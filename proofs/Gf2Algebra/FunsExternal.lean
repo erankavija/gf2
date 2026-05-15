@@ -10,6 +10,9 @@ set_option linter.unusedVariables false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
+
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
 open gf2_algebra
 
 /-- [core::array::from_fn]:
@@ -480,7 +483,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp.div
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 672:4-672:41
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 675:4-675:41
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::max_unreduced_additions]
     Visibility: public -/
 @[rust_fun

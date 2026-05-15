@@ -10,6 +10,9 @@ set_option linter.unusedVariables false
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
 
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
+
 /-- [core::fmt::builders::DebugStruct]
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 88:0-88:34
     Name pattern: [core::fmt::builders::DebugStruct]
@@ -23,10 +26,4 @@ axiom core.fmt.builders.DebugStruct : Type
     Visibility: public -/
 @[rust_type "core::iter::adapters::zip::Zip"]
 axiom core.iter.adapters.zip.Zip (A : Type) (B : Type) : Type
-
-/-- [gf2_core::gf2m::field::Gf2mElement_]
-    Source: 'crates/gf2-core/src/gf2m/field.rs', lines 206:0-209:1
-    Visibility: public -/
-axiom gf2m.field.Gf2mElement_ {V : Type} (uint_extUintExtInst :
-  gf2m.uint_ext.UintExt V) : Type
 

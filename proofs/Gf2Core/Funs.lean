@@ -11,6 +11,9 @@ set_option linter.unusedVariables false
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
 
+/- You can set the `maxRecDepth` value with the `-max-recdepth` CLI option -/
+set_option maxRecDepth 2048
+
 /- You can remove the following line by using the CLI option `-all-computable`: -/
 noncomputable section
 
@@ -934,6 +937,7 @@ def gfp.montgomery.mod_pow_mont_loop.body
     let result1 ←
       if i = 1#u64
       then
+        do
         let i1 ← lift (UScalar.cast .U128 result)
         let i2 ← lift (UScalar.cast .U128 base)
         let i3 ← i1 * i2
@@ -1213,7 +1217,7 @@ def Shared0Fp.Insts.CoreOpsArithNegFp (P : Std.U64) : core.ops.arith.Neg
 }
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::theorem_4_operand_bound]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 666:4-668:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 693:4-695:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.theorem_4_operand_bound
   (P : Std.U64) : Result Std.U128 := do
@@ -1221,7 +1225,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.theorem_4_operand_bound
   ok (core.num.U128.saturating_sub i 1#u128)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 648:4-659:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 675:4-686:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
   (P : Std.U64) : Result Std.Usize := do
@@ -1365,12 +1369,13 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} (self : gfp.Fp P) : Result Std.U64 := by
   sorry
 /-- Trait implementation: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-669:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 511:0-848:1 -/
 @[reducible]
 impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
   field.traits.FiniteField (gfp.Fp P) Std.U64 Std.U128 := {
   WINOGRAD_THRESHOLD := ok 32#usize
   TRI_BASE_THRESHOLD := ok 8#usize
+  PLE_BASE_COLS := ok 1#usize
   corecloneCloneInst := gfp.Fp.Insts.CoreCloneClone P
   corecmpPartialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
   corecmpEqInst := gfp.Fp.Insts.CoreCmpEq P
@@ -1427,14 +1432,14 @@ impl_def gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128 (P : Std.U64) :
 }
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::order]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 695:4-697:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 874:4-876:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.order
   (P : Std.U64) : Result Std.U128 := do
   ok (UScalar.cast .U128 P)
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::one]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 684:4-692:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 863:4-871:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1449,7 +1454,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one
          ok i
 
 /-- [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}::zero]:
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 677:4-681:5
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 856:4-860:5
     Visibility: public -/
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   (P : Std.U64) : Result (gfp.Fp P) := do
@@ -1457,7 +1462,7 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero
   ok 0#u64
 
 /-- Trait implementation: [gf2_core::gfp::{gf2_core::field::traits::ConstField<u64, u128> for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 675:0-698:1 -/
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 854:0-877:1 -/
 @[reducible]
 def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128 (P : Std.U64) :
   field.traits.ConstField (gfp.Fp P) Std.U64 Std.U128 := {
@@ -1466,201 +1471,6 @@ def gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128 (P : Std.U64) :
   zero := gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.zero P
   one := gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.one P
   order := gfp.Fp.Insts.Gf2_coreFieldTraitsConstFieldU64U128.order P
-}
-
-/-- [gf2_core::gfp::simd_ops::SimdVecOps::try_simd_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 71:4-73:5
-    Visibility: public -/
-def gfp.simd_ops.SimdVecOps.try_simd_mul_vec.default
-  {Self : Type} (_a : Slice Self) (_b : Slice Self) :
-  Result (Option (alloc.vec.Vec Self))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::SimdVecOps::try_simd_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 86:4-88:5
-    Visibility: public -/
-def gfp.simd_ops.SimdVecOps.try_simd_add_vec.default
-  {Self : Type} (_a : Slice Self) (_b : Slice Self) :
-  Result (Option (alloc.vec.Vec Self))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::SimdVecOps::try_simd_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 101:4-103:5
-    Visibility: public -/
-def gfp.simd_ops.SimdVecOps.try_simd_sub_vec.default
-  {Self : Type} (_a : Slice Self) (_b : Slice Self) :
-  Result (Option (alloc.vec.Vec Self))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gf2m::field::Gf2mElement_<V>[TraitClause@0]}::try_simd_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 112:0-112:76
-    Visibility: public -/
-def
-  gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
-  {V : Type} (gf2muint_extUintExtInst : gf2m.uint_ext.UintExt V)
-  (_a : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst))
-  (_b : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst)) :
-  Result (Option (alloc.vec.Vec (gf2m.field.Gf2mElement_
-    gf2muint_extUintExtInst)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gf2m::field::Gf2mElement_<V>[TraitClause@0]}::try_simd_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 112:0-112:76
-    Visibility: public -/
-def
-  gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
-  {V : Type} (gf2muint_extUintExtInst : gf2m.uint_ext.UintExt V)
-  (_a : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst))
-  (_b : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst)) :
-  Result (Option (alloc.vec.Vec (gf2m.field.Gf2mElement_
-    gf2muint_extUintExtInst)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gf2m::field::Gf2mElement_<V>[TraitClause@0]}::try_simd_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 112:0-112:76
-    Visibility: public -/
-def
-  gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
-  {V : Type} (gf2muint_extUintExtInst : gf2m.uint_ext.UintExt V)
-  (_a : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst))
-  (_b : Slice (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst)) :
-  Result (Option (alloc.vec.Vec (gf2m.field.Gf2mElement_
-    gf2muint_extUintExtInst)))
-  := do
-  ok none
-
-/-- Trait implementation: [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gf2m::field::Gf2mElement_<V>[TraitClause@0]}]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 112:0-112:76 -/
-@[reducible]
-def gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps {V : Type}
-  (gf2muint_extUintExtInst : gf2m.uint_ext.UintExt V) : gfp.simd_ops.SimdVecOps
-  (gf2m.field.Gf2mElement_ gf2muint_extUintExtInst) := {
-  try_simd_mul_vec :=
-    gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
-    gf2muint_extUintExtInst
-  try_simd_add_vec :=
-    gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
-    gf2muint_extUintExtInst
-  try_simd_sub_vec :=
-    gf2m.field.Gf2mElement_.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
-    gf2muint_extUintExtInst
-}
-
-/-- [gf2_core::gfp::simd_ops::fp65537_try_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 366:0-368:1 -/
-def gfp.simd_ops.fp65537_try_sub_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::fp_generic_try_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 265:0-267:1 -/
-def gfp.simd_ops.fp_generic_try_sub_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_sub_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 139:4-144:5
-    Visibility: public -/
-def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
-  {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  if P = 65537#u64
-  then gfp.simd_ops.fp65537_try_sub_vec a b
-  else gfp.simd_ops.fp_generic_try_sub_vec a b
-
-/-- [gf2_core::gfp::simd_ops::fp65537_try_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 360:0-362:1 -/
-def gfp.simd_ops.fp65537_try_add_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::fp_generic_try_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 259:0-261:1 -/
-def gfp.simd_ops.fp_generic_try_add_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_add_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 131:4-136:5
-    Visibility: public -/
-def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
-  {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  if P = 65537#u64
-  then gfp.simd_ops.fp65537_try_add_vec a b
-  else gfp.simd_ops.fp_generic_try_add_vec a b
-
-/-- [gf2_core::gfp::simd_ops::fp65537_try_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 354:0-356:1 -/
-def gfp.simd_ops.fp65537_try_mul_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::fp_generic_try_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 253:0-255:1 -/
-def gfp.simd_ops.fp_generic_try_mul_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::fpm31_try_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 183:0-185:1 -/
-def gfp.simd_ops.fpm31_try_mul_vec
-  {P : Std.U64} (_a : Slice (gfp.Fp P)) (_b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  ok none
-
-/-- [gf2_core::gfp::simd_ops::M31]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 151:0-151:34 -/
-@[global_simps, irreducible]
-def gfp.simd_ops.M31 : Result Std.U64 := do let i ← 1#u64 <<< 31#i32
-                                            i - 1#u64
-
-/-- [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}::try_simd_mul_vec]:
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 120:4-128:5
-    Visibility: public -/
-def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
-  {P : Std.U64} (a : Slice (gfp.Fp P)) (b : Slice (gfp.Fp P)) :
-  Result (Option (alloc.vec.Vec (gfp.Fp P)))
-  := do
-  if P = 65537#u64
-  then gfp.simd_ops.fp65537_try_mul_vec a b
-  else
-    let i ← gfp.simd_ops.M31
-    if P = i
-    then gfp.simd_ops.fpm31_try_mul_vec a b
-    else gfp.simd_ops.fp_generic_try_mul_vec a b
-
-/-- Trait implementation: [gf2_core::gfp::simd_ops::{gf2_core::gfp::simd_ops::SimdVecOps for gf2_core::gfp::Fp<P>}]
-    Source: 'crates/gf2-core/src/gfp/simd_ops.rs', lines 118:0-145:1 -/
-@[reducible]
-def gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps (P : Std.U64) :
-  gfp.simd_ops.SimdVecOps (gfp.Fp P) := {
-  try_simd_mul_vec :=
-    gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_mul_vec
-  try_simd_add_vec :=
-    gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_add_vec
-  try_simd_sub_vec :=
-    gfp.Fp.Insts.Gf2_coreGfpSimd_opsSimdVecOps.try_simd_sub_vec
 }
 
 /-- [gf2_core::gfp::specialized::{core::fmt::Debug for gf2_core::gfp::specialized::PrimeShape}::fmt]:
@@ -2551,6 +2361,7 @@ impl_def
   field.traits.FiniteField gfp.specialized.GoldilocksFp Std.U64 Std.U128 := {
   WINOGRAD_THRESHOLD := ok 32#usize
   TRI_BASE_THRESHOLD := ok 8#usize
+  PLE_BASE_COLS := ok 1#usize
   corecloneCloneInst := gfp.specialized.GoldilocksFp.Insts.CoreCloneClone
   corecmpPartialEqInst :=
     gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp
@@ -2840,7 +2651,7 @@ def gfpn.cubic.CubicExtWide.Insts.CoreOpsArithAddAssignCubicExtWide {W : Type}
     coreopsarithAddAssignInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::clone::Clone for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::clone]:
+/-- [gf2_core::gfpn::cubic::{core::clone::Clone for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::clone]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 261:4-263:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreCloneClone.clone
@@ -2848,12 +2659,14 @@ def gfpn.cubic.CubicExt.Insts.CoreCloneClone.clone
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   ok self
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::clone::Clone for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::clone::Clone for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 259:0-264:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreCloneClone {C : Type} {Clause0_BaseField :
@@ -2861,12 +2674,13 @@ def gfpn.cubic.CubicExt.Insts.CoreCloneClone {C : Type} {Clause0_BaseField :
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.clone.Clone (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.clone.Clone (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   clone := gfpn.cubic.CubicExt.Insts.CoreCloneClone.clone
     ext_configExtConfigInst
 }
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::marker::Copy for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::marker::Copy for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 266:0-266:42 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreMarkerCopy {C : Type} {Clause0_BaseField :
@@ -2874,11 +2688,12 @@ def gfpn.cubic.CubicExt.Insts.CoreMarkerCopy {C : Type} {Clause0_BaseField :
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.marker.Copy (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.marker.Copy (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   cloneInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::cmp::PartialEq<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::eq]:
+/-- [gf2_core::gfpn::cubic::{core::cmp::PartialEq<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::eq]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 270:4-272:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt.eq
@@ -2886,8 +2701,10 @@ def gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt.eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (other : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (other : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -2905,7 +2722,7 @@ def gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt.eq
     else ok false
   else ok false
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::cmp::PartialEq<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::cmp::PartialEq<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 268:0-273:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt {C : Type}
@@ -2913,21 +2730,24 @@ def gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.cmp.PartialEq (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.cmp.PartialEq (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   eq := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt.eq
     ext_configExtConfigInst
 }
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 275:0-275:40 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField : Type}
   {Clause0_Clause0_Clause0_Characteristic : Type} {Clause0_Clause0_Clause0_Wide
   : Type} (ext_configExtConfigInst : gfpn.ext_config.ExtConfig C
   Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
-  Clause0_Clause0_Clause0_Wide) : core.cmp.Eq (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  Clause0_Clause0_Clause0_Wide) : core.cmp.Eq (gfpn.cubic.CubicExt C
+  Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) := {
   partialEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt
     ext_configExtConfigInst
   assert_receiver_is_total_eq :=
@@ -2935,7 +2755,7 @@ def gfpn.cubic.CubicExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField : Type}
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::hash::Hash for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::hash]:
+/-- [gf2_core::gfpn::cubic::{core::hash::Hash for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::hash]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 278:4-282:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreHashHash.hash
@@ -2944,7 +2764,9 @@ def gfpn.cubic.CubicExt.Insts.CoreHashHash.hash
   : Type} (ext_configExtConfigInst : gfpn.ext_config.ExtConfig C
   Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
   Clause0_Clause0_Clause0_Wide) (corehashHasherInst : core.hash.Hasher H)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) (state : H) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (state : H) :
   Result H
   := do
   let state1 ←
@@ -2956,7 +2778,7 @@ def gfpn.cubic.CubicExt.Insts.CoreHashHash.hash
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corehashHashInst.hash
     corehashHasherInst self.c2 state2
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::hash::Hash for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::hash::Hash for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 277:0-283:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreHashHash {C : Type} {Clause0_BaseField :
@@ -2964,13 +2786,14 @@ def gfpn.cubic.CubicExt.Insts.CoreHashHash {C : Type} {Clause0_BaseField :
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.hash.Hash (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.hash.Hash (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   hash := fun {H : Type} (corehashHasherInst : core.hash.Hasher H) =>
     gfpn.cubic.CubicExt.Insts.CoreHashHash.hash ext_configExtConfigInst
     corehashHasherInst
 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::new]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::new]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 309:4-311:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.new
@@ -2979,11 +2802,12 @@ def gfpn.cubic.CubicExt.new
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c0 : Clause0_BaseField) (c1 : Clause0_BaseField) (c2 : Clause0_BaseField) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   ok { c0, c1, c2 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::c0]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::c0]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 315:4-317:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.impl.c0
@@ -2991,12 +2815,13 @@ def gfpn.cubic.CubicExt.impl.c0
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   ok self.c0
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::c1]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::c1]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 321:4-323:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.impl.c1
@@ -3004,12 +2829,13 @@ def gfpn.cubic.CubicExt.impl.c1
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   ok self.c1
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::c2]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::c2]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 327:4-329:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.impl.c2
@@ -3017,7 +2843,8 @@ def gfpn.cubic.CubicExt.impl.c2
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   ok self.c2
@@ -3037,7 +2864,7 @@ def gfpn.ext_config.ExtConfig.mul_by_non_residue.default
   ExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithMulInst.mul
     x t
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::norm]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 352:4-362:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.norm
@@ -3045,7 +2872,8 @@ def gfpn.cubic.CubicExt.norm
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   let t ←
@@ -3093,7 +2921,7 @@ def gfpn.cubic.CubicExt.norm
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddInst.add
     t8 t12
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::from_base]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::from_base]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 386:4-389:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.from_base
@@ -3102,12 +2930,13 @@ def gfpn.cubic.CubicExt.from_base
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (value : Clause0_BaseField) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let z ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.cubic.CubicExt.new ext_configExtConfigInst value z z
 
-/-- [gf2_core::gfpn::cubic::{core::fmt::Display for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::fmt]:
+/-- [gf2_core::gfpn::cubic::{core::fmt::Display for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::fmt]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 401:4-433:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt
@@ -3116,8 +2945,9 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (corefmtDisplayInst : core.fmt.Display Clause0_BaseField)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) (f : core.fmt.Formatter)
-  :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (f : core.fmt.Formatter) :
   Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
   := do
   let c0_zero ←
@@ -3322,7 +3152,7 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt
           Unit (core.convert.FromSame core.fmt.Error) residual
       ok (r1, f1)
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::fmt::Display for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::fmt::Display for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 396:0-434:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay {C : Type} {Clause0_BaseField :
@@ -3331,12 +3161,13 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay {C : Type} {Clause0_BaseField :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (corefmtDisplayInst : core.fmt.Display Clause0_BaseField) : core.fmt.Display
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   fmt := gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt ext_configExtConfigInst
     corefmtDisplayInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::fmt::Debug for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::fmt]:
+/-- [gf2_core::gfpn::cubic::{core::fmt::Debug for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::fmt]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 437:4-439:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreFmtDebug.fmt
@@ -3344,8 +3175,9 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDebug.fmt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) (f : core.fmt.Formatter)
-  :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (f : core.fmt.Formatter) :
   Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
   := do
   let a ←
@@ -3369,7 +3201,7 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDebug.fmt
         ]) (Array.make 3#usize [ a, a1, a2 ])
   core.fmt.Formatter.write_fmt f a3
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::fmt::Debug for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::fmt::Debug for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 436:0-440:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreFmtDebug {C : Type} {Clause0_BaseField :
@@ -3377,11 +3209,12 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDebug {C : Type} {Clause0_BaseField :
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.fmt.Debug (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.fmt.Debug (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   fmt := gfpn.cubic.CubicExt.Insts.CoreFmtDebug.fmt ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 455:4-457:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
@@ -3389,9 +3222,12 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddInst.add
@@ -3404,7 +3240,7 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
       self.c2 rhs.c2
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t2
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 446:0-458:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt {C : Type}
@@ -3412,14 +3248,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add := gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::sub]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 469:4-471:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
@@ -3427,9 +3266,12 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithSubInst.sub
@@ -3442,7 +3284,7 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
       self.c2 rhs.c2
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t2
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 460:0-472:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt {C : Type}
@@ -3450,14 +3292,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub := gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::neg]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::neg]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 483:4-485:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg
@@ -3465,8 +3310,10 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithNegInst.neg
@@ -3479,7 +3326,7 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg
       self.c2
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t2
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 474:0-486:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt {C : Type}
@@ -3487,13 +3334,15 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Neg (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.ops.arith.Neg (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   neg := gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 497:4-517:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
@@ -3501,9 +3350,12 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let v0 ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithMulInst.mul
@@ -3572,7 +3424,7 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
       y t14
   gfpn.cubic.CubicExt.new ext_configExtConfigInst c0 c1 z
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 488:0-518:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt {C : Type}
@@ -3580,14 +3432,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul := gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure<0, 1, 2, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::call_once]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<0, 1, 2, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 674:17-674:82 -/
 def
   gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldCubicExt.call_once
@@ -3597,12 +3452,14 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c :
   gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure
-  ext_configExtConfigInst) (tupled_args : Clause0_BaseField) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) (tupled_args : Clause0_BaseField) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   sorry
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure<0, 1, 2, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<0, 1, 2, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 674:17-674:82 -/
 @[reducible]
 def
@@ -3613,14 +3470,16 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   core.ops.function.FnOnce
   (gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure
-  ext_configExtConfigInst) Clause0_BaseField (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) Clause0_BaseField (gfpn.cubic.CubicExt C
+  Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) := {
   call_once :=
     gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldCubicExt.call_once
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 662:4-675:5
     Visibility: public -/
 def
@@ -3629,12 +3488,14 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (Option (gfpn.cubic.CubicExt ext_configExtConfigInst))
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (Option (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide))
   := do
   sorry
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::div]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::div]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 530:4-532:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
@@ -3642,9 +3503,12 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let o ←
     gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv
@@ -3653,7 +3517,7 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
   gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
     ext_configExtConfigInst self ce
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 520:0-533:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt {C : Type}
@@ -3661,14 +3525,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div := gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add_assign]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add_assign]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 541:4-543:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt.add_assign
@@ -3676,14 +3543,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt.add_assign
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 539:0-544:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt {C : Type}
@@ -3691,14 +3561,16 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.AddAssign (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.ops.arith.AddAssign (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add_assign :=
     gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt.add_assign
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add_assign]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add_assign]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 548:4-550:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt.add_assign
@@ -3706,14 +3578,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt.add_assign
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 546:0-551:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt {C : Type}
@@ -3721,14 +3596,16 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.AddAssign (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := {
+  core.ops.arith.AddAssign (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add_assign :=
     gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt.add_assign
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 560:4-562:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
@@ -3736,14 +3613,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 557:0-563:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt {C : Type}
@@ -3751,14 +3631,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add := gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::add]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::add]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 568:4-570:5
     Visibility: public -/
 def Shared0CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
@@ -3766,14 +3649,17 @@ def Shared0CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Add<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 565:0-571:1 -/
 @[reducible]
 def Shared0CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt {C : Type}
@@ -3781,14 +3667,17 @@ def Shared0CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add := Shared0CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::sub]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 576:4-578:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
@@ -3796,14 +3685,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 573:0-579:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt {C : Type}
@@ -3811,14 +3703,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub := gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::sub]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::sub]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 584:4-586:5
     Visibility: public -/
 def Shared0CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
@@ -3826,14 +3721,17 @@ def Shared0CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt.sub
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 581:0-587:1 -/
 @[reducible]
 def Shared0CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt {C : Type}
@@ -3841,14 +3739,17 @@ def Shared0CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub := Shared0CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 592:4-594:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
@@ -3856,14 +3757,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 589:0-595:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt {C : Type}
@@ -3871,14 +3775,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul := gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::mul]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::mul]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 600:4-602:5
     Visibility: public -/
 def Shared0CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
@@ -3886,14 +3793,17 @@ def Shared0CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt.mul
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 597:0-603:1 -/
 @[reducible]
 def Shared0CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt {C : Type}
@@ -3901,14 +3811,17 @@ def Shared0CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul := Shared0CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::div]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::div]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 608:4-610:5
     Visibility: public -/
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
@@ -3916,14 +3829,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 605:0-611:1 -/
 @[reducible]
 def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt {C : Type}
@@ -3931,14 +3847,17 @@ def gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div := gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::div]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::div]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 616:4-618:5
     Visibility: public -/
 def Shared0CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
@@ -3946,14 +3865,17 @@ def Shared0CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt.div
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Div<&0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 613:0-619:1 -/
 @[reducible]
 def Shared0CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt {C : Type}
@@ -3961,14 +3883,17 @@ def Shared0CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) (gfpn.cubic.CubicExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div := Shared0CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::neg]:
+/-- [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::neg]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 624:4-626:5
     Visibility: public -/
 def Shared0CubicExt.Insts.CoreOpsArithNegCubicExt.neg
@@ -3976,13 +3901,15 @@ def Shared0CubicExt.Insts.CoreOpsArithNegCubicExt.neg
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt.neg ext_configExtConfigInst
     self
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{core::ops::arith::Neg<gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 621:0-627:1 -/
 @[reducible]
 def Shared0CubicExt.Insts.CoreOpsArithNegCubicExt {C : Type} {Clause0_BaseField
@@ -3990,10 +3917,12 @@ def Shared0CubicExt.Insts.CoreOpsArithNegCubicExt {C : Type} {Clause0_BaseField
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Neg (gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (gfpn.cubic.CubicExt ext_configExtConfigInst) := by
+  core.ops.arith.Neg (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := by
   sorry
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::max_unreduced_additions]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::max_unreduced_additions]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 748:4-750:5
     Visibility: public -/
 def
@@ -4006,7 +3935,7 @@ def
   := do
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.max_unreduced_additions
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::reduce_wide]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::reduce_wide]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 732:4-738:5
     Visibility: public -/
 def
@@ -4016,7 +3945,8 @@ def
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (wide : gfpn.cubic.CubicExtWide Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.reduce_wide
@@ -4029,7 +3959,7 @@ def
       wide.c2
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t2
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::reduce_product_sum_wide]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::reduce_product_sum_wide]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 741:4-743:5
     Visibility: public -/
 def
@@ -4039,12 +3969,13 @@ def
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (wide : gfpn.cubic.CubicExtWide Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.reduce_wide
     ext_configExtConfigInst wide
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::to_wide]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::to_wide]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 706:4-708:5
     Visibility: public -/
 def
@@ -4053,7 +3984,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.cubic.CubicExtWide Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
@@ -4067,7 +3999,7 @@ def
       self.c2
   gfpn.cubic.CubicExtWide.new t t1 t2
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul_to_wide]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul_to_wide]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 720:4-722:5
     Visibility: public -/
 def
@@ -4076,8 +4008,10 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.cubic.CubicExtWide Clause0_Clause0_Clause0_Wide)
   := do
   let ce ←
@@ -4086,7 +4020,7 @@ def
   gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.to_wide
     ext_configExtConfigInst ce
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul_product_sum_wide]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul_product_sum_wide]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 725:4-727:5
     Visibility: public -/
 def
@@ -4095,14 +4029,16 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst)
-  (rhs : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.cubic.CubicExtWide Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.mul_to_wide
     ext_configExtConfigInst self rhs
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::call_once]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 700:55-700:75 -/
 def
   gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint.closure.Insts.CoreOpsFunctionFnOnceTupleU32OptionU32.call_once
@@ -4112,12 +4048,13 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c :
   gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint.closure
-  ext_configExtConfigInst) (tupled_args : Std.U32) :
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) (tupled_args : Std.U32) :
   Result (Option Std.U32)
   := do
   ok (U32.checked_mul tupled_args 3#u32)
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 700:55-700:75 -/
 @[reducible]
 def
@@ -4128,13 +4065,14 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   core.ops.function.FnOnce
   (gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint.closure
-  ext_configExtConfigInst) Std.U32 (Option Std.U32) := {
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) Std.U32 (Option Std.U32) := {
   call_once :=
     gfpn.cubic.FiniteFieldCubicExtClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint.closure.Insts.CoreOpsFunctionFnOnceTupleU32OptionU32.call_once
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 699:4-701:5
     Visibility: public -/
 def
@@ -4146,7 +4084,7 @@ def
   Result (Option Std.U32)
   := by
   sorry
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 759:4-762:5
     Visibility: public -/
 def
@@ -4155,12 +4093,13 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let z ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.cubic.CubicExt.new ext_configExtConfigInst z z z
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero_hint]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero_hint]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 689:4-692:5
     Visibility: public -/
 def
@@ -4169,14 +4108,15 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (Option (gfpn.cubic.CubicExt ext_configExtConfigInst))
+  Result (Option (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide))
   := do
   let ce ←
     gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.zero
       ext_configExtConfigInst
   ok (some ce)
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::one_like]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::one_like]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 684:4-686:5
     Visibility: public -/
 def
@@ -4185,8 +4125,10 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.one_like
@@ -4196,7 +4138,7 @@ def
       self.c0
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t1
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero_like]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero_like]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 678:4-681:5
     Visibility: public -/
 def
@@ -4205,15 +4147,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let z ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.zero_like
       self.c0
   gfpn.cubic.CubicExt.new ext_configExtConfigInst z z z
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::is_one]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::is_one]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 653:4-655:5
     Visibility: public -/
 def
@@ -4222,7 +4166,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -4240,7 +4185,7 @@ def
     else ok false
   else ok false
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::is_zero]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::is_zero]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 648:4-650:5
     Visibility: public -/
 def
@@ -4249,7 +4194,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -4267,7 +4213,7 @@ def
     else ok false
   else ok false
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::extension_degree]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::extension_degree]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 643:4-645:5
     Visibility: public -/
 def
@@ -4276,7 +4222,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Std.Usize
   := do
   let i ←
@@ -4284,7 +4231,7 @@ def
       self.c0
   3#usize * i
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::characteristic]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::characteristic]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 638:4-640:5
     Visibility: public -/
 def
@@ -4293,11 +4240,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.cubic.CubicExt ext_configExtConfigInst) :
+  (self : gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_Clause0_Clause0_Characteristic
   := by
   sorry
-/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1 -/
 @[reducible]
 impl_def
@@ -4306,11 +4254,13 @@ impl_def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.FiniteField (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  field.traits.FiniteField (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   Clause0_Clause0_Clause0_Characteristic (gfpn.cubic.CubicExtWide
   Clause0_Clause0_Clause0_Wide) := {
   WINOGRAD_THRESHOLD := ok 32#usize
   TRI_BASE_THRESHOLD := ok 8#usize
+  PLE_BASE_COLS := ok 1#usize
   corecloneCloneInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone
     ext_configExtConfigInst
   corecmpPartialEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt
@@ -4416,7 +4366,7 @@ impl_def
   theorem_4_operand_bound := ok 0#u128
 }
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::order]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::order]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 774:4-777:5
     Visibility: public -/
 def
@@ -4431,7 +4381,7 @@ def
   let i ← base_order * base_order
   i * base_order
 
-/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::one]:
+/-- [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::one]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 765:4-771:5
     Visibility: public -/
 def
@@ -4440,13 +4390,14 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  Result (gfpn.cubic.CubicExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ← ext_configExtConfigInst.fieldtraitsConstFieldInst.one
   let t1 ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.cubic.CubicExt.new ext_configExtConfigInst t t1 t1
 
-/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::cubic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 757:0-778:1 -/
 @[reducible]
 def
@@ -4455,7 +4406,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.ConstField (gfpn.cubic.CubicExt ext_configExtConfigInst)
+  field.traits.ConstField (gfpn.cubic.CubicExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   Clause0_Clause0_Clause0_Characteristic (gfpn.cubic.CubicExtWide
   Clause0_Clause0_Clause0_Wide) := {
   FiniteFieldInst :=
@@ -4653,7 +4605,7 @@ def gfpn.quadratic.QuadraticExtWide.Insts.CoreOpsArithAddAssignQuadraticExtWide
     coreopsarithAddAssignInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::clone::Clone for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::clone]:
+/-- [gf2_core::gfpn::quadratic::{core::clone::Clone for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::clone]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 239:4-241:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone.clone
@@ -4661,12 +4613,14 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone.clone
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   ok self
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::clone::Clone for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::clone::Clone for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 237:0-242:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone {C : Type}
@@ -4674,12 +4628,13 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.clone.Clone (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.clone.Clone (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   clone := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone.clone
     ext_configExtConfigInst
 }
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::marker::Copy for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::marker::Copy for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 244:0-244:46 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreMarkerCopy {C : Type}
@@ -4687,12 +4642,13 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreMarkerCopy {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.marker.Copy (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.marker.Copy (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   cloneInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::cmp::PartialEq<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::eq]:
+/-- [gf2_core::gfpn::quadratic::{core::cmp::PartialEq<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::eq]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 248:4-250:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt.eq
@@ -4700,8 +4656,10 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt.eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (other : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (other : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -4713,7 +4671,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt.eq
       self.c1 other.c1
   else ok false
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::cmp::PartialEq<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::cmp::PartialEq<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 246:0-251:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt {C : Type}
@@ -4721,13 +4679,15 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.cmp.PartialEq (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.cmp.PartialEq (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   eq := gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt.eq
     ext_configExtConfigInst
 }
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 253:0-253:44 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField :
@@ -4735,7 +4695,8 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField :
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.cmp.Eq (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.cmp.Eq (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   partialEqInst :=
     gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt
     ext_configExtConfigInst
@@ -4744,7 +4705,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField :
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::hash::Hash for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::hash]:
+/-- [gf2_core::gfpn::quadratic::{core::hash::Hash for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::hash]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 256:4-259:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreHashHash.hash
@@ -4753,7 +4714,9 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreHashHash.hash
   : Type} (ext_configExtConfigInst : gfpn.ext_config.ExtConfig C
   Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
   Clause0_Clause0_Clause0_Wide) (corehashHasherInst : core.hash.Hasher H)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) (state : H) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (state : H) :
   Result H
   := do
   let state1 ←
@@ -4762,7 +4725,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreHashHash.hash
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corehashHashInst.hash
     corehashHasherInst self.c1 state1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::hash::Hash for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::hash::Hash for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 255:0-260:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreHashHash {C : Type}
@@ -4770,13 +4733,14 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreHashHash {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.hash.Hash (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.hash.Hash (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   hash := fun {H : Type} (corehashHasherInst : core.hash.Hasher H) =>
     gfpn.quadratic.QuadraticExt.Insts.CoreHashHash.hash ext_configExtConfigInst
     corehashHasherInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::new]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::new]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 285:4-287:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.new
@@ -4785,11 +4749,12 @@ def gfpn.quadratic.QuadraticExt.new
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c0 : Clause0_BaseField) (c1 : Clause0_BaseField) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   ok { c0, c1 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::c0]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::c0]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 291:4-293:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.impl.c0
@@ -4797,12 +4762,13 @@ def gfpn.quadratic.QuadraticExt.impl.c0
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   ok self.c0
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::c1]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::c1]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 297:4-299:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.impl.c1
@@ -4810,12 +4776,13 @@ def gfpn.quadratic.QuadraticExt.impl.c1
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   ok self.c1
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::conjugate]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::conjugate]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 320:4-322:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.conjugate
@@ -4823,15 +4790,17 @@ def gfpn.quadratic.QuadraticExt.conjugate
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithNegInst.neg
       self.c1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst self.c0 t
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::norm]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 346:4-350:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.norm
@@ -4839,7 +4808,8 @@ def gfpn.quadratic.QuadraticExt.norm
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_BaseField
   := do
   let t0 ←
@@ -4852,7 +4822,7 @@ def gfpn.quadratic.QuadraticExt.norm
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithSubInst.sub
     t0 t
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::from_base]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::from_base]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 373:4-375:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.from_base
@@ -4861,12 +4831,13 @@ def gfpn.quadratic.QuadraticExt.from_base
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (value : Clause0_BaseField) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst value t
 
-/-- [gf2_core::gfpn::quadratic::{core::fmt::Display for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::fmt]:
+/-- [gf2_core::gfpn::quadratic::{core::fmt::Display for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::fmt]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 387:4-396:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay.fmt
@@ -4875,7 +4846,8 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay.fmt
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (corefmtDisplayInst : core.fmt.Display Clause0_BaseField)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (f : core.fmt.Formatter) :
   Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
   := do
@@ -4917,7 +4889,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay.fmt
             ]) (Array.make 2#usize [ a, a1 ])
       core.fmt.Formatter.write_fmt f a2
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::fmt::Display for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::fmt::Display for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 382:0-397:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay {C : Type}
@@ -4926,12 +4898,13 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay {C : Type}
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (corefmtDisplayInst : core.fmt.Display Clause0_BaseField) : core.fmt.Display
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   fmt := gfpn.quadratic.QuadraticExt.Insts.CoreFmtDisplay.fmt
     ext_configExtConfigInst corefmtDisplayInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::fmt]:
+/-- [gf2_core::gfpn::quadratic::{core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::fmt]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 400:4-402:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug.fmt
@@ -4939,7 +4912,8 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug.fmt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (f : core.fmt.Formatter) :
   Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
   := do
@@ -4960,7 +4934,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug.fmt
         ]) (Array.make 2#usize [ a, a1 ])
   core.fmt.Formatter.write_fmt f a2
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::fmt::Debug for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 399:0-403:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug {C : Type}
@@ -4968,12 +4942,13 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.fmt.Debug (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.fmt.Debug (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   fmt := gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug.fmt
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 418:4-420:5
     Visibility: public -/
 def
@@ -4982,9 +4957,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddInst.add
@@ -4994,7 +4972,7 @@ def
       self.c1 rhs.c1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 409:0-421:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt
@@ -5002,15 +4980,18 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::sub]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 432:4-434:5
     Visibility: public -/
 def
@@ -5019,9 +5000,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithSubInst.sub
@@ -5031,7 +5015,7 @@ def
       self.c1 rhs.c1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 423:0-435:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt
@@ -5039,15 +5023,18 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::neg]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::neg]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 446:4-448:5
     Visibility: public -/
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
@@ -5055,8 +5042,10 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithNegInst.neg
@@ -5066,7 +5055,7 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
       self.c1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 437:0-449:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt {C : Type}
@@ -5074,13 +5063,15 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Neg (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Neg (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   neg := gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 460:4-466:5
     Visibility: public -/
 def
@@ -5089,9 +5080,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let v0 ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithMulInst.mul
@@ -5120,7 +5114,7 @@ def
       t4 v1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst c0 c1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 451:0-467:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt
@@ -5128,15 +5122,18 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure<0, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::call_once]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<0, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 616:17-616:80 -/
 def
   gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldQuadraticExt.call_once
@@ -5146,12 +5143,14 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c :
   gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure
-  ext_configExtConfigInst) (tupled_args : Clause0_BaseField) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) (tupled_args : Clause0_BaseField) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   sorry
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv::closure<0, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::{core::ops::function::FnOnce<(Clause0_BaseField), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv::closure<0, C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 616:17-616:80 -/
 @[reducible]
 def
@@ -5162,14 +5161,16 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   core.ops.function.FnOnce
   (gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure
-  ext_configExtConfigInst) Clause0_BaseField (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) := {
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) Clause0_BaseField (gfpn.quadratic.QuadraticExt
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) := {
   call_once :=
     gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldQuadraticExt.call_once
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::inv]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::inv]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 611:4-617:5
     Visibility: public -/
 def
@@ -5178,12 +5179,14 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (Option (gfpn.quadratic.QuadraticExt ext_configExtConfigInst))
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (Option (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide))
   := do
   sorry
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::div]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::div]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 479:4-481:5
     Visibility: public -/
 def
@@ -5192,9 +5195,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let o ←
     gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv
@@ -5204,7 +5210,7 @@ def
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt.mul
     ext_configExtConfigInst self qe
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0], gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>, gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 469:0-482:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt
@@ -5212,15 +5218,18 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add_assign]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add_assign]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 490:4-492:5
     Visibility: public -/
 def
@@ -5229,14 +5238,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 488:0-493:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignQuadraticExt {C :
@@ -5244,15 +5256,16 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignQuadraticExt {C :
   Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.AddAssign (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.AddAssign (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add_assign :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignQuadraticExt.add_assign
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add_assign]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add_assign]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 497:4-499:5
     Visibility: public -/
 def
@@ -5261,14 +5274,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::AddAssign<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 495:0-500:1 -/
 @[reducible]
 def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignShared0QuadraticExt
@@ -5276,15 +5292,16 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignShared0QuadraticExt
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.AddAssign (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) := {
+  core.ops.arith.AddAssign (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add_assign :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignShared0QuadraticExt.add_assign
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::add]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::add]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 509:4-511:5
     Visibility: public -/
 def
@@ -5293,14 +5310,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 506:0-512:1 -/
 @[reducible]
 def
@@ -5309,15 +5329,18 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddShared0QuadraticExtQuadraticExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::add]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::add]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 517:4-519:5
     Visibility: public -/
 def
@@ -5326,14 +5349,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt.add
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Add<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 514:0-520:1 -/
 @[reducible]
 def Shared0QuadraticExt.Insts.CoreOpsArithAddShared0QuadraticExtQuadraticExt {C
@@ -5341,15 +5367,18 @@ def Shared0QuadraticExt.Insts.CoreOpsArithAddShared0QuadraticExtQuadraticExt {C
   Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Add (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Add (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   add :=
     Shared0QuadraticExt.Insts.CoreOpsArithAddShared0QuadraticExtQuadraticExt.add
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::sub]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::sub]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 525:4-527:5
     Visibility: public -/
 def
@@ -5358,14 +5387,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt.sub
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 522:0-528:1 -/
 @[reducible]
 def
@@ -5374,15 +5406,18 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubShared0QuadraticExtQuadraticExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::sub]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::sub]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 533:4-535:5
     Visibility: public -/
 def
@@ -5391,14 +5426,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt.sub
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Sub<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 530:0-536:1 -/
 @[reducible]
 def Shared0QuadraticExt.Insts.CoreOpsArithSubShared0QuadraticExtQuadraticExt {C
@@ -5406,15 +5444,18 @@ def Shared0QuadraticExt.Insts.CoreOpsArithSubShared0QuadraticExtQuadraticExt {C
   Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Sub (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   sub :=
     Shared0QuadraticExt.Insts.CoreOpsArithSubShared0QuadraticExtQuadraticExt.sub
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 541:4-543:5
     Visibility: public -/
 def
@@ -5423,14 +5464,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt.mul
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 538:0-544:1 -/
 @[reducible]
 def
@@ -5439,15 +5483,18 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulShared0QuadraticExtQuadraticExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::mul]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::mul]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 549:4-551:5
     Visibility: public -/
 def
@@ -5456,14 +5503,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt.mul
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Mul<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 546:0-552:1 -/
 @[reducible]
 def Shared0QuadraticExt.Insts.CoreOpsArithMulShared0QuadraticExtQuadraticExt {C
@@ -5471,15 +5521,18 @@ def Shared0QuadraticExt.Insts.CoreOpsArithMulShared0QuadraticExtQuadraticExt {C
   Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Mul (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   mul :=
     Shared0QuadraticExt.Insts.CoreOpsArithMulShared0QuadraticExtQuadraticExt.mul
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::div]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::div]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 557:4-559:5
     Visibility: public -/
 def
@@ -5488,14 +5541,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt.div
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 554:0-560:1 -/
 @[reducible]
 def
@@ -5504,15 +5560,18 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div :=
     gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivShared0QuadraticExtQuadraticExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::div]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::div]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 565:4-567:5
     Visibility: public -/
 def
@@ -5521,14 +5580,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt.div
     ext_configExtConfigInst self rhs
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Div<&0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>), gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 562:0-568:1 -/
 @[reducible]
 def Shared0QuadraticExt.Insts.CoreOpsArithDivShared0QuadraticExtQuadraticExt {C
@@ -5536,15 +5598,18 @@ def Shared0QuadraticExt.Insts.CoreOpsArithDivShared0QuadraticExtQuadraticExt {C
   Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Div (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := {
+  core.ops.arith.Div (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
   div :=
     Shared0QuadraticExt.Insts.CoreOpsArithDivShared0QuadraticExtQuadraticExt.div
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}::neg]:
+/-- [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}::neg]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 573:4-575:5
     Visibility: public -/
 def Shared0QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
@@ -5552,13 +5617,15 @@ def Shared0QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt.neg
     ext_configExtConfigInst self
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0])}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{core::ops::arith::Neg<gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>> for &0 (gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>)}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 570:0-576:1 -/
 @[reducible]
 def Shared0QuadraticExt.Insts.CoreOpsArithNegQuadraticExt {C : Type}
@@ -5566,10 +5633,12 @@ def Shared0QuadraticExt.Insts.CoreOpsArithNegQuadraticExt {C : Type}
   {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  core.ops.arith.Neg (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (gfpn.quadratic.QuadraticExt ext_configExtConfigInst) := by
+  core.ops.arith.Neg (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := by
   sorry
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::max_unreduced_additions]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::max_unreduced_additions]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 693:4-695:5
     Visibility: public -/
 def
@@ -5582,7 +5651,7 @@ def
   := do
   ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.max_unreduced_additions
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::reduce_wide]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::reduce_wide]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 678:4-683:5
     Visibility: public -/
 def
@@ -5592,7 +5661,8 @@ def
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (wide : gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.reduce_wide
@@ -5602,7 +5672,7 @@ def
       wide.c1
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::reduce_product_sum_wide]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::reduce_product_sum_wide]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 686:4-688:5
     Visibility: public -/
 def
@@ -5612,12 +5682,13 @@ def
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (wide : gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.reduce_wide
     ext_configExtConfigInst wide
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::to_wide]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::to_wide]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 648:4-650:5
     Visibility: public -/
 def
@@ -5626,7 +5697,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
@@ -5637,7 +5709,7 @@ def
       self.c1
   gfpn.quadratic.QuadraticExtWide.new t t1
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul_to_wide]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul_to_wide]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 666:4-668:5
     Visibility: public -/
 def
@@ -5646,8 +5718,10 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide)
   := do
   let qe ←
@@ -5656,7 +5730,7 @@ def
   gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.to_wide
     ext_configExtConfigInst qe
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::mul_product_sum_wide]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::mul_product_sum_wide]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 671:4-673:5
     Visibility: public -/
 def
@@ -5665,14 +5739,16 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
-  (rhs : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (rhs : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result (gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide)
   := do
   gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.mul_to_wide
     ext_configExtConfigInst self rhs
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::call_once]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::call_once]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 642:55-642:75 -/
 def
   gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint.closure.Insts.CoreOpsFunctionFnOnceTupleU32OptionU32.call_once
@@ -5682,12 +5758,13 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (c :
   gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint.closure
-  ext_configExtConfigInst) (tupled_args : Std.U32) :
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) (tupled_args : Std.U32) :
   Result (Option Std.U32)
   := do
   ok (U32.checked_mul tupled_args 2#u32)
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::{core::ops::function::FnOnce<(u32), core::option::Option<u32>> for gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint::closure<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 642:55-642:75 -/
 @[reducible]
 def
@@ -5698,13 +5775,14 @@ def
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   core.ops.function.FnOnce
   (gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint.closure
-  ext_configExtConfigInst) Std.U32 (Option Std.U32) := {
+  C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+  Clause0_Clause0_Clause0_Wide) Std.U32 (Option Std.U32) := {
   call_once :=
     gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint.closure.Insts.CoreOpsFunctionFnOnceTupleU32OptionU32.call_once
     ext_configExtConfigInst
 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::cardinality_log2_hint]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::cardinality_log2_hint]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 641:4-643:5
     Visibility: public -/
 def
@@ -5716,7 +5794,7 @@ def
   Result (Option Std.U32)
   := by
   sorry
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 704:4-706:5
     Visibility: public -/
 def
@@ -5725,12 +5803,13 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero_hint]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero_hint]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 631:4-634:5
     Visibility: public -/
 def
@@ -5739,14 +5818,15 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (Option (gfpn.quadratic.QuadraticExt ext_configExtConfigInst))
+  Result (Option (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide))
   := do
   let qe ←
     gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.zero
       ext_configExtConfigInst
   ok (some qe)
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::one_like]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::one_like]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 626:4-628:5
     Visibility: public -/
 def
@@ -5755,8 +5835,10 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.one_like
@@ -5766,7 +5848,7 @@ def
       self.c0
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::zero_like]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::zero_like]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 620:4-623:5
     Visibility: public -/
 def
@@ -5775,15 +5857,17 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let z ←
     ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.zero_like
       self.c0
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst z z
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::is_one]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::is_one]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 602:4-604:5
     Visibility: public -/
 def
@@ -5792,7 +5876,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -5804,7 +5889,7 @@ def
       self.c1
   else ok false
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::is_zero]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::is_zero]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 597:4-599:5
     Visibility: public -/
 def
@@ -5813,7 +5898,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Bool
   := do
   let b ←
@@ -5825,7 +5911,7 @@ def
       self.c1
   else ok false
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::extension_degree]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::extension_degree]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 592:4-594:5
     Visibility: public -/
 def
@@ -5834,7 +5920,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Std.Usize
   := do
   let i ←
@@ -5842,7 +5929,7 @@ def
       self.c0
   2#usize * i
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::characteristic]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::characteristic]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 587:4-589:5
     Visibility: public -/
 def
@@ -5851,11 +5938,12 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (self : gfpn.quadratic.QuadraticExt ext_configExtConfigInst) :
+  (self : gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Clause0_Clause0_Clause0_Characteristic
   := by
   sorry
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1 -/
 @[reducible]
 impl_def
@@ -5864,11 +5952,13 @@ impl_def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.FiniteField (gfpn.quadratic.QuadraticExt
-  ext_configExtConfigInst) Clause0_Clause0_Clause0_Characteristic
-  (gfpn.quadratic.QuadraticExtWide Clause0_Clause0_Clause0_Wide) := {
+  field.traits.FiniteField (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  Clause0_Clause0_Clause0_Characteristic (gfpn.quadratic.QuadraticExtWide
+  Clause0_Clause0_Clause0_Wide) := {
   WINOGRAD_THRESHOLD := ok 32#usize
   TRI_BASE_THRESHOLD := ok 8#usize
+  PLE_BASE_COLS := ok 1#usize
   corecloneCloneInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
     ext_configExtConfigInst
   corecmpPartialEqInst :=
@@ -5977,7 +6067,7 @@ impl_def
   theorem_4_operand_bound := ok 0#u128
 }
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::order]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::order]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 714:4-717:5
     Visibility: public -/
 def
@@ -5991,7 +6081,7 @@ def
   let base_order ← ext_configExtConfigInst.fieldtraitsConstFieldInst.order
   base_order * base_order
 
-/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::one]:
+/-- [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::one]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 709:4-711:5
     Visibility: public -/
 def
@@ -6000,13 +6090,14 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  Result (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  Result (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   := do
   let t ← ext_configExtConfigInst.fieldtraitsConstFieldInst.one
   let t1 ← ext_configExtConfigInst.fieldtraitsConstFieldInst.zero
   gfpn.quadratic.QuadraticExt.new ext_configExtConfigInst t t1
 
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}]
+/-- Trait implementation: [gf2_core::gfpn::quadratic::{gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 702:0-718:1 -/
 @[reducible]
 def
@@ -6015,7 +6106,8 @@ def
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.ConstField (gfpn.quadratic.QuadraticExt ext_configExtConfigInst)
+  field.traits.ConstField (gfpn.quadratic.QuadraticExt C Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   Clause0_Clause0_Clause0_Characteristic (gfpn.quadratic.QuadraticExtWide
   Clause0_Clause0_Clause0_Wide) := {
   FiniteFieldInst :=

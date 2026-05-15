@@ -133,7 +133,8 @@ axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  gfpn.cubic.CubicExt ext_configExtConfigInst → Result Unit
+  gfpn.cubic.CubicExt C Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
+    Clause0_Clause0_Clause0_Wide → Result Unit
 
 /- [gf2_core::gfpn::quadratic::{core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>[TraitClause@0]}::assert_receiver_is_total_eq]:
    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 109:0-109:44 -/
@@ -142,4 +143,5 @@ axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  gfpn.quadratic.QuadraticExt ext_configExtConfigInst → Result Unit
+  gfpn.quadratic.QuadraticExt C Clause0_BaseField
+    Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide → Result Unit
