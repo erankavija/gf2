@@ -73,6 +73,11 @@ required-features = ["parallel", "test-support"]
 name = "s3_scalar_vs_avx2_sanity"
 required-features = ["simd", "test-support"]
 
+# ── Issue `16f03734` (epic `ae82bd73`) — headline benchmark demo ──
+[[example]]
+name = "permanent_demo"
+required-features = ["test-support"]
+
 [features]
 # `f5` and `f7` flipped to default-on as the W4 closing edit per
 # R1 §1 and dev/plans/d1c_feature_gate_matrix.md §8.1 — the encodings
