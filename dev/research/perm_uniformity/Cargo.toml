@@ -1,0 +1,29 @@
+[package]
+name = "perm-uniformity"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+publish = false
+description = "Empirical perm-vs-det uniformity comparison over F_3/F_5/F_7 (JIT issue 8e4e19a0). Standalone non-workspace prototype."
+
+[[bin]]
+name = "perm_uniformity"
+path = "src/main.rs"
+
+[[test]]
+name = "smoke"
+path = "tests/smoke.rs"
+
+[dependencies]
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
+gf2-core = { path = "../../../crates/gf2-core" }
+rayon = "1.10"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]
