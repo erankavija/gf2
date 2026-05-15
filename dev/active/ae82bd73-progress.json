@@ -107,13 +107,14 @@
       "0606186a (V2 Lean Ryser bounded) — session 1 infrastructure pass: Rust monomorphisation wrapper + verify-lean.sh extension + RyserBounded.lean (198 lines, L1 corners + L7-at-n=0). L2-L9 not stated. Worker estimates 1500-2500 more lines across 2-4 Opus sessions."
     ],
     "issues_in_flight": [
-      "a9e461de (GPU crossover sim) — Sonnet worker still running multiple sim sweeps as of handoff; CSV expected at dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15*.csv"
+      "a9e461de (GPU crossover sim) — Sonnet worker completed; landed commits d0e35cbf/b0ea950c/0b45f617. cargo-ci PASS; code-review FAIL with two findings: (1) [hard] criterion 2 'fixed batch size' wording vs harness mixed M=256/16/4/1 — needs rerun-vs-amend decision; (2) [aspirational] criterion 1 amendment not recorded in issue description (lead-direct fix per criterion wording allowance)."
     ],
     "user_escalations_resolved": 2,
-    "user_escalations_open": 1,
-    "open_escalation_detail": "Charon/Aeneas upstream state review per user 'see what the current state of Charon/Aeneas is. We might have to do some additional work to get on par with upstream.' Tied to V2 path decision (continue 4 sessions / amend aspirational / drop) and the gf2-core extraction Charon panic from recent gfp/mod.rs Option<Box<dyn Trait>> returns.",
-    "commits_on_main_this_session": 14,
-    "tests_passing_on_main": "3783 fast-tier + 471 gf2-algebra unit + 173 doctests + 5 new V2-wrapper tests; 9 gfx1030-only tests across kernels + dispatcher."
+    "user_escalations_open": 2,
+    "open_escalation_detail_1": "a9e461de criterion 2 path: rerun with fixed M (e.g. M=256 capped at n=28) vs amend [hard] criterion wording to allow per-n M (user approval required).",
+    "open_escalation_detail_2": "User-in-progress Charon/Aeneas upstream rebase: unstaged changes across crates/gf2-core/src/gfp/mod.rs, proofs/Gf2{Core,Algebra}/* extraction, scripts/verify-lean.sh, proofs/lean-toolchain. New JIT issue 9efd9c39 ('Restore Lean proofs of QuadraticExt/CubicExt after Aeneas upstream upgrade') tracks proof-restoration. Charon HEAD 1ec8d4bb, Aeneas HEAD 5fc8fdf2, Lean v4.30.0-rc2. Lead must NOT auto-commit user's in-progress unstaged work.",
+    "commits_on_main_this_session": 18,
+    "tests_passing_on_main": "3788 fast-tier (post-sim-harness add) on commit 0b45f617; 9 gfx1030-only tests across kernels + dispatcher + 3 sim-criterion tests + 3 sim-smoke tests."
   },
   "next_session_priorities": [
     "1. Review Charon/Aeneas upstream state per user direction. Check /data/aeneas-build/charon/ and /data/aeneas-build/aeneas/ git logs vs upstream. The three project-local Charon patches (per MEMORY.md) may have been absorbed or moved past upstream.",

@@ -16,9 +16,17 @@
 2. **f05ffbe1 (V1 Lean — bipedal F_3 correctness)** — 20-lemma proof per D2 sketch §10. User-approved div→neg substitution (`PackedField<Fp<3>>` trait exposes `{add, sub, mul, neg}` — no `div` in production; reproduced sketch contract with neg in div's place). Production target via inherent wrappers `Bipedal3::{add,sub,mul,neg}_inherent` (Option A from dispatch prompt). Closed after 1 review round:
    - Round 1: `bipedal3_add_word` / `bipedal3_sub_word` lemmas were dead-code placeholders that didn't bind to the actual production formula expressions. Worker bypassed them in `*_correct` with inline `simp only [BitVec.getLsbD_*]`. Fix in `521da541`: word lemmas now stated against the *exact* composed bitwise expressions used in production; `*_correct` proofs now `obtain` + `rw` through the word lemmas (load-bearing).
 
-### In flight at handoff
+### In flight at handoff (resolved before session close)
 
-3. **a9e461de (GPU vs CPU SIMD crossover sim)** — Sonnet worker running ~80 min as of handoff. Multiple sim re-runs in progress (n=28 sweep + custom n=32/36 sub-run). Worker will return a structured handoff when complete. **CSV path expected:** `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv` (plus a `-n32n36` companion run). Writeup expected at `dev/plans/s5_gpu_crossover.md`.
+3. **a9e461de (GPU vs CPU SIMD crossover sim)** — Sonnet worker completed ~80 min after handoff start; landed commits `d0e35cbf` (harness), `b0ea950c` (CSV data), `0b45f617` (writeup). CSV at `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`; writeup at `dev/plans/s5_gpu_crossover.md` (attached via `jit doc add` post-completion).
+
+   **Key finding:** GPU wins at ALL tested n (24, 28) at M=256 with 28-29× speedup. At M=4 (n=32) CPU wins 2×. **Crossover is M-dependent, not n-dependent.** The aspirational n≥40 framing is contradicted by the data but the production-batch performance target is exceeded.
+
+   **Gate status (cargo-ci PASS, code-review FAIL):** Reviewer flagged TWO findings on commit `0b45f617`:
+   1. **[hard] criterion 2 miss**: criterion 2 wording requires "on a fixed batch size" but the harness used mixed `M` values (256 for n=24,28; 4 for n=32; 1 for n=36). Either re-run with fixed M (M=256 for n=24..32, dropping n=36) OR amend criterion 2 wording (user approval required — [hard] criterion change).
+   2. **[aspirational] criterion 1 amendment not recorded in issue description**: the criterion's allowance "may be amended only if full cargo-ci passes and amendment is recorded in issue description with evidence" — cargo-ci PASSED so amendment is allowed, but the issue description was not amended. Lead-direct fix (aspirational amendments under that condition do not require user approval).
+
+   **Next-session action:** decide criterion 2 path (rerun vs amend) + record amendment for criterion 1 + re-run code-review gate + close.
 
 4. **0606186a (V2 Lean Ryser bounded n ≤ 63)** — Opus session 1, ~22 min wallclock. Landed:
    - `crates/gf2-algebra/src/permanent/ryser_fp3.rs` (commit `ce897278`) — `pub fn permanent_ryser_fp3(matrix: &[Fp<3>], n: usize) -> Fp<3>`, iterator-free `while` loops (Aeneas iterator-adapter library gap workaround), 5 unit tests crossing-check vs generic `permanent_ryser::<Fp<3>>`.
@@ -28,6 +36,21 @@
 ## Open escalations / decisions for next session
 
 User decision 2026-05-15 (session 10 close): "Let's do a handoff at this point. We should see what the current state of Charon/Aeneas is. We might have to do some additional work to get on par with upstream."
+
+### User-in-progress Charon/Aeneas upstream rebase (DO NOT TOUCH at next session start)
+
+After the session-10 handoff was committed, the user began the upstream rebase work themselves. As of handoff-13 final write, **unstaged changes are present on the working tree** that the lead must NOT auto-commit:
+
+- `crates/gf2-core/src/gfp/mod.rs` — `#[cfg(not(verify_lean))]` gates added to the `dyn Trait`-returning helpers (option (a) from the session-10 escalation; the Charon-regression fix).
+- `proofs/Gf2Algebra/{Funs,FunsExternal,Types,TypesExternal,FunsExternal_Template,TypesExternal_Template}.lean` — re-extracted.
+- `proofs/Gf2Core/{Funs,FunsExternal,Types,TypesExternal,FunsExternal_Template,TypesExternal_Template}.lean` — re-extracted.
+- `proofs/Gf2Core/Proofs/{CubicExtField,QuadraticExtField,ExtProgress}.lean` — modified (proof restoration work in progress).
+- `proofs/lean-toolchain` + `proofs/lakefile.lean` + `proofs/lake-manifest.json` — bumped (per the new JIT issue's title: Charon HEAD `1ec8d4bb`, Aeneas HEAD `5fc8fdf2`, Lean v4.30.0-rc2, Mathlib v4.30.0-rc2).
+- `scripts/verify-lean.sh` + `scripts/fix-aeneas-dupes.py` — updated for new upstream.
+- `dev/active/charon-patch-backup-2026-05-15/` (untracked) — backup of the three project-local Charon patches that have been absorbed/superseded by upstream.
+- New JIT issue **`9efd9c39`** (state: ready, label `milestone:1.0`): "Restore Lean proofs of QuadraticExt/CubicExt operations after Aeneas upstream upgrade". The user's tracked work item for completing the rebase proof restoration.
+
+**Next-session lead action:** treat all the above as user's in-progress work. Do NOT `git add -A`. The next session should ask the user before doing anything in `proofs/`, `scripts/verify-lean.sh`, or `crates/gf2-core/src/gfp/mod.rs`. The Charon-regression fix (the cfg gates in gfp/mod.rs) is the most actionable piece — once the user signals commit-readiness, that resolves the V2 verify-lean.sh-end-to-end blocker recorded below.
 
 The two interconnected blockers:
 
