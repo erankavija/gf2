@@ -4911,3 +4911,5 @@
 {"type":"gate_passed","id":"f801295f-10a7-4015-8ed0-e480fe0632d7","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:27:04.157198635Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"05f84b52-517b-4d4a-ba7a-f01427d0d7dc","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:27:28.683736142Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"be1dd0cc-d585-4223-b8e1-b0adc29ca961","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:27:28.683768432Z"}
+{"type":"gate_passed","id":"a6d1f039-6b15-4c1c-b55b-eeebd290ee4d","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:32:44.800591374Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_created","id":"3790fc62-5d2f-44cb-a4ad-1c2c193a326c","issue_id":"2e544a34-3c04-44fa-a675-d8b25f5eff8c","timestamp":"2026-05-15T18:37:31.483929915Z","title":"Eliminate masked proof debt surfaced by 9efd9c39 code review","priority":"normal"}
