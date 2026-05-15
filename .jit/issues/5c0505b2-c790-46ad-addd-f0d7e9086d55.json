@@ -13,22 +13,22 @@
     "code-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T08:44:58.791350611Z"
-    },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T08:57:30.389241445Z"
+      "updated_at": "2026-05-15T09:03:13.323113189Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T09:02:53.459356386Z"
     }
   },
   "context": {},
   "documents": [
     {
       "path": "dev/active/ae82bd73-w5-gpu-verification.md",
-      "commit": "0e4dd3398589d33c751d8aed803de587c5573523",
+      "commit": "892f033949d143ffc42a8d00f875c640e2919dfd",
       "label": "gfx1030 GPU run evidence for W5 kernel bit-identity + LUT checksum",
       "doc_type": "verification",
       "format": "markdown"
@@ -40,5 +40,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-05-09T09:47:22.088994039+00:00",
-  "updated_at": "2026-05-15T09:00:26.537913001+00:00"
+  "updated_at": "2026-05-15T09:05:15.032601970+00:00"
 }

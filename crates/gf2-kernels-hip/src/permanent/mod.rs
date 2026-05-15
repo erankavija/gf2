@@ -536,40 +536,60 @@ pub unsafe fn init_permanent_gf7(
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     let rc = unsafe { permanent_bipedal7_hip_init(host_add_lut, host_sub_lut, host_mul_lut) };
-    // Memoise the outcome via a CAS loop. Contract: "if any concurrent or
-    // prior init succeeded (rc == 0), the memoised state must end at 0;
-    // failed inits may be overwritten by later inits but never overwrite
-    // a successful one." The prior non-atomic load-then-store version of
-    // this code was racy — two parallel callers, one succeeding and one
-    // failing, could both see `prev != 0` (the sentinel) and store in
-    // any order, so a failed init could clobber a concurrent successful
-    // init. The CAS loop below is the correct fix: at every retry the
-    // exchange only succeeds if the observed `prev` is still current, so
-    // we never silently overwrite a freshly-stored success.
+    memoise_init_outcome(&GF7_INIT_RC, rc);
+    rc
+}
+
+/// CAS-loop helper that records `rc` into `state` per the init contract:
+/// "if any concurrent or prior init succeeded (`rc == 0`), the memoised
+/// state must end at 0; failed inits may be overwritten by later inits but
+/// never overwrite a successful one." Extracted from
+/// [`init_permanent_gf7`] so the state-machine semantics can be exercised
+/// by unit tests without a live HIP/ROCm context.
+///
+/// # Arguments
+///
+/// * `state` — the atomic the init outcome is memoised in (in production,
+///   [`GF7_INIT_RC`]).
+/// * `rc` — the return code from this call's init attempt; `0` means
+///   success, any other value is a HIP error code.
+///
+/// # Concurrency
+///
+/// Multi-thread-safe via [`AtomicI32::compare_exchange`]. The prior
+/// non-atomic load-then-store version of this code was racy — two parallel
+/// callers, one succeeding and one failing, could both see `prev != 0`
+/// (the sentinel) and store in any order, so a failed init could clobber
+/// a concurrent successful init. The CAS loop here is the correct fix:
+/// at every retry the exchange only succeeds if the observed `prev` is
+/// still current, so we never silently overwrite a freshly-stored success.
+///
+/// # Complexity
+///
+/// Amortised `O(1)` per call. Under contention, the loop retries at most
+/// once per concurrent overwriter; in practice the loop terminates in 1
+/// or 2 iterations.
+fn memoise_init_outcome(state: &std::sync::atomic::AtomicI32, rc: c_int) {
     use std::sync::atomic::Ordering::SeqCst;
     loop {
-        let prev = GF7_INIT_RC.load(SeqCst);
+        let prev = state.load(SeqCst);
         if prev == 0 {
             // Some init (possibly a concurrent one) has already recorded
             // success — the LUTs are populated on the device. Even if
             // this call's `rc` is non-zero (transient init failure on a
             // separate context, say), the device state remains valid
             // for compute. Leave the success state in place.
-            break;
+            return;
         }
         // prev is either the uninitialised sentinel or a prior failed rc;
         // overwrite atomically. If a racing thread mutated the state
         // between our load and this CAS, the exchange fails and we retry
         // — on the retry we'll either see success (and break) or another
         // overwrite-eligible state.
-        if GF7_INIT_RC
-            .compare_exchange(prev, rc, SeqCst, SeqCst)
-            .is_ok()
-        {
-            break;
+        if state.compare_exchange(prev, rc, SeqCst, SeqCst).is_ok() {
+            return;
         }
     }
-    rc
 }
 
 /// Compute the F_7 permanent of a single n×n matrix on the GPU.
@@ -763,4 +783,89 @@ pub unsafe fn compute_permanent_gf7_batch(
 pub unsafe fn compute_lut_checksum_gpu(out_ptr: *mut u64) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     unsafe { permanent_bipedal7_hip_lut_checksum(out_ptr) }
+}
+
+#[cfg(test)]
+mod init_state_machine_tests {
+    //! Pure-Rust unit tests for the [`memoise_init_outcome`] CAS state
+    //! machine, exercising the init-contract semantics without a HIP/ROCm
+    //! device. These cover the regression that prompted the rewrite from
+    //! the original non-atomic load-then-store: a failed init clobbering
+    //! a concurrent successful init.
+    use super::{memoise_init_outcome, GF7_INIT_UNINIT};
+    use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
+
+    /// Fresh-state semantics: a single failed init records its rc.
+    #[test]
+    fn test_memoise_init_failed_init_records_rc() {
+        let state = AtomicI32::new(GF7_INIT_UNINIT);
+        memoise_init_outcome(&state, 7);
+        assert_eq!(state.load(SeqCst), 7);
+    }
+
+    /// Fresh-state semantics: a single successful init records 0.
+    #[test]
+    fn test_memoise_init_successful_init_records_zero() {
+        let state = AtomicI32::new(GF7_INIT_UNINIT);
+        memoise_init_outcome(&state, 0);
+        assert_eq!(state.load(SeqCst), 0);
+    }
+
+    /// Success-after-failure: a later success overwrites a prior failure.
+    #[test]
+    fn test_memoise_init_success_overwrites_prior_failure() {
+        let state = AtomicI32::new(GF7_INIT_UNINIT);
+        memoise_init_outcome(&state, 5);
+        assert_eq!(state.load(SeqCst), 5);
+        memoise_init_outcome(&state, 0);
+        assert_eq!(state.load(SeqCst), 0);
+    }
+
+    /// Success-stickiness: a later failure does NOT overwrite a prior
+    /// success. This is the critical contract — the regression that
+    /// prompted the CAS rewrite — and the key invariant the prior
+    /// non-atomic load-then-store violated under concurrency.
+    #[test]
+    fn test_memoise_init_failure_does_not_overwrite_success() {
+        let state = AtomicI32::new(GF7_INIT_UNINIT);
+        memoise_init_outcome(&state, 0);
+        memoise_init_outcome(&state, 9);
+        assert_eq!(
+            state.load(SeqCst),
+            0,
+            "memoise_init_outcome must not overwrite a prior success"
+        );
+    }
+
+    /// Multi-call idempotency: repeated successful inits stay at 0.
+    #[test]
+    fn test_memoise_init_repeated_success_idempotent() {
+        let state = AtomicI32::new(GF7_INIT_UNINIT);
+        for _ in 0..16 {
+            memoise_init_outcome(&state, 0);
+        }
+        assert_eq!(state.load(SeqCst), 0);
+    }
+
+    /// Concurrent stress: spawn N threads, half succeeding, half failing.
+    /// The final state must be 0 (success) because at least one success
+    /// landed.
+    #[test]
+    fn test_memoise_init_concurrent_success_wins() {
+        let state = std::sync::Arc::new(AtomicI32::new(GF7_INIT_UNINIT));
+        let mut threads = Vec::new();
+        for i in 0..16 {
+            let s = std::sync::Arc::clone(&state);
+            let rc = if i % 2 == 0 { 0 } else { 100 + i };
+            threads.push(std::thread::spawn(move || memoise_init_outcome(&s, rc)));
+        }
+        for t in threads {
+            t.join().unwrap();
+        }
+        assert_eq!(
+            state.load(SeqCst),
+            0,
+            "at least one success ran; final state must be 0 (success-wins contract)"
+        );
+    }
 }
