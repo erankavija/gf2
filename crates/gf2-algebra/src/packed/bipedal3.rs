@@ -375,6 +375,96 @@ impl Bipedal3 {
             Fp::<3>::new(2)
         }
     }
+
+    // -----------------------------------------------------------------------
+    // Inherent arithmetic wrappers (proof targets for D2 / JIT f05ffbe1).
+    //
+    // These methods delegate verbatim to the `PackedField<Fp<3>>` trait impl
+    // below; they exist so the Charon/Aeneas verification pipeline can prove
+    // bipedal F_3 correctness against a fixed inherent surface that is not
+    // affected by trait-dispatch indirection. There is no algorithmic
+    // divergence between the inherent and trait paths — the inherent body
+    // is a single tail call into the trait method, which Rust inlines away.
+    //
+    // Per `dev/plans/d2_lean_bipedal3_sketch.md` §5, the Lean proof file
+    // `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` targets these
+    // inherent methods (Option A in the dispatch prompt).
+    // -----------------------------------------------------------------------
+
+    /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<3>>>::add`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
+    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
+    /// assert_eq!(Bipedal3::add_inherent(a, b).lane(0), Fp::<3>::new(0));
+    /// ```
+    #[inline]
+    pub fn add_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<3>>>::add(self, rhs)
+    }
+
+    /// Inherent `sub` wrapper — delegates to `<Self as PackedField<Fp<3>>>::sub`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(0));
+    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
+    /// assert_eq!(Bipedal3::sub_inherent(a, b).lane(0), Fp::<3>::new(2));
+    /// ```
+    #[inline]
+    pub fn sub_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<3>>>::sub(self, rhs)
+    }
+
+    /// Inherent `mul` wrapper — delegates to `<Self as PackedField<Fp<3>>>::mul`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
+    /// let b = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(2));
+    /// assert_eq!(Bipedal3::mul_inherent(a, b).lane(0), Fp::<3>::new(1));
+    /// ```
+    #[inline]
+    pub fn mul_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<3>>>::mul(self, rhs)
+    }
+
+    /// Inherent `neg` wrapper — delegates to `<Self as PackedField<Fp<3>>>::neg`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Bipedal3, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Bipedal3 as PackedField<Fp<3>>>::splat(Fp::<3>::new(1));
+    /// assert_eq!(Bipedal3::neg_inherent(a).lane(0), Fp::<3>::new(2));
+    /// ```
+    #[inline]
+    pub fn neg_inherent(self) -> Self {
+        <Self as PackedField<Fp<3>>>::neg(self)
+    }
 }
 
 // ---------------------------------------------------------------------------
