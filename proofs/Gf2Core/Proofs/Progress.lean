@@ -26,7 +26,7 @@ These let the `progress` tactic reason through our custom defs. -/
 @[progress]
 theorem overflowing_sub_spec (x y : Std.U64) :
     core.num.U64.overflowing_sub x y ⦃ r =>
-      r.1.bv = x.bv - y.bv ∧ r.2 = decide (x.val < y.val) ⦄ := by
+      r.fst.bv = x.bv - y.bv ∧ r.snd = decide (x.val < y.val) ⦄ := by
   simp only [core.num.U64.overflowing_sub, spec, theta, wp_return]; trivial
 
 @[progress]
@@ -219,20 +219,20 @@ theorem redc_progress {P : Std.U64} {t : Std.U128}
   progress as ⟨i3, hi3⟩
   progress as ⟨i4, hi4⟩
   progress as ⟨u, hu⟩
-  progress as ⟨discr, hdiscr1, hdiscr2⟩
+  progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
   progress as ⟨i5, hi5⟩
   progress as ⟨neg_i, hneg_i⟩
   progress as ⟨correction, hcorrection⟩
   -- Rewrite to match cond_sub_val pattern
-  have h_result_eq : discr.1 = (⟨u.bv - P.bv⟩ : Std.U64) := by
+  have h_result_eq : discr_v = (⟨u.bv - P.bv⟩ : Std.U64) := by
     apply UScalar.val_eq_imp
-    show discr.1.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
+    show discr_v.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
   have h_corr_struct : correction = neg_i &&& P := by
     apply UScalar.val_eq_imp; exact hcorrection
   have cast_fromBool_val : ∀ (b : Bool),
       (UScalar.cast_fromBool .U64 b).val = b.toNat := by
     intro b; cases b <;> native_decide
-  have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr.2 := by
+  have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr_b := by
     apply UScalar.val_eq_imp
     rw [hi5, cast_fromBool_val]
   rw [h_result_eq, h_corr_struct, hneg_i, h_i5_eq, hdiscr2]
@@ -327,20 +327,20 @@ theorem mont_add_progress {P : Std.U64} {a b : Std.U64}
   have hspec : gfp.montgomery.mont_add P a b ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    progress as ⟨discr, hdiscr1, hdiscr2⟩
+    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
     progress as ⟨i, hi⟩
     progress as ⟨neg_i, hneg_i⟩
     progress as ⟨correction, hcorrection⟩
     have hsum_lt : sum.val < 2 * P.val := by omega
-    have h_result_eq : discr.1 = (⟨sum.bv - P.bv⟩ : Std.U64) := by
+    have h_result_eq : discr_v = (⟨sum.bv - P.bv⟩ : Std.U64) := by
       apply UScalar.val_eq_imp
-      show discr.1.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
+      show discr_v.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
     have h_corr_struct : correction = neg_i &&& P := by
       apply UScalar.val_eq_imp; exact hcorrection
     have cast_fromBool_val : ∀ (b : Bool),
         (UScalar.cast_fromBool .U64 b).val = b.toNat := by
       intro b; cases b <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr.2 := by
+    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
       apply UScalar.val_eq_imp
       rw [hi, cast_fromBool_val]
     rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
@@ -352,19 +352,19 @@ theorem mont_sub_progress {P : Std.U64} {a b : Std.U64}
     ∃ r, gfp.montgomery.mont_sub P a b = ok r ∧ r.val < P.val := by
   have hspec : gfp.montgomery.mont_sub P a b ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.montgomery.mont_sub
-    progress as ⟨discr, hdiscr1, hdiscr2⟩
+    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
     progress as ⟨i, hi⟩
     progress as ⟨neg_i, hneg_i⟩
     progress as ⟨correction, hcorrection⟩
-    have h_result_eq : discr.1 = (⟨a.bv - b.bv⟩ : Std.U64) := by
+    have h_result_eq : discr_v = (⟨a.bv - b.bv⟩ : Std.U64) := by
       apply UScalar.val_eq_imp
-      show discr.1.bv.toNat = (a.bv - b.bv).toNat; rw [hdiscr1]
+      show discr_v.bv.toNat = (a.bv - b.bv).toNat; rw [hdiscr1]
     have h_corr_struct : correction = neg_i &&& P := by
       apply UScalar.val_eq_imp; exact hcorrection
     have cast_fromBool_val : ∀ (bl : Bool),
         (UScalar.cast_fromBool .U64 bl).val = bl.toNat := by
       intro bl; cases bl <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr.2 := by
+    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
       apply UScalar.val_eq_imp
       rw [hi, cast_fromBool_val]
     rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]

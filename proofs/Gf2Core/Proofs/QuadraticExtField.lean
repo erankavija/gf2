@@ -31,7 +31,7 @@ variable {inst : gfpn.ext_config.ExtConfig C BF Char Wide}
 
 /-- Bare bijection between Aeneas QuadraticExt and pure QExt -/
 def qextEquiv (hv : ValidExtConfig inst) :
-    gfpn.quadratic.QuadraticExt inst ≃ QExt BF hv.getNonResidue where
+    gfpn.quadratic.QuadraticExt C BF Char Wide ≃ QExt BF hv.getNonResidue where
   toFun a := ⟨a.c0, a.c1⟩
   invFun a := ⟨a.c0, a.c1⟩
   left_inv a := by cases a; rfl
@@ -41,12 +41,12 @@ def qextEquiv (hv : ValidExtConfig inst) :
 
 /-- QuadraticExt forms a commutative ring -/
 noncomputable def instCommRing (hv : ValidExtConfig inst) :
-    CommRing (gfpn.quadratic.QuadraticExt inst) :=
+    CommRing (gfpn.quadratic.QuadraticExt C BF Char Wide) :=
   (qextEquiv hv).commRing
 
 /-- QuadraticExt forms a field (given irreducibility of the non-residue) -/
 noncomputable def instField (hv : ValidExtConfig inst) :
-    Field (gfpn.quadratic.QuadraticExt inst) :=
+    Field (gfpn.quadratic.QuadraticExt C BF Char Wide) :=
   letI : Field (QExt BF hv.getNonResidue) := QExt.instField (hv.nr_irred _ hv.mul_nr_eq)
   (qextEquiv hv).field
 
@@ -55,7 +55,7 @@ noncomputable def instField (hv : ValidExtConfig inst) :
 /-- Karatsuba multiplication in the actual Rust code computes the same result
     as schoolbook extension field multiplication. -/
 theorem karatsuba_correct (hv : ValidExtConfig inst)
-    (a b : gfpn.quadratic.QuadraticExt inst) :
+    (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ r, ExtAbbrev.QMul inst a b = ok r ∧
       r.c0 = a.c0 * b.c0 + hv.getNonResidue * (a.c1 * b.c1) ∧
       r.c1 = a.c0 * b.c1 + a.c1 * b.c0 :=
@@ -63,21 +63,21 @@ theorem karatsuba_correct (hv : ValidExtConfig inst)
 
 /-- Addition in the Rust code is component-wise. -/
 theorem add_correct (hv : ValidExtConfig inst)
-    (a b : gfpn.quadratic.QuadraticExt inst) :
+    (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ r, ExtAbbrev.QAdd inst a b = ok r ∧
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 :=
   Aeneas.Std.WP.spec_imp_exists (QExtProgress.qadd_progress hv a b)
 
 /-- Negation in the Rust code is component-wise. -/
 theorem neg_correct (hv : ValidExtConfig inst)
-    (a : gfpn.quadratic.QuadraticExt inst) :
+    (a : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ r, ExtAbbrev.QNeg inst a = ok r ∧
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 :=
   Aeneas.Std.WP.spec_imp_exists (QExtProgress.qneg_progress hv a)
 
 /-- Inversion in the Rust code computes conjugate/norm. -/
 theorem inv_correct (hv : ValidExtConfig inst)
-    (self : gfpn.quadratic.QuadraticExt inst) :
+    (self : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ∃ o, ExtAbbrev.QInv inst self = ok o ∧
       (self.c0 = 0 ∧ self.c1 = 0 → o = none) ∧
       (¬(self.c0 = 0 ∧ self.c1 = 0) → ∃ r, o = some r ∧

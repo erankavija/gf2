@@ -395,7 +395,7 @@ theorem redc_value_spec {P : Std.U64} {t : Std.U128}
     progress as ⟨i3, hi3⟩           -- checked U128 add: t + mp
     progress as ⟨i4, hi4⟩           -- i3 >>> 64
     progress as ⟨u, hu⟩             -- cast U64 i4
-    progress as ⟨discr, hdiscr1, hdiscr2⟩  -- overflowing_sub u P
+    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩  -- overflowing_sub u P
     progress as ⟨i5, hi5⟩           -- cast_fromBool
     progress as ⟨neg_i, hneg_i⟩     -- wrapping_neg
     progress as ⟨correction, hcorrection⟩  -- AND
@@ -416,15 +416,15 @@ theorem redc_value_spec {P : Std.U64} {t : Std.U128}
         have := hP.2.2; scalar_tac)
     have hu_lt_2P : u.val < 2 * P.val := by rw [hu_val_eq]; exact hi4_lt
     -- Rewrite to match cond_sub pattern
-    have h_result_eq : discr.1 = (⟨u.bv - P.bv⟩ : Std.U64) := by
+    have h_result_eq : discr_v = (⟨u.bv - P.bv⟩ : Std.U64) := by
       apply UScalar.val_eq_imp
-      show discr.1.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
+      show discr_v.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
     have h_corr_struct : correction = neg_i &&& P := by
       apply UScalar.val_eq_imp; exact hcorrection
     have cast_fromBool_val : ∀ (b : Bool),
         (UScalar.cast_fromBool .U64 b).val = b.toNat := by
       intro b; cases b <;> native_decide
-    have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr.2 := by
+    have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr_b := by
       apply UScalar.val_eq_imp
       rw [hi5, cast_fromBool_val]
     rw [h_result_eq, h_corr_struct, hneg_i, h_i5_eq, hdiscr2]
@@ -599,20 +599,20 @@ private theorem mont_add_value_spec {P : Std.U64} {a b : Std.U64}
       r.val < P.val ∧ r.val % P.val = (a.val + b.val) % P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    progress as ⟨discr, hdiscr1, hdiscr2⟩
+    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
     progress as ⟨i, hi⟩
     progress as ⟨neg_i, hneg_i⟩
     progress as ⟨correction, hcorrection⟩
     have hsum_lt : sum.val < 2 * P.val := by omega
-    have h_result_eq : discr.1 = (⟨sum.bv - P.bv⟩ : Std.U64) := by
+    have h_result_eq : discr_v = (⟨sum.bv - P.bv⟩ : Std.U64) := by
       apply UScalar.val_eq_imp
-      show discr.1.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
+      show discr_v.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
     have h_corr_struct : correction = neg_i &&& P := by
       apply UScalar.val_eq_imp; exact hcorrection
     have cast_fromBool_val : ∀ (b : Bool),
         (UScalar.cast_fromBool .U64 b).val = b.toNat := by
       intro b; cases b <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr.2 := by
+    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
       apply UScalar.val_eq_imp
       rw [hi, cast_fromBool_val]
     rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
