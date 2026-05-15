@@ -3,9 +3,13 @@
 S5 (JIT issue `a9e461de`): GPU-vs-CPU-SIMD throughput crossover measurement for
 `permanent_bipedal3` (F_3) on gfx1030.
 
-The harness sweeps n ∈ {24, 28, 32, 36, 40, 44} with M = 256 (n ≤ 36) or M = 64
-(n ≥ 40), comparing sequential CPU SIMD (`permanent_bipedal3`) against GPU batch
-(`gf2_algebra::gpu::permanent_batch_bipedal3`) on the same matrices.
+The harness sweeps `n ∈ {24, 28}` at a **fixed batch size `M = 256`**, with
+3 timed repetitions per cell (median wall-clock reported). It compares sequential
+CPU SIMD (`permanent_bipedal3`) against GPU batch
+(`gf2_algebra::gpu::permanent_batch_bipedal3`) on the same matrices. Larger `n`
+at `M = 256` is outside the per-cell wall-clock budget (CPU SIMD at `n = 32` would
+take ~11 h per repetition); the M-dependence of the crossover and extrapolations
+to larger `n` are discussed in `dev/plans/s5_gpu_crossover.md` §3.
 
 The substantive writeup and results table live at `dev/plans/s5_gpu_crossover.md`.
 The CSV output lands at `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-YYYY-MM-DD.csv`.
