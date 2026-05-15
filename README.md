@@ -24,9 +24,10 @@ Active work is tracked in-repo with [jit](https://github.com/erankavija/just-in-
 |---|---|
 | [`gf2-core`](crates/gf2-core/) | Bit primitives, dense/sparse linear algebra over GF(2), GF(2^m), GF(p), and tower extensions GF(p^n). No unsafe. |
 | [`gf2-coding`](crates/gf2-coding/) | Block codes, streaming codes, GRAND decoders, modem framework, channel models, simulation harness. |
+| [`gf2-algebra`](crates/gf2-algebra/) | Packed F_3 / F_5 / F_7 element types and fast matrix permanents (bipedal F_3, packed F_5 / F_7) on CPU (scalar, AVX2, rayon) and HIP/ROCm GPU. |
 | [`gf2-kernels-simd`](crates/gf2-kernels-simd/) | Isolated unsafe CPU kernels (AVX2, AVX-512, aarch64). |
-| [`gf2-kernels-hip`](crates/gf2-kernels-hip/) | Isolated unsafe HIP/ROCm GPU kernels. Excluded from the default workspace; opt in with `--features hip` on `gf2-coding`. |
-| [`proofs/`](proofs/) | Lean4 formal-verification package for `gfp/` and `gfpn/`. |
+| [`gf2-kernels-hip`](crates/gf2-kernels-hip/) | Isolated unsafe HIP/ROCm GPU kernels. Excluded from the default workspace; opt in with `--features hip` on `gf2-coding` (BCJR / Gray-QAM demap) or `gf2-algebra` (batch permanents). |
+| [`proofs/`](proofs/) | Lean4 formal-verification package for `gfp/`, `gfpn/`, and `gf2-algebra::packed::bipedal3`. |
 
 All `unsafe` code is confined to the two kernel crates; everything else is `#![deny(unsafe_code)]`.
 

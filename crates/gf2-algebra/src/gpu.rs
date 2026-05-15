@@ -214,8 +214,13 @@ fn serialise_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usize) {
 /// Code referencing it on non-`hip` builds will fail to compile. The CPU
 /// fallback is:
 ///
-/// ```rust,ignore
-/// matrices.iter().map(permanent_bipedal3).collect::<Vec<_>>()
+/// ```rust
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_algebra::permanent::permanent_bipedal3;
+/// use gf2_core::gfp::Fp;
+///
+/// let matrices: Vec<Bipedal3Matrix> = vec![];
+/// let _results: Vec<Fp<3>> = matrices.iter().map(permanent_bipedal3).collect();
 /// ```
 ///
 /// # Arguments
@@ -225,8 +230,9 @@ fn serialise_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usize) {
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
+/// ```no_run
+/// // Compiles only with the `hip` Cargo feature; never executed under
+/// // `cargo test --doc` (requires ROCm + gfx1030 at runtime).
 /// # #[cfg(feature = "hip")] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal3;
 /// use gf2_algebra::packed::Bipedal3Matrix;
@@ -304,8 +310,15 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
 /// **Without the `hip` Cargo feature this function does not exist.**
 /// The CPU fallback is:
 ///
-/// ```rust,ignore
-/// matrices.iter().map(permanent_bipedal5).collect::<Vec<_>>()
+/// ```rust
+/// # #[cfg(feature = "f5")] {
+/// use gf2_algebra::packed::Packed5Matrix;
+/// use gf2_algebra::permanent::permanent_bipedal5;
+/// use gf2_core::gfp::Fp;
+///
+/// let matrices: Vec<Packed5Matrix> = vec![];
+/// let _results: Vec<Fp<5>> = matrices.iter().map(permanent_bipedal5).collect();
+/// # }
 /// ```
 ///
 /// # Arguments
@@ -315,9 +328,10 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
-/// # #[cfg(feature = "hip")] {
+/// ```no_run
+/// // Compiles only with the `hip` + `f5` Cargo features; never executed
+/// // under `cargo test --doc` (requires ROCm + gfx1030 at runtime).
+/// # #[cfg(all(feature = "hip", feature = "f5"))] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal5;
 /// use gf2_algebra::packed::Packed5Matrix;
 /// use gf2_core::gfp::Fp;
@@ -400,8 +414,15 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
 /// **Without the `hip` Cargo feature this function does not exist.**
 /// The CPU fallback is:
 ///
-/// ```rust,ignore
-/// matrices.iter().map(permanent_bipedal7).collect::<Vec<_>>()
+/// ```rust
+/// # #[cfg(feature = "f7")] {
+/// use gf2_algebra::packed::Packed7Matrix;
+/// use gf2_algebra::permanent::permanent_bipedal7;
+/// use gf2_core::gfp::Fp;
+///
+/// let matrices: Vec<Packed7Matrix> = vec![];
+/// let _results: Vec<Fp<7>> = matrices.iter().map(permanent_bipedal7).collect();
+/// # }
 /// ```
 ///
 /// # Arguments
@@ -411,9 +432,10 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
 ///
 /// # Examples
 ///
-/// ```ignore
-/// // Skipped under `cargo test` (requires ROCm + gfx1030):
-/// # #[cfg(feature = "hip")] {
+/// ```no_run
+/// // Compiles only with the `hip` + `f7` Cargo features; never executed
+/// // under `cargo test --doc` (requires ROCm + gfx1030 at runtime).
+/// # #[cfg(all(feature = "hip", feature = "f7"))] {
 /// use gf2_algebra::gpu::permanent_batch_bipedal7;
 /// use gf2_algebra::packed::Packed7Matrix;
 /// use gf2_core::gfp::Fp;
