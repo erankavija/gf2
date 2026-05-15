@@ -2,9 +2,9 @@
   "id": "9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72",
   "title": "Restore Lean proofs of QuadraticExt/CubicExt operations after Aeneas upstream upgrade",
   "description": "## Context\n\nThe 2026-05-15 upgrade to upstream Charon HEAD (`1ec8d4bb`) + Aeneas HEAD (`5fc8fdf2`) + Lean v4.30.0-rc2 + Mathlib v4.30.0-rc2 surfaced two related Aeneas behavior changes that have been worked around but warrant proper resolution before the project's 1.0 milestone:\n\n### 1. Default trait method extraction regression\n\nAeneas at upstream HEAD does NOT generate sibling `def`s for trait methods that an impl uses via the default. The instance dictionary it generates references qualified names like `gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.try_simd_dot_product` even though no such def is emitted, causing `lake build` to fail with `Invalid field` errors.\n\n**Workaround in place:** `scripts/fix-aeneas-dupes.py` extended with `inline_default_methods()` that detects dangling references and inlines the trait default body (e.g., `fun a b => ok none`). Catalogue of methods + bodies in `DEFAULT_METHOD_BODIES` and `DEFAULT_CONST_BODIES` dicts.\n\n**Workaround in `crates/gf2-core/src/gfp/mod.rs`:** 11 `Fp::FiniteField` impl method overrides cfg-gated under `#[cfg(not(verify_lean))]`. The trait defaults (returning `None`/`false`) are used during extraction; the SIMD overrides are used in production builds. Same legitimate pattern as the existing `verify_lean` cfg for `ExtConfig::NON_RESIDUE`.\n\n**Long-term fix:** File upstream issue against AeneasVerif/aeneas requesting that Aeneas emit either a sibling `def` delegating to the trait default or rewrite the instance-dict reference to inline the default. After the upstream fix lands, remove the `inline_default_methods()` pass from the dedup script AND remove the `#[cfg(not(verify_lean))]` gates from `gfp/mod.rs`.\n\n### 2. Type-parameter-flattening change in extracted record types\n\nThe new Aeneas extracts `gfpn::QuadraticExt<C>` (1 type param at the Rust level, with `BaseField`, `Characteristic`, `Wide` derived from the `ExtConfig` trait) as `gfpn.quadratic.QuadraticExt (C : Type) (Clause0_BaseField : Type) (Clause0_Clause0_Clause0_Characteristic : Type) (Clause0_Clause0_Clause0_Wide : Type)` (4 type params, lifted from associated types). The project's hand-written proofs in `proofs/Gf2Core/Proofs/{ExtProgress,QuadraticExtField,CubicExtField}.lean` apply the structure with one `inst : ExtConfig` argument: `gfpn.quadratic.QuadraticExt inst`. After the upgrade these 28 references type-error with \"argument inst has type ExtConfig but is expected to have type Type\".\n\n**No workaround in place** — the proof files do not currently build. The project's V2 path (Bipedal3 / Gf2Algebra) is unaffected and still builds clean.\n\n**Fix required:** rewrite the 28 references in the three proof files to use the 4-arg form, threading the type params from the `ExtConfig` instance. Likely needs a small abbreviation `def QExt (inst : ExtConfig C BF Char Wide) := QuadraticExt C BF Char Wide` and similar for CubicExt to keep call sites clean. Estimated effort: 2-4 hour focused session by someone familiar with the proof structure.\n\n## Summary of state at handoff\n\n- Aeneas + Charon: clean upstream HEAD, 3 Charon patches + 1 obsolete-asserts removal applied (no tech debt)\n- Lean toolchain: bumped to v4.30.0-rc2; Mathlib v4.30.0-rc2\n- Gf2Algebra: builds clean (sole legacy sorrys are pre-existing V2 stubs, unrelated)\n- Gf2Core extraction: clean end-to-end\n- Gf2Core handcrafted proofs: 28 references in 3 files need refactoring (this issue)\n\n## Acceptance criteria\n\n- [hard] All 28 `QuadraticExt inst` / `CubicExt inst` references in `proofs/Gf2Core/Proofs/{ExtProgress,QuadraticExtField,CubicExtField}.lean` updated to the 4-arg form (or equivalent abbreviation)\n- [hard] `./scripts/verify-lean.sh` exits 0 end-to-end with no errors\n- [hard] No new sorrys introduced; no tactic-level workarounds that mask broken reasoning\n- [aspirational] After upstream Aeneas fixes default-method extraction, remove the `inline_default_methods()` pass from `scripts/fix-aeneas-dupes.py` AND remove the `#[cfg(not(verify_lean))]` gates from the 11 SIMD overrides in `crates/gf2-core/src/gfp/mod.rs`\n\n## Reference\n\nAeneas commit that bumped Lean to 4.29 (where the default-method regression appears to have been introduced or first surfaced): `f71903c1` (2026-05-06, \"Update to Lean 4.29.0 (#979)\"). Last Aeneas commit on Lean v4.28: `a2fcf192`.\n\nLast Charon commit pre-upgrade (locally): `419f53b6` (2026-03-20). Upstream HEAD post-upgrade: `1ec8d4bb` (2026-05-13).\n",
-  "state": "ready",
+  "state": "done",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -12,20 +12,20 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "lake-build": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-15T18:16:28.644557294Z"
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T18:18:37.207414816Z"
     },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-15T18:16:28.644505154Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T18:18:55.464784579Z"
     },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-15T18:16:28.644578724Z"
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T18:18:48.758755991Z"
     }
   },
   "context": {},
@@ -36,5 +36,5 @@
     "milestone:1.0"
   ],
   "created_at": "2026-05-15T17:17:56.457786669+00:00",
-  "updated_at": "2026-05-15T18:16:28.644598724+00:00"
+  "updated_at": "2026-05-15T18:27:28.683791882+00:00"
 }
