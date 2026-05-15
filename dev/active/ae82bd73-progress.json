@@ -3,10 +3,11 @@
   "epic_short_id": "ae82bd73",
   "epic_title": "Fast matrix permanents over F_3 / F_5 / F_7 via packed bipedal arithmetic",
   "current_wave": 5,
-  "current_subwave": "W5 GPU kernels (b62c86d8, ad55b777, b43cdf33, 5c0505b2) closed. W5 remaining: 2fbbdfa5 (host dispatcher) + a9e461de (GPU-vs-CPU crossover sim).",
-  "current_status": "W5 4-of-6 closed. W6 unblocked by 8c902184 close. CPU/GPU consistency narrowing (n ≤ 63) landed across gf2-algebra single-word paths. HIP test SSOT refactored, init state machine has unit-test coverage, gfx1030 GPU evidence captured in versioned verification doc.",
+  "current_subwave": "W5 closing: 2fbbdfa5 + f05ffbe1 closed; a9e461de in flight; W6 V2 (0606186a) ~10% landed pending Charon/Aeneas upstream review and lemma-chain continuation.",
+  "current_status": "W5 5-of-6 closed (2fbbdfa5 host dispatcher landed with gfx1030 evidence; a9e461de sim in flight). W6 V1 (f05ffbe1) closed with div→neg amendment. W6 V2 (0606186a) session-1 infrastructure done; L9 headline NOT stated; Charon gf2-core regression blocks verify-lean.sh end-to-end. User-requested session-10-close pending Charon/Aeneas state review.",
   "started_at": "2026-05-09T01:30:00+03:00",
-  "session_count": 9,
+  "session_count": 10,
+  "session_10_close_time": "2026-05-15T18:30:00+03:00",
   "session_9_close_time": "2026-05-15T12:25:00+03:00",
   "session_8_close_time": "2026-05-14T20:05:00+03:00",
   "rework_counts": {
@@ -35,7 +36,10 @@
     "8c902184": 6,
     "ad55b777": 2,
     "b43cdf33": 2,
-    "5c0505b2": 5
+    "5c0505b2": 5,
+    "2fbbdfa5": 3,
+    "f05ffbe1": 1,
+    "0606186a": 0
   },
   "wave_status": {
     "W0": {"name": "Decisions and sketches", "status": "CLOSED", "issues_done": 11},
@@ -45,25 +49,25 @@
     "W4": {"name": "F_5/F_7 packed + SIMD", "status": "CLOSED 2026-05-14", "issues_done": 5},
     "W5": {
       "name": "GPU HIP/ROCm",
-      "status": "IN PROGRESS (4 of 6 closed)",
+      "status": "IN PROGRESS (5 of 6 closed); a9e461de still in flight at handoff-13",
       "issues": {
         "b62c86d8": "DONE 2026-05-14 — HIP scaffold (placeholder .hip + extern shims, build.rs wiring).",
         "ad55b777": "DONE 2026-05-15 — F_3 HIP kernel; bipedal arithmetic + sequential Gray walk; batched FFI; tests at n=16,24,32,40,63. Amendments: per-n test counts (criterion 2) + n ≤ 63 narrowing.",
         "b43cdf33": "DONE 2026-05-15 — F_5 HIP kernel; direct byte-arithmetic Ryser walk (amendment: encoding may diverge from CPU Packed5 bit-plane); tests at n=8,12; criterion 5 wording fix.",
         "5c0505b2": "DONE 2026-05-15 — F_7 HIP kernel; LUT-based (MUL_LUT in __constant__, ADD/SUB in __device__); explicit caller-driven init via init_permanent_gf7; CAS-loop memoise_init_outcome state machine with 6 unit tests; LUT-checksum test; tests at n=8,12.",
-        "2fbbdfa5": "PENDING (host-side dispatcher; routes to CPU singleword / CPU multiword / GPU based on M/n).",
-        "a9e461de": "PENDING (GPU vs CPU crossover sim — measure M/n where GPU pays off)."
+        "2fbbdfa5": "DONE 2026-05-15 (session 10) — host-side gpu.rs dispatcher; 3 GPU criterion tests pass on gfx1030 (F_3 217s, F_5 1462s, F_7 1695s at n=24 M=1000); evidence doc ae82bd73-w5-gpu-dispatcher-verification.md attached; 3 review rounds resolving feature-gating + doctest + stale README docs.",
+        "a9e461de": "IN FLIGHT at session-10 handoff — Sonnet sim worker running multiple sweep runs (CSV expected at dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15*.csv)."
       },
-      "host_status": "ROCm gfx1030 confirmed on dev host; --features hip builds clean. All three F_3/F_5/F_7 GPU bit-identity tests pass on hardware (evidence: dev/active/ae82bd73-w5-gpu-verification.md)."
+      "host_status": "ROCm gfx1030 confirmed on dev host; --features hip builds clean. All three F_3/F_5/F_7 GPU bit-identity tests pass on hardware (evidence: dev/active/ae82bd73-w5-gpu-verification.md + ae82bd73-w5-gpu-dispatcher-verification.md)."
     },
     "W6": {
       "name": "Lean verification",
-      "status": "UNBLOCKED 2026-05-15 (8c902184 closed); awaiting dispatch",
+      "status": "V1 DONE 2026-05-15; V2 ~10% complete pending Charon/Aeneas review; V3 not started",
       "issues": {
         "8c902184": "DONE 2026-05-15 — API freeze doc attached commit-pinned; user-approved.",
-        "f05ffbe1": "PENDING bipedal F_3 Lean (sketch a0c0a45f approved).",
-        "0606186a": "PENDING Ryser n ≤ 63 Lean (sketch 4aaa6e4d approved).",
-        "30e98ef1": "PENDING F_5/F_7 Lean aspirational (NEW sketch required)."
+        "f05ffbe1": "DONE 2026-05-15 (session 10) — V1 bipedal F_3 Lean; 20 lemmas per D2 sketch with user-approved div→neg substitution; production target via inherent wrappers; 1 review round resolving dead-code *_word lemmas.",
+        "0606186a": "PARTIAL 2026-05-15 (session 10) — V2 Ryser bounded; Rust monomorphisation wrapper permanent_ryser_fp3 + verify-lean.sh extension + RyserBounded.lean infrastructure (198 lines, L1 corners + L7-at-n=0). Headline L9 NOT stated. Charon gf2-core regression blocks verify-lean.sh end-to-end. Pending user-approved path forward (4 more Opus sessions vs amend-aspirational vs drop).",
+        "30e98ef1": "PENDING F_5/F_7 Lean aspirational (NEW D4 sketch required; not started this session)."
       }
     },
     "W7": {
@@ -94,12 +98,34 @@
     "user_escalations_open": 0,
     "tests_passing_on_main": "3783 fast-tier (workspace --all-features --release --profile ci) + 6 init-state-machine unit tests under --features hip + 9 gfx1030-only tests verified manually."
   },
+  "session_10_summary": {
+    "issues_closed": [
+      "2fbbdfa5 (host-side GPU dispatcher) — 3 review rounds resolving feature-gating + doctest ignore→no_run + README feature-matrix sweep; 3 GPU criterion tests pass on gfx1030 at n=24 M=1000 (F_3 217s, F_5 1462s, F_7 1695s)",
+      "f05ffbe1 (V1 Lean bipedal F_3) — 1 review round resolving dead-code *_word lemma rework; user-approved div→neg substitution amendment recorded in issue description"
+    ],
+    "issues_partial": [
+      "0606186a (V2 Lean Ryser bounded) — session 1 infrastructure pass: Rust monomorphisation wrapper + verify-lean.sh extension + RyserBounded.lean (198 lines, L1 corners + L7-at-n=0). L2-L9 not stated. Worker estimates 1500-2500 more lines across 2-4 Opus sessions."
+    ],
+    "issues_in_flight": [
+      "a9e461de (GPU crossover sim) — Sonnet worker still running multiple sim sweeps as of handoff; CSV expected at dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15*.csv"
+    ],
+    "user_escalations_resolved": 2,
+    "user_escalations_open": 1,
+    "open_escalation_detail": "Charon/Aeneas upstream state review per user 'see what the current state of Charon/Aeneas is. We might have to do some additional work to get on par with upstream.' Tied to V2 path decision (continue 4 sessions / amend aspirational / drop) and the gf2-core extraction Charon panic from recent gfp/mod.rs Option<Box<dyn Trait>> returns.",
+    "commits_on_main_this_session": 14,
+    "tests_passing_on_main": "3783 fast-tier + 471 gf2-algebra unit + 173 doctests + 5 new V2-wrapper tests; 9 gfx1030-only tests across kernels + dispatcher."
+  },
   "next_session_priorities": [
-    "1. W5 dispatcher (2fbbdfa5) — host-side router CPU/GPU based on M/n. Use crossover from a9e461de (or stub initial threshold).",
-    "2. W5 crossover sim (a9e461de) — measure M/n product where GPU pays off; produce CSV + curve.",
-    "3. W6 Lean chain: f05ffbe1 (V1 with approved sketch a0c0a45f) → parallel 0606186a (V2 with sketch 4aaa6e4d) + 30e98ef1 (V3 needs NEW sketch). All three need approved sketches before implementation dispatch.",
-    "4. W7 Reporting: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4 — parallelisable. Plus 333028c1 (CAS cross-val), 8e4e19a0 (perm-vs-det sim), 9480f8a6 (S1g GPU 50× after a9e461de).",
-    "5. Final: epic ae82bd73 completion report + transition to done."
+    "1. Review Charon/Aeneas upstream state per user direction. Check /data/aeneas-build/charon/ and /data/aeneas-build/aeneas/ git logs vs upstream. The three project-local Charon patches (per MEMORY.md) may have been absorbed or moved past upstream.",
+    "2. Fix Charon gf2-core extraction regression: gate `Option<Box<dyn Trait>>` returns in gfp/mod.rs:734,746,798 under `#[cfg(not(verify_lean))]` (option a from session-10 escalation).",
+    "3. Decide V2 Ryser path (continue / amend / drop) — pending user answer to AskUserQuestion still open.",
+    "4. Pick up a9e461de when sim worker returns; review CSV + writeup; close.",
+    "5. W7 Reporting wave: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4, 333028c1 (Sage at /usr/bin/sage), 8e4e19a0, 9480f8a6.",
+    "6. W6 30e98ef1 sketch if V2 path includes F_5/F_7.",
+    "7. Final: epic ae82bd73 completion report + transition to done."
   ],
-  "active_worktrees": []
+  "active_worktrees": [],
+  "active_background_processes_at_handoff": [
+    "a9e461de Sonnet worker (agent-a5d9be8862af1f9e1) — multiple cargo run permanent_gpu_crossover instances + polling loops"
+  ]
 }
