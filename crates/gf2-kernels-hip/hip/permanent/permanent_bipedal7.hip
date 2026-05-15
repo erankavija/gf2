@@ -40,9 +40,9 @@
 //   - d_ADD_LUT, d_SUB_LUT: __device__ global memory (64 KiB each).
 //     Populated by the same init call. Accesses go through L1/L2.
 //
-//   Criterion 3: the `gpu_f7_constant_lut_checksum_matches_host` test sums
-//   all 65536 bytes of d_MUL_LUT on the GPU and compares to the host
-//   MUL_LUT sum, verifying byte-identical population.
+//   Criterion 3: the `test_permanent_bipedal7_constant_lut_checksum_matches_host`
+//   test sums all 65536 bytes of d_MUL_LUT on the GPU and compares to the
+//   host MUL_LUT sum, verifying byte-identical population.
 //
 // Gray-code enumeration (SSOT: `crates/gf2-algebra/src/gray.rs`):
 //   At step k (k = 1 .. 2^n - 1):
@@ -245,7 +245,8 @@ __global__ void permanent_bipedal7_kernel(const unsigned char* __restrict__ matr
 // LUT checksum kernel (for criterion-3 test)
 //
 // Sums all 65536 bytes of d_MUL_LUT (__constant__) and writes the u64
-// result to *out_ptr. Used by `gpu_f7_constant_lut_checksum_matches_host`.
+// result to *out_ptr. Used by
+// `test_permanent_bipedal7_constant_lut_checksum_matches_host`.
 // ---------------------------------------------------------------------------
 __global__ void permanent_bipedal7_lut_checksum_kernel(unsigned long long* __restrict__ out_ptr) {
     if (threadIdx.x != 0 || blockIdx.x != 0) return;
@@ -260,8 +261,9 @@ __global__ void permanent_bipedal7_lut_checksum_kernel(unsigned long long* __res
 // Init entry point
 //
 // Copies the three host LUTs into GPU memory. Safe to call multiple times
-// (idempotent). The Rust shim calls this via std::sync::Once before the
-// first batch kernel launch.
+// (idempotent). The Rust shim memoises this function's return code in
+// `GF7_INIT_RC` so a failure here propagates to subsequent compute-batch
+// callers instead of silently producing wrong results.
 //
 // Parameters:
 //   host_add_lut — host pointer to 65536 bytes (ADD_LUT from gf2-algebra).

@@ -536,16 +536,38 @@ pub unsafe fn init_permanent_gf7(
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
     let rc = unsafe { permanent_bipedal7_hip_init(host_add_lut, host_sub_lut, host_mul_lut) };
-    // Record the outcome so subsequent calls to `compute_permanent_gf7_batch`
-    // see the same status without re-invoking the FFI. If a prior call
-    // succeeded (rc=0), keep that state: the LUTs are populated on the
-    // device, and a later init failure (e.g. transient context error)
-    // should not invalidate the earlier successful state.
-    let prev = GF7_INIT_RC.load(std::sync::atomic::Ordering::SeqCst);
-    if prev != 0 {
-        // Either uninitialised (sentinel) or a previously-failed init —
-        // record this call's rc as the new memoised state.
-        GF7_INIT_RC.store(rc, std::sync::atomic::Ordering::SeqCst);
+    // Memoise the outcome via a CAS loop. Contract: "if any concurrent or
+    // prior init succeeded (rc == 0), the memoised state must end at 0;
+    // failed inits may be overwritten by later inits but never overwrite
+    // a successful one." The prior non-atomic load-then-store version of
+    // this code was racy — two parallel callers, one succeeding and one
+    // failing, could both see `prev != 0` (the sentinel) and store in
+    // any order, so a failed init could clobber a concurrent successful
+    // init. The CAS loop below is the correct fix: at every retry the
+    // exchange only succeeds if the observed `prev` is still current, so
+    // we never silently overwrite a freshly-stored success.
+    use std::sync::atomic::Ordering::SeqCst;
+    loop {
+        let prev = GF7_INIT_RC.load(SeqCst);
+        if prev == 0 {
+            // Some init (possibly a concurrent one) has already recorded
+            // success — the LUTs are populated on the device. Even if
+            // this call's `rc` is non-zero (transient init failure on a
+            // separate context, say), the device state remains valid
+            // for compute. Leave the success state in place.
+            break;
+        }
+        // prev is either the uninitialised sentinel or a prior failed rc;
+        // overwrite atomically. If a racing thread mutated the state
+        // between our load and this CAS, the exchange fails and we retry
+        // — on the retry we'll either see success (and break) or another
+        // overwrite-eligible state.
+        if GF7_INIT_RC
+            .compare_exchange(prev, rc, SeqCst, SeqCst)
+            .is_ok()
+        {
+            break;
+        }
     }
     rc
 }
@@ -711,8 +733,8 @@ pub unsafe fn compute_permanent_gf7_batch(
 /// Launches `permanent_bipedal7_lut_checksum_kernel` (a single-thread kernel)
 /// that sums all 65 536 bytes of `d_MUL_LUT` and writes the `u64` result to
 /// `*out_ptr`. Used by the criterion-3 test
-/// `gpu_f7_constant_lut_checksum_matches_host` to verify that the device copy
-/// of MUL_LUT is byte-identical to the host static const.
+/// `test_permanent_bipedal7_constant_lut_checksum_matches_host` to verify
+/// that the device copy of MUL_LUT is byte-identical to the host static const.
 ///
 /// # Arguments
 ///

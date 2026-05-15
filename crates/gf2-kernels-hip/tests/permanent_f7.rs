@@ -187,10 +187,10 @@ fn test_permanent_bipedal7_constant_lut_checksum_matches_host() {
     assert_eq!(rc, 0, "hipMalloc(d_out) failed: code {rc}");
 
     // Explicitly init the LUTs so d_MUL_LUT is populated before the checksum
-    // kernel reads it. `compute_permanent_gf7_batch` would also trigger init
-    // via the Once guard, but this test calls init_permanent_gf7 directly to
-    // make the dependency explicit and to allow the checksum test to be run
-    // independently of the bit-identity tests.
+    // kernel reads it. The lib does not auto-init; the caller is responsible
+    // for calling init_permanent_gf7 before the first compute or checksum
+    // call (see `crates/gf2-kernels-hip/src/permanent/mod.rs` for the
+    // memoised-init contract).
     //
     // SAFETY: ADD_LUT, SUB_LUT, MUL_LUT are 'static [u8; 65536] from gf2_algebra.
     // The HIP runtime is live (gfx1030 device required).
