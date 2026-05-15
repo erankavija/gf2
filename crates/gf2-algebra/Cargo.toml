@@ -99,7 +99,7 @@ parallel = ["dep:rayon", "gf2-core/parallel"]
 # gf2-coding's "hip" feature, since hipcc/ROCm is not present on most
 # developer hosts. Pulls in the gf2-kernels-hip crate (which is in
 # workspace `exclude`).
-hip = ["dep:gf2-kernels-hip"]
+hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 
 # F_5 packed permanent. Default-on as of W4 closing edit; the W4
 # implementation landed `packed5::Packed5` (jit:6917eb85) per R1
