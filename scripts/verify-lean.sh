@@ -56,6 +56,7 @@ charon cargo \
   --opaque 'gf2_core::gf2m::thread_safety_tests' \
   --opaque 'gf2_core::gf2m::barrett' \
   --opaque 'gf2_core::gfpn::batch' \
+  --opaque 'gf2_core::gfp::simd_ops' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \

@@ -649,6 +649,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// medium primes (`P ∈ (251, 65536)`); other primes return `None` and
     /// the caller continues through the generic delayed-reduction path
     /// driven by [`mul_product_sum_wide`](Self::mul_product_sum_wide).
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_fp_simd_dot_product(
         a: &[Self],
@@ -659,11 +660,13 @@ impl<const P: u64> FiniteField for Fp<P> {
         crate::gfp::simd_ops::fp_medium_try_dot_product::<P>(a, b, scratch_a, scratch_b)
     }
 
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_pack_fp_medium_u16(xs: &[Self], out: &mut Vec<u16>) -> Option<()> {
         crate::gfp::simd_ops::fp_medium_try_pack_u16::<P>(xs, out)
     }
 
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_fp_simd_dot_packed_u16(a_packed: &[u16], b_packed: &[u16]) -> Option<Self> {
         crate::gfp::simd_ops::fp_medium_try_dot_packed::<P>(a_packed, b_packed)
@@ -696,6 +699,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// range (the chunked-Wide loop in
     /// [`crate::field::vec::dot_product_slices`] handles them
     /// correctly).
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_dot_product(a: &[Self], b: &[Self]) -> Option<Self> {
         <Self as simd_ops::SimdVecOps>::try_simd_dot_vec(a, b)
@@ -713,6 +717,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// - `P > 251` or `P < 3` (out of byte-lane range);
     /// - the `simd` feature is disabled;
     /// - AVX2 is unavailable at runtime.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_gemm_classical(
         a: &[Self],
@@ -728,6 +733,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// Constructs a packed basis reducer for the cyclic-decomposition
     /// reduce loop (issue `d1dd266c`). Returns `None` when no SIMD
     /// fast path is available.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_make_basis_reducer(
         n: usize,
@@ -740,6 +746,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// (issue `5a3dbd5b`). Returns `None` when `P > 251` or when AVX2
     /// is unavailable; the caller falls back to the scalar `FieldPoly`
     /// path.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_make_chain_poly_arith(
         n: usize,
@@ -751,6 +758,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// Lets `cyclic_decomposition` decide whether to take the packed
     /// canonical-byte chain-poly arithmetic path without paying a boxed
     /// allocation per decomposition.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn chain_poly_arith_available() -> bool {
         simd_ops::fp_chain_poly_arith_available::<P>()
@@ -762,6 +770,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// `batch_mul` + `batch_add` kernels with the scalar `a` broadcast
     /// across the whole vector. Returns `false` for `P > 65535` or
     /// when the `simd` feature / AVX2 are unavailable.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_axpy(y: &mut [Self], a: &Self, x: &[Self]) -> bool {
         simd_ops::fp_try_axpy::<P>(y, a, x)
@@ -778,6 +787,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// disabled / AVX2 is unavailable, in which case the caller (the
     /// public [`crate::field::matrix::FieldMatrix::matvec`]) falls back
     /// to the per-row scalar `dot_product_slices` chain.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_matvec(a: &[Self], x: &[Self], m: usize, k: usize, out: &mut [Self]) -> bool {
         simd_ops::fp_try_matvec::<P>(a, x, m, k, out)
@@ -790,6 +800,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// in [`crate::field::charpoly`] (`cyclic_decomposition`,
     /// `wiedemann_minpoly_attempt`) to amortise the matrix-pack cost
     /// across `O(n)` matvec calls per minpoly / charpoly invocation.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_prepack_matvec(
         a: &[Self],
@@ -808,6 +819,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// Wide-accumulator scatter path. The hook packs `b` once
     /// internally and reuses the canonical-byte / canonical-u16 buffer
     /// across every row of the sparse left matrix.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_spmm(
         a_row_ptr: &[usize],
@@ -826,6 +838,7 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// `P ∈ {7, 251}` engages a quadratic or cubic extension large enough
     /// that `|E| > n` for the project's bench sizes (n ≤ 256); other
     /// primes fall through to the default `None`.
+    #[cfg(not(verify_lean))]
     #[inline]
     fn try_extension_wiedemann_minpoly(
         a: &crate::field::matrix::FieldMatrix<Self>,
