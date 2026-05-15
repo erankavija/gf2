@@ -88,3 +88,4 @@ benchmarks/expected/sparse_smoke_n16.bin
 # stale committed copy cannot mask gf2-core regressions in the
 # GF(2^32) matmul path.
 benchmarks/expected/gf2pow32_smoke_n16.bin
+.claude/scheduled_tasks.lock
