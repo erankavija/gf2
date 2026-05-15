@@ -37,20 +37,51 @@
 
 User decision 2026-05-15 (session 10 close): "Let's do a handoff at this point. We should see what the current state of Charon/Aeneas is. We might have to do some additional work to get on par with upstream."
 
-### User-in-progress Charon/Aeneas upstream rebase (DO NOT TOUCH at next session start)
+### Charon/Aeneas upstream rebase — landed by user (issue 9efd9c39, in_progress)
 
-After the session-10 handoff was committed, the user began the upstream rebase work themselves. As of handoff-13 final write, **unstaged changes are present on the working tree** that the lead must NOT auto-commit:
+After the session-10 handoff was committed, the user completed and committed the upstream rebase work themselves. Six commits under `jit:9efd9c39` between `146fbf31` and HEAD `4cd84f6c`:
 
-- `crates/gf2-core/src/gfp/mod.rs` — `#[cfg(not(verify_lean))]` gates added to the `dyn Trait`-returning helpers (option (a) from the session-10 escalation; the Charon-regression fix).
-- `proofs/Gf2Algebra/{Funs,FunsExternal,Types,TypesExternal,FunsExternal_Template,TypesExternal_Template}.lean` — re-extracted.
-- `proofs/Gf2Core/{Funs,FunsExternal,Types,TypesExternal,FunsExternal_Template,TypesExternal_Template}.lean` — re-extracted.
-- `proofs/Gf2Core/Proofs/{CubicExtField,QuadraticExtField,ExtProgress}.lean` — modified (proof restoration work in progress).
-- `proofs/lean-toolchain` + `proofs/lakefile.lean` + `proofs/lake-manifest.json` — bumped (per the new JIT issue's title: Charon HEAD `1ec8d4bb`, Aeneas HEAD `5fc8fdf2`, Lean v4.30.0-rc2, Mathlib v4.30.0-rc2).
-- `scripts/verify-lean.sh` + `scripts/fix-aeneas-dupes.py` — updated for new upstream.
-- `dev/active/charon-patch-backup-2026-05-15/` (untracked) — backup of the three project-local Charon patches that have been absorbed/superseded by upstream.
-- New JIT issue **`9efd9c39`** (state: ready, label `milestone:1.0`): "Restore Lean proofs of QuadraticExt/CubicExt operations after Aeneas upstream upgrade". The user's tracked work item for completing the rebase proof restoration.
+| Commit | Subject |
+|---|---|
+| `eca071bb` | `chore(jit:9efd9c39): bump Lean toolchain to v4.30.0-rc2 + Mathlib v4.30.0-rc2` |
+| `ad56afe2` | `feat(jit:9efd9c39): work around Aeneas default-trait-method extraction regression` |
+| `0203545f` | `chore(jit:9efd9c39): regenerate Lean extraction artifacts under upstream Aeneas/Charon` |
+| `7421c283` | `fix(jit:9efd9c39): refactor Gf2Core proofs for new Aeneas type-flattening + Prod destructure` |
+| `3e376a3f` | `chore(jit:9efd9c39): file JIT issue + back up original Charon patches` |
+| `4cd84f6c` | `chore(jit:9efd9c39): add code-review, lake-build, cargo-ci gates` |
 
-**Next-session lead action:** treat all the above as user's in-progress work. Do NOT `git add -A`. The next session should ask the user before doing anything in `proofs/`, `scripts/verify-lean.sh`, or `crates/gf2-core/src/gfp/mod.rs`. The Charon-regression fix (the cfg gates in gfp/mod.rs) is the most actionable piece — once the user signals commit-readiness, that resolves the V2 verify-lean.sh-end-to-end blocker recorded below.
+**Versions now on `main`:**
+- Charon HEAD `1ec8d4bb`
+- Aeneas HEAD `5fc8fdf2`
+- Lean v4.30.0-rc2; Mathlib v4.30.0-rc2
+
+**Workarounds in place** (per issue 9efd9c39 description):
+- `scripts/fix-aeneas-dupes.py::inline_default_methods()` — detects dangling default-trait-method references and inlines the trait default body. `DEFAULT_METHOD_BODIES`/`DEFAULT_CONST_BODIES` dicts catalogue the inline targets.
+- `crates/gf2-core/src/gfp/mod.rs` — 11 `Fp::FiniteField` impl method overrides gated `#[cfg(not(verify_lean))]`. During extraction the trait defaults (returning `None`/`false`) are used; production builds use the SIMD overrides. Same pattern as the existing `ExtConfig::NON_RESIDUE` cfg.
+
+**Gates on 9efd9c39:**
+- `cargo-ci` — PASS (2026-05-15T18:18Z)
+- `lake-build` — PASS (2026-05-15T18:18Z)
+- `code-review` — pending (not yet run)
+
+**Acceptance criteria remaining open on 9efd9c39:**
+- [hard] All 28 `QuadraticExt inst` / `CubicExt inst` references in `proofs/Gf2Core/Proofs/{ExtProgress,QuadraticExtField,CubicExtField}.lean` updated to the 4-arg form (lifted associated-type params). Per the diff stat (`ExtProgress.lean +/-28`, `QuadraticExtField.lean +/-14`, `CubicExtField.lean +/-14`), commit `7421c283` already touches these files — the [hard] criterion may already be satisfied; code-review will confirm.
+- [hard] `./scripts/verify-lean.sh` exits 0 end-to-end. lake-build gate PASS implies this is satisfied.
+- [hard] No new sorrys / no tactic-level workarounds masking broken reasoning.
+- [aspirational] After upstream Aeneas fixes the default-method extraction, remove the `inline_default_methods()` pass + remove the cfg gates in gfp/mod.rs.
+
+**Next-session lead action for 9efd9c39:**
+1. Run `jit gate pass code-review` on 9efd9c39 (the AI reviewer will check the 28-reference refactor, the no-sorry property, and the workaround documentation).
+2. If review passes, close 9efd9c39.
+3. If review fails, dispatch rework per the standard review-loop pattern.
+
+**Downstream effect on epic ae82bd73:**
+
+The Charon gf2-core regression that blocked the V2 verify-lean.sh-end-to-end criterion is now resolved — `verify-lean.sh` runs end-to-end on main. The V2 path decision (continue 4 sessions / amend aspirational / drop) is still open, but the infrastructure blocker is gone.
+
+The V1 (f05ffbe1) proof file rebuilt cleanly against the new toolchain per lake-build pass.
+
+`dev/active/charon-patch-backup-2026-05-15/` (committed under `3e376a3f`) preserves the three project-local Charon patches that were absorbed/superseded by upstream — these are now historical reference rather than active patches.
 
 The two interconnected blockers:
 
@@ -133,26 +164,39 @@ None.
 
 ## Next-session priorities
 
-1. **Review Charon/Aeneas upstream state.** The user explicitly flagged this. Check `/data/aeneas-build/charon/` git log vs upstream (`https://github.com/AeneasVerif/charon`); check `/data/aeneas-build/aeneas/` similarly. The local Charon has three project-applied patches (per MEMORY.md "Charon Fixes Applied"). Upstream may have absorbed or moved past them. Decide: rebase local patches onto current upstream, OR apply a minimal fix for the `dyn Trait` return regression and defer upstream rebase.
+1. **Close 9efd9c39** (Charon/Aeneas upstream rebase). cargo-ci + lake-build already PASS. Run code-review; if pass, transition to done. Inherits no rework history.
 
-2. **Fix Charon gf2-core regression.** Per option (a): gate the three `Option<Box<dyn Trait>>` returns in `gfp/mod.rs` under `#[cfg(not(verify_lean))]`. Verify `./scripts/verify-lean.sh` runs end-to-end.
+2. **Close a9e461de** (GPU crossover sim). cargo-ci PASS; code-review FAIL on two findings:
+   - [hard] criterion 2 "fixed batch size" wording vs harness mixed M — decide rerun-with-fixed-M-256-capped-at-n=28 vs amend criterion 2 wording (user approval required for [hard] amendment).
+   - [aspirational] criterion 1 amendment to be recorded in issue description (lead-direct per criterion's own allowance — cargo-ci passed).
 
-3. **Decide V2 Ryser proof path** (4 more sessions vs amendment vs drop) — per the user's three-option AskUserQuestion still pending.
+3. **Decide V2 Ryser proof path** (continue 2-4 Opus sessions / amend epic criterion 8 to aspirational / drop V2 entirely). The Charon-regression blocker on verify-lean.sh is now resolved (per 9efd9c39); the open question is the L2–L9 lemma-chain budget. AskUserQuestion from session 10 still open.
 
-4. **Pick up a9e461de close** when sim worker returns: review CSV + writeup, attach via `jit doc add`, code-review gate, close.
+4. **W7 reporting wave**: 7 dispatchable issues, mostly parallelisable.
+   - 333028c1 (CAS cross-val) — Sage installed at `/usr/bin/sage`.
+   - 16f03734 (gf2-algebra README + doctests + permanent_demo example).
+   - 8808b051 (root CLAUDE.md + ROADMAP).
+   - 424aa94f (plot scripts).
+   - c90db5a4 (permanent-repro.sh — depends on 7cd9afdb).
+   - 8e4e19a0 (perm-vs-det MC sim — CPU-bound, no GPU contention).
+   - 7cd9afdb (publication artefact — depends on 333028c1, 424aa94f, a9e461de).
+   - 9480f8a6 (S1g GPU 50×).
 
-5. **W7 reporting wave**: 7 dispatchable issues, mostly parallelisable. 333028c1 needs Sage (installed at `/usr/bin/sage`); 16f03734 + 8808b051 are doc-only; 424aa94f is plot scripts; 8e4e19a0 is a perm-vs-det MC sim (CPU-bound, no GPU contention with a9e461de or 9480f8a6).
+5. **W6 30e98ef1 sketch** if V2 path includes F_5/F_7 aspirational.
 
-6. **W6 30e98ef1 sketch** if V2 path includes it.
-
-7. **Final**: epic ae82bd73 completion report + transition to done.
+6. **Final**: epic ae82bd73 completion report + transition to done.
 
 ## Files of note
 
 - `dev/active/ae82bd73-w5-gpu-dispatcher-verification.md` — 2fbbdfa5 gfx1030 evidence.
-- `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` — V1 (f05ffbe1) closed proof, 20 lemmas, load-bearing word lemmas after rework.
+- `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` — V1 (f05ffbe1) closed proof, 20 lemmas, load-bearing word lemmas after rework. Rebuilt cleanly under v4.30.0-rc2 toolchain.
 - `proofs/Gf2Algebra/Proofs/RyserBounded.lean` — V2 (0606186a) session-1 infrastructure; L9 not yet stated.
-- `crates/gf2-algebra/src/gpu.rs` — host dispatcher; doctests now `no_run` with cfg-guarded bodies.
+- `crates/gf2-algebra/src/gpu.rs` — host dispatcher; doctests `no_run` with cfg-guarded bodies.
 - `crates/gf2-algebra/src/permanent/ryser_fp3.rs` — iterator-free F_3 monomorphisation wrapper for V2 extraction.
-- `scripts/verify-lean.sh` — gf2-algebra extraction leg works; gf2-core leg blocked on Charon `dyn Trait` regression.
+- `scripts/verify-lean.sh` — now end-to-end clean on both Gf2Core + Gf2Algebra legs after the upstream rebase (`eca071bb`–`0203545f`).
+- `scripts/fix-aeneas-dupes.py` — extended with `inline_default_methods()` workaround for the Aeneas default-trait-method extraction regression (`ad56afe2`).
 - `scripts/fix-aeneas-gf2algebra.py` — V1's post-processing for gf2-algebra extraction.
+- `proofs/Gf2Core/Proofs/{CubicExtField,QuadraticExtField,ExtProgress}.lean` — refactored for new Aeneas type-flattening + Prod destructure (commit `7421c283`).
+- `dev/active/charon-patch-backup-2026-05-15/` — historical backup of three project-local Charon patches absorbed/superseded by upstream HEAD `1ec8d4bb` (`3e376a3f`).
+- `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv` — a9e461de sim measurement data.
+- `dev/plans/s5_gpu_crossover.md` — a9e461de writeup; documents M-dependent (not n-dependent) crossover finding.

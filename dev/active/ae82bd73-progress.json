@@ -109,24 +109,29 @@
     "issues_in_flight": [
       "a9e461de (GPU crossover sim) — Sonnet worker completed; landed commits d0e35cbf/b0ea950c/0b45f617. cargo-ci PASS; code-review FAIL with two findings: (1) [hard] criterion 2 'fixed batch size' wording vs harness mixed M=256/16/4/1 — needs rerun-vs-amend decision; (2) [aspirational] criterion 1 amendment not recorded in issue description (lead-direct fix per criterion wording allowance)."
     ],
-    "user_escalations_resolved": 2,
+    "user_escalations_resolved": 3,
     "user_escalations_open": 2,
     "open_escalation_detail_1": "a9e461de criterion 2 path: rerun with fixed M (e.g. M=256 capped at n=28) vs amend [hard] criterion wording to allow per-n M (user approval required).",
-    "open_escalation_detail_2": "User-in-progress Charon/Aeneas upstream rebase: unstaged changes across crates/gf2-core/src/gfp/mod.rs, proofs/Gf2{Core,Algebra}/* extraction, scripts/verify-lean.sh, proofs/lean-toolchain. New JIT issue 9efd9c39 ('Restore Lean proofs of QuadraticExt/CubicExt after Aeneas upstream upgrade') tracks proof-restoration. Charon HEAD 1ec8d4bb, Aeneas HEAD 5fc8fdf2, Lean v4.30.0-rc2. Lead must NOT auto-commit user's in-progress unstaged work.",
-    "commits_on_main_this_session": 18,
-    "tests_passing_on_main": "3788 fast-tier (post-sim-harness add) on commit 0b45f617; 9 gfx1030-only tests across kernels + dispatcher + 3 sim-criterion tests + 3 sim-smoke tests."
+    "open_escalation_detail_2": "V2 Ryser proof path: continue 2-4 Opus sessions for L2-L9 vs amend epic criterion 8 to aspirational vs drop V2 entirely. Charon-regression blocker on verify-lean.sh is RESOLVED by 9efd9c39 rebase.",
+    "resolved_escalation": "Charon/Aeneas upstream rebase landed by user in 6 commits (eca071bb -> 4cd84f6c) under new JIT issue 9efd9c39. cargo-ci + lake-build PASS on main; code-review pending. verify-lean.sh end-to-end works.",
+    "commits_on_main_this_session": 24,
+    "tests_passing_on_main": "3788 fast-tier on commit 4cd84f6c; lake build passes Gf2Core + Gf2Algebra under Lean v4.30.0-rc2 + Mathlib v4.30.0-rc2; 9 gfx1030-only tests across kernels + dispatcher + 3 sim-criterion tests + 3 sim-smoke tests."
   },
   "next_session_priorities": [
-    "1. Review Charon/Aeneas upstream state per user direction. Check /data/aeneas-build/charon/ and /data/aeneas-build/aeneas/ git logs vs upstream. The three project-local Charon patches (per MEMORY.md) may have been absorbed or moved past upstream.",
-    "2. Fix Charon gf2-core extraction regression: gate `Option<Box<dyn Trait>>` returns in gfp/mod.rs:734,746,798 under `#[cfg(not(verify_lean))]` (option a from session-10 escalation).",
-    "3. Decide V2 Ryser path (continue / amend / drop) — pending user answer to AskUserQuestion still open.",
-    "4. Pick up a9e461de when sim worker returns; review CSV + writeup; close.",
-    "5. W7 Reporting wave: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4, 333028c1 (Sage at /usr/bin/sage), 8e4e19a0, 9480f8a6.",
-    "6. W6 30e98ef1 sketch if V2 path includes F_5/F_7.",
-    "7. Final: epic ae82bd73 completion report + transition to done."
+    "1. Close 9efd9c39 (Charon/Aeneas rebase). cargo-ci + lake-build PASS; run code-review; close if pass. Inherits no rework history.",
+    "2. Close a9e461de. cargo-ci PASS; code-review FAIL on (a) [hard] criterion 2 fixed-batch-size wording vs harness mixed M (user-decide: rerun vs amend), (b) [aspirational] criterion 1 amendment to be recorded in description (lead-direct since cargo-ci passed).",
+    "3. Decide V2 Ryser path: continue / amend / drop. Charon-regression blocker on verify-lean.sh now resolved (9efd9c39). Pending user answer to AskUserQuestion from session 10.",
+    "4. W7 Reporting wave: 7cd9afdb, 16f03734, 8808b051, 424aa94f, c90db5a4, 333028c1 (Sage at /usr/bin/sage), 8e4e19a0, 9480f8a6.",
+    "5. W6 30e98ef1 sketch if V2 path includes F_5/F_7.",
+    "6. Final: epic ae82bd73 completion report + transition to done."
   ],
+  "related_open_issue_outside_epic": {
+    "id": "9efd9c39",
+    "title": "Restore Lean proofs of QuadraticExt/CubicExt operations after Aeneas upstream upgrade",
+    "state": "in_progress",
+    "labels": ["type:task", "component:gf2-core", "milestone:1.0"],
+    "note": "Created by user during session 10. Charon/Aeneas/Lean/Mathlib upstream rebase. cargo-ci PASS, lake-build PASS, code-review pending. Not part of epic ae82bd73 but unblocked V2 verify-lean.sh-end-to-end criterion."
+  },
   "active_worktrees": [],
-  "active_background_processes_at_handoff": [
-    "a9e461de Sonnet worker (agent-a5d9be8862af1f9e1) — multiple cargo run permanent_gpu_crossover instances + polling loops"
-  ]
+  "active_background_processes_at_handoff": []
 }
