@@ -16,3 +16,7 @@ package gf2core where
 @[default_target]
 lean_lib Gf2Core where
   srcDir := "."
+
+@[default_target]
+lean_lib Gf2Algebra where
+  srcDir := "."
