@@ -23,7 +23,7 @@
 //! assert_eq!(app.len(), 4);
 //! ```
 
-mod ffi;
+pub(crate) mod ffi;
 
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
@@ -101,13 +101,17 @@ pub fn extract_h_cols(h: &gf2_core::BitMatrix) -> Vec<u32> {
 }
 
 /// RAII wrapper for a HIP device allocation.
-struct DeviceBuffer {
+///
+/// Accessible within the crate (`pub(crate)`) so the `permanent` submodule
+/// can use it for the safe host-dispatch wrappers without re-duplicating
+/// the alloc/free boilerplate.
+pub(crate) struct DeviceBuffer {
     ptr: *mut c_void,
     size: usize,
 }
 
 impl DeviceBuffer {
-    fn new(size: usize) -> Result<Self, HipError> {
+    pub(crate) fn new(size: usize) -> Result<Self, HipError> {
         let mut ptr: *mut c_void = ptr::null_mut();
         // SAFETY: hip_malloc writes a valid device pointer to `ptr` on success.
         // The pointer is freed in Drop. `size` is validated by the HIP runtime.
@@ -115,15 +119,15 @@ impl DeviceBuffer {
         Ok(Self { ptr, size })
     }
 
-    fn as_ptr(&self) -> *const c_void {
+    pub(crate) fn as_ptr(&self) -> *const c_void {
         self.ptr as *const c_void
     }
 
-    fn as_mut_ptr(&self) -> *mut c_void {
+    pub(crate) fn as_mut_ptr(&self) -> *mut c_void {
         self.ptr
     }
 
-    fn copy_from_host(&self, src: &[u8]) -> Result<(), HipError> {
+    pub(crate) fn copy_from_host(&self, src: &[u8]) -> Result<(), HipError> {
         assert!(src.len() <= self.size);
         // SAFETY: `self.ptr` is a valid device allocation of `self.size` bytes.
         // `src` is a valid host slice. HIP copies `src.len()` bytes H→D.
@@ -133,7 +137,7 @@ impl DeviceBuffer {
         )
     }
 
-    fn copy_to_host(&self, dst: &mut [u8]) -> Result<(), HipError> {
+    pub(crate) fn copy_to_host(&self, dst: &mut [u8]) -> Result<(), HipError> {
         assert!(dst.len() <= self.size);
         // SAFETY: `self.ptr` is a valid device allocation. `dst` is a valid
         // mutable host slice. HIP copies `dst.len()` bytes D→H.

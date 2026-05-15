@@ -814,6 +814,388 @@ pub unsafe fn compute_lut_checksum_gpu(out_ptr: *mut u64) -> c_int {
     unsafe { permanent_bipedal7_hip_lut_checksum(out_ptr) }
 }
 
+/// Safe wrapper around [`init_permanent_gf7`] that accepts typed references
+/// instead of raw pointers, allowing the call to be made from safe Rust code.
+///
+/// Identical in semantics to [`init_permanent_gf7`] but takes
+/// `&[u8; 65536]` references instead of raw pointers; the compiler proves
+/// they are valid host pointers of the required length.
+///
+/// # Arguments
+///
+/// - `add_lut` — reference to the F_7 ADD_LUT (65 536 bytes).
+/// - `sub_lut` — reference to the F_7 SUB_LUT (65 536 bytes).
+/// - `mul_lut` — reference to the F_7 MUL_LUT (65 536 bytes).
+///
+/// # Returns
+///
+/// 0 on success (`hipSuccess`), non-zero HIP error code otherwise.
+///
+/// # Panics
+///
+/// Never panics from Rust — all error reporting flows through the `i32`
+/// return value.
+///
+/// # Complexity
+///
+/// Three `hipMemcpyToSymbol` calls of 64 KiB each — `O(1)` host work.
+///
+/// # Examples
+///
+/// ```ignore
+/// # #[cfg(feature = "hip")] {
+/// use gf2_kernels_hip::permanent::init_permanent_gf7_from_slices;
+/// let rc = init_permanent_gf7_from_slices(&add_arr, &sub_arr, &mul_arr);
+/// assert_eq!(rc, 0, "hipSuccess");
+/// # }
+/// ```
+pub fn init_permanent_gf7_from_slices(
+    add_lut: &[u8; 65536],
+    sub_lut: &[u8; 65536],
+    mul_lut: &[u8; 65536],
+) -> i32 {
+    // SAFETY: add_lut, sub_lut, mul_lut are valid host references of exactly
+    // 65536 bytes each. The `as_ptr()` calls return non-null pointers into
+    // the referenced data. The HIP runtime must be initialised (a device
+    // context must be active).
+    let rc = unsafe {
+        permanent_bipedal7_hip_init(add_lut.as_ptr(), sub_lut.as_ptr(), mul_lut.as_ptr())
+    };
+    memoise_init_outcome(&GF7_INIT_RC, rc);
+    rc
+}
+
+// ---------------------------------------------------------------------------
+// Safe host-dispatch wrappers
+//
+// The unsafe FFI surface above requires device pointers (obtained from
+// hipMalloc) and must be called within `unsafe` blocks. The three safe
+// wrappers below hide all of that behind the `DeviceBuffer` RAII helper
+// from `crate` (lib.rs) and the `check_hip` panic-on-error helper.
+//
+// `gf2-algebra::gpu` calls these from its `#![deny(unsafe_code)]`
+// environment, so they must be entirely safe on the Rust side. Any HIP
+// error surfaces as a panic (consistent with the CPU permanent entry points
+// that also panic on bad arguments).
+//
+// Each wrapper:
+//   1. Validates preconditions (n, m, slice length).
+//   2. Allocates device memory for the input matrix byte buffer and the
+//      u64 output array.
+//   3. Copies inputs H2D.
+//   4. Calls the corresponding `compute_permanent_gfX_batch` kernel launch.
+//   5. Calls `hipDeviceSynchronize`.
+//   6. Copies outputs D2H.
+//   7. Returns the output as `Vec<u64>`. Device memory is freed by `Drop`
+//      on the `DeviceBuffer` RAII wrappers.
+// ---------------------------------------------------------------------------
+
+/// Run the F_3 permanent GPU kernel on a batch of pre-serialised matrices
+/// and return the results as a host `Vec<u64>`.
+///
+/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
+/// order, one `u8` per GF(3) element (values 0, 1, 2). Output `result[i]`
+/// is the permanent of matrix `i` modulo 3.
+///
+/// # Arguments
+///
+/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
+///   arrays of GF(3) values (`0..=2`). Length must equal `m * n * n`.
+/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
+/// - `m` — batch size; must be `>= 1`.
+///
+/// # Returns
+///
+/// `Vec<u64>` of length `m` where `result[i]` is the permanent of the
+/// i-th input matrix modulo 3.
+///
+/// # Panics
+///
+/// Panics if any HIP runtime call (hipMalloc, hipMemcpy, kernel, sync)
+/// returns a non-zero error code, if `n` is outside `1..=63`, or if
+/// `host_matrices.len() != m * n * n`.
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` GPU work per matrix (all `m` matrices run in parallel).
+/// Host overhead: two `hipMalloc` + two `hipMemcpy` + one
+/// `hipDeviceSynchronize`.
+///
+/// # Examples
+///
+/// ```ignore
+/// // Skipped under `cargo test` (requires ROCm + gfx1030):
+/// # #[cfg(feature = "hip")] {
+/// use gf2_kernels_hip::permanent::permanent_gf3_batch_dispatch;
+/// // 1 identity matrix, n=2, in row-major GF(3) bytes: [[1,0],[0,1]]
+/// let results = permanent_gf3_batch_dispatch(&[1, 0, 0, 1], 2, 1);
+/// assert_eq!(results[0], 1); // perm = 1
+/// # }
+/// ```
+pub fn permanent_gf3_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
+    assert!(
+        (1..=63).contains(&n),
+        "permanent_gf3_batch_dispatch: n must be in 1..=63, got n = {n}"
+    );
+    assert!(m >= 1, "permanent_gf3_batch_dispatch: m must be >= 1");
+    assert_eq!(
+        host_matrices.len(),
+        m * n * n,
+        "permanent_gf3_batch_dispatch: host_matrices.len() ({}) != m * n * n ({})",
+        host_matrices.len(),
+        m * n * n
+    );
+
+    let total_bytes = m * n * n;
+    let out_bytes = m * std::mem::size_of::<u64>();
+
+    let d_mat = crate::DeviceBuffer::new(total_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: {e}"));
+    let d_out = crate::DeviceBuffer::new(out_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: {e}"));
+
+    d_mat
+        .copy_from_host(host_matrices)
+        .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: H2D copy failed: {e}"));
+
+    // SAFETY: d_mat and d_out are valid device allocations. n and m are
+    // validated above. The FFI pointers are device-only and not
+    // dereferenced on the host.
+    let rc = unsafe {
+        compute_permanent_gf3_batch(
+            d_mat.as_ptr() as *const u8,
+            n as c_int,
+            m as c_int,
+            d_out.as_mut_ptr() as *mut u64,
+        )
+    };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf3_batch_dispatch: compute_permanent_gf3_batch returned HIP error {rc}"
+    );
+
+    // SAFETY: hipDeviceSynchronize has no preconditions.
+    let rc = unsafe { crate::ffi::hip_device_synchronize() };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf3_batch_dispatch: hipDeviceSynchronize returned HIP error {rc}"
+    );
+
+    let mut out = vec![0u64; m];
+    // SAFETY: `out` is a host-allocated Vec<u64>; reinterpreting as &mut [u8] is
+    // safe because u64 has no padding.
+    let out_bytes_slice = unsafe {
+        std::slice::from_raw_parts_mut(out.as_mut_ptr() as *mut u8, m * std::mem::size_of::<u64>())
+    };
+    d_out
+        .copy_to_host(out_bytes_slice)
+        .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: D2H copy failed: {e}"));
+
+    out
+}
+
+/// Run the F_5 permanent GPU kernel on a batch of pre-serialised matrices
+/// and return the results as a host `Vec<u64>`.
+///
+/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
+/// order, one `u8` per GF(5) element (values 0..=4). Output `result[i]`
+/// is the permanent of matrix `i` modulo 5.
+///
+/// # Arguments
+///
+/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
+///   arrays of GF(5) values (`0..=4`). Length must equal `m * n * n`.
+/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
+/// - `m` — batch size; must be `>= 1`.
+///
+/// # Returns
+///
+/// `Vec<u64>` of length `m`.
+///
+/// # Panics
+///
+/// Panics on HIP errors or invalid arguments (see [`permanent_gf3_batch_dispatch`]).
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` GPU work per matrix.
+///
+/// # Examples
+///
+/// ```ignore
+/// // Skipped under `cargo test` (requires ROCm + gfx1030):
+/// # #[cfg(feature = "hip")] {
+/// use gf2_kernels_hip::permanent::permanent_gf5_batch_dispatch;
+/// let results = permanent_gf5_batch_dispatch(&[1, 0, 0, 1], 2, 1);
+/// assert_eq!(results[0], 1); // perm of identity = 1
+/// # }
+/// ```
+pub fn permanent_gf5_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
+    assert!(
+        (1..=63).contains(&n),
+        "permanent_gf5_batch_dispatch: n must be in 1..=63, got n = {n}"
+    );
+    assert!(m >= 1, "permanent_gf5_batch_dispatch: m must be >= 1");
+    assert_eq!(
+        host_matrices.len(),
+        m * n * n,
+        "permanent_gf5_batch_dispatch: host_matrices.len() ({}) != m * n * n ({})",
+        host_matrices.len(),
+        m * n * n
+    );
+
+    let total_bytes = m * n * n;
+    let out_bytes = m * std::mem::size_of::<u64>();
+
+    let d_mat = crate::DeviceBuffer::new(total_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: {e}"));
+    let d_out = crate::DeviceBuffer::new(out_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: {e}"));
+
+    d_mat
+        .copy_from_host(host_matrices)
+        .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: H2D copy failed: {e}"));
+
+    // SAFETY: d_mat and d_out are valid device allocations; n, m validated.
+    let rc = unsafe {
+        compute_permanent_gf5_batch(
+            d_mat.as_ptr() as *const u8,
+            n as c_int,
+            m as c_int,
+            d_out.as_mut_ptr() as *mut u64,
+        )
+    };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf5_batch_dispatch: compute_permanent_gf5_batch returned HIP error {rc}"
+    );
+
+    // SAFETY: hipDeviceSynchronize has no preconditions.
+    let rc = unsafe { crate::ffi::hip_device_synchronize() };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf5_batch_dispatch: hipDeviceSynchronize returned HIP error {rc}"
+    );
+
+    let mut out = vec![0u64; m];
+    // SAFETY: reinterpreting Vec<u64> as &mut [u8] is safe (no padding in u64).
+    let out_bytes_slice = unsafe {
+        std::slice::from_raw_parts_mut(out.as_mut_ptr() as *mut u8, m * std::mem::size_of::<u64>())
+    };
+    d_out
+        .copy_to_host(out_bytes_slice)
+        .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: D2H copy failed: {e}"));
+
+    out
+}
+
+/// Run the F_7 permanent GPU kernel on a batch of pre-serialised matrices
+/// and return the results as a host `Vec<u64>`.
+///
+/// **Precondition:** the F_7 device LUTs must have been initialised by a
+/// prior call to [`init_permanent_gf7`] (or by calling this via
+/// `gf2_algebra::gpu::permanent_batch_bipedal7`, which does the one-shot
+/// init automatically). If the memoised init state is non-zero (failed or
+/// never called), this function panics.
+///
+/// `host_matrices` must contain exactly `m * n * n` bytes in row-major
+/// order, one `u8` per GF(7) element (values 0..=6). Output `result[i]`
+/// is the permanent of matrix `i` modulo 7.
+///
+/// # Arguments
+///
+/// - `host_matrices` — flat row-major byte buffer: `m` consecutive `n×n`
+///   arrays of GF(7) values (`0..=6`). Length must equal `m * n * n`.
+/// - `n` — matrix dimension; must satisfy `1 <= n <= 63`.
+/// - `m` — batch size; must be `>= 1`.
+///
+/// # Returns
+///
+/// `Vec<u64>` of length `m`.
+///
+/// # Panics
+///
+/// Panics on HIP errors, invalid arguments, or if `init_permanent_gf7`
+/// has not been called successfully beforehand.
+///
+/// # Complexity
+///
+/// `O(n · 2^n)` GPU work per matrix.
+///
+/// # Examples
+///
+/// ```ignore
+/// // Skipped under `cargo test` (requires ROCm + gfx1030 + init):
+/// # #[cfg(feature = "hip")] {
+/// use gf2_kernels_hip::permanent::{init_permanent_gf7, permanent_gf7_batch_dispatch};
+/// // Caller must init LUTs first.
+/// // unsafe { init_permanent_gf7(add_ptr, sub_ptr, mul_ptr) };
+/// let results = permanent_gf7_batch_dispatch(&[1, 0, 0, 1], 2, 1);
+/// assert_eq!(results[0], 1); // perm of identity = 1
+/// # }
+/// ```
+pub fn permanent_gf7_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) -> Vec<u64> {
+    assert!(
+        (1..=63).contains(&n),
+        "permanent_gf7_batch_dispatch: n must be in 1..=63, got n = {n}"
+    );
+    assert!(m >= 1, "permanent_gf7_batch_dispatch: m must be >= 1");
+    assert_eq!(
+        host_matrices.len(),
+        m * n * n,
+        "permanent_gf7_batch_dispatch: host_matrices.len() ({}) != m * n * n ({})",
+        host_matrices.len(),
+        m * n * n
+    );
+
+    let total_bytes = m * n * n;
+    let out_bytes = m * std::mem::size_of::<u64>();
+
+    let d_mat = crate::DeviceBuffer::new(total_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: {e}"));
+    let d_out = crate::DeviceBuffer::new(out_bytes)
+        .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: {e}"));
+
+    d_mat
+        .copy_from_host(host_matrices)
+        .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: H2D copy failed: {e}"));
+
+    // SAFETY: d_mat and d_out are valid device allocations; n, m validated.
+    // init_permanent_gf7 must have been called; compute_permanent_gf7_batch
+    // checks the memoised GF7_INIT_RC and returns non-zero if not done.
+    let rc = unsafe {
+        compute_permanent_gf7_batch(
+            d_mat.as_ptr() as *const u8,
+            n as c_int,
+            m as c_int,
+            d_out.as_mut_ptr() as *mut u64,
+        )
+    };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf7_batch_dispatch: compute_permanent_gf7_batch returned HIP error {rc}. \
+         Ensure init_permanent_gf7 was called successfully first."
+    );
+
+    // SAFETY: hipDeviceSynchronize has no preconditions.
+    let rc = unsafe { crate::ffi::hip_device_synchronize() };
+    assert_eq!(
+        rc, 0,
+        "permanent_gf7_batch_dispatch: hipDeviceSynchronize returned HIP error {rc}"
+    );
+
+    let mut out = vec![0u64; m];
+    // SAFETY: reinterpreting Vec<u64> as &mut [u8] is safe (no padding in u64).
+    let out_bytes_slice = unsafe {
+        std::slice::from_raw_parts_mut(out.as_mut_ptr() as *mut u8, m * std::mem::size_of::<u64>())
+    };
+    d_out
+        .copy_to_host(out_bytes_slice)
+        .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: D2H copy failed: {e}"));
+
+    out
+}
+
 #[cfg(test)]
 mod init_state_machine_tests {
     //! Pure-Rust unit tests for the [`memoise_init_outcome`] CAS state
