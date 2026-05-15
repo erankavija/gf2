@@ -52,16 +52,23 @@ def _resolve_csv(input_dir: Path, filename: str) -> Path:
     """Return the absolute path to *filename* under *input_dir*.
 
     Raises FileNotFoundError with the absolute path if the file is missing.
+    If the exact dated filename is absent but a date-suffix glob match exists,
+    log the substitution to stderr so the audit trail records which file was
+    actually consumed.
     """
-    # Try exact name first, then glob for name-stem (ignoring date suffix).
     path = input_dir / filename
     if path.exists():
         return path
-    # Fallback: find any file whose name starts with the stem before the date.
     stem = filename.split("-")[0]  # e.g. "s1_speedup"
     candidates = sorted(input_dir.glob(f"{stem}-*.csv"))
     if candidates:
-        return candidates[-1]  # most recent date suffix wins
+        substitute = candidates[-1]  # most recent date suffix wins
+        print(
+            f"  [warn] {filename!r} not found in {input_dir}; "
+            f"using {substitute.name!r} instead (most recent match)",
+            file=sys.stderr,
+        )
+        return substitute
     raise FileNotFoundError(f"missing input CSV: {path.resolve()}")
 
 
@@ -105,7 +112,21 @@ def _apply_style() -> None:
 S1_FILENAME = "s1_speedup-2026-05-11.csv"
 
 def plot_speedup(input_dir: Path, output_dir: Path) -> Path:
-    """Fig (a): wall-clock time (log scale) vs n for reference vs bipedal3-SIMD."""
+    """Fig (a): wall-clock time (log scale) vs n for the F_3 permanent paths.
+
+    Overlays:
+      - permanent_mod3_reference (S1)
+      - permanent_bipedal3_simd (S1; AVX2)
+      - permanent_bipedal3_parallel (S2; 12-thread, the dev host's full physical-core
+        count). The S2 CSV's thread sweep at each n is restricted to max-thread rows
+        for this overlay so the curve directly reads as wall-clock vs n at the parallel
+        path's best configuration.
+
+    The scalar bipedal3 fallback path is exercised at unit-test time
+    (`test_simd_vs_scalar_n24` and friends) but is not separately benchmarked in S1,
+    because the production dispatch path always selects AVX2 on the dev host. If a
+    scalar-only S1 column appears in future, the auto-style branch picks it up.
+    """
     csv_path = _resolve_csv(input_dir, S1_FILENAME)
     rows = _read_csv(csv_path)
 
@@ -125,6 +146,29 @@ def plot_speedup(input_dir: Path, output_dir: Path) -> Path:
         paired = sorted(zip(ns, ts))
         data[impl] = ([p[0] for p in paired], [p[1] for p in paired])
 
+    # Overlay S2 max-thread parallel data if present.
+    parallel_ns: list[int] = []
+    parallel_ts: list[float] = []
+    try:
+        s2_path = _resolve_csv(input_dir, S2_FILENAME)
+        s2_rows = _read_csv(s2_path)
+        # Group by n, pick the max-thread row per n.
+        per_n: dict[int, tuple[int, float]] = {}
+        for row in s2_rows:
+            n = int(row["n"])
+            t = int(row["threads"])
+            mean_s = float(row["mean_us"]) / 1e6
+            prev = per_n.get(n)
+            if prev is None or t > prev[0]:
+                per_n[n] = (t, mean_s)
+        for n in sorted(per_n.keys()):
+            parallel_ns.append(n)
+            parallel_ts.append(per_n[n][1])
+    except FileNotFoundError:
+        # S2 absent: emit a clear info line; the figure still renders reference + SIMD.
+        print("  [info] S2 CSV missing; parallel curve omitted from figure (a)",
+              file=sys.stderr)
+
     _apply_style()
     fig, ax = plt.subplots()
 
@@ -143,6 +187,10 @@ def plot_speedup(input_dir: Path, output_dir: Path) -> Path:
             auto_idx += 1
             kw = dict(color=c, marker="^", linestyle="--", label=impl.replace("_", " "))
         ax.semilogy(ns, ts, **kw)
+
+    if parallel_ns:
+        ax.semilogy(parallel_ns, parallel_ts, color="#27ae60", marker="D",
+                    linestyle="-.", label="Bipedal3-parallel (12-thread)")
 
     ax.set_xlabel("Matrix dimension n")
     ax.set_ylabel("Wall-clock time (seconds, log scale)")
@@ -267,6 +315,16 @@ def plot_cross_cpu(input_dir: Path, output_dir: Path) -> Path:
 
     # Common n values across scalar and avx2 (for sanity-check at n=16/20/24)
     sanity_impl = next((k for k in data if "sanity" in k), None)
+
+    # Guard: refuse to silently save an empty figure if the impl classifiers
+    # didn't recognise the CSV's impl names. The substring heuristics depend on
+    # the S3 CSV's column naming convention; if it changes upstream we want a
+    # clear error rather than an empty bar chart.
+    if not scalar_impl or not (sanity_impl or avx2_impl):
+        raise ValueError(
+            f"S3 CSV at {csv_path} did not yield recognisable 'scalar' and "
+            f"'avx2' impl names; found: {sorted(data.keys())}"
+        )
 
     # Choose n values: prefer sanity-check rows (n=16,20,24) since those have both scalar+avx2.
     # Also include the large-n avx2-only rows for context, displayed separately.
@@ -485,6 +543,30 @@ def main() -> None:
         targets = list(SUBCOMMANDS.keys())
     else:
         targets = [args.subcommand]
+
+    # Pre-flight: in `all` mode, verify every target's input CSV resolves
+    # BEFORE we write any figure. This prevents the "partial figure set"
+    # failure mode where S1/S2/S3 succeed and we crash on S5's missing input,
+    # leaving an inconsistent figures/ directory on disk.
+    csv_for_target = {
+        "speedup":       S1_FILENAME,
+        "parallel":      S2_FILENAME,
+        "cross_cpu":     S3_FILENAME,
+        "gpu_crossover": S5_FILENAME,
+    }
+    if args.subcommand == "all":
+        missing = []
+        for name in targets:
+            try:
+                _resolve_csv(input_dir, csv_for_target[name])
+            except FileNotFoundError as exc:
+                missing.append(str(exc))
+        if missing:
+            raise FileNotFoundError(
+                "all-mode pre-flight: refusing to write any figure because "
+                "one or more required input CSVs are missing:\n  - "
+                + "\n  - ".join(missing)
+            )
 
     print(f"Input:  {input_dir}")
     print(f"Output: {output_dir}")
