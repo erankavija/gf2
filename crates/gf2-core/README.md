@@ -159,7 +159,7 @@ Deep dives under `docs/`:
 
 ## Safety
 
-`#![deny(unsafe_code)]`. Unsafe SIMD lives in `gf2-kernels-simd`; GPU kernels in `gf2-kernels-hip` (used only from `gf2-coding` under the `hip` feature).
+`#![deny(unsafe_code)]`. Unsafe SIMD lives in `gf2-kernels-simd`; GPU kernels in `gf2-kernels-hip`, consumed from `gf2-coding` (BCJR / Gray-QAM demap) and `gf2-algebra` (batch permanents over F_3 / F_5 / F_7) under each crate's `hip` feature.
 
 ## License
 
