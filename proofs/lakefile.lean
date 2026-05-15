@@ -6,7 +6,7 @@ require aeneas from "/data/aeneas-build" / "backends" / "lean"
 
 -- Mathlib (also a transitive dep via Aeneas, declared explicitly for clarity)
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.28.0-rc1"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
 
 package gf2core where
   leanOptions := #[
