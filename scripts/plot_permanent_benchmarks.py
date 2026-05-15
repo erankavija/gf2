@@ -191,7 +191,7 @@ def plot_speedup(input_dir: Path, output_dir: Path) -> Path:
 
     ax.set_xlabel("Matrix dimension n")
     ax.set_ylabel("Wall-clock time (seconds, log scale)")
-    ax.set_title("F₃ Permanent: log-time vs n (single thread)")
+    ax.set_title("F₃ Permanent: log-time vs n (S1 single-thread + S2 12-thread)")
     ax.xaxis.set_major_locator(ticker.MultipleLocator(4))
     ax.grid(True, which="both")
     ax.legend()
