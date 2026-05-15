@@ -12,15 +12,15 @@
     "cargo-ci"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T18:28:21.929479406Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-15T18:18:37.207414816Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T18:18:55.464784579Z"
     },
     "lake-build": {
       "status": "passed",
@@ -36,5 +36,5 @@
     "milestone:1.0"
   ],
   "created_at": "2026-05-15T17:17:56.457786669+00:00",
-  "updated_at": "2026-05-15T18:27:28.683791882+00:00"
+  "updated_at": "2026-05-15T18:32:48.578710095+00:00"
 }

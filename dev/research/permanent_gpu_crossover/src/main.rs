@@ -38,48 +38,38 @@ mod harness {
     use std::io::Write;
     use std::time::Instant;
 
-    /// Matrix dimensions swept. Wider sweep is impractical: CPU Gray-walk cost grows as
-    /// 2^n. At n=36, the CPU SIMD path takes ~848s per matrix (from S1 measurement),
-    /// making n=40 (~13500s per matrix) and n=44 impractical for CPU timing.
-    /// The crossover question is fully answerable within n ∈ {24, 28, 32, 36}:
-    /// the GPU wins at all these n (see results), so the threshold is below n=24.
+    /// Matrix dimensions swept at the **fixed batch size** specified by [`BATCH_SIZE`].
     ///
-    /// For n=40/44 the GPU path is timed but the CPU path is estimated from the
-    /// S1 extrapolation (actual CPU measurement would require ~11+ hours of runtime).
-    pub const N_VALUES: &[usize] = &[24, 28, 32, 36];
+    /// The sweep is restricted to `n ∈ {24, 28}` so the CPU SIMD side completes within the
+    /// per-cell wall-clock budget (~5 min CPU at n=24, ~14 min CPU at n=28). Larger `n` at
+    /// `M = 256` is impractical: CPU SIMD time grows as `M × n × 2^n`, putting n=32 at
+    /// ~13,500 s of CPU wall-clock per repetition (~3.7 h). The crossover question at the
+    /// production batch size is fully answerable from these two points: the GPU wins at
+    /// both with comparable speedup, so the crossover threshold (at M=256) lies below the
+    /// smallest tested n. Extrapolation to larger n and the M-dependence of the crossover
+    /// is discussed in `dev/plans/s5_gpu_crossover.md` §3.
+    pub const N_VALUES: &[usize] = &[24, 28];
 
-    /// Batch sizes per n. Calibrated so each n-cell completes in < 5 min.
+    /// Fixed batch size for both CPU and GPU paths. The criterion requires a single
+    /// `M` value across the sweep so the throughput-vs-n plot has a well-defined batch
+    /// dimension.
     ///
-    /// CPU time per matrix (from S1 benchmark):
-    ///   n=24: ~214ms, n=28: ~3.4s, n=32: ~53s, n=36: ~848s
-    ///
-    /// Target: CPU total wall-clock per n-cell (M * REPEATS * per_mat) < 5 min = 300s.
-    ///   n=24: M=256, 3 reps → 256 * 0.214 * 3 = 164s (OK)
-    ///   n=28: M=16,  3 reps → 16  * 3.4   * 3 = 163s (OK)
-    ///   n=32: M=4,   2 reps → 4   * 53    * 2 = 424s (borderline; 1 rep = 212s, OK)
-    ///   n=36: M=1,   1 rep  → 1   * 848   * 1 = 848s (skip CPU; record GPU only)
-    ///
-    /// For n=36, only GPU is timed; cpu_simd_perm_per_s is 0 and gpu_wins = true by
-    /// extrapolation.
-    fn batch_size(n: usize) -> usize {
-        match n {
-            ..=24 => 256,
-            28 => 16,
-            32 => 4,
-            _ => 1,
-        }
+    /// `M = 256` is the production batch size: it matches the GPU dispatcher's typical
+    /// per-launch occupancy on gfx1030 (~80 CUs × 3 waves) and is the size at which the
+    /// GPU path's per-launch overhead is fully amortized. The writeup §3 discusses why
+    /// smaller M shifts the crossover.
+    pub const BATCH_SIZE: usize = 256;
+
+    fn batch_size(_n: usize) -> usize {
+        BATCH_SIZE
     }
 
-    /// Number of timed repetitions per (n, M) cell; we take the median.
-    /// Reduced to 1 for n=32+ to stay under wall-clock budget.
-    fn repeats(n: usize) -> usize {
-        match n {
-            ..=28 => 3,
-            _ => 1,
-        }
+    /// Number of timed repetitions per cell; the median is reported.
+    fn repeats(_n: usize) -> usize {
+        REPEATS
     }
 
-    /// Placeholder for the REPEATS constant used in CSV header.
+    /// Repetitions used for the median-of-K timing.
     const REPEATS: usize = 3;
 
     /// Deterministic seed (documented in the CSV header).
@@ -214,8 +204,8 @@ mod harness {
         writeln!(f, "# seed: {:#018x}", m.seed).unwrap();
         writeln!(
             f,
-            "# sweep: n ∈ {:?}, M=256/n=24, M=16/n=28, M=4/n=32, M=1/n=36; reps=3 for n<=28 else 1",
-            N_VALUES
+            "# sweep: n ∈ {:?}, fixed M={}, reps={} (median wall-clock)",
+            N_VALUES, BATCH_SIZE, REPEATS
         )
         .unwrap();
         writeln!(
@@ -310,24 +300,15 @@ mod harness {
             let matrices = build_matrices(n, m, SEED ^ (n as u64));
 
             // --- CPU SIMD: reps timed repetitions, take median ---
-            // For n=36 the CPU path takes ~848s per matrix; skip CPU timing and
-            // record 0 (noted in header comment).
-            let (cpu_med_t, cpu_med_pps) = if n >= 36 {
-                println!("  {n:>4}  CPU path skipped at n={n} (estimated ~{:.0}s/matrix from S1 extrapolation; impractical for M={m})",
-                    848.0_f64 * 4.0_f64.powi((n as i32 - 36) / 4));
-                (0.0_f64, 0.0_f64)
-            } else {
-                let mut cpu_times = vec![0f64; reps];
-                let mut cpu_pps_v = vec![0f64; reps];
-                for rep in 0..reps {
-                    let (t, p) = time_cpu_simd(&matrices);
-                    cpu_times[rep] = t;
-                    cpu_pps_v[rep] = p;
-                }
-                let med_t = median_vec(&cpu_times);
-                let med_pps = median_vec(&cpu_pps_v);
-                (med_t, med_pps)
-            };
+            let mut cpu_times = vec![0f64; reps];
+            let mut cpu_pps_v = vec![0f64; reps];
+            for rep in 0..reps {
+                let (t, p) = time_cpu_simd(&matrices);
+                cpu_times[rep] = t;
+                cpu_pps_v[rep] = p;
+            }
+            let cpu_med_t = median_vec(&cpu_times);
+            let cpu_med_pps = median_vec(&cpu_pps_v);
 
             // --- GPU batch: reps timed repetitions (includes H2D + kernel + D2H), take median ---
             let mut gpu_times = vec![0f64; reps];
@@ -340,38 +321,22 @@ mod harness {
             let gpu_med_t = median_vec(&gpu_times);
             let gpu_med_pps = median_vec(&gpu_pps_v);
 
-            // Compute ratio; for n=36+ cpu=0 means ratio is "inf" (GPU wins)
-            let (ratio, gpu_wins) = if cpu_med_pps > 0.0 {
-                let r = gpu_med_pps / cpu_med_pps;
-                (r, r > 1.0)
-            } else {
-                (f64::INFINITY, true)
-            };
-
-            let ratio_str = if ratio.is_infinite() {
-                "inf".to_string()
-            } else {
-                format!("{ratio:.4}")
-            };
+            let ratio = gpu_med_pps / cpu_med_pps;
+            let gpu_wins = ratio > 1.0;
 
             println!(
-                "{:>4}  {:>5}  {:>22.3}  {:>22.3}  {:>12}  {}",
+                "{:>4}  {:>5}  {:>22.3}  {:>22.3}  {:>12.4}  {}",
                 n,
                 m,
                 cpu_med_pps,
                 gpu_med_pps,
-                ratio_str,
+                ratio,
                 if gpu_wins { "YES" } else { "no" }
             );
 
-            let ratio_csv = if ratio.is_infinite() {
-                "inf".to_string()
-            } else {
-                format!("{ratio:.6}")
-            };
             writeln!(
                 csv_file,
-                "{n},{m},{cpu_med_t:.6},{cpu_med_pps:.3},{gpu_med_t:.6},{gpu_med_pps:.3},{ratio_csv},{gpu_wins}"
+                "{n},{m},{cpu_med_t:.6},{cpu_med_pps:.3},{gpu_med_t:.6},{gpu_med_pps:.3},{ratio:.6},{gpu_wins}"
             )
             .unwrap();
         }
