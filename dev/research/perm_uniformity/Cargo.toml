@@ -7,6 +7,23 @@ authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
 publish = false
 description = "Empirical perm-vs-det uniformity comparison over F_3/F_5/F_7 (JIT issue 8e4e19a0). Standalone non-workspace prototype."
 
+# D5 note: this crate is intentionally excluded from the root workspace so it
+# does not slow the default `cargo nextest` build.  The canonical build
+# invocations are:
+#
+#   cargo build --manifest-path dev/research/perm_uniformity/Cargo.toml --release
+#   cargo nextest run --manifest-path dev/research/perm_uniformity/Cargo.toml --release --profile ci
+#
+# The criterion-1 text reads `cargo build -p perm-uniformity --release`; because
+# this crate is not in the root workspace, that invocation fails with
+# "package ID specification did not match any packages".  The correct form is
+# the --manifest-path invocation above, matching the permanent_gpu_crossover
+# and gf2-kernels-hip precedents (see .jit/issues/5c0505b2 Amendment 2026-05-15).
+
+[lib]
+name = "perm_uniformity"
+path = "src/lib.rs"
+
 [[bin]]
 name = "perm_uniformity"
 path = "src/main.rs"

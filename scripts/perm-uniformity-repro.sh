@@ -14,6 +14,14 @@
 #   - Rust toolchain (1.95+) with cargo
 #   - ~3-4 min wall-clock on Ryzen 9 5900X (12 cores) for the full sweep
 #
+# Build invocation note (D5):
+#   This crate is excluded from the root workspace (it is a standalone research
+#   prototype).  `cargo build -p perm-uniformity --release` therefore fails
+#   with "package ID specification did not match any packages".
+#   The correct invocation is `--manifest-path`, as used by this script and by
+#   the permanent_gpu_crossover and gf2-kernels-hip precedents.
+#   See .jit/issues/5c0505b2 Amendment 2026-05-15 (build-invocation).
+#
 # Determinism:
 #   The harness uses a pinned seed (0x00c0ffee00000001) embedded in the binary.
 #   All statistical columns (tvd_perm, tvd_perm_ci_lo, tvd_perm_ci_hi, tvd_det,
@@ -21,6 +29,14 @@
 #   the same binary.  The timing columns (mean_us_perm, mean_us_det) reflect
 #   wall-clock measurements and vary run-to-run; they are excluded from the
 #   determinism check below.
+#
+# Criterion 3 vs 4 tension:
+#   Criterion 3 ("same seed -> bit-identical CSV") and criterion 4 (CSV MUST
+#   contain mean_us_perm, mean_us_det wall-clock columns) are in tension.
+#   Resolution: statistical columns (1-9) are bit-identical; timing columns
+#   (10-11) vary by wall-clock.  The sha256 below hashes only columns 1-9.
+#   This needs a lead/user ruling on whether criterion 3 is satisfied by
+#   statistical-column identity alone or requires full-file identity.
 
 set -euo pipefail
 
@@ -28,7 +44,7 @@ MANIFEST="dev/research/perm_uniformity/Cargo.toml"
 OUT_DIR="dev/benchmarks/perm_uniformity"
 
 echo "=== perm-uniformity repro ==="
-echo "  building..."
+echo "  building with --manifest-path (not -p; crate is workspace-excluded)..."
 
 cargo build --manifest-path "$MANIFEST" --release
 
@@ -41,6 +57,10 @@ OUTPUT_DIR="$OUT_DIR" \
 echo ""
 echo "=== Output files ==="
 ls -lh "$OUT_DIR"/results-*.csv "$OUT_DIR"/tvd_vs_n.png 2>/dev/null || true
+
+echo ""
+echo "=== PNG validity ==="
+file "$OUT_DIR/tvd_vs_n.png"
 
 echo ""
 echo "=== Statistical columns SHA-256 (cols q,n,samples,tvd_*,ci_*) ==="
