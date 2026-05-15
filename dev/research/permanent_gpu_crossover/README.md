@@ -7,9 +7,10 @@ The harness sweeps `n ∈ {24, 28}` at a **fixed batch size `M = 256`**, with
 3 timed repetitions per cell (median wall-clock reported). It compares sequential
 CPU SIMD (`permanent_bipedal3`) against GPU batch
 (`gf2_algebra::gpu::permanent_batch_bipedal3`) on the same matrices. Larger `n`
-at `M = 256` is outside the per-cell wall-clock budget (CPU SIMD at `n = 32` would
-take ~11 h per repetition); the M-dependence of the crossover and extrapolations
-to larger `n` are discussed in `dev/plans/s5_gpu_crossover.md` §3.
+at `M = 256` is outside the per-cell wall-clock budget: CPU SIMD at `n = 32` would
+take ~3.7 h per repetition (256 × 53 s ≈ 13,500 s), i.e. ~11 h for the full
+3-repetition cell. The M-dependence of the crossover and extrapolations to larger
+`n` are discussed in `dev/plans/s5_gpu_crossover.md` §3.
 
 The substantive writeup and results table live at `dev/plans/s5_gpu_crossover.md`.
 The CSV output lands at `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-YYYY-MM-DD.csv`.
