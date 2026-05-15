@@ -16,21 +16,29 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T08:34:53.523876632Z"
+      "updated_at": "2026-05-15T08:44:58.791350611Z"
     },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T08:34:59.621488477Z"
+      "updated_at": "2026-05-15T08:57:30.389241445Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/ae82bd73-w5-gpu-verification.md",
+      "commit": "0e4dd3398589d33c751d8aed803de587c5573523",
+      "label": "gfx1030 GPU run evidence for W5 kernel bit-identity + LUT checksum",
+      "doc_type": "verification",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-05-09T09:47:22.088994039+00:00",
-  "updated_at": "2026-05-15T08:38:47.923443145+00:00"
+  "updated_at": "2026-05-15T09:00:26.537913001+00:00"
 }
