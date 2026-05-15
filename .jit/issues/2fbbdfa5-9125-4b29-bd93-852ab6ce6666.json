@@ -2,7 +2,7 @@
   "id": "2fbbdfa5-9125-4b29-bd93-852ab6ce6666",
   "title": "Host-side GPU dispatcher in gf2-algebra",
   "description": "Land the host-side GPU dispatcher in `gf2-algebra::gpu` that routes batch-permanent workloads to the F_3 / F_5 / F_7 HIP kernels (T23-T25), with feature-gated compilation under `hip`.\n\n## Background\n\nUsers call `gf2_algebra::gpu::permanent_batch_bipedal3(&matrices)` and similar. The dispatcher checks the `hip` feature is on, validates the device exists, copies inputs to device memory, launches the appropriate kernel, copies outputs back. CPU fallback is `permanent_bipedal3` from T13, used when `hip` is not enabled at compile time or the device is missing at runtime.\n\n## Success Criteria\n\n- [ ] [hard] `gf2_algebra::gpu::permanent_batch_bipedal3`, `permanent_batch_bipedal5`, `permanent_batch_bipedal7` exist behind the `hip` feature.\n- [ ] [hard] Without `hip`, the entry points either return a `cfg`-disabled compile error or fall back to per-matrix CPU iteration; document the chosen behaviour in the function docs.\n- [ ] [hard] On a gfx1030 host with `hip` enabled, end-to-end batch test: 1000 random matrices for $n=24$ produce results bit-identical to the CPU path.\n- [ ] [hard] Tests gated `#[cfg(feature = \"hip\")]` and `#[ignore = \"external: gfx1030 device required\"]`.\n- [ ] [hard] `cargo build -p gf2-algebra --release --features hip` succeeds on a ROCm host.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -25,5 +25,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:47:29.713162691+00:00",
-  "updated_at": "2026-05-09T09:50:01.187172078+00:00"
+  "updated_at": "2026-05-15T09:23:39.295742812+00:00"
 }
