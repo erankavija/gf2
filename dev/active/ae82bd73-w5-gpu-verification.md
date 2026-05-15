@@ -90,8 +90,35 @@ Per-test contract:
 | 2 (n=12) | `test_permanent_bipedal7_gpu_bit_identity_n12` | 0.275 s | PASS — bit-identical for all 100 matrices |
 | 3        | `test_permanent_bipedal7_constant_lut_checksum_matches_host` | 0.254 s | PASS — GPU `__constant__ d_MUL_LUT` byte-checksum equals host static const byte-checksum |
 
+## F_7 init state machine unit tests (5c0505b2 — regression coverage)
+
+Beyond the on-device evidence above, the `init_permanent_gf7` CAS-loop
+state machine introduced in commit `892f0339` (and refactored into a
+testable helper in commit `2cae4579`) is covered by six host-side unit
+tests that do not require a GPU:
+
+```
+$ cargo nextest run --manifest-path crates/gf2-kernels-hip/Cargo.toml \
+       --features hip --release -E 'test(test_memoise_init)'
+        PASS [   0.015s] permanent::init_state_machine_tests::test_memoise_init_failed_init_records_rc
+        PASS [   0.015s] permanent::init_state_machine_tests::test_memoise_init_successful_init_records_zero
+        PASS [   0.015s] permanent::init_state_machine_tests::test_memoise_init_success_overwrites_prior_failure
+        PASS [   0.015s] permanent::init_state_machine_tests::test_memoise_init_failure_does_not_overwrite_success
+        PASS [   0.015s] permanent::init_state_machine_tests::test_memoise_init_repeated_success_idempotent
+        PASS [   0.016s] permanent::init_state_machine_tests::test_memoise_init_concurrent_success_wins
+     Summary 6 tests run: 6 passed
+```
+
+These cover the regression that prompted the rewrite: the prior
+non-atomic load-then-store could allow a failed init to clobber a
+concurrent successful one. The "success stickiness" and "concurrent
+success wins" tests directly exercise the invariant the new CAS loop
+preserves.
+
 ## Summary
 
 All five hard criteria for each of the three W5 kernel issues are satisfied
-at HEAD `97af9dad` on the gfx1030 dev host. The reduced per-n test counts
-on F_3 (n=32, n=40, n=63) are per Amendment 2026-05-15 on `ad55b777`.
+at HEAD on the gfx1030 dev host. The reduced per-n test counts on F_3
+(n=32, n=40, n=63) are per Amendment 2026-05-15 on `ad55b777`. The F_7
+init state machine has dedicated host-side regression tests beyond the
+on-device evidence.
