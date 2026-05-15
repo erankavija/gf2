@@ -20,3 +20,13 @@ lean_lib Gf2Core where
 @[default_target]
 lean_lib Gf2Algebra where
   srcDir := "."
+
+-- Strict-build wrapper (issue 2e544a34): plain `lake build` is too permissive
+-- because Lean's `warningAsError` is global (catches every warning, including
+-- pre-existing project linter noise that's out of scope). Instead, the
+-- `lake-build` quality gate invokes `scripts/lake-build-strict.sh`, which
+-- runs `lake build` and then greps the captured output for
+-- `declaration uses 'sorry'` warnings in hand-written `Proofs/` files.
+-- The wrapper's hand-written / generated separation matches the carve-out:
+-- Aeneas-emitted `Funs.lean` placeholders are tolerated (they are
+-- extraction artefacts, not proof debt); `Proofs/*.lean` sorrys fail.

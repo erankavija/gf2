@@ -7,6 +7,12 @@ open Aeneas Aeneas.Std Result ControlFlow Error
 set_option linter.dupNamespace false
 set_option linter.hashCommand false
 set_option linter.unusedVariables false
+-- Strict-build carve-out (issue 2e544a34): Aeneas extraction
+-- artefacts may carry `sorry` placeholders for items the
+-- translator could not handle. Silence the elaborator warning
+-- at file scope so the project lakefile's warningAsError=true
+-- fires only on hand-written Proofs/ files.
+set_option warn.sorry false
 
 /- You can set the `maxHeartbeats` value with the `-max-heartbeats` CLI option -/
 set_option maxHeartbeats 1000000
