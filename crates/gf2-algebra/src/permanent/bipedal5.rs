@@ -163,7 +163,9 @@ pub fn permanent_bipedal5(mat: &Packed5Matrix) -> Fp<5> {
 ///
 /// # Panics
 ///
-/// Panics if `mat.rows() != mat.cols()` or `mat.cols() > 64`.
+/// Panics if `mat.rows() != mat.cols()` or `mat.cols() > 63` (the
+/// single-word path was narrowed to `n <= 63` by the 2026-05-15
+/// CPU/GPU consistency change).
 ///
 /// # Complexity
 ///
