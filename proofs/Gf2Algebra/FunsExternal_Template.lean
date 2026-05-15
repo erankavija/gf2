@@ -108,6 +108,32 @@ axiom U64.Insts.CoreIterRangeStep.forward_checked
 axiom U64.Insts.CoreIterRangeStep.steps_between
   : Std.U64 → Std.U64 → Result (Std.Usize × (Option Std.Usize))
 
+/-- [core::iter::range::{core::iter::range::Step for u128}::backward_checked]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 388:16-388:74
+    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::backward_checked]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::range::Step<u128>}::backward_checked"]
+axiom U128.Insts.CoreIterRangeStep.backward_checked
+  : Std.U128 → Std.Usize → Result (Option Std.U128)
+
+/-- [core::iter::range::{core::iter::range::Step for u128}::forward_checked]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 383:16-383:73
+    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::forward_checked]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::range::Step<u128>}::forward_checked"]
+axiom U128.Insts.CoreIterRangeStep.forward_checked
+  : Std.U128 → Std.Usize → Result (Option Std.U128)
+
+/-- [core::iter::range::{core::iter::range::Step for u128}::steps_between]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 370:16-370:84
+    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::steps_between]
+    Visibility: public -/
+@[rust_fun "core::iter::range::{core::iter::range::Step<u128>}::steps_between"]
+axiom U128.Insts.CoreIterRangeStep.steps_between
+  : Std.U128 → Std.U128 → Result (Std.Usize × (Option Std.Usize))
+
 /-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::all]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::all]
@@ -175,6 +201,13 @@ axiom core.iter.traits.iterator.Iterator.all.default
   (opsfunctionFnMutFTupleClause0_ItemBoolInst : core.ops.function.FnMut F
   Clause0_Item Bool) :
   Self → F → Result (Bool × Self)
+
+/-- [core::num::{u128}::trailing_zeros]:
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 174:8-174:48
+    Name pattern: [core::num::{u128}::trailing_zeros]
+    Visibility: public -/
+@[rust_fun "core::num::{u128}::trailing_zeros"]
+axiom core.num.U128.trailing_zeros : Std.U128 → Result Std.U32
 
 /-- [core::num::{usize}::div_ceil]:
     Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3597:8-3597:54

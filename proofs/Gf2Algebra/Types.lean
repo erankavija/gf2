@@ -112,6 +112,11 @@ structure gf2_core.field.traits.FiniteField (Self : Type) (Self_Characteristic
   reduce_wide : Self_Wide → Result Self
   max_unreduced_additions : Result Std.Usize
 
+/-- [gf2_algebra::gray::gray_code_iter::closure]
+    Source: 'crates/gf2-algebra/src/gray.rs', lines 139:23-148:5 -/
+@[reducible]
+def gray.gray_code_iter.closure := Unit
+
 /-- [gf2_algebra::packed::bipedal3::Bipedal3]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 85:0-88:1
     Visibility: public -/
