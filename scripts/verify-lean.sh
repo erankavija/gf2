@@ -10,6 +10,20 @@
 #   - elan / lean / lake
 #
 # Usage: ./scripts/verify-lean.sh
+#
+# Known gf2-core extraction blocker (as of 2026-05-15):
+# Charon panics in `src/pretty/fmt_with_ctx.rs:416` when extracting
+# `gf2_core::gfp` because recent perf work
+# (commits e927ea83, fc3e2cf2, 8d71d62c — `--gfp::simd_ops` SSOT for
+# packed kernels) introduced `Option<Box<dyn Trait>>` return types
+# (`gfp/mod.rs:734`, `:746`, `:798`) that crash Charon's pretty
+# printer during the `simplify_output::filter_trivial_drops` transform.
+# The Step 1 extraction below will fail on a clean rebuild until this
+# is resolved (either by extending the local Charon build or by
+# guarding those `dyn` returns behind `cfg(not(verify_lean))`).  The
+# Gf2Core/* Lean files in the proofs tree are still good (last
+# successful extraction predates the regression); skip Step 1 to
+# re-use them as-is.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -75,8 +89,14 @@ charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_algebra::packed::bipedal3' \
-  --opaque 'gf2_algebra::permanent' \
-  --opaque 'gf2_algebra::gray' \
+  --start-from 'gf2_algebra::permanent::ryser_fp3::permanent_ryser_fp3' \
+  --start-from 'gf2_algebra::gray::gray_code_iter' \
+  --start-from 'gf2_algebra::gray::gray_code_index_to_subset' \
+  --opaque 'gf2_algebra::permanent::bipedal3' \
+  --opaque 'gf2_algebra::permanent::bipedal3_multiword' \
+  --opaque 'gf2_algebra::permanent::ryser' \
+  --opaque 'gf2_algebra::permanent::reference' \
+  --opaque 'gf2_algebra::permanent::parallel_bipedal3' \
   --opaque 'gf2_algebra::packed::scalar' \
   --opaque 'gf2_algebra::packed::packed5' \
   --opaque 'gf2_algebra::packed::packed7' \
