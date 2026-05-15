@@ -31,7 +31,7 @@ variable {inst : gfpn.ext_config.ExtConfig C BF Char Wide}
 
 /-- Bare bijection between Aeneas CubicExt and pure CExt -/
 def cextEquiv (hv : ValidCubicExtConfig inst) :
-    gfpn.cubic.CubicExt inst ≃ CExt BF hv.toValidExtConfig.getNonResidue where
+    gfpn.cubic.CubicExt C BF Char Wide ≃ CExt BF hv.toValidExtConfig.getNonResidue where
   toFun a := ⟨a.c0, a.c1, a.c2⟩
   invFun a := ⟨a.c0, a.c1, a.c2⟩
   left_inv a := by cases a; rfl
@@ -41,12 +41,12 @@ def cextEquiv (hv : ValidCubicExtConfig inst) :
 
 /-- CubicExt forms a commutative ring -/
 noncomputable def instCommRing (hv : ValidCubicExtConfig inst) :
-    CommRing (gfpn.cubic.CubicExt inst) :=
+    CommRing (gfpn.cubic.CubicExt C BF Char Wide) :=
   (cextEquiv hv).commRing
 
 /-- CubicExt forms a field (given irreducibility of the cubic norm) -/
 noncomputable def instField (hv : ValidCubicExtConfig inst) :
-    Field (gfpn.cubic.CubicExt inst) :=
+    Field (gfpn.cubic.CubicExt C BF Char Wide) :=
   letI : Field (CExt BF hv.toValidExtConfig.getNonResidue) :=
     CExt.instField (hv.cubic_nr_irred _ hv.toValidExtConfig.mul_nr_eq)
   (cextEquiv hv).field
@@ -56,7 +56,7 @@ noncomputable def instField (hv : ValidCubicExtConfig inst) :
 /-- Karatsuba multiplication in the actual Rust code computes the same result
     as schoolbook cubic extension multiplication. -/
 theorem karatsuba_correct (hv : ValidCubicExtConfig inst)
-    (a b : gfpn.cubic.CubicExt inst) :
+    (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     let β := hv.toValidExtConfig.getNonResidue
     ∃ r, ExtAbbrev.CMul inst a b = ok r ∧
       r.c0 = a.c0 * b.c0 + β * (a.c1 * b.c2 + a.c2 * b.c1) ∧
@@ -66,21 +66,21 @@ theorem karatsuba_correct (hv : ValidCubicExtConfig inst)
 
 /-- Addition in the Rust code is component-wise. -/
 theorem add_correct (hv : ValidCubicExtConfig inst)
-    (a b : gfpn.cubic.CubicExt inst) :
+    (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     ∃ r, ExtAbbrev.CAdd inst a b = ok r ∧
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 ∧ r.c2 = a.c2 + b.c2 :=
   Aeneas.Std.WP.spec_imp_exists (CExtProgress.cadd_progress hv.toValidExtConfig a b)
 
 /-- Negation in the Rust code is component-wise. -/
 theorem neg_correct (hv : ValidCubicExtConfig inst)
-    (a : gfpn.cubic.CubicExt inst) :
+    (a : gfpn.cubic.CubicExt C BF Char Wide) :
     ∃ r, ExtAbbrev.CNeg inst a = ok r ∧
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 ∧ r.c2 = -a.c2 :=
   Aeneas.Std.WP.spec_imp_exists (CExtProgress.cneg_progress hv.toValidExtConfig a)
 
 /-- Inversion in the Rust code computes cofactors/norm correctly. -/
 theorem inv_correct (hv : ValidCubicExtConfig inst)
-    (self : gfpn.cubic.CubicExt inst) :
+    (self : gfpn.cubic.CubicExt C BF Char Wide) :
     let β := hv.toValidExtConfig.getNonResidue
     let s0 := self.c0 ^ 2 - β * (self.c1 * self.c2)
     let s1 := β * self.c2 ^ 2 - self.c0 * self.c1

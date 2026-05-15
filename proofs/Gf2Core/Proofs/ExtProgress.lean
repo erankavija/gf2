@@ -33,7 +33,7 @@ theorem qnew_progress (c0 c1 : BF) :
 /-- QuadraticExt.add: component-wise addition -/
 @[progress]
 theorem qadd_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.quadratic.QuadraticExt inst) :
+    (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QAdd inst a b ⦃ fun r =>
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 ⦄ := by
   simp only [ExtAbbrev.QAdd,
@@ -44,7 +44,7 @@ theorem qadd_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.sub: component-wise subtraction -/
 @[progress]
 theorem qsub_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.quadratic.QuadraticExt inst) :
+    (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QSub inst a b ⦃ fun r =>
       r.c0 = a.c0 - b.c0 ∧ r.c1 = a.c1 - b.c1 ⦄ := by
   simp only [ExtAbbrev.QSub,
@@ -55,7 +55,7 @@ theorem qsub_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.neg: component-wise negation -/
 @[progress]
 theorem qneg_progress (hv : ValidExtConfig inst)
-    (a : gfpn.quadratic.QuadraticExt inst) :
+    (a : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QNeg inst a ⦃ fun r =>
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 ⦄ := by
   simp only [ExtAbbrev.QNeg,
@@ -66,7 +66,7 @@ theorem qneg_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.mul: Karatsuba multiplication equals schoolbook -/
 @[progress]
 theorem qmul_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.quadratic.QuadraticExt inst) :
+    (a b : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QMul inst a b ⦃ fun r =>
       r.c0 = a.c0 * b.c0 + hv.getNonResidue * (a.c1 * b.c1) ∧
       r.c1 = a.c0 * b.c1 + a.c1 * b.c0 ⦄ := by
@@ -79,7 +79,7 @@ theorem qmul_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.norm: computes c0² - β·c1² -/
 @[progress]
 theorem qnorm_progress (hv : ValidExtConfig inst)
-    (a : gfpn.quadratic.QuadraticExt inst) :
+    (a : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QNorm inst a ⦃ fun r =>
       r = a.c0 ^ 2 - hv.getNonResidue * a.c1 ^ 2 ⦄ := by
   simp only [ExtAbbrev.QNorm, gfpn.quadratic.QuadraticExt.norm,
@@ -89,7 +89,7 @@ theorem qnorm_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.conjugate: (c0, -c1) -/
 @[progress]
 theorem qconj_progress (hv : ValidExtConfig inst)
-    (a : gfpn.quadratic.QuadraticExt inst) :
+    (a : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QConj inst a ⦃ fun r =>
       r.c0 = a.c0 ∧ r.c1 = -a.c1 ⦄ := by
   simp only [ExtAbbrev.QConj, gfpn.quadratic.QuadraticExt.conjugate,
@@ -98,7 +98,7 @@ theorem qconj_progress (hv : ValidExtConfig inst)
 
 /-- The closure for quadratic inv: given norm_inv, produces conjugate/norm -/
 theorem qinv_closure_progress (hv : ValidExtConfig inst)
-    (self : gfpn.quadratic.QuadraticExt inst) (norm_inv : BF) :
+    (self : gfpn.quadratic.QuadraticExt C BF Char Wide) (norm_inv : BF) :
     gfpn.quadratic.FiniteFieldQuadraticExtClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv.closure.Insts.CoreOpsFunctionFnOnceTupleClause0_BaseFieldQuadraticExt.call_once
       inst self norm_inv ⦃ fun r =>
         r.c0 = self.c0 * norm_inv ∧ r.c1 = -(self.c1 * norm_inv) ⦄ := by
@@ -106,7 +106,7 @@ theorem qinv_closure_progress (hv : ValidExtConfig inst)
 /-- QuadraticExt.inv: computes norm, inverts, maps closure -/
 @[progress]
 theorem qinv_progress (hv : ValidExtConfig inst)
-    (self : gfpn.quadratic.QuadraticExt inst) :
+    (self : gfpn.quadratic.QuadraticExt C BF Char Wide) :
     ExtAbbrev.QInv inst self ⦃ fun o =>
       (self.c0 = 0 ∧ self.c1 = 0 → o = none) ∧
       (¬(self.c0 = 0 ∧ self.c1 = 0) → ∃ r, o = some r ∧
@@ -143,7 +143,7 @@ theorem cnew_progress (c0 c1 c2 : BF) :
 /-- CubicExt.add: component-wise -/
 @[progress]
 theorem cadd_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.cubic.CubicExt inst) :
+    (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     ExtAbbrev.CAdd inst a b ⦃ fun r =>
       r.c0 = a.c0 + b.c0 ∧ r.c1 = a.c1 + b.c1 ∧ r.c2 = a.c2 + b.c2 ⦄ := by
   simp only [ExtAbbrev.CAdd,
@@ -154,7 +154,7 @@ theorem cadd_progress (hv : ValidExtConfig inst)
 /-- CubicExt.sub: component-wise -/
 @[progress]
 theorem csub_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.cubic.CubicExt inst) :
+    (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     ExtAbbrev.CSub inst a b ⦃ fun r =>
       r.c0 = a.c0 - b.c0 ∧ r.c1 = a.c1 - b.c1 ∧ r.c2 = a.c2 - b.c2 ⦄ := by
   simp only [ExtAbbrev.CSub,
@@ -165,7 +165,7 @@ theorem csub_progress (hv : ValidExtConfig inst)
 /-- CubicExt.neg: component-wise -/
 @[progress]
 theorem cneg_progress (hv : ValidExtConfig inst)
-    (a : gfpn.cubic.CubicExt inst) :
+    (a : gfpn.cubic.CubicExt C BF Char Wide) :
     ExtAbbrev.CNeg inst a ⦃ fun r =>
       r.c0 = -a.c0 ∧ r.c1 = -a.c1 ∧ r.c2 = -a.c2 ⦄ := by
   simp only [ExtAbbrev.CNeg,
@@ -176,7 +176,7 @@ theorem cneg_progress (hv : ValidExtConfig inst)
 /-- CubicExt.mul: Karatsuba 6-mul trick equals schoolbook -/
 @[progress]
 theorem cmul_progress (hv : ValidExtConfig inst)
-    (a b : gfpn.cubic.CubicExt inst) :
+    (a b : gfpn.cubic.CubicExt C BF Char Wide) :
     let β := hv.getNonResidue
     ExtAbbrev.CMul inst a b ⦃ fun r =>
       r.c0 = a.c0 * b.c0 + β * (a.c1 * b.c2 + a.c2 * b.c1) ∧
@@ -191,7 +191,7 @@ theorem cmul_progress (hv : ValidExtConfig inst)
 /-- CubicExt.norm: the full cubic norm computation -/
 @[progress]
 theorem cnorm_progress (hv : ValidExtConfig inst)
-    (a : gfpn.cubic.CubicExt inst) :
+    (a : gfpn.cubic.CubicExt C BF Char Wide) :
     let β := hv.getNonResidue
     ExtAbbrev.CNorm inst a ⦃ fun r =>
       r = a.c0 * (a.c0 ^ 2 - β * (a.c1 * a.c2)) +
@@ -204,7 +204,7 @@ theorem cnorm_progress (hv : ValidExtConfig inst)
 /-- CubicExt.inv: computes cofactors, norm, base inv, maps closure -/
 @[progress]
 theorem cinv_progress (hv : ValidExtConfig inst)
-    (self : gfpn.cubic.CubicExt inst) :
+    (self : gfpn.cubic.CubicExt C BF Char Wide) :
     let β := hv.getNonResidue
     let s0 := self.c0 ^ 2 - β * (self.c1 * self.c2)
     let s1 := β * self.c2 ^ 2 - self.c0 * self.c1
