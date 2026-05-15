@@ -6,8 +6,28 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "code-review",
+    "lake-build",
+    "cargo-ci"
+  ],
+  "gates_status": {
+    "lake-build": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-15T18:16:28.644557294Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-15T18:16:28.644505154Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-15T18:16:28.644578724Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -16,5 +36,5 @@
     "milestone:1.0"
   ],
   "created_at": "2026-05-15T17:17:56.457786669+00:00",
-  "updated_at": "2026-05-15T17:17:56.457794089+00:00"
+  "updated_at": "2026-05-15T18:16:28.644598724+00:00"
 }

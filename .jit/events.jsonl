@@ -4901,3 +4901,6 @@
 {"type":"issue_created","id":"0a2acdc4-8a97-4551-b20f-187dcf38df09","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T17:17:56.458096309Z","title":"Restore Lean proofs of QuadraticExt/CubicExt operations after Aeneas upstream upgrade","priority":"normal"}
 {"type":"gate_passed","id":"446e0a78-bdcf-404a-9778-7975ab483ffb","issue_id":"a9e461de-e0f1-4958-9a34-2f56db15d3a2","timestamp":"2026-05-15T17:20:47.024677559Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"369f69e0-dd08-485b-8e93-527dff3b7cf6","issue_id":"a9e461de-e0f1-4958-9a34-2f56db15d3a2","timestamp":"2026-05-15T17:26:33.665439034Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_added","id":"c86d50a1-9698-4090-847d-0477c159dbec","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:16:28.644512474Z","gate_key":"code-review"}
+{"type":"gate_added","id":"8699bf5c-39fa-402e-8bd7-cc1c7a56a42f","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:16:28.644557694Z","gate_key":"lake-build"}
+{"type":"gate_added","id":"4c6f17ed-d889-474d-be44-51693104d93f","issue_id":"9efd9c39-7f5f-4b1d-8f98-82ecf6ef6a72","timestamp":"2026-05-15T18:16:28.644579094Z","gate_key":"cargo-ci"}
