@@ -33,22 +33,46 @@
 //! ## Usage
 //!
 //! ```bash
-//! cargo run -p gf2-algebra --release --features test-support --example permanent_demo
+//! cargo run -p gf2-algebra --release --example permanent_demo
 //! ```
 //!
 //! The example prints one status line per batch cell, then a summary table
 //! comparing bipedal3 throughput vs the reference, and a ±5% check against
-//! the S1 CSV mean.
+//! the S1 CSV mean. It is self-contained — it uses its own inline
+//! deterministic LCG rather than the `test-support`-gated
+//! `gf2_algebra::testutil::random_matrix`, so the bare `cargo run` command
+//! above works without any extra feature flags (epic criterion 12).
 
 #![allow(clippy::cast_precision_loss)]
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::permanent_bipedal3;
 use gf2_algebra::permanent::permanent_mod3_reference;
-use gf2_algebra::testutil::random_matrix;
 use gf2_core::gfp::Fp;
 use std::hint::black_box;
 use std::time::Instant;
+
+/// Inline deterministic `F_3` matrix generator (SplitMix64-style LCG).
+///
+/// Self-contained so this example needs no `test-support` feature. The
+/// reduction `next % 3` introduces a negligible modulo bias for a demo
+/// benchmark (the permanent timing is unaffected by element distribution),
+/// and the stream is fully determined by `seed` so the determinism check
+/// at the end of `main` is meaningful.
+fn demo_random_matrix(n: usize, seed: u64) -> Vec<Fp<3>> {
+    let mut state = seed;
+    (0..n * n)
+        .map(|_| {
+            // SplitMix64 step.
+            state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+            let mut z = state;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+            z ^= z >> 31;
+            Fp::<3>::new(z % 3)
+        })
+        .collect()
+}
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -99,7 +123,7 @@ fn main() {
     let bipedal_matrices: Vec<Bipedal3Matrix> = (0..BATCH)
         .map(|i| {
             let seed = SEED_BASE ^ (N_BIPEDAL as u64).wrapping_shl(8) ^ i as u64;
-            let row_major: Vec<Fp<3>> = random_matrix::<3>(N_BIPEDAL, seed);
+            let row_major: Vec<Fp<3>> = demo_random_matrix(N_BIPEDAL, seed);
             Bipedal3Matrix::from_row_major(&row_major, N_BIPEDAL, N_BIPEDAL)
         })
         .collect();
@@ -108,7 +132,7 @@ fn main() {
     let ref_matrices: Vec<Vec<Fp<3>>> = (0..BATCH)
         .map(|i| {
             let seed = SEED_BASE ^ (N_REF as u64).wrapping_shl(8) ^ i as u64;
-            random_matrix::<3>(N_REF, seed)
+            demo_random_matrix(N_REF, seed)
         })
         .collect();
 
@@ -225,7 +249,7 @@ fn main() {
 
     // Sanity: results are deterministic — same seed → same permanent value.
     let seed0 = SEED_BASE ^ (N_BIPEDAL as u64).wrapping_shl(8);
-    let mat0_row = random_matrix::<3>(N_BIPEDAL, seed0);
+    let mat0_row = demo_random_matrix(N_BIPEDAL, seed0);
     let mat0 = Bipedal3Matrix::from_row_major(&mat0_row, N_BIPEDAL, N_BIPEDAL);
     let repro = permanent_bipedal3(&mat0).value();
     assert_eq!(

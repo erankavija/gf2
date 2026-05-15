@@ -74,9 +74,11 @@ name = "s3_scalar_vs_avx2_sanity"
 required-features = ["simd", "test-support"]
 
 # ── Issue `16f03734` (epic `ae82bd73`) — headline benchmark demo ──
+# No `required-features`: the example carries its own inline deterministic
+# LCG, so `cargo run -p gf2-algebra --example permanent_demo --release`
+# works against the default feature set (epic criterion 12).
 [[example]]
 name = "permanent_demo"
-required-features = ["test-support"]
 
 [features]
 # `f5` and `f7` flipped to default-on as the W4 closing edit per
