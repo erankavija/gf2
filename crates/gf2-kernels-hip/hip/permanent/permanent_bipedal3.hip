@@ -178,23 +178,26 @@ __global__ void permanent_bipedal3_kernel(const unsigned char* __restrict__ matr
 
     const unsigned char* mat = matrices_ptr + (size_t)mat_idx * (size_t)n * (size_t)n;
 
-    // Assertion: n must be in [1, 63]. The GPU sequential Gray walk at n=64
-    // would take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps), so n=64 is
+    // Range guards ordered so n == 0 is handled correctly before the
+    // out-of-range rejection.
+    //
+    // The supported range is 1 <= n <= 63 (post 2026-05-15 CPU/GPU
+    // consistency narrowing). The GPU sequential Gray walk at n=64 would
+    // take ~600 years on gfx1030 (2^64 ≈ 1.8×10^19 steps), so n=64 is
     // computationally infeasible and is excluded from the supported range.
-    // The CPU reference (permanent_bipedal3_singleword) supports n=64 via a
-    // u128 Gray-code counter; the GPU kernel does not need that range.
-    // If violated, write 0 and return early. (The host wrapper checks this too.)
-    if (n <= 0 || n > 63) {
-        out_ptr[mat_idx] = 0ULL;
-        return;
-    }
-
-    // Edge case: 0×0 matrix. Permanent of the empty matrix is 1
-    // (the empty permutation has product 1 — vacuous product).
-    // The host wrapper passes n >= 1 for real matrices; this guard is
-    // defensive only.
+    // The CPU reference (permanent_bipedal3_singleword) supports n=64 via
+    // a u128 Gray-code counter; the GPU kernel does not need that range.
+    //
+    // Empty-matrix case (n == 0): permanent of the empty matrix is 1
+    // (the empty permutation has product 1 — vacuous product). The host
+    // wrapper rejects n <= 0 before launching, so this branch is
+    // defensive against direct kernel invocation.
     if (n == 0) {
         out_ptr[mat_idx] = 1ULL;
+        return;
+    }
+    if (n < 0 || n > 63) {
+        out_ptr[mat_idx] = 0ULL;
         return;
     }
 
