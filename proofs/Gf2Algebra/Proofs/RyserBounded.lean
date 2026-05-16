@@ -54,69 +54,62 @@
     per-function inclusion–exclusion collapse to the bijective `f`s →
     `Equiv.Perm` reindexing onto `Mᵀ.permanent = M.permanent`.
 
-  ## Scope of session 4 (this commit) — and the headline blocker
+  ## Final scope (Option 3, user-approved 2026-05-17) — abstract-only
 
-  Session 4 was scoped to land L4 (column-sum loop invariant), L5
-  (fold-product invariant), L6 (outer parity/Gray-bijection sum), L8
-  (extracted-spec `progress` chain) and the L9 headline
-  `permanent_ryser_fp3_correct` as one coupled unit, citing the V0
-  scalar Montgomery decode lemmas per the session-3 divergence finding.
+  V2's final, user-approved contract is the **abstract** bounded-n
+  Ryser correctness result.  Binding a headline
+  `permanent_ryser_fp3_correct` to extracted Rust was attempted and
+  **twice empirically falsified at the Charon extraction layer**
+  (gated spikes, 2026-05-17; mechanism-level evidence in
+  `dev/active/0606186a-impl-handoff.md`):
 
-  **Session 4 surfaced a deeper, environment-level blocker that makes
-  the value-level chain (L4–L9) unprovable in this Lean environment
-  without introducing new `axiom`s (forbidden):** the `gf2_algebra`
-  Charon extraction marks `gf2_core::gfp` `--opaque`
-  (`scripts/verify-lean.sh`), so every `Fp<3>` primitive
-  `permanent_ryser_fp3` calls is a *bare uninterpreted `axiom`* in
-  `Gf2Algebra/FunsExternal.lean` with no value spec; and the V0
-  `Gf2Core.Proofs.MontgomeryRoundtrip` lemmas are about `Gf2Core`'s
-  *concrete* `Fp` in a *mutually exclusive* Lean environment (importing
-  `Gf2Core.*` here fails with a `core.fmt.builders.DebugStruct`
-  environment conflict).  The full analysis, and the lead/user
-  escalation paths to resolve it, are in the in-file §3.5 section
-  "the session-4 extraction blocker".
+  1. Charon does not monomorphise a generic `permanent_ryser<F>` from
+     a non-generic `--start-from` root (Aeneas `sorry`-poisons the
+     target signature); and
+  2. in the `gf2_algebra` leg `gf2-core` is a *foreign dependency
+     crate*, whose method bodies Charon skips by default, so the
+     `Fp<3>` arithmetic is uninterpreted there regardless of
+     `--opaque`/`--start-from` (the only override,
+     `--extract-opaque-bodies`, is global and fatally panics rustc on
+     std/core).
 
-  Per CLAUDE.md §"Verification work" ("a sorry-laden headline is worse
-  than an honest partial") and the session-4 hard rule, the
-  `permanent_ryser_fp3_correct` headline is therefore **deliberately
-  not stated** (not `sorry`-stubbed).  What session 4 *does* land,
-  fully proved and `sorry`-free:
+  Per the user's selected Option 3 (issue `0606186a` Amendments §2)
+  the extracted-Rust binding is **descoped — not deferred**: the
+  epic's [hard] Charon/Aeneas-extracted formal-verification deliverable
+  is provided by V1 `f05ffbe1` (closed), and the now-purposeless
+  extraction scaffold `crates/gf2-algebra/src/permanent/ryser_fp3.rs`
+  has been removed.  Per CLAUDE.md §"Verification work" ("a sorry-laden
+  headline is worse than an honest partial"), the value-level chain
+  (L4–L9) and the `permanent_ryser_fp3_correct` headline are
+  **not stated** (not `sorry`-stubbed) — by final design, not pending
+  any further pipeline work.
 
-  * `matrixOfSlice` — the pure, total abstract decode of the row-major
-    `&[Fp<3>]` slice (the abstract side of the sketch §1 headline);
-    independent of the opaque `Fp<3>` axioms.
+  What V2 lands, fully proved and `sorry`-free, is the mathematically
+  substantive content:
+
+  * `matrixOfSlice` — the pure, total abstract decode of a row-major
+    `&[Fp<3>]` slice.
+  * `ryser_eq_permanent_zmod` (L7) — `ryserRHS M = M.permanent` over
+    *any* `CommRing` (the `ZMod 3` case is the free specialisation).
   * `ryserRHS_matrixOfSlice_eq_permanent` — L7 specialised to the
-    decoded matrix (`ryserRHS = permanent` over `ZMod 3`).
+    decoded matrix over `ZMod 3`.
   * `permanent_matrixOfSlice_n_zero` — the `n = 0` Ryser/abstract
-    corner (`permanent = 1`), the half of the §1 corner that does not
-    touch the opaque arithmetic.
-  * `ryser_permanent_bounded` — the abstract half of the headline
-    contract as an explicit-`n ≤ 63`-hypothesis statement (matching
-    the issue's "`n ≤ 63` explicit" criterion on the provable side).
-
-  ### Divergence reconciliation (for the lead)
-
-  The session-3 divergence finding ("cite V0 scalar lemmas, not the
-  bipedal lane lemmas; L4–L6/L8 are one coupled unit") was *correct as
-  far as it went* but rested on the implicit premise that the V0
-  scalar lemmas are *reachable* from this file.  Session 4 establishes
-  they are not: the opaque-gfp choice in the current
-  `scripts/verify-lean.sh` `gf2_algebra` extraction, combined with the
-  `Gf2Core`/`Gf2Algebra` environment incompatibility, means L4–L6/L8
-  are not merely "artificially split" — they are *not stateable*
-  against a specified `Fp<3>` semantics here at all.  This is an
-  extraction-pipeline / sketch-§5-restructuring concern, not a proof
-  difficulty; it requires lead/user escalation (see in-file §3.5).
-  No `sorry` and no new `axiom` were introduced.
+    corner (`permanent = 1`).
+  * `ryser_permanent_bounded` — the bounded-n abstract correctness
+    theorem, carrying the explicit `n ≤ 63` hypothesis the issue
+    requires.
+  * the Gray-code traversal-correctness lemmas `gray_succ_xor`,
+    `flipBit_lt`, `subsetOfBits_bijective` (the Gray-walk ↔ powerset
+    correspondence).
 
   No `sorry` is used.  No new `axiom` is declared.
 
   ## Reference
 
-  * Sketch: `dev/plans/d3_lean_ryser_sketch.md`
-  * Issue:  `0606186a` (under epic `ae82bd73`)
-  * Extracted target: `Gf2Algebra.Funs.permanent.ryser_fp3.permanent_ryser_fp3`
-  * Rust source: `crates/gf2-algebra/src/permanent/ryser_fp3.rs`
+  * Abstract sketch: `dev/plans/d3_lean_ryser_sketch.md`
+  * Path-1 sketch + Option-3 addendum: `dev/plans/d3_v2_path1_sketch.md` §9
+  * Extraction-falsification evidence: `dev/active/0606186a-impl-handoff.md`
+  * Issue: `0606186a` (epic `ae82bd73`), Amendments §2
 -/
 import Aeneas
 import Mathlib.Data.ZMod.Basic
@@ -956,98 +949,35 @@ theorem ryser_eq_permanent_zmod {R : Type*} [CommRing R] {n : ℕ}
   · intro σ _
     rfl
 
-/-! ## §3.5 — Decode bridge and §1 headline: the session-4 extraction blocker
+/-! ## §3.5 — Decode bridge: abstract-only landing (Option 3, final)
 
-Session 4 was scoped to land L4 (column-sum loop invariant), L5
-(fold-product invariant), L6 (outer parity/Gray-bijection sum), L8
-(extracted-spec `progress` chain) and the L9 headline
+The headline `permanent_ryser_fp3_correct`
+(`decodeFp3 (permanent_ryser_fp3 matrix n) = (matrixOfSlice n matrix).permanent`,
+with explicit `n ≤ 63`) and the value-level chain L4–L9 that would
+prove it are **not stated** here — by final, user-approved design
+(Option 3; see the file header and issue `0606186a` Amendments §2),
+not as a pending gap.
 
-```
-permanent_ryser_fp3_correct : decodeFp3 (permanent_ryser_fp3 matrix n)
-                                = (matrixOfSlice n matrix).permanent
-```
+Binding the headline to extracted Rust was attempted and **twice
+empirically falsified at the Charon extraction layer** (gated spikes,
+2026-05-17; mechanism-level evidence in
+`dev/active/0606186a-impl-handoff.md`): (1) Charon does not
+monomorphise the generic `permanent_ryser<F>` from a non-generic
+`--start-from` root (Aeneas `sorry`-poisons the target signature);
+and (2) in the `gf2_algebra` leg `gf2-core` is a *foreign dependency
+crate* whose method bodies Charon skips by default, so the `Fp<3>`
+arithmetic is uninterpreted there regardless of
+`--opaque`/`--start-from` (the only override,
+`--extract-opaque-bodies`, is global and fatally panics rustc on
+std/core).  Resolving it would require a shared-infrastructure Charon
+change; per Option 3 that is descoped, and the epic's [hard]
+Charon/Aeneas-extracted formal-verification deliverable is provided
+by V1 `f05ffbe1` (closed).
 
-with the explicit `n ≤ 63` hypothesis.
-
-### What blocks the value-level chain (L4–L9)
-
-The session-3 divergence finding (file header) established that the
-extracted `permanent_ryser_fp3` uses **scalar `Fp<3>`** arithmetic and
-that L4/L5 must cite the V0 scalar Montgomery decode lemmas
-(`Gf2Core.Proofs.MontgomeryRoundtrip.fp_{add,mul}_correct`,
-`fp_new_value_roundtrip`).  Session 4 attempted exactly that and hit a
-deeper, *environment-level* blocker that the session-3 finding did not
-surface:
-
-1. **`gf2_core::gfp` is `--opaque` in the `gf2_algebra` Charon
-   extraction.**  `scripts/verify-lean.sh` (the `gf2_algebra` charon
-   invocation, lines ~123–125) passes `--opaque 'gf2_core::gfp'`.
-   Consequently every `Fp<3>` primitive the extracted body calls —
-   `gf2_core.gfp.Fp.new`, `gf2_core.gfp.Fp.value`,
-   `gf2_core.gfp.Fp.Insts.CoreOpsArith{Add,Sub,Mul,Neg}…` — is emitted
-   in `proofs/Gf2Algebra/FunsExternal.lean` as a **bare uninterpreted
-   `axiom`** with *no* equational characterisation, no value spec, no
-   `@[progress]`/`@[simp]` lemma.  `scripts/verify-lean.sh` even
-   documents (≈ line 303) that, "unlike gf2-core, the gf2-algebra
-   FunsExternal has no hand-edits" — it is copied verbatim from the
-   Aeneas template.  An uninterpreted `Fp.new : Std.U64 → Result (Fp P)`
-   cannot even be shown to return `ok`, let alone to produce a
-   particular `ZMod 3` value.
-
-2. **The V0 lemmas live in an incompatible environment.**
-   `Gf2Core.Proofs.MontgomeryRoundtrip.fp_add_correct` (and siblings)
-   are proved about `Gf2Core`'s *concrete* `gf2_core.gfp.Fp.*`
-   definitions (from `proofs/Gf2Core/Funs.lean`).  Those are *different
-   declarations* from the `Gf2Algebra` *axioms* of the same display
-   name.  Importing `Gf2Core.Proofs.MontgomeryRoundtrip` (or
-   `Gf2Core.Funs`) into this file to reuse the V0 lemmas fails with a
-   hard Lean environment conflict:
-
-   ```
-   import Gf2Core.TypesExternal failed, environment already contains
-   'core.fmt.builders.DebugStruct' from Gf2Algebra.TypesExternal
-   ```
-
-   i.e. the two Charon extractions both regenerate the same
-   `core.fmt.*` / `TypesExternal` declarations, so `Gf2Core.*` and
-   `Gf2Algebra.*` proof environments are *mutually exclusive*.  There is
-   no in-environment path from the axiomatic `Gf2Algebra` `Fp` to the
-   concrete `Gf2Core` `Fp` the V0 theorems characterise.
-
-### Why this is left as an honest gap, not a `sorry`
-
-Closing L4–L9 in this environment would require **introducing new
-`axiom` declarations** characterising the opaque `Fp<3>` ops (e.g. an
-assumed `fp3_add_decode` axiom).  CLAUDE.md §"Verification work" §7.3
-and this session's hard rules forbid both new `axiom`s and `sorry`.
 Per CLAUDE.md §"Verification work" ("a sorry-laden headline is worse
-than an honest partial") and this session's explicit instruction —
-*"state the headline with the remaining gap explicitly un-proved (NOT
-sorry-stubbed — leave it unstated) and report precisely what blocks
-it"* — the `permanent_ryser_fp3_correct` headline is **deliberately not
-stated**.  Everything that IS provable without the opaque-`Fp` value
-semantics is landed below and in §§2–3.3 above, all `sorry`-free.
-
-### Resolution path (for the lead — out of scope for a proof-only session)
-
-The blocker is in the *extraction pipeline*, not the proof.  Fixing it
-requires one of (escalation, not a proof edit):
-
-* **(a) Make `gf2_core::gfp` transparent in the `gf2_algebra`
-  extraction** and merge the `Gf2Core`/`Gf2Algebra` external-decl trees
-  so the concrete `Fp` bodies + the V0 `MontgomeryRoundtrip` lemmas are
-  in-scope for `RyserBounded.lean`.  This is a `verify-lean.sh` +
-  `FunsExternal`/`TypesExternal` restructuring (the very restructuring
-  D3 sketch §5 calls "part of V2's deliverable, not D3's", but which the
-  opaque-gfp choice in the *current* `verify-lean.sh` contradicts).
-* **(b) Provide a hand-maintained `Gf2Algebra/FunsExternal.lean` gfp
-  block with assumed value specs** — explicitly an `axiom` surface, so
-  it needs user sign-off under CLAUDE.md §"Verification work" (it trades
-  the proof obligation for a trusted-axiom obligation).
-
-Either is an architectural change requiring lead/user approval; it is
-recorded here for sketch/issue reconciliation and is **not** something
-a sandboxed proof session may decide unilaterally.
+than an honest partial"), the headline is left **unstated, not
+`sorry`-stubbed**; everything provable abstractly is landed below and
+in §§2–3.3, all `sorry`-free, and is V2's final deliverable.
 -/
 
 /-- The abstract matrix decoded from a row-major `&[Fp<3>]` slice.
@@ -1061,8 +991,9 @@ It is a **pure, total** definition (it only reads `Std.U64` storage and
 applies the pure `decodeFp3`); it does NOT depend on the opaque `Fp<3>`
 arithmetic axioms, so it — and the `n = 0` corner of the permanent it
 induces — is fully provable here.  The full headline that *relates* it
-to `permanent_ryser_fp3`'s output is blocked for the environment reason
-documented above. -/
+to extracted-Rust output is descoped per Option 3 (file header / §3.5);
+the abstract identity it feeds (`ryser_permanent_bounded`) is V2's
+final deliverable. -/
 noncomputable def matrixOfSlice (n : ℕ)
     (matrix : Slice (gf2_core.gfp.Fp 3#u64)) :
     Matrix (Fin n) (Fin n) (ZMod 3) :=
