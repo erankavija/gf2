@@ -10,18 +10,24 @@
   ],
   "gates_required": [
     "lake-build",
-    "code-review"
+    "code-review",
+    "verify-lean"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T22:26:18.716727718Z"
-    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-16T22:26:13.013000256Z"
+    },
+    "verify-lean": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-16T23:02:33.515501212Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-16T22:33:28.760490544Z"
     }
   },
   "context": {},
@@ -54,5 +60,5 @@
     "component:proofs"
   ],
   "created_at": "2026-05-09T09:48:15.886764151+00:00",
-  "updated_at": "2026-05-16T22:32:01.317580077+00:00"
+  "updated_at": "2026-05-16T23:02:33.515541182+00:00"
 }
