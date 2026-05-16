@@ -1,6 +1,6 @@
 /-
   Gf2Algebra.Proofs.RyserBounded — V2 (D3) bounded-n Ryser correctness
-                                    (sessions 1 + 2)
+                                    (sessions 1 + 2 + 3)
 
   This file implements the bounded-n (n ≤ 63) Ryser permanent formula
   correctness proof per the user-approved D3 sketch
@@ -34,12 +34,57 @@
     `Fin (2^n) → Finset (Fin n)` (equivalently, onto the powerset of
     `Finset.univ : Finset (Fin n)`).
 
-  ## Out of scope (deferred to sessions 3 + 4)
+  ## Scope of session 3 (this commit)
 
-  L4 (column-sum loop invariant), L5 (fold-product invariant), L6 (outer
-  parity/Gray-bijection sum), L7 (general-`CommRing` Ryser identity), L8
-  (extracted-spec progress chain), L9 (top-level theorem at general
-  `n ≤ 63`) remain for sessions 3 and 4.
+  Session 3 lands L7 — the algebra-heaviest lemma of the sketch
+  (§3.3, "30–80 lines"), proved *first* per sketch §7.2 so any
+  algebraic dead-end surfaces before the Aeneas glue:
+
+  * `sum_powerset_neg_one_pow_card_ring` — generic-`CommRing` version
+    of Mathlib's `ℤ`-only `Finset.sum_powerset_neg_one_pow_card`
+    (`∑_{T ⊆ s} (-1)^|T| = if s = ∅ then 1 else 0`), via
+    `Finset.prod_one_add`.
+  * `sum_superset_neg_one_pow_card` — alternating sum of `(-1)^|S|`
+    over subsets `S ⊇ c` (the `S ↦ S \ c` bijection onto
+    `(univ \ c).powerset`).
+  * L7 `ryser_eq_permanent_zmod` — `ryserRHS M = M.permanent` over
+    *any* `CommRing R` (the headline `ZMod 3` case is the free
+    specialisation).  Proof: `Finset.prod_univ_sum` multinomial
+    expansion → membership-indicator factoring → `Finset.sum_comm` →
+    per-function inclusion–exclusion collapse to the bijective `f`s →
+    `Equiv.Perm` reindexing onto `Mᵀ.permanent = M.permanent`.
+
+  ## Out of scope (deferred to session 4)
+
+  L4 (column-sum loop invariant), L5 (fold-product invariant), L6
+  (outer parity/Gray-bijection sum), L8 (extracted-spec progress
+  chain), L9 (top-level theorem at general `n ≤ 63`) remain for
+  session 4.
+
+  ### Divergence finding (L4/L5 citation premise — for the lead)
+
+  The session-3 dispatch prompt asked L4/L5 to cite V1's bipedal
+  per-op decode lemmas (`Bipedal3Correctness.bipedal3_{add,sub,mul}_*`)
+  "lane-wise".  That premise does **not** hold for *this* extraction
+  target: the Charon/Aeneas-extracted `permanent_ryser_fp3` (Rust
+  source `crates/gf2-algebra/src/permanent/ryser_fp3.rs`) operates on
+  a scalar `&[Fp<3>]` slice and a `Vec (Fp 3)` accumulator using
+  scalar `Fp<3>` arithmetic
+  (`gf2_core.gfp.Fp.Insts.CoreOpsArith{Add,Sub,Mul}FpFp.{add,sub,mul}`
+  in `Gf2Algebra/Funs.lean`).  It never touches the bipedal packed
+  `packed::bipedal3::Bipedal3` representation that
+  `Bipedal3Correctness.lean` verifies.  L4/L5 must therefore cite the
+  V0 scalar-`Fp<3>` Montgomery decode lemmas
+  (`Gf2Core.Proofs.MontgomeryRoundtrip.fp_{add,mul}_correct`,
+  `fp_new_value_roundtrip`), not the bipedal lane lemmas.  Because
+  L4/L5/L6 are then a single continuous Aeneas-`loop` induction that
+  is tightly coupled to L8's `progress` chain (the sketch's L4–L6/L8
+  split is artificial for the scalar extraction), session 3 lands L7
+  only and defers the whole L4–L6/L8 chain to session 4 as one unit,
+  rather than sorry-stubbing a partial loop invariant.  This
+  divergence is recorded here for lead/sketch reconciliation per
+  CLAUDE.md §Verification work; no `sorry` and no `axiom` were
+  introduced.
 
   No `sorry` is used.  No new `axiom` is declared.
 
@@ -571,9 +616,9 @@ theorem subsetOfBits_bijective (n : ℕ) :
 The Ryser inclusion-exclusion right-hand side over an arbitrary
 `CommRing`.  L7 of the sketch is the proof
 `ryserRHS M = M.permanent` for any `CommRing R`.  We **define**
-the RHS here as a self-contained Lean term; the proof L7 itself
-(30–80 lines per sketch estimate) is deferred to a subsequent
-session.
+the RHS here as a self-contained Lean term; the full L7 proof
+(`ryser_eq_permanent_zmod`, landed this session) follows the
+`ryserRHS_eq_permanent_n_zero` `n = 0` corner below.
 
 Subset summation convention: the sum runs over the full powerset
 of `Fin n`, including the empty subset.  At `n = 0`, this is the
@@ -601,6 +646,281 @@ theorem ryserRHS_eq_permanent_n_zero {R : Type*} [CommRing R]
   -- The outer factor is `(-1)^0 = 1`.
   -- `Matrix.permanent_isEmpty` gives `M.permanent = 1`.
   simp [ryserRHS, Matrix.permanent_isEmpty]
+
+/-! ## §3.3 — L7: `ryserRHS M = M.permanent` over any `CommRing`
+
+This is the algebra-heaviest lemma of the sketch (§3.3, estimated
+30–80 lines).  Per sketch §7.2 it is proved *before* the
+Aeneas-`progress` glue (L4–L6, L8) so that an algebraic dead-end is
+discovered first.  It is a **pure-Mathlib** identity with no Rust
+content, stated over an arbitrary `CommRing R` (the `ZMod 3`
+instance the headline theorem uses is then free).
+
+### Proof outline
+
+`ryserRHS M = (-1)^n · ∑_{S ⊆ univ} (-1)^|S| · ∏_i ∑_{j ∈ S} M i j`.
+
+1. Expand the inner product by the multinomial/distribution lemma
+   `Finset.prod_univ_sum`:
+   `∏_i ∑_{j ∈ S} M i j = ∑_{f ∈ piFinset (fun _ => S)} ∏_i M i (f i)`.
+2. Rewrite the membership constraint of `piFinset` as a `Finset.prod`
+   of `0/1` indicators so the dependence on `S` factors out, then
+   swap the `S`/`f` summation order (`Finset.sum_comm`).
+3. The inner `S`-sum becomes
+   `∑_{S ⊆ univ, image f ⊆ S} (-1)^|S|`, which (lemma
+   `sum_superset_neg_one_pow_card`) equals
+   `(-1)^|image f| · [univ \ image f = ∅]`.
+4. `univ \ image f = ∅ ↔ f` surjective `↔ f` bijective; on the
+   bijective `f`s `|image f| = n`, so the inner sum collapses to
+   `(-1)^n` and the whole sum is `(-1)^n · ∑_{f bij} ∏_i M i (f i)`.
+5. Multiply by the outer `(-1)^n` (so `(-1)^{2n} = 1`) and reindex
+   the bijective-`f` sum by `Equiv.Perm` to land on
+   `∑_σ ∏_i M i (σ i) = Mᵀ.permanent = M.permanent`.
+-/
+
+/-- Generic `CommRing` version of `Finset.sum_powerset_neg_one_pow_card`
+(Mathlib only states it over `ℤ`): the alternating sum of `(-1)^|T|`
+over all subsets `T` of a finset `s` is `1` if `s` is empty and `0`
+otherwise.  Proof: `∑_{T ⊆ s} (-1)^|T| = ∏_{i ∈ s} (1 + (-1)) = 0^…`
+via `Finset.prod_one_add`. -/
+theorem sum_powerset_neg_one_pow_card_ring {R : Type*} [CommRing R]
+    {α : Type*} [DecidableEq α] (s : Finset α) :
+    (∑ T ∈ s.powerset, (-1 : R) ^ T.card) = if s = ∅ then 1 else 0 := by
+  have hkey : ∏ _i ∈ s, ((1 : R) + (-1)) = ∑ T ∈ s.powerset, (-1 : R) ^ T.card := by
+    rw [Finset.prod_one_add]
+    refine Finset.sum_congr rfl ?_
+    intro T _
+    rw [Finset.prod_const]
+  rw [← hkey]
+  by_cases hs : s = ∅
+  · subst hs; simp
+  · rw [if_neg hs]
+    obtain ⟨a, ha⟩ := Finset.nonempty_iff_ne_empty.mpr hs
+    refine Finset.prod_eq_zero ha ?_
+    ring
+
+/-- The alternating sum of `(-1)^|S|` over subsets `S` of `univ`
+that *contain* a fixed subset `c` equals `(-1)^|c|` times the
+empty/non-empty indicator of `univ \ c`.
+
+Proved by the bijection `S ↦ S \ c` between `{S | c ⊆ S ⊆ univ}` and
+`(univ \ c).powerset`, with inverse `T ↦ T ∪ c` and the cardinality
+bookkeeping `|S| = |c| + |S \ c|`. -/
+theorem sum_superset_neg_one_pow_card {R : Type*} [CommRing R]
+    {α : Type*} [DecidableEq α] [Fintype α] (c : Finset α) :
+    (∑ S ∈ (Finset.univ : Finset α).powerset with c ⊆ S, (-1 : R) ^ S.card)
+      = (-1 : R) ^ c.card * (if (Finset.univ \ c) = ∅ then 1 else 0) := by
+  -- Reindex via the bijection `S ↦ S \ c : {c ⊆ S ⊆ univ} → (univ\c).powerset`.
+  rw [← sum_powerset_neg_one_pow_card_ring (R := R) (Finset.univ \ c)]
+  rw [Finset.mul_sum]
+  refine Finset.sum_nbij'
+    (fun S => S \ c)
+    (fun T => T ∪ c)
+    ?_ ?_ ?_ ?_ ?_
+  · -- S \ c ∈ (univ \ c).powerset
+    intro S hS
+    simp only [Finset.mem_filter, Finset.mem_powerset] at hS
+    simp only [Finset.mem_powerset]
+    intro x hx
+    simp only [Finset.mem_sdiff] at hx ⊢
+    exact ⟨Finset.mem_univ x, hx.2⟩
+  · -- T ∪ c ∈ {S ∈ univ.powerset | c ⊆ S}
+    intro T _
+    simp only [Finset.mem_filter, Finset.mem_powerset]
+    exact ⟨Finset.subset_univ _, Finset.subset_union_right⟩
+  · -- (S \ c) ∪ c = S  (since c ⊆ S)
+    intro S hS
+    simp only [Finset.mem_filter, Finset.mem_powerset] at hS
+    show (S \ c) ∪ c = S
+    rw [Finset.sdiff_union_of_subset hS.2]
+  · -- (T ∪ c) \ c = T  (since T ⊆ univ \ c, so T disjoint from c)
+    intro T hT
+    simp only [Finset.mem_powerset] at hT
+    show (T ∪ c) \ c = T
+    rw [Finset.union_sdiff_right]
+    rw [Finset.sdiff_eq_self_of_disjoint]
+    rw [Finset.disjoint_left]
+    intro x hxT hxc
+    have := hT hxT
+    simp only [Finset.mem_sdiff] at this
+    exact this.2 hxc
+  · -- (-1)^|S| = (-1)^|c| * (-1)^|S \ c|
+    intro S hS
+    simp only [Finset.mem_filter, Finset.mem_powerset] at hS
+    show (-1 : R) ^ S.card = (-1) ^ c.card * (-1) ^ (S \ c).card
+    rw [← pow_add]
+    congr 1
+    have hcs : (S \ c).card = S.card - c.card := Finset.card_sdiff_of_subset hS.2
+    have hle : c.card ≤ S.card := Finset.card_le_card hS.2
+    omega
+
+/-- L7 (sketch §3.3): the Ryser inclusion–exclusion right-hand side
+equals `Matrix.permanent` over any `CommRing R`.
+
+The pure-Mathlib identity; the headline theorem's `ZMod 3` case is
+the free specialisation `R := ZMod 3`. -/
+theorem ryser_eq_permanent_zmod {R : Type*} [CommRing R] {n : ℕ}
+    (M : Matrix (Fin n) (Fin n) R) :
+    ryserRHS M = M.permanent := by
+  classical
+  -- Work with `Mᵀ.permanent = M.permanent` so the product index lines
+  -- up with the `∏_i M i (σ i)` shape coming out of the expansion.
+  rw [← Matrix.permanent_transpose]
+  unfold ryserRHS Matrix.permanent
+  -- Step 1: expand the inner product by the multinomial lemma.
+  -- `∏ i, ∑ j ∈ S, M i j = ∑ f ∈ piFinset (fun _ => S), ∏ i, M i (f i)`.
+  have hprod : ∀ S : Finset (Fin n),
+      (∏ i, ∑ j ∈ S, M i j)
+        = ∑ f ∈ Fintype.piFinset (fun _ : Fin n => S), ∏ i, M i (f i) := by
+    intro S
+    rw [Finset.prod_univ_sum (fun _ : Fin n => S) (fun i j => M i j)]
+  simp only [hprod]
+  -- Express the `piFinset` sum as a sum over *all* functions weighted
+  -- by the `0/1` membership indicator, so the `S`-dependence factors.
+  have hpi : ∀ S : Finset (Fin n),
+      (∑ f ∈ Fintype.piFinset (fun _ : Fin n => S), ∏ i, M i (f i))
+        = ∑ f : Fin n → Fin n,
+            (∏ i, M i (f i)) * (if (∀ i, f i ∈ S) then 1 else 0) := by
+    intro S
+    -- RHS: collapse the `0/1` weight into a `filter` on the function space.
+    have hrhs :
+        (∑ f : Fin n → Fin n,
+            (∏ i, M i (f i)) * (if (∀ i, f i ∈ S) then 1 else 0))
+          = ∑ f ∈ (Finset.univ : Finset (Fin n → Fin n))
+              with (∀ i, f i ∈ S), ∏ i, M i (f i) := by
+      rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl ?_
+      intro f _
+      by_cases h : ∀ i, f i ∈ S <;> simp [h]
+    rw [hrhs]
+    -- `piFinset (fun _ => S) = univ.filter (fun f => ∀ i, f i ∈ S)`.
+    apply Finset.sum_congr _ (fun _ _ => rfl)
+    ext f
+    simp only [Fintype.mem_piFinset, Finset.mem_filter, Finset.mem_univ, true_and]
+  simp only [hpi]
+  -- Distribute the `(-1)^n` and `(-1)^|S|` scalars fully into the inner
+  -- `f`-sum, then swap the `S`/`f` summation order.
+  simp only [Finset.mul_sum]
+  rw [Finset.sum_comm]
+  -- For each `f`, the inner `S`-sum is
+  -- `∑_{S ⊆ univ} (-1)^n·(-1)^|S| · (∏_i M i (f i)) · [image f ⊆ S]`.
+  -- Pull `(∏_i M i (f i))` out and evaluate the bracketed `S`-sum.
+  have hsurj_iff : ∀ f : Fin n → Fin n,
+      (Finset.univ \ Finset.image f Finset.univ) = ∅
+        ↔ Function.Surjective f := by
+    intro f
+    rw [Finset.sdiff_eq_empty_iff_subset]
+    constructor
+    · intro hsub y
+      have : y ∈ Finset.image f Finset.univ := hsub (Finset.mem_univ y)
+      simpa using this
+    · intro hsurj
+      intro y _
+      obtain ⟨x, hx⟩ := hsurj y
+      exact Finset.mem_image.mpr ⟨x, Finset.mem_univ x, hx⟩
+  -- Evaluate each `f`-term.
+  have hterm : ∀ f : Fin n → Fin n,
+      (∑ S ∈ (Finset.univ : Finset (Fin n)).powerset,
+          (-1 : R) ^ n * ((-1) ^ S.card *
+            ((∏ i, M i (f i)) * (if (∀ i, f i ∈ S) then 1 else 0))))
+        = if Function.Bijective f then (∏ i, M i (f i)) else 0 := by
+    intro f
+    -- Move the membership indicator into a `filter` on the powerset.
+    have hmem : ∀ S : Finset (Fin n),
+        (if (∀ i, f i ∈ S) then (1 : R) else 0)
+          = (if Finset.image f Finset.univ ⊆ S then (1 : R) else 0) := by
+      intro S
+      congr 1
+      simp only [eq_iff_iff]
+      constructor
+      · intro h
+        intro y hy
+        simp only [Finset.mem_image] at hy
+        obtain ⟨x, _, hx⟩ := hy
+        rw [← hx]; exact h x
+      · intro h i
+        exact h (Finset.mem_image.mpr ⟨i, Finset.mem_univ i, rfl⟩)
+    simp only [hmem]
+    -- Factor and isolate the bracketed `(-1)^|S|` sum over supersets.
+    have hrw : ∀ S : Finset (Fin n),
+        (-1 : R) ^ n * ((-1) ^ S.card *
+            ((∏ i, M i (f i)) * (if Finset.image f Finset.univ ⊆ S then (1:R) else 0)))
+          = ((-1 : R) ^ n * (∏ i, M i (f i)))
+              * ((-1) ^ S.card * (if Finset.image f Finset.univ ⊆ S then (1:R) else 0)) := by
+      intro S; ring
+    simp only [hrw]
+    rw [← Finset.mul_sum]
+    -- The bracketed sum: drop the indicator into a `filter`.
+    have hfilter :
+        (∑ S ∈ (Finset.univ : Finset (Fin n)).powerset,
+            (-1 : R) ^ S.card *
+              (if Finset.image f Finset.univ ⊆ S then (1:R) else 0))
+          = ∑ S ∈ (Finset.univ : Finset (Fin n)).powerset
+              with Finset.image f Finset.univ ⊆ S, (-1 : R) ^ S.card := by
+      rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl ?_
+      intro S _
+      by_cases h : Finset.image f Finset.univ ⊆ S <;> simp [h]
+    rw [hfilter, sum_superset_neg_one_pow_card (Finset.image f Finset.univ)]
+    by_cases hbij : Function.Bijective f
+    · -- Bijective ⇒ surjective ⇒ `univ \ image = ∅`, `|image| = n`.
+      have hsurj : Function.Surjective f := hbij.2
+      have himg : Finset.image f Finset.univ = Finset.univ := by
+        rw [Finset.eq_univ_iff_forall]
+        intro y
+        obtain ⟨x, hx⟩ := hsurj y
+        exact Finset.mem_image.mpr ⟨x, Finset.mem_univ x, hx⟩
+      have hempty : (Finset.univ \ Finset.image f Finset.univ) = ∅ :=
+        (hsurj_iff f).mpr hsurj
+      have hcard : (Finset.image f Finset.univ).card = n := by
+        rw [himg]; simp
+      rw [if_pos hempty, hcard, if_pos hbij, mul_one]
+      -- Goal: ((-1)^n * ∏ i, M i (f i)) * (-1)^n = ∏ i, M i (f i).
+      have hsq : (-1 : R) ^ n * (-1 : R) ^ n = 1 := by
+        rw [← pow_add]
+        rcases Nat.even_or_odd n with he | ho
+        · exact Even.neg_one_pow (by simpa using he.add he)
+        · have : Even (n + n) := by simpa using ho.add ho
+          exact Even.neg_one_pow this
+      calc ((-1 : R) ^ n * ∏ i, M i (f i)) * (-1) ^ n
+          = (∏ i, M i (f i)) * ((-1 : R) ^ n * (-1) ^ n) := by ring
+        _ = (∏ i, M i (f i)) * 1 := by rw [hsq]
+        _ = ∏ i, M i (f i) := mul_one _
+    · -- Not bijective ⇒ (on `Fin n`) not surjective ⇒ `univ \ image ≠ ∅`.
+      have hnsurj : ¬ Function.Surjective f := by
+        intro hsurj
+        exact hbij ⟨(Finite.injective_iff_surjective).mpr hsurj, hsurj⟩
+      have hne : (Finset.univ \ Finset.image f Finset.univ) ≠ ∅ := by
+        intro hcontra
+        exact hnsurj ((hsurj_iff f).mp hcontra)
+      rw [if_neg hne, if_neg hbij]
+      ring
+  simp only [hterm]
+  -- The sum over all `f` collapses to the sum over bijective `f`,
+  -- which reindexes by `Equiv.Perm (Fin n)`.
+  rw [← Finset.sum_filter]
+  -- `∑_{f bijective} ∏_i M i (f i) = ∑_{σ : Perm} ∏_i M i (σ i) = Mᵀ.permanent`.
+  symm
+  refine Finset.sum_nbij'
+    (fun σ : Equiv.Perm (Fin n) => (⇑σ : Fin n → Fin n))
+    (fun f => if h : Function.Bijective f then Equiv.ofBijective f h else 1)
+    ?_ ?_ ?_ ?_ ?_
+  · intro σ _
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    exact σ.bijective
+  · intro f _
+    exact Finset.mem_univ _
+  · intro σ _
+    have : Function.Bijective (⇑σ) := σ.bijective
+    simp only [this, dif_pos]
+    ext x
+    rfl
+  · intro f hf
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hf
+    simp only [hf, dif_pos]
+    rfl
+  · intro σ _
+    rfl
 
 /-! ## §1 — Bounded-n headline corner (n = 0)
 
