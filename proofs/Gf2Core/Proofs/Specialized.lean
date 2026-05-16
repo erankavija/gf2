@@ -885,4 +885,68 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
     obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists (wide_mod_arm hP ha hb)
     exact ⟨r, hr_eq, hr_lt, hr_val⟩
 
+/-! ## §11 — inv_loop result bound -/
+
+/-- The Fermat-inverse square-and-multiply `inv_loop` keeps `result` and
+    `base` in `[0, P)` (each `specialized_mul` step returns `< P`), so its
+    final result is in `[0, P)`. Proven by the `loop.spec` invariant
+    pattern; the `specialized_mul` bound is the now-proven
+    `specialized_mul_correct`. -/
+theorem inv_loop_bound {P : Std.U64} (hP : ValidPrime P)
+    (result base e : Std.U64)
+    (hr : result.val < P.val) (hb : base.val < P.val) :
+    ∃ r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop P result base e
+      = ok r ∧ r.val < P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hspec :
+      gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop P result base e
+      ⦃ r => r.val < P.val ⦄ := by
+    unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop
+    apply loop.spec
+      (measure := fun ((_, _, e1) : Std.U64 × Std.U64 × Std.U64) => e1.val)
+      (inv := fun ((res1, bas1, _) : Std.U64 × Std.U64 × Std.U64) =>
+        res1.val < P.val ∧ bas1.val < P.val)
+    · intro ⟨res1, bas1, e1⟩ ⟨hres1, hbas1⟩
+      dsimp only
+      simp only [gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop.body]
+      by_cases he : e1 > 0#u64
+      · simp only [he, if_true]
+        -- i = e1 & 1
+        progress as ⟨i, _, _⟩
+        -- result1 = if i = 1 then specialized_mul P res1 bas1 else res1
+        have hres1_step : ∃ res2, (if i = 1#u64
+            then gfp.specialized_mul P res1 bas1 else ok res1) = ok res2
+            ∧ res2.val < P.val := by
+          by_cases hi1 : i = 1#u64
+          · simp only [hi1, if_true]
+            obtain ⟨r2, hr2_eq, hr2_lt, _⟩ := specialized_mul_correct hP hres1 hbas1
+            exact ⟨r2, hr2_eq, hr2_lt⟩
+          · simp only [hi1, if_false]
+            exact ⟨res1, rfl, hres1⟩
+        obtain ⟨res2, hres2_eq, hres2_lt⟩ := hres1_step
+        simp only [hres2_eq, bind_tc_ok]
+        -- e_next = e1 >>> 1
+        progress as ⟨enext, henext_val, _⟩
+        have he1_pos : 0 < e1.val := by scalar_tac
+        have henext_lt : enext.val < e1.val := by
+          rw [henext_val, Nat.shiftRight_eq_div_pow, pow_one]
+          omega
+        by_cases he2 : enext > 0#u64
+        · simp only [he2, if_true]
+          obtain ⟨bas2, hbas2_eq, hbas2_lt, _⟩ :=
+            specialized_mul_correct hP hbas1 hbas1
+          simp only [hbas2_eq, bind_tc_ok, spec, theta, wp_return]
+          refine ⟨hres2_lt, hbas2_lt, ?_⟩
+          show enext.val < e1.val
+          exact henext_lt
+        · simp only [he2, if_false, spec, theta, wp_return]
+          refine ⟨hres2_lt, hbas1, ?_⟩
+          show enext.val < e1.val
+          exact henext_lt
+      · simp only [he, if_false, spec, theta, wp_return]
+        exact hres1
+    · exact ⟨hr, hb⟩
+  obtain ⟨r, hr_eq, hr_lt⟩ := spec_imp_exists hspec
+  exact ⟨r, hr_eq, hr_lt⟩
+
 end Specialized
