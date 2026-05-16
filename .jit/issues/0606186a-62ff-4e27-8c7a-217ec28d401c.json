@@ -16,12 +16,12 @@
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T13:50:52.634836177Z"
+      "updated_at": "2026-05-16T22:26:18.716727718Z"
     },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T13:50:43.010017174Z"
+      "updated_at": "2026-05-16T22:26:13.013000256Z"
     }
   },
   "context": {},
@@ -36,21 +36,14 @@
     {
       "path": "proofs/Gf2Algebra/Proofs/RyserBounded.lean",
       "commit": null,
-      "label": "V2 Lean proof file (session 1 infrastructure + session 2 L1-L3 Gray-code lemmas)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    },
-    {
-      "path": "crates/gf2-algebra/src/permanent/ryser_fp3.rs",
-      "commit": null,
-      "label": "F_3 monomorphisation wrapper (Charon/Aeneas extraction target)",
+      "label": "V2 Lean proof — final Option-3 abstract-only landing (ryser_permanent_bounded n≤63 + Gray-code lemmas, sorry-free)",
       "doc_type": "implementation",
       "format": "markdown"
     },
     {
       "path": "dev/plans/d3_v2_path1_sketch.md",
       "commit": null,
-      "label": "V2 Path-1 proof sketch (lead-approved: transparent gfp + thin delegating wrapper + L4-L9/headline)",
+      "label": "V2 Path-1 sketch + §9 Option-3 addendum (Path-1 §2 falsified; final landing = abstract-only, user-approved)",
       "doc_type": "design",
       "format": "markdown"
     }
@@ -61,5 +54,5 @@
     "component:proofs"
   ],
   "created_at": "2026-05-09T09:48:15.886764151+00:00",
-  "updated_at": "2026-05-16T22:12:24.228554879+00:00"
+  "updated_at": "2026-05-16T22:32:01.317580077+00:00"
 }
