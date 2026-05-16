@@ -949,4 +949,188 @@ theorem inv_loop_bound {P : Std.U64} (hP : ValidPrime P)
   obtain ⟨r, hr_eq, hr_lt⟩ := spec_imp_exists hspec
   exact ⟨r, hr_eq, hr_lt⟩
 
+/-! ## §12 — inv_loop value correctness (Fermat square-and-multiply) -/
+
+/-- Pure-`Nat` binary-exponentiation spec mirroring `inv_loop.body`
+    (canonical-form `specialized_mul` = `(x·y) % P`). -/
+private def invPowSpec (P result base e : ℕ) : ℕ :=
+  if e = 0 then result
+  else
+    let result' := if e % 2 = 1 then result * base % P else result
+    let e' := e / 2
+    let base' := if e' > 0 then base * base % P else base
+    invPowSpec P result' base' e'
+termination_by e
+decreasing_by omega
+
+private lemma invPowSpec_zero (P result base : ℕ) :
+    invPowSpec P result base 0 = result := by
+  rw [invPowSpec]; simp
+
+private lemma invPowSpec_step (P result base e : ℕ) (he : 0 < e) :
+    invPowSpec P result base e =
+      invPowSpec P (if e % 2 = 1 then result * base % P else result)
+        (if e / 2 > 0 then base * base % P else base) (e / 2) := by
+  conv_lhs => rw [invPowSpec]
+  simp only [show ¬(e = 0) from by omega, if_false]
+
+/-- `invPowSpec` computes `result · base^e (mod P)`. -/
+private lemma invPowSpec_correct (P : ℕ) (hP : 0 < P) :
+    ∀ e result base, invPowSpec P result base e % P
+      = (result * base ^ e) % P := by
+  intro e
+  induction e using Nat.strong_induction_on with
+  | _ e ih =>
+    intro result base
+    by_cases he : e = 0
+    · subst he; rw [invPowSpec_zero]; simp
+    · have hepos : 0 < e := by omega
+      rw [invPowSpec_step P result base e hepos]
+      have he2 : e / 2 < e := by omega
+      rw [ih (e / 2) he2]
+      -- base^e = base^(e%2) * (base^2)^(e/2)
+      have hsplit : base ^ e = base ^ (e % 2) * (base ^ 2) ^ (e / 2) := by
+        rw [← pow_mul, ← pow_add]
+        congr 1
+        omega
+      -- (bb % P)^k % P = bb^k % P
+      have hpm : ∀ (bb k : ℕ), (bb % P) ^ k % P = bb ^ k % P := by
+        intro bb k; conv_rhs => rw [Nat.pow_mod]
+      have hbsq : base * base = base ^ 2 := by ring
+      by_cases hbpos : e / 2 > 0
+      · simp only [hbpos, if_true]
+        by_cases hodd : e % 2 = 1
+        · simp only [hodd, if_true]
+          -- LHS: (result*base % P) * (base*base % P)^(e/2) % P
+          -- RHS: result * (base^(e%2) * (base^2)^(e/2)) % P
+          rw [hsplit, hodd, pow_one]
+          calc (result * base % P) * (base * base % P) ^ (e / 2) % P
+              = (result * base) * (base * base) ^ (e / 2) % P := by
+                rw [Nat.mul_mod (result * base % P), Nat.mod_mod,
+                    hpm (base * base) (e / 2), ← Nat.mul_mod]
+            _ = (result * base) * (base ^ 2) ^ (e / 2) % P := by rw [hbsq]
+            _ = result * (base * (base ^ 2) ^ (e / 2)) % P := by ring_nf
+        · have heven : e % 2 = 0 := by omega
+          simp only [hodd, if_false]
+          rw [hsplit, heven, pow_zero, Nat.one_mul]
+          calc result * (base * base % P) ^ (e / 2) % P
+              = result * (base * base) ^ (e / 2) % P := by
+                rw [Nat.mul_mod result, hpm (base * base) (e / 2), ← Nat.mul_mod]
+            _ = result * (base ^ 2) ^ (e / 2) % P := by rw [hbsq]
+      · have he1 : e = 1 := by omega
+        simp only [hbpos, if_false]
+        subst he1
+        simp only [Nat.reduceDiv, invPowSpec_zero,
+                   show (1 : ℕ) % 2 = 1 from rfl, if_true, pow_zero,
+                   Nat.mul_one, pow_one, Nat.mod_mod]
+
+/-- The Fermat-inverse `inv_loop` computes `result · base^e (mod P)`,
+    with the result in `[0, P)`. Square-and-multiply over canonical values
+    via the now-proven `specialized_mul_correct`. -/
+theorem inv_loop_value {P : Std.U64} (hP : ValidPrime P)
+    (result base e : Std.U64)
+    (hr : result.val < P.val) (hb : base.val < P.val) :
+    ∃ r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop P result base e
+      = ok r ∧ r.val < P.val ∧
+      r.val = (result.val * base.val ^ e.val) % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hspec :
+      gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop P result base e
+      ⦃ r => r.val < P.val ∧
+        r.val = invPowSpec P.val result.val base.val e.val % P.val ⦄ := by
+    unfold gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop
+    apply loop.spec
+      (measure := fun ((_, _, e1) : Std.U64 × Std.U64 × Std.U64) => e1.val)
+      (inv := fun ((res1, bas1, e1) : Std.U64 × Std.U64 × Std.U64) =>
+        res1.val < P.val ∧ bas1.val < P.val ∧
+        invPowSpec P.val res1.val bas1.val e1.val =
+          invPowSpec P.val result.val base.val e.val)
+    · intro ⟨res1, bas1, e1⟩ ⟨hres1, hbas1, hinv1⟩
+      dsimp only
+      simp only [gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop.body]
+      by_cases he : e1 > 0#u64
+      · simp only [he, if_true]
+        have he1_pos : 0 < e1.val := by scalar_tac
+        progress as ⟨i, hi_val, _⟩
+        -- i = e1 & 1 ; i.val = e1.val % 2  (low bit)
+        have hi_bit : i.val = e1.val % 2 := by
+          rw [hi_val, UScalar.val_and]
+          have : (1#u64 : Std.U64).val = 1 := by native_decide
+          rw [this]
+          have : e1.val &&& 1 = e1.val % 2 := by
+            have := and_mask_mod e1.val 1
+            simpa using this
+          exact this
+        -- result1 step
+        have hres_step : ∃ res2, (if i = 1#u64
+            then gfp.specialized_mul P res1 bas1 else ok res1) = ok res2
+            ∧ res2.val < P.val
+            ∧ res2.val = (if e1.val % 2 = 1 then res1.val * bas1.val % P.val
+                          else res1.val) := by
+          by_cases hi1 : i = 1#u64
+          · simp only [hi1, if_true]
+            have he1odd : e1.val % 2 = 1 := by
+              have : i.val = (1#u64 : Std.U64).val := by rw [hi1]
+              have h1v : (1#u64 : Std.U64).val = 1 := by native_decide
+              rw [h1v] at this; omega
+            obtain ⟨r2, hr2_eq, hr2_lt, hr2_val⟩ :=
+              specialized_mul_correct hP hres1 hbas1
+            exact ⟨r2, hr2_eq, hr2_lt, by simp only [he1odd, if_true]; exact hr2_val⟩
+          · simp only [hi1, if_false]
+            have he1even : e1.val % 2 ≠ 1 := by
+              intro hodd
+              apply hi1
+              apply UScalar.val_eq_imp
+              have h1v : (1#u64 : Std.U64).val = 1 := by native_decide
+              rw [h1v]; omega
+            exact ⟨res1, rfl, hres1, by simp only [he1even, if_false]⟩
+        obtain ⟨res2, hres2_eq, hres2_lt, hres2_val⟩ := hres_step
+        simp only [hres2_eq, bind_tc_ok]
+        progress as ⟨enext, henext_val, _⟩
+        have henext_eq : enext.val = e1.val / 2 := by
+          rw [henext_val, Nat.shiftRight_eq_div_pow, pow_one]
+        have henext_lt : enext.val < e1.val := by rw [henext_eq]; omega
+        by_cases he2 : enext > 0#u64
+        · simp only [he2, if_true]
+          have henext_pos : 0 < enext.val := by scalar_tac
+          obtain ⟨bas2, hbas2_eq, hbas2_lt, hbas2_val⟩ :=
+            specialized_mul_correct hP hbas1 hbas1
+          simp only [hbas2_eq, bind_tc_ok, spec, theta, wp_return]
+          refine ⟨hres2_lt, hbas2_lt, ?_, ?_⟩
+          · -- invPowSpec preserved
+            rw [← hinv1]
+            rw [invPowSpec_step P.val res1.val bas1.val e1.val he1_pos]
+            have hd : e1.val / 2 > 0 := by rw [← henext_eq]; exact henext_pos
+            have hb2 : bas2.val = (if e1.val / 2 > 0 then
+                bas1.val * bas1.val % P.val else bas1.val) := by
+              simp only [hd, if_true]; exact hbas2_val
+            rw [hres2_val, hb2, henext_eq]
+          · show enext.val < e1.val
+            exact henext_lt
+        · simp only [he2, if_false, spec, theta, wp_return]
+          have henext0 : enext.val = 0 := by
+            have : ¬ (0#u64 : Std.U64).val < enext.val := by
+              simpa using he2
+            have h0 : (0#u64 : Std.U64).val = 0 := by native_decide
+            omega
+          refine ⟨hres2_lt, hbas1, ?_, ?_⟩
+          · rw [← hinv1, invPowSpec_step P.val res1.val bas1.val e1.val he1_pos]
+            have hd : ¬ (e1.val / 2 > 0) := by rw [← henext_eq]; omega
+            rw [hres2_val, henext_eq]
+            simp only [hd, if_false]
+          · show enext.val < e1.val
+            exact henext_lt
+      · simp only [he, if_false, spec, theta, wp_return]
+        have he0 : e1.val = 0 := by
+          have : ¬ (0#u64 : Std.U64).val < e1.val := by simpa using he
+          have h0 : (0#u64 : Std.U64).val = 0 := by native_decide
+          omega
+        refine ⟨hres1, ?_⟩
+        rw [← hinv1, he0, invPowSpec_zero]
+        rw [Nat.mod_eq_of_lt hres1]
+    · exact ⟨hr, hb, rfl⟩
+  obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists hspec
+  refine ⟨r, hr_eq, hr_lt, ?_⟩
+  rw [hr_val, invPowSpec_correct P.val hP_pos e.val result.val base.val]
+
 end Specialized
