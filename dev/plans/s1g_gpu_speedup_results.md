@@ -128,6 +128,12 @@ The scaling from n=32 to n=36 by a factor of 2^4 = 16 was correctly predicted:
 T_gpu_equiv_n32 = 5.645 s  →  T_gpu_equiv_n36 = 90.089 s  (ratio: 15.96×, close to 16×)
 ```
 
+### [hard] 50× at n=36
+
+**MET and exceeded.** Measured speedup at n=36 is **100.24×** > 50×, a 2.0× margin
+over the hard contract. All four sweep rows (n=24/28/32/36) clear the 50× bar at
+n≥28 (n=24 = 66.5×, n=28 = 78.2×, n=32 = 88.6×, n=36 = 100.2×).
+
 ### [aspirational] 86.9× at n=36
 
 **MET and exceeded.** Measured speedup at n=36 is **100.24×** > 86.9×.
@@ -146,7 +152,7 @@ The determinism check is implemented in:
 - `dev/research/permanent_gpu_speedup/src/det_check.rs` — standalone binary that runs
   CPU SIMD and GPU concurrently, then asserts equality. GPU wall-clock: ~7200 s (~2 h).
 - `dev/research/permanent_gpu_speedup/src/simd_check.rs` — CPU-only SIMD binary for
-  obtaining the expected Fp<3> value without ROCm. Wall-clock: ~848 s (~14 min).
+  obtaining the expected Fp<3> value without ROCm. Measured wall-clock: 983.3 s (~16 min).
 - `dev/research/permanent_gpu_speedup/tests/smoke.rs` — `test_gpu_matches_simd_at_n36`
   (`#[ignore = "external: gfx1030 device required; n=36 takes ~7200 s (~2 h)"]`).
 
@@ -158,17 +164,25 @@ walk as the CPU path; field arithmetic is byte-level mod-3 which matches F_3 exa
 **Determinism check result (n=36, seed=0x9480f8a600000024):**
 
 The `det_check` binary (PID 1369762) was launched at 21:01 EEST on 2026-05-16 immediately
-after the sweep completed. It runs `permanent_bipedal3` (SIMD, ~848 s) and
-`permanent_batch_bipedal3` (GPU M=1, ~7200 s) concurrently on the same matrix, then
-compares the results.
+after the sweep completed. It runs `permanent_bipedal3` (SIMD) and
+`permanent_batch_bipedal3` (GPU M=1) concurrently on the same matrix, then
+compares the results. It completed at 23:01 EEST on 2026-05-16.
 
-- **CPU SIMD result:** `Fp<3>(0)` — computed independently by simd_check binary in 983.3 s
-  (confirmed at 21:50 EEST; seed=0x9480f8a600000024; the permanent of this 36×36 F_3 matrix ≡ 0 mod 3)
-- **GPU result:** (expected ~23:01 EEST; written by det_check upon GPU completion)
-- **Equality:** GPU value must equal `Fp<3>(0)` for PASS
+- **CPU SIMD result:** `Fp<3>(0)` in 913.5 s (measured inside det_check). Independently
+  cross-checked by the standalone simd_check binary, which produced the same value
+  `Fp<3>(0)` in 983.3 s (confirmed at 21:50 EEST). seed=0x9480f8a600000024; the
+  permanent of this 36×36 F_3 matrix ≡ 0 mod 3.
+- **GPU result:** `Fp<3>(0)` in 7176.9 s, computed by `permanent_batch_bipedal3`
+  (M=1, gfx1030/RDNA2). Total det_check wall-clock 7176.9 s (GPU-bound, CPU overlapped).
+- **Equality:** **PASS** — `GPU == SIMD == Fp<3>(0)` (n=36, seed=0x9480f8a600000024).
+  The det_check binary asserted equality and printed
+  `PASS: GPU == SIMD == Fp<3>(0)  (n=36, seed=0x9480f8a600000024)`.
 
-_Note: The GPU value and final PASS/FAIL will be appended once det_check (PID 1369762)
-completes at ~23:01 EEST 2026-05-16. The SIMD value `Fp<3>(0)` is confirmed._
+The [hard] determinism criterion (criterion 6) is **MET**: the GPU batch kernel and the
+CPU SIMD path return bit-identical `Fp<3>` permanents for the same seeded n=36 matrix.
+This is further corroborated by three independent computations of the same matrix all
+yielding `Fp<3>(0)`: det_check SIMD (913.5 s), det_check GPU (7176.9 s), and the
+standalone simd_check binary (983.3 s).
 
 ---
 
