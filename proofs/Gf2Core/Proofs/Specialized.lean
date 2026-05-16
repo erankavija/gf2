@@ -784,57 +784,469 @@ theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
   simp only [theta, wp_return]
   rw [hr_val, hpp]
 
-/-! ## §9 — dispatch-match threading (clause-(c) axiom) -/
+/-! ## §9 — dispatch-match routing (clause-(c) axiom: pure structural routing) -/
 
 /-- **Tracked Aeneas-extraction-shape limitation (issue 2e544a34,
     2026-05-16 amendment #2, criterion 2 clause (c) — the single permitted
-    dispatch-threading axiom).**
+    dispatch-routing axiom).**
 
 `gfp.dispatch_mersenne_mul` and `gfp.dispatch_proth_mul` are extracted by
 Aeneas as nested `#uscalar`-literal `match` expressions
-(`match n with | 31#32#uscalar => … | 61#32#uscalar => … | _ => …`, and
-the Proth `(k,n)` analogue). Every arm routes the operands into one of the
-Mersenne/Proth reducers whose modular correctness is **proven, not
-assumed**, immediately above in this file
-(`mersenne_reduce_u64_correct`, `mersenne_reduce_correct`,
-`proth_reduce_u64_correct`). The only residual obligation is the *purely
-mechanical* fact that the `#uscalar`-literal match routes the scrutinee to
-the reducer for its shape. No Lean 4.30 tactic can case-split these
-generated matches (exhaustively falsified during attempt 2: `split`,
-`subst`/`rw`, the generated `.match_N` splitters, `fun_cases`, a standalone
-collapse lemma — `#uscalar` patterns are not user-writable — and
-`simp`/`decide`); it is an extraction-shape / tactic limitation, not
-avoidable in-`Proofs/` work.
+(`match n with | 31#uscalar => … | 61#uscalar => … | _ => …`, and the
+Proth `match k with | 15#uscalar … | 127#uscalar … | _ …` analogue with
+its inner `match n`). No Lean 4.30 tactic can case-split these generated
+matches (exhaustively falsified during attempt 2: `split`, `subst`/`rw`,
+the generated `.match_N` splitters, `fun_cases`, a standalone collapse
+lemma — `#uscalar` patterns are not user-writable — and `simp`/`decide`);
+it is an extraction-shape / tactic limitation, not avoidable in-`Proofs/`
+work.
 
-This axiom asserts ONLY that threading conclusion: for the prime shapes
-`classify` actually returns, the dispatch succeeds and its result value is
-exactly the value the *proven* reducer lemmas establish
-(`(a·b) mod (2^n − 1)` for Mersenne `P = 2^n − 1`; `(a·b) mod (k·2^n + 1)`
-for Proth `P = k·2^n + 1`). It does **not** absorb reducer correctness or
-`classify_spec` — those remain proven theorems above and are what give the
-right-hand side its `mod P` form. A root-cause fix (Rust-side dispatch
-refactor, Aeneas/Lean upgrade, or a `#uscalar` simproc) is tracked as
-out-of-scope follow-up per this issue's non-goals. -/
-axiom dispatch_threads :
-    (∀ (n : Std.U32) (a b : Std.U64),
-        4 ≤ n.val → n.val ≤ 62 →
-        a.val < 2 ^ n.val - 1 → b.val < 2 ^ n.val - 1 →
-        ∃ r, gfp.dispatch_mersenne_mul n a b = ok r ∧
-          r.val = (a.val * b.val) % (2 ^ n.val - 1))
-    ∧ (∀ (k : Std.U64) (n : Std.U32) (a b : Std.U64),
-        1 ≤ k.val → 16 ≤ n.val → n.val ≤ 62 →
-        k.val * 2 ^ n.val + 1 ≤ 2 ^ 63 →
-        a.val < k.val * 2 ^ n.val + 1 → b.val < k.val * 2 ^ n.val + 1 →
-        ∃ r, gfp.dispatch_proth_mul k n a b = ok r ∧
-          r.val = (a.val * b.val) % (k.val * 2 ^ n.val + 1))
+This axiom asserts **only** the *pure structural routing* fact: the
+`#uscalar`-literal match collapses to its matched arm, with the
+un-case-splittable scrutinee match rewritten to a decidable `if` on
+`.val`. Each right-hand side is the **literal extracted arm body** — it
+contains **no** `% P` arithmetic claim and does **not** mention any
+reducer's specification. All modular correctness (`(a·b) mod P`) is
+derived downstream in `specialized_mul_correct` by composing this routing
+identity with the *proven* reducer theorems (`mersenne_reduce_u64_correct`,
+`mersenne_reduce_correct`, `proth_reduce_u64_correct`) and `classify_spec`;
+the axiom does **not** absorb reducer correctness. A root-cause fix
+(Rust-side dispatch refactor, Aeneas/Lean upgrade, or a `#uscalar`
+simproc) is tracked as out-of-scope follow-up per this issue's
+non-goals. -/
+axiom dispatch_route :
+    (∀ (n : Std.U32) (a b : Std.U64), n.val = 31 →
+        gfp.dispatch_mersenne_mul n a b
+          = (do
+              let i ← lift (core.num.U64.wrapping_mul a b)
+              gfp.specialized.mersenne_reduce_u64 31#u32 i))
+  ∧ (∀ (n : Std.U32) (a b : Std.U64), n.val = 61 →
+        gfp.dispatch_mersenne_mul n a b
+          = (do
+              let i ← lift (UScalar.cast .U128 a)
+              let i1 ← lift (UScalar.cast .U128 b)
+              let i2 ← i * i1
+              gfp.specialized.mersenne_reduce 61#u32 i2))
+  ∧ (∀ (n : Std.U32) (a b : Std.U64), n.val ≠ 31 → n.val ≠ 61 →
+        gfp.dispatch_mersenne_mul n a b
+          = (do
+              let i ← lift (UScalar.cast .U128 a)
+              let i1 ← lift (UScalar.cast .U128 b)
+              let wide ← i * i1
+              let i2 ← 1#u128 <<< n
+              let i3 ← i2 - 1#u128
+              let i4 ← wide % i3
+              ok (UScalar.cast .U64 i4)))
+  ∧ (∀ (k : Std.U64) (n : Std.U32) (a b : Std.U64),
+        k.val = 15 → n.val = 27 →
+        gfp.dispatch_proth_mul k n a b
+          = (do
+              let i ← lift (UScalar.cast .U128 k)
+              let i1 ← 1#u128 <<< n
+              let i2 ← i * i1
+              let p ← i2 + 1#u128
+              let p32 ← lift (UScalar.cast .U64 p)
+              let i3 ← 1#u128 <<< 32#i32
+              if p < i3 then
+                (do
+                  let prod ← lift (core.num.U64.wrapping_mul a b)
+                  gfp.specialized.proth_reduce_u64 15#u64 27#u32 prod)
+              else
+                (do
+                  let i4 ← lift (UScalar.cast .U128 a)
+                  let i5 ← lift (UScalar.cast .U128 b)
+                  let wide ← i4 * i5
+                  let i6 ← wide % p
+                  ok (UScalar.cast .U64 i6))))
+  ∧ (∀ (k : Std.U64) (n : Std.U32) (a b : Std.U64),
+        k.val = 127 → n.val = 24 →
+        gfp.dispatch_proth_mul k n a b
+          = (do
+              let i ← lift (UScalar.cast .U128 k)
+              let i1 ← 1#u128 <<< n
+              let i2 ← i * i1
+              let p ← i2 + 1#u128
+              let p32 ← lift (UScalar.cast .U64 p)
+              let i3 ← 1#u128 <<< 32#i32
+              if p < i3 then
+                (do
+                  let prod ← lift (core.num.U64.wrapping_mul a b)
+                  gfp.specialized.proth_reduce_u64 127#u64 24#u32 prod)
+              else
+                (do
+                  let i4 ← lift (UScalar.cast .U128 a)
+                  let i5 ← lift (UScalar.cast .U128 b)
+                  let wide ← i4 * i5
+                  let i6 ← wide % p
+                  ok (UScalar.cast .U64 i6))))
+  ∧ (∀ (k : Std.U64) (n : Std.U32) (a b : Std.U64),
+        ¬ (k.val = 15 ∧ n.val = 27) → ¬ (k.val = 127 ∧ n.val = 24) →
+        gfp.dispatch_proth_mul k n a b
+          = (do
+              let i ← lift (UScalar.cast .U128 k)
+              let i1 ← 1#u128 <<< n
+              let i2 ← i * i1
+              let p ← i2 + 1#u128
+              let p32 ← lift (UScalar.cast .U64 p)
+              let i3 ← 1#u128 <<< 32#i32
+              if p < i3 then
+                (do
+                  let prod ← lift (core.num.U64.wrapping_mul a b)
+                  prod % p32)
+              else
+                (do
+                  let i4 ← lift (UScalar.cast .U128 a)
+                  let i5 ← lift (UScalar.cast .U128 b)
+                  let wide ← i4 * i5
+                  let i6 ← wide % p
+                  ok (UScalar.cast .U64 i6))))
 
-/-! ## §10 — specialized_mul full modular correctness -/
+/-! ## §10 — specialized_mul full modular correctness
+
+`specialized_mul` correctness is **derived**, not assumed: the §9
+`dispatch_route` axiom only collapses the un-case-splittable `#uscalar`
+match to its literal arm body; every modular fact below comes from the
+*proven* reducer theorems (`mersenne_reduce_u64_correct`,
+`mersenne_reduce_correct`, `proth_reduce_u64_correct`), `classify_spec`,
+and the `u128_wide_mod` / `u64_wide_mod` direct-modulo lemmas. -/
+
+/-- Generic 128-bit product-modulo arm: `(cast U64 ((cast U128 a) *
+    (cast U128 b) % m))` equals `(a·b) % P` and stays `< P`, whenever
+    `m.val = P.val`. Used by the Mersenne-generic and every Proth
+    `else` (wide) branch. -/
+private theorem u128_wide_mod {P a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (m : Std.U128) (hm : m.val = P.val) :
+    (do
+      let i ← lift (UScalar.cast .U128 a)
+      let i1 ← lift (UScalar.cast .U128 b)
+      let i2 ← i * i1
+      let i4 ← i2 % m
+      ok (UScalar.cast .U64 i4))
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
+  have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val := U64.cast_U128_val_eq b
+  simp only [lift, bind_tc_ok]
+  progress as ⟨prod, hprod⟩
+  progress as ⟨rem, hrem⟩
+  have hprod_val : prod.val = a.val * b.val := by rw [hprod, ha128, hb128]
+  have hrem_val : rem.val = (a.val * b.val) % P.val := by
+    rw [hrem, hprod_val, hm]
+  have hrem_lt : rem.val < P.val := by rw [hrem_val]; exact Nat.mod_lt _ hP_pos
+  have hcast : (UScalar.cast .U64 rem).val = rem.val :=
+    UScalar.cast_val_mod_pow_of_inBounds_eq .U64 rem (by
+      have : UScalarTy.U64.numBits = 64 := by decide
+      rw [this]; nlinarith [hP.2.2])
+  exact ⟨by rw [hcast]; exact hrem_lt, by rw [hcast, hrem_val]⟩
+
+/-- 64-bit product-modulo arm: `(core.num.U64.wrapping_mul a b) % m`
+    equals `(a·b) % P` and stays `< P`, whenever `m.val = P.val`,
+    `P.val < 2^32`, and `a, b < P` (so `a·b < 2^64`, no wrap). Used by
+    the Proth `then` branch's unsupported-pair fall-through
+    (`prod % p32`). -/
+private theorem u64_wide_mod {P a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hP32 : P.val < 2 ^ 32) (m : Std.U64) (hm : m.val = P.val) :
+    (do
+      let prod ← lift (core.num.U64.wrapping_mul a b)
+      prod % m)
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hab64 : a.val * b.val < 2 ^ 64 := by
+    calc a.val * b.val ≤ (2 ^ 32 - 1) * (2 ^ 32 - 1) :=
+          Nat.mul_le_mul (by omega) (by omega)
+      _ < 2 ^ 64 := by norm_num
+  have hprod : (core.num.U64.wrapping_mul a b).val = a.val * b.val := by
+    have h := core.num.U64.wrapping_mul_val_eq a b
+    simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h
+    rw [h]; exact Nat.mod_eq_of_lt (by
+      have : (18446744073709551616 : ℕ) = 2 ^ 64 := by norm_num
+      omega)
+  simp only [lift, bind_tc_ok]
+  have hm_ne : m.val ≠ 0 := by rw [hm]; omega
+  obtain ⟨r, hr_eq, hr_val⟩ :=
+    spec_imp_exists (UScalar.rem_spec (core.num.U64.wrapping_mul a b) hm_ne)
+  rw [show spec = theta from rfl, hr_eq]
+  simp only [theta, wp_return]
+  rw [hr_val, hprod, hm]
+  exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
+
+/-- Helper: `1#u128 <<< s` has value `2 ^ s.val` whenever `s.val < 128`. -/
+private theorem one_shl_u128_val (pw : Std.U128) {s : ℕ}
+    (hpw_val : pw.val = 1 <<< s % U128.size) (hs : s < 128) :
+    pw.val = 2 ^ s := by
+  rw [hpw_val, Nat.one_shiftLeft, U128.size_eq]
+  exact Nat.mod_eq_of_lt (by
+    have : 2 ^ s < 2 ^ 128 := Nat.pow_lt_pow_right (by norm_num) hs
+    omega)
+
+/-- M31 dispatch arm: `wrapping_mul` then the proven
+    `mersenne_reduce_u64_correct`. -/
+private theorem mersenne31_arm {P a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hP31 : P.val = 2 ^ 31 - 1) :
+    (do
+      let i ← lift (core.num.U64.wrapping_mul a b)
+      gfp.specialized.mersenne_reduce_u64 31#u32 i)
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have h31v : (31#u32 : Std.U32).val = 31 := by native_decide
+  have ha31 : a.val < 2 ^ 31 - 1 := by rw [← hP31]; exact ha
+  have hb31 : b.val < 2 ^ 31 - 1 := by rw [← hP31]; exact hb
+  have hprod : (core.num.U64.wrapping_mul a b).val = a.val * b.val := by
+    have h := core.num.U64.wrapping_mul_val_eq a b
+    simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h
+    rw [h]; exact Nat.mod_eq_of_lt (by
+      calc a.val * b.val ≤ (2 ^ 31 - 1) * (2 ^ 31 - 1) :=
+            Nat.mul_le_mul (by omega) (by omega)
+        _ < 18446744073709551616 := by norm_num)
+  simp only [lift, bind_tc_ok]
+  obtain ⟨r, hr_eq, hr_val⟩ :=
+    mersenne_reduce_u64_correct 31#u32 (core.num.U64.wrapping_mul a b)
+      (by omega) (by omega) (by
+        rw [h31v, hprod]
+        calc a.val * b.val ≤ (2 ^ 31 - 1) * (2 ^ 31 - 1) :=
+              Nat.mul_le_mul (by omega) (by omega)
+          _ < 2 ^ (2 * 31) := by norm_num)
+  rw [show spec = theta from rfl, hr_eq]
+  simp only [theta, wp_return]
+  rw [hr_val, h31v, hprod, ← hP31]
+  exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
+
+/-- M61 dispatch arm: 128-bit product then the proven
+    `mersenne_reduce_correct`. -/
+private theorem mersenne61_arm {P a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hP61 : P.val = 2 ^ 61 - 1) :
+    (do
+      let i ← lift (UScalar.cast .U128 a)
+      let i1 ← lift (UScalar.cast .U128 b)
+      let i2 ← i * i1
+      gfp.specialized.mersenne_reduce 61#u32 i2)
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have h61v : (61#u32 : Std.U32).val = 61 := by native_decide
+  have ha61 : a.val < 2 ^ 61 - 1 := by rw [← hP61]; exact ha
+  have hb61 : b.val < 2 ^ 61 - 1 := by rw [← hP61]; exact hb
+  have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val :=
+    U64.cast_U128_val_eq a
+  have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val :=
+    U64.cast_U128_val_eq b
+  simp only [lift, bind_tc_ok]
+  progress as ⟨i2, hi2⟩
+  have hi2_val : i2.val = a.val * b.val := by rw [hi2, ha128, hb128]
+  obtain ⟨r, hr_eq, hr_val⟩ :=
+    mersenne_reduce_correct 61#u32 i2 (by omega) (by omega) (by
+      rw [h61v, hi2_val]
+      calc a.val * b.val ≤ (2 ^ 61 - 1) * (2 ^ 61 - 1) :=
+            Nat.mul_le_mul (by omega) (by omega)
+        _ < 2 ^ (2 * 61) := by norm_num)
+  rw [show spec = theta from rfl, hr_eq]
+  simp only [theta, wp_return]
+  rw [hr_val, h61v, hi2_val, ← hP61]
+  exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
+
+/-- Generic Mersenne dispatch arm: direct 128-bit `(a·b) % (2^n − 1)`. -/
+private theorem mersenne_generic_arm {P a b : Std.U64} {n : Std.U32}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hn4 : 4 ≤ n.val) (hn62 : n.val ≤ 62) (hPeq : P.val = 2 ^ n.val - 1) :
+    (do
+      let i ← lift (UScalar.cast .U128 a)
+      let i1 ← lift (UScalar.cast .U128 b)
+      let wide ← i * i1
+      let i2 ← 1#u128 <<< n
+      let i3 ← i2 - 1#u128
+      let i4 ← wide % i3
+      ok (UScalar.cast .U64 i4))
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hnlt128 : n.val < 128 := by omega
+  have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val :=
+    U64.cast_U128_val_eq a
+  have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val :=
+    U64.cast_U128_val_eq b
+  have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
+  simp only [lift, bind_tc_ok]
+  progress as ⟨wide, hwide⟩
+  have hwide_val : wide.val = a.val * b.val := by rw [hwide, ha128, hb128]
+  progress as ⟨pw, hpw_val, _⟩
+  have hpw : pw.val = 2 ^ n.val := one_shl_u128_val pw hpw_val hnlt128
+  have hpw_ge1 : (1#u128 : Std.U128).val ≤ pw.val := by
+    rw [h1v128, hpw]; exact Nat.one_le_pow _ _ (by norm_num)
+  obtain ⟨md, hmd_eq, hmd_val0, _⟩ := spec_imp_exists (UScalar.sub_spec hpw_ge1)
+  simp only [hmd_eq, bind_tc_ok]
+  have hmd_val : md.val = 2 ^ n.val - 1 := by rw [hmd_val0, hpw, h1v128]
+  progress as ⟨i4, hi4⟩
+  have hi4_val : i4.val = (a.val * b.val) % P.val := by
+    rw [hi4, hwide_val, hmd_val, ← hPeq]
+  have hi4_lt : i4.val < P.val := by rw [hi4_val]; exact Nat.mod_lt _ hP_pos
+  have hcast : (UScalar.cast .U64 i4 : Std.U64).val = i4.val :=
+    UScalar.cast_val_mod_pow_of_inBounds_eq .U64 i4 (by
+      have : UScalarTy.U64.numBits = 64 := by decide
+      rw [this]; nlinarith [hP.2.2, hi4_lt])
+  exact ⟨by rw [hcast]; exact hi4_lt, by rw [hcast, hi4_val]⟩
+
+/-- Proth dispatch supported-pair arm `(K, N)`: 128-bit prefix computes
+    `p = K·2^N + 1 = P` (so `p < 2^32`, the `then`-branch fires), then
+    the proven `proth_reduce_u64_correct`. -/
+private theorem proth_supported_arm {P k a b : Std.U64} {n : Std.U32}
+    (K : Std.U64) (N : Std.U32)
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hkK : k.val = K.val) (hnN : n.val = N.val)
+    (hK1 : 1 ≤ K.val) (hN16 : 16 ≤ N.val) (hN32 : N.val ≤ 32)
+    (hPbound : K.val * 2 ^ N.val + 1 < 2 ^ 32)
+    (hPeq : P.val = k.val * 2 ^ n.val + 1) :
+    (do
+      let i ← lift (UScalar.cast .U128 k)
+      let i1 ← 1#u128 <<< n
+      let i2 ← i * i1
+      let p ← i2 + 1#u128
+      let _p32 ← lift (UScalar.cast .U64 p)
+      let i3 ← 1#u128 <<< 32#i32
+      if p < i3 then
+        (do
+          let prod ← lift (core.num.U64.wrapping_mul a b)
+          gfp.specialized.proth_reduce_u64 K N prod)
+      else
+        (do
+          let i4 ← lift (UScalar.cast .U128 a)
+          let i5 ← lift (UScalar.cast .U128 b)
+          let wide ← i4 * i5
+          let i6 ← wide % p
+          ok (UScalar.cast .U64 i6)))
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hnlt128 : n.val < 128 := by rw [hnN]; omega
+  have hPKN : P.val = K.val * 2 ^ N.val + 1 := by rw [hPeq, hkK, hnN]
+  have hP32 : P.val < 2 ^ 32 := by rw [hPKN]; exact hPbound
+  have hk128 : (UScalar.cast .U128 k : Std.U128).val = k.val :=
+    U64.cast_U128_val_eq k
+  have hmax128 : UScalar.max .U128 = 2 ^ 128 - 1 := by native_decide
+  have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
+  simp only [lift, bind_tc_ok]
+  progress as ⟨i1, hi1v, _⟩
+  have hi1 : i1.val = 2 ^ n.val := one_shl_u128_val i1 hi1v hnlt128
+  have hmul_le : (UScalar.cast .U128 k : Std.U128).val * i1.val
+      ≤ UScalar.max .U128 := by
+    rw [hk128, hi1, hmax128, hkK, hnN]; omega
+  obtain ⟨i2, hi2_eq, hi2_val0⟩ := spec_imp_exists (UScalar.mul_spec hmul_le)
+  simp only [hi2_eq, bind_tc_ok]
+  have hi2_val : i2.val = k.val * 2 ^ n.val := by rw [hi2_val0, hk128, hi1]
+  have hadd_le : i2.val + (1#u128 : Std.U128).val ≤ UScalar.max .U128 := by
+    rw [hi2_val, h1v128, hmax128, hkK, hnN]; omega
+  obtain ⟨p, hp_eq, hp_val0⟩ := spec_imp_exists (UScalar.add_spec hadd_le)
+  simp only [hp_eq, bind_tc_ok]
+  have hp_val : p.val = P.val := by
+    rw [hp_val0, hi2_val, h1v128, ← hPeq]
+  progress as ⟨i3, hi3v, _⟩
+  have hi3 : i3.val = 2 ^ 32 := by
+    have : (32 : ℕ) < 128 := by norm_num
+    rw [hi3v, Nat.one_shiftLeft, U128.size_eq]
+    exact Nat.mod_eq_of_lt (by norm_num)
+  have hpfx : p < i3 := by
+    rw [UScalar.lt_equiv, hp_val, hi3]; exact hP32
+  rw [if_pos hpfx]
+  have hprod : (core.num.U64.wrapping_mul a b).val = a.val * b.val := by
+    have h := core.num.U64.wrapping_mul_val_eq a b
+    simp only [UScalar.size_UScalarTyU64, U64.size_eq] at h
+    rw [h]; exact Nat.mod_eq_of_lt (by
+      have haa : a.val < 2 ^ 32 := by omega
+      have hbb : b.val < 2 ^ 32 := by omega
+      calc a.val * b.val ≤ (2 ^ 32 - 1) * (2 ^ 32 - 1) :=
+            Nat.mul_le_mul (by omega) (by omega)
+        _ < 18446744073709551616 := by norm_num)
+  obtain ⟨r, hr_eq, hr_val⟩ :=
+    proth_reduce_u64_correct K N (core.num.U64.wrapping_mul a b)
+      hK1 hN16 hN32 (by omega)
+  rw [show spec = theta from rfl, hr_eq]
+  simp only [theta, wp_return]
+  rw [hr_val, hprod]
+  have hPKNv : K.val * 2 ^ N.val + 1 = P.val := by
+    rw [← hkK, ← hnN, ← hPeq]
+  rw [hPKNv]
+  exact ⟨Nat.mod_lt _ hP_pos, rfl⟩
+
+/-- Proth dispatch fall-through arm (unsupported `(k, n)`): the inner
+    `#uscalar` match collapses to `prod % p32` (when `P < 2^32`) or to
+    the 128-bit wide path (when `P ≥ 2^32`); both are direct modulo
+    discharged by `u64_wide_mod` / `u128_wide_mod`. -/
+private theorem proth_fallthrough_arm {P k a b : Std.U64} {n : Std.U32}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val)
+    (hn16 : 16 ≤ n.val) (hn62 : n.val ≤ 62) (hk1 : 1 ≤ k.val)
+    (hPeq : P.val = k.val * 2 ^ n.val + 1) :
+    (do
+      let i ← lift (UScalar.cast .U128 k)
+      let i1 ← 1#u128 <<< n
+      let i2 ← i * i1
+      let p ← i2 + 1#u128
+      let p32 ← lift (UScalar.cast .U64 p)
+      let i3 ← 1#u128 <<< 32#i32
+      if p < i3 then
+        (do
+          let prod ← lift (core.num.U64.wrapping_mul a b)
+          prod % p32)
+      else
+        (do
+          let i4 ← lift (UScalar.cast .U128 a)
+          let i5 ← lift (UScalar.cast .U128 b)
+          let wide ← i4 * i5
+          let i6 ← wide % p
+          ok (UScalar.cast .U64 i6)))
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hPle : P.val ≤ 2 ^ 63 := hP.2.2
+  have hnlt128 : n.val < 128 := by omega
+  have hk128 : (UScalar.cast .U128 k : Std.U128).val = k.val :=
+    U64.cast_U128_val_eq k
+  have hmax128 : UScalar.max .U128 = 2 ^ 128 - 1 := by native_decide
+  have h1v128 : (1#u128 : Std.U128).val = 1 := by native_decide
+  simp only [lift, bind_tc_ok]
+  progress as ⟨i1, hi1v, _⟩
+  have hi1 : i1.val = 2 ^ n.val := one_shl_u128_val i1 hi1v hnlt128
+  have hmul_le : (UScalar.cast .U128 k : Std.U128).val * i1.val
+      ≤ UScalar.max .U128 := by
+    rw [hk128, hi1, hmax128]
+    have hkn : k.val * 2 ^ n.val + 1 = P.val := hPeq.symm
+    have : k.val * 2 ^ n.val ≤ 2 ^ 63 := by omega
+    calc k.val * 2 ^ n.val ≤ 2 ^ 63 := this
+      _ ≤ 2 ^ 128 - 1 := by norm_num
+  obtain ⟨i2, hi2_eq, hi2_val0⟩ := spec_imp_exists (UScalar.mul_spec hmul_le)
+  simp only [hi2_eq, bind_tc_ok]
+  have hi2_val : i2.val = k.val * 2 ^ n.val := by rw [hi2_val0, hk128, hi1]
+  have hadd_le : i2.val + (1#u128 : Std.U128).val ≤ UScalar.max .U128 := by
+    rw [hi2_val, h1v128, hmax128]
+    have hkn : k.val * 2 ^ n.val + 1 = P.val := hPeq.symm
+    omega
+  obtain ⟨p, hp_eq, hp_val0⟩ := spec_imp_exists (UScalar.add_spec hadd_le)
+  simp only [hp_eq, bind_tc_ok]
+  have hp_val : p.val = P.val := by
+    rw [hp_val0, hi2_val, h1v128, ← hPeq]
+  have hp32 : (UScalar.cast .U64 p : Std.U64).val = P.val := by
+    rw [UScalar.cast_val_mod_pow_of_inBounds_eq .U64 p (by
+      have : UScalarTy.U64.numBits = 64 := by decide
+      rw [this, hp_val]; nlinarith [hP.2.2]), hp_val]
+  progress as ⟨i3, hi3v, _⟩
+  have hi3 : i3.val = 2 ^ 32 := by
+    rw [hi3v, Nat.one_shiftLeft, U128.size_eq]
+    exact Nat.mod_eq_of_lt (by norm_num)
+  by_cases hpfx : p < i3
+  · rw [if_pos hpfx]
+    have hP32 : P.val < 2 ^ 32 := by
+      have hlt := (UScalar.lt_equiv p i3).mp hpfx
+      rw [hp_val, hi3] at hlt; exact hlt
+    exact u64_wide_mod hP ha hb hP32 (UScalar.cast .U64 p) hp32
+  · rw [if_neg hpfx]
+    exact u128_wide_mod hP ha hb p hp_val
 
 /-- `specialized_mul P a b` returns `r` with `r.val < P.val` and
     `r.val = (a.val * b.val) % P.val`, for any valid prime `P` and
     `a, b < P`, across all four `PrimeShape` arms. Composes the proven
-    `classify_spec` + reducer lemmas (via the §9 threading axiom for the
-    Mersenne/Proth dispatch arms) + `wide_mod_arm` (Goldilocks/Generic). -/
+    `classify_spec` + reducer lemmas, threading dispatch through the §9
+    pure-routing axiom (`dispatch_route`) only — the `(a·b) mod P` form
+    comes entirely from the proven `mersenne_reduce_u64_correct` /
+    `mersenne_reduce_correct` / `proth_reduce_u64_correct` /
+    `u128_wide_mod` / `u64_wide_mod` lemmas. -/
 theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
     (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val) :
     ∃ r, gfp.specialized_mul P a b = ok r ∧
@@ -849,13 +1261,17 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
   | Mersenne n =>
     -- classifyPost: 4 ≤ n ≤ 62 ∧ P.val = 2^n - 1
     obtain ⟨hn4, hn62, hPeq⟩ := hps_post
-    have haP : a.val < 2 ^ n.val - 1 := by rw [← hPeq]; exact ha
-    have hbP : b.val < 2 ^ n.val - 1 := by rw [← hPeq]; exact hb
-    obtain ⟨r, hr_eq, hr_val⟩ :=
-      dispatch_threads.1 n a b hn4 hn62 haP hbP
-    refine ⟨r, hr_eq, ?_, ?_⟩
-    · rw [hr_val, ← hPeq]; exact Nat.mod_lt _ hP_pos
-    · rw [hr_val, ← hPeq]
+    by_cases h31 : n.val = 31
+    · simp only [dispatch_route.1 n a b h31]
+      exact spec_imp_exists
+        (mersenne31_arm hP ha hb (by rw [hPeq, h31]))
+    · by_cases h61 : n.val = 61
+      · simp only [dispatch_route.2.1 n a b h61]
+        exact spec_imp_exists
+          (mersenne61_arm hP ha hb (by rw [hPeq, h61]))
+      · simp only [dispatch_route.2.2.1 n a b h31 h61]
+        exact spec_imp_exists
+          (mersenne_generic_arm hP ha hb hn4 hn62 hPeq)
   | Proth k n =>
     -- classifyPost: 16 ≤ n ∧ 1 ≤ k ∧ P.val = k*2^n + 1
     obtain ⟨hn16, hk1, hPeq⟩ := hps_post
@@ -868,14 +1284,25 @@ theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
         calc k.val * 2 ^ n.val ≥ 1 * 2 ^ 63 := Nat.mul_le_mul hk1 hpgt
           _ = 2 ^ 63 := by ring
       omega
-    have hPle' : k.val * 2 ^ n.val + 1 ≤ 2 ^ 63 := by rw [← hPeq]; exact hPle
-    have haP : a.val < k.val * 2 ^ n.val + 1 := by rw [← hPeq]; exact ha
-    have hbP : b.val < k.val * 2 ^ n.val + 1 := by rw [← hPeq]; exact hb
-    obtain ⟨r, hr_eq, hr_val⟩ :=
-      dispatch_threads.2 k n a b hk1 hn16 hn62 hPle' haP hbP
-    refine ⟨r, hr_eq, ?_, ?_⟩
-    · rw [hr_val, ← hPeq]; exact Nat.mod_lt _ hP_pos
-    · rw [hr_val, ← hPeq]
+    by_cases hc1 : k.val = 15 ∧ n.val = 27
+    · obtain ⟨hk15, hn27⟩ := hc1
+      simp only [dispatch_route.2.2.2.1 k n a b hk15 hn27]
+      exact spec_imp_exists
+        (proth_supported_arm 15#u64 27#u32 hP ha hb
+          (by rw [hk15]; native_decide) (by rw [hn27]; native_decide)
+          (by native_decide) (by native_decide) (by native_decide)
+          (by native_decide) hPeq)
+    · by_cases hc2 : k.val = 127 ∧ n.val = 24
+      · obtain ⟨hk127, hn24⟩ := hc2
+        simp only [dispatch_route.2.2.2.2.1 k n a b hk127 hn24]
+        exact spec_imp_exists
+          (proth_supported_arm 127#u64 24#u32 hP ha hb
+            (by rw [hk127]; native_decide) (by rw [hn24]; native_decide)
+            (by native_decide) (by native_decide) (by native_decide)
+            (by native_decide) hPeq)
+      · simp only [dispatch_route.2.2.2.2.2 k n a b hc1 hc2]
+        exact spec_imp_exists
+          (proth_fallthrough_arm hP ha hb hn16 hn62 hk1 hPeq)
   | Goldilocks =>
     -- classifyPost: P.val = GOLDILOCKS constant; specialized_mul body =
     -- the wide (a*b)%P arm
