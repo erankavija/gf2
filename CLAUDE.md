@@ -20,6 +20,7 @@ cargo nextest run --workspace --all-features --release --profile ci
 # Run tests for a single crate
 cargo nextest run -p gf2-core --release --profile ci
 cargo nextest run -p gf2-coding --release --profile ci
+cargo nextest run -p gf2-algebra --release --profile ci
 
 # Run a single test by name
 cargo nextest run -p gf2-core --release -E 'test(test_name)'
@@ -39,11 +40,13 @@ cargo doc --no-deps --open
 # Benchmarks
 cargo bench -p gf2-core
 cargo bench -p gf2-coding
+cargo bench -p gf2-algebra
 
 # Run examples
 cargo run -p gf2-coding --example hamming_7_4
 cargo run -p gf2-coding --example dvb_t2_ldpc_basic
 cargo run -p gf2-coding --example ldpc_awgn --release
+cargo run -p gf2-algebra --example permanent_demo --release
 
 # Lean4 verification pipeline (requires charon + aeneas + elan)
 ./scripts/verify-lean.sh
@@ -77,15 +80,16 @@ Two tiers. Use the fast tier by default. Never run the slow tier as an agent.
 
 ## Architecture
 
-This is a Cargo workspace with three crates:
+This is a Cargo workspace with four production crates:
 
 - **`gf2-core`** (`crates/gf2-core/`) — Low-level primitives. No dependencies on the other workspace crates. All purely mathematical operations, data structures, and algorithms go here.
 - **`gf2-coding`** (`crates/gf2-coding/`) — Error-correcting codes; depends on `gf2-core`.
+- **`gf2-algebra`** (`crates/gf2-algebra/`) — Packed F_3 / F_5 / F_7 element types and fast matrix permanents (bipedal F_3, packed F_5 / F_7) on CPU (scalar, AVX2, Rayon) and HIP/ROCm GPU. Depends on `gf2-core`. Delivers the `gf2-algebra-permanent` epic: ~10.6x single-thread AVX2 speedup over the in-tree Rust reference at n=36; GPU batch ~28-30x CPU-SIMD at n=24/28 (M=256); F_5/F_7 packed kernels; Lean V1 bipedal F_3 correctness proof complete, Lean V2 (Ryser bounded n<=63) in progress.
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64).
-- **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or by building the crate with its own manifest.
+- **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype, and gf2-algebra batch permanents). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or `gf2-algebra`, or by building the crate with its own manifest.
 
 Unsafe code lives exclusively in these two kernel crates; everything else uses `#![deny(unsafe_code)]`. Standalone `dev/research/<crate>/` stubs (non-workspace prototypes) are exempt: they may contain `unsafe` if necessary to exercise the surface they prototype, provided each `pub unsafe fn` carries a top-of-function `// SAFETY:` comment explaining the preconditions the caller must uphold. Production crates remain bound by the kernel-crates-only rule.
-- **`proofs/`** — Lean4 formal verification of `gfp/` and `gfpn/` field arithmetic, auto-generated via Charon/Aeneas. See `proofs/README.md`. Covers `Fp<P>` (Montgomery arithmetic), `QuadraticExt`, and `CubicExt` (tower extensions).
+- **`proofs/`** — Lean4 formal verification of `gfp/` and `gfpn/` field arithmetic and `gf2-algebra::packed::bipedal3` correctness, auto-generated via Charon/Aeneas. See `proofs/README.md`. Covers `Fp<P>` (Montgomery arithmetic), `QuadraticExt`, `CubicExt` (tower extensions), and bipedal F_3 add/sub/mul/neg.
 
 ### gf2-core module map
 
@@ -103,6 +107,17 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 | `kernels/` | Runtime dispatch to scalar or SIMD backends |
 | `compute/` | Parallel batch operations (rayon backend) |
 | `io/` | Serde-based serialization (feature-gated) |
+
+### gf2-algebra module map
+
+| Module | Purpose |
+|--------|---------|
+| `packed/` | `PackedField` / `PackedFieldVec` traits and per-prime impls: `Bipedal3` (F_3, 64 lanes), `Packed5` (F_5, 64 lanes), `Packed7` (F_7, 16 lanes), plus `*Matrix` types for each |
+| `permanent/` | `permanent_ryser` (field-generic oracle), `permanent_mod3_reference` (paper baseline), `permanent_bipedal{3,5,7}` fast paths, parallel and multi-word variants |
+| `gray` | Gray-code subset enumerator used by Ryser's formula and all bipedal kernels |
+| `parallel` | Rayon-based work-stealing dispatch (feature = "parallel", default on) |
+| `gpu` | HIP/ROCm host-side batch dispatcher (feature = "hip", default off) |
+| `testutil` | Deterministic random matrix generators (feature = "test-support" or `cfg(test)`) |
 
 ### gf2-coding module map
 
@@ -138,6 +153,11 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 | `gf2-coding` | `simd` | Propagates to `gf2-core/simd` (default on) |
 | `gf2-coding` | `parallel` | Rayon BCH/LDPC batch |
 | `gf2-coding` | `llr-f64` | Use f64 instead of f32 for LLRs |
+| `gf2-algebra` | `simd` | AVX2 dispatch for `permanent_bipedal3` (default on) |
+| `gf2-algebra` | `parallel` | Rayon `permanent_bipedal3_parallel` (default on) |
+| `gf2-algebra` | `f5` | `Packed5`, `Packed5Matrix`, `permanent_bipedal5` (default on) |
+| `gf2-algebra` | `f7` | `Packed7`, `Packed7Matrix`, `permanent_bipedal7` (default on) |
+| `gf2-algebra` | `hip` | HIP/ROCm GPU batch permanents (`gpu` module; requires hipcc) |
 
 ## Testing conventions
 
