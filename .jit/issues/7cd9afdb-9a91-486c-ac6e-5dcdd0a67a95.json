@@ -2,7 +2,7 @@
   "id": "7cd9afdb-9a91-486c-ac6e-5dcdd0a67a95",
   "title": "Publication-grade benchmark artefact with hardware and seed pinned",
   "description": "Assemble the publication-grade benchmark artefact under `dev/benchmarks/gf2_algebra_permanent/` consolidating all S1-S5 outputs with hardware fingerprint, seed pins, and the figures from T27.\n\n## Background\n\nEpic success criterion 9: a reproducible benchmark artefact lives at `dev/benchmarks/gf2_algebra_permanent/`, with criterion JSONs, hardware fingerprint, seed pins, and `scripts/permanent-repro.sh` runs end-to-end. This issue is the artefact assembly step — it consumes S1, S2, S3, S4, S5 outputs (already individually committed) and produces a top-level `README.md` that pins the dataset.\n\nThe artefact directory layout:\n- `README.md` — overview, hardware fingerprint, seed pins, figure index.\n- `criterion/` — copies of relevant criterion JSON outputs.\n- `figures/` — output of T27.\n- `csvs/` — S1/S2/S3/S4/S5 CSVs.\n- `provenance.json` — exact commit SHA, rustc version, OS, ROCm version, hardware identifiers.\n\n## Success Criteria\n\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/README.md` exists, listing every CSV, figure, and criterion JSON included.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/provenance.json` records commit SHA, `rustc --version`, `lscpu`, `rocminfo` (when available), and the seeds used.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/figures/` is populated by T27's plot scripts.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/csvs/` contains the S1-S5 CSVs with conventional names.\n- [ ] [hard] User has signed off on the artefact (recorded as an `## Approval` section in the artefact README).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -25,5 +25,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:48:42.941662701+00:00",
-  "updated_at": "2026-05-09T09:50:17.484028200+00:00"
+  "updated_at": "2026-05-15T20:20:06.186828929+00:00"
 }

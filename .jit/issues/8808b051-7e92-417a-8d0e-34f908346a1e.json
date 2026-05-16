@@ -2,7 +2,7 @@
   "id": "8808b051-7e92-417a-8d0e-34f908346a1e",
   "title": "Update root CLAUDE.md ROADMAP and workspace docs for gf2-algebra",
   "description": "Update root `CLAUDE.md`, `ROADMAP.md`, and the workspace-level documentation to reference the new `gf2-algebra` crate (epic success criterion 11).\n\n## Background\n\nThe new crate is the third Rust crate in the workspace; the root `CLAUDE.md` §Architecture section lists `gf2-core`, `gf2-coding`, `gf2-kernels-simd`, `gf2-kernels-hip`, and `proofs/` — `gf2-algebra` must be added. The `ROADMAP.md` must reference the epic and the headline outcomes. This is the closing-leaf issue of W7.\n\n## Success Criteria\n\n- [ ] [hard] Root `CLAUDE.md` §Architecture lists `gf2-algebra` with a one-paragraph description of its scope and the modules it hosts (`packed/`, `permanent/`, `gpu/`).\n- [ ] [hard] Root `CLAUDE.md` §Commands includes the `gf2-algebra`-specific test/bench/example invocations.\n- [ ] [hard] `ROADMAP.md` references the gf2-algebra-permanent epic outcomes (50× speedup, F_5/F_7 generalisations, GPU prototype, Lean V1/V2 verification).\n- [ ] [hard] Any project-level workspace docs (`docs/`, top-level READMEs) that enumerate crates are updated.\n- [ ] [hard] `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets --all-features -- -D warnings` pass (in case any markdown is referenced from rustdoc).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -20,5 +20,5 @@
     "component:docs"
   ],
   "created_at": "2026-05-09T09:49:07.644404049+00:00",
-  "updated_at": "2026-05-09T09:50:19.368973209+00:00"
+  "updated_at": "2026-05-15T20:50:44.038721172+00:00"
 }
