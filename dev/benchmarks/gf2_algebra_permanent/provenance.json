@@ -1,0 +1,27 @@
+{
+  "commit": "e896ce4a246999c19ee7a72c891ce71dffd74f45",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "os": "Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux",
+  "lscpu": "Architecture: x86_64 | Vendor: AuthenticAMD | Model: AMD Ryzen 9 5900X 12-Core Processor | Family: 25, Model: 33, Stepping: 2 | Cores: 12 physical / 24 logical (SMT 2x) | CPU max MHz: 4954.5649 | L1d: 384 KiB, L1i: 384 KiB, L2: 6 MiB, L3: 64 MiB | Flags: avx2=yes, avx512=no, fma=yes, aes=yes",
+  "lscpu_full": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nByte Order:                              Little Endian\nCPU(s):                                  24\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 9 5900X 12-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      12\nSocket(s):                               1\nStepping:                                2\nCPU max MHz:                             4954.5649\nCPU min MHz:                             567.0890\nBogoMIPS:                                7400.21\nL1d cache:                               384 KiB (12 instances)\nL1i cache:                               384 KiB (12 instances)\nL2 cache:                                6 MiB (12 instances)\nL3 cache:                                64 MiB (2 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-23",
+  "rocminfo": {
+    "hsa_runtime_version": "1.18",
+    "hip_package_version": "7.2.53211",
+    "gpu_name": "gfx1030",
+    "gpu_marketing_name": "AMD Radeon RX 6950 XT",
+    "gpu_uuid": "GPU-8cd14d6d8a3c8a73",
+    "note": "rocminfo available; HSA Runtime Version 1.18; HIP cmake package version 7.2.53211 (from /opt/rocm/lib/cmake/hip/hip-config-version.cmake). CSV headers record rocm_version: 7.2.3 — this is the short-form version string reported by the rocm-smi tool during the measurement sessions."
+  },
+  "seeds": {
+    "S1": "0xc98ed60300000000",
+    "S2_n28": "0x4513209c0000001c",
+    "S2_n32": "0x4513209c00000020",
+    "S2_n36": "0x4513209c00000024",
+    "S3": "0x363556e600000000",
+    "S5": "0x00c0ffee00000000",
+    "S1g": "0x9480f8a600000000"
+  },
+  "figures_regenerated_at_commit": "e896ce4a246999c19ee7a72c891ce71dffd74f45",
+  "plot_script": "scripts/plot_permanent_benchmarks.py",
+  "matplotlib_version_pinned": "3.10.9"
+}
