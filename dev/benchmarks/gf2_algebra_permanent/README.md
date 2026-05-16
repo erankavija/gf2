@@ -192,4 +192,9 @@ See `provenance.json` for the complete machine-readable record.
 
 ## Approval
 
-Pending project-lead / user sign-off (escalation in progress).
+**2026-05-17:** User signed off on this publication-grade benchmark artefact
+via the project-lead escalation path, after reviewing the README and
+`provenance.json` linked to JIT issue `7cd9afdb` (`jit doc list 7cd9afdb`).
+The dataset (S1/S2/S3/S5/S1g CSVs, the 4 regenerated figures, `provenance.json`,
+and the pinned seeds) is approved as the frozen publication snapshot for the
+`gf2-algebra-permanent` epic.
