@@ -1,28 +1,19 @@
 [package]
-name = "permanent-gpu-crossover"
+name = "permanent-gpu-common"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.95"
 authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
 publish = false
-description = "S5 GPU-vs-CPU-SIMD crossover measurement for permanent_bipedal3 (F_3) — JIT issue a9e461de. Standalone non-workspace prototype."
+description = "Shared harness helpers (median, matrix build, hardware fingerprint, CSV header, provenance) for the permanent_gpu_speedup (jit:9480f8a6) and permanent_gpu_crossover (jit:a9e461de) research stubs. Standalone non-workspace prototype — single source of truth for the duplicated benchmark plumbing."
 
-[[bin]]
-name = "permanent_gpu_crossover"
-path = "src/main.rs"
-
-[[test]]
-name = "smoke"
-path = "tests/smoke.rs"
-
-[features]
-default = []
-hip = ["gf2-algebra/hip"]
+[lib]
+name = "permanent_gpu_common"
+path = "src/lib.rs"
 
 [dependencies]
 gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
 gf2-core = { path = "../../../crates/gf2-core" }
-permanent-gpu-common = { path = "../permanent_gpu_common" }
 
 [profile.release]
 opt-level = 3

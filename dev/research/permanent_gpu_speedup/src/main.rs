@@ -40,9 +40,10 @@ fn main() {
 mod harness {
     use gf2_algebra::gpu::permanent_batch_bipedal3;
     use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
-    use gf2_algebra::testutil::random_matrix_with_rng;
-    use gf2_core::gfp::Fp;
-    use gf2_core::rng::Lcg;
+    use permanent_gpu_common::{
+        build_matrices, git_short_sha, hw_fingerprint, median_vec, rustc_version,
+        write_csv_header_common,
+    };
     use std::fs::{self, File};
     use std::io::Write;
     use std::time::Instant;
@@ -94,33 +95,6 @@ mod harness {
     // Helpers
     // -----------------------------------------------------------------------
 
-    /// Compute the median of a non-empty slice.
-    fn median_vec(v: &[f64]) -> f64 {
-        assert!(!v.is_empty());
-        if v.len() == 1 {
-            return v[0];
-        }
-        let mut s = v.to_vec();
-        s.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let mid = s.len() / 2;
-        if s.len().is_multiple_of(2) {
-            (s[mid - 1] + s[mid]) / 2.0
-        } else {
-            s[mid]
-        }
-    }
-
-    /// Build M random F_3 matrices, each n×n, from a deterministic LCG seed.
-    fn build_matrices(n: usize, m: usize, seed: u64) -> Vec<Bipedal3Matrix> {
-        let mut rng = Lcg::new(seed);
-        (0..m)
-            .map(|_| {
-                let elems: Vec<Fp<3>> = random_matrix_with_rng::<3>(&mut rng, n);
-                Bipedal3Matrix::from_row_major(&elems, n, n)
-            })
-            .collect()
-    }
-
     /// Time one GPU batch call.  Returns (total_wallclock_s, per_mat_equiv_s).
     fn time_gpu_batch(matrices: &[Bipedal3Matrix]) -> (f64, f64) {
         let m = matrices.len();
@@ -132,91 +106,18 @@ mod harness {
     }
 
     // -----------------------------------------------------------------------
-    // Hardware fingerprint
+    // CSV writer (header tail — common provenance prefix lives in
+    // permanent_gpu_common::write_csv_header_common)
     // -----------------------------------------------------------------------
 
-    fn hw_fingerprint() -> HwInfo {
-        let cpu_model = std::fs::read_to_string("/proc/cpuinfo")
-            .unwrap_or_default()
-            .lines()
-            .find(|l| l.starts_with("model name"))
-            .and_then(|l| l.split(':').nth(1))
-            .map(|s| s.trim().to_string())
-            .unwrap_or_else(|| "unknown".to_string());
-
-        let rocm_ver = std::fs::read_to_string("/opt/rocm/.info/version")
-            .unwrap_or_else(|_| "unknown".to_string())
-            .trim()
-            .to_string();
-
-        let gfx_target = std::process::Command::new("rocminfo")
-            .output()
-            .ok()
-            .and_then(|o| {
-                let s = String::from_utf8_lossy(&o.stdout).to_string();
-                s.lines()
-                    .filter(|l| l.contains("Name") && l.contains("gfx"))
-                    .find_map(|l| {
-                        l.split_whitespace()
-                            .find(|w| w.starts_with("gfx"))
-                            .map(|s| s.to_string())
-                    })
-            })
-            .unwrap_or_else(|| "gfx1030".to_string());
-
-        let gpu_name = std::process::Command::new("rocminfo")
-            .output()
-            .ok()
-            .and_then(|o| {
-                let s = String::from_utf8_lossy(&o.stdout).to_string();
-                s.lines()
-                    .find(|l| l.contains("Marketing Name") && l.contains("Radeon"))
-                    .and_then(|l| l.split(':').nth(1))
-                    .map(|s| s.trim().to_string())
-            })
-            .unwrap_or_else(|| "AMD Radeon RX 6950 XT".to_string());
-
-        let kernel_ver = std::process::Command::new("uname")
-            .arg("-r")
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .unwrap_or_else(|_| "unknown".to_string());
-
-        HwInfo {
-            cpu_model,
-            gpu_name,
-            gfx_target,
-            rocm_ver,
-            kernel_ver,
-        }
-    }
-
-    struct HwInfo {
-        cpu_model: String,
-        gpu_name: String,
-        gfx_target: String,
-        rocm_ver: String,
-        kernel_ver: String,
-    }
-
-    // -----------------------------------------------------------------------
-    // CSV writer
-    // -----------------------------------------------------------------------
-
-    fn write_csv_header(f: &mut File, hw: &HwInfo, commit_sha: &str, rustc_ver: &str, seed: u64) {
-        writeln!(
-            f,
-            "# S1g (jit:9480f8a6) GPU 50x speedup measurement for permanent_bipedal3 (F_3)"
-        )
-        .unwrap();
-        writeln!(f, "# commit: {commit_sha}").unwrap();
-        writeln!(f, "# rustc: {rustc_ver}").unwrap();
-        writeln!(f, "# cpu: {}", hw.cpu_model).unwrap();
-        writeln!(f, "# gpu: {}", hw.gpu_name).unwrap();
-        writeln!(f, "# gfx_target: {}", hw.gfx_target).unwrap();
-        writeln!(f, "# rocm_version: {}", hw.rocm_ver).unwrap();
-        writeln!(f, "# kernel: {}", hw.kernel_ver).unwrap();
-        writeln!(f, "# seed: {seed:#018x}").unwrap();
+    /// Write the S1g-specific CSV header tail (sweep / methodology / reps /
+    /// s1_csv lines).
+    ///
+    /// The common provenance prefix (title + commit/rustc/cpu/gpu/gfx/rocm/
+    /// kernel/seed) is emitted by [`write_csv_header_common`]; this tail plus
+    /// that prefix reproduce the exact byte layout this measurement's CSV has
+    /// always used.
+    fn write_csv_header_tail(f: &mut File) {
         writeln!(
             f,
             "# sweep: n ∈ {:?}, M={BATCH_SIZE} (GPU fills ceil(M/80)=1 round on gfx1030)",
@@ -257,18 +158,8 @@ mod harness {
     pub fn run() {
         let hw = hw_fingerprint();
 
-        let rustc_ver = std::process::Command::new("rustc")
-            .arg("--version")
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .unwrap_or_else(|_| "unknown".to_string());
-
-        let commit_sha = std::process::Command::new("git")
-            .args(["rev-parse", "--short", "HEAD"])
-            .current_dir(env!("CARGO_MANIFEST_DIR"))
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .unwrap_or_else(|_| "unknown".to_string());
+        let rustc_ver = rustc_version();
+        let commit_sha = git_short_sha(env!("CARGO_MANIFEST_DIR"));
 
         // CSV output path.
         let date = gf2_algebra::testutil::today_yyyy_mm_dd();
@@ -290,7 +181,16 @@ mod harness {
         fs::create_dir_all(csv_abs.parent().unwrap()).expect("create benchmarks dir");
         let mut csv_file = File::create(&csv_abs).expect("create CSV");
 
-        write_csv_header(&mut csv_file, &hw, &commit_sha, &rustc_ver, SEED);
+        write_csv_header_common(
+            &mut csv_file,
+            "S1g (jit:9480f8a6) GPU 50x speedup measurement for permanent_bipedal3 (F_3)",
+            &hw,
+            &commit_sha,
+            &rustc_ver,
+            true,
+            SEED,
+        );
+        write_csv_header_tail(&mut csv_file);
         writeln!(
             csv_file,
             "n,m,gpu_total_wallclock_s,gpu_per_mat_equiv_s,reps,ref_time_s,speedup_ratio,measurement_type"
