@@ -226,6 +226,101 @@ fn run_cell_f7(n: usize, n_samples: usize) -> CellResult {
 // PNG plot — faceted by q, CI bands, log-scale y (D2 + D3 fix)
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Embedded 5×7 bitmap font (pure-Rust, no unsafe, no external crates)
+// ---------------------------------------------------------------------------
+//
+// Each glyph is 5 columns × 7 rows, stored as 7 u8 values.  Each u8 encodes
+// one row: bit 4 (MSB of the 5-bit field) is the leftmost pixel.  Bit 0 is
+// the rightmost pixel.  A set bit means "draw this pixel".
+//
+// Character coverage: digits 0-9, uppercase A-Z, lowercase a-z,
+// plus space, '-', '^', '.', '(', ')', '=', '1' already in digits.
+
+/// Return the 5×7 glyph for `ch`, or a fallback (rectangle) if not found.
+/// Each element of the returned array is a 5-bit row mask (bits 4..0 = cols 0..4).
+fn glyph(ch: char) -> [u8; 7] {
+    match ch {
+        ' ' => [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        '0' => [0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E],
+        '1' => [0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E],
+        '2' => [0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F],
+        '3' => [0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E],
+        '4' => [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02],
+        '5' => [0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E],
+        '6' => [0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E],
+        '7' => [0x1F, 0x01, 0x02, 0x04, 0x04, 0x04, 0x04],
+        '8' => [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E],
+        '9' => [0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C],
+        'A' => [0x04, 0x0A, 0x11, 0x11, 0x1F, 0x11, 0x11],
+        'B' => [0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E],
+        'C' => [0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E],
+        'D' => [0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C],
+        'E' => [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F],
+        'F' => [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10],
+        'G' => [0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F],
+        'H' => [0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+        'I' => [0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E],
+        'J' => [0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C],
+        'K' => [0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11],
+        'L' => [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F],
+        'M' => [0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11],
+        'N' => [0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11],
+        'O' => [0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+        'P' => [0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10],
+        'Q' => [0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D],
+        'R' => [0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11],
+        'S' => [0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E],
+        'T' => [0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04],
+        'U' => [0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+        'V' => [0x11, 0x11, 0x11, 0x11, 0x0A, 0x0A, 0x04],
+        'W' => [0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11],
+        'X' => [0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11],
+        'Y' => [0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04],
+        'Z' => [0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F],
+        'a' => [0x00, 0x00, 0x0E, 0x01, 0x0F, 0x11, 0x0F],
+        'b' => [0x10, 0x10, 0x1E, 0x11, 0x11, 0x11, 0x1E],
+        'c' => [0x00, 0x00, 0x0E, 0x10, 0x10, 0x11, 0x0E],
+        'd' => [0x01, 0x01, 0x0F, 0x11, 0x11, 0x11, 0x0F],
+        'e' => [0x00, 0x00, 0x0E, 0x11, 0x1F, 0x10, 0x0E],
+        'f' => [0x06, 0x09, 0x08, 0x1C, 0x08, 0x08, 0x08],
+        'g' => [0x00, 0x0F, 0x11, 0x11, 0x0F, 0x01, 0x0E],
+        'h' => [0x10, 0x10, 0x16, 0x19, 0x11, 0x11, 0x11],
+        'i' => [0x04, 0x00, 0x0C, 0x04, 0x04, 0x04, 0x0E],
+        'j' => [0x02, 0x00, 0x06, 0x02, 0x02, 0x12, 0x0C],
+        'k' => [0x10, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11],
+        'l' => [0x0C, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E],
+        'm' => [0x00, 0x00, 0x1A, 0x15, 0x15, 0x11, 0x11],
+        'n' => [0x00, 0x00, 0x16, 0x19, 0x11, 0x11, 0x11],
+        'o' => [0x00, 0x00, 0x0E, 0x11, 0x11, 0x11, 0x0E],
+        'p' => [0x00, 0x00, 0x1E, 0x11, 0x11, 0x1E, 0x10],
+        'q' => [0x00, 0x00, 0x0F, 0x11, 0x11, 0x0F, 0x01],
+        'r' => [0x00, 0x00, 0x16, 0x19, 0x10, 0x10, 0x10],
+        's' => [0x00, 0x00, 0x0E, 0x10, 0x0E, 0x01, 0x1E],
+        't' => [0x08, 0x08, 0x1C, 0x08, 0x08, 0x09, 0x06],
+        'u' => [0x00, 0x00, 0x11, 0x11, 0x11, 0x13, 0x0D],
+        'v' => [0x00, 0x00, 0x11, 0x11, 0x11, 0x0A, 0x04],
+        'w' => [0x00, 0x00, 0x11, 0x15, 0x15, 0x15, 0x0A],
+        'x' => [0x00, 0x00, 0x11, 0x0A, 0x04, 0x0A, 0x11],
+        'y' => [0x00, 0x11, 0x11, 0x0F, 0x01, 0x11, 0x0E],
+        'z' => [0x00, 0x00, 0x1F, 0x02, 0x04, 0x08, 0x1F],
+        '-' => [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00],
+        '^' => [0x04, 0x0A, 0x11, 0x00, 0x00, 0x00, 0x00],
+        '.' => [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C],
+        '(' => [0x02, 0x04, 0x08, 0x08, 0x08, 0x04, 0x02],
+        ')' => [0x08, 0x04, 0x02, 0x02, 0x02, 0x04, 0x08],
+        '=' => [0x00, 0x00, 0x1F, 0x00, 0x1F, 0x00, 0x00],
+        _ => [0x1F, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1F], // unknown: filled rectangle
+    }
+}
+
+/// Width of one glyph in pixels (5 columns + 1 spacing column = 6 px/char).
+const GLYPH_W: usize = 5;
+/// Height of one glyph in pixels.
+const GLYPH_H: usize = 7;
+/// Horizontal advance per character (glyph + 1 px gap).
+const GLYPH_ADV: usize = GLYPH_W + 1;
+
 /// Mutable canvas wrapping a flat RGB pixel buffer.
 struct Canvas {
     pixels: Vec<u8>,
@@ -308,10 +403,133 @@ impl Canvas {
             }
         }
     }
+
+    /// Blit a single glyph at pixel (x, y) — top-left of the glyph cell.
+    /// `scale` = 1 means each logical pixel becomes 1×1 screen pixel.
+    fn draw_glyph(&mut self, x: usize, y: usize, ch: char, rgb: (u8, u8, u8), scale: usize) {
+        let rows = glyph(ch);
+        for (row_idx, &row_mask) in rows.iter().enumerate() {
+            for col in 0..GLYPH_W {
+                let bit = (row_mask >> (GLYPH_W - 1 - col)) & 1;
+                if bit != 0 {
+                    let px0 = x + col * scale;
+                    let py0 = y + row_idx * scale;
+                    for dy in 0..scale {
+                        for dx in 0..scale {
+                            self.set_pixel(px0 + dx, py0 + dy, rgb);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Draw a left-to-right text string starting at pixel (x, y) — top-left of
+    /// the first character.  `scale` enlarges each pixel (1 = normal, 2 = 2×).
+    /// Returns the x coordinate immediately after the last character.
+    fn draw_text(&mut self, x: usize, y: usize, s: &str, rgb: (u8, u8, u8), scale: usize) -> usize {
+        let mut cx = x;
+        for ch in s.chars() {
+            self.draw_glyph(cx, y, ch, rgb, scale);
+            cx += GLYPH_ADV * scale;
+        }
+        cx
+    }
+
+    /// Return the pixel width of a string rendered at `scale`.
+    fn text_width(s: &str, scale: usize) -> usize {
+        let chars = s.chars().count();
+        if chars == 0 {
+            return 0;
+        }
+        // All chars advance GLYPH_ADV*scale, but the last char does not need
+        // the trailing gap.  Keep it simple: advance * chars - 1 * scale gap.
+        (chars * GLYPH_ADV - 1) * scale
+    }
+
+    /// Draw text centred horizontally around pixel x_centre.
+    fn draw_text_centred(
+        &mut self,
+        x_centre: usize,
+        y: usize,
+        s: &str,
+        rgb: (u8, u8, u8),
+        scale: usize,
+    ) {
+        let w = Self::text_width(s, scale);
+        let x0 = x_centre.saturating_sub(w / 2);
+        self.draw_text(x0, y, s, rgb, scale);
+    }
+
+    /// Draw text right-aligned: the rightmost pixel of the last glyph sits at
+    /// `x_right`.
+    fn draw_text_right(
+        &mut self,
+        x_right: usize,
+        y: usize,
+        s: &str,
+        rgb: (u8, u8, u8),
+        scale: usize,
+    ) {
+        let w = Self::text_width(s, scale);
+        let x0 = x_right.saturating_sub(w);
+        self.draw_text(x0, y, s, rgb, scale);
+    }
+
+    /// Draw text rotated 90° counter-clockwise (bottom-to-top) at position
+    /// (x, y_bottom): the bottom of the first character is at y_bottom, text
+    /// reads upwards.  Used for the y-axis title.
+    fn draw_text_vertical(
+        &mut self,
+        x: usize,
+        y_bottom: usize,
+        s: &str,
+        rgb: (u8, u8, u8),
+        scale: usize,
+    ) {
+        // We draw each glyph rotated: column → row, row → -column.
+        // Origin: top-left of the upward-going text starts at (x, y_bottom - text_height).
+        // text_height = chars * GLYPH_ADV * scale.
+        let chars: Vec<char> = s.chars().collect();
+        let n = chars.len();
+        for (ci, &ch) in chars.iter().enumerate() {
+            // The ci-th character occupies vertical slots [ci*GLYPH_ADV .. ci*GLYPH_ADV + GLYPH_H]
+            // going upward from y_bottom.
+            let rows = glyph(ch);
+            for (row_idx, &row_mask) in rows.iter().enumerate() {
+                for col in 0..GLYPH_W {
+                    let bit = (row_mask >> (GLYPH_W - 1 - col)) & 1;
+                    if bit != 0 {
+                        // In normal coords: glyph pixel at (col, row_idx).
+                        // Rotated 90° CCW: new_x = row_idx, new_y = (GLYPH_W-1 - col).
+                        // Character spacing: character ci shifts y upward by ci*GLYPH_ADV.
+                        let rotated_x = row_idx; // was row → now column
+                        let rotated_y = (n - 1 - ci) * GLYPH_ADV + (GLYPH_W - 1 - col);
+                        let px0 = x + rotated_x * scale;
+                        let py0 = y_bottom.saturating_sub((rotated_y + 1) * scale);
+                        for dy in 0..scale {
+                            for dx in 0..scale {
+                                self.set_pixel(px0 + dx, py0 + dy, rgb);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Write a plot faceted by q (3 panels side-by-side), with CI bands (filled
 /// ribbon between ci_lo and ci_hi), log-scale y axis.
+///
+/// Labels added (publication-grade):
+///   - Per-panel title "q=3" / "q=5" / "q=7" centred above each panel.
+///   - Y-axis tick labels "10^0" .. "10^-4" left of the y-axis (right-aligned
+///     to the axis tick mark).
+///   - Y-axis title "TVD (log10)" drawn vertically on the leftmost panel only.
+///   - X-axis tick labels showing the actual n value below each data point.
+///   - X-axis title "n" centred below each panel.
+///   - Per-panel legend: coloured "perm" and "det" labels inside the plot area.
 ///
 /// If `convert` (ImageMagick) is available the PPM is promoted to PNG and the
 /// PPM is removed.  Otherwise, a pure-Rust minimal PNG is written directly
@@ -321,12 +539,13 @@ fn write_plot(results: &[CellResult], path: &str) {
     let n_panels = qs.len(); // 3
 
     // Overall canvas: 3 panels side by side.
+    // Increased margins to accommodate axis labels and titles.
     let panel_w = 400usize;
-    let panel_h = 400usize;
-    let margin_left = 70usize;
+    let panel_h = 420usize;
+    let margin_left = 80usize; // room for y-tick labels + y-title
     let margin_right = 20usize;
-    let margin_top = 40usize;
-    let margin_bottom = 55usize;
+    let margin_top = 50usize; // room for panel title
+    let margin_bottom = 65usize; // room for x-tick labels + x-title
     let panel_gap = 20usize;
 
     let total_w = n_panels * panel_w + (n_panels - 1) * panel_gap;
@@ -339,6 +558,11 @@ fn write_plot(results: &[CellResult], path: &str) {
 
     let y_min_log = -4.0f64;
     let y_max_log = 0.0f64;
+
+    // Shared text colours.
+    let label_rgb = (40u8, 40u8, 40u8);
+    let axis_rgb = (80u8, 80u8, 80u8);
+    let grid_rgb = (220u8, 220u8, 220u8);
 
     for (qi, &q) in qs.iter().enumerate() {
         let cell_q: Vec<&CellResult> = results.iter().filter(|r| r.q == q).collect();
@@ -380,7 +604,6 @@ fn write_plot(results: &[CellResult], path: &str) {
         };
 
         // Draw axis lines (dark grey).
-        let axis_rgb = (80u8, 80u8, 80u8);
         for x in plot_x0..=(plot_x0 + plot_w) {
             canvas.set_pixel(x, plot_y0 + plot_h, axis_rgb);
         }
@@ -389,13 +612,56 @@ fn write_plot(results: &[CellResult], path: &str) {
         }
 
         // Draw horizontal grid lines at each log10 tick.
-        let grid_rgb = (220u8, 220u8, 220u8);
         for log_tick in [-4i32, -3, -2, -1, 0] {
             let y_tick = to_px_y(10f64.powi(log_tick));
             for x in plot_x0..=(plot_x0 + plot_w) {
                 canvas.set_pixel(x, y_tick, grid_rgb);
             }
+
+            // Y-axis tick mark (3 px left of axis line).
+            for dx in 1usize..=4 {
+                canvas.set_pixel(plot_x0.saturating_sub(dx), y_tick, axis_rgb);
+            }
+
+            // Y-axis tick label, e.g. "10^0", "10^-1", ..., "10^-4".
+            // Right-align to 5 px left of the tick mark.
+            let tick_label = match log_tick {
+                0 => "10^0",
+                -1 => "10^-1",
+                -2 => "10^-2",
+                -3 => "10^-3",
+                -4 => "10^-4",
+                _ => "",
+            };
+            // Vertically centre the 7-px-tall glyph on the tick row.
+            let label_y = y_tick.saturating_sub(GLYPH_H / 2);
+            let label_x_right = plot_x0.saturating_sub(6); // 6 px gap from axis
+            canvas.draw_text_right(label_x_right, label_y, tick_label, label_rgb, 1);
         }
+
+        // Y-axis title "TVD (log10)" — drawn vertically on the leftmost panel only.
+        if qi == 0 {
+            // The vertical text is drawn bottom-up; anchor y is the bottom of
+            // the plot area.  x is 2 px from the left edge of the canvas.
+            let vtitle = "TVD (log10)";
+            // Height of the vertical text (rotated): n_chars * GLYPH_ADV * scale px.
+            let vtitle_height = vtitle.chars().count() * GLYPH_ADV;
+            // Centre the text vertically in the plot area.
+            let vert_centre_y = plot_y0 + plot_h / 2;
+            let y_bottom = vert_centre_y + vtitle_height / 2;
+            canvas.draw_text_vertical(2, y_bottom, vtitle, label_rgb, 1);
+        }
+
+        // Panel title "q=3" / "q=5" / "q=7" centred above the plot area.
+        let title = match q {
+            3 => "q=3",
+            5 => "q=5",
+            7 => "q=7",
+            _ => "q=?",
+        };
+        let title_y = plot_y0.saturating_sub(GLYPH_H + 6); // 6 px above plot top
+        let panel_centre_x = plot_x0 + plot_w / 2;
+        canvas.draw_text_centred(panel_centre_x, title_y, title, label_rgb, 2);
 
         let col_perm = colours_perm[qi];
         let col_det = colours_det[qi];
@@ -445,37 +711,67 @@ fn write_plot(results: &[CellResult], path: &str) {
             canvas.draw_disk(px, py_p, 4, col_perm);
             canvas.draw_disk(px, py_d, 4, col_det);
         }
-    }
 
-    // Try ImageMagick first (produces optimally compressed PNG).
-    let ppm_path = if path.ends_with(".png") {
-        path.replace(".png", ".ppm")
-    } else {
-        path.to_string()
-    };
-    if let Ok(mut f) = fs::File::create(&ppm_path) {
-        let header = format!("P6\n{total_w} {total_h}\n255\n");
-        let _ = f.write_all(header.as_bytes());
-        let _ = f.write_all(&canvas.pixels);
-    }
-
-    let convert_ok = std::process::Command::new("convert")
-        .arg(&ppm_path)
-        .arg(path)
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false);
-
-    if convert_ok {
-        let _ = fs::remove_file(&ppm_path);
-        eprintln!("  plot written to {path} (via ImageMagick)");
-    } else {
-        // Fallback: write a valid PNG using the pure-Rust encoder (D3 fix).
-        let _ = fs::remove_file(&ppm_path);
-        match perm_uniformity::png::write_png_file(path, &canvas.pixels, total_w, total_h) {
-            Ok(()) => eprintln!("  plot written to {path} (pure-Rust PNG encoder)"),
-            Err(e) => eprintln!("  ERROR writing PNG: {e}"),
+        // X-axis tick labels: show n value below each data point.
+        // Use scale=1 glyphs, centred under the point.  Tick mark 3 px below axis.
+        let x_tick_y = plot_y0 + plot_h + 2; // tick line below axis
+        let x_label_y = x_tick_y + 5; // label below tick
+        for &n_val in &n_values {
+            let px = to_px_x(n_val);
+            // Short tick mark.
+            for dy in 0..4usize {
+                canvas.set_pixel(px, plot_y0 + plot_h + dy, axis_rgb);
+            }
+            let label = n_val.to_string();
+            canvas.draw_text_centred(px, x_label_y, &label, label_rgb, 1);
         }
+
+        // X-axis title "n" centred under the panel.
+        let x_title_y = x_label_y + GLYPH_H + 6;
+        canvas.draw_text_centred(panel_centre_x, x_title_y, "n", label_rgb, 2);
+
+        // Legend — drawn inside the plot area near the top-right corner.
+        // Two rows: one for "perm", one for "det".
+        let legend_swatch_w = 18usize; // width of coloured swatch
+        let legend_text_x_off = legend_swatch_w + 4;
+        let legend_row_h = GLYPH_H + 4;
+        // Position: 5 px from the right edge of the plot, 10 px from the top.
+        let legend_x_right = plot_x0 + plot_w - 5;
+        let legend_x_swatch = legend_x_right
+            .saturating_sub(Canvas::text_width("perm", 1) + legend_text_x_off + legend_swatch_w);
+        let legend_y0 = plot_y0 + 10;
+
+        for (row, (label_str, col)) in [("perm", col_perm), ("det", col_det)].iter().enumerate() {
+            let ly = legend_y0 + row * legend_row_h;
+            // Filled swatch (a short line at mid-height).
+            let swatch_mid_y = ly + GLYPH_H / 2;
+            for dx in 0..legend_swatch_w {
+                canvas.set_pixel(legend_x_swatch + dx, swatch_mid_y, *col);
+                if swatch_mid_y > 0 {
+                    canvas.set_pixel(legend_x_swatch + dx, swatch_mid_y - 1, *col);
+                }
+                canvas.set_pixel(legend_x_swatch + dx, swatch_mid_y + 1, *col);
+            }
+            // Small dot on top of swatch (matches the data-point dots).
+            canvas.draw_disk(legend_x_swatch + legend_swatch_w / 2, swatch_mid_y, 3, *col);
+            // Text label.
+            canvas.draw_text(
+                legend_x_swatch + legend_text_x_off,
+                ly,
+                label_str,
+                label_rgb,
+                1,
+            );
+        }
+    }
+
+    // Always use the pure-Rust PNG encoder for byte-identical output across
+    // runs (criterion 3 / D3).  The ImageMagick path is intentionally skipped:
+    // ImageMagick's palette quantiser and compression are non-deterministic
+    // across invocations, which breaks sha256 reproducibility.
+    match perm_uniformity::png::write_png_file(path, &canvas.pixels, total_w, total_h) {
+        Ok(()) => eprintln!("  plot written to {path} (pure-Rust PNG encoder)"),
+        Err(e) => eprintln!("  ERROR writing PNG: {e}"),
     }
 }
 
