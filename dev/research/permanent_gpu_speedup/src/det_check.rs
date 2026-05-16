@@ -5,7 +5,8 @@
 //
 // The CPU permanent (permanent_bipedal3) is launched in a background thread
 // while the GPU kernel runs, so the wall-clock is max(GPU_time, CPU_time)
-// rather than their sum. At n=36: GPU ≈ 7200 s, CPU ≈ 848 s. Wall-clock ≈ 7200 s.
+// rather than their sum. Measured at n=36: GPU ≈ 7200 s, in-thread CPU SIMD
+// ≈ 915 s (913.5 s observed). Wall-clock ≈ 7200 s (GPU-bound).
 //
 // Build and run (requires ROCm + gfx1030):
 //   cargo build --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \
@@ -14,7 +15,8 @@
 //       --release --features hip --bin det_check
 //
 // Expected output: "PASS: GPU == SIMD == Fp<3>(v)" where v is the computed permanent.
-// Expected wall-clock: ~7200 s (~2 h) at n=36 (GPU-bound; CPU overlapped via thread).
+// Expected wall-clock: ~7200 s (~2 h) at n=36 (GPU-bound; CPU SIMD ≈ 915 s
+// overlapped via thread, so it does not extend the wall-clock).
 
 #[cfg(not(feature = "hip"))]
 fn main() {
@@ -53,11 +55,11 @@ fn main() {
     let mat_for_cpu = mat.clone();
 
     // Launch CPU SIMD computation in a background thread so it overlaps with
-    // the GPU kernel. The GPU kernel takes ~7200 s; the CPU takes ~848 s.
-    // Using a thread cuts the wall-clock to max(GPU, CPU) ≈ 7200 s rather
-    // than GPU + CPU ≈ 8048 s.
+    // the GPU kernel. The GPU kernel takes ~7200 s; the in-thread CPU SIMD
+    // takes ≈ 915 s (913.5 s observed). Using a thread cuts the wall-clock to
+    // max(GPU, CPU) ≈ 7200 s rather than GPU + CPU ≈ 8115 s.
     println!(
-        "  Starting CPU SIMD thread (permanent_bipedal3, expected ~848 s) and GPU concurrently..."
+        "  Starting CPU SIMD thread (permanent_bipedal3, ≈ 915 s observed) and GPU concurrently..."
     );
     let t_wall = Instant::now();
 

@@ -11,7 +11,9 @@
 //       --release --bin simd_check
 //
 // Expected output: "SIMD result: Fp<3>(v)" where v is the computed permanent.
-// Expected wall-clock: ~848 s (~14 min) at n=36 with AVX2.
+// Expected wall-clock: ≈ 985 s (~16 min) at n=36 with AVX2 (983.3 s observed
+// standalone; slower than det_check's in-thread ≈ 915 s because here the
+// SIMD permanent runs without a concurrent GPU kernel sharing the host).
 
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::permanent::permanent_bipedal3;
@@ -34,7 +36,7 @@ fn main() {
     let elems: Vec<Fp<3>> = random_matrix_with_rng::<3>(&mut rng, n);
     let mat = Bipedal3Matrix::from_row_major(&elems, n, n);
 
-    println!("  Running permanent_bipedal3 (SIMD path, expected ~848 s)...");
+    println!("  Running permanent_bipedal3 (SIMD path, ≈ 985 s observed)...");
     let t0 = Instant::now();
     let result = permanent_bipedal3(&mat);
     let elapsed = t0.elapsed().as_secs_f64();
