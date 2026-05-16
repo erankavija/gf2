@@ -1,5 +1,13 @@
 {
-  "commit": "e896ce4a246999c19ee7a72c891ce71dffd74f45",
+  "artefact_assembly_commit": "e896ce4a246999c19ee7a72c891ce71dffd74f45",
+  "dataset_source_commits": {
+    "S1": "not recorded in CSV header (s1_speedup-2026-05-11.csv predates the commit-header provenance convention; measured 2026-05-11)",
+    "S2": "not recorded in CSV header (s2_parallel_scaling-2026-05-11.csv predates the commit-header convention; measured 2026-05-11)",
+    "S3": "not recorded in CSV header (s3_cross_cpu-2026-05-12.csv predates the commit-header convention; measured 2026-05-12)",
+    "S5": "13b9143a (HEAD at sim startup; fixed-M=256 harness changes uncommitted at the time, landed in 9da0d7fe — both reproduce the same CSV given the same seed; per s5_gpu_crossover-2026-05-15.csv header)",
+    "S1g": "6a6631d7 (per s1g_gpu_speedup-2026-05-16.csv header)"
+  },
+  "_provenance_note": "artefact_assembly_commit is the repo HEAD when this artefact directory (README/provenance/figures/csvs snapshot) was assembled; it is NOT the measurement commit for every dataset. The S* CSVs were generated at the per-dataset revisions in dataset_source_commits; checking out artefact_assembly_commit recovers the committed CSV data + assembly tooling, while dataset_source_commits records the exact code state each measurement was produced from.",
   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
   "os": "Linux fraktaali 7.0.3-arch1-1 #1 SMP PREEMPT_DYNAMIC Thu, 30 Apr 2026 18:41:12 +0000 x86_64 GNU/Linux",
   "lscpu": "Architecture: x86_64 | Vendor: AuthenticAMD | Model: AMD Ryzen 9 5900X 12-Core Processor | Family: 25, Model: 33, Stepping: 2 | Cores: 12 physical / 24 logical (SMT 2x) | CPU max MHz: 4954.5649 | L1d: 384 KiB, L1i: 384 KiB, L2: 6 MiB, L3: 64 MiB | Flags: avx2=yes, avx512=no, fma=yes, aes=yes",
