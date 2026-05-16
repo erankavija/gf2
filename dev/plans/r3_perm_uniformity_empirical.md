@@ -271,18 +271,18 @@ faster.
 
 Master seed: `0x00c0ffee00000001`
 
-Per-cell seeds are derived as:
+Per-cell seeds are derived as (all arithmetic wrapping u64), matching
+`dev/research/perm_uniformity/src/main.rs::cell_seed`:
 ```
 cell_seed(q, n, which) = SEED
-    + q * 0x9e3779b97f4a7c15
-    + n * 0x6c62272e07bb0142
-    + which * 0x1234567890abcdef0
+    .wrapping_add(q     * 0x9e37_79b9_7f4a_7c15)
+    .wrapping_add(n     * 0x6c62_272e_07bb_0142)
+    .wrapping_add(which * 0x1234_5678_9abc_def0)
 ```
 
 where `which=0` is the perm stream, `which=1` is the det stream,
 `which=2,3` are the independent TVD bootstrap seeds, and `which=4` is the
-seed for the paired-difference bootstrap (criterion 6).  All arithmetic is
-wrapping u64.
+seed for the difference bootstrap (criterion 6).
 
 **Determinism verification**: Two independent runs on the same host produce
 bit-identical values for all statistical columns (q, n, samples, tvd_perm,
@@ -322,4 +322,9 @@ On the dev host (Ryzen 9 5900X, 12 cores), wall-clock is approximately 3-4 min.
 
 ## 9. User sign-off
 
-*(Not yet: the lead will escalate this step after code-review passes.)*
+**2026-05-16:** The user signed off on this writeup and approved the
+criterion 1 / 3 / 6 amendments (build invocation → `--manifest-path`,
+statistical-column determinism, and the noise-dominated `q=3, n∈{24,28,32}`
+exclusion) via the project-lead escalation path. The authoritative JIT
+approval record is in issue `8e4e19a0`'s description (Amendments §1–§3 and
+the "User sign-off (criterion 10)" note).
