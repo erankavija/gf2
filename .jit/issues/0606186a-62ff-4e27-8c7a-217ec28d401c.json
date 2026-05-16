@@ -46,6 +46,13 @@
       "label": "F_3 monomorphisation wrapper (Charon/Aeneas extraction target)",
       "doc_type": "implementation",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/d3_v2_path1_sketch.md",
+      "commit": null,
+      "label": "V2 Path-1 proof sketch (lead-approved: transparent gfp + thin delegating wrapper + L4-L9/headline)",
+      "doc_type": "design",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -54,5 +61,5 @@
     "component:proofs"
   ],
   "created_at": "2026-05-09T09:48:15.886764151+00:00",
-  "updated_at": "2026-05-16T13:52:55.451839975+00:00"
+  "updated_at": "2026-05-16T21:14:54.526124161+00:00"
 }
