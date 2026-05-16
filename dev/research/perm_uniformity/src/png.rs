@@ -124,6 +124,24 @@ fn zlib_wrap(raw_data: &[u8]) -> Vec<u8> {
 /// * `pixels` — flat RGB byte slice, row-major, length == width * height * 3.
 /// * `width`, `height` — image dimensions in pixels.
 /// * `out` — output byte buffer.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::png::encode_png;
+/// let mut out = Vec::new();
+/// // One white pixel.
+/// encode_png(&[255, 255, 255], 1, 1, &mut out);
+/// assert_eq!(&out[..8], b"\x89PNG\r\n\x1a\n");
+/// ```
+///
+/// # Panics
+///
+/// Panics if `pixels.len() != width * height * 3`.
+///
+/// # Complexity
+///
+/// `O(width * height)` (one pass to filter scanlines, one stored-deflate pass).
 pub fn encode_png(pixels: &[u8], width: usize, height: usize, out: &mut Vec<u8>) {
     assert_eq!(
         pixels.len(),
@@ -164,6 +182,33 @@ pub fn encode_png(pixels: &[u8], width: usize, height: usize, out: &mut Vec<u8>)
 /// Write an RGB pixel buffer as a PNG file.
 ///
 /// Returns `Ok(())` on success, or an IO error.
+///
+/// # Arguments
+///
+/// * `path` — destination file path.
+/// * `pixels` — flat RGB byte slice, row-major, length == width * height * 3.
+/// * `width`, `height` — image dimensions in pixels.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::png::write_png_file;
+/// let mut p = std::env::temp_dir();
+/// p.push("perm_uniformity_doctest_1x1.png");
+/// let path = p.to_str().unwrap();
+/// write_png_file(path, &[0, 0, 0], 1, 1).unwrap();
+/// assert!(std::path::Path::new(path).exists());
+/// std::fs::remove_file(path).ok();
+/// ```
+///
+/// # Panics
+///
+/// Panics if `pixels.len() != width * height * 3` (propagated from
+/// [`encode_png`]). Filesystem failures are returned as `Err`, not panics.
+///
+/// # Complexity
+///
+/// `O(width * height)` plus a single file write.
 pub fn write_png_file(
     path: &str,
     pixels: &[u8],

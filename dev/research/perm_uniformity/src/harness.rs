@@ -18,6 +18,26 @@ use gf2_core::rng::Lcg;
 /// * `counts` — histogram of observed values, length q.
 /// * `n_total` — total number of samples (= sum of counts).
 /// * `q` — field order.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::harness::tvd_from_counts;
+/// // Perfectly uniform histogram over F_3 has TVD 0.
+/// assert_eq!(tvd_from_counts(&[10, 10, 10], 30, 3), 0.0);
+/// // All mass on one symbol: TVD = 1 - 1/q.
+/// assert!((tvd_from_counts(&[9, 0, 0], 9, 3) - (1.0 - 1.0 / 3.0)).abs() < 1e-12);
+/// ```
+///
+/// # Panics
+///
+/// Does not panic for `n_total > 0`. With `n_total == 0` the division
+/// produces non-finite values (no panic) — callers must pass a positive
+/// total.
+///
+/// # Complexity
+///
+/// `O(q)`.
 pub fn tvd_from_counts(counts: &[u64], n_total: u64, q: u64) -> f64 {
     let uniform_prob = 1.0 / q as f64;
     let mut sum = 0.0_f64;
@@ -42,6 +62,26 @@ pub fn tvd_from_counts(counts: &[u64], n_total: u64, q: u64) -> f64 {
 /// * `q` — field order.
 /// * `n_bootstrap` — number of bootstrap resamples (1000 recommended).
 /// * `seed` — deterministic seed for the bootstrap RNG.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::harness::bootstrap_tvd_ci;
+/// let samples = [0u8, 1, 2, 0, 1, 2, 0, 1, 2];
+/// let (lo, hi) = bootstrap_tvd_ci(&samples, 3, 200, 0x00C0_FFEE);
+/// assert!((0.0..=1.0).contains(&lo) && lo <= hi);
+/// // Deterministic in the seed.
+/// assert_eq!(bootstrap_tvd_ci(&samples, 3, 200, 0x00C0_FFEE), (lo, hi));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `samples` is empty (the bootstrap draws an index in `0..0`),
+/// or if a resampled TVD is NaN (the percentile sort comparator unwraps).
+///
+/// # Complexity
+///
+/// `O(n_bootstrap * (N + q))` for `N = samples.len()`.
 pub fn bootstrap_tvd_ci(samples: &[u8], q: u64, n_bootstrap: usize, seed: u64) -> (f64, f64) {
     let n = samples.len();
     let mut rng = Lcg::new(seed);
@@ -102,6 +142,27 @@ pub fn bootstrap_tvd_ci(samples: &[u8], q: u64, n_bootstrap: usize, seed: u64) -
 /// approximately zero, and this reduces to independent bootstrap; using the
 /// same index for both avoids a second independent RNG draw and keeps the
 /// procedure exact across seeds.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::harness::bootstrap_diff_ci;
+/// // perm near-uniform, det skewed: the difference (perm - det) is negative.
+/// let perm = [0u8, 1, 2, 0, 1, 2, 0, 1, 2];
+/// let det = [0u8, 0, 0, 0, 0, 0, 0, 0, 1];
+/// let (mean, q95) = bootstrap_diff_ci(&perm, &det, 3, 200, 7);
+/// assert!(mean.is_finite() && q95.is_finite());
+/// assert!(mean <= 0.0); // perm is closer to uniform than det here
+/// ```
+///
+/// # Panics
+///
+/// Panics if `perm_samples.len() != det_samples.len()`, if the slices are
+/// empty, or if a bootstrap difference is NaN.
+///
+/// # Complexity
+///
+/// `O(n_bootstrap * (N + q))` for `N = perm_samples.len()`.
 pub fn bootstrap_diff_ci(
     perm_samples: &[u8],
     det_samples: &[u8],
@@ -173,6 +234,35 @@ pub struct CellResult {
 /// stream RNG, `boot_perm_seed` and `boot_det_seed` drive the two independent
 /// TVD bootstrap CIs, and `boot_diff_seed` drives the paired difference
 /// bootstrap for criterion 6.
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::harness::run_cell;
+/// use gf2_core::rng::Lcg;
+/// // Toy closures: emit a field element drawn straight from the RNG,
+/// // ignoring the matrix dimension.
+/// let r = run_cell(
+///     3, 4, 128,
+///     1, 2, 3, 4, 5,
+///     |rng: &mut Lcg, _n| rng.next_bounded_usize(3) as u8,
+///     |rng: &mut Lcg, _n| rng.next_bounded_usize(3) as u8,
+/// );
+/// assert_eq!((r.q, r.n, r.n_samples), (3, 4, 128));
+/// assert!(r.tvd_perm >= 0.0 && r.tvd_det >= 0.0);
+/// assert!(r.tvd_perm_ci_lo <= r.tvd_perm_ci_hi);
+/// ```
+///
+/// # Panics
+///
+/// Panics if `q == 0`, if `n_samples == 0`, or if a sampling closure
+/// returns a value `>= q` (histogram index out of bounds).
+///
+/// # Complexity
+///
+/// `O(n_samples * C_sample + n_bootstrap * (n_samples + q))` where
+/// `C_sample` is the per-call cost of the sampling closures and
+/// `n_bootstrap = 1000`.
 #[allow(clippy::too_many_arguments)]
 pub fn run_cell<FP, FD>(
     q: u64,
