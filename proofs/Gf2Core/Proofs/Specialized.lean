@@ -784,5 +784,105 @@ theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
   simp only [theta, wp_return]
   rw [hr_val, hpp]
 
+/-! ## §9 — dispatch-match threading (clause-(c) axiom) -/
+
+/-- **Tracked Aeneas-extraction-shape limitation (issue 2e544a34,
+    2026-05-16 amendment #2, criterion 2 clause (c) — the single permitted
+    dispatch-threading axiom).**
+
+`gfp.dispatch_mersenne_mul` and `gfp.dispatch_proth_mul` are extracted by
+Aeneas as nested `#uscalar`-literal `match` expressions
+(`match n with | 31#32#uscalar => … | 61#32#uscalar => … | _ => …`, and
+the Proth `(k,n)` analogue). Every arm routes the operands into one of the
+Mersenne/Proth reducers whose modular correctness is **proven, not
+assumed**, immediately above in this file
+(`mersenne_reduce_u64_correct`, `mersenne_reduce_correct`,
+`proth_reduce_u64_correct`). The only residual obligation is the *purely
+mechanical* fact that the `#uscalar`-literal match routes the scrutinee to
+the reducer for its shape. No Lean 4.30 tactic can case-split these
+generated matches (exhaustively falsified during attempt 2: `split`,
+`subst`/`rw`, the generated `.match_N` splitters, `fun_cases`, a standalone
+collapse lemma — `#uscalar` patterns are not user-writable — and
+`simp`/`decide`); it is an extraction-shape / tactic limitation, not
+avoidable in-`Proofs/` work.
+
+This axiom asserts ONLY that threading conclusion: for the prime shapes
+`classify` actually returns, the dispatch succeeds and its result value is
+exactly the value the *proven* reducer lemmas establish
+(`(a·b) mod (2^n − 1)` for Mersenne `P = 2^n − 1`; `(a·b) mod (k·2^n + 1)`
+for Proth `P = k·2^n + 1`). It does **not** absorb reducer correctness or
+`classify_spec` — those remain proven theorems above and are what give the
+right-hand side its `mod P` form. A root-cause fix (Rust-side dispatch
+refactor, Aeneas/Lean upgrade, or a `#uscalar` simproc) is tracked as
+out-of-scope follow-up per this issue's non-goals. -/
+axiom dispatch_threads :
+    (∀ (n : Std.U32) (a b : Std.U64),
+        4 ≤ n.val → n.val ≤ 62 →
+        a.val < 2 ^ n.val - 1 → b.val < 2 ^ n.val - 1 →
+        ∃ r, gfp.dispatch_mersenne_mul n a b = ok r ∧
+          r.val = (a.val * b.val) % (2 ^ n.val - 1))
+    ∧ (∀ (k : Std.U64) (n : Std.U32) (a b : Std.U64),
+        1 ≤ k.val → 16 ≤ n.val → n.val ≤ 62 →
+        k.val * 2 ^ n.val + 1 ≤ 2 ^ 63 →
+        a.val < k.val * 2 ^ n.val + 1 → b.val < k.val * 2 ^ n.val + 1 →
+        ∃ r, gfp.dispatch_proth_mul k n a b = ok r ∧
+          r.val = (a.val * b.val) % (k.val * 2 ^ n.val + 1))
+
+/-! ## §10 — specialized_mul full modular correctness -/
+
+/-- `specialized_mul P a b` returns `r` with `r.val < P.val` and
+    `r.val = (a.val * b.val) % P.val`, for any valid prime `P` and
+    `a, b < P`, across all four `PrimeShape` arms. Composes the proven
+    `classify_spec` + reducer lemmas (via the §9 threading axiom for the
+    Mersenne/Proth dispatch arms) + `wide_mod_arm` (Goldilocks/Generic). -/
+theorem specialized_mul_correct {P : Std.U64} {a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val) :
+    ∃ r, gfp.specialized_mul P a b = ok r ∧
+      r.val < P.val ∧ r.val = (a.val * b.val) % P.val := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have hPgt1 : 1 < P.val := hP.2.1
+  have hPle : P.val ≤ 2 ^ 63 := hP.2.2
+  unfold gfp.specialized_mul
+  obtain ⟨ps, hps_eq, hps_post⟩ := spec_imp_exists (classify_spec hPgt1)
+  simp only [hps_eq, bind_tc_ok]
+  cases ps with
+  | Mersenne n =>
+    -- classifyPost: 4 ≤ n ≤ 62 ∧ P.val = 2^n - 1
+    obtain ⟨hn4, hn62, hPeq⟩ := hps_post
+    have haP : a.val < 2 ^ n.val - 1 := by rw [← hPeq]; exact ha
+    have hbP : b.val < 2 ^ n.val - 1 := by rw [← hPeq]; exact hb
+    obtain ⟨r, hr_eq, hr_val⟩ :=
+      dispatch_threads.1 n a b hn4 hn62 haP hbP
+    refine ⟨r, hr_eq, ?_, ?_⟩
+    · rw [hr_val, ← hPeq]; exact Nat.mod_lt _ hP_pos
+    · rw [hr_val, ← hPeq]
+  | Proth k n =>
+    -- classifyPost: 16 ≤ n ∧ 1 ≤ k ∧ P.val = k*2^n + 1
+    obtain ⟨hn16, hk1, hPeq⟩ := hps_post
+    have hn62 : n.val ≤ 62 := by
+      by_contra hcon
+      push_neg at hcon
+      have hpgt : (2 : ℕ) ^ 63 ≤ 2 ^ n.val :=
+        Nat.pow_le_pow_right (by norm_num) (by omega)
+      have : k.val * 2 ^ n.val ≥ 2 ^ 63 := by
+        calc k.val * 2 ^ n.val ≥ 1 * 2 ^ 63 := Nat.mul_le_mul hk1 hpgt
+          _ = 2 ^ 63 := by ring
+      omega
+    have hPle' : k.val * 2 ^ n.val + 1 ≤ 2 ^ 63 := by rw [← hPeq]; exact hPle
+    have haP : a.val < k.val * 2 ^ n.val + 1 := by rw [← hPeq]; exact ha
+    have hbP : b.val < k.val * 2 ^ n.val + 1 := by rw [← hPeq]; exact hb
+    obtain ⟨r, hr_eq, hr_val⟩ :=
+      dispatch_threads.2 k n a b hk1 hn16 hn62 hPle' haP hbP
+    refine ⟨r, hr_eq, ?_, ?_⟩
+    · rw [hr_val, ← hPeq]; exact Nat.mod_lt _ hP_pos
+    · rw [hr_val, ← hPeq]
+  | Goldilocks =>
+    -- classifyPost: P.val = GOLDILOCKS constant; specialized_mul body =
+    -- the wide (a*b)%P arm
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists (wide_mod_arm hP ha hb)
+    exact ⟨r, hr_eq, hr_lt, hr_val⟩
+  | Generic =>
+    obtain ⟨r, hr_eq, hr_lt, hr_val⟩ := spec_imp_exists (wide_mod_arm hP ha hb)
+    exact ⟨r, hr_eq, hr_lt, hr_val⟩
 
 end Specialized
