@@ -227,3 +227,50 @@ Established-pattern references: V1 `proofs/Gf2Algebra/Proofs/Bipedal3Correctness
 ## 8. Approval
 
 Per CLAUDE.md §"Verification work", this sketch must be approved by the project lead before any proof/pipeline/Rust code is written for `0606186a`. The V2 implementation issue should be dispatched as "implement this approved Path-1 sketch", with the **extraction spike (Risk #1/#2) as a gating sub-task that must pass before proof code is written**. This document modifies no `.jit/` state; issue transitions remain the lead's responsibility.
+
+---
+
+## 9. Option 2 (USER-SELECTED 2026-05-17) — supersedes §2
+
+The gated extraction spike (`dev/active/0606186a-impl-handoff.md`, 2026-05-17)
+**empirically falsified §2 option-(b)**: on the pinned Charon `1ec8d4bb`+4
+patches, a non-generic `--start-from` root does NOT monomorphise the generic
+`permanent_ryser<F>`. It extracts fully generic and Aeneas emits `sorry` into
+the proof target's own signature (`type_var_id … ExtractBase.Item`,
+`ryser.rs:152-163`). The user selected **Option 2** (over a 5th Charon patch /
+closure-helper / de-scope). This section is **lead-approved** and governs the
+implementation; §2 is retained only as the falsified-premise record.
+
+**What changes vs the rest of this sketch:**
+
+- **DO NOT modify `crates/gf2-algebra/src/permanent/ryser_fp3.rs`.** Keep the
+  committed iterator-free monomorphic body verbatim. It is the proof target;
+  it extracts cleanly (the spike confirmed only the *generic* body fails).
+  SSOT/criterion-3 is resolved by the user-approved criterion-3 amendment
+  (issue `0606186a` Amendments §1): the monomorphic body is test-certified
+  bit-identical to generic T7 via `test_permanent_ryser_fp3_matches_generic_small`.
+- **`scripts/verify-lean.sh`: KEEP `--opaque 'gf2_algebra::permanent::ryser'`**
+  (line 142) — there is no delegation into the generic, so it stays opaque.
+  Apply only the §3.1 *transparent-gfp* deltas: delete `--opaque
+  'gf2_core::gfp'`, add `--opaque 'gf2_core::gfp::simd_ops'`. (Do NOT delete
+  the `--opaque ryser` line — that was §2-specific and is now wrong.)
+- **§3.2 C2 (FunsExternal seed-and-port) and C3 (`fix-aeneas-gf2algebra.py`
+  regex narrowing) still apply** and are the **only remaining gating spike**
+  (Risk #1/C3). Risk #2 is eliminated (the committed iterator-free body has no
+  `Map`/`collect`/closure machinery — the spike already extracted it cleanly
+  in the pre-Path-1 baseline).
+- **§4/§5 apply unchanged**: `fp3_{new,add,sub,mul,neg}_decode` re-proved
+  in-leg; L4/L5/L6 loop invariants; L8 progress chain; L9 headline with
+  explicit `n ≤ 63`; reuse the proved abstract L1–L7 by name. The Aeneas def
+  the proof binds to is the **same** name (`permanent.ryser_fp3.permanent_ryser_fp3`
+  + its `_loop0`/`_loop1_loop0`/`_loop1_loop1` defs) — these already exist for
+  the committed body (`Funs.lean:5776+`); no loop-shape re-confirmation needed.
+- **Gating spike for Option 2 = C3 only**: confirm `fix-aeneas-gf2algebra.py`
+  can keep `CoreOpsArith{Add,Sub,Mul,Neg}FpFp` bodies transparent while still
+  axiomatising the unreachable `WINOGRAD_THRESHOLD.default`-recursive
+  `FiniteField` `impl_def`. If they are inseparably entangled in the LLBC →
+  **STOP and escalate** (5th Charon patch = shared infra, not worker-authorised).
+  Do NOT work around with `sorry`/axiom.
+
+Scope estimate is otherwise as §7 (the ~95-line `ryser_fp3.rs` deletion is
+removed from scope; net Lean work unchanged at ~400–650 lines).
