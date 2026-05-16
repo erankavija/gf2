@@ -4,6 +4,7 @@ This document provides strategic direction for the gf2 workspace. For detailed i
 
 - **[crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md)** - Performance primitives and optimization phases
 - **[crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md)** - Coding theory algorithms and DVB-T2 FEC
+- **[dev/plans/gf2_algebra_permanent.md](dev/plans/gf2_algebra_permanent.md)** - gf2-algebra-permanent epic: bipedal F_3/F_5/F_7 permanents, SIMD/GPU acceleration, Lean verification
 
 ## Vision
 
@@ -74,6 +75,17 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 | **M13** | DVB-T2 LDPC: All 12 configurations + validation | 2025-Q4 |
 | **M14** | LDPC Performance: Profiling & baseline | 2025-Q4 |
 | **M15** | Parallel Computing Framework: CPU backend | 2025-Q4 |
+| **M16** | gf2-algebra-permanent epic (W0–W7): bipedal F_3/F_5/F_7 packed permanents | 2026-Q2 |
+
+### gf2-algebra-permanent outcomes (M16)
+
+The `gf2-algebra` crate (W0–W7 waves) delivered the following headline outcomes against the reference paper (Scheinerman 2024, arXiv 2407.20205v2):
+
+- **~10.6x single-thread AVX2 speedup** over the in-tree Rust reference (`permanent_mod3_reference`) at n=36 on AMD Ryzen 9 5900X / Zen 3 (source: `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`; ratio=10.6434).
+- **GPU batch ~28-30x CPU-SIMD** at M=256 (n=24: 28.65x, n=28: 30.32x) on AMD Radeon RX 6950 XT / gfx1030 (source: `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`).
+- **F_5 and F_7 packed kernels**: `Packed5` (64 lanes/u64-triple), `Packed7` (16 lanes/u64-pair), `permanent_bipedal5` and `permanent_bipedal7` fast paths.
+- **Lean V1 complete**: `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` proves all four bipedal F_3 operations (add/sub/mul/neg) correct via Charon/Aeneas extraction from live Rust source.
+- **Lean V2 in progress**: `proofs/Gf2Algebra/Proofs/RyserBounded.lean` (bounded n<=63 Ryser formula correctness; sessions 1-3 landed, full proof pending).
 
 ## In Progress
 
@@ -84,14 +96,14 @@ A **research-grade** toolkit for high-performance binary field computing and cod
 
 | Milestone | Description | Priority | Research Focus |
 |-----------|-------------|----------|----------------|
-| **M16** | GPU/FPGA acceleration: Belief propagation prototypes | High | Hardware acceleration, memory vs compute bottlenecks |
-| **M17** | QAM modulation: Soft-decision demapping for FEC chain | High | Channel modeling, LLR integration |
-| **M18** | End-to-end DVB-T2: Full FEC + BICM simulation | High | System integration, FER curves vs Shannon limit |
-| **M19** | Competitive benchmarking: vs Magma/Sage/AFF3CT | High | Performance positioning, gap analysis |
-| **M20** | GRAND decoding: Universal decoder for short codes | Research | Alternative to algebraic methods |
-| **M21** | 5G polar codes: CRC-aided SCL decoder | Research | Modern capacity-approaching codes |
-| **M22** | Neural-aided BP: ML-enhanced LDPC decoding | Research | Iteration reduction for fixed FER |
-| **M23** | SDR integration: GNU Radio blocks for real signals | Research | Practical validation, throughput |
+| **M17** | GPU/FPGA acceleration: Belief propagation prototypes | High | Hardware acceleration, memory vs compute bottlenecks |
+| **M18** | QAM modulation: Soft-decision demapping for FEC chain | High | Channel modeling, LLR integration |
+| **M19** | End-to-end DVB-T2: Full FEC + BICM simulation | High | System integration, FER curves vs Shannon limit |
+| **M20** | Competitive benchmarking: vs Magma/Sage/AFF3CT | High | Performance positioning, gap analysis |
+| **M21** | GRAND decoding: Universal decoder for short codes | Research | Alternative to algebraic methods |
+| **M22** | 5G polar codes: CRC-aided SCL decoder | Research | Modern capacity-approaching codes |
+| **M23** | Neural-aided BP: ML-enhanced LDPC decoding | Research | Iteration reduction for fixed FER |
+| **M24** | SDR integration: GNU Radio blocks for real signals | Research | Practical validation, throughput |
 
 ## Research Goals
 
@@ -193,4 +205,4 @@ See subproject roadmaps for detailed tasks.
 
 ---
 
-*For implementation details, see [crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md) and [crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md).*
+*For implementation details, see [crates/gf2-core/ROADMAP.md](crates/gf2-core/ROADMAP.md), [crates/gf2-coding/ROADMAP.md](crates/gf2-coding/ROADMAP.md), and [dev/plans/gf2_algebra_permanent.md](dev/plans/gf2_algebra_permanent.md).*

@@ -14,7 +14,7 @@ A research-grade Rust toolkit for finite field computing and modern coding theor
 - **Standards**: DVB-T2 LDPC + BCH validated against ETSI EN 302 755 test vectors (202/202); 5G NR LDPC BG1/BG2 base graphs with per-i_LS shift tables.
 - **Modulation & channel**: BPSK + Gray-QAM (QPSK/16/64/256) with soft demapping, AWGN, Rician fading, BCJR batch decoder.
 - **Acceleration**: AVX2/AVX-512 CPU kernels (runtime-dispatched) and optional HIP/ROCm GPU kernels (gfx1030) for batched BCJR and Gray-QAM demap.
-- **Formal verification**: Lean4 proofs of prime-field Montgomery arithmetic extracted from the live Rust source via Charon/Aeneas.
+- **Formal verification**: Lean4 proofs of prime-field Montgomery arithmetic and bipedal F_3 arithmetic (add/sub/mul/neg) extracted from the live Rust source via Charon/Aeneas.
 
 Active work is tracked in-repo with [jit](https://github.com/erankavija/just-in-time) under `.jit/` — run `jit status` or browse issues there for the current backlog and in-progress items.
 
@@ -170,7 +170,7 @@ Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wro
 
 ## Formal verification
 
-`proofs/` contains a self-contained Lean4 package that proves correctness of the Rust implementations of `Fp<P>` (Montgomery) and the quadratic/cubic tower extensions. Lean sources are auto-generated from the live Rust via a Charon/Aeneas pipeline (`scripts/verify-lean.sh`), committed to the repo, and backed by hand-written proofs under `proofs/Gf2Core/Proofs/`. Headline theorems include Montgomery roundtrip, REDC correctness, and `CommRing`/`Field` instances via equivalence with `ZMod P.val`. See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
+`proofs/` contains a self-contained Lean4 package that proves correctness of the Rust implementations of `Fp<P>` (Montgomery), the quadratic/cubic tower extensions, and the `gf2-algebra` bipedal F_3 arithmetic. Lean sources are auto-generated from the live Rust via a Charon/Aeneas pipeline (`scripts/verify-lean.sh`), committed to the repo, and backed by hand-written proofs under `proofs/Gf2Core/Proofs/` and `proofs/Gf2Algebra/Proofs/`. Headline theorems include Montgomery roundtrip, REDC correctness, `CommRing`/`Field` instances via equivalence with `ZMod P.val`, and all four bipedal F_3 operations (add/sub/mul/neg) correct against their `Fp<3>` reference semantics. See [proofs/README.md](proofs/README.md) for the full pipeline and prerequisites.
 
 ## Design notes
 
