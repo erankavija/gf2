@@ -1,0 +1,21 @@
+# S1 (jit:c98ed603) single-thread speedup: permanent_bipedal3-simd vs permanent_mod3_reference
+# date: 2026-05-11
+# host: AMD Ryzen 9 5900X 12-Core Processor
+# arch: Zen 3
+# avx2: yes, avx512: no
+# seed_base: 0xc98ed60300000000
+# method: n=24/28 from Criterion (sample_size=10, 25s measurement_time); n=32/36 offline (1 sample each)
+# criterion_output: s1_permanent_mod3_reference/24 [1.4701s, 1.4738s, 1.4776s]; s1_permanent_bipedal3/24 [213.54ms, 213.97ms, 214.30ms]
+# criterion_output: s1_permanent_mod3_reference/28 [27.341s, 27.360s, 27.381s]; s1_permanent_bipedal3/28 [3.4103s, 3.4146s, 3.4192s]
+# offline_n32: ref=500.028 s (one sample), bipedal3-simd=53.065 s -> ratio 9.4229x
+# offline_n36: ref=9030.741 s (one sample, ~2.5 hr), bipedal3-simd=848.484 s (~14 min) -> ratio 10.6434x
+# note: ratio_vs_reference column uses 1.000 for reference rows, actual ratio for bipedal3 rows
+n,impl,mean_us,std_us,samples,ratio_vs_reference,hardware_fingerprint
+24,permanent_mod3_reference,1473800.0,N/A,10,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+24,permanent_bipedal3_simd,213970.0,N/A,10,6.888,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+28,permanent_mod3_reference,27360000.0,N/A,10,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+28,permanent_bipedal3_simd,3414600.0,N/A,10,8.013,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+32,permanent_mod3_reference,500027842.469,N/A,1,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+32,permanent_bipedal3_simd,53064989.812,N/A,1,9.4229,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+36,permanent_mod3_reference,9030740871.365,N/A,1,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+36,permanent_bipedal3_simd,848483503.503,N/A,1,10.6434,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes

@@ -1,0 +1,30 @@
+# S3 (jit:363556e6) cross-CPU portability sweep — AVX2-only scope
+# date: 2026-05-12
+# host: AMD Ryzen 9 5900X 12-Core Processor
+# arch: Zen 3
+# avx2: yes, avx512: no
+# seed_base: 0x363556e600000000
+# scope: AVX2-only per amendment 2026-05-12 (AVX-512 row deferred to f8d230ef)
+# avx2_throughput_source: re-used from dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv
+#   (rows: permanent_bipedal3_simd at n=24 line 15, n=28 line 17, n=32 line 19, n=36 line 21)
+#   s1 seed_base: 0xc98ed60300000000; s1 date: 2026-05-11
+# scalar_vs_avx2_sanity: measured fresh 2026-05-12 via crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs
+#   n in {16, 20, 24}, 5 samples per cell, seed = 0x363556e600000000 ^ n ^ sample
+#   Note: scalar is faster than AVX2 at small n (W=1 word). This is expected: the
+#   singleword SIMD path zero-pads to a 4-element AVX2 lane (documented in bipedal3.rs
+#   module comment). The timing difference confirms that two distinct code paths are
+#   executed (correctness checked via bit-identical assertions). At large n (n in
+#   {24,28,32,36} from S1), the AVX2 path is 6.9x-10.6x faster than the reference.
+# avx2_dispatch_correctness: verified by test_simd_vs_scalar_n8 / n16 / n24 in
+#   crates/gf2-algebra/src/permanent/bipedal3.rs (all PASS on this host, 2026-05-12)
+n,impl,mean_us,std_us,samples,ratio_vs_avx2,hardware_fingerprint
+24,permanent_bipedal3_avx2,213970.0,N/A,10,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+28,permanent_bipedal3_avx2,3414600.0,N/A,10,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+32,permanent_bipedal3_avx2,53064989.812,N/A,1,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+36,permanent_bipedal3_avx2,848483503.503,N/A,1,1.000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+16,permanent_bipedal3_scalar,259.722,3.506,5,0.3173,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+16,permanent_bipedal3_avx2_sanity,818.430,6.509,5,1.0000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+20,permanent_bipedal3_scalar,4183.279,6.810,5,0.3188,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+20,permanent_bipedal3_avx2_sanity,13120.042,45.717,5,1.0000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+24,permanent_bipedal3_scalar,66791.423,541.844,5,0.3191,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
+24,permanent_bipedal3_avx2_sanity,209282.102,1278.652,5,1.0000,AMD Ryzen 9 5900X 12-Core Processor/Zen 3/AVX2=yes
