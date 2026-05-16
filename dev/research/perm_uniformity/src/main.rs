@@ -9,7 +9,7 @@
 //   variation distance (TVD) of each distribution from the uniform
 //   distribution on F_q.  Bootstrap 1000 resamples to obtain 95% CI.
 //
-//   Criterion 6 (D1 fix): the paired-difference bootstrap CI on
+//   Criterion 6 (D1 fix): the difference bootstrap CI on
 //   (TVD_perm - TVD_det) is used.  Resampling the two independent streams
 //   separately gives the 95th-percentile of the difference distribution;
 //   PASS when that quantile is < 0.

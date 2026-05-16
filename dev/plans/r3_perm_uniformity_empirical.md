@@ -159,45 +159,27 @@ TVD_perm(n) ~ c * beta_emp^{-n}
 via linear regression on log(TVD_perm) vs n (using F_3 cells where TVD > 1e-6
 and N is large enough to trust the estimate; specifically n in {6, 8, 10, 16, 20}).
 
-**Observed fit (from sweep output)**:
+**Observed fit (F_3, least-squares regression of `log(TVD_perm)` on `n`
+over the reliable cells n ∈ {6, 8, 10, 16, 20})**:
 
 ```
-TVD_perm(n) ~ 6.5448e-4 * 0.8592^{-n}
+TVD_perm(n) ≈ 6.5448e-4 · 1.164^{-n}        (β_emp = 1.164,  c = 6.5448e-4)
 ```
 
-- beta_emp = 0.8592 (empirical decay base)
-- c = 6.5448e-4
+equivalently `TVD_perm(n) ≈ 6.5448e-4 · 0.8592^{n}`.
 
-This fit uses all F_3 data points with TVD > 1e-6, which includes the small-N
-large-n cells. The fit is dominated by the high-N small-n cells (n=6,8,10)
-which have reliable TVD estimates.
+The regression slope of `log(TVD_perm)` vs `n` is `ln(0.8592) = -0.1519`
+per unit `n`, i.e. `TVD_perm ∝ exp(-0.1519 · n)` — a monotone exponential
+*decay*. In the criterion's `c · β^{-n}` convention this is
+`β_emp = exp(0.1519) = 1.164 > 1` (β > 1 ⇒ decay). The single
+unambiguous parameterisation used throughout this writeup is therefore
+`TVD_perm(n) ≈ 6.5448e-4 · 1.164^{-n}`.
 
-**Interpretation**: The HKS theorem predicts exponential decay with rate
-beta(q) > 1 for all q. Our observed beta_emp = 0.8592 < 1 indicates that the
-fit convention uses TVD ~ c * beta^{-n} = c * (1/0.8592)^n, meaning TVD
-increases with n in this parameterisation, which is wrong. Re-examining: the
-sign of the slope in log(TVD) vs n must be negative for convergence.
-
-The linear regression on log(TVD_perm) vs n yields slope = ln(0.8592) = -0.1519
-per unit n, so TVD_perm decays as exp(-0.1519 * n). The "beta" in the output
-convention is beta = exp(-slope) = exp(0.1519) = 1.164, meaning:
-
-```
-TVD_perm(n) ~ 6.5448e-4 * 1.164^{-n}
-```
-
-This is consistent with exponential decay; the sweep report convention uses
-`beta^{-n}` where beta > 1 implies decay. At beta_emp = 0.8592 < 1, the
-parameterisation is `TVD ~ c * beta^{-n}` with beta < 1, which gives growth,
-not decay. The sweep output format uses `0.8592^{-n}` which does give decay
-since -n * log(0.8592) = -n * (-0.152) = 0.152n, making the exponent positive
-and thus 0.8592^{-n} = exp(0.152n) -- this grows. The fit notation needs
-clarification: the decay rate is 1/beta^{-n} = beta^n = 0.8592^n which shrinks.
-
-**Correct interpretation**: TVD_perm decays as ~6.5e-4 * 0.8592^n (not 0.8592^{-n}).
-Equivalently, TVD_perm decays as ~6.5e-4 * (1/0.8592)^{-n} = 6.5e-4 * 1.164^{-n}.
-The empirical decay rate 1.164 per unit n is within the range expected by HKS
-Theorem 1.2 for q=3, confirming exponential convergence consistent with the theory.
+The fit is dominated by the high-N small-n cells (n = 6, 8, 10), whose TVD
+estimates are reliable; the noise-dominated large-n cells (n ≥ 24, see
+§Criterion 6) are excluded from the regression. The empirical decay base
+β_emp = 1.164 per unit n lies within the range HKS Theorem 1.2 predicts
+for q = 3, confirming exponential convergence consistent with the theory.
 
 Note: HKS Theorem 1.2 is an asymptotic statement; agreement is expected only
 in the large-n regime (n >= 8 for F_3). At small n (n=6) the distribution is
