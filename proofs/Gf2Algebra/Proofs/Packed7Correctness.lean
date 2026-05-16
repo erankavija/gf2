@@ -265,15 +265,11 @@ theorem keyByte_eq (a b bi : Nat) :
     intro w
     simp only [byteN, nib]
     have e1 : (16 : Nat) ^ (2 * bi) = 256 ^ bi := by
-      rw [show 2 * bi = bi * 2 by ring, pow_mul,
-        show (16 : Nat) ^ 2 = 256 from by norm_num]
+      rw [pow_mul, show (16 : Nat) ^ 2 = 256 from by norm_num]
     have e2 : (16 : Nat) ^ (2 * bi + 1) = 256 ^ bi * 16 := by
-      rw [pow_succ, show 2 * bi = bi * 2 by ring, pow_mul,
-        show (16 : Nat) ^ 2 = 256 from by norm_num]
-    rw [e1, e2, Nat.div_div_eq_div_mul]
-    -- (w / 256^bi) % 256 = (w/256^bi)%16 + 16*((w/256^bi/16)%16)
-    rw [show (256 : Nat) = 16 * 16 by norm_num,
-      @Nat.mod_mul 16 16 (w / (256 ^ bi))]
+      rw [pow_succ, pow_mul, show (16 : Nat) ^ 2 = 256 from by norm_num]
+    rw [e1, e2, ← Nat.div_div_eq_div_mul,
+      show (256 : Nat) = 16 * 16 by norm_num, Nat.mod_mul]
   simp only [keyByte, split a, split b]; ring
 
 
@@ -337,9 +333,10 @@ theorem byteN_lutSum (a b : Nat) (L : Array Std.U8 65536#usize)
       subst heq
       have hlow := lutSum_lt a b L bi
       simp only [lutSum, byteN]
-      rw [Nat.add_mul_div_left _ _ (by positivity : 0 < 256 ^ bi),
+      rw [Nat.mul_comm (L.val[keyByte a b bi]!).val (256 ^ bi),
+        Nat.add_mul_div_left _ _ (by positivity : 0 < 256 ^ bi),
         Nat.div_eq_of_lt hlow, Nat.zero_add, Nat.mod_eq_of_lt hbnd]
-      simp [Nat.lt_irrefl]
+      simp
     · -- bi > k: lutSum (k+1) < 256^(k+1) ≤ 256^bi, so byte bi = 0.
       have hsum_lt := lutSum_lt a b L (k + 1)
       have hle : 256 ^ (k + 1) ≤ 256 ^ bi :=
@@ -372,7 +369,12 @@ theorem binary_op_word_spec
     dsimp only
     simp only [packed.packed7.binary_op_word_loop.body]
     by_cases hlt : i < 8#i32
-    · simp only [hlt, ite_true]
+    · -- Collapse the pure `lift` binds (the `&&&`/`|||`/`cast` ops are not
+      -- `Result`-fallible; only `*`, `>>>`, `<<<`, `index_usize`, `+` are
+      -- genuine `Result` ops needing `step`). Mirrors the
+      -- `simp only [..., Std.lift, bind_tc_ok]` precedent in
+      -- `MontgomeryRoundtrip.lean:1127`.
+      simp only [hlt, ite_true, Std.lift, bind_tc_ok]
       have hival : i.val < 8 := by scalar_tac
       have hivalN : i.val.toNat < 8 := by omega
       -- i1 = 8 * i, with 0 ≤ i1 < 64.
@@ -381,43 +383,109 @@ theorem binary_op_word_spec
       have hi1lt : i1.val < 64 := by omega
       have hi1ge : (0 : Int) ≤ i1.val := by omega
       step as ⟨i2, hi2⟩            -- a >>> i1
-      step as ⟨i3, hi3⟩            -- lift (i2 &&& 0xff)
-      step as ⟨ap, hap⟩            -- lift (cast Usize i3)
       step as ⟨i4, hi4⟩            -- b >>> i1
-      step as ⟨i5, hi5⟩            -- lift (i4 &&& 0xff)
-      step as ⟨bp, hbp⟩            -- lift (cast Usize i5)
-      step as ⟨i6, hi6⟩            -- lift (bp <<< 8)
-      step as ⟨keyv, hkeyveq⟩      -- lift (ap ||| i6)
+      step as ⟨i6, hi6⟩ by
+        first
+          | scalar_tac
+          | (cases System.Platform.numBits_eq <;> simp [*])
+      -- The `index_usize` key is `ap ||| i6` with `ap` (low byte from a)
+      -- and `bp <<< 8` (= i6) inlined.
+      set keyv : Std.Usize :=
+        (UScalar.cast .Usize (i2 &&& 255#u64)) ||| i6 with hkeyv_def
+      have hi1valNat : i1.val.toNat = 8 * i.val.toNat := by omega
+      -- `Usize` is at least 16-bit on every supported platform (32 or 64).
+      have hUbits : 2 ^ (16 : Nat) ≤ 2 ^ (UScalarTy.Usize.numBits) := by
+        apply Nat.pow_le_pow_right (by norm_num)
+        rw [UScalarTy.Usize_numBits_eq]
+        cases System.Platform.numBits_eq with
+        | inl h => omega
+        | inr h => omega
+      have hsize : (65536 : Nat) ≤ Usize.size := by
+        rw [Usize.size]
+        calc (65536 : Nat) = 2 ^ 16 := by norm_num
+          _ ≤ 2 ^ (UScalarTy.Usize.numBits) := hUbits
+          _ = 2 ^ (Usize.numBits) := by rw [Usize.numBits]
       have hkeyval : keyv.val = keyByte a.val b.val i.val.toNat := by
+        have hi2and : (i2 &&& 255#u64).val = a.val >>> (8 * i.val.toNat) &&& 255 := by
+          rw [UScalar.val_and, hi2, hi1valNat]; rfl
+        have hi4and : (i4 &&& 255#u64).val = b.val >>> (8 * i.val.toNat) &&& 255 := by
+          rw [UScalar.val_and, hi4, hi1valNat]; rfl
+        have hap_le : a.val >>> (8 * i.val.toNat) &&& 255 ≤ 255 := Nat.and_le_right
+        have hbp_le : b.val >>> (8 * i.val.toNat) &&& 255 ≤ 255 := Nat.and_le_right
+        have hapv : (UScalar.cast .Usize (i2 &&& 255#u64)).val
+            = a.val >>> (8 * i.val.toNat) &&& 255 := by
+          rw [UScalar.cast_val_eq, hi2and]
+          exact Nat.mod_eq_of_lt (by
+            calc a.val >>> (8 * i.val.toNat) &&& 255
+                ≤ 255 := hap_le
+              _ < 2 ^ 16 := by norm_num
+              _ ≤ 2 ^ (UScalarTy.Usize.numBits) := hUbits)
+        have hi6v : i6.val = (b.val >>> (8 * i.val.toNat) &&& 255) <<< 8 := by
+          rw [hi6, UScalar.cast_val_eq, hi4and]
+          have hinner : (b.val >>> (8 * i.val.toNat) &&& 255)
+              % 2 ^ (UScalarTy.Usize.numBits)
+              = b.val >>> (8 * i.val.toNat) &&& 255 := by
+            apply Nat.mod_eq_of_lt
+            calc b.val >>> (8 * i.val.toNat) &&& 255
+                ≤ 255 := hbp_le
+              _ < 2 ^ 16 := by norm_num
+              _ ≤ 2 ^ (UScalarTy.Usize.numBits) := hUbits
+          rw [hinner, Nat.shiftLeft_eq]
+          apply Nat.mod_eq_of_lt
+          calc (b.val >>> (8 * i.val.toNat) &&& 255) * 2 ^ 8
+              ≤ 255 * 2 ^ 8 := Nat.mul_le_mul_right _ hbp_le
+            _ < 65536 := by norm_num
+            _ ≤ Usize.size := hsize
         have hk : keyv.val
-            = ((a.val >>> i1.val) &&& 0xff) ||| (((b.val >>> i1.val) &&& 0xff) <<< 8) := by
-          scalar_tac
-        rw [hk, hi1valN, keyByte_eq]
+            = ((a.val >>> (8 * i.val.toNat)) &&& 0xff)
+              ||| (((b.val >>> (8 * i.val.toNat)) &&& 0xff) <<< 8) := by
+          rw [hkeyv_def, UScalar.val_or, hapv, hi6v]
+        rw [hk, keyByte_eq]
       have hkeylt : keyv.val < 65536 := by
         rw [hkeyval]; exact keyByte_lt _ _ _
       step as ⟨i7, hi7⟩            -- Array.index_usize lut keyv
-      step as ⟨i8, hi8'⟩           -- lift (cast U64 i7)
-      step as ⟨i9, hi9⟩            -- lift (i8 <<< i1)
-      step as ⟨r1, hr1eq⟩          -- lift (r ||| i9)
+      step as ⟨i9, hi9⟩            -- (cast U64 i7) <<< i1
       step as ⟨i10, hi10⟩          -- i + 1#i32
-      refine ⟨by omega, by omega, ?_⟩
-      -- r1.val = lutSum … (i+1) = r.val + byte · 256^i
-      have hi10val : i10.val.toNat = i.val.toNat + 1 := by scalar_tac
-      have hi7val : i7.val = (L.val[keyv.val]!).val := by scalar_tac
-      have hi8val : i8.val = i7.val := by scalar_tac
-      have hi9val : i9.val = i8.val * 2 ^ (8 * i.val.toNat) := by
-        have hh : i9.val = i8.val <<< i1.val := by scalar_tac
-        rw [hh, hi1valN, Nat.shiftLeft_eq]
+      -- (r ||| i9).val = lutSum … (i+1) = r.val + byte · 256^i
+      have hi10val : i10.val.toNat = i.val.toNat + 1 := by
+        rw [hi10]; omega
+      have hi7val : i7.val = (L.val[keyv.val]!).val := by rw [hi7]
+      have hi7le : i7.val ≤ 255 := by
+        have := U8.lt_succ_max i7; omega
+      have hcastU64 : (UScalar.cast .U64 i7).val = i7.val := by
+        rw [UScalar.cast_val_eq]
+        exact Nat.mod_eq_of_lt (by
+          calc i7.val ≤ 255 := hi7le
+            _ < 2 ^ (UScalarTy.U64.numBits) := by norm_num)
+      have hU64size : (2 : Nat) ^ 64 = U64.size := by
+        rw [U64.size_eq]; norm_num
+      have hi9val : i9.val = i7.val * 2 ^ (8 * i.val.toNat) := by
+        rw [hi9, hcastU64, hi1valNat, Nat.shiftLeft_eq]
+        apply Nat.mod_eq_of_lt
+        calc i7.val * 2 ^ (8 * i.val.toNat)
+            ≤ 255 * 2 ^ (8 * i.val.toNat) := Nat.mul_le_mul_right _ hi7le
+          _ < 2 ^ 64 := by
+              have : 8 * i.val.toNat ≤ 56 := by omega
+              calc 255 * 2 ^ (8 * i.val.toNat)
+                  ≤ 255 * 2 ^ 56 :=
+                    Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) this)
+                _ < 2 ^ 64 := by norm_num
+          _ = U64.size := hU64size
       have hpow : (256 : Nat) ^ i.val.toNat = 2 ^ (8 * i.val.toNat) := by
         rw [pow_mul]; norm_num
       have hr_lt : r.val < 2 ^ (8 * i.val.toNat) := by
         rw [hrEq, ← hpow]; exact lutSum_lt a.val b.val L i.val.toNat
-      have hr1val : r1.val = r.val + i8.val * 2 ^ (8 * i.val.toNat) := by
-        have hr1' : r1.val = r.val ||| i9.val := by scalar_tac
-        rw [hr1', hi9val, Nat.lor_comm,
-          ← Nat.shiftLeft_add_eq_or_of_lt hr_lt, Nat.shiftLeft_eq,
-          Nat.add_comm]
-      rw [hr1val, hi10val, lutSum, hrEq, hi8val, hi7val, hkeyval, hpow]
+      have hr1val : (r ||| i9).val = r.val + i7.val * 2 ^ (8 * i.val.toNat) := by
+        rw [UScalar.val_or, hi9val,
+          show i7.val * 2 ^ (8 * i.val.toNat) = i7.val <<< (8 * i.val.toNat)
+            from (Nat.shiftLeft_eq _ _).symm,
+          Nat.lor_comm, ← Nat.shiftLeft_add_eq_or_of_lt hr_lt, Nat.add_comm,
+          Nat.shiftLeft_eq]
+      refine ⟨by omega, by omega, ?_, ?_⟩
+      · rw [hr1val, hi10val, lutSum, hrEq, hi7val, hkeyval, hpow]
+      · -- measure decreases: (8 - i10) < (8 - i), with i10 = i + 1, i < 8
+        show (8 - i10.val).toNat < (8 - i.val).toNat
+        omega
     · simp only [hlt, ite_false, spec, theta, wp_return]
       have hieq : i.val = 8 := by scalar_tac
       have hieqN : i.val.toNat = 8 := by omega
@@ -444,21 +512,27 @@ theorem binary_op_word_nib
   have hmod : i.val % 2 = 0 ∨ i.val % 2 = 1 := by omega
   have e256 : (256 : Nat) ^ (i.val / 2) = 16 ^ (2 * (i.val / 2)) := by
     rw [pow_mul]; norm_num
+  simp only [nib, byteN] at hbyte ⊢
   rcases hmod with hm | hm
-  · simp only [hm, if_pos, ite_true]
-    have hidx : i.val = 2 * (i.val / 2) := by omega
-    simp only [nib, byteN] at *
-    rw [hidx, ← hbyte, e256]
-    omega
+  · simp only [hm, if_pos]
+    -- even lane: 16^(i) = 256^(i/2); byte%16 from the full byte (16 ∣ 256)
+    have hexp : (16 : Nat) ^ i.val = 256 ^ (i.val / 2) := by
+      conv_lhs => rw [show i.val = 2 * (i.val / 2) from by omega]
+      rw [pow_mul, show (16 : Nat) ^ 2 = 256 from by norm_num]
+    rw [hexp, ← hbyte]
+    exact (Nat.mod_mod_of_dvd _ (by norm_num : (16 : Nat) ∣ 256)).symm
   · simp only [hm]
-    rw [show (¬ (1 = 0)) from by decide, if_neg (by decide)]
-    have hidx : i.val = 2 * (i.val / 2) + 1 := by omega
-    simp only [nib, byteN] at *
-    rw [hidx, ← hbyte, e256]
-    have e16 : (16 : Nat) ^ (2 * (i.val / 2) + 1)
-        = 16 ^ (2 * (i.val / 2)) * 16 := by rw [pow_succ]
-    rw [e16]
-    omega
+    rw [if_neg (by decide : ¬ ((1 : Nat) = 0))]
+    -- odd lane: 16^i = 256^(i/2) * 16; (byte/16)%16 from the high nibble
+    have hexp : (16 : Nat) ^ i.val = 256 ^ (i.val / 2) * 16 := by
+      conv_lhs => rw [show i.val = 2 * (i.val / 2) + 1 from by omega]
+      rw [pow_succ, pow_mul, show (16 : Nat) ^ 2 = 256 from by norm_num]
+    rw [hexp, ← hbyte]
+    -- LHS: Y/(D*16)%16 = Y/D/16%16  ;  RHS: (Y/D % 256)/16%16 = Y/D/16%16
+    rw [← Nat.div_div_eq_div_mul,
+      show (256 : Nat) = 16 * 16 from by norm_num,
+      Nat.mod_mul_right_div_self,
+      Nat.mod_mod_of_dvd _ (by norm_num : (16 : Nat) ∣ 16)]
 
 /-! ## §3.4 Per-op `*_correct` theorems (against the Aeneas-extracted fn)
 
@@ -527,7 +601,7 @@ private theorem lane_correct_of_lut
   rw [hkey, hcontract]
   have hcanon : nib a.val (2*bi) < 7 ∧ nib a.val (2*bi+1) < 7
       ∧ nib b.val (2*bi) < 7 ∧ nib b.val (2*bi+1) < 7 := ⟨ca0, ca1, cb0, cb1⟩
-  simp only [hcanon, if_pos, ite_true]
+  rw [if_pos hcanon]
   have hr0 : op (nib a.val (2*bi)) (nib b.val (2*bi)) % 7 < 7 :=
     Nat.mod_lt _ (by decide)
   have hr1 : op (nib a.val (2*bi+1)) (nib b.val (2*bi+1)) % 7 < 7 :=
@@ -535,15 +609,14 @@ private theorem lane_correct_of_lut
   have hi2 : i.val = 2 * bi ∨ i.val = 2 * bi + 1 := by omega
   rcases hi2 with hii | hii
   · have hpar : i.val % 2 = 0 := by omega
-    simp only [hpar, if_pos, ite_true]
+    rw [if_pos hpar]
     -- (r0 + 16*r1) % 16 = r0  since r0 < 7 < 16
     rw [show ((op (nib a.val (2*bi)) (nib b.val (2*bi)) % 7)
           + 16 * (op (nib a.val (2*bi+1)) (nib b.val (2*bi+1)) % 7)) % 16
         = op (nib a.val (2*bi)) (nib b.val (2*bi)) % 7 from by omega]
     rw [hii]
   · have hpar : i.val % 2 = 1 := by omega
-    simp only [hpar]
-    rw [show (¬ (1 = 0)) from by decide, if_neg (by decide)]
+    rw [if_neg (by rw [hpar]; decide : ¬ (i.val % 2 = 0))]
     rw [show ((op (nib a.val (2*bi)) (nib b.val (2*bi)) % 7)
           + 16 * (op (nib a.val (2*bi+1)) (nib b.val (2*bi+1)) % 7)) / 16 % 16
         = op (nib a.val (2*bi+1)) (nib b.val (2*bi+1)) % 7 from by omega]
@@ -615,18 +688,19 @@ theorem packed7_neg_correct (a : Std.U64) (i : Fin 16)
   obtain ⟨L, hL, hcL⟩ := sub_lut_spec
   rw [hL]
   simp only [bind_tc_ok]
+  have h0val : (0#u64 : Std.U64).val = 0 := by native_decide
   have hzero : Canon7Word (0#u64 : Std.U64).val := by
-    intro j; simp only [nib]; decide
+    intro j; simp only [nib, h0val, Nat.zero_div, Nat.zero_mod]; decide
   obtain ⟨r, hr, hdec⟩ :=
     lane_correct_of_lut (0#u64 : Std.U64) a L i (fun x y => x + 7 - y)
       (fun a0 a1 b0 b1 h0 h1 h2 h3 => hcL a0 a1 b0 b1 h0 h1 h2 h3)
       hzero ha
   have hz : nib (0#u64 : Std.U64).val i.val = 0 := by
-    simp only [nib]; decide
+    simp only [nib, h0val, Nat.zero_div, Nat.zero_mod]
+  rw [hz] at hdec
   refine ⟨⟨r⟩, ?_, ?_⟩
   · simp only [hr, bind_tc_ok]
-  · have := hdec.trans (dec7_neg_contract (nib a.val i.val) (ha i))
-    simpa [hz] using this
+  · exact hdec.trans (dec7_neg_contract (nib a.val i.val) (ha i))
 
 /-! ## §3.5 Headline corollary + `Fp<7>` bridge note -/
 
