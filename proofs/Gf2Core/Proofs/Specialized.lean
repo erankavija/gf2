@@ -263,4 +263,55 @@ theorem classify_spec {P : Std.U64} (hP : 1 < P.val) :
         simp only [Bool.false_eq_true, if_false]
         exact proth_subtree_spec hP hrval
 
+/-! ## §4 — use_specialized_storage totality
+
+`use_specialized_storage P` always returns `ok` (it calls the now-total
+`classify` then pattern-matches). -/
+
+theorem use_specialized_storage_total (P : Std.U64) (hP : 1 < P.val) :
+    ∃ b, gfp.use_specialized_storage P = ok b := by
+  unfold gfp.use_specialized_storage
+  by_cases h2 : P = 2#u64
+  · exact ⟨false, by simp [h2]⟩
+  · simp only [h2, if_false]
+    obtain ⟨ps, hps_eq, _⟩ := spec_imp_exists (classify_spec hP)
+    simp only [hps_eq, bind_tc_ok]
+    cases ps with
+    | Mersenne n => exact ⟨_, rfl⟩
+    | Proth k n => exact ⟨_, rfl⟩
+    | Goldilocks => exact ⟨false, rfl⟩
+    | Generic => exact ⟨false, rfl⟩
+
+/-! ## §5 — the generic-product arm (Goldilocks / Generic)
+
+`(cast U64 ((cast U128 a) * (cast U128 b) % (cast U128 P)))` equals
+`(a.val * b.val) % P.val`, with the result `< P.val`. -/
+
+private theorem wide_mod_arm {P a b : Std.U64}
+    (hP : ValidPrime P) (ha : a.val < P.val) (hb : b.val < P.val) :
+    (do
+      let i ← lift (UScalar.cast .U128 a)
+      let i1 ← lift (UScalar.cast .U128 b)
+      let i2 ← i * i1
+      let i3 ← lift (UScalar.cast .U128 P)
+      let i4 ← i2 % i3
+      ok (UScalar.cast .U64 i4))
+    ⦃ r => r.val < P.val ∧ r.val = (a.val * b.val) % P.val ⦄ := by
+  have hP_pos : 0 < P.val := by have := hP.2.1; omega
+  have ha128 : (UScalar.cast .U128 a : Std.U128).val = a.val := U64.cast_U128_val_eq a
+  have hb128 : (UScalar.cast .U128 b : Std.U128).val = b.val := U64.cast_U128_val_eq b
+  have hP128 : (UScalar.cast .U128 P : Std.U128).val = P.val := U64.cast_U128_val_eq P
+  simp only [lift, bind_tc_ok]
+  progress as ⟨prod, hprod⟩
+  progress as ⟨rem, hrem⟩
+  have hprod_val : prod.val = a.val * b.val := by rw [hprod, ha128, hb128]
+  have hrem_val : rem.val = (a.val * b.val) % P.val := by
+    rw [hrem, hprod_val, hP128]
+  have hrem_lt : rem.val < P.val := by rw [hrem_val]; exact Nat.mod_lt _ hP_pos
+  have hcast : (UScalar.cast .U64 rem).val = rem.val :=
+    UScalar.cast_val_mod_pow_of_inBounds_eq .U64 rem (by
+      have : UScalarTy.U64.numBits = 64 := by decide
+      rw [this]; nlinarith [hP.2.2])
+  exact ⟨by rw [hcast]; exact hrem_lt, by rw [hcast, hrem_val]⟩
+
 end Specialized
