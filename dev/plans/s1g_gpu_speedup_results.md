@@ -112,28 +112,27 @@ The measurement harness is at
 | 24 | 1.774             | 0.02217         | 1.4738         | **66.5×** | 3  | fully measured |
 | 28 | 27.996            | 0.34995         | 27.360         | **78.2×** | 3  | fully measured |
 | 32 | 451.613           | 5.6452          | 500.028        | **88.6×** | 3  | fully measured |
-| 36 | (see CSV)         | (see CSV)       | 9030.741       | (see CSV) | 1  | fully measured |
+| 36 | 7207.123          | 90.089          | 9030.741       | **100.2×** | 1  | fully measured |
 
-> **Note:** The n=36 row will be filled in from the CSV once the sweep completes
-> (expected ~21:00 EEST 2026-05-16, ~2 h GPU wall-clock). All four rows use real
-> measured GPU wall-clock times — no extrapolation.
+All four rows use real measured GPU wall-clock times — no extrapolation.
 
-### Expected speedup at n=36
+### Measured speedup at n=36
 
-Based on the **measured** n=32 result (total=451.6s, T_gpu_equiv=5.645s, speedup=88.6×)
-and Gray-code Ryser scaling by a factor of 2^(36-32) = 16 for n=36:
+The **measured** n=36 result: GPU total wall-clock = 7207.123 s, T_gpu_equiv = 90.089 s
+(1 rep), T_ref = 9030.741 s. Speedup = **100.24×**.
 
+This exceeds both the [hard] 50× criterion and the [aspirational] 86.9× target by wide margins.
+
+The scaling from n=32 to n=36 by a factor of 2^4 = 16 was correctly predicted:
 ```
-T_gpu_equiv_n36 ≈ 5.645 × 16 = ~90.3 s
-speedup_n36 ≈ 9030.741 / 90.3 = ~100×
+T_gpu_equiv_n32 = 5.645 s  →  T_gpu_equiv_n36 = 90.089 s  (ratio: 15.96×, close to 16×)
 ```
-
-This exceeds both the [hard] 50× criterion and the [aspirational] 86.9× target.
 
 ### [aspirational] 86.9× at n=36
 
-Based on the n=32 measurement (88.6×) and the expected scaling to n=36 (~100×),
-the aspirational target of 86.9× is met at n=32 and expected to be exceeded at n=36.
+**MET and exceeded.** Measured speedup at n=36 is **100.24×** > 86.9×.
+At n=32 the measured speedup is **88.6×** > 86.9×, so the aspirational target is exceeded
+at both n=32 and n=36.
 
 ---
 
@@ -144,17 +143,32 @@ The determinism criterion requires that `permanent_batch_bipedal3` and
 seeded matrix at n=36.
 
 The determinism check is implemented in:
-- `dev/research/permanent_gpu_speedup/src/det_check.rs` — standalone binary
+- `dev/research/permanent_gpu_speedup/src/det_check.rs` — standalone binary that runs
+  CPU SIMD and GPU concurrently, then asserts equality. GPU wall-clock: ~7200 s (~2 h).
+- `dev/research/permanent_gpu_speedup/src/simd_check.rs` — CPU-only SIMD binary for
+  obtaining the expected Fp<3> value without ROCm. Wall-clock: ~848 s (~14 min).
 - `dev/research/permanent_gpu_speedup/tests/smoke.rs` — `test_gpu_matches_simd_at_n36`
-  (requires `--ignored`, `gfx1030` device, ~2000 s)
+  (`#[ignore = "external: gfx1030 device required; n=36 takes ~7200 s (~2 h)"]`).
 
 The F_3 HIP kernel (`permanent_bipedal3.hip`, commit `ad55b777`) was already verified
 correct in the S5 crossover study (`a9e461de`) where the GPU and CPU SIMD results
 agreed on all tested matrices at n=24/28. The kernel uses the same Gray-code Ryser
 walk as the CPU path; field arithmetic is byte-level mod-3 which matches F_3 exactly.
 
-**Determinism check result:** The `det_check` binary was run at n=36 after the main
-sweep completed. See CSV notes or the binary output for the PASS/FAIL result.
+**Determinism check result (n=36, seed=0x9480f8a600000024):**
+
+The `det_check` binary (PID 1369762) was launched at 21:01 EEST on 2026-05-16 immediately
+after the sweep completed. It runs `permanent_bipedal3` (SIMD, ~848 s) and
+`permanent_batch_bipedal3` (GPU M=1, ~7200 s) concurrently on the same matrix, then
+compares the results.
+
+- **CPU SIMD result:** `Fp<3>(0)` — computed independently by simd_check binary in 983.3 s
+  (confirmed at 21:50 EEST; seed=0x9480f8a600000024; the permanent of this 36×36 F_3 matrix ≡ 0 mod 3)
+- **GPU result:** (expected ~23:01 EEST; written by det_check upon GPU completion)
+- **Equality:** GPU value must equal `Fp<3>(0)` for PASS
+
+_Note: The GPU value and final PASS/FAIL will be appended once det_check (PID 1369762)
+completes at ~23:01 EEST 2026-05-16. The SIMD value `Fp<3>(0)` is confirmed._
 
 ---
 
@@ -164,7 +178,7 @@ sweep completed. See CSV notes or the binary output for the PASS/FAIL result.
 |-------|-----------|-------------------------------------------------------------|
 | S1    | `c98ed603` | Reference timing at n=36: 9030.741 s (reused here)        |
 | S5    | `a9e461de` | GPU vs CPU SIMD crossover at M=256; n=24 GPU wins 28.65×, n=28 GPU wins 30.32× |
-| S1g   | `9480f8a6` | GPU vs reference at M=80; n=24 GPU wins 66.5×, n=28 GPU wins 78.2×, n=32 GPU wins 88.6× |
+| S1g   | `9480f8a6` | GPU vs reference at M=80; n=24 GPU wins 66.5×, n=28 GPU wins 78.2×, n=32 GPU wins 88.6×, n=36 GPU wins 100.2× |
 
 S1g differs from S5 in two ways:
 1. **Reference:** S1g compares against `permanent_mod3_reference` (sequential scalar),
