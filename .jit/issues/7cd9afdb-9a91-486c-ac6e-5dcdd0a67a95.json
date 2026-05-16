@@ -18,12 +18,26 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/gf2_algebra_permanent/README.md",
+      "commit": null,
+      "label": "Publication-grade benchmark artefact README (HW fingerprint, seed pins, headline numbers, file index)",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/benchmarks/gf2_algebra_permanent/provenance.json",
+      "commit": null,
+      "label": "Artefact provenance (commit, rustc, lscpu, rocminfo gfx1030, per-S* seeds)",
+      "doc_type": "data"
+    }
+  ],
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:48:42.941662701+00:00",
-  "updated_at": "2026-05-16T23:06:28.195414635+00:00"
+  "updated_at": "2026-05-16T23:30:41.527831326+00:00"
 }
