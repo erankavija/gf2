@@ -27,6 +27,7 @@ open Aeneas Aeneas.Std Result ControlFlow Error Aeneas.Std.WP
 open gf2_core
 
 set_option maxHeartbeats 3200000
+set_option maxRecDepth 8000
 
 noncomputable section
 
@@ -116,5 +117,150 @@ theorem shift_decomp {r n : ℕ} (hn0 : r % 2 ^ n = 0) (hn1 : r % 2 ^ (n + 1) �
     rw [← Nat.div_mul_cancel hdvd, hc]; ring
   rw [this, pow_succ]
   exact Nat.mul_mod_left c (2 ^ n * 2)
+
+/-! ## §3 — classify_spec
+
+`gfp.specialized.classify P` returns a `PrimeShape` whose constructor pins
+`P.val`'s arithmetic shape. Proven from the two §1 intrinsic specs only. -/
+
+/-- Shape postcondition on `classify`'s result. -/
+def classifyPost (P : Std.U64) : gfp.specialized.PrimeShape → Prop
+  | .Goldilocks => P.val = 18446744069414584321
+  | .Mersenne n => 4 ≤ n.val ∧ n.val ≤ 62 ∧ P.val = 2 ^ n.val - 1
+  | .Proth k n => 16 ≤ n.val ∧ 1 ≤ k.val ∧ P.val = k.val * 2 ^ n.val + 1
+  | .Generic => True
+
+/-- The Proth-detection subtree, factored out (it appears 4× verbatim in
+    `classify`, guarded by `r = wrapping_sub p 1`). Given `r.val = P.val - 1`
+    and `1 < P.val`, whatever `PrimeShape` the subtree yields satisfies
+    `classifyPost P`. -/
+private theorem proth_subtree_spec {P r : Std.U64}
+    (hP : 1 < P.val) (hr : r.val = P.val - 1) :
+    (do
+      if r != 0#u64 then
+        let n1 ← core.num.U64.trailing_zeros r
+        if n1 >= 16#u32 then
+          let k ← r >>> n1
+          if k >= 1#u64 then
+            if n1 >= 63#u32 then ok (gfp.specialized.PrimeShape.Proth k n1)
+            else
+              let i ← 1#u64 <<< n1
+              if k < i then ok (gfp.specialized.PrimeShape.Proth k n1)
+              else ok gfp.specialized.PrimeShape.Generic
+          else ok gfp.specialized.PrimeShape.Generic
+        else ok gfp.specialized.PrimeShape.Generic
+      else ok gfp.specialized.PrimeShape.Generic)
+    ⦃ ps => classifyPost P ps ⦄ := by
+  have hrne : r.val ≠ 0 := by omega
+  have hr_ne_lit : r ≠ 0#u64 := by
+    intro h; exact hrne (by rw [h]; rfl)
+  simp only [bne_iff_ne, ne_eq, hr_ne_lit, not_false_eq_true, if_true]
+  -- trailing_zeros r
+  progress as ⟨tz, htz_eq0, htz_ne0⟩
+  obtain ⟨htz0, htz1a, htz1b⟩ := htz_ne0 hrne
+  by_cases hn16 : tz ≥ 16#u32
+  · simp only [hn16, if_true]
+    have hn16v : 16 ≤ tz.val := by
+      have he : (16#u32 : Std.U32).val = 16 := by native_decide
+      have : (16#u32 : Std.U32).val ≤ tz.val := hn16
+      omega
+    -- k = r >>> tz
+    progress as ⟨k, hk_val, _⟩
+    have hkval : k.val = r.val / 2 ^ tz.val := by
+      rw [hk_val, Nat.shiftRight_eq_div_pow]
+    obtain ⟨hr_decomp, _⟩ := shift_decomp htz1a htz1b
+    rw [← hkval] at hr_decomp
+    by_cases hk1 : k ≥ 1#u64
+    · simp only [hk1, if_true]
+      have hk1v : 1 ≤ k.val := by
+        have he : (1#u64 : Std.U64).val = 1 := by native_decide
+        have : (1#u64 : Std.U64).val ≤ k.val := hk1
+        omega
+      have hProth : classifyPost P (gfp.specialized.PrimeShape.Proth k tz) := by
+        refine ⟨hn16v, hk1v, ?_⟩; omega
+      by_cases hn63 : tz ≥ 63#u32
+      · simp only [hn63, if_true, spec, theta, wp_return]
+        exact hProth
+      · simp only [hn63, if_false]
+        progress as ⟨i, _, _⟩
+        by_cases hki : k < i
+        · simp only [hki, if_true, spec, theta, wp_return]; exact hProth
+        · simp only [hki, if_false, spec, theta, wp_return]; trivial
+    · simp only [hk1, if_false, spec, theta, wp_return]; trivial
+  · simp only [hn16, if_false, spec, theta, wp_return]; trivial
+
+theorem classify_spec {P : Std.U64} (hP : 1 < P.val) :
+    gfp.specialized.classify P ⦃ ps => classifyPost P ps ⦄ := by
+  unfold gfp.specialized.classify
+  have hPlt : P.val < 2 ^ 64 := P.hBounds
+  by_cases hgold : P = gfp.specialized.GOLDILOCKS_PRIME
+  · simp only [hgold, if_true, spec, theta, wp_return]
+    show classifyPost gfp.specialized.GOLDILOCKS_PRIME
+      gfp.specialized.PrimeShape.Goldilocks
+    show gfp.specialized.GOLDILOCKS_PRIME.val = 18446744069414584321
+    native_decide
+  · simp only [hgold, if_false, lift, bind_tc_ok]
+    -- proth subtree precondition: r = wrapping_sub P 1, r.val = P.val - 1
+    have hrval : (core.num.U64.wrapping_sub P 1#u64).val = P.val - 1 := by
+      rw [core.num.U64.wrapping_sub_val_eq]
+      have h1 : (1#u64 : Std.U64).val = 1 := by rfl
+      simp only [h1, UScalar.size_UScalarTyU64, U64.size_eq]
+      have hb : (18446744073709551616 : ℕ) = 2 ^ 64 := by norm_num
+      rw [hb]
+      have hkey : P.val + (2 ^ 64 - 1) = (P.val - 1) + 2 ^ 64 := by omega
+      rw [hkey, Nat.add_mod_right, Nat.mod_eq_of_lt (by omega)]
+    -- q = wrapping_add P 1
+    have hqval : (core.num.U64.wrapping_add P 1#u64).val = (P.val + 1) % 2 ^ 64 := by
+      rw [core.num.U64.wrapping_add_val_eq]
+      have h1 : (1#u64 : Std.U64).val = 1 := by rfl
+      simp only [h1, UScalar.size_UScalarTyU64, U64.size_eq]
+      norm_num
+    set q : Std.U64 := core.num.U64.wrapping_add P 1#u64 with hq_def
+    by_cases hqne : q = 0#u64
+    · -- q = 0: proth subtree
+      rw [show (q != 0#u64) = false from by rw [hqne]; rfl, if_neg (by decide)]
+      exact proth_subtree_spec hP hrval
+    · rw [show (q != 0#u64) = true from by
+        simp only [bne_iff_ne, ne_eq]; exact hqne, if_pos rfl]
+      have hqne' : q.val ≠ 0 := by
+        intro h; exact hqne (by apply UScalar.val_eq_imp; rw [h]; rfl)
+      -- is_power_of_two q
+      progress as ⟨b, hb_iff⟩
+      by_cases hb : b = true
+      · subst hb
+        obtain ⟨kk, hkklt, hqpow⟩ := hb_iff.mp rfl
+        simp only [if_true]
+        -- trailing_zeros q
+        progress as ⟨n, hn_eq0, hn_ne0⟩
+        obtain ⟨hn0lt, hn0, hn1⟩ := hn_ne0 hqne'
+        have hqn : q.val = 2 ^ n.val := pow_two_of_val_eq hqpow hn0 hn1
+        have hPne : P.val + 1 ≠ 2 ^ 64 := by
+          intro h; apply hqne'; rw [hqval, h, Nat.mod_self]
+        have hqeq : q.val = P.val + 1 := by
+          rw [hqval, Nat.mod_eq_of_lt (by omega)]
+        by_cases hn4 : n ≥ 4#u32
+        · simp only [hn4, if_true]
+          have hn4v : 4 ≤ n.val := by
+            have he : (4#u32 : Std.U32).val = 4 := by native_decide
+            have : (4#u32 : Std.U32).val ≤ n.val := hn4
+            omega
+          by_cases hn62 : n ≤ 62#u32
+          · simp only [hn62, if_true, spec, theta, wp_return]
+            show classifyPost P (gfp.specialized.PrimeShape.Mersenne n)
+            have hn62v : n.val ≤ 62 := by
+              have he : (62#u32 : Std.U32).val = 62 := by native_decide
+              have : n.val ≤ (62#u32 : Std.U32).val := hn62
+              omega
+            refine ⟨hn4v, hn62v, ?_⟩
+            have hpeq : P.val + 1 = 2 ^ n.val := by rw [← hqeq, hqn]
+            omega
+          · simp only [hn62, if_false]
+            exact proth_subtree_spec hP hrval
+        · simp only [hn4, if_false]
+          exact proth_subtree_spec hP hrval
+      · have hbf : b = false := Bool.not_eq_true b |>.mp hb
+        subst hbf
+        simp only [Bool.false_eq_true, if_false]
+        exact proth_subtree_spec hP hrval
 
 end Specialized
