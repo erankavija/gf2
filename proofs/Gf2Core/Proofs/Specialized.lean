@@ -722,4 +722,67 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
     rw [Nat.mod_eq_of_lt hsub_lt] at hcong
     rw [hcong, hrv_cong]
 
+/-! ## §8 — Proth reducer correctness
+
+`dispatch_proth_mul` reduces to `(a·b) % P` on every arm
+(`P = K·2^N + 1`): the reducer body and both `prod % p32` /
+wide-path branches are literal modulo. -/
+
+/-- `proth_reduce_u64 K N x = x % (K·2^N + 1)` when `K ≥ 1`,
+    `16 ≤ N ≤ 32`, and `K·2^N + 1 < 2^64` (no overflow). -/
+theorem proth_reduce_u64_correct (K : Std.U64) (N : Std.U32) (x : Std.U64)
+    (hK : 1 ≤ K.val) (hN16 : 16 ≤ N.val) (hN32 : N.val ≤ 32)
+    (hP : K.val * 2 ^ N.val + 1 < 2 ^ 64) :
+    ∃ r, gfp.specialized.proth_reduce_u64 K N x = ok r ∧
+      r.val = x.val % (K.val * 2 ^ N.val + 1) := by
+  have hNlt64 : N.val < 64 := by omega
+  apply spec_imp_exists
+  unfold gfp.specialized.proth_reduce_u64
+  have ha1 : (K ≥ 1#u64) := by
+    show (1#u64 : Std.U64).val ≤ K.val
+    have : (1#u64 : Std.U64).val = 1 := by native_decide
+    omega
+  have ha2 : (N ≥ 16#u32) := by
+    show (16#u32 : Std.U32).val ≤ N.val
+    have : (16#u32 : Std.U32).val = 16 := by native_decide
+    omega
+  have ha3 : (N ≤ 32#u32) := by
+    show N.val ≤ (32#u32 : Std.U32).val
+    have : (32#u32 : Std.U32).val = 32 := by native_decide
+    omega
+  rw [massert, if_pos ha1]
+  simp only [bind_tc_ok]
+  rw [massert, if_pos ha2]
+  simp only [bind_tc_ok]
+  rw [massert, if_pos ha3]
+  simp only [bind_tc_ok]
+  -- pw = 1 <<< N = 2^N
+  progress as ⟨pw, hpw_val, _⟩
+  have hpw : pw.val = 2 ^ N.val := by
+    rw [hpw_val, Nat.one_shiftLeft, U64.size_eq]
+    exact Nat.mod_eq_of_lt (by
+      have : 2 ^ N.val < 2 ^ 64 := Nat.pow_lt_pow_right (by norm_num) hNlt64
+      omega)
+  -- i1 = K * pw  (no overflow: K*2^N < K*2^N + 1 < 2^64)
+  have hmax64 : UScalar.max .U64 = 2 ^ 64 - 1 := by native_decide
+  have hKpw_le : K.val * pw.val ≤ UScalar.max .U64 := by
+    rw [hpw, hmax64]; omega
+  obtain ⟨i1, hi1_eq, hi1_val⟩ := spec_imp_exists (UScalar.mul_spec hKpw_le)
+  simp only [hi1_eq, bind_tc_ok]
+  have hi1 : i1.val = K.val * 2 ^ N.val := by rw [hi1_val, hpw]
+  -- p = i1 + 1
+  have h1v : (1#u64 : Std.U64).val = 1 := by native_decide
+  have hi1_p1_le : i1.val + (1#u64 : Std.U64).val ≤ UScalar.max .U64 := by
+    rw [hi1, h1v, hmax64]; omega
+  obtain ⟨pp, hpp_eq, hpp_val⟩ := spec_imp_exists (UScalar.add_spec hi1_p1_le)
+  simp only [hpp_eq, bind_tc_ok]
+  have hpp : pp.val = K.val * 2 ^ N.val + 1 := by rw [hpp_val, hi1, h1v]
+  -- x % pp
+  have hpp_ne : pp.val ≠ 0 := by rw [hpp]; positivity
+  obtain ⟨r, hr_eq, hr_val⟩ := spec_imp_exists (UScalar.rem_spec x hpp_ne)
+  rw [show spec = theta from rfl, hr_eq]
+  simp only [theta, wp_return]
+  rw [hr_val, hpp]
+
+
 end Specialized
