@@ -100,7 +100,64 @@ def fixup_funs(path: str) -> None:
     text = def_re.sub(replace_def, text)
 
     # ------------------------------------------------------------------
-    # 3) Remove the no-arg axiom-equivalent `def gf2_core.gfp.Fp.Insts.
+    # 3) Axiomatise the malformed `Zip` iterator-adapter trait-impl
+    #    instance.
+    #
+    #    The D5 packed5 extraction (`--features f5`, JIT 30e98ef1) pulls
+    #    in `Packed5Vec::all_zero`, whose `self.b0.iter().zip(self.b1
+    #    .iter()).zip(self.b2.iter()).all(...)` chain makes Charon emit a
+    #    `core::iter::adapters::zip::Zip` `Iterator` instance. Charon
+    #    generates that record with fields `next / zip / map / enumerate
+    #    / collect / all`, but the Aeneas Lean stdlib `Iterator`
+    #    structure (`backends/lean/Aeneas/Std/Core/Iter.lean:51-58`) has
+    #    exactly four fields: `next / step_by / enumerate / take`. The
+    #    generated record is therefore rejected by Lean
+    #    (`zip is not a field of structure …Iterator`, `Fields missing:
+    #    step_by, take`), and its `…Pair.{next,zip,map,collect,all}`
+    #    helper bodies are never even defined (undefined references).
+    #
+    #    `Packed5Vec` is explicitly out of D5 scope
+    #    (`dev/plans/d5_lean_packed5_sketch.md` §7); the proofs target
+    #    only the `Packed5::{add,sub,mul,neg}_inherent` element ops and
+    #    never project this `Zip` instance (it is referenced nowhere
+    #    outside its own malformed body). Replacing the whole `def …
+    #    := { … }` block with an `axiom` of the same declared signature
+    #    eliminates the build error without losing anything the proofs
+    #    use — the identical R5/R6 unreachable-artefact-axiomatisation
+    #    pattern as the gf2_core `Fp` trait-impls above.
+    # ------------------------------------------------------------------
+    zip_inst_re = re.compile(
+        r"@\[reducible, rust_trait_impl\s*\n"
+        r'\s*"core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, \(@Clause0_Item, @Clause1_Item\)>"\]\s*\n'
+        r"def (core\.iter\.adapters\.zip\.Zip\.Insts\.CoreIterTraitsIteratorIteratorPair) "
+        r"(\{A :\s*\n"
+        r"  Type\} \{B : Type\} \{Clause0_Item : Type\} \{Clause1_Item : Type\}\s*\n"
+        r"  \(traitsiteratorIteratorInst : core\.iter\.traits\.iterator\.Iterator A\s*\n"
+        r"  Clause0_Item\) \(traitsiteratorIteratorInst1 :\s*\n"
+        r"  core\.iter\.traits\.iterator\.Iterator B Clause1_Item\)) :\s*\n"
+        r"  (core\.iter\.traits\.iterator\.Iterator \(core\.iter\.adapters\.zip\.Zip A B\)\s*\n"
+        r"  \(Clause0_Item × Clause1_Item\)) := \{[\s\S]*?\n\}\n",
+        re.MULTILINE,
+    )
+
+    def replace_zip_inst(m: "re.Match[str]") -> str:
+        name = m.group(1)
+        binders = m.group(2)
+        sig = m.group(3)
+        return (
+            "@[rust_trait_impl\n"
+            '  "core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>"]\n'
+            f"axiom {name} {binders} :\n  {sig}\n"
+        )
+
+    text, nz = zip_inst_re.subn(replace_zip_inst, text)
+    if nz != 1:
+        raise SystemExit(
+            f"fix-aeneas-gf2algebra: expected exactly one Zip Iterator instance, got {nz}"
+        )
+
+    # ------------------------------------------------------------------
+    # 4) Remove the no-arg axiom-equivalent `def gf2_core.gfp.Fp.Insts.
     #    CoreCloneClone.clone` style body defs — these are referenced only
     #    by the trait impls above (now axioms), so they are unreachable.
     #    We leave them in place; they typically compile fine since their

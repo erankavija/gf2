@@ -45,43 +45,15 @@ def Usize.Insts.CoreFmtDisplay : core.fmt.Display Std.Usize := {
 /-- Trait implementation: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}]
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>] -/
-@[reducible, rust_trait_impl
+@[rust_trait_impl
   "core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>"]
-def core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair {A :
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair {A :
   Type} {B : Type} {Clause0_Item : Type} {Clause1_Item : Type}
   (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
   Clause0_Item) (traitsiteratorIteratorInst1 :
   core.iter.traits.iterator.Iterator B Clause1_Item) :
   core.iter.traits.iterator.Iterator (core.iter.adapters.zip.Zip A B)
-  (Clause0_Item × Clause1_Item) := {
-  next :=
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.next
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-  zip := fun {U : Type} {Clause0_Item1 : Type} {Clause0_IntoIter : Type}
-    (traitscollectIntoIteratorInst : core.iter.traits.collect.IntoIterator U
-    Clause0_Item1 Clause0_IntoIter) =>
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-    traitscollectIntoIteratorInst
-  map := fun {B1 : Type} {F : Type} (opsfunctionFnMutPTuplePairPInst :
-    core.ops.function.FnMut F (Clause0_Item × Clause1_Item) B1) =>
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.map
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-    opsfunctionFnMutPTuplePairPInst
-  enumerate :=
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.enumerate
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-  collect := fun {B1 : Type} (traitscollectFromIteratorPPairInst :
-    core.iter.traits.collect.FromIterator B1 (Clause0_Item × Clause1_Item)) =>
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.collect
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-    traitscollectFromIteratorPPairInst
-  all := fun {F : Type} (opsfunctionFnMutPTuplePairBoolInst :
-    core.ops.function.FnMut F (Clause0_Item × Clause1_Item) Bool) =>
-    core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.all
-    traitsiteratorIteratorInst traitsiteratorIteratorInst1
-    opsfunctionFnMutPTuplePairBoolInst
-}
+  (Clause0_Item × Clause1_Item)
 
 /-- Trait implementation: [core::iter::range::{core::iter::range::Step for u64}]
     Source: '/rustc/library/core/src/iter/range.rs', lines 265:12-265:37
