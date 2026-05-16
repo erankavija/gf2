@@ -187,8 +187,14 @@ statistics are recorded inline in the CSV comment headers (see `# criterion_outp
 
 ### provenance.json
 
-Records commit SHA, rustc version, lscpu summary, rocminfo GPU identity, OS, and seed pins.
-See `provenance.json` for the complete machine-readable record.
+Records `artefact_assembly_commit` (repo HEAD when this snapshot was assembled),
+`dataset_source_commits` (the per-dataset measurement revision for each S* CSV,
+read from the CSV `# commit:` headers where present — S1/S2/S3 predate the
+commit-header convention and are recorded as such, S5 = `13b9143a`, S1g =
+`6a6631d7`), rustc version, lscpu summary, rocminfo GPU identity, OS, and the
+per-S* seed pins. See `provenance.json` for the complete machine-readable
+record, including the `_provenance_note` clarifying the assembly-vs-measurement
+commit distinction.
 
 ## Approval
 
