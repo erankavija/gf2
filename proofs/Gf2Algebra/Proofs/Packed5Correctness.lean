@@ -98,6 +98,32 @@ theorem dec5_red_eq_zero (x y z : Bool) :
       ∨ (x = true ∧ y = true ∧ z = true) := by
   cases x <;> cases y <;> cases z <;> decide
 
+/-- Canonicality predicate on one lane's 3-plane code `(b0,b1,b2)`.
+
+A lane is *canonical* iff its 3-bit codepoint `b0 | (b1<<1) | (b2<<2)`
+is one of the five F_5 values `0..=4`; the three redundant codepoints
+`5 = (1,0,1)`, `6 = (0,1,1)`, `7 = (1,1,1)` are excluded.
+
+This is exactly the production invariant documented at
+`crates/gf2-algebra/src/packed/packed5.rs:20,181`: *"Codepoints 5..=7 are
+redundant and never produced by canonical packings"*. Every `Packed5`
+constructor (`splat`, `set_lane`, `from_field_slice`, `from_fp_slice`)
+only ever writes canonical codepoints, so a well-formed `Packed5` value
+satisfies `canon5` on every lane. The per-op correctness theorems for
+the carry-coupled ops (`add`, `sub`) are stated over canonical inputs —
+this is the D5 sketch §2 "all 25 canonical input pairs" contract: on the
+unreachable redundant codepoints the `decode5` selectors are all-zero,
+which the carry-coupled `add`/`sub` cross-product circuits map to `0`
+rather than to `dec5`'s nominal `0`-on-redundant value (`mul`/`neg` do
+not have this coupling and hold unconditionally — see their lemmas). -/
+def canon5 (b0 b1 b2 : Bool) : Prop :=
+  ¬ ((b0 = true ∧ b1 = false ∧ b2 = true)        -- codepoint 5
+    ∨ (b0 = false ∧ b1 = true ∧ b2 = true)       -- codepoint 6
+    ∨ (b0 = true ∧ b1 = true ∧ b2 = true))       -- codepoint 7
+
+instance : DecidablePred (fun p : Bool × Bool × Bool => canon5 p.1 p.2.1 p.2.2) :=
+  fun p => by unfold canon5; infer_instance
+
 /-! ## §3.2 Per-op lane truth tables
 
 Each lemma states that the **exact composed circuit** of the
@@ -137,8 +163,14 @@ theorem dec5_selBool (b0 b1 b2 : Bool) :
 /-- §3.2 L9 per-lane add correctness on Bools. The `r1..r4` Bool
 expressions mirror `packed.packed5.add_circuit` cell-for-cell; the final
 `dec5` of `(c0,c1,c2) = encode5 [0,r1,r2,r3,r4]` equals
-`dec5 a + dec5 b` in `ZMod 5`. 64-row `decide`. -/
-theorem packed5_add_lane (a0 a1 a2 b0 b1 b2 : Bool) :
+`dec5 a + dec5 b` in `ZMod 5`, for the 25 canonical input pairs (D5
+sketch §2). The carry-coupled add cross-product maps an all-zero
+(redundant-codepoint) selector vector to `0`, which differs from
+`dec5`'s nominal `0`-on-redundant only on the unreachable redundant
+inputs; `canon5` excludes exactly those. 64-row `decide` (vacuous on
+the 39 non-canonical-pair rows). -/
+theorem packed5_add_lane (a0 a1 a2 b0 b1 b2 : Bool)
+    (ha : canon5 a0 a1 a2) (hb : canon5 b0 b1 b2) :
     let e := selBool a0 a1 a2
     let f := selBool b0 b1 b2
     let e0 := e.1;          let e1 := e.2.1
@@ -150,11 +182,18 @@ theorem packed5_add_lane (a0 a1 a2 b0 b1 b2 : Bool) :
     let r3 := (e0&&f3) || (e1&&f2) || (e2&&f1) || (e3&&f0) || (e4&&f4)
     let r4 := (e0&&f4) || (e1&&f3) || (e2&&f2) || (e3&&f1) || (e4&&f0)
     dec5 (r1 || r3) (r2 || r3) r4 = dec5 a0 a1 a2 + dec5 b0 b1 b2 := by
-  cases a0 <;> cases a1 <;> cases a2 <;> cases b0 <;> cases b1 <;> cases b2 <;> decide
+  revert ha hb
+  cases a0 <;> cases a1 <;> cases a2 <;> cases b0 <;> cases b1 <;> cases b2 <;>
+    simp only [canon5] <;> decide
 
 /-- §3.2 L10 per-lane sub correctness on Bools (mirrors
-`packed.packed5.sub_circuit`). 64-row `decide`. -/
-theorem packed5_sub_lane (a0 a1 a2 b0 b1 b2 : Bool) :
+`packed.packed5.sub_circuit`), for the 25 canonical input pairs (D5
+sketch §2). Like `add`, the carry-coupled subtraction cross-product maps
+an all-zero (redundant-codepoint) selector vector to `0`; `canon5`
+excludes the unreachable redundant inputs. 64-row `decide` (vacuous on
+the 39 non-canonical-pair rows). -/
+theorem packed5_sub_lane (a0 a1 a2 b0 b1 b2 : Bool)
+    (ha : canon5 a0 a1 a2) (hb : canon5 b0 b1 b2) :
     let e := selBool a0 a1 a2
     let f := selBool b0 b1 b2
     let e0 := e.1;          let e1 := e.2.1
@@ -166,7 +205,9 @@ theorem packed5_sub_lane (a0 a1 a2 b0 b1 b2 : Bool) :
     let r3 := (e0&&f2) || (e1&&f3) || (e2&&f4) || (e3&&f0) || (e4&&f1)
     let r4 := (e0&&f1) || (e1&&f2) || (e2&&f3) || (e3&&f4) || (e4&&f0)
     dec5 (r1 || r3) (r2 || r3) r4 = dec5 a0 a1 a2 - dec5 b0 b1 b2 := by
-  cases a0 <;> cases a1 <;> cases a2 <;> cases b0 <;> cases b1 <;> cases b2 <;> decide
+  revert ha hb
+  cases a0 <;> cases a1 <;> cases a2 <;> cases b0 <;> cases b1 <;> cases b2 <;>
+    simp only [canon5] <;> decide
 
 /-- §3.2 L11 per-lane mul correctness on Bools (mirrors
 `packed.packed5.mul_circuit`; the `i=0`/`j=0` cells are absent — they
@@ -256,10 +297,7 @@ theorem packed5_add_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e0&&f4)||(e1&&f3)||(e2&&f2)||(e3&&f1)||(e4&&f0)) := by
   refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool, BitVec.getLsbD_and, BitVec.getLsbD_or, BitVec.getLsbD_not,
-      Bool.and_assoc, Bool.or_assoc] <;>
-    (try (cases b0.bv.getLsbD i <;> cases b1.bv.getLsbD i <;> cases b2.bv.getLsbD i <;>
-          cases c0.bv.getLsbD i <;> cases c1.bv.getLsbD i <;> cases c2.bv.getLsbD i <;> decide))
+    simp [selBool]
 
 /-- §3.3 L14 sub-word: analogous for `sub_inherent`. -/
 theorem packed5_sub_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
@@ -293,10 +331,7 @@ theorem packed5_sub_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e0&&f1)||(e1&&f2)||(e2&&f3)||(e3&&f4)||(e4&&f0)) := by
   refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool, BitVec.getLsbD_and, BitVec.getLsbD_or, BitVec.getLsbD_not,
-      Bool.and_assoc, Bool.or_assoc] <;>
-    (try (cases b0.bv.getLsbD i <;> cases b1.bv.getLsbD i <;> cases b2.bv.getLsbD i <;>
-          cases c0.bv.getLsbD i <;> cases c1.bv.getLsbD i <;> cases c2.bv.getLsbD i <;> decide))
+    simp [selBool]
 
 /-- §3.3 L15 mul-word: analogous for `mul_inherent`. -/
 theorem packed5_mul_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
@@ -330,10 +365,7 @@ theorem packed5_mul_word (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
          let f2 := f.2.2.1; let f3 := f.2.2.2.1; let f4 := f.2.2.2.2
          (e1&&f4)||(e2&&f2)||(e3&&f3)||(e4&&f1)) := by
   refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool, BitVec.getLsbD_and, BitVec.getLsbD_or, BitVec.getLsbD_not,
-      Bool.and_assoc, Bool.or_assoc] <;>
-    (try (cases b0.bv.getLsbD i <;> cases b1.bv.getLsbD i <;> cases b2.bv.getLsbD i <;>
-          cases c0.bv.getLsbD i <;> cases c1.bv.getLsbD i <;> cases c2.bv.getLsbD i <;> decide))
+    simp [selBool]
 
 /-- §3.3 L16 neg-word: the extracted `neg_inherent ⟨b0,b1,b2⟩` reduces to
 `ok` of the permuted-selector plane expressions, lifted lane-wise. -/
@@ -351,9 +383,7 @@ theorem packed5_neg_word (b0 b1 b2 : Std.U64) (i : Fin 64) :
         (let e := selBool (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i)
          e.2.1) := by
   refine ⟨_, rfl, ?_, ?_, ?_⟩ <;>
-    simp [selBool, BitVec.getLsbD_and, BitVec.getLsbD_or, BitVec.getLsbD_not,
-      Bool.and_assoc, Bool.or_assoc] <;>
-    (try (cases b0.bv.getLsbD i <;> cases b1.bv.getLsbD i <;> cases b2.bv.getLsbD i <;> decide))
+    simp [selBool]
 
 /-! ## §3.4 Per-op `*_correct` theorems (against the Aeneas-extracted fn)
 
@@ -364,8 +394,14 @@ table. No `progress`/Result-monad branching is needed — the `Packed5`
 circuits are `Result`-pure (pure bitwise, no error path). -/
 
 /-- §3.4 L17 add-correct: per-lane add correctness on the inherent
-wrapper, against canonical `ZMod 5` addition. -/
-theorem packed5_add_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
+wrapper, against canonical `ZMod 5` addition. The `canon5` hypotheses on
+the two input lanes encode the production invariant
+(`packed5.rs:20,181`: redundant codepoints 5..=7 are never produced by
+any `Packed5` constructor), matching the D5 sketch §2 "25 canonical
+input pairs" contract for the carry-coupled `add` op. -/
+theorem packed5_add_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64)
+    (hb : canon5 (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i))
+    (hc : canon5 (c0.bv.getLsbD i) (c1.bv.getLsbD i) (c2.bv.getLsbD i)) :
     ∃ r, packed.packed5.Packed5.add_inherent ⟨b0,b1,b2⟩ ⟨c0,c1,c2⟩ = ok r ∧
       dec5 (r.b0.bv.getLsbD i) (r.b1.bv.getLsbD i) (r.b2.bv.getLsbD i)
         = dec5 (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i)
@@ -373,11 +409,14 @@ theorem packed5_add_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
   obtain ⟨r, hr, h0, h1, h2⟩ := packed5_add_word b0 b1 b2 c0 c1 c2 i
   refine ⟨r, hr, ?_⟩
   rw [h0, h1, h2]
-  exact packed5_add_lane _ _ _ _ _ _
+  exact packed5_add_lane _ _ _ _ _ _ hb hc
 
 /-- §3.4 L18 sub-correct: analogous, against canonical `ZMod 5`
-subtraction. -/
-theorem packed5_sub_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
+subtraction. Canonical-input contract identical to `add` (carry-coupled
+op; D5 sketch §2). -/
+theorem packed5_sub_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64)
+    (hb : canon5 (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i))
+    (hc : canon5 (c0.bv.getLsbD i) (c1.bv.getLsbD i) (c2.bv.getLsbD i)) :
     ∃ r, packed.packed5.Packed5.sub_inherent ⟨b0,b1,b2⟩ ⟨c0,c1,c2⟩ = ok r ∧
       dec5 (r.b0.bv.getLsbD i) (r.b1.bv.getLsbD i) (r.b2.bv.getLsbD i)
         = dec5 (b0.bv.getLsbD i) (b1.bv.getLsbD i) (b2.bv.getLsbD i)
@@ -385,7 +424,7 @@ theorem packed5_sub_correct (b0 b1 b2 c0 c1 c2 : Std.U64) (i : Fin 64) :
   obtain ⟨r, hr, h0, h1, h2⟩ := packed5_sub_word b0 b1 b2 c0 c1 c2 i
   refine ⟨r, hr, ?_⟩
   rw [h0, h1, h2]
-  exact packed5_sub_lane _ _ _ _ _ _
+  exact packed5_sub_lane _ _ _ _ _ _ hb hc
 
 /-- §3.4 L19 mul-correct: analogous, against canonical `ZMod 5`
 multiplication. -/
@@ -457,18 +496,31 @@ projection used by the headline corollary). -/
 def dec5_lane (a : packed.packed5.Packed5) (i : Fin 64) : ZMod 5 :=
   dec5 (a.b0.bv.getLsbD i) (a.b1.bv.getLsbD i) (a.b2.bv.getLsbD i)
 
+/-- Lane `i` of a `Packed5` value holds a canonical (non-redundant)
+codepoint. Every `Packed5` constructor preserves this on every lane
+(`packed5.rs:20,181`); it is the well-formedness invariant carried by
+all values the production code actually produces. -/
+def canon5_lane (a : packed.packed5.Packed5) (i : Fin 64) : Prop :=
+  canon5 (a.b0.bv.getLsbD i) (a.b1.bv.getLsbD i) (a.b2.bv.getLsbD i)
+
 /-- §3.5 L23 headline corollary: `Packed5` arithmetic vs canonical F_5
 (`ZMod 5`) arithmetic on every lane, for every `ArithOp` tag. The four
-per-op theorems provide the case-split discharge (D5 §1 headline). -/
+per-op theorems provide the case-split discharge (D5 §1 headline). The
+`canon5_lane` hypotheses encode the production well-formedness invariant
+(redundant codepoints 5..=7 are never produced — `packed5.rs:20,181`);
+they are consumed by the carry-coupled `add`/`sub` branches and held
+trivially available for `mul`/`neg` (whose lane lemmas hold
+unconditionally). -/
 theorem packed5_correct_vs_canonical_F5
-    (op : ArithOp) (a b : packed.packed5.Packed5) (i : Fin 64) :
+    (op : ArithOp) (a b : packed.packed5.Packed5) (i : Fin 64)
+    (ha : canon5_lane a i) (hb : canon5_lane b i) :
     ∃ r, Packed5.dispatch op a b = ok r ∧
       dec5_lane r i = ZMod5.dispatch op (dec5_lane a i) (dec5_lane b i) := by
   cases op with
   | add => simpa [Packed5.dispatch, ZMod5.dispatch, dec5_lane] using
-             packed5_add_correct a.b0 a.b1 a.b2 b.b0 b.b1 b.b2 i
+             packed5_add_correct a.b0 a.b1 a.b2 b.b0 b.b1 b.b2 i ha hb
   | sub => simpa [Packed5.dispatch, ZMod5.dispatch, dec5_lane] using
-             packed5_sub_correct a.b0 a.b1 a.b2 b.b0 b.b1 b.b2 i
+             packed5_sub_correct a.b0 a.b1 a.b2 b.b0 b.b1 b.b2 i ha hb
   | mul => simpa [Packed5.dispatch, ZMod5.dispatch, dec5_lane] using
              packed5_mul_correct a.b0 a.b1 a.b2 b.b0 b.b1 b.b2 i
   | neg => simpa [Packed5.dispatch, ZMod5.dispatch, dec5_lane] using
