@@ -308,6 +308,99 @@ impl fmt::Debug for Packed5 {
 }
 
 // ---------------------------------------------------------------------------
+// Inherent arithmetic wrappers (proof targets for D5 / JIT 30e98ef1).
+//
+// These methods delegate verbatim to the `PackedField<Fp<5>>` trait impl
+// below; they exist so the Charon/Aeneas verification pipeline can prove
+// `Packed5` F_5 correctness against a fixed inherent surface that is not
+// affected by trait-dispatch indirection. There is no algorithmic
+// divergence between the inherent and trait paths — the inherent body is a
+// single tail call into the trait method, which Rust inlines away.
+//
+// Per `dev/plans/d5_lean_packed5_sketch.md` §4, the Lean proof file
+// `proofs/Gf2Algebra/Proofs/Packed5Correctness.lean` targets these
+// inherent methods (verbatim adaptation of the `bipedal3.rs:409-467`
+// pattern).
+// ---------------------------------------------------------------------------
+
+impl Packed5 {
+    /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<5>>>::add`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed5, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
+    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
+    /// assert_eq!(Packed5::add_inherent(a, b).lane(0), Fp::<5>::new(2));
+    /// ```
+    #[inline]
+    pub fn add_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<5>>>::add(self, rhs)
+    }
+
+    /// Inherent `sub` wrapper — delegates to `<Self as PackedField<Fp<5>>>::sub`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed5, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(1));
+    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
+    /// assert_eq!(Packed5::sub_inherent(a, b).lane(0), Fp::<5>::new(3));
+    /// ```
+    #[inline]
+    pub fn sub_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<5>>>::sub(self, rhs)
+    }
+
+    /// Inherent `mul` wrapper — delegates to `<Self as PackedField<Fp<5>>>::mul`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed5, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(3));
+    /// let b = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(4));
+    /// assert_eq!(Packed5::mul_inherent(a, b).lane(0), Fp::<5>::new(2));
+    /// ```
+    #[inline]
+    pub fn mul_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<5>>>::mul(self, rhs)
+    }
+
+    /// Inherent `neg` wrapper — delegates to `<Self as PackedField<Fp<5>>>::neg`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed5, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed5 as PackedField<Fp<5>>>::splat(Fp::<5>::new(2));
+    /// assert_eq!(Packed5::neg_inherent(a).lane(0), Fp::<5>::new(3));
+    /// ```
+    #[inline]
+    pub fn neg_inherent(self) -> Self {
+        <Self as PackedField<Fp<5>>>::neg(self)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // PackedField<Fp<5>>
 // ---------------------------------------------------------------------------
 

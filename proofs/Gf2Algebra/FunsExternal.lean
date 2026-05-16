@@ -58,6 +58,14 @@ axiom core.fmt.Formatter.debug_struct
   core.fmt.Formatter → Str → Result (core.fmt.builders.DebugStruct ×
     core.fmt.Formatter)
 
+/-- [core::hash::impls::{core::hash::Hash for u64}::hash]:
+    Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
+    Name pattern: [core::hash::impls::{core::hash::Hash<u64>}::hash]
+    Visibility: public -/
+@[rust_fun "core::hash::impls::{core::hash::Hash<u64>}::hash"]
+axiom U64.Insts.CoreHashHash.hash
+  {H : Type} (HasherInst : core.hash.Hasher H) : Std.U64 → H → Result H
+
 /-- [core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<(usize, Clause0_Item)> for core::iter::adapters::enumerate::Enumerate<I>}::next]:
     Source: '/rustc/library/core/src/iter/adapters/enumerate.rs', lines 79:4-79:64
     Name pattern: [core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<core::iter::adapters::enumerate::Enumerate<@I>, (usize, @Clause0_Item)>}::next]
@@ -84,6 +92,99 @@ axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
   core.ops.function.FnMut F Clause0_Item B) (traitscollectFromIteratorInst :
   core.iter.traits.collect.FromIterator B1 B) :
   core.iter.adapters.map.Map I F → Result B1
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::next]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 84:4-84:44
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.next
+  {A : Type} {B : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
+  Clause0_Item) (traitsiteratorIteratorInst1 :
+  core.iter.traits.iterator.Iterator B Clause1_Item) :
+  core.iter.adapters.zip.Zip A B → Result ((Option (Clause0_Item ×
+    Clause1_Item)) × (core.iter.adapters.zip.Zip A B))
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::all]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::all]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::all"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.all
+  {A : Type} {B : Type} {F : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
+  Clause0_Item) (traitsiteratorIteratorInst1 :
+  core.iter.traits.iterator.Iterator B Clause1_Item)
+  (opsfunctionFnMutFTuplePairBoolInst : core.ops.function.FnMut F (Clause0_Item
+  × Clause1_Item) Bool) :
+  core.iter.adapters.zip.Zip A B → F → Result (Bool ×
+    (core.iter.adapters.zip.Zip A B))
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::collect]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::collect]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::collect"]
+axiom
+  core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.collect
+  {A : Type} {B : Type} {B1 : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
+  Clause0_Item) (traitsiteratorIteratorInst1 :
+  core.iter.traits.iterator.Iterator B Clause1_Item)
+  (traitscollectFromIteratorBPairInst : core.iter.traits.collect.FromIterator
+  B1 (Clause0_Item × Clause1_Item)) :
+  core.iter.adapters.zip.Zip A B → Result B1
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::enumerate]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::enumerate]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::enumerate"]
+axiom
+  core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.enumerate
+  {A : Type} {B : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  (traitsiteratorIteratorInst : core.iter.traits.iterator.Iterator A
+  Clause0_Item) (traitsiteratorIteratorInst1 :
+  core.iter.traits.iterator.Iterator B Clause1_Item) :
+  core.iter.adapters.zip.Zip A B → Result
+    (core.iter.adapters.enumerate.Enumerate (core.iter.adapters.zip.Zip A B))
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::map]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::map]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::map"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.map
+  {A : Type} {B : Type} {B1 : Type} {F : Type} {Clause0_Item : Type}
+  {Clause1_Item : Type} (traitsiteratorIteratorInst :
+  core.iter.traits.iterator.Iterator A Clause0_Item)
+  (traitsiteratorIteratorInst1 : core.iter.traits.iterator.Iterator B
+  Clause1_Item) (opsfunctionFnMutFTuplePairBInst : core.ops.function.FnMut F
+  (Clause0_Item × Clause1_Item) B1) :
+  core.iter.adapters.zip.Zip A B → F → Result (core.iter.adapters.map.Map
+    (core.iter.adapters.zip.Zip A B) F)
+
+/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::zip]:
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip"]
+axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
+  {A : Type} {B : Type} {U : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  {Clause2_Item : Type} {Clause2_IntoIter : Type} (traitsiteratorIteratorInst :
+  core.iter.traits.iterator.Iterator A Clause0_Item)
+  (traitsiteratorIteratorInst1 : core.iter.traits.iterator.Iterator B
+  Clause1_Item) (traitscollectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator U Clause2_Item Clause2_IntoIter) :
+  core.iter.adapters.zip.Zip A B → U → Result (core.iter.adapters.zip.Zip
+    (core.iter.adapters.zip.Zip A B) Clause2_IntoIter)
 
 /-- [core::iter::range::{core::iter::range::Step for u64}::backward_checked]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 289:16-289:74
@@ -170,6 +271,31 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
   (opsfunctionFnMutFTupleABInst : core.ops.function.FnMut F A B) :
   core.ops.range.Range A → F → Result (core.iter.adapters.map.Map
     (core.ops.range.Range A) F)
+
+/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::zip]:
+    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::zip"]
+axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.zip
+  {A : Type} {U : Type} {Clause1_Item : Type} {Clause1_IntoIter : Type}
+  (StepInst : core.iter.range.Step A) (traitscollectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator U Clause1_Item Clause1_IntoIter) :
+  core.ops.range.Range A → U → Result (core.iter.adapters.zip.Zip
+    (core.ops.range.Range A) Clause1_IntoIter)
+
+/-- [core::iter::traits::iterator::Iterator::zip]:
+    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 626:4-629:24
+    Name pattern: [core::iter::traits::iterator::Iterator::zip]
+    Visibility: public -/
+@[rust_fun "core::iter::traits::iterator::Iterator::zip"]
+axiom core.iter.traits.iterator.Iterator.zip.default
+  {Self : Type} {U : Type} {Clause0_Item : Type} {Clause1_Item : Type}
+  {Clause1_IntoIter : Type} (IteratorInst : core.iter.traits.iterator.Iterator
+  Self Clause0_Item) (collectIntoIteratorInst :
+  core.iter.traits.collect.IntoIterator U Clause1_Item Clause1_IntoIter) :
+  Self → U → Result (core.iter.adapters.zip.Zip Self Clause1_IntoIter)
 
 /-- [core::iter::traits::iterator::Iterator::map]:
     Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 789:4-792:34
@@ -289,6 +415,19 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.map
   core.ops.function.FnMut F T B) :
   core.slice.iter.Iter T → F → Result (core.iter.adapters.map.Map
     (core.slice.iter.Iter T) F)
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::zip]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::zip"]
+axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.zip
+  {T : Type} {U : Type} {Clause0_Item : Type} {Clause0_IntoIter : Type}
+  (itertraitscollectIntoIteratorInst : core.iter.traits.collect.IntoIterator U
+  Clause0_Item Clause0_IntoIter) :
+  core.slice.iter.Iter T → U → Result (core.iter.adapters.zip.Zip
+    (core.slice.iter.Iter T) Clause0_IntoIter)
 
 /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
     Source: 'crates/gf2-core/src/field/traits.rs', lines 797:4-797:35
