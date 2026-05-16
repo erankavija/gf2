@@ -66,6 +66,43 @@ pub fn build_matrices(n: usize, m: usize, seed: u64) -> Vec<Bipedal3Matrix> {
         .collect()
 }
 
+/// Parse the CPU model string from `/proc/cpuinfo` contents.
+///
+/// Returns `None` if no `model name` line is present (caller records
+/// `"unknown"` rather than fabricating a value).
+fn parse_cpu_model(cpuinfo: &str) -> Option<String> {
+    cpuinfo
+        .lines()
+        .find(|l| l.starts_with("model name"))
+        .and_then(|l| l.split(':').nth(1))
+        .map(|s| s.trim().to_string())
+}
+
+/// Parse the gfx ISA target (e.g. `gfx1030`) from `rocminfo` stdout.
+///
+/// Returns `None` if no `Name:` line containing a `gfx*` token is present.
+fn parse_gfx_target(rocminfo_stdout: &str) -> Option<String> {
+    rocminfo_stdout
+        .lines()
+        .filter(|l| l.contains("Name") && l.contains("gfx"))
+        .find_map(|l| {
+            l.split_whitespace()
+                .find(|w| w.starts_with("gfx"))
+                .map(|s| s.to_string())
+        })
+}
+
+/// Parse the GPU marketing name from `rocminfo` stdout.
+///
+/// Returns `None` if no `Marketing Name:` line for a Radeon device is present.
+fn parse_gpu_name(rocminfo_stdout: &str) -> Option<String> {
+    rocminfo_stdout
+        .lines()
+        .find(|l| l.contains("Marketing Name") && l.contains("Radeon"))
+        .and_then(|l| l.split(':').nth(1))
+        .map(|s| s.trim().to_string())
+}
+
 /// Host + device fingerprint recorded in benchmark CSV headers.
 ///
 /// `kernel_ver` is always collected; the crossover harness simply does not emit
@@ -85,51 +122,33 @@ pub struct HwInfo {
 
 /// Collect a best-effort hardware fingerprint for the CSV header.
 ///
-/// Every field falls back to a known-good default for the dev host if the
-/// probe fails, so the harness never aborts on a missing tool.
+/// Every field that cannot be probed is recorded as the literal string
+/// `"unknown"`. The harness never substitutes a plausible-but-unverified
+/// hardware identity (e.g. a hardcoded dev-host GPU name): a CSV must never
+/// claim a device that was not actually observed at run time. A missing tool
+/// therefore yields `unknown`, not fabricated provenance.
 ///
 /// # Complexity
-/// Spawns up to three short-lived subprocesses (`rocminfo` twice, `uname`).
+/// Spawns up to two short-lived subprocesses (`rocminfo` once, `uname` once).
 pub fn hw_fingerprint() -> HwInfo {
     let cpu_model = std::fs::read_to_string("/proc/cpuinfo")
-        .unwrap_or_default()
-        .lines()
-        .find(|l| l.starts_with("model name"))
-        .and_then(|l| l.split(':').nth(1))
-        .map(|s| s.trim().to_string())
+        .ok()
+        .as_deref()
+        .and_then(parse_cpu_model)
         .unwrap_or_else(|| "unknown".to_string());
 
     let rocm_ver = std::fs::read_to_string("/opt/rocm/.info/version")
-        .unwrap_or_else(|_| "unknown".to_string())
-        .trim()
-        .to_string();
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|_| "unknown".to_string());
 
-    let gfx_target = std::process::Command::new("rocminfo")
+    let rocminfo_stdout = std::process::Command::new("rocminfo")
         .output()
         .ok()
-        .and_then(|o| {
-            let s = String::from_utf8_lossy(&o.stdout).to_string();
-            s.lines()
-                .filter(|l| l.contains("Name") && l.contains("gfx"))
-                .find_map(|l| {
-                    l.split_whitespace()
-                        .find(|w| w.starts_with("gfx"))
-                        .map(|s| s.to_string())
-                })
-        })
-        .unwrap_or_else(|| "gfx1030".to_string());
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default();
 
-    let gpu_name = std::process::Command::new("rocminfo")
-        .output()
-        .ok()
-        .and_then(|o| {
-            let s = String::from_utf8_lossy(&o.stdout).to_string();
-            s.lines()
-                .find(|l| l.contains("Marketing Name") && l.contains("Radeon"))
-                .and_then(|l| l.split(':').nth(1))
-                .map(|s| s.trim().to_string())
-        })
-        .unwrap_or_else(|| "AMD Radeon RX 6950 XT".to_string());
+    let gfx_target = parse_gfx_target(&rocminfo_stdout).unwrap_or_else(|| "unknown".to_string());
+    let gpu_name = parse_gpu_name(&rocminfo_stdout).unwrap_or_else(|| "unknown".to_string());
 
     let kernel_ver = std::process::Command::new("uname")
         .arg("-r")
@@ -205,4 +224,67 @@ pub fn git_short_sha(manifest_dir: &str) -> String {
         .output()
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
         .unwrap_or_else(|_| "unknown".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_cpu_model_extracts_trimmed_value() {
+        let cpuinfo = "processor\t: 0\nmodel name\t: AMD Ryzen 9 5900X 12-Core Processor\ncpu MHz\t\t: 3700.0\n";
+        assert_eq!(
+            parse_cpu_model(cpuinfo).as_deref(),
+            Some("AMD Ryzen 9 5900X 12-Core Processor")
+        );
+    }
+
+    #[test]
+    fn parse_cpu_model_none_on_missing_or_garbage() {
+        // Probe failure / empty file must NOT fabricate a value.
+        assert_eq!(parse_cpu_model(""), None);
+        assert_eq!(parse_cpu_model("flags\t: sse avx2\nbogomips: 7400\n"), None);
+    }
+
+    #[test]
+    fn parse_gfx_target_extracts_token() {
+        let rocminfo = "*** Agent 2 ***\n  Name:                    gfx1030\n  Marketing Name:          AMD Radeon RX 6950 XT\n";
+        assert_eq!(parse_gfx_target(rocminfo).as_deref(), Some("gfx1030"));
+    }
+
+    #[test]
+    fn parse_gfx_target_none_on_missing_or_garbage() {
+        assert_eq!(parse_gfx_target(""), None);
+        // A CPU agent's Name line has no gfx token — must not match.
+        assert_eq!(
+            parse_gfx_target("  Name:                    AMD Ryzen 9 5900X\n"),
+            None
+        );
+    }
+
+    #[test]
+    fn parse_gpu_name_extracts_trimmed_value() {
+        let rocminfo = "  Name:                    gfx1030\n  Marketing Name:          AMD Radeon RX 6950 XT\n";
+        assert_eq!(
+            parse_gpu_name(rocminfo).as_deref(),
+            Some("AMD Radeon RX 6950 XT")
+        );
+    }
+
+    #[test]
+    fn parse_gpu_name_none_on_missing_or_non_radeon() {
+        assert_eq!(parse_gpu_name(""), None);
+        // Non-Radeon marketing name must not be mistaken for the dev GPU.
+        assert_eq!(
+            parse_gpu_name("  Marketing Name:          Intel Arc A770\n"),
+            None
+        );
+    }
+
+    #[test]
+    fn median_vec_odd_even_and_singleton() {
+        assert_eq!(median_vec(&[5.0]), 5.0);
+        assert_eq!(median_vec(&[3.0, 1.0, 2.0]), 2.0);
+        assert_eq!(median_vec(&[4.0, 1.0, 3.0, 2.0]), 2.5);
+    }
 }
