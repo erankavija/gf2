@@ -128,7 +128,6 @@ charon cargo \
   --start-from 'gf2_algebra::packed::bipedal3' \
   --start-from 'gf2_algebra::packed::packed5' \
   --start-from 'gf2_algebra::packed::packed7' \
-  --start-from 'gf2_algebra::permanent::ryser_fp3::permanent_ryser_fp3' \
   --start-from 'gf2_algebra::gray::gray_code_iter' \
   --start-from 'gf2_algebra::gray::gray_code_index_to_subset' \
   --opaque 'gf2_algebra::packed::packed7::ADD_LUT' \
