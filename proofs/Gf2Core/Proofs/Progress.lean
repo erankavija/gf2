@@ -9,6 +9,7 @@ import Aeneas
 import Gf2Core.Funs
 import Gf2Core.Proofs.Defs
 import Gf2Core.Proofs.ModArith
+import Gf2Core.Proofs.Specialized
 
 open Aeneas Aeneas.Std Result ControlFlow Error Aeneas.Std.WP
 open gf2_core
@@ -371,32 +372,17 @@ theorem mont_sub_progress {P : Std.U64} {a b : Std.U64}
     exact cond_add_back_val a b P ha hb hP.2.2
   exact spec_imp_exists hspec
 
-/-! ## Axioms for specialized arithmetic
+/-! ## Specialized-arithmetic helpers (proven, no axioms)
 
-`use_specialized_storage`, `specialized_mul`, and `inv_loop` involve complex
-runtime dispatch (Mersenne/Proth/Goldilocks reducers, axiomatic `trailing_zeros`).
-These axioms assert totality and output-bound properties that are evident from
-the Rust source but require machine-arithmetic case analysis beyond the current
-scope of the Lean proofs. -/
-
-/-- `use_specialized_storage` always returns `ok` (never panics).
-    Evident from the source: every branch of `classify` returns `ok`, and
-    `use_specialized_storage` itself just pattern-matches on the shape. -/
-axiom use_specialized_storage_ok (P : Std.U64) :
-    ∃ b, gfp.use_specialized_storage P = ok b
-
-/-- `specialized_mul` returns a value strictly less than P, for P prime > 1,
-    a < P, b < P.  All dispatch branches reduce mod P (or equivalent). -/
-axiom specialized_mul_lt (P a b : Std.U64) (hP : ValidPrime P)
-    (ha : a.val < P.val) (hb : b.val < P.val) :
-    ∃ r, gfp.specialized_mul P a b = ok r ∧ r.val < P.val
-
-/-- The `inv_loop` computes a result in [0, P) when the initial `result` and `base`
-    are in [0, P). Used in the specialized-storage branch of `inv`. -/
-axiom inv_loop_lt (P result base e : Std.U64) (hP : ValidPrime P)
-    (hr : result.val < P.val) (hb : base.val < P.val) :
-    ∃ r, gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv_loop P result base e = ok r
-      ∧ r.val < P.val
+`use_specialized_storage` totality, `specialized_mul` full modular
+correctness, and the `inv_loop` result bound are all *proven* in
+`Gf2Core.Proofs.Specialized` (`use_specialized_storage_total`,
+`specialized_mul_correct`, `inv_loop_bound`) — composed from the proven
+`classify_spec` + Mersenne/Proth reducer-correctness lemmas + the single
+clause-(c) dispatch-threading axiom (issue 2e544a34). The three rejected
+attempt-1 axioms that previously sat here
+(`use_specialized_storage_ok`/`specialized_mul_lt`/`inv_loop_lt`) are
+deleted; the lemmas below now consume the proven versions. -/
 
 /-- Helper: the redc precondition holds for products of values less than P.
     Placed here so it's available for mul_progress below. -/
@@ -417,12 +403,12 @@ theorem mul_progress {P : Std.U64} {a b : Std.U64}
   unfold gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
   -- P ≠ 2 branch
   simp only [show ¬(P = 2#u64) from fun h => hP2 (congrArg UScalar.val h ▸ rfl), ite_false]
-  obtain ⟨b_spec, hb_spec⟩ := use_specialized_storage_ok P
+  obtain ⟨b_spec, hb_spec⟩ := Specialized.use_specialized_storage_total P hP.2.1
   simp only [hb_spec, bind_tc_ok]
   by_cases hspec : b_spec = true
   · -- specialized branch
     simp only [hspec, ite_true]
-    obtain ⟨r, hr_eq, hr_lt⟩ := specialized_mul_lt P a b hP ha hb
+    obtain ⟨r, hr_eq, hr_lt, _⟩ := Specialized.specialized_mul_correct hP ha hb
     exact ⟨r, by simp [hr_eq], hr_lt⟩
   · -- montgomery branch
     have hbf : b_spec = false := Bool.not_eq_true b_spec |>.mp hspec
@@ -488,7 +474,7 @@ theorem fp_new_progress {P : Std.U64}
   -- P ≠ 2 branch
   simp only [show ¬(P = 2#u64) from fun h => hP2 (congrArg UScalar.val h ▸ rfl), ite_false]
   -- use_specialized_storage
-  obtain ⟨b_spec, hb_spec⟩ := use_specialized_storage_ok P
+  obtain ⟨b_spec, hb_spec⟩ := Specialized.use_specialized_storage_total P hP.2.1
   simp only [hb_spec, bind_tc_ok]
   by_cases hspec : b_spec = true
   · -- specialized: return reduced
@@ -509,7 +495,7 @@ theorem fp_value_progress {P : Std.U64} {a : Std.U64}
   unfold gfp.Fp.value
   -- P ≠ 2 branch
   simp only [show ¬(P = 2#u64) from fun h => hP2 (congrArg UScalar.val h ▸ rfl), ite_false]
-  obtain ⟨b_spec, hb_spec⟩ := use_specialized_storage_ok P
+  obtain ⟨b_spec, hb_spec⟩ := Specialized.use_specialized_storage_total P hP.2.1
   simp only [hb_spec, bind_tc_ok]
   by_cases hspec : b_spec = true
   · -- specialized: return self (< P by assumption)
@@ -642,7 +628,7 @@ theorem inv_progress {P : Std.U64} {self : Std.U64}
   simp only [show ¬(self = 0#u64) from fun h => hne (congrArg UScalar.val h ▸ rfl), ite_false]
   -- P ≠ 2 branch
   simp only [show ¬(P = 2#u64) from fun h => hP2 (congrArg UScalar.val h ▸ rfl), ite_false]
-  obtain ⟨b_spec, hb_spec⟩ := use_specialized_storage_ok P
+  obtain ⟨b_spec, hb_spec⟩ := Specialized.use_specialized_storage_total P hP.2.1
   simp only [hb_spec, bind_tc_ok]
   by_cases hspec : b_spec = true
   · -- specialized branch: use inv_loop
@@ -655,7 +641,7 @@ theorem inv_progress {P : Std.U64} {self : Std.U64}
     obtain ⟨e, he_eq⟩ := he
     simp only [he_eq, bind_tc_ok]
     have h1 : (1#u64 : Std.U64).val < P.val := by have := hP.2.1; scalar_tac
-    obtain ⟨r, hr_eq, hr_lt⟩ := inv_loop_lt P 1#u64 self e hP h1 hself
+    obtain ⟨r, hr_eq, hr_lt⟩ := Specialized.inv_loop_bound hP 1#u64 self e h1 hself
     exact ⟨r, by simp [hr_eq], hr_lt⟩
   · -- montgomery branch: mod_pow_mont
     have hbf : b_spec = false := Bool.not_eq_true b_spec |>.mp hspec
