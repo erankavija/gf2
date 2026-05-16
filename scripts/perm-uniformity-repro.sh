@@ -30,13 +30,12 @@
 #   wall-clock measurements and vary run-to-run; they are excluded from the
 #   determinism check below.
 #
-# Criterion 3 vs 4 tension:
-#   Criterion 3 ("same seed -> bit-identical CSV") and criterion 4 (CSV MUST
-#   contain mean_us_perm, mean_us_det wall-clock columns) are in tension.
-#   Resolution: statistical columns (1-9) are bit-identical; timing columns
-#   (10-11) vary by wall-clock.  The sha256 below hashes only columns 1-9.
-#   This needs a lead/user ruling on whether criterion 3 is satisfied by
-#   statistical-column identity alone or requires full-file identity.
+# Criterion 3 (resolved, user-approved 2026-05-16):
+#   Criterion 3 was amended (issue 8e4e19a0 Amendments §2, user sign-off) to
+#   scope the bit-identical guarantee to the statistical columns (1-9) only;
+#   the wall-clock timing columns (10-11) required by criterion 4 are
+#   inherently nondeterministic and explicitly excluded. The sha256 below
+#   hashes only columns 1-9, which is exactly the approved guarantee.
 
 set -euo pipefail
 
