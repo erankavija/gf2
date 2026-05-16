@@ -98,16 +98,21 @@ echo ""
 echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
 #
 # Extract gf2-algebra::packed::bipedal3 for the D2 bipedal F_3 correctness
-# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md).
-# Everything else in the crate is opaque — the proofs target only the
-# inherent Bipedal3::{add,sub,mul,neg}_inherent wrappers. gf2_core::* is
-# opaque too: the bipedal3 arithmetic does not reach into Fp / FiniteField
-# machinery at runtime, but Charon would otherwise transitively extract
-# those trait impls and surface unresolvable recursive defaults.
+# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md)
+# and gf2-algebra::packed::packed5 for the D5 F_5 correctness proof (JIT
+# issue 30e98ef1; sketch at dev/plans/d5_lean_packed5_sketch.md). The `f5`
+# feature is enabled so the `#[cfg(feature = "f5")]`-gated packed5 module is
+# compiled into the LLBC. Everything else in the crate is opaque — the
+# proofs target only the inherent {Bipedal3,Packed5}::{add,sub,mul,neg}_inherent
+# wrappers. gf2_core::* is opaque too: the bipedal3 / packed5 arithmetic does
+# not reach into Fp / FiniteField machinery at runtime, but Charon would
+# otherwise transitively extract those trait impls and surface unresolvable
+# recursive defaults.
 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_algebra::packed::bipedal3' \
+  --start-from 'gf2_algebra::packed::packed5' \
   --start-from 'gf2_algebra::permanent::ryser_fp3::permanent_ryser_fp3' \
   --start-from 'gf2_algebra::gray::gray_code_iter' \
   --start-from 'gf2_algebra::gray::gray_code_index_to_subset' \
@@ -117,7 +122,6 @@ charon cargo \
   --opaque 'gf2_algebra::permanent::reference' \
   --opaque 'gf2_algebra::permanent::parallel_bipedal3' \
   --opaque 'gf2_algebra::packed::scalar' \
-  --opaque 'gf2_algebra::packed::packed5' \
   --opaque 'gf2_algebra::packed::packed7' \
   --opaque 'gf2_algebra::testutil' \
   --opaque 'gf2_core::gfp' \
@@ -135,7 +139,7 @@ charon cargo \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
   --dest-file "$LLBC_FILE_ALGEBRA" \
-  -- --manifest-path "$REPO_ROOT/crates/gf2-algebra/Cargo.toml" --no-default-features
+  -- --manifest-path "$REPO_ROOT/crates/gf2-algebra/Cargo.toml" --no-default-features --features f5
 
 if [ ! -f "$LLBC_FILE_ALGEBRA" ]; then
   echo "ERROR: Charon did not produce $LLBC_FILE_ALGEBRA"
