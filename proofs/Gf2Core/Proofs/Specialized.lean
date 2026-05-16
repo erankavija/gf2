@@ -485,4 +485,241 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
     rw [Nat.mod_eq_of_lt hsub_lt] at hcong
     rw [hcong, hrv_cong]
 
+/-! ## §7 — 128-bit Mersenne reducer (`N ≥ 61` branch)
+
+`dispatch_mersenne_mul` uses `mersenne_reduce 61` for the n=61 Mersenne
+prime. The `N ≥ 61` arm folds three `N`-bit limbs (`2^N ≡ 1`). -/
+
+/-- Three-limb Mersenne fold preserves residue mod `2^N − 1`. -/
+theorem mersenne_fold3_mod (lo mid hi N : ℕ) (hN : 2 ≤ N)
+    (x : ℕ) (hx : x = hi * 2 ^ (2 * N) + mid * 2 ^ N + lo) :
+    (lo + mid + hi) % (2 ^ N - 1) = x % (2 ^ N - 1) := by
+  have hpos : 0 < (2 : ℕ) ^ N := by positivity
+  have hmod : (2 : ℕ) ^ N % (2 ^ N - 1) = 1 := by
+    have hpow : (2 : ℕ) ^ N = (2 ^ N - 1) + 1 :=
+      (Nat.succ_pred_eq_of_pos hpos).symm
+    nth_rewrite 1 [hpow]
+    have h4le : (4 : ℕ) ≤ 2 ^ N := by
+      calc (4:ℕ) = 2 ^ 2 := by norm_num
+        _ ≤ 2 ^ N := Nat.pow_le_pow_right (by norm_num) hN
+    rw [Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
+  have hme : Nat.ModEq (2 ^ N - 1) (2 ^ N) 1 := by
+    unfold Nat.ModEq; rw [hmod]
+    have h4le : (4 : ℕ) ≤ 2 ^ N := by
+      calc (4:ℕ) = 2 ^ 2 := by norm_num
+        _ ≤ 2 ^ N := Nat.pow_le_pow_right (by norm_num) hN
+    exact (Nat.mod_eq_of_lt (by omega)).symm
+  have hme2 : Nat.ModEq (2 ^ N - 1) (2 ^ (2 * N)) 1 := by
+    have : (2 : ℕ) ^ (2 * N) = (2 ^ N) * (2 ^ N) := by
+      rw [← pow_add]; ring_nf
+    rw [this]
+    calc 2 ^ N * 2 ^ N ≡ 1 * 1 [MOD 2 ^ N - 1] := Nat.ModEq.mul hme hme
+      _ = 1 := by ring
+  subst hx
+  calc (lo + mid + hi) % (2 ^ N - 1)
+      = (hi + mid + lo) % (2 ^ N - 1) := by ring_nf
+    _ = (hi * 1 + mid * 1 + lo) % (2 ^ N - 1) := by ring_nf
+    _ = (hi * 2 ^ (2 * N) + mid * 2 ^ N + lo) % (2 ^ N - 1) := by
+          have e1 := (Nat.ModEq.mul_left hi hme2)
+          have e2 := (Nat.ModEq.mul_left mid hme)
+          have : Nat.ModEq (2 ^ N - 1)
+              (hi * 1 + mid * 1 + lo) (hi * 2 ^ (2 * N) + mid * 2 ^ N + lo) :=
+            (Nat.ModEq.add_right lo (Nat.ModEq.add e1.symm e2.symm))
+          exact this
+
+/-- `mersenne_reduce N x` (the `N ≥ 61` arm) computes `x % (2^N − 1)`
+    for `61 ≤ N ≤ 62` and `x < 2^(2N)` (true for products of two
+    `< 2^N` operands; then the high limb is `0`). -/
+theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
+    (hN61 : 61 ≤ N.val) (hN62 : N.val ≤ 62) (hx : x.val < 2 ^ (2 * N.val)) :
+    ∃ r, gfp.specialized.mersenne_reduce N x = ok r ∧
+      r.val = x.val % (2 ^ N.val - 1) := by
+  have hNlt64 : N.val < 64 := by omega
+  have hNlt128 : N.val < 128 := by omega
+  have h2Nlt128 : 2 * N.val < 128 := by omega
+  have hp_pos : 0 < 2 ^ N.val - 1 := by
+    have : 2 ^ 4 ≤ 2 ^ N.val := Nat.pow_le_pow_right (by norm_num) (by omega)
+    omega
+  apply spec_imp_exists
+  unfold gfp.specialized.mersenne_reduce
+  -- debug_assert_n_in_range N : massert (4 ≤ N) ; massert (N ≤ 62)
+  have ha1 : (N ≥ 4#u32) := by
+    show (4#u32 : Std.U32).val ≤ N.val
+    have : (4#u32 : Std.U32).val = 4 := by native_decide
+    omega
+  have ha2 : (N ≤ 62#u32) := by
+    show N.val ≤ (62#u32 : Std.U32).val
+    have : (62#u32 : Std.U32).val = 62 := by native_decide
+    omega
+  have hdbg : gfp.specialized.debug_assert_n_in_range N = ok () := by
+    simp only [gfp.specialized.debug_assert_n_in_range, massert,
+               if_pos ha1, if_pos ha2, bind_tc_ok]
+  rw [hdbg]
+  simp only [bind_tc_ok, lift]
+  -- pw = 1 <<< N = 2^N
+  progress as ⟨pw, hpw_val, _⟩
+  have hpw : pw.val = 2 ^ N.val := by
+    rw [hpw_val, Nat.one_shiftLeft, U64.size_eq]
+    exact Nat.mod_eq_of_lt (by
+      have : 2 ^ N.val < 2 ^ 64 := Nat.pow_lt_pow_right (by norm_num) hNlt64
+      omega)
+  have hpw_ge1 : (1#u64 : Std.U64).val ≤ pw.val := by
+    have h1 : (1#u64 : Std.U64).val = 1 := by native_decide
+    rw [h1, hpw]; exact Nat.one_le_two_pow
+  obtain ⟨p, hp_eq, hp_val, _⟩ := spec_imp_exists (UScalar.sub_spec hpw_ge1)
+  simp only [hp_eq, bind_tc_ok]
+  have hp : p.val = 2 ^ N.val - 1 := by
+    rw [hp_val, hpw]
+    have h1 : (1#u64 : Std.U64).val = 1 := by native_decide
+    rw [h1]
+  -- N ≥ 61 branch
+  have hN61b : (N ≥ 61#u32) := by
+    show (61#u32 : Std.U32).val ≤ N.val
+    have : (61#u32 : Std.U32).val = 61 := by native_decide
+    omega
+  simp only [hN61b, if_true]
+  -- lo = (cast U64 x) & p = x % 2^N
+  have hcastx : (UScalar.cast .U64 x : Std.U64).val = x.val % 2 ^ 64 := by
+    rw [UScalar.cast_val_eq]; norm_num
+  have hlo : ((UScalar.cast .U64 x : Std.U64) &&& p).val = x.val % 2 ^ N.val := by
+    rw [UScalar.val_and, hp, and_mask_mod, hcastx,
+        Nat.mod_mod_of_dvd _ (pow_dvd_pow 2 (by omega : N.val ≤ 64))]
+  -- i2 = x >>> N
+  progress as ⟨i2, hi2_val, _⟩
+  have hi2 : i2.val = x.val / 2 ^ N.val := by
+    rw [hi2_val, Nat.shiftRight_eq_div_pow]
+  -- mid = (cast U64 i2) & p = (x / 2^N) % 2^N
+  have hmid : ((UScalar.cast .U64 i2 : Std.U64) &&& p).val =
+      (x.val / 2 ^ N.val) % 2 ^ N.val := by
+    rw [UScalar.val_and, hp, and_mask_mod, UScalar.cast_val_eq, hi2]
+    have hdvd : (2:ℕ) ^ N.val ∣ 2 ^ 64 := pow_dvd_pow 2 (by omega : N.val ≤ 64)
+    have : (2:ℕ) ^ UScalarTy.U64.numBits = 2 ^ 64 := by norm_num
+    rw [this, Nat.mod_mod_of_dvd _ hdvd]
+  -- i4 = 2 * N (u32)
+  progress as ⟨tn, htn⟩
+  have htn_val : tn.val = 2 * N.val := by
+    have h2 : (2#u32 : Std.U32).val = 2 := by native_decide
+    omega
+  -- i5 = x >>> (2N)
+  progress as ⟨i5, hi5_val, _⟩
+  have hi5 : i5.val = x.val / 2 ^ (2 * N.val) := by
+    rw [hi5_val, Nat.shiftRight_eq_div_pow, htn_val]
+  -- hi = cast U64 i5 = x / 2^(2N) = 0  (x < 2^(2N))
+  have hhi : (UScalar.cast .U64 i5 : Std.U64).val = 0 := by
+    rw [UScalar.cast_val_eq, hi5]
+    have : x.val / 2 ^ (2 * N.val) = 0 := Nat.div_eq_of_lt hx
+    rw [this]; norm_num
+  set lo := (UScalar.cast .U64 x : Std.U64) &&& p with hlo_def
+  set mid := (UScalar.cast .U64 i2 : Std.U64) &&& p with hmid_def
+  set hi := (UScalar.cast .U64 i5 : Std.U64) with hhi_def
+  -- s1 = wrapping_add (wrapping_add lo mid) hi
+  have hlo_lt : lo.val < 2 ^ N.val := by rw [hlo]; exact Nat.mod_lt _ (by positivity)
+  have hmid_lt : mid.val < 2 ^ N.val := by
+    rw [hmid]; exact Nat.mod_lt _ (by positivity)
+  have hi6_no_ovf : lo.val + mid.val < 2 ^ 64 := by
+    have : 2 ^ N.val ≤ 2 ^ 62 := Nat.pow_le_pow_right (by norm_num) hN62
+    omega
+  have hi6 : (core.num.U64.wrapping_add lo mid).val = lo.val + mid.val := by
+    rw [core.num.U64.wrapping_add_val_eq, UScalar.size_UScalarTyU64, U64.size_eq,
+        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
+        Nat.mod_eq_of_lt hi6_no_ovf]
+  set i6 := core.num.U64.wrapping_add lo mid with hi6_def
+  have hs1_no_ovf : i6.val + hi.val < 2 ^ 64 := by
+    rw [hi6, hhi]; omega
+  have hs1 : (core.num.U64.wrapping_add i6 hi).val = lo.val + mid.val + hi.val := by
+    rw [core.num.U64.wrapping_add_val_eq, UScalar.size_UScalarTyU64, U64.size_eq,
+        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
+        Nat.mod_eq_of_lt hs1_no_ovf, hi6]
+  set s1 := core.num.U64.wrapping_add i6 hi with hs1_def
+  set s1v := lo.val + mid.val + hi.val with hs1v_def
+  -- s1v ≡ x (mod 2^N-1)
+  have hs1_cong : s1v % (2 ^ N.val - 1) = x.val % (2 ^ N.val - 1) := by
+    have hpow : 2 ^ (2 * N.val) = 2 ^ N.val * 2 ^ N.val := by
+      rw [← pow_add]; ring_nf
+    have hhi0 : x.val / 2 ^ (2 * N.val) = 0 := Nat.div_eq_of_lt hx
+    have hxdiv_lt : x.val / 2 ^ N.val < 2 ^ N.val := by
+      apply Nat.div_lt_of_lt_mul; rw [← hpow]; exact hx
+    have hxsplit : x.val = (x.val / 2 ^ (2 * N.val)) * 2 ^ (2 * N.val)
+        + (x.val / 2 ^ N.val % 2 ^ N.val) * 2 ^ N.val + x.val % 2 ^ N.val := by
+      have hd1 := Nat.div_add_mod x.val (2 ^ N.val)
+      rw [hhi0, Nat.zero_mul, Nat.zero_add, Nat.mod_eq_of_lt hxdiv_lt]
+      -- x = (x/2^N)*2^N + x%2^N  (Nat.div_add_mod, rearranged)
+      have : 2 ^ N.val * (x.val / 2 ^ N.val) + x.val % 2 ^ N.val = x.val := hd1
+      calc x.val = 2 ^ N.val * (x.val / 2 ^ N.val) + x.val % 2 ^ N.val := this.symm
+        _ = x.val / 2 ^ N.val * 2 ^ N.val + x.val % 2 ^ N.val := by ring
+    have hfold := mersenne_fold3_mod (x.val % 2 ^ N.val)
+      (x.val / 2 ^ N.val % 2 ^ N.val) (x.val / 2 ^ (2 * N.val)) N.val
+      (by omega) x.val hxsplit
+    rw [hhi0] at hfold
+    rw [hs1v_def, hlo, hmid, hhi]
+    exact hfold
+  -- i7 = s1 & p = s1v % 2^N ; i8 = s1 >>> N = s1v / 2^N
+  have hi7 : (s1 &&& p).val = s1v % 2 ^ N.val := by
+    rw [UScalar.val_and, hp, and_mask_mod, hs1]
+  progress as ⟨i8, hi8_val, _⟩
+  have hi8 : i8.val = s1v / 2 ^ N.val := by
+    rw [hi8_val, Nat.shiftRight_eq_div_pow, hs1]
+  -- s1v < 3·2^N so s1v / 2^N ≤ 2
+  have hs1v_lt : s1v < 3 * 2 ^ N.val := by
+    rw [hs1v_def, hhi]; omega
+  have hi8_le2 : s1v / 2 ^ N.val ≤ 2 := by
+    apply Nat.le_of_lt_succ
+    apply Nat.div_lt_of_lt_mul
+    calc s1v < 3 * 2 ^ N.val := hs1v_lt
+      _ = 2 ^ N.val * 3 := by ring
+  -- r = wrapping_add i7 i8
+  have hi7v_lt : s1v % 2 ^ N.val < 2 ^ N.val := Nat.mod_lt _ (by positivity)
+  have hr_no_ovf : s1v % 2 ^ N.val + s1v / 2 ^ N.val < 2 ^ 64 := by
+    have : 2 ^ N.val ≤ 2 ^ 62 := Nat.pow_le_pow_right (by norm_num) hN62
+    omega
+  set rv := s1v % 2 ^ N.val + s1v / 2 ^ N.val with hrv_def
+  have hr : (core.num.U64.wrapping_add (s1 &&& p) i8).val = rv := by
+    rw [core.num.U64.wrapping_add_val_eq, hi7, hi8, ← hrv_def,
+        UScalar.size_UScalarTyU64, U64.size_eq,
+        show (18446744073709551616 : ℕ) = 2 ^ 64 from by norm_num,
+        Nat.mod_eq_of_lt hr_no_ovf]
+  set r := core.num.U64.wrapping_add (s1 &&& p) i8 with hr_def
+  have hrv_cong : rv % (2 ^ N.val - 1) = x.val % (2 ^ N.val - 1) := by
+    rw [hrv_def]
+    calc (s1v % 2 ^ N.val + s1v / 2 ^ N.val) % (2 ^ N.val - 1)
+        = s1v % (2 ^ N.val - 1) := mersenne_fold_mod s1v N.val (by omega)
+      _ = x.val % (2 ^ N.val - 1) := hs1_cong
+  have hrv_lt : rv < 2 ^ N.val + 2 := by
+    rw [hrv_def]; omega
+  have hr_val : r.val = rv := hr
+  -- overflowing_sub r p tail
+  have htail : (do
+      let (sub, borrow) ← core.num.U64.overflowing_sub r p
+      if borrow then ok r else ok sub)
+      = ok (if r.val < p.val then r else (⟨r.bv - p.bv⟩ : Std.U64)) := by
+    simp only [core.num.U64.overflowing_sub, bind_tc_ok]
+    by_cases hb : r.val < p.val
+    · simp [hb]
+    · simp [hb]
+  rw [htail]
+  by_cases hb : r.val < p.val
+  · simp only [hb, if_true, spec, theta, wp_return]
+    rw [hr_val] at hb ⊢
+    rw [hp] at hb
+    rw [← hrv_cong, Nat.mod_eq_of_lt hb]
+  · simp only [hb, if_false, spec, theta, wp_return]
+    push_neg at hb
+    have hple : p.val ≤ r.val := hb
+    have hsub_val : (⟨r.bv - p.bv⟩ : Std.U64).val = r.val - p.val := by
+      show (r.bv - p.bv).toNat = r.val - p.val
+      exact BitVec.toNat_sub_of_le (show p.bv.toNat ≤ r.bv.toNat from hple)
+    rw [hsub_val, hr_val, hp]
+    rw [hr_val, hp] at hb
+    have h16 : (16 : ℕ) ≤ 2 ^ N.val := by
+      calc (16:ℕ) = 2 ^ 4 := by norm_num
+        _ ≤ 2 ^ N.val := Nat.pow_le_pow_right (by norm_num) (by omega)
+    have hsub_lt : rv - (2 ^ N.val - 1) < 2 ^ N.val - 1 := by
+      have := hrv_lt; omega
+    have hcong : (rv - (2 ^ N.val - 1)) % (2 ^ N.val - 1) =
+        rv % (2 ^ N.val - 1) := by
+      conv_rhs => rw [show rv = (rv - (2 ^ N.val - 1)) + (2 ^ N.val - 1) from by omega]
+      rw [Nat.add_mod_right]
+    rw [Nat.mod_eq_of_lt hsub_lt] at hcong
+    rw [hcong, hrv_cong]
+
 end Specialized
