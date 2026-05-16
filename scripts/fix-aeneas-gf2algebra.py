@@ -157,6 +157,63 @@ def fixup_funs(path: str) -> None:
         )
 
     # ------------------------------------------------------------------
+    # 3b) Axiomatise the malformed `slice::iter::IterMut` Iterator
+    #     trait-impl instance.
+    #
+    #     The D6 packed7 extraction (`--features f5,f7`, JIT 30e98ef1)
+    #     pulls in `Packed7Vec`'s `add_assign`/`sub_assign`/`mul_assign`/
+    #     `neg_assign`, which iterate `self.words.iter_mut()`. That makes
+    #     Charon emit a `core::slice::iter::IterMut` `Iterator` trait
+    #     instance. Identical malformation to the `Zip` case above:
+    #     Charon generates the record with fields `next / zip / map /
+    #     enumerate / collect / all`, but the Aeneas Lean stdlib
+    #     `Iterator` structure (`backends/lean/Aeneas/Std/Core/Iter.lean`)
+    #     has exactly four fields `next / step_by / enumerate / take`, so
+    #     Lean rejects the record (`zip is not a field of structure …
+    #     Iterator`, `Fields missing: step_by, take`), and the
+    #     `…IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.{zip,map,
+    #     collect,all}` helper bodies are never even defined.
+    #
+    #     `Packed7Vec` (like `Packed5Vec`) is explicitly out of D5/D6
+    #     scope (`dev/plans/d6_lean_packed7_sketch.md` §7); the proofs
+    #     target only the `Packed7::{add,sub,mul,neg}_inherent` element
+    #     ops and never project this `IterMut` instance (it is referenced
+    #     nowhere outside its own malformed body / the out-of-scope
+    #     `Packed{5,7}Vec` ops). Replacing the whole `def … := { … }`
+    #     block with an `axiom` of the same declared signature eliminates
+    #     the build error without losing anything the proofs use — the
+    #     identical R5/R6 unreachable-artefact-axiomatisation pattern as
+    #     the gf2_core `Fp` trait-impls and the `Zip` instance above.
+    #     This is the D6 §7 anticipated, out-of-scope-but-necessary
+    #     post-process extension (the f7 `Packed7Vec` analogue of the
+    #     D5 Packed5Vec `Zip` artefact).
+    # ------------------------------------------------------------------
+    itermut_inst_re = re.compile(
+        r"@\[reducible, rust_trait_impl\s*\n"
+        r'\s*"core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<\'a, @T>, &\'a mut @T>"\]\s*\n'
+        r"def (core\.slice\.iter\.IterMut\.Insts\.CoreIterTraitsIteratorIteratorMutAT) "
+        r"(\(T :\s*\n"
+        r"  Type\)) : (core\.iter\.traits\.iterator\.Iterator \(core\.slice\.iter\.IterMut T\) T) := \{[\s\S]*?\n\}\n",
+        re.MULTILINE,
+    )
+
+    def replace_itermut_inst(m: "re.Match[str]") -> str:
+        name = m.group(1)
+        binders = m.group(2)
+        sig = m.group(3)
+        return (
+            "@[rust_trait_impl\n"
+            "  \"core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>\"]\n"
+            f"axiom {name} {binders} :\n  {sig}\n"
+        )
+
+    text, nim = itermut_inst_re.subn(replace_itermut_inst, text)
+    if nim != 1:
+        raise SystemExit(
+            f"fix-aeneas-gf2algebra: expected exactly one IterMut Iterator instance, got {nim}"
+        )
+
+    # ------------------------------------------------------------------
     # 4) Remove the no-arg axiom-equivalent `def gf2_core.gfp.Fp.Insts.
     #    CoreCloneClone.clone` style body defs — these are referenced only
     #    by the trait impls above (now axioms), so they are unreachable.

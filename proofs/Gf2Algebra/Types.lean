@@ -295,4 +295,63 @@ def packed.packed5.Packed5Matrix.from_row_major.closure.closure :=
 def packed.packed5.Packed5Matrix.from_row_major.closure :=
   Std.Usize × Slice (gf2_core.gfp.Fp 5#u64) × Std.Usize
 
+/-- [gf2_algebra::packed::packed7::Packed7]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 211:0-213:1
+    Visibility: public -/
+structure packed.packed7.Packed7 where
+  w : Std.U64
+
+/-- [gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7}::to_array::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 302:29-302:45 -/
+@[reducible]
+def packed.packed7.Packed7.to_array.closure := packed.packed7.Packed7
+
+/-- [gf2_algebra::packed::packed7::Packed7Vec]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 866:0-869:1
+    Visibility: public -/
+structure packed.packed7.Packed7Vec where
+  words : alloc.vec.Vec Std.U64
+  len_lanes : Std.Usize
+
+/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Vec}::fmt::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1042:17-1046:13 -/
+@[reducible]
+def packed.packed7.DebugPacked7Vec.fmt.closure := packed.packed7.Packed7Vec
+
+/-- [gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::all_zero::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1294:30-1294:41 -/
+@[reducible]
+def packed.packed7.PackedFieldVecPacked7VecFp7Packed7U64U128U64U128.all_zero.closure
+  :=
+Unit
+
+/-- [gf2_algebra::packed::packed7::Packed7Matrix]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1345:0-1350:1
+    Visibility: public -/
+structure packed.packed7.Packed7Matrix where
+  columns : alloc.vec.Vec packed.packed7.Packed7Vec
+  rows : Std.Usize
+  cols : Std.Usize
+
+/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1399:25-1399:59 -/
+def packed.packed7.DebugPacked7Matrix.fmt.closure.closure :=
+  packed.packed7.Packed7Matrix × Std.Usize
+
+/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1397:17-1401:13 -/
+@[reducible]
+def packed.packed7.DebugPacked7Matrix.fmt.closure :=
+  packed.packed7.Packed7Matrix
+
+/-- [gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::closure::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1459:57-1459:79 -/
+def packed.packed7.Packed7Matrix.from_row_major.closure.closure :=
+  Slice (gf2_core.gfp.Fp 7#u64) × Std.Usize × Std.Usize
+
+/-- [gf2_algebra::packed::packed7::{gf2_algebra::packed::packed7::Packed7Matrix}::from_row_major::closure]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1458:17-1461:13 -/
+def packed.packed7.Packed7Matrix.from_row_major.closure :=
+  Std.Usize × Slice (gf2_core.gfp.Fp 7#u64) × Std.Usize
+
 end gf2_algebra
