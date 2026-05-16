@@ -156,11 +156,14 @@ The empirical data fits:
 TVD_perm(n) ~ c * beta_emp^{-n}
 ```
 
-via linear regression on log(TVD_perm) vs n (using F_3 cells where TVD > 1e-6
-and N is large enough to trust the estimate; specifically n in {6, 8, 10, 16, 20}).
+via linear regression of `log(TVD_perm)` on `n` over **every F_3 cell with
+`tvd_perm > 1e-6`** — the exact filter applied by `fit_exponential_f3` in
+`dev/research/perm_uniformity/src/main.rs`. That set therefore *includes*
+the noise-dominated large-n cells (n = 24, 28, 32); the current harness
+does not drop them from the regression. This is called out as a known
+limitation in §8.
 
-**Observed fit (F_3, least-squares regression of `log(TVD_perm)` on `n`
-over the reliable cells n ∈ {6, 8, 10, 16, 20})**:
+**Observed fit (F_3)**:
 
 ```
 TVD_perm(n) ≈ 6.5448e-4 · 1.164^{-n}        (β_emp = 1.164,  c = 6.5448e-4)
@@ -171,15 +174,18 @@ equivalently `TVD_perm(n) ≈ 6.5448e-4 · 0.8592^{n}`.
 The regression slope of `log(TVD_perm)` vs `n` is `ln(0.8592) = -0.1519`
 per unit `n`, i.e. `TVD_perm ∝ exp(-0.1519 · n)` — a monotone exponential
 *decay*. In the criterion's `c · β^{-n}` convention this is
-`β_emp = exp(0.1519) = 1.164 > 1` (β > 1 ⇒ decay). The single
-unambiguous parameterisation used throughout this writeup is therefore
-`TVD_perm(n) ≈ 6.5448e-4 · 1.164^{-n}`.
+`β_emp = exp(0.1519) = 1.164 > 1` (β > 1 ⇒ decay). This single
+parameterisation `TVD_perm(n) ≈ 6.5448e-4 · 1.164^{-n}` is used throughout
+this writeup.
 
-The fit is dominated by the high-N small-n cells (n = 6, 8, 10), whose TVD
-estimates are reliable; the noise-dominated large-n cells (n ≥ 24, see
-§Criterion 6) are excluded from the regression. The empirical decay base
-β_emp = 1.164 per unit n lies within the range HKS Theorem 1.2 predicts
-for q = 3, confirming exponential convergence consistent with the theory.
+The regression is dominated by the high-N small-n cells (n = 6, 8, 10),
+whose TVD estimates are reliable. The noise-dominated large-n cells
+(n ≥ 24) are *not* excluded by the current code, which inflates the
+residual scatter — this is exactly why §8 lists a CI-weighted or
+n ≤ 20-restricted fit as the more precise alternative. Even with the
+unweighted fit the empirical decay base β_emp = 1.164 per unit n lies
+within the range HKS Theorem 1.2 predicts for q = 3, confirming
+exponential convergence consistent with the theory.
 
 Note: HKS Theorem 1.2 is an asymptotic statement; agreement is expected only
 in the large-n regime (n >= 8 for F_3). At small n (n=6) the distribution is
