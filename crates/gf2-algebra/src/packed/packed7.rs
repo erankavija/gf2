@@ -482,6 +482,99 @@ impl Packed7 {
 }
 
 // ---------------------------------------------------------------------------
+// Inherent arithmetic wrappers (proof targets for D6 / JIT 30e98ef1).
+//
+// These methods delegate verbatim to the `PackedField<Fp<7>>` trait impl
+// below; they exist so the Charon/Aeneas verification pipeline can prove
+// `Packed7` F_7 correctness against a fixed inherent surface that is not
+// affected by trait-dispatch indirection. There is no algorithmic
+// divergence between the inherent and trait paths — the inherent body is a
+// single tail call into the trait method, which Rust inlines away.
+//
+// Per `dev/plans/d6_lean_packed7_sketch.md` §4, the Lean proof file
+// `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` targets these inherent
+// methods (verbatim adaptation of the `packed5.rs:326-401` pattern, itself
+// adapted from `bipedal3.rs`).
+// ---------------------------------------------------------------------------
+
+impl Packed7 {
+    /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<7>>>::add`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// LUT-driven formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed7, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
+    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
+    /// assert_eq!(Packed7::add_inherent(a, b).lane(0), Fp::<7>::new(1));
+    /// ```
+    #[inline]
+    pub fn add_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<7>>>::add(self, rhs)
+    }
+
+    /// Inherent `sub` wrapper — delegates to `<Self as PackedField<Fp<7>>>::sub`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// LUT-driven formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed7, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(2));
+    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(5));
+    /// assert_eq!(Packed7::sub_inherent(a, b).lane(0), Fp::<7>::new(4));
+    /// ```
+    #[inline]
+    pub fn sub_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<7>>>::sub(self, rhs)
+    }
+
+    /// Inherent `mul` wrapper — delegates to `<Self as PackedField<Fp<7>>>::mul`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// LUT-driven formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed7, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
+    /// let b = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(3));
+    /// assert_eq!(Packed7::mul_inherent(a, b).lane(0), Fp::<7>::new(2));
+    /// ```
+    #[inline]
+    pub fn mul_inherent(self, rhs: Self) -> Self {
+        <Self as PackedField<Fp<7>>>::mul(self, rhs)
+    }
+
+    /// Inherent `neg` wrapper — delegates to `<Self as PackedField<Fp<7>>>::neg`.
+    ///
+    /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
+    /// LUT-driven formula lives in the trait impl below.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_algebra::packed::{Packed7, PackedField};
+    /// use gf2_core::gfp::Fp;
+    /// let a = <Packed7 as PackedField<Fp<7>>>::splat(Fp::<7>::new(1));
+    /// assert_eq!(Packed7::neg_inherent(a).lane(0), Fp::<7>::new(6));
+    /// ```
+    #[inline]
+    pub fn neg_inherent(self) -> Self {
+        <Self as PackedField<Fp<7>>>::neg(self)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // PackedField<Fp<7>> for Packed7
 // ---------------------------------------------------------------------------
 
@@ -1597,6 +1690,80 @@ mod tests {
             scalar_mul(4, 5) as u8,
             "mul high nibble (4*5=20%7=6)"
         );
+    }
+
+    // -----------------------------------------------------------------------
+    // Exhaustive LUT-contract cross-validation for the D6 Path-B Lean axioms.
+    //
+    // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` axiomatises the
+    // contents of `ADD_LUT` / `SUB_LUT` / `MUL_LUT` (Path B,
+    // `dev/plans/d6_lean_packed7_sketch.md` §4.3). Per sketch §6 R4, those
+    // axioms are *trusted because exhaustively tested in Rust*: each Lean
+    // axiom states exactly the contract checked below over every one of the
+    // 65536 keys, so axiom ⟺ tested-Rust-contract is mechanically checkable.
+    //
+    // Contract (transcribed verbatim from `build_{add,sub,mul}_lut`):
+    //   key = (b_byte << 8) | a_byte,  a0 = key&0xf,  a1 = (key>>4)&0xf,
+    //   b0 = (key>>8)&0xf,  b1 = (key>>12)&0xf.
+    //   If a0<7 && a1<7 && b0<7 && b1<7:
+    //     ADD_LUT[key] = ((a0+b0)%7)     | (((a1+b1)%7)     << 4)
+    //     SUB_LUT[key] = ((a0+7-b0)%7)   | (((a1+7-b1)%7)   << 4)
+    //     MUL_LUT[key] = ((a0*b0)%7)     | (((a1*b1)%7)     << 4)
+    //   else: 0  (array zero-init; the `if` guard is not taken).
+    // -----------------------------------------------------------------------
+
+    /// Exhaustive cross-validation of `ADD_LUT` against the exact contract the
+    /// Lean `add_lut_spec` axiom (D6 Path B) transcribes.
+    #[test]
+    fn test_add_lut_contract_exhaustive() {
+        for (key, &got) in ADD_LUT.iter().enumerate() {
+            let a0 = (key & 0xf) as u64;
+            let a1 = ((key >> 4) & 0xf) as u64;
+            let b0 = ((key >> 8) & 0xf) as u64;
+            let b1 = ((key >> 12) & 0xf) as u64;
+            let expected: u8 = if a0 < 7 && a1 < 7 && b0 < 7 && b1 < 7 {
+                (((a0 + b0) % 7) | (((a1 + b1) % 7) << 4)) as u8
+            } else {
+                0
+            };
+            assert_eq!(got, expected, "ADD_LUT[{key:#06x}]");
+        }
+    }
+
+    /// Exhaustive cross-validation of `SUB_LUT` against the exact contract the
+    /// Lean `sub_lut_spec` axiom (D6 Path B) transcribes.
+    #[test]
+    fn test_sub_lut_contract_exhaustive() {
+        for (key, &got) in SUB_LUT.iter().enumerate() {
+            let a0 = (key & 0xf) as u64;
+            let a1 = ((key >> 4) & 0xf) as u64;
+            let b0 = ((key >> 8) & 0xf) as u64;
+            let b1 = ((key >> 12) & 0xf) as u64;
+            let expected: u8 = if a0 < 7 && a1 < 7 && b0 < 7 && b1 < 7 {
+                (((a0 + 7 - b0) % 7) | (((a1 + 7 - b1) % 7) << 4)) as u8
+            } else {
+                0
+            };
+            assert_eq!(got, expected, "SUB_LUT[{key:#06x}]");
+        }
+    }
+
+    /// Exhaustive cross-validation of `MUL_LUT` against the exact contract the
+    /// Lean `mul_lut_spec` axiom (D6 Path B) transcribes.
+    #[test]
+    fn test_mul_lut_contract_exhaustive() {
+        for (key, &got) in MUL_LUT.iter().enumerate() {
+            let a0 = (key & 0xf) as u64;
+            let a1 = ((key >> 4) & 0xf) as u64;
+            let b0 = ((key >> 8) & 0xf) as u64;
+            let b1 = ((key >> 12) & 0xf) as u64;
+            let expected: u8 = if a0 < 7 && a1 < 7 && b0 < 7 && b1 < 7 {
+                (((a0 * b0) % 7) | (((a1 * b1) % 7) << 4)) as u8
+            } else {
+                0
+            };
+            assert_eq!(got, expected, "MUL_LUT[{key:#06x}]");
+        }
     }
 
     /// Non-canonical nibble inputs (≥ 7) produce 0 in the LUT.

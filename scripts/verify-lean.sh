@@ -98,31 +98,51 @@ echo ""
 echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
 #
 # Extract gf2-algebra::packed::bipedal3 for the D2 bipedal F_3 correctness
-# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md)
-# and gf2-algebra::packed::packed5 for the D5 F_5 correctness proof (JIT
-# issue 30e98ef1; sketch at dev/plans/d5_lean_packed5_sketch.md). The `f5`
-# feature is enabled so the `#[cfg(feature = "f5")]`-gated packed5 module is
-# compiled into the LLBC. Everything else in the crate is opaque — the
-# proofs target only the inherent {Bipedal3,Packed5}::{add,sub,mul,neg}_inherent
-# wrappers. gf2_core::* is opaque too: the bipedal3 / packed5 arithmetic does
-# not reach into Fp / FiniteField machinery at runtime, but Charon would
-# otherwise transitively extract those trait impls and surface unresolvable
-# recursive defaults.
+# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md),
+# gf2-algebra::packed::packed5 for the D5 F_5 correctness proof (JIT issue
+# 30e98ef1; sketch at dev/plans/d5_lean_packed5_sketch.md), and
+# gf2-algebra::packed::packed7 for the D6 F_7 correctness proof (JIT issue
+# 30e98ef1; sketch at dev/plans/d6_lean_packed7_sketch.md). The `f5` and
+# `f7` features are enabled so the `#[cfg(feature = "f5")]`-gated packed5 and
+# `#[cfg(feature = "f7")]`-gated packed7 modules are compiled into the LLBC.
+# Everything else in the crate is opaque — the proofs target only the
+# inherent {Bipedal3,Packed5,Packed7}::{add,sub,mul,neg}_inherent wrappers.
+#
+# D6 Path B (user-chosen 2026-05-16, sketch §4.3 / §8): the three packed7
+# 64 KiB compile-time LUTs are extracted as opaque external constants via
+# `--opaque 'gf2_algebra::packed::packed7::{ADD,SUB,MUL}_LUT'`. The Lean
+# proof axiomatises their contents with a source-faithful characterisation
+# cross-validated by the exhaustive Rust `test_*_lut_contract_exhaustive`
+# tests; `binary_op_word` + the four `*_correct` theorems are proved against
+# the production code path. This is the same `--opaque`/axiom mechanism the
+# pipeline already uses for the `gf2_core::gfp` instances. The `build_*_lut`
+# `const fn` initialisers are *not* extracted (Path A is out of scope).
+#
+# gf2_core::* is opaque too: the bipedal3 / packed5 / packed7 arithmetic
+# does not reach into Fp / FiniteField machinery at runtime, but Charon
+# would otherwise transitively extract those trait impls and surface
+# unresolvable recursive defaults.
 charon cargo \
   --preset aeneas \
   --rustc-arg=--cfg=verify_lean \
   --start-from 'gf2_algebra::packed::bipedal3' \
   --start-from 'gf2_algebra::packed::packed5' \
+  --start-from 'gf2_algebra::packed::packed7' \
   --start-from 'gf2_algebra::permanent::ryser_fp3::permanent_ryser_fp3' \
   --start-from 'gf2_algebra::gray::gray_code_iter' \
   --start-from 'gf2_algebra::gray::gray_code_index_to_subset' \
+  --opaque 'gf2_algebra::packed::packed7::ADD_LUT' \
+  --opaque 'gf2_algebra::packed::packed7::SUB_LUT' \
+  --opaque 'gf2_algebra::packed::packed7::MUL_LUT' \
+  --opaque 'gf2_algebra::packed::packed7::build_add_lut' \
+  --opaque 'gf2_algebra::packed::packed7::build_sub_lut' \
+  --opaque 'gf2_algebra::packed::packed7::build_mul_lut' \
   --opaque 'gf2_algebra::permanent::bipedal3' \
   --opaque 'gf2_algebra::permanent::bipedal3_multiword' \
   --opaque 'gf2_algebra::permanent::ryser' \
   --opaque 'gf2_algebra::permanent::reference' \
   --opaque 'gf2_algebra::permanent::parallel_bipedal3' \
   --opaque 'gf2_algebra::packed::scalar' \
-  --opaque 'gf2_algebra::packed::packed7' \
   --opaque 'gf2_algebra::testutil' \
   --opaque 'gf2_core::gfp' \
   --opaque 'gf2_core::gfpn' \
@@ -139,7 +159,7 @@ charon cargo \
   --opaque 'gf2_core::io' \
   --opaque 'gf2_core::macros' \
   --dest-file "$LLBC_FILE_ALGEBRA" \
-  -- --manifest-path "$REPO_ROOT/crates/gf2-algebra/Cargo.toml" --no-default-features --features f5
+  -- --manifest-path "$REPO_ROOT/crates/gf2-algebra/Cargo.toml" --no-default-features --features f5,f7
 
 if [ ! -f "$LLBC_FILE_ALGEBRA" ]; then
   echo "ERROR: Charon did not produce $LLBC_FILE_ALGEBRA"

@@ -25,6 +25,14 @@ axiom core.array.from_fn
   core.ops.function.FnMut F Std.Usize T) :
   F → Result (Array T N)
 
+/-- [core::cmp::impls::{core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
+    Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
+    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq]
+    Visibility: public -/
+@[rust_fun
+  "core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq"]
+axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
+
 /-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]:
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 132:4-132:76
     Name pattern: [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]
@@ -429,6 +437,69 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.zip
   core.slice.iter.Iter T → U → Result (core.iter.adapters.zip.Zip
     (core.slice.iter.Iter T) Clause0_IntoIter)
 
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::all]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 309:12-312:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::all]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::all"]
+axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.all
+  {T : Type} {F : Type} (opsfunctionFnMutFTupleMutATBoolInst :
+  core.ops.function.FnMut F T Bool) :
+  core.slice.iter.IterMut T → F → Result (Bool × (core.slice.iter.IterMut T) ×
+    (core.slice.iter.IterMut T → core.slice.iter.IterMut T))
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::collect]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::collect]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::collect"]
+axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.collect
+  {T : Type} {B : Type} (itertraitscollectFromIteratorBMutATInst :
+  core.iter.traits.collect.FromIterator B T) :
+  core.slice.iter.IterMut T → Result (B × (core.slice.iter.IterMut T))
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::enumerate]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::enumerate]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::enumerate"]
+axiom
+  core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.enumerate
+  {T : Type} :
+  core.slice.iter.IterMut T → Result ((core.iter.adapters.enumerate.Enumerate
+    (core.slice.iter.IterMut T)) × (core.iter.adapters.enumerate.Enumerate
+    (core.slice.iter.IterMut T) → core.slice.iter.IterMut T))
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::map]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::map]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::map"]
+axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.map
+  {T : Type} {B : Type} {F : Type} (opsfunctionFnMutFTupleMutATBInst :
+  core.ops.function.FnMut F T B) :
+  core.slice.iter.IterMut T → F → Result ((core.iter.adapters.map.Map
+    (core.slice.iter.IterMut T) F) × (core.iter.adapters.map.Map
+    (core.slice.iter.IterMut T) F → core.slice.iter.IterMut T))
+
+/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::zip]:
+    Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
+    Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::zip]
+    Visibility: public -/
+@[rust_fun
+  "core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::zip"]
+axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.zip
+  {T : Type} {U : Type} {Clause0_Item : Type} {Clause0_IntoIter : Type}
+  (itertraitscollectIntoIteratorInst : core.iter.traits.collect.IntoIterator U
+  Clause0_Item Clause0_IntoIter) :
+  core.slice.iter.IterMut T → U → Result ((core.iter.adapters.zip.Zip
+    (core.slice.iter.IterMut T) Clause0_IntoIter) × (core.iter.adapters.zip.Zip
+    (core.slice.iter.IterMut T) Clause0_IntoIter → core.slice.iter.IterMut T))
+
 /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
     Source: 'crates/gf2-core/src/field/traits.rs', lines 797:4-797:35
     Name pattern: [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
@@ -478,6 +549,15 @@ axiom gf2_core.gfp.Fp.Insts.CoreCloneClone.clone
   "gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::eq"]
 axiom gf2_core.gfp.Fp.Insts.CoreCmpPartialEqFp.eq
   {P : Std.U64} : gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result Bool
+
+/-- [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35
+    Name pattern: [gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_receiver_is_total_eq]
+    Visibility: public -/
+@[rust_fun
+  "gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_receiver_is_total_eq"]
+axiom gf2_core.gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  {P : Std.U64} : gf2_core.gfp.Fp P → Result Unit
 
 /-- [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:37-133:41
@@ -722,4 +802,80 @@ axiom
 axiom
   gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U64
+
+/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 137:0-137:23
+    Visibility: public -/
+axiom packed.bipedal3.Bipedal3.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.bipedal3.Bipedal3 → Result Unit
+
+/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1769:0-1769:26
+    Visibility: public -/
+axiom packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.bipedal3.Bipedal3Vec → Result Unit
+
+/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2912:0-2912:29
+    Visibility: public -/
+axiom
+  packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.bipedal3.Bipedal3Matrix → Result Unit
+
+/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 260:0-260:22
+    Visibility: public -/
+axiom packed.packed5.Packed5.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.packed5.Packed5 → Result Unit
+
+/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 939:0-939:25
+    Visibility: public -/
+axiom packed.packed5.Packed5Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.packed5.Packed5Vec → Result Unit
+
+/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1417:0-1417:28
+    Visibility: public -/
+axiom packed.packed5.Packed5Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.packed5.Packed5Matrix → Result Unit
+
+/-- [gf2_algebra::packed::packed7::build_add_lut]:
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 54:0-75:1 -/
+axiom packed.packed7.build_add_lut : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::build_sub_lut]:
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 82:0-103:1 -/
+axiom packed.packed7.build_sub_lut : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::build_mul_lut]:
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 110:0-131:1 -/
+axiom packed.packed7.build_mul_lut : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::ADD_LUT]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 137:0-137:50
+    Visibility: public -/
+axiom packed.packed7.ADD_LUT : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::SUB_LUT]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 143:0-143:50
+    Visibility: public -/
+axiom packed.packed7.SUB_LUT : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::MUL_LUT]
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 149:0-149:50
+    Visibility: public -/
+axiom packed.packed7.MUL_LUT : Result (Array Std.U8 65536#usize)
+
+/-- [gf2_algebra::packed::packed7::{core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Vec}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1021:0-1021:25
+    Visibility: public -/
+axiom packed.packed7.Packed7Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.packed7.Packed7Vec → Result Unit
+
+/-- [gf2_algebra::packed::packed7::{core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Matrix}::assert_receiver_is_total_eq]:
+    Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1378:0-1378:28
+    Visibility: public -/
+axiom packed.packed7.Packed7Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  : packed.packed7.Packed7Matrix → Result Unit
 
