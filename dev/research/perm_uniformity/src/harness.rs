@@ -111,8 +111,9 @@ pub fn bootstrap_tvd_ci(samples: &[u8], q: u64, n_bootstrap: usize, seed: u64) -
 /// Bootstrap the one-sided 95% upper quantile of (TVD_perm - TVD_det).
 ///
 /// This is the correct statistic for criterion 6: the comparison accounts for
-/// the sampling uncertainty in *both* TVD estimates simultaneously by resampling
-/// the same index set for perm and det on each bootstrap iteration.
+/// the sampling uncertainty in *both* TVD estimates simultaneously by
+/// independently resampling each stream on every bootstrap iteration (the perm
+/// and det samples are themselves statistically independent).
 ///
 /// Returns `(diff_mean, diff_q95)` where:
 ///   * `diff_mean` = point estimate TVD_perm - TVD_det
@@ -131,17 +132,18 @@ pub fn bootstrap_tvd_ci(samples: &[u8], q: u64, n_bootstrap: usize, seed: u64) -
 /// * `n_bootstrap` — number of bootstrap resamples.
 /// * `seed` — deterministic seed.
 ///
-/// # Note on paired vs. independent resampling
+/// # Note on independent resampling
 ///
 /// The perm and det streams were sampled from *independent* matrices (different
-/// RNG sub-seeds). They are therefore statistically independent samples, not
-/// paired observations. Nevertheless, for the purpose of CI-on-the-difference
-/// we resample each stream with the *same* bootstrap indices so that the
-/// bootstrap variance of the difference reflects the within-resample covariance
-/// structure. Because the streams are independent, the covariance is
-/// approximately zero, and this reduces to independent bootstrap; using the
-/// same index for both avoids a second independent RNG draw and keeps the
-/// procedure exact across seeds.
+/// RNG sub-seeds), so they are statistically independent samples, not paired
+/// observations. The implementation therefore resamples each stream with its
+/// own independent bootstrap indices: on each of the `N` draws per iteration it
+/// takes a fresh index `pi` for the perm stream and a separate fresh index `di`
+/// for the det stream (two draws from the same seeded `Lcg`). The bootstrap
+/// variance of the difference is then the sum of the two streams' independent
+/// bootstrap variances, which is the correct uncertainty model here. Because
+/// every index comes from one fixed-order `Lcg(seed)` sequence, the procedure
+/// is exactly reproducible across runs for a given `seed`.
 ///
 /// # Examples
 ///
@@ -207,20 +209,37 @@ pub fn bootstrap_diff_ci(
 // Generic cell runner (shared sampling + TVD pattern)
 // ---------------------------------------------------------------------------
 
-/// Result of one (q, n) cell.
+/// All measured quantities for one $(q, n)$ sweep cell.
+///
+/// One `CellResult` becomes one row of the output CSV. The `tvd_*` and
+/// `diff_q95` fields are deterministic in the cell seeds (the bit-identical
+/// statistical columns of criterion 3); the two `mean_us_*` timing fields are
+/// wall-clock measurements and are inherently nondeterministic.
 pub struct CellResult {
+    /// Field order (3, 5, or 7).
     pub q: u64,
+    /// Matrix dimension (rows = cols = `n`).
     pub n: usize,
+    /// Number of Monte-Carlo samples drawn for each of perm and det.
     pub n_samples: usize,
+    /// Point estimate of $\operatorname{TVD}(\operatorname{perm}, U_{\mathbb{F}_q})$.
     pub tvd_perm: f64,
+    /// Lower bound of the 95% bootstrap CI for `tvd_perm`.
     pub tvd_perm_ci_lo: f64,
+    /// Upper bound of the 95% bootstrap CI for `tvd_perm`.
     pub tvd_perm_ci_hi: f64,
+    /// Point estimate of $\operatorname{TVD}(\det, U_{\mathbb{F}_q})$.
     pub tvd_det: f64,
+    /// Lower bound of the 95% bootstrap CI for `tvd_det`.
     pub tvd_det_ci_lo: f64,
+    /// Upper bound of the 95% bootstrap CI for `tvd_det`.
     pub tvd_det_ci_hi: f64,
-    /// 95th-percentile bootstrap of (TVD_perm - TVD_det); negative = criterion 6 PASS.
+    /// 95th-percentile bootstrap of (`tvd_perm` − `tvd_det`); negative ⇒
+    /// criterion 6 PASS for this cell.
     pub diff_q95: f64,
+    /// Mean wall-clock microseconds per perm(A) evaluation (nondeterministic).
     pub mean_us_perm: f64,
+    /// Mean wall-clock microseconds per det(A) evaluation (nondeterministic).
     pub mean_us_det: f64,
 }
 
@@ -232,8 +251,8 @@ pub struct CellResult {
 ///
 /// Seeds: `perm_seed` drives the perm stream RNG, `det_seed` drives the det
 /// stream RNG, `boot_perm_seed` and `boot_det_seed` drive the two independent
-/// TVD bootstrap CIs, and `boot_diff_seed` drives the paired difference
-/// bootstrap for criterion 6.
+/// TVD bootstrap CIs, and `boot_diff_seed` drives the difference bootstrap for
+/// criterion 6.
 ///
 /// # Examples
 ///
