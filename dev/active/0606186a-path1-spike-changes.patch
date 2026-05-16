@@ -1,0 +1,314 @@
+diff --git a/crates/gf2-algebra/src/permanent/ryser_fp3.rs b/crates/gf2-algebra/src/permanent/ryser_fp3.rs
+index 6d60c945..e3bffb50 100644
+--- a/crates/gf2-algebra/src/permanent/ryser_fp3.rs
++++ b/crates/gf2-algebra/src/permanent/ryser_fp3.rs
+@@ -2,30 +2,22 @@
+ //! extraction.
+ //!
+ //! This module exists solely as a Charon/Aeneas extraction target for the
+-//! D3 Lean proof (JIT issue 0606186a). It re-states the same Gray-code
+-//! Ryser walk that lives in [`super::ryser::permanent_ryser`] but pinned
+-//! to `Fp<3>` and operating directly on a row-major `&[Fp<3>]` slice, so
+-//! that:
++//! D3 Lean proof (JIT issue 0606186a). Under the D3 V2 Path-1 sketch
++//! (`dev/plans/d3_v2_path1_sketch.md` §2 option (b)) this is a **thin
++//! delegating wrapper**: its sole body is a single tail-call into the
++//! generic [`super::ryser::permanent_ryser`] monomorphised at `Fp<3>`.
++//! There is no second copy of the Ryser algorithm — the production logic
++//! lives **only** in [`super::ryser`] (SSOT). Charon monomorphises the
++//! generic body in place when extracting from this non-generic root, so
++//! the Aeneas-generated `permanent.ryser_fp3.permanent_ryser_fp3`
++//! contains the generic algorithm body specialised to `Fp<3>`. The Lean
++//! correctness theorem `permanent_ryser_fp3_correct` in
++//! `proofs/Gf2Algebra/Proofs/RyserBounded.lean` is therefore proved
++//! against the genuine production `permanent_ryser<F>` body (at
++//! `F = Fp<3>`), not a hand-copied stub.
+ //!
+-//! 1. **No generic trait dispatch** appears in the extracted body. The
+-//!    Charon `permanent_ryser_fp3` translation contains only `Fp<3>`
+-//!    arithmetic and `gray_code_iter` indexing — both already verified
+-//!    via `Gf2Core::Proofs::MontgomeryRoundtrip` (V0) and the D3 proof's
+-//!    own Gray-code lemmas (V2).
+-//! 2. **The algorithm body is bit-identical to the generic
+-//!    `permanent_ryser::<Fp<3>>`** — both follow the same `Gray-code` →
+-//!    `update col_sum` → `fold product` → `accumulate with sign` →
+-//!    `apply (-1)^n` pipeline. The bit-identical structure means the
+-//!    Lean correctness theorem for `permanent_ryser_fp3` transfers
+-//!    semantically to `permanent_ryser::<F>` for every other valid
+-//!    `FiniteField` `F`, because the only place the algorithm cares
+-//!    about the choice of field is at the abstract `+ / - / * / 0 / 1`
+-//!    operations — which the `FiniteField` axiomatisation (verified
+-//!    elsewhere) constrains to behave the same way under decoding to
+-//!    `ZMod P`.
+-//!
+-//! The Lean theorem statement is recorded in the D3 sketch
+-//! (`dev/plans/d3_lean_ryser_sketch.md` §1) and the proof lives at
++//! The Lean theorem statement is recorded in the D3 V2 Path-1 sketch
++//! (`dev/plans/d3_v2_path1_sketch.md` §1/§4) and the proof lives at
+ //! `proofs/Gf2Algebra/Proofs/RyserBounded.lean`.
+ 
+ use gf2_core::gfp::Fp;
+@@ -34,15 +26,17 @@ use gf2_core::gfp::Fp;
+ /// Ryser's formula in Gray-code subset order. **F_3-monomorphised
+ /// Charon/Aeneas extraction target for the Lean D3 proof.**
+ ///
+-/// The body is structurally identical to
+-/// [`super::ryser::permanent_ryser`] at `F = Fp<3>` — see that function's
+-/// rustdoc for the full algorithm derivation. This wrapper exists so the
+-/// Charon LLBC contains a non-generic entrypoint whose only field-typed
+-/// operations are concrete `Fp<3>` arithmetic, which Aeneas translates
+-/// cleanly. The Lean correctness theorem
++/// This is a thin delegating wrapper: its sole body is a single
++/// tail-call into the generic [`super::ryser::permanent_ryser`]
++/// monomorphised at `F = Fp<3>` — see that function's rustdoc for the
++/// full algorithm derivation. There is no second copy of the algorithm
++/// (SSOT: the production logic lives only in [`super::ryser`]). Charon
++/// monomorphises the generic body in place when extracting from this
++/// non-generic root, so the Lean correctness theorem
+ /// `permanent_ryser_fp3_correct` in
+-/// `proofs/Gf2Algebra/Proofs/RyserBounded.lean` is proved against
+-/// **this** function (Charon-extracted), not the generic one.
++/// `proofs/Gf2Algebra/Proofs/RyserBounded.lean` is proved against the
++/// genuine production `permanent_ryser<F>` body (specialised to
++/// `Fp<3>`), not a hand-copied stub.
+ ///
+ /// # Arguments
+ ///
+@@ -77,99 +71,12 @@ use gf2_core::gfp::Fp;
+ ///
+ /// `O(n · 2^n)` `Fp<3>` operations, `O(n)` extra space.
+ pub fn permanent_ryser_fp3(matrix: &[Fp<3>], n: usize) -> Fp<3> {
+-    assert!(
+-        n <= 63,
+-        "permanent_ryser_fp3: n = {} exceeds the single-u64 Gray-code register's n <= 63 bound",
+-        n,
+-    );
+-    assert_eq!(
+-        matrix.len(),
+-        n * n,
+-        "permanent_ryser_fp3: matrix.len() ({}) must equal n * n ({}) where n = {}",
+-        matrix.len(),
+-        n * n,
+-        n,
+-    );
+-
+-    // Edge case: the 0×0 matrix has permanent = 1 (vacuous product).
+-    if n == 0 {
+-        return Fp::<3>::new(1);
+-    }
+-
+-    // col_sum[i] accumulates sum_{j ∈ S} A[i, j] over F_3.
+-    // Built with a plain index loop (not `(0..n).map(...).collect()`) so the
+-    // Charon extraction contains no `Iterator::map` closure — Aeneas's Lean
+-    // model handles plain `Range::next` cleanly but the `Map`-adapter shape
+-    // bakes an opaque closure type into the loop body.
+-    let mut col_sum: Vec<Fp<3>> = Vec::with_capacity(n);
+-    {
+-        let mut i = 0usize;
+-        while i < n {
+-            col_sum.push(Fp::<3>::new(0));
+-            i += 1;
+-        }
+-    }
+-    let mut total = Fp::<3>::new(0);
+-    let mut subset_size: usize = 0;
+-
+-    // Gray-code walk inlined as a plain `while k < upper` loop (not
+-    // `for ... in gray_code_iter(n)`) — same reason as col_sum above:
+-    // avoids `Iterator::map` in the extracted body.  The widening to
+-    // `u128` matches `crate::gray::gray_code_iter`'s internal counter
+-    // type so the bound `1u128 << n` is well-defined for `n <= 63`.
+-    let upper: u128 = 1u128 << n;
+-    let mut k: u128 = 1;
+-    while k < upper {
+-        let flip = k.trailing_zeros() as usize;
+-        let g_k = k ^ (k >> 1);
+-        let parity: i8 = if ((g_k >> flip) & 1) == 1 { 1 } else { -1 };
+-
+-        // We use explicit `let new = a OP b; a = new` rather than the
+-        // `OP=`-assign forms because `Fp<3>` only implements `AddAssign`
+-        // (not `SubAssign` / `MulAssign`).  Allowing
+-        // `clippy::assign_op_pattern` keeps the Charon extraction body
+-        // free of `OP=` desugaring on the unsupported ops.
+-        #[allow(clippy::assign_op_pattern)]
+-        if parity == 1 {
+-            subset_size += 1;
+-            let mut i = 0usize;
+-            while i < n {
+-                col_sum[i] = col_sum[i] + matrix[i * n + flip];
+-                i += 1;
+-            }
+-        } else {
+-            subset_size -= 1;
+-            let mut i = 0usize;
+-            while i < n {
+-                col_sum[i] = col_sum[i] - matrix[i * n + flip];
+-                i += 1;
+-            }
+-        }
+-
+-        // term = prod_{i=0}^{n-1} col_sum[i].
+-        let mut term = Fp::<3>::new(1);
+-        let mut i = 0usize;
+-        #[allow(clippy::assign_op_pattern)]
+-        while i < n {
+-            term = term * col_sum[i];
+-            i += 1;
+-        }
+-
+-        #[allow(clippy::assign_op_pattern)]
+-        if subset_size % 2 == 1 {
+-            total = total - term;
+-        } else {
+-            total = total + term;
+-        }
+-
+-        k += 1;
+-    }
+-
+-    if n % 2 == 1 {
+-        -total
+-    } else {
+-        total
+-    }
++    // SSOT: delegate to the generic production driver. Charon
++    // monomorphises this tail-call in place (per `dev/plans/
++    // d3_v2_path1_sketch.md` §2 option (b)), so the extracted Lean body
++    // is the generic `permanent_ryser<F>` algorithm specialised to
++    // `Fp<3>`. No copy of the algorithm exists here.
++    super::ryser::permanent_ryser::<Fp<3>>(matrix, n)
+ }
+ 
+ #[cfg(test)]
+diff --git a/scripts/verify-lean.sh b/scripts/verify-lean.sh
+index f136126e..e4fd4390 100755
+--- a/scripts/verify-lean.sh
++++ b/scripts/verify-lean.sh
+@@ -118,10 +118,23 @@ echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
+ # pipeline already uses for the `gf2_core::gfp` instances. The `build_*_lut`
+ # `const fn` initialisers are *not* extracted (Path A is out of scope).
+ #
+-# gf2_core::* is opaque too: the bipedal3 / packed5 / packed7 arithmetic
+-# does not reach into Fp / FiniteField machinery at runtime, but Charon
+-# would otherwise transitively extract those trait impls and surface
+-# unresolvable recursive defaults.
++# gf2_core::gfpn / ::field / ::gf2m / ... remain opaque: the bipedal3 /
++# packed5 / packed7 arithmetic does not reach into the tower / GF(2^m)
++# machinery, and Charon would otherwise transitively extract those trait
++# impls and surface unresolvable recursive defaults.
++#
++# D3 V2 Path 1 (issue 0606186a, sketch dev/plans/d3_v2_path1_sketch.md
++# §2/§3.1): `gf2_core::gfp` is now extracted *transparently* in this leg
++# (the `--opaque 'gf2_core::gfp'` line was removed), and
++# `gf2_algebra::permanent::ryser` is no longer opaque so Charon follows
++# the `ryser_fp3 → permanent_ryser::<Fp<3>>` thin-wrapper delegation and
++# monomorphises the generic Ryser body in place. The transparent gfp
++# bodies are the *same* Aeneas output the gf2_core leg already verifies
++# (V0 MontgomeryRoundtrip); the D3 proof re-proves the value specs
++# in-leg against them. `--opaque 'gf2_core::gfp::simd_ops'` keeps the
++# SIMD-ops module out of the LLBC (the `verify_lean` cfg already routes
++# arithmetic through the scalar Montgomery trait defaults), mirroring
++# the gf2_core leg.
+ charon cargo \
+   --preset aeneas \
+   --rustc-arg=--cfg=verify_lean \
+@@ -139,12 +152,11 @@ charon cargo \
+   --opaque 'gf2_algebra::packed::packed7::build_mul_lut' \
+   --opaque 'gf2_algebra::permanent::bipedal3' \
+   --opaque 'gf2_algebra::permanent::bipedal3_multiword' \
+-  --opaque 'gf2_algebra::permanent::ryser' \
+   --opaque 'gf2_algebra::permanent::reference' \
+   --opaque 'gf2_algebra::permanent::parallel_bipedal3' \
+   --opaque 'gf2_algebra::packed::scalar' \
+   --opaque 'gf2_algebra::testutil' \
+-  --opaque 'gf2_core::gfp' \
++  --opaque 'gf2_core::gfp::simd_ops' \
+   --opaque 'gf2_core::gfpn' \
+   --opaque 'gf2_core::field' \
+   --opaque 'gf2_core::gf2m' \
+@@ -318,16 +330,79 @@ python3 "$REPO_ROOT/scripts/fix-aeneas-dupes.py" \
+ # script's docstring for the full reasoning.
+ python3 "$REPO_ROOT/scripts/fix-aeneas-gf2algebra.py" "$LEAN_DIR_ALGEBRA/Funs.lean"
+ 
+-# TypesExternal / FunsExternal seed (no hand-edits required for the
+-# bipedal3 V1 — the four bitwise ops do not exercise any U128 /
+-# wrapping_neg / overflowing_sub external).
++# TypesExternal seed (auto-generated type axioms; no hand-edits needed).
+ if [ -f "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" ]; then
+   cp "$LEAN_DIR_ALGEBRA/TypesExternal_Template.lean" "$LEAN_DIR_ALGEBRA/TypesExternal.lean"
+ fi
+-# Unlike gf2-core, the gf2-algebra FunsExternal has no hand-edits (the
+-# bipedal3 ops use only bitwise primitives, no wrapping arithmetic), so we
+-# always regenerate from the template.
++# FunsExternal: under D3 V2 Path 1 (issue 0606186a) `gf2_core::gfp` is now
++# extracted *transparently* in this leg, so the transitively-pulled
++# Montgomery code (mont_add / mont_sub / from_mont / to_mont) needs the
++# same two concrete `core.num.U64.{wrapping_neg,overflowing_sub}` externals
++# the gf2-core leg already hand-models. The bipedal3/packed5/packed7 V1
++# ops still use only bitwise primitives. We always regenerate from the
++# Aeneas template (so newly-emitted externals stay in sync) and then port
++# the two concrete two's-complement defs verbatim, exactly as
++# `proofs/Gf2Core/FunsExternal.lean:33-42` does. This is NOT a sorry/axiom:
++# it is the identical trusted-primitive modelling already user-accepted
++# for the gf2-core leg (bit-exact two's-complement defs, not assumptions
++# about field semantics).
+ cp "$LEAN_DIR_ALGEBRA/FunsExternal_Template.lean" "$LEAN_DIR_ALGEBRA/FunsExternal.lean"
++python3 - "$LEAN_DIR_ALGEBRA/FunsExternal.lean" <<'PY'
++import re
++import sys
++from pathlib import Path
++
++path = Path(sys.argv[1])
++text = path.read_text()
++
++# Replace `axiom core.num.U64.wrapping_neg : Std.U64 → Result Std.U64`
++# with the concrete two's-complement def (verbatim from
++# proofs/Gf2Core/FunsExternal.lean).
++wrapping_neg_def = (
++    '@[rust_fun "core::num::{u64}::wrapping_neg"]\n'
++    "def core.num.U64.wrapping_neg (x : Std.U64) : Result Std.U64 :=\n"
++    "  ok (UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) x)"
++)
++text, n_wn = re.subn(
++    r'@\[rust_fun "core::num::\{u64\}::wrapping_neg"\]\s*\n'
++    r"axiom core\.num\.U64\.wrapping_neg : Std\.U64 → Result Std\.U64",
++    lambda _m: wrapping_neg_def,
++    text,
++    count=1,
++)
++
++# Replace the `overflowing_sub` axiom (its signature spans two lines in
++# the template) with the concrete def.
++overflowing_sub_def = (
++    '@[rust_fun "core::num::{u64}::overflowing_sub"]\n'
++    "def core.num.U64.overflowing_sub (x y : Std.U64) : Result (Std.U64 × Bool) :=\n"
++    "  ok (⟨x.bv - y.bv⟩, decide (x.val < y.val))"
++)
++text, n_os = re.subn(
++    r'@\[rust_fun "core::num::\{u64\}::overflowing_sub"\]\s*\n'
++    r"axiom core\.num\.U64\.overflowing_sub\s*\n"
++    r"\s*: Std\.U64 → Std\.U64 → Result \(Std\.U64 × Bool\)",
++    lambda _m: overflowing_sub_def,
++    text,
++    count=1,
++)
++
++if n_wn != 1:
++    raise SystemExit(
++        f"verify-lean(gf2-algebra FunsExternal): expected exactly one "
++        f"wrapping_neg axiom to port, replaced {n_wn} (template shape "
++        f"changed — re-derive the regex from the new "
++        f"FunsExternal_Template.lean)"
++    )
++if n_os != 1:
++    raise SystemExit(
++        f"verify-lean(gf2-algebra FunsExternal): expected exactly one "
++        f"overflowing_sub axiom to port, replaced {n_os} (template shape "
++        f"changed — re-derive the regex)"
++    )
++
++path.write_text(text)
++PY
+ echo "Post-processing (gf2-algebra) done"
+ 
+ echo ""
