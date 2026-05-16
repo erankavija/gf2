@@ -81,7 +81,7 @@ fn test_gpu_matches_simd_n8() {
 /// Does NOT check correctness (too slow) — only checks liveness.
 #[test]
 #[ignore = "external: gfx1030 device required; n=36 M=4 takes ~450 s"]
-fn test_gpu_liveness_n36_m80() {
+fn test_gpu_liveness_n36_small_batch() {
     let n = 36;
     let m = 4; // use small M for a feasible liveness check in ~500 s
     let seed = 0x9480_F8A6_DEAD_BEEF_u64;

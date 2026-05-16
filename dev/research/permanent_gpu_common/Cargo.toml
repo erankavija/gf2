@@ -1,0 +1,24 @@
+[package]
+name = "permanent-gpu-common"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+publish = false
+description = "Shared harness helpers (median, matrix build, hardware fingerprint, CSV header, provenance) for the permanent_gpu_speedup (jit:9480f8a6) and permanent_gpu_crossover (jit:a9e461de) research stubs. Standalone non-workspace prototype — single source of truth for the duplicated benchmark plumbing."
+
+[lib]
+name = "permanent_gpu_common"
+path = "src/lib.rs"
+
+[dependencies]
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
+gf2-core = { path = "../../../crates/gf2-core" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]

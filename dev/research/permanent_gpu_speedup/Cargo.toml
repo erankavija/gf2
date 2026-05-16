@@ -30,6 +30,7 @@ hip = ["gf2-algebra/hip"]
 [dependencies]
 gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
 gf2-core = { path = "../../../crates/gf2-core" }
+permanent-gpu-common = { path = "../permanent_gpu_common" }
 
 [profile.release]
 opt-level = 3
