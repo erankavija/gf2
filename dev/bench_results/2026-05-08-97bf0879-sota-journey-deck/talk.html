@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>gf2-core SOTA Journey — Epic 97bf0879</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+<style>.reveal aside.notes{display:none!important}</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ── SLIDE 1: TITLE ──────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>gf2-core SOTA Performance<br/>The Journey</h1>
+  <p class="tagline">Epic <code>97bf0879</code> — Close gf2-core SOTA Performance Gaps</p>
+  <table>
+    <tr><th>Started</th><td>2026-04-26 — post-PPC baseline handoff from <code>64c88ae4</code></td></tr>
+    <tr><th>Closed</th><td>2026-05-08 — Wave-12 cascade, scorecard published</td></tr>
+    <tr><th>Worst-to-best</th><td><span class="badge gray">340x slower</span> than reference &rarr; <span class="badge green">0.17x (6x faster)</span></td></tr>
+  </table>
+  <p class="caption">Distinct from <code>f00fd873</code> final scorecard deck — this deck covers the <em>narrative arc</em>. Ratio convention throughout: <strong>gf2 wall / reference wall</strong> — lower is better. PASS &le; 1.5x.</p>
+  <aside class="notes">
+    This deck tells the story of how the epic was run: where we started, the engineering choices made along
+    the way, headline algorithmic wins, and what remains. The f00fd873 deck is the reference scorecard;
+    open that for the complete cell-by-cell tables. Epic 97bf0879 began from a 2026-04-26 post-PPC baseline
+    with known large gaps and ended with an 80+ cell target matrix scored against six reference libraries.
+  </aside>
+</section>
+
+<!-- ── SLIDE 2: WHERE WE STARTED — tables ───────────────────────────────── -->
+<section>
+  <span class="seclabel">Baseline <span class="num">· 2 / 43</span></span>
+  <h2>Where We Started — Post-PPC Baseline</h2>
+  <p class="muted small center">Source: <code>dev/bench_results/2026-04-26.md</code> — handoff from <code>64c88ae4</code></p>
+  <div class="two-col">
+    <div>
+      <h3>Dense matmul / fgemm</h3>
+      <table>
+        <thead><tr><th>Field</th><th>n</th><th>Baseline ratio</th><th>Direction</th></tr></thead>
+        <tbody>
+          <tr><td>GF(2)</td><td>256</td><td>0.07x throughput = 14x slower</td><td>vs M4RI</td></tr>
+          <tr><td>GF(7)</td><td>256</td><td>0.01x throughput = ~100x slower</td><td>vs fflas</td></tr>
+          <tr><td>GF(251)</td><td>256</td><td>0.00x throughput = ~220x slower</td><td>vs fflas</td></tr>
+          <tr><td>GF(2^31-1)</td><td>256</td><td>0.28x throughput = 3.6x slower</td><td>vs fflas</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>Dense factorize / polynomial invariants</h3>
+      <table>
+        <thead><tr><th>Field/op</th><th>n</th><th>Baseline ratio</th></tr></thead>
+        <tbody>
+          <tr><td>GF(7) echelon</td><td>256</td><td>0.09x throughput = 11x slower</td></tr>
+          <tr><td>GF(251) pluq</td><td>256</td><td>0.03x throughput = 37x slower</td></tr>
+          <tr><td>minpoly GF(7)</td><td>256</td><td>no ref grid match (quartic path)</td></tr>
+          <tr><td>minpoly GF(251)</td><td>256</td><td>7516 ms vs 1.634 ms = 4599x</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    Key insight from the baseline: the biggest gap was not algorithmic for GF(2^31-1) (Mersenne fast path
+    was already close at 0.28x throughput). For GF(7) and GF(251) the gap was truly structural: fflas
+    routes small primes through OpenBLAS sgemm float-modular cascade at 128-138 Gops/s; gf2 was using
+    pure scalar Montgomery arithmetic at ~0.5 Gops/s. The minpoly quartic path on GF(7)/256 ran 6914 ms
+    vs fflas 20.29 ms = 340x gap, but that was an algorithm choice, not a hardware limit.
+  </aside>
+</section>
+
+<!-- ── SLIDE 2b: WHERE WE STARTED — notes + summary (cont.) ─────────────── -->
+<section>
+  <span class="seclabel">Baseline <span class="num">· 3 / 43</span></span>
+  <h2>Where We Started — Post-PPC Baseline (cont.)</h2>
+  <p class="muted small">GF(2^8)/GF(2^16) had no external reference at all (harness-scope gap). GF(31) and GF(2^32) coverage was absent entirely.</p>
+  <p class="muted small">charpoly/minpoly grids did not overlap — gf2 ran n=32,128,512; fflas ran n=64,256. No direct ratio existed.</p>
+  <div class="warning">
+    <strong>Summary:</strong> non-Mersenne GF(p) was 10x–220x behind fflas. GF(2) matmul was 7x–14x behind M4RI
+    at small n. Polynomial invariants had no aligned reference grid and the quartic minpoly algorithm was
+    3–5 orders of magnitude slower on low-cardinality fields. GF(2^m) lacked external references entirely.
+    Sparse operations had no scorecard at all.
+  </div>
+  <aside class="notes">
+    Key insight from the baseline: the biggest gap was not algorithmic for GF(2^31-1) (Mersenne fast path
+    was already close at 0.28x throughput). For GF(7) and GF(251) the gap was truly structural: fflas
+    routes small primes through OpenBLAS sgemm float-modular cascade at 128-138 Gops/s; gf2 was using
+    pure scalar Montgomery arithmetic at ~0.5 Gops/s. The minpoly quartic path on GF(7)/256 ran 6914 ms
+    vs fflas 20.29 ms = 340x gap, but that was an algorithm choice, not a hardware limit.
+  </aside>
+</section>
+
+<!-- ── SLIDE 3: REPRODUCIBLE REFERENCES — the problem ─────────────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 4 / 43</span></span>
+  <h2>The Reproducible-References Move</h2>
+  <p class="muted small center">Source: <code>dev/plans/sota_target_matrix.md</code> — published by story <code>cbecfced</code></p>
+  <h3>The problem with the old approach</h3>
+  <ul>
+    <li>Baseline used <em>ad-hoc</em> reference numbers — no pinned versions, no shared seeds</li>
+    <li>Different grid sizes on gf2 vs reference side made direct ratio impossible</li>
+    <li>No policy for which library is canonical per cell</li>
+    <li>Polynomial invariants had zero external reference wired</li>
+  </ul>
+  <aside class="notes">
+    The acceptance protocol (dev/plans/sota_reference_acceptance_protocol.md) defines five criteria a library
+    must satisfy before becoming a hard reference: reproducible build, shared seed, aligned grid, public API
+    for the operation, and no CAS special-case. This protocol was the most important process investment of the
+    epic — it meant every subsequent closure decision could be audited. The target matrix design doc
+    (sota_target_matrix.md) is the keystone synthesis that every optimization story consumed.
+  </aside>
+</section>
+
+<!-- ── SLIDE 3b: REPRODUCIBLE REFERENCES — libraries (cont.) ───────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 5 / 43</span></span>
+  <h2>The Reproducible-References Move (cont.)</h2>
+  <h3>Six reference libraries pinned</h3>
+  <table>
+    <thead><tr><th>Library</th><th>Version</th><th>Canonical for</th></tr></thead>
+    <tbody>
+      <tr><td>fflas-ffpack</td><td>2.5.0</td><td>all GF(p) ops</td></tr>
+      <tr><td>M4RI</td><td>20260122</td><td>GF(2) dense</td></tr>
+      <tr><td>M4RIE</td><td>20250128</td><td>GF(2^m) matmul</td></tr>
+      <tr><td>NTL</td><td>11.6.0</td><td>GF(2^32) matmul</td></tr>
+      <tr><td>FLINT</td><td>3.5.0</td><td>GF(p) secondary</td></tr>
+      <tr><td>LinBox</td><td>1.7.1</td><td>sparse-elim, spmv GF(2)</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">Container: <code>benchmarks/Containerfile</code> + <code>benchmarks/image.lock</code>. All SHA-256 pinned; <code>analyze.py</code> merges both CSVs row-for-row.</p>
+  <aside class="notes">
+    The acceptance protocol (dev/plans/sota_reference_acceptance_protocol.md) defines five criteria a library
+    must satisfy before becoming a hard reference: reproducible build, shared seed, aligned grid, public API
+    for the operation, and no CAS special-case. This protocol was the most important process investment of the
+    epic — it meant every subsequent closure decision could be audited. The target matrix design doc
+    (sota_target_matrix.md) is the keystone synthesis that every optimization story consumed.
+  </aside>
+</section>
+
+<!-- ── SLIDE 3b: REPRODUCIBLE REFERENCES — fixes + matrix (cont.) ───────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 6 / 43</span></span>
+  <h2>The Reproducible-References Move (cont.)</h2>
+  <div class="note">
+    <strong>Wave 1–3 fix:</strong> define a reproducible five-criterion acceptance protocol,
+    containerize all six reference libraries, share seed <code>0x6F73AC91D31E4A7C</code>,
+    emit aligned CSV grids, publish a 80+ cell target matrix with per-cell canonical designations.
+  </div>
+  <div class="example">
+    <strong>80+ cell target matrix:</strong> Cartesian product of 11 operations (dense + sparse) x 9 field families.
+    20 cells excluded as <em>no-independent-oracle</em> (user-approved). Every remaining cell has a named canonical
+    reference, a SHA-256 pinned binary, and a one-line evidence-doc citation.
+  </div>
+  <aside class="notes">
+    The acceptance protocol (dev/plans/sota_reference_acceptance_protocol.md) defines five criteria a library
+    must satisfy before becoming a hard reference: reproducible build, shared seed, aligned grid, public API
+    for the operation, and no CAS special-case. This protocol was the most important process investment of the
+    epic — it meant every subsequent closure decision could be audited. The target matrix design doc
+    (sota_target_matrix.md) is the keystone synthesis that every optimization story consumed.
+  </aside>
+</section>
+
+<!-- ── SLIDE 4: STORY ARCHITECTURE — first 3 stories ───────────────────── -->
+<section>
+  <span class="seclabel">Architecture <span class="num">· 7 / 43</span></span>
+  <h2>Story-Level Architecture — 6 Stories, Wave-Paced</h2>
+  <table>
+    <thead>
+      <tr><th>Story</th><th>JIT</th><th>Operation family</th><th>Waves</th><th>Key tasks</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GF(2) dense-LA</td>
+        <td><code>974a85bd</code></td>
+        <td>matmul, echelon x GF(2)</td>
+        <td>5–7</td>
+        <td>M4RM kernel, blocked RREF, Gray-code schedule</td>
+      </tr>
+      <tr>
+        <td>GF(p) fgemm</td>
+        <td><code>cc5de315</code></td>
+        <td>fgemm x all GF(p)</td>
+        <td>4–6</td>
+        <td>Panelized C kernel, Mersenne fast path, prime-family classification</td>
+      </tr>
+      <tr>
+        <td>GF(2^m) fgemm</td>
+        <td><code>2c7548ae</code></td>
+        <td>matmul x GF(2^m) {4,8,16,32}</td>
+        <td>8</td>
+        <td>VPCLMULQDQ panels, GF(2^32) NTL reference, row-panel layout</td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The wave structure meant the project-lead could parallelize independent stories (GF(2) and GF(p) fgemm
+    ran concurrently in Waves 4-6) but serialize within a story to avoid merge conflicts. Sub-agents operated
+    on git worktrees when parallel dispatches were needed. The code-review gate used Copilot gpt-5.4 as the
+    reviewer; rate-limit issues that appeared in Waves 1-4 were resolved post-2026-05-04 reset.
+  </aside>
+</section>
+
+<!-- ── SLIDE 4b: STORY ARCHITECTURE — last 3 stories (cont.) ────────────── -->
+<section>
+  <span class="seclabel">Architecture <span class="num">· 8 / 43</span></span>
+  <h2>Story-Level Architecture — 6 Stories, Wave-Paced (cont.)</h2>
+  <table>
+    <thead>
+      <tr><th>Story</th><th>JIT</th><th>Operation family</th><th>Waves</th><th>Key tasks</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Dense factorize/solve</td>
+        <td><code>72ab6d0e</code></td>
+        <td>pluq, echelon, invert, solve x GF(p)+GF(2)</td>
+        <td>9</td>
+        <td>PLE-driven dispatch, in-place LU-reuse invert, TRI_BASE threshold tuning</td>
+      </tr>
+      <tr>
+        <td>charpoly / minpoly</td>
+        <td><code>66190ccd</code></td>
+        <td>charpoly, minpoly x GF(p)</td>
+        <td>10–11</td>
+        <td>Wiedemann O(n^3) dispatch, packed-matvec cache, extension-field verifier</td>
+      </tr>
+      <tr>
+        <td>Sparse</td>
+        <td><code>54fd3f0b</code></td>
+        <td>spmv, sparse-matmul, sparse-dense, sparse-elim</td>
+        <td>3</td>
+        <td>CSR layout sweep, sparse-dense Path-A/B, LinBox alignment</td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The wave structure meant the project-lead could parallelize independent stories (GF(2) and GF(p) fgemm
+    ran concurrently in Waves 4-6) but serialize within a story to avoid merge conflicts. Sub-agents operated
+    on git worktrees when parallel dispatches were needed. The code-review gate used Copilot gpt-5.4 as the
+    reviewer; rate-limit issues that appeared in Waves 1-4 were resolved post-2026-05-04 reset.
+  </aside>
+</section>
+
+<!-- ── SLIDE 4c: STORY ARCHITECTURE — process model (cont.) ─────────────── -->
+<section>
+  <span class="seclabel">Architecture <span class="num">· 9 / 43</span></span>
+  <h2>Story-Level Architecture — 6 Stories, Wave-Paced (cont.)</h2>
+  <div class="note">
+    <strong>Process model:</strong> each story = 1–4 task waves dispatched as AI sub-agent jobs.
+    Lead ran <code>code-review</code> gate after each wave (Copilot reviewer).
+    No-go decisions preserved in amendment ledger; aspirational criteria amended with empirical data
+    rather than reworked against hypothesis. Total: 12 waves, ~30 task issues, 6 story closures.
+  </div>
+  <aside class="notes">
+    The wave structure meant the project-lead could parallelize independent stories (GF(2) and GF(p) fgemm
+    ran concurrently in Waves 4-6) but serialize within a story to avoid merge conflicts. Sub-agents operated
+    on git worktrees when parallel dispatches were needed. The code-review gate used Copilot gpt-5.4 as the
+    reviewer; rate-limit issues that appeared in Waves 1-4 were resolved post-2026-05-04 reset.
+  </aside>
+</section>
+
+<!-- ── SLIDE 5: DENSE FGEMM WIN 1 — GF(p) insight ──────────────────────── -->
+<section>
+  <span class="seclabel">Win 1: fgemm <span class="num">· 10 / 43</span></span>
+  <h2>Algorithmic Win 1 — Dense fgemm</h2>
+  <p class="muted small center">Stories <code>cc5de315</code> (GF(p)) + <code>2c7548ae</code> (GF(2^m))</p>
+  <h3>GF(p) fgemm — Panelized C kernel</h3>
+  <div class="note">
+    <strong>Insight:</strong> fflas routes GF(p) through OpenBLAS sgemm at 128-138 Gops/s.
+    gf2's Montgomery scalar path ran at ~0.5 Gops/s. The algorithmic answer was a
+    hand-written C kernel with AVX2 FMA doing packed-byte or packed-u16 arithmetic
+    in row panels, matched to the Zen 3 L1/L2 cache geometry.
+  </div>
+  <aside class="notes">
+    The GF(2^32) result is particularly striking: gf2-core (VPCLMULQDQ-based) is 5.5-6.7x faster than
+    NTL's mat_GF2E. This is because NTL uses a polynomial representation with generic arithmetic while
+    gf2-core uses hardware-accelerated carry-less multiplication with a Barrett-reduced representation.
+    The GF(2^31-1) Mersenne path was already competitive before the epic (0.28x throughput = 3.6x slower)
+    and crossed to PASS (0.34x wall) after the fgemm panelization.
+  </aside>
+</section>
+
+<!-- ── SLIDE 5b: DENSE FGEMM WIN 1 — GF(p) results (cont.) ──────────────── -->
+<section>
+  <span class="seclabel">Win 1: fgemm <span class="num">· 11 / 43</span></span>
+  <h2>Algorithmic Win 1 — Dense fgemm (cont.)</h2>
+  <h3>GF(p) fgemm — Panelized C kernel</h3>
+  <table>
+    <thead><tr><th>Field / n</th><th>Before</th><th>After</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>GF(7) / 256</td><td>~100x slower</td><td>0.68x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(7) / 1024</td><td>slow-or-nightly</td><td>0.71x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(65521) / 256</td><td>~50x slower</td><td>0.68x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(2^31-1) / 64</td><td>3.6x slower</td><td>0.34x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(251) / 256</td><td>220x slower</td><td>2.99x (gap)</td><td><span class="badge orange">AMENDED</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">GF(251) gap is structural: fflas uses float-BLAS cascade, architecturally bounded below 128 Gops/s sgemm. Aspirational amendment, tracked in <code>615db3b9</code>.</p>
+  <aside class="notes">
+    The GF(2^32) result is particularly striking: gf2-core (VPCLMULQDQ-based) is 5.5-6.7x faster than
+    NTL's mat_GF2E. This is because NTL uses a polynomial representation with generic arithmetic while
+    gf2-core uses hardware-accelerated carry-less multiplication with a Barrett-reduced representation.
+    The GF(2^31-1) Mersenne path was already competitive before the epic (0.28x throughput = 3.6x slower)
+    and crossed to PASS (0.34x wall) after the fgemm panelization.
+  </aside>
+</section>
+
+<!-- ── SLIDE 5c: DENSE FGEMM WIN 1 — GF(2^m) key moves (cont.) ─────────── -->
+<section>
+  <span class="seclabel">Win 1: fgemm <span class="num">· 12 / 43</span></span>
+  <h2>Algorithmic Win 1 — Dense fgemm (cont.)</h2>
+  <h3>GF(2^m) matmul — VPCLMULQDQ panels + GF(2^32) NTL</h3>
+  <div class="note">
+    <strong>Key moves:</strong> (1) Promoted NTL 11.6.0 as canonical for GF(2^32). (2) Deployed
+    panelized VPCLMULQDQ row-panel layout for GF(2^m) — same panel structure as GF(p) kernel.
+  </div>
+  <aside class="notes">
+    The GF(2^32) result is particularly striking: gf2-core (VPCLMULQDQ-based) is 5.5-6.7x faster than
+    NTL's mat_GF2E. This is because NTL uses a polynomial representation with generic arithmetic while
+    gf2-core uses hardware-accelerated carry-less multiplication with a Barrett-reduced representation.
+    The GF(2^31-1) Mersenne path was already competitive before the epic (0.28x throughput = 3.6x slower)
+    and crossed to PASS (0.34x wall) after the fgemm panelization.
+  </aside>
+</section>
+
+<!-- ── SLIDE 5d: DENSE FGEMM WIN 1 — GF(2^m) results (cont.) ───────────── -->
+<section>
+  <span class="seclabel">Win 1: fgemm <span class="num">· 13 / 43</span></span>
+  <h2>Algorithmic Win 1 — Dense fgemm (cont.)</h2>
+  <h3>GF(2^m) matmul — VPCLMULQDQ panels + GF(2^32) NTL</h3>
+  <table>
+    <thead><tr><th>Field / n</th><th>Result</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>GF(2^32) / 64</td><td>0.15x (6.7x faster)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(2^32) / 256</td><td>0.15x (6.7x faster)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(2^32) / 1024</td><td>0.18x (5.5x faster)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(2^16) / 64</td><td>148x faster (!)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>GF(2^8) / 1024</td><td>66.7x slower</td><td><span class="badge orange">AMENDED</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">GF(2^8) gap: M4RIE uses O(n^3/log n) Method-of-Four-Russians with PSHUFB tables; gf2 uses O(n^3) per-element VPCLMULQDQ. Tracked in <code>615db3b9</code>.</p>
+  <aside class="notes">
+    The GF(2^32) result is particularly striking: gf2-core (VPCLMULQDQ-based) is 5.5-6.7x faster than
+    NTL's mat_GF2E. This is because NTL uses a polynomial representation with generic arithmetic while
+    gf2-core uses hardware-accelerated carry-less multiplication with a Barrett-reduced representation.
+    The GF(2^31-1) Mersenne path was already competitive before the epic (0.28x throughput = 3.6x slower)
+    and crossed to PASS (0.34x wall) after the fgemm panelization.
+  </aside>
+</section>
+
+<!-- ── SLIDE 6: DENSE FACTORIZE WIN 2 — GF(2^31-1) insight ─────────────── -->
+<section>
+  <span class="seclabel">Win 2: factorize <span class="num">· 14 / 43</span></span>
+  <h2>Algorithmic Win 2 — Dense Factorize and Solve</h2>
+  <p class="muted small center">Story <code>72ab6d0e</code> — Wave 9; evidence <code>4eb105f7</code></p>
+  <h3>GF(2^31-1) — PLE-driven dispatch</h3>
+  <div class="note">
+    <strong>Insight:</strong> GF(2^31-1) pluq/echelon/solve was slow because the LU pivot loop
+    kept calling <code>FieldMatrix::matvec</code> on shrinking sub-matrices. Two fixes:
+    <ol>
+      <li>Set <code>TRI_BASE_THRESHOLD=8</code> — sub-problems below 8 fall to the scalar path</li>
+      <li>In-place LU reuse for invert (task <code>d1a5fea8</code>): solve two TRSM
+          passes against the already-factored LU rather than re-factoring for each RHS</li>
+    </ol>
+  </div>
+  <aside class="notes">
+    The TRI_BASE_THRESHOLD tuning is a classic algorithmic parameter: below threshold 8, the recursive
+    PLE uses a flat scalar pivot, avoiding function-call overhead in small sub-problems. The in-place
+    invert (d1a5fea8) was a separate Wave-9 task that eliminated one of the two LU factorizations in
+    the standard Gauss-Jordan invert path by reusing the factored form. The combined effect at n=64
+    was dramatic: aggregate CSV showed 2.14x (FAIL); Wave-9 Criterion median showed 0.67x (PASS).
+  </aside>
+</section>
+
+<!-- ── SLIDE 6b: DENSE FACTORIZE WIN 2 — GF(2^31-1) results (cont.) ─────── -->
+<section>
+  <span class="seclabel">Win 2: factorize <span class="num">· 15 / 43</span></span>
+  <h2>Algorithmic Win 2 — Dense Factorize and Solve (cont.)</h2>
+  <h3>GF(2^31-1) — PLE-driven dispatch</h3>
+  <table>
+    <thead><tr><th>Operation / n</th><th>Before</th><th>After</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>pluq / 256 uniform</td><td>0.34x tput = 2.9x slow</td><td>0.55x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>pluq / 1024 uniform</td><td>0.30x tput = 3.3x slow</td><td>0.61x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>solve / 256 uniform</td><td>0.38x tput = 2.6x slow</td><td>0.52x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>invert / 64 uniform</td><td>2.14x (FAIL, agg)</td><td>0.67x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>echelon / 256 uniform</td><td>0.18x tput = 5.5x slow</td><td>~0.48x est (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The TRI_BASE_THRESHOLD tuning is a classic algorithmic parameter: below threshold 8, the recursive
+    PLE uses a flat scalar pivot, avoiding function-call overhead in small sub-problems. The in-place
+    invert (d1a5fea8) was a separate Wave-9 task that eliminated one of the two LU factorizations in
+    the standard Gauss-Jordan invert path by reusing the factored form. The combined effect at n=64
+    was dramatic: aggregate CSV showed 2.14x (FAIL); Wave-9 Criterion median showed 0.67x (PASS).
+  </aside>
+</section>
+
+<!-- ── SLIDE 6c: DENSE FACTORIZE WIN 2 — GF(2) echelon insight (cont.) ─── -->
+<section>
+  <span class="seclabel">Win 2: factorize <span class="num">· 16 / 43</span></span>
+  <h2>Algorithmic Win 2 — Dense Factorize and Solve (cont.)</h2>
+  <h3>GF(2) echelon — blocked RREF</h3>
+  <div class="note">
+    <strong>Insight:</strong> baseline GF(2) echelon was 11x–0.07x behind M4RI. The fix was
+    a blocked RREF implementation (task <code>111a3967</code>) that works in
+    cache-resident 64-row blocks, matching M4RI's cache-aware strategy. Gray-code scheduling
+    for the inner Gauss-Jordan also helped at small n.
+  </div>
+  <aside class="notes">
+    The TRI_BASE_THRESHOLD tuning is a classic algorithmic parameter: below threshold 8, the recursive
+    PLE uses a flat scalar pivot, avoiding function-call overhead in small sub-problems. The in-place
+    invert (d1a5fea8) was a separate Wave-9 task that eliminated one of the two LU factorizations in
+    the standard Gauss-Jordan invert path by reusing the factored form. The combined effect at n=64
+    was dramatic: aggregate CSV showed 2.14x (FAIL); Wave-9 Criterion median showed 0.67x (PASS).
+  </aside>
+</section>
+
+<!-- ── SLIDE 6d: DENSE FACTORIZE WIN 2 — GF(2) echelon results (cont.) ──── -->
+<section>
+  <span class="seclabel">Win 2: factorize <span class="num">· 17 / 43</span></span>
+  <h2>Algorithmic Win 2 — Dense Factorize and Solve (cont.)</h2>
+  <h3>GF(2) echelon — blocked RREF</h3>
+  <table>
+    <thead><tr><th>Shape / n</th><th>Before</th><th>After</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>echelon / 64 uniform</td><td>0.22x = 4.5x slow</td><td>1.05x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>echelon / 256 uniform</td><td>0.11x = 9.1x slow</td><td>1.39x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>echelon / 1024 uniform</td><td>0.07x = 14x slow</td><td>1.29x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">All 6 GF(2) echelon cells PASS. GF(p) pluq/echelon/invert/solve (non-Mersenne) remain FAIL — structural BLAS gap, tracked in <code>615db3b9</code>.</p>
+  <aside class="notes">
+    The TRI_BASE_THRESHOLD tuning is a classic algorithmic parameter: below threshold 8, the recursive
+    PLE uses a flat scalar pivot, avoiding function-call overhead in small sub-problems. The in-place
+    invert (d1a5fea8) was a separate Wave-9 task that eliminated one of the two LU factorizations in
+    the standard Gauss-Jordan invert path by reusing the factored form. The combined effect at n=64
+    was dramatic: aggregate CSV showed 2.14x (FAIL); Wave-9 Criterion median showed 0.67x (PASS).
+  </aside>
+</section>
+
+<!-- ── SLIDE 7: POLYNOMIAL INVARIANTS WIN 3 — before ───────────────────── -->
+<section>
+  <span class="seclabel">Win 3: minpoly <span class="num">· 18 / 43</span></span>
+  <h2>Algorithmic Win 3 — Polynomial Invariants</h2>
+  <p class="muted small center">Story <code>66190ccd</code> — Waves 10–11; tasks <code>d1dd266c</code>, <code>5a3dbd5b</code>, <code>70766cb1</code>, <code>6c926de0</code></p>
+  <h3>The algorithm transformation</h3>
+  <div class="warning">
+    <strong>Before:</strong> O(n^4) lcm-of-Krylov-annihilators.
+    Each of n basis vectors got its own O(n^2) Berlekamp-Massey sweep,
+    then an O(n^2) polynomial lcm. Total: O(n) x O(n^2) = O(n^4).
+    At GF(7)/n=256: 6914 ms. At GF(7)/n=512: estimated months.
+  </div>
+  <aside class="notes">
+    The extension-field Wiedemann insight (6c926de0) is the most elegant algorithmic result of the epic:
+    for low-cardinality fields like GF(7), the scalar Wiedemann Krylov sequence repeats too quickly
+    (probability of failure ~n/q). By projecting into GF(q^k) with q^k >= n, the sequence is guaranteed
+    to be linearly independent with high probability. This turns an O(n^4) problem into O(n^3) with
+    constant overhead only of the field extension arithmetic.
+  </aside>
+</section>
+
+<!-- ── SLIDE 7b: POLYNOMIAL INVARIANTS WIN 3 — after (cont.) ────────────── -->
+<section>
+  <span class="seclabel">Win 3: minpoly <span class="num">· 19 / 43</span></span>
+  <h2>Algorithmic Win 3 — Polynomial Invariants (cont.)</h2>
+  <h3>The algorithm transformation</h3>
+  <div class="example">
+    <strong>After (task <code>d1dd266c</code>):</strong>
+    <ol>
+      <li><strong>Extension-field Wiedemann</strong> when q &le; n:
+          project over GF(q^k) where q^k &ge; n, run single Krylov chain, verify.
+          O(n^3) total.</li>
+      <li><strong>Multi-seed scalar Wiedemann</strong> fallback with Las-Vegas verifier.</li>
+      <li><strong>Cyclic decomposition</strong> (A and A^T) as final fallback.</li>
+      <li><strong>Packed-matvec cache</strong> (tasks <code>5a3dbd5b</code>,
+          <code>70766cb1</code>): build AVX2 canonical-byte/u16 panel once,
+          reuse across all Krylov passes.</li>
+    </ol>
+  </div>
+  <aside class="notes">
+    The extension-field Wiedemann insight (6c926de0) is the most elegant algorithmic result of the epic:
+    for low-cardinality fields like GF(7), the scalar Wiedemann Krylov sequence repeats too quickly
+    (probability of failure ~n/q). By projecting into GF(q^k) with q^k >= n, the sequence is guaranteed
+    to be linearly independent with high probability. This turns an O(n^4) problem into O(n^3) with
+    constant overhead only of the field extension arithmetic.
+  </aside>
+</section>
+
+<!-- ── SLIDE 7c: POLYNOMIAL INVARIANTS WIN 3 — headline (cont.) ─────────── -->
+<section>
+  <span class="seclabel">Win 3: minpoly <span class="num">· 20 / 43</span></span>
+  <h2>Algorithmic Win 3 — Polynomial Invariants (cont.)</h2>
+  <h3>Headline numbers (minpoly)</h3>
+  <table>
+    <thead><tr><th>Field / n</th><th>Before</th><th>After</th><th>Factor</th></tr></thead>
+    <tbody>
+      <tr><td>GF(7) / 64</td><td>30.66 ms</td><td>0.159 ms</td><td>193x faster</td></tr>
+      <tr><td>GF(7) / 256</td><td>6914 ms</td><td>3.411 ms</td><td>2027x faster</td></tr>
+      <tr><td>GF(251) / 256</td><td>7516 ms</td><td>2.235 ms</td><td>3362x faster</td></tr>
+      <tr><td>GF(65521) / 256</td><td>38.84 ms</td><td>12.290 ms</td><td>3.2x faster</td></tr>
+      <tr><td>GF(2^31-1) / 256</td><td>39.05 ms</td><td>57.150 ms</td><td>PASS (0.70x)</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    charpoly improvements (tasks <code>5a3dbd5b</code>, <code>70766cb1</code>)
+    inherited the packed-matvec cache: GF(7)/256 charpoly went from no-ref to 0.18x (PASS).
+    14 of 16 cells PASS; 2 cells (GF(251)/64 minpoly, GF(251)/256 charpoly) routed to
+    <code>52cce970</code>.
+  </p>
+  <aside class="notes">
+    The extension-field Wiedemann insight (6c926de0) is the most elegant algorithmic result of the epic:
+    for low-cardinality fields like GF(7), the scalar Wiedemann Krylov sequence repeats too quickly
+    (probability of failure ~n/q). By projecting into GF(q^k) with q^k >= n, the sequence is guaranteed
+    to be linearly independent with high probability. This turns an O(n^4) problem into O(n^3) with
+    constant overhead only of the field extension arithmetic.
+  </aside>
+</section>
+
+<!-- ── SLIDE 8: SPARSE WIN 4 — spmv etc. ────────────────────────────────── -->
+<section>
+  <span class="seclabel">Win 4: sparse <span class="num">· 21 / 43</span></span>
+  <h2>Algorithmic Win 4 — Sparse Operations</h2>
+  <p class="muted small center">Story <code>54fd3f0b</code> — Wave 3; tasks <code>47698404</code>, <code>3a37e0f6</code>, <code>1726270d</code></p>
+  <h3>spmv, sparse-matmul, sparse-dense</h3>
+  <table>
+    <thead><tr><th>Operation / field</th><th>Result</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>spmv / GF(7)</td><td>1.34x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>spmv / GF(251)</td><td>1.43x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>spmv / GF(2^31-1)</td><td>0.75x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>sparse-dense / GF(7)</td><td>0.89x (PASS)</td><td><span class="badge green">PASS</span></td></tr>
+      <tr><td>sparse-dense / GF(2)</td><td>0.00243x (!)</td><td><span class="badge green">PASS (412x faster)</span></td></tr>
+      <tr><td>sparse-matmul / all 7 fields</td><td>1.00x (self-canonical)</td><td><span class="badge green">PASS</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">
+    CSR layout sweep (task <code>3a37e0f6</code>) identified optimal layout for
+    each field family. GF(2) sparse-dense is 412x faster than LinBox — different semantic
+    (BitMatrix x dense vs LinBox's modular path).
+  </p>
+  <aside class="notes">
+    The sparse story was notable for the breadth it needed to establish: before Wave 3, there was no
+    sparse scorecard at all. Task 47698404 built the entire sparse benchmark corpus from scratch:
+    CSR corpus, LinBox harness wired to the containerized build, analyze.py extension for sparse ops,
+    and the initial measurement. The gap in sparse-elim is clearly algorithmic, not a constant-factor
+    issue — LinBox fills fewer pivots and exits earlier on dependent rows. This is the classic
+    Markowitz criterion tradeoff: O(nnz) overhead per pivot selection vs O(1) straight-line.
+  </aside>
+</section>
+
+<!-- ── SLIDE 8b: SPARSE WIN 4 — sparse-elim root cause (cont.) ──────────── -->
+<section>
+  <span class="seclabel">Win 4: sparse <span class="num">· 22 / 43</span></span>
+  <h2>Algorithmic Win 4 — Sparse Operations (cont.)</h2>
+  <h3>sparse-elim — open algorithmic gap</h3>
+  <div class="warning">
+    <strong>Root cause:</strong> LinBox's <code>GaussDomain::NoReordering</code> uses
+    Markowitz-degree pivoting with a priority queue: it selects the pivot column with the
+    fewest nonzeros, minimizing fill-in. gf2-core uses a straight-line column sweep.
+    Result: uniformly 2.0x–2.6x of LinBox.
+  </div>
+  <aside class="notes">
+    The sparse story was notable for the breadth it needed to establish: before Wave 3, there was no
+    sparse scorecard at all. Task 47698404 built the entire sparse benchmark corpus from scratch:
+    CSR corpus, LinBox harness wired to the containerized build, analyze.py extension for sparse ops,
+    and the initial measurement. The gap in sparse-elim is clearly algorithmic, not a constant-factor
+    issue — LinBox fills fewer pivots and exits earlier on dependent rows. This is the classic
+    Markowitz criterion tradeoff: O(nnz) overhead per pivot selection vs O(1) straight-line.
+  </aside>
+</section>
+
+<!-- ── SLIDE 8c: SPARSE WIN 4 — sparse-elim results (cont.) ─────────────── -->
+<section>
+  <span class="seclabel">Win 4: sparse <span class="num">· 23 / 43</span></span>
+  <h2>Algorithmic Win 4 — Sparse Operations (cont.)</h2>
+  <h3>sparse-elim — open algorithmic gap</h3>
+  <table>
+    <thead><tr><th>Cell</th><th>Ratio</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>GF(7) / n=256</td><td>2.61x</td><td><span class="badge gray">FAIL</span></td></tr>
+      <tr><td>GF(251) / n=1024</td><td>2.14x</td><td><span class="badge gray">FAIL</span></td></tr>
+      <tr><td>GF(2) / n=256</td><td>2.15x</td><td><span class="badge gray">FAIL</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">All 10 sparse-elim cells FAIL. Routed to <code>5ce13bae</code> (Markowitz-degree pivoting). GF(2^8)/GF(2^16) sparse-elim: PASS (self-canonical — no external oracle).</p>
+  <aside class="notes">
+    The sparse story was notable for the breadth it needed to establish: before Wave 3, there was no
+    sparse scorecard at all. Task 47698404 built the entire sparse benchmark corpus from scratch:
+    CSR corpus, LinBox harness wired to the containerized build, analyze.py extension for sparse ops,
+    and the initial measurement. The gap in sparse-elim is clearly algorithmic, not a constant-factor
+    issue — LinBox fills fewer pivots and exits earlier on dependent rows. This is the classic
+    Markowitz criterion tradeoff: O(nnz) overhead per pivot selection vs O(1) straight-line.
+  </aside>
+</section>
+
+<!-- ── SLIDE 9: WHERE WE LANDED — metrics ───────────────────────────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 24 / 43</span></span>
+  <h2>Where We Landed — Final Scorecard</h2>
+  <p class="muted small center">Source: <code>dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md</code></p>
+  <div class="three-col">
+    <div>
+      <h3>~64</h3>
+      <p>PASS cells</p>
+    </div>
+    <div>
+      <h3>~11</h3>
+      <p>AMENDED cells<br/>(aspirational, user-approved)</p>
+    </div>
+    <div>
+      <h3>~70</h3>
+      <p>FAIL cells<br/>(all routed per A8)</p>
+    </div>
+  </div>
+  <p class="muted small center">+ 20 EXCLUDED (no-independent-oracle) + ~16 PENDING (harness gap or gf2 side absent)</p>
+  <aside class="notes">
+    The scorecard authority is 2cfc4372-sota-scorecard.md. The ~64 PASS count includes self-canonical
+    cells (sparse-matmul, sparse-elim GF(2^m), some spmv) but those are real measurements: gf2-core
+    implements these operations and they are measured. The 70 FAIL count from A8 annex is authoritative
+    and includes the exact per-cell routing. The 20 EXCLUDED cells are not performance failures —
+    they are cells where no independent oracle exists for the operation under the same algebraic contract.
+  </aside>
+</section>
+
+<!-- ── SLIDE 9b: WHERE WE LANDED — scorecard rows 1-3 (cont.) ───────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 25 / 43</span></span>
+  <h2>Where We Landed — Final Scorecard (cont.)</h2>
+  <table>
+    <thead><tr><th>Operation family</th><th>PASS</th><th>AMENDED</th><th>FAIL</th><th>EXCL</th><th>Notable</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>fgemm / matmul</td>
+        <td>GF(2^31-1) all n; GF(7,31,65521) n&le;1024; GF(2^32) all n; GF(2) n&ge;1024</td>
+        <td>GF(251) all n (A7); GF(7,31)/64 (A5,A6); GF(2^8) (A2); GF(2^16)/1024 (A3)</td>
+        <td>n=4096 non-Mersenne; GF(2) n&lt;1024</td>
+        <td>—</td>
+        <td>GF(2^32) is 5.5-6.7x <em>faster</em> than NTL</td>
+      </tr>
+      <tr>
+        <td>pluq / echelon / invert / solve</td>
+        <td>GF(2^31-1) all; GF(2) echelon all 6</td>
+        <td>GF(2^31-1) invert n=256,1024 uniform (A4)</td>
+        <td>all non-Mersenne GF(p) = 52 cells; GF(2) invert = 3 cells</td>
+        <td>GF(2^m) non-matmul = 18 cells</td>
+        <td>pluq/solve GF(2) absent (harness gap)</td>
+      </tr>
+      <tr>
+        <td>charpoly / minpoly</td>
+        <td>14/16 cells across GF(7,251,65521,2^31-1)</td>
+        <td>—</td>
+        <td>GF(251)/64 minpoly (4.14x); GF(251)/256 charpoly (3.18x)</td>
+        <td>GF(2), GF(2^m) = 8 cells</td>
+        <td>GF(7)/256 minpoly: 340x &rarr; 0.17x</td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The scorecard authority is 2cfc4372-sota-scorecard.md. The ~64 PASS count includes self-canonical
+    cells (sparse-matmul, sparse-elim GF(2^m), some spmv) but those are real measurements: gf2-core
+    implements these operations and they are measured. The 70 FAIL count from A8 annex is authoritative
+    and includes the exact per-cell routing. The 20 EXCLUDED cells are not performance failures —
+    they are cells where no independent oracle exists for the operation under the same algebraic contract.
+  </aside>
+</section>
+
+<!-- ── SLIDE 9c: WHERE WE LANDED — scorecard rows 4-5 (cont.) ───────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 26 / 43</span></span>
+  <h2>Where We Landed — Final Scorecard (cont.)</h2>
+  <table>
+    <thead><tr><th>Operation family</th><th>PASS</th><th>AMENDED</th><th>FAIL</th><th>EXCL</th><th>Notable</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>spmv / sparse-matmul / sparse-dense</td>
+        <td>All 19 cells</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>GF(2) sparse-dense 412x faster than LinBox</td>
+      </tr>
+      <tr>
+        <td>sparse-elim</td>
+        <td>GF(2^8)/GF(2^16) (self-canonical)</td>
+        <td>—</td>
+        <td>GF(p)+GF(2) x 10 cells (2.1x-2.6x)</td>
+        <td>—</td>
+        <td>Markowitz gap; tracked in <code>5ce13bae</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The scorecard authority is 2cfc4372-sota-scorecard.md. The ~64 PASS count includes self-canonical
+    cells (sparse-matmul, sparse-elim GF(2^m), some spmv) but those are real measurements: gf2-core
+    implements these operations and they are measured. The 70 FAIL count from A8 annex is authoritative
+    and includes the exact per-cell routing. The 20 EXCLUDED cells are not performance failures —
+    they are cells where no independent oracle exists for the operation under the same algebraic contract.
+  </aside>
+</section>
+
+<!-- ── SLIDE 10: BIGGEST IMPROVEMENT — numbers + why slow ──────────────── -->
+<section>
+  <span class="seclabel">Deep dive <span class="num">· 27 / 43</span></span>
+  <h2>The Biggest Single Improvement</h2>
+  <p class="muted small center"><code>minpoly x GF(7) / n=256</code> — from O(n^4) quartic to extension-field Wiedemann</p>
+  <div class="two-col">
+    <div>
+      <h3>340.7x</h3>
+      <p class="center">Before (2026-04-26 baseline)<br/>gf2: 6914 ms &nbsp;|&nbsp; fflas: 20.29 ms</p>
+    </div>
+    <div>
+      <h3>0.17x</h3>
+      <p class="center">After (2026-05-07 Wave-11)<br/>gf2: 3.411 ms &nbsp;|&nbsp; fflas: 20.29 ms</p>
+    </div>
+  </div>
+  <aside class="notes">
+    This is perhaps the cleanest example in the entire epic of an algorithmic fix dominating a hardware
+    optimization. No amount of SIMD tuning would have helped a 340x gap — the O(n^4) algorithm was just
+    the wrong algorithm. The extension-field Wiedemann approach was first described by Villard (1997) and
+    has been in the computer algebra literature for decades, but wiring it correctly into the dispatch
+    path — with the Las-Vegas verifier, the cyclic decomposition fallback, and the shared packed-matvec
+    cache — required careful engineering. Task d1dd266c + three Wave-11 sibling tasks (5a3dbd5b, 70766cb1,
+    6c926de0) delivered the complete implementation.
+  </aside>
+</section>
+
+<!-- ── SLIDE 10b: BIGGEST IMPROVEMENT — why slow (cont.) ────────────────── -->
+<section>
+  <span class="seclabel">Deep dive <span class="num">· 28 / 43</span></span>
+  <h2>The Biggest Single Improvement (cont.)</h2>
+  <div class="note">
+    <strong>Why was the baseline so slow?</strong>
+    The O(n^4) algorithm ran n=256 canonical basis vectors, each requiring an O(n^2)
+    Berlekamp-Massey sweep. For GF(7)/n=256: 256 vectors x 256 B-M steps x 256 reduction
+    = 256^3 = 16M field operations per call — and then the lcm merge on top.
+  </div>
+  <aside class="notes">
+    This is perhaps the cleanest example in the entire epic of an algorithmic fix dominating a hardware
+    optimization. No amount of SIMD tuning would have helped a 340x gap — the O(n^4) algorithm was just
+    the wrong algorithm. The extension-field Wiedemann approach was first described by Villard (1997) and
+    has been in the computer algebra literature for decades, but wiring it correctly into the dispatch
+    path — with the Las-Vegas verifier, the cyclic decomposition fallback, and the shared packed-matvec
+    cache — required careful engineering. Task d1dd266c + three Wave-11 sibling tasks (5a3dbd5b, 70766cb1,
+    6c926de0) delivered the complete implementation.
+  </aside>
+</section>
+
+<!-- ── SLIDE 10c: BIGGEST IMPROVEMENT — why it works (cont.) ────────────── -->
+<section>
+  <span class="seclabel">Deep dive <span class="num">· 29 / 43</span></span>
+  <h2>The Biggest Single Improvement (cont.)</h2>
+  <div class="example">
+    <strong>Why does extension-field Wiedemann work?</strong>
+    For GF(7) with n=256: scalar Wiedemann fails because sequences repeat mod q=7 quickly.
+    Promoting to GF(7^3) (343 elements &gt; 256) makes the Krylov sequence generically
+    non-repeating. A single O(n^2) Krylov sweep + O(n^2) Berlekamp-Massey gives the minpoly.
+    Total: O(n^3) = 256^3/6 &asymp; 2.8M ops. Factor of improvement: &asymp; 2027x.
+  </div>
+  <div class="example">
+    <strong>Improvement factor: 2000x</strong> in wall clock.
+    Ratio moved from <span class="badge gray">340.7x slower</span> to <span class="badge green">0.17x (6x faster)</span>.
+    Same pattern at GF(7)/n=64: 53.9x &rarr; 0.28x (193x improvement).
+  </div>
+  <aside class="notes">
+    This is perhaps the cleanest example in the entire epic of an algorithmic fix dominating a hardware
+    optimization. No amount of SIMD tuning would have helped a 340x gap — the O(n^4) algorithm was just
+    the wrong algorithm. The extension-field Wiedemann approach was first described by Villard (1997) and
+    has been in the computer algebra literature for decades, but wiring it correctly into the dispatch
+    path — with the Las-Vegas verifier, the cyclic decomposition fallback, and the shared packed-matvec
+    cache — required careful engineering. Task d1dd266c + three Wave-11 sibling tasks (5a3dbd5b, 70766cb1,
+    6c926de0) delivered the complete implementation.
+  </aside>
+</section>
+
+<!-- ── SLIDE 11: WHAT REMAINS — issues 1-2 ─────────────────────────────── -->
+<section>
+  <span class="seclabel">Follow-ups <span class="num">· 30 / 43</span></span>
+  <h2>What Remains — The 5 Named Follow-up Issues</h2>
+  <p class="muted small center">All 70 FAIL cells routed per A8 annex — SC#4 satisfied</p>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Cells</th><th>Title</th><th>Architectural rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>615db3b9</code></td>
+        <td>52 cells</td>
+        <td>Pursue fflas-like GF(251) GEMM performance</td>
+        <td>
+          Non-Mersenne GF(p) dense LA catch-up. Core gap: fflas routes GF(251) and GF(7)
+          through OpenBLAS sgemm float-modular cascade (128-138 Gops/s); gf2 AVX2
+          byte-kernel ~58-71 Gops/s. Covers all pluq/echelon/invert/solve non-Mersenne
+          cells (inherit GEMM gap) + large-n fgemm. Design doc at
+          <code>dev/active/615db3b9-finite-field-la-sota-plan.md</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><code>5ce13bae</code></td>
+        <td>10 cells</td>
+        <td>Markowitz-degree pivot selection for sparse RREF</td>
+        <td>
+          Filed 2026-05-08. LinBox uses a priority queue to select the min-degree pivot
+          column, minimising fill-in. gf2 does straight-line column sweep. Gap is
+          uniform at 2.0x–2.6x across all fields and sizes.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    615db3b9 with 52 cells is the dominant remaining work. The design doc attached to that issue identifies
+    five architectural options: in-Rust f32/FMA cascade, BLAS-backed cascade, Goto/BLIS-style panelized
+    integer micro-kernel, AVX-512/VNNI follow-up, and "external BLAS dependency as explicit opt-in". The
+    last option would close all 52 cells immediately but adds a runtime dependency — the issue records this
+    as a policy option for the user to decide. The BLIS-style micro-kernel approach is the longest path
+    but produces the best result for the library's goal of "no external BLAS dependency in default build".
+  </aside>
+</section>
+
+<!-- ── SLIDE 11b: WHAT REMAINS — issues 3-5 (cont.) ────────────────────── -->
+<section>
+  <span class="seclabel">Follow-ups <span class="num">· 31 / 43</span></span>
+  <h2>What Remains — The 5 Named Follow-up Issues (cont.)</h2>
+  <table>
+    <thead>
+      <tr><th>Issue</th><th>Cells</th><th>Title</th><th>Architectural rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>aaa847cf</code></td>
+        <td>3 cells</td>
+        <td>M4RI-style invert path for BitMatrix</td>
+        <td>
+          Filed 2026-05-08. M4RI <code>mzd_invert_m4ri</code> uses Gray-code gather tables
+          during RREF for invert; gf2 BitMatrix uses plain Gauss-Jordan. Gap grows with n:
+          3.55x at n=64, 8.35x at n=256, 16.92x at n=1024.
+        </td>
+      </tr>
+      <tr>
+        <td><code>974a85bd</code></td>
+        <td>2 cells</td>
+        <td>Close GF(2) BitMatrix gaps to M4RI (story — residual)</td>
+        <td>
+          Story closed PASS at n&ge;1024. Residual: n=64 (1.79x) and n=256 (1.72x) below
+          M4RM crossover threshold. M4RM's table-lookup schedule needs n large enough to
+          amortize table-build cost.
+        </td>
+      </tr>
+      <tr>
+        <td><code>52cce970</code></td>
+        <td>2 cells</td>
+        <td>Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly</td>
+        <td>
+          GF(251)/n=64 minpoly (4.14x) and GF(251)/n=256 charpoly (3.18x). Needs
+          register-scheduled <code>gf2-kernels-simd</code> kernels. Reduction from
+          initial 4599x and 9.58x gaps respectively; residual is constant-factor.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    615db3b9 with 52 cells is the dominant remaining work. The design doc attached to that issue identifies
+    five architectural options: in-Rust f32/FMA cascade, BLAS-backed cascade, Goto/BLIS-style panelized
+    integer micro-kernel, AVX-512/VNNI follow-up, and "external BLAS dependency as explicit opt-in". The
+    last option would close all 52 cells immediately but adds a runtime dependency — the issue records this
+    as a policy option for the user to decide. The BLIS-style micro-kernel approach is the longest path
+    but produces the best result for the library's goal of "no external BLAS dependency in default build".
+  </aside>
+</section>
+
+<!-- ── SLIDE 12: EXCLUDED LEDGER — the cells ────────────────────────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 32 / 43</span></span>
+  <h2>The Excluded Ledger — 20 Cells</h2>
+  <p class="muted small center">Protocol class: <em>no-independent-oracle</em> — user-approved per <code>sota_target_matrix.md</code> § 6.1 + § 6.2</p>
+  <h3>The 20 excluded cells</h3>
+  <table>
+    <thead><tr><th>#</th><th>Operation x field</th><th>Class</th></tr></thead>
+    <tbody>
+      <tr><td>1–3</td><td>echelon x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>4–6</td><td>invert x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>7–9</td><td>solve x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>10–12</td><td>charpoly x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>13–15</td><td>minpoly x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>16–18</td><td>pluq x {GF(2^8), GF(2^16), GF(2^32)}</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>19</td><td>charpoly x GF(2)</td><td><span class="badge gray">no-oracle</span></td></tr>
+      <tr><td>20</td><td>minpoly x GF(2)</td><td><span class="badge gray">no-oracle</span></td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    The distinction between "excluded" and "self-canonical" matters here. Excluded means we have chosen
+    not to measure at all (no oracle exists and we haven't written a scalar reference). Self-canonical
+    means gf2-core itself is the reference because no external library exposes the same algebraic operation.
+    Sparse-elim over GF(2^m) falls into the latter category: LinBox's GaussDomain works over prime fields,
+    not extension fields. So gf2-core's own measurement is the reference, and the ratio is 1.00 by definition.
+  </aside>
+</section>
+
+<!-- ── SLIDE 12b: EXCLUDED LEDGER — root reason (cont.) ─────────────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 33 / 43</span></span>
+  <h2>The Excluded Ledger — 20 Cells (cont.)</h2>
+  <h3>Why excluded, and how to promote</h3>
+  <div class="example">
+    <strong>Root reason:</strong> the five-criterion acceptance protocol requires a reference library
+    that exposes the operation under the <em>same algebraic contract</em>. For GF(2^m) non-matmul
+    operations, no public library in the survey implements echelon / invert / solve / charpoly /
+    minpoly / pluq over GF(2^m) extension fields in a harness-compatible form.
+  </div>
+  <aside class="notes">
+    The distinction between "excluded" and "self-canonical" matters here. Excluded means we have chosen
+    not to measure at all (no oracle exists and we haven't written a scalar reference). Self-canonical
+    means gf2-core itself is the reference because no external library exposes the same algebraic operation.
+    Sparse-elim over GF(2^m) falls into the latter category: LinBox's GaussDomain works over prime fields,
+    not extension fields. So gf2-core's own measurement is the reference, and the ratio is 1.00 by definition.
+  </aside>
+</section>
+
+<!-- ── SLIDE 12c: EXCLUDED LEDGER — how to unblock (cont.) ──────────────── -->
+<section>
+  <span class="seclabel">Scorecard <span class="num">· 34 / 43</span></span>
+  <h2>The Excluded Ledger — 20 Cells (cont.)</h2>
+  <h3>Why excluded, and how to promote</h3>
+  <div class="note">
+    <strong>How to unblock promotion:</strong>
+    <ul>
+      <li><strong>Rows 1–18:</strong> add a <code>ref_gf2m_rref</code> scalar reference harness
+          (scalar GF(2^m) Gauss-Jordan in C) or wire FLINT <code>fq_nmod_mat_*</code>.</li>
+      <li><strong>Row 19–20 (GF(2) charpoly/minpoly):</strong> add <code>ref_gf2_charpoly</code>
+          harness to the bench container. There is no technical blocker — just a missing driver.</li>
+    </ul>
+  </div>
+  <p class="muted small">
+    Note: <code>sparse-elim x GF(2^8)/GF(2^16)</code> are <strong>not</strong> excluded — they
+    are kept as self-canonical (semantics-mismatch) and are PASS.
+  </p>
+  <aside class="notes">
+    The distinction between "excluded" and "self-canonical" matters here. Excluded means we have chosen
+    not to measure at all (no oracle exists and we haven't written a scalar reference). Self-canonical
+    means gf2-core itself is the reference because no external library exposes the same algebraic operation.
+    Sparse-elim over GF(2^m) falls into the latter category: LinBox's GaussDomain works over prime fields,
+    not extension fields. So gf2-core's own measurement is the reference, and the ratio is 1.00 by definition.
+  </aside>
+</section>
+
+<!-- ── SLIDE 13: PROCESS NARRATIVE — steps 1-3 ─────────────────────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 35 / 43</span></span>
+  <h2>Process Narrative — AI Sub-agents Driving Closure</h2>
+  <h3>How the project-lead skill operated</h3>
+  <ol>
+    <li><strong>Pre-dispatch:</strong> claim + in_progress transition before dispatch; no orphaned
+        workers on stale issues.</li>
+    <li><strong>Sub-agent dispatch:</strong> each task compiled to a focused prompt with exact
+        acceptance criteria, file paths, and "do not run benchmarks in test mode" guards.</li>
+    <li><strong>Gate enforcement:</strong> <code>cargo-ci</code> ran automatically; <code>code-review</code>
+        was driven by the lead calling Copilot gpt-5.4 as reviewer; <code>doc-review</code>
+        checked evidence doc completeness.</li>
+  </ol>
+  <aside class="notes">
+    The code-review gate was run by Copilot gpt-5.4. After a rate-limit incident in Waves 1-4 (resolved
+    post 2026-05-04 reset), review throughput was restored and the epic ran at approximately one code-review
+    gate per task per day. The key insight about parallel dispatch is that stories that don't share source
+    files (GF(2) story vs GF(p) fgemm story) can be dispatched simultaneously using git worktrees. The lead
+    skill's isolation requirement (feedback_parallel_agent_isolation.md) was satisfied by assigning each
+    parallel worker to its own worktree.
+  </aside>
+</section>
+
+<!-- ── SLIDE 13b: PROCESS NARRATIVE — steps 4-5 (cont.) ────────────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 36 / 43</span></span>
+  <h2>Process Narrative — AI Sub-agents Driving Closure (cont.)</h2>
+  <h3>How the project-lead skill operated</h3>
+  <ol start="4">
+    <li><strong>No-go decisions:</strong> review failures that surfaced missing invariants
+        (e.g., SSOT violation, harness using test-copy rather than production path) were
+        escalated to rework, never soft-approved.</li>
+    <li><strong>Amendment audit trail:</strong> every [hard] criterion that failed empirically
+        was amended in the issue description with the observed number and a pointer to the
+        evidence doc. Amendment ledger A1–A8 in the scorecard is the full audit trail.</li>
+  </ol>
+  <aside class="notes">
+    The code-review gate was run by Copilot gpt-5.4. After a rate-limit incident in Waves 1-4 (resolved
+    post 2026-05-04 reset), review throughput was restored and the epic ran at approximately one code-review
+    gate per task per day. The key insight about parallel dispatch is that stories that don't share source
+    files (GF(2) story vs GF(p) fgemm story) can be dispatched simultaneously using git worktrees. The lead
+    skill's isolation requirement (feedback_parallel_agent_isolation.md) was satisfied by assigning each
+    parallel worker to its own worktree.
+  </aside>
+</section>
+
+<!-- ── SLIDE 13c: PROCESS NARRATIVE — lessons 1 (cont.) ────────────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 37 / 43</span></span>
+  <h2>Process Narrative — AI Sub-agents Driving Closure (cont.)</h2>
+  <h3>Key process lessons from this epic</h3>
+  <div class="example">
+    <strong>What worked:</strong> pinned reproducible references eliminated ambiguity.
+    Amendment-based (not rework-based) gap handling kept the epic moving.
+    Parallel story dispatch (974+cc5 Waves 5-7) saved ~2 wave-cycles.
+  </div>
+  <div class="warning">
+    <strong>What was costly:</strong> charpoly/minpoly story (66190ccd) required 3 worker
+    reworks because the pre-dispatch criterion audit identified the quartic baseline too late.
+    The lesson: pre-dispatch criterion audits against reality are mandatory for polynomial-algorithm
+    work where complexity class is the dominant variable.
+  </div>
+  <aside class="notes">
+    The code-review gate was run by Copilot gpt-5.4. After a rate-limit incident in Waves 1-4 (resolved
+    post 2026-05-04 reset), review throughput was restored and the epic ran at approximately one code-review
+    gate per task per day. The key insight about parallel dispatch is that stories that don't share source
+    files (GF(2) story vs GF(p) fgemm story) can be dispatched simultaneously using git worktrees. The lead
+    skill's isolation requirement (feedback_parallel_agent_isolation.md) was satisfied by assigning each
+    parallel worker to its own worktree.
+  </aside>
+</section>
+
+<!-- ── SLIDE 13d: PROCESS NARRATIVE — lessons 2 (cont.) ────────────────── -->
+<section>
+  <span class="seclabel">Process <span class="num">· 38 / 43</span></span>
+  <h2>Process Narrative — AI Sub-agents Driving Closure (cont.)</h2>
+  <h3>Key process lessons from this epic</h3>
+  <div class="note">
+    <strong>Verification issues:</strong> proof sketches for Lean4 formal verification work
+    (proofs/ crate) are a separate lifecycle. No verification work was included in this epic.
+  </div>
+  <aside class="notes">
+    The code-review gate was run by Copilot gpt-5.4. After a rate-limit incident in Waves 1-4 (resolved
+    post 2026-05-04 reset), review throughput was restored and the epic ran at approximately one code-review
+    gate per task per day. The key insight about parallel dispatch is that stories that don't share source
+    files (GF(2) story vs GF(p) fgemm story) can be dispatched simultaneously using git worktrees. The lead
+    skill's isolation requirement (feedback_parallel_agent_isolation.md) was satisfied by assigning each
+    parallel worker to its own worktree.
+  </aside>
+</section>
+
+<!-- ── SLIDE 14: FUTURE RESEARCH — near-term ────────────────────────────── -->
+<section>
+  <span class="seclabel">Future <span class="num">· 39 / 43</span></span>
+  <h2>Future Research Directions</h2>
+  <p class="muted small center">Beyond the 5 named follow-ups — open research frontiers</p>
+  <h3>Near-term (natural extensions)</h3>
+  <ul>
+    <li><strong>BLIS-style micro-kernel for GF(251):</strong> a Goto/BLIS panelized
+        integer micro-kernel in <code>gf2-kernels-simd</code> could close the
+        float-modular BLAS gap without a runtime BLAS dependency. Planned in
+        <code>615db3b9</code>.</li>
+    <li><strong>AVX-512 / GFNI on capable hardware:</strong> GF(2^8) matmul gap
+        requires Method-of-Four-Russians or GFNI. This host (Zen 3) lacks AVX-512;
+        a GFNI path would be gated behind <code>#[cfg(target_feature = "gfni")]</code>
+        with scalar fallback.</li>
+    <li><strong>GF(2) invert M4RM tables (<code>aaa847cf</code>):</strong>
+        M4RI's Gray-code table gather during RREF is a known algorithm; implementing
+        it in Rust would close 3 FAIL cells.</li>
+  </ul>
+  <aside class="notes">
+    The GPU sparse work (16283d6f) is particularly interesting because the sparse story showed that
+    gf2-core's CSR spmv is already within 1.3-1.4x of LinBox on CPU. GPU acceleration would target
+    completely different workloads: cryptographic lattice problems, code-based cryptography, and
+    compressed sensing matrices where n > 10^4 and density < 0.1%. The HIP crate (gf2-kernels-hip)
+    is already in the workspace as an opt-in feature; the BCJR batch decode prototype shows the
+    infrastructure is there.
+  </aside>
+</section>
+
+<!-- ── SLIDE 14b: FUTURE RESEARCH — medium-term 1-2 (cont.) ─────────────── -->
+<section>
+  <span class="seclabel">Future <span class="num">· 40 / 43</span></span>
+  <h2>Future Research Directions (cont.)</h2>
+  <h3>Medium-term (new frontiers)</h3>
+  <ul>
+    <li><strong>GPU sparse via <code>16283d6f</code>:</strong>
+        HIP/ROCm sparse-matvec over GF(p) is already stubbed in
+        <code>gf2-kernels-hip</code>. The sparse story surfaced that CPU spmv
+        is already competitive with LinBox; GPU would target the large-n regime
+        (n &gt; 10^4, density &lt; 0.1%).</li>
+    <li><strong>AFFFFT comparison (<code>b117c95e</code>):</strong>
+        GF(2^m) polynomial multiplication via Algebraic FFT over
+        GF(2)[x] / (irreducible) — relevant for GF(2^m) charpoly/minpoly if the
+        excluded cells get promoted.</li>
+  </ul>
+  <aside class="notes">
+    The GPU sparse work (16283d6f) is particularly interesting because the sparse story showed that
+    gf2-core's CSR spmv is already within 1.3-1.4x of LinBox on CPU. GPU acceleration would target
+    completely different workloads: cryptographic lattice problems, code-based cryptography, and
+    compressed sensing matrices where n > 10^4 and density < 0.1%. The HIP crate (gf2-kernels-hip)
+    is already in the workspace as an opt-in feature; the BCJR batch decode prototype shows the
+    infrastructure is there.
+  </aside>
+</section>
+
+<!-- ── SLIDE 14c: FUTURE RESEARCH — medium-term 3-4 (cont.) ─────────────── -->
+<section>
+  <span class="seclabel">Future <span class="num">· 41 / 43</span></span>
+  <h2>Future Research Directions (cont.)</h2>
+  <h3>Medium-term (new frontiers)</h3>
+  <ul>
+    <li><strong>RNS/CRT approach for GF(251) fgemm:</strong>
+        Residue Number System: represent GF(251) elements as a residue pair
+        (mod 127, mod 251), use SIMD 8-bit arithmetic across both residues,
+        CRT-reconstruct. Potentially closes the float-BLAS gap without BLAS.</li>
+    <li><strong>Formal verification of charpoly algorithm:</strong>
+        The Cayley-Hamilton theorem + Krylov sequence is a natural target
+        for Lean4 via Charon/Aeneas (extension of existing <code>proofs/</code>
+        crate). Requires proof sketch per CLAUDE.md verification rules.</li>
+  </ul>
+  <aside class="notes">
+    The GPU sparse work (16283d6f) is particularly interesting because the sparse story showed that
+    gf2-core's CSR spmv is already within 1.3-1.4x of LinBox on CPU. GPU acceleration would target
+    completely different workloads: cryptographic lattice problems, code-based cryptography, and
+    compressed sensing matrices where n > 10^4 and density < 0.1%. The HIP crate (gf2-kernels-hip)
+    is already in the workspace as an opt-in feature; the BCJR batch decode prototype shows the
+    infrastructure is there.
+  </aside>
+</section>
+
+<!-- ── SLIDE 15: CLOSE ──────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>Close</h1>
+  <p class="tagline">Epic <code>97bf0879</code> — 2026-04-26 to 2026-05-08</p>
+  <div class="three-col">
+    <div>
+      <strong>Biggest win</strong><br/>
+      minpoly GF(7)/256<br/>
+      340x &rarr; 0.17x<br/>
+      <span class="muted small">2000x improvement</span>
+    </div>
+    <div>
+      <strong>Scorecard</strong><br/>
+      ~64 PASS<br/>
+      ~11 AMENDED<br/>
+      ~70 FAIL (all routed)<br/>
+      20 EXCLUDED
+    </div>
+    <div>
+      <strong>Outstanding work</strong><br/>
+      5 follow-up issues<br/>
+      52+10+3+2+2 cells<br/>
+      Primary: <code>615db3b9</code><br/>
+      <span class="muted small">non-Mersenne dense LA</span>
+    </div>
+  </div>
+  <aside class="notes">
+    To recap the narrative arc: we started with a 14x to 340x gap across multiple operation families
+    and no aligned reference grid. We built a reproducible 80+ cell target matrix with six pinned
+    reference libraries. We closed the gaps through algorithmic innovations (extension-field Wiedemann,
+    blocked RREF, PLE-driven dispatch, panelized AVX2 fgemm) and systematic wave-paced sub-agent dispatch.
+    64 cells now PASS, 11 are user-approved aspirational amendments, and 70 FAILs have explicit follow-up
+    routing. The dominant remaining work is the non-Mersenne GF(p) dense LA catch-up plan (615db3b9).
+  </aside>
+</section>
+
+<!-- ── SLIDE 15b: CLOSE — artefact index (cont.) ───────────────────────── -->
+<section>
+  <span class="seclabel">References <span class="num">· 43 / 43</span></span>
+  <h2>Close — Artefact Index</h2>
+  <table>
+    <thead><tr><th>Artefact</th><th>Path</th></tr></thead>
+    <tbody>
+      <tr><td>Final scorecard (cell-by-cell)</td><td><code>dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md</code></td></tr>
+      <tr><td>Scorecard summary deck</td><td><code>dev/bench_results/2026-05-08-f00fd873-sota-closure-deck.html</code></td></tr>
+      <tr><td>This journey deck</td><td><code>dev/bench_results/2026-05-08-97bf0879-sota-journey-deck.html</code></td></tr>
+      <tr><td>Target matrix</td><td><code>dev/plans/sota_target_matrix.md</code></td></tr>
+      <tr><td>Aggregate gf2 CSV (243 rows)</td><td><code>dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv</code></td></tr>
+      <tr><td>Aggregate reference CSV (335 rows)</td><td><code>dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv</code></td></tr>
+      <tr><td>Catch-up plan</td><td><code>dev/active/615db3b9-finite-field-la-sota-plan.md</code></td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    To recap the narrative arc: we started with a 14x to 340x gap across multiple operation families
+    and no aligned reference grid. We built a reproducible 80+ cell target matrix with six pinned
+    reference libraries. We closed the gaps through algorithmic innovations (extension-field Wiedemann,
+    blocked RREF, PLE-driven dispatch, panelized AVX2 fgemm) and systematic wave-paced sub-agent dispatch.
+    64 cells now PASS, 11 are user-approved aspirational amendments, and 70 FAILs have explicit follow-up
+    routing. The dominant remaining work is the non-Mersenne GF(p) dense LA catch-up plan (615db3b9).
+  </aside>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight, RevealNotes ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
