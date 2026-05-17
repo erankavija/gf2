@@ -61,15 +61,17 @@
 #       default; only set this for a full publication-grade regeneration.
 #
 #   SA_DATE=YYYY-MM-DD
-#       Override the date embedded in output CSV filenames (default: today's UTC
-#       date).  Use SA_DATE=2026-05-11 to reproduce the exact canonical filenames
-#       in the committed artefact.  The plot script reads specific dated filenames
-#       (its S1_FILENAME / S2_FILENAME / S3_FILENAME / S5_FILENAME constants);
-#       set SA_DATE to the canonical date if you want the figures to reflect the
-#       newly generated CSVs.  This is a whole-artefact property — every S*
-#       dataset (not just S3) writes a <name>-<DATE>.csv and the plot step
-#       resolves the canonical committed filename — NOT an S3-specific manual
-#       step.
+#       Override the date embedded in this run's output CSV filenames
+#       (default: today's UTC date). Use SA_DATE=2026-05-11 (etc.) if you
+#       want the top-level dated CSVs this run writes to carry the same
+#       filenames as the committed canonical artefact.
+#
+#       SA_DATE does NOT affect figure generation: step 6 always stages
+#       THIS run's freshly produced dated CSVs into a transient plot-input
+#       directory under the exact pinned filenames the (closed-issue) plot
+#       script resolves, then runs the plot script against that dir. The
+#       figures therefore always reflect this run's data regardless of
+#       SA_DATE, and the plot script itself is never modified.
 #
 # S3 assembly (fully automated — no manual step):
 #   s3_cross_cpu-<DATE>.csv is a deterministic two-part assembly the script
@@ -135,16 +137,31 @@ fi
 
 echo ""
 echo "=== step 1: workspace build ==="
-echo "    cargo build --workspace --all-features --release"
-cargo build --workspace --all-features --release
+# IMPORTANT: do NOT use --all-features. gf2-algebra's `hip` feature
+# (crates/gf2-algebra/Cargo.toml) pulls in gf2-kernels-hip, whose
+# build.rs unconditionally invokes /opt/rocm/bin/hipcc — that breaks
+# the CPU-only / GF2_PERMANENT_REPRO_SKIP_GPU=1 path at build time,
+# before any GPU-skip logic runs. We therefore build an explicit
+# non-hip CPU feature set. `hip` is added to the GPU harness builds
+# (steps 4a/4b) only when GPU steps are actually enabled.
+#
+# CPU feature set: gf2-algebra default is [simd, parallel, f5, f7];
+# the criterion bench needs `test-support` (and `simd`), the examples
+# need `parallel test-support`. We pass the union explicitly so the
+# build is deterministic and never enables `hip`.
+CPU_FEATURES="simd parallel f5 f7 test-support"
+echo "    cargo build --workspace --release --features \"${CPU_FEATURES}\""
+cargo build --workspace --release --features "${CPU_FEATURES}"
 
-# Also build the GPU research harnesses (even on non-GPU hosts: without
-# --features hip they compile to a stub that prints an error and exits).
-echo "    building permanent_gpu_crossover (S5 harness) stub..."
+# Also build the GPU research harnesses WITHOUT --features hip so they
+# compile to the non-ROCm stub (prints a message and exits non-zero if
+# run without hip). This keeps step 1 ROCm-free; the real hip build of
+# these crates happens in steps 4a/4b only when GPU is enabled.
+echo "    building permanent_gpu_crossover (S5 harness) non-hip stub..."
 cargo build \
     --manifest-path dev/research/permanent_gpu_crossover/Cargo.toml \
     --release
-echo "    building permanent_gpu_speedup (S1g harness) stub..."
+echo "    building permanent_gpu_speedup (S1g harness) non-hip stub..."
 cargo build \
     --manifest-path dev/research/permanent_gpu_speedup/Cargo.toml \
     --release
@@ -393,47 +410,62 @@ echo "=== step 5: update csvs/ snapshot from dated top-level CSVs ==="
 
 _DATE="${SA_DATE:-$(date -u +%F)}"
 
-_copy_if_exists() {
+# Fail-fast copy: a producing step that RAN must have emitted its CSV.
+# Absence is a HARD error (criterion 4 fail-fast) — we never silently
+# leave a stale csvs/ snapshot in place for a dataset whose step ran.
+# GPU-skipped datasets are handled separately below (absence is allowed
+# there, and the previously committed snapshot is intentionally retained).
+_require_copy() {
     local src="$1"
     local dst="$2"
+    local label="$3"
     if [[ -f "${src}" ]]; then
         cp "${src}" "${dst}"
         echo "    copied: ${src} -> ${dst}"
     else
-        echo "    WARNING: source not found, skipping: ${src}"
+        echo "    ERROR: ${label} step ran but its output is missing: ${src}" >&2
+        echo "           Refusing to leave a stale ${dst} — aborting." >&2
+        exit 1
     fi
 }
 
 mkdir -p "${ARTEFACT_DIR}/csvs"
 
-# S1: dated CSV written by the bench (uses SA_DATE or today's date)
-_copy_if_exists \
+# S1: dated CSV written by the bench (uses SA_DATE or today's date).
+# The Criterion bench (step 2) always runs, so this file must exist.
+_require_copy \
     "${ARTEFACT_DIR}/s1_speedup-${_DATE}.csv" \
-    "${ARTEFACT_DIR}/csvs/s1_speedup.csv"
+    "${ARTEFACT_DIR}/csvs/s1_speedup.csv" \
+    "S1 (criterion bench)"
 
-# S2: dated CSV written by parallel_scaling_sweep example
-_copy_if_exists \
+# S2: dated CSV written by parallel_scaling_sweep example (step 3a, always runs)
+_require_copy \
     "${ARTEFACT_DIR}/s2_parallel_scaling-${_DATE}.csv" \
-    "${ARTEFACT_DIR}/csvs/s2_parallel_scaling.csv"
+    "${ARTEFACT_DIR}/csvs/s2_parallel_scaling.csv" \
+    "S2 (parallel scaling sweep)"
 
-# S3: dated CSV assembled automatically in step 3b (Part A from S1 + Part B sanity)
-_copy_if_exists \
+# S3: dated CSV assembled automatically in step 3b (always runs)
+_require_copy \
     "${ARTEFACT_DIR}/s3_cross_cpu-${_DATE}.csv" \
-    "${ARTEFACT_DIR}/csvs/s3_cross_cpu.csv"
+    "${ARTEFACT_DIR}/csvs/s3_cross_cpu.csv" \
+    "S3 (cross-CPU assembly)"
 
 if [[ "${skip_gpu}" == "0" ]]; then
-    # S5: dated CSV written by permanent_gpu_crossover harness
-    _copy_if_exists \
+    # GPU steps actually ran — their outputs are now MANDATORY.
+    _require_copy \
         "${ARTEFACT_DIR}/s5_gpu_crossover-${_DATE}.csv" \
-        "${ARTEFACT_DIR}/csvs/s5_gpu_crossover.csv"
-
-    # S1g: dated CSV written by permanent_gpu_speedup harness
-    _copy_if_exists \
+        "${ARTEFACT_DIR}/csvs/s5_gpu_crossover.csv" \
+        "S5 (GPU crossover)"
+    _require_copy \
         "${ARTEFACT_DIR}/s1g_gpu_speedup-${_DATE}.csv" \
-        "${ARTEFACT_DIR}/csvs/s1g_gpu_speedup.csv"
+        "${ARTEFACT_DIR}/csvs/s1g_gpu_speedup.csv" \
+        "S1g (GPU speedup)"
 else
+    # GPU steps were INTENTIONALLY skipped (no ROCm or
+    # GF2_PERMANENT_REPRO_SKIP_GPU=1). Their absence is expected; the
+    # previously committed csvs/ snapshots are intentionally retained.
     echo "    INFO: GPU steps skipped — csvs/s5_gpu_crossover.csv and csvs/s1g_gpu_speedup.csv"
-    echo "         remain the previously committed snapshots."
+    echo "         remain the previously committed snapshots (not regenerated this run)."
 fi
 
 # ---------------------------------------------------------------------------
@@ -442,22 +474,79 @@ fi
 
 echo ""
 echo "=== step 6: regenerate figures via scripts/plot_permanent_benchmarks.py ==="
-echo "    The plot script resolves canonical dated filenames via its"
-echo "    S1_FILENAME/S2_FILENAME/S3_FILENAME/S5_FILENAME constants (strict, no"
-echo "    silent date substitution). This is uniform across ALL S* datasets, not"
-echo "    S3-specific: set SA_DATE to the canonical date so step 3b/step 2/etc."
-echo "    write the filenames the plot constants name. The S3 CSV that step 3b"
-echo "    assembled flows into the plot identically to every other S* dated file."
+#
+# The closed-issue plot script resolves four PINNED historical filenames
+# via strict constants (no silent date substitution):
+#   S1_FILENAME = s1_speedup-2026-05-11.csv
+#   S2_FILENAME = s2_parallel_scaling-2026-05-11.csv
+#   S3_FILENAME = s3_cross_cpu-2026-05-12.csv
+#   S5_FILENAME = s5_gpu_crossover-2026-05-15.csv
+# (S1g is NOT plotted.) If we pointed the plot script at the artefact dir
+# directly, it would render from the OLD committed pinned-name CSVs, not
+# this run's freshly produced dated CSVs.
+#
+# Fix (without touching the plot script): stage THIS run's fresh dated
+# CSVs into a dedicated plot-input dir under the EXACT pinned names the
+# plot script resolves, then point the plot script at that dir. The
+# figures are therefore generated from this run's data. Idempotent and
+# diff-stable: the staging dir is rebuilt from scratch each run.
+PLOT_PIN_S1="s1_speedup-2026-05-11.csv"
+PLOT_PIN_S2="s2_parallel_scaling-2026-05-11.csv"
+PLOT_PIN_S3="s3_cross_cpu-2026-05-12.csv"
+PLOT_PIN_S5="s5_gpu_crossover-2026-05-15.csv"
+
+PLOT_INPUT_DIR="${ARTEFACT_DIR}/.plot-input"
+rm -rf "${PLOT_INPUT_DIR}"
+mkdir -p "${PLOT_INPUT_DIR}"
+
+# S1/S2/S3 always produced this run — required.
+_require_copy \
+    "${ARTEFACT_DIR}/s1_speedup-${_DATE}.csv" \
+    "${PLOT_INPUT_DIR}/${PLOT_PIN_S1}" \
+    "S1 (plot input)"
+_require_copy \
+    "${ARTEFACT_DIR}/s2_parallel_scaling-${_DATE}.csv" \
+    "${PLOT_INPUT_DIR}/${PLOT_PIN_S2}" \
+    "S2 (plot input)"
+_require_copy \
+    "${ARTEFACT_DIR}/s3_cross_cpu-${_DATE}.csv" \
+    "${PLOT_INPUT_DIR}/${PLOT_PIN_S3}" \
+    "S3 (plot input)"
+
+# S5: if GPU ran this run, use the fresh CSV; if GPU was intentionally
+# skipped, fall back to the committed canonical S5 CSV so the S5 figure
+# still renders (clearly: S5 was not regenerated this run).
+if [[ "${skip_gpu}" == "0" ]]; then
+    _require_copy \
+        "${ARTEFACT_DIR}/s5_gpu_crossover-${_DATE}.csv" \
+        "${PLOT_INPUT_DIR}/${PLOT_PIN_S5}" \
+        "S5 (plot input)"
+else
+    if [[ -f "${ARTEFACT_DIR}/${PLOT_PIN_S5}" ]]; then
+        cp "${ARTEFACT_DIR}/${PLOT_PIN_S5}" "${PLOT_INPUT_DIR}/${PLOT_PIN_S5}"
+        echo "    S5 plot input: GPU skipped — using committed ${PLOT_PIN_S5}"
+        echo "    (S5 figure reflects the committed measurement, not this run)."
+    else
+        echo "    ERROR: GPU skipped and committed ${PLOT_PIN_S5} is absent;" >&2
+        echo "           cannot render the S5 figure. Aborting." >&2
+        exit 1
+    fi
+fi
+
 echo "    python3 scripts/plot_permanent_benchmarks.py all \\"
-echo "        --input-dir ${ARTEFACT_DIR}/ \\"
+echo "        --input-dir ${PLOT_INPUT_DIR}/ \\"
 echo "        --output-dir ${ARTEFACT_DIR}/figures/"
 
 mkdir -p "${ARTEFACT_DIR}/figures"
 python3 scripts/plot_permanent_benchmarks.py all \
-    --input-dir "${ARTEFACT_DIR}/" \
+    --input-dir "${PLOT_INPUT_DIR}/" \
     --output-dir "${ARTEFACT_DIR}/figures/"
 
-echo "    Figures written to: ${ARTEFACT_DIR}/figures/"
+# Clean up the transient staging dir so the artefact tree stays pristine
+# and the run is idempotent (no leftover .plot-input on re-runs).
+rm -rf "${PLOT_INPUT_DIR}"
+
+echo "    Figures written to: ${ARTEFACT_DIR}/figures/ (from THIS run's CSVs)"
 
 # ---------------------------------------------------------------------------
 # Step 7: Rewrite provenance.json
