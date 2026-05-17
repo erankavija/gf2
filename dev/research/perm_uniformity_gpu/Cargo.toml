@@ -1,0 +1,47 @@
+[package]
+name = "perm-uniformity-gpu"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+publish = false
+description = "GPU-accelerated high-N perm-vs-det uniformity resample over F_3/F_5/F_7 (JIT issue b293af5a). Standalone non-workspace prototype, supersedes the 8e4e19a0 noise-limited cells."
+
+# This crate is intentionally excluded from the root workspace so it does not
+# slow the default `cargo nextest` build.  Canonical build invocations:
+#
+#   cargo build --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
+#       --release --features hip
+#   cargo run   --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
+#       --release --features hip
+#
+# Without --features hip the binary builds (stub main prints a message and
+# exits non-zero); this keeps the crate buildable on non-ROCm hosts, matching
+# the permanent_gpu_crossover / gf2-kernels-hip precedents.
+
+[[bin]]
+name = "perm_uniformity_gpu"
+path = "src/main.rs"
+
+[[test]]
+name = "smoke"
+path = "tests/smoke.rs"
+
+[features]
+default = []
+hip = ["gf2-algebra/hip"]
+
+[dependencies]
+# Reuse the existing 8e4e19a0 harness as a path dependency: TVD, bootstrap CI,
+# the difference statistic, CellResult, the CSV schema, and the PNG encoder.
+perm-uniformity = { path = "../perm_uniformity" }
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["simd", "parallel", "f5", "f7", "test-support"] }
+gf2-core = { path = "../../../crates/gf2-core" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]
