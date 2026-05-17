@@ -120,7 +120,7 @@ TVD_det stabilises near ≈ 0.107 (q=3), ≈ 0.04 (q=5), ≈ 0.02 (q=7) from
 | 5 | 12 | 200,000 | 0.001784 | 0.0410 | yes |
 | 5 | 16 | 40,000  | 0.003989 | 0.0414 | yes |
 | 5 | 20 | 20,000  | 0.005642 | 0.0413 | yes (floor 0.0056 ≪ TVD_det/2 = 0.0206) |
-| 5 | 24 | 8,000   | 0.008921 | ≈0.041 | yes (the exact 8e4e19a0 q=5-large-n N=8000 standard) |
+| 5 | 24 | 8,000   | 0.008921 | 0.0404 | yes (floor 0.0089 ≪ TVD_det/2 = 0.0202; the exact 8e4e19a0 q=5-large-n N=8000 standard) |
 | 7 | 8  | 300,000 | 0.001784 | 0.0196 | yes |
 | 7 | 12 | 300,000 | 0.001784 | 0.0197 | yes |
 | 7 | 16 | 40,000  | 0.004886 | 0.0234 | yes (floor 0.0049 < TVD_det/2 = 0.0117) |
@@ -241,6 +241,7 @@ the high-N data establishes without the `8e4e19a0` noise masking.
 | 12 | 200,000 | 0.00215000 | [0.00137, 0.00480] | 0.04101000 | [0.03902, 0.04285] | −0.036925 | 0.001784 | PASS |
 | **16** | 40,000 | 0.00395000 | [0.00225, 0.00953] | 0.04137500 | [0.03718, 0.04558] | **−0.025000** | 0.003989 | **PASS (new: n>14, absent in 8e4e19a0)** |
 | **20** | 20,000 | 0.00320000 | [0.00255, 0.01140] | 0.04125000 | [0.03500, 0.04720] | **−0.020700** | 0.005642 | **PASS (new: n>14; previously hung the GPU, now defeated by chunking)** |
+| **24** | 8,000 | 0.00962500 | [0.00563, 0.02250] | 0.04037500 | [0.03150, 0.05088] | **−0.005875** | 0.008921 | **PASS (new: n>14; the 8e4e19a0 q=5-large-n N=8000 standard; 203.4 min, 104 chunked launches)** |
 
 F_5 n=16 and n=20 are new cells beyond `8e4e19a0`'s single-word CPU cap of
 n≤14. **F_5 n=20 is the cell that reproducibly hung the gfx1030 GPU twice
@@ -257,11 +258,13 @@ order-0.04 det baseline (a decreasing-then-flat convergence consistent
 with HKS Thm 1.2).
 
 q=5 n=24 (N=8000, the exact 8e4e19a0 q=5-large-n standard, floor 0.008921
-≪ TVD_det/2 ≈ 0.02): see §9 for status (long ≈3.4 h cell; the watchdog is
-defeated — it ran 28 clean bounded launches at ≈117 s with zero hangs —
-but the run was interrupted by an external session resource limit, not a
-GPU hang; resume command in the handoff). q=5 n=28 is hardware-infeasible
-at the required N (§2.4).
+≪ TVD_det/2 ≈ 0.0202) is now **measured genuine PASS**: TVD_perm=0.00962500
+(CI [0.00563, 0.02250], CI lower bound 0.00563 > 0 ⇒ TVD_perm resolved
+above the floor), TVD_det=0.04037500, diff_q95=**−0.005875** < 0 ⇒
+perm ≤ det at 95%. It completed in **one uninterrupted 203.4 min run
+(104 bounded sub-batch launches ≈117 s each, zero GPU hangs)** — the §2.5
+mitigation holds for the longest feasible F_5 cell. q=5 n=28 is
+hardware-infeasible at the required N (§2.4, §9 limitation 3).
 
 ### F_7 (extended past 8e4e19a0's n ≤ 14 — all new cells)
 
@@ -389,16 +392,23 @@ reach, are now **genuine PASS** (TVD_perm ≤ TVD_det at 95% via
    mitigation**. Now N=20,000 with bounded sub-batches: TVD_perm=0.00320000
    (CI [0.00255, 0.01140], CI lo > 0 resolved), diff_q95=**−0.020700**,
    floor 0.005642. GENUINE PASS — the watchdog is defeated.
-6. **q=7, n=8** — `8e4e19a0` had no F_7 n>14; this is a new GPU-path
+6. **q=5, n=24** — absent in `8e4e19a0` (its CPU path capped at n≤14);
+   this is the exact q=5-large-n N=8000 standard. New cell at N=8,000:
+   TVD_perm=0.00962500 (CI [0.00563, 0.02250], CI lo 0.00563 > 0 resolved
+   above floor 0.008921), diff_q95=**−0.005875**. Completed in **one
+   uninterrupted 203.4 min run (104 bounded sub-batch launches ≈117 s
+   each, zero GPU hangs)**. GENUINE PASS — the §2.5 mitigation holds for
+   the longest feasible F_5 cell.
+7. **q=7, n=8** — `8e4e19a0` had no F_7 n>14; this is a new GPU-path
    extension cell. N=300,000: TVD_perm=0.00200810 (CI [0.00136, 0.00416]),
    diff_q95=**−0.013955**, floor 0.001784. GENUINE PASS.
-7. **q=7, n=12** — new extension. N=300,000: TVD_perm=0.00184190
+8. **q=7, n=12** — new extension. N=300,000: TVD_perm=0.00184190
    (CI [0.00127, 0.00397]), diff_q95=**−0.013820**, floor 0.001784.
    GENUINE PASS.
-8. **q=7, n=16** — new extension (beyond `8e4e19a0`'s n≤14). N=40,000:
+9. **q=7, n=16** — new extension (beyond `8e4e19a0`'s n≤14). N=40,000:
    TVD_perm=0.00454643 (CI [0.00324, 0.01020]), diff_q95=**−0.010771**,
    floor 0.004886. GENUINE PASS.
-9. **q=7, n=20** — new extension. N=40,000: TVD_perm=0.00582857
+10. **q=7, n=20** — new extension. N=40,000: TVD_perm=0.00582857
    (CI [0.00408, 0.01150]), diff_q95=**−0.012146**, floor 0.004886.
    GENUINE PASS.
 
@@ -409,14 +419,14 @@ all with `diff_q95 < 0` and TVD_perm ≪ TVD_det (≈ O(10⁻³) vs det baseline
 ≈0.04 / ≈0.02), establishing the perm→uniform-vs-det convergence
 relationship for both fields past the `8e4e19a0` n≤14 cap.
 
-**Still REMAINING:** q=5 n=24 (feasible — the watchdog is defeated, it ran
-28 clean bounded launches with zero hangs; the ≈3.4 h run was cut by an
-*external session resource limit*, NOT a GPU hang or a harness/kernel
-fault; exact resume command in the handoff). q=5 n=28 and q=7 n=24 are
+**Still REMAINING — hardware-infeasible only:** q=5 n=28 and q=7 n=24 are
 **hardware-infeasible at the noise-floor-required N** on gfx1030 (§2.4,
-with measured per-launch evidence) — NOT under-sampled or faked. The
-headline contract — the three `8e4e19a0`-noise-excluded q=3 cells
-n∈{24,28,32} — remains **fully and genuinely satisfied**, plus the F_5/F_7
+with measured per-launch evidence) — NOT under-sampled or faked. Every
+*feasible* cell, including the long ≈3.4 h q=5 n=24 (the exact `8e4e19a0`
+q=5-large-n N=8000 standard, completed in one uninterrupted 203.4 min
+run), is now measured genuine PASS. The headline contract — the three
+`8e4e19a0`-noise-excluded q=3 cells n∈{24,28,32} — is **fully and
+genuinely satisfied**, plus the F_5 extension to n=24 and the F_7
 extension to n=20.
 
 ---
@@ -468,18 +478,23 @@ statistical column (seed→matrix map is fixed before chunking).
    Identical sample stream ⇒ identical histogram ⇒ identical statistical
    columns, regardless of sub-batch size or cooldown.
 
-The completed-cell CSV (`results-2026-05-17-gpu.csv`, the 16 cells
-q=3 n=6..32 + q=5 n=8,12,16,20 + q=7 n=8,12,16,20) statistical-column
-digest is:
+The completed-cell CSV (`results-2026-05-17-gpu.csv`, the **18 cells**
+q=3 n=6..32 (9) + q=5 n=8,12,16,20,24 (5) + q=7 n=8,12,16,20 (4))
+statistical-column digest is:
 
 ```
 sha256(grep -v '^#' results-2026-05-17-gpu.csv | cut -d, -f1-9)
-  = c7d469fbfa5b1b164887c823eb4e72c4671ce1a3d2a59474ada4e979cedc9334
+  = e505a44c57e60763f4dd27d53c2ebde52c8059430c02da3d32803afd86966690
 ```
 
-(This digest covers exactly the 16 completed cells; it changes when
-q=5 n=24 is appended, but every *individual* cell's statistical columns
-are seed-deterministic and reproducible — guarantees 1 and 2 above.)
+(This digest covers all 18 cells. The pre-q=5-n=24 17-cell digest was
+`c7d469fb…cedc9334`; appending the seed-deterministic q=5 n=24 row changes
+the whole-file digest to the value above. Every *individual* cell's
+statistical columns remain seed-deterministic and reproducible —
+guarantees 1 and 2 above; the q=5 n=24 columns reproduce bit-identically
+from SEED=0x00c0ffee00000001 via the cell_seed derivation. Note the
+earlier writeup count of "16 cells" was an off-by-one — the pre-q=5-n=24
+CSV held 17 cells, now 18.)
 
 ---
 
@@ -493,26 +508,28 @@ Regenerates `results-2026-05-17-gpu.csv` and (on a sweep that runs to
 completion) `tvd_vs_n_gpu.png` deterministically. Requires ROCm + a
 gfx1030 device.
 
-The repro script regenerates the CSV; a sweep that runs the full grid to
-completion in a single process also emits `tvd_vs_n_gpu.png` (reusing
-`perm_uniformity::png::write_png_file`, the byte-deterministic encoder)
-from the in-memory cell results after the sweep loop. The 16-cell
+The repro script regenerates the CSV; the faceted log-y `tvd_vs_n_gpu.png`
+is regenerated *from the persisted SSOT CSV* via the harness `PLOT_ONLY`
+mode (reusing `perm_uniformity::png::write_png_file`, the byte-deterministic
+encoder — no duplicate plotting logic), so the figure always matches the
+CSV regardless of which cells ran in a given process. The 18-cell
 `results-2026-05-17-gpu.csv` here was assembled by merging the
 incrementally-written per-cell CSVs from the q=3+F_5-small run, the F_7
-run, and the F_5 n=20 run (each a separate process due to the
-session/wall-clock split — the CSV is the load-bearing artefact and is
-byte-correct per cell). The faceted log-y plot is regenerated by any
-single-process run over the same `CELLS`; it is the optional artefact per
-the issue, not load-bearing.
+run, the F_5 n=20 run, and the q=5 n=24 run (each a separate process due
+to the session/wall-clock split — the CSV is the load-bearing artefact and
+is byte-correct per cell; see the CSV header `# provenance:` note for the
+two-commit measurement record). The plot is the optional artefact per the
+issue, not load-bearing.
 
 **Measured wall-clock (gfx1030 / AMD Radeon RX 6950 XT, ROCm 7.2.3).**
 q=3 headline cells (prior run): n=24 (193.8 s, N=40k), n=28 (598.6 s,
 N=8k), n=32 (2300.0 s ≈ 38 min, N=2k). F_5/F_7 rework run:
 F_5 n=20 (300.9 s, 17 bounded launches ≈18 s each, N=20k); F_7 sweep
 n=8,12,16,20 ≈ 23.2 min total (q7n8/12 ≈1 min cooldown-dominated, q7n20
-≈121 launches ≈10 s each). q=5 n=24 (N=8k, the long ≈3.4 h cell): ran 28
-clean bounded launches at ≈117 s each (zero hangs) before an external
-session resource limit cut the run — NOT a GPU hang (§9). Per-cell
+≈121 launches ≈10 s each). q=5 n=24 (N=8k, the long ≈3.4 h cell):
+**completed in one uninterrupted run — 12 206.4 s = 203.4 min, 104 bounded
+sub-batch launches ≈117 s each (sub-batch=77), zero GPU hangs**, genuine
+PASS (§3, §6). Per-cell
 `mean_us_perm`/`mean_us_det` are in the CSV (excluded from the determinism
 guarantee per §7). End-to-end wall-clock and per-cell N are `[aspirational]`
 provisional knobs (issue criterion 8); actual values are recorded here and
@@ -532,20 +549,20 @@ in the CSV header.
    does not perturb the sampled stream. This is no longer a limitation —
    it is a solved problem and the central deliverable of this rework.
 
-2. **q=5 n=24 interrupted by an external session resource limit (NOT a
-   GPU hang).** q=5 n=24 (N=8,000, ≈3.4 h: 104 bounded launches ≈117 s
-   each) ran up to 28 clean launches with zero hangs (GPU 99 % throughout,
-   0 hang signatures in any log) before its background task was killed
-   **three** times at ≈58–60 min by an out-of-band session/resource limit.
-   The GPU was idle (0 %, no hang signature) after each kill — this is a
-   wall-clock / session-budget constraint, not a watchdog or
-   harness/kernel fault (contrast: q=5 n=20, the cell that genuinely hung
-   the GPU before §2.5, now completes cleanly). The cell is feasible and
-   the mitigation is proven for it; it is documented
-   as REMAINING (resume command in `dev/active/b293af5a-impl-handoff.md`)
-   needing one uninterrupted ≈3.4 h run. Its noise floor at the chosen
-   N=8,000 is 0.008921 ≪ TVD_det/2 ≈ 0.02 (the exact 8e4e19a0
-   q=5-large-n standard), so the resume run will resolve a genuine PASS.
+2. **q=5 n=24: RESOLVED — completed genuine PASS.** The longest feasible
+   F_5 cell (N=8,000, ≈3.4 h) had been cut **three** times at ≈58–60 min
+   by an out-of-band session/resource limit — never a GPU hang (GPU 99 %
+   throughout, 0 hang signatures in any log; the GPU was idle after each
+   kill, a wall-clock/session-budget constraint, not a watchdog or
+   harness/kernel fault; contrast q=5 n=20, the cell that genuinely hung
+   the GPU before §2.5, which now completes cleanly). It has since
+   **completed in one uninterrupted run: 12 206.4 s = 203.4 min, 104
+   bounded sub-batch launches ≈117 s each, zero GPU hangs.** Result:
+   TVD_perm=0.00962500 (CI [0.00563, 0.02250], CI lo 0.00563 > 0 ⇒
+   resolved above floor 0.008921), diff_q95=−0.005875 < 0 ⇒ genuine PASS
+   (§3, §6). This is no longer a limitation — it is a solved cell. (The
+   floor 0.008921 ≪ TVD_det/2 ≈ 0.0202, the exact 8e4e19a0 q=5-large-n
+   N=8000 standard.)
 
 3. **q=5 n=28 and q=7 n=24: hardware-infeasible at the noise-floor-required
    N (NOT under-sampled or faked).** Per §2.4, the 2^n Gray-walk makes the
@@ -581,15 +598,14 @@ in the CSV header.
    the two cleanest high-N noise-free points (n=8,10). The qualitative
    exponential-convergence and perm≪det conclusions are robust.
 
-6. **F_5/F_7 extension reaches n=20 (not further).** F_5 n=16,20 and
+6. **F_5 extension reaches n=24, F_7 reaches n=20.** F_5 n=16,20,24 and
    F_7 n=8,12,16,20 are all measured genuine PASS — criterion 4's
-   "extended past n≤14" is satisfied for both fields. F_5 n=24 is
-   feasible and pending one uninterrupted run (limitation 2);
-   F_5 n=28 / F_7 n=24 are hardware-infeasible at the required N
-   (limitation 3). The measured F_5/F_7 trends (TVD_perm ≈ O(10⁻³)
-   ≪ TVD_det at every n, flat/decreasing vs the non-vanishing det
-   baseline) establish the perm→uniform-vs-det convergence; the very-large
-   n F_5/F_7 regime beyond n=20/24 is not claimed.
+   "extended past n≤14" is satisfied for both fields. F_5 n=28 / F_7 n=24
+   are hardware-infeasible at the required N (limitation 3). The measured
+   F_5/F_7 trends (TVD_perm ≈ O(10⁻³) ≪ TVD_det at every n,
+   flat/decreasing vs the non-vanishing det baseline) establish the
+   perm→uniform-vs-det convergence; the very-large-n F_5/F_7 regime beyond
+   n=24/20 is not claimed.
 
 ---
 

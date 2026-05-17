@@ -1,12 +1,13 @@
 # b293af5a GPU-resample — implementation handoff
 
-Status as of 2026-05-17. This file records exactly which (q,n) cells of the
-GPU high-N uniformity resample are DONE versus REMAINING, with the chosen N
-and the precise resume command. It exists so a long sweep that exceeds the
-per-session wall-clock budget can be resumed without re-running completed
-cells (the harness writes the CSV incrementally after every cell, so all
-completed cells are already persisted in
-`dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv`).
+Status as of 2026-05-18: **all feasible measurement is COMPLETE** (18 cells
+genuine PASS, including the long ≈3.4 h q=5 n=24; only the two
+hardware-infeasible cells q5n28/q7n24 are out of scope). This file records
+which (q,n) cells are DONE and the two documented-infeasible cells. It
+originally existed so a long sweep exceeding the per-session wall-clock
+budget could be resumed without re-running completed cells (the harness
+writes the CSV incrementally after every cell); all completed cells are
+persisted in `dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv`.
 
 ## Harness
 
@@ -40,7 +41,9 @@ before), q=7 n=8/12/16/20, and the q=5 n=24 launches. The
 `validate_chunked_equals_unchunked` assertion (sub-batched stream ≡
 un-chunked single-launch, byte-identical) PASSED on every run.
 
-**DONE — 16 cells in `results-2026-05-17-gpu.csv`, all genuine PASS:**
+**DONE — 18 cells in `results-2026-05-17-gpu.csv`, all genuine PASS**
+(an earlier draft of this handoff said "16" — that was an off-by-one; the
+pre-q5n24 CSV held 17 cells, now 18 with q5n24):
 
 | q | n | N | TVD_perm | diff_q95 | verdict |
 |---|---|---|----------|----------|---------|
@@ -57,38 +60,34 @@ un-chunked single-launch, byte-identical) PASSED on every run.
 | 5 | 12 | 200,000 | 0.00215000 | −0.036925 | PASS |
 | 5 | 16 | 40,000  | 0.00395000 | −0.025000 | **PASS (new: n>14, absent in 8e4e19a0)** |
 | 5 | 20 | 20,000  | 0.00320000 | −0.020700 | **PASS (new: n>14; previously hung GPU ×2, now defeated)** |
+| 5 | 24 | 8,000   | 0.00962500 | −0.005875 | **PASS (new: n>14; the 8e4e19a0 q=5-large-n N=8000 standard; 203.4 min, 104 chunked launches, zero hangs)** |
 | 7 | 8  | 300,000 | 0.00200810 | −0.013955 | **PASS (new: F_7 n>14 extension; 8e4e19a0 had none)** |
 | 7 | 12 | 300,000 | 0.00184190 | −0.013820 | **PASS (new)** |
 | 7 | 16 | 40,000  | 0.00454643 | −0.010771 | **PASS (new: n>14, absent in 8e4e19a0)** |
 | 7 | 20 | 40,000  | 0.00582857 | −0.012146 | **PASS (new: n>14, absent in 8e4e19a0)** |
 
 Criterion 4 (F_5 AND F_7 extended past n≤14, perm ≤ det at 95%,
-perm≪det/decreasing trend): **SATISFIED** — F_5 to n=20, F_7 to n=20,
+perm≪det/decreasing trend): **SATISFIED** — F_5 to n=24, F_7 to n=20,
 all genuine PASS.
 
-**REMAINING — 1 feasible (session-limited), 2 hardware-infeasible:**
+**REMAINING — 0 feasible, 2 hardware-infeasible:**
+
+q5n24 is **DONE** (above): it completed in one uninterrupted 203.4 min run
+(104 bounded sub-batch launches ≈117 s each, zero GPU hangs) after the
+prior three ≈58–60 min cuts by an *external session resource limit* (never
+a GPU hang or harness/kernel fault). TVD_perm=0.00962500 (CI lo 0.00563 >
+0, resolved above floor 0.008921), diff_q95=−0.005875 < 0 ⇒ genuine PASS.
+Its row is merged into `results-2026-05-17-gpu.csv` in grid order (after
+`5,20`, before `7,8`); the CSV header carries a `# provenance:` note
+recording the two-commit measurement (16+1 bulk cells at runtime
+HEAD=4fb9db1e with the S2.5 source uncommitted, q5n24 at HEAD=57f12685,
+byte-identical binary verified via empty `git diff c0a24b4a..57f12685`
+over the harness + deps).
 
 | q | n | N | tag | status |
 |---|---|---|-----|--------|
-| 5 | 24 | 8,000 | q5n24 | FEASIBLE — watchdog defeated (ran 28 clean ≈117 s launches, zero hangs, GPU 99 % throughout, 0 hang signatures in any log); the ≈3.4 h cell was cut **three** times at ≈58–60 min by an *external session resource limit*, NOT a GPU hang and NOT a harness/kernel fault. Needs one uninterrupted ≈3.4 h run (the §2.5 mitigation is already in the committed binary — no code change needed). floor 0.008921 ≪ TVD_det/2≈0.02 (the exact 8e4e19a0 q=5-large-n N=8000 standard) ⇒ the resume run will resolve a genuine PASS. |
 | 5 | 28 | — | q5n28 | HARDWARE-INFEASIBLE at the noise-floor-required N: ≈53 h at N=8000 on gfx1030 (≈1.51 s/matrix × 16 for +4 in n). NOT under-sampled to fake a PASS. |
 | 7 | 24 | — | q7n24 | HARDWARE-INFEASIBLE: F_7 LUT ≈1.30 s/matrix; required N≥20000 (floor ≪ 0.01) ⇒ ≈7.3 h; N=8000 gives floor 0.01092 > 0.01 (fails requirement). NOT under-sampled. |
-
-**Resume command for q5n24** (the only feasible-pending cell — run in one
-uninterrupted session; the §2.5 mitigation is already in the committed
-binary, no code change needed):
-
-```bash
-cargo build --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
-    --release --features hip
-OUTPUT_DIR=/tmp/pug_q5n24 CELLS=q5n24 \
-    cargo run --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
-    --release --features hip
-# ≈3.4 h: 104 bounded sub-batch launches @ ≈117 s each, zero hangs expected
-# (q5n24 sub-batch=77 from the q=5 work budget 1.3e9). Then merge the one
-# produced row into dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv
-# in grid order (after the 5,20 row, before the 7,8 row).
-```
 
 q5n28 and q7n24 are documented as hardware-infeasible at the required N
 (see writeup §2.4 / §9 limitation 3) — they are NOT to be forced with an
@@ -101,14 +100,30 @@ authoritative grid) and `dev/plans/r4_gpu_uniformity_resample.md` §2.4. N is
 chosen so the Monte-Carlo TVD noise floor `sqrt((q-1)/(2*pi*N))` is
 comfortably below TVD_det/2 and TVD_perm is resolved above its own floor.
 
-## Remaining work for the next session
+## Status — all measurement work COMPLETE (2026-05-18)
 
-1. Run the resume command for the REMAINING cells above.
-2. Cross-check every produced row against the CSV (no guessed numbers).
-3. Fill the `dev/plans/r4_gpu_uniformity_resample.md` placeholders from the
-   completed CSV (results tables, 8e4e19a0 comparison, HKS fit, the
-   now-PASS list, determinism sha256, wall-clock, limitations).
-4. Regenerate `tvd_vs_n_gpu.png`.
-5. Verify statistical-column bit-stability across two same-seed short runs.
-6. Commit results + writeup (NOT `.jit/`); lead handles JIT state + the
-   `jit doc add` attach + the user sign-off escalation.
+1. ✅ q5n24 resume run completed (one uninterrupted 203.4 min run, exit 0,
+   genuine PASS). The two hardware-infeasible cells (q5n28, q7n24) remain
+   documented as such — NOT to be forced with an under-floor N.
+2. ✅ q5n24 row cross-checked against the run log and merged into
+   `results-2026-05-17-gpu.csv` in grid order (18 data rows, single exact
+   `5,24,8000,...` row, verified no double-insert).
+3. ✅ Writeup `dev/plans/r4_gpu_uniformity_resample.md` updated from the
+   completed CSV (§2.4 table, §3 F_5 table + paragraph, §6 now-PASS list
+   renumbered, §7 determinism digest e505a44c… for 18 cells + "16"→17/18
+   off-by-one correction, §8 assembly/PLOT_ONLY + wall-clock, §9
+   limitation 2 RESOLVED + limitation 6 reach). `## Approval` left
+   "Pending … sign-off" (user signs off; the lead does not self-approve).
+4. ✅ `tvd_vs_n_gpu.png` regenerated from the 18-cell SSOT CSV via the new
+   harness `PLOT_ONLY` mode (reuses `perm_uniformity::png`; no duplicate
+   plotting logic; never calls `write_csv`, so the provenance header is
+   preserved). Repro script updated to drive PLOT_ONLY.
+5. ✅ Determinism: §7 guarantees 1 (two-run seed sha256) + 2
+   (`validate_chunked_equals_unchunked` byte-identity, asserted every run)
+   carry over; q5n24 statistical columns are seed-deterministic.
+
+**Remaining (lead-only):** commit code+docs (NOT `.jit/`); run b293af5a
+gates (cargo-ci + code-review); re-present the writeup for user sign-off;
+on sign-off record the dated approval in §Approval; `jit doc add` the
+regenerated PNG; close b293af5a; then the epic completion report +
+transition ae82bd73 → done.

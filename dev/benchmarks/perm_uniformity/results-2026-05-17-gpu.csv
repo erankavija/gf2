@@ -1,5 +1,14 @@
 # perm-uniformity-gpu resample (JIT b293af5a)  supersedes 8e4e19a0 noise-limited cells
 # commit: 4fb9db1e
+# provenance: the 16 bulk cells (q=3 n=6..32, F_5 n=8..20, F_7 n=8..20) were measured
+#   with the chunked-kernel (writeup S2.5) binary while that mitigation was an uncommitted
+#   working-tree change, so the harness-recorded runtime HEAD is 4fb9db1e (the S2.5 source
+#   landed in c0a24b4a). The q=5 n=24 row was measured later at runtime HEAD 57f12685
+#   (clean tree). `git diff c0a24b4a..57f12685` restricted to dev/research/perm_uniformity_gpu,
+#   dev/research/perm_uniformity, crates/gf2-algebra, crates/gf2-core, crates/gf2-kernels-hip
+#   is EMPTY (intervening commits are .jit/doc chores only) => byte-identical binary; all 17
+#   rows are directly comparable and reproduce under seed 0x00c0ffee00000001. Same honest
+#   uncommitted-at-runtime shape as the S5 entry in gf2_algebra_permanent/provenance.json.
 # rustc: rustc 1.95.0 (59807616e 2026-04-14)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
 # gpu: AMD Radeon RX 6950 XT
@@ -20,6 +29,7 @@
 5,12,200000,0.00215000,0.00136500,0.00480000,0.04101000,0.03901500,0.04284500,35.1494,2.9201
 5,16,40000,0.00395000,0.00225000,0.00952500,0.04137500,0.03717500,0.04557500,700.8623,4.9923
 5,20,20000,0.00320000,0.00255000,0.01140000,0.04125000,0.03500000,0.04720000,15024.9775,8.1575
+5,24,8000,0.00962500,0.00562500,0.02250000,0.04037500,0.03150000,0.05087500,1525769.7977,11.7422
 7,8,300000,0.00200810,0.00136238,0.00415810,0.01957952,0.01838286,0.02078619,197.6676,1.4268
 7,12,300000,0.00184190,0.00127190,0.00396524,0.01969619,0.01838619,0.02097952,234.1358,3.1263
 7,16,40000,0.00454643,0.00323571,0.01019643,0.02341786,0.01991071,0.02721786,958.4629,5.3827
