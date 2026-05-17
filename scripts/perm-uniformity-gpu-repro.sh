@@ -27,6 +27,17 @@
 #   seed.  The wall-clock timing columns (mean_us_perm, mean_us_det) are
 #   inherently nondeterministic and excluded from the bit-identical guarantee
 #   (8e4e19a0 Amendments §2 precedent).
+#
+# Known gfx1030 GPU watchdog hang (2026-05-17):
+#   On the dev host, the F_5 n=20 (N=40,000) kernel reproducibly triggers a
+#   gfx1030 "GPU Hang" HW exception (the GPU recovers; an isolated F_7 n=8
+#   re-run PASSes, so the harness/kernels are correct — it is a hardware
+#   watchdog limit on sustained long kernels). The 12 q=3 (n=6..32) + F_5
+#   (n=8,12,16) cells complete and are written incrementally; the F_5 n>=20
+#   and F_7 cells are REMAINING. To complete them, resume with a CELLS
+#   filter and a smaller N per the handoff dev/active/b293af5a-impl-handoff.md
+#   e.g.:  CELLS=q7n8,q7n12,q7n16,q7n20,q7n24 OUTPUT_DIR=... \
+#          cargo run --manifest-path "$MANIFEST" --release --features hip
 
 set -euo pipefail
 
