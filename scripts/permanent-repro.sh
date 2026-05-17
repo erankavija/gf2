@@ -28,10 +28,11 @@
 #
 # Requirements:
 #   - Rust toolchain (MSRV 1.95+) with cargo, cargo-nextest optional
-#   - Python 3 with matplotlib 3.10.x for the plot step
+#   - Python 3 (REQUIRED): drives the S3 CSV assembly, the T27 plot step
+#     (matplotlib 3.10.x), and the provenance.json rewrite. The script
+#     fail-fast aborts if python3 is unavailable.
 #   - ROCm / hipcc for GPU steps S5 and S1g (auto-skipped if absent or
 #     GF2_PERMANENT_REPRO_SKIP_GPU=1 is set)
-#   - jq for provenance.json rewrite (optional; falls back to sed if absent)
 #
 # Approximate wall-clock (Ryzen 9 5900X, AVX2, GPU gfx1030):
 #   Step 1 (workspace build):               ~1-3 min
@@ -574,8 +575,16 @@ try:
     with open(prov_path) as f:
         prov = json.load(f)
 except Exception as e:
-    print(f"WARNING: could not read {prov_path}: {e}", file=sys.stderr)
-    prov = {}
+    # Fail-fast: this step UPDATES an existing provenance.json, preserving
+    # measurement-dependent fields (dataset_source_commits, seeds, rocminfo,
+    # lscpu_full, ...). If the existing file cannot be read/parsed we must NOT
+    # silently rewrite it from an empty object — that would drop those fields
+    # and leave a partial artefact while exiting 0. Abort the whole repro.
+    print(f"ERROR: cannot read/parse {prov_path}: {e}", file=sys.stderr)
+    print("       refusing to overwrite provenance.json from an empty object "
+          "(would drop dataset_source_commits/seeds/rocminfo/lscpu_full). "
+          "Aborting the reproduction run.", file=sys.stderr)
+    sys.exit(1)
 
 prov["artefact_assembly_commit"] = "${_HEAD_SHA}"
 prov["rustc"] = "${_RUSTC}"
@@ -590,8 +599,12 @@ with open(prov_path, "w") as f:
 print(f"    provenance.json updated (artefact_assembly_commit={prov['artefact_assembly_commit'][:8]}...)")
 PYEOF
 else
-    echo "    WARNING: python3 not available; provenance.json not updated."
-    echo "    Manually set artefact_assembly_commit to ${_HEAD_SHA}."
+    # python3 is a documented requirement (it also drives the plot step).
+    # Fail-fast: a missing provenance.json update is a partial artefact, so
+    # abort non-zero rather than exit 0 with a warning.
+    echo "ERROR: python3 not available; cannot update provenance.json." >&2
+    echo "       python3 is a documented requirement of this repro script." >&2
+    exit 1
 fi
 
 # ---------------------------------------------------------------------------
