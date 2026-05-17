@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Modem framework for gf2 — what researchers can now do</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- reveal.js core only (no reveal theme — base.css + the theme token file own all appearance) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<!-- KaTeX (synchronous math; deterministic heights for the fit-checker) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<!-- Theme system: structure is theme-agnostic; swap the #theme link to retheme -->
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ── 1. TITLE ─────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>A modem framework for gf2</h1>
+  <p class="tagline">Research-grade soft-decision demapping,<br>shipped end-to-end</p>
+  <p>Gray-QAM up to 256-QAM · arbitrary custom constellations · opt-in per-bit analysis<br>
+     AWGN + Rician fading · SIMD dispatch · optional GPU prototype</p>
+  <p class="caption">Closing out JIT epic <code>d4851c3d</code></p>
+</section>
+
+<!-- ── 2. WHAT THIS TALK IS ──────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Intro <span class="num">· 2 / 31</span></span>
+  <h2>What this talk is</h2>
+  <ul>
+    <li><strong>What you can do now</strong> in <code>gf2-coding</code> that you couldn't before</li>
+    <li><strong>How to use it</strong> — three concrete workflows, copy-pasteable</li>
+    <li><strong>What we learned</strong> building it — brief retrospective on 11 waves of work</li>
+  </ul>
+  <p class="muted small" style="margin-top: 2em;">
+    For researchers whose next experiment starts with "I need a QAM soft demapper and a place to drop in my weird constellation."
+  </p>
+</section>
+
+<!-- ── 3. BEFORE ─────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Context <span class="num">· 3 / 31</span></span>
+  <h2>Before this epic</h2>
+  <h3>The state in 2026 Q1</h3>
+  <ul>
+    <li>BPSK over AWGN was the only first-class path</li>
+    <li>QPSK lived as an ad-hoc SOGRAND wrapper</li>
+    <li>No Gray-QAM above QPSK, no 16/64/256-QAM</li>
+    <li>No way to build a custom constellation</li>
+    <li>No per-bit LLR analysis tooling</li>
+    <li>No way to choose between exact log-MAP and max-log per simulation</li>
+    <li>Three duplicated deterministic LCG helpers scattered across crates</li>
+  </ul>
+</section>
+
+<!-- ── 4. BEFORE (cont.) ──────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Context <span class="num">· 4 / 31</span></span>
+  <h2>Before this epic (cont.)</h2>
+  <h3>Want 16-QAM at Eb/N0 = 10 dB with a few thousand symbols?</h3>
+  <p>Roll your own mapper. Roll your own soft demapper. Copy the AWGN noise formula from the one test that had it. Hope your LLR sign convention matches the decoder.</p>
+  <p><em>Now:</em> four public calls.</p>
+</section>
+
+<!-- ── 5. AFTER (part 1) ─────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Context <span class="num">· 5 / 31</span></span>
+  <h2>After</h2>
+  <p>One shared modem surface rooted at <code>gf2_coding::modem</code>:</p>
+  <ul>
+    <li><span class="badge blue">preset</span> <code>ModemSpec::bpsk()</code>, <code>::gray_square_qam(4|16|64|256)</code></li>
+    <li><span class="badge blue">custom</span> <code>ModemSpecBuilder</code> for arbitrary <code>(points, labels)</code> constellations</li>
+    <li><span class="badge blue">fast</span> <code>GrayQamMapper</code> + <code>FastGrayQamDemapper</code> (SIMD-dispatched)</li>
+    <li><span class="badge blue">reference</span> <code>ReferenceMapper</code> + <code>ReferenceSoftDemapper</code> (exact log-MAP, any labeling)</li>
+  </ul>
+</section>
+
+<!-- ── 6. AFTER (part 2) ─────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Context <span class="num">· 6 / 31</span></span>
+  <h2>After (cont.)</h2>
+  <ul>
+    <li><span class="badge blue">shared-api</span> <code>ModemSpec::preferred_mapper()</code> / <code>::preferred_soft_demapper()</code> — auto-pick fast vs reference</li>
+    <li><span class="badge blue">channel</span> <code>BpskAwgnChannel</code>, <code>ModemChannelAdapter</code>, <code>QpskRicianChannelModel</code> — all <code>ChannelModel</code></li>
+    <li><span class="badge blue">analysis</span> <code>AnalysisCapture</code> for per-bit LLR stats + MI/GMI estimators</li>
+    <li><span class="badge blue">gpu</span> <code>GpuGrayQamSoftDemapper</code> behind the <code>hip</code> feature (experimental)</li>
+  </ul>
+  <p class="small" style="margin-top: 1em;">
+    Soft-decision demapping, noise-convention SSOT, and a validated builder — all in one place.
+  </p>
+</section>
+
+<!-- ── 7. HOW-TO #1a ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 7 / 31</span></span>
+  <h2>How to: Gray-QAM preset over AWGN</h2>
+<pre><code class="language-rust" data-trim>use gf2_coding::modem::{
+    DemapInput, DemapMethod, ModemSpec,
+};
+use gf2_coding::modem::awgn_link::{
+    unit_energy_sigma_sq_from_eb_n0_db,
+    unit_energy_n0_from_eb_n0_db,
+};</code></pre>
+</section>
+
+<!-- ── 8. HOW-TO #1b ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 8 / 31</span></span>
+  <h2>How to: Gray-QAM preset over AWGN (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 1. Pick a preset. bits_per_symbol = 4 for 16-QAM.
+let spec = ModemSpec::&lt;f32&gt;::gray_square_qam(16);
+// 2. Let the framework pick the best backends (Gray-QAM fast path here).
+let mapper  = spec.clone().preferred_mapper();
+let demap   = spec.preferred_soft_demapper();</code></pre>
+</section>
+
+<!-- ── 9. HOW-TO #1c ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 9 / 31</span></span>
+  <h2>How to: Gray-QAM preset over AWGN (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 3. Bits -&gt; I/Q symbols.
+let mut rx_i = vec![0.0; num_symbols];
+let mut rx_q = vec![0.0; num_symbols];
+mapper.map_bits(&amp;tx_bits, &amp;mut rx_i, &amp;mut rx_q);
+// 4. Noise scale from the SSOT Eb/N0 helpers.
+let sigma_sq = unit_energy_sigma_sq_from_eb_n0_db(4, /*rate*/ 1.0, 10.0);
+let n0       = unit_energy_n0_from_eb_n0_db(4, 1.0, 10.0);
+// ... add Gaussian noise with sigma_sq per axis ...</code></pre>
+</section>
+
+<!-- ── 10. HOW-TO #1d ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 10 / 31</span></span>
+  <h2>How to: Gray-QAM preset over AWGN (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 5. Demap to LLRs (symbol-major, MSB-first within each symbol).
+let noise_var = vec![n0 as f32; num_symbols];
+let mut llrs = vec![Default::default(); num_symbols * 4];
+demap.demap_llrs(
+    DemapInput { rx_i: &amp;rx_i, rx_q: &amp;rx_q, gain_i: None, gain_q: None,
+                 noise_var: &amp;noise_var, method: DemapMethod::MaxLog },
+    &amp;mut llrs,
+);</code></pre>
+  <p class="muted small">
+    Full runnable example: <code>examples/modem_gray_qam_preset.rs</code>
+  </p>
+</section>
+
+<!-- ── 11. HOW-TO #2a ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 11 / 31</span></span>
+  <h2>How to: your custom constellation</h2>
+  <p class="muted small">
+    Non-square, non-Gray, non-uniform — anything that fits on the complex plane with a
+    label-to-point bijection.
+  </p>
+<pre><code class="language-rust" data-trim>use gf2_coding::modem::{
+    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod,
+    LabelWord, ModemSpecBuilder, SymbolPoint,
+    ReferenceMapper, ReferenceSoftDemapper,
+};</code></pre>
+</section>
+
+<!-- ── 12. HOW-TO #2b ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 12 / 31</span></span>
+  <h2>How to: your custom constellation (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 8-PSK with a non-Gray label permutation — builder accepts arbitrary specs.
+let m: u8 = 3;
+let points: Vec&lt;SymbolPoint&lt;f32&gt;&gt; = (0..8).map(|k| {
+    let theta = (k as f32) * core::f32::consts::PI / 4.0;
+    SymbolPoint::new(theta.cos(), theta.sin())
+}).collect();</code></pre>
+</section>
+
+<!-- ── 13. HOW-TO #2c ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 13 / 31</span></span>
+  <h2>How to: your custom constellation (cont.)</h2>
+<pre><code class="language-rust" data-trim>let labels: Vec&lt;LabelWord&gt; = [3u16, 1, 6, 4, 0, 7, 2, 5]
+    .iter().map(|&amp;b| LabelWord::new(b, m)).collect();
+let spec = ModemSpecBuilder::&lt;f32&gt;::new()
+    .bits_per_symbol(m)
+    .points(points)
+    .labels(labels)
+    .build();  // validates label width, bijection, normalization, capabilities
+let mapper  = ReferenceMapper::new(spec.clone());
+let demap   = ReferenceSoftDemapper::new(spec);   // exact log-MAP, arbitrary labeling</code></pre>
+  <p class="muted small">
+    Full runnable example: <code>examples/modem_custom_constellation.rs</code>
+  </p>
+</section>
+
+<!-- ── 14. HOW-TO #3a ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 14 / 31</span></span>
+  <h2>How to: opt-in per-bit analysis</h2>
+  <p class="muted small">
+    Per-bit MI and GMI, histogram-based conditional LLR distributions — with a hard
+    zero-overhead guarantee when disabled.
+  </p>
+<pre><code class="language-rust" data-trim>use gf2_coding::modem::analysis::{PerBitLlrStats, HistogramConfig, GmiMethod, gmi_bits};
+use gf2_coding::modem::{AnalysisCapture, DemapMethod};
+use gf2_coding::simulation::{SimulationConfig, SimulationRunner, BpskAwgnChannel};</code></pre>
+</section>
+
+<!-- ── 15. HOW-TO #3b ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 15 / 31</span></span>
+  <h2>How to: opt-in per-bit analysis (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 1. Build an accumulator. Histograms opt-in (ranges and bin count are yours).
+let mut stats = PerBitLlrStats::new(4).with_histogram(HistogramConfig {
+    min: -40.0, max: 40.0, num_bins: 256.try_into().unwrap(),
+});
+// 2. Tag the capture with the demap method your channel produces.
+//    Mismatched captures are rejected up front by the runner.
+let mut capture = AnalysisCapture::with_method(&amp;mut stats, DemapMethod::ExactLogMap);</code></pre>
+</section>
+
+<!-- ── 16. HOW-TO #3c ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">How-to <span class="num">· 16 / 31</span></span>
+  <h2>How to: opt-in per-bit analysis (cont.)</h2>
+<pre><code class="language-rust" data-trim>// 3. Normal sim call. When analysis is disabled (None), zero extra work.
+let _ = SimulationRunner::run_uncoded_ber_with_analysis(
+    &amp;BpskAwgnChannel, &amp;config, Some(&amp;mut capture), &amp;mut rng);
+// 4. Read out per-position statistics + GMI.
+let report = stats.report();
+for r in &amp;report {
+    println!("pos {} mean|L|={:.2} MI≈{:.3} bits (method={:?})",
+        r.bit_index, r.mean_abs_llr,
+        r.mutual_info_bits_gaussian_approximation, r.demap_method);
+}
+let gmi = gmi_bits(&amp;report, GmiMethod::Histogram);  // empirical from histograms</code></pre>
+</section>
+
+<!-- ── 14. FIGURE 1 ────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 17 / 31</span></span>
+  <h2>Figure 1 — BER across the preset family</h2>
+  <p class="small muted">
+    Uncoded Monte Carlo over AWGN driven through <code>SimulationRunner::run_uncoded_ber_with_channel</code>.
+    80 000 symbols per Eb/N0 point, seed locked. All four curves use the same
+    <code>ModemChannelAdapter</code> path — only the <code>ModemSpec</code> differs.
+  </p>
+  <img src="../figures/ber_curves.svg" alt="Uncoded BER vs Eb/N0 for BPSK, QPSK, 16-QAM, 64-QAM"
+       style="display:block;margin:0 auto;max-width:100%;max-height:340px;height:auto;background:white;border-radius:6px;">
+  <p class="small muted" style="margin-top: 0.5em;">
+    Reproducible via <code>cargo run -p gf2-coding --example gen_presentation_figures --release</code>.
+  </p>
+</section>
+
+<!-- ── 15. FIGURE 2 ────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 18 / 31</span></span>
+  <h2>Figure 2 — 16-QAM per-bit mutual information</h2>
+  <p class="small muted">
+    The analysis framework exposes the "inner vs outer PAM bit" reliability gap that standard BER summaries hide.
+    Gray-QAM's MSB bits (positions 0, 2 — outer PAM) climb toward 1 bit faster than the inner-PAM bits (1, 3).
+  </p>
+  <img src="../figures/per_bit_mi_16qam.svg" alt="Per-bit mutual information vs Eb/N0 for 16-QAM"
+       style="display:block;margin:0 auto;max-width:100%;max-height:300px;height:auto;background:white;border-radius:6px;">
+  <p class="small muted" style="margin-top: 0.5em;">
+    Computed via <code>AnalysisCapture::with_method(…, MaxLog)</code> over 60 000 symbols per point; values are
+    <code>mutual_info_bits_gaussian_approximation</code> from <code>PerBitChannelStats</code>.
+  </p>
+</section>
+
+<!-- ── 16. FIGURE 3 ───────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 19 / 31</span></span>
+  <h2>Figure 3 — Conditional LLR densities, 16-QAM</h2>
+  <p class="small muted">
+    At Eb/N0 = 8 dB, 200 000 symbols, max-log demap. Outer-PAM bits (0, 2) are near-Gaussian; inner-PAM bits (1, 3)
+    are <strong>bimodal</strong> — exactly the regime where the Gaussian-approximation MI estimate breaks down.
+    This is why the framework ships a histogram-based MI/GMI estimator alongside it.
+  </p>
+  <img src="../figures/llr_histograms_16qam.svg" alt="Conditional LLR histograms for 16-QAM bit positions at Eb/N0 = 8 dB"
+       style="display:block;margin:0 auto;max-width:100%;max-height:300px;height:auto;background:white;border-radius:6px;">
+  <p class="small muted" style="margin-top: 0.3em;">
+    Histograms are read from <code>PerBitChannelStats::{hist_bit0, hist_bit1}</code>; bin counts normalised to densities.
+  </p>
+</section>
+
+<!-- ── 17. WHAT'S IN THE BOX (part 1) ───────────────────────────────────── -->
+<section>
+  <span class="seclabel">Reference <span class="num">· 20 / 31</span></span>
+  <h2>What's actually in the box</h2>
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Public types</th><th>Where it lives</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Presets</td><td><code>ModemSpec::{bpsk, gray_square_qam}</code></td><td><code>modem::presets</code></td></tr>
+      <tr><td>Custom builder</td><td><code>ModemSpecBuilder</code></td><td><code>modem::builder</code></td></tr>
+      <tr><td>Mappers</td><td><code>ReferenceMapper</code>, <code>GrayQamMapper</code></td><td><code>modem::{ref_mapper, gray_qam_mapper}</code></td></tr>
+      <tr><td>Soft demappers</td><td><code>ReferenceSoftDemapper</code>, <code>FastGrayQamDemapper</code></td><td><code>modem::{ref_demapper, fast_gray_qam_demapper}</code></td></tr>
+      <tr><td>Shared-API factories</td><td><code>ModemSpec::preferred_{mapper, soft_demapper}</code></td><td><code>modem::spec</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── 18. WHAT'S IN THE BOX (part 2) ───────────────────────────────────── -->
+<section>
+  <span class="seclabel">Reference <span class="num">· 21 / 31</span></span>
+  <h2>What's actually in the box (cont.)</h2>
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Public types</th><th>Where it lives</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Channels</td><td><code>BpskAwgnChannel</code>, <code>ModemChannelAdapter</code>, <code>QpskRicianChannelModel</code></td><td><code>simulation</code>, <code>modem::awgn_link</code>, <code>fading</code></td></tr>
+      <tr><td>Analysis</td><td><code>PerBitLlrStats</code>, <code>Histogram</code>, <code>AnalysisCapture</code>, <code>GmiMethod</code></td><td><code>modem::analysis</code>, <code>modem::analysis_capture</code></td></tr>
+      <tr><td>GPU (experimental)</td><td><code>GpuGrayQamSoftDemapper</code></td><td><code>modem::gpu_demapper</code> (feature <code>hip</code>)</td></tr>
+      <tr><td>SIMD kernels</td><td>internal; dispatched at runtime</td><td><code>gf2-kernels-simd</code> (AVX2/scalar auto-detect)</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted" style="margin-top: 1em;">
+    One source of truth for noise scaling, PAM levels, and Eb/N0 math via <code>modem::awgn_link</code>.
+  </p>
+</section>
+
+<!-- ── 19. PERFORMANCE SNAPSHOT ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 22 / 31</span></span>
+  <h2>Performance snapshot (gfx1030 + AVX2 host)</h2>
+  <p class="small">
+    CPU AVX2 fast-path <code>FastGrayQamDemapper</code> vs GPU HIP prototype,
+    <em>µs per demap_llrs call</em>.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Order</th><th>Batch 256</th><th>Batch 1 024</th><th>Batch 4 096</th><th>Batch 16 384</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>4 (QPSK)</td><td>CPU 3.7 / GPU 57</td><td>14 / 59</td><td>56 / 62</td><td>224 / 75 (3×)</td></tr>
+      <tr><td>16</td><td>7 / 58</td><td>32 / 61</td><td>140 / 67 (2.1×)</td><td>574 / 90 (6.4×)</td></tr>
+      <tr><td>64</td><td>15 / 60</td><td>60 / 60 (parity)</td><td>244 / 72 (3.4×)</td><td>1 569 / 103 (15×)</td></tr>
+      <tr><td>256</td><td>31 / 63</td><td>124 / 65 (1.9×)</td><td>501 / 79 (6.4×)</td><td>3 211 / 120 (27×)</td></tr>
+    </tbody>
+  </table>
+  <p class="small" style="margin-top: 1em;">
+    <strong>Takeaway:</strong> GPU wins above ~1k symbols for 64/256-QAM, above 4k for 16-QAM, and only at 16k for QPSK.
+    GPU always loses at batch = 256.
+    <span class="muted">Full decision doc: <code>dev/active/9c37ec8c-gpu-crossover-decision.md</code></span>
+  </p>
+  <p class="small muted">
+    AVX2 speedup over the scalar full demapper is only 1.04–1.20× — per-symbol validation/reduction dominates the budget, not the per-axis kernel.
+  </p>
+</section>
+
+<!-- ── 20. WHY RESEARCHERS SHOULD CARE (part 1) ─────────────────────────── -->
+<section>
+  <span class="seclabel">Impact <span class="num">· 23 / 31</span></span>
+  <h2>Why researchers should care</h2>
+  <h3>What's newly possible</h3>
+  <ul>
+    <li>BICM capacity / GMI estimation on any custom constellation</li>
+    <li>Drop-in non-Gray / non-square constellations with correctness guaranteed by the builder</li>
+    <li>Fair comparisons between exact log-MAP and max-log with method provenance baked into every stats record</li>
+    <li>BER/FER sweeps over Rician fading without rewriting QPSK from scratch</li>
+    <li>Reproducible results across machines (workspace SSOT RNG)</li>
+  </ul>
+</section>
+
+<!-- ── 21. WHY RESEARCHERS SHOULD CARE (part 2) ─────────────────────────── -->
+<section>
+  <span class="seclabel">Impact <span class="num">· 24 / 31</span></span>
+  <h2>Why researchers should care (cont.)</h2>
+  <h3>Engineering guarantees</h3>
+  <ul>
+    <li><strong>SSOT</strong> for noise, PAM levels, RNG — across every sim + bench</li>
+    <li><strong>Zero-overhead</strong> analysis when disabled (<code>Option&lt;&amp;mut _&gt;</code> collapses)</li>
+    <li><strong>Safe Rust only</strong> outside the two accelerator crates</li>
+    <li><strong>2 770+ tests</strong> including property tests and locked regression BERs</li>
+    <li><strong>No deprecation shims</strong> — the legacy surface is deleted, not wrapped</li>
+  </ul>
+</section>
+
+<!-- ── 22. LIMITS ────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Limits <span class="num">· 25 / 31</span></span>
+  <h2>Limits + where this stops</h2>
+  <ul>
+    <li><strong>BER floors</strong>: the workspace RNG (<code>gf2_core::rng::Lcg</code>) is simulation-grade, good to ~10⁻⁵. For ~10⁻⁹ work, swap in <code>rand_chacha</code>.</li>
+    <li><strong>GPU path</strong> is max-log only, f32 only, ROCm only. Not a general accelerator; a targeted research prototype.</li>
+    <li><strong>Square QAM only</strong> on the fast path; non-square constellations land on the reference path. That's still correct, just slower (~3–8× at large M).</li>
+    <li><strong>No cryptographic guarantees</strong>. Nothing here claims to be a CSPRNG or a TRNG.</li>
+    <li><strong>Lean4 verification</strong> covers the <code>gfp/gfpn</code> finite-field arithmetic, not the modem path itself.</li>
+  </ul>
+  <p class="small muted" style="margin-top: 1em;">
+    Known follow-on work is tracked in the decision doc and under JIT <code>19069bc1</code> (GPU story).
+  </p>
+</section>
+
+<!-- ── 23. RETROSPECTIVE — WHAT WORKED ───────────────────────────────────── -->
+<section>
+  <span class="seclabel">Retrospective <span class="num">· 26 / 31</span></span>
+  <h2>Retrospective — 11 waves, 33 children</h2>
+  <h3>What worked</h3>
+  <ul>
+    <li><strong>Wave discipline</strong> + topological DAG. Each wave's issues landed before the next dispatched.</li>
+    <li><strong>Async gate firing</strong>. The AI review script is 4–7 min per run; running it in the background freed the lead to keep working.</li>
+    <li><strong>Small inline fixes</strong> for review findings under ~20 LoC. Dispatching a whole rework agent for a one-liner wastes minutes.</li>
+    <li><strong>Worktree parallelism</strong> when tasks had disjoint file footprints.</li>
+    <li><strong>Pulling <code>5fd315c0</code> forward</strong> — single pivot cleared 5 issues stuck on the same SSOT finding.</li>
+  </ul>
+</section>
+
+<!-- ── 27. RETROSPECTIVE (cont.) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Retrospective <span class="num">· 27 / 31</span></span>
+  <h2>Retrospective — 11 waves, 33 children (cont.)</h2>
+  <h3>What was costly</h3>
+  <ul>
+    <li><strong>Noise-convention semantics</strong> ate 3 rework rounds on <code>a23646dd</code>. A local variable named <code>sigma_squared</code> was semantically N0. Now there's one SSOT helper, module-wide.</li>
+    <li><strong>Calibration drift</strong> between code, docs, and tests. Reviewer caught this several times — doc/impl mismatch on "lower bound" vs "approximation", on where a panic originated, on what a bench actually measured.</li>
+    <li><strong>Tooling artifacts</strong> masquerading as real findings. "Branch scope" failed reviews a handful of times before a retry-without-change passed.</li>
+  </ul>
+</section>
+
+<!-- ── 25. THE SHAPE OF THE END STATE ───────────────────────────────────── -->
+<section>
+  <span class="seclabel">Retrospective <span class="num">· 28 / 31</span></span>
+  <h2>The shape of the end state</h2>
+  <ul>
+    <li><strong>33/33 children closed.</strong> Zero rejections, zero deferrals.</li>
+    <li><strong>~280 commits this session.</strong> ~18 closures, 49 code-review rework cycles tracked.</li>
+    <li><strong><code>modulation.rs</code> deleted outright.</strong> <code>channel.rs</code> went from 832 → 200 LoC.</li>
+    <li><strong>One workspace LCG.</strong> Five non-modem copies migrated onto <code>gf2_core::rng::Lcg</code> under a new sub-task created mid-epic.</li>
+    <li><strong>Documentation in sync.</strong> Crate/workspace READMEs advertise the framework; module docs explain the two workflows; decision doc attached via <code>jit doc add</code>.</li>
+    <li><strong>2 770+ tests</strong> (up from 2 614 at session start), 0 flake, all gates green.</li>
+  </ul>
+</section>
+
+<!-- ── 29. WHERE TO LOOK NEXT ────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Pointers <span class="num">· 29 / 31</span></span>
+  <h2>Where to look next</h2>
+  <ul>
+    <li><strong>User guide:</strong> <code>crates/gf2-coding/src/modem/mod.rs</code> (module header)</li>
+    <li><strong>Examples:</strong>
+      <ul>
+        <li><code>cargo run -p gf2-coding --example modem_gray_qam_preset --release</code></li>
+        <li><code>cargo run -p gf2-coding --example modem_custom_constellation --release</code></li>
+        <li><code>cargo run -p gf2-coding --example modem_simulation_harness --release</code></li>
+        <li><code>cargo run -p gf2-coding --example gen_presentation_figures --release</code> — regenerates the three SVGs in this deck from fresh simulations</li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<!-- ── 30. WHERE TO LOOK NEXT (cont.) ───────────────────────────────────── -->
+<section>
+  <span class="seclabel">Pointers <span class="num">· 30 / 31</span></span>
+  <h2>Where to look next (cont.)</h2>
+  <ul>
+    <li><strong>Benchmarks:</strong> <code>cargo bench -p gf2-coding</code> (4 criterion suites: <code>modem_cpu</code>, <code>modem_generic_vs_fast</code>, <code>cpu_dispatch_probe</code>, <code>simulation_no_analysis_overhead</code>)</li>
+    <li><strong>GPU path:</strong> <code>cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release</code> on a ROCm host</li>
+    <li><strong>Decision doc:</strong> <code>dev/active/9c37ec8c-gpu-crossover-decision.md</code></li>
+    <li><strong>Completion report:</strong> <code>dev/active/d4851c3d-completion-report.md</code></li>
+  </ul>
+</section>
+
+<!-- ── 31. CLOSING ───────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>Thanks</h1>
+  <p class="small muted" style="margin-top: 2em;">
+    Epic <code>d4851c3d</code> — "Implement QAM modulation with soft-decision demapping" — closed 2026-04-15.
+  </p>
+  <p class="small muted">
+    Questions, weird constellations, crossover measurements welcome.
+  </p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
