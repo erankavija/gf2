@@ -1,7 +1,7 @@
 {
   "id": "7cd9afdb-9a91-486c-ac6e-5dcdd0a67a95",
   "title": "Publication-grade benchmark artefact with hardware and seed pinned",
-  "description": "Assemble the publication-grade benchmark artefact under `dev/benchmarks/gf2_algebra_permanent/` consolidating all S1-S5 outputs with hardware fingerprint, seed pins, and the figures from T27.\n\n## Background\n\nEpic success criterion 9: a reproducible benchmark artefact lives at `dev/benchmarks/gf2_algebra_permanent/`, with criterion JSONs, hardware fingerprint, seed pins, and `scripts/permanent-repro.sh` runs end-to-end. This issue is the artefact assembly step — it consumes S1, S2, S3, S4, S5 outputs (already individually committed) and produces a top-level `README.md` that pins the dataset.\n\nThe artefact directory layout:\n- `README.md` — overview, hardware fingerprint, seed pins, figure index.\n- `criterion/` — copies of relevant criterion JSON outputs.\n- `figures/` — output of T27.\n- `csvs/` — S1/S2/S3/S4/S5 CSVs.\n- `provenance.json` — exact commit SHA, rustc version, OS, ROCm version, hardware identifiers.\n\n## Success Criteria\n\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/README.md` exists, listing every CSV, figure, and criterion JSON included.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/provenance.json` records commit SHA, `rustc --version`, `lscpu`, `rocminfo` (when available), and the seeds used.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/figures/` is populated by T27's plot scripts.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/csvs/` contains the S1-S5 CSVs with conventional names.\n- [ ] [hard] User has signed off on the artefact (recorded as an `## Approval` section in the artefact README).",
+  "description": "Assemble the publication-grade benchmark artefact under `dev/benchmarks/gf2_algebra_permanent/` consolidating all simulation outputs with hardware fingerprint, seed pins, and the figures from T27.\n\n## Background\n\nEpic success criterion 9: a reproducible benchmark artefact lives at `dev/benchmarks/gf2_algebra_permanent/`, with hardware fingerprint, seed pins, and `scripts/permanent-repro.sh` runs end-to-end. This issue is the artefact assembly step — it consumes the epic's committed simulation outputs (S1, S1g, S2, S3, S5 — see Amendments §1: no S4 simulation exists in the epic; the S-series the epic produced is S1/S1g/S2/S3/S5) and produces a top-level `README.md` that pins the dataset.\n\nThe artefact directory layout:\n- `README.md` — overview, hardware fingerprint, seed pins, figure index.\n- `figures/` — output of T27.\n- `csvs/` — S1/S1g/S2/S3/S5 CSVs (conventional names; frozen publication snapshot of the dated working CSVs).\n- `provenance.json` — `artefact_assembly_commit`, per-dataset `dataset_source_commits`, rustc version, OS, ROCm version, hardware identifiers, seed pins.\n\n(Criterion run data for this epic is recorded **inline in the CSV `#` headers**; the epic produced no standalone Criterion JSON output files, so there is no `criterion/` subdirectory — see Amendments §1.)\n\n## Success Criteria\n\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/README.md` exists, listing every CSV and figure included, and noting that Criterion run data is inline in the CSV headers (no standalone criterion JSONs / `criterion/` subdir — see Amendments §1).\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/provenance.json` records the artefact-assembly commit SHA, per-dataset source commits, `rustc --version`, `lscpu`, `rocminfo` (when available), and the seeds used.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/figures/` is populated by T27's plot scripts.\n- [ ] [hard] `dev/benchmarks/gf2_algebra_permanent/csvs/` contains the S1/S1g/S2/S3/S5 CSVs with conventional names (amended 2026-05-17 from \"S1-S5 CSVs\"; see Amendments §1).\n- [ ] [hard] User has signed off on the artefact (recorded as an `## Approval` section in the artefact README).\n\n## Amendments (2026-05-17, user-approved via project-lead escalation)\n\n1. **Scope corrected from \"S1-S5\" + `criterion/` to the epic's actual deliverables.** Reason: the issue was written at epic-breakdown time with speculative boilerplate (\"consumes S1, S2, S3, S4, S5\"; \"`criterion/` copies of relevant Criterion JSON outputs\"; \"csvs/ — S1/S2/S3/S4/S5 CSVs\"). The epic in fact produced the simulation series **S1, S1g, S2, S3, S5** — there is **no S4 simulation** anywhere in the epic (the dependency set 333028c1/424aa94f/4513209c/a9e461de/363556e6 contains no S4; verified). Criterion run data is recorded **inline in the CSV `#` headers**; the epic produced **no standalone Criterion JSON files**, so no `criterion/` subdirectory exists. Criterion 4 and the Background were amended accordingly (S1-S5 → S1/S1g/S2/S3/S5; criterion/ → inline-in-headers). No measurement is missing — the artefact bundles every simulation the epic actually produced. Approved by the user over the alternative (\"investigate whether an S4 was intended\" — confirmed none was).",
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude",
@@ -16,7 +16,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-16T23:54:11.787640325Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-16T23:54:24.203587067Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -39,5 +50,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:48:42.941662701+00:00",
-  "updated_at": "2026-05-16T23:30:41.527831326+00:00"
+  "updated_at": "2026-05-17T00:04:42.010722563+00:00"
 }
