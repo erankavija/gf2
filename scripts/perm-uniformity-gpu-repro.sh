@@ -8,6 +8,7 @@
 # Usage:
 #   bash scripts/perm-uniformity-gpu-repro.sh            # full sweep
 #   CELLS=q3n24,q3n28,q3n32 bash scripts/perm-uniformity-gpu-repro.sh
+#   PLOT_ONLY=1 bash scripts/perm-uniformity-gpu-repro.sh # figure-only, no run
 #
 # Requirements:
 #   - Rust toolchain (1.95+) with cargo
@@ -28,16 +29,22 @@
 #   inherently nondeterministic and excluded from the bit-identical guarantee
 #   (8e4e19a0 Amendments §2 precedent).
 #
-# Known gfx1030 GPU watchdog hang (2026-05-17):
-#   On the dev host, the F_5 n=20 (N=40,000) kernel reproducibly triggers a
-#   gfx1030 "GPU Hang" HW exception (the GPU recovers; an isolated F_7 n=8
-#   re-run PASSes, so the harness/kernels are correct — it is a hardware
-#   watchdog limit on sustained long kernels). The 12 q=3 (n=6..32) + F_5
-#   (n=8,12,16) cells complete and are written incrementally; the F_5 n>=20
-#   and F_7 cells are REMAINING. To complete them, resume with a CELLS
-#   filter and a smaller N per the handoff dev/active/b293af5a-impl-handoff.md
-#   e.g.:  CELLS=q7n8,q7n12,q7n16,q7n20,q7n24 OUTPUT_DIR=... \
-#          cargo run --manifest-path "$MANIFEST" --release --features hip
+# gfx1030 GPU watchdog: DEFEATED (writeup §2.5).
+#   The earlier gfx1030 "GPU Hang" HW exception on sustained long kernels
+#   (originally F_5 n=20) is fully resolved by the bounded sub-batch +
+#   host-cooldown chunked-kernel mitigation. All 18 measured cells
+#   (q=3 n=6..32, F_5 n=8..24, F_7 n=8..20) are genuine PASS with zero GPU
+#   hangs. q=5 n=28 and q=7 n=24 are hardware-infeasible at the
+#   noise-floor-required N (writeup §9 limitation 3) and are deliberately
+#   NOT in the grid — they are not under-sampled to fake a PASS.
+#
+# Figure regeneration (PLOT_ONLY):
+#   The per-cell sweep is split across sessions (some cells are multi-hour),
+#   so the SSOT artefact is the incrementally-written CSV. The faceted
+#   tvd_vs_n_gpu.png is regenerated FROM that CSV — without re-running any
+#   cell — via the harness PLOT_ONLY mode. This script always refreshes the
+#   figure from the persisted CSV at the end, so the plot matches the CSV
+#   regardless of which (or how many) cells ran in this invocation.
 
 set -euo pipefail
 
@@ -50,10 +57,20 @@ echo "  building with --manifest-path --features hip (workspace-excluded crate).
 
 cargo build --manifest-path "$MANIFEST" --release --features hip
 
-echo "  running GPU resample sweep..."
 mkdir -p "$OUT_DIR"
-OUTPUT_DIR="$OUT_DIR" \
-    cargo run --manifest-path "$MANIFEST" --release --features hip
+
+if [ -n "${PLOT_ONLY:-}" ]; then
+    echo "  PLOT_ONLY: regenerating figure from persisted SSOT CSV (no cell run)..."
+    PLOT_ONLY=1 OUTPUT_DIR="$OUT_DIR" \
+        cargo run --manifest-path "$MANIFEST" --release --features hip
+else
+    echo "  running GPU resample sweep..."
+    OUTPUT_DIR="$OUT_DIR" \
+        cargo run --manifest-path "$MANIFEST" --release --features hip
+    echo "  refreshing figure from persisted SSOT CSV (PLOT_ONLY)..."
+    PLOT_ONLY=1 OUTPUT_DIR="$OUT_DIR" \
+        cargo run --manifest-path "$MANIFEST" --release --features hip
+fi
 
 echo ""
 echo "=== Output files ==="

@@ -754,6 +754,56 @@ mod harness {
         fs::create_dir_all(&output_dir).expect("cannot create output dir");
         let csv_path = format!("{output_dir}/results-2026-05-17-gpu.csv");
 
+        // PLOT_ONLY: regenerate the figure from the persisted SSOT CSV without
+        // re-running any cell. Required because resumed cells are merged into
+        // the CSV out-of-band and re-running the full grid to refresh the plot
+        // is hardware-infeasible (F_5 n=20 alone is ~4 h). Reuses write_plot
+        // (no duplicate plotting logic) and never calls write_csv, so the
+        // committed two-commit provenance header is left untouched.
+        if std::env::var("PLOT_ONLY").is_ok() {
+            let raw = fs::read_to_string(&csv_path)
+                .unwrap_or_else(|e| panic!("PLOT_ONLY: cannot read {csv_path}: {e}"));
+            let mut results: Vec<CellResult> = Vec::new();
+            for line in raw.lines() {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') || line.starts_with("q,n,") {
+                    continue;
+                }
+                let c: Vec<&str> = line.split(',').collect();
+                assert!(
+                    c.len() == 11,
+                    "PLOT_ONLY: malformed CSV row ({} cols): {line}",
+                    c.len()
+                );
+                let p = |i: usize| -> f64 {
+                    c[i].parse()
+                        .unwrap_or_else(|e| panic!("PLOT_ONLY: bad float col {i} in '{line}': {e}"))
+                };
+                results.push(CellResult {
+                    q: c[0].parse().expect("PLOT_ONLY: bad q"),
+                    n: c[1].parse().expect("PLOT_ONLY: bad n"),
+                    n_samples: c[2].parse().expect("PLOT_ONLY: bad samples"),
+                    tvd_perm: p(3),
+                    tvd_perm_ci_lo: p(4),
+                    tvd_perm_ci_hi: p(5),
+                    tvd_det: p(6),
+                    tvd_det_ci_lo: p(7),
+                    tvd_det_ci_hi: p(8),
+                    diff_q95: 0.0, // not stored in CSV; unused by write_plot
+                    mean_us_perm: p(9),
+                    mean_us_det: p(10),
+                });
+            }
+            assert!(!results.is_empty(), "PLOT_ONLY: no data rows in {csv_path}");
+            let plot_path = format!("{output_dir}/tvd_vs_n_gpu.png");
+            write_plot(&results, &plot_path);
+            println!(
+                "PLOT_ONLY: regenerated {plot_path} from {} cells in {csv_path}",
+                results.len()
+            );
+            return;
+        }
+
         println!("perm-uniformity-gpu resample (JIT b293af5a)");
         println!("  seed   = {SEED:#018x}");
         println!("  output = {csv_path}");
