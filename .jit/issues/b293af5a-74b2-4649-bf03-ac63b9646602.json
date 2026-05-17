@@ -1,0 +1,27 @@
+{
+  "id": "b293af5a-74b2-4649-bf03-ac63b9646602",
+  "title": "GPU-accelerated high-N uniformity resample — reproduce perm→uniform convergence (F_3 large-n, F_5, F_7)",
+  "description": "Follow-up to `8e4e19a0` (perm-vs-det uniformity): use the epic's GPU batch-permanent path to take enough Monte-Carlo samples that the perm→uniform convergence is **genuinely reproduced** at large n for F_3, F_5, F_7 — eliminating the sampling-noise limitation that forced the `8e4e19a0` criterion-6 noise-exclusion amendment.\n\n## Background\n\n`8e4e19a0` measured TVD(perm, U) vs TVD(det, U) over F_q, q∈{3,5,7}. Computing a permanent is O(n·2^n), so the CPU harness could only afford N = 500/200/50 samples at q=3 n = 24/28/32. The Monte-Carlo TVD estimator has a noise floor ≈ √((q−1)/(2πN)); at N=50 that is ≈0.1, far above the true (tiny) TVD_perm at large n. The measured TVD_perm at q=3 n=28/32 (0.0417, 0.133) was therefore dominated by sampling noise, *masking* the convergence — those three cells were excluded from the criterion-6 verdict via a user-approved amendment (`8e4e19a0` Amendments §3). F_5/F_7 were capped at n≤14 for the same cost reason. The convergence is the reference paper's (arXiv 2407.20205) headline observation and HKS Theorem 1.2's subject, so reproducing it robustly is publication-relevant.\n\nThe epic's GPU batch-permanent path (`gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}`, issues `2fbbdfa5`/`9480f8a6`/`ad55b777`/`5c0505b2`) runs ~28–30× CPU-SIMD throughput at n=24–28 and is *embarrassingly parallel over independent matrices* (each uniformity sample is an independent matrix). It can lift N by 2–3 orders of magnitude in the same wall-clock, dropping the noise floor below the true TVD_perm so the convergence is observed rather than noise-masked.\n\n## Scope\n\nGPU-accelerated re-sample of the `8e4e19a0` uniformity experiment, reusing the existing GPU batch permanent + `gf2_core::field::det`, focused on the cells where `8e4e19a0` was noise-limited: q=3 large n (n∈{24,28,32}, previously excluded) and q=5/q=7 extended beyond n≤14.\n\n## Draft Success Criteria (PLAN — pending user approval before any dispatch)\n\n- [ ] [hard] The resample harness reuses `gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}` and `gf2_core::field::det` directly — no re-implementation of the permanent or the determinant.\n- [ ] [hard] For q=3, the GPU resample uses N large enough that the bootstrap 95% CI half-width on TVD_perm resolves the estimate above the Monte-Carlo noise floor at every n in the sweep including n∈{24,28,32}; the `8e4e19a0` criterion-6 noise-exclusion for q=3 n∈{24,28,32} is eliminated (those cells now genuinely satisfy TVD_perm ≤ TVD_det at 95% confidence).\n- [ ] [hard] With the high-N data, TVD_perm(n) for q=3 is monotonically non-increasing in n across the full sweep within CI (genuine convergence, not via wide-CI overlap of noise-dominated points).\n- [ ] [hard] F_5 and F_7 are extended past `8e4e19a0`'s n≤14 using the GPU path, with TVD_perm ≤ TVD_det at 95% confidence and a decreasing TVD_perm trend demonstrating convergence for F_5/F_7.\n- [ ] [hard] Deterministic, seed-pinned; output CSV follows the `8e4e19a0` schema; the statistical columns are bit-identical across runs for the same seed.\n- [ ] [hard] Writeup added/updated comparing the GPU high-N result to HKS Theorem 1.2 and to the original `8e4e19a0` noise-limited result, explicitly listing which previously-excluded/absent cells are now genuine PASS; attached via `jit doc add`.\n- [ ] [hard] User has signed off on the result (recorded as an `## Approval` section in the writeup) before this issue transitions to `done`.\n- [ ] [aspirational] The specific N per cell, the F_5/F_7 n extents, and the end-to-end wall-clock are provisional targets refined against GPU-measured data and recorded in the writeup.\n\n## Notes\n\nThis is **additive scope** requested by the user after the epic's original children completed; it does not retroactively reopen the closed, signed-off `8e4e19a0` (which stands with its honest noise-limited documentation). Per CLAUDE.md, falsification of the convergence by our implementation would more likely indicate a sampling/kernel bug than a flaw in the theory; the criteria are `[hard]` with the standard escalation path if robust falsification is observed. PLAN status: success criteria above are a draft for user review; no implementation is dispatched until the user approves the plan.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "2fbbdfa5-9125-4b29-bd93-852ab6ce6666",
+    "8e4e19a0-a61f-4228-aec5-0dbae508fcbe",
+    "9480f8a6-3dc0-4d1f-aa4a-fcc13e1755b5"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:simulation",
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra"
+  ],
+  "created_at": "2026-05-17T00:16:33.224143913+00:00",
+  "updated_at": "2026-05-17T00:16:50.361717296+00:00"
+}
