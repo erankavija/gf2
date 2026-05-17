@@ -81,14 +81,14 @@
       "format": "markdown"
     },
     {
-      "path": "docs/presentations/bb85c68a-fieldmatrix.html",
+      "path": "docs/presentations/bb85c68a-fieldmatrix/talk.html",
       "commit": null,
       "label": "FieldMatrix showcase presentation",
       "doc_type": "report",
       "format": "html",
       "assets": [
         {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/math/math.js",
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
           "resolved_path": null,
           "asset_type": "external",
           "mime_type": null,
@@ -96,7 +96,7 @@
           "is_shared": false
         },
         {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
           "resolved_path": null,
           "asset_type": "external",
           "mime_type": null,
@@ -104,7 +104,7 @@
           "is_shared": false
         },
         {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css",
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
           "resolved_path": null,
           "asset_type": "external",
           "mime_type": null,
@@ -120,6 +120,46 @@
           "is_shared": false
         },
         {
+          "original_path": "themes/rust.css",
+          "resolved_path": "docs/presentations/bb85c68a-fieldmatrix/themes/rust.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false
+        },
+        {
+          "original_path": "base.css",
+          "resolved_path": "docs/presentations/bb85c68a-fieldmatrix/base.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
           "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
           "resolved_path": null,
           "asset_type": "external",
@@ -128,7 +168,7 @@
           "is_shared": false
         },
         {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css",
+          "original_path": "https://fonts.gstatic.com",
           "resolved_path": null,
           "asset_type": "external",
           "mime_type": null,
@@ -136,15 +176,7 @@
           "is_shared": false
         },
         {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
           "resolved_path": null,
           "asset_type": "external",
           "mime_type": null,
@@ -159,5 +191,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-23T19:19:40.625724847+00:00",
-  "updated_at": "2026-04-30T09:04:09.364780431+00:00"
+  "updated_at": "2026-05-17T23:34:03.845371121+00:00"
 }
