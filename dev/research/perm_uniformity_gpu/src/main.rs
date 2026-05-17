@@ -5,8 +5,9 @@
 // 8e4e19a0 (q=3 n in {24,28,32}, plus F_5/F_7 extended past n<=14).
 //
 // What is reused (no re-implementation):
-//   * perm_uniformity::harness::{tvd_from_counts, bootstrap_tvd_ci,
-//     bootstrap_diff_ci, CellResult}  -- the 8e4e19a0 SSOT statistics.
+//   * perm_uniformity::harness::{finalize_cell, CellResult}  -- the
+//     8e4e19a0 SSOT statistics tail (histogram -> TVD -> bootstrap CIs ->
+//     difference statistic -> CellResult), called verbatim, no re-impl.
 //   * perm_uniformity::png::write_png_file               -- the PNG encoder.
 //   * gf2_core::field::inverse::det                      -- canonical det.
 //   * gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}   -- GPU permanent.
@@ -68,9 +69,7 @@ mod harness {
     use gf2_core::gfp::Fp;
     use gf2_core::rng::Lcg;
 
-    use perm_uniformity::harness::{
-        bootstrap_diff_ci, bootstrap_tvd_ci, tvd_from_counts, CellResult,
-    };
+    use perm_uniformity::harness::{finalize_cell, CellResult};
 
     use std::fs;
     use std::io::Write;
@@ -233,22 +232,39 @@ mod harness {
         let mut cells = Vec::new();
 
         // -- F_3 ------------------------------------------------------------
-        // Small/mid n: cheap on GPU, take big N (noise floor << TVD_det).
+        // High-N schedule (criterion-8 [aspirational] N knob, refined against
+        // GPU-measured data per user direction 2026-05-18): push N as far as
+        // gfx1030 wall-clock feasibly allows so the Monte-Carlo TVD floor
+        // sqrt(2/(2*pi*N)) drops below the *true* (tiny, decreasing) TVD_perm
+        // and the absolute estimate is resolved above its own floor rather
+        // than floor-masked.  Per-matrix cost is N-independent (dominated by
+        // the 2^n Gray walk), so cheap small n take enormous N; the cost wall
+        // is the three large-n headline cells.
+        //   n=10: N=8M   floor 0.000199   (~8 s)
+        //   n=12: N=8M   floor 0.000199   (~17 s)
+        //   n=16: N=4M   floor 0.000282   (~81 s)
+        //   n=20: N=2M   floor 0.000399   (~10 min)
+        // n=6,8 already resolved far above floor (TVD 0.0225/0.0026 >>
+        // floor 0.0008 at N=500k) and are kept as-is.
         for &(n, n_samples) in &[
             (6usize, 500_000usize),
             (8, 500_000),
-            (10, 500_000),
-            (12, 200_000),
-            (16, 200_000),
-            (20, 100_000),
+            (10, 8_000_000),
+            (12, 8_000_000),
+            (16, 4_000_000),
+            (20, 2_000_000),
         ] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
-        // The 8e4e19a0 noise-excluded headline cells.
-        //   n=24: floor(N=40k)=sqrt(2/(2*pi*40000))=0.00282 << TVD_det/2~0.045
-        //   n=28: floor(N=8k) =0.00631  << 0.045
-        //   n=32: floor(N=2k) =0.01262  <  0.045  (still resolves TVD_perm)
-        for &(n, n_samples) in &[(24usize, 40_000usize), (28, 8_000), (32, 2_000)] {
+        // The 8e4e19a0 noise-excluded headline cells, at the maximal
+        // GPU-feasible N (user direction 2026-05-18):
+        //   n=24: N=800k  floor sqrt(2/(2*pi*800000))=0.000631  (~1.1 h)
+        //   n=28: N=80k   floor 0.001995                        (~1.7 h)
+        //   n=32: N=20k   floor 0.005642                        (~6.4 h)
+        // n=32 may remain floor-limited if the true TVD_perm there is
+        // sub-0.006 (resolving it needs N>>3e5 => >100 h, infeasible) — this
+        // is the documented partial limit the user accepted.
+        for &(n, n_samples) in &[(24usize, 800_000usize), (28, 80_000), (32, 20_000)] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
 
@@ -315,11 +331,14 @@ mod harness {
     // -----------------------------------------------------------------------
     // Generic GPU-batched cell runner.
     //
-    // This is the only new logic.  It reproduces the tail of
-    // perm_uniformity::harness::run_cell *exactly* (same histogram, same
-    // tvd_from_counts, same bootstrap_tvd_ci x2, same bootstrap_diff_ci, same
-    // per-cell seeds) but draws/evaluates the perm stream via the GPU batch
-    // kernel instead of a per-sample CPU closure.
+    // The ONLY new logic is GPU-batched perm-stream production.  The post-
+    // sampling statistics tail (histogram -> TVD -> two bootstrap CIs ->
+    // difference statistic -> CellResult) is NOT reimplemented here: it is
+    // delegated verbatim to the SSOT perm_uniformity::harness::finalize_cell,
+    // the exact same function the CPU run_cell driver calls.  This runner
+    // differs from run_cell only in that the perm field values come from the
+    // GPU batch kernel instead of a per-sample CPU closure; the det stream
+    // and all statistics are identical by construction (shared code path).
     //
     // `gen_mats`   : Lcg(perm_seed) -> Vec of N matrices in strict seed order.
     // `gpu_batch`  : &[Matrix] (a chunk) -> Vec<u8> of perm field values.
@@ -414,28 +433,27 @@ mod harness {
         }
         let det_elapsed = t_det_start.elapsed().as_secs_f64();
 
-        // --- statistics: reused 8e4e19a0 harness functions, verbatim ------
-        let tvd_perm = tvd_from_counts(&perm_counts, n_samples as u64, q);
-        let tvd_det = tvd_from_counts(&det_counts, n_samples as u64, q);
-
-        let (pci_lo, pci_hi) = bootstrap_tvd_ci(&perm_samples, q, 1000, boot_perm_seed);
-        let (dci_lo, dci_hi) = bootstrap_tvd_ci(&det_samples, q, 1000, boot_det_seed);
-        let (_, diff_q95) = bootstrap_diff_ci(&perm_samples, &det_samples, q, 1000, boot_diff_seed);
-
-        CellResult {
+        // --- statistics: the SSOT perm_uniformity::harness tail -----------
+        // finalize_cell is the single source of truth for TVD + the two
+        // bootstrap CIs + the difference statistic + CellResult assembly,
+        // shared verbatim with the CPU run_cell driver.  Only the perm/det
+        // *stream production* differs (GPU batch vs per-sample CPU closure);
+        // everything from the raw u8 streams onward is identical and must
+        // not be duplicated here.
+        finalize_cell(
             q,
             n,
             n_samples,
-            tvd_perm,
-            tvd_perm_ci_lo: pci_lo,
-            tvd_perm_ci_hi: pci_hi,
-            tvd_det,
-            tvd_det_ci_lo: dci_lo,
-            tvd_det_ci_hi: dci_hi,
-            diff_q95,
-            mean_us_perm: perm_elapsed * 1e6 / n_samples as f64,
-            mean_us_det: det_elapsed * 1e6 / n_samples as f64,
-        }
+            &perm_counts,
+            &det_counts,
+            &perm_samples,
+            &det_samples,
+            perm_elapsed,
+            det_elapsed,
+            boot_perm_seed,
+            boot_det_seed,
+            boot_diff_seed,
+        )
     }
 
     // -----------------------------------------------------------------------
@@ -748,9 +766,100 @@ mod harness {
     // Driver
     // -----------------------------------------------------------------------
 
+    /// Parse one line of the results CSV into a [`CellResult`] for the
+    /// `PLOT_ONLY` figure-regeneration path.
+    ///
+    /// Returns `None` for non-data lines (blank, `#`-comment, or the legacy
+    /// `q,n,...` column header) so the caller can `filter_map` over the file.
+    /// A data row must have exactly the 11 columns `write_csv` emits;
+    /// `diff_q95` is not stored in the CSV and is set to `0.0` (it is unused
+    /// by `write_plot`). Panics on a malformed data row (fail-fast: a
+    /// corrupt SSOT CSV must not silently produce a wrong figure).
+    fn parse_csv_data_row(line: &str) -> Option<CellResult> {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with("q,n,") {
+            return None;
+        }
+        let c: Vec<&str> = line.split(',').collect();
+        assert!(
+            c.len() == 11,
+            "parse_csv_data_row: malformed CSV row ({} cols): {line}",
+            c.len()
+        );
+        let p = |i: usize| -> f64 {
+            c[i].parse().unwrap_or_else(|e| {
+                panic!("parse_csv_data_row: bad float col {i} in '{line}': {e}")
+            })
+        };
+        Some(CellResult {
+            q: c[0].parse().expect("parse_csv_data_row: bad q"),
+            n: c[1].parse().expect("parse_csv_data_row: bad n"),
+            n_samples: c[2].parse().expect("parse_csv_data_row: bad samples"),
+            tvd_perm: p(3),
+            tvd_perm_ci_lo: p(4),
+            tvd_perm_ci_hi: p(5),
+            tvd_det: p(6),
+            tvd_det_ci_lo: p(7),
+            tvd_det_ci_hi: p(8),
+            diff_q95: 0.0, // not stored in CSV; unused by write_plot
+            mean_us_perm: p(9),
+            mean_us_det: p(10),
+        })
+    }
+
+    /// Directory holding the committed SSOT CSV (and the default OUTPUT_DIR).
+    const SSOT_DIR: &str = "dev/benchmarks/perm_uniformity";
+
+    /// Normalize a directory path for comparison: strip a leading `./` and
+    /// any trailing `/` so `dev/x`, `./dev/x`, and `dev/x/` compare equal.
+    fn normalize_dir(s: &str) -> String {
+        let s = s.strip_prefix("./").unwrap_or(s);
+        s.trim_end_matches('/').to_string()
+    }
+
+    /// Fail-fast guard against the resume-path data-loss footgun.
+    ///
+    /// `write_csv` uses `File::create` (truncate) and only ever holds the
+    /// cells of the *current* process, so a `CELLS`-filtered (partial/resume)
+    /// run that writes into the SSOT directory would silently overwrite
+    /// `results-2026-05-17-gpu.csv` with just the filtered subset, destroying
+    /// every other already-completed row. A partial run must therefore use a
+    /// separate staging `OUTPUT_DIR`; the operator merges the produced rows
+    /// into the SSOT CSV and regenerates the figure via `PLOT_ONLY=1`.
+    ///
+    /// `requested` and `ssot_dir` must already be `normalize_dir`-normalized.
+    /// Returns `Err(reason)` only for the data-loss case; a full sweep
+    /// (`cells_filtered == false`) writes the complete grid and is safe.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// assert!(ssot_overwrite_guard(false, "dev/benchmarks/perm_uniformity",
+    ///                              "dev/benchmarks/perm_uniformity").is_ok());
+    /// assert!(ssot_overwrite_guard(true,  "/tmp/pug_resume",
+    ///                              "dev/benchmarks/perm_uniformity").is_ok());
+    /// assert!(ssot_overwrite_guard(true,  "dev/benchmarks/perm_uniformity",
+    ///                              "dev/benchmarks/perm_uniformity").is_err());
+    /// ```
+    fn ssot_overwrite_guard(
+        cells_filtered: bool,
+        requested: &str,
+        ssot_dir: &str,
+    ) -> Result<(), String> {
+        if cells_filtered && requested == ssot_dir {
+            return Err(format!(
+                "refusing a CELLS-filtered (partial) sweep with OUTPUT_DIR='{requested}': \
+                 write_csv truncates {ssot_dir}/results-2026-05-17-gpu.csv to ONLY the \
+                 filtered cells, destroying all other rows. Set OUTPUT_DIR to a separate \
+                 staging directory (e.g. OUTPUT_DIR=/tmp/pug_resume CELLS=... ), then merge \
+                 the produced rows into the SSOT CSV and regenerate the figure with PLOT_ONLY=1."
+            ));
+        }
+        Ok(())
+    }
+
     pub fn run() {
-        let output_dir = std::env::var("OUTPUT_DIR")
-            .unwrap_or_else(|_| "dev/benchmarks/perm_uniformity".to_string());
+        let output_dir = std::env::var("OUTPUT_DIR").unwrap_or_else(|_| SSOT_DIR.to_string());
         fs::create_dir_all(&output_dir).expect("cannot create output dir");
         let csv_path = format!("{output_dir}/results-2026-05-17-gpu.csv");
 
@@ -763,37 +872,7 @@ mod harness {
         if std::env::var("PLOT_ONLY").is_ok() {
             let raw = fs::read_to_string(&csv_path)
                 .unwrap_or_else(|e| panic!("PLOT_ONLY: cannot read {csv_path}: {e}"));
-            let mut results: Vec<CellResult> = Vec::new();
-            for line in raw.lines() {
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') || line.starts_with("q,n,") {
-                    continue;
-                }
-                let c: Vec<&str> = line.split(',').collect();
-                assert!(
-                    c.len() == 11,
-                    "PLOT_ONLY: malformed CSV row ({} cols): {line}",
-                    c.len()
-                );
-                let p = |i: usize| -> f64 {
-                    c[i].parse()
-                        .unwrap_or_else(|e| panic!("PLOT_ONLY: bad float col {i} in '{line}': {e}"))
-                };
-                results.push(CellResult {
-                    q: c[0].parse().expect("PLOT_ONLY: bad q"),
-                    n: c[1].parse().expect("PLOT_ONLY: bad n"),
-                    n_samples: c[2].parse().expect("PLOT_ONLY: bad samples"),
-                    tvd_perm: p(3),
-                    tvd_perm_ci_lo: p(4),
-                    tvd_perm_ci_hi: p(5),
-                    tvd_det: p(6),
-                    tvd_det_ci_lo: p(7),
-                    tvd_det_ci_hi: p(8),
-                    diff_q95: 0.0, // not stored in CSV; unused by write_plot
-                    mean_us_perm: p(9),
-                    mean_us_det: p(10),
-                });
-            }
+            let results: Vec<CellResult> = raw.lines().filter_map(parse_csv_data_row).collect();
             assert!(!results.is_empty(), "PLOT_ONLY: no data rows in {csv_path}");
             let plot_path = format!("{output_dir}/tvd_vs_n_gpu.png");
             write_plot(&results, &plot_path);
@@ -819,6 +898,16 @@ mod harness {
         let only: Option<Vec<String>> = std::env::var("CELLS")
             .ok()
             .map(|s| s.split(',').map(|t| t.trim().to_string()).collect());
+
+        // Fail-fast: a CELLS-filtered run must not truncate the SSOT CSV.
+        if let Err(msg) = ssot_overwrite_guard(
+            only.is_some(),
+            &normalize_dir(&output_dir),
+            &normalize_dir(SSOT_DIR),
+        ) {
+            eprintln!("perm-uniformity-gpu: {msg}");
+            std::process::exit(1);
+        }
 
         let grid = sweep_grid();
         let mut results: Vec<CellResult> = Vec::new();
@@ -1126,6 +1215,84 @@ mod harness {
         match perm_uniformity::png::write_png_file(path, &px, total_w, total_h) {
             Ok(()) => println!("  plot written to {path} (reused perm_uniformity::png encoder)"),
             Err(e) => eprintln!("  ERROR writing PNG: {e}"),
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Unit tests for the new pure logic (the GPU/stat path is exercised by
+    // validate_gpu_matches_cpu + validate_chunked_equals_unchunked inside the
+    // binary; these cover the resume-safety guard and the PLOT_ONLY parser
+    // that the code review flagged as untested).
+    // -----------------------------------------------------------------------
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn normalize_dir_strips_dot_slash_and_trailing_slash() {
+            assert_eq!(normalize_dir("dev/x"), "dev/x");
+            assert_eq!(normalize_dir("./dev/x"), "dev/x");
+            assert_eq!(normalize_dir("dev/x/"), "dev/x");
+            assert_eq!(normalize_dir("./dev/x///"), "dev/x");
+        }
+
+        #[test]
+        fn full_sweep_into_ssot_dir_is_allowed() {
+            // CELLS unset -> the complete grid is written; safe.
+            assert!(ssot_overwrite_guard(false, SSOT_DIR, SSOT_DIR).is_ok());
+        }
+
+        #[test]
+        fn filtered_run_into_staging_dir_is_allowed() {
+            assert!(ssot_overwrite_guard(true, "/tmp/pug_resume", SSOT_DIR).is_ok());
+        }
+
+        #[test]
+        fn filtered_run_into_ssot_dir_is_refused() {
+            // The exact resume-path data-loss footgun: must fail-fast.
+            let e = ssot_overwrite_guard(true, SSOT_DIR, SSOT_DIR);
+            assert!(e.is_err());
+            assert!(e.unwrap_err().contains("CELLS-filtered"));
+        }
+
+        #[test]
+        fn filtered_run_default_output_dir_is_refused() {
+            // Reproduces `CELLS=q3n32 cargo run` with no OUTPUT_DIR: the
+            // default resolves to SSOT_DIR and must be refused.
+            let resolved = normalize_dir(SSOT_DIR);
+            assert!(ssot_overwrite_guard(true, &resolved, &normalize_dir(SSOT_DIR)).is_err());
+        }
+
+        #[test]
+        fn parse_csv_skips_comment_header_and_blank() {
+            assert!(parse_csv_data_row("").is_none());
+            assert!(parse_csv_data_row("   ").is_none());
+            assert!(parse_csv_data_row("# commit: abc1234").is_none());
+            assert!(parse_csv_data_row("#   provenance continuation").is_none());
+            assert!(parse_csv_data_row(
+                "q,n,samples,tvd_perm,tvd_perm_ci_lo,tvd_perm_ci_hi,tvd_det,tvd_det_ci_lo,tvd_det_ci_hi,mean_us_perm,mean_us_det"
+            )
+            .is_none());
+        }
+
+        #[test]
+        fn parse_csv_data_row_maps_columns() {
+            let row = "5,24,8000,0.00962500,0.00562500,0.02250000,\
+                       0.04037500,0.03150000,0.05087500,1525769.7977,11.7422";
+            let r = parse_csv_data_row(row).expect("valid data row");
+            assert_eq!((r.q, r.n, r.n_samples), (5, 24, 8000));
+            assert!((r.tvd_perm - 0.009625).abs() < 1e-12);
+            assert!((r.tvd_perm_ci_lo - 0.005625).abs() < 1e-12);
+            assert!((r.tvd_det - 0.040375).abs() < 1e-12);
+            assert!((r.tvd_det_ci_hi - 0.050875).abs() < 1e-12);
+            assert!((r.mean_us_perm - 1525769.7977).abs() < 1e-3);
+            assert_eq!(r.diff_q95, 0.0); // not stored in CSV
+        }
+
+        #[test]
+        #[should_panic(expected = "malformed CSV row")]
+        fn parse_csv_data_row_panics_on_wrong_column_count() {
+            parse_csv_data_row("5,24,8000,0.1,0.2");
         }
     }
 }

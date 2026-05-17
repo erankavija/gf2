@@ -7,8 +7,15 @@
 #
 # Usage:
 #   bash scripts/perm-uniformity-gpu-repro.sh            # full sweep
-#   CELLS=q3n24,q3n28,q3n32 bash scripts/perm-uniformity-gpu-repro.sh
 #   PLOT_ONLY=1 bash scripts/perm-uniformity-gpu-repro.sh # figure-only, no run
+#
+#   # A CELLS-filtered (partial/resume) run MUST use a separate staging
+#   # OUTPUT_DIR — the harness fail-fast-refuses to truncate the SSOT CSV:
+#   OUTPUT_DIR=/tmp/pug_resume CELLS=q3n24,q3n28,q3n32 \
+#       cargo run --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
+#       --release --features hip
+#   # then merge the produced rows into the SSOT CSV and refresh the figure:
+#   PLOT_ONLY=1 bash scripts/perm-uniformity-gpu-repro.sh
 #
 # Requirements:
 #   - Rust toolchain (1.95+) with cargo

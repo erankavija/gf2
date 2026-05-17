@@ -322,12 +322,101 @@ where
     }
     let det_elapsed = t_det_start.elapsed().as_secs_f64();
 
-    let tvd_perm = tvd_from_counts(&perm_counts, n_samples as u64, q);
-    let tvd_det = tvd_from_counts(&det_counts, n_samples as u64, q);
+    finalize_cell(
+        q,
+        n,
+        n_samples,
+        &perm_counts,
+        &det_counts,
+        &perm_samples,
+        &det_samples,
+        perm_elapsed,
+        det_elapsed,
+        boot_perm_seed,
+        boot_det_seed,
+        boot_diff_seed,
+    )
+}
 
-    let (pci_lo, pci_hi) = bootstrap_tvd_ci(&perm_samples, q, 1000, boot_perm_seed);
-    let (dci_lo, dci_hi) = bootstrap_tvd_ci(&det_samples, q, 1000, boot_det_seed);
-    let (_, diff_q95) = bootstrap_diff_ci(&perm_samples, &det_samples, q, 1000, boot_diff_seed);
+/// Number of bootstrap resamples for every CI / difference statistic.
+///
+/// Single source of truth for the bootstrap count used by [`run_cell`] and
+/// any GPU-batched runner via [`finalize_cell`]; changing it changes every
+/// statistical column, so it is centralised here.
+pub const N_BOOTSTRAP: usize = 1000;
+
+/// Assemble a [`CellResult`] from accumulated histograms + raw sample
+/// streams: the statistics tail (TVD, the two independent bootstrap CIs,
+/// the difference statistic, and the per-matrix timing columns) shared by
+/// the CPU [`run_cell`] driver and any GPU-batched runner.
+///
+/// This is the single source of truth for the post-sampling statistics.
+/// Callers differ only in *how* the perm/det streams are produced (per-sample
+/// CPU closure vs GPU batch kernel); everything downstream of the raw `u8`
+/// streams and their `q`-bucket histograms is identical and must not be
+/// duplicated.
+///
+/// # Arguments
+///
+/// * `q`, `n`, `n_samples` — cell identity (copied verbatim into the result).
+/// * `perm_counts`, `det_counts` — length-`q` histograms of the perm/det
+///   field values (sum to `n_samples`).
+/// * `perm_samples`, `det_samples` — the raw per-evaluation field elements
+///   (length `n_samples`), fed to the bootstrap.
+/// * `perm_elapsed_s`, `det_elapsed_s` — wall-clock seconds for the perm/det
+///   evaluation phases (only the non-deterministic `mean_us_*` columns).
+/// * `boot_perm_seed`, `boot_det_seed`, `boot_diff_seed` — the three
+///   independent bootstrap seeds (criterion-3 / criterion-6 streams).
+///
+/// # Examples
+///
+/// ```
+/// use perm_uniformity::harness::finalize_cell;
+/// let perm = [0u8, 1, 2, 0, 1, 2];
+/// let det = [0u8, 0, 0, 1, 1, 2];
+/// let r = finalize_cell(
+///     3, 4, perm.len(),
+///     &[2, 2, 2], &[3, 2, 1],
+///     &perm, &det,
+///     0.0, 0.0,
+///     2, 3, 4,
+/// );
+/// assert_eq!((r.q, r.n, r.n_samples), (3, 4, 6));
+/// assert!(r.tvd_perm >= 0.0 && r.tvd_det >= 0.0);
+/// assert!(r.tvd_perm_ci_lo <= r.tvd_perm_ci_hi);
+/// ```
+///
+/// # Panics
+///
+/// Panics if `q == 0`, if `n_samples == 0`, or if `perm_samples.len() !=
+/// det_samples.len()` (the difference bootstrap requires equal-length
+/// streams).
+///
+/// # Complexity
+///
+/// `O(N_BOOTSTRAP * (n_samples + q))`.
+#[allow(clippy::too_many_arguments)]
+pub fn finalize_cell(
+    q: u64,
+    n: usize,
+    n_samples: usize,
+    perm_counts: &[u64],
+    det_counts: &[u64],
+    perm_samples: &[u8],
+    det_samples: &[u8],
+    perm_elapsed_s: f64,
+    det_elapsed_s: f64,
+    boot_perm_seed: u64,
+    boot_det_seed: u64,
+    boot_diff_seed: u64,
+) -> CellResult {
+    let tvd_perm = tvd_from_counts(perm_counts, n_samples as u64, q);
+    let tvd_det = tvd_from_counts(det_counts, n_samples as u64, q);
+
+    let (pci_lo, pci_hi) = bootstrap_tvd_ci(perm_samples, q, N_BOOTSTRAP, boot_perm_seed);
+    let (dci_lo, dci_hi) = bootstrap_tvd_ci(det_samples, q, N_BOOTSTRAP, boot_det_seed);
+    let (_, diff_q95) =
+        bootstrap_diff_ci(perm_samples, det_samples, q, N_BOOTSTRAP, boot_diff_seed);
 
     CellResult {
         q,
@@ -340,7 +429,75 @@ where
         tvd_det_ci_lo: dci_lo,
         tvd_det_ci_hi: dci_hi,
         diff_q95,
-        mean_us_perm: perm_elapsed * 1e6 / n_samples as f64,
-        mean_us_det: det_elapsed * 1e6 / n_samples as f64,
+        mean_us_perm: perm_elapsed_s * 1e6 / n_samples as f64,
+        mean_us_det: det_elapsed_s * 1e6 / n_samples as f64,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The shared statistics tail used by both the CPU run_cell driver and
+    // the GPU-batched runner. These guard that finalize_cell is the single
+    // source of truth: deterministic for a fixed seed (criterion-5
+    // bit-identical guarantee at the SSOT) and consistent with the
+    // documented tvd_from_counts.
+
+    #[test]
+    fn finalize_cell_is_seed_deterministic() {
+        let perm = [0u8, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2];
+        let det = [0u8, 0, 0, 1, 1, 1, 2, 2, 2, 0, 1, 2];
+        let pc = [4u64, 4, 4];
+        let dc = [4u64, 4, 4];
+        let a = finalize_cell(3, 5, 12, &pc, &dc, &perm, &det, 1.0, 2.0, 7, 8, 9);
+        let b = finalize_cell(3, 5, 12, &pc, &dc, &perm, &det, 9.0, 9.0, 7, 8, 9);
+        // Statistical columns must be bit-identical for fixed bootstrap
+        // seeds regardless of the (non-deterministic) timing inputs.
+        assert_eq!(a.tvd_perm, b.tvd_perm);
+        assert_eq!(a.tvd_perm_ci_lo, b.tvd_perm_ci_lo);
+        assert_eq!(a.tvd_perm_ci_hi, b.tvd_perm_ci_hi);
+        assert_eq!(a.tvd_det, b.tvd_det);
+        assert_eq!(a.tvd_det_ci_lo, b.tvd_det_ci_lo);
+        assert_eq!(a.tvd_det_ci_hi, b.tvd_det_ci_hi);
+        assert_eq!(a.diff_q95, b.diff_q95);
+        // Timing columns track their (here differing) elapsed inputs.
+        assert!((a.mean_us_perm - 1.0 * 1e6 / 12.0).abs() < 1e-9);
+        assert!((b.mean_us_perm - 9.0 * 1e6 / 12.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn finalize_cell_tvd_matches_tvd_from_counts() {
+        let perm = [0u8, 1, 2, 0, 1, 2];
+        let det = [0u8, 0, 0, 0, 1, 2];
+        let pc = [2u64, 2, 2]; // uniform -> TVD 0
+        let dc = [4u64, 1, 1];
+        let r = finalize_cell(3, 4, 6, &pc, &dc, &perm, &det, 0.0, 0.0, 1, 2, 3);
+        assert_eq!(r.tvd_perm, tvd_from_counts(&pc, 6, 3));
+        assert_eq!(r.tvd_det, tvd_from_counts(&dc, 6, 3));
+        assert_eq!(r.tvd_perm, 0.0);
+        assert!(r.tvd_det > 0.0);
+        assert_eq!((r.q, r.n, r.n_samples), (3, 4, 6));
+    }
+
+    #[test]
+    #[should_panic]
+    fn finalize_cell_panics_on_unequal_stream_lengths() {
+        let perm = [0u8, 1, 2];
+        let det = [0u8, 0]; // shorter -> difference bootstrap must panic
+        finalize_cell(
+            3,
+            2,
+            3,
+            &[1, 1, 1],
+            &[1, 1, 0],
+            &perm,
+            &det,
+            0.0,
+            0.0,
+            1,
+            2,
+            3,
+        );
     }
 }
