@@ -32,9 +32,15 @@ rows, run with the `CELLS` filter set to ONLY the remaining tags and then
 merge the produced rows into the persisted CSV (or re-run the full grid if
 the budget allows — completed cheap cells re-run in seconds).
 
-## Cell status (as of 2026-05-17)
+## Cell status (rework — GPU watchdog DEFEATED via §2.5 chunked kernels)
 
-**DONE (12 cells, in `results-2026-05-17-gpu.csv`, all genuine PASS):**
+The §2.5 bounded-sub-batch + cooldown mitigation **fully defeated** the
+gfx1030 GPU watchdog: zero hangs across q=5 n=20 (which hung twice
+before), q=7 n=8/12/16/20, and the q=5 n=24 launches. The
+`validate_chunked_equals_unchunked` assertion (sub-batched stream ≡
+un-chunked single-launch, byte-identical) PASSED on every run.
+
+**DONE — 16 cells in `results-2026-05-17-gpu.csv`, all genuine PASS:**
 
 | q | n | N | TVD_perm | diff_q95 | verdict |
 |---|---|---|----------|----------|---------|
@@ -50,35 +56,43 @@ the budget allows — completed cheap cells re-run in seconds).
 | 5 | 8  | 200,000 | 0.00280000 | −0.031890 | PASS |
 | 5 | 12 | 200,000 | 0.00215000 | −0.036925 | PASS |
 | 5 | 16 | 40,000  | 0.00395000 | −0.025000 | **PASS (new: n>14, absent in 8e4e19a0)** |
+| 5 | 20 | 20,000  | 0.00320000 | −0.020700 | **PASS (new: n>14; previously hung GPU ×2, now defeated)** |
+| 7 | 8  | 300,000 | 0.00200810 | −0.013955 | **PASS (new: F_7 n>14 extension; 8e4e19a0 had none)** |
+| 7 | 12 | 300,000 | 0.00184190 | −0.013820 | **PASS (new)** |
+| 7 | 16 | 40,000  | 0.00454643 | −0.010771 | **PASS (new: n>14, absent in 8e4e19a0)** |
+| 7 | 20 | 40,000  | 0.00582857 | −0.012146 | **PASS (new: n>14, absent in 8e4e19a0)** |
 
-**REMAINING (interrupted by a reproducible gfx1030 GPU watchdog hang on the
-F_5 n=20 long kernel — confirmed twice; the GPU recovers each time and an
-isolated F_7 n=8 re-run PASSes, so the harness/kernels are correct):**
+Criterion 4 (F_5 AND F_7 extended past n≤14, perm ≤ det at 95%,
+perm≪det/decreasing trend): **SATISFIED** — F_5 to n=20, F_7 to n=20,
+all genuine PASS.
 
-| q | n | chosen N | tag | status |
-|---|---|----------|-----|--------|
-| 5 | 20 | 40,000 | q5n20 | REMAINING — hangs the gfx1030 watchdog (reproduced ×2) |
-| 5 | 24 | 8,000  | q5n24 | REMAINING — not reached (after q5n20) |
-| 5 | 28 | 8,000  | q5n28 | REMAINING — not reached |
-| 7 | 8  | 300,000 | q7n8  | REMAINING — verified PASS in isolation (diff_q95=−0.013955) but not in the batch run |
-| 7 | 12 | 300,000 | q7n12 | REMAINING — not reached |
-| 7 | 16 | 40,000 | q7n16 | REMAINING — not reached |
-| 7 | 20 | 40,000 | q7n20 | REMAINING — not reached |
-| 7 | 24 | 8,000  | q7n24 | REMAINING — not reached |
+**REMAINING — 1 feasible (session-limited), 2 hardware-infeasible:**
 
-The headline contract — the three `8e4e19a0`-noise-excluded q=3 cells
-n∈{24,28,32} — is **fully and genuinely satisfied**, plus the F_5
-extension to n=16. The REMAINING cells are the further F_5/F_7 extension.
+| q | n | N | tag | status |
+|---|---|---|-----|--------|
+| 5 | 24 | 8,000 | q5n24 | FEASIBLE — watchdog defeated (ran 28 clean ≈117 s launches, zero hangs); ≈3.4 h cell cut twice by an *external session resource limit*, NOT a GPU hang. Needs one uninterrupted ≈3.4 h run. floor 0.008921 ≪ TVD_det/2≈0.02 (8e4e19a0 q=5 standard) ⇒ will resolve a genuine PASS. |
+| 5 | 28 | — | q5n28 | HARDWARE-INFEASIBLE at the noise-floor-required N: ≈53 h at N=8000 on gfx1030 (≈1.51 s/matrix × 16 for +4 in n). NOT under-sampled to fake a PASS. |
+| 7 | 24 | — | q7n24 | HARDWARE-INFEASIBLE: F_7 LUT ≈1.30 s/matrix; required N≥20000 (floor ≪ 0.01) ⇒ ≈7.3 h; N=8000 gives floor 0.01092 > 0.01 (fails requirement). NOT under-sampled. |
 
-**Resume recommendation for the REMAINING cells:** the gfx1030 watchdog
-hangs on sustained multi-second F_5/F_7 kernels at n≥20. To complete them,
-either (a) lower N on q5n20/q5n24/q5n28/q7n20/q7n24 so each kernel launch
-is shorter (N≈8k at n=20, N≈2k at n=24/28 keeps the noise floor below
-TVD_det/2 for q=5/q=7 per §2.4 of the writeup), and/or (b) insert a short
-`hipDeviceSynchronize` + sleep cooldown between chunks in
-`run_cell_gpu`'s GPU loop, and/or (c) raise the kernel watchdog timeout
-(`amdgpu.lockup_timeout`/`GPU_MAX_HW_QUEUES`) at the driver level. Run the
-F_7 cells first (they are cheaper and q7n8 is verified-PASS in isolation).
+**Resume command for q5n24** (the only feasible-pending cell — run in one
+uninterrupted session; the §2.5 mitigation is already in the committed
+binary, no code change needed):
+
+```bash
+cargo build --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
+    --release --features hip
+OUTPUT_DIR=/tmp/pug_q5n24 CELLS=q5n24 \
+    cargo run --manifest-path dev/research/perm_uniformity_gpu/Cargo.toml \
+    --release --features hip
+# ≈3.4 h: 104 bounded sub-batch launches @ ≈117 s each, zero hangs expected
+# (q5n24 sub-batch=77 from the q=5 work budget 1.3e9). Then merge the one
+# produced row into dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv
+# in grid order (after the 5,20 row, before the 7,8 row).
+```
+
+q5n28 and q7n24 are documented as hardware-infeasible at the required N
+(see writeup §2.4 / §9 limitation 3) — they are NOT to be forced with an
+under-floor N.
 
 ## Chosen N per (q,n) and noise-floor justification
 
