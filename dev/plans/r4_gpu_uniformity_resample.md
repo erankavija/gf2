@@ -534,11 +534,14 @@ in the CSV header.
 
 2. **q=5 n=24 interrupted by an external session resource limit (NOT a
    GPU hang).** q=5 n=24 (N=8,000, ≈3.4 h: 104 bounded launches ≈117 s
-   each) ran 28 clean launches with zero hangs before its background task
-   was killed twice by an out-of-band session/resource limit. The GPU was
-   idle (0 %, no hang signature) after each kill — this is a wall-clock /
-   session-budget constraint, not a watchdog or harness/kernel fault. The
-   cell is feasible and the mitigation is proven for it; it is documented
+   each) ran up to 28 clean launches with zero hangs (GPU 99 % throughout,
+   0 hang signatures in any log) before its background task was killed
+   **three** times at ≈58–60 min by an out-of-band session/resource limit.
+   The GPU was idle (0 %, no hang signature) after each kill — this is a
+   wall-clock / session-budget constraint, not a watchdog or
+   harness/kernel fault (contrast: q=5 n=20, the cell that genuinely hung
+   the GPU before §2.5, now completes cleanly). The cell is feasible and
+   the mitigation is proven for it; it is documented
    as REMAINING (resume command in `dev/active/b293af5a-impl-handoff.md`)
    needing one uninterrupted ≈3.4 h run. Its noise floor at the chosen
    N=8,000 is 0.008921 ≪ TVD_det/2 ≈ 0.02 (the exact 8e4e19a0

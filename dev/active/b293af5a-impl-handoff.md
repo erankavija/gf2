@@ -70,7 +70,7 @@ all genuine PASS.
 
 | q | n | N | tag | status |
 |---|---|---|-----|--------|
-| 5 | 24 | 8,000 | q5n24 | FEASIBLE — watchdog defeated (ran 28 clean ≈117 s launches, zero hangs); ≈3.4 h cell cut twice by an *external session resource limit*, NOT a GPU hang. Needs one uninterrupted ≈3.4 h run. floor 0.008921 ≪ TVD_det/2≈0.02 (8e4e19a0 q=5 standard) ⇒ will resolve a genuine PASS. |
+| 5 | 24 | 8,000 | q5n24 | FEASIBLE — watchdog defeated (ran 28 clean ≈117 s launches, zero hangs, GPU 99 % throughout, 0 hang signatures in any log); the ≈3.4 h cell was cut **three** times at ≈58–60 min by an *external session resource limit*, NOT a GPU hang and NOT a harness/kernel fault. Needs one uninterrupted ≈3.4 h run (the §2.5 mitigation is already in the committed binary — no code change needed). floor 0.008921 ≪ TVD_det/2≈0.02 (the exact 8e4e19a0 q=5-large-n N=8000 standard) ⇒ the resume run will resolve a genuine PASS. |
 | 5 | 28 | — | q5n28 | HARDWARE-INFEASIBLE at the noise-floor-required N: ≈53 h at N=8000 on gfx1030 (≈1.51 s/matrix × 16 for +4 in n). NOT under-sampled to fake a PASS. |
 | 7 | 24 | — | q7n24 | HARDWARE-INFEASIBLE: F_7 LUT ≈1.30 s/matrix; required N≥20000 (floor ≪ 0.01) ⇒ ≈7.3 h; N=8000 gives floor 0.01092 > 0.01 (fails requirement). NOT under-sampled. |
 
