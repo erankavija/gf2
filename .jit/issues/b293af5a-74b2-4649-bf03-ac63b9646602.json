@@ -16,12 +16,27 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/plans/r4_gpu_uniformity_resample.md",
+      "commit": null,
+      "label": "R4 GPU high-N uniformity resample writeup (q=3 headline reproduced; F_5/F_7 extended to n=20; vs HKS + 8e4e19a0)",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv",
+      "commit": null,
+      "label": "GPU high-N resample CSV (16 cells, all genuine PASS, 8e4e19a0 schema, seed-pinned)",
+      "doc_type": "data",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-17T00:16:33.224143913+00:00",
-  "updated_at": "2026-05-17T07:20:02.673940323+00:00"
+  "updated_at": "2026-05-17T12:07:40.031148151+00:00"
 }
