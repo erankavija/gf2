@@ -1,0 +1,10 @@
+# Transient plot-input staging directory created by scripts/permanent-repro.sh
+# step 6 (fresh dated CSVs copied under the plot script's pinned filenames).
+# It is rm -rf'd at the start and end of step 6; this entry guards against a
+# leftover copy if a run aborts mid-plot.
+.plot-input/
+
+# Transient S3 sanity-row capture (s3_scalar_vs_avx2_sanity stdout). The
+# assembled s3_cross_cpu-<DATE>.csv is the committed artefact; the raw
+# capture is reproducible scratch.
+s3_sanity_rows-*.txt

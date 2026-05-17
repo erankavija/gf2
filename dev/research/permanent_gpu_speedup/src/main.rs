@@ -3,11 +3,17 @@
 // Measures the speedup of the batched GPU path (`permanent_batch_bipedal3`) over the
 // single-thread reference (`permanent_mod3_reference`) at n ∈ {24, 28, 32, 36}.
 //
-// Methodology: the reference timing at n=36 (9030.741 s) is reused from S1's canonical CSV
-// (`dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`, row n=36,
-// impl=permanent_mod3_reference).  The GPU contender time is measured by batching M matrices
-// through `permanent_batch_bipedal3` and reporting the per-matrix-equivalent GPU time as
-// T_gpu = total_wallclock / M.  The speedup ratio is T_reference / T_gpu.
+// Methodology: the reference timings at every n are LOADED AT RUNTIME from the S1
+// speedup CSV produced by the same one-command repro run
+// (`dev/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv`, rows
+// impl=permanent_mod3_reference; falls back to the newest s1_speedup-*.csv). They
+// are NOT hard-coded — this keeps the one-command repro SSOT/end-to-end (S1g
+// speedup derives from THIS run's S1 measurement). Given the committed
+// s1_speedup-2026-05-11.csv the loaded values reproduce the committed
+// s1g_gpu_speedup CSV's ratios byte-for-byte. The GPU contender time is measured
+// by batching M matrices through `permanent_batch_bipedal3` and reporting the
+// per-matrix-equivalent GPU time as T_gpu = total_wallclock / M. The speedup
+// ratio is T_reference / T_gpu.
 //
 // Batch size: M=80 is chosen so that ceil(M/80)=1 round on gfx1030 (80 CUs). All M blocks
 // run in parallel, so the total wall-clock equals 1 GPU-block time at each n. Measured:
@@ -75,21 +81,114 @@ mod harness {
     pub const SEED: u64 = 0x9480_F8A6_0000_0000_u64;
 
     // -----------------------------------------------------------------------
-    // S1 reference timings (reused from s1_speedup-2026-05-11.csv)
+    // S1 reference timings — loaded at RUNTIME from the S1 CSV (SSOT).
     //
-    // Source: dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv
-    // Rows: n=24/28/32/36, impl=permanent_mod3_reference, mean_us column.
-    // Units: microseconds in CSV → seconds here.
+    // The reference wall-clock times are NOT hard-coded. They are read at
+    // runtime from the S1 speedup CSV produced by the same one-command repro
+    // run (dev/benchmarks/gf2_algebra_permanent/s1_speedup-<DATE>.csv, rows
+    // impl=permanent_mod3_reference, mean_us column, µs → s). This mirrors
+    // the S3 Part-A precedent in scripts/permanent-repro.sh (read the S1 CSV
+    // at runtime instead of embedding copied numbers) so the one-command
+    // repro is genuinely SSOT / end-to-end: S1g speedup ratios derive from
+    // THIS run's S1 measurement, not a stale snapshot.
+    //
+    // CSV resolution (same approach as the S3 Part-A reader):
+    //   1. dev/benchmarks/gf2_algebra_permanent/s1_speedup-<SA_DATE|today>.csv
+    //   2. fall back to the newest s1_speedup-*.csv in that directory.
+    // Given the committed s1_speedup-2026-05-11.csv the loaded values are
+    // {1.473800, 27.360000, 500.027842, 9030.740871} s, identical to the
+    // numbers previously embedded, so the computed ratios are unchanged and
+    // still match the committed s1g_gpu_speedup CSV.
     // -----------------------------------------------------------------------
 
-    /// Reference wall-clock times (seconds) at each n, reused from S1 CSV.
-    /// Order matches N_VALUES: {24, 28, 32, 36}.
-    pub const REF_TIMES_S: [f64; 4] = [
-        1_473_800.0e-6,       // n=24: 1473800.0 µs = 1.4738 s
-        27_360_000.0e-6,      // n=28: 27360000.0 µs = 27.360 s
-        500_027_842.469e-6,   // n=32: 500027842.469 µs = 500.028 s
-        9_030_740_871.365e-6, // n=36: 9030740871.365 µs = 9030.741 s
-    ];
+    /// Load the S1 reference wall-clock times (seconds) for `N_VALUES` from
+    /// the S1 speedup CSV under `workspace_root`.
+    ///
+    /// Resolves `s1_speedup-<SA_DATE|today>.csv`, falling back to the newest
+    /// `s1_speedup-*.csv` in the benchmark directory. Parses rows
+    /// `impl=permanent_mod3_reference`, converting the `mean_us` column from
+    /// microseconds to seconds.
+    ///
+    /// Returns `(ref_times_s, s1_csv_basename)`: one timing per `N_VALUES`
+    /// entry in order, plus the basename of the S1 CSV actually read (so the
+    /// CSV header / console can record the true SSOT source instead of a
+    /// hard-coded historical filename).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the CSV cannot be located, cannot be read, or does not
+    /// contain a `permanent_mod3_reference` row for every `n` in `N_VALUES`.
+    /// A missing reference row is a hard SSOT failure — the harness must not
+    /// silently substitute a stale or guessed value.
+    fn load_ref_times_s(workspace_root: &std::path::Path) -> (Vec<f64>, String) {
+        let bench_dir = workspace_root.join("dev/benchmarks/gf2_algebra_permanent");
+
+        // 1. Prefer the SA_DATE/today dated file (same env var the rest of
+        //    the repro uses via testutil::today_yyyy_mm_dd()).
+        let date = gf2_algebra::testutil::today_yyyy_mm_dd();
+        let dated = bench_dir.join(format!("s1_speedup-{date}.csv"));
+        let csv_path = if dated.is_file() {
+            dated
+        } else {
+            // 2. Newest s1_speedup-*.csv (ISO dates sort lexically).
+            let mut candidates: Vec<std::path::PathBuf> = fs::read_dir(&bench_dir)
+                .unwrap_or_else(|e| panic!("read S1 bench dir {}: {e}", bench_dir.display()))
+                .filter_map(|e| e.ok().map(|e| e.path()))
+                .filter(|p| {
+                    p.file_name()
+                        .and_then(|s| s.to_str())
+                        .is_some_and(|s| s.starts_with("s1_speedup-") && s.ends_with(".csv"))
+                })
+                .collect();
+            candidates.sort();
+            candidates.pop().unwrap_or_else(|| {
+                panic!(
+                    "no s1_speedup-*.csv found in {} — run the S1 bench (repro step 2) first",
+                    bench_dir.display()
+                )
+            })
+        };
+
+        let content = fs::read_to_string(&csv_path)
+            .unwrap_or_else(|e| panic!("read S1 CSV {}: {e}", csv_path.display()));
+
+        // Parse: n,impl,mean_us,std_us,samples,ratio_vs_reference,hw_fingerprint
+        let mut ref_us: std::collections::HashMap<usize, f64> = std::collections::HashMap::new();
+        for line in content.lines() {
+            if line.starts_with('#') || line.is_empty() {
+                continue;
+            }
+            let cols: Vec<&str> = line.split(',').collect();
+            if cols.len() < 3 || cols[1] != "permanent_mod3_reference" {
+                continue;
+            }
+            if let (Ok(n), Ok(mean_us)) = (cols[0].parse::<usize>(), cols[2].parse::<f64>()) {
+                ref_us.insert(n, mean_us);
+            }
+        }
+
+        let times: Vec<f64> = N_VALUES
+            .iter()
+            .map(|&n| {
+                let us = ref_us.get(&n).unwrap_or_else(|| {
+                    panic!(
+                        "S1 CSV {} has no permanent_mod3_reference row for n={n} \
+                         (SSOT failure — S1g cannot derive its speedup)",
+                        csv_path.display()
+                    )
+                });
+                us * 1e-6
+            })
+            .collect();
+
+        let basename = csv_path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("s1_speedup.csv")
+            .to_string();
+
+        (times, basename)
+    }
 
     // -----------------------------------------------------------------------
     // Helpers
@@ -117,7 +216,7 @@ mod harness {
     /// kernel/seed) is emitted by [`write_csv_header_common`]; this tail plus
     /// that prefix reproduce the exact byte layout this measurement's CSV has
     /// always used.
-    fn write_csv_header_tail(f: &mut File) {
+    fn write_csv_header_tail(f: &mut File, s1_csv_basename: &str) {
         writeln!(
             f,
             "# sweep: n ∈ {:?}, M={BATCH_SIZE} (GPU fills ceil(M/80)=1 round on gfx1030)",
@@ -131,12 +230,12 @@ mod harness {
         .unwrap();
         writeln!(
             f,
-            "#   speedup = T_reference / T_gpu_equiv where T_reference is reused from"
+            "#   speedup = T_reference / T_gpu_equiv where T_reference is loaded at runtime from"
         )
         .unwrap();
         writeln!(
             f,
-            "#   s1_speedup-2026-05-11.csv row impl=permanent_mod3_reference."
+            "#   {s1_csv_basename} row impl=permanent_mod3_reference."
         )
         .unwrap();
         writeln!(
@@ -146,7 +245,7 @@ mod harness {
         .unwrap();
         writeln!(
             f,
-            "# s1_csv: dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv"
+            "# s1_csv: dev/benchmarks/gf2_algebra_permanent/{s1_csv_basename}"
         )
         .unwrap();
     }
@@ -177,6 +276,10 @@ mod harness {
                 .to_path_buf()
         };
 
+        // Load S1 reference timings at RUNTIME from the S1 CSV produced by
+        // this same repro run (SSOT — no hard-coded copied numbers).
+        let (ref_times_s, s1_csv_basename) = load_ref_times_s(&workspace_root);
+
         let csv_abs = workspace_root.join(&csv_path);
         fs::create_dir_all(csv_abs.parent().unwrap()).expect("create benchmarks dir");
         let mut csv_file = File::create(&csv_abs).expect("create CSV");
@@ -190,7 +293,7 @@ mod harness {
             true,
             SEED,
         );
-        write_csv_header_tail(&mut csv_file);
+        write_csv_header_tail(&mut csv_file, &s1_csv_basename);
         writeln!(
             csv_file,
             "n,m,gpu_total_wallclock_s,gpu_per_mat_equiv_s,reps,ref_time_s,speedup_ratio,measurement_type"
@@ -213,7 +316,7 @@ mod harness {
             "  methodology: T_gpu_equiv = total_wallclock_s / M  (batch parallelism over ~80 CUs)"
         );
         println!(
-            "  reference (reused from s1_speedup-2026-05-11.csv, permanent_mod3_reference rows)"
+            "  reference (loaded at runtime from {s1_csv_basename}, permanent_mod3_reference rows)"
         );
         println!();
         println!(
@@ -224,7 +327,7 @@ mod harness {
 
         for (i, &n) in N_VALUES.iter().enumerate() {
             let reps = if n == 36 { REP_SLOW } else { REP_FAST };
-            let ref_time_s = REF_TIMES_S[i];
+            let ref_time_s = ref_times_s[i];
 
             println!("  n={n}: building {BATCH_SIZE} random {n}x{n} matrices (seed={SEED:#018x} ^ {n:#x})...");
             let matrices = build_matrices(n, BATCH_SIZE, SEED ^ (n as u64));
