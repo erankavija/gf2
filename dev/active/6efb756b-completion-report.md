@@ -232,7 +232,7 @@ regression.
 | Fig 5 BLER vs paper | within 0.89–1.31× across 2.00–3.25 dB (was 4–9× off at v5) |
 | Fig 4 BLER vs paper | within 0.79–1.55× at 0.0–1.0 dB; residual 2.4–5.4× at 1.5–2.0 dB = 0.22–0.38 dB SNR shift |
 | Fig 6 BLER vs paper | within 0.87–1.21× across 0–4 dB |
-| Closeout presentation | `docs/presentations/6efb756b-grand-sogrand.html` (linked via `jit doc add`) |
+| Closeout presentation | `docs/presentations/6efb756b-grand-sogrand/talk.html` (linked via `jit doc add`) |
 | Open issues from this epic's scope | none blocking; 5 scoped follow-ons captured above |
 
 The epic is complete. No follow-up project-lead session is required for

@@ -44,10 +44,133 @@
       "format": "markdown"
     },
     {
-      "path": "docs/presentations/6efb756b-grand-sogrand.html",
+      "path": "docs/presentations/6efb756b-grand-sogrand/talk.html",
       "commit": null,
       "label": "Epic closeout presentation (GRAND/SOGRAND math + Fig 4/5/6 paper comparison)",
-      "doc_type": "presentation"
+      "doc_type": "presentation",
+      "format": "html",
+      "assets": [
+        {
+          "original_path": "base.css",
+          "resolved_path": "docs/presentations/6efb756b-grand-sogrand/base.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "themes/rust.css",
+          "resolved_path": "docs/presentations/6efb756b-grand-sogrand/themes/rust.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/fig6_ebch_16_7_comparison.svg",
+          "resolved_path": "docs/presentations/figures/fig6_ebch_16_7_comparison.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "e8b7571a2e570dd35cc50cf1958ad661bcc7a77969cb2865dd78e36258df14a8",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/fig5_ebch_64_57_comparison.svg",
+          "resolved_path": "docs/presentations/figures/fig5_ebch_64_57_comparison.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "fd23bcfec10acfabe678be37265e7e9f415024e639d29ee302ffe5f27a4861ac",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/fig4_crc_25_15_comparison.svg",
+          "resolved_path": "docs/presentations/figures/fig4_crc_25_15_comparison.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "fc319ff696b60b529b67ea87d789e95ddaeacc523af4b9e838a1a44c318c999d",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -56,5 +179,5 @@
     "epic:grand"
   ],
   "created_at": "2026-02-21T19:35:51.613833285+00:00",
-  "updated_at": "2026-04-16T22:46:51.666562177+00:00"
+  "updated_at": "2026-05-17T23:35:20.410945707+00:00"
 }
