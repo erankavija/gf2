@@ -29,11 +29,133 @@
       "format": "markdown"
     },
     {
-      "path": "docs/presentations/d4851c3d-modem-framework.html",
+      "path": "docs/presentations/d4851c3d-modem-framework/talk.html",
       "commit": null,
       "label": "Modem framework for gf2 — researcher-facing highlights (revealjs)",
       "doc_type": "presentation",
-      "format": "markdown"
+      "format": "html",
+      "assets": [
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "themes/rust.css",
+          "resolved_path": "docs/presentations/d4851c3d-modem-framework/themes/rust.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "base.css",
+          "resolved_path": "docs/presentations/d4851c3d-modem-framework/base.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/per_bit_mi_16qam.svg",
+          "resolved_path": "docs/presentations/figures/per_bit_mi_16qam.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "137e6201ec6bc9362512a482f8d0616794ddb9fb510ac90d1adba08f54ee403d",
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/llr_histograms_16qam.svg",
+          "resolved_path": "docs/presentations/figures/llr_histograms_16qam.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "e45e2c58d4fe719a096e3bb16550a0ea23f9c488e1ddc1b8b986616f7fd20c2c",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "../figures/ber_curves.svg",
+          "resolved_path": "docs/presentations/figures/ber_curves.svg",
+          "asset_type": "local",
+          "mime_type": "image/svg+xml",
+          "content_hash": "0d38c663ecb1baa6573fbde1fb0ddbd3f72ba05f71d64dd7766e5ac253cf4a85",
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -41,5 +163,5 @@
     "component:gf2-coding"
   ],
   "created_at": "2026-02-21T19:35:51.598964928+00:00",
-  "updated_at": "2026-04-15T12:11:15.342435730+00:00"
+  "updated_at": "2026-05-17T23:31:19.188877973+00:00"
 }
