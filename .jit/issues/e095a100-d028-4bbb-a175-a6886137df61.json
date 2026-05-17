@@ -28,6 +28,11 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-21T03:17:15.462339426Z"
     },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-21T03:15:04.948995046Z"
+    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -37,11 +42,6 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-21T02:44:50.615598831Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-21T03:15:04.948995046Z"
     }
   },
   "context": {},
@@ -85,18 +85,116 @@
       "format": "markdown"
     },
     {
-      "path": "dev/active/e095a100-presentation.html",
-      "commit": null,
-      "label": "Epic close-out reveal.js presentation",
-      "doc_type": "presentation",
-      "format": "markdown"
-    },
-    {
       "path": "dev/active/e095a100-completion-report.md",
       "commit": null,
       "label": "Completion report (session 4 / epic rollup)",
       "doc_type": "session",
       "format": "markdown"
+    },
+    {
+      "path": "dev/active/e095a100-presentation/talk.html",
+      "commit": null,
+      "label": "Epic close-out reveal.js presentation",
+      "doc_type": "presentation",
+      "format": "html",
+      "assets": [
+        {
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "base.css",
+          "resolved_path": "dev/active/e095a100-presentation/base.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        },
+        {
+          "original_path": "themes/rust.css",
+          "resolved_path": "dev/active/e095a100-presentation/themes/rust.css",
+          "asset_type": "local",
+          "mime_type": null,
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false
+        }
+      ]
     }
   ],
   "labels": [
@@ -104,5 +202,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.633739852+00:00",
-  "updated_at": "2026-04-21T19:13:54.062725283+00:00"
+  "updated_at": "2026-05-17T23:32:48.127519488+00:00"
 }

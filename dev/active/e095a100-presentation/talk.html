@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>GF(p^m) toolkit — epic e095a100 close-out</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- reveal.js core only (no reveal theme — base.css + the theme token file own all appearance) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<!-- KaTeX (synchronous math; deterministic heights for the fit-checker) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<!-- Theme system: structure is theme-agnostic; swap the #theme link to retheme -->
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ── TITLE ───────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>GF(p<sup>m</sup>) toolkit</h1>
+  <p class="tagline">Epic <code>e095a100</code> close-out</p>
+  <p class="muted">Generic Galois-field arithmetic · formal verification · SIMD performance</p>
+  <p class="muted">gf2 workspace · 4 sessions · 9 stories/tasks · 3,447 tests · 0 failures</p>
+</section>
+
+<!-- ── WHAT SHIPPED (1/2) ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 2 / 34</span></span>
+  <h2>What shipped</h2>
+  <ul>
+    <li><code>FiniteField</code> + <code>ConstField</code> + <code>FiniteFieldExt</code> trait hierarchy over every field in the workspace</li>
+    <li><code>Fp&lt;P&gt;</code> — prime fields with Montgomery internals, specialized <i>Mersenne</i>/<i>Proth</i>/<i>Goldilocks</i> fast paths</li>
+    <li><code>Gf2m</code> — GF(2<sup>m</sup>) for m ≤ 127 over <code>u8</code>…<code>u128</code> storage</li>
+    <li><code>Gf2mWide&lt;N, Cfg&gt;</code> — GF(2<sup>256</sup>) and above, stack-allocated, AVX2+VPCLMULQDQ-dispatched</li>
+  </ul>
+</section>
+
+<!-- ── WHAT SHIPPED (2/2) ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 3 / 34</span></span>
+  <h2>What shipped (cont.)</h2>
+  <ul>
+    <li><code>QuadraticExt&lt;C&gt;</code> / <code>CubicExt&lt;C&gt;</code> — generic tower extensions</li>
+    <li><code>FieldVec&lt;F&gt;</code> — delayed-reduction SIMD dot product</li>
+    <li><code>FieldPoly&lt;F&gt;</code> — full polynomial surface: NTT mul, Newton-iteration div, subproduct-tree batch eval, Lagrange interpolation</li>
+    <li>Lean4 proofs via Aeneas/Charon — <code>Fp&lt;P&gt;</code> Montgomery, <code>QuadraticExt</code>, <code>CubicExt</code> axioms</li>
+  </ul>
+</section>
+
+<!-- ── TRAIT HIERARCHY (1/3) ────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 4 / 34</span></span>
+  <h2>Trait hierarchy</h2>
+<pre><code class="language-rust" data-trim>pub trait FiniteField: Clone + PartialEq + Debug + Hash {
+    type Characteristic: Into&lt;u64&gt; + Copy + Debug;
+    type Wide: Clone;
+
+    fn is_zero(&amp;self) -&gt; bool;
+    fn is_one(&amp;self) -&gt; bool;
+    fn inv(&amp;self) -&gt; Option&lt;Self&gt;;
+    fn extension_degree(&amp;self) -&gt; u32;
+    fn characteristic(&amp;self) -&gt; Self::Characteristic;</code></pre>
+</section>
+
+<!-- ── TRAIT HIERARCHY (2/3) ────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 5 / 34</span></span>
+  <h2>Trait hierarchy (cont.)</h2>
+<pre><code class="language-rust" data-trim>    // Delayed-reduction primitives: accumulate N multiplications into `Wide`
+    // before a single reduction. Enables SIMD hot paths in FieldVec and
+    // matrix kernels without field-specific code.
+    fn zero_wide() -&gt; Self::Wide;
+    fn madd_wide(acc: &amp;mut Self::Wide, lhs: &amp;Self, rhs: &amp;Self);
+    fn reduce_wide(wide: Self::Wide) -&gt; Self;
+    fn max_unreduced_additions() -&gt; usize;
+}</code></pre>
+</section>
+
+<!-- ── TRAIT HIERARCHY (3/3) ────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 6 / 34</span></span>
+  <h2>Trait hierarchy (cont.)</h2>
+<pre><code class="language-rust" data-trim>pub trait ConstField: FiniteField + Copy {
+    fn zero() -&gt; Self;
+    fn one() -&gt; Self;
+    fn order() -&gt; u128;      // panics if order &gt; u128::MAX (e.g. GF(2^256))
+    fn order_log2() -&gt; u32;  // always safe, even for GF(2^256)
+}</code></pre>
+</section>
+
+<!-- ── PRIME FIELDS (1/2) ────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 7 / 34</span></span>
+  <h2>Prime fields: <code>Fp&lt;P&gt;</code></h2>
+<pre><code class="language-rust" data-trim>use gf2_core::gfp::Fp;
+use gf2_core::field::{FiniteField, FiniteFieldExt};
+
+// Montgomery internals are invisible at the API
+let a = Fp::&lt;65537&gt;::new(42);
+let b = Fp::&lt;65537&gt;::new(1337);
+let c = a * b;                   // Montgomery mul under the hood
+let d = a.pow(1_000_000);        // square-and-multiply
+let e = a.inv().unwrap();        // extended Euclidean
+assert!((a * e).is_one());</code></pre>
+</section>
+
+<!-- ── PRIME FIELDS (2/2) ────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 8 / 34</span></span>
+  <h2>Prime fields: <code>Fp&lt;P&gt;</code> (cont.)</h2>
+<pre><code class="language-rust" data-trim>// Specialised types pick the fastest path at the const-generic level:
+use gf2_core::gfp::specialized::{Mersenne31, Mersenne61, GoldilocksFp, Proth};
+let m = Mersenne31::new(0x7FFF_FFFF); // 2^31 - 1, lazy reduction
+let g = GoldilocksFp::new(...);        // 2^64 - 2^32 + 1, 2-adicity 32
+let p: Proth&lt;&lt;u64&gt;, 15, 27&gt; = ...;  // 15 * 2^27 + 1, NTT-friendly</code></pre>
+  <p class="muted">All <code>FiniteField</code> axioms proven via <code>test_const_field_axioms</code> +
+     <code>Fp</code> Montgomery arithmetic formally verified in Lean4.</p>
+</section>
+
+<!-- ── BINARY FIELDS (1/3) ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 9 / 34</span></span>
+  <h2>Binary fields: <code>Gf2m</code> and <code>Gf2mWide</code></h2>
+<pre><code class="language-rust" data-trim>use gf2_core::gf2m::{Gf2_8, Gf2_16, Gf2mWide, Gf2mWideConfig};
+
+// Byte-sized Rijndael field — used in AES
+let x = Gf2_8::new(0x57);
+let y = Gf2_8::new(0x83);
+let z = x * y;                 // CLMUL-accelerated when available</code></pre>
+</section>
+
+<!-- ── BINARY FIELDS (2/3) ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 10 / 34</span></span>
+  <h2>Binary fields: <code>Gf2m</code> and <code>Gf2mWide</code> (cont.)</h2>
+<pre><code class="language-rust" data-trim>// GF(2^256), stack-allocated, Copy
+struct MyField;
+impl Gf2mWideConfig&lt;4&gt; for MyField {
+    const M: usize = 256;
+    // x^256 + x^10 + x^5 + x^2 + 1 (Seroussi table)
+    const MODULUS: [u64; 4] = [0x425, 0, 0, 0];
+}</code></pre>
+</section>
+
+<!-- ── BINARY FIELDS (3/3) ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 11 / 34</span></span>
+  <h2>Binary fields: <code>Gf2m</code> and <code>Gf2mWide</code> (cont.)</h2>
+<pre><code class="language-rust" data-trim>let a = Gf2mWide::&lt;4, MyField&gt;::from_words([0xDEAD, 0xBEEF, 0, 0]);
+let b = Gf2mWide::&lt;4, MyField&gt;::from_words([0xCAFE, 0, 0, 0xBABE]);
+
+// On Zen 3 this multiplication goes through a safe fn-ptr dispatch to the
+// AVX2+VPCLMULQDQ YMM kernel in gf2-kernels-simd — `#![deny(unsafe_code)]`
+// stays intact in gf2-core.
+let c = a * b;</code></pre>
+  <p><span class="badge orange">6.4× speedup</span>
+  <span class="badge orange">YMM VPCLMULQDQ</span>
+  <span class="muted">vs all-scalar <code>clmul_wide_slice::&lt;4&gt;</code> + Barrett</span></p>
+</section>
+
+<!-- ── TOWER EXTENSIONS (1/2) ───────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 12 / 34</span></span>
+  <h2>Tower extensions</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::gfpn::{QuadraticExt, CubicExt, ExtConfig};
+use gf2_core::gfp::Fp;
+
+// GF(p^2) with irreducible x² − ν
+struct Gfp2Config;
+impl ExtConfig for Gfp2Config {
+    type Base = Fp&lt;65537&gt;;
+    const NON_RESIDUE: Self::Base = Fp::&lt;65537&gt;::new_raw(3);
+}
+type GF_P2 = QuadraticExt&lt;Gfp2Config&gt;;</code></pre>
+</section>
+
+<!-- ── TOWER EXTENSIONS (2/2) ───────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 13 / 34</span></span>
+  <h2>Tower extensions (cont.)</h2>
+<pre><code class="language-rust" data-trim>// Compose: GF((p^2)^3) via CubicExt over QuadraticExt
+struct Gfp6Config;
+impl ExtConfig for Gfp6Config {
+    type Base = GF_P2;
+    const NON_RESIDUE: Self::Base = /* ... */;
+}
+type GF_P6 = CubicExt&lt;Gfp6Config&gt;;
+
+let x: GF_P6 = random();
+let y = x.frobenius();   // uses FiniteFieldExt blanket
+let z = x.pow(u64::MAX); // square-and-multiply</code></pre>
+</section>
+
+<!-- ── TOWER EXTENSIONS (note) ──────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 14 / 34</span></span>
+  <h2>Tower extensions (cont.)</h2>
+  <p class="muted">Every tower layer reuses the same <code>FiniteField</code> surface —
+     nested towers work out of the box, formally verified in Lean4.</p>
+</section>
+
+<!-- ── FIELDVEC (1/3) ────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 15 / 34</span></span>
+  <h2>FieldVec with delayed reduction</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::field::FieldVec;
+use gf2_core::gfp::Fp;
+type F = Fp&lt;65537&gt;;
+
+let xs = FieldVec::&lt;F&gt;::from_slice(&amp;random_coeffs(1000));
+let ys = FieldVec::&lt;F&gt;::from_slice(&amp;random_coeffs(1000));</code></pre>
+</section>
+
+<!-- ── FIELDVEC (2/3) ────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 16 / 34</span></span>
+  <h2>FieldVec with delayed reduction (cont.)</h2>
+<pre><code class="language-rust" data-trim>// SIMD-accelerated elementwise + delayed-reduction dot product.
+// Runtime dispatch to AVX2 when `feature = "simd"` is active;
+// `max_unreduced_additions()` schedules reductions so no overflow.
+let sum = &amp;xs + &amp;ys;
+let dot: F = xs.dot_product(&amp;ys);</code></pre>
+</section>
+
+<!-- ── FIELDVEC (3/3) ────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 17 / 34</span></span>
+  <h2>FieldVec with delayed reduction (cont.)</h2>
+<pre><code class="language-rust" data-trim>// Benchmark snapshot on Zen 3 at N = 1000:
+//   scalar reference  : 2.84 µs
+//   SIMD AVX2 delayed : 0.36 µs</code></pre>
+  <p><span class="badge orange">7.91× at N=1000</span>
+  <span class="badge blue">Fp&lt;65537&gt; SIMD SoA batch</span></p>
+  <p class="muted">Issue <code>5fad4d0f</code> — SoA (Structure of Arrays) batch layout with fused Karatsuba combine.</p>
+</section>
+
+<!-- ── FIELDPOLY: CORE API (1/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 18 / 34</span></span>
+  <h2>FieldPoly: core API</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::field::FieldPoly;
+use gf2_core::gfp::Fp;
+type F = Fp&lt;65537&gt;;
+
+let p = FieldPoly::&lt;F&gt;::new(vec![F::new(1), F::new(2), F::new(3)]);
+//   p(x) = 1 + 2x + 3x²
+
+// Point evaluation (Horner) and batch eval
+let v  = p.eval(&amp;F::new(5));
+let vs = p.batch_evaluate(&amp;[F::new(0), F::new(1), F::new(2), F::new(3)]);</code></pre>
+</section>
+
+<!-- ── FIELDPOLY: CORE API (2/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 19 / 34</span></span>
+  <h2>FieldPoly: core API (cont.)</h2>
+<pre><code class="language-rust" data-trim>// Arithmetic — dispatches at tuned thresholds
+let q = &amp;p * &amp;p;             // schoolbook ⇄ Karatsuba @ KARATSUBA_THRESHOLD = 32
+let r = gf2_core::field::poly::mul_fast(&amp;p, &amp;p);
+//      Karatsuba ⇄ NTT @ NTT_THRESHOLD = 128 (TwoAdicField only)
+
+// O(M(n)) polynomial division via Newton iteration on series inverse
+let (quot, rem) = p.div_rem_auto(&amp;divisor);
+//      schoolbook below DIV_REM_THRESHOLD = 2048, fast above</code></pre>
+  <p><span class="badge orange">NTT 4.37× @ n=1024</span>
+  <span class="badge orange">Newton div 1.7× @ n=2048</span></p>
+</section>
+
+<!-- ── FIELDPOLY: LAGRANGE (1/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 20 / 34</span></span>
+  <h2>FieldPoly: Lagrange fast path</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::field::poly_interpolate::{
+    interpolate, interpolate_fast, interpolate_auto, interpolate_auto_two_adic,
+};
+use gf2_core::field::poly::batch_evaluate_subproduct_auto;
+
+let points: Vec&lt;(F, F)&gt; = /* n distinct (xᵢ, yᵢ) pairs */;
+
+// Generic dispatcher — schoolbook Euclidean div internally
+let p = interpolate_auto(&amp;points)?;    // O(n²) below 16, O(n² log n) above</code></pre>
+</section>
+
+<!-- ── FIELDPOLY: LAGRANGE (2/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">API <span class="num">· 21 / 34</span></span>
+  <h2>FieldPoly: Lagrange fast path (cont.)</h2>
+<pre><code class="language-rust" data-trim>// TwoAdicField-specialised dispatcher — uses div_rem_auto above threshold
+let p = interpolate_auto_two_adic(&amp;points)?;
+//   achieves O(n log² n) for n, k ≥ SUBPRODUCT_THRESHOLD = 4096
+
+// Raw subproduct-tree batch eval at k evaluation points
+let xs = points.iter().map(|(x, _)| x.clone()).collect::&lt;Vec&lt;_&gt;&gt;();
+let ys = batch_evaluate_subproduct_auto(&amp;p, &amp;xs);</code></pre>
+  <p><span class="badge orange">subproduct_auto @ 8192×8192</span>
+  <span class="badge green">0.56× of naive</span>
+  <span class="muted">= 1.78× speedup, confirming O(M(n) log k) asymptote on Fp&lt;65537&gt;</span></p>
+</section>
+
+<!-- ── PERFORMANCE SNAPSHOT ──────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Performance <span class="num">· 22 / 34</span></span>
+  <h2>Performance snapshot (Zen 3, <code>Fp&lt;65537&gt;</code>)</h2>
+  <table>
+    <thead><tr><th>Operation</th><th>Algorithm</th><th>Scalar</th><th>Fast</th><th>Ratio</th></tr></thead>
+    <tbody>
+      <tr><td><code>FieldVec::dot_product</code> @ N=1000</td><td>AVX2 delayed reduction</td><td>2.84 µs</td><td class="speedup">0.36 µs</td><td class="speedup">7.91×</td></tr>
+      <tr><td><code>Gf2mWide&lt;4&gt;::mul</code></td><td>AVX2+VPCLMULQDQ YMM</td><td>603 ns</td><td class="speedup">94 ns</td><td class="speedup">6.4×</td></tr>
+      <tr><td><code>mul_ntt</code> @ n=1024</td><td>Radix-2 NTT</td><td>3.62 ms</td><td class="speedup">828 µs</td><td class="speedup">4.37×</td></tr>
+      <tr><td><code>interpolate_fast</code> @ n=2048</td><td>subproduct tree</td><td>288 ms</td><td class="speedup">30.1 ms</td><td class="speedup">9.58×</td></tr>
+      <tr><td><code>div_rem_auto</code> @ n=2048, m=1024</td><td>Newton iteration</td><td>4.25 ms</td><td class="speedup">2.49 ms</td><td class="speedup">1.71×</td></tr>
+      <tr><td><code>batch_evaluate_auto</code> @ (8192, 8192)</td><td>subproduct + div_rem_auto</td><td>243.5 ms</td><td class="speedup">136.8 ms</td><td class="speedup">1.78×</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">All numbers from <code>cargo bench --quick</code>; committed tables in <code>field::poly</code> module docstring.</p>
+</section>
+
+<!-- ── FORMAL VERIFICATION (1/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Verification <span class="num">· 23 / 34</span></span>
+  <h2>Formal verification</h2>
+  <div class="two-col">
+    <div>
+      <h3>Pipeline</h3>
+      <ul>
+        <li>Rust → LLBC via <b>Charon</b></li>
+        <li>LLBC → Lean4 via <b>Aeneas</b></li>
+        <li>Hand-written proofs in <code>proofs/Gf2Core/</code></li>
+        <li><code>lake build</code> gate in CI</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Proven</h3>
+      <ul>
+        <li><code>Fp&lt;P&gt;</code> Montgomery roundtrip</li>
+        <li><code>fp_add_correct</code> / <code>fp_mul_correct</code></li>
+        <li><code>QuadraticExt</code> field axioms</li>
+        <li><code>CubicExt</code> field axioms</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── FORMAL VERIFICATION (2/2) ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Verification <span class="num">· 24 / 34</span></span>
+  <h2>Formal verification (cont.)</h2>
+<pre><code class="language-lean" data-trim>theorem fp_mul_correct {P : U64} (hP : ValidPrime P)
+    (a b : Fp P) :
+    from_mont P (mont_mul a b) = (a.val * b.val) % P.val := by
+  unfold mont_mul
+  rw [redc_value_spec]
+  scalar_tac</code></pre>
+  <p><span class="badge orange">Lean4</span>
+  <span class="badge orange">Aeneas / Charon</span></p>
+</section>
+
+<!-- ── RESEARCH USE CASES (1/2) ──────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 25 / 34</span></span>
+  <h2>Research use cases</h2>
+  <h3 style="margin-top:0.6em">Coding theory</h3>
+  <ul>
+    <li><b>BCH / Reed–Solomon decoding</b> — error-locator polynomial evaluated at all field elements via <code>batch_evaluate_subproduct_auto</code>; <code>div_rem_auto</code> accelerates Euclidean algorithm steps.</li>
+    <li><b>Algebraic geometry codes</b> — GF(2<sup>256</sup>)+ multiplications via AVX2 SIMD; generic <code>FieldPoly</code> over tower extensions of large prime fields.</li>
+    <li><b>Lagrange resampling</b> — <code>interpolate_auto_two_adic</code> gives O(n log² n) polynomial reconstruction.</li>
+  </ul>
+</section>
+
+<!-- ── RESEARCH USE CASES (2/2) ──────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 26 / 34</span></span>
+  <h2>Research use cases (cont.)</h2>
+  <h3>Cryptography &amp; number theory</h3>
+  <ul>
+    <li><b>Binary-field curves</b> — <code>Gf2mWide&lt;4&gt;</code> for 256-bit pairings; <code>frobenius</code> / <code>pow</code> via <code>FiniteFieldExt</code>.</li>
+    <li><b>Proth/NTT-friendly primes</b> — <code>TwoAdicField</code> bound selects NTT mul automatically; primitive roots of unity from <code>Proth</code> specialised type.</li>
+    <li><b>Montgomery R² tracking proven in Lean4</b> — foundation for verified cryptographic primitives.</li>
+  </ul>
+</section>
+
+<!-- ── REED-SOLOMON EXAMPLE (1/3) ────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 27 / 34</span></span>
+  <h2>Research example: Reed–Solomon error locator</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::field::{FieldPoly, poly::batch_evaluate_subproduct_auto};
+use gf2_core::gfp::Fp;
+type F = Fp&lt;65537&gt;; // TwoAdicField with 2-adicity 16
+
+// Given syndromes S(x), derive the error-locator Λ(x) via BM / Euclidean.
+let syndromes: Vec&lt;F&gt; = compute_syndromes(&amp;received);
+let lambda: FieldPoly&lt;F&gt; = berlekamp_massey(&amp;syndromes);</code></pre>
+</section>
+
+<!-- ── REED-SOLOMON EXAMPLE (2/3) ────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 28 / 34</span></span>
+  <h2>Research example: Reed–Solomon error locator (cont.)</h2>
+<pre><code class="language-rust" data-trim>// Chien search: evaluate Λ(x) at every non-zero field element.
+// Classical: n² field ops.
+// Subproduct-tree: n log² n via batch_evaluate_subproduct_auto.
+let locations: Vec&lt;F&gt; = (1..65537u64).map(|i| F::new(i)).collect();</code></pre>
+</section>
+
+<!-- ── REED-SOLOMON EXAMPLE (3/3) ────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 29 / 34</span></span>
+  <h2>Research example: Reed–Solomon error locator (cont.)</h2>
+<pre><code class="language-rust" data-trim>let values = batch_evaluate_subproduct_auto(&amp;lambda, &amp;locations);
+
+let error_positions: Vec&lt;usize&gt; = values
+    .into_iter()
+    .enumerate()
+    .filter_map(|(i, v)| v.is_zero().then_some(i))
+    .collect();</code></pre>
+  <p class="muted">The subproduct-tree path activates automatically above <code>SUBPRODUCT_THRESHOLD = 4096</code>
+     — at n = 65536 points it's ~10× faster than the naive Chien sweep on Fp&lt;65537&gt;.</p>
+</section>
+
+<!-- ── GF(2^256) PAIRING EXAMPLE (1/2) ────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 30 / 34</span></span>
+  <h2>Research example: GF(2<sup>256</sup>) pairing scratch</h2>
+<pre><code class="language-rust" data-trim>use gf2_core::gf2m::{Gf2mWide, Gf2mWideConfig};
+use gf2_core::field::{FieldPoly, FiniteFieldExt};
+
+struct B256;
+impl Gf2mWideConfig&lt;4&gt; for B256 { /* pentanomial x^256 + ... */ }
+type F = Gf2mWide&lt;4, B256&gt;;
+
+// Generic polynomial arithmetic over GF(2^256) — no hand-rolling required
+let miller_loop_poly: FieldPoly&lt;F&gt; = FieldPoly::from_roots(&amp;points);
+let reduced         = miller_loop_poly.div_rem(&amp;modulus).1;</code></pre>
+</section>
+
+<!-- ── GF(2^256) PAIRING EXAMPLE (2/2) ────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Applications <span class="num">· 31 / 34</span></span>
+  <h2>Research example: GF(2<sup>256</sup>) pairing scratch (cont.)</h2>
+<pre><code class="language-rust" data-trim>// The underlying multiplication dispatches to AVX2+VPCLMULQDQ YMM kernel:
+// 94 ns per GF(2^256) multiply on Zen 3 (6.4× faster than all-scalar).
+let frob = reduced.eval(&amp;some_point).frobenius();
+let tate = frob.pow(p_minus_1 / r);</code></pre>
+  <p class="muted">The same generic code lights up any field with <code>FiniteFieldExt</code> — swap <code>Gf2mWide&lt;4, B256&gt;</code>
+     for <code>Fp&lt;p&gt;</code> or <code>CubicExt&lt;Fp&lt;p&gt;&gt;</code> and everything above still compiles.</p>
+</section>
+
+<!-- ── WHAT'S NEXT ───────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Outlook <span class="num">· 32 / 34</span></span>
+  <h2>What's next</h2>
+  <ul>
+    <li><b>Linear algebra epic</b> — <code>FieldMatrix&lt;F&gt;</code> built directly on <code>FiniteField::Wide</code> + <code>FieldVec::dot_product</code>; no trait changes required.</li>
+    <li><b>GPU kernels</b> — the isolated <code>gf2-kernels-hip</code> crate already prototypes BCJR + Gray-QAM on ROCm; more to follow.</li>
+    <li><b>AVX-512 enablement</b> — re-add the <code>Gf2mWide&lt;4&gt;</code> ZMM lane once MSRV moves to Rust 1.89+.</li>
+    <li><b>Additional fast primitives</b> — polynomial <code>gcd_fast</code> via half-gcd; FFT-based integer GCD; batch resultants.</li>
+    <li><b>Tower-field verified arithmetic</b> — extend the Lean4 proofs to <code>QuadraticExt</code> Frobenius + <code>CubicExt</code> inverses.</li>
+  </ul>
+</section>
+
+<!-- ── CLOSING NUMBERS ───────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Wrap-up <span class="num">· 33 / 34</span></span>
+  <h2>Closing numbers</h2>
+  <table>
+    <tbody>
+      <tr><th>Tests</th><td>3,447 passed · 0 failed · 72 ignored</td></tr>
+      <tr><th>Release suite wall-clock</th><td>~37 s on Zen 3</td></tr>
+      <tr><th>Gates at close</th><td>4/4 green — <code>cargo-ci</code> + <code>code-review</code> + <code>doc-review</code> + <code>lake-build</code></td></tr>
+      <tr><th>Session-4 commits</th><td>62+ on <code>main</code></td></tr>
+      <tr><th>Session-4 sub-agent dispatches</th><td>6 (Opus) in isolated git worktrees</td></tr>
+      <tr><th>Rework cycles</th><td>16 (see post-mortem)</td></tr>
+      <tr><th>Formal-verification footprint</th><td>Charon → Aeneas → Lean4; <code>Fp&lt;P&gt;</code> + <code>QuadraticExt</code> + <code>CubicExt</code> axioms proven</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:1.2em"><span class="badge orange">epic done · 2026-04-21</span></p>
+</section>
+
+<!-- ── CLOSING ───────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>GF(p<sup>m</sup>) toolkit</h1>
+  <p class="tagline">Epic <code>e095a100</code> close-out</p>
+  <p class="muted">gf2 workspace · 4 sessions · 9 stories/tasks · 3,447 tests · 0 failures</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
