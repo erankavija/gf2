@@ -5028,3 +5028,9 @@
 {"type":"issue_state_changed","id":"5f34bb0f-f2ee-4730-86f0-04f7599dee55","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T00:08:17.640376305Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"0a777a27-8e56-493e-b796-87b8017ea5ba","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T00:08:17.643186326Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"a015d95e-74b5-4809-9538-13eb1a412078","issue_id":"b293af5a-74b2-4649-bf03-ac63b9646602","timestamp":"2026-05-17T00:16:33.224437213Z","title":"GPU-accelerated high-N uniformity resample — reproduce perm→uniform convergence (F_3 large-n, F_5, F_7)","priority":"normal"}
+{"type":"gate_failed","id":"0e3f1404-e9f3-4e72-bea6-89cb92aadea8","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T06:58:24.367287644Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"a0d42f99-aeb0-4c5a-971c-ba10208eac49","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T07:13:22.873354909Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"ab506bde-fbcf-478c-91e5-36fe233467d6","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T07:18:22.766453969Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"74dcf3e3-01e2-4e5d-bb28-fce6e64430c3","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T07:18:41.600243907Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"be8da901-0df5-470a-8179-9fb726a73266","issue_id":"c90db5a4-5d2b-40e1-8d48-2660dd2a845b","timestamp":"2026-05-17T07:18:41.600272947Z"}
+{"type":"issue_state_changed","id":"5738a226-8a00-402b-aedc-082bd310a4d8","issue_id":"ae82bd73-741d-4007-811f-914dac00bae8","timestamp":"2026-05-17T07:18:41.780538269Z","from":"backlog","to":"ready"}

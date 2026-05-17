@@ -2,7 +2,7 @@
   "id": "c90db5a4-5d2b-40e1-8d48-2660dd2a845b",
   "title": "scripts/permanent-repro.sh one-command reproduction",
   "description": "Add `scripts/permanent-repro.sh` that runs end-to-end from a clean checkout and reproduces the benchmark artefact (S6).\n\n## Background\n\nEpic success criterion 9: `scripts/permanent-repro.sh` runs end-to-end. This issue lands the script — a single-command driver that builds the workspace, runs the criterion benches, runs the simulation harnesses (S1-S5 where the host can), generates the plots (T27), and writes the provenance JSON.\n\nThe script must be idempotent: running it twice in a row produces the same artefact (modulo wall-clock timestamps in the criterion JSON metadata).\n\n## Success Criteria\n\n- [ ] [hard] `scripts/permanent-repro.sh` exists and is executable.\n- [ ] [hard] Running it from a clean checkout on the dev host produces the full `dev/benchmarks/gf2_algebra_permanent/` artefact directory end-to-end.\n- [ ] [hard] The script honours environment variables for hardware-specific opts (`GF2_PERMANENT_REPRO_SKIP_GPU=1`, etc.) so non-ROCm hosts can still reproduce the CPU portion.\n- [ ] [hard] Script returns non-zero on any sub-step failure; partial artefacts are not silently committed.\n- [ ] [hard] Script invokes `cargo bench`, the simulation harnesses, and the T27 plot scripts in dependency order.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -11,7 +11,13 @@
   "gates_required": [
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-17T07:15:07.185657523Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -20,5 +26,5 @@
     "component:gf2-algebra"
   ],
   "created_at": "2026-05-09T09:48:50.020231757+00:00",
-  "updated_at": "2026-05-17T00:08:17.640432005+00:00"
+  "updated_at": "2026-05-17T07:18:41.600288827+00:00"
 }
