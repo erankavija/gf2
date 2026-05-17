@@ -14,64 +14,29 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T16:00:04.169124449Z"
+      "updated_at": "2026-05-08T16:06:46.465889097Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-08T16:52:24.981218342Z"
     },
-    "code-review": {
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T16:06:46.465889097Z"
+      "updated_at": "2026-05-08T16:00:04.169124449Z"
     }
   },
   "context": {},
   "documents": [
     {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck.html",
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
       "commit": null,
       "label": "SOTA closure Reveal.js presentation deck",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
+      "doc_type": "presentation"
     }
   ],
   "labels": [
@@ -81,5 +46,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.955460362+00:00",
-  "updated_at": "2026-05-08T16:52:24.981218972+00:00"
+  "updated_at": "2026-05-17T23:39:25.285776806+00:00"
 }

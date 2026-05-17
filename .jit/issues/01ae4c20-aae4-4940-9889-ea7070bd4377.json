@@ -41,55 +41,6 @@
       "format": "markdown"
     },
     {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck.html",
-      "commit": null,
-      "label": "Final SOTA closure Reveal.js deck (13 slides)",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
       "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
       "commit": null,
       "label": "SOTA aggregate gf2 measurements",
@@ -100,6 +51,12 @@
       "commit": null,
       "label": "SOTA aggregate reference measurements",
       "doc_type": null
+    },
+    {
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
+      "commit": null,
+      "label": "Final SOTA closure Reveal.js deck (13 slides)",
+      "doc_type": "presentation"
     }
   ],
   "labels": [
@@ -109,5 +66,5 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.531571131+00:00",
-  "updated_at": "2026-05-08T18:47:44.628967908+00:00"
+  "updated_at": "2026-05-17T23:39:29.509117074+00:00"
 }

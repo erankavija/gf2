@@ -25,53 +25,10 @@
       "format": "markdown"
     },
     {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck.html",
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
       "commit": null,
       "label": "gf2-core SOTA closure deck (epic 97bf0879)",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
+      "doc_type": "presentation"
     }
   ],
   "labels": [
@@ -81,5 +38,5 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:23:54.395404062+00:00",
-  "updated_at": "2026-05-08T21:53:27.395608029+00:00"
+  "updated_at": "2026-05-17T23:39:28.250202424+00:00"
 }
