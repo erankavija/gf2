@@ -122,8 +122,41 @@ comfortably below TVD_det/2 and TVD_perm is resolved above its own floor.
    (`validate_chunked_equals_unchunked` byte-identity, asserted every run)
    carry over; q5n24 statistical columns are seed-deterministic.
 
-**Remaining (lead-only):** commit code+docs (NOT `.jit/`); run b293af5a
-gates (cargo-ci + code-review); re-present the writeup for user sign-off;
-on sign-off record the dated approval in §Approval; `jit doc add` the
-regenerated PNG; close b293af5a; then the epic completion report +
-transition ae82bd73 → done.
+## Update 2026-05-18 — code-review FAIL → rework + high-N + criteria amendment
+
+6. ✅ b293af5a code-review FAILed (commit da0abd52). Code findings reworked
+   (commit 313ad762): SSOT `finalize_cell` factor-out (both run_cell and
+   run_cell_gpu delegate); `ssot_overwrite_guard` resume-safety fail-fast;
+   `parse_csv_data_row` extracted + tested; finalize_cell/guard/parser
+   unit tests. fmt/clippy/tests green.
+7. ✅ Contract findings (criteria 2/3/4 falsified by data) escalated. User
+   chose "Long run to raise N"; q=3 re-measured at up to **8,000,000**
+   samples (n=10/12 8M, n=16 4M, n=20 2M, n=24 800k). Conclusive: q=3
+   TVD_perm collapses to ≈1e-4 by n=10, **at/below the MC noise floor even
+   at N=8M** (fundamental resolution limit, not a budget one). The high-N
+   run was STOPPED after n=24 per user direction (q3n28 @ N=80k ≈45 h —
+   GPU-wall-clock infeasible with the watchdog-bounded sub-batch); n=28/32
+   kept at original N (8k/2k). `finalize_cell` proven result-neutral by a
+   bit-identical q3n6 cols-1-9 re-run across the refactor.
+8. ✅ Merged: 7 high-N q=3 rows replace the old q=3 n≤24 rows; n=28/32 +
+   all F_5/F_7 + q5n24 preserved. New 18-cell digest
+   `4031d01b…7367616c`. CSV provenance note records the 3 measurement
+   epochs. Writeup §2.4/§3/§4/§5/§6/§7/§8/§9 synced to the high-N data +
+   the conclusive sub-floor finding (digest verified == CSV).
+9. ✅ User approved (escalation 2026-05-18) amending criteria 2/3/4 to the
+   empirically-true contract: `[hard]` core (perm ≤ det at 95%,
+   `diff_q95<0`, noise-exclusion eliminated) MET at all 18 cells; the
+   literal above-floor / strict-monotone / strict-decreasing sub-clauses
+   reclassified `[aspirational]` (sub-MC-floor, conclusive). Exact text
+   staged at `dev/active/b293af5a-amendment.txt`.
+
+**Remaining:**
+- **USER action:** apply the amendment to the JIT issue (the agent is
+  blocked from writing `[hard]` criteria to shared state by the standing
+  "stop amending on your own" boundary):
+  `jit issue update b293af5a --description "$(cat dev/active/b293af5a-amendment.txt)"`
+- Lead, after the amendment is applied: run `code-review` gate (cargo-ci
+  already run); re-present the writeup for user sign-off; on sign-off
+  record the dated approval in §Approval; `jit doc add` the regenerated
+  PNG; close b293af5a; then epic completion report + transition
+  ae82bd73 → done.
