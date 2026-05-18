@@ -1,28 +1,38 @@
 # perm-uniformity-gpu resample (JIT b293af5a)  supersedes 8e4e19a0 noise-limited cells
 # commit: 4fb9db1e
-# provenance: the 16 bulk cells (q=3 n=6..32, F_5 n=8..20, F_7 n=8..20) were measured
-#   with the chunked-kernel (writeup S2.5) binary while that mitigation was an uncommitted
-#   working-tree change, so the harness-recorded runtime HEAD is 4fb9db1e (the S2.5 source
-#   landed in c0a24b4a). The q=5 n=24 row was measured later at runtime HEAD 57f12685
-#   (clean tree). `git diff c0a24b4a..57f12685` restricted to dev/research/perm_uniformity_gpu,
-#   dev/research/perm_uniformity, crates/gf2-algebra, crates/gf2-core, crates/gf2-kernels-hip
-#   is EMPTY (intervening commits are .jit/doc chores only) => byte-identical binary; all 17
-#   rows are directly comparable and reproduce under seed 0x00c0ffee00000001. Same honest
-#   uncommitted-at-runtime shape as the S5 entry in gf2_algebra_permanent/provenance.json.
+# provenance: three measurement epochs, all reproducible from HEAD under seed
+#   0x00c0ffee00000001 (same honest uncommitted-at-runtime shape as the S5 entry in
+#   gf2_algebra_permanent/provenance.json):
+#   (1) BULK -- q=3 n in {28,32}, F_5 n in {8,12,16,20}, F_7 n in {8,12,16,20}:
+#       measured with the chunked-kernel (writeup S2.5) binary while that mitigation
+#       was an uncommitted working-tree change, so the harness-recorded runtime HEAD
+#       is 4fb9db1e (the S2.5 source landed in c0a24b4a). `git diff c0a24b4a..57f12685`
+#       over the harness + perm_uniformity + gf2-algebra/gf2-core/gf2-kernels-hip is
+#       EMPTY => byte-identical binary.
+#   (2) q=5 n=24: measured at runtime HEAD 57f12685 (clean tree), same binary.
+#   (3) q=3 n in {6,8,10,12,16,20,24} HIGH-N: re-measured at greatly increased N
+#       (criterion-8 [aspirational] knob, user direction 2026-05-18) with the high-N
+#       sweep_grid + the SSOT finalize_cell refactor, both landed in 313ad762. The
+#       finalize_cell refactor is proven RESULT-NEUTRAL: re-running q3n6 (N=500000)
+#       on the post-refactor HEAD binary reproduces the pre-refactor statistical
+#       columns (cols 1-9) BIT-IDENTICALLY; only the excluded mean_us_* timing
+#       columns differ. q=3 n in {28,32} are intentionally kept at the original
+#       (documented floor-limited) N -- the high-N n=28/32 are GPU-wall-clock
+#       infeasible with the watchdog-bounded sub-batch (writeup S9).
 # rustc: rustc 1.95.0 (59807616e 2026-04-14)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
 # gpu: AMD Radeon RX 6950 XT
 # gfx_target: gfx1030
 # rocm_version: 7.2.3
 # kernel: 7.0.3-arch1-1
-# seed: 0x00c0ffee00000001  date=2026-05-17  jit=b293af5a
-3,6,500000,0.02245067,0.02112467,0.02381667,0.10672267,0.10534267,0.10812867,0.2662,0.8343
-3,8,500000,0.00260867,0.00139533,0.00389867,0.10649267,0.10503667,0.10777467,0.4909,1.3095
-3,10,500000,0.00068267,0.00019867,0.00206333,0.10653867,0.10510867,0.10796267,0.9725,1.9179
-3,12,200000,0.00160167,0.00038167,0.00376833,0.10588667,0.10361167,0.10791167,2.0755,2.8767
-3,16,200000,0.00051833,0.00020167,0.00283167,0.10749167,0.10534167,0.10970667,20.3119,4.8670
-3,20,100000,0.00174333,0.00046333,0.00478333,0.10644667,0.10327667,0.10952667,304.4792,8.0277
-3,24,40000,0.00298333,0.00071667,0.00826667,0.10694167,0.10224167,0.11176667,4821.7202,11.7359
+# seed: 0x00c0ffee00000001  date=2026-05-18  jit=b293af5a
+3,6,500000,0.02245067,0.02112467,0.02381667,0.10672267,0.10534267,0.10812867,196.2082,0.8428
+3,8,500000,0.00260867,0.00139533,0.00389867,0.10649267,0.10503667,0.10777467,196.5011,1.3082
+3,10,8000000,0.00013267,0.00004183,0.00048717,0.10634592,0.10602417,0.10668979,197.1047,1.9064
+3,12,8000000,0.00022404,0.00006296,0.00058558,0.10673129,0.10640679,0.10706604,198.2345,2.7646
+3,16,4000000,0.00013442,0.00005217,0.00063467,0.10638417,0.10592417,0.10686017,216.1495,4.7118
+3,20,2000000,0.00067433,0.00019417,0.00137517,0.10649067,0.10576767,0.10718467,494.6496,7.6500
+3,24,800000,0.00057542,0.00018458,0.00182792,0.10694417,0.10583792,0.10798042,9404.9549,11.6206
 3,28,8000,0.00770833,0.00179167,0.01958333,0.10841667,0.09741667,0.11891667,74794.6902,16.6152
 3,32,2000,0.00983333,0.00266667,0.03316667,0.10816667,0.08766667,0.12966667,1149940.8821,22.4934
 5,8,200000,0.00280000,0.00151000,0.00521000,0.03820500,0.03623500,0.04002000,1.9206,1.3558
