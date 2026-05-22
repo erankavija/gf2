@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>gf2-algebra: Fast Matrix Permanents — epic closing showcase</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- reveal.js core only (no reveal theme — base.css + the theme token file own all appearance) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<!-- KaTeX (synchronous math; deterministic heights for the fit-checker) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<!-- Theme system: structure is theme-agnostic; swap the #theme link to retheme -->
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ── TITLE ───────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>gf2-algebra: Fast Matrix Permanents</h1>
+  <p class="tagline">Packed bipedal arithmetic over F₃ / F₅ / F₇ — CPU, GPU, and Lean4-verified</p>
+  <p>Epic <code>ae82bd73</code> closing showcase &nbsp;·&nbsp; gf2 project &nbsp;·&nbsp; 2026-05-23</p>
+  <p class="caption">54 issues delivered — pushing past the reference implementation of arXiv 2407.20205</p>
+</section>
+
+<!-- ── OVERVIEW ────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 2 / 14</span></span>
+  <h2>Six new research capabilities</h2>
+  <ol>
+    <li>Packed bipedal F₃ / F₅ / F₇ arithmetic</li>
+    <li>Fast matrix permanents on CPU — scalar · AVX2 · Rayon</li>
+    <li>HIP/ROCm GPU batch permanents</li>
+    <li>Lean4 mechanical verification</li>
+    <li>Empirical perm→uniform convergence study</li>
+    <li>Publication-grade reproducible benchmark artefact</li>
+  </ol>
+</section>
+
+<!-- ── BACKGROUND ──────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Background <span class="num">· 3 / 14</span></span>
+  <h2>The permanent, and the bipedal trick</h2>
+  <div class="math-block">
+    \[ \operatorname{perm}(A) = \sum_{\sigma \in S_n} \prod_{i=1}^{n} A_{i,\sigma(i)} \]
+  </div>
+  <p>Ryser's formula evaluates it in O(n·2ⁿ) time via Gray-code subset sums.
+  The "bipedal" map (arXiv 2407.20205) encodes F₃ⁿ as a pair of F₂ⁿ vectors —
+  field add / sub / mul collapse to 1–6 bitwise <code>u64</code> operations.</p>
+</section>
+
+<!-- ── CAPABILITY 1 ────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 1 <span class="num">· 4 / 14</span></span>
+  <h2>Packed bipedal F₃ / F₅ / F₇ arithmetic</h2>
+  <div class="item-decl">trait PackedField — SIMD-friendly packed field elements</div>
+  <ul>
+    <li><code>Bipedal3</code> — F₃ as two F₂ bit-planes, 64 lanes per word</li>
+    <li><code>Packed5</code> — F₅, 64 lanes &nbsp;·&nbsp; <code>Packed7</code> — F₇, 16 lanes</li>
+    <li>Per-prime <code>*Matrix</code> types; arithmetic in a handful of bitwise ops</li>
+  </ul>
+  <p>One composable trait surface — the permanent kernels are generic over it.</p>
+</section>
+
+<!-- ── CAPABILITY 2 — CPU ──────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 2 <span class="num">· 5 / 14</span></span>
+  <h2>Fast permanents on CPU</h2>
+  <p>Single-thread AVX2 <code>permanent_bipedal3</code> vs the in-tree, paper-faithful reference:</p>
+  <table>
+    <thead><tr><th>n</th><th>reference</th><th>bipedal3 AVX2</th><th>speedup</th></tr></thead>
+    <tbody>
+      <tr><td>24</td><td>1.47 s</td><td>0.21 s</td><td><span class="badge blue">6.89×</span></td></tr>
+      <tr><td>28</td><td>27.4 s</td><td>3.41 s</td><td><span class="badge blue">8.01×</span></td></tr>
+      <tr><td>32</td><td>500 s</td><td>53.1 s</td><td><span class="badge blue">9.42×</span></td></tr>
+      <tr><td>36</td><td>9031 s</td><td>848 s</td><td><span class="badge green">10.64×</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── CAPABILITY 2 — PARALLEL ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 2 <span class="num">· 6 / 14</span></span>
+  <h2>Parallel scaling</h2>
+  <p>The permanent is embarrassingly parallel over independent Gray-code
+  subranges. A Rayon work-stealing dispatch with a cache-tuned chunk size
+  gives near-linear scaling.</p>
+  <div class="note">Scaling factor ≥ 0.883× per physical core at n ≥ 28,
+  measured across 1 / 2 / 4 / 8 / 12 threads on a 12-core Zen 3 host.</div>
+</section>
+
+<!-- ── CAPABILITY 3 — GPU ──────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 3 <span class="num">· 7 / 14</span></span>
+  <h2>HIP/ROCm GPU batch permanents</h2>
+  <table>
+    <thead><tr><th>comparison</th><th>n = 24</th><th>n = 28</th><th>n = 36</th></tr></thead>
+    <tbody>
+      <tr><td>GPU vs CPU-SIMD, batch M=256</td><td>28.65×</td><td>30.32×</td><td>—</td></tr>
+      <tr><td>GPU vs paper-faithful reference</td><td>66.5×</td><td>78.2×</td><td><span class="badge green">100.2×</span></td></tr>
+    </tbody>
+  </table>
+  <p>gfx1030 device kernels batch independent matrices; the ≥50× headline
+  target is delivered on the GPU path — 100.2× over the reference at n=36.</p>
+</section>
+
+<!-- ── CAPABILITY 4 — LEAN ─────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 4 <span class="num">· 8 / 14</span></span>
+  <h2>Lean4 mechanical verification</h2>
+  <ul>
+    <li><strong>Bipedal F₃ correctness</strong> — add / sub / mul / neg proven
+    equal to the canonical <code>Fp&lt;3&gt;</code> prime field</li>
+    <li><strong>Ryser's formula</strong> — proven on the <code>FiniteField</code>
+    trait, bounded n ≤ 63 (the single-word regime)</li>
+  </ul>
+  <div class="note">Both proofs are generated through the Charon → Aeneas →
+  Lean4 pipeline, build with <code>lake build</code> with no <code>sorry</code>,
+  and are gated in CI by the <code>verify-lean</code> pipeline.</div>
+</section>
+
+<!-- ── CAPABILITY 5 — CONVERGENCE ──────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 5 <span class="num">· 9 / 14</span></span>
+  <h2>perm→uniform convergence, reproduced</h2>
+  <p>A random permanent over a finite field converges to uniform far faster
+  than the determinant (HKS Theorem 1.2 / arXiv 2407.20205). The GPU high-N
+  re-sample resolves the convergence where CPU sampling could not:</p>
+  <div class="example">18 cells — TVD<sub>perm</sub> ≤ TVD<sub>det</sub> at 95%
+  confidence at <em>every</em> cell. The q=3 permanent TVD collapses to ≈10⁻⁴
+  by n = 10, below the Monte-Carlo resolution floor even at 8M samples.</div>
+</section>
+
+<!-- ── CAPABILITY 6 — ARTEFACT ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Capability 6 <span class="num">· 10 / 14</span></span>
+  <h2>Reproducible benchmark artefact</h2>
+  <ul>
+    <li>Dated single-source-of-truth CSVs (S1 / S1g / S2 / S3 / S5) with
+    hardware fingerprint and seed pins</li>
+    <li>Deterministic figures; <code>provenance.json</code> recording the
+    measurement commit of every dataset</li>
+    <li><code>scripts/permanent-repro.sh</code> — one-command end-to-end repro</li>
+  </ul>
+  <div class="note">Every headline number traces to a seed-pinned, committed
+  CSV — the benchmark is auditable, not anecdotal.</div>
+</section>
+
+<!-- ── RESULTS ─────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 11 / 14</span></span>
+  <h2>Headline numbers</h2>
+  <table>
+    <thead><tr><th>metric</th><th>result</th></tr></thead>
+    <tbody>
+      <tr><td>CPU AVX2 speedup at n=36 vs reference</td><td><span class="badge blue">10.64×</span></td></tr>
+      <tr><td>GPU speedup at n=36 vs reference</td><td><span class="badge green">100.2×</span></td></tr>
+      <tr><td>GPU vs CPU-SIMD batch (M=256)</td><td>28–30×</td></tr>
+      <tr><td>parallel scaling per core (n ≥ 28)</td><td>≥ 0.883×</td></tr>
+      <tr><td>Lean4 proofs, sorry-free</td><td>2 / 2</td></tr>
+      <tr><td>epic issues delivered</td><td>54 / 54</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── DISCUSSION — HONEST SCOPE ───────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Discussion <span class="num">· 12 / 14</span></span>
+  <h2>Honest scope and amendments</h2>
+  <ul>
+    <li>The original ≥50× target was a <em>Julia</em>-baseline figure. Against
+    the faster in-tree Rust reference the CPU-SIMD path is 10.6×; the ≥50× is
+    delivered on the GPU — a user-approved amendment, recorded with evidence.</li>
+    <li>For perm→uniform, the strict-monotone and above-floor sub-claims are
+    Monte-Carlo-resolution-limited — reclassified aspirational with the
+    conclusive N=8M evidence rather than overclaimed.</li>
+  </ul>
+</section>
+
+<!-- ── SUMMARY ─────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Wrap-up <span class="num">· 13 / 14</span></span>
+  <h2>What gf2-algebra now provides</h2>
+  <ul>
+    <li>Packed F₃ / F₅ / F₇ arithmetic and matrix permanents — CPU and GPU</li>
+    <li>10.6× CPU-SIMD and 100× GPU over the paper-faithful baseline</li>
+    <li>Lean4-verified bipedal F₃ arithmetic and Ryser's formula (n ≤ 63)</li>
+    <li>A reproduced perm→uniform convergence result and a publication artefact</li>
+  </ul>
+</section>
+
+<!-- ── CLOSING ─────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>Epic delivered</h1>
+  <p class="tagline">gf2-algebra-permanent — 54 issues, closed 2026-05-23</p>
+  <p><code>crates/gf2-algebra</code> &nbsp;·&nbsp; <code>dev/benchmarks/gf2_algebra_permanent</code></p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
