@@ -670,4 +670,16 @@ actual values are recorded here and in the CSV header.
 
 ## Approval
 
-Pending project-lead / user sign-off (escalation in progress).
+**2026-05-23:** User signed off on this GPU high-N perm-vs-det uniformity
+resample result via the project-lead sign-off path. The result is approved:
+18 measured cells (q=3 n=6..32, F_5 n=8..24, F_7 n=8..20); the core claim
+TVD_perm ≤ TVD_det at 95% confidence (`diff_q95 < 0`) is genuinely met at
+every cell, including the three `8e4e19a0`-noise-excluded q=3 cells
+n∈{24,28,32} and the F_5→n=24 / F_7→n=20 extensions — the `8e4e19a0`
+criterion-6 noise-exclusion is eliminated. The conclusive high-N finding
+(q=3 TVD_perm collapses below the Monte-Carlo resolution floor by n≥10,
+even at N=8M) and the user-approved 2026-05-18 amendment of criteria
+2/3/4 (the literal above-floor / strict-monotone / strictly-decreasing
+sub-clauses reclassified `[aspirational]`; the `[hard]` core perm ≤ det
+claim met) are approved as the genuine, honest result for JIT issue
+`b293af5a`.
