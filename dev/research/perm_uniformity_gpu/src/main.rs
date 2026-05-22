@@ -233,19 +233,18 @@ mod harness {
 
         // -- F_3 ------------------------------------------------------------
         // High-N schedule (criterion-8 [aspirational] N knob, refined against
-        // GPU-measured data per user direction 2026-05-18): push N as far as
-        // gfx1030 wall-clock feasibly allows so the Monte-Carlo TVD floor
-        // sqrt(2/(2*pi*N)) drops below the *true* (tiny, decreasing) TVD_perm
-        // and the absolute estimate is resolved above its own floor rather
-        // than floor-masked.  Per-matrix cost is N-independent (dominated by
-        // the 2^n Gray walk), so cheap small n take enormous N; the cost wall
-        // is the three large-n headline cells.
-        //   n=10: N=8M   floor 0.000199   (~8 s)
-        //   n=12: N=8M   floor 0.000199   (~17 s)
-        //   n=16: N=4M   floor 0.000282   (~81 s)
-        //   n=20: N=2M   floor 0.000399   (~10 min)
-        // n=6,8 already resolved far above floor (TVD 0.0225/0.0026 >>
-        // floor 0.0008 at N=500k) and are kept as-is.
+        // GPU-measured data per user direction 2026-05-18): N pushed as far
+        // as gfx1030 wall-clock feasibly allows to drive the Monte-Carlo TVD
+        // floor sqrt(2/(2*pi*N)) as low as possible. Measured wall-clock per
+        // cell (gfx1030, watchdog-bounded sub-batch):
+        //   n=10: N=8M   floor 0.000199   ~1663 s
+        //   n=12: N=8M   floor 0.000199   ~1680 s
+        //   n=16: N=4M   floor 0.000282   ~921 s
+        //   n=20: N=2M   floor 0.000399   ~1025 s
+        // n=6,8 kept at N=500k (~102 s each). Conclusive result: even at
+        // N=8M the q=3 TVD_perm for n>=10 is itself AT/BELOW this floor
+        // (true TVD_perm ~1e-4) -- the convergence is below the Monte-Carlo
+        // resolution limit, not merely the old noise floor (see writeup §9).
         for &(n, n_samples) in &[
             (6usize, 500_000usize),
             (8, 500_000),
@@ -256,15 +255,17 @@ mod harness {
         ] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
-        // The 8e4e19a0 noise-excluded headline cells, at the maximal
-        // GPU-feasible N (user direction 2026-05-18):
-        //   n=24: N=800k  floor sqrt(2/(2*pi*800000))=0.000631  (~1.1 h)
-        //   n=28: N=80k   floor 0.001995                        (~1.7 h)
-        //   n=32: N=20k   floor 0.005642                        (~6.4 h)
-        // n=32 may remain floor-limited if the true TVD_perm there is
-        // sub-0.006 (resolving it needs N>>3e5 => >100 h, infeasible) — this
-        // is the documented partial limit the user accepted.
-        for &(n, n_samples) in &[(24usize, 800_000usize), (28, 80_000), (32, 20_000)] {
+        // The 8e4e19a0 noise-excluded headline cells. These N values are the
+        // ones that produced the committed artifact
+        // `results-2026-05-17-gpu.csv` -- a full sweep from HEAD reproduces it.
+        //   n=24: N=800k  high-N (user direction 2026-05-18); floor 0.000631
+        //   n=28: N=8k    kept at original N; floor 0.006308
+        //   n=32: N=2k    kept at original N; floor 0.012616
+        // The high-N re-run was driven to n=24 then STOPPED: high-N n=28/32
+        // are GPU-wall-clock infeasible with the watchdog-bounded sub-batch
+        // (q3n28 at N=80k measured ~45 h for that single cell), so n=28/32
+        // retain their original-N rows. See writeup §8/§9.
+        for &(n, n_samples) in &[(24usize, 800_000usize), (28, 8_000), (32, 2_000)] {
             cells.push(CellSpec { q: 3, n, n_samples });
         }
 
