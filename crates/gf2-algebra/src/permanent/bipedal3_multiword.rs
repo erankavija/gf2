@@ -664,9 +664,13 @@ mod tests {
     }
 
     #[test]
-    fn test_multiword_vs_ryser_n20() {
-        // n=20 trades off coverage vs runtime: per-trial ~60 ms; 50 trials
-        // ≈ 3 s sits comfortably under the 5 s fast-tier budget.
+    #[ignore = "slow: multi-word vs ryser at n=20 (50 trials; ~4 s solo, \
+                exceeds the 5 s fast-tier hard kill under parallel --workspace load)"]
+    fn test_multiword_vs_ryser_n20_slow() {
+        // n=20: 50 trials measure ≈4 s in isolation — no margin against the
+        // 5 s fast-tier hard kill once nextest runs it concurrently with the
+        // full workspace, so it is slow-tiered. Fast-tier ryser cross-check
+        // coverage is retained by the n=2/5/8/16 cases above.
         run_multiword_vs_ryser_at_n(20, 50, 0x0014);
     }
 
