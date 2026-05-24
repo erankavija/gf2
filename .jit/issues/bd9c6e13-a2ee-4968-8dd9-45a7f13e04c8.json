@@ -2,7 +2,7 @@
   "id": "bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8",
   "title": "Fix non-canonical RREF in FieldMatrix::rref dense PLE path",
   "description": "`FieldMatrix::rref` (the dense PLE-based RREF in `crates/gf2-core/src/field/ple.rs`) produces a non-canonical RREF on rank-deficient inputs where the PLE recursion's inter-block trsm + Schur-complement step builds `L1`/`L1_bot` scratch from a contiguous column prefix instead of from the absolute `pivot_cols[...]` slice. Discovered during 5ce13bae's Markowitz-sparse test development.\n\n## Background\n\nThe issue was originally filed citing a specific reproducer (15×17 GF(7), density 0.05, seed 1) based on 5ce13bae's evidence doc § 6. Empirically, under the actual `dense_random_fp_seeded` generator that ships in `crates/gf2-core/src/field/test_random_matrix.rs`, the literal `<7>(15, 17, 0.05, 1)` cell agrees pre-fix and post-fix by chance (both produce canonical pivots `[1, 2, 4, 5, 9, 10, 11, 15]`). The 5ce13bae evidence was generated with a different generator instantiation (named `random_sparse_fp`, which does not exist by that name in the current codebase). The structural bug is real however: sweeping the same seed/shape/density grid as `test_rref_markowitz_sweep_fp7` (32 seeds × 6 shapes × 5 densities, GF(7)) revealed **47 of 960 cells with non-canonical pivots or rank under-counts** pre-fix; post-fix sweep is divergence-free.\n\n## Amendment — 2026-05-24 (user-approved)\n\nOriginal SC#1 wording (\"Reproduce the bug on the named 15×17 GF(7)/seed=1/density=0.05 input; document the divergence with hard evidence (pivot sets).\") is empirically falsified by data — that exact named cell does not trigger the bug under the actual generator. Per CLAUDE.md § \"Success-criterion maturity markers\" + project memory `feedback_measurements_not_guesses` (amend `[hard]` falsified by data), SC#1 is rewritten as the **Success Criteria** section below. The original wording is preserved in the historical record via this amendment block. User approved 2026-05-24.\n\n## Workaround applied by 5ce13bae\n\n5ce13bae's Markowitz sparse RREF correctly produces the canonical form. Its test suite circumvents the dense-reference bug by using an in-test textbook column-by-column Gauss-Jordan oracle (`direct_rref_reference_fp` in `crates/gf2-core/src/field/sparse_matrix.rs` tests; R1 refactored these helpers to a shared module `crates/gf2-core/src/field/test_random_matrix.rs`).\n\n## Success Criteria (amended 2026-05-24)\n\n- [hard] Reproduce the bug on **at least 5 cells from the 47-cell pre-fix divergence sweep** in `crates/gf2-core/src/field/ple.rs::tests::test_rref_canonical_known_buggy_cells_jit_bd9c6e13`; document each cell's pre-fix divergence with hard evidence (pivot sets) in the evidence doc. (Amended from \"the named 15×17 GF(7)/seed=1/density=0.05 input\" per the 2026-05-24 amendment block — that named cell happens to agree pre/post by chance under the shipping generator.)\n- [hard] Fix `FieldMatrix::rref` so it produces canonical RREF (leftmost linearly-independent pivot column set) on this input AND on a property-based proptest covering 100+ random rank-deficient shapes.\n- [hard] Bit-exact equality with the textbook Gauss-Jordan oracle (`direct_rref_oracle_fp` in `crates/gf2-core/src/field/test_random_matrix.rs` per R1 SSOT refactor) on the full sweep.\n- [hard] No regression on the existing `FieldMatrix::rref` tests in `crates/gf2-core/src/field/ple.rs::tests` and adjacent modules.\n- [hard] Diagnostic note: the fix should preserve the PLE-based decomposition's downstream uses (rank computation, deficient-rank handling, solver paths). Don't drop the PLE path — fix its canonical-RREF projection.\n\n## Out of scope\n\n- Performance optimisation of `FieldMatrix::rref` beyond what's needed for correctness.\n- Touching the sparse RREF path (owned by 5ce13bae / `SparseFieldMatrix::rref`).\n- AVX-512 / VNNI / GFNI work (out of scope for epic 026fc832 per its scope-boundary section).\n\n## Authority and references\n\n- 5ce13bae evidence doc § 6 \"Open question — pre-existing `FieldMatrix::rref` canonical divergence\" (`dev/bench_results/2026-05-24-5ce13bae-markowitz-sparse-rref.md`).\n- Discovery commit: `12d2b3a2` (sparse-matrix worker preserved the diagnostic in test-module).\n- Filed under epic `026fc832` per user approval 2026-05-24 (scope-creep accepted — bug discovered during epic work; closure tracked under epic).\n\n## Notes\n\nThis is a correctness bug, not a performance issue. It is decoupled from any aspirational marker. The fix is small in scope (one elimination step in PLE) but warrants thorough proptest coverage to confirm no other corner cases exist.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,15 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T18:52:01.388648917Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T18:51:55.994687264Z"
+      "updated_at": "2026-05-24T19:01:10.746434180Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T19:05:06.536015180Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-24T19:10:34.800569327Z"
     }
   },
   "context": {},
@@ -46,5 +51,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T10:45:37.973733708+00:00",
-  "updated_at": "2026-05-24T19:00:27.122850389+00:00"
+  "updated_at": "2026-05-24T19:10:35.378456742+00:00"
 }
