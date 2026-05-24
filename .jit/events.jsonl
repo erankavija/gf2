@@ -5102,3 +5102,5 @@
 {"type":"issue_created","id":"e5ea8ab7-35c6-49f0-b7e3-544b5849ad6b","issue_id":"bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8","timestamp":"2026-05-24T10:45:37.974074218Z","title":"Fix non-canonical RREF in FieldMatrix::rref dense PLE path","priority":"normal"}
 {"type":"gate_passed","id":"fcd22c6b-cc26-48ee-bd02-1ef1c803e0de","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T10:50:43.832161765Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"171b0964-3291-4674-9257-bc6ef16e55b4","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T10:58:00.048004157Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"f72aff3a-fe26-4201-adb4-9015ae9ba215","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T11:03:04.868730577Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"d3c1825f-8d33-4970-beda-f790e7ba57e8","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T11:06:57.112418382Z","gate_key":"code-review","updated_by":"auto:executor"}

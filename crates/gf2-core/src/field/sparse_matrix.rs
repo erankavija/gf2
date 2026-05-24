@@ -1334,11 +1334,8 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     ///
     /// # Panics
     ///
-    /// Panics if the matrix is `0 × n` (zero rows) and `F::zero_hint()`
-    /// returns `None` and `n > 0` — there is no `F` witness available.
-    /// Use `F: ConstField` (every standard field impl) or pass at least a
-    /// `1 × n` matrix. Never panics for square `n × n` shapes on a
-    /// `ConstField`.
+    /// Does not panic on any valid input. Zero-dimension shapes
+    /// (`0 × n` or `m × 0`) return an empty canonical CSR immediately.
     ///
     /// # Complexity
     ///

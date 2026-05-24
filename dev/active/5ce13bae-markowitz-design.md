@@ -90,13 +90,9 @@ This is the same property the existing straight-line algorithm relies on. The Ma
 
 ### Incremental nnz maintenance — must NOT re-scan
 
-The col_nnz array MUST be maintained incrementally during axpy. For each axpy on row `k`:
+The `row_nnz` array MUST be maintained incrementally during axpy. After each XOR / sparse-axpy on row `k`, set `row_nnz[k] = new_row_k.len()` (or update by `Δ = new_len − old_len`). Re-scanning the matrix to recompute `row_nnz` at each step would destroy the speedup (O(m · nnz) extra work) and recreate the asymptotic constant of the straight-line algorithm.
 
-- Iterate the merged sparse-row output and the original row in parallel (or precompute the symmetric difference).
-- For each column `c` that is **added** to row `k`: `col_nnz[c] += 1`.
-- For each column `c` that is **removed** from row `k`: `col_nnz[c] -= 1`.
-
-Re-scanning the matrix to recompute col_nnz at each step would destroy the speedup (O(m * nnz) extra work) and recreate the asymptotic constant of the straight-line algorithm.
+**No `col_nnz` is maintained.** As recorded in the Algorithm section above, the canonical-RREF constraint pins the pivot column set to the leftmost linearly-independent columns; walking pivot columns in ascending order means the only un-used rows that can contain entries at pivot column `pc` are those whose leading column equals `pc` (others have entries only at columns `> pc` by the sorted-list invariant). At a fixed `pc`, `col_nnz[pc]` is therefore identical across all candidate rows, and the Markowitz product `(row_nnz - 1) * (col_nnz - 1)` collapses to "minimise `row_nnz`". Materialising `col_nnz` would be dead work.
 
 ### Correctness vs the dense reference
 
@@ -114,13 +110,12 @@ The Markowitz selection changes only the internal order in which pivots are chos
 
 The existing code already materialises each row as a `Vec<usize>` of column indices. We add:
 - `row_nnz: Vec<usize>` — initially `rows[i].len()`.
-- `col_nnz: Vec<usize>` — initially the count of rows containing each column. Built once by iterating `rows`.
 
-The pivot-search loop becomes a `argmin` over un-used rows of `(row_nnz[i] - 1) * (col_nnz[rows[i][0]] - 1)`. After elimination, walk the symmetric difference of `old_row[k]` vs `new_row[k]` and update both `row_nnz[k]` and `col_nnz[*]`.
+The pivot-search loop walks pivot columns `pc` in ascending order; within each `pc` it does an `argmin` over un-used rows of `row_nnz[i]` (restricted to rows whose leading column equals `pc`). After elimination, set `row_nnz[k] = new_row_k.len()` for each modified row. `col_nnz` is not materialised — see "Incremental nnz maintenance" above for the collapse argument.
 
 ### GF(p) (`SparseFieldMatrix::rref`)
 
-Identical pattern, except rows are `Vec<(usize, F)>` and the symmetric-difference walk has to compare the column components only.
+Identical pattern, except rows are `Vec<(usize, F)>` and the column-index comparison is on the `usize` component only. The pivot row is scaled to a leading `F::one()` before elimination so each axpy is `target := target − target[pc] * pivot_row`.
 
 ## Test plan
 

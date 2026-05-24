@@ -12,20 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-24T05:26:04.525686212Z"
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T11:02:59.557288907Z"
     },
     "code-review": {
       "status": "failed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T10:50:46.847958927Z"
+      "updated_at": "2026-05-24T11:03:08.430170676Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T10:46:28.631434461Z"
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-24T05:26:04.525686212Z"
     }
   },
   "context": {},
@@ -59,5 +59,5 @@
     "type:task"
   ],
   "created_at": "2026-05-08T19:11:49.303423313+00:00",
-  "updated_at": "2026-05-24T10:58:00.047803757+00:00"
+  "updated_at": "2026-05-24T11:06:57.112193662+00:00"
 }
