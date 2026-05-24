@@ -136,7 +136,7 @@ secondary to the table-lookup pack/unpack.
 | File | Change |
 |---|---|
 | `crates/gf2-core/src/gfp/simd_ops.rs` | Rewrote `fp_small_try_gemm_classical` to (a) use `build_small_prime_tables<P>()` for byte-lane pack/unpack instead of `Fp::value()` / `Fp::new()`; (b) reuse thread-local `GEMM_SMALL_{A,BT,OUT}_SCRATCH` Vecs instead of three per-call `vec![]` allocations. Added new boundary-length unit test `test_small_prime_gemm_dispatch_boundary_lengths` and proptest `proptest_small_prime_gemm_boundary_fp251` covering lengths {0, 1, 15, 16, 17, 63, 64, 65, 128, 129} per the issue's TDD requirement. |
-| `crates/gf2-core/benches/fieldmatrix_gemm.rs` | Added `SQUARE_SIZES_GF31_SMALL_N = [64, 256, 1024]` and rerouted `bench_gemm_fp_31` to it. The GF(31)/n=64 cell is the issue's explicit `[hard]` pass/fail gate; the bench needs to expose it. |
+| `crates/gf2-core/benches/fieldmatrix_gemm.rs` | Added `SQUARE_SIZES_GF31_SMALL_N = [64, 256, 1024, 4096]` and rerouted `bench_gemm_fp_31` to it. The GF(31)/n=64 cell is the issue's explicit `[hard]` pass/fail gate, and GF(31)/n=4096 is the `[hard]` non-regression cell (added in R1 to close the code-review R0 evidence gap); the bench needs to expose both. |
 
 ### What did NOT change
 
