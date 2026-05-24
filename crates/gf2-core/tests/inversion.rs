@@ -1,8 +1,9 @@
 //! Tests for matrix inversion over GF(2).
 
-use gf2_core::alg::gauss::invert;
+use gf2_core::alg::gauss::{invert, invert_m4ri, invert_scalar};
 use gf2_core::alg::m4rm::multiply;
 use gf2_core::matrix::BitMatrix;
+use proptest::prelude::*;
 
 #[test]
 fn test_invert_identity() {
@@ -223,6 +224,67 @@ fn test_invert_property_double_inverse() {
     for r in 0..3 {
         for c in 0..3 {
             assert_eq!(inv_inv.get(r, c), m.get(r, c));
+        }
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// M4RM-style invert path (jit:aaa847cf) — bit-exact correctness oracle vs.
+// the scalar Gauss–Jordan reference. Property tests cover the word-boundary
+// edge cases listed in CLAUDE.md (0, 1, 63, 64, 65 bits) plus n=127/128/129
+// to catch off-by-one at the multi-word boundary, and a range that crosses
+// the INVERT_M4RI_THRESHOLD dispatch cliff.
+// ────────────────────────────────────────────────────────────────────────────
+
+fn boundary_sizes() -> Vec<usize> {
+    vec![0, 1, 7, 8, 9, 63, 64, 65, 127, 128, 129]
+}
+
+#[test]
+fn test_invert_m4ri_bit_exact_with_scalar_on_boundaries() {
+    // Identity is invertible at every boundary, so this exercises every size
+    // without needing seed-driven random search.
+    for n in boundary_sizes() {
+        let id = BitMatrix::identity(n);
+        let scalar = invert_scalar(&id);
+        let m4ri = invert_m4ri(&id);
+        assert_eq!(scalar, m4ri, "identity at n={n}: scalar vs m4ri");
+        assert_eq!(
+            invert(&id),
+            scalar,
+            "dispatch at n={n}: must equal scalar (== m4ri)"
+        );
+    }
+}
+
+proptest! {
+    /// Property: for any invertible random GF(2) matrix at sizes spanning
+    /// the word boundary and the dispatch threshold, the M4RM path returns
+    /// the exact same bit pattern as the scalar Gauss–Jordan reference.
+    /// Singular inputs are filtered out by `prop_assume!`.
+    #[test]
+    fn prop_invert_m4ri_equals_gauss(
+        n in prop_oneof![
+            Just(1usize), Just(7), Just(8), Just(9), Just(15), Just(16),
+            Just(31), Just(32), Just(63), Just(64), Just(65), Just(127),
+            Just(128), Just(129),
+        ],
+        seed in any::<u64>(),
+    ) {
+        let m = BitMatrix::random_seeded(n, n, seed);
+        let scalar = invert_scalar(&m);
+        let m4ri = invert_m4ri(&m);
+        prop_assert_eq!(scalar.clone(), m4ri.clone(),
+            "scalar vs m4ri mismatch at n={}, seed={}", n, seed);
+        // Round-trip: if the matrix was invertible, m × m^-1 must be I.
+        if let Some(inv) = m4ri {
+            let product = multiply(&m, &inv);
+            let id = BitMatrix::identity(n);
+            prop_assert_eq!(product, id,
+                "m × m^-1 ≠ I at n={}, seed={}", n, seed);
+        } else {
+            // Singular input: both paths must agree on that classification.
+            prop_assert!(scalar.is_none());
         }
     }
 }
