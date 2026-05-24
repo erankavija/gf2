@@ -11,9 +11,35 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T16:29:31.115800235Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T16:29:24.323249282Z"
+    }
+  },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-24-52cce970-charpoly-minpoly-closure.md",
+      "commit": null,
+      "label": "Charpoly/minpoly bespoke kernel evidence",
+      "doc_type": "implementation",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/52cce970-bespoke-avx2-design.md",
+      "commit": null,
+      "label": "Bespoke AVX2 design note",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -22,5 +48,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-05-07T16:12:06.196594051+00:00",
-  "updated_at": "2026-05-24T12:18:43.884096719+00:00"
+  "updated_at": "2026-05-24T16:32:40.119812550+00:00"
 }
