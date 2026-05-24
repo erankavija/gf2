@@ -607,7 +607,7 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
         let q: __m256i;
         asm!(
             "vpmulhuw {q}, {p}, {m}",
-            q = lateout(ymm_reg) q,
+            q = out(ymm_reg) q,
             p = in(ymm_reg) prod,
             m = in(ymm_reg) mu_vec,
             options(pure, nomem, nostack, preserves_flags),
@@ -631,16 +631,17 @@ pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: 
         b_ptr = b_ptr.add(16);
     }
 
-    // Scalar tail.
+    // Scalar tail (at most 15 iterations; bounds-check cost is negligible
+    // compared to the modular arithmetic).
     let tail_start = nvec * 16;
     let p_u32 = p as u32;
     let alpha_u32 = alpha as u32;
     for i in tail_start..n {
-        let prod = (alpha_u32 * *chain_j.get_unchecked(i) as u32) % p_u32;
-        let b = *buf.get_unchecked(i) as u32;
+        let prod = (alpha_u32 * chain_j[i] as u32) % p_u32;
+        let b = buf[i] as u32;
         // b + (p - prod) mod p — keeps the unsigned arithmetic positive.
         let new = (b + (p_u32 - prod)) % p_u32;
-        *buf.get_unchecked_mut(i) = new as u8;
+        buf[i] = new as u8;
     }
 }
 
@@ -1075,7 +1076,60 @@ mod tests {
     ///
     /// Issue `52cce970` § "Success Criteria" requires correctness at
     /// these exact lengths. The oracle is the same scalar computation
-    /// used by the non-AVX2 fallback.
+    /// used by the non-AVX2 fallback. Input data is randomised per the
+    /// `seed` parameter so each proptest run exercises a fresh data set.
+    #[allow(clippy::wildcard_imports)]
+    mod proptest_sub_scaled_jit_52cce970 {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(256))]
+
+            #[test]
+            fn proptest_sub_scaled_matches_scalar_boundary_lengths_jit_52cce970(
+                len in prop_oneof![
+                    Just(0usize), Just(1), Just(15), Just(16), Just(17),
+                    Just(63), Just(64), Just(65), Just(255), Just(256)
+                ],
+                seed in any::<u64>(),
+                p_idx in 0usize..9usize,
+            ) {
+                if !std::arch::is_x86_feature_detected!("avx2") {
+                    return Ok(());
+                }
+                let primes: [u8; 9] = [3, 5, 7, 11, 13, 17, 31, 127, 251];
+                let p = primes[p_idx];
+                let mu = barrett_mu_u16(p);
+                // Derive alpha and data from seed via a simple LCG so
+                // every proptest case uses independent pseudo-random values.
+                let s1 = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                let s2 = s1.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                let alpha = ((s1 >> 32) % p as u64) as u8;
+                let chain_j: Vec<u8> = (0..len)
+                    .map(|i| {
+                        let v = s1.wrapping_mul(i as u64 + 1).wrapping_add(s2);
+                        (v % p as u64) as u8
+                    })
+                    .collect();
+                let buf_init: Vec<u8> = (0..len)
+                    .map(|i| {
+                        let v = s2.wrapping_mul(i as u64 + 1).wrapping_add(s1);
+                        (v % p as u64) as u8
+                    })
+                    .collect();
+                let mut buf = buf_init.clone();
+                let mut expected = buf_init;
+                scalar_sub_scaled_oracle(&mut expected, &chain_j, alpha, p);
+                // SAFETY: AVX2 detected above; p is a small prime in [3,251].
+                unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p, mu) };
+                prop_assert_eq!(buf, expected, "p={} alpha={} len={}", p, alpha, len);
+            }
+        }
+    }
+
+    /// Smoke test: deterministic boundary-length check retained alongside
+    /// the proptest for fast feedback during development.
     #[test]
     fn sub_scaled_matches_scalar_boundary_lengths_jit_52cce970() {
         run_for_primes(|p| {

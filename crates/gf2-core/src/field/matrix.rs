@@ -59,13 +59,21 @@ pub use crate::field::ple::Permutation;
 pub trait BasisReducer<F: FiniteField>: Send {
     /// Appends a column to the basis. The column is packed once at
     /// append time; subsequent `reduce` calls reuse the packed form.
-    ///
-    /// `pivot_row` is the row index at which this column has its
-    /// pivot — implementations may use it to pre-compute and cache
-    /// `col[pivot_row]^{-1}`, hoisting the (Fermat-style) inverse
-    /// out of the per-reduce inner loop. The caller guarantees
+    fn push_col(&mut self, col: &[F]);
+
+    /// Optimised variant for callers that already know which row holds
+    /// this column's pivot. Implementations may pre-compute and cache
+    /// `col[pivot_row]^{-1}`, hoisting the (Fermat-style) inverse out
+    /// of the per-reduce inner loop. The caller guarantees
     /// `col[pivot_row]` is non-zero (the basis invariant).
-    fn push_col(&mut self, col: &[F], pivot_row: usize);
+    ///
+    /// The default implementation ignores `pivot_row` and delegates to
+    /// [`push_col`](Self::push_col). Optimised impls (e.g.
+    /// `PackedFpBasis`) override this to skip the per-element REDC.
+    fn push_col_with_pivot_row(&mut self, col: &[F], pivot_row: usize) {
+        let _ = pivot_row;
+        self.push_col(col);
+    }
 
     /// Computes `(residual, coeffs)` such that
     /// `v = Σ coeffs[j] · basis[j] + residual`, with `residual` having
