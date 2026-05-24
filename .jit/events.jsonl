@@ -5109,3 +5109,5 @@
 {"type":"gate_passed","id":"e002011d-494f-45ff-9659-9ffdb914df36","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T11:21:07.928645353Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"977b1e00-5b93-4420-a3eb-627cc7f486be","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T11:21:08.503216057Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"2a8f44b2-22bb-4bba-951b-215559e40a90","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T11:21:08.503242887Z"}
+{"type":"issue_state_changed","id":"b7bc7886-8418-4cec-9e2a-7760586d92b9","issue_id":"aaa847cf-1f94-42a4-9ddc-513a04c92b5a","timestamp":"2026-05-24T11:21:38.163899793Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"c4b8c041-b401-4819-8db8-7d06e447fa00","issue_id":"aaa847cf-1f94-42a4-9ddc-513a04c92b5a","timestamp":"2026-05-24T11:21:38.166708874Z","assignee":"agent:claude"}
