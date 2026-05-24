@@ -1,0 +1,2 @@
+nice: cannot set niceness: Permission denied
+[bench_blas_gf251] trial=2 sizes=[64, 256, 1024] inner=15 warmup=3 openblas_num_threads=1
