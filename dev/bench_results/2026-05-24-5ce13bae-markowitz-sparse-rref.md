@@ -191,3 +191,13 @@ A separate JIT issue should be filed against `FieldMatrix::rref` to investigate.
 | gf2-core tests | `cargo nextest run -p gf2-core --release --all-features --profile ci` | 2021/2021 PASS |
 | Workspace tests | `cargo nextest run --workspace --all-features --release --profile ci` | 3798/3798 PASS |
 | Sparse-rref subset | `cargo nextest run -p gf2-core --release -E 'test(sparse) and test(rref)' --profile ci` | 31/31 PASS |
+
+---
+
+## 9. Amendment — 2026-05-24 (user-approved)
+
+The two open questions from §§ 5 and 6 were triaged by the lead and resolved by the user on 2026-05-24:
+
+**§ 5 — three n=256 GF(p) cells short of 1.5x.** GF(7)/GF(251)/GF(65521) × n=256 are amended from `[hard]` to `[aspirational]` in 5ce13bae's issue description with architectural cause recorded (per-pivot O(m) argmin scan + Montgomery REDC at small dense n; achievable 0.516 / 0.604 / 0.627 vs target 0.667). All three deliver 1.35x-1.43x speedup over the pre-Markowitz baseline; uniform improvement holds across all 10 cells. Aggregate amended contract: 7/10 [hard] PASS + 3/10 [aspirational] PASS at ≥1.35x. Closing the residual gap is deferred to a future scoped follow-up (lazy-reduction MAC, sparse priority queue, or block elimination at small n) — not in 5ce13bae's scope. Precedent for the amendment: `7a106fe4` GF(7)/GF(31)/n=64 (same small-n constant-overhead pattern, since closed by `27bb2f75`).
+
+**§ 6 — pre-existing FieldMatrix::rref bug.** The dense-RREF non-canonical-pivot bug discovered during Markowitz test development is filed as a separate JIT task **`bd9c6e13`** ("Fix non-canonical RREF in FieldMatrix::rref dense PLE path"), wired as a dependency of epic `026fc832` per user approval 2026-05-24. The Markowitz path under 5ce13bae is unaffected — its tests use the `direct_rref_reference_fp` / `_g8` textbook oracle as an independent canonical-RREF reference; the bug lives entirely in the dense PLE path. The reproducer (15×17 GF(7)/seed=1/density=0.05) and the expected vs observed pivot sets are documented in `bd9c6e13`'s description.
