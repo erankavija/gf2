@@ -15,7 +15,36 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md",
+      "commit": null,
+      "label": "Route C integer panel evidence",
+      "doc_type": "implementation",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/fc182ed5-route-c-design.md",
+      "commit": null,
+      "label": "Route C integer panel design",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/fc182ed5-route-c-design.md",
+      "commit": null,
+      "label": "Route C integer-panel design note",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md",
+      "commit": null,
+      "label": "Route C integer-panel evidence",
+      "doc_type": "implementation",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -23,5 +52,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:32:00.464569067+00:00",
-  "updated_at": "2026-05-24T20:55:18.747305348+00:00"
+  "updated_at": "2026-05-24T21:46:05.726200425+00:00"
 }
