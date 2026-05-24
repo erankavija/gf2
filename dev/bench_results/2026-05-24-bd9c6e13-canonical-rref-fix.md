@@ -5,13 +5,17 @@
 **Branch:** `worktree-agent-bd9c6e13`
 **Epic:** 026fc832 — Continue gf2-core SOTA catch-up
 
-## 1. Success criteria (verbatim from issue)
+## 1. Success criteria (amended 2026-05-24; see § 1.1)
 
-- **[hard]** Reproduce the bug on the named 15×17 GF(7)/seed=1/density=0.05 input; document the divergence with hard evidence (pivot sets).
+- **[hard]** Reproduce the bug on **at least 5 cells from the 47-cell pre-fix divergence sweep** in `crates/gf2-core/src/field/ple.rs::tests::test_rref_canonical_known_buggy_cells_jit_bd9c6e13`; document each cell's pre-fix divergence with hard evidence (pivot sets). *(Amended SC#1; see § 1.1.)*
 - **[hard]** Fix `FieldMatrix::rref` so it produces canonical RREF (leftmost linearly-independent pivot column set) on this input AND on a property-based proptest covering 100+ random rank-deficient shapes.
-- **[hard]** Bit-exact equality with the textbook Gauss-Jordan oracle (`direct_rref_reference_fp` in `sparse_matrix.rs` tests, or a new module-local equivalent) on the full sweep.
+- **[hard]** Bit-exact equality with the textbook Gauss-Jordan oracle (`direct_rref_oracle_fp` in `crates/gf2-core/src/field/test_random_matrix.rs` per R1 SSOT refactor) on the full sweep.
 - **[hard]** No regression on the existing `FieldMatrix::rref` tests in `crates/gf2-core/src/field/ple.rs::tests` and adjacent modules.
 - **[hard]** Diagnostic note: the fix should preserve the PLE-based decomposition's downstream uses (rank computation, deficient-rank handling, solver paths). Don't drop the PLE path — fix its canonical-RREF projection.
+
+### 1.1 SC#1 amendment (2026-05-24, user-approved)
+
+Original SC#1 wording was: *"Reproduce the bug on the named 15×17 GF(7)/seed=1/density=0.05 input; document the divergence with hard evidence (pivot sets)."* Empirically (this doc § 10) the named cell agrees pre- and post-fix by chance under the shipping `dense_random_fp_seeded` generator — the 5ce13bae evidence that the criterion was based on used a different generator instantiation (named `random_sparse_fp`, not present in the codebase). Per CLAUDE.md § "Success-criterion maturity markers" + project memory `feedback_measurements_not_guesses` (amend `[hard]` falsified by data), the user approved on 2026-05-24 amending SC#1 to require reproduction on ≥ 5 cells from the 47-cell sweep — which `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` implements with hardcoded `(seed, rows, cols, density, expected_canonical_pivots)` tuples. The original SC#1 wording is preserved in the JIT issue's amendment block (`jit issue show bd9c6e13`, "Amendment — 2026-05-24"). SC#3's oracle reference is also updated to reflect the R1 SSOT refactor (`direct_rref_oracle_fp` in `test_random_matrix.rs`).
 
 ## 2. Reproducer
 
