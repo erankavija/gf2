@@ -356,7 +356,9 @@ pub fn matrix_to_canonical_bytes(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<u8> {
 ///
 /// # Panics
 ///
-/// Panics if `bytes.len() != rows * cols`.
+/// Panics if `bytes.len() != rows * cols`, or if any byte is `>= 251`
+/// (out of canonical `GF(251)` range — the public-API boundary check
+/// matches the `blas_gf251_gemm_canonical_bytes` input contract).
 ///
 /// # Complexity
 ///
@@ -613,5 +615,29 @@ mod tests {
         let a = fp_matrix_from_seed::<P_GF251>(8, 8, 1);
         let b = fp_matrix_from_seed::<P_GF251>(8, 8, 2);
         let _c = blas_gf251_gemm(&a, &b);
+    }
+
+    /// Regression guard for the `# Panics` contract on
+    /// `blas_gf251_gemm_canonical_bytes`: byte 251 must trigger an
+    /// `assert!` in release builds, not silently pack a non-canonical
+    /// f32 lane. (jit:91429c1c R1 code-review finding.)
+    #[test]
+    #[should_panic(expected = "out of GF(251) range")]
+    fn canonical_bytes_rejects_byte_251_input() {
+        let m = 4;
+        let k = 4;
+        let n = 4;
+        let mut a = vec![0u8; m * k];
+        a[3] = 251; // illegal: only [0, 251) is in field
+        let b = vec![1u8; k * n];
+        let _ = blas_gf251_gemm_canonical_bytes(&a, m, k, &b, n);
+    }
+
+    /// Same regression guard for `canonical_bytes_to_matrix`.
+    #[test]
+    #[should_panic(expected = "out of GF(251) range")]
+    fn canonical_bytes_to_matrix_rejects_byte_251() {
+        let bytes = vec![0u8, 1, 2, 251];
+        let _ = canonical_bytes_to_matrix(&bytes, 2, 2);
     }
 }

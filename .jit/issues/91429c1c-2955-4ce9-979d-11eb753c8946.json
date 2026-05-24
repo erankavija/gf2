@@ -14,15 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T20:28:45.001768344Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T20:28:39.510855313Z"
+      "updated_at": "2026-05-24T20:34:14.435616436Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T20:34:19.931679838Z"
     }
   },
   "context": {},
@@ -83,5 +83,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:31:46.023399135+00:00",
-  "updated_at": "2026-05-24T20:33:12.510498369+00:00"
+  "updated_at": "2026-05-24T20:35:52.296313344+00:00"
 }
