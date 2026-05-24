@@ -1240,6 +1240,15 @@ thread_local! {
 pub(crate) struct SmallPrimeTables {
     from_mont: Vec<u8>, // index = raw storage word (in [0, P)); value = canonical
     to_mont: Vec<u64>,  // index = canonical value (in [0, P)); value = raw storage
+    /// 16-bit Barrett constant `μ = ⌊2¹⁶ / P⌋` (issue 52cce970 R1).
+    ///
+    /// Cached here so callers into `fp_small`'s `sub_scaled` /
+    /// `batch_mul` / `batch_sub` kernels can pass `μ` as a kernel
+    /// argument and skip the 22-25 cycle integer `div esi` that the
+    /// kernel prologue otherwise emits once per call. At ~32 000
+    /// invocations per GF(251)/n=256 charpoly call this hoist removes
+    /// roughly 190 µs of wall time (7-8 %).
+    barrett_mu: u16,
 }
 
 // Global per-prime table cache for small primes (P ≤ 251).
@@ -1277,7 +1286,12 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
             let raw = Fp::<P>::new(canon).raw_storage();
             to_mont[canon as usize] = raw;
         }
-        SmallPrimeTables { from_mont, to_mont }
+        let barrett_mu = gf2_kernels_simd::fp_small::barrett_mu_u16(P as u8);
+        SmallPrimeTables {
+            from_mont,
+            to_mont,
+            barrett_mu,
+        }
     })
 }
 
@@ -1689,6 +1703,11 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
             let tables = build_small_prime_tables::<P>();
             let from_mont = tables.from_mont.as_slice();
             let to_mont = tables.to_mont.as_slice();
+            // Per-prime Barrett constant μ = ⌊2¹⁶ / P⌋ (issue 52cce970 R1):
+            // hoisted out of the kernel so the per-call `div esi` prologue
+            // is replaced by a single broadcast load. At ~32 k sub_scaled
+            // calls per GF(251)/n=256 charpoly the hoist saves ~190 µs.
+            let barrett_mu = tables.barrett_mu;
             let mut residual: Vec<u8> = v
                 .iter()
                 .map(|x| from_mont[x.raw_storage() as usize])
@@ -1713,7 +1732,7 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                 // pass. Eliminates one broadcast-fill, one intermediate Vec,
                 // one new_residual Vec, and one swap; keeps factor, μ, p in
                 // ymm registers across the column sweep.
-                (fns.sub_scaled_fn)(&mut residual, col, factor, p_u8);
+                (fns.sub_scaled_fn)(&mut residual, col, factor, p_u8, barrett_mu);
                 // Coeff value is the canonical `factor` byte — store the
                 // matching Montgomery storage word via the `to_mont` table
                 // (one byte-indexed lookup; no REDC).
@@ -1971,7 +1990,16 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
         // two-call sequence (issue 52cce970): the fused kernel keeps α, μ, p
         // in ymm registers, threads the intermediate product through
         // registers only, and writes results back in a single pass.
-        (fns.sub_scaled_fn)(&mut buf[..], chain_j, alpha_val, P as u8);
+        //
+        // μ is precomputed in `build_small_prime_tables::<P>()` (issue
+        // 52cce970 R1) and passed in to skip the kernel's per-call `div`.
+        (fns.sub_scaled_fn)(
+            &mut buf[..],
+            chain_j,
+            alpha_val,
+            P as u8,
+            self.tables.barrett_mu,
+        );
     }
 
     fn push_buf(&mut self, buf: &[u8]) {

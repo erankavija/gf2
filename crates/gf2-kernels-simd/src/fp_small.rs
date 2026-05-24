@@ -151,11 +151,15 @@ pub type SmallPrimeSpmmRowFn = fn(&[u8], &[usize], &[u8], usize, usize, u8, &mut
 /// * `chain_j` — source vector in canonical bytes.
 /// * `alpha` — scalar in `[0, p)`.
 /// * `p` — odd prime in `[3, 251]`.
+/// * `mu` — precomputed Barrett constant `μ = ⌊2¹⁶ / p⌋`. Hoisting `μ`
+///   out of the kernel (`jit:52cce970` R1) eliminates the per-call
+///   integer division previously emitted as the kernel prologue. Use
+///   [`barrett_mu_u16`] to compute the value once per prime.
 ///
 /// # Panics
 ///
 /// Panics if `buf.len() < chain_j.len()`.
-pub type SmallPrimeSubScaledFn = fn(&mut [u8], &[u8], u8, u8);
+pub type SmallPrimeSubScaledFn = fn(&mut [u8], &[u8], u8, u8, u16);
 
 /// Bundle of small-prime SIMD batch operations.
 ///
@@ -280,9 +284,35 @@ fn spmm_row_safe(
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8) {
+fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8, mu: u16) {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
-    unsafe { crate::x86::fp_small::fp_small_sub_scaled(buf, chain_j, alpha, p) }
+    unsafe { crate::x86::fp_small::fp_small_sub_scaled(buf, chain_j, alpha, p, mu) }
+}
+
+/// Returns the 16-bit Barrett constant `μ = ⌊2¹⁶ / p⌋` for an odd prime
+/// `p ∈ [3, 255]`.
+///
+/// Callers should compute and cache this value once per prime and pass
+/// it to [`SmallPrimeSubScaledFn`] invocations to skip the per-call
+/// integer division otherwise emitted by the kernel prologue.
+///
+/// # Panics
+///
+/// `debug_assert!`s that `p >= 3`. For `p < 3` the byte-lane Barrett
+/// invariant breaks down (`μ` overflows `u16`) so the caller must have
+/// already enforced the prime range upstream.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_kernels_simd::fp_small;
+/// assert_eq!(fp_small::barrett_mu_u16(251), 65536 / 251);
+/// assert_eq!(fp_small::barrett_mu_u16(7), 65536 / 7);
+/// ```
+#[inline]
+pub const fn barrett_mu_u16(p: u8) -> u16 {
+    debug_assert!(p >= 3);
+    (65536u32 / p as u32) as u16
 }
 
 #[cfg(test)]
@@ -422,6 +452,7 @@ mod tests {
             None => return,
         };
         for &p in &[7u8, 31, 251] {
+            let mu = barrett_mu_u16(p);
             for &len in &[0usize, 1, 15, 16, 17, 63, 64, 65, 255, 256] {
                 let chain_j: Vec<u8> = (0..len as u32)
                     .map(|i| ((i * 19 + 5) % p as u32) as u8)
@@ -436,9 +467,18 @@ mod tests {
                     let prod = (alpha as u32 * chain_j[i] as u32) % p_u32;
                     expected[i] = ((expected[i] as u32 + p_u32 - prod) % p_u32) as u8;
                 }
-                (fns.sub_scaled_fn)(&mut buf, &chain_j, alpha, p);
+                (fns.sub_scaled_fn)(&mut buf, &chain_j, alpha, p, mu);
                 assert_eq!(buf, expected, "p={p} len={len}");
             }
+        }
+    }
+
+    /// Coverage that `barrett_mu_u16` returns the mathematically correct
+    /// value at the supported prime boundaries.
+    #[test]
+    fn barrett_mu_u16_returns_correct_value_at_boundaries() {
+        for &p in &[3u8, 5, 7, 11, 13, 17, 31, 127, 251] {
+            assert_eq!(barrett_mu_u16(p), (65536u32 / p as u32) as u16, "p={p}");
         }
     }
 }

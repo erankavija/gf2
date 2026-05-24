@@ -152,3 +152,43 @@ Three live constants (alpha, μ, p) stay in ymm0/ymm1/ymm2 across the entire vec
 - ASM artefact — `crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt` regenerated with `fp_small_sub_scaled` added to the symbol list.
 - Non-regression — measure GF(2^31-1), GF(65521), GF(251), GF(7) at n ∈ {64, 256} for both minpoly and charpoly (the §§ 3.1, 3.2 cells from d1dd266c).
 - Quiet-host audit — `ps aux | grep cargo` before each 5-trial window.
+
+## R1 amendment — 2026-05-24 (Barrett-μ hoist + inline-asm `vpmulhuw`)
+
+R0 (`dbfd11ef`) closed the GF(251)/n=64 minpoly cell but left
+GF(251)/n=256 charpoly at 2.001x of fflas (1.5x ceiling = 1.975 ms).
+The R0 evidence doc § 6 framed the 33.5 % residual gap as needing
+AVX-512 or an algorithmic redesign. **User directive 2026-05-24
+formally superseded that framing:** "AVX-512 does not play a role here
+as the baseline does not have it either." The fflas baseline runs on
+the same Zen 3 host with no AVX-512 — so the remaining gap is
+algorithmically closable in pure AVX2 territory.
+
+The R1 closure landed two strictly-AVX2 levers (no new intrinsics, no
+new files):
+
+1. **Precompute Barrett μ = ⌊2¹⁶/p⌋ at table-build time** and pass it
+   as a kernel parameter. R0's inner loop entered with a 22-25 cycle
+   `div esi` to derive μ per call; at ~32 000 calls per charpoly that
+   was ~190 µs of wall time. μ now lives in `SmallPrimeTables` and
+   threads through the `SmallPrimeSubScaledFn` signature.
+
+2. **Hand-encode the `vpmulhuw` Barrett step via inline `asm!`.**
+   rustc 1.95 / LLVM 19 emit a six-instruction widen-then-pack sequence
+   around `_mm256_mulhi_epu16(prod, mu_vec)` when one operand is a
+   broadcast vector built in the same function (this is a codegen
+   quality problem — the same intrinsic in isolation emits a single
+   `vpmulhuw`). Forcing the single-instruction encoding via inline
+   `asm!` cuts the inner loop from 21 to 15 instructions per 16-lane
+   iteration (~30 % body speedup; confirmed by regenerated
+   `fp_small.asm.txt` artefact at label `.LBB80_4`).
+
+Post-R1 5-trial CCX1-pinned median of medians:
+
+- GF(251)/n=256 charpoly: **1.867 ms (1.418x of fflas) PASS** (5.5 % headroom)
+- GF(251)/n=64 minpoly: **170.40 µs (1.263x of fflas) PASS** (no change vs R0)
+
+Non-regression: all 15 non-target cells stay PASS; the cells that share
+the small-prime byte-lane path inherit -1.7 % to -26.2 % improvements.
+See `dev/bench_results/2026-05-24-52cce970-charpoly-minpoly-closure.md`
+§ 11 for full numbers + the corrected framing.
