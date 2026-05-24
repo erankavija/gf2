@@ -89,7 +89,16 @@ pub fn rref_with_block_size_for_test(
     rref_with_block_size(matrix, pivot_from_right, block_size)
 }
 
-fn default_block_size(cols: usize) -> usize {
+/// Default M4RM block width for both RREF and matrix inversion over GF(2).
+///
+/// Mirrors the M4RI library's `m4ri_optk(n)` rule of thumb: 4-wide tables
+/// (16 entries) at small-to-mid sizes and 8-wide tables (256 entries) at
+/// large sizes. This gives a 256-entry table for n > 512, which is the same
+/// schedule M4RI uses at n=1024.
+///
+/// Used by `rref::rref` and `gauss::invert_m4ri` so that block-size policy
+/// lives in exactly one place.
+pub(crate) fn default_block_size(cols: usize) -> usize {
     match cols {
         0..=64 => 4,
         65..=512 => 4,
