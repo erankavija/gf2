@@ -6,13 +6,33 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-24T05:26:04.525670172Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-24T05:26:04.525686212Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-24T05:26:04.525627012Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
     "type:task"
   ],
   "created_at": "2026-05-08T19:11:49.303423313+00:00",
-  "updated_at": "2026-05-08T19:11:49.303428843+00:00"
+  "updated_at": "2026-05-24T05:26:04.525701862+00:00"
 }
