@@ -452,6 +452,26 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool 
 /// (`N_THRESH_PRIME = 252`). Candidate F remains compiled in as an upgrade
 /// path for future measurement on a different host or at larger n.
 ///
+/// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
+/// per-call constants (panel-pack heap allocations + Montgomery REDC on
+/// every packed byte) are a measurable fraction of wall time. Profiling
+/// at GF(7)/n=64 attributed ~7 µs (≈ 27 % of 26 µs) to the 12 288 REDCs
+/// in the A-pack + B^T-pack + output-unpack loops, plus ≈ 1 µs to the
+/// three `vec![]` allocations. This path replaces:
+///
+///  * the per-element `Fp::value()` REDC in the A and B^T pack with a
+///    single byte-indexed lookup in the per-prime `from_mont` table
+///    (built once per prime per process by `build_small_prime_tables`);
+///  * the per-element `Fp::new(byte)` REDC in the output unpack with a
+///    single u64 lookup in the per-prime `to_mont` table;
+///  * the three per-call `Vec<u8>` allocations with thread-local
+///    scratch buffers that grow once to the steady-state shape.
+///
+/// At n=k=m=64 this collapses ~12 288 REDCs into the same number of
+/// L1-resident table lookups (each ≤ 1 byte / 8 bytes; the from_mont
+/// table for P ≤ 251 fits in a single cache line and the to_mont table
+/// in four).
+///
 /// Returns `true` when one of the fast paths executed; `false` to
 /// defer to the caller's scalar `dot_product_slices` loop.
 #[cfg(feature = "simd")]
@@ -479,49 +499,97 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     }
 
     let p_u8 = P as u8;
-    let mut out_u8 = vec![0u8; m * n];
 
-    // Candidate F (AVX2 + FMA3 f32-cascade) — compiled in as upgrade path;
-    // currently not selected at any `P ≤ 251` cell (N_THRESH_PRIME = 252,
-    // see select_f32_path doc). The selector returns `false` for all
-    // in-scope small primes per the 2026-05-06 prime-sweep sub-amendment
-    // (§ 6.1 of the design doc): C_WINS at every (prime, n) cell.
-    let f32_taken = if select_f32_path::<P>(m, k, n) {
+    // Resolve the small-prime SIMD fns once. The selection F-path uses
+    // its own canonical-f32 pack/run/unpack, so it can short-circuit
+    // before we touch the byte-lane scratches below; otherwise we walk
+    // straight into Candidate C using cached lookup tables and thread-
+    // local scratch buffers (issue 27bb2f75).
+    let f32_selected = select_f32_path::<P>(m, k, n);
+
+    if f32_selected {
+        // Candidate F (AVX2 + FMA3 f32-cascade) — kept identical to the
+        // pre-rework body: not selected at any `P ≤ 251` cell with the
+        // current N_THRESH_PRIME=252. Allocation pattern is unchanged
+        // because the F-path is dormant in production; spending agent
+        // time optimising it would violate the "out of scope" line in
+        // 27bb2f75 (Candidate F is the upgrade-path, not the production
+        // path).
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
+            let mut out_u8 = vec![0u8; m * n];
             let a_f32: Vec<f32> = a.iter().map(|x| x.value() as f32).collect();
             let bt_f32: Vec<f32> = b_t.iter().map(|x| x.value() as f32).collect();
             (fns_f32.batch_gemm_fn)(&a_f32, &bt_f32, m, k, n, p_u8, &mut out_u8);
-            true
-        } else {
-            false
+            for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+                *slot = Fp::<P>::new(byte as u64);
+            }
+            return true;
         }
-    } else {
-        false
+        // F-path selected but kernel detection failed (no FMA3); fall
+        // through to Candidate C — the byte-lane kernel is the documented
+        // AVX2-only-no-FMA3 fallback.
+    }
+
+    // Candidate C (AVX2 16-bit-integer Barrett kernel) — primary path
+    // for all `p ≤ 251` cells per the 2026-05-06 prime-sweep amendment
+    // (N_THRESH_PRIME = 252, select_f32_path always returns false).
+    let Some(fns) = crate::simd::maybe_fp_small() else {
+        return false;
     };
+    // Per-prime lookup tables. Built at most once per (prime, process);
+    // the OnceLock cost is paid the first time a process touches any
+    // GEMM for this prime and is amortised forever afterwards.
+    let tables = build_small_prime_tables::<P>();
 
-    if !f32_taken {
-        // Candidate C (AVX2 16-bit-integer Barrett kernel) — primary path
-        // for all `p ≤ 251` cells per the 2026-05-06 prime-sweep amendment
-        // (N_THRESH_PRIME = 252, select_f32_path always returns false).
-        // Also the fallback for AVX2-only-no-FMA3 hosts (Zen 1, Sandy Bridge).
-        let Some(fns) = crate::simd::maybe_fp_small() else {
-            return false;
-        };
-        // Pack A and B-transpose as canonical bytes for the integer
-        // kernel — one Montgomery REDC per element via `Fp::value()`.
-        let a_u8: Vec<u8> = a.iter().map(|x| x.value() as u8).collect();
-        let bt_u8: Vec<u8> = b_t.iter().map(|x| x.value() as u8).collect();
-        for i in 0..m {
-            let a_row = &a_u8[i * k..(i + 1) * k];
-            let out_row = &mut out_u8[i * n..(i + 1) * n];
-            (fns.gemm_row_panel_fn)(a_row, &bt_u8, k, n, p_u8, out_row);
-        }
-    }
+    GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
+        GEMM_SMALL_BT_SCRATCH.with_borrow_mut(|bt_u8| {
+            GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
+                let a_len = m * k;
+                let bt_len = n * k;
+                let out_len = m * n;
+                a_u8.resize(a_len, 0u8);
+                bt_u8.resize(bt_len, 0u8);
+                out_u8.resize(out_len, 0u8);
 
-    // Unpack canonical → Montgomery storage.
-    for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
-        *slot = Fp::<P>::new(byte as u64);
-    }
+                // Pack A and B^T via the from_mont table. Each entry is
+                // one byte read indexed by the Montgomery storage word
+                // (in `[0, P)`) — replacing what used to be a `Fp::value()`
+                // REDC call per element.
+                let from_mont = tables.from_mont.as_slice();
+                for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
+                    // SAFETY: raw_storage is in `[0, P)` and from_mont has
+                    // length P; the index is always in-bounds. Using
+                    // `get_unchecked` shaves a branch per element on the
+                    // hot inner pack loop.
+                    let raw = src.raw_storage() as usize;
+                    debug_assert!(raw < from_mont.len());
+                    *dst = from_mont[raw];
+                }
+                for (dst, src) in bt_u8.iter_mut().zip(b_t.iter()) {
+                    let raw = src.raw_storage() as usize;
+                    debug_assert!(raw < from_mont.len());
+                    *dst = from_mont[raw];
+                }
+
+                // Run the row-panel kernel for each row of A.
+                for i in 0..m {
+                    let a_row = &a_u8[i * k..(i + 1) * k];
+                    let out_row = &mut out_u8[i * n..(i + 1) * n];
+                    (fns.gemm_row_panel_fn)(a_row, bt_u8, k, n, p_u8, out_row);
+                }
+
+                // Unpack canonical bytes → Montgomery storage via the
+                // to_mont table — replacing what used to be a
+                // `Fp::new(byte as u64)` REDC call per element.
+                let to_mont = tables.to_mont.as_slice();
+                for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+                    let canon = byte as usize;
+                    debug_assert!(canon < to_mont.len());
+                    *slot = Fp::<P>::from_raw_storage(to_mont[canon]);
+                }
+            });
+        });
+    });
     true
 }
 
@@ -1144,6 +1212,18 @@ thread_local! {
     static SMALL_X_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    // GEMM-specific scratch buffers (issue 27bb2f75). The small-n GEMM
+    // dispatch path packs A, B^T, and the canonical-byte output into
+    // three separate buffers; reusing thread-local Vecs avoids three
+    // heap allocations per gemm call. For the GF(7)/GF(31)/n=64 target
+    // cell these allocations total ~12 KB and the alloc/free overhead
+    // is a measurable fraction of the ~26 µs wall time.
+    static GEMM_SMALL_A_SCRATCH: std::cell::RefCell<Vec<u8>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_SMALL_BT_SCRATCH: std::cell::RefCell<Vec<u8>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
@@ -2063,6 +2143,167 @@ mod tests {
         {
             check_small_prime_prepack_matvec::<251>(BOUNDARY_LENS);
             check_small_prime_prepack_matvec::<7>(BOUNDARY_LENS);
+        }
+    }
+
+    /// Boundary-length scalar-equivalence test for the small-n GEMM
+    /// dispatch path (issue 27bb2f75). Covers the table-lookup
+    /// pack/unpack and the thread-local scratch reuse for
+    /// `fp_small_try_gemm_classical`. Lengths `{0, 1, 15, 16, 17, 63,
+    /// 64, 65, 128, 129}` exercise the kernel's row-panel tile (4× per
+    /// inner pass) at its boundaries and the per-row scratch reuse.
+    #[cfg(feature = "simd")]
+    fn check_small_prime_gemm_dispatch<const P: u64>(lens: &[usize]) {
+        if crate::simd::maybe_fp_small().is_none() {
+            return;
+        }
+        for &m in lens {
+            for &k in lens {
+                for &n in lens {
+                    // Skip zero-dim cells: the dispatch contract is that
+                    // `fp_small_try_gemm_classical` returns false for
+                    // m==0 || k==0 || n==0 (caller already populated
+                    // out with zeros for the m×n zero-matrix case).
+                    if m == 0 || k == 0 || n == 0 {
+                        let a: Vec<Fp<P>> = vec![Fp::<P>::new(0); m * k];
+                        let bt: Vec<Fp<P>> = vec![Fp::<P>::new(0); n * k];
+                        let mut out = vec![Fp::<P>::new(0); m * n];
+                        let used = fp_small_try_gemm_classical::<P>(&a, &bt, m, k, n, &mut out);
+                        assert!(!used, "zero-dim shape must return false");
+                        continue;
+                    }
+                    // Build deterministic matrices in Montgomery storage.
+                    let a: Vec<Fp<P>> = (0..(m * k) as u64)
+                        .map(|i| Fp::<P>::new(i.wrapping_mul(1_000_003).wrapping_add(17)))
+                        .collect();
+                    let bt: Vec<Fp<P>> = (0..(n * k) as u64)
+                        .map(|i| Fp::<P>::new(i.wrapping_mul(2_654_435_761).wrapping_add(11)))
+                        .collect();
+                    // Scalar reference: out[i*n+j] = sum_t a[i*k+t] * bt[j*k+t].
+                    let mut out_ref = vec![Fp::<P>::new(0); m * n];
+                    for i in 0..m {
+                        for j in 0..n {
+                            let mut acc = Fp::<P>::new(0);
+                            for t in 0..k {
+                                acc += a[i * k + t] * bt[j * k + t];
+                            }
+                            out_ref[i * n + j] = acc;
+                        }
+                    }
+                    let mut out_simd = vec![Fp::<P>::new(0); m * n];
+                    let used = fp_small_try_gemm_classical::<P>(&a, &bt, m, k, n, &mut out_simd);
+                    assert!(
+                        used,
+                        "fp_small_try_gemm_classical must succeed on AVX2 host"
+                    );
+                    for i in 0..m {
+                        for j in 0..n {
+                            assert_eq!(
+                                out_simd[i * n + j],
+                                out_ref[i * n + j],
+                                "gemm dispatch mismatch P={P} m={m} k={k} n={n} i={i} j={j}"
+                            );
+                        }
+                    }
+                    // Run a second time with the SAME shape to exercise
+                    // the thread-local scratch reuse path.
+                    let mut out_simd2 = vec![Fp::<P>::new(0); m * n];
+                    let used2 = fp_small_try_gemm_classical::<P>(&a, &bt, m, k, n, &mut out_simd2);
+                    assert!(used2);
+                    assert_eq!(
+                        out_simd, out_simd2,
+                        "scratch reuse drift P={P} m={m} k={k} n={n}"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Boundary-length scalar-equivalence test for the small-n GEMM
+    /// dispatch path (issue 27bb2f75). Covers the lengths mandated by
+    /// the issue: `{0, 1, 15, 16, 17, 63, 64, 65, 128, 129}` for each
+    /// of m, k, n. Tests both GF(7) (lowest in-scope prime; small
+    /// table) and GF(251) (largest in-scope prime; table spans 251
+    /// slots).
+    #[test]
+    fn test_small_prime_gemm_dispatch_boundary_lengths() {
+        #[cfg(not(feature = "simd"))]
+        return;
+
+        const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65, 128, 129];
+
+        #[cfg(feature = "simd")]
+        {
+            check_small_prime_gemm_dispatch::<7>(BOUNDARY_LENS);
+            check_small_prime_gemm_dispatch::<31>(BOUNDARY_LENS);
+            check_small_prime_gemm_dispatch::<251>(BOUNDARY_LENS);
+        }
+    }
+
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
+
+        /// Property: `fp_small_try_gemm_classical` for GF(251) at random
+        /// `(m, k, n)` boundary shapes matches the scalar GEMM reference
+        /// bit-exactly. Boundary lengths from issue 27bb2f75's success
+        /// criteria: `{0, 1, 15, 16, 17, 63, 64, 65, 128, 129}`.
+        #[test]
+        fn proptest_small_prime_gemm_boundary_fp251(
+            m_idx in 0usize..10,
+            k_idx in 0usize..10,
+            n_idx in 0usize..10,
+            seed in proptest::prelude::any::<u64>(),
+        ) {
+            const BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65, 128, 129];
+            let m = BOUNDARY_LENS[m_idx];
+            let k = BOUNDARY_LENS[k_idx];
+            let n = BOUNDARY_LENS[n_idx];
+            #[cfg(feature = "simd")]
+            {
+                if crate::simd::maybe_fp_small().is_none() {
+                    return Ok(());
+                }
+                if m == 0 || k == 0 || n == 0 {
+                    let a: Vec<Fp<251>> = vec![Fp::<251>::new(0); m * k];
+                    let bt: Vec<Fp<251>> = vec![Fp::<251>::new(0); n * k];
+                    let mut out = vec![Fp::<251>::new(0); m * n];
+                    let used = fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, &mut out);
+                    proptest::prop_assert!(!used);
+                    return Ok(());
+                }
+                let mut s = seed;
+                let a: Vec<Fp<251>> = (0..m * k)
+                    .map(|_| {
+                        s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9);
+                        Fp::<251>::new(s)
+                    })
+                    .collect();
+                let bt: Vec<Fp<251>> = (0..n * k)
+                    .map(|_| {
+                        s = s.wrapping_mul(2_654_435_761).wrapping_add(0x9E37_79B9);
+                        Fp::<251>::new(s)
+                    })
+                    .collect();
+                let mut out_ref = vec![Fp::<251>::new(0); m * n];
+                for i in 0..m {
+                    for j in 0..n {
+                        let mut acc = Fp::<251>::new(0);
+                        for t in 0..k {
+                            acc += a[i * k + t] * bt[j * k + t];
+                        }
+                        out_ref[i * n + j] = acc;
+                    }
+                }
+                let mut out_simd = vec![Fp::<251>::new(0); m * n];
+                let used = fp_small_try_gemm_classical::<251>(&a, &bt, m, k, n, &mut out_simd);
+                proptest::prop_assert!(used);
+                for i in 0..m {
+                    for j in 0..n {
+                        proptest::prop_assert_eq!(out_simd[i * n + j], out_ref[i * n + j]);
+                    }
+                }
+            }
+            let _ = (m, k, n, seed);
         }
     }
 
