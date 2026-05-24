@@ -484,7 +484,10 @@ fn cyclic_decomposition_inner<F: FiniteField>(
             &mut pivot_row_of_col,
         );
         if let Some(pb) = packed_basis.as_mut() {
-            pb.push_col(residual.as_slice());
+            let pivot_row = *pivot_row_of_col
+                .last()
+                .expect("append_to_basis must record a pivot row");
+            pb.push_col(residual.as_slice(), pivot_row);
         }
         chain.push(residual);
         if let Some(cpa) = packed_cpa.as_mut() {
@@ -533,7 +536,10 @@ fn cyclic_decomposition_inner<F: FiniteField>(
                         &mut pivot_row_of_col,
                     );
                     if let Some(pb) = packed_basis.as_mut() {
-                        pb.push_col(residual_next.as_slice());
+                        let pivot_row = *pivot_row_of_col
+                            .last()
+                            .expect("append_to_basis must record a pivot row");
+                        pb.push_col(residual_next.as_slice(), pivot_row);
                     }
                     chain.push(residual_next);
                     cpa.push_buf(&buf);
@@ -563,7 +569,10 @@ fn cyclic_decomposition_inner<F: FiniteField>(
                         &mut pivot_row_of_col,
                     );
                     if let Some(pb) = packed_basis.as_mut() {
-                        pb.push_col(residual_next.as_slice());
+                        let pivot_row = *pivot_row_of_col
+                            .last()
+                            .expect("append_to_basis must record a pivot row");
+                        pb.push_col(residual_next.as_slice(), pivot_row);
                     }
                     chain.push(residual_next);
                     chain_polys.push(next_poly);
