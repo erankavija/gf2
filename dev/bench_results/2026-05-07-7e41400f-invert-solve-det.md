@@ -260,9 +260,12 @@ performance.
 **Path A amendment (user-approved 2026-05-07)**: Mark the 2 invert/uniform
 cells [aspirational] with documented algorithm-choice cause. The in-place
 LU-reuse driver implementation is delegated to the broader finite-field
-SOTA catch-up plan in issue 615db3b9. The issue description amendment
+SOTA catch-up plan in issue 615db3b9 (closed 2026-05-24 as plan-only; the
+plan's Phase 5 "Downstream dense LA inheritance" tracks PLE/LU/invert
+inheritance from GEMM improvements). The issue description amendment
 captures the per-cell maturity-marker scoping and re-escalation threshold
-(revisit when 615db3b9 lands an in-place-invert sub-issue and that closes).
+(revisit when 615db3b9's Phase 5 downstream-LA-inheritance child lands and
+closes).
 
 ### SC#2: Correctness tests cover singular and rank-deficient inputs
 

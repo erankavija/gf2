@@ -335,6 +335,18 @@ Suggested child work items:
 - **GF(2^m) scale.** GF(2^8) has a much larger gap than GF(251). Project planning should not over-focus on fflas/GF(p) while the M4RIE gap remains open.
 - **Downstream inheritance.** Downstream operations only catch up if they are blocked around GEMM/submul kernels. A fast standalone GEMM is necessary but not sufficient.
 
+## Scope boundary: AVX-512 / VNNI / GFNI / ZMM
+
+AVX-512 and its sub-families (VNNI, GFNI, VPCLMULQDQ-512, ZMM lanes) are **not in scope** for this plan or epic `026fc832`. The 5900X reference host has no AVX-512 hardware, so any AVX-512 route is not measurable here. All deferred AVX-512 work — including the Phase 1 "AVX-512/VNNI follow-up" route comparison and the Phase 3 "GFNI/AVX-512 ZMM follow-up for GF(2^16)/n=1024" — belongs under epic `7f809931` ("SIMD and platform expansion"), which already houses:
+
+- `c7c0e991` — AVX-512 VPCLMULQDQ (512-bit) + GF2P8AFFINEQB GFNI kernels for GF(2^m)
+- `f8d230ef` — AVX-512 ZMM bipedal-3 kernel for permanent_bipedal3
+
+In-scope alternatives for the AVX-512-dependent cells listed in Phase 3:
+
+- **GF(2^16) at n=1024:** in-scope path is a precomputed Barrett table for m=16 (64K entries) on AVX2. The GFNI/AVX-512 ZMM follow-up is out-of-scope and belongs as a child of `c7c0e991` under epic `7f809931`.
+- **Phase 1 route comparison:** the in-scope route set is now {in-Rust f32/FMA cascade, optional BLAS-backed cascade, Goto/BLIS-style panelized integer micro-kernel, "external BLAS dependency out of default build" policy}. The AVX-512/VNNI option is recorded only as future-host context, not as an actionable route under this plan.
+
 ## References
 
 - `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`
