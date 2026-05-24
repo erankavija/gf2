@@ -122,25 +122,39 @@ Module-level rustdoc updated:
 
 ## 6. Validation
 
-New tests added to `crates/gf2-core/src/field/ple.rs::tests`:
+Tests in `crates/gf2-core/src/field/ple.rs::tests` (post-rework, R1):
 
-1. **`test_rref_canonical_15x17_gf7_seed1`** — named reproducer from
-   the issue. Cross-checks the pivot set against the textbook
-   Gauss-Jordan oracle and asserts `a.rank()` matches the canonical
-   pivot count.
-2. **`test_rref_canonical_sweep_proptest_like`** — 128-case sweep
-   (8 shapes × 4 densities × 4 seeds × 2 primes) over GF(7) and GF(251).
-   Each case asserts bit-exact equality with the canonical oracle.
-   Exceeds the issue's "100+ random rank-deficient shapes" criterion
-   by 28 cases.
-3. **`test_rref_canonical_markowitz_grid_sweep_fp7`** — full replica
+1. **`test_rref_canonical_15x17_gf7_seed1_structural_correctness`** —
+   structural correctness check on the issue-named seed. As noted in
+   § 10, this cell agrees pre-fix and post-fix by chance; it is NOT a
+   regression guard. Renamed from `test_rref_canonical_15x17_gf7_seed1`
+   during rework R1 to clarify intent.
+2. **`test_rref_canonical_known_buggy_cells_jit_bd9c6e13`** — regression
+   guard: 5 cells from the 47-cell pre-fix divergence set (evidence
+   doc § 3), with hardcoded expected canonical pivot vectors measured
+   at post-fix HEAD (commit 95f28a57):
+   - seed=0x8,  3×5,  0.50: expected `[1, 2, 4]`
+   - seed=0x19, 8×8,  0.05: expected `[1, 3, 5]`
+   - seed=0x1f, 8×8,  0.05: expected `[1, 2, 4, 5]`
+   - seed=0x4,  8×8,  0.25: expected `[0, 2, 3, 4, 6, 7]`
+   - seed=0xc,  8×8,  0.25: expected `[0, 2, 4, 5, 6, 7]`
+3. **`proptest_field_matrix_rref_canonical_rank_deficient_jit_bd9c6e13`**
+   — real `proptest!` block with 128 cases over GF(7) and GF(251).
+   Rank-deficient matrices constructed by outer product: A = F*G
+   where F is rows×(rank) and G is rank×cols with rank = min(rows,cols)-1.
+   Replaces the former `test_rref_canonical_sweep_proptest_like` which
+   was a deterministic nested loop, not a real proptest. Per SC#2.
+4. **`test_rref_canonical_markowitz_grid_sweep_fp7`** — full replica
    of the Markowitz sweep grid in `sparse_matrix.rs` (32 seeds × 6
-   shapes × 5 densities, GF(7)). Pre-fix this grid had 47 divergent
-   cells; post-fix it asserts zero.
+   shapes × 5 densities, GF(7)). Pre-fix: 47 divergent cells;
+   post-fix: 0.
 
-Plus a self-contained textbook oracle `direct_rref_oracle_fp` and a
-seeded random generator `dense_random_fp_seeded` (mirrored from
-`sparse_matrix.rs`) local to the `ple.rs` test module.
+**SSOT refactor (R1):** `direct_rref_oracle_fp` and `dense_random_fp_sparse`
+promoted to `crates/gf2-core/src/field/test_random_matrix.rs` as the
+single source of truth. `ple.rs` imports via `use` and provides a thin
+`dense_random_fp_seeded` alias. `sparse_matrix.rs` replaces its local
+`dense_random_fp` and `direct_rref_reference_fp` with aliases to the
+shared versions.
 
 ## 7. Preservation of downstream uses
 
@@ -171,7 +185,9 @@ of `FieldMatrix::rref`, `ple`, `lu`, `row_echelon`, `nullspace`, and
 
 | Path | Description |
 |---|---|
-| `crates/gf2-core/src/field/ple.rs` | PLE recursion + materialise helpers; new canonical-RREF tests |
+| `crates/gf2-core/src/field/ple.rs` | PLE recursion + materialise helpers; canonical-RREF tests (post-R1) |
+| `crates/gf2-core/src/field/sparse_matrix.rs` | SSOT aliases for dense_random_fp and direct_rref_reference_fp |
+| `crates/gf2-core/src/field/test_random_matrix.rs` | SSOT for `dense_random_fp_sparse` and `direct_rref_oracle_fp` |
 | `dev/active/bd9c6e13-canonical-rref-fix.md` | Design note: root cause + fix design + preservation argument |
 | `dev/bench_results/2026-05-24-bd9c6e13-canonical-rref-fix.md` | This evidence document |
 
@@ -181,13 +197,16 @@ of `FieldMatrix::rref`, `ple`, `lu`, `row_echelon`, `nullspace`, and
 |---|---|:---:|
 | `cargo fmt` | `cargo fmt --all -- --check` | PASS |
 | `cargo clippy` | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | PASS |
-| `cargo doc` test | `cargo test --release --doc -p gf2-core` | PASS (546/546) |
-| gf2-core tests | `cargo nextest run -p gf2-core --release --all-features --profile ci` | 2032/2032 |
-| Workspace tests | `cargo nextest run --workspace --all-features --release --profile ci` | 3818/3818 |
-| PLE/RREF subset | `cargo nextest run -p gf2-core --release -E 'test(ple) \| test(rref) \| test(row_echelon) \| test(nullspace) \| test(lu_)' --profile ci` | 136/136 |
+| `cargo doc` test | `cargo test --release --doc -p gf2-core` | PASS (548/548) |
+| gf2-core tests | `cargo nextest run -p gf2-core --release --all-features --profile ci` | (R1 pending) |
+| Workspace tests | `cargo nextest run --workspace --all-features --release --profile ci` | 3819/3819 (R1) |
+| PLE/RREF subset | `cargo nextest run -p gf2-core --release -E 'test(rref) \| test(ple) \| test(proptest_field_matrix_rref)' --profile ci` | 137/137 (R1) |
 
 ## 10. Open questions / unexpected findings
 
-- The literal pivot sets quoted in the issue description (`{0,1,2,3,5,6,7,10,15,16}` vs `{0,1,2,3,5,6,7,13,15,16}`) come from a slightly different generator instantiation than the one cited (named `random_sparse_fp`, which does not exist by that name). The actual canonical and pre-fix outputs on `dense_random_fp_seeded::<7>(15, 17, 0.05, 1)` are both `[1, 2, 4, 5, 9, 10, 11, 15]` — i.e., this exact cell happens to agree by chance. The bug is structural (rank under-count and non-canonical scaling) and reproduces strongly across 47 cells in the Markowitz-grid sweep; the discovery sweep is the more rigorous reproducer than the single named cell.
+- **R0 finding (resolved in R1)**: The issue-named 15×17 GF(7)/seed=1/density=0.05 cell agrees pre-fix and post-fix by chance (canonical and pre-fix outputs are both `[1, 2, 4, 5, 9, 10, 11, 15]`). `test_rref_canonical_15x17_gf7_seed1` was NOT a regression guard. Fixed in R1: renamed to `test_rref_canonical_15x17_gf7_seed1_structural_correctness` (structural check only) and the actual regression guard is now `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` (5 hardcoded divergent cells).
+- **R0 finding (resolved in R1)**: `test_rref_canonical_sweep_proptest_like` was a deterministic nested loop, not a real `proptest!`. Replaced in R1 by `proptest_field_matrix_rref_canonical_rank_deficient_jit_bd9c6e13` (128 cases, real proptest, rank-deficient by construction).
+- **R0 finding (resolved in R1)**: Docstring said "32 seeds x 7 shapes x 5 densities" but the loop has 6 shapes. Fixed to "6 shapes".
+- **R0 finding (resolved in R1)**: `direct_rref_oracle_fp` and `dense_random_fp_seeded` were duplicated across `ple.rs` and `sparse_matrix.rs`. Promoted to shared SSOT in `test_random_matrix.rs`; both files now use aliases.
 - No regressions were observed in any adjacent module (sparse, rref_comprehensive, ple-budget, lu, nullspace).
 - The pre-existing comment in `split_compact` (lines 738–745) was already correct against the storage convention; only the inter-block step had drifted.
