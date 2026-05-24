@@ -6,14 +6,15 @@
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "27bb2f75-7305-4ae2-8cfe-512696bf4fcc",
-    "5ce13bae-61db-4df2-85b1-87447f643cd8",
     "873cbec1-6c55-44db-9685-f6c8a2614eb6",
+    "27bb2f75-7305-4ae2-8cfe-512696bf4fcc",
     "615db3b9-9dbf-44b6-a9e4-7f60d6009a09",
+    "e8a0c47a-2ad1-4c31-bb30-531256fce432",
     "52cce970-8142-4ff9-ac19-95ed994fee38",
-    "b0fa00af-795c-49de-b27a-870d5e239cc1",
+    "5ce13bae-61db-4df2-85b1-87447f643cd8",
+    "bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8",
     "aaa847cf-1f94-42a4-9ddc-513a04c92b5a",
-    "e8a0c47a-2ad1-4c31-bb30-531256fce432"
+    "b0fa00af-795c-49de-b27a-870d5e239cc1"
   ],
   "gates_required": [
     "code-review",
@@ -39,5 +40,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-08T21:53:15.427284885+00:00",
-  "updated_at": "2026-05-24T00:33:39.029109626+00:00"
+  "updated_at": "2026-05-24T10:45:54.884766596+00:00"
 }

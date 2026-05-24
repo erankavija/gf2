@@ -1,0 +1,24 @@
+{
+  "id": "bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8",
+  "title": "Fix non-canonical RREF in FieldMatrix::rref dense PLE path",
+  "description": "`FieldMatrix::rref` (the dense PLE-based RREF in `crates/gf2-core/src/field/ple.rs`) produces a non-canonical RREF on a corner-case input. Discovered during 5ce13bae's Markowitz-sparse test development.\n\n## Reproducer\n\nInput: 15×17 GF(7) matrix, generated at density 0.05 with seed=1 (the exact generator used in `crates/gf2-core/src/field/sparse_matrix.rs::tests` Markowitz sweep). Use the same `random_sparse_fp` seeded RNG as that test module.\n\nExpected canonical RREF pivot columns: `{0, 1, 2, 3, 5, 6, 7, 10, 15, 16}`.\nObserved `FieldMatrix::rref` output pivot columns: `{0, 1, 2, 3, 5, 6, 7, 13, 15, 16}`.\n\nBoth outputs are row-echelon forms of *some* row-equivalent matrix, but only the first set is the **canonical** RREF — the leftmost linearly-independent column set is uniquely determined by the row space. The dense PLE path's choice of `13` over `10` indicates the rank-deficient PLE recursion exhibits a row-permutation pattern that breaks canonical-leftmost selection at the relevant elimination step.\n\n## Workaround applied by 5ce13bae\n\n5ce13bae's Markowitz sparse RREF correctly produces the canonical form. Its test suite circumvents the dense-reference bug by using an in-test textbook column-by-column Gauss-Jordan oracle (`direct_rref_reference_fp` / `direct_rref_reference_g8` in `crates/gf2-core/src/field/sparse_matrix.rs` tests). The pre-existing sparse-vs-dense comparison tests do not catch this bug because their chosen seeds avoid the failure pattern.\n\n## Success Criteria\n\n- [hard] Reproduce the bug on the named 15×17 GF(7)/seed=1/density=0.05 input; document the divergence with hard evidence (pivot sets).\n- [hard] Fix `FieldMatrix::rref` so it produces canonical RREF (leftmost linearly-independent pivot column set) on this input AND on a property-based proptest covering 100+ random rank-deficient shapes.\n- [hard] Bit-exact equality with the textbook Gauss-Jordan oracle (`direct_rref_reference_fp` in `sparse_matrix.rs` tests, or a new module-local equivalent) on the full sweep.\n- [hard] No regression on the existing `FieldMatrix::rref` tests in `crates/gf2-core/src/field/ple.rs::tests` and adjacent modules.\n- [hard] Diagnostic note: the fix should preserve the PLE-based decomposition's downstream uses (rank computation, deficient-rank handling, solver paths). Don't drop the PLE path — fix its canonical-RREF projection.\n\n## Out of scope\n\n- Performance optimisation of `FieldMatrix::rref` beyond what's needed for correctness.\n- Touching the sparse RREF path (owned by 5ce13bae / `SparseFieldMatrix::rref`).\n- AVX-512 / VNNI / GFNI work (out of scope for epic 026fc832 per its scope-boundary section).\n\n## Authority and references\n\n- 5ce13bae evidence doc § 6 \"Open question — pre-existing `FieldMatrix::rref` canonical divergence\" (`dev/bench_results/2026-05-24-5ce13bae-markowitz-sparse-rref.md`).\n- Discovery commit: `12d2b3a2` (sparse-matrix worker preserved the diagnostic in test-module).\n- Filed under epic `026fc832` per user approval 2026-05-24 (scope-creep accepted — bug discovered during epic work; closure tracked under epic).\n\n## Notes\n\nThis is a correctness bug, not a performance issue. It is decoupled from any aspirational marker. The fix is small in scope (one elimination step in PLE) but warrants thorough proptest coverage to confirm no other corner cases exist.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:bug",
+    "component:gf2-core",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-24T10:45:37.973733708+00:00",
+  "updated_at": "2026-05-24T10:45:37.973739038+00:00"
+}
