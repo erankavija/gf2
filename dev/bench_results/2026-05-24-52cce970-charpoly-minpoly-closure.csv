@@ -1,0 +1,17 @@
+cell,kind,field,n,fflas_us,gf2_r0_us,gf2_r1_us,fflas_ratio_r0,fflas_ratio_r1,ceiling_us,delta_vs_r0_pct,verdict_r1
+charpoly_ref/Fp_251/256,charpoly,Fp_251,256,1316.86,2635,1867.2,2.001,1.418,1975,-29.1,PASS
+charpoly_ref/Fp_251/64,charpoly,Fp_251,64,476.418,100.18,89.138,0.210,0.187,715,-11.0,PASS
+charpoly_ref/Fp_65521/64,charpoly,Fp_65521,64,674.064,280.77,261.64,0.417,0.388,1011,-6.8,PASS
+charpoly_ref/Fp_65521/256,charpoly,Fp_65521,256,12378,13523,12358,1.093,0.998,18567,-8.6,PASS
+charpoly_ref/Fp_M31/64,charpoly,Fp_M31,64,743.458,701.69,702.83,0.944,0.945,1115,0.2,PASS
+charpoly_ref/Fp_M31/256,charpoly,Fp_M31,256,43920,35116,35124,0.799,0.800,65880,0.0,PASS
+charpoly_ref/Fp_7/64,charpoly,Fp_7,64,401.970,93.06,83.795,0.231,0.208,603,-10.0,PASS
+charpoly_ref/Fp_7/256,charpoly,Fp_7,256,13633,2403.8,1774.7,0.176,0.130,20450,-26.2,PASS
+minpoly_ref/Fp_251/64,minpoly,Fp_251,64,134.866,171.78,170.40,1.273,1.263,202,-0.8,PASS
+minpoly_ref/Fp_251/256,minpoly,Fp_251,256,1633.957,2132.2,2135.1,1.305,1.307,2451,0.1,PASS
+minpoly_ref/Fp_65521/64,minpoly,Fp_65521,64,522,299.04,286.93,0.573,0.550,783,-4.0,PASS
+minpoly_ref/Fp_65521/256,minpoly,Fp_65521,256,17200,9313,9375.8,0.541,0.545,25800,0.7,PASS
+minpoly_ref/Fp_M31/64,minpoly,Fp_M31,64,1679,962.42,964.24,0.573,0.574,2519,0.2,PASS
+minpoly_ref/Fp_M31/256,minpoly,Fp_M31,256,81500,57914,57869,0.711,0.710,122250,-0.1,PASS
+minpoly_ref/Fp_7/64,minpoly,Fp_7,64,569.273,125.07,122.98,0.220,0.216,854,-1.7,PASS
+minpoly_ref/Fp_7/256,minpoly,Fp_7,256,20290,2979.2,2929.5,0.147,0.144,30435,-1.7,PASS

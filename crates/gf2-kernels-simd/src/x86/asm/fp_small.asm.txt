@@ -3,13 +3,13 @@
 ; crate         : gf2-kernels-simd
 ; primary       : gf2_kernels_simd::x86::fp_small::fp_small_batch_mul
 ; extra symbols : gf2_kernels_simd::x86::fp_small::fp_small_batch_add gf2_kernels_simd::x86::fp_small::fp_small_batch_sub gf2_kernels_simd::x86::fp_small::fp_small_batch_dot gf2_kernels_simd::x86::fp_small::fp_small_gemm_row_panel gf2_kernels_simd::x86::fp_small::fp_small_sub_scaled gf2_kernels_simd::x86::fp_small::fp_small_spmm_row
-; output        : crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt
+; output        : /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt
 ; rustc         : rustc 1.95.0 (59807616e 2026-04-14)
 ; host triple   : x86_64-unknown-linux-gnu
 ; target-cpu    : <unset; rely on #[target_feature]>
 ; RUSTFLAGS     : <empty>
-; commit        : 653b27c0
-; regenerated   : 2026-05-24T13:25:53Z
+; commit        : dbfd11ef
+; regenerated   : 2026-05-24T15:46:55Z
 ; tool          : cargo-show-asm
 ; ---------------------------------------------------------
 
@@ -20,7 +20,7 @@
 
    Compiling gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-simd)
 
-    Finished `release` profile [optimized] target(s) in 1.56s
+    Finished `release` profile [optimized] target(s) in 1.54s
 gf2_kernels_simd::x86::fp_small::fp_small_batch_mul:
 	push rbx
 	sub rsp, 32
@@ -769,35 +769,35 @@ gf2_kernels_simd::x86::fp_small::fp_small_gemm_row_panel:
 	div r8d
 	jmp .LBB81_25
 .LBB81_59:
-	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.142]
-	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.143]
+	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.143]
+	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.144]
 	lea rsi, [rsp + 72]
 	lea rdx, [rsp + 56]
 	mov r8d, 75
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB81_60:
-	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.144]
-	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.145]
+	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.145]
+	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.146]
 	lea rsi, [rsp + 80]
 	lea rdx, [rsp + 88]
 	mov r8d, 85
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB81_61:
-	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.146]
-	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.147]
+	lea rcx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.147]
+	lea r9, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.148]
 	lea rsi, [rsp + 96]
 	lea rdx, [rsp + 64]
 	mov r8d, 79
 	xor edi, edi
 	call qword ptr [rip + core::panicking::assert_failed::<usize, usize>@GOTPCREL]
 .LBB81_58:
-	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.149]
+	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.150]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_const::panic_const_rem_by_zero@GOTPCREL]
 .LBB81_31:
-	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.148]
+	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.149]
 	vzeroupper
 	call qword ptr [rip + core::panicking::panic_const::panic_const_rem_by_zero@GOTPCREL]
 
@@ -810,80 +810,75 @@ gf2_kernels_simd::x86::fp_small::fp_small_gemm_row_panel:
 gf2_kernels_simd::x86::fp_small::fp_small_sub_scaled:
 	sub rsp, 56
 	cmp rsi, rcx
-	jb .LBB80_10
+	jb .LBB80_11
 	test rcx, rcx
 	je .LBB80_9
-	test r9b, r9b
-	je .LBB80_11
 	mov r10, rdx
-	mov r11, rcx
-	shr r11, 4
-	movzx r8d, r8b
+	mov rdx, rcx
+	shr rdx, 4
+	movzx eax, r8b
 	movzx esi, r9b
-	je .LBB80_6
-	vmovd xmm0, r8d
+	je .LBB80_5
+	movzx r8d, word ptr [rsp + 64]
+	vmovd xmm0, eax
 	vpbroadcastw ymm0, xmm0
-	vmovd xmm1, esi
+	vmovd xmm1, r8d
 	vpbroadcastw ymm1, xmm1
-	xor r9d, r9d
-	mov eax, 65536
-	xor edx, edx
-	div esi
-	vmovd xmm2, eax
-	vpbroadcastw xmm2, xmm2
-	vpmovzxwd ymm2, xmm2
-	shl r11, 4
-.LBB80_5:
-	vpmovzxbw ymm3, xmmword ptr [r10 + r9]
+	vmovd xmm2, esi
+	vpbroadcastw ymm2, xmm2
+	shl rdx, 4
+	xor r8d, r8d
+.LBB80_4:
+	vpmovzxbw ymm3, xmmword ptr [r10 + r8]
 	vpmullw ymm3, ymm0, ymm3
-	vpmovzxwd ymm4, xmm3
-	vextracti128 xmm5, ymm3, 1
-	vpmovzxwd ymm5, xmm5
-	vpmulhuw ymm5, ymm5, ymm2
-	vpmulhuw ymm4, ymm4, ymm2
-	vpackusdw ymm4, ymm4, ymm5
-	vpermq ymm4, ymm4, 216
-	vpmullw ymm4, ymm1, ymm4
+	#APP
+
+	vpmulhuw ymm4, ymm3, ymm1
+
+	#NO_APP
+	vpmullw ymm4, ymm2, ymm4
 	vpsubw ymm3, ymm3, ymm4
-	vpsubw ymm4, ymm3, ymm1
+	vpsubw ymm4, ymm3, ymm2
 	vpminuw ymm3, ymm3, ymm4
-	vpmovzxbw ymm4, xmmword ptr [rdi + r9]
+	vpmovzxbw ymm4, xmmword ptr [rdi + r8]
 	vpsubw ymm3, ymm4, ymm3
-	vpaddw ymm4, ymm3, ymm1
+	vpaddw ymm4, ymm3, ymm2
 	vpminuw ymm3, ymm4, ymm3
 	vextracti128 xmm4, ymm3, 1
 	vpackuswb xmm3, xmm3, xmm4
-	vmovdqu xmmword ptr [rdi + r9], xmm3
-	add r9, 16
-	cmp r11, r9
-	jne .LBB80_5
-.LBB80_6:
-	movabs r9, 9223372036854775792
-	and r9, rcx
-	cmp r9, rcx
+	vmovdqu xmmword ptr [rdi + r8], xmm3
+	add r8, 16
+	cmp rdx, r8
+	jne .LBB80_4
+.LBB80_5:
+	movabs r8, 9223372036854775792
+	and r8, rcx
+	cmp r8, rcx
 	je .LBB80_9
-	movzx r8d, r8w
+	test r9b, r9b
+	je .LBB80_10
+	movzx r9d, ax
 .LBB80_8:
-	movzx eax, byte ptr [r10 + r9]
-	imul eax, r8d
+	movzx eax, byte ptr [r10 + r8]
+	imul eax, r9d
 	xor edx, edx
 	div si
 	movzx edx, dx
-	movzx r11d, byte ptr [rdi + r9]
+	movzx r11d, byte ptr [rdi + r8]
 	mov eax, esi
 	sub eax, edx
 	add eax, r11d
 	xor edx, edx
 	div esi
-	mov byte ptr [rdi + r9], dl
-	inc r9
-	cmp r9, rcx
+	mov byte ptr [rdi + r8], dl
+	inc r8
+	cmp r8, rcx
 	jb .LBB80_8
 .LBB80_9:
 	add rsp, 56
 	vzeroupper
 	ret
-.LBB80_10:
+.LBB80_11:
 	mov qword ptr [rsp + 8], rsi
 	mov qword ptr [rsp + 16], rcx
 	lea rax, [rsp + 8]
@@ -897,9 +892,10 @@ gf2_kernels_simd::x86::fp_small::fp_small_sub_scaled:
 	lea rdx, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.141]
 	lea rsi, [rsp + 24]
 	call qword ptr [rip + core::panicking::panic_fmt@GOTPCREL]
-.LBB80_11:
-	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.117]
-	call qword ptr [rip + core::panicking::panic_const::panic_const_div_by_zero@GOTPCREL]
+.LBB80_10:
+	lea rdi, [rip + .Lanon.03022515bb33221b8c95a2bdde93b519.142]
+	vzeroupper
+	call qword ptr [rip + core::panicking::panic_const::panic_const_rem_by_zero@GOTPCREL]
 
 ;==========================================================
 ; symbol: gf2_kernels_simd::x86::fp_small::fp_small_spmm_row
