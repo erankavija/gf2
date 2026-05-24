@@ -72,11 +72,17 @@ followed verbatim:
 Bench driver: `dev/bench_results/run_68cdf4c8_route_a_bench.sh`
 runs two phases sequentially in the same process per trial:
 
-1. **Phase 1 (route-A on):** `GF2_GF251_ROUTE_A=1` env var set. GF(251)
-   dispatches through the reworked Candidate F. GF(7), GF(31), GF(127)
-   ignore the env var and continue to use Candidate C.
+1. **Phase 1 (route-A on):** `GF2_GF251_ROUTE_A=1` env var set. The
+   GF(251) bench function reads the env var via safe `std::env::var()`
+   and calls the safe `set_route_a_gf251_enabled(true)` setter before
+   the GF(251) bench group runs (jit:68cdf4c8 R1 commit `4bad2e72` —
+   the original env-var-read-at-dispatch path was retired in favor of
+   an `AtomicBool` to satisfy SC#3 unsafe-isolation; the env var is
+   now a launcher-convenience flag only). GF(7), GF(31), GF(127) bench
+   functions don't read this env var and continue to use Candidate C.
 2. **Phase 2 (default):** env var unset. Every prime dispatches through
-   Candidate C (`N_THRESH_PRIME = 252`, `select_f32_path` false).
+   Candidate C (`N_THRESH_PRIME = 252`, `select_f32_path` false). The
+   GF(251) bench function calls `set_route_a_gf251_enabled(false)`.
 
 The non-regression criterion (criterion 6) is satisfied by phase-2's
 direct 5-trial measurement of GF(7), GF(31), GF(127), and GF(251)

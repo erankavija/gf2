@@ -294,6 +294,17 @@ fn bench_gemm_fp_241(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_251(c: &mut Criterion) {
+    // Per jit:68cdf4c8 SC#1: the Phase 1 route A f32/FMA cascade is a
+    // non-default runtime debug switch. The bench reads the launcher-
+    // convenience env var `GF2_GF251_ROUTE_A` (a safe read via
+    // `std::env::var`) and toggles the safe AtomicBool setter in
+    // `gf2_core::gfp::simd_ops`. Production dispatch defaults to route C
+    // (Candidate C) — this only matters when the bench driver sets the
+    // env var to opt into the A/B comparison.
+    let route_a = std::env::var("GF2_GF251_ROUTE_A")
+        .map(|v| v == "1")
+        .unwrap_or(false);
+    gf2_core::gfp::simd_ops::set_route_a_gf251_enabled(route_a);
     bench_square::<gf2_core::gfp::Fp<PRIME_251>, _>(
         c,
         "gemm/Fp_251",
@@ -308,6 +319,9 @@ fn bench_gemm_fp_251(c: &mut Criterion) {
         RECT_SHAPES,
         fp_matrix_from_seed::<PRIME_251>,
     );
+    // Reset to the production default to avoid bleeding the toggle into
+    // subsequent bench groups that share the criterion process.
+    gf2_core::gfp::simd_ops::set_route_a_gf251_enabled(false);
 }
 
 fn bench_gemm_fp_65521(c: &mut Criterion) {

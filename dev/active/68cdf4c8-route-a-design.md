@@ -133,33 +133,61 @@ or lower lane utilisation.
 ## 3. Toggle mechanism
 
 The criterion says "non-default dispatch toggle (cargo feature OR
-runtime debug switch)". A runtime env-var toggle keeps the change
-local to `crates/gf2-core/src/gfp/simd_ops.rs` and avoids adding a
-Cargo feature that would propagate across the workspace.
+runtime debug switch)". This issue ships a **safe `AtomicBool` runtime
+debug switch** (the R0 env-var-based draft below is preserved for
+historical reference but is no longer the shipped toggle — see the
+R1 amendment block at the end of this section).
+
+Shipped at R1 (commit `4bad2e72`):
 
 ```rust
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static ROUTE_A_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Safe runtime debug switch for jit:68cdf4c8 route A. Default off;
+/// production dispatch is unaffected unless a caller opts in.
+pub fn set_route_a_gf251_enabled(enabled: bool) {
+    ROUTE_A_GF251_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+#[inline]
+pub(crate) fn route_a_gf251_enabled() -> bool {
+    ROUTE_A_GF251_ENABLED.load(Ordering::Relaxed)
+}
+
 fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool {
     // Production: N_THRESH_PRIME=252 keeps F dormant.
     if P >= N_THRESH_PRIME && P <= 251 { return true; }
     // Route A toggle (issue 68cdf4c8): opt-in measurement path for GF(251).
-    if P == 251 && route_a_enabled() { return true; }
+    if P == 251 && route_a_gf251_enabled() { return true; }
     false
-}
-
-fn route_a_enabled() -> bool {
-    std::env::var("GF2_GF251_ROUTE_A").map(|v| v == "1").unwrap_or(false)
 }
 ```
 
-This is checked at the GEMM dispatch site only (not inside the inner
-loop), so the per-call overhead is one env-var read per GEMM call
-(~50 ns); no inner-loop cost. The env var is read every call because
-`OnceLock`-caching the value would be a semantic gotcha for
-test/bench harnesses that set the var per-call.
+Per-call overhead is one relaxed atomic load (~1-2 ns) at the GEMM
+dispatch site only (not inside the inner loop). The bench file at
+`crates/gf2-core/benches/fieldmatrix_gemm.rs::bench_gemm_fp_251` reads
+the launcher-convenience env var `GF2_GF251_ROUTE_A` (safe
+`std::env::var()`) and calls `set_route_a_gf251_enabled(true)` before
+the GF(251) bench group, resetting to `false` after — so the route-A
+shell driver `run_68cdf4c8_route_a_bench.sh` still works unchanged.
 
 The production dispatch (`N_THRESH_PRIME = 252`,
-`route_a_enabled() == false`) is unchanged: zero impact on default
-behaviour, satisfying the "no production dispatch change" criterion.
+`route_a_gf251_enabled() == false`) is unchanged: zero impact on
+default behaviour, satisfying the "no production dispatch change"
+criterion.
+
+### 3.1 R0 draft (historical — env-var toggle, retired in R1)
+
+The R0 implementation used a `std::env::var("GF2_GF251_ROUTE_A")` read
+inside `route_a_enabled()`. The test harness then needed
+`unsafe { std::env::set_var(...) }` to drive it (Rust 1.78+ marked
+`set_var`/`remove_var` unsafe). That violated SC#3 unsafe-isolation
+(unsafe-in-tests in `gf2-core` whose crate-level attribute is
+`#![deny(unsafe_code)]`). R1 (`4bad2e72`) replaced the env-var toggle
+with the safe `AtomicBool` setter shown above; tests now call the
+setter directly without any `unsafe` block.
 
 ## 4. Public references consulted
 

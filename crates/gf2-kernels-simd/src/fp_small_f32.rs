@@ -35,8 +35,11 @@
 //!
 //! The lookup-table pack (replacing the per-element `value()` REDC
 //! chain in the caller) lives in `crates/gf2-core/src/gfp/simd_ops.rs`
-//! alongside the existing `SmallPrimeTables` cache, gated on the
-//! `GF2_GF251_ROUTE_A=1` runtime debug switch. Both paths return
+//! alongside the existing `SmallPrimeTables` cache, gated on the safe
+//! `AtomicBool` runtime debug switch (`set_route_a_gf251_enabled` /
+//! `route_a_gf251_enabled`; see jit:68cdf4c8 R1 commit `4bad2e72` —
+//! the original env-var toggle was retired in favor of a safe setter
+//! to satisfy SC#3 unsafe-isolation). Both paths return
 //! bit-identical bytes for every input pair on every `p ≤ 251`; see
 //! `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs::tests` for the
 //! parity proptest battery.
@@ -168,10 +171,11 @@ pub struct SmallPrimeF32Fns {
     /// Route-A variant of `batch_gemm_fn` (issue 68cdf4c8). Identical
     /// inner f32-FMA loop, but uses an AVX2 32-bit-lane Barrett
     /// reduction on each output tile instead of a per-cell scalar
-    /// `% p`. Selected for GF(251) only when the `GF2_GF251_ROUTE_A`
-    /// runtime debug toggle is set; the default production dispatch
-    /// continues to call `batch_gemm_fn` (when Candidate F is selected
-    /// at all) or Candidate C.
+    /// `% p`. Selected for GF(251) only when the safe runtime debug
+    /// toggle `gf2_core::gfp::simd_ops::set_route_a_gf251_enabled(true)`
+    /// has been called; the default production dispatch continues to
+    /// call `batch_gemm_fn` (when Candidate F is selected at all) or
+    /// Candidate C.
     pub batch_gemm_route_a_fn: SmallPrimeF32GemmFn,
 }
 
