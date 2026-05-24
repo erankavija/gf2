@@ -17,6 +17,8 @@
 //! Both paths are bit-exact: they produce the unique inverse of a
 //! non-singular GF(2) matrix and return `None` on a singular input.
 
+use crate::alg::m4rm::build_gray_table_flat;
+use crate::alg::rref::default_block_size;
 use crate::kernels::ops::{resolve_xor_inplace, xor_inplace, XorInplaceFn};
 use crate::matrix::BitMatrix;
 
@@ -74,11 +76,43 @@ pub fn invert(m: &BitMatrix) -> Option<BitMatrix> {
 /// Inverts a square matrix using textbook Gauss–Jordan over the augmented
 /// matrix `[A | I]`. Issues one row-XOR per non-pivot row per column.
 ///
-/// This is the V0 scalar path — kept as the correctness oracle for the
+/// This is the scalar path — kept as the correctness oracle for the
 /// blocked M4RM path and used for very small matrices where its lower
-/// constant factor wins.
+/// constant factor wins. It is called directly by [`invert`] for matrices
+/// below [`INVERT_M4RI_THRESHOLD`].
 ///
-/// Returns `None` if the matrix is non-square or singular.
+/// # Arguments
+///
+/// * `m` - Square matrix to invert.
+///
+/// # Returns
+///
+/// * `Some(inverse)` — the inverse matrix when one exists.
+/// * `None` — when the matrix is non-square or singular.
+///
+/// # Panics
+///
+/// Does not panic. Non-square or singular inputs return `None`.
+///
+/// # Complexity
+///
+/// O(n³) bit operations, with n = `m.rows()`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::alg::gauss::invert_scalar;
+///
+/// // Inverting the 3×3 identity gives the identity.
+/// let id = BitMatrix::identity(3);
+/// let inv = invert_scalar(&id).unwrap();
+/// assert_eq!(inv, id);
+///
+/// // A singular (all-zero) matrix has no inverse.
+/// let zero = BitMatrix::zeros(2, 2);
+/// assert!(invert_scalar(&zero).is_none());
+/// ```
 pub fn invert_scalar(m: &BitMatrix) -> Option<BitMatrix> {
     let n = m.rows();
     if n != m.cols() {
@@ -126,20 +160,68 @@ pub fn invert_scalar(m: &BitMatrix) -> Option<BitMatrix> {
 /// elimination on `[A | I]`.
 ///
 /// For each column block of width `k`, the routine finds `k` pivots inside
-/// the block, builds a 2ᵏ-entry Gray-code table of XORs of the pivot rows
-/// (over the trailing word suffix), and applies the table to every other
-/// row in a single suffix-XOR per row. The asymptotic word-op count drops
-/// from O(n³ / 64) to O(n³ / (64 · k)), with `k = O(log₂ n)`.
+/// the block, then delegates table construction to
+/// [`crate::alg::m4rm::build_gray_table_flat`], which builds a 2ᵏ-entry
+/// Gray-code table of XOR combinations of the pivot rows. Each non-pivot row
+/// then clears the whole block with a single suffix XOR. The asymptotic
+/// word-op count drops from O(n³ / 64) to O(n³ / (64 · k)), with
+/// `k = O(log₂ n)`.
 ///
-/// Returns `None` if the matrix is non-square or singular.
+/// For matrices below [`INVERT_M4RI_THRESHOLD`] the constant overhead of
+/// the Gray table dominates row traffic, so [`invert`] dispatches to
+/// [`invert_scalar`] instead.
+///
+/// # Arguments
+///
+/// * `m` - Square matrix to invert.
+///
+/// # Returns
+///
+/// * `Some(inverse)` — the inverse matrix when one exists.
+/// * `None` — when the matrix is non-square or singular.
+///
+/// # Panics
+///
+/// Does not panic. Non-square or singular inputs return `None`.
+///
+/// # Complexity
+///
+/// O(n³ / (64 · k)) word operations where k = O(log₂ n), equivalent to
+/// O(n³ / log n) word operations. This is the standard M4RI / M4RM invert
+/// bound.
 ///
 /// # Algorithm reference
 ///
-/// The block-elimination kernel mirrors the M4RI-style block schedule
-/// already used by [`crate::alg::rref::rref`]; the only structural difference
-/// is that invert eliminates rows **above** the pivot stripe in addition to
-/// rows below, which is what turns the row-echelon form into the inverse on
-/// the right half of `[A | I]`.
+/// The block-elimination kernel uses the same block schedule as
+/// [`crate::alg::rref::rref`]. The structural difference is that invert
+/// operates on the augmented matrix `[A | I]` and eliminates rows both
+/// **above** and **below** the pivot stripe (Gauss–Jordan), whereas RREF
+/// only eliminates below (Gaussian elimination). Both paths share the same
+/// block-size policy and Gray-table builder.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::matrix::BitMatrix;
+/// use gf2_core::alg::gauss::invert_m4ri;
+/// use gf2_core::alg::m4rm::multiply;
+///
+/// // Inverting the 8×8 identity gives the identity.
+/// let id = BitMatrix::identity(8);
+/// let inv = invert_m4ri(&id).unwrap();
+/// assert_eq!(inv, id);
+///
+/// // For an arbitrary invertible matrix, M × M⁻¹ = I.
+/// let m = BitMatrix::random_seeded(8, 8, 42);
+/// if let Some(inv) = invert_m4ri(&m) {
+///     let product = multiply(&m, &inv);
+///     assert_eq!(product, BitMatrix::identity(8));
+/// }
+///
+/// // A singular matrix has no inverse.
+/// let zero = BitMatrix::zeros(4, 4);
+/// assert!(invert_m4ri(&zero).is_none());
+/// ```
 pub fn invert_m4ri(m: &BitMatrix) -> Option<BitMatrix> {
     let n = m.rows();
     if n != m.cols() {
@@ -172,7 +254,7 @@ pub fn invert_m4ri(m: &BitMatrix) -> Option<BitMatrix> {
     let stride_words = aug.stride_words();
     let xor = resolve_xor_inplace(stride_words);
 
-    let block_size = default_block_size_invert(n);
+    let block_size = default_block_size(n);
     debug_assert!((1..=10).contains(&block_size));
 
     let mut col = 0usize;
@@ -291,36 +373,26 @@ pub fn invert_m4ri(m: &BitMatrix) -> Option<BitMatrix> {
     Some(inv)
 }
 
-/// Default M4RM block width for `invert` over GF(2).
-///
-/// The threshold table mirrors `crate::alg::rref::default_block_size` and
-/// the M4RI library's own `m4ri_optk(n)` rule of thumb (M4RI clamps `k` to
-/// roughly `log₂(n)` then floors at small `n`). For the SOTA target sizes:
-///
-/// | n     | k_block |
-/// |-------|---------|
-/// | ≤ 64  | 4       |
-/// | 65–512| 4       |
-/// | > 512 | 8       |
-///
-/// The right column gives a 16-entry table at small n and a 256-entry
-/// table at large n. The 256-entry case is the table size M4RI uses at
-/// n=1024 in its `mzd_invert_m4ri` default schedule.
-fn default_block_size_invert(n: usize) -> usize {
-    match n {
-        0..=64 => 4,
-        65..=512 => 4,
-        _ => 8,
-    }
-}
-
 /// Find a pivot row at or below `start_row` for column `col`, reducing
 /// scanned rows by the pivots collected so far in the block so that
 /// their column-`col` bit reflects the post-elimination state.
 ///
-/// This mirrors `crate::alg::rref::find_block_pivot` but uses the public
-/// `BitMatrix::get` to dodge the `pub(crate)` access boundary on the unsafe
-/// helpers.
+/// # Structural difference from `rref::find_block_pivot`
+///
+/// The logic is analogous to `crate::alg::rref::find_block_pivot` but
+/// differs in two ways that prevent sharing a single implementation:
+///
+/// 1. **Augmented matrix**: the pivot search is over an n×2n augmented
+///    matrix `[A | I]` rather than an m×n input. The column upper bound
+///    for pivots is `n` (the left half), not `matrix.cols()`, so this
+///    function's caller bounds `col < n` explicitly.
+/// 2. **Safe vs. unchecked access**: `rref::find_block_pivot` calls
+///    `BitMatrix::get_unchecked` (a `pub(crate)` method) whereas this
+///    function uses the public `BitMatrix::get` / `BitMatrix::row_xor_from`
+///    to respect the `#![deny(unsafe_code)]` boundary of this crate.
+///    Extracting a shared helper would require either exposing the unchecked
+///    accessor or accepting a performance penalty — neither is warranted at
+///    this call frequency.
 fn find_block_pivot_invert(
     aug: &mut BitMatrix,
     block_row_start: usize,
@@ -342,12 +414,27 @@ fn find_block_pivot_invert(
 }
 
 /// Eliminate a `k`-pivot block from every row outside the pivot stripe
-/// using a Gray-code table of pivot-row XOR combinations restricted to the
-/// trailing word suffix.
+/// using a Gray-code table of pivot-row XOR combinations.
 ///
-/// This is the M4RI "method-of-the-four-Russians for elimination" step
-/// generalised to Gauss–Jordan (i.e., the table is applied to rows above
-/// the pivot stripe as well as below, not only below as in `rref::eliminate_block`).
+/// The Gray-code table is built by delegating to
+/// [`crate::alg::m4rm::build_gray_table_flat`] (the shared builder also used
+/// by M4RM matrix multiplication). Each non-pivot row clears the entire
+/// block with a single suffix XOR into the table entry selected by its
+/// `block_pivots` bits.
+///
+/// # Structural difference from `rref::eliminate_block`
+///
+/// `rref::eliminate_block` only eliminates rows **below** the pivot stripe
+/// (standard Gaussian elimination → REF). This function eliminates rows
+/// **both above and below** the pivot stripe (Gauss–Jordan → RREF / invert).
+/// The full-elimination scope is what converts the right half of `[A | I]`
+/// into A⁻¹ without a back-substitution pass.
+///
+/// Because the elimination scope is strictly broader, and because the
+/// augmented-matrix column indexing differs from the m×n RREF case, sharing
+/// a single `eliminate_block` implementation would require an extra
+/// "eliminate-above" flag and augmented-bounds parameters, adding complexity
+/// with no measurable benefit at invert call frequency.
 #[allow(clippy::too_many_arguments)]
 fn eliminate_block_full(
     aug: &mut BitMatrix,
@@ -365,24 +452,16 @@ fn eliminate_block_full(
         return;
     }
 
-    // table[g] = XOR of pivot rows selected by the bits of g, restricted to
-    // the trailing suffix (first_word..stride_words). Gray-code walk so each
-    // step requires one XOR of a single pivot row.
+    // table[g] = XOR of pivot rows selected by the bits of g, over the full
+    // row width of the augmented matrix. Delegated to build_gray_table_flat
+    // (m4rm module) so the Gray-code table builder is not duplicated here.
+    // The lookup below slices each entry from first_word onward to cover
+    // only the suffix that can be non-zero after earlier blocks have been
+    // eliminated.
     let table_rows = 1usize << block_rows;
-    let mut table = vec![0u64; table_rows * suffix_words];
-    for idx in 1..table_rows {
-        let bit = idx.trailing_zeros() as usize;
-        let prev = idx & !(1usize << bit);
-
-        let (before, after) = table.split_at_mut(idx * suffix_words);
-        let prev_slice = &before[prev * suffix_words..prev * suffix_words + suffix_words];
-        let dst = &mut after[..suffix_words];
-        dst.copy_from_slice(prev_slice);
-        xor(
-            dst,
-            &aug.row_words(block_row_start + bit)[first_word..first_word + suffix_words],
-        );
-    }
+    let aug_cols = aug.cols();
+    let mut table = vec![0u64; table_rows * stride_words];
+    build_gray_table_flat(aug, block_row_start, block_rows, aug_cols, &mut table, xor);
 
     let stripe_end = block_row_start + block_rows;
     for row in 0..rows {
@@ -391,8 +470,12 @@ fn eliminate_block_full(
         }
         let table_idx = block_table_index_invert(aug, row, block_pivots);
         if table_idx != 0 {
-            let src_start = table_idx * suffix_words;
-            aug.row_xor_slice_from(row, first_word, &table[src_start..src_start + suffix_words]);
+            let entry_start = table_idx * stride_words + first_word;
+            aug.row_xor_slice_from(
+                row,
+                first_word,
+                &table[entry_start..entry_start + suffix_words],
+            );
         }
     }
 }
