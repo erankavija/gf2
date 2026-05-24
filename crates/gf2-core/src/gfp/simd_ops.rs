@@ -557,10 +557,6 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
                 // REDC call per element.
                 let from_mont = tables.from_mont.as_slice();
                 for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
-                    // SAFETY: raw_storage is in `[0, P)` and from_mont has
-                    // length P; the index is always in-bounds. Using
-                    // `get_unchecked` shaves a branch per element on the
-                    // hot inner pack loop.
                     let raw = src.raw_storage() as usize;
                     debug_assert!(raw < from_mont.len());
                     *dst = from_mont[raw];
