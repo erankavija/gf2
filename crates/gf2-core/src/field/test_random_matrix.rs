@@ -32,6 +32,7 @@
 //! platform-stable for our `cargo test` matrix).
 
 use crate::field::matrix::FieldMatrix;
+use crate::field::traits::FiniteField;
 use crate::field::vec::FieldVec;
 use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
 use crate::gfp::Fp;
@@ -146,4 +147,125 @@ pub fn random_gf2m_wide_1_invertible<C: Gf2mWideConfig<1>>(
         C::NAME,
         seed
     );
+}
+
+// ─── Sparse (density-threshold) Fp builder ───────────────────────────────────
+
+/// Returns a sparse `m × n` matrix over `Fp<P>` where each entry is
+/// independently non-zero with probability `density`. Non-zero values
+/// are sampled uniformly from `[1, P-1]`. Deterministic in `seed`.
+///
+/// Used by RREF/PLE tests in `ple.rs` and `sparse_matrix.rs`; this is
+/// the single source of truth for the generator (jit:bd9c6e13 SSOT fix).
+///
+/// # Arguments
+///
+/// - `rows`, `cols` — matrix dimensions.
+/// - `density` — Bernoulli probability that each entry is non-zero
+///   (0.0 = all-zero, 1.0 = all non-zero).
+/// - `seed` — deterministic seed for `StdRng`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::test_random_matrix::dense_random_fp_sparse;
+/// let m = dense_random_fp_sparse::<7>(4, 5, 0.3, 42);
+/// assert_eq!(m.rows(), 4);
+/// assert_eq!(m.cols(), 5);
+/// ```
+pub fn dense_random_fp_sparse<const P: u64>(
+    rows: usize,
+    cols: usize,
+    density: f64,
+    seed: u64,
+) -> FieldMatrix<Fp<P>> {
+    let mut rng = StdRng::seed_from_u64(seed);
+    let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
+    for r in 0..rows {
+        for c in 0..cols {
+            if rng.gen::<f64>() < density {
+                let v = (rng.gen::<u64>() % (P - 1)) + 1;
+                m.set(r, c, Fp::<P>::new(v));
+            }
+        }
+    }
+    m
+}
+
+// ─── Canonical RREF oracle ────────────────────────────────────────────────────
+
+/// Textbook column-by-column Gauss-Jordan RREF over `Fp<P>`.
+///
+/// Produces the canonical RREF by construction: pivot columns are the
+/// leftmost linearly-independent subset of the input's columns.
+/// Used as a byte-equality reference for `FieldMatrix::rref` tests in
+/// `ple.rs` and `sparse_matrix.rs`; this is the single source of truth
+/// for the oracle (jit:bd9c6e13 SSOT fix, was duplicated as
+/// `direct_rref_oracle_fp` in `ple.rs` and `direct_rref_reference_fp`
+/// in `sparse_matrix.rs`).
+///
+/// # Arguments
+///
+/// - `a` — input matrix (not mutated).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::test_random_matrix::{dense_random_fp_sparse, direct_rref_oracle_fp};
+/// let a = dense_random_fp_sparse::<7>(4, 5, 0.4, 1);
+/// let rref = direct_rref_oracle_fp(&a);
+/// assert_eq!(rref.rows(), 4);
+/// assert_eq!(rref.cols(), 5);
+/// ```
+pub fn direct_rref_oracle_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
+    let (m, n) = a.shape();
+    let mut e = a.clone();
+    let zero = Fp::<P>::new(0);
+    let one = Fp::<P>::new(1);
+    let mut next_pivot_row = 0usize;
+    for col in 0..n {
+        if next_pivot_row >= m {
+            break;
+        }
+        let mut pivot_row: Option<usize> = None;
+        for i in next_pivot_row..m {
+            if e.get(i, col) != zero {
+                pivot_row = Some(i);
+                break;
+            }
+        }
+        let Some(p) = pivot_row else {
+            continue;
+        };
+        if p != next_pivot_row {
+            for c in 0..n {
+                let tmp = e.get(next_pivot_row, c);
+                e.set(next_pivot_row, c, e.get(p, c));
+                e.set(p, c, tmp);
+            }
+        }
+        let piv = e.get(next_pivot_row, col);
+        if piv != one {
+            let inv = piv.inv().unwrap();
+            for c in 0..n {
+                let v = e.get(next_pivot_row, c) * inv;
+                e.set(next_pivot_row, c, v);
+            }
+        }
+        for k in 0..m {
+            if k == next_pivot_row {
+                continue;
+            }
+            let factor = e.get(k, col);
+            if factor == zero {
+                continue;
+            }
+            for c in 0..n {
+                let v = e.get(k, c) - factor * e.get(next_pivot_row, c);
+                e.set(k, c, v);
+            }
+        }
+        next_pivot_row += 1;
+    }
+    e
 }

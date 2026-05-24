@@ -1322,7 +1322,9 @@ fn pad_l_to_full<F: FiniteField>(
 mod tests {
     use super::*;
     use crate::field::matrix::{fieldmatrix_new_count, gemm, reset_fieldmatrix_new_count};
-    use crate::field::test_random_matrix::{random_fp, random_gf2m_wide_1};
+    use crate::field::test_random_matrix::{
+        dense_random_fp_sparse, direct_rref_oracle_fp, random_fp, random_gf2m_wide_1,
+    };
     use crate::gf2m::wide::Gf2mWide;
     use crate::gf2m::wide_config::Gf2mWideConfig;
     use crate::gf2m::{Gf2mElement, Gf2mField};
@@ -1657,103 +1659,34 @@ mod tests {
     // but does NOT verify canonical-leftmost pivots — which is a separate
     // uniqueness contract. The harness below adds:
     //
-    //   1. `direct_rref_oracle_fp` — textbook column-by-column
-    //      Gauss-Jordan over GF(p). Produces the canonical RREF by
-    //      construction (it scans columns left-to-right and pivots on
-    //      the first column with a non-zero entry below the current
-    //      pivot row).
-    //   2. `dense_random_fp_seeded` — the same seeded sparse-random
-    //      generator used by the Markowitz sweep tests in
-    //      `sparse_matrix.rs`. Lets us share the named 15x17 GF(7)
-    //      reproducer cited in the issue description.
-    //   3. `check_canonical_rref` — bit-exact equality between
+    //   1. `direct_rref_oracle_fp` — shared SSOT in
+    //      `field::test_random_matrix`. Textbook column-by-column
+    //      Gauss-Jordan over GF(p); produces canonical RREF by
+    //      construction (jit:bd9c6e13 SSOT fix).
+    //   2. `dense_random_fp_seeded` — thin alias to the shared
+    //      `dense_random_fp_sparse` SSOT in `field::test_random_matrix`.
+    //      Same seeded sparse-random generator used by Markowitz sweep
+    //      tests in `sparse_matrix.rs`.
+    //   3. `check_canonical_rref_fp` — bit-exact equality between
     //      `FieldMatrix::rref` and the oracle.
     //
-    // The named reproducer (15x17 GF(7) / density=0.05 / seed=1) is
-    // pinned as `test_rref_canonical_15x17_gf7_seed1` so any future
-    // regression in the canonical-leftmost projection is caught
-    // immediately.
+    // The actual regression guard is
+    // `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` (5 cells
+    // that diverged pre-fix, with hardcoded expected pivot sets).
+    // `test_rref_canonical_15x17_gf7_seed1_structural_correctness` is
+    // the issue-named structural check (does NOT guard regression; see
+    // evidence doc § 10).
 
-    /// Textbook column-by-column Gauss-Jordan RREF over `Fp<P>`.
-    /// Produces the canonical RREF by construction: pivot columns are
-    /// the leftmost linearly-independent subset of the input's columns.
-    #[cfg(test)]
-    fn direct_rref_oracle_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
-        let (m, n) = a.shape();
-        let mut e = a.clone();
-        let zero = Fp::<P>::new(0);
-        let one = Fp::<P>::new(1);
-        let mut next_pivot_row = 0usize;
-        for col in 0..n {
-            if next_pivot_row >= m {
-                break;
-            }
-            let mut pivot_row: Option<usize> = None;
-            for i in next_pivot_row..m {
-                if e.get(i, col) != zero {
-                    pivot_row = Some(i);
-                    break;
-                }
-            }
-            let Some(p) = pivot_row else {
-                continue;
-            };
-            if p != next_pivot_row {
-                for c in 0..n {
-                    let tmp = e.get(next_pivot_row, c);
-                    e.set(next_pivot_row, c, e.get(p, c));
-                    e.set(p, c, tmp);
-                }
-            }
-            let piv = e.get(next_pivot_row, col);
-            if piv != one {
-                let inv = piv.inv().unwrap();
-                for c in 0..n {
-                    let v = e.get(next_pivot_row, c) * inv;
-                    e.set(next_pivot_row, c, v);
-                }
-            }
-            for k in 0..m {
-                if k == next_pivot_row {
-                    continue;
-                }
-                let factor = e.get(k, col);
-                if factor == zero {
-                    continue;
-                }
-                for c in 0..n {
-                    let v = e.get(k, c) - factor * e.get(next_pivot_row, c);
-                    e.set(k, c, v);
-                }
-            }
-            next_pivot_row += 1;
-        }
-        e
-    }
-
-    /// Sparse-random `m x n` matrix over `Fp<P>`. Matches the generator
-    /// in `crates/gf2-core/src/field/sparse_matrix.rs` (`dense_random_fp`)
-    /// so the named 15x17 GF(7) / density=0.05 / seed=1 reproducer cited
-    /// in jit:bd9c6e13 can be shared verbatim between the two test modules.
-    #[cfg(test)]
+    /// Thin alias: `dense_random_fp_seeded` delegates to the shared
+    /// `dense_random_fp_sparse` SSOT in `field::test_random_matrix`
+    /// (jit:bd9c6e13 SSOT fix). Tests below use this name unchanged.
     fn dense_random_fp_seeded<const P: u64>(
         rows: usize,
         cols: usize,
         density: f64,
         seed: u64,
     ) -> FieldMatrix<Fp<P>> {
-        use rand::{Rng, SeedableRng};
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                if rng.gen::<f64>() < density {
-                    let v = (rng.gen::<u64>() % (P - 1)) + 1;
-                    m.set(r, c, Fp::<P>::new(v));
-                }
-            }
-        }
-        m
+        dense_random_fp_sparse::<P>(rows, cols, density, seed)
     }
 
     /// Returns the pivot columns of an RREF matrix in ascending order.
@@ -1803,45 +1736,72 @@ mod tests {
         );
     }
 
-    /// Named reproducer from jit:bd9c6e13.
+    /// Issue-named structural-correctness check for jit:bd9c6e13.
     ///
     /// Input: 15x17 GF(7) matrix, density=0.05, seed=1 (same seeded
     /// generator as `crates/gf2-core/src/field/sparse_matrix.rs` tests).
-    /// Canonical RREF pivots: `{0, 1, 2, 3, 5, 6, 7, 10, 15, 16}`.
-    /// The pre-fix dense PLE path's `FieldMatrix::rref` output picked
-    /// `{0, 1, 2, 3, 5, 6, 7, 13, 15, 16}` (non-canonical — column 13
-    /// chosen over column 10).
+    ///
+    /// NOTE: this exact cell happens to agree pre-fix and post-fix (the
+    /// pivots on this seed coincide by chance — see evidence doc § 10).
+    /// It is a structural correctness check, NOT a regression guard.
+    /// The actual regression guard is
+    /// `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` below.
     #[test]
-    fn test_rref_canonical_15x17_gf7_seed1() {
+    fn test_rref_canonical_15x17_gf7_seed1_structural_correctness() {
         let a = dense_random_fp_seeded::<7>(15, 17, 0.05, 1);
-        // The named reproducer in jit:bd9c6e13. Canonical RREF pivots
-        // are uniquely determined by the row space, computed via the
-        // textbook column-by-column Gauss-Jordan oracle.
-        let expected = direct_rref_oracle_fp(&a);
-        let expected_pivots = pivot_cols_of_rref(&expected);
-        let (_x, got) = a.rref();
-        let got_pivots = pivot_cols_of_rref(&got);
-        // Diagnostic: under the pre-fix dense PLE path, expected pivots
-        // were {0,1,2,3,5,6,7,10,15,16} and the buggy output picked a
-        // strict subset / non-leftmost set. After the fix both must
-        // agree.
-        assert_eq!(
-            got_pivots, expected_pivots,
-            "FieldMatrix::rref must produce canonical pivots on the \
-             15x17 GF(7)/seed=1/density=0.05 reproducer"
-        );
         check_canonical_rref_fp(&a);
-        // Also check that the rank reported by ple() matches the canonical
-        // pivot count (cross-check between ple() and rref()).
+        // Rank reported by ple() must match the canonical pivot count.
+        let (_x, got) = a.rref();
         assert_eq!(
             a.rank(),
-            expected_pivots.len(),
+            pivot_cols_of_rref(&got).len(),
             "rank(15x17 GF(7)/seed=1) must match canonical pivot count"
         );
     }
 
+    /// Regression guard for jit:bd9c6e13 — hardcoded cells that diverged
+    /// pre-fix (from evidence doc § 3 discovery sweep, 47 divergent cells).
+    ///
+    /// Each entry: `(pre-XOR seed, rows, cols, density, expected canonical pivots)`.
+    /// The actual generator key used is `seed ^ 0xF1AB_CAFE` (matching
+    /// `test_rref_canonical_markowitz_grid_sweep_fp7`). Expected pivots
+    /// were captured at post-fix HEAD (commit 95f28a57) against
+    /// `direct_rref_oracle_fp`.
+    ///
+    /// Pre-fix pivot divergences observed:
+    ///   - seed=0x8,  3×5,  0.50: got `[1, 4]`,       expected `[1, 2, 4]`
+    ///   - seed=0x19, 8×8,  0.05: got `[1, 5]`,       expected `[1, 3, 5]`
+    ///   - seed=0x1f, 8×8,  0.05: got `[1, 2, 4]`,    expected `[1, 2, 4, 5]`
+    ///   - seed=0x4,  8×8,  0.25: got 5 pivots,        expected 6 pivots
+    ///   - seed=0xc,  8×8,  0.25: got 5 pivots,        expected 6 pivots
+    #[test]
+    fn test_rref_canonical_known_buggy_cells_jit_bd9c6e13() {
+        // (pre-XOR seed, rows, cols, density, expected canonical pivots)
+        let cells: &[(u64, usize, usize, f64, &[usize])] = &[
+            (0x8, 3, 5, 0.5, &[1, 2, 4]),
+            (0x19, 8, 8, 0.05, &[1, 3, 5]),
+            (0x1f, 8, 8, 0.05, &[1, 2, 4, 5]),
+            (0x4, 8, 8, 0.25, &[0, 2, 3, 4, 6, 7]),
+            (0xc, 8, 8, 0.25, &[0, 2, 4, 5, 6, 7]),
+        ];
+        for &(seed, rows, cols, density, expected_pivots) in cells {
+            let a = dense_random_fp_seeded::<7>(rows, cols, density, seed ^ 0xF1AB_CAFE);
+            // bit-exact equality with the canonical oracle
+            check_canonical_rref_fp(&a);
+            // Also assert the specific expected pivot columns (regression
+            // guard: if the fix regresses, the wrong pivot set is caught here).
+            let (_x, got) = a.rref();
+            let got_pivots = pivot_cols_of_rref(&got);
+            assert_eq!(
+                got_pivots, expected_pivots,
+                "canonical pivot regression: seed={seed:#x} rows={rows} cols={cols} \
+                 density={density}: got {got_pivots:?}, expected {expected_pivots:?}",
+            );
+        }
+    }
+
     /// Mirrors the seed/shape/density grid that `test_rref_markowitz_sweep_fp7`
-    /// uses in `sparse_matrix.rs` (32 seeds x 7 shapes x 5 densities), and
+    /// uses in `sparse_matrix.rs` (32 seeds x 6 shapes x 5 densities), and
     /// asserts byte-equal canonical RREF between the dense PLE-based
     /// `FieldMatrix::rref` and the textbook oracle. Pre-fix this sweep
     /// flagged 47 divergent cells (jit:bd9c6e13 evidence doc § "Reproducer").
@@ -1875,48 +1835,55 @@ mod tests {
         );
     }
 
-    /// Property-based sweep: bit-exact equality with the textbook
-    /// canonical Gauss-Jordan oracle on 100+ random rank-deficient
-    /// shapes over GF(7) and GF(251). Per jit:bd9c6e13 §Success Criteria.
-    #[test]
-    fn test_rref_canonical_sweep_proptest_like() {
-        // Deterministic 120-case sweep (Pn x shapes x densities x seeds).
-        // We use plain nested loops with seeded inputs rather than
-        // proptest's macro to keep wall-clock well under the 5s fast-tier
-        // budget while still exercising 100+ distinct rank-deficient
-        // matrices.
-        let shapes: &[(usize, usize)] = &[
-            (3, 5),
-            (5, 3),
-            (8, 8),
-            (15, 17),
-            (12, 9),
-            (17, 12),
-            (10, 20),
-            (20, 10),
-        ];
-        let densities: &[f64] = &[0.05, 0.15, 0.3, 0.5];
-        let mut case = 0usize;
-        for seed in 0u64..4 {
-            for &(rows, cols) in shapes {
-                for &density in densities {
-                    // GF(7)
-                    let a7 = dense_random_fp_seeded::<7>(rows, cols, density, seed ^ 0xBD9C_6E13);
-                    check_canonical_rref_fp(&a7);
-                    case += 1;
-                    // GF(251)
-                    let a251 =
-                        dense_random_fp_seeded::<251>(rows, cols, density, seed ^ 0xBD9C_6E14);
-                    check_canonical_rref_fp(&a251);
-                    case += 1;
-                }
-            }
+    // Property-based test: bit-exact equality with the textbook canonical
+    // Gauss-Jordan oracle on 128 random inputs over GF(7) and GF(251),
+    // restricted to rank-deficient matrices.
+    //
+    // Per jit:bd9c6e13 SC#2: "property-based proptest covering 100+
+    // random rank-deficient shapes". Configured for 128 cases (> 100).
+    // Rank-deficient matrices are generated by duplicating a row so that
+    // rank < min(rows, cols) by construction.
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(128))]
+
+        #[test]
+        fn proptest_field_matrix_rref_canonical_rank_deficient_jit_bd9c6e13(
+            rows in 4usize..=16,
+            cols in 4usize..=16,
+            seed in proptest::prelude::any::<u64>(),
+        ) {
+            // Build a rank-deficient GF(7) matrix by outer-product
+            // construction: A = F * G where F is rows×(rank) and G is
+            // (rank)×cols with rank = min(rows,cols) - 1. This guarantees
+            // rank(A) <= rank < min(rows,cols) by construction.
+            let rank = rows.min(cols) - 1; // guaranteed < min(rows,cols)
+            let f7 = random_fp::<7>(rows, rank, seed);
+            let g7 = random_fp::<7>(rank, cols, seed.wrapping_add(1));
+            let a7 = gemm(&f7, &g7);
+            // rank(A) <= rank by construction; equality holds with high prob
+            // but we only need rank < min(rows,cols), which always holds.
+            proptest::prop_assert!(
+                a7.rank() < rows.min(cols),
+                "product matrix should have rank < min(rows,cols)"
+            );
+            let (_x, got) = a7.rref();
+            let expected = direct_rref_oracle_fp(&a7);
+            proptest::prop_assert_eq!(
+                got, expected,
+                "FieldMatrix::rref != canonical oracle on GF(7) rank-deficient input"
+            );
+
+            // Same for GF(251).
+            let f251 = random_fp::<251>(rows, rank, seed.wrapping_add(2));
+            let g251 = random_fp::<251>(rank, cols, seed.wrapping_add(3));
+            let a251 = gemm(&f251, &g251);
+            let (_x2, got2) = a251.rref();
+            let expected2 = direct_rref_oracle_fp(&a251);
+            proptest::prop_assert_eq!(
+                got2, expected2,
+                "FieldMatrix::rref != canonical oracle on GF(251) rank-deficient input"
+            );
         }
-        assert!(
-            case >= 100,
-            "canonical-RREF sweep covered only {} cases; expected >= 100",
-            case
-        );
     }
 
     // ── Hard SC#4: nullspace ─────────────────────────────────────────────────

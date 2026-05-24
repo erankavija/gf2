@@ -1947,25 +1947,23 @@ mod tests {
     type G8 = Gf2mWide<1, Gf2m8AesCfg>;
 
     // ── Generic test helpers ─────────────────────────────────────────────
+    //
+    // `dense_random_fp` and `direct_rref_reference_fp` are the single
+    // source of truth as of jit:bd9c6e13; they live in
+    // `field::test_random_matrix` and are aliased here.
 
+    use crate::field::test_random_matrix::{
+        dense_random_fp_sparse, direct_rref_oracle_fp as direct_rref_reference_fp_shared,
+    };
+
+    /// Alias to the shared sparse density-threshold generator.
     fn dense_random_fp<const P: u64>(
         rows: usize,
         cols: usize,
         density: f64,
         seed: u64,
     ) -> FieldMatrix<Fp<P>> {
-        use rand::{Rng, SeedableRng};
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
-        for r in 0..rows {
-            for c in 0..cols {
-                if rng.gen::<f64>() < density {
-                    let v = (rng.gen::<u64>() % (P - 1)) + 1;
-                    m.set(r, c, Fp::<P>::new(v));
-                }
-            }
-        }
-        m
+        dense_random_fp_sparse::<P>(rows, cols, density, seed)
     }
 
     fn dense_random_g8(rows: usize, cols: usize, density: f64, seed: u64) -> FieldMatrix<G8> {
@@ -2700,62 +2698,11 @@ mod tests {
     // doc); the Markowitz sparse path is verified to always produce
     // the true canonical RREF.
 
-    /// Independent oracle: straight-line column-by-column Gauss-Jordan
-    /// over GF(p) producing canonical RREF. Used as the byte-equality
-    /// reference for Markowitz tests where the dense `FieldMatrix::rref`
-    /// path diverges from canonical on certain sparse inputs.
-    #[cfg(test)]
+    /// Alias to the shared canonical Gauss-Jordan oracle (SSOT in
+    /// `field::test_random_matrix::direct_rref_oracle_fp`; aliased here
+    /// under the original local name to keep all call sites below intact).
     fn direct_rref_reference_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
-        let (m, n) = a.shape();
-        let mut e = a.clone();
-        let zero = Fp::<P>::new(0);
-        let one = Fp::<P>::new(1);
-        let mut next_pivot_row = 0usize;
-        for col in 0..n {
-            if next_pivot_row >= m {
-                break;
-            }
-            let mut pivot_row: Option<usize> = None;
-            for i in next_pivot_row..m {
-                if e.get(i, col) != zero {
-                    pivot_row = Some(i);
-                    break;
-                }
-            }
-            let Some(p) = pivot_row else {
-                continue;
-            };
-            if p != next_pivot_row {
-                for c in 0..n {
-                    let tmp = e.get(next_pivot_row, c);
-                    e.set(next_pivot_row, c, e.get(p, c));
-                    e.set(p, c, tmp);
-                }
-            }
-            let piv = e.get(next_pivot_row, col);
-            if piv != one {
-                let inv = piv.inv().unwrap();
-                for c in 0..n {
-                    let v = e.get(next_pivot_row, c) * inv;
-                    e.set(next_pivot_row, c, v);
-                }
-            }
-            for k in 0..m {
-                if k == next_pivot_row {
-                    continue;
-                }
-                let factor = e.get(k, col);
-                if factor == zero {
-                    continue;
-                }
-                for c in 0..n {
-                    let v = e.get(k, c) - factor * e.get(next_pivot_row, c);
-                    e.set(k, c, v);
-                }
-            }
-            next_pivot_row += 1;
-        }
-        e
+        direct_rref_reference_fp_shared::<P>(a)
     }
 
     /// Same as `direct_rref_reference_fp` but for `Gf2mWide<1, _>` —
