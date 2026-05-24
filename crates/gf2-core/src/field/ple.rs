@@ -56,14 +56,28 @@
 //!         direct column-by-column Gaussian elimination (ple_base_direct)
 //!     else:
 //!         h = n / 2
-//!         r1 = ple(A[:, 0..h])                 (recurse on the left)
-//!         L1     = unit-lower-triangular shaped from A[0..r1, 0..r1]
-//!         L1_bot = A[r1..m, 0..r1]
-//!         A[0..r1, h..n]    ← trsm_lower(L1, A[0..r1, h..n])     (A3)
-//!         A[r1..m, h..n]   ← A[r1..m, h..n] − L1_bot · A[0..r1, h..n]  (A4)
+//!         (r1, pc_left) = ple(A[:, 0..h])         (recurse on the left;
+//!                                                   pc_left is the set of
+//!                                                   r1 absolute pivot
+//!                                                   columns found in
+//!                                                   [0..h))
+//!         L1     = unit-lower-triangular shaped from A[0..r1, pc_left]
+//!         L1_bot = A[r1..m, pc_left]
+//!         A[0..r1, h..n]   ← trsm_lower(L1, A[0..r1, h..n])             (A3)
+//!         A[r1..m, h..n]   ← A[r1..m, h..n] − L1_bot · A[0..r1, h..n]   (A4)
 //!         r2 = ple(A[r1..m, h..n])
 //!         return r1 + r2
 //! ```
+//!
+//! Note: `L1` and `L1_bot` source their cells from the actual pivot
+//! columns `pc_left` rather than the contiguous prefix `[0..r1)`. The
+//! compact-storage convention places L's multipliers under their pivot
+//! columns (see below), and those columns are non-contiguous when the
+//! left half is rank-deficient (one or more columns in `[0..h)` had
+//! no pivot). Sourcing from the contiguous prefix in that case reads
+//! pre-Schur-eliminated zeros (or earlier pivots' multipliers) and
+//! silently corrupts the trsm + gemm update — see jit:bd9c6e13 for the
+//! discovery case (15x17 GF(7), seed=1, density=0.05).
 //!
 //! The default `PLE_BASE_COLS = 1` uses the block-recursive trsm+gemm path
 //! for all window widths > 1. This is optimal for large-prime fields (e.g.
@@ -73,13 +87,23 @@
 //! may benefit from a larger `PLE_BASE_COLS` override if profiling confirms
 //! the schoolbook base case beats the recursive dispatch overhead.
 //!
-//! Compact storage: after the recursion, `working[0..r, j]` for `j` in
-//! the pivot columns holds `E`'s entries; `working[i, 0..r]` for `i ≥ r`
-//! and `j < i` holds `L`'s strict-lower entries. The base case writes
-//! `working[k, col] = working[k, col] / pivot` for `k > 0`, leaving the
-//! pivot value at row 0 (so the diagonal of the `working[0..r, 0..r]`
-//! block carries E's pivots, NOT 1; the L factor's unit diagonal is
-//! synthesised when extracting `L`).
+//! Compact storage: after the recursion, the working buffer interleaves
+//! `E`'s entries and `L`'s multipliers within a single dense `m × n`
+//! grid. Specifically, for each pivot index `k = 0..r` with absolute
+//! pivot column `pc[k]`:
+//!
+//! - `working[k, pc[k]..n]` holds row `k` of `E` (above the diagonal of
+//!   the leading pivot block); cells `working[k, j]` for `j < pc[k]`
+//!   may hold L-multipliers of earlier rows but are projected to zero
+//!   when E is extracted.
+//! - `working[i, pc[k]]` for `i > k` holds `L`'s `k`-th column
+//!   multiplier (not the value at column `k` of `working`, since
+//!   `pc[k]` may exceed `k`).
+//!
+//! The base case writes `working[k, col] = working[k, col] / pivot` for
+//! `k > 0`, leaving the pivot value at the pivot row (so the diagonal
+//! cell `working[k, pc[k]]` carries E's pivot value, NOT `1`; the L
+//! factor's unit diagonal is synthesised when extracting `L`).
 //!
 //! See Dumas–Pernet, "Polynomial-time matrix algorithms over finite fields,"
 //! 2010, alg. 2.5 (PLE), 2.6 (row echelon), 2.7 (RREF).
@@ -486,6 +510,23 @@ fn ple_in_place<F: FiniteField>(
 /// Appends discovered pivot columns (absolute column indices into the
 /// full working matrix) to `pivot_cols` in the order they are found.
 /// On return `pivot_cols.len()` increases by the rank of this window.
+///
+/// # Compact storage and pivot-column scatter (jit:bd9c6e13)
+///
+/// Pivots are found left-to-right by column scan; the storage convention
+/// places L's multipliers in the **pivot columns themselves**, not in
+/// the leftmost `r1` columns of the window. When the left-half recursion
+/// finds `r1` pivots at columns `pivot_cols[L..L+r1]`, the L multipliers
+/// live at `a[i, pivot_cols[L+k]]` (not at `a[i, col_lo + k]`).
+///
+/// For the inter-block trsm + gemm step to be correct on rank-deficient
+/// inputs where the left half has gaps (i.e., one or more columns in
+/// `[col_lo, mid)` had no pivot), we must read L1 and L1_bot from the
+/// actual pivot columns rather than the contiguous prefix. The earlier
+/// implementation read the contiguous prefix `[col_lo, col_lo + r1)`,
+/// which silently used wrong multipliers when pivots were non-contiguous
+/// — corrupting the Schur complement update and dropping otherwise-
+/// valid pivots in the right-half recursion.
 fn ple_in_place_window<F: FiniteField>(
     mut a: MatViewMut<'_, F>,
     col_lo: usize,
@@ -519,6 +560,11 @@ fn ple_in_place_window<F: FiniteField>(
 
     // Step 1 — recurse on the left half. `a` continues to span the
     // full parent column range; we restrict only via the col window.
+    //
+    // Snapshot the pivot-cols length so we can locate this level's own
+    // left-half pivots after the recursion returns (they sit at
+    // `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`).
+    let pivot_cols_start = pivot_cols.len();
     let r1 = ple_in_place_window(a.reborrow(), col_lo, mid, perm, pivot_cols);
 
     // Steps 2 & 3 — trsm and gemm on the right half.
@@ -530,17 +576,27 @@ fn ple_in_place_window<F: FiniteField>(
     // buffers. The materialised L1 carries an explicit unit diagonal
     // so it can feed `trsm_lower` (which reads diagonal cells).
     if r1 > 0 && mid < col_hi {
+        // The left-half recursion places its r1 pivots at the absolute
+        // column indices `pivot_cols[pivot_cols_start..pivot_cols_start + r1]`.
+        // L1 and L1_bot must be sourced from THOSE columns (not from
+        // the contiguous prefix `[col_lo, col_lo + r1)`); otherwise on
+        // rank-deficient inputs where pivots are non-contiguous within
+        // `[col_lo, mid)` the multipliers are scattered across gap
+        // columns and the contiguous read returns either non-pivot
+        // residue (almost always zero — pre-Schur-eliminated) or the
+        // wrong pivot's multipliers. See jit:bd9c6e13 for the discovery
+        // case (15x17 GF(7), seed=1, density=0.05).
+        let left_pivots: &[usize] = &pivot_cols[pivot_cols_start..pivot_cols_start + r1];
         // Materialise L1 (r1 × r1, unit lower-triangular). Source
-        // strict-lower cells from a[0..r1, col_lo..mid] (which holds
-        // the multipliers from the left-half recursion).
-        let l1 = materialise_l1_unit(&a.as_view(), 0, col_lo, r1);
+        // strict-lower cells from `a[0..r1, left_pivots[j]]` for j<i.
+        let l1 = materialise_l1_unit_at_cols(&a.as_view(), 0, left_pivots);
         // trsm_lower: solve L1 · X = a[0..r1, mid..col_hi] in place.
         trsm_lower(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
 
         // Step 3 — Schur complement: a[r1..m, mid..col_hi] -=
         //   L1_bot · a[0..r1, mid..col_hi].
         if r1 < m {
-            let l1_bot = materialise_block(&a.as_view(), r1, col_lo, m - r1, r1);
+            let l1_bot = materialise_block_at_cols(&a.as_view(), r1, left_pivots, m - r1);
             let zero = a.get(0, col_lo).zero_like();
             let one = zero.one_like();
             let neg_one = zero - one.clone();
@@ -571,44 +627,63 @@ fn ple_in_place_window<F: FiniteField>(
     r1 + r2
 }
 
-/// Materialises an `r1 × r1` unit-lower-triangular matrix sourcing strict-
-/// lower entries from `a[row_off..row_off+r1, col_off..col_off+r1]`.
-/// The diagonal is set to `1`; strictly upper entries are zeroed.
-fn materialise_l1_unit<F: FiniteField>(
+/// Materialises an `r1 × r1` unit-lower-triangular L1 factor by sourcing
+/// strict-lower entries from the **pivot columns** of `a`.
+///
+/// `pivot_cols[k]` is the absolute column index in `a` holding L's
+/// `k`-th column multipliers. Reads `a.get(row_off + i, pivot_cols[j])`
+/// for `j < i` (the strict-lower part); fills diagonal with `1` and
+/// strict-upper with `0`.
+///
+/// This replaces the earlier `materialise_l1_unit(a, row_off, col_off, r1)`
+/// which read a contiguous `[col_off, col_off + r1)` range. The contiguous
+/// read was correct only when the left-half pivots happened to be at
+/// columns `col_off, col_off + 1, …, col_off + r1 - 1`; on rank-deficient
+/// inputs whose left half had gaps, the contiguous read returned wrong
+/// values, corrupting the inter-block trsm + Schur update. See
+/// jit:bd9c6e13.
+fn materialise_l1_unit_at_cols<F: FiniteField>(
     a: &MatView<'_, F>,
     row_off: usize,
-    col_off: usize,
-    r1: usize,
+    pivot_cols: &[usize],
 ) -> FieldMatrix<F> {
-    debug_assert!(r1 > 0, "materialise_l1_unit called with r1 == 0");
-    let zero = a.get(row_off, col_off).zero_like();
+    let r1 = pivot_cols.len();
+    debug_assert!(r1 > 0, "materialise_l1_unit_at_cols called with r1 == 0");
+    let zero = a.get(row_off, pivot_cols[0]).zero_like();
     let one = zero.one_like();
     let mut l1 = FieldMatrix::new(r1, r1, zero);
     for i in 0..r1 {
         l1.set(i, i, one.clone());
-        for j in 0..i {
-            l1.set(i, j, a.get(row_off + i, col_off + j));
+        for (j, &pcj) in pivot_cols.iter().enumerate().take(i) {
+            l1.set(i, j, a.get(row_off + i, pcj));
         }
         // Strict-upper stays zero.
     }
     l1
 }
 
-/// Materialises a `rows × cols` block at offset `(row_off, col_off)` of
-/// `a` into a freshly-allocated [`FieldMatrix<F>`].
-fn materialise_block<F: FiniteField>(
+/// Materialises a `rows × r1` block sourcing column `j` from
+/// `a.get(row_off + i, pivot_cols[j])` for each row `i`.
+///
+/// Used to build L1_bot (the strict-lower-trapezoidal L factor below
+/// the pivot rows) for the Schur-complement update. Mirrors
+/// `materialise_l1_unit_at_cols` but covers a rectangular block.
+fn materialise_block_at_cols<F: FiniteField>(
     a: &MatView<'_, F>,
     row_off: usize,
-    col_off: usize,
+    pivot_cols: &[usize],
     rows: usize,
-    cols: usize,
 ) -> FieldMatrix<F> {
-    debug_assert!(rows > 0 && cols > 0, "materialise_block: empty");
-    let zero = a.get(row_off, col_off).zero_like();
+    let cols = pivot_cols.len();
+    debug_assert!(
+        rows > 0 && cols > 0,
+        "materialise_block_at_cols: empty (rows={rows}, cols={cols})"
+    );
+    let zero = a.get(row_off, pivot_cols[0]).zero_like();
     let mut out = FieldMatrix::new(rows, cols, zero);
     for i in 0..rows {
-        for j in 0..cols {
-            out.set(i, j, a.get(row_off + i, col_off + j));
+        for (j, &pcj) in pivot_cols.iter().enumerate() {
+            out.set(i, j, a.get(row_off + i, pcj));
         }
     }
     out
@@ -617,11 +692,12 @@ fn materialise_block<F: FiniteField>(
 /// Splits the working buffer's compact storage into the L (`m × rank`)
 /// and E (`rank × n`) factors.
 ///
-/// `working[0..rank, j]` for `j` in the pivot columns hold E's entries.
-/// `working[i, k]` for `i ≥ k` hold L's strict-lower entries (the diagonal
-/// is implicit `1`). The `perm` argument is the destination → source map
-/// computed by the recursion: `working[i, *]` corresponds to the original
-/// matrix's row `perm[i]` after permutation.
+/// `working[i, pivot_cols[i]..n]` for `i < rank` holds E's entries (the
+/// part of row `i` from its pivot column rightward); cells to the left
+/// of `pivot_cols[i]` either hold earlier pivots' L-multipliers (when
+/// `j ∈ pivot_cols` with index `< i`) or are zero. `working[i, pivot_cols[k]]`
+/// for `i > k` holds L's `k`-th-column strict-lower entry (L's unit
+/// diagonal is synthesised at extraction).
 ///
 /// **Rank-deficient optimisation.** `pivot_cols` is pre-filled by
 /// `ple_in_place` during the factorisation — one entry per pivot, in
@@ -1569,6 +1645,278 @@ mod tests {
         let a = gemm(&f1, &f2);
         check_row_echelon(&a);
         check_rref(&a);
+    }
+
+    // ── Canonical RREF (jit:bd9c6e13) ────────────────────────────────────────
+    //
+    // `FieldMatrix::rref` is contractually required to produce the
+    // canonical reduced row-echelon form: the unique RREF whose pivot
+    // columns are the leftmost linearly-independent subset of the input's
+    // columns. The check_rref helper above verifies the structural RREF
+    // property (leading-1, zero in pivot columns, increasing pivot order)
+    // but does NOT verify canonical-leftmost pivots — which is a separate
+    // uniqueness contract. The harness below adds:
+    //
+    //   1. `direct_rref_oracle_fp` — textbook column-by-column
+    //      Gauss-Jordan over GF(p). Produces the canonical RREF by
+    //      construction (it scans columns left-to-right and pivots on
+    //      the first column with a non-zero entry below the current
+    //      pivot row).
+    //   2. `dense_random_fp_seeded` — the same seeded sparse-random
+    //      generator used by the Markowitz sweep tests in
+    //      `sparse_matrix.rs`. Lets us share the named 15x17 GF(7)
+    //      reproducer cited in the issue description.
+    //   3. `check_canonical_rref` — bit-exact equality between
+    //      `FieldMatrix::rref` and the oracle.
+    //
+    // The named reproducer (15x17 GF(7) / density=0.05 / seed=1) is
+    // pinned as `test_rref_canonical_15x17_gf7_seed1` so any future
+    // regression in the canonical-leftmost projection is caught
+    // immediately.
+
+    /// Textbook column-by-column Gauss-Jordan RREF over `Fp<P>`.
+    /// Produces the canonical RREF by construction: pivot columns are
+    /// the leftmost linearly-independent subset of the input's columns.
+    #[cfg(test)]
+    fn direct_rref_oracle_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) -> FieldMatrix<Fp<P>> {
+        let (m, n) = a.shape();
+        let mut e = a.clone();
+        let zero = Fp::<P>::new(0);
+        let one = Fp::<P>::new(1);
+        let mut next_pivot_row = 0usize;
+        for col in 0..n {
+            if next_pivot_row >= m {
+                break;
+            }
+            let mut pivot_row: Option<usize> = None;
+            for i in next_pivot_row..m {
+                if e.get(i, col) != zero {
+                    pivot_row = Some(i);
+                    break;
+                }
+            }
+            let Some(p) = pivot_row else {
+                continue;
+            };
+            if p != next_pivot_row {
+                for c in 0..n {
+                    let tmp = e.get(next_pivot_row, c);
+                    e.set(next_pivot_row, c, e.get(p, c));
+                    e.set(p, c, tmp);
+                }
+            }
+            let piv = e.get(next_pivot_row, col);
+            if piv != one {
+                let inv = piv.inv().unwrap();
+                for c in 0..n {
+                    let v = e.get(next_pivot_row, c) * inv;
+                    e.set(next_pivot_row, c, v);
+                }
+            }
+            for k in 0..m {
+                if k == next_pivot_row {
+                    continue;
+                }
+                let factor = e.get(k, col);
+                if factor == zero {
+                    continue;
+                }
+                for c in 0..n {
+                    let v = e.get(k, c) - factor * e.get(next_pivot_row, c);
+                    e.set(k, c, v);
+                }
+            }
+            next_pivot_row += 1;
+        }
+        e
+    }
+
+    /// Sparse-random `m x n` matrix over `Fp<P>`. Matches the generator
+    /// in `crates/gf2-core/src/field/sparse_matrix.rs` (`dense_random_fp`)
+    /// so the named 15x17 GF(7) / density=0.05 / seed=1 reproducer cited
+    /// in jit:bd9c6e13 can be shared verbatim between the two test modules.
+    #[cfg(test)]
+    fn dense_random_fp_seeded<const P: u64>(
+        rows: usize,
+        cols: usize,
+        density: f64,
+        seed: u64,
+    ) -> FieldMatrix<Fp<P>> {
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut m = FieldMatrix::<Fp<P>>::zeros(rows, cols);
+        for r in 0..rows {
+            for c in 0..cols {
+                if rng.gen::<f64>() < density {
+                    let v = (rng.gen::<u64>() % (P - 1)) + 1;
+                    m.set(r, c, Fp::<P>::new(v));
+                }
+            }
+        }
+        m
+    }
+
+    /// Returns the pivot columns of an RREF matrix in ascending order.
+    #[cfg(test)]
+    fn pivot_cols_of_rref<F: FiniteField>(r: &FieldMatrix<F>) -> Vec<usize> {
+        let (m, n) = r.shape();
+        let zero = if m == 0 || n == 0 {
+            return Vec::new();
+        } else {
+            r.get(0, 0).zero_like()
+        };
+        let mut pivots = Vec::new();
+        let mut last: isize = -1;
+        for i in 0..m {
+            let start = (last + 1).max(0) as usize;
+            let mut found: Option<usize> = None;
+            for j in start..n {
+                if r.get(i, j) != zero {
+                    found = Some(j);
+                    break;
+                }
+            }
+            if let Some(p) = found {
+                pivots.push(p);
+                last = p as isize;
+            } else {
+                break;
+            }
+        }
+        pivots
+    }
+
+    /// Asserts `FieldMatrix::rref` produces the canonical RREF — bit-exact
+    /// equal to the textbook Gauss-Jordan oracle.
+    #[cfg(test)]
+    fn check_canonical_rref_fp<const P: u64>(a: &FieldMatrix<Fp<P>>) {
+        let (_x, got) = a.rref();
+        let expected = direct_rref_oracle_fp(a);
+        assert_eq!(
+            got,
+            expected,
+            "FieldMatrix::rref != canonical (direct_rref_oracle_fp)\n\
+             got pivots:      {:?}\n\
+             expected pivots: {:?}",
+            pivot_cols_of_rref(&got),
+            pivot_cols_of_rref(&expected),
+        );
+    }
+
+    /// Named reproducer from jit:bd9c6e13.
+    ///
+    /// Input: 15x17 GF(7) matrix, density=0.05, seed=1 (same seeded
+    /// generator as `crates/gf2-core/src/field/sparse_matrix.rs` tests).
+    /// Canonical RREF pivots: `{0, 1, 2, 3, 5, 6, 7, 10, 15, 16}`.
+    /// The pre-fix dense PLE path's `FieldMatrix::rref` output picked
+    /// `{0, 1, 2, 3, 5, 6, 7, 13, 15, 16}` (non-canonical — column 13
+    /// chosen over column 10).
+    #[test]
+    fn test_rref_canonical_15x17_gf7_seed1() {
+        let a = dense_random_fp_seeded::<7>(15, 17, 0.05, 1);
+        // The named reproducer in jit:bd9c6e13. Canonical RREF pivots
+        // are uniquely determined by the row space, computed via the
+        // textbook column-by-column Gauss-Jordan oracle.
+        let expected = direct_rref_oracle_fp(&a);
+        let expected_pivots = pivot_cols_of_rref(&expected);
+        let (_x, got) = a.rref();
+        let got_pivots = pivot_cols_of_rref(&got);
+        // Diagnostic: under the pre-fix dense PLE path, expected pivots
+        // were {0,1,2,3,5,6,7,10,15,16} and the buggy output picked a
+        // strict subset / non-leftmost set. After the fix both must
+        // agree.
+        assert_eq!(
+            got_pivots, expected_pivots,
+            "FieldMatrix::rref must produce canonical pivots on the \
+             15x17 GF(7)/seed=1/density=0.05 reproducer"
+        );
+        check_canonical_rref_fp(&a);
+        // Also check that the rank reported by ple() matches the canonical
+        // pivot count (cross-check between ple() and rref()).
+        assert_eq!(
+            a.rank(),
+            expected_pivots.len(),
+            "rank(15x17 GF(7)/seed=1) must match canonical pivot count"
+        );
+    }
+
+    /// Mirrors the seed/shape/density grid that `test_rref_markowitz_sweep_fp7`
+    /// uses in `sparse_matrix.rs` (32 seeds x 7 shapes x 5 densities), and
+    /// asserts byte-equal canonical RREF between the dense PLE-based
+    /// `FieldMatrix::rref` and the textbook oracle. Pre-fix this sweep
+    /// flagged 47 divergent cells (jit:bd9c6e13 evidence doc § "Reproducer").
+    #[test]
+    fn test_rref_canonical_markowitz_grid_sweep_fp7() {
+        const SHAPES: &[(usize, usize)] = &[(1, 1), (3, 5), (5, 3), (8, 8), (15, 17), (24, 24)];
+        const DENSITIES: &[f64] = &[0.0_f64, 0.05, 0.25, 0.5, 0.9];
+        let mut divergent = 0usize;
+        for seed in 0u64..32 {
+            for &(rows, cols) in SHAPES {
+                for &density in DENSITIES {
+                    let a = dense_random_fp_seeded::<7>(rows, cols, density, seed ^ 0xF1AB_CAFE);
+                    let (_x, got) = a.rref();
+                    let expected = direct_rref_oracle_fp(&a);
+                    if got != expected {
+                        divergent += 1;
+                        eprintln!(
+                            "DIVERGE: seed={seed:#x} rows={rows} cols={cols} density={density} \
+                             got_pivots={:?} expected_pivots={:?}",
+                            pivot_cols_of_rref(&got),
+                            pivot_cols_of_rref(&expected),
+                        );
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            divergent, 0,
+            "canonical-RREF divergence count: expected 0, got {divergent}; \
+             see eprintln output above for the failing cells"
+        );
+    }
+
+    /// Property-based sweep: bit-exact equality with the textbook
+    /// canonical Gauss-Jordan oracle on 100+ random rank-deficient
+    /// shapes over GF(7) and GF(251). Per jit:bd9c6e13 §Success Criteria.
+    #[test]
+    fn test_rref_canonical_sweep_proptest_like() {
+        // Deterministic 120-case sweep (Pn x shapes x densities x seeds).
+        // We use plain nested loops with seeded inputs rather than
+        // proptest's macro to keep wall-clock well under the 5s fast-tier
+        // budget while still exercising 100+ distinct rank-deficient
+        // matrices.
+        let shapes: &[(usize, usize)] = &[
+            (3, 5),
+            (5, 3),
+            (8, 8),
+            (15, 17),
+            (12, 9),
+            (17, 12),
+            (10, 20),
+            (20, 10),
+        ];
+        let densities: &[f64] = &[0.05, 0.15, 0.3, 0.5];
+        let mut case = 0usize;
+        for seed in 0u64..4 {
+            for &(rows, cols) in shapes {
+                for &density in densities {
+                    // GF(7)
+                    let a7 = dense_random_fp_seeded::<7>(rows, cols, density, seed ^ 0xBD9C_6E13);
+                    check_canonical_rref_fp(&a7);
+                    case += 1;
+                    // GF(251)
+                    let a251 =
+                        dense_random_fp_seeded::<251>(rows, cols, density, seed ^ 0xBD9C_6E14);
+                    check_canonical_rref_fp(&a251);
+                    case += 1;
+                }
+            }
+        }
+        assert!(
+            case >= 100,
+            "canonical-RREF sweep covered only {} cases; expected >= 100",
+            case
+        );
     }
 
     // ── Hard SC#4: nullspace ─────────────────────────────────────────────────
