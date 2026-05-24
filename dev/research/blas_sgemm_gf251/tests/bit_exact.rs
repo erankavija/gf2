@@ -9,20 +9,9 @@
 //! reference gemm); both are well under criterion-test bounds for
 //! `cargo test --release`.
 
-use blas_sgemm_gf251::{blas_gf251_gemm, P_GF251};
+use blas_sgemm_gf251::{blas_gf251_gemm, matrix_to_canonical_bytes, P_GF251};
 use gf2_core::bench_seed::fp_matrix_from_seed;
-use gf2_core::field::matrix::{gemm as core_gemm, FieldMatrix};
-use gf2_core::gfp::Fp;
-
-fn canonical_bytes(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<u8> {
-    let mut out = Vec::with_capacity(m.rows() * m.cols());
-    for i in 0..m.rows() {
-        for j in 0..m.cols() {
-            out.push(m.get(i, j).value() as u8);
-        }
-    }
-    out
-}
+use gf2_core::field::matrix::gemm as core_gemm;
 
 fn check_bit_exact_square(n: usize, seed_salt: u64) {
     let seed_a = 0x9142_9c1c_dead_beef_u64 ^ ((n as u64) << 32) ^ seed_salt;
@@ -32,8 +21,8 @@ fn check_bit_exact_square(n: usize, seed_salt: u64) {
     let blas_c = blas_gf251_gemm(&a, &b);
     let core_c = core_gemm(&a, &b);
     assert_eq!(
-        canonical_bytes(&blas_c),
-        canonical_bytes(&core_c),
+        matrix_to_canonical_bytes(&blas_c),
+        matrix_to_canonical_bytes(&core_c),
         "n={n} mismatch"
     );
 }

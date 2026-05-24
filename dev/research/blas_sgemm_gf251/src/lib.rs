@@ -77,8 +77,41 @@ pub const K_CHUNK: usize = 268;
 
 /// GF(251) cascade GEMM via single-threaded sgemm.
 ///
-/// Returns `A · B` over `GF(251)`. The result is bit-exact equal to
+/// Computes `A · B` over `GF(251)` using a chunked-sgemm cascade.
+/// The result is bit-exact equal to
 /// `gf2_core::field::matrix::gemm(a, b)` for any GF(251) inputs.
+///
+/// The function packs both matrices to row-major f32, delegates to the
+/// shared [`cascade_chunked_sgemm_internal`] kernel (chunked sgemm +
+/// Barrett reduction + accumulation), then unpacks the i32 accumulator
+/// back to `FieldMatrix`.
+///
+/// # Arguments
+///
+/// * `a` — The m×k left factor in `FieldMatrix<Fp<251>>` (Montgomery
+///   storage). Canonical values extracted via `Fp::value()`.
+/// * `b` — The k×n right factor in `FieldMatrix<Fp<251>>` (Montgomery
+///   storage). Canonical values extracted via `Fp::value()`.
+///
+/// # Returns
+///
+/// A fresh `m × n` `FieldMatrix<Fp<251>>` holding `A · B mod 251`.
+///
+/// # Examples
+///
+/// ```no_run
+/// // no_run: links against system OpenBLAS which is not present in
+/// // every build environment; run manually inside this crate's dir.
+/// use blas_sgemm_gf251::{blas_gf251_gemm, P_GF251};
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let a = FieldMatrix::<Fp<P_GF251>>::zeros(4, 4);
+/// let b = FieldMatrix::<Fp<P_GF251>>::zeros(4, 4);
+/// let c = blas_gf251_gemm(&a, &b);
+/// assert_eq!(c.rows(), 4);
+/// assert_eq!(c.cols(), 4);
+/// ```
 ///
 /// # Panics
 ///
@@ -90,6 +123,11 @@ pub const K_CHUNK: usize = 268;
 /// to ensure apples-to-apples single-threaded measurement (matching
 /// fflas-ffpack's `Modular<float>` route in the canonical reference
 /// container).
+///
+/// # Complexity
+///
+/// O(m·k·n) flops; `⌈k / K_CHUNK⌉` OpenBLAS sgemm calls (K_CHUNK=268)
+/// plus one u8 lookup-table pack/unpack pass per element.
 pub fn blas_gf251_gemm(
     a: &FieldMatrix<Fp<P_GF251>>,
     b: &FieldMatrix<Fp<P_GF251>>,
@@ -122,6 +160,260 @@ pub fn blas_gf251_gemm(
     let a_f32 = pack_fp_to_f32(a);
     let b_f32 = pack_fp_to_f32(b);
 
+    // Run the shared cascade kernel.
+    let acc = cascade_chunked_sgemm_internal(&a_f32, &b_f32, m, k, n);
+
+    // Unpack acc into the output FieldMatrix.
+    for i in 0..m {
+        for j in 0..n {
+            let v = acc[i * n + j];
+            debug_assert!((0..251).contains(&v));
+            out.set(i, j, Fp::<P_GF251>::new(v as u64));
+        }
+    }
+
+    out
+}
+
+/// Canonical-byte variant of the cascade.
+///
+/// Computes `A · B` over `GF(251)` where inputs and output are
+/// row-major canonical byte slices (each cell in `[0, 251)`).
+///
+/// This is the "fflas-ffpack-apples-to-apples" entrypoint: it avoids
+/// the Montgomery REDC round-trip on the I/O boundary that
+/// `blas_gf251_gemm` pays, because fflas-ffpack's `Modular<float>`
+/// storage *is* canonical f32 (no Montgomery encoding on either side
+/// of its sgemm). The chunked-sgemm cascade kernel is identical to the
+/// one used by [`blas_gf251_gemm`]; the only difference is the
+/// pack/unpack step.
+///
+/// # Arguments
+///
+/// * `a` — Row-major byte slice for the m×k left factor; each byte
+///   must satisfy `a[i] < 251`.
+/// * `m` — Number of rows of `A` (and rows of the result `C`).
+/// * `k` — Number of columns of `A` / rows of `B`.
+/// * `b` — Row-major byte slice for the k×n right factor; each byte
+///   must satisfy `b[i] < 251`.
+/// * `n` — Number of columns of `B` (and columns of the result `C`).
+///
+/// # Returns
+///
+/// A `Vec<u8>` of length `m * n` containing the row-major canonical
+/// bytes of `A · B mod 251`.
+///
+/// # Examples
+///
+/// ```no_run
+/// // no_run: links against system OpenBLAS which is not present in
+/// // every build environment; run manually inside this crate's dir.
+/// use blas_sgemm_gf251::blas_gf251_gemm_canonical_bytes;
+///
+/// let a = vec![0u8; 4 * 4]; // 4×4 zero matrix
+/// let b = vec![0u8; 4 * 4]; // 4×4 zero matrix
+/// let c = blas_gf251_gemm_canonical_bytes(&a, 4, 4, &b, 4);
+/// assert_eq!(c.len(), 16);
+/// assert!(c.iter().all(|&v| v == 0));
+/// ```
+///
+/// # Panics
+///
+/// Panics if `a.len() != m * k` or `b.len() != k * n` or any byte
+/// is `>= 251`.
+///
+/// # Complexity
+///
+/// O(m·k·n) flops; `⌈k / K_CHUNK⌉` OpenBLAS sgemm calls (K_CHUNK=268)
+/// plus one cast-only pack/unpack pass per element (no REDC).
+pub fn blas_gf251_gemm_canonical_bytes(
+    a: &[u8],
+    m: usize,
+    k: usize,
+    b: &[u8],
+    n: usize,
+) -> Vec<u8> {
+    assert_eq!(a.len(), m * k, "A shape mismatch");
+    assert_eq!(b.len(), k * n, "B shape mismatch");
+
+    if m == 0 || n == 0 {
+        return Vec::new();
+    }
+    let mut out = vec![0u8; m * n];
+    if k == 0 {
+        return out;
+    }
+
+    // SAFETY: openblas_set_num_threads is safe to call.
+    unsafe { openblas_set_num_threads(1) };
+
+    // Pack canonical bytes to f32 (one cast per cell, no REDC).
+    let mut a_f32 = vec![0.0f32; m * k];
+    for (slot, &v) in a_f32.iter_mut().zip(a.iter()) {
+        debug_assert!(v < 251);
+        *slot = v as f32;
+    }
+    let mut b_f32 = vec![0.0f32; k * n];
+    for (slot, &v) in b_f32.iter_mut().zip(b.iter()) {
+        debug_assert!(v < 251);
+        *slot = v as f32;
+    }
+
+    // Run the shared cascade kernel.
+    let acc = cascade_chunked_sgemm_internal(&a_f32, &b_f32, m, k, n);
+
+    // Pack acc → out u8 (just a downcast, no field arithmetic).
+    for (dst, &v) in out.iter_mut().zip(acc.iter()) {
+        debug_assert!((0..251).contains(&v));
+        *dst = v as u8;
+    }
+    out
+}
+
+/// Convert a `FieldMatrix<Fp<251>>` to a canonical row-major byte vec.
+///
+/// Extracts each element's canonical value via `Fp::value()` (one
+/// inverse-Montgomery REDC per cell). Used by callers that want to
+/// measure the BLAS cascade in isolation from the Montgomery
+/// encoding cost, or to compare output against the canonical-byte
+/// variant of the cascade.
+///
+/// # Arguments
+///
+/// * `m` — The source `FieldMatrix<Fp<251>>` in Montgomery storage.
+///
+/// # Returns
+///
+/// A `Vec<u8>` of length `m.rows() * m.cols()` in row-major order,
+/// each byte in `[0, 251)`.
+///
+/// # Examples
+///
+/// ```no_run
+/// // no_run: links against system OpenBLAS which is not present in
+/// // every build environment; run manually inside this crate's dir.
+/// use blas_sgemm_gf251::{matrix_to_canonical_bytes, P_GF251};
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::gfp::Fp;
+///
+/// let m = FieldMatrix::<Fp<P_GF251>>::zeros(2, 3);
+/// let bytes = matrix_to_canonical_bytes(&m);
+/// assert_eq!(bytes.len(), 6);
+/// assert!(bytes.iter().all(|&v| v == 0));
+/// ```
+///
+/// # Panics
+///
+/// Does not panic on valid inputs.
+///
+/// # Complexity
+///
+/// O(m.rows() · m.cols()) — one `Fp::value()` REDC per element.
+pub fn matrix_to_canonical_bytes(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<u8> {
+    let r = m.rows();
+    let c = m.cols();
+    let mut out = vec![0u8; r * c];
+    for i in 0..r {
+        for j in 0..c {
+            out[i * c + j] = m.get(i, j).value() as u8;
+        }
+    }
+    out
+}
+
+/// Convert canonical bytes back to `FieldMatrix<Fp<251>>`.
+///
+/// Converts each byte to its Montgomery representation via
+/// `Fp::new(v as u64)` (one `to_mont` per cell). The inverse of
+/// [`matrix_to_canonical_bytes`].
+///
+/// # Arguments
+///
+/// * `bytes` — Row-major byte slice; each byte must be in `[0, 251)`.
+///   Length must equal `rows * cols`.
+/// * `rows` — Number of rows of the output matrix.
+/// * `cols` — Number of columns of the output matrix.
+///
+/// # Returns
+///
+/// A `FieldMatrix<Fp<251>>` of shape `rows × cols`.
+///
+/// # Examples
+///
+/// ```no_run
+/// // no_run: links against system OpenBLAS which is not present in
+/// // every build environment; run manually inside this crate's dir.
+/// use blas_sgemm_gf251::{canonical_bytes_to_matrix, P_GF251};
+/// use gf2_core::gfp::Fp;
+///
+/// let bytes = vec![1u8, 2, 3, 4];
+/// let m = canonical_bytes_to_matrix(&bytes, 2, 2);
+/// assert_eq!(m.get(0, 0).value(), 1);
+/// assert_eq!(m.get(1, 1).value(), 4);
+/// ```
+///
+/// # Panics
+///
+/// Panics if `bytes.len() != rows * cols`.
+///
+/// # Complexity
+///
+/// O(rows · cols) — one `Fp::new` Montgomery encoding per element.
+pub fn canonical_bytes_to_matrix(
+    bytes: &[u8],
+    rows: usize,
+    cols: usize,
+) -> FieldMatrix<Fp<P_GF251>> {
+    assert_eq!(bytes.len(), rows * cols);
+    let mut out = FieldMatrix::<Fp<P_GF251>>::zeros(rows, cols);
+    for i in 0..rows {
+        for j in 0..cols {
+            let v = bytes[i * cols + j];
+            debug_assert!(v < 251);
+            out.set(i, j, Fp::<P_GF251>::new(v as u64));
+        }
+    }
+    out
+}
+
+/// Internal: chunked sgemm + Barrett reduction + accumulation.
+///
+/// This is the shared kernel used by both [`blas_gf251_gemm`] and
+/// [`blas_gf251_gemm_canonical_bytes`]. The two public entrypoints
+/// differ only in their pack/unpack steps; the cascade body is
+/// identical and lives here.
+///
+/// Iterates over the k dimension in slabs of width `K_CHUNK`, calls
+/// `cblas_sgemm` for each slab, reduces the f32 partial products
+/// modulo 251 (scalar i32 `% 251`), and accumulates into `acc` with a
+/// single conditional subtraction to keep each cell in `[0, 251)`.
+///
+/// # Arguments
+///
+/// * `a_f32` — Row-major f32 slice for the m×k left factor; values in
+///   `[0, 251)`. Must have exactly `m * k` elements.
+/// * `b_f32` — Row-major f32 slice for the k×n right factor; values in
+///   `[0, 251)`. Must have exactly `k * n` elements.
+/// * `m` — Number of rows of `A`.
+/// * `k` — Number of columns of `A` / rows of `B`. Must be `> 0`.
+/// * `n` — Number of columns of `B`.
+///
+/// # Returns
+///
+/// A `Vec<i32>` of length `m * n` with each element in `[0, 251)`.
+///
+/// # Panics
+///
+/// Panics in debug mode if any sgemm output is negative or the
+/// accumulator overflows `[0, 251)`. Does not panic in release mode
+/// on valid inputs.
+fn cascade_chunked_sgemm_internal(
+    a_f32: &[f32],
+    b_f32: &[f32],
+    m: usize,
+    k: usize,
+    n: usize,
+) -> Vec<i32> {
     // Running accumulator (modulo 251) in i32. The final value at
     // each cell is in [0, 251).
     let mut acc = vec![0i32; m * n];
@@ -193,16 +485,7 @@ pub fn blas_gf251_gemm(
         k_off += kc;
     }
 
-    // Unpack acc into the output FieldMatrix.
-    for i in 0..m {
-        for j in 0..n {
-            let v = acc[i * n + j];
-            debug_assert!((0..251).contains(&v));
-            out.set(i, j, Fp::<P_GF251>::new(v as u64));
-        }
-    }
-
-    out
+    acc
 }
 
 /// Packs `m: FieldMatrix<Fp<251>>` to row-major f32 with canonical
@@ -227,158 +510,11 @@ fn pack_fp_to_f32(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<f32> {
     out
 }
 
-/// Canonical-byte variant of the cascade.
-///
-/// Takes `A: m × k` and `B: k × n` as row-major canonical byte
-/// slices (each cell in `[0, 251)`), returns the product `C: m × n`
-/// as a row-major canonical byte vec. This is the
-/// "fflas-ffpack-apples-to-apples" entrypoint — it avoids the
-/// Montgomery REDC round-trip on the I/O boundary that
-/// `blas_gf251_gemm` pays, because fflas-ffpack's
-/// `Modular<float>` storage *is* canonical f32 (no Montgomery
-/// encoding on either side of its sgemm).
-///
-/// # Panics
-///
-/// Panics if `a.len() != m * k` or `b.len() != k * n` or any byte
-/// is `>= 251`.
-pub fn blas_gf251_gemm_canonical_bytes(
-    a: &[u8],
-    m: usize,
-    k: usize,
-    b: &[u8],
-    n: usize,
-) -> Vec<u8> {
-    assert_eq!(a.len(), m * k, "A shape mismatch");
-    assert_eq!(b.len(), k * n, "B shape mismatch");
-
-    if m == 0 || n == 0 {
-        return Vec::new();
-    }
-    let mut out = vec![0u8; m * n];
-    if k == 0 {
-        return out;
-    }
-
-    // SAFETY: openblas_set_num_threads is safe to call.
-    unsafe { openblas_set_num_threads(1) };
-
-    // Pack canonical bytes to f32 (one cast per cell, no REDC).
-    let mut a_f32 = vec![0.0f32; m * k];
-    for (slot, &v) in a_f32.iter_mut().zip(a.iter()) {
-        debug_assert!(v < 251);
-        *slot = v as f32;
-    }
-    let mut b_f32 = vec![0.0f32; k * n];
-    for (slot, &v) in b_f32.iter_mut().zip(b.iter()) {
-        debug_assert!(v < 251);
-        *slot = v as f32;
-    }
-
-    let mut acc = vec![0i32; m * n];
-    let mut chunk_out = vec![0.0f32; m * n];
-    let mut k_off = 0usize;
-    while k_off < k {
-        let kc = K_CHUNK.min(k - k_off);
-        let a_ptr = unsafe { a_f32.as_ptr().add(k_off) };
-        let b_ptr = unsafe { b_f32.as_ptr().add(k_off * n) };
-        chunk_out.fill(0.0);
-        // SAFETY: see `blas_gf251_gemm` for the matching pointer
-        // bounds argument.
-        unsafe {
-            blas_ffi::cblas_sgemm(
-                blas_ffi::CBLAS_ROW_MAJOR,
-                blas_ffi::CBLAS_NO_TRANS,
-                blas_ffi::CBLAS_NO_TRANS,
-                m as i32,
-                n as i32,
-                kc as i32,
-                1.0,
-                a_ptr,
-                k as i32,
-                b_ptr,
-                n as i32,
-                0.0,
-                chunk_out.as_mut_ptr(),
-                n as i32,
-            );
-        }
-        for (a_slot, &c_part) in acc.iter_mut().zip(chunk_out.iter()) {
-            let v = c_part as i32;
-            debug_assert!(v >= 0);
-            let r = v % 251;
-            let mut sum = *a_slot + r;
-            if sum >= 251 {
-                sum -= 251;
-            }
-            *a_slot = sum;
-        }
-        k_off += kc;
-
-        // Drop intermediate buffers to keep peak RSS small (no-op
-        // for the same `acc` etc. reused across chunks).
-    }
-
-    // Pack acc → out u8 (just a downcast, no field arithmetic).
-    for (dst, &v) in out.iter_mut().zip(acc.iter()) {
-        debug_assert!((0..251).contains(&v));
-        *dst = v as u8;
-    }
-    out
-}
-
-/// Convert a `FieldMatrix<Fp<251>>` to a canonical row-major byte vec.
-///
-/// One `Fp::value()` REDC per cell. Used by callers that want to
-/// measure the BLAS cascade in isolation from the Montgomery
-/// encoding cost.
-pub fn matrix_to_canonical_bytes(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<u8> {
-    let r = m.rows();
-    let c = m.cols();
-    let mut out = vec![0u8; r * c];
-    for i in 0..r {
-        for j in 0..c {
-            out[i * c + j] = m.get(i, j).value() as u8;
-        }
-    }
-    out
-}
-
-/// Convert canonical bytes back to `FieldMatrix<Fp<251>>`.
-///
-/// One `Fp::new` (to_mont) per cell.
-pub fn canonical_bytes_to_matrix(
-    bytes: &[u8],
-    rows: usize,
-    cols: usize,
-) -> FieldMatrix<Fp<P_GF251>> {
-    assert_eq!(bytes.len(), rows * cols);
-    let mut out = FieldMatrix::<Fp<P_GF251>>::zeros(rows, cols);
-    for i in 0..rows {
-        for j in 0..cols {
-            let v = bytes[i * cols + j];
-            debug_assert!(v < 251);
-            out.set(i, j, Fp::<P_GF251>::new(v as u64));
-        }
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use gf2_core::bench_seed::fp_matrix_from_seed;
     use gf2_core::field::matrix::gemm as core_gemm;
-
-    fn canonical_bytes(m: &FieldMatrix<Fp<P_GF251>>) -> Vec<u8> {
-        let mut out = Vec::with_capacity(m.rows() * m.cols());
-        for i in 0..m.rows() {
-            for j in 0..m.cols() {
-                out.push(m.get(i, j).value() as u8);
-            }
-        }
-        out
-    }
 
     #[test]
     fn bit_exact_n_64() {
@@ -386,7 +522,7 @@ mod tests {
         let b = fp_matrix_from_seed::<P_GF251>(64, 64, 0xdead_beef_0000_0065);
         let blas_c = blas_gf251_gemm(&a, &b);
         let core_c = core_gemm(&a, &b);
-        assert_eq!(canonical_bytes(&blas_c), canonical_bytes(&core_c));
+        assert_eq!(matrix_to_canonical_bytes(&blas_c), matrix_to_canonical_bytes(&core_c));
     }
 
     #[test]
@@ -400,7 +536,7 @@ mod tests {
         let b = fp_matrix_from_seed::<P_GF251>(k, n, 0xc0ff_eeba_be00_0002);
         let blas_c = blas_gf251_gemm(&a, &b);
         let core_c = core_gemm(&a, &b);
-        assert_eq!(canonical_bytes(&blas_c), canonical_bytes(&core_c));
+        assert_eq!(matrix_to_canonical_bytes(&blas_c), matrix_to_canonical_bytes(&core_c));
     }
 
     #[test]
@@ -412,8 +548,8 @@ mod tests {
             let blas_c = blas_gf251_gemm(&a, &b);
             let core_c = core_gemm(&a, &b);
             assert_eq!(
-                canonical_bytes(&blas_c),
-                canonical_bytes(&core_c),
+                matrix_to_canonical_bytes(&blas_c),
+                matrix_to_canonical_bytes(&core_c),
                 "k={k} mismatch"
             );
         }
@@ -446,7 +582,7 @@ mod tests {
             let a_bytes = matrix_to_canonical_bytes(&a);
             let b_bytes = matrix_to_canonical_bytes(&b);
             let c_bytes = blas_gf251_gemm_canonical_bytes(&a_bytes, n, n, &b_bytes, n);
-            assert_eq!(canonical_bytes(&via_matrix), c_bytes, "n={n}");
+            assert_eq!(matrix_to_canonical_bytes(&via_matrix), c_bytes, "n={n}");
         }
     }
 
