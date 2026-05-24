@@ -49,6 +49,16 @@ Fp_31,4096,2,post,1132400.0,121.370,non_regression_check_n4096
 Fp_31,4096,3,post,1185400.0,115.942,non_regression_check_n4096
 Fp_31,4096,4,post,1194900.0,115.019,non_regression_check_n4096
 Fp_31,4096,5,post,1140800.0,120.476,non_regression_check_n4096
+Fp_251,256,1,post,496.18,67.611,non_regression_check_n256
+Fp_251,256,2,post,497.60,67.418,non_regression_check_n256
+Fp_251,256,3,post,495.71,67.675,non_regression_check_n256
+Fp_251,256,4,post,495.20,67.745,non_regression_check_n256
+Fp_251,256,5,post,494.75,67.806,non_regression_check_n256
+Fp_251,1024,1,post,22977.0,93.462,non_regression_check_n1024
+Fp_251,1024,2,post,22735.0,94.455,non_regression_check_n1024
+Fp_251,1024,3,post,22847.0,93.993,non_regression_check_n1024
+Fp_251,1024,4,post,22750.0,94.395,non_regression_check_n1024
+Fp_251,1024,5,post,22654.0,94.794,non_regression_check_n1024
 Fp_251,4096,1,post,1174200.0,117.052,non_regression_check_n4096
 Fp_251,4096,2,post,3612600.0,38.045,non_regression_check_n4096_thermal_outlier
 Fp_251,4096,3,post,1221600.0,112.509,non_regression_check_n4096
