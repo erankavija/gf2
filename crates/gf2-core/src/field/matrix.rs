@@ -59,7 +59,13 @@ pub use crate::field::ple::Permutation;
 pub trait BasisReducer<F: FiniteField>: Send {
     /// Appends a column to the basis. The column is packed once at
     /// append time; subsequent `reduce` calls reuse the packed form.
-    fn push_col(&mut self, col: &[F]);
+    ///
+    /// `pivot_row` is the row index at which this column has its
+    /// pivot — implementations may use it to pre-compute and cache
+    /// `col[pivot_row]^{-1}`, hoisting the (Fermat-style) inverse
+    /// out of the per-reduce inner loop. The caller guarantees
+    /// `col[pivot_row]` is non-zero (the basis invariant).
+    fn push_col(&mut self, col: &[F], pivot_row: usize);
 
     /// Computes `(residual, coeffs)` such that
     /// `v = Σ coeffs[j] · basis[j] + residual`, with `residual` having

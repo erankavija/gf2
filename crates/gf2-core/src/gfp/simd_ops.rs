@@ -1582,8 +1582,24 @@ pub(crate) fn fp_try_axpy<const P: u64>(_y: &mut [Fp<P>], _a: &Fp<P>, _x: &[Fp<P
 /// `axpy` path.
 #[cfg(feature = "simd")]
 pub(crate) enum PackedFpBasis<const P: u64> {
-    Small { cols: Vec<Vec<u8>>, n: usize },
-    Medium { cols: Vec<Vec<u16>>, n: usize },
+    Small {
+        cols: Vec<Vec<u8>>,
+        /// Pre-computed pivot inverses, one per column, indexed in lockstep
+        /// with `cols`. `pivot_inv[j] = col_j[pivot_row_j]^{-1} (mod P)`,
+        /// canonical byte form. Hoists the Fermat-style `Fp::inv` out of
+        /// `fp_reduce_packed`'s inner loop (issue 52cce970); profiling
+        /// at GF(251)/n=256 showed `Fp::inv` consumed ~12 % of charpoly
+        /// wall time before this hoist.
+        pivot_inv: Vec<u8>,
+        n: usize,
+    },
+    Medium {
+        cols: Vec<Vec<u16>>,
+        /// Pre-computed pivot inverses for the medium-prime path,
+        /// `pivot_inv[j] = col_j[pivot_row_j]^{-1} (mod P)`, canonical u16.
+        pivot_inv: Vec<u16>,
+        n: usize,
+    },
 }
 
 #[cfg(feature = "simd")]
@@ -1595,6 +1611,7 @@ impl<const P: u64> PackedFpBasis<P> {
             crate::simd::maybe_fp_small()?;
             return Some(Self::Small {
                 cols: Vec::new(),
+                pivot_inv: Vec::new(),
                 n,
             });
         }
@@ -1602,24 +1619,39 @@ impl<const P: u64> PackedFpBasis<P> {
             crate::simd::maybe_fp_medium()?;
             return Some(Self::Medium {
                 cols: Vec::new(),
+                pivot_inv: Vec::new(),
                 n,
             });
         }
         None
     }
 
-    /// Appends a column (as `Fp<P>`) by packing into canonical form.
-    pub(crate) fn push(&mut self, col: &[Fp<P>]) {
+    /// Appends a column (as `Fp<P>`) by packing into canonical form and
+    /// caching the inverse of its pivot entry. The caller guarantees
+    /// `col[pivot_row]` is non-zero.
+    pub(crate) fn push(&mut self, col: &[Fp<P>], pivot_row: usize) {
         match self {
-            PackedFpBasis::Small { cols, n } => {
+            PackedFpBasis::Small { cols, pivot_inv, n } => {
                 debug_assert_eq!(col.len(), *n);
                 let packed: Vec<u8> = col.iter().map(|v| v.value() as u8).collect();
+                let pivot_canon = packed[pivot_row];
+                let inv = Fp::<P>::new(pivot_canon as u64)
+                    .inv()
+                    .expect("PackedFpBasis::push: pivot must be non-zero")
+                    .value() as u8;
                 cols.push(packed);
+                pivot_inv.push(inv);
             }
-            PackedFpBasis::Medium { cols, n } => {
+            PackedFpBasis::Medium { cols, pivot_inv, n } => {
                 debug_assert_eq!(col.len(), *n);
                 let packed: Vec<u16> = col.iter().map(|v| v.value() as u16).collect();
+                let pivot_canon = packed[pivot_row];
+                let inv = Fp::<P>::new(pivot_canon as u64)
+                    .inv()
+                    .expect("PackedFpBasis::push: pivot must be non-zero")
+                    .value() as u16;
                 cols.push(packed);
+                pivot_inv.push(inv);
             }
         }
     }
@@ -1643,37 +1675,61 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
     let n = v.len();
     let basis_len = pivot_row_of_col.len();
     match basis {
-        PackedFpBasis::Small { cols, .. } => {
+        PackedFpBasis::Small {
+            cols, pivot_inv, ..
+        } => {
             let fns = crate::simd::maybe_fp_small().expect("PackedFpBasis::Small requires AVX2");
             let p_u8 = P as u8;
-            let mut residual: Vec<u8> = v.iter().map(|x| x.value() as u8).collect();
+            // Use the per-prime from_mont / to_mont lookup tables (issue
+            // 27bb2f75 / 70766cb1 precedent) so packing/unpacking is a
+            // byte-indexed table read rather than a Montgomery REDC per
+            // element. At n=256 this removes 2 · 256 = 512 REDC calls per
+            // `do_reduce` invocation; over the ~n calls per charpoly this
+            // is ~131 k REDCs eliminated.
+            let tables = build_small_prime_tables::<P>();
+            let from_mont = tables.from_mont.as_slice();
+            let to_mont = tables.to_mont.as_slice();
+            let mut residual: Vec<u8> = v
+                .iter()
+                .map(|x| from_mont[x.raw_storage() as usize])
+                .collect();
             let mut coeffs: Vec<Fp<P>> = vec![Fp::<P>::new(0); basis_len];
-            let mut bcast: Vec<u8> = vec![0u8; n];
-            let mut tmp: Vec<u8> = vec![0u8; n];
-            let mut new_residual: Vec<u8> = vec![0u8; n];
             for (j, col) in cols.iter().enumerate() {
                 let r = pivot_row_of_col[j];
                 let v_at_r = residual[r];
                 if v_at_r == 0 {
                     continue;
                 }
-                let pivot_val = col[r];
-                let pivot_inv = Fp::<P>::new(pivot_val as u64)
-                    .inv()
-                    .expect("reduce: pivot must be non-zero")
-                    .value() as u8;
                 // factor = v_at_r * pivot_inv mod P (canonical scalar mul).
-                let factor = ((v_at_r as u32 * pivot_inv as u32) % P as u32) as u8;
-                bcast.iter_mut().for_each(|s| *s = factor);
-                (fns.batch_mul_fn)(&bcast, col, p_u8, &mut tmp);
-                (fns.batch_sub_fn)(&residual, &tmp, p_u8, &mut new_residual);
-                std::mem::swap(&mut residual, &mut new_residual);
-                coeffs[j] = Fp::<P>::new(factor as u64);
+                // Pivot inverses are pre-computed once per column at `push_col`
+                // time (issue 52cce970): profiling showed Fermat-style
+                // `Fp::inv` consumed ~12 % of charpoly wall time when called
+                // here, repeatedly, with the same column. Hoisting trims
+                // that overhead entirely.
+                let factor = ((v_at_r as u32 * pivot_inv[j] as u32) % P as u32) as u8;
+                // Fused in-place `residual := (residual − factor · col) mod p`
+                // (issue 52cce970): replaces the prior `batch_mul(bcast, col)
+                // → tmp; batch_sub(residual, tmp) → new_residual; swap` triple
+                // pass. Eliminates one broadcast-fill, one intermediate Vec,
+                // one new_residual Vec, and one swap; keeps factor, μ, p in
+                // ymm registers across the column sweep.
+                (fns.sub_scaled_fn)(&mut residual, col, factor, p_u8);
+                // Coeff value is the canonical `factor` byte — store the
+                // matching Montgomery storage word via the `to_mont` table
+                // (one byte-indexed lookup; no REDC).
+                coeffs[j] = Fp::<P>::from_raw_storage(to_mont[factor as usize]);
             }
-            let unpacked: Vec<Fp<P>> = residual.iter().map(|&b| Fp::<P>::new(b as u64)).collect();
+            // Unpack the canonical-byte residual back to Fp<P> Montgomery
+            // storage via the same per-prime `to_mont` table.
+            let unpacked: Vec<Fp<P>> = residual
+                .iter()
+                .map(|&b| Fp::<P>::from_raw_storage(to_mont[b as usize]))
+                .collect();
             (unpacked, coeffs)
         }
-        PackedFpBasis::Medium { cols, .. } => {
+        PackedFpBasis::Medium {
+            cols, pivot_inv, ..
+        } => {
             let fns = crate::simd::maybe_fp_medium().expect("PackedFpBasis::Medium requires AVX2");
             let p_u16 = P as u16;
             let barrett_m = gf2_kernels_simd::fp_medium::barrett_m32(p_u16);
@@ -1688,12 +1744,9 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
                 if v_at_r == 0 {
                     continue;
                 }
-                let pivot_val = col[r];
-                let pivot_inv = Fp::<P>::new(pivot_val as u64)
-                    .inv()
-                    .expect("reduce: pivot must be non-zero")
-                    .value() as u16;
-                let factor = ((v_at_r as u64 * pivot_inv as u64) % P) as u16;
+                // Pivot inverses pre-computed once per column at `push_col`
+                // time (issue 52cce970); see Small branch for rationale.
+                let factor = ((v_at_r as u64 * pivot_inv[j] as u64) % P) as u16;
                 bcast.iter_mut().for_each(|s| *s = factor);
                 (fns.batch_mul_fn)(&bcast, col, p_u16, barrett_m, &mut tmp);
                 (fns.batch_sub_fn)(&residual, &tmp, p_u16, &mut new_residual);
@@ -1708,8 +1761,8 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
 
 #[cfg(feature = "simd")]
 impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P> {
-    fn push_col(&mut self, col: &[Fp<P>]) {
-        self.push(col);
+    fn push_col(&mut self, col: &[Fp<P>], pivot_row: usize) {
+        self.push(col, pivot_row);
     }
 
     fn reduce(&self, v: &[Fp<P>], pivot_row_of_col: &[usize]) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
@@ -1828,6 +1881,13 @@ pub(crate) fn fp_try_matvec<const P: u64>(
 /// charpoly` reported in `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md`
 /// § 6.4.
 ///
+/// As of issue `52cce970`, `sub_scaled_into` calls a single fused AVX2
+/// kernel (`fns.sub_scaled_fn`, semantics `buf := (buf − α·chain_j) mod p`)
+/// instead of the two-step `batch_mul` + `batch_sub` sequence that the
+/// `5a3dbd5b` implementation used. The fused path eliminates the
+/// per-call scratch broadcast-fill, the intermediate-product write,
+/// and the copy-back step.
+///
 /// # Examples
 ///
 /// ```
@@ -1848,15 +1908,6 @@ pub(crate) struct PackedFpChainPolys<const P: u64> {
     /// Stored coefficients for each chain polynomial, in canonical bytes,
     /// ascending-degree order.  `polys[j]` has length `j + 1` (degree `j`).
     polys: Vec<Vec<u8>>,
-    /// Pre-allocated scratch buffer of 3 × max_cj_len bytes.  Layout:
-    ///   [0..n]:   broadcast (alpha repeated n times)
-    ///   [n..2n]:  scaled polynomial (alpha * chain_j)
-    ///   [2n..3n]: subtraction result (buf - scaled)
-    /// Grown lazily; never shrunk.  Using a single allocation and
-    /// `split_at_mut` gives safe non-overlapping mutable borrows.
-    scratch: Vec<u8>,
-    /// Current capacity per lane (scratch.len() / 3).
-    scratch_cap: usize,
     /// Per-prime conversion tables (issue 5a3dbd5b R5 review feedback):
     /// `from_mont[raw]` maps a Montgomery storage word to its canonical
     /// byte. Used in `sub_scaled_into` so `alpha`'s canonical value is
@@ -1875,21 +1926,8 @@ impl<const P: u64> PackedFpChainPolys<P> {
         crate::simd::maybe_fp_small()?;
         Some(Self {
             polys: Vec::new(),
-            scratch: Vec::new(),
-            scratch_cap: 0,
             tables: build_small_prime_tables::<P>(),
         })
-    }
-
-    /// Ensures the scratch buffer has capacity for at least `n` bytes per
-    /// lane.  Reallocates at most once per Krylov block (monotonically
-    /// growing polynomials).
-    #[inline]
-    fn ensure_scratch(&mut self, n: usize) {
-        if n > self.scratch_cap {
-            self.scratch.resize(n * 3, 0u8);
-            self.scratch_cap = n;
-        }
     }
 }
 
@@ -1921,51 +1959,19 @@ impl<const P: u64> crate::field::matrix::ChainPolyArith<Fp<P>> for PackedFpChain
         }
         let fns = crate::simd::maybe_fp_small()
             .expect("PackedFpChainPolys::sub_scaled_into requires AVX2");
-        let p_u8 = P as u8;
-        let cj_len = self.polys[j].len();
-        // buf must be at least as long as chain_j.
+        let chain_j = &self.polys[j];
         debug_assert!(
-            buf.len() >= cj_len,
+            buf.len() >= chain_j.len(),
             "sub_scaled_into: buf len {} < chain_j len {}",
             buf.len(),
-            cj_len
+            chain_j.len()
         );
-        // Ensure the single scratch buffer has 3 × cj_len capacity.
-        // Layout: [0..cj_len] = broadcast; [cj_len..2*cj_len] = scaled;
-        //         [2*cj_len..3*cj_len] = sub result.
-        self.ensure_scratch(cj_len);
-        // Split scratch into three non-overlapping lanes.
-        // Layout:  [0..cap]=lane0  [cap..2cap]=lane1  [2cap..3cap]=lane2
-        //
-        // Steps:
-        //  1. lane1[..cj_len] = polys[j]      (chain copy)
-        //  2. lane0[..cj_len] = alpha_val      (broadcast)
-        //  3. batch_mul(lane0, lane1) -> lane2 (scaled = alpha * chain)
-        //  4. batch_sub(buf, lane2) -> lane0   (diff = buf - scaled)
-        //  5. buf[..cj_len] = lane0[..cj_len]
-        let cap = self.scratch_cap;
-        // Step 1: copy polys[j] into lane1 (polys and scratch are separate
-        // fields, so we can borrow them simultaneously).
-        self.scratch[cap..cap + cj_len].copy_from_slice(&self.polys[j]);
-        // Step 2: fill lane0 with broadcast.
-        self.scratch[..cj_len].fill(alpha_val);
-        // Step 3: batch_mul(lane0, lane1) -> lane2.
-        // Split into (lane0+lane1) | lane2 to get mutable access to lane2
-        // while borrowing lane0 and lane1 immutably.
-        let (lo_and_l1, lane2_full) = self.scratch.split_at_mut(2 * cap);
-        let bcast = &lo_and_l1[..cj_len];
-        let chain_copy = &lo_and_l1[cap..cap + cj_len];
-        let scaled = &mut lane2_full[..cj_len];
-        (fns.batch_mul_fn)(bcast, chain_copy, p_u8, scaled);
-        // Step 4: batch_sub(buf, lane2) -> lane0.
-        // Split into lane0 | (lane1+lane2) to get mutable access to lane0
-        // while borrowing lane2 immutably.
-        let (lane0_full, l1_and_l2) = self.scratch.split_at_mut(cap);
-        let diff_out = &mut lane0_full[..cj_len];
-        let scaled_in = &l1_and_l2[cap..cap + cj_len]; // lane2[..cj_len]
-        (fns.batch_sub_fn)(&buf[..cj_len], scaled_in, p_u8, diff_out);
-        // Step 5: write result back to buf.
-        buf[..cj_len].copy_from_slice(&self.scratch[..cj_len]);
+        // Single fused in-place kernel call: buf[..cj_len] := (buf − α · chain_j) mod p.
+        // Replaces the prior `tmp = batch_mul(α, chain_j); buf = batch_sub(buf, tmp)`
+        // two-call sequence (issue 52cce970): the fused kernel keeps α, μ, p
+        // in ymm registers, threads the intermediate product through
+        // registers only, and writes results back in a single pass.
+        (fns.sub_scaled_fn)(&mut buf[..], chain_j, alpha_val, P as u8);
     }
 
     fn push_buf(&mut self, buf: &[u8]) {

@@ -131,6 +131,32 @@ pub type SmallPrimeGemmRowPanelFn = fn(&[u8], &[u8], usize, usize, u8, &mut [u8]
 /// Panics if `a_vals.len() != a_cols.len()` or `out.len() != n`.
 pub type SmallPrimeSpmmRowFn = fn(&[u8], &[usize], &[u8], usize, usize, u8, &mut [u8]);
 
+/// Fused in-place `buf := (buf − α · chain_j) mod p` for `Fp<P>`
+/// with `P <= 251`.
+///
+/// Performs the AXPY-style update used by
+/// `PackedFpChainPolys::sub_scaled_into` in a single register-resident
+/// pass — combining the multiply-by-scalar, mod-p Barrett reduction,
+/// and subtract-then-canonicalise steps that the older
+/// `batch_mul` + `batch_sub` two-call sequence required.
+///
+/// The intermediate `α · chain_j[i]` value never leaves an AVX2 register;
+/// only `chain_j` (read) and `buf` (read-modify-write) touch memory.
+///
+/// # Arguments
+///
+/// * `buf` — destination buffer in canonical bytes. Mutated in place.
+///   `buf.len() >= chain_j.len()`. Bytes beyond `chain_j.len()` are
+///   untouched.
+/// * `chain_j` — source vector in canonical bytes.
+/// * `alpha` — scalar in `[0, p)`.
+/// * `p` — odd prime in `[3, 251]`.
+///
+/// # Panics
+///
+/// Panics if `buf.len() < chain_j.len()`.
+pub type SmallPrimeSubScaledFn = fn(&mut [u8], &[u8], u8, u8);
+
 /// Bundle of small-prime SIMD batch operations.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available. All
@@ -155,6 +181,12 @@ pub struct SmallPrimeFns {
     pub gemm_row_panel_fn: SmallPrimeGemmRowPanelFn,
     /// Sparse-times-dense row kernel for `Fp<P>` with `P <= 251`.
     pub spmm_row_fn: SmallPrimeSpmmRowFn,
+    /// Fused in-place `buf := (buf − α · chain_j) mod p` for `Fp<P>`
+    /// with `P <= 251`. Used by the `PackedFpChainPolys::sub_scaled_into`
+    /// hot loop on `cyclic_decomposition`'s chain-polynomial update —
+    /// the bespoke kernel closing the residual gap on the GF(251)/n=256
+    /// charpoly cell tracked by `jit:52cce970`.
+    pub sub_scaled_fn: SmallPrimeSubScaledFn,
 }
 
 /// Detect and return the best available small-prime SIMD function bundle.
@@ -196,6 +228,7 @@ fn detect_x86() -> Option<SmallPrimeFns> {
             batch_dot_fn: batch_dot_safe,
             gemm_row_panel_fn: gemm_row_panel_safe,
             spmm_row_fn: spmm_row_safe,
+            sub_scaled_fn: sub_scaled_safe,
         })
     } else {
         None
@@ -244,6 +277,12 @@ fn spmm_row_safe(
 ) {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_small::fp_small_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe { crate::x86::fp_small::fp_small_sub_scaled(buf, chain_j, alpha, p) }
 }
 
 #[cfg(test)]
@@ -367,6 +406,38 @@ mod tests {
                     expected = (expected + a[i] as u32 * b[i] as u32) % p as u32;
                 }
                 assert_eq!(got, expected as u8, "p={p} len={len}");
+            }
+        }
+    }
+
+    /// Wrapper-layer parity for the `sub_scaled` fused kernel
+    /// at the issue-mandated boundary lengths.
+    /// Mirrors the unsafe-layer test in `x86::fp_small::tests` so a
+    /// regression in the safe dispatch table is caught at this layer
+    /// even if the unsafe-layer test were skipped.
+    #[test]
+    fn safe_wrapper_matches_scalar_sub_scaled() {
+        let fns = match detect() {
+            Some(f) => f,
+            None => return,
+        };
+        for &p in &[7u8, 31, 251] {
+            for &len in &[0usize, 1, 15, 16, 17, 63, 64, 65, 255, 256] {
+                let chain_j: Vec<u8> = (0..len as u32)
+                    .map(|i| ((i * 19 + 5) % p as u32) as u8)
+                    .collect();
+                let alpha: u8 = ((len as u32 * 11 + 3) % p as u32) as u8;
+                let mut buf: Vec<u8> = (0..len as u32)
+                    .map(|i| ((i * 31 + 11) % p as u32) as u8)
+                    .collect();
+                let mut expected = buf.clone();
+                let p_u32 = p as u32;
+                for i in 0..len {
+                    let prod = (alpha as u32 * chain_j[i] as u32) % p_u32;
+                    expected[i] = ((expected[i] as u32 + p_u32 - prod) % p_u32) as u8;
+                }
+                (fns.sub_scaled_fn)(&mut buf, &chain_j, alpha, p);
+                assert_eq!(buf, expected, "p={p} len={len}");
             }
         }
     }

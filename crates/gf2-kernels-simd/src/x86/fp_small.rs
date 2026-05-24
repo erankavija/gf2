@@ -465,6 +465,135 @@ pub unsafe fn fp_small_gemm_row_panel(
     }
 }
 
+/// Fused `buf := (buf − α · chain_j) mod p` in-place AXPY-style kernel
+/// for `Fp<P>` with `P ≤ 251`.
+///
+/// Inputs are canonical bytes (each `< p`). The kernel performs, for
+/// `i ∈ [0, chain_j.len())`:
+///
+/// ```text
+///     buf[i] := (buf[i] − α · chain_j[i]) mod p
+/// ```
+///
+/// `buf` is mutated in place; `chain_j` is read only. `buf.len()` may
+/// exceed `chain_j.len()` (extra elements are not touched).
+///
+/// # Why this exists
+///
+/// The closing kernel for the `52cce970` issue's GF(251)/n=256 charpoly
+/// gap. `PackedFpChainPolys::sub_scaled_into` (in `gf2-core`) was
+/// previously implemented as `tmp = batch_mul(α, chain_j); buf =
+/// batch_sub(buf, tmp)`, paying:
+///
+///   * two `[u8] → [u8]` AVX2 kernel function-pointer indirections
+///     per call,
+///   * one `cj_len` byte broadcast-fill into a scratch lane,
+///   * one `cj_len` byte intermediate write (the product),
+///   * one `cj_len` byte copy back from the scratch lane to `buf`.
+///
+/// Fusing collapses those into a single 16-lane register-resident
+/// read-modify-write loop:
+///   * `α`, the Barrett constant `μ`, and `p` stay broadcast-loaded
+///     in `ymm` registers across the whole loop (three registers).
+///   * The intermediate product never leaves register `ymm4`.
+///   * The only memory traffic per iteration is one 16-byte load
+///     from `chain_j`, one 16-byte load from `buf`, and one 16-byte
+///     store to `buf`.
+///
+/// # Algorithm
+///
+/// Per 16-lane iteration:
+///
+/// 1. Load 16 bytes from `chain_j`; zero-extend to 16 × `u16` lanes.
+/// 2. Multiply lane-wise by broadcast `α`: product ≤ `(P − 1)² ≤ 250² = 62 500 < 2¹⁶`.
+/// 3. Reduce mod `p` via a single 16-bit Barrett step (`mulhi(prod, μ)`
+///    quotient + `mullo(q, p)` correction + conditional subtract).
+/// 4. Load 16 bytes from `buf`; zero-extend.
+/// 5. `diff = buf − reduced_prod ∈ [−(p−1), p−1]` (16-bit signed).
+/// 6. Lift via `diff + p`, conditionally subtract `p` to land in `[0, p)`.
+/// 7. Pack 16 × `u16` back to 16 × `u8` and store into `buf`.
+///
+/// Tail bytes (`chain_j.len() % 16`) run a scalar `(buf[i] + (p −
+/// (α · chain_j[i]) mod p)) mod p` per byte.
+///
+/// # Safety
+///
+/// Caller must ensure:
+///   * AVX2 is available at runtime.
+///   * `p` is an odd prime in `[3, 251]`.
+///   * `alpha < p`.
+///   * Every byte of `buf` and `chain_j` is canonical (`< p`).
+///   * `buf.len() >= chain_j.len()`.
+///
+/// # Panics
+///
+/// Panics if `buf.len() < chain_j.len()`.
+#[target_feature(enable = "avx2")]
+pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8) {
+    // SAFETY: the kernel is annotated `#[target_feature(enable = "avx2")]`
+    // and the caller has already verified AVX2 availability via the
+    // `SmallPrimeFns` dispatch table returned by `detect_x86`. All
+    // intrinsics below are AVX2 (256-bit lane) or SSE2 (128-bit lane)
+    // and require no fences. Pointer arithmetic stays within the
+    // bounds asserted at function entry.
+    assert!(
+        buf.len() >= chain_j.len(),
+        "fp_small_sub_scaled: buf shorter than chain_j ({} < {})",
+        buf.len(),
+        chain_j.len()
+    );
+
+    let n = chain_j.len();
+    if n == 0 {
+        return;
+    }
+    let nvec = n / 16;
+
+    let alpha_vec = _mm256_set1_epi16(alpha as i16);
+    let mu_vec = _mm256_set1_epi16(barrett_mu_u16(p) as i16);
+    let p_vec = _mm256_set1_epi16(p as i16);
+
+    let mut c_ptr = chain_j.as_ptr();
+    let mut b_ptr = buf.as_mut_ptr();
+    for _ in 0..nvec {
+        // 1. Load 16 chain_j bytes, expand to u16 lanes.
+        let cv = _mm256_cvtepu8_epi16(_mm_loadu_si128(c_ptr as *const __m128i));
+        // 2. Lane-wise mul by α. Product fits in u16.
+        let prod = _mm256_mullo_epi16(cv, alpha_vec);
+        // 3. Barrett-reduce mod p (single step, result in [0, p)).
+        let q = _mm256_mulhi_epu16(prod, mu_vec);
+        let qp = _mm256_mullo_epi16(q, p_vec);
+        let r = _mm256_sub_epi16(prod, qp);
+        let r_minus_p = _mm256_sub_epi16(r, p_vec);
+        let r_canon = _mm256_min_epu16(r, r_minus_p);
+        // 4. Load buf bytes, expand.
+        let bv = _mm256_cvtepu8_epi16(_mm_loadu_si128(b_ptr as *const __m128i));
+        // 5. diff = bv - r_canon ∈ [-(p-1), p-1] (signed 16-bit).
+        let diff = _mm256_sub_epi16(bv, r_canon);
+        // 6. shifted = diff + p ∈ [1, 2p-1].
+        let shifted = _mm256_add_epi16(diff, p_vec);
+        let shifted_minus_p = _mm256_sub_epi16(shifted, p_vec);
+        let out = _mm256_min_epu16(shifted, shifted_minus_p);
+        // 7. Pack 16 × u16 → 16 × u8 and store.
+        store_u16_to_u8(out, b_ptr);
+
+        c_ptr = c_ptr.add(16);
+        b_ptr = b_ptr.add(16);
+    }
+
+    // Scalar tail.
+    let tail_start = nvec * 16;
+    let p_u32 = p as u32;
+    let alpha_u32 = alpha as u32;
+    for i in tail_start..n {
+        let prod = (alpha_u32 * *chain_j.get_unchecked(i) as u32) % p_u32;
+        let b = *buf.get_unchecked(i) as u32;
+        // b + (p - prod) mod p — keeps the unsigned arithmetic positive.
+        let new = (b + (p_u32 - prod)) % p_u32;
+        *buf.get_unchecked_mut(i) = new as u8;
+    }
+}
+
 /// Sparse-times-dense row kernel: writes `out[j] = (∑_h a_vals[h] *
 /// b[a_cols[h] * b_stride + j]) mod p` for `j ∈ [0, n)`.
 ///
@@ -876,6 +1005,122 @@ mod tests {
             for (j, &val) in out.iter().enumerate().take(n) {
                 assert_eq!(val, 0, "p={p} j={j}");
             }
+        });
+    }
+
+    fn scalar_sub_scaled_oracle(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8) {
+        // Reference: buf[i] := (buf[i] - alpha * chain_j[i]) mod p.
+        let p_u32 = p as u32;
+        let alpha_u32 = alpha as u32;
+        for i in 0..chain_j.len() {
+            let prod = (alpha_u32 * chain_j[i] as u32) % p_u32;
+            let b = buf[i] as u32;
+            buf[i] = ((b + p_u32 - prod) % p_u32) as u8;
+        }
+    }
+
+    /// Bit-identical scalar-equivalence test for the fused `sub_scaled`
+    /// kernel at the issue-mandated boundary lengths `{0, 1, 15, 16, 17,
+    /// 63, 64, 65, 255, 256}` across every supported small prime.
+    ///
+    /// Issue `52cce970` § "Success Criteria" requires correctness at
+    /// these exact lengths. The oracle is the same scalar computation
+    /// used by the non-AVX2 fallback.
+    #[test]
+    fn sub_scaled_matches_scalar_boundary_lengths_jit_52cce970() {
+        run_for_primes(|p| {
+            for &len in &[0usize, 1, 15, 16, 17, 63, 64, 65, 255, 256] {
+                // Two different alpha values per (p, len) to broaden
+                // coverage: a "small" one and the maximal canonical
+                // (p-1) which exercises the (P-1)² product corner.
+                for &alpha in &[2u8 % p, (p - 1) % p] {
+                    let mut buf: Vec<u8> = (0..len as u32)
+                        .map(|i| ((i * 31 + 11) % p as u32) as u8)
+                        .collect();
+                    let chain_j: Vec<u8> = (0..len as u32)
+                        .map(|i| ((i * 19 + 5) % p as u32) as u8)
+                        .collect();
+                    let mut expected = buf.clone();
+                    scalar_sub_scaled_oracle(&mut expected, &chain_j, alpha, p);
+                    unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p) };
+                    assert_eq!(buf, expected, "p={p} alpha={alpha} len={len}");
+                }
+            }
+        });
+    }
+
+    /// Coverage for `buf.len() > chain_j.len()` — the kernel must
+    /// leave the trailing `buf` bytes untouched. This case matches the
+    /// `PackedFpChainPolys::sub_scaled_into` call shape where `buf`
+    /// has been resized to hold the upcoming `x · chain_{d-1}` shift
+    /// (one byte longer than the longest chain polynomial seen so far).
+    #[test]
+    fn sub_scaled_preserves_buf_tail() {
+        run_for_primes(|p| {
+            let chain_len = 33;
+            let buf_extra = 7;
+            let chain_j: Vec<u8> = (0..chain_len as u32)
+                .map(|i| ((i * 11 + 3) % p as u32) as u8)
+                .collect();
+            let mut buf: Vec<u8> = (0..(chain_len + buf_extra) as u32)
+                .map(|i| ((i * 23 + 5) % p as u32) as u8)
+                .collect();
+            let alpha = 7u8 % p;
+            let mut expected = buf.clone();
+            scalar_sub_scaled_oracle(&mut expected[..chain_len], &chain_j, alpha, p);
+            unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p) };
+            assert_eq!(buf, expected, "p={p}");
+            // Explicit check: tail bytes equal the original initial values.
+            let original_tail: Vec<u8> = (chain_len..chain_len + buf_extra)
+                .map(|i| ((i as u32 * 23 + 5) % p as u32) as u8)
+                .collect();
+            assert_eq!(&buf[chain_len..], &original_tail[..], "p={p} tail mutated");
+        });
+    }
+
+    /// Stress test: random alphas, random chain_j and buf at varying
+    /// lengths, repeated many times. Complements the boundary test by
+    /// hitting non-corner lengths that the byte-pair tile may treat
+    /// differently inside the SIMD vs. tail boundary.
+    #[test]
+    fn sub_scaled_matches_scalar_random_lengths() {
+        run_for_primes(|p| {
+            // Simple LCG for reproducible pseudo-random byte values.
+            let mut state: u64 = 0xDEAD_BEEF_CAFE_BABE;
+            let mut step = || {
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                state
+            };
+            for &len in &[2usize, 7, 8, 18, 30, 31, 32, 47, 96, 113, 200, 257, 511] {
+                let chain_j: Vec<u8> = (0..len).map(|_| (step() as u32 % p as u32) as u8).collect();
+                let mut buf: Vec<u8> = (0..len).map(|_| (step() as u32 % p as u32) as u8).collect();
+                let alpha = (step() as u32 % p as u32) as u8;
+                let mut expected = buf.clone();
+                scalar_sub_scaled_oracle(&mut expected, &chain_j, alpha, p);
+                unsafe { fp_small_sub_scaled(&mut buf, &chain_j, alpha, p) };
+                assert_eq!(buf, expected, "p={p} alpha={alpha} len={len}");
+            }
+        });
+    }
+
+    /// Sanity: `alpha == 0` is a no-op (the caller in `gf2-core`
+    /// short-circuits on zero alpha but the kernel itself must handle
+    /// the corner cleanly in case a future caller forgets).
+    #[test]
+    fn sub_scaled_zero_alpha_is_noop() {
+        run_for_primes(|p| {
+            let len = 65;
+            let chain_j: Vec<u8> = (0..len as u32)
+                .map(|i| ((i * 7 + 1) % p as u32) as u8)
+                .collect();
+            let original_buf: Vec<u8> = (0..len as u32)
+                .map(|i| ((i * 13 + 2) % p as u32) as u8)
+                .collect();
+            let mut buf = original_buf.clone();
+            unsafe { fp_small_sub_scaled(&mut buf, &chain_j, 0, p) };
+            assert_eq!(buf, original_buf, "p={p} alpha=0 must be no-op");
         });
     }
 }
