@@ -2,9 +2,9 @@
   "id": "52cce970-8142-4ff9-ac19-95ed994fee38",
   "title": "Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells",
   "description": "Close the two residual GF(251) cells left open after the d1dd266c+sibling integration — both share the small-prime AVX2 kernel-call-overhead root cause and need bespoke register-scheduled kernels in `gf2-kernels-simd`. Tracked here under 615db3b9's broader finite-field LA catch-up umbrella.\n\n## Cells to close\n\n| Cell | Pre-integration | Post-integration | 1.5x ceiling | Gap |\n|---|---:|---:|---:|---:|\n| GF(251)/n=64 minpoly | 4.04x | 2.84x | 0.202 ms | 1.9x past ceiling |\n| GF(251)/n=256 charpoly | 9.58x | 3.18x | 1.975 ms | 2.1x past ceiling |\n\nEvidence: `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` §§ 6.1, 6.2.\n\n## Background\n\nSibling tasks `5a3dbd5b` (canonical-byte chain_polys) and `70766cb1` (panel-kernel inline + Barrett-table cache) closed the algorithmic and dispatch overhead. The residual gap is now the per-call AVX2 byte-lane operation cost:\n\n- **GF(251)/n=64 minpoly:** 4 panel iterations × ~50 ns/iteration AVX2 lane/register setup. fflas hand-tunes a small-n register-scheduled kernel.\n- **GF(251)/n=256 charpoly:** chain_polys `sub_scaled_into` per-call function-pointer indirection + Barrett-constant load. fflas fuses the chain_polys update with the matvec inner loop.\n\n## Success Criteria\n\n- [hard] Both target cells PASS the 1.5x ceiling vs fflas-ffpack on Zen 3 with reproducible measurements.\n- [hard] Implementation respects unsafe-isolation: any new register-scheduled kernels live in `gf2-kernels-simd`; the safe `gf2-core` API surface stays unchanged.\n- [hard] No regression on any cell currently PASSing in `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` §§ 3.1–3.2.\n- [hard] Correctness: bit-identical scalar-equivalence proptests for the new kernels at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65, 255, 256}.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or successor) with the closed cells.\n\n## Notes\n\nThis task is a follow-up to `d1dd266c` + siblings — it does NOT block their closure. The `97bf0879` epic accepts the partial 14/16 result via the user-approved 2026-05-07 amendment routing the residual constant-factor closure to this follow-up. Filed as a `615db3b9` dependency to attach it to the broader finite-field LA SOTA catch-up plan.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -22,5 +22,5 @@
     "story:sota-polynomial-invariants"
   ],
   "created_at": "2026-05-07T16:12:06.196594051+00:00",
-  "updated_at": "2026-05-07T16:12:06.196604541+00:00"
+  "updated_at": "2026-05-24T12:18:43.884096719+00:00"
 }
