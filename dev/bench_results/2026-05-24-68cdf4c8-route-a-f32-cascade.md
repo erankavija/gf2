@@ -318,3 +318,51 @@ should be quiesced by stopping parallel agent workers in
 | Asm artefact | `crates/gf2-kernels-simd/src/x86/asm/fp_small_f32.asm.txt` |
 | Dispatch site | `crates/gf2-core/src/gfp/simd_ops.rs::fp_small_try_gemm_classical` |
 | Parity tests | `crates/gf2-core/tests/route_a_gf251_parity.rs` |
+
+---
+
+## 8. Amendment — 2026-05-24 R1 (toggle mechanism + SSOT fixes)
+
+**Changes made after code-review run `896d4898`; no re-measurement required.**
+
+### 8.1 Toggle mechanism: env-var → `AtomicBool`
+
+The original dispatch toggle read `std::env::var("GF2_GF251_ROUTE_A")` per
+GEMM call. Rust 1.78+ made `set_var`/`remove_var` unsafe; the integration
+test (`crates/gf2-core/tests/route_a_gf251_parity.rs`) was calling them
+in `unsafe {}` blocks, violating SC#3 (unsafe isolation).
+
+**Fix:** Replaced the env-var read in `simd_ops.rs` with a process-wide
+`AtomicBool` (`ROUTE_A_GF251_ENABLED`) and a safe setter
+`set_route_a_gf251_enabled(bool)` (public in `gf2_core::gfp::simd_ops`).
+All tests in `route_a_gf251_parity.rs` now call the safe setter instead of
+`unsafe { set_var / remove_var }`. No `unsafe` blocks remain in that test
+file. The toggle default (`false`) and production dispatch are unchanged.
+No re-bench needed: the toggle mechanism does not affect kernel codegen;
+`AtomicBool::load(Relaxed)` is one instruction vs. the former `env::var`
+syscall (≈ 50 ns), making the new path strictly cheaper per call, with no
+effect on the n=1024 cell where route-A's headline PASS was measured.
+
+### 8.2 SSOT fix: local SplitMix64 generator removed
+
+The local `fp251_matrix_from_seed` in `route_a_gf251_parity.rs` (a
+hand-rolled SplitMix64 loop) was replaced with the shared
+`gf2_core::bench_seed::fp_matrix_from_seed::<P>()` helper. The two
+generators use different mixing steps and would produce different matrices
+for the same seed. Since the tests only check that route-A == Candidate-C
+for any valid GF(251) matrix (not specific expected values), the matrix
+change has no effect on test correctness or coverage.
+
+### 8.3 SSOT fix: `barrett_reduce_lane32_local` delegated to SSOT
+
+`crates/gf2-kernels-simd/src/x86/fp_small_f32.rs::barrett_reduce_lane32_local`
+was a duplicated copy of
+`crates/gf2-kernels-simd/src/x86/fp_small.rs::barrett_reduce_lane32`.
+The original in `fp_small.rs` is now `pub(super)` and
+`barrett_reduce_lane32_local` is a one-line wrapper that delegates via
+`super::fp_small::barrett_reduce_lane32(x, mu_vec, p_vec, p_vec)`. Both
+functions are `#[inline]`; the compiler eliminates the wrapper and the
+`p_vec64` dummy argument. The generated SIMD sequence for
+`store_and_reduce_tile_route_a` is unchanged — no re-bench was performed
+because the kernel body was not modified. The n=1024 GF(251) route-A ratio
+of **0.679** (PASS at ≥ 0.667) remains valid.

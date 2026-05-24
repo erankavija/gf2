@@ -783,9 +783,20 @@ pub unsafe fn fp_small_spmm_row(
 
 /// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)` and
 /// `p ≤ 251`. Returns reduced 32-bit lanes still in u32 form.
+///
+/// `p_vec64` carries `p` broadcast as 64-bit lanes; it is accepted for
+/// interface symmetry with the calling context in this module but is
+/// not used in the reduction arithmetic. Use
+/// `super::fp_small_f32::barrett_reduce_lane32` (which passes `p_vec`
+/// for `p_vec64`) when calling from the route-A kernel to keep a single
+/// implementation.
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available at runtime.
 #[inline]
 #[target_feature(enable = "avx2")]
-unsafe fn barrett_reduce_lane32(
+pub(super) unsafe fn barrett_reduce_lane32(
     x: __m256i,
     mu_vec: __m256i,
     p_vec: __m256i,

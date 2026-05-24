@@ -438,40 +438,64 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool 
     P >= N_THRESH_PRIME && P <= 251
 }
 
-/// Route-A dispatch toggle for GF(251) (issue 68cdf4c8).
+// ---------------------------------------------------------------------------
+// Route-A dispatch toggle (AtomicBool, issue 68cdf4c8)
+// ---------------------------------------------------------------------------
+
+#[cfg(feature = "simd")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Global runtime debug switch for the route-A GF(251) f32/FMA cascade
+/// (issue 68cdf4c8). Default `false`; off by default so production
+/// dispatch is unchanged. Tests and bench drivers flip this via
+/// [`set_route_a_gf251_enabled`] instead of unsafe env-var mutation.
+#[cfg(feature = "simd")]
+static ROUTE_A_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Sets the runtime debug switch that opts GF(251) GEMM calls into the
+/// reworked Candidate F path (vectorized AVX2 Barrett output reduction +
+/// lookup-table pack / unpack).
 ///
-/// Runtime debug switch that opts a single GEMM call into the reworked
-/// Candidate F path (vectorized AVX2 Barrett output reduction +
-/// lookup-table pack / unpack). The switch is **off by default** —
-/// production dispatch is unaffected.
+/// Default is `false` — production dispatch is unaffected. Call with
+/// `true` in test or bench code to exercise route A; restore to `false`
+/// after the test to avoid cross-test interference (the flag is a process-
+/// wide `AtomicBool`).
 ///
-/// The switch is read once per GEMM call via the `GF2_GF251_ROUTE_A`
-/// environment variable; setting it to `"1"` enables route A for that
-/// process. The check is intentionally not `OnceLock`-cached so that
-/// criterion bench harnesses can toggle the path per-bench without a
-/// process restart. The per-call cost is one `env::var` lookup
-/// (≈ 50 ns) which is negligible at the n=256 and n=1024 cells where
-/// the bench evidence is collected.
-///
-/// This toggle is the dispatch surface the issue's success criterion 1
-/// names as the "non-default dispatch toggle (cargo feature OR runtime
-/// debug switch)" exposing the reworked path "without changing default
+/// This is the dispatch surface the issue's success criterion 1 names as
+/// the "non-default dispatch toggle (cargo feature OR runtime debug
+/// switch)" exposing the reworked path "without changing default
 /// production behaviour."
 ///
-/// Scope: GF(251) only. The kernel itself supports every `p ≤ 251`
-/// (the 32-bit-lane Barrett magic is computed at runtime per prime
-/// inside `store_and_reduce_tile_route_a`), but per the issue scope
-/// this toggle is restricted to `P == 251` so non-GF(251) cells
-/// continue to use Candidate C regardless of the env var.
+/// Scope: only affects `P == 251`; other primes continue to use
+/// Candidate C regardless of this flag.
+///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "simd")]
+/// # {
+/// use gf2_core::gfp::simd_ops::set_route_a_gf251_enabled;
+/// set_route_a_gf251_enabled(true);
+/// // ... run GF(251) GEMM via route A ...
+/// set_route_a_gf251_enabled(false);
+/// # }
+/// ```
+#[cfg(feature = "simd")]
+pub fn set_route_a_gf251_enabled(enabled: bool) {
+    ROUTE_A_GF251_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+/// Returns `true` when `P == 251` and the route-A debug switch is on.
+/// See [`set_route_a_gf251_enabled`].
+///
+/// Scope: GF(251) only. Non-GF(251) primes always return `false`.
 #[cfg(feature = "simd")]
 #[inline]
 fn route_a_gf251_enabled<const P: u64>() -> bool {
     if P != 251 {
         return false;
     }
-    std::env::var("GF2_GF251_ROUTE_A")
-        .map(|v| v == "1")
-        .unwrap_or(false)
+    ROUTE_A_GF251_ENABLED.load(Ordering::Relaxed)
 }
 
 /// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
@@ -488,13 +512,13 @@ fn route_a_gf251_enabled<const P: u64>() -> bool {
 /// (`N_THRESH_PRIME = 252`). Candidate F remains compiled in as an upgrade
 /// path for future measurement on a different host or at larger n.
 ///
-/// **Route-A toggle (issue 68cdf4c8):** when `GF2_GF251_ROUTE_A=1` is set
-/// in the environment AND `P == 251`, this function routes through a
-/// reworked Candidate F variant with vectorized AVX2 Barrett output
+/// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`]
+/// has been called with `true` AND `P == 251`, this function routes through
+/// a reworked Candidate F variant with vectorized AVX2 Barrett output
 /// reduction and lookup-table pack / unpack instead of Candidate C. The
-/// toggle is opt-in and read once per call via `std::env::var`; default
-/// production dispatch (env var unset) is unchanged. See
-/// `route_a_gf251_enabled` and `dev/active/68cdf4c8-route-a-design.md`.
+/// toggle is opt-in via a process-wide `AtomicBool`; default production
+/// dispatch is unchanged. See `route_a_gf251_enabled` and
+/// `dev/active/68cdf4c8-route-a-design.md`.
 ///
 /// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
 /// per-call constants (panel-pack heap allocations + Montgomery REDC on
@@ -555,7 +579,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     if route_a_selected {
         // Route A (issue 68cdf4c8): reworked Candidate F for GF(251)
         // with vectorized output reduction and lookup-table pack/unpack.
-        // The toggle is opt-in via `GF2_GF251_ROUTE_A=1`; default
+        // The toggle is opt-in via `set_route_a_gf251_enabled(true)`; default
         // production dispatch is unaffected (Candidate C continues to
         // own all `p ≤ 251` cells).
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
