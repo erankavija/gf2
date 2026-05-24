@@ -2,9 +2,9 @@
   "id": "5ce13bae-61db-4df2-85b1-87447f643cd8",
   "title": "Markowitz-degree pivot selection for sparse RREF",
   "description": "gf2-core's sparse Gauss-Jordan elimination uses a straight-line column-sweep that doesn't match LinBox's `GaussDomain::NoReordering` pivot-priority strategy. Cross-ratios (sparse-elim × {GF(2), GF(7), GF(251), GF(65521), GF(2^31-1)} at n=256/1024 density 3.9%/0.98%) are uniformly 1.97x-2.61x of LinBox — uniformly outside the 1.5x SOTA contract.\n\n## Background\n\nPer `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 *Feasible CPU gaps* and `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` § 4.4, this is an algorithmic gap, not a kernel-tuning gap. LinBox stores priority-queue pivots and does early-out on dependent rows; gf2-core does straight-line sparse Gauss-Jordan.\n\n## Success Criteria\n\n- [hard] Implement Markowitz-degree pivot selection in `SpBitMatrix::rref` (GF(2)) and `SparseFieldMatrix::rref` (GF(p)).\n- [hard] Cross-ratios for the 10 sparse-elim cells (GF(2)/GF(p) × {n=256, n=1024} × scorecard densities) come within 1.5x of LinBox `GaussDomain::NoReordering`.\n- [hard] Bit-exact equality vs gf2-core's existing dense Gauss-Jordan reference and (where applicable) LinBox rank cross-check.\n- [hard] No regression on the existing sparse-rref proptests in `crates/gf2-core/src/sparse.rs::tests`.\n- [hard] Filed under epic 97bf0879 umbrella amendment A8 as named follow-up for the 10 sparse-elim FAIL cells documented in dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md § 4.4.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -34,5 +34,5 @@
     "type:task"
   ],
   "created_at": "2026-05-08T19:11:49.303423313+00:00",
-  "updated_at": "2026-05-24T05:26:04.525701862+00:00"
+  "updated_at": "2026-05-24T07:35:03.350145517+00:00"
 }
