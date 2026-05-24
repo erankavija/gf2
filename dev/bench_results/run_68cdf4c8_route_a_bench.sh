@@ -3,10 +3,14 @@
 #
 # Runs N=5 sequential criterion bench trials for the route-A reworked
 # Candidate F path at GF(251)/n ∈ {256, 1024} on the CCX1-pinned Zen-3
-# reference host. The route-A path is opted into via
-# `GF2_GF251_ROUTE_A=1`; all other primes / cells use the default
-# Candidate C dispatch (env-var-checked at GEMM dispatch time, so the
-# non-regression controls share a single bench binary).
+# reference host. The route-A path is opted into via the launcher-
+# convenience env var `GF2_GF251_ROUTE_A=1`, which the GF(251) bench
+# function reads (safe `std::env::var`) and dispatches to the safe
+# `gf2_core::gfp::simd_ops::set_route_a_gf251_enabled(true)` setter
+# (jit:68cdf4c8 R1 commit `4bad2e72`; original env-var-driven toggle
+# replaced with `AtomicBool` to satisfy SC#3 unsafe-isolation). All
+# other primes / cells use the default Candidate C dispatch and share
+# a single bench binary.
 #
 # Per-trial isolation:
 #   * taskset -c 6-11 pins to CCX1 (cores 6-11). The parent shell lives
