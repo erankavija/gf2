@@ -921,7 +921,8 @@ impl SpBitMatrix {
     }
 
     /// Computes the reduced row echelon form (RREF) over GF(2) using a
-    /// sparse-native column-elimination algorithm.
+    /// sparse-native column-elimination algorithm with **Markowitz-degree
+    /// pivot selection** (`jit:5ce13bae`).
     ///
     /// The output is a CSR matrix in canonical RREF: pivot rows appear at
     /// the top in pivot-column order, followed by zero rows. The result
@@ -931,20 +932,30 @@ impl SpBitMatrix {
     ///
     /// # Algorithm
     ///
-    /// Walks columns left-to-right. For each column, picks the first
-    /// not-yet-pivoted row containing it, then eliminates that column
-    /// from every other row by XOR (the GF(2) analogue of the GF(p)
-    /// `axpy` step in [`crate::field::sparse_matrix::SparseFieldMatrix::rref`]).
-    /// Each row is held as a sorted `Vec<usize>` of column indices; the
-    /// XOR of two sorted lists is computed as a symmetric-difference
-    /// merge in `O(|target| + |source|)`.
+    /// At each elimination step, picks the (row, col) pair with the
+    /// minimum **Markowitz product** `(row_nnz(r) - 1) * (col_nnz(c) - 1)`
+    /// among un-used rows, where `col` is the leading column of row `r`.
+    /// This minimises the structural upper bound on fill-in, matching
+    /// LinBox `GaussDomain::NoReordering`'s pivot-priority strategy.
+    /// Dependent rows (`row_nnz == 0`) drop out of subsequent pivot
+    /// search automatically.
+    ///
+    /// Eliminates the chosen column from every other row by XOR (the
+    /// GF(2) analogue of the GF(p) `axpy` step in
+    /// [`crate::field::sparse_matrix::SparseFieldMatrix::rref`]). Each
+    /// row is held as a sorted `Vec<usize>` of column indices; the XOR
+    /// of two sorted lists is computed as a symmetric-difference merge
+    /// in `O(|target| + |source|)`. The `row_nnz` and `col_nnz` arrays
+    /// are maintained incrementally during each axpy — re-scanning the
+    /// matrix would destroy the speedup.
     ///
     /// # Complexity
     ///
-    /// Worst case `O(m·n·avg_row_nnz)` for an `m × n` matrix. For sparse
-    /// matrices with bounded row-weight `w` and rank `r`, the cost is
-    /// `O(r·m·w)`, much smaller than the dense `O(m²·n / 64)` path of
-    /// [`crate::alg::rref::rref`] when `n` is large.
+    /// Same big-O as the previous straight-line algorithm (`O(r·m·w)`
+    /// for bounded row-weight `w` and rank `r`); Markowitz wins on the
+    /// constant factor by keeping fill-in low and skipping dependent
+    /// rows in pivot search. See `dev/active/5ce13bae-markowitz-design.md`
+    /// for the full design rationale.
     ///
     /// # Examples
     ///
@@ -991,6 +1002,16 @@ impl SpBitMatrix {
             })
             .collect();
 
+        // ── Markowitz pivot bookkeeping (jit:5ce13bae) ─────────────────
+        //
+        // `row_nnz[i] = rows[i].len()` is maintained incrementally after
+        // each axpy. The Markowitz product `(row_nnz - 1) * (col_nnz - 1)`
+        // collapses to "minimise row_nnz" once the pivot column is fixed
+        // (col_nnz is the same for all candidates at that column), so we
+        // do not need to maintain col_nnz explicitly. See
+        // `dev/active/5ce13bae-markowitz-design.md` § "Pivot column choice".
+        let mut row_nnz: Vec<usize> = rows.iter().map(|r| r.len()).collect();
+
         // Symmetric difference of two sorted, strictly-ascending column
         // lists, written into `target`. This is the GF(2) `axpy` step:
         // `target ← target XOR source`.
@@ -1030,60 +1051,102 @@ impl SpBitMatrix {
 
         // `row_used[i]` tracks whether row `i` has been chosen as a pivot.
         let mut row_used = vec![false; m];
-        // Order in which pivots were picked: each entry is the original
-        // row index. Pivot column equals first index of that row at
-        // pick-time.
-        let mut pivot_order: Vec<usize> = Vec::new();
+        // Pivots in pick order: each entry is `(original_row, pivot_col)`.
+        // Final output sorts these by `pivot_col` ascending for canonical
+        // RREF row order.
+        let mut pivot_order: Vec<(usize, usize)> = Vec::new();
 
-        for col in 0..n {
-            // Find an un-used row whose first stored entry equals `col`.
-            // (Because pivot columns are processed in ascending order and
-            // each elimination step removes earlier columns from the
-            // un-pivoted rows, every un-used row's leading entry is `>=
-            // col`.)
-            let mut pivot: Option<usize> = None;
-            for (i, used) in row_used.iter().enumerate() {
-                if *used {
+        // Outer loop: pick `min(m, n)` pivots at most. Each iteration
+        // either picks one pivot or breaks if no eligible row remains.
+        for _ in 0..m.min(n) {
+            // Markowitz pivot search subject to canonical-RREF ordering.
+            //
+            // The pivot column SET of an RREF is uniquely determined —
+            // it is the leftmost independent columns of the matrix. So
+            // at each step we must pick the smallest column `pc` that
+            // is still the leading entry of some un-used row.
+            //
+            // Among rows whose leading entry equals `pc`, Markowitz
+            // says to pick the one with minimum `(row_nnz - 1) *
+            // (col_nnz[pc] - 1)`. Since `col_nnz[pc]` is the same for
+            // all candidates at this column, this is equivalent to
+            // picking the row with minimum row_nnz — minimising fill-in
+            // generated by the upcoming axpy operations.
+            //
+            // This produces the same pivot column set as straight-line
+            // RREF (canonical) while choosing the SPARSEST row at each
+            // pivot column, which is the fill-in-minimising strategy.
+            // See `dev/active/5ce13bae-markowitz-design.md` § "Pivot
+            // column choice".
+            let mut pc: usize = usize::MAX;
+            for i in 0..m {
+                if row_used[i] {
                     continue;
                 }
-                if rows[i].first().copied() == Some(col) {
-                    pivot = Some(i);
-                    break;
+                if rows[i].is_empty() {
+                    continue;
+                }
+                let c = rows[i][0];
+                if c < pc {
+                    pc = c;
+                    if pc == 0 {
+                        break;
+                    }
                 }
             }
-            let pi = match pivot {
-                Some(i) => i,
-                None => continue,
+            if pc == usize::MAX {
+                break;
+            }
+            // Now find the un-used row with minimum row_nnz whose leading
+            // entry equals `pc`.
+            let mut pi: Option<usize> = None;
+            let mut best_rn: usize = usize::MAX;
+            for i in 0..m {
+                if row_used[i] {
+                    continue;
+                }
+                if rows[i].first().copied() != Some(pc) {
+                    continue;
+                }
+                let rn = row_nnz[i];
+                if rn < best_rn {
+                    best_rn = rn;
+                    pi = Some(i);
+                    if rn == 1 {
+                        break;
+                    }
+                }
+            }
+            let pi = match pi {
+                Some(p) => p,
+                None => break,
             };
 
             row_used[pi] = true;
-            pivot_order.push(pi);
+            pivot_order.push((pi, pc));
 
-            // Eliminate `col` from every other row that has a non-zero
-            // there. We need both already-pivoted rows (so the pivot
-            // column ends up canonical above-pivot-zeros) and not-yet-
-            // pivoted rows (forward elimination).
+            // Eliminate column `pc` from every other row that has a
+            // non-zero there. Snapshot pivot row first so xor_into can
+            // borrow rows[k] mutably without aliasing.
+            let pivot_snapshot: Vec<usize> = rows[pi].clone();
             for k in 0..m {
                 if k == pi {
                     continue;
                 }
-                // Quick check: does row k contain `col`?
-                // For un-used rows the leading entry is `>= col` so a
-                // simple binary search is fine; for used rows the entry
-                // could be anywhere because previous pivot columns are
-                // smaller. Use binary search uniformly.
-                if rows[k].binary_search(&col).is_err() {
+                if rows[k].binary_search(&pc).is_err() {
                     continue;
                 }
-                let pivot_snapshot: Vec<usize> = rows[pi].clone();
                 xor_into(&mut rows[k], &pivot_snapshot);
+                row_nnz[k] = rows[k].len();
             }
         }
 
-        // Re-order pivoted rows to the top in the order they were picked.
-        // Un-pivoted rows go below as zero rows.
+        // Sort pivots by pivot column ascending for canonical RREF row
+        // order — matches dense `crate::alg::rref::rref`.
+        pivot_order.sort_by_key(|&(_orig, pc)| pc);
+
         let mut ordered: Vec<Vec<usize>> = Vec::with_capacity(m);
-        for &orig in &pivot_order {
+        for &(orig, _) in &pivot_order {
             ordered.push(std::mem::take(&mut rows[orig]));
         }
         while ordered.len() < m {
@@ -2668,6 +2731,47 @@ mod tests {
             let out = m.rref();
             assert_csr_canonical(&out);
             prop_assert_eq!(out, dense_rref_reference(&m));
+        }
+
+        /// Markowitz-degree RREF (`jit:5ce13bae`) byte-equality vs the
+        /// dense reference across a wider parameter range, including the
+        /// word-boundary edges (n=64, n=65) and ranges that span the
+        /// dense / very-sparse regimes. RREF is uniquely determined by
+        /// its canonical form so byte-equality must hold whether or not
+        /// the internal pivot order differs from straight-line.
+        #[test]
+        fn proptest_rref_markowitz_byte_equality(
+            rows in 0usize..=65,
+            cols in 0usize..=65,
+            entry_count in 0usize..=200,
+            seed in any::<u64>(),
+        ) {
+            // Deterministic Bernoulli sample via splitmix64 for
+            // reproducibility under proptest shrinking.
+            let mut st = seed;
+            fn next(st: &mut u64) -> u64 {
+                *st = st.wrapping_add(0x9E37_79B9_7F4A_7C15);
+                let mut z = *st;
+                z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+                z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+                z ^ (z >> 31)
+            }
+            let mut entries: Vec<(usize, usize)> = Vec::new();
+            if rows > 0 && cols > 0 {
+                for _ in 0..entry_count {
+                    let r = (next(&mut st) as usize) % rows;
+                    let c = (next(&mut st) as usize) % cols;
+                    entries.push((r, c));
+                }
+            }
+            let m = SpBitMatrix::from_coo(rows, cols, &entries);
+            let out = m.rref();
+            assert_csr_canonical(&out);
+            // Byte-equality vs dense reference is the strict oracle.
+            prop_assert_eq!(out.clone(), dense_rref_reference(&m));
+            // Idempotence: RREF(RREF(A)) == RREF(A).
+            let out2 = out.rref();
+            prop_assert_eq!(out2, out);
         }
     }
 }
