@@ -8,11 +8,10 @@
 //! > {64, 256, 1024} on canonical seeds (proptest or fixed-seed parity
 //! > test).
 //!
-//! The toggle is exercised via the `GF2_GF251_ROUTE_A` environment
-//! variable, which is read at dispatch time by `select_f32_path` in
-//! `crates/gf2-core/src/gfp/simd_ops.rs`. We use `std::env::set_var`
-//! and `std::env::remove_var` to flip the toggle in-process, with a
-//! mutex serialising env-var access since `set_var` is not thread-safe.
+//! The toggle is exercised via [`gf2_core::gfp::simd_ops::set_route_a_gf251_enabled`],
+//! a safe `AtomicBool`-backed setter. No `unsafe` env-var mutation is
+//! needed. Concurrent tests use the `ROUTE_A_MUTEX` to serialise toggle
+//! access since the flag is process-wide.
 //!
 //! The dispatch path under test is the production `gemm` entry point
 //! (`crates/gf2-core/src/field/matrix.rs::gemm`) which forwards to
@@ -20,59 +19,35 @@
 
 #![cfg(feature = "simd")]
 
-use gf2_core::field::matrix::{gemm, FieldMatrix};
-use gf2_core::gfp::Fp;
+use gf2_core::bench_seed::fp_matrix_from_seed;
+use gf2_core::field::matrix::gemm;
+use gf2_core::gfp::simd_ops::set_route_a_gf251_enabled;
 use std::sync::Mutex;
 
-// Env-var mutation in tests must be serialised because `std::env::set_var`
-// is not thread-safe (rustc 1.95 deprecates per-thread env mutation for
-// good reason). Every route-A test takes this mutex before flipping
-// `GF2_GF251_ROUTE_A` and releases it after the comparison.
-static ROUTE_A_ENV_MUTEX: Mutex<()> = Mutex::new(());
+// The route-A toggle is a process-wide AtomicBool; tests must serialise
+// their set/restore pairs to avoid races when nextest runs them in
+// parallel threads.
+static ROUTE_A_MUTEX: Mutex<()> = Mutex::new(());
 
 const P: u64 = 251;
 
-/// Deterministic seed-derived matrix generator. Uses splitmix64 so the
-/// generated matrices are stable across runs and across the route-A
-/// and Candidate-C call sites.
-fn fp251_matrix_from_seed(rows: usize, cols: usize, seed: u64) -> FieldMatrix<Fp<P>> {
-    let mut state = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15);
-    let mut mat = FieldMatrix::<Fp<P>>::new(rows, cols, Fp::<P>::new(0));
-    for i in 0..rows {
-        for j in 0..cols {
-            state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-            let mut z = state;
-            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-            z ^= z >> 31;
-            mat.set(i, j, Fp::<P>::new(z % P));
-        }
-    }
-    mat
-}
-
 fn run_one(m: usize, k: usize, n: usize, seed_a: u64, seed_b: u64) {
-    let a = fp251_matrix_from_seed(m, k, seed_a);
-    let b = fp251_matrix_from_seed(k, n, seed_b);
+    let a = fp_matrix_from_seed::<P>(m, k, seed_a);
+    let b = fp_matrix_from_seed::<P>(k, n, seed_b);
 
-    // Compute the Candidate C output (production default).
-    let _guard = ROUTE_A_ENV_MUTEX.lock().unwrap();
-    // SAFETY: env-var mutation is serialised by ROUTE_A_ENV_MUTEX above.
-    unsafe {
-        std::env::remove_var("GF2_GF251_ROUTE_A");
-    }
+    // Serialise toggle mutation across concurrent test threads.
+    let _guard = ROUTE_A_MUTEX.lock().unwrap();
+
+    // Compute the Candidate C output (production default, toggle off).
+    set_route_a_gf251_enabled(false);
     let c_default = gemm(&a, &b);
 
-    // Compute the route-A output with the env var enabled.
-    // SAFETY: env-var mutation is serialised by ROUTE_A_ENV_MUTEX above.
-    unsafe {
-        std::env::set_var("GF2_GF251_ROUTE_A", "1");
-    }
+    // Compute the route-A output with the toggle enabled.
+    set_route_a_gf251_enabled(true);
     let c_route_a = gemm(&a, &b);
-    // SAFETY: env-var mutation is serialised by ROUTE_A_ENV_MUTEX above.
-    unsafe {
-        std::env::remove_var("GF2_GF251_ROUTE_A");
-    }
+
+    // Restore the toggle to off before releasing the mutex.
+    set_route_a_gf251_enabled(false);
 
     // Compare element by element so a failure pinpoints the cell.
     for i in 0..m {
@@ -90,7 +65,7 @@ fn run_one(m: usize, k: usize, n: usize, seed_a: u64, seed_b: u64) {
 fn route_a_matches_default_at_criterion_n_values() {
     // The issue's success criterion 2 calls out n ∈ {64, 256, 1024}.
     // We extend the sweep to include the boundary n values cited in
-    // the design note: {0, 1, 15, 16, 17, 63, 64, 65, 255, 256, 257,
+    // the design note: {1, 15, 16, 17, 63, 64, 65, 255, 256, 257,
     // 1023, 1024}. m = k = n in each cell (square gemm), which is the
     // shape the headline benchmark cells use.
     let ns = [1usize, 15, 16, 17, 63, 64, 65, 255, 256, 257, 1023, 1024];
@@ -134,16 +109,13 @@ fn route_a_matches_default_at_n_partial() {
 
 #[test]
 fn route_a_off_leaves_dispatch_unchanged() {
-    // With the env var unset, two consecutive default-dispatch calls
+    // With the toggle off, two consecutive default-dispatch calls
     // must produce the same output (sanity check that toggling does
     // not leak across calls).
-    let _guard = ROUTE_A_ENV_MUTEX.lock().unwrap();
-    // SAFETY: env-var mutation is serialised by ROUTE_A_ENV_MUTEX above.
-    unsafe {
-        std::env::remove_var("GF2_GF251_ROUTE_A");
-    }
-    let a = fp251_matrix_from_seed(16, 16, 11);
-    let b = fp251_matrix_from_seed(16, 16, 13);
+    let _guard = ROUTE_A_MUTEX.lock().unwrap();
+    set_route_a_gf251_enabled(false);
+    let a = fp_matrix_from_seed::<P>(16, 16, 11);
+    let b = fp_matrix_from_seed::<P>(16, 16, 13);
     let c1 = gemm(&a, &b);
     let c2 = gemm(&a, &b);
     for i in 0..16 {

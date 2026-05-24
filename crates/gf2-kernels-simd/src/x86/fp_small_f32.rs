@@ -797,9 +797,9 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
 }
 
 /// 32-bit-lane Barrett reduction `r = x mod p` for `x ∈ [0, 2³²)` and
-/// `p ≤ 251`. Mirrors the same algebra as
-/// [`crate::x86::fp_small::barrett_reduce_lane32`] (Candidate C's SpMM
-/// row reducer): `q = ⌊(x · μ) / 2³²⌋` with `μ = ⌊2³² / p⌋`, then
+/// `p ≤ 251`. Thin wrapper around [`super::fp_small::barrett_reduce_lane32`]
+/// (Candidate C's SpMM row reducer, the SSOT for this algorithm):
+/// `q = ⌊(x · μ) / 2³²⌋` with `μ = ⌊2³² / p⌋`, then
 /// `r = x − q · p`, followed by one conditional subtract. The result
 /// is in `[0, p)` for every `x < 2³²` when the inner kernel's i32 sum
 /// bound `k · (p−1)² ≤ 4096 · 250² = 2.56 · 10⁸ < 2³¹` holds, which it
@@ -814,24 +814,11 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn barrett_reduce_lane32_local(x: __m256i, mu_vec: __m256i, p_vec: __m256i) -> __m256i {
-    // q = high 32 bits of (x * mu) per 32-bit lane.
-    let mask32 = _mm256_set1_epi64x(0xFFFF_FFFF);
-    let x_even = _mm256_and_si256(x, mask32);
-    let x_odd = _mm256_srli_epi64::<32>(x);
-    let q_even_64 = _mm256_mul_epu32(x_even, mu_vec);
-    let q_odd_64 = _mm256_mul_epu32(x_odd, mu_vec);
-    let q_even_hi = _mm256_srli_epi64::<32>(q_even_64);
-    let q_odd_hi = _mm256_srli_epi64::<32>(q_odd_64);
-    let q_odd_shifted = _mm256_slli_epi64::<32>(q_odd_hi);
-    let q = _mm256_or_si256(q_even_hi, q_odd_shifted);
-
-    // r = x - q * p; if r >= p, r -= p. r ends in [0, p).
-    let qp = _mm256_mullo_epi32(q, p_vec);
-    let r = _mm256_sub_epi32(x, qp);
-    let r2 = _mm256_sub_epi32(r, p_vec);
-    // mask = (r2 < 0) ? -1 : 0
-    let mask_lt = _mm256_cmpgt_epi32(_mm256_setzero_si256(), r2);
-    _mm256_blendv_epi8(r2, r, mask_lt)
+    // Delegate to the shared impl in fp_small. Pass p_vec as p_vec64 —
+    // that parameter is unused in the reduction (it was kept for interface
+    // symmetry in the fp_small calling context). Inlining eliminates any
+    // overhead; the generated SIMD sequence is identical.
+    super::fp_small::barrett_reduce_lane32(x, mu_vec, p_vec, p_vec)
 }
 
 /// Pack 8 reduced i32 lanes (each in `[0, p)`) into an 8-byte u8 array.
