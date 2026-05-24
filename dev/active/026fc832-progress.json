@@ -1,0 +1,148 @@
+{
+  "epic_id": "026fc832-a480-4d07-8d25-47b8bfcb69a3",
+  "epic_short_id": "026fc832",
+  "epic_title": "Continue gf2-core SOTA catch-up — close A8 + §6.3 follow-ups",
+  "started_at": "2026-05-24T00:00:00+00:00",
+  "current_wave": 2,
+  "scope_decision": {
+    "session_1_date": "2026-05-24",
+    "user_choice": "Option 1: close 615db3b9 as plan-only + drive all 12 items",
+    "session_1_action": "615db3b9 closed plan-only; 8 plan children filed; DAG wired; AVX-512 routed to 7f809931"
+  },
+  "waves": [
+    {
+      "wave_number": 1,
+      "label": "Plan closure + breakdown (session 1, 2026-05-24)",
+      "issues": [
+        {
+          "short_id": "615db3b9",
+          "title": "Pursue fflas-like GF(251) GEMM performance (plan-only closure)",
+          "classification": "design",
+          "status": "done",
+          "completed_at": "2026-05-24T00:30:11+00:00"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "label": "Independent implementation tasks + plan Phase 0 (can run in parallel after worktree isolation)",
+      "issues": [
+        {
+          "short_id": "a70b1c70",
+          "title": "Refresh GF(251) and control-lane benchmarks (615db3b9 Phase 0)",
+          "classification": "research",
+          "status": "pending",
+          "depends_on": []
+        },
+        {
+          "short_id": "27bb2f75",
+          "title": "Optimize small-n GEMM dispatch path (n≤128)",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [],
+          "primary_files": ["crates/gf2-core/src/gfp/simd_ops.rs", "crates/gf2-kernels-simd/src/x86/fp_small.rs"]
+        },
+        {
+          "short_id": "52cce970",
+          "title": "Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residuals",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [],
+          "primary_files": ["crates/gf2-kernels-simd/src/", "crates/gf2-core/src/field/charpoly.rs"]
+        },
+        {
+          "short_id": "aaa847cf",
+          "title": "M4RI-style invert path for BitMatrix",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [],
+          "primary_files": ["crates/gf2-core/src/matrix.rs", "crates/gf2-core/src/alg/gauss.rs", "crates/gf2-core/src/alg/m4rm.rs"]
+        },
+        {
+          "short_id": "5ce13bae",
+          "title": "Markowitz-degree pivot selection for sparse RREF",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [],
+          "primary_files": ["crates/gf2-core/src/sparse.rs", "crates/gf2-core/src/field/sparse_matrix.rs"]
+        }
+      ],
+      "parallelism_note": "5 issues. 27bb2f75 + 52cce970 both touch crates/gf2-kernels-simd → potential collision; serialize OR use worktree isolation. a70b1c70 is benchmarks-only (no production change). aaa847cf isolated to GF(2) BitMatrix. 5ce13bae isolated to sparse paths. Recommend: a70b1c70 first (its CSVs feed routes A/B/C), then parallel dispatch of {27bb2f75, aaa847cf, 5ce13bae} via worktrees, then 52cce970 alone."
+    },
+    {
+      "wave_number": 3,
+      "label": "Phase 1 GF(251) route prototypes (parallel after a70b1c70 closes)",
+      "issues": [
+        {"short_id": "68cdf4c8", "title": "Prototype in-Rust GF(251) f32/FMA cascade (route A)", "classification": "implementation", "status": "pending", "depends_on": ["a70b1c70"], "primary_files": ["crates/gf2-kernels-simd/src/fp_small_f32.rs"]},
+        {"short_id": "91429c1c", "title": "Prototype optional BLAS-backed GF(251) cascade (route B)", "classification": "implementation", "status": "pending", "depends_on": ["a70b1c70"], "primary_files": ["crates/gf2-core/Cargo.toml", "dev/research/"]},
+        {"short_id": "fc182ed5", "title": "Prototype pure integer panelized GF(251) micro-kernel (route C)", "classification": "implementation", "status": "pending", "depends_on": ["a70b1c70"], "primary_files": ["crates/gf2-kernels-simd/src/"]}
+      ],
+      "parallelism_note": "All three touch crates/gf2-kernels-simd (or its Cargo.toml). Worktree isolation REQUIRED per references/worktree-dispatch-protocol.md if dispatching in parallel."
+    },
+    {
+      "wave_number": 4,
+      "label": "Phase 1 fan-in: route selection + wire production",
+      "issues": [
+        {"short_id": "41096af5", "title": "Select and wire the GF(251) production route", "classification": "implementation", "status": "pending", "depends_on": ["68cdf4c8", "91429c1c", "fc182ed5"]}
+      ],
+      "parallelism_note": "Single task. May ESCALATE per its SC#7 if decision-rule 'neither route clears threshold' branch fires."
+    },
+    {
+      "wave_number": 5,
+      "label": "Phase 2 + 4 + 5 (parallel after route selection)",
+      "issues": [
+        {"short_id": "e8a0c47a", "title": "Generalize GF(p) reductions and dispatch policy (Phase 2)", "classification": "implementation", "status": "pending", "depends_on": ["41096af5"]},
+        {"short_id": "873cbec1", "title": "Design extension-field matrix GEMM via base-field decomposition (Phase 4)", "classification": "design", "status": "pending", "depends_on": ["41096af5"]},
+        {"short_id": "b0fa00af", "title": "Publish cross-family dense LA SOTA scorecard (Phase 5)", "classification": "documentation", "status": "pending", "depends_on": ["41096af5"]}
+      ],
+      "parallelism_note": "e8a0c47a touches kernels-simd; 873cbec1 is design-only; b0fa00af reads results. Run all three in parallel — b0fa00af reads-only, 873cbec1 doc-only, e8a0c47a is the only one mutating production code."
+    }
+  ],
+  "created_during_execution": [
+    {"short_id": "a70b1c70", "rationale": "Phase 0 baseline refresh", "wired_as": "predecessor of routes A/B/C"},
+    {"short_id": "68cdf4c8", "rationale": "Phase 1 route A prototype"},
+    {"short_id": "91429c1c", "rationale": "Phase 1 route B prototype"},
+    {"short_id": "fc182ed5", "rationale": "Phase 1 route C prototype"},
+    {"short_id": "41096af5", "rationale": "Phase 1 fan-in / route selection"},
+    {"short_id": "e8a0c47a", "rationale": "Phase 2 GF(p) generalization"},
+    {"short_id": "873cbec1", "rationale": "Phase 4 extension-field GEMM design"},
+    {"short_id": "b0fa00af", "rationale": "Phase 5 cross-family scorecard (epic terminal deliverable)"}
+  ],
+  "escalations": [
+    {
+      "date": "2026-05-24",
+      "category": "Scope shape / epic success criteria interpretation",
+      "resolved": true,
+      "user_choice": "Option 1: close 615db3b9 plan-only + drive 12-item DAG",
+      "session_recorded": 1
+    },
+    {
+      "date": "2026-05-24",
+      "category": "AVX-512 scope routing",
+      "resolved": true,
+      "user_directive": "AVX-512 is not in scope for 026fc832; all deferred AVX-512 work goes under 7f809931 (which already has c7c0e991 + f8d230ef)",
+      "session_recorded": 1
+    }
+  ],
+  "rework_counts": {
+    "615db3b9": 1
+  },
+  "session_history": [
+    {
+      "session_number": 1,
+      "date": "2026-05-24",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Epic intake + project discovery",
+        "Escalated scope ambiguity (615db3b9 design-only vs epic 'cells PASSing') — user picked Option 1",
+        "Escalated AVX-512 routing — user routed to 7f809931 (separate epic)",
+        "Re-wired 52cce970 from 615db3b9 dep to direct epic dep",
+        "Annotated 615db3b9 design doc with AVX-512 scope-boundary section",
+        "Code-review FAIL on 615db3b9 (criterion 2 missing per-family file+evidence pairings; criterion 5 fresh-measurement gap unclear) — addressed both literally, code-review PASS on 2nd attempt",
+        "Closed 615db3b9 as done (cargo-ci + code-review + doc-review all green)",
+        "Filed 8 plan-children with success criteria, gates, and DAG wiring",
+        "Wired 026fc832 → {e8a0c47a, 873cbec1, b0fa00af} as terminal-leaf epic deps; transitive tree reaches all 12 items"
+      ]
+    }
+  ]
+}

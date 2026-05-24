@@ -1,0 +1,24 @@
+{
+  "id": "a70b1c70-357a-4378-9ed5-3afa7715d86d",
+  "title": "Refresh GF(251) and control-lane benchmarks (615db3b9 Phase 0)",
+  "description": "Phase 0 of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 0). Closes the \"fresh measurements still needed\" list before any GF(251)-route prototype is dispatched. Predecessor: 615db3b9 (done, plan-only). Parent epic: 026fc832.\n\n## Background\n\n615db3b9's plan separates already-available baselines (cited from cc5de315's closure trail) from fresh measurements still required before prototype work begins. This task collects the fresh measurements so prototype-vs-baseline deltas in Phase 1 do not conflate prototype effect with host drift or with missing-control regressions.\n\n## Success Criteria\n\n- [hard] CSV of GF(241)/n in {256, 1024} 5-trial CCX-pinned measurements (gf2 Candidate C vs fflas-ffpack 2.5.0), collected with the cc5de315 methodology, committed under `dev/bench_results/<date>-<short-id>-...csv`.\n- [hard] CSV of GF(127)/n in {256, 1024} 5-trial CCX-pinned measurements (gf2 vs fflas-ffpack 2.5.0) collected the same way.\n- [hard] Single-trial drift check: re-run GF(251)/n in {256, 1024} at current HEAD and confirm the cited 58.98 / 70.89 Gop/s numbers from `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md` still hold within ±5%. If outside ±5%, surface as an open question for the user (do not silently rebaseline).\n- [hard] Evidence markdown doc summarising the three results, attached via `jit doc add`, citing each CSV by relative path and stating the per-cell PASS/FAIL/AMENDED status against the 1.5× threshold.\n- [hard] No production code changes — this task only produces measurements and the evidence doc; no dispatch/kernel changes land here.\n\n## Out of scope\n\n- Any prototype implementation (Phases 1–4 of the plan).\n- Re-measuring already-available baselines beyond the GF(251) drift check.\n- AVX-512 / VNNI / GFNI measurements (out of scope for 026fc832 per the plan's Scope-boundary section; lives under epic 7f809931).\n\n## Notes\n\nThe reference host is the 5900X (`/proc/cpuinfo`). All measurements must be CCX-pinned and 5-trial unless explicitly noted; no concurrent cargo/criterion jobs during measurement.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-24T00:31:08.732264246+00:00",
+  "updated_at": "2026-05-24T00:31:08.732272666+00:00"
+}

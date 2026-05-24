@@ -1,0 +1,29 @@
+{
+  "id": "41096af5-f777-4ad7-86fd-335431f1ab40",
+  "title": "Select and wire the GF(251) production route (615db3b9 Phase 1 fan-in)",
+  "description": "Phase 1 fan-in of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 1, item 5). Reads the three prototype evidence docs (routes A, B, C), applies the Phase-1 decision rule, and wires the selected production route. This task is the gate that turns route exploration into production change.\n\nParent epic: 026fc832. Predecessors: Phase 1 routes A (68cdf4c8), B (91429c1c), C (fc182ed5). All three must be done before this task can start.\n\n## Background\n\nThe plan's Phase 1 decision rule is verbatim:\n\n> - If optional BLAS gives a decisive win but the in-house routes stay below the 0.667 ratio, record BLAS as an optional accelerator/reference lane and keep the default build self-contained.\n> - If in-Rust f32 or integer panelized kernels clear GF(251) within 1.5x of fflas at n in {256, 1024}, prefer the self-contained route for production.\n> - If neither clears the threshold, split a focused architecture issue before continuing broad downstream work.\n\n## Success Criteria\n\n- [hard] A decision document attached via `jit doc add`, summarising the three prototype evidence docs side-by-side (one table row per route × n cell with GF(251) Gop/s, ratio to fflas, and status) and applying the Phase-1 decision rule literally.\n- [hard] The decision doc names the selected production route and the reason (decision-rule branch hit).\n- [hard] If the decision is to wire one of routes A or C into production: `crates/gf2-core/src/gfp/simd_ops.rs` dispatch and `N_THRESH_PRIME` updated so the selected route is taken for GF(251) (and explicitly stated which other primes are affected). If the decision is to keep BLAS as an optional accelerator: an `external-blas` (or equivalent) feature is wired with documentation, but is OFF by default.\n- [hard] CCX-pinned 5-trial verification at GF(251)/n in {256, 1024} on the 5900X reference host after the production wire-in, recorded as a CSV + evidence doc, showing the post-change ratios.\n- [hard] No regression on currently-PASSing GF(p) cells (delta ≤ 5% under same-session measurement on the pinned reference host).\n- [hard] Bit-exact correctness preserved across GF(p) prime sweep proptests (boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}).\n- [hard] If the decision-rule \"neither route clears the threshold\" branch fires, escalate to the user per `references/escalation-policy.md` (architectural decision) rather than autonomously splitting a focused architecture issue.\n\n## Out of scope\n\n- New prototype work — this task only selects between A/B/C and wires the chosen one.\n- Generalizing the chosen route across other primes — that is Phase 2 (separate task).\n- Extension-field GEMM — that is Phase 4 (separate task).\n\n## Notes\n\nIf the route selection chooses BLAS as optional, the project's default-build self-containment is preserved; if it chooses A or C, the default build picks up the new path automatically.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "fc182ed5-bc03-4385-b6c2-22d785b4904f",
+    "68cdf4c8-562b-43a7-8532-fb979d6fd4c3",
+    "91429c1c-2955-4ce9-979d-11eb753c8946"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-24T00:32:26.024254790+00:00",
+  "updated_at": "2026-05-24T00:33:35.715795728+00:00"
+}

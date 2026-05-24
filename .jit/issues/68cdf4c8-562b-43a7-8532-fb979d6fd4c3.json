@@ -1,0 +1,27 @@
+{
+  "id": "68cdf4c8-562b-43a7-8532-fb979d6fd4c3",
+  "title": "Prototype in-Rust GF(251) f32/FMA cascade (615db3b9 Phase 1 route A)",
+  "description": "Phase 1 route A of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 1, item 1). Reworks the existing Candidate F (in-Rust f32/FMA cascade) around the precise GF(251) target so it can be compared head-to-head against route B (optional BLAS-backed cascade) and route C (integer panelized micro-kernel) before route selection in Phase 1 fan-in.\n\nParent epic: 026fc832. Predecessor: 615db3b9 (plan, done).\n\n## Background\n\nThe plan's Phase 1, item 1 says: \"Rework the existing Candidate F around the precise GF(251) target: k-chunking at 268 (= ⌊2²⁴ / 250²⌋), vectorized output reduction, lower pack cost, and comparison at n=256/1024 rather than broad all-prime dispatch. This avoids a C dependency and keeps unsafe code in `gf2-kernels-simd`.\"\n\nThe existing Candidate F lives in `crates/gf2-kernels-simd/src/fp_small_f32.rs` and `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs`. It is compiled but not selected for any prime in current production dispatch (`N_THRESH_PRIME = 252` makes `select_f32_path` false for all small primes).\n\n## Success Criteria\n\n- [hard] A non-default dispatch toggle (cargo feature OR runtime debug switch) exposes the reworked Candidate F path for GF(251) so it can be measured without changing default production behaviour.\n- [hard] Bit-exact equality vs the existing Candidate C output across n in {64, 256, 1024} on canonical seeds (proptest or fixed-seed parity test).\n- [hard] Implementation respects unsafe-isolation: any unsafe code lives exclusively in `gf2-kernels-simd`; `gf2-core` remains `#![deny(unsafe_code)]`.\n- [hard] CCX-pinned 5-trial measurement at GF(251)/n in {256, 1024} on the 5900X reference host, recorded as a CSV + evidence markdown doc.\n- [hard] [aspirational] If the reworked Candidate F clears the 1.5×-of-fflas threshold at n in {256, 1024}, mark it as a Phase-1 candidate for production routing in the route-selection task; if not, the evidence doc must record why (pack cost, k-chunking overhead, lane underutilisation) so route selection can compare apples-to-apples.\n- [hard] No regression on currently-PASSing GF(p) cells (delta ≤ 5% under same-session measurement at same commit).\n- [hard] No fflas-ffpack source code, comments, autotuning tables, or micro-kernel structure is copied or translated into the prototype. The evidence doc records that the implementation came from public GEMM/ISA principles and gf2-owned prototypes only.\n\n## Out of scope\n\n- Changing production dispatch (`N_THRESH_PRIME`, `select_f32_path`) — route selection is the consumer task's decision.\n- Route B (BLAS) or route C (integer panel) prototypes — those are separate sibling tasks.\n- AVX-512 / VNNI variants — out of scope for 026fc832, routed to 7f809931.\n\n## Notes\n\nASM artefact gate (`asm-artefact-present`) is not added to this issue's gate list because the existing Candidate F already carries sibling .asm.txt artefacts; if new SIMD source files are introduced, the gate will fire automatically on touched files.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "a70b1c70-357a-4378-9ed5-3afa7715d86d"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-24T00:31:27.771394573+00:00",
+  "updated_at": "2026-05-24T00:33:32.706313187+00:00"
+}

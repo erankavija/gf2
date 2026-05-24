@@ -2,7 +2,7 @@
   "id": "615db3b9-9dbf-44b6-a9e4-7f60d6009a09",
   "title": "Pursue fflas-like GF(251) GEMM performance",
   "description": "Follow-up research and planning work for the GF(251) cells amended to aspirational during `cc5de315` closure. This issue is now the planning and dispatch point for a broader finite-field dense linear algebra SOTA catch-up effort across GF(p), GF(2), GF(2^m), extension fields, and downstream dense LA.\n\n## Background\n\nStory `cc5de315` closed the current GF(p) parity contract with a user-approved amendment: GF(251) remains below the 1.5x-of-fflas hard threshold because fflas-ffpack routes GF(251) through an OpenBLAS-backed float-modular cascade, while gf2-core currently uses a pure AVX2 hand-written packed-byte kernel. The amendment does not mean the gap is uninteresting; it means it is non-blocking for `cc5de315` closure.\n\nThe intended scope is broader than GF(251): gf2 should catch up with fflas-ffpack where fflas is strong, exceed it where gf2 has domain-specific leverage, and preserve clean composable Rust APIs over dense finite-field linear algebra.\n\n## Success Criteria\n\n- [hard] A design document is attached to this issue and identifies the highest-leverage route toward fflas-like GF(251) performance at n in {256, 1024}, comparing at least: in-Rust f32/FMA cascade, optional BLAS-backed cascade, Goto/BLIS-style panelized integer micro-kernel, AVX-512/VNNI follow-up, and \"external BLAS dependency out of default build\" as an explicit policy option.\n- [hard] The design records what gf2 already implements for dense finite-field linear algebra, with file paths and evidence docs for GF(p), GF(2), GF(2^m), GF(p^n), and downstream operations.\n- [hard] The design references the local fflas-ffpack checkout under `/home/vkaskivuo/Projects/fflas-ffpack` and identifies the relevant source files for delayed bounds, fgemm, igemm, SIMD modular reductions, and RNS/CRT.\n- [hard] The design and all child implementation issues preserve gf2's MIT licensing: fflas-ffpack source may be used only as a behavioral/performance reference, not copied, translated, linked into the default build, or used as a source-code template.\n- [hard] The design includes reproducible GF(251) benchmark evidence at n in {256, 1024} using the same pinned/reference methodology as `cc5de315`, and identifies any fresh measurements still needed before implementation.\n- [hard] The design expands the SOTA catch-up scope beyond GF(251) into actionable workstreams for GF(p) prime families, GF(2), GF(2^m), extension fields, and downstream dense LA operations that inherit GEMM improvements.\n- [hard] The plan defines a proposed JIT breakdown with dependency order, expected gates, benchmark criteria, and non-regression requirements.\n- [hard] Any production implementation spawned from this plan preserves correctness for GF(7), GF(31), GF(251), Mersenne31, Fp<65537>, the medium-prime band, and selected GF(2^m) fields, and does not regress already-passing GF(p) cells by more than 5% under same-session measurement.\n\n## Notes\n\nPlanning document: `dev/active/615db3b9-finite-field-la-sota-plan.md`.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:copilot",
   "dependencies": [
@@ -13,7 +13,23 @@
     "cargo-ci",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-24T00:30:07.146807576Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T00:16:07.114962861Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T00:28:14.354448326Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -32,5 +48,5 @@
     "story:sota-gfp-fflas"
   ],
   "created_at": "2026-05-06T12:18:36.365886606+00:00",
-  "updated_at": "2026-05-24T00:12:59.830323429+00:00"
+  "updated_at": "2026-05-24T00:30:11.830537566+00:00"
 }
