@@ -84,6 +84,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp_medium::MediumPrimeFns;
     use gf2_kernels_simd::fp_small::SmallPrimeFns;
     use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
+    use gf2_kernels_simd::fp_small_panel::SmallPrimePanelFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns;
@@ -103,6 +104,7 @@ pub(crate) mod simd {
     static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
     static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
     static FP_SMALL_F32_FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
+    static FP_SMALL_PANEL_FNS: OnceLock<Option<SmallPrimePanelFns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
@@ -265,6 +267,33 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the small-prime `Fp<P>` AVX2 pure-integer Goto/BLIS-style
+    /// panelized GEMM kernel, if any.
+    ///
+    /// Provides **Route C** from the jit:615db3b9 Phase 1 plan
+    /// (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 1,
+    /// item 3) and the design note `dev/active/fc182ed5-route-c-design.md`
+    /// — an explicit A/B panel-packed AVX2 register-blocked
+    /// `_mm256_madd_epi16`-based GEMM for canonical-byte `Fp<P>`
+    /// operands with `P ≤ 251`.
+    ///
+    /// **Status (per jit:fc182ed5):** the kernel is fully implemented
+    /// and tested but **not currently selected at runtime**. It is
+    /// exposed only via the GF(251)-only opt-in toggle
+    /// [`crate::gfp::simd_ops::set_route_c_gf251_enabled`]. Default
+    /// production dispatch is unchanged: Candidate C
+    /// ([`maybe_fp_small`]) owns all `p ≤ 251` cells.
+    ///
+    /// Returns `None` on non-AVX2 hardware; callers must fall back to
+    /// [`maybe_fp_small`] (the production Candidate C row-panel
+    /// kernel) or scalar.
+    #[inline]
+    pub fn maybe_fp_small_panel() -> Option<&'static SmallPrimePanelFns> {
+        FP_SMALL_PANEL_FNS
+            .get_or_init(gf2_kernels_simd::fp_small_panel::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -334,6 +363,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_small_f32() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_small_panel() -> Option<()> {
         None
     }
 

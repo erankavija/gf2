@@ -498,6 +498,69 @@ fn route_a_gf251_enabled<const P: u64>() -> bool {
     ROUTE_A_GF251_ENABLED.load(Ordering::Relaxed)
 }
 
+// ---------------------------------------------------------------------------
+// Route-C dispatch toggle (AtomicBool, issue fc182ed5)
+// ---------------------------------------------------------------------------
+
+/// Global runtime debug switch for the route-C GF(251) pure-integer
+/// Goto/BLIS-style panelized micro-kernel (issue fc182ed5). Default
+/// `false`; off by default so production dispatch is unchanged. Tests
+/// and bench drivers flip this via [`set_route_c_gf251_enabled`].
+///
+/// Mechanically identical to [`ROUTE_A_GF251_ENABLED`]: a process-wide
+/// `AtomicBool` accessed via a safe setter / `Relaxed` load. The two
+/// flags coexist; if both are on for `P == 251`, route A wins (the
+/// dispatch checks route A first). Bench drivers toggle one route at
+/// a time.
+#[cfg(feature = "simd")]
+static ROUTE_C_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Sets the runtime debug switch that opts GF(251) GEMM calls into the
+/// route-C pure-integer Goto/BLIS-style panelized micro-kernel
+/// (`crate::simd::maybe_fp_small_panel`).
+///
+/// Default is `false` — production dispatch is unaffected. Call with
+/// `true` in test or bench code to exercise route C; restore to `false`
+/// after the test to avoid cross-test interference (the flag is a
+/// process-wide `AtomicBool`).
+///
+/// This is the dispatch surface the issue's success criterion 1 names as
+/// the "non-default dispatch toggle (cargo feature OR runtime debug
+/// switch)" exposing the panelized integer path "without changing
+/// default production behaviour."
+///
+/// Scope: only affects `P == 251`; other primes continue to use
+/// Candidate C regardless of this flag.
+///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "simd")]
+/// # {
+/// use gf2_core::gfp::simd_ops::set_route_c_gf251_enabled;
+/// set_route_c_gf251_enabled(true);
+/// // ... run GF(251) GEMM via route C ...
+/// set_route_c_gf251_enabled(false);
+/// # }
+/// ```
+#[cfg(feature = "simd")]
+pub fn set_route_c_gf251_enabled(enabled: bool) {
+    ROUTE_C_GF251_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+/// Returns `true` when `P == 251` and the route-C debug switch is on.
+/// See [`set_route_c_gf251_enabled`].
+///
+/// Scope: GF(251) only. Non-GF(251) primes always return `false`.
+#[cfg(feature = "simd")]
+#[inline]
+fn route_c_gf251_enabled<const P: u64>() -> bool {
+    if P != 251 {
+        return false;
+    }
+    ROUTE_C_GF251_ENABLED.load(Ordering::Relaxed)
+}
+
 /// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
 /// (`n × k` row-major, already transposed by the caller) to
 /// canonical-byte SoA buffers and runs the AVX2 byte-lane batch-dot
@@ -575,6 +638,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     // local scratch buffers (issue 27bb2f75).
     let f32_selected = select_f32_path::<P>(m, k, n);
     let route_a_selected = route_a_gf251_enabled::<P>();
+    let route_c_selected = route_c_gf251_enabled::<P>();
 
     if route_a_selected {
         // Route A (issue 68cdf4c8): reworked Candidate F for GF(251)
@@ -635,6 +699,62 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         // Route-A requested but kernel detection failed (no FMA3); fall
         // through to Candidate C — the byte-lane kernel is the documented
         // AVX2-only-no-FMA3 fallback.
+    }
+
+    if route_c_selected {
+        // Route C (issue fc182ed5): pure-integer Goto/BLIS-style
+        // panelized micro-kernel for GF(251) with explicit A/B panel
+        // packing + KC blocking. The toggle is opt-in via
+        // `set_route_c_gf251_enabled(true)`; default production
+        // dispatch is unaffected (Candidate C continues to own all
+        // `p ≤ 251` cells). See `dev/active/fc182ed5-route-c-design.md`
+        // for the panel-dimension derivation (MR × NR × KC = 4 × 24 × 256).
+        if let Some(fns_panel) = crate::simd::maybe_fp_small_panel() {
+            let tables = build_small_prime_tables::<P>();
+            let from_mont = tables.from_mont.as_slice();
+            let to_mont = tables.to_mont.as_slice();
+            return GEMM_SMALL_A_SCRATCH.with_borrow_mut(|a_u8| {
+                GEMM_SMALL_BT_SCRATCH.with_borrow_mut(|bt_u8| {
+                    GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8| {
+                        a_u8.resize(m * k, 0u8);
+                        bt_u8.resize(n * k, 0u8);
+                        out_u8.resize(m * n, 0u8);
+
+                        // Pack A and B^T canonical bytes via the
+                        // `from_mont` table (one L1 lookup per element,
+                        // no REDC). Same pre-pack the Candidate C
+                        // dispatch uses.
+                        for (dst, src) in a_u8.iter_mut().zip(a.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont.len());
+                            *dst = from_mont[raw];
+                        }
+                        for (dst, src) in bt_u8.iter_mut().zip(b_t.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont.len());
+                            *dst = from_mont[raw];
+                        }
+
+                        (fns_panel.batch_gemm_fn)(a_u8, bt_u8, m, k, n, p_u8, out_u8);
+
+                        // Unpack canonical bytes → Montgomery storage
+                        // via the `to_mont` table (same fast path as
+                        // Candidate C's output unpack — no REDC).
+                        for (slot, &byte) in out.iter_mut().zip(out_u8.iter()) {
+                            let canon = byte as usize;
+                            debug_assert!(canon < to_mont.len());
+                            *slot = Fp::<P>::from_raw_storage(to_mont[canon]);
+                        }
+                        true
+                    })
+                })
+            });
+        }
+        // Route-C requested but kernel detection failed (no AVX2); fall
+        // through to Candidate C below — Candidate C requires AVX2 too,
+        // so it will also fall back to scalar dispatch via the
+        // `maybe_fp_small` `None` arm. Behaviour is therefore identical
+        // to the production no-AVX2 fallback path.
     }
 
     if f32_selected {

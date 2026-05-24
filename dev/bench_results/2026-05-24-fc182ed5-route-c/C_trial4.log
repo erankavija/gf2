@@ -1,0 +1,127 @@
+nice: cannot set niceness: Permission denied
+Benchmarking gemm/Fp_7/Fp_7/64
+Benchmarking gemm/Fp_7/Fp_7/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/64: Collecting 10 samples in estimated 5.0001 s (303k iterations)
+Benchmarking gemm/Fp_7/Fp_7/64: Analyzing
+gemm/Fp_7/Fp_7/64       time:   [16.495 µs 16.512 µs 16.538 µs]
+                        thrpt:  [31.703 Gelem/s 31.752 Gelem/s 31.785 Gelem/s]
+                 change:
+                        time:   [+0.0729% +0.2336% +0.4077%] (p = 0.02 < 0.05)
+                        thrpt:  [-0.4061% -0.2331% -0.0728%]
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
+Benchmarking gemm/Fp_7/Fp_7/256
+Benchmarking gemm/Fp_7/Fp_7/256: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/256: Collecting 10 samples in estimated 5.0182 s (10k iterations)
+Benchmarking gemm/Fp_7/Fp_7/256: Analyzing
+gemm/Fp_7/Fp_7/256      time:   [478.93 µs 479.24 µs 479.52 µs]
+                        thrpt:  [69.975 Gelem/s 70.015 Gelem/s 70.061 Gelem/s]
+                 change:
+                        time:   [-1.0565% -0.6264% -0.1982%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.1986% +0.6304% +1.0678%]
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking gemm/Fp_7/Fp_7/1024
+Benchmarking gemm/Fp_7/Fp_7/1024: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/1024: Collecting 10 samples in estimated 6.3214 s (220 iterations)
+Benchmarking gemm/Fp_7/Fp_7/1024: Analyzing
+gemm/Fp_7/Fp_7/1024     time:   [28.695 ms 28.719 ms 28.739 ms]
+                        thrpt:  [74.724 Gelem/s 74.775 Gelem/s 74.837 Gelem/s]
+                 change:
+                        time:   [-0.8563% -0.4876% -0.0761%] (p = 0.03 < 0.05)
+                        thrpt:  [+0.0761% +0.4900% +0.8637%]
+                        Change within noise threshold.
+
+Benchmarking gemm/Fp_31/Fp_31/64
+Benchmarking gemm/Fp_31/Fp_31/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/64: Collecting 10 samples in estimated 5.0009 s (291k iterations)
+Benchmarking gemm/Fp_31/Fp_31/64: Analyzing
+gemm/Fp_31/Fp_31/64     time:   [17.146 µs 17.164 µs 17.187 µs]
+                        thrpt:  [30.506 Gelem/s 30.546 Gelem/s 30.578 Gelem/s]
+                 change:
+                        time:   [+1.1807% +1.3783% +1.6150%] (p = 0.00 < 0.05)
+                        thrpt:  [-1.5893% -1.3596% -1.1669%]
+                        Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking gemm/Fp_31/Fp_31/256
+Benchmarking gemm/Fp_31/Fp_31/256: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/256: Collecting 10 samples in estimated 5.0060 s (10k iterations)
+Benchmarking gemm/Fp_31/Fp_31/256: Analyzing
+gemm/Fp_31/Fp_31/256    time:   [485.88 µs 487.19 µs 487.89 µs]
+                        thrpt:  [68.775 Gelem/s 68.873 Gelem/s 69.059 Gelem/s]
+                 change:
+                        time:   [-0.4816% -0.2203% +0.0387%] (p = 0.12 > 0.05)
+                        thrpt:  [-0.0387% +0.2207% +0.4839%]
+                        No change in performance detected.
+Benchmarking gemm/Fp_31/Fp_31/1024
+Benchmarking gemm/Fp_31/Fp_31/1024: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/1024: Collecting 10 samples in estimated 6.2682 s (220 iterations)
+Benchmarking gemm/Fp_31/Fp_31/1024: Analyzing
+gemm/Fp_31/Fp_31/1024   time:   [28.476 ms 28.532 ms 28.585 ms]
+                        thrpt:  [75.127 Gelem/s 75.265 Gelem/s 75.413 Gelem/s]
+                 change:
+                        time:   [-0.9225% -0.7529% -0.5921%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.5956% +0.7586% +0.9311%]
+                        Change within noise threshold.
+
+Benchmarking gemm/Fp_127/Fp_127/256
+Benchmarking gemm/Fp_127/Fp_127/256: Warming up for 3.0000 s
+Benchmarking gemm/Fp_127/Fp_127/256: Collecting 10 samples in estimated 5.0162 s (10k iterations)
+Benchmarking gemm/Fp_127/Fp_127/256: Analyzing
+gemm/Fp_127/Fp_127/256  time:   [485.11 µs 485.71 µs 486.32 µs]
+                        thrpt:  [68.996 Gelem/s 69.083 Gelem/s 69.168 Gelem/s]
+                 change:
+                        time:   [-0.3424% -0.1238% +0.0980%] (p = 0.32 > 0.05)
+                        thrpt:  [-0.0979% +0.1239% +0.3435%]
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking gemm/Fp_127/Fp_127/1024
+Benchmarking gemm/Fp_127/Fp_127/1024: Warming up for 3.0000 s
+Benchmarking gemm/Fp_127/Fp_127/1024: Collecting 10 samples in estimated 6.2835 s (220 iterations)
+Benchmarking gemm/Fp_127/Fp_127/1024: Analyzing
+gemm/Fp_127/Fp_127/1024 time:   [28.483 ms 28.544 ms 28.640 ms]
+                        thrpt:  [74.981 Gelem/s 75.234 Gelem/s 75.397 Gelem/s]
+                 change:
+                        time:   [-0.7823% -0.5722% -0.3732%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.3746% +0.5755% +0.7885%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0006 s (314k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [15.782 µs 15.784 µs 15.787 µs]
+                        thrpt:  [33.209 Gelem/s 33.216 Gelem/s 33.220 Gelem/s]
+                 change:
+                        time:   [-0.1811% -0.0512% +0.0511%] (p = 0.48 > 0.05)
+                        thrpt:  [-0.0511% +0.0512% +0.1814%]
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking gemm/Fp_251/Fp_251/256
+Benchmarking gemm/Fp_251/Fp_251/256: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/256: Collecting 10 samples in estimated 5.0251 s (10k iterations)
+Benchmarking gemm/Fp_251/Fp_251/256: Analyzing
+gemm/Fp_251/Fp_251/256  time:   [481.97 µs 482.34 µs 483.01 µs]
+                        thrpt:  [69.470 Gelem/s 69.567 Gelem/s 69.619 Gelem/s]
+                 change:
+                        time:   [-0.2635% -0.0845% +0.0924%] (p = 0.39 > 0.05)
+                        thrpt:  [-0.0923% +0.0846% +0.2642%]
+                        No change in performance detected.
+Benchmarking gemm/Fp_251/Fp_251/1024
+Benchmarking gemm/Fp_251/Fp_251/1024: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/1024: Collecting 10 samples in estimated 6.3157 s (220 iterations)
+Benchmarking gemm/Fp_251/Fp_251/1024: Analyzing
+gemm/Fp_251/Fp_251/1024 time:   [28.660 ms 28.728 ms 28.766 ms]
+                        thrpt:  [74.653 Gelem/s 74.753 Gelem/s 74.929 Gelem/s]
+                 change:
+                        time:   [-0.4224% -0.1411% +0.1576%] (p = 0.38 > 0.05)
+                        thrpt:  [-0.1573% +0.1413% +0.4242%]
+                        No change in performance detected.
+
