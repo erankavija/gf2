@@ -40,11 +40,21 @@ right rank but with non-canonical column choices.
 
 ## Discovery
 
-A 15×17 GF(7) matrix at density 0.05 / seed 1 (named in jit:bd9c6e13)
-exposes the bug. Sweeping the same seed/shape/density grid as
-`test_rref_markowitz_sweep_fp7` (32 seeds × 6 shapes × 5 densities,
-GF(7)) reveals **47 divergent cases** out of 960 pre-fix; post-fix
-sweep is divergence-free.
+The bug was discovered during 5ce13bae Markowitz-sparse test
+development; the issue description cites a 15×17 GF(7), density 0.05,
+seed 1 input as the named example. Empirically (R0 evidence § 10) the
+*literal* `dense_random_fp_seeded::<7>(15, 17, 0.05, 1)` cell produces
+identical pivots pre- and post-fix (`[1, 2, 4, 5, 9, 10, 11, 15]`) —
+the named seed agrees by chance under the generator instantiation
+this codebase ships. The structural bug is real, however: sweeping the
+same seed/shape/density grid as `test_rref_markowitz_sweep_fp7`
+(32 seeds × 6 shapes × 5 densities, GF(7)) revealed **47 divergent
+cells** out of 960 pre-fix; post-fix sweep is divergence-free. Five
+of those 47 cells are now hardcoded into the regression-guard test
+`test_rref_canonical_known_buggy_cells_jit_bd9c6e13`. The named-seed
+case is retained as a structural-correctness check (renamed
+`test_rref_canonical_15x17_gf7_seed1_structural_correctness`) — not as
+a regression guard.
 
 ## Fix
 
@@ -87,23 +97,35 @@ the storage convention; only the inter-block step had drifted from it.
 
 ## Validation
 
-Added three new tests in `crates/gf2-core/src/field/ple.rs::tests`:
+Added four new tests in `crates/gf2-core/src/field/ple.rs::tests`:
 
-1. `test_rref_canonical_15x17_gf7_seed1` — named reproducer from the
-   issue description; cross-checks pivot set against the textbook
-   Gauss-Jordan oracle and asserts `a.rank()` matches the canonical
-   pivot count.
-2. `test_rref_canonical_sweep_proptest_like` — 128-case sweep (8 shapes
-   × 4 densities × 4 seeds × 2 primes) over GF(7) and GF(251); each
-   case asserts bit-exact equality with the canonical oracle.
-3. `test_rref_canonical_markowitz_grid_sweep_fp7` — full
-   replica of the Markowitz sweep grid in `sparse_matrix.rs`
-   (32 seeds × 6 shapes × 5 densities, GF(7)). Pre-fix this grid had
-   47 divergent cells; post-fix it asserts zero.
+1. `test_rref_canonical_15x17_gf7_seed1_structural_correctness` —
+   structural-correctness check on the issue-named seed (15×17 GF(7),
+   density 0.05, seed 1). The literal cell agrees pre/post-fix by
+   chance under this generator instantiation, so the test verifies
+   canonical RREF correctness rather than acting as a regression guard.
+2. `test_rref_canonical_known_buggy_cells_jit_bd9c6e13` — the actual
+   regression guard. Hardcodes 5 cells from the 47-cell pre-fix
+   divergence list with their expected canonical pivots:
+     - seed=0x8, 3×5, 0.50 → canonical `[1, 2, 4]`
+     - seed=0x19, 8×8, 0.05 → canonical `[1, 3, 5]`
+     - seed=0x1f, 8×8, 0.05 → canonical `[1, 2, 4, 5]`
+     - seed=0x4, 8×8, 0.25 → canonical `[0, 2, 3, 4, 6, 7]`
+     - seed=0xc, 8×8, 0.25 → canonical `[0, 2, 4, 5, 6, 7]`
+3. `proptest_field_matrix_rref_canonical_rank_deficient_jit_bd9c6e13` —
+   128-case `proptest!` block restricted to rank-deficient inputs (via
+   outer-product construction), covers GF(7) and GF(251); each case
+   asserts bit-exact equality with the canonical oracle.
+4. `test_rref_canonical_markowitz_grid_sweep_fp7` — full replica of the
+   Markowitz sweep grid in `sparse_matrix.rs` (32 seeds × 6 shapes ×
+   5 densities, GF(7)). Pre-fix had 47 divergent cells; post-fix
+   asserts zero.
 
-Plus a textbook oracle `direct_rref_oracle_fp` (and `dense_random_fp_seeded`)
-local to the `ple.rs` test module, mirroring `direct_rref_reference_fp`
-in `sparse_matrix.rs` so the test harness is self-contained.
+The textbook oracle and seeded sparse-random generator are shared
+across `ple.rs` and `sparse_matrix.rs` test modules via
+`crates/gf2-core/src/field/test_random_matrix.rs` (R1 SSOT refactor:
+`direct_rref_oracle_fp` and `dense_random_fp_sparse`). Both modules
+import the shared helpers.
 
 ## Quality gates
 
