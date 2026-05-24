@@ -5100,3 +5100,5 @@
 {"type":"issue_state_changed","id":"52c899e9-d767-42e9-ba51-f19cd3098f18","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T07:35:03.350086807Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"44063069-1f39-482b-be63-b367b0fc78c4","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T07:35:03.350287917Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"e5ea8ab7-35c6-49f0-b7e3-544b5849ad6b","issue_id":"bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8","timestamp":"2026-05-24T10:45:37.974074218Z","title":"Fix non-canonical RREF in FieldMatrix::rref dense PLE path","priority":"normal"}
+{"type":"gate_passed","id":"fcd22c6b-cc26-48ee-bd02-1ef1c803e0de","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T10:50:43.832161765Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"171b0964-3291-4674-9257-bc6ef16e55b4","issue_id":"5ce13bae-61db-4df2-85b1-87447f643cd8","timestamp":"2026-05-24T10:58:00.048004157Z","gate_key":"code-review","updated_by":"auto:executor"}

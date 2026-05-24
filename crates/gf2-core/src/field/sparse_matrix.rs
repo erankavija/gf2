@@ -1301,27 +1301,35 @@ impl<F: FiniteField> SparseFieldMatrix<F> {
     /// elimination, returning a new sparse matrix in canonical CSR form
     /// (column indices sorted ascending within each row, no stored zeros).
     ///
-    /// The output is bitwise-equal to the dense round-trip:
-    /// `self.rref().to_dense() == self.to_dense().rref().1` (the second
-    /// return value of [`FieldMatrix::rref`] which is the echelon form
-    /// itself; the transform `X` is not produced here).
+    /// The output is the canonical reduced row-echelon form of `self`:
+    /// the pivot column set is the leftmost linearly-independent subset
+    /// of `self`'s columns, every pivot entry is `F::one()`, every
+    /// non-pivot entry in a pivot column is `F::zero()`, and rows are
+    /// ordered by pivot column. Validated bit-exact against an in-test
+    /// textbook column-by-column Gauss–Jordan oracle in the issue's
+    /// test sweep.
     ///
     /// # Algorithm
     ///
-    /// Sparse Gauss–Jordan with **Markowitz-degree pivot selection**
-    /// (`jit:5ce13bae`). At each elimination step picks the (row, col)
-    /// pair minimising `(row_nnz(r) - 1) * (col_nnz(c) - 1)` among
-    /// un-used rows, where `col` is the leading column of row `r`. This
-    /// minimises the structural upper bound on fill-in, matching LinBox
-    /// `GaussDomain::NoReordering`'s pivot-priority strategy. Dependent
-    /// rows (`row_nnz == 0`) drop out of subsequent pivot search
-    /// automatically.
+    /// Sparse Gauss–Jordan with **column-restricted Markowitz pivot
+    /// selection** (`jit:5ce13bae`). The pivot column set of canonical
+    /// RREF is uniquely determined as the leftmost linearly-independent
+    /// columns; the algorithm walks pivot columns in ascending order and
+    /// within each column picks the un-used row with minimum `row_nnz`.
+    /// At a fixed pivot column `pc`, the only candidate rows are those
+    /// whose leading column equals `pc` (others have entries only at
+    /// columns `> pc` by the sorted-list invariant), so `col_nnz[pc]` is
+    /// identical across candidates and the full Markowitz product
+    /// `(row_nnz - 1) * (col_nnz - 1)` collapses to "minimise `row_nnz`".
+    /// This matches LinBox `GaussDomain::NoReordering`'s pivot-priority
+    /// strategy. Dependent rows (`row_nnz == 0`) drop out of subsequent
+    /// pivot search automatically.
     ///
     /// Each row is materialised on demand into a sparse `Vec<(usize, F)>`
     /// working buffer; the pivot row is scaled to a leading `1` and the
     /// chosen column eliminated from every other row via sparse `axpy`.
-    /// `row_nnz` and `col_nnz` are maintained incrementally during each
-    /// axpy — re-scanning the matrix would destroy the speedup. See
+    /// `row_nnz` is maintained incrementally during each axpy — re-
+    /// scanning the matrix would destroy the speedup. See
     /// `dev/active/5ce13bae-markowitz-design.md` for the full design.
     ///
     /// # Panics

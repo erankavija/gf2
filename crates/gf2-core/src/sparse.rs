@@ -945,9 +945,14 @@ impl SpBitMatrix {
     /// [`crate::field::sparse_matrix::SparseFieldMatrix::rref`]). Each
     /// row is held as a sorted `Vec<usize>` of column indices; the XOR
     /// of two sorted lists is computed as a symmetric-difference merge
-    /// in `O(|target| + |source|)`. The `row_nnz` and `col_nnz` arrays
-    /// are maintained incrementally during each axpy — re-scanning the
-    /// matrix would destroy the speedup.
+    /// in `O(|target| + |source|)`. The `row_nnz` array is maintained
+    /// incrementally during each XOR — re-scanning the matrix would
+    /// destroy the speedup. `col_nnz` is not materialised: at a fixed
+    /// pivot column `pc`, the only un-used rows that contain entries at
+    /// `pc` are those whose leading column equals `pc` (others have
+    /// entries only at columns `> pc` by the sorted-list invariant), so
+    /// `col_nnz[pc]` is constant across candidates and the full
+    /// Markowitz product collapses to "minimise `row_nnz`".
     ///
     /// # Complexity
     ///
