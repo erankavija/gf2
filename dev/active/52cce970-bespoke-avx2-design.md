@@ -68,11 +68,15 @@ Per call overhead (independent of cj_len): ~3 function-pointer prologues + 3 cop
 
 ### `fp_small_sub_scaled` (new public AVX2 entry point)
 
-Signature:
+Signature (final, post-R1 Barrett-μ hoist):
 ```rust
 #[target_feature(enable = "avx2")]
-pub unsafe fn fp_small_sub_scaled(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8)
+pub unsafe fn fp_small_sub_scaled(
+    buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8, mu: u16,
+)
 ```
+
+The `mu: u16` parameter is the precomputed Barrett constant `μ = ⌊2¹⁶/p⌋` (obtain via [`crate::fp_small::barrett_mu_u16`]). It was added in R1 to skip the per-call `div esi` in the kernel prologue (~190 µs / 7-8% of GF(251)/n=256 charpoly wall time saved). The original R0 design (no `mu` parameter, μ computed inline) is preserved here for historical clarity but the shipped kernel takes 5 arguments. Callers must `debug_assert_eq!(mu, barrett_mu_u16(p))` at the safe-wrapper boundary.
 
 Semantics: `buf[i] := (buf[i] - alpha * chain_j[i]) mod p` for `i in 0..chain_j.len()`.
 
@@ -107,7 +111,7 @@ At chain length d=128 (mid-decomposition, n=256), each call had ~5 cj_len-sized 
 
 `PackedFpChainPolys::sub_scaled_into` (in `crates/gf2-core/src/gfp/simd_ops.rs`):
 - Drops the `scratch` Vec and the `scratch_cap` field. (Confirmed unused elsewhere.)
-- Calls a new safe wrapper `fns.sub_scaled_fn(buf, &self.polys[j], alpha_val, P as u8)` exposed through `SmallPrimeFns`.
+- Calls the safe wrapper `fns.sub_scaled_fn(buf, &self.polys[j], alpha_val, P as u8, mu_for_p)` exposed through `SmallPrimeFns`. The `mu_for_p` is read from the per-prime `SmallPrimeTables::barrett_mu` cache (populated once at `build_small_prime_tables` time), eliminating the per-call division in the kernel prologue. Final shipped call signature has 5 args; the R0 doc above shows 4 for historical reference.
 
 ### Non-AVX2 hosts
 
