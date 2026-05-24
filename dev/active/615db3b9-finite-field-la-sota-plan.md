@@ -101,9 +101,32 @@ Already-passing or protected lanes:
 - Medium primes mostly pass. GF(32749)/n=64 misses by 0.18% due to `K_PANEL=2` drain overhead; other medium-prime cells pass.
 - Mersenne31 and Fp<65537> have dedicated dispatch that must remain above generic branches.
 
-### GF(2) and GF(2^m)
+### GF(2)
 
-GF(2) has M4RM/RREF work and benchmark evidence against M4RI, but wide matrix sizes still have threshold-edge gaps. GF(2^m) has the largest dense GEMM gap:
+GF(2) has M4RM/RREF work and benchmark evidence against M4RI, but small-n matmul cells (n=64, n=256) still miss the 1.5x threshold (per § 1.1 of the predecessor scorecard).
+
+Implementation files:
+
+- `crates/gf2-core/src/bitvec.rs` — dense bit storage.
+- `crates/gf2-core/src/bitslice.rs` — bit-slice views.
+- `crates/gf2-core/src/matrix.rs` — `BitMatrix` row-major bit-packed matrix and basic ops.
+- `crates/gf2-core/src/sparse.rs` — CSR/CSC sparse GF(2) matrices.
+- `crates/gf2-core/src/alg/m4rm.rs` — M4RM multiplication.
+- `crates/gf2-core/src/alg/gauss.rs` — Gauss-Jordan inversion.
+- `crates/gf2-core/src/alg/rref.rs` — RREF.
+- `crates/gf2-core/src/alg/matmul.rs` — matmul dispatch entry.
+- `crates/gf2-core/src/alg/strassen.rs` — Strassen path for GF(2).
+- `crates/gf2-kernels-simd/src/` — SIMD kernels invoked from `alg/`.
+
+Authoritative GF(2) evidence:
+
+- `dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md` — Wave-6/7 M4RM parity rollup.
+- `dev/bench_results/2026-05-06-380e041a-m4ri-gray-schedule.md` — Gray-code schedule study against M4RI.
+- `dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md` — perf-stat profile against M4RI.
+
+### GF(2^m)
+
+GF(2^m) has the largest dense GEMM gap among supported field families:
 
 - GF(2^8) is about 5x behind M4RIE at n=64, about 29x behind at n=256, and about 134x behind at n=1024.
 - GF(2^16) wins at n=64 and n=256, but loses by about 5x at n=1024.
@@ -111,25 +134,72 @@ GF(2) has M4RM/RREF work and benchmark evidence against M4RI, but wide matrix si
 
 Current GF(2^m) GEMM uses per-output-cell packing/export plus batch carry-less multiply, not matrix-level Four-Russians/Gray-code panelization. Existing issue `e24f7839` is already in progress for panelized GF(2^m) GEMM and should be treated as the primary owner of this gap, not duplicated.
 
+Implementation files:
+
+- `crates/gf2-core/src/gf2m/mod.rs` — module entry and dispatch.
+- `crates/gf2-core/src/gf2m/field.rs` — `Gf2m<m, T>` element type.
+- `crates/gf2-core/src/gf2m/wide.rs`, `wide_config.rs` — wide-storage backing for m > 32.
+- `crates/gf2-core/src/gf2m/uint_ext.rs` — sealed storage-width trait.
+- `crates/gf2-core/src/gf2m/mul_raw.rs` — raw carry-less multiplication.
+- `crates/gf2-core/src/gf2m/barrett.rs` — Barrett-reduction tables.
+- `crates/gf2-core/src/gf2m/batch.rs` — `try_gf2m_u64_batch_dot_product` hook used by `field/matrix.rs::gemm`.
+- `crates/gf2-core/src/gf2m/generation.rs` — generation/sampling helpers used by benches/tests.
+- `crates/gf2-core/src/primitive_polys.rs` — primitive polynomials for m in 2..16.
+
 Authoritative GF(2^m) evidence:
 
-- `dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md`
-- `dev/plans/m4rie_promotion_evidence.md`
-- `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv`
-- `dev/bench_results/2026-05-06-a1172cea-ntl-gf2pow32-large.csv`
+- `dev/bench_results/2026-05-06-a1172cea-gf2m-scorecard.md` — pre-panelization scorecard.
+- `dev/plans/m4rie_promotion_evidence.md` — M4RIE reference promotion analysis.
+- `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv` — M4RIE reference numbers.
+- `dev/bench_results/2026-05-06-a1172cea-ntl-gf2pow32-large.csv` — NTL GF(2^32) reference at large n.
+- `dev/bench_results/2026-05-06-e24f7839-panelized-gf2m-gemm.md` — post-`e24f7839` panelized GEMM evidence (GF(2^32) PASS, GF(2^16) n=1024 + GF(2^8) all-n aspirational).
+- `dev/bench_results/2026-05-06-e24f7839-gf2pow32-panelized.csv` and `2026-05-06-e24f7839-gf2m-panelized.csv` — raw bench CSVs.
 
-### Extension fields and downstream dense LA
+### Extension fields GF(p^n)
 
-Extension-field arithmetic exists:
+Implementation files:
 
-- `crates/gf2-core/src/gfpn/quadratic.rs`
-- `crates/gf2-core/src/gfpn/cubic.rs`
-- `crates/gf2-core/src/gfpn/batch.rs`
-- `crates/gf2-kernels-simd/src/fp65537.rs`
+- `crates/gf2-core/src/gfpn/mod.rs` — module entry, `ExtConfig` trait.
+- `crates/gf2-core/src/gfpn/ext_config.rs` — extension configuration trait surfaces.
+- `crates/gf2-core/src/gfpn/quadratic.rs` — `QuadraticExt<C>` arithmetic.
+- `crates/gf2-core/src/gfpn/cubic.rs` — `CubicExt<C>` arithmetic.
+- `crates/gf2-core/src/gfpn/batch.rs` — batch-dot helpers for extension elements.
+- `crates/gf2-kernels-simd/src/fp65537.rs` — Fp<65537> base-field kernels reused by extension matmul.
 
-However, `FieldMatrix<QuadraticExt<_>>` and `FieldMatrix<CubicExt<_>>` currently inherit generic matrix multiply rather than a matrix-level Karatsuba decomposition into accelerated base-field GEMMs.
+Authoritative GF(p^n) evidence:
+
+- `dev/plans/gfpn_groundwork_analysis.md` — tower-extension design analysis and benchmarking groundwork.
+- `dev/plans/cubic_ext.md` — `CubicExt` design notes.
+- `dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md` — extension-field-adjacent charpoly/minpoly reference selection.
+- `dev/bench_results/2026-05-04-5dea7457-reference-extension.csv` — extension reference benchmark CSV.
+
+`FieldMatrix<QuadraticExt<_>>` and `FieldMatrix<CubicExt<_>>` currently inherit generic matrix multiply rather than a matrix-level Karatsuba decomposition into accelerated base-field GEMMs. Phase 4 of this plan addresses that.
+
+### Downstream dense LA
 
 Downstream dense LA exists across triangular solve/multiply, PLE, RREF/rank, determinant, charpoly/minpoly, and expression/fusion layers. The SOTA catch-up work should make downstream operations inherit optimized GEMM through blocked algorithms rather than optimizing each operation independently.
+
+Implementation files:
+
+- `crates/gf2-core/src/field/triangular.rs` — triangular solve / triangular multiply (TRSM / TRMM).
+- `crates/gf2-core/src/field/ple.rs` — PLE / LU factorisation.
+- `crates/gf2-core/src/field/inverse.rs` — `FieldMatrix::invert`.
+- `crates/gf2-core/src/field/charpoly.rs` — characteristic / minimum polynomial.
+- `crates/gf2-core/src/field/poly.rs`, `poly_interpolate.rs` — polynomial helpers backing charpoly/minpoly.
+- `crates/gf2-core/src/field/winograd.rs` — Winograd recursive GEMM with Dumas-Pernet bound propagation.
+- `crates/gf2-core/src/field/expr.rs`, `batch_ops.rs` — expression-template / fusion layer.
+- `crates/gf2-core/src/field/sparse_matrix.rs` — `SparseFieldMatrix` and sparse RREF entry.
+- `crates/gf2-core/src/field/extension_wiedemann.rs` — block-Wiedemann variant for extension fields.
+
+Authoritative downstream-LA evidence:
+
+- `dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md` — dense LA parity rollup vs fflas-ffpack.
+- `dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md` — post-GEMM inheritance check across downstream ops.
+- `dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md` — PLE/TRSM tuning evidence.
+- `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` — invert/solve/det Wave-9 parity.
+- `dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md` — in-place invert evidence.
+- `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` — minpoly tuning + Wave-12 panel-kernel inline.
+- `dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv`, `minpoly-reference.csv` — charpoly/minpoly reference CSVs.
 
 ## FFLAS-FFPACK techniques to catch up with
 
@@ -188,15 +258,27 @@ Thus n=256 fits in one f32 chunk, while n=1024 needs four chunks. Double precisi
 
 ### Phase 0: Reconfirm the benchmark baseline
 
-Before implementation, pin the exact reference and current gf2 rows that future reviews will use:
+Before implementation, the GF(251)-route prototype work needs a single pinned baseline. This section separates measurements that already exist in the repository from measurements that must be re-collected before prototype dispatch.
 
-- GF(251) n in {256, 1024}, current Candidate C vs fflas.
-- GF(241) n in {256, 1024}, because it shares the byte-prime float-modular failure mode.
-- GF(7), GF(31), GF(127) n in {64, 256, 1024}, as non-regression and small-n controls.
-- GF(257), GF(32749), GF(65521) n in {64, 256, 1024}, as medium-prime non-regression controls.
-- Mersenne31 and Fp<65537> n in {256, 1024}, as exact-dispatch non-regression controls.
+#### Already-available measurements (no fresh collection needed)
 
-Use the `cc5de315` methodology: pinned reference container, canonical seeds, CCX-pinned 5-trial gf2 measurement, no concurrent cargo/criterion jobs.
+These come from `cc5de315`'s closure trail and the post-`97bf0879` scorecard, all collected with CCX-pinned 5-trial methodology on the 5900X reference host:
+
+- **GF(251)/n in {256, 1024}** Candidate C vs fflas — `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md` and the predecessor scorecard `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` § 1.1 (`58.98 / 70.89 Gop/s` for gf2, `128.48 / 138.32 Gop/s` for fflas).
+- **GF(251)/n=64, n=4096** Candidate C vs fflas — same scorecard § 1.1 (`A7` amendment rows, including the n=4096 row).
+- **GF(7), GF(31), GF(127)/n in {64, 256, 1024}** non-regression controls — same scorecard § 1.1 plus `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`; GF(7)/GF(31)/n=64 cells are `A6` / `A5` aspirational amendments owned by `27bb2f75`.
+- **GF(257), GF(32749), GF(65521)/n in {64, 256, 1024}** medium-prime controls — `dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md` and predecessor scorecard § 1.1 (GF(65521) rows are PASS [hard] per `[E14]` § 1.2; GF(32749)/n=64 misses by 0.18%).
+- **Mersenne31, Fp<65537>/n in {256, 1024}** exact-dispatch controls — same scorecard § 1.1.
+
+#### Fresh measurements still needed before prototype dispatch
+
+These are not yet in the repository and must be collected before Phase 1 prototype work begins. Use the `cc5de315` methodology: pinned reference container, canonical seeds, CCX-pinned 5-trial gf2 measurement, no concurrent cargo/criterion jobs.
+
+- **GF(241)/n in {256, 1024}.** No GF(241) measurement exists. The cell is needed because GF(241) shares the byte-prime float-modular failure mode with GF(251); without this cell, the prototypes cannot demonstrate that improvements generalize across the byte-prime family.
+- **Single-trial-vs-5-trial drift baseline on the reference host at HEAD.** The current host environment has shifted since `cc5de315`'s closure (`HEAD = 8a800a9d` at the time of writing); a single 5-trial GF(251) re-run at HEAD is needed to confirm the cited Gop/s numbers still hold within the 5% non-regression band before prototype work begins. Otherwise prototype-vs-baseline deltas conflate prototype effect with host drift.
+- **GF(127)/n in {256, 1024} as an additional small-prime control.** GF(127) is not currently in the `cc5de315` scorecard but is in this plan's control list because it spans the boundary between byte-prime and medium-prime dispatch tiers; the cell is needed to verify that a GF(251) prototype change does not regress GF(127).
+
+This list is the work of child issue #1 ("Refresh GF(251) and control-lane benchmarks") in the proposed JIT breakdown below.
 
 ### Phase 1: Decide the GF(251) breakthrough route by prototype
 
