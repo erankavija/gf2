@@ -444,7 +444,64 @@ mod tests {
     /// at the issue-mandated boundary lengths.
     /// Mirrors the unsafe-layer test in `x86::fp_small::tests` so a
     /// regression in the safe dispatch table is caught at this layer
-    /// even if the unsafe-layer test were skipped.
+    /// even if the unsafe-layer test were skipped. Input data is
+    /// randomised per the `seed` parameter so each proptest run exercises
+    /// a fresh data set.
+    #[allow(clippy::wildcard_imports)]
+    mod proptest_safe_wrapper_sub_scaled_jit_52cce970 {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(256))]
+
+            #[test]
+            fn proptest_safe_wrapper_matches_scalar_sub_scaled(
+                len in prop_oneof![
+                    Just(0usize), Just(1), Just(15), Just(16), Just(17),
+                    Just(63), Just(64), Just(65), Just(255), Just(256)
+                ],
+                seed in any::<u64>(),
+                p_idx in 0usize..3usize,
+            ) {
+                let fns = match detect() {
+                    Some(f) => f,
+                    None => return Ok(()),
+                };
+                let primes: [u8; 3] = [7, 31, 251];
+                let p = primes[p_idx];
+                let mu = barrett_mu_u16(p);
+                // Derive alpha and data from seed.
+                let s1 = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                let s2 = s1.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                let alpha = ((s1 >> 32) % p as u64) as u8;
+                let chain_j: Vec<u8> = (0..len)
+                    .map(|i| {
+                        let v = s1.wrapping_mul(i as u64 + 1).wrapping_add(s2);
+                        (v % p as u64) as u8
+                    })
+                    .collect();
+                let buf_init: Vec<u8> = (0..len)
+                    .map(|i| {
+                        let v = s2.wrapping_mul(i as u64 + 1).wrapping_add(s1);
+                        (v % p as u64) as u8
+                    })
+                    .collect();
+                let mut buf = buf_init.clone();
+                let p_u32 = p as u32;
+                let mut expected = buf_init;
+                for i in 0..len {
+                    let prod = (alpha as u32 * chain_j[i] as u32) % p_u32;
+                    expected[i] = ((expected[i] as u32 + p_u32 - prod) % p_u32) as u8;
+                }
+                (fns.sub_scaled_fn)(&mut buf, &chain_j, alpha, p, mu);
+                prop_assert_eq!(buf, expected, "p={} alpha={} len={}", p, alpha, len);
+            }
+        }
+    }
+
+    /// Smoke test: deterministic boundary-length check retained alongside
+    /// the proptest for fast feedback during development.
     #[test]
     fn safe_wrapper_matches_scalar_sub_scaled() {
         let fns = match detect() {

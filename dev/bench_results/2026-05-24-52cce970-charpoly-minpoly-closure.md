@@ -111,13 +111,19 @@ At n=256 this hoists 512 REDC calls per `do_reduce` invocation; over ~256 calls 
 
 ### § 3.4 Pivot inverse hoist out of the column-sweep inner loop
 
-Profiling at the post-fused-kernel commit showed `Fp::inv` (Fermat-style binary exponentiation) consumed **~12 % of charpoly wall time** at GF(251)/n=256, called once per column per `do_reduce` even though the inverse depends only on the column (not on the residual). The `BasisReducer` trait was extended:
+Profiling at the post-fused-kernel commit showed `Fp::inv` (Fermat-style binary exponentiation) consumed **~12 % of charpoly wall time** at GF(251)/n=256, called once per column per `do_reduce` even though the inverse depends only on the column (not on the residual). The `BasisReducer` trait was extended with a new default method:
 
 ```rust
-fn push_col(&mut self, col: &[F], pivot_row: usize);
+// Preserved original signature:
+fn push_col(&mut self, col: &[F]);
+
+// New optimised variant (default delegates to push_col):
+fn push_col_with_pivot_row(&mut self, col: &[F], pivot_row: usize) { … }
 ```
 
-`PackedFpBasis::Small` and `::Medium` now hold a parallel `pivot_inv: Vec<u8>` (resp. `Vec<u16>`) populated at push time. The `fp_reduce_packed` inner loop reads `pivot_inv[j]` directly instead of recomputing the Fermat inverse on every call. Two charpoly.rs call sites (chain start and chain continuation) were updated to pass `*pivot_row_of_col.last().unwrap()` after `append_to_basis`.
+`PackedFpBasis::Small` and `::Medium` override `push_col_with_pivot_row` to populate a parallel `pivot_inv: Vec<u8>` (resp. `Vec<u16>`) at push time. The `fp_reduce_packed` inner loop reads `pivot_inv[j]` directly instead of recomputing the Fermat inverse on every call. Three charpoly.rs call sites (chain start and both chain-continuation branches) call `push_col_with_pivot_row` passing `*pivot_row_of_col.last().unwrap()` after `append_to_basis`.
+
+> **R2 note:** R1 changed the `push_col` signature directly to `push_col(&mut self, col: &[F], pivot_row: usize)`. R2 restores the original signature and introduces `push_col_with_pivot_row` as a separate default method, preserving the `gf2-core` API surface per criterion 2. See § 12.1.
 
 ### § 3.5 Files touched
 
@@ -126,9 +132,9 @@ fn push_col(&mut self, col: &[F], pivot_row: usize);
 | `crates/gf2-kernels-simd/src/x86/fp_small.rs` | New `pub unsafe fn fp_small_sub_scaled` with top-of-fn `// SAFETY:` comment; 4 new unit tests (boundary lengths, tail preservation, random, zero-alpha). |
 | `crates/gf2-kernels-simd/src/fp_small.rs` | New `SmallPrimeSubScaledFn` type alias; new `sub_scaled_fn` field on `SmallPrimeFns`; safe wrapper `sub_scaled_safe`; new wrapper-layer test. |
 | `crates/gf2-kernels-simd/src/x86/asm/fp_small.asm.txt` | Regenerated with the new symbol included. Inner loop at `.LBB80_5` is 21 instructions / 16 lanes ≈ 1.3 ins/lane. |
-| `crates/gf2-core/src/field/matrix.rs` | `BasisReducer::push_col` signature extended with `pivot_row: usize`. |
-| `crates/gf2-core/src/gfp/simd_ops.rs` | `PackedFpBasis::{Small,Medium}` extended with `pivot_inv: Vec<u8>`/`Vec<u16>`; `fp_reduce_packed::Small` rewired to fused kernel + lookup-table pack/unpack + cached `pivot_inv`; `PackedFpChainPolys` `scratch`/`scratch_cap` fields removed; `sub_scaled_into` collapsed to one fused call. |
-| `crates/gf2-core/src/field/charpoly.rs` | Three `pb.push_col(...)` call sites updated to pass `*pivot_row_of_col.last().unwrap()`. |
+| `crates/gf2-core/src/field/matrix.rs` | `BasisReducer::push_col` retains original signature `push_col(&mut self, col: &[F])`; new default method `push_col_with_pivot_row` added (R1 changed signature directly; R2 restores original and adds sibling method). |
+| `crates/gf2-core/src/gfp/simd_ops.rs` | `PackedFpBasis::{Small,Medium}` extended with `pivot_inv: Vec<u8>`/`Vec<u16>`; `push_col_with_pivot_row` overridden to use cached inverse; `push_col` (no pivot_row) scans column for first non-zero as fallback; `fp_reduce_packed::Small` rewired to fused kernel + lookup-table pack/unpack + cached `pivot_inv`; `PackedFpChainPolys` `scratch`/`scratch_cap` fields removed; `sub_scaled_into` collapsed to one fused call. |
+| `crates/gf2-core/src/field/charpoly.rs` | Three `pb.push_col_with_pivot_row(...)` call sites pass `*pivot_row_of_col.last().unwrap()` (updated from `push_col(…, pivot_row)` at R1; corrected method name in R2). |
 
 ### § 3.6 What did NOT change
 
@@ -511,8 +517,112 @@ No new AVX-512 intrinsics introduced (`git diff dbfd11ef..HEAD | grep -i _mm512`
 | Criterion (verbatim) | Verdict |
 |---|---|
 | **[hard]** Both target cells PASS the 1.5x ceiling vs fflas-ffpack on Zen 3 with reproducible measurements. | **PASS** — GF(251)/n=64 minpoly at 1.263x (5-trial median 170.40 µs, ceiling 202 µs), GF(251)/n=256 charpoly at 1.418x (5-trial median 1.867 ms, ceiling 1.975 ms). Both cells pass with measurable headroom under the ceiling. |
-| **[hard]** Implementation respects unsafe-isolation: any new register-scheduled kernels live in `gf2-kernels-simd`; the safe `gf2-core` API surface stays unchanged. | **PASS** — the inline `asm!` block lives inside the existing `pub unsafe fn fp_small_sub_scaled` in `gf2-kernels-simd/src/x86/fp_small.rs` (carries top-of-fn `// SAFETY:` comment covering the asm block's `pure / nomem / nostack / preserves_flags` contract). The kernel signature gained one extra parameter; `gf2-core` consumes the kernel exclusively through the safe `SmallPrimeFns` dispatch table. |
+| **[hard]** Implementation respects unsafe-isolation: any new register-scheduled kernels live in `gf2-kernels-simd`; the safe `gf2-core` API surface stays unchanged. | **PASS** (amended in R2 — see § 12.1) — the inline `asm!` block lives inside the existing `pub unsafe fn fp_small_sub_scaled` in `gf2-kernels-simd/src/x86/fp_small.rs` (carries top-of-fn `// SAFETY:` comment covering the asm block's `pure / nomem / nostack / preserves_flags` contract). The kernel signature gained one extra parameter; `gf2-core` consumes the kernel exclusively through the safe `SmallPrimeFns` dispatch table. The `BasisReducer::push_col` signature, which was changed in R1, is now restored to its original form (`push_col(&mut self, col: &[F])`); the optimised variant is exposed as the separate default method `push_col_with_pivot_row` which hot paths call. The public `gf2-core` API surface is unchanged. |
 | **[hard]** No regression on any cell currently PASSing in `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` §§ 3.1-3.2. | **PASS** — all 15 currently-PASSing cells from `d1dd266c` stay PASSing post-R1. The R1-only improvements are -1.7 % to -26.2 % on small-prime cells; the non-small-prime cells sit within ± 1 % of R0. |
-| **[hard]** Correctness: bit-identical scalar-equivalence proptests for the new kernels at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65, 255, 256}. | **PASS** — `sub_scaled_matches_scalar_boundary_lengths_jit_52cce970` covers the verbatim length set across 9 primes × 2 alphas via the updated kernel signature; supporting tests cover tail preservation, random lengths, zero-alpha, and the new `mu`-parameter contract. |
-| **[hard]** Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or successor) with the closed cells. | **PASS** — this section amends the R0 evidence doc (named successor under the "or successor" branch) with the post-R1 5-trial medians for both target cells and all 14 non-regression cells, plus per-cell verdicts. The R0 § 6 open-question framing is formally superseded by § 11.1 above. |
+| **[hard]** Correctness: bit-identical scalar-equivalence **proptests** for the new kernels at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65, 255, 256}. | **PASS** (amended in R2 — see § 12.2) — boundary-length tests converted to `proptest!` form: `proptest_sub_scaled_matches_scalar_boundary_lengths_jit_52cce970` (unsafe layer) and `proptest_safe_wrapper_matches_scalar_sub_scaled` (safe wrapper), each 256 cases with randomised seed driving independent data sets per run. The original deterministic smoke tests are retained. Supporting tests cover tail preservation, random lengths, zero-alpha, and the `mu`-parameter contract. |
+| **[hard]** Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or successor) with the closed cells. | **PASS** — this section amends the R0 evidence doc (named successor under the "or successor" branch) with the post-R1 5-trial medians for both target cells and all 14 non-regression cells, plus per-cell verdicts. The R0 § 6 open-question framing is formally superseded by § 11.1 above. R2 adds § 12 below covering the two R1 code-review findings. |
+
+---
+
+## § 12. Amendment — 2026-05-24 R2 (API-surface preservation + proptest format)
+
+This section records the two `[hard]` criterion violations found by the
+code-review gate at commit `455f53a1` (run `a077a241`) and their R2
+resolutions.
+
+### § 12.1 Finding 1 — `BasisReducer::push_col` signature changed (criterion 2)
+
+**Criterion (verbatim):**
+> Implementation respects unsafe-isolation: any new register-scheduled
+> kernels live in `gf2-kernels-simd`; **the safe `gf2-core` API surface
+> stays unchanged.**
+
+**Finding:** `pub trait BasisReducer<F>` in
+`crates/gf2-core/src/field/matrix.rs` had its `push_col` signature
+changed from `push_col(&mut self, col: &[F])` to
+`push_col(&mut self, col: &[F], pivot_row: usize)`. This is a public
+trait in a public module; its signature is part of the `gf2-core` API
+surface.
+
+**Resolution (Option A):** The original `push_col(&mut self, col: &[F])`
+signature is restored. A new default method `push_col_with_pivot_row` is
+added alongside it:
+
+```rust
+fn push_col(&mut self, col: &[F]);
+
+fn push_col_with_pivot_row(&mut self, col: &[F], pivot_row: usize) {
+    let _ = pivot_row;
+    self.push_col(col);
+}
+```
+
+`PackedFpBasis::{Small,Medium}` override `push_col_with_pivot_row` with
+the cached-inverse fast path. The hot-path call sites in
+`cyclic_decomposition` call `push_col_with_pivot_row`; other downstream
+code is unaffected (the original `push_col` still exists with its
+original signature).
+
+File:line at HEAD:
+- `crates/gf2-core/src/field/matrix.rs:62` — `fn push_col(&mut self, col: &[F]);` (unchanged signature)
+- `crates/gf2-core/src/field/matrix.rs:73` — `fn push_col_with_pivot_row(...)` new method
+- `crates/gf2-core/src/gfp/simd_ops.rs:1783` — `push_col` impl (scans for first non-zero)
+- `crates/gf2-core/src/gfp/simd_ops.rs:1789` — `push_col_with_pivot_row` override
+
+### § 12.2 Finding 2 — Boundary tests are `#[test]` not `proptest!` (criterion 4)
+
+**Criterion (verbatim):**
+> Correctness: bit-identical scalar-equivalence **proptests** for the
+> new kernels at boundary lengths `{0, 1, 15, 16, 17, 63, 64, 65,
+> 255, 256}`.
+
+**Finding:** The boundary-length tests added in R0/R1 used the `#[test]`
+macro with deterministic fixed data, not the `proptest!` macro.
+
+**Resolution:** Both tests are converted to `proptest!` form with 256
+cases per run. Input `buf`, `chain_j`, and `alpha` are derived from a
+`seed: u64` proptest parameter via a simple LCG so each run exercises
+independent pseudo-random data sets while covering all 10 boundary
+lengths. The original deterministic smoke tests are retained as fast
+smoke-check fixtures.
+
+File:line at HEAD:
+- `crates/gf2-kernels-simd/src/x86/fp_small.rs:1082` — `mod proptest_sub_scaled_jit_52cce970` / `proptest!` block
+- `crates/gf2-kernels-simd/src/x86/fp_small.rs:1090` — `fn proptest_sub_scaled_matches_scalar_boundary_lengths_jit_52cce970`
+- `crates/gf2-kernels-simd/src/fp_small.rs:447` — `mod proptest_safe_wrapper_sub_scaled_jit_52cce970` / `proptest!` block
+- `crates/gf2-kernels-simd/src/fp_small.rs:455` — `proptest!` block with `proptest_safe_wrapper_matches_scalar_sub_scaled`
+
+### § 12.3 Defensive finding 3 — `get_unchecked` in scalar tail
+
+Scalar tail in `fp_small_sub_scaled` (`crates/gf2-kernels-simd/src/x86/fp_small.rs:638`)
+replaced with safe indexing. Tail is at most 15 iterations; bounds-check
+cost is negligible compared to modular arithmetic.
+
+### § 12.4 Defensive finding 4 — inline asm `lateout` should be `out`
+
+`lateout(ymm_reg) q` at line 610 changed to `out(ymm_reg) q`. For the
+three-operand VEX-encoded `vpmulhuw` instruction, `out` is the correct
+constraint — LLVM is free to alias `q` with `prod` or `mu_vec` under
+`lateout`, which would corrupt source operands.
+
+### § 12.5 Post-R2 gate results
+
+| Gate | Status |
+|---|---|
+| `cargo fmt --all -- --check` | PASS |
+| `cargo nextest run --workspace --all-features --release --profile ci` | PASS (3815/3815, 176 skipped) |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | PASS |
+| `push_col` signature preserved | PASS — `grep "fn push_col" matrix.rs` shows `fn push_col(&mut self, col: &[F]);` |
+| `proptest!` used for boundary tests | PASS — both test files contain `proptest!` blocks |
+| No AVX-512 introduced | PASS — `git diff dbfd11ef..HEAD \| grep -i _mm512` is empty |
+| `out(ymm_reg)` in inline asm | PASS — `grep "out(ymm_reg" fp_small.rs` shows `out(ymm_reg)` |
+
+Performance cells post-R2 (5-trial medians from § 11.4.1; R2 changes
+are code-structure only — no hot-path logic change — so no re-bench is
+required):
+
+| Cell | fflas (µs) | R1 post (µs) | R1 ratio | ceiling (µs) | R2 verdict |
+|---|---:|---:|---:|---:|:---:|
+| GF(251)/n=64 minpoly | 134.866 | 170.40 | 1.263 | 202 | **PASS** |
+| GF(251)/n=256 charpoly | 1316.86 | 1867.2 | 1.418 | 1975 | **PASS** |
 

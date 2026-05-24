@@ -1780,7 +1780,20 @@ pub(crate) fn fp_reduce_packed<const P: u64>(
 
 #[cfg(feature = "simd")]
 impl<const P: u64> crate::field::matrix::BasisReducer<Fp<P>> for PackedFpBasis<P> {
-    fn push_col(&mut self, col: &[Fp<P>], pivot_row: usize) {
+    fn push_col(&mut self, col: &[Fp<P>]) {
+        // Find the first non-zero entry to serve as pivot. The basis
+        // invariant guarantees at least one exists; if not, panic.
+        let pivot_row = col
+            .iter()
+            .position(|v| !v.is_zero())
+            .expect("PackedFpBasis::push_col: column must have a non-zero entry");
+        self.push(col, pivot_row);
+    }
+
+    /// Optimised override: callers that already hold `pivot_row` (all
+    /// hot paths in `cyclic_decomposition`) call this variant to skip
+    /// the linear pivot-scan of the default implementation.
+    fn push_col_with_pivot_row(&mut self, col: &[Fp<P>], pivot_row: usize) {
         self.push(col, pivot_row);
     }
 
