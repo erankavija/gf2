@@ -5090,3 +5090,4 @@
 {"type":"gate_passed","id":"1e0a9577-683d-477b-b8f7-ba61ea53effe","issue_id":"27bb2f75-7305-4ae2-8cfe-512696bf4fcc","timestamp":"2026-05-24T06:46:40.256425465Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"6490628e-a7a0-4c6c-8749-d1c2d4e0c193","issue_id":"27bb2f75-7305-4ae2-8cfe-512696bf4fcc","timestamp":"2026-05-24T06:53:47.285106249Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"8081232c-cd9f-434f-a6fb-1a38bf434f05","issue_id":"27bb2f75-7305-4ae2-8cfe-512696bf4fcc","timestamp":"2026-05-24T07:12:37.803401763Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"53657ecf-d835-4245-8bc6-cdd6d2e7eacd","issue_id":"27bb2f75-7305-4ae2-8cfe-512696bf4fcc","timestamp":"2026-05-24T07:20:26.018709730Z","gate_key":"code-review","updated_by":"auto:executor"}
