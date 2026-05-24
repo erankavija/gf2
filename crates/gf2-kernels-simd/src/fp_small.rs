@@ -169,8 +169,11 @@ pub type SmallPrimeSubScaledFn = fn(&mut [u8], &[u8], u8, u8, u16);
 ///
 /// The function pointers take the prime `p` as a runtime argument so
 /// one dispatch struct covers GF(7), GF(31), GF(251), and any other
-/// `P ≤ 251` consumers. The Barrett constant for the chosen prime is
-/// loaded from a 256-entry table at the start of every kernel call.
+/// `P ≤ 251` consumers. Most kernels derive the Barrett constant
+/// `μ = ⌊2¹⁶/p⌋` from `p` internally; the exception is
+/// [`SmallPrimeSubScaledFn`], whose entry-point signature requires the
+/// caller to supply `μ` precomputed via [`barrett_mu_u16`] so the
+/// kernel prologue can skip the per-call integer division.
 #[derive(Copy, Clone)]
 pub struct SmallPrimeFns {
     /// Lane-wise batch multiply for `Fp<P>` with `P <= 251`.
