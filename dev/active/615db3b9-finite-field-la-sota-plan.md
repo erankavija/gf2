@@ -97,7 +97,7 @@ Key GF(251) rows:
 
 Already-passing or protected lanes:
 
-- GF(7), GF(31), and most small primes pass at n in {256, 1024}; n=64 overhead is tracked separately by `27bb2f75`.
+- GF(7), GF(31), and most small primes pass at n in {256, 1024}; n=64 overhead was tracked separately by `27bb2f75` (**closed PASS [hard] on 2026-05-24**: GF(7)/n=64 = 34.40 Gop/s, GF(31)/n=64 = 31.15 Gop/s, GF(251)/n=64 = 32.66 Gop/s; see `dev/bench_results/2026-05-24-27bb2f75-small-n-dispatch.md` and the 7a106fe4 doc § 10 amendment).
 - Medium primes mostly pass. GF(32749)/n=64 misses by 0.18% due to `K_PANEL=2` drain overhead; other medium-prime cells pass.
 - Mersenne31 and Fp<65537> have dedicated dispatch that must remain above generic branches.
 
@@ -266,7 +266,7 @@ These come from `cc5de315`'s closure trail and the post-`97bf0879` scorecard, al
 
 - **GF(251)/n in {256, 1024}** Candidate C vs fflas — `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md` and the predecessor scorecard `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` § 1.1 (`58.98 / 70.89 Gop/s` for gf2, `128.48 / 138.32 Gop/s` for fflas).
 - **GF(251)/n=64, n=4096** Candidate C vs fflas — same scorecard § 1.1 (`A7` amendment rows, including the n=4096 row).
-- **GF(7), GF(31), GF(127)/n in {64, 256, 1024}** non-regression controls — same scorecard § 1.1 plus `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`; GF(7)/GF(31)/n=64 cells are `A6` / `A5` aspirational amendments owned by `27bb2f75`.
+- **GF(7), GF(31), GF(127)/n in {64, 256, 1024}** non-regression controls — same scorecard § 1.1 plus `dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md`; GF(7)/GF(31)/n=64 cells were `A6` / `A5` aspirational amendments owned by `27bb2f75`, **now closed PASS [hard]** on 2026-05-24 (see the 7a106fe4 doc § 10 amendment + `dev/bench_results/2026-05-24-27bb2f75-small-n-dispatch.md`). The aspirational markers are retired.
 - **GF(257), GF(32749), GF(65521)/n in {64, 256, 1024}** medium-prime controls — `dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md` and predecessor scorecard § 1.1 (GF(65521) rows are PASS [hard] per `[E14]` § 1.2; GF(32749)/n=64 misses by 0.18%).
 - **Mersenne31, Fp<65537>/n in {256, 1024}** exact-dispatch controls — same scorecard § 1.1.
 
@@ -300,7 +300,7 @@ After the GF(251) route is chosen:
 
 - Keep exact-prime dispatch ordering unchanged: Fp<65537>, then Mersenne31, then family paths.
 - Revisit `N_THRESH_PRIME` only with new data; Candidate C currently wins on Zen 3 for p <= 251.
-- Complete or coordinate with `27bb2f75` for n <= 128 overhead reduction.
+- Complete or coordinate with `27bb2f75` for n <= 128 overhead reduction. (**Completed 2026-05-24** — see note above; n=64 small-prime cells now PASS [hard].)
 - Consider a medium-prime cleanup only if the GF(32749)/n=64 0.18% gap becomes worth addressing; it should not distract from GF(251) and GF(2^m).
 - Make vectorized modular reduction a reusable primitive for f32/double cascade output and integer-panel outputs.
 

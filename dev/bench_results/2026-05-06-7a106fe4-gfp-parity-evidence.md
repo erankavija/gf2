@@ -30,7 +30,7 @@ fflas reference at n=64 from `dev/bench_results/2026-04-26-reference.csv` (GF(7)
 
 | prime | n | gf2 Gop/s (Cand-C median) | fflas Gop/s | ratio | marker | evidence source |
 |---|---:|---:|---:|---:|---|---|
-| GF(7) | 64 | 19.36 | 33.47 | 0.578 | [aspirational] | `rework2-perf-spiral-comparison.csv:2` |
+| GF(7) | 64 | 19.36 | 33.47 | 0.578 | [aspirational] ‡ | `rework2-perf-spiral-comparison.csv:2` |
 | GF(7) | 256 | 34.46 | 50.75 | 0.679 | [hard] | `prime-sweep-aggregate.csv:2` |
 | GF(7) | 1024 | 68.17 | 96.23 | 0.708 | [hard] | `prime-sweep-aggregate.csv:4` |
 | GF(11) | 256 | 53.85 | 50.75* | 1.061 | [hard] | `prime-sweep-aggregate.csv:6` |
@@ -45,7 +45,7 @@ fflas reference at n=64 from `dev/bench_results/2026-04-26-reference.csv` (GF(7)
 | GF(23) | 1024 | 68.29 | 96.23* | 0.710 | [hard] | `prime-sweep-aggregate.csv:24` |
 | GF(29) | 256 | 51.80 | 50.75* | 1.021 | [hard] | `prime-sweep-aggregate.csv:26` |
 | GF(29) | 1024 | 68.23 | 96.23* | 0.709 | [hard] | `prime-sweep-aggregate.csv:28` |
-| GF(31) | 64 | 16.82 | 36.15 | 0.465 | [aspirational] | `rework2-perf-spiral-comparison.csv:6` |
+| GF(31) | 64 | 16.82 | 36.15 | 0.465 | [aspirational] ‡ | `rework2-perf-spiral-comparison.csv:6` |
 | GF(31) | 256 | 53.74 | 50.48 | 1.065 | [hard] | `prime-sweep-aggregate.csv:30` |
 | GF(31) | 1024 | 68.98 | 94.64 | 0.729 | [hard] | `prime-sweep-aggregate.csv:32` |
 | GF(127) | 256 | 53.74 | 50.75* | 1.059 | [hard] | `prime-sweep-aggregate.csv:34` |
@@ -58,7 +58,7 @@ fflas reference at n=64 from `dev/bench_results/2026-04-26-reference.csv` (GF(7)
 
 `*` = fflas number bracketed from the nearest measured prime (GF(7) for tiny-prime int64 path; GF(251) for byte-family float-modular path). The extrapolation is conservative: fflas throughput on `Modular<int64_t>` is nearly flat across tiny primes (GF(7) = 50.75 Gop/s, GF(31) = 50.48 Gop/s at n=256), and on `Modular<float>` is flat across byte primes; any interpolated value is within measurement noise of a direct measurement.
 
-**GF(7)/n=64 and GF(31)/n=64** are `[aspirational]`: the C kernel hits 19.36 and 16.82 Gop/s respectively, below the 0.667× threshold (targets ~22.3 and ~24.1 Gop/s). The architectural cause is per-call overhead dominating at n=64 -- the kernel's SIMD setup cost is amortised over only 64² = 4096 multiply-accumulate operations. Amendment recorded in `662f7a15` issue description (2026-05-06 closure amendment). Follow-up: issue `27bb2f75` (small-n optimisation, n ≤ 128).
+**GF(7)/n=64 and GF(31)/n=64** are `[aspirational]` ‡: the C kernel hits 19.36 and 16.82 Gop/s respectively, below the 0.667× threshold (targets ~22.3 and ~24.1 Gop/s). The architectural cause is per-call overhead dominating at n=64 -- the kernel's SIMD setup cost is amortised over only 64² = 4096 multiply-accumulate operations. Amendment recorded in `662f7a15` issue description (2026-05-06 closure amendment). Follow-up: issue `27bb2f75` (small-n optimisation, n ≤ 128). **‡ Superseded by § 10 amendment 2026-05-24:** 27bb2f75 closed PASS on 2026-05-24; both cells now clear the 1.5× target (GF(7)/n=64 = 34.40 Gop/s, GF(31)/n=64 = 31.15 Gop/s).
 
 **GF(241) and GF(251)** are `[aspirational]` at all measured n: fflas-ffpack uses its float-modular BLAS cascade (`Modular<float>`) for p < 256, which hits 128-140 Gop/s by delegating to OpenBLAS sgemm. The Candidate C kernel achieves 58-71 Gop/s (ratio 0.45-0.51). The architectural cause is documented in Wave-6A `5cacaec5` (amendment for GF(251)) and confirmed by the prime-sweep closure.
 
@@ -239,9 +239,9 @@ All files live under `dev/bench_results/` relative to the repository root.
 
 The following open threads are filed or noted but are not blocking story `cc5de315` closure:
 
-### 5.1 Small-n optimization (issue 27bb2f75, filed)
+### 5.1 Small-n optimization (issue 27bb2f75, closed 2026-05-24 — see § 10)
 
-At n ≤ 128, per-call overhead (SIMD state transition, buffer allocation, branch tree) dominates productive inner-loop work. GF(7)/n=64 ratio is 0.578 (target 0.667); GF(31)/n=64 is 0.465. The follow-up issue `27bb2f75` was filed to profile and reduce this overhead -- candidate approaches include an n-threshold scalar-path bypass for n < 16, a zero-copy small-n codepath that avoids dynamic buffer allocation, and a branchless SIMD entry that avoids state-transition penalties. The n ≤ 128 cells are marked `[aspirational]` in the parity table; they are not regression concerns (gf2 already beats the pre-implementation 3.7 Gop/s baseline at these sizes).
+At n ≤ 128, per-call overhead (SIMD state transition, buffer allocation, branch tree) dominates productive inner-loop work. GF(7)/n=64 ratio is 0.578 (target 0.667); GF(31)/n=64 is 0.465. The follow-up issue `27bb2f75` was filed to profile and reduce this overhead -- candidate approaches include an n-threshold scalar-path bypass for n < 16, a zero-copy small-n codepath that avoids dynamic buffer allocation, and a branchless SIMD entry that avoids state-transition penalties. The n ≤ 128 cells are marked `[aspirational]` in the parity table; they are not regression concerns (gf2 already beats the pre-implementation 3.7 Gop/s baseline at these sizes). **Status update 2026-05-24:** `27bb2f75` closed PASS via a different lever than originally hypothesised — the per-call overhead at n=64 was dominated by 12 288 Montgomery REDC calls in pack/unpack, not by `OnceLock` or `Vec` allocations as originally suggested. Routing pack/unpack through the `build_small_prime_tables<P>()` byte-indexed lookup tables (built by `70766cb1`) closed all three target cells: GF(7)/n=64 = 34.40 Gop/s (+73%); GF(31)/n=64 = 31.15 Gop/s (+55%); GF(251)/n=64 = 32.66 Gop/s (+87%, also clearing the [aspirational] 3.2× soft threshold). Evidence: `dev/bench_results/2026-05-24-27bb2f75-small-n-dispatch.md`.
 
 ### 5.2 Forward-compatibility of Candidate F on Zen-4+/AVX-VNNI/AVX-512 hosts
 
@@ -296,7 +296,9 @@ cells meet the amended story criterion. GF(251) required the story-scope
 `[aspirational]` amendment because the fflas float-modular BLAS cascade is
 architecturally inaccessible to the current pure AVX2 hand-written kernel.
 n=64 cells for GF(7) and GF(31) are `[aspirational]` (per-call overhead,
-follow-up `27bb2f75`).
+follow-up `27bb2f75`) ‡.
+
+**‡ Superseded by § 10 (2026-05-24):** `27bb2f75` closed PASS; GF(7)/n=64 = 34.40 Gop/s and GF(31)/n=64 = 31.15 Gop/s now clear the 1.5× [hard] target. The aspirational marker on these two cells is retired.
 
 ### 7.1 Downstream dense-row inheritance and follow-up wiring
 
@@ -364,3 +366,36 @@ field-family-specific decisions.**
 Satisfied by § 1 (raw numbers and ratio tables), § 2 (field-family-specific
 dispatch decisions), and § 4 (raw CSV index). Each dispatch subsection names
 the branch, kernel file, and evidence that the dispatch behaves as described.
+
+---
+
+## 10. Amendment — 2026-05-24 (post-`27bb2f75` closure)
+
+This section is added after `27bb2f75` (Optimize small-n GEMM dispatch path n≤128) closed PASS on 2026-05-24 under epic `026fc832`. The follow-up that this doc named at §§ 1.1, 3.3, 5.1, and 7 as "filed" is now closed; the GF(7)/GF(31)/n=64 `[aspirational]` cells and the GF(251)/n=64 aspirational soft target all now PASS. The original `[aspirational]` markers on those two GF(7)/GF(31) rows in § 1.1 are retained for historical accuracy (they reflect the state at 2026-05-06 close of `7a106fe4`), with inline ‡ markers pointing here.
+
+### 10.1 Closed cells
+
+| Field | n | pre Gop/s (this doc § 1.1) | post Gop/s (`27bb2f75` § 6) | target Gop/s | new verdict |
+|---:|---:|---:|---:|---:|---|
+| GF(7)  | 64 | 19.36 | 34.40 | ≥ 24.40 (1.5× [hard]) | **PASS [hard]** (+41% over target) |
+| GF(31) | 64 | 16.82 | 31.15 | ≥ 24.10 (1.5× [hard]) | **PASS [hard]** (+29% over target) |
+| GF(251)| 64 | 17.42 | 32.66 | ≥ 20.10 (3.2× [aspirational] soft) | **PASS [aspirational]** (+62% over soft target) |
+
+### 10.2 Mechanism (what actually changed)
+
+The dominant per-call overhead at m=k=n=64 was not the per-call heap allocations or the `OnceLock::get_or_init` atomic load originally hypothesised in `662f7a15` Amendment A. Profiling under `27bb2f75` showed the dominant cost was the **12 288 Montgomery REDC calls** (4 096 each in A-pack, B^T-pack, output-unpack) — approximately 13 µs of the 26.3 µs pre-rework wall time per call. Routing pack/unpack through the per-prime `from_mont` / `to_mont` byte-indexed lookup tables built by `build_small_prime_tables<P>()` (the helper added by `70766cb1` for the matvec fast path) eliminates that overhead while leaving the inner SIMD kernel untouched. Thread-local scratch buffers replaced the three per-call `vec![]` allocations (lever 1 from the original `27bb2f75` issue description) as supporting work; the table-lookup pack/unpack carries the bulk of the speedup.
+
+The same change also delivered material non-regression speedups at larger n (GF(7)/n=256 +30%, GF(7)/n=1024 +11%, GF(31)/n=256 +27%, GF(31)/n=1024 +10%) because the REDC count scales as m·k + k·n + m·n, which is non-trivial at every n. The Mersenne31 and Fp<65537> dispatch paths are untouched (different kernels); their non-regression bound holds at <1% delta.
+
+### 10.3 What this doc's headline status now is
+
+- `[aspirational]` markers on the GF(7)/n=64 and GF(31)/n=64 rows in § 1.1 are **retired** as of 2026-05-24. The cells now satisfy the 1.5× [hard] contract. The ‡ markers point here.
+- § 5.1 "Future research directions / Small-n optimization (issue 27bb2f75, filed)" is **closed**; the section heading still reads "filed" in the historical sense but the inline status note points here.
+- § 7 closing paragraph's "(per-call overhead, follow-up 27bb2f75)" qualifier on the n=64 cells is **superseded** per the inline ‡ note added there.
+- The GF(251)/n=64 aspirational soft threshold (3.2×, equivalently ≥ 20.1 Gop/s) is **cleared**; gf2/fflas ratio at GF(251)/n=64 is now 0.508 vs the soft 0.313 target. The structural float-modular BLAS gap to fflas's 64.27 Gop/s is unchanged and remains owned by `615db3b9` Phase 1 (route prototyping) under epic `026fc832`.
+
+### 10.4 Source
+
+- `27bb2f75` evidence: `dev/bench_results/2026-05-24-27bb2f75-small-n-dispatch.md` (§§ 6.1, 6.4) and the raw CSV at `dev/bench_results/2026-05-24-27bb2f75-small-n-dispatch.csv`.
+- Implementation commit: `28022b45` (`perf(jit:27bb2f75): collapse 12k REDCs in small-n GEMM pack/unpack via from_mont/to_mont tables`).
+- Pre-rework HEAD baseline measured fresh on the same host (Zen 3, 5900X) under the same CCX1 protocol as this doc § 6 — not re-cited from `rework2-perf-spiral-comparison.csv` to bracket session-to-session drift. The drift was ~3% (well within the 5% non-regression bound on the n=256/1024/4096 cells).
