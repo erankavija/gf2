@@ -4,16 +4,23 @@
 **Session number:** 3
 **Prior handoffs:** `dev/active/026fc832-handoff.md` (session 1), `dev/active/026fc832-handoff-2.md` (session 2)
 
-## Current state
+## Current state (updated post-handoff after 91429c1c worker returned + closed)
 
 - Epic: `026fc832` — state: `backlog` (still gated on remaining wave-3/4/5 deps; assignee `agent:project-lead`)
-- Wave in progress: wave 3 of 5 (2/3 prototypes through review; 91429c1c R1 in background, fc182ed5 not yet dispatched)
-- Children summary (direct epic deps + transitive): 8 done (615db3b9, 27bb2f75, 5ce13bae, aaa847cf, 52cce970, a70b1c70, bd9c6e13, 68cdf4c8), 1 in_progress with R1 worker mid-flight (91429c1c), 1 ready (fc182ed5), 3 backlog (873cbec1, e8a0c47a, b0fa00af — all chained via 41096af5 wave-4 fan-in), 1 backlog (41096af5)
-- Active claims:
-  - Epic itself claimed by `agent:project-lead`
-  - **91429c1c** claimed by `agent:claude` (worker currently running R1 refactor; lead dispatched `aa105bd8a0368beb88` opus/background)
-- Open escalations: None unresolved. Three resolved this session (bd9c6e13 SC#1 amendment; 91429c1c verdict acceptance via no-criterion-requires-pass; the 68cdf4c8 stale-doc post-amendment sweep done lead-direct)
-- Progress file: `dev/active/026fc832-progress.json` (still session-2's schema; needs update — wave 3 = 1/3 done after 68cdf4c8 closes; bd9c6e13 done out-of-band)
+- Wave in progress: wave 3 of 5 (**2/3 prototypes done**; fc182ed5 route C remains)
+- Children summary (direct epic deps + transitive): **9 done** (615db3b9, 27bb2f75, 5ce13bae, aaa847cf, 52cce970, a70b1c70, bd9c6e13, 68cdf4c8, **91429c1c**), 1 ready (fc182ed5), 3 backlog (873cbec1, e8a0c47a, b0fa00af — all chained via 41096af5 wave-4 fan-in), 1 backlog (41096af5)
+- Active claims: epic itself claimed by `agent:project-lead`. No active worker claims.
+- Open escalations: None unresolved.
+- Progress file: `dev/active/026fc832-progress.json` (updated post-91429c1c close)
+
+### 91429c1c post-handoff closure (this session, after handoff was first written)
+
+The R1 worker (`aa105bd8a0368beb88`) returned and reported its work was already at HEAD `c0179ce4` (this handoff's own commit had swept the worker's in-flight edits via `git add -A`). Re-running code-review surfaced two follow-up findings — both lead-direct fixes:
+
+1. R1.1 (commit `b2d1ca77`): public canonical-byte APIs (`blas_gf251_gemm_canonical_bytes`, `canonical_bytes_to_matrix`) had `# Panics` docs promising rejection of bytes >= 251, but the impl only used `debug_assert!` — silently accepted invalid bytes in release. Replaced with unconditional `assert!`.
+2. R1.2 (commit `60deb209` + `009adc7d` + `b0c4968c`): added `#[should_panic]` regression guards for the byte-range asserts; updated `canonical_bytes_to_matrix` `# Panics` doc to list both panic conditions; swept evidence doc § 5 and § 13 for stale "9 tests" → "15 tests" references (added 2 panic guards).
+
+91429c1c closed PASS as **research-only retention** per criterion recommendation. Final commit `d3e2cc11`.
 
 ## What just happened
 
@@ -36,8 +43,7 @@ Wave 3 dispatch + close cycles this session. Plus bd9c6e13 dense-RREF bug (out-o
 
 In order of priority:
 
-- [ ] **Wait for 91429c1c R1 worker completion** (agent ID `aa105bd8a0368beb88` in background). Verify the worker stayed in `dev/research/blas_sgemm_gf251/`, didn't touch unrelated files, didn't change perf characteristics. Re-run code-review gate.
-- [ ] **If 91429c1c R1 PASSes:** close 91429c1c. If FAILs again: rework counter would be at 2 (MAX = 2 = no more reworks); next FAIL → escalate.
+- [x] ~~Wait for 91429c1c R1 worker completion.~~ **Done — 91429c1c closed PASS at commit `d3e2cc11`** (see updated Current state).
 - [ ] **Dispatch fc182ed5** (Phase 1 route C — pure integer panelized GF(251) micro-kernel; opus; on main; should NOT need worktree since it'll be the only worker active). Touches `crates/gf2-kernels-simd/`. Expect ~60 min impl + bench.
 - [ ] **Dispatch wave 4: 41096af5** (route selection / Phase 1 fan-in). Single task. Compares route A (PASS n=1024, SHORTFALL n=256), route B (SHORTFALL both, research-only recommended), route C (TBD). May escalate per its SC#7 if no route clears the threshold at both n=256 and n=1024 (currently only route A has any PASS).
 - [ ] **Dispatch wave 5 in parallel**: e8a0c47a (Phase 2 GF(p) generalization), 873cbec1 (Phase 4 ext-field GEMM design), b0fa00af (Phase 5 terminal scorecard, supersedes 2cfc4372). All three depend on 41096af5.

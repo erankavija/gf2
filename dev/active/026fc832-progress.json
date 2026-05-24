@@ -1,7 +1,7 @@
 {
   "epic_id": "026fc832-a480-4d07-8d25-47b8bfcb69a3",
   "epic_short_id": "026fc832",
-  "epic_title": "Continue gf2-core SOTA catch-up — close A8 + §6.3 follow-ups",
+  "epic_title": "Continue gf2-core SOTA catch-up \u2014 close A8 + \u00a76.3 follow-ups",
   "started_at": "2026-05-24T00:00:00+00:00",
   "current_wave": 3,
   "scope_decision": {
@@ -9,12 +9,28 @@
     "user_choice": "Option 1: close 615db3b9 as plan-only + drive all 12 items",
     "session_1_action": "615db3b9 closed plan-only; 8 plan children filed; DAG wired; AVX-512 routed to 7f809931",
     "session_2_amendments": [
-      {"date": "2026-05-24", "issue": "5ce13bae", "decision": "Option 1: amend 3 n=256 GF(p) cells to [aspirational]; close 5ce13bae PASS at 7/10 [hard] + 3/10 [aspirational]"},
-      {"date": "2026-05-24", "issue": "bd9c6e13", "decision": "Option C: file dense FieldMatrix::rref bug under 026fc832 epic as new type:bug task (wired as direct epic dep)"},
-      {"date": "2026-05-24", "issue": "52cce970", "decision": "Continue rework — AVX-512 not applicable (fflas baseline has no AVX-512 either); R1 worker found AVX2 codegen-quality lever (Barrett μ hoist + inline-asm vpmulhuw) closing the gap"}
+      {
+        "date": "2026-05-24",
+        "issue": "5ce13bae",
+        "decision": "Option 1: amend 3 n=256 GF(p) cells to [aspirational]; close 5ce13bae PASS at 7/10 [hard] + 3/10 [aspirational]"
+      },
+      {
+        "date": "2026-05-24",
+        "issue": "bd9c6e13",
+        "decision": "Option C: file dense FieldMatrix::rref bug under 026fc832 epic as new type:bug task (wired as direct epic dep)"
+      },
+      {
+        "date": "2026-05-24",
+        "issue": "52cce970",
+        "decision": "Continue rework \u2014 AVX-512 not applicable (fflas baseline has no AVX-512 either); R1 worker found AVX2 codegen-quality lever (Barrett \u03bc hoist + inline-asm vpmulhuw) closing the gap"
+      }
     ],
     "session_3_amendments": [
-      {"date": "2026-05-24", "issue": "bd9c6e13", "decision": "Amend SC#1 to drop seed=1 specificity — require ≥5 cells from 47-cell pre-fix divergence sweep instead. Original SC#1 named a specific reproducer (15×17 GF(7)/seed=1/density=0.05) that R0 worker proved empirically does not trigger the bug under the actual `dense_random_fp_seeded` generator. Per CLAUDE.md § success-criterion maturity markers + feedback_measurements_not_guesses, criterion amended; original wording preserved in amendment block."}
+      {
+        "date": "2026-05-24",
+        "issue": "bd9c6e13",
+        "decision": "Amend SC#1 to drop seed=1 specificity \u2014 require \u22655 cells from 47-cell pre-fix divergence sweep instead. Original SC#1 named a specific reproducer (15\u00d717 GF(7)/seed=1/density=0.05) that R0 worker proved empirically does not trigger the bug under the actual `dense_random_fp_seeded` generator. Per CLAUDE.md \u00a7 success-criterion maturity markers + feedback_measurements_not_guesses, criterion amended; original wording preserved in amendment block."
+      }
     ]
   },
   "waves": [
@@ -22,72 +38,266 @@
       "wave_number": 1,
       "label": "Plan closure + breakdown (session 1, 2026-05-24)",
       "issues": [
-        {"short_id": "615db3b9", "title": "Pursue fflas-like GF(251) GEMM performance (plan-only closure)", "classification": "design", "status": "done", "completed_at": "2026-05-24T00:30:11+00:00"}
+        {
+          "short_id": "615db3b9",
+          "title": "Pursue fflas-like GF(251) GEMM performance (plan-only closure)",
+          "classification": "design",
+          "status": "done",
+          "completed_at": "2026-05-24T00:30:11+00:00"
+        }
       ]
     },
     {
       "wave_number": 2,
       "label": "Independent implementation tasks + plan Phase 0 (closed session 2, 2026-05-24)",
       "issues": [
-        {"short_id": "a70b1c70", "title": "Refresh GF(251) and control-lane benchmarks (615db3b9 Phase 0)", "classification": "research", "status": "done", "completed_at": "2026-05-24T05:47:44+00:00", "rework_count": 0, "model": "sonnet"},
-        {"short_id": "27bb2f75", "title": "Optimize small-n GEMM dispatch path (n≤128)", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T07:34:28+00:00", "rework_count": 4, "model": "opus"},
-        {"short_id": "5ce13bae", "title": "Markowitz-degree pivot selection for sparse RREF", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T11:21:08+00:00", "rework_count": 2, "model": "opus"},
-        {"short_id": "aaa847cf", "title": "M4RI-style invert path for BitMatrix", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T12:18:17+00:00", "rework_count": 1, "model": "opus/sonnet"},
-        {"short_id": "52cce970", "title": "Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residuals", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T17:00:16+00:00", "rework_count": 5, "model": "opus/sonnet"}
+        {
+          "short_id": "a70b1c70",
+          "title": "Refresh GF(251) and control-lane benchmarks (615db3b9 Phase 0)",
+          "classification": "research",
+          "status": "done",
+          "completed_at": "2026-05-24T05:47:44+00:00",
+          "rework_count": 0,
+          "model": "sonnet"
+        },
+        {
+          "short_id": "27bb2f75",
+          "title": "Optimize small-n GEMM dispatch path (n\u2264128)",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T07:34:28+00:00",
+          "rework_count": 4,
+          "model": "opus"
+        },
+        {
+          "short_id": "5ce13bae",
+          "title": "Markowitz-degree pivot selection for sparse RREF",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T11:21:08+00:00",
+          "rework_count": 2,
+          "model": "opus"
+        },
+        {
+          "short_id": "aaa847cf",
+          "title": "M4RI-style invert path for BitMatrix",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T12:18:17+00:00",
+          "rework_count": 1,
+          "model": "opus/sonnet"
+        },
+        {
+          "short_id": "52cce970",
+          "title": "Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residuals",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T17:00:16+00:00",
+          "rework_count": 5,
+          "model": "opus/sonnet"
+        }
       ]
     },
     {
       "wave_number": 3,
       "label": "Phase 1 GF(251) route prototypes (in progress; session 3)",
       "issues": [
-        {"short_id": "68cdf4c8", "title": "Prototype in-Rust GF(251) f32/FMA cascade (route A)", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T19:55:53+00:00", "rework_count": 3, "model": "opus/sonnet", "headline_result": "n=1024 PASS at 0.679 (+24.5% vs Candidate C); n=256 SHORTFALL at 0.547 (pack-cost-dominated; documented per criterion 5 [aspirational])"},
-        {"short_id": "91429c1c", "title": "Prototype optional BLAS-backed GF(251) cascade (route B)", "classification": "implementation", "status": "in_progress_R1", "rework_count": 1, "model": "opus/sonnet", "headline_result": "Both cells SHORTFALL (n=256: 0.273-0.386; n=1024: 0.481-0.566). Dominated by route A. Recommendation: research-only, do not promote to default-off accelerator.", "background_worker": "aa105bd8a0368beb88 (R1 refactor + docs, in flight)"},
-        {"short_id": "fc182ed5", "title": "Prototype pure integer panelized GF(251) micro-kernel (route C)", "classification": "implementation", "status": "pending", "depends_on": ["a70b1c70"], "primary_files": ["crates/gf2-kernels-simd/src/"]}
+        {
+          "short_id": "68cdf4c8",
+          "title": "Prototype in-Rust GF(251) f32/FMA cascade (route A)",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T19:55:53+00:00",
+          "rework_count": 3,
+          "model": "opus/sonnet",
+          "headline_result": "n=1024 PASS at 0.679 (+24.5% vs Candidate C); n=256 SHORTFALL at 0.547 (pack-cost-dominated; documented per criterion 5 [aspirational])"
+        },
+        {
+          "short_id": "91429c1c",
+          "title": "Prototype optional BLAS-backed GF(251) cascade (route B)",
+          "classification": "implementation",
+          "status": "done",
+          "rework_count": 4,
+          "model": "opus/sonnet",
+          "headline_result": "Both cells SHORTFALL (n=256: 0.273-0.386; n=1024: 0.481-0.566). Dominated by route A. Recommendation: research-only, do not promote to default-off accelerator.",
+          "completed_at": "2026-05-24T20:42:49+00:00"
+        },
+        {
+          "short_id": "fc182ed5",
+          "title": "Prototype pure integer panelized GF(251) micro-kernel (route C)",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [
+            "a70b1c70"
+          ],
+          "primary_files": [
+            "crates/gf2-kernels-simd/src/"
+          ]
+        }
       ],
-      "parallelism_note": "All three touch crates/gf2-kernels-simd (or its Cargo.toml). Session-2 lead decision: SERIAL dispatch (perf prototypes need 5-trial CCX1 single-occupancy bench measurements; the 27bb2f75 cycle proved parallel bench measurements pollute each other). 91429c1c is the exception — out-of-tree harness in dev/research/blas_sgemm_gf251/, parallel-safe with kernels-simd work in principle, but serialized in practice for consistent bench host conditions."
+      "parallelism_note": "All three touch crates/gf2-kernels-simd (or its Cargo.toml). Session-2 lead decision: SERIAL dispatch (perf prototypes need 5-trial CCX1 single-occupancy bench measurements; the 27bb2f75 cycle proved parallel bench measurements pollute each other). 91429c1c is the exception \u2014 out-of-tree harness in dev/research/blas_sgemm_gf251/, parallel-safe with kernels-simd work in principle, but serialized in practice for consistent bench host conditions."
     },
     {
       "wave_number": 4,
       "label": "Phase 1 fan-in: route selection + wire production",
       "issues": [
-        {"short_id": "41096af5", "title": "Select and wire the GF(251) production route", "classification": "implementation", "status": "pending", "depends_on": ["68cdf4c8", "91429c1c", "fc182ed5"], "notes": "Decision context after wave 3: route A clears 1.5x only at n=1024 (0.679); route B SHORTFALL at both. Route C verdict TBD. If route C SHORTFALLS at both n=256 and n=1024, route-selection SC#7 escalation branch fires — no route clears the threshold uniformly."}
+        {
+          "short_id": "41096af5",
+          "title": "Select and wire the GF(251) production route",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [
+            "68cdf4c8",
+            "91429c1c",
+            "fc182ed5"
+          ],
+          "notes": "Decision context after wave 3: route A clears 1.5x only at n=1024 (0.679); route B SHORTFALL at both. Route C verdict TBD. If route C SHORTFALLS at both n=256 and n=1024, route-selection SC#7 escalation branch fires \u2014 no route clears the threshold uniformly."
+        }
       ]
     },
     {
       "wave_number": 5,
       "label": "Phase 2 + 4 + 5 (parallel after route selection)",
       "issues": [
-        {"short_id": "e8a0c47a", "title": "Generalize GF(p) reductions and dispatch policy (Phase 2)", "classification": "implementation", "status": "pending", "depends_on": ["41096af5"]},
-        {"short_id": "873cbec1", "title": "Design extension-field matrix GEMM via base-field decomposition (Phase 4)", "classification": "design", "status": "pending", "depends_on": ["41096af5"]},
-        {"short_id": "b0fa00af", "title": "Publish cross-family dense LA SOTA scorecard (Phase 5)", "classification": "documentation", "status": "pending", "depends_on": ["41096af5"]}
+        {
+          "short_id": "e8a0c47a",
+          "title": "Generalize GF(p) reductions and dispatch policy (Phase 2)",
+          "classification": "implementation",
+          "status": "pending",
+          "depends_on": [
+            "41096af5"
+          ]
+        },
+        {
+          "short_id": "873cbec1",
+          "title": "Design extension-field matrix GEMM via base-field decomposition (Phase 4)",
+          "classification": "design",
+          "status": "pending",
+          "depends_on": [
+            "41096af5"
+          ]
+        },
+        {
+          "short_id": "b0fa00af",
+          "title": "Publish cross-family dense LA SOTA scorecard (Phase 5)",
+          "classification": "documentation",
+          "status": "pending",
+          "depends_on": [
+            "41096af5"
+          ]
+        }
       ]
     },
     {
       "wave_number": "out-of-band",
       "label": "Dense FieldMatrix::rref bug (added session 2, closed session 3)",
       "issues": [
-        {"short_id": "bd9c6e13", "title": "Fix non-canonical RREF in FieldMatrix::rref dense PLE path", "classification": "implementation", "status": "done", "completed_at": "2026-05-24T19:10:35+00:00", "rework_count": 3, "model": "opus/sonnet", "headline_result": "Root cause: ple_in_place_window built L1/L1_bot scratch from contiguous-prefix instead of pivot_cols[start..start+r1] when rank-deficient. Fix: source from pivot_cols[]. Result: 47/960 grid cells previously divergent → 0 post-fix."}
+        {
+          "short_id": "bd9c6e13",
+          "title": "Fix non-canonical RREF in FieldMatrix::rref dense PLE path",
+          "classification": "implementation",
+          "status": "done",
+          "completed_at": "2026-05-24T19:10:35+00:00",
+          "rework_count": 3,
+          "model": "opus/sonnet",
+          "headline_result": "Root cause: ple_in_place_window built L1/L1_bot scratch from contiguous-prefix instead of pivot_cols[start..start+r1] when rank-deficient. Fix: source from pivot_cols[]. Result: 47/960 grid cells previously divergent \u2192 0 post-fix."
+        }
       ]
     }
   ],
   "created_during_execution": [
-    {"short_id": "a70b1c70", "rationale": "Phase 0 baseline refresh", "wired_as": "predecessor of routes A/B/C", "filed_in": "session 1"},
-    {"short_id": "68cdf4c8", "rationale": "Phase 1 route A prototype", "filed_in": "session 1"},
-    {"short_id": "91429c1c", "rationale": "Phase 1 route B prototype", "filed_in": "session 1"},
-    {"short_id": "fc182ed5", "rationale": "Phase 1 route C prototype", "filed_in": "session 1"},
-    {"short_id": "41096af5", "rationale": "Phase 1 fan-in / route selection", "filed_in": "session 1"},
-    {"short_id": "e8a0c47a", "rationale": "Phase 2 GF(p) generalization", "filed_in": "session 1"},
-    {"short_id": "873cbec1", "rationale": "Phase 4 extension-field GEMM design", "filed_in": "session 1"},
-    {"short_id": "b0fa00af", "rationale": "Phase 5 cross-family scorecard (epic terminal deliverable)", "filed_in": "session 1"},
-    {"short_id": "bd9c6e13", "rationale": "Pre-existing FieldMatrix::rref non-canonical RREF bug discovered during 5ce13bae Markowitz test development; user approved filing under 026fc832 as type:bug", "filed_in": "session 2", "wired_as": "direct epic dep", "closed_in": "session 3"}
+    {
+      "short_id": "a70b1c70",
+      "rationale": "Phase 0 baseline refresh",
+      "wired_as": "predecessor of routes A/B/C",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "68cdf4c8",
+      "rationale": "Phase 1 route A prototype",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "91429c1c",
+      "rationale": "Phase 1 route B prototype",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "fc182ed5",
+      "rationale": "Phase 1 route C prototype",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "41096af5",
+      "rationale": "Phase 1 fan-in / route selection",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "e8a0c47a",
+      "rationale": "Phase 2 GF(p) generalization",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "873cbec1",
+      "rationale": "Phase 4 extension-field GEMM design",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "b0fa00af",
+      "rationale": "Phase 5 cross-family scorecard (epic terminal deliverable)",
+      "filed_in": "session 1"
+    },
+    {
+      "short_id": "bd9c6e13",
+      "rationale": "Pre-existing FieldMatrix::rref non-canonical RREF bug discovered during 5ce13bae Markowitz test development; user approved filing under 026fc832 as type:bug",
+      "filed_in": "session 2",
+      "wired_as": "direct epic dep",
+      "closed_in": "session 3"
+    }
   ],
   "escalations": [
-    {"date": "2026-05-24", "session": 1, "category": "Scope shape / epic success criteria interpretation", "resolved": true, "user_choice": "Option 1: close 615db3b9 plan-only + drive 12-item DAG"},
-    {"date": "2026-05-24", "session": 1, "category": "AVX-512 scope routing", "resolved": true, "user_directive": "AVX-512 is not in scope for 026fc832; all deferred AVX-512 work goes under 7f809931"},
-    {"date": "2026-05-24", "session": 2, "category": "5ce13bae partial PASS (7/10 cells [hard], 3/10 short by 6-23% at n=256 dense regime)", "resolved": true, "user_choice": "Option 1: amend 3 cells to [aspirational], close PASS"},
-    {"date": "2026-05-24", "session": 2, "category": "FieldMatrix::rref dense PLE bug discovered during 5ce13bae work; not 5ce13bae's scope", "resolved": true, "user_choice": "Option C: file under 026fc832 epic as type:bug (bd9c6e13)"},
-    {"date": "2026-05-24", "session": 2, "category": "52cce970 R0 partial: GF(251)/n=256 charpoly 33.5% above 1.5x ceiling; worker framed remaining gap as AVX-512 territory", "resolved": true, "user_directive": "AVX-512 does not play a role here as the baseline does not have it either. The gap is algorithmically closable in pure AVX2."},
-    {"date": "2026-05-24", "session": 3, "category": "bd9c6e13 SC#1 empirically falsified — named seed=1 cell does not actually trigger the bug under the actual dense_random_fp_seeded generator (R0 worker's evidence § 10)", "resolved": true, "user_choice": "Amend SC#1: drop seed=1 specificity, require ≥5 cells from 47-cell pre-fix divergence sweep"}
+    {
+      "date": "2026-05-24",
+      "session": 1,
+      "category": "Scope shape / epic success criteria interpretation",
+      "resolved": true,
+      "user_choice": "Option 1: close 615db3b9 plan-only + drive 12-item DAG"
+    },
+    {
+      "date": "2026-05-24",
+      "session": 1,
+      "category": "AVX-512 scope routing",
+      "resolved": true,
+      "user_directive": "AVX-512 is not in scope for 026fc832; all deferred AVX-512 work goes under 7f809931"
+    },
+    {
+      "date": "2026-05-24",
+      "session": 2,
+      "category": "5ce13bae partial PASS (7/10 cells [hard], 3/10 short by 6-23% at n=256 dense regime)",
+      "resolved": true,
+      "user_choice": "Option 1: amend 3 cells to [aspirational], close PASS"
+    },
+    {
+      "date": "2026-05-24",
+      "session": 2,
+      "category": "FieldMatrix::rref dense PLE bug discovered during 5ce13bae work; not 5ce13bae's scope",
+      "resolved": true,
+      "user_choice": "Option C: file under 026fc832 epic as type:bug (bd9c6e13)"
+    },
+    {
+      "date": "2026-05-24",
+      "session": 2,
+      "category": "52cce970 R0 partial: GF(251)/n=256 charpoly 33.5% above 1.5x ceiling; worker framed remaining gap as AVX-512 territory",
+      "resolved": true,
+      "user_directive": "AVX-512 does not play a role here as the baseline does not have it either. The gap is algorithmically closable in pure AVX2."
+    },
+    {
+      "date": "2026-05-24",
+      "session": 3,
+      "category": "bd9c6e13 SC#1 empirically falsified \u2014 named seed=1 cell does not actually trigger the bug under the actual dense_random_fp_seeded generator (R0 worker's evidence \u00a7 10)",
+      "resolved": true,
+      "user_choice": "Amend SC#1: drop seed=1 specificity, require \u22655 cells from 47-cell pre-fix divergence sweep"
+    }
   ],
   "rework_counts": {
     "615db3b9": 1,
@@ -98,19 +308,42 @@
     "52cce970": 5,
     "bd9c6e13": 3,
     "68cdf4c8": 3,
-    "91429c1c": 1
+    "91429c1c": 4
   },
   "session_history": [
-    {"session_number": 1, "date": "2026-05-24", "lead": "agent:project-lead (Claude Opus 4.7)", "actions": ["Epic intake + project discovery", "Escalated scope ambiguity (615db3b9 design-only) — user picked Option 1", "Escalated AVX-512 routing — user routed to 7f809931", "Closed 615db3b9 plan-only", "Filed 8 plan-children with DAG wiring"]},
-    {"session_number": 2, "date": "2026-05-24", "lead": "agent:project-lead (Claude Opus 4.7)", "actions": ["Wave 2 dispatch + close (5 issues, 12 review rounds total)", "Filed bd9c6e13 (dense RREF bug) per user approval; wired as 026fc832 dep", "Post-amendment sweep on 7a106fe4 + 615db3b9 plan (27bb2f75 [aspirational]→PASS narrative cleanup)"]},
-    {"session_number": 3, "date": "2026-05-24", "lead": "agent:project-lead (Claude Opus 4.7)", "actions": ["Wave 3 dispatch (68cdf4c8 + bd9c6e13 in parallel worktrees, 91429c1c on main)", "Closed bd9c6e13 (4 review rounds; user-approved SC#1 amendment via escalation)", "Closed 68cdf4c8 (3 review rounds; worktree rebased + merged; post-amendment sweep done lead-direct R2)", "91429c1c R0 PASS evidence-wise (research-only recommendation); R1 dispatched for SSOT + doc-sections refactor (sonnet, background, in flight)", "Wrote session-3 handoff + updated progress.json"]}
-  ],
-  "background_worker_at_handoff": {
-    "agent_id": "aa105bd8a0368beb88",
-    "model": "sonnet",
-    "issue": "91429c1c",
-    "round": "R1",
-    "scope": "Extract shared cascade_chunked_sgemm_internal helper; dedupe matrix_to_canonical_bytes; add # Arguments / # Examples / # Complexity to 4 public APIs in dev/research/blas_sgemm_gf251/src/lib.rs. No perf re-bench needed (refactor + docs only).",
-    "dispatched_at": "2026-05-24T20:23:00+00:00"
-  }
+    {
+      "session_number": 1,
+      "date": "2026-05-24",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Epic intake + project discovery",
+        "Escalated scope ambiguity (615db3b9 design-only) \u2014 user picked Option 1",
+        "Escalated AVX-512 routing \u2014 user routed to 7f809931",
+        "Closed 615db3b9 plan-only",
+        "Filed 8 plan-children with DAG wiring"
+      ]
+    },
+    {
+      "session_number": 2,
+      "date": "2026-05-24",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Wave 2 dispatch + close (5 issues, 12 review rounds total)",
+        "Filed bd9c6e13 (dense RREF bug) per user approval; wired as 026fc832 dep",
+        "Post-amendment sweep on 7a106fe4 + 615db3b9 plan (27bb2f75 [aspirational]\u2192PASS narrative cleanup)"
+      ]
+    },
+    {
+      "session_number": 3,
+      "date": "2026-05-24",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Wave 3 dispatch (68cdf4c8 + bd9c6e13 in parallel worktrees, 91429c1c on main)",
+        "Closed bd9c6e13 (4 review rounds; user-approved SC#1 amendment via escalation)",
+        "Closed 68cdf4c8 (3 review rounds; worktree rebased + merged; post-amendment sweep done lead-direct R2)",
+        "91429c1c R0 PASS evidence-wise (research-only recommendation); R1 dispatched for SSOT + doc-sections refactor (sonnet, background, in flight)",
+        "Wrote session-3 handoff + updated progress.json"
+      ]
+    }
+  ]
 }
