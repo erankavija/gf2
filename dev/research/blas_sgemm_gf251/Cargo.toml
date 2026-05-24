@@ -1,0 +1,29 @@
+[package]
+name = "blas_sgemm_gf251"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Standalone out-of-tree BLAS-backed GF(251) cascade harness for JIT issue 91429c1c — Phase 1 route B. Not a workspace member; links to system OpenBLAS via cblas FFI. The chosen BLAS provider must be a permissively-licensed BLAS (BSD-3, Apache-2.0). NO fflas-ffpack, Givaro, or FFPACK source is copied or linked."
+rust-version = "1.95"
+
+[lib]
+name = "blas_sgemm_gf251"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bench_blas_gf251"
+path = "src/bin/bench_blas_gf251.rs"
+
+[dependencies]
+gf2-core = { path = "../../../crates/gf2-core", default-features = false, features = ["test-support", "rand"] }
+
+[dev-dependencies]
+gf2-core = { path = "../../../crates/gf2-core", default-features = false, features = ["test-support", "rand"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# Standalone research prototype — not a member of the gf2 workspace.
+[workspace]
