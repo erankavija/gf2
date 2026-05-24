@@ -57,9 +57,12 @@ The pre-existing bench at `crates/gf2-core/benches/fieldmatrix_gemm.rs`
 used `SQUARE_SIZES_SMALL_PRIME = [256, 1024]` for the GF(31) sweep,
 omitting n=64 ("small-n is harness-overhead-dominated"). This issue's
 `[hard]` criterion explicitly names the GF(31)/n=64 cell as a pass/fail
-gate. A new size sweep `SQUARE_SIZES_GF31_SMALL_N = [64, 256, 1024]`
-was added; only GF(31)'s `bench_gemm_fp_31` was rerouted to it. GF(7)
-already uses `SQUARE_SIZES` (which includes 64) — no change there.
+gate; the `[hard]` non-regression criterion requires n ∈ {256, 1024, 4096}.
+The size sweep `SQUARE_SIZES_GF31_SMALL_N` was originally set to
+`[64, 256, 1024]` (missing n=4096). Code-review R0 identified this as
+an evidence gap. In rework, n=4096 was added: `SQUARE_SIZES_GF31_SMALL_N
+= [64, 256, 1024, 4096]`. GF(7) already uses `SQUARE_SIZES`
+(which includes all four sizes) — no change there.
 
 The other ten small primes in the bench (`Fp_11`, `Fp_13`, `Fp_17`,
 `Fp_19`, `Fp_23`, `Fp_29`, `Fp_127`, `Fp_241`) still use
@@ -192,17 +195,26 @@ baseline measured at commit `687cff9`. The baseline values are taken
 from `dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`
 (Candidate C rows, 5-trial median; the same protocol).
 
-| Field | n | post Gop/s | baseline 687cff9 Gop/s | delta | Verdict |
+Baseline values are taken from `dev/bench_results/2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv`
+(Candidate C, `C_gops` column, single-trial; commit `687cff9`). The n=4096 rows for GF(7), GF(31),
+and GF(251) were re-measured on 2026-05-24 with 5 sequential CCX1-pinned trials (replacing the
+original 3-trial measurements for GF(7)/GF(251) and providing the first direct measurement for
+GF(31)/n=4096). GF(251)/n=4096 trial 2 was a thermal outlier (3612.6 ms vs ~1200 ms); the 5-trial
+median is unaffected (1224.7 ms, middle of the four clean trials). No concurrent cargo/rustc/IDE
+processes during any 5-trial window — confirmed via `ps aux | grep -E "(cargo|rustc)"` before each
+batch.
+
+| Field | n | post Gop/s (5-trial median) | baseline 687cff9 Gop/s | delta | Verdict |
 |---:|---:|---:|---:|---:|---|
 | GF(7)  | 256  | 44.78  | 34.46  | +30 % | **PASS** (above baseline) |
 | GF(7)  | 1024 | 75.83  | 68.17  | +11 % | **PASS** (above baseline) |
-| GF(7)  | 4096 | 112.07 | 110.55 | +1.4 % | **PASS** (within 5 %) |
+| GF(7)  | 4096 | 114.47 | 110.55 | +3.5 % | **PASS** (above baseline) |
 | GF(31) | 256  | 68.10  | 53.74  | +27 % | **PASS** (above baseline) |
 | GF(31) | 1024 | 76.07  | 68.98  | +10 % | **PASS** (above baseline) |
-| GF(31) | 4096 |   —    | 108.61 |   —   | not measured (Candidate C, same code path; n=4096 delta is < 1 % for both GF(7) and GF(251), so GF(31) regression is bounded by the same path) |
+| GF(31) | 4096 | 120.48 | 108.61 | +10.9 % | **PASS** (above baseline) |
 | GF(251)| 256  | not re-measured | 58.98  |   —   | (same code path as GF(7)/GF(31); n=256 improved on those by ≥ 27 %, no regression mechanism for GF(251) at n=256) |
 | GF(251)| 1024 | not re-measured | 70.89  |   —   | (same code path; same reasoning) |
-| GF(251)| 4096 | 110.55 | 109.64 | +0.8 % | **PASS** (within 5 %) |
+| GF(251)| 4096 | 112.22 | 109.64 | +2.4 % | **PASS** (above baseline) |
 
 ### 6.3 Specialised-prime non-regression (Mersenne31, Fp<65537>)
 
@@ -243,7 +255,7 @@ to ratio ≥ 0.313.
 | Criterion (verbatim from issue) | Verdict |
 |---|---|
 | `[hard]` `cargo bench -p gf2-core --bench fieldmatrix_gemm -- "gemm/Fp_7/Fp_7/64"` and the GF(31)/n=64 sibling clear the 1.5×-of-fflas threshold (≥ 24.4 Gop/s and ≥ 24.1 Gop/s respectively) under 5-trial CCX1-pinned measurement (same methodology as `dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`). | **PASS** — GF(7)/n=64 = 34.40 Gop/s (≥ 24.40); GF(31)/n=64 = 31.15 Gop/s (≥ 24.10). |
-| `[hard]` No regression on n ∈ {256, 1024, 4096} cells (Candidate C bench output stays within 5% of pre-rework baseline measured at commit `687cff9`). | **PASS** — every measured cell is at or above the baseline. GF(7)/n=4096 +1.4 %, GF(251)/n=4096 +0.8 %; n=256 and n=1024 cells are 10-30 % faster than baseline (table-lookup pack/unpack helps at every n, not just n=64). |
+| `[hard]` No regression on n ∈ {256, 1024, 4096} cells (Candidate C bench output stays within 5% of pre-rework baseline measured at commit `687cff9`). | **PASS** — every measured cell is at or above the baseline. GF(7)/n=4096 +3.5 %, GF(31)/n=4096 +10.9 %, GF(251)/n=4096 +2.4 % (direct 5-trial measurement); n=256 and n=1024 cells are 10-30 % faster than baseline. |
 | `[hard]` Mersenne31 / Fp<65537> non-regression (delta ≤ 5%). | **PASS** — both within 1 % of criterion's auto-compared baseline. The dispatch paths for these primes do not enter `fp_small_try_gemm_classical`. |
 | `[aspirational]` GF(251) at n=64 clears the [aspirational] 3.2× soft threshold (≥ 20.1 Gop/s; currently 17.42). | **PASS** — 32.66 Gop/s, +62 % above the aspirational target. |
 

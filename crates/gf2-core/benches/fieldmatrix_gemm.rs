@@ -66,11 +66,12 @@ const MERSENNE_31: u64 = 2_147_483_647;
 /// inform the structural crossover question.
 const SQUARE_SIZES_SMALL_PRIME: &[usize] = &[256, 1024];
 
-/// Sizes for the GF(31) small-prime sweep including n=64 (issue 27bb2f75).
-/// The n=64 cell is the per-call-overhead target of the small-n dispatch
-/// rework — the GF(31)/n=64 cell is named explicitly in the issue's
-/// `[hard]` success criterion.
-const SQUARE_SIZES_GF31_SMALL_N: &[usize] = &[64, 256, 1024];
+/// Sizes for the GF(31) small-prime sweep including n=64 and n=4096
+/// (issue 27bb2f75). The n=64 cell is the per-call-overhead target of the
+/// small-n dispatch rework; n=4096 is required by the `[hard]`
+/// non-regression criterion (n ∈ {256, 1024, 4096}) — previously omitted,
+/// causing an evidence gap caught in R0 code-review.
+const SQUARE_SIZES_GF31_SMALL_N: &[usize] = &[64, 256, 1024, 4096];
 
 // ----- Medium-prime sweep cells (issue 9e12659b R1) ------------------------
 // These three primes exercise the SIMD `fp_medium` AVX2 kernel across the
