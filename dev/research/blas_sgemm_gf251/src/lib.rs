@@ -248,14 +248,16 @@ pub fn blas_gf251_gemm_canonical_bytes(
     unsafe { openblas_set_num_threads(1) };
 
     // Pack canonical bytes to f32 (one cast per cell, no REDC).
+    // Validate at the public-API boundary: the `# Panics` doc promises
+    // rejection of out-of-field bytes, so assert always (not debug-only).
     let mut a_f32 = vec![0.0f32; m * k];
     for (slot, &v) in a_f32.iter_mut().zip(a.iter()) {
-        debug_assert!(v < 251);
+        assert!(v < 251, "input byte {} out of GF(251) range", v);
         *slot = v as f32;
     }
     let mut b_f32 = vec![0.0f32; k * n];
     for (slot, &v) in b_f32.iter_mut().zip(b.iter()) {
-        debug_assert!(v < 251);
+        assert!(v < 251, "input byte {} out of GF(251) range", v);
         *slot = v as f32;
     }
 
@@ -369,7 +371,10 @@ pub fn canonical_bytes_to_matrix(
     for i in 0..rows {
         for j in 0..cols {
             let v = bytes[i * cols + j];
-            debug_assert!(v < 251);
+            // Validate at the public-API boundary: the `# Panics` doc
+            // promises rejection of out-of-field bytes, so assert
+            // always (not debug-only).
+            assert!(v < 251, "input byte {} out of GF(251) range", v);
             out.set(i, j, Fp::<P_GF251>::new(v as u64));
         }
     }
