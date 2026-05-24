@@ -438,6 +438,42 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool 
     P >= N_THRESH_PRIME && P <= 251
 }
 
+/// Route-A dispatch toggle for GF(251) (issue 68cdf4c8).
+///
+/// Runtime debug switch that opts a single GEMM call into the reworked
+/// Candidate F path (vectorized AVX2 Barrett output reduction +
+/// lookup-table pack / unpack). The switch is **off by default** —
+/// production dispatch is unaffected.
+///
+/// The switch is read once per GEMM call via the `GF2_GF251_ROUTE_A`
+/// environment variable; setting it to `"1"` enables route A for that
+/// process. The check is intentionally not `OnceLock`-cached so that
+/// criterion bench harnesses can toggle the path per-bench without a
+/// process restart. The per-call cost is one `env::var` lookup
+/// (≈ 50 ns) which is negligible at the n=256 and n=1024 cells where
+/// the bench evidence is collected.
+///
+/// This toggle is the dispatch surface the issue's success criterion 1
+/// names as the "non-default dispatch toggle (cargo feature OR runtime
+/// debug switch)" exposing the reworked path "without changing default
+/// production behaviour."
+///
+/// Scope: GF(251) only. The kernel itself supports every `p ≤ 251`
+/// (the 32-bit-lane Barrett magic is computed at runtime per prime
+/// inside `store_and_reduce_tile_route_a`), but per the issue scope
+/// this toggle is restricted to `P == 251` so non-GF(251) cells
+/// continue to use Candidate C regardless of the env var.
+#[cfg(feature = "simd")]
+#[inline]
+fn route_a_gf251_enabled<const P: u64>() -> bool {
+    if P != 251 {
+        return false;
+    }
+    std::env::var("GF2_GF251_ROUTE_A")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+}
+
 /// Whole-gemm fast path. Pre-packs `a` (`m × k` row-major) and `b_t`
 /// (`n × k` row-major, already transposed by the caller) to
 /// canonical-byte SoA buffers and runs the AVX2 byte-lane batch-dot
@@ -451,6 +487,14 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool 
 /// cell; `select_f32_path` returns `false` for all in-scope primes
 /// (`N_THRESH_PRIME = 252`). Candidate F remains compiled in as an upgrade
 /// path for future measurement on a different host or at larger n.
+///
+/// **Route-A toggle (issue 68cdf4c8):** when `GF2_GF251_ROUTE_A=1` is set
+/// in the environment AND `P == 251`, this function routes through a
+/// reworked Candidate F variant with vectorized AVX2 Barrett output
+/// reduction and lookup-table pack / unpack instead of Candidate C. The
+/// toggle is opt-in and read once per call via `std::env::var`; default
+/// production dispatch (env var unset) is unchanged. See
+/// `route_a_gf251_enabled` and `dev/active/68cdf4c8-route-a-design.md`.
 ///
 /// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
 /// per-call constants (panel-pack heap allocations + Montgomery REDC on
@@ -506,6 +550,68 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     // straight into Candidate C using cached lookup tables and thread-
     // local scratch buffers (issue 27bb2f75).
     let f32_selected = select_f32_path::<P>(m, k, n);
+    let route_a_selected = route_a_gf251_enabled::<P>();
+
+    if route_a_selected {
+        // Route A (issue 68cdf4c8): reworked Candidate F for GF(251)
+        // with vectorized output reduction and lookup-table pack/unpack.
+        // The toggle is opt-in via `GF2_GF251_ROUTE_A=1`; default
+        // production dispatch is unaffected (Candidate C continues to
+        // own all `p ≤ 251` cells).
+        if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
+            let tables = build_small_prime_tables::<P>();
+            let from_mont_f32 = tables.from_mont_f32.as_slice();
+            let to_mont = tables.to_mont.as_slice();
+            return GEMM_SMALL_F32_A_SCRATCH.with_borrow_mut(|a_f32_scratch| {
+                GEMM_SMALL_F32_BT_SCRATCH.with_borrow_mut(|bt_f32_scratch| {
+                    GEMM_SMALL_OUT_SCRATCH.with_borrow_mut(|out_u8_scratch| {
+                        a_f32_scratch.resize(m * k, 0.0);
+                        bt_f32_scratch.resize(n * k, 0.0);
+                        out_u8_scratch.resize(m * n, 0u8);
+
+                        // Pack via the `from_mont_f32` table: one L1
+                        // table load + f32 store per element. Replaces
+                        // the `a.iter().map(|x| x.value() as f32)`
+                        // chain which does a full Montgomery REDC per
+                        // element.
+                        for (dst, src) in a_f32_scratch.iter_mut().zip(a.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont_f32.len());
+                            *dst = from_mont_f32[raw];
+                        }
+                        for (dst, src) in bt_f32_scratch.iter_mut().zip(b_t.iter()) {
+                            let raw = src.raw_storage() as usize;
+                            debug_assert!(raw < from_mont_f32.len());
+                            *dst = from_mont_f32[raw];
+                        }
+
+                        (fns_f32.batch_gemm_route_a_fn)(
+                            a_f32_scratch,
+                            bt_f32_scratch,
+                            m,
+                            k,
+                            n,
+                            p_u8,
+                            out_u8_scratch,
+                        );
+
+                        // Unpack canonical bytes → Montgomery storage
+                        // via the `to_mont` table — same fast path as
+                        // Candidate C's unpack (no REDC per element).
+                        for (slot, &byte) in out.iter_mut().zip(out_u8_scratch.iter()) {
+                            let canon = byte as usize;
+                            debug_assert!(canon < to_mont.len());
+                            *slot = Fp::<P>::from_raw_storage(to_mont[canon]);
+                        }
+                        true
+                    })
+                })
+            });
+        }
+        // Route-A requested but kernel detection failed (no FMA3); fall
+        // through to Candidate C — the byte-lane kernel is the documented
+        // AVX2-only-no-FMA3 fallback.
+    }
 
     if f32_selected {
         // Candidate F (AVX2 + FMA3 f32-cascade) — kept identical to the
@@ -1221,6 +1327,15 @@ thread_local! {
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_SMALL_OUT_SCRATCH: std::cell::RefCell<Vec<u8>> =
         const { std::cell::RefCell::new(Vec::new()) };
+    // Route-A GEMM scratch (issue 68cdf4c8). Pre-packs `a` and `bt`
+    // into f32 buffers via the `from_mont_f32` table lookup; the output
+    // is written to a u8 buffer first then unpacked through `to_mont`.
+    // Buffers grow as needed and are reused across repeated GEMM calls
+    // on the same thread.
+    static GEMM_SMALL_F32_A_SCRATCH: std::cell::RefCell<Vec<f32>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_SMALL_F32_BT_SCRATCH: std::cell::RefCell<Vec<f32>> =
+        const { std::cell::RefCell::new(Vec::new()) };
 }
 
 /// Pre-prime Barrett-constant cache for the small-prime row-panel matvec
@@ -1249,6 +1364,13 @@ pub(crate) struct SmallPrimeTables {
     /// invocations per GF(251)/n=256 charpoly call this hoist removes
     /// roughly 190 µs of wall time (7-8 %).
     barrett_mu: u16,
+    /// `from_mont_f32[raw]` — canonical value as `f32` for a Montgomery
+    /// word `raw` in `[0, P)`. Used by the route-A f32 cascade dispatch
+    /// (issue 68cdf4c8) to replace the per-element
+    /// `a.iter().map(|x| x.value() as f32)` REDC pack with a single
+    /// L1-resident table load. At `P ≤ 251` the table is 251 × 4 = 1004
+    /// bytes, fitting in 16 cache lines.
+    from_mont_f32: Vec<f32>,
 }
 
 // Global per-prime table cache for small primes (P ≤ 251).
@@ -1280,9 +1402,11 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
         let p = P as usize;
         let mut from_mont = vec![0u8; p];
         let mut to_mont = vec![0u64; p];
+        let mut from_mont_f32 = vec![0.0f32; p];
         for (a, slot) in from_mont.iter_mut().enumerate() {
             let canon = Fp::<P>::from_raw_storage(a as u64).value(); // from_mont(a)
             *slot = canon as u8;
+            from_mont_f32[a] = canon as f32;
             let raw = Fp::<P>::new(canon).raw_storage();
             to_mont[canon as usize] = raw;
         }
@@ -1291,6 +1415,7 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
             from_mont,
             to_mont,
             barrett_mu,
+            from_mont_f32,
         }
     })
 }

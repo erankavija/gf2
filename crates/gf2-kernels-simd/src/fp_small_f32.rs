@@ -20,6 +20,27 @@
 //! AVX2 + FMA3 receive `None` and must fall back to Candidate C
 //! (or scalar).
 //!
+//! # Route A (issue 68cdf4c8)
+//!
+//! [`SmallPrimeF32Fns::batch_gemm_route_a_fn`] is a reworked Candidate F
+//! variant added for the GF(251) f32/FMA cascade prototype dispatched
+//! under JIT issue `68cdf4c8` (Phase 1 route A of
+//! `dev/active/615db3b9-finite-field-la-sota-plan.md`). It differs from
+//! [`SmallPrimeF32Fns::batch_gemm_fn`] only at the **output-reduction**
+//! step: where the original kernel runs a per-cell scalar `% p` on a
+//! 96-i32 scratch tile, the route-A variant applies a 32-bit-lane AVX2
+//! Barrett reduction on the 12 i32 SIMD accumulators in place, then
+//! packs to u8 via two in-lane `vpackusdw + vpackuswb` passes. The inner
+//! FMA loop is byte-identical.
+//!
+//! The lookup-table pack (replacing the per-element `value()` REDC
+//! chain in the caller) lives in `crates/gf2-core/src/gfp/simd_ops.rs`
+//! alongside the existing `SmallPrimeTables` cache, gated on the
+//! `GF2_GF251_ROUTE_A=1` runtime debug switch. Both paths return
+//! bit-identical bytes for every input pair on every `p ≤ 251`; see
+//! `crates/gf2-kernels-simd/src/x86/fp_small_f32.rs::tests` for the
+//! parity proptest battery.
+//!
 //! # Algorithm
 //!
 //! For canonical residues `a, b ∈ [0, P)` arriving as **`f32` lanes**
@@ -144,6 +165,14 @@ pub type SmallPrimeF32GemmFn = fn(&[f32], &[f32], usize, usize, usize, u8, &mut 
 pub struct SmallPrimeF32Fns {
     /// Whole-gemm `Fp<P>` AVX2 + FMA3 f32-cascade kernel for `P <= 251`.
     pub batch_gemm_fn: SmallPrimeF32GemmFn,
+    /// Route-A variant of `batch_gemm_fn` (issue 68cdf4c8). Identical
+    /// inner f32-FMA loop, but uses an AVX2 32-bit-lane Barrett
+    /// reduction on each output tile instead of a per-cell scalar
+    /// `% p`. Selected for GF(251) only when the `GF2_GF251_ROUTE_A`
+    /// runtime debug toggle is set; the default production dispatch
+    /// continues to call `batch_gemm_fn` (when Candidate F is selected
+    /// at all) or Candidate C.
+    pub batch_gemm_route_a_fn: SmallPrimeF32GemmFn,
 }
 
 /// Detect and return the best available small-prime f32-FMA SIMD
@@ -188,6 +217,7 @@ fn detect_x86() -> Option<SmallPrimeF32Fns> {
     if is_x86_feature_detected!("avx2") && is_x86_feature_detected!("fma") {
         Some(SmallPrimeF32Fns {
             batch_gemm_fn: batch_gemm_safe,
+            batch_gemm_route_a_fn: batch_gemm_route_a_safe,
         })
     } else {
         None
@@ -199,6 +229,21 @@ fn batch_gemm_safe(a: &[f32], bt: &[f32], m: usize, k: usize, n: usize, p: u8, c
     // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
     // are both available at runtime.
     unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm(a, bt, m, k, n, p, c) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn batch_gemm_route_a_safe(
+    a: &[f32],
+    bt: &[f32],
+    m: usize,
+    k: usize,
+    n: usize,
+    p: u8,
+    c: &mut [u8],
+) {
+    // Safety: `detect_x86` only returns this pointer when AVX2 + FMA3
+    // are both available at runtime.
+    unsafe { crate::x86::fp_small_f32::fp_small_f32_gemm_route_a(a, bt, m, k, n, p, c) }
 }
 
 #[cfg(test)]
@@ -267,6 +312,50 @@ mod tests {
                 (fns.batch_gemm_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
                 let expected = scalar_gemm(&a, &bt, m, k, n, p);
                 assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
+            }
+        }
+    }
+
+    #[test]
+    fn route_a_safe_wrapper_matches_scalar_gemm() {
+        // Verify the route-A entry point (vectorized output reduction)
+        // returns bit-identical bytes vs scalar reference. Covers the
+        // panel-boundary cases the criterion lists at n ∈ {0, 1, 15, 16,
+        // 17, 63, 64, 65, 255, 256, 257, 1023, 1024} and k ∈ {1, 64,
+        // 256, 268, 1024} (issue 68cdf4c8 success criterion 2).
+        let fns = match detect() {
+            Some(f) => f,
+            None => return,
+        };
+        for &p in &[7u8, 31, 127, 251] {
+            for &(m, k, n) in &[
+                (1usize, 1usize, 1usize),
+                (1, 4, 4),
+                (3, 5, 7),
+                (4, 64, 24),
+                (8, 64, 32),
+                (16, 134, 16),
+                (16, 134, 24),
+                (4, 65, 25),
+                // Panel / k_max boundary cases for route-A.
+                (4, 256, 256),
+                (4, 1024, 1024),
+                (4, 267, 24), // just under k_max(251) = 268
+                (4, 268, 24), // exactly k_max(251) = 268
+                (4, 269, 24), // just over → 2 chunks
+            ] {
+                let a: Vec<u8> = (0..(m * k) as u32)
+                    .map(|i| ((i * 17 + 1) % p as u32) as u8)
+                    .collect();
+                let bt: Vec<u8> = (0..(n * k) as u32)
+                    .map(|i| ((i * 23 + 5) % p as u32) as u8)
+                    .collect();
+                let a_f = u8_to_f32(&a);
+                let bt_f = u8_to_f32(&bt);
+                let mut got = vec![0u8; m * n];
+                (fns.batch_gemm_route_a_fn)(&a_f, &bt_f, m, k, n, p, &mut got);
+                let expected = scalar_gemm(&a, &bt, m, k, n, p);
+                assert_eq!(got, expected, "route-A p={p} m={m} k={k} n={n}");
             }
         }
     }
