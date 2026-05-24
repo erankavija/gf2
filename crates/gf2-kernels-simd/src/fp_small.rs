@@ -306,8 +306,8 @@ fn sub_scaled_safe(buf: &mut [u8], chain_j: &[u8], alpha: u8, p: u8, mu: u16) {
 ///
 /// ```
 /// use gf2_kernels_simd::fp_small;
-/// assert_eq!(fp_small::barrett_mu_u16(251), 65536 / 251);
-/// assert_eq!(fp_small::barrett_mu_u16(7), 65536 / 7);
+/// assert_eq!(fp_small::barrett_mu_u16(251), (65536u32 / 251) as u16);
+/// assert_eq!(fp_small::barrett_mu_u16(7), (65536u32 / 7) as u16);
 /// ```
 #[inline]
 pub const fn barrett_mu_u16(p: u8) -> u16 {
