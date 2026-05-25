@@ -180,10 +180,122 @@
           "short_id": "b0fa00af",
           "title": "Publish cross-family dense LA SOTA scorecard (Phase 5)",
           "classification": "documentation",
-          "status": "pending",
+          "status": "in_progress_v1_published_pending_phase6",
+          "completed_at_v1": "2026-05-25T10:21:00+00:00",
           "depends_on": [
-            "41096af5"
-          ]
+            "41096af5",
+            "6823c8a0",
+            "869ce43b",
+            "8df0c501",
+            "6613abf4",
+            "98336ab4"
+          ],
+          "v1_headline_result": "Scorecard v1 published 2026-05-25 (commit e062dda7). Closed ~19 PASS + 7 AMENDED [aspirational] from A8. § 8 left 53 cells in FAIL state pointing to 615db3b9. Per user escalation 2026-05-25, this violates SC#5 and the epic cannot close with FAIL cells; user picked 'Full panelized dense-LA push'. b0fa00af stays in_progress until Phase 6 impls land and the scorecard is re-published with the new closures."
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "label": "Phase 6 — panelized dense-LA designs + n=4096 fgemm extension (filed session 5 post-escalation)",
+      "issues": [
+        {
+          "short_id": "2e8c5a29",
+          "title": "Design panelized GF(p) PLE/LU kernel",
+          "classification": "design",
+          "status": "ready",
+          "depends_on": [],
+          "model_recommendation": "sonnet",
+          "expected_duration": "~2 days"
+        },
+        {
+          "short_id": "24a93e4e",
+          "title": "Design blocked GF(p) echelon / RREF kernel",
+          "classification": "design",
+          "status": "ready",
+          "depends_on": [],
+          "model_recommendation": "sonnet",
+          "expected_duration": "~1 day"
+        },
+        {
+          "short_id": "feb15da9",
+          "title": "Design blocked GF(p) invert via PLE",
+          "classification": "design",
+          "status": "ready",
+          "depends_on": [],
+          "model_recommendation": "sonnet",
+          "expected_duration": "~1 day"
+        },
+        {
+          "short_id": "98336ab4",
+          "title": "Extend GF(p) fgemm benchmarks + dispatch to n=4096",
+          "classification": "implementation",
+          "status": "ready",
+          "depends_on": [],
+          "model_recommendation": "sonnet",
+          "expected_duration": "~1-2 days"
+        }
+      ],
+      "parallelism_note": "All 4 issues filesystem-isolatable (PLE/echelon/invert designs write only to dev/active/; n=4096 fgemm extension touches benches + maybe dispatch). Worktree-dispatch protocol applies; only n=4096 will exercise benches (CCX1-pinned). Designs do not bench. Parallel-safe."
+    },
+    {
+      "wave_number": "7a",
+      "label": "Phase 6 — panelized PLE implementation (foundational; echelon/invert/solve depend on this)",
+      "issues": [
+        {
+          "short_id": "6823c8a0",
+          "title": "Implement panelized GF(p) PLE/LU — small-prime family",
+          "classification": "implementation",
+          "status": "backlog",
+          "depends_on": ["2e8c5a29"],
+          "model_recommendation": "opus",
+          "expected_duration": "~3-5 days"
+        }
+      ]
+    },
+    {
+      "wave_number": "7b",
+      "label": "Phase 6 — echelon + invert + solve implementations (parallel after PLE lands)",
+      "issues": [
+        {
+          "short_id": "869ce43b",
+          "title": "Implement blocked GF(p) echelon / RREF",
+          "classification": "implementation",
+          "status": "backlog",
+          "depends_on": ["24a93e4e", "6823c8a0"],
+          "model_recommendation": "opus",
+          "expected_duration": "~3-5 days"
+        },
+        {
+          "short_id": "8df0c501",
+          "title": "Implement blocked GF(p) invert via PLE",
+          "classification": "implementation",
+          "status": "backlog",
+          "depends_on": ["feb15da9", "6823c8a0"],
+          "model_recommendation": "opus",
+          "expected_duration": "~3-5 days"
+        },
+        {
+          "short_id": "6613abf4",
+          "title": "Implement blocked GF(p) triangular solve",
+          "classification": "implementation",
+          "status": "backlog",
+          "depends_on": ["6823c8a0"],
+          "model_recommendation": "opus",
+          "expected_duration": "~3-5 days"
+        }
+      ],
+      "parallelism_note": "All 3 impls touch FieldMatrix and depend on the panelized PLE landing. Worktree dispatch + serial bench runs to preserve 5-trial CCX1-pinned measurement integrity."
+    },
+    {
+      "wave_number": 8,
+      "label": "Phase 6 — re-publish b0fa00af scorecard with Phase 6 closures",
+      "issues": [
+        {
+          "short_id": "b0fa00af",
+          "title": "Publish cross-family dense LA SOTA scorecard (Phase 5/6)",
+          "classification": "documentation",
+          "status": "v2_pending",
+          "depends_on": ["6823c8a0", "869ce43b", "8df0c501", "6613abf4", "98336ab4"]
         }
       ]
     },
