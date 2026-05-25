@@ -2844,6 +2844,28 @@ where
 /// scratch (the same one [`gemm`] and [`gemm_into_view`] pay), giving
 /// the inner kernel cache-friendly contiguous row·row dot products.
 ///
+/// # Small-prime / medium-prime fast paths (issue `40195c09`)
+///
+/// When `F` is `Fp<P>` with `P ≤ 251` and the `simd` feature is
+/// enabled, the kernel pre-packs `A` into a contiguous `m × k`
+/// scratch buffer, calls [`FiniteField::try_simd_gemm_classical`] to
+/// run the whole-GEMM byte-lane AVX2 kernel into a fresh `m × n`
+/// scratch, then folds `α · scratch[i, j] + β · out[i, j]` into the
+/// caller-supplied `out` view. This bypasses the per-cell
+/// `dot_product_slices` loop and inherits the full whole-GEMM win
+/// (~6–10× over the per-cell scalar fallback at `n = 256` per the
+/// `41096af5` post-wire-in measurements). The fold pass reads
+/// `out[i, j]` BEFORE writing the new value, preserving the trsm/trmm
+/// aliasing rule.
+///
+/// When `F` is `Fp<P>` with `P ∈ (251, 65536)`, the kernel pre-packs
+/// both `A` and `B^T` into u16 canonical-storage buffers (matching
+/// the [`gemm`] medium-prime path) and dispatches per-cell through
+/// [`FiniteField::try_fp_simd_dot_packed_u16`], amortising the
+/// `u64 → u16` truncation across all `m · n` output cells. For every
+/// other field the kernel falls back to the per-cell
+/// `dot_product_slices` loop as before.
+///
 /// # Complexity
 ///
 /// `O(m · k · n)` field multiplies plus the one-time `O(k · n)`
@@ -2892,10 +2914,114 @@ pub(crate) fn gemm_axpy_into_view<F>(
     }
     let zero: F = a.get(0, 0).zero_like();
     // Transpose `B` once so the inner kernel walks contiguous memory in
-    // both operands. Mirrors `gemm` / `gemm_into_view`. This is the
-    // single allocation this routine performs on top of the caller-
-    // supplied views.
+    // both operands. Mirrors `gemm` / `gemm_into_view`. The transpose
+    // materialises an owned `FieldMatrix<F>`, so its backing slice is
+    // contiguous and usable by the whole-GEMM SIMD kernels below.
     let b_t = b.transpose();
+
+    // Whole-GEMM small-prime fast path (issue `40195c09`): when the
+    // field exposes the packed AVX2 byte-lane kernel (the `Fp<P>`
+    // `P ≤ 251` implementation), pre-pack `A` into a contiguous
+    // `m × k` buffer, allocate a fresh `m × n` scratch for the kernel
+    // output, run the kernel once, then fold
+    // `out[i, j] ← α · scratch[i, j] + β · out[i, j]` cell by cell.
+    // The fold reads `out` BEFORE writing, preserving the trsm/trmm
+    // aliasing contract documented above.
+    //
+    // The probe `has_simd_gemm_classical` is non-allocating, so the
+    // `a_flat` / `scratch` buffers below are paid only when the
+    // kernel will actually execute. The default trait impl returns
+    // `false`, so non-`Fp<P>` fields (Mersenne31, GF(2^m), etc.) skip
+    // this block entirely.
+    // Threshold for taking the whole-GEMM fast path. Below this
+    // the per-cell SIMD dot path is competitive (the small-prime
+    // `fp_small_try_dot_vec` already packs and runs an AVX2 batch
+    // dot per cell), and the contiguous-A + scratch-output
+    // allocations dominate the inner work. Tuned empirically against
+    // the trsm recursion shape (which decomposes a n×n trsm into
+    // many tiny `gemm_axpy_into_view` calls down to
+    // `TRI_BASE_THRESHOLD = 8`): at `m, k, n ≤ 32` the per-cell
+    // SIMD dot wins; at `m * k * n ≥ 4096` (≈ a 16³ cube) the
+    // whole-GEMM kernel wins on every cell measured in
+    // `2026-05-26-40195c09-gemm-axpy-lift`.
+    const GEMM_AXPY_FAST_PATH_THRESHOLD: usize = 16 * 16 * 16;
+
+    if F::has_simd_gemm_classical() && m * k * n >= GEMM_AXPY_FAST_PATH_THRESHOLD {
+        // Pack `A` (which may be a strided sub-view of a parent
+        // buffer) into a contiguous row-major `m × k` slice. Walks
+        // `a.row_slice(i)` to avoid the per-cell `get` indexing.
+        let mut a_flat: Vec<F> = Vec::with_capacity(m * k);
+        for i in 0..m {
+            a_flat.extend_from_slice(a.row_slice(i));
+        }
+        // Fresh `m × n` scratch — initialised to zero so the kernel
+        // sees a clean buffer (the underlying kernel writes every
+        // cell, but we use `zero` for defensive determinism on the
+        // fallback `false`-return path).
+        let mut scratch: Vec<F> = vec![zero.clone(); m * n];
+        if F::try_simd_gemm_classical(&a_flat, b_t.data.as_slice(), m, k, n, &mut scratch) {
+            // Fold `α · scratch[i, j] + β · out[i, j]` into `out`.
+            // The read of `out.get(i, j)` happens before the write,
+            // matching the trsm/trmm aliasing rule.
+            for i in 0..m {
+                let row_start = i * n;
+                for j in 0..n {
+                    let prod = scratch[row_start + j].clone();
+                    let c_old = out.get(i, j);
+                    out.set(i, j, alpha.clone() * prod + beta.clone() * c_old);
+                }
+            }
+            return;
+        }
+        // The kernel declined (e.g. shape early-out, AVX2 not
+        // available at runtime even though the probe said yes for the
+        // prime range). Fall through to the per-cell loop below; the
+        // `a_flat` / `scratch` allocations are dropped.
+    }
+
+    // Medium-prime fast path (`Fp<P>` with `P ∈ (251, 65536)`):
+    // pre-pack both operands into u16 raw-storage buffers once per
+    // call, then run the AVX2 16-lane SIMD dot kernel per output cell.
+    // This amortises the `u64 → u16` truncation across all `m · n`
+    // output cells (`O(mk + kn)` packing vs `O(mn(k + k))` if we
+    // re-packed per cell). Mirrors the medium-prime block in `gemm`.
+    //
+    // `A` may be a strided sub-view, so we first materialise it into
+    // a contiguous `m × k` `Vec<F>` (`a_contig`) and then hand the
+    // slice to `try_pack_fp_medium_u16`, which `clear()`s its output
+    // buffer and fills it in one pass.
+    //
+    // Same `m * k * n >= GEMM_AXPY_FAST_PATH_THRESHOLD` gate as the
+    // small-prime path: below this the per-cell `dot_product_slices`
+    // (which internally hits `try_fp_simd_dot_product` for medium
+    // primes anyway) is competitive with pre-pack + per-cell-packed
+    // dot, and the contiguous-A copy + pack-buffer allocations are
+    // pure overhead.
+    let mut a_contig_for_medium: Vec<F> = Vec::new();
+    let mut a_pack_buf: Vec<u16> = Vec::new();
+    let mut b_pack_buf: Vec<u16> = Vec::new();
+    let medium_pack_ok = if m * k * n < GEMM_AXPY_FAST_PATH_THRESHOLD {
+        false
+    } else {
+        // Cheap probe via the `B^T` pack: this slice is already
+        // contiguous (it's an owned `FieldMatrix::data`). If the
+        // hook returns `Some(())`, the field is eligible and we pay
+        // the `A` contiguity copy + the second pack call. Otherwise
+        // (every non-medium `Fp<P>` field, plus the medium-prime
+        // case with the `simd` feature disabled or AVX2 unavailable),
+        // the probe declines, leaving `a_pack_buf` empty and
+        // `medium_pack_ok = false`.
+        if F::try_pack_fp_medium_u16(b_t.data.as_slice(), &mut b_pack_buf).is_some() {
+            a_contig_for_medium.reserve(m * k);
+            for i in 0..m {
+                a_contig_for_medium.extend_from_slice(a.row_slice(i));
+            }
+            F::try_pack_fp_medium_u16(a_contig_for_medium.as_slice(), &mut a_pack_buf).is_some()
+        } else {
+            false
+        }
+    };
+
     // Blocked traversal over output tiles. The inner kernel is one
     // `dot_product_slices` per cell — the same delayed-reduction
     // primitive `gemm` uses. The `β · out[i, j]` fold reads the cell
@@ -2911,7 +3037,25 @@ pub(crate) fn gemm_axpy_into_view<F>(
                 for j in j_blk..j_end {
                     let b_col = b_t.row(j);
                     debug_assert_eq!(b_col.len(), k);
-                    let prod = crate::field::vec::dot_product_slices(a_row, b_col, &zero);
+                    let prod = if medium_pack_ok {
+                        // Slice the pre-packed `A` and `B^T` u16
+                        // buffers using the same row/col indexing as
+                        // the unpacked operands. The `Fp<P>` medium
+                        // hook returns the canonical reduced dot
+                        // product as `Self`; fall back to
+                        // `dot_product_slices` only if the hook
+                        // declines (which should not happen here
+                        // because `medium_pack_ok` already gated the
+                        // dispatch).
+                        let a_packed = &a_pack_buf[i * k..(i + 1) * k];
+                        let b_packed = &b_pack_buf[j * k..(j + 1) * k];
+                        match F::try_fp_simd_dot_packed_u16(a_packed, b_packed) {
+                            Some(v) => v,
+                            None => crate::field::vec::dot_product_slices(a_row, b_col, &zero),
+                        }
+                    } else {
+                        crate::field::vec::dot_product_slices(a_row, b_col, &zero)
+                    };
                     let c_old = out.get(i, j);
                     out.set(i, j, alpha.clone() * prod + beta.clone() * c_old);
                 }
@@ -5109,5 +5253,309 @@ mod tests {
     #[ignore = "slow: f32 GEMM correctness check over small prime p=251; scalar reference at n=1024 exceeds 5s"]
     fn check_small_prime_f32_p251() {
         check_small_prime_f32::<251>();
+    }
+
+    // ─── gemm_axpy_into_view small-prime / medium-prime fast-path tests ─────
+    //
+    // Issue `40195c09`: bit-exact equality between the lifted
+    // `gemm_axpy_into_view` (which now dispatches through
+    // `try_simd_gemm_classical` for `P ≤ 251` and through the
+    // pre-packed `try_fp_simd_dot_packed_u16` for `251 < P < 65536`)
+    // and an independent scalar oracle that walks the kernel's
+    // mathematical definition cell by cell. Boundary lengths
+    // `{0, 1, 15, 16, 17, 63, 64, 65}` cover the SIMD lane boundaries
+    // (16 lanes for u16 medium, 32 lanes for u8 small) and the
+    // `n = 0` / `k = 0` shape early-outs.
+
+    /// Naive scalar oracle for `gemm_axpy_into_view`: walks the cell
+    /// definition `out[i, j] := α · Σ a[i, t] · b[t, j] + β · out[i, j]`
+    /// using `FiniteField` operators only, so it never visits any
+    /// SIMD code path. Used as the bit-exact reference for the
+    /// lifted-kernel tests below.
+    fn scalar_axpy_reference<const P: u64>(
+        alpha: Fp<P>,
+        a: &FieldMatrix<Fp<P>>,
+        b: &FieldMatrix<Fp<P>>,
+        beta: Fp<P>,
+        out: &mut FieldMatrix<Fp<P>>,
+    ) {
+        assert_eq!(a.cols, b.rows);
+        assert_eq!(out.rows, a.rows);
+        assert_eq!(out.cols, b.cols);
+        let m = a.rows;
+        let n = b.cols;
+        let k = a.cols;
+        for i in 0..m {
+            for j in 0..n {
+                let mut acc = Fp::<P>::new(0);
+                for t in 0..k {
+                    acc += a.get(i, t) * b.get(t, j);
+                }
+                let c_old = out.get(i, j);
+                out.set(i, j, alpha * acc + beta * c_old);
+            }
+        }
+    }
+
+    /// Explicit small-prime path coverage at `Fp<251>` for the three
+    /// `n ∈ {16, 64, 256}` cells mandated by issue `40195c09`. Builds
+    /// random `m × k` and `k × n` operands plus an `m × n` `C` buffer
+    /// (square `n × n × n` shape because trsm Schur-update tiles are
+    /// square-ish), runs the lifted `gemm_axpy_into_view`, and asserts
+    /// every cell matches the scalar oracle bit-exactly.
+    #[test]
+    fn test_gemm_axpy_into_view_fp251_small_prime_path() {
+        const P: u64 = 251;
+        for &n in &[16usize, 64, 256] {
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0x4019_5C09 ^ n as u64);
+            let b = random_fp_matrix::<P>(k, n, 0x5C09_4019 ^ n as u64);
+            let c = random_fp_matrix::<P>(m, n, 0xCCCC_DDDD ^ n as u64);
+
+            let alpha = Fp::<P>::new(3);
+            let beta = Fp::<P>::new(5);
+
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+
+            for i in 0..m {
+                for j in 0..n {
+                    assert_eq!(
+                        got.get(i, j),
+                        want.get(i, j),
+                        "Fp<251> gemm_axpy_into_view cell mismatch at n={n} \
+                         i={i} j={j} alpha=3 beta=5"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Boundary-length sweep for the small-prime path at every prime
+    /// in `{7, 31, 127, 241, 251}`. Lengths cover SIMD lane boundaries
+    /// (`{0, 1, 15, 16, 17, 63, 64, 65}`). Includes `α = 0`, `α = 1`,
+    /// `α = −1` (the `submul` case used by trsm), `β = 0`, `β = 1`
+    /// shape mixes so the read-then-write aliasing path is exercised.
+    #[test]
+    fn test_gemm_axpy_into_view_small_prime_boundary_lengths() {
+        fn check<const P: u64>() {
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+            for &n in LENS {
+                if n == 0 {
+                    // n = 0 ⇒ empty output, kernel returns early. Verify
+                    // shapes and that no panic occurs.
+                    let a = random_fp_matrix::<P>(2, 3, 0xA000 ^ n as u64);
+                    let b = random_fp_matrix::<P>(3, 0, 0xB000 ^ n as u64);
+                    let mut got = FieldMatrix::<Fp<P>>::zeros(2, 0);
+                    gemm_axpy_into_view(
+                        Fp::<P>::new(1),
+                        &a.submat(.., ..),
+                        &b.submat(.., ..),
+                        Fp::<P>::new(1),
+                        got.submat_mut(.., ..),
+                    );
+                    assert_eq!(got.shape(), (2, 0), "P={P} n=0 empty out shape");
+                    continue;
+                }
+                // (α, β) pairs: trsm submul = (−1, 1), addmul = (1, 1),
+                // identity-update = (0, 1), copy-overwrite = (1, 0).
+                let pairs: &[(u64, u64)] = &[(P - 1, 1), (1, 1), (0, 1), (1, 0), (3, 5)];
+                let m = n;
+                let k = n;
+                let a = random_fp_matrix::<P>(m, k, 0xA1A1 ^ (n as u64 * 1031));
+                let b = random_fp_matrix::<P>(k, n, 0xB2B2 ^ (n as u64 * 2069));
+                let c = random_fp_matrix::<P>(m, n, 0xC3C3 ^ (n as u64 * 4093));
+                for &(av, bv) in pairs {
+                    let alpha = Fp::<P>::new(av);
+                    let beta = Fp::<P>::new(bv);
+                    let mut got = c.clone();
+                    gemm_axpy_into_view(
+                        alpha,
+                        &a.submat(.., ..),
+                        &b.submat(.., ..),
+                        beta,
+                        got.submat_mut(.., ..),
+                    );
+                    let mut want = c.clone();
+                    scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+                    for i in 0..m {
+                        for j in 0..n {
+                            assert_eq!(
+                                got.get(i, j),
+                                want.get(i, j),
+                                "Fp<{P}> gemm_axpy_into_view mismatch at n={n} \
+                                 alpha={av} beta={bv} i={i} j={j}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        check::<7>();
+        check::<31>();
+        check::<127>();
+        check::<241>();
+        check::<251>();
+    }
+
+    /// Boundary-length sweep for the medium-prime path at `Fp<65521>`
+    /// (the largest prime that fits in the u16 raw-storage lane). Same
+    /// `(α, β)` mix as the small-prime sweep above. The lifted
+    /// `gemm_axpy_into_view` pre-packs both operands into u16 buffers
+    /// once and dispatches per cell through `try_fp_simd_dot_packed_u16`,
+    /// matching the `gemm` medium-prime path; this test guards
+    /// bit-exact equality against the scalar oracle.
+    #[test]
+    fn test_gemm_axpy_into_view_fp65521_medium_prime_boundary_lengths() {
+        const P: u64 = 65521;
+        const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+        for &n in LENS {
+            if n == 0 {
+                let a = random_fp_matrix::<P>(2, 3, 0xA0A0 ^ n as u64);
+                let b = random_fp_matrix::<P>(3, 0, 0xB0B0 ^ n as u64);
+                let mut got = FieldMatrix::<Fp<P>>::zeros(2, 0);
+                gemm_axpy_into_view(
+                    Fp::<P>::new(1),
+                    &a.submat(.., ..),
+                    &b.submat(.., ..),
+                    Fp::<P>::new(1),
+                    got.submat_mut(.., ..),
+                );
+                assert_eq!(got.shape(), (2, 0), "Fp<65521> n=0 empty out shape");
+                continue;
+            }
+            let pairs: &[(u64, u64)] = &[(P - 1, 1), (1, 1), (0, 1), (1, 0), (7, 11)];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA9A9 ^ (n as u64 * 1031));
+            let b = random_fp_matrix::<P>(k, n, 0xB8B8 ^ (n as u64 * 2069));
+            let c = random_fp_matrix::<P>(m, n, 0xC7C7 ^ (n as u64 * 4093));
+            for &(av, bv) in pairs {
+                let alpha = Fp::<P>::new(av);
+                let beta = Fp::<P>::new(bv);
+                let mut got = c.clone();
+                gemm_axpy_into_view(
+                    alpha,
+                    &a.submat(.., ..),
+                    &b.submat(.., ..),
+                    beta,
+                    got.submat_mut(.., ..),
+                );
+                let mut want = c.clone();
+                scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+                for i in 0..m {
+                    for j in 0..n {
+                        assert_eq!(
+                            got.get(i, j),
+                            want.get(i, j),
+                            "Fp<65521> gemm_axpy_into_view mismatch at n={n} \
+                             alpha={av} beta={bv} i={i} j={j}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// Verifies the lifted `gemm_axpy_into_view` is correct when `A`
+    /// is a STRIDED sub-view (the common trsm Schur-update shape:
+    /// `a21 = a.submat(h..m, 0..h)` is row-strided because
+    /// `parent_cols = m > h = cols`). The packing path materialises
+    /// `A` into a contiguous buffer before the kernel call; this test
+    /// guards that materialisation against a parent matrix whose
+    /// non-A columns hold non-zero values that must NOT leak into
+    /// the kernel.
+    #[test]
+    fn test_gemm_axpy_into_view_fp251_strided_a() {
+        const P: u64 = 251;
+        // Build a 128 × 128 parent and pull out a 64 × 32 strided
+        // sub-view from rows 32..96, cols 16..48. The strict-strided
+        // shape (col_offset > 0, cols < parent_cols) exercises both
+        // the row-offset and col-offset fast-path arithmetic.
+        let parent_a = random_fp_matrix::<P>(128, 128, 0xAB12_CD34);
+        let a_view = parent_a.submat(32..96, 16..48);
+        let m = a_view.rows();
+        let k = a_view.cols();
+        let n = 32;
+        let b = random_fp_matrix::<P>(k, n, 0xDE56_F789);
+        let c = random_fp_matrix::<P>(m, n, 0x9999_8888);
+        let alpha = Fp::<P>::new(P - 1);
+        let beta = Fp::<P>::new(1);
+        let mut got = c.clone();
+        gemm_axpy_into_view(
+            alpha,
+            &a_view,
+            &b.submat(.., ..),
+            beta,
+            got.submat_mut(.., ..),
+        );
+        // Build the contiguous A oracle by manual copy.
+        let mut a_contig = FieldMatrix::<Fp<P>>::zeros(m, k);
+        for i in 0..m {
+            for j in 0..k {
+                a_contig.set(i, j, parent_a.get(32 + i, 16 + j));
+            }
+        }
+        let mut want = c.clone();
+        scalar_axpy_reference::<P>(alpha, &a_contig, &b, beta, &mut want);
+        for i in 0..m {
+            for j in 0..n {
+                assert_eq!(
+                    got.get(i, j),
+                    want.get(i, j),
+                    "strided A: cell mismatch at i={i} j={j} m={m} k={k} n={n}"
+                );
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<251>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. 16 cases × randomised shapes covering the
+        /// boundary-length grid.
+        #[test]
+        fn prop_gemm_axpy_into_view_fp251_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..251,
+            beta_v in 0u64..251,
+        ) {
+            const P: u64 = 251;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA000 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB000 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC000 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
     }
 }

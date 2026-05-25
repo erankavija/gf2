@@ -164,6 +164,28 @@ fn bench_trsm_upper(c: &mut Criterion) {
                 },
             );
         });
+        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
+        let a251 = random_upper_fp::<251>(n, 0xA3A3 + n as u64);
+        let b251 = random_fp_matrix::<251>(n, n, 0xA4A4 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b251.clone(),
+                |mut b_local| {
+                    trsm_upper(black_box(&a251).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+        // Fp<65521> — largest medium-prime u16-lane AVX2 cell.
+        let a65 = random_upper_fp::<65521>(n, 0xA5A5 + n as u64);
+        let b65 = random_fp_matrix::<65521>(n, n, 0xA6A6 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b65.clone(),
+                |mut b_local| {
+                    trsm_upper(black_box(&a65).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
         // Fp<MERSENNE_31>
         let a31 = random_upper_fp::<MERSENNE_31>(n, 0xB1B1 + n as u64);
         let b31 = random_fp_matrix::<MERSENNE_31>(n, n, 0xB2B2 + n as u64);
@@ -201,6 +223,28 @@ fn bench_trsm_lower(c: &mut Criterion) {
                 || b.clone(),
                 |mut b_local| {
                     trsm_lower(black_box(&a).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+        // Fp<251> — small-prime byte-lane AVX2 cell (issue `40195c09`).
+        let a251 = random_lower_fp::<251>(n, 0xA3A3 + n as u64);
+        let b251 = random_fp_matrix::<251>(n, n, 0xA4A4 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_251", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b251.clone(),
+                |mut b_local| {
+                    trsm_lower(black_box(&a251).submat(.., ..), b_local.submat_mut(.., ..));
+                },
+            );
+        });
+        // Fp<65521> — largest medium-prime u16-lane AVX2 cell.
+        let a65 = random_lower_fp::<65521>(n, 0xA5A5 + n as u64);
+        let b65 = random_fp_matrix::<65521>(n, n, 0xA6A6 + n as u64);
+        g.bench_with_input(BenchmarkId::new("Fp_65521", n), &n, |bencher, _| {
+            bencher.iter_with_setup(
+                || b65.clone(),
+                |mut b_local| {
+                    trsm_lower(black_box(&a65).submat(.., ..), b_local.submat_mut(.., ..));
                 },
             );
         });

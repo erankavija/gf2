@@ -730,6 +730,19 @@ impl<const P: u64> FiniteField for Fp<P> {
         simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
     }
 
+    /// Non-allocating availability probe for the small-prime
+    /// whole-GEMM kernel (issue `40195c09`). Returns `true` when
+    /// `P ≤ 251`, the `simd` feature is enabled, and an AVX2 kernel
+    /// was detected at runtime. Used by
+    /// [`crate::field::matrix::gemm_axpy_into_view`] to decide
+    /// whether to allocate the contiguous-`A` scratch buffer before
+    /// dispatching the kernel.
+    #[cfg(not(verify_lean))]
+    #[inline]
+    fn has_simd_gemm_classical() -> bool {
+        simd_ops::fp_small_gemm_classical_available::<P>()
+    }
+
     /// Constructs a packed basis reducer for the cyclic-decomposition
     /// reduce loop (issue `d1dd266c`). Returns `None` when no SIMD
     /// fast path is available.
