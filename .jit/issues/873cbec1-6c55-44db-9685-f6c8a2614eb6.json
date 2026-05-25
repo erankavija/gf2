@@ -2,9 +2,9 @@
   "id": "873cbec1-6c55-44db-9685-f6c8a2614eb6",
   "title": "Design extension-field matrix GEMM via base-field decomposition (615db3b9 Phase 4)",
   "description": "Phase 4 of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 4). Designs (NOT implements) matrix-level Karatsuba decomposition for `FieldMatrix<QuadraticExt<_>>` and `FieldMatrix<CubicExt<_>>` so extension-field matmul can inherit the now-optimized base-field GEMM rather than going through generic component products.\n\nParent epic: 026fc832. Predecessor: Phase 1 fan-in (route selection task — the base-field GEMM must be settled before designing the matrix-level decomposition).\n\n## Background\n\nThe plan's Phase 4 (verbatim):\n\n> - Quadratic extensions: compute multiplication using 3 base-field GEMMs via Karatsuba rather than 4 generic component products.\n> - Cubic extensions: use the existing tower arithmetic strategy but lift it to matrix-level batch GEMM.\n> - For `QuadraticExt<Fp<65537>>` and `CubicExt<Fp<65537>>`, route base GEMMs through existing Fp<65537> acceleration where applicable.\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` that:\n  - states the public API surface (trait additions, free functions, or method impls on `FieldMatrix`) needed to specialise matmul for `QuadraticExt<_>` and `CubicExt<_>`,\n  - shows the Karatsuba decomposition explicitly (3 base-field GEMMs + corresponding adds/subs for quadratic; the analogous formula for cubic via Toom-Cook or recursive Karatsuba),\n  - identifies the correctness tests required (round-trip equality vs the existing generic matmul for `QuadraticExt<Fp<P>>` and `CubicExt<Fp<P>>` at n in {16, 64, 256}),\n  - identifies the benchmark cells (`QuadraticExt<Fp<65537>>`, `CubicExt<Fp<65537>>`, and at least one extension over a smaller GF(p) base) that will measure the speedup,\n  - states the non-regression contract (no regression on existing extension-field paths used by other crates, e.g., `gf2-coding` or `gf2-algebra`).\n- [hard] The design cites the relevant existing files: `crates/gf2-core/src/gfpn/quadratic.rs`, `crates/gf2-core/src/gfpn/cubic.rs`, `crates/gf2-core/src/gfpn/batch.rs`, `crates/gf2-core/src/gfpn/ext_config.rs`, `crates/gf2-core/src/field/matrix.rs::gemm`.\n- [hard] The design lists the implementation child issues needed to land Phase 4 (separate JIT issues, with dependency order).\n- [hard] No production code changes in this task — it is design-only.\n\n## Out of scope\n\n- Implementation (separate child issues filed under this task).\n- Cross-family scorecard (Phase 5 — separate task).\n- New extension-field arithmetic primitives beyond what is needed for matrix decomposition.\n\n## Notes\n\nThis task is design-only, like 615db3b9 was. It exists to surface the API design and the implementation breakdown before any extension-field matrix work is dispatched.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "41096af5-f777-4ad7-86fd-335431f1ab40"
   ],
@@ -22,5 +22,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:32:59.969699061+00:00",
-  "updated_at": "2026-05-25T06:58:39.129413407+00:00"
+  "updated_at": "2026-05-25T07:00:22.588105257+00:00"
 }
