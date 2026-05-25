@@ -1,19 +1,34 @@
 {
   "id": "87a2402f-f076-4775-a265-294271b29944",
   "title": "Implement DVB-T2 bit interleaving (column-row)",
-  "description": "Implement DVB-T2 bit interleaving as specified in ETSI EN 302 755. This uses a column-row interleaving scheme that is part of the BICM (Bit-Interleaved Coded Modulation) chain between LDPC encoding and QAM mapping.",
+  "description": "## Goal\n\nImplement the DVB-T2 column-row (block) bit interleaver from ETSI\nEN 302 755 v1.4.1 §6.1.3 in\n`crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs` (or under\n`crates/gf2-coding/src/modem/`, at the implementer's choice).\nThis is the deterministic, frame-aware, MODCOD-dependent interleaver\nthat sits between LDPC encoding and QAM mapping.\n\nIt is distinct from the random-seed `BitInterleaver` in\n`crates/gf2-coding/src/fading.rs` (around line 509), which is for\ngeneric decorrelation, not standards-compliant DVB-T2.\n\n## Context\n\nEN 302 755 §6.1.3 defines a two-stage permutation:\n\n1. Bit interleaving inside an FECFRAME using a column-row block\n   interleaver whose dimensions (Nc, Nr) depend on FECFRAME size,\n   modulation order, and code rate. Bits are written column by\n   column and read row by row.\n2. For 16-QAM and 64-QAM, a column-twist offset is applied per\n   column before reading; the twist offsets are tabulated in the\n   spec (Table 9 / Table 9a).\n\nThis task implements both stages forward and inverse, plus an\nLLR-domain inverse for the receive path.\n\n## Deliverables\n\n1. Public type, e.g. `DvbT2BitInterleaver`, with at minimum:\n   - `pub fn new(modcod: DvbT2Modcod) -> Self`\n   - `pub fn interleave(&self, bits: &BitVec) -> BitVec`\n   - `pub fn deinterleave(&self, bits: &BitVec) -> BitVec`\n   - `pub fn deinterleave_llrs(&self, llrs: &[Llr]) -> Vec<Llr>`\n2. `DvbT2Modcod` parameter struct that selects (Nc, Nr, twist[]) from\n   the spec for the in-scope configurations × {16-QAM, 64-QAM}.\n3. Unit tests:\n   - roundtrip identity on random inputs across all in-scope modcods,\n   - word-boundary edge cases (0, 1, 63, 64, 65 bits beyond a\n     multiple of the column dimension),\n   - LLR-domain inverse correctness via index-tagging.\n\n## Success criteria\n\n- [hard] Roundtrip identity: `deinterleave(interleave(x, m), m) == x`\n  for random inputs across all 3 in-scope rates × {16-QAM, 64-QAM}.\n- [hard] LLR-domain inverse: feeding interleaved-then-noisy LLRs back\n  through `deinterleave_llrs` yields LLRs in the same order as the\n  original pre-interleaved bit sequence (verified by index-tagging\n  test).\n- [hard] The interleaver is consumed end-to-end by the TP07a vector\n  validation in 4cdaf1c5 — that validation passes.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n- [hard] Public API has standard rustdoc (description, arguments,\n  examples that compile, panics, complexity).\n\n## Spec reference\n\nETSI EN 302 755 v1.4.1 §6.1.3 (\"Bit interleaver\") and Tables 9 / 9a\nfor the column-twist values.",
   "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.244378887Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.244341687Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.603861387+00:00",
-  "updated_at": "2026-02-21T19:35:51.603866297+00:00"
+  "updated_at": "2026-05-25T21:55:50.493136830+00:00"
 }

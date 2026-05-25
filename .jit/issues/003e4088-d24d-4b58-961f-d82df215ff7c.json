@@ -1,22 +1,44 @@
 {
   "id": "003e4088-d24d-4b58-961f-d82df215ff7c",
   "title": "Integrate BCH + LDPC + interleaver + QAM into unified FEC chain",
-  "description": "Build the complete DVB-T2 FEC processing chain combining BCH outer coding, LDPC inner coding, bit interleaving, and QAM modulation. Implement the full pipeline with proper interfaces between stages.",
+  "description": "## Goal\n\nBuild the complete DVB-T2 BICM processing chain by composing the\nalready-existing or in-flight component pieces into a single end-to-end\npipeline with stable interfaces between stages:\n\n```\nBBFRAME → BCH encode → LDPC encode → bit interleave → QAM map\n                                                            ↓\n                                                          AWGN\n                                                            ↓\n        BCH decode ← LDPC decode ← bit deinterleave ← QAM demap\n```\n\nThis is the integration story that the campaign runner (`152388f4`)\nconsumes. It does NOT include the runner binary, the simulation\nharness, or the test-vector validation — those are sibling tasks.\n\n## Context\n\nComponents present or in-flight (cited as their JIT short IDs):\n\n- BCH outer encoder/decoder — done, all 12 DVB-T2 configs\n  (`crates/gf2-coding/src/bch/dvb_t2/`).\n- LDPC inner encoder/decoder — done, all 12 DVB-T2 parity tables in\n  Rust consts (`crates/gf2-coding/src/ldpc/dvb_t2/`); raw `.txt`\n  source files for 11/12 still pending (`cef2e631`).\n- BCH+LDPC concatenation API — task `a18956a4` (NEW-1 of this epic).\n- DVB-T2 column-row bit interleaver — task `87a2402f`.\n- Gray-QAM mapper / soft demapper — done (`d4851c3d` epic closed),\n  located in `crates/gf2-coding/src/modem/`.\n\nThe 3 in-scope (rate × modulation) configurations are\nNormal × {1/2, 2/3, 3/4} × {16-QAM, 64-QAM}. Other configurations\nmay be wired but are not required by this story.\n\n## Deliverables\n\n1. A single public type — e.g. `DvbT2BicmChain` — exposing the\n   forward (transmit) and inverse (receive) chain in a single call,\n   with constructor `DvbT2BicmChain::new(frame_size, code_rate,\n   modulation)`.\n2. Internally delegates to:\n   - the BCH+LDPC concat codec (`a18956a4`),\n   - the DVB-T2 bit interleaver (`87a2402f`),\n   - the existing Gray-QAM mapper / demapper.\n3. Module placement under `crates/gf2-coding/src/ldpc/dvb_t2/` so the\n   spec-specific glue stays colocated with the inner code (final\n   placement at implementer's choice).\n4. Roundtrip unit tests on all 3 × 2 in-scope configurations\n   (transmit then receive at very high SNR — should recover the\n   payload bit-exact).\n5. Documentation: rustdoc with the standard sections plus a chain\n   diagram. CLAUDE.md module map updated.\n\n## Success criteria\n\n- [hard] All 3 × 2 in-scope configurations round-trip random\n  payloads bit-exact at very high SNR (effectively noiseless).\n- [hard] The chain is wired end-to-end through the\n  bit-interleaver-aware path; the TP07a vector validation\n  (`4cdaf1c5`) is satisfied via this chain.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n- [hard] Public API has rustdoc with the standard sections.\n- [hard] CLAUDE.md gf2-coding module map updated.\n\n## Non-goals\n\n- No AWGN simulation harness changes — that is in NEW-INFRA\n  (`fd73e8a8`).\n- No campaign binary, CSV, or plotting — that is in NEW-2\n  (`152388f4`).\n- No production campaign runs — that is in `e4849f07`.\n- No fading or non-AWGN channels.\n- 9 out-of-scope LDPC configurations may panic with\n  `unimplemented!` or return `Err`.",
   "state": "backlog",
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
-    "87a2402f-f076-4775-a265-294271b29944"
+    "a18956a4-915b-47c0-873c-73c48eb5acfe",
+    "87a2402f-f076-4775-a265-294271b29944",
+    "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe"
   ],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.234580215Z"
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.234598745Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.234540055Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
     "type:story",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.648467440+00:00",
-  "updated_at": "2026-02-21T19:35:51.919419598+00:00"
+  "updated_at": "2026-05-25T21:55:50.473993674+00:00"
 }

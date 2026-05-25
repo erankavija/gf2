@@ -1,0 +1,40 @@
+{
+  "id": "fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e",
+  "title": "Resumable observable SimulationRunner (tracing + JSON log + checkpoint/resume)",
+  "description": "## Goal\n\nMake the shared simulation harness in\n`crates/gf2-coding/src/simulation.rs` observable and resumable so\nmulti-hour campaign runs can be launched unattended, tailed live, and\nrecover from crashes / interrupts without recomputing finished SNR\npoints. The features land at the shared `SimulationRunner` layer so\nevery future code type (DVB-T2 BICM, 5G NR polar, regular LDPC demo,\nBCH curves) benefits.\n\n## Context\n\n`SimulationRunner` currently offers `run_uncoded_ber`,\n`run_uncoded_ber_with_channel`, `run_coded`, `run_coded_iterative`,\n`run_coded_iterative_parallel`. Output goes to in-memory\n`SimulationResults` and an optional CSV write at the end. Logging is\n`println!`-style and not structured. There is no checkpoint file, no\nresume path, no graceful-shutdown handling. A 10⁶-frame campaign at\nthe deepest SNR point of a DVB-T2 sweep can run for hours; losing\nthat to a SIGKILL is unacceptable on the team's hardware budget.\n\nThis task does NOT change existing public signatures except by\naddition. All current callers (LDPC AWGN demo, BCH curves, modem\nharness) continue to compile and pass tests unchanged. New behaviour\nis opt-in via new `SimulationConfig` fields.\n\n## Deliverables\n\n1. New `SimulationConfig` fields:\n   - `checkpoint_dir: Option<PathBuf>` — directory; if `Some`, the\n     runner writes per-SNR checkpoint files and resumes from any\n     existing ones on startup.\n   - `tracing_log_path: Option<PathBuf>` — JSON-lines tracing output.\n   - `heartbeat_every_frames: Option<usize>` — emit a within-SNR\n     progress event every N simulated frames (within-SNR opt-in;\n     None = per-SNR-point coarse-grain only).\n2. Checkpoint format: one JSON file per SNR point under\n   `<checkpoint_dir>/snr_<index>.json`, containing the canonical SNR\n   value, completed frame count, error count, accumulated iteration\n   stats, RNG state snapshot, and a content hash of the\n   `SimulationConfig` (config-mismatch detection).\n3. Resume behaviour: on startup with `checkpoint_dir = Some(p)`, the\n   runner reads each existing `snr_<i>.json`, verifies the config\n   hash, and either skips finished points or continues from a partial\n   point if `heartbeat_every_frames` is set. Mismatched config hash\n   aborts with a clear error.\n4. `tracing` instrumentation:\n   - span per campaign with config hash and run UUID,\n   - span per SNR point with eb_n0_db / es_n0_db, frames_target,\n     errors_target,\n   - event on SNR completion with FER, BER, mean iterations, elapsed,\n   - event per heartbeat with progress counters.\n   All emitted via the `tracing` crate; subscriber configured to write\n   JSON lines to `tracing_log_path` when set.\n5. SIGINT / SIGTERM handling: handler flushes the current SNR\n   checkpoint before exiting non-zero (so resume is safe). Wrapped\n   via `ctrlc` or `signal-hook`, whichever is lighter and stable on\n   MSRV 1.95.\n6. Deterministic RNG seek: the per-SNR-point RNG is derived as\n   `seed = config.seed ^ snr_index ^ frames_completed_at_checkpoint`\n   (or equivalent) so a resumed point produces the same sequence it\n   would have if uninterrupted. Document the derivation in rustdoc.\n\n## Success criteria\n\n- [hard] All existing callers of `SimulationRunner` continue to\n  compile and pass tests unchanged (workspace `cargo nextest run\n  --workspace --all-features --release --profile ci`).\n- [hard] Integration test: run a short multi-point AWGN BPSK campaign\n  to completion (small frame counts), then re-run with the same\n  config — second run completes near-instantly because all\n  checkpoints exist and validate.\n- [hard] Resume-after-kill test: spawn a campaign in a subprocess,\n  send SIGINT after the first SNR point completes, restart with the\n  same config, and assert that the final CSV is byte-identical to a\n  reference uninterrupted run with the same seed.\n- [hard] Config-mismatch detection: change one config field, retry\n  resume, verify the runner errors with a clear message and does not\n  overwrite existing checkpoints.\n- [hard] Within-SNR heartbeat events are emitted at the configured\n  cadence; integration test asserts the count of heartbeat events for\n  a known-size run.\n- [hard] JSON tracing log is valid JSON-lines (each line a complete\n  JSON object); test parses the log and asserts span / event\n  structure.\n- [hard] New dependencies (`tracing`, `tracing-subscriber`, signal\n  handler crate) gate behind feature `sim-observability` (default on)\n  so embedded users can opt out.\n- [hard] CLAUDE.md `gf2-coding` module map and rustdoc updated to\n  describe the resume, tracing, and signal-handling surface.\n- [hard] No new `unsafe`; crate-level `#![deny(unsafe_code)]` is\n  preserved.\n\n## Non-goals\n\n- No live TUI, progress bar, or terminal UI of any kind.\n- No distributed / cluster execution.\n- No per-frame checkpoint (frame counter is checkpointed at heartbeat\n  cadence only).\n- No compression of checkpoint files (JSON, plain text on disk).\n- No metrics-system integration (Prometheus / OpenTelemetry); tracing\n  JSON is the sole structured output.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.199537415Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.199490595Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.199442475Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
+  ],
+  "created_at": "2026-05-25T21:46:52.878530297+00:00",
+  "updated_at": "2026-05-25T21:55:50.412425247+00:00"
+}

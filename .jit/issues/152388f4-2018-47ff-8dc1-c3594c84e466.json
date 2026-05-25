@@ -1,0 +1,43 @@
+{
+  "id": "152388f4-2018-47ff-8dc1-c3594c84e466",
+  "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
+  "description": "## Goal\n\nA reusable CLI binary that runs the full DVB-T2 BICM AWGN simulation\nfor one (rate, modulation) configuration, producing a CSV curve, a\nPNG overlay vs the ETSI TR 102 831 reference, and a JSON tracing log.\nSix invocations (3 rates × 2 modulations) reproduce every curve\nrequired by the epic.\n\n## Context\n\nThis task is the consumer of:\n\n- NEW-INFRA: resumable, observable `SimulationRunner`,\n- NEW-1: DVB-T2 BCH+LDPC concatenated codec,\n- 87a2402f: column-row bit interleaver,\n- existing Gray-QAM mapper / demapper in\n  `crates/gf2-coding/src/modem/`,\n- a generalisation of the existing `BpskAwgnChannel` to a\n  `QamAwgnChannel` for 16-QAM and 64-QAM.\n\nThe TP07a vector validation (4cdaf1c5) is a hard prereq so we know\nthe BICM chain matches the standard bit-exactly before throwing CPU\nhours at FER curves.\n\n## Deliverables\n\n1. New binary: `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`\n   (or a similarly named binary; placement in `src/bin/` matches the\n   existing `sim_runner.rs`).\n2. CLI accepts at minimum:\n   - `--rate {1/2|2/3|3/4}`\n   - `--modulation {16qam|64qam}`\n   - `--esn0-range <start>:<stop>:<step>` (dB)\n   - `--target-errors <N>` (default 100)\n   - `--max-frames <N>`\n   - `--seed <u64>`\n   - `--output-dir <path>`\n   - `--resume`\n3. Output layout under `<output-dir>/`:\n   - `curve_<rate>_<mod>.csv` — columns: es_n0_db, fer, ber, frames,\n     errors, mean_iters, wall_seconds (one row per SNR point).\n   - `curve_<rate>_<mod>.png` — simulated vs ETSI TR 102 831\n     reference overlay using `plotters` (or another headless,\n     CI-friendly plotting backend; the choice is recorded in\n     CLAUDE.md and the new binary's rustdoc).\n   - `tracing.jsonl` — structured `tracing` log via NEW-INFRA.\n   - `README.md` — invocation, RNG seed, host info, total wall-clock.\n4. ETSI TR 102 831 reference points checked in as a small,\n   hand-extracted TOML file under\n   `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`. One entry\n   per MODCOD listing (es_n0_db, fer) points read from the report's\n   figures. The file header cites the table / figure numbers.\n5. `--resume` propagates through to NEW-INFRA's checkpoint behaviour\n   so the binary inherits crash recovery for free.\n\n## Success criteria\n\n- [hard] Binary builds without warnings under\n  `cargo build --workspace --all-features --release`.\n- [hard] A smoke campaign (3 SNR points, small frame budget) completes\n  end-to-end and produces all four output artefacts.\n- [hard] The PNG overlay shows simulated and reference curves on the\n  same axes with a legend identifying each; rendering is\n  non-interactive / headless (CI-safe; no display required).\n- [hard] Killing the binary with SIGINT mid-run and re-invoking with\n  `--resume` results in a final CSV that is byte-identical to an\n  uninterrupted reference run with the same seed (integration test).\n- [hard] CLAUDE.md updated to list the new binary and the reference\n  data file.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n\n## Non-goals\n\n- No interactive UI.\n- No code refactoring beyond what is needed to plug 16-QAM / 64-QAM\n  into the existing mapper / demapper.\n- No new channel model (AWGN only).\n- This task does NOT execute the production campaigns — that is\n  e4849f07. Smoke runs only here.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e",
+    "4cdaf1c5-0d93-4320-bc41-7485e18f94a3"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.222525691Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.222456361Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-05-25T21:54:59.222502541Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
+  ],
+  "created_at": "2026-05-25T21:46:57.676876440+00:00",
+  "updated_at": "2026-05-25T21:55:50.453269858+00:00"
+}
