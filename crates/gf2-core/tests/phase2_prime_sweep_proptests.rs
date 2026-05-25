@@ -90,10 +90,6 @@ fn naive_gemm_gf<const Q: u64>(
 /// For other primes: no toggle interaction; the mutex is still held to avoid
 /// interfering with any concurrent test that does mutate the toggle.
 fn check_phase2_vs_scalar<const Q: u64>(n: usize, seed_a: u64, seed_b: u64) {
-    if n == 0 {
-        return;
-    }
-
     let a_mat = fp_matrix_from_seed::<Q>(n, n, seed_a);
     let b_mat = fp_matrix_from_seed::<Q>(n, n, seed_b);
 
@@ -103,6 +99,24 @@ fn check_phase2_vs_scalar<const Q: u64>(n: usize, seed_a: u64, seed_b: u64) {
     set_route_a_gf251_enabled(false); // restore
 
     let c_scalar = naive_gemm_gf::<Q>(&a_mat, &b_mat, n, n, n);
+
+    // SC#3 boundary length n=0: both production and scalar paths emit an
+    // empty (0 x 0) result. Verify the shape agrees rather than skipping.
+    assert_eq!(
+        c_prod.rows(),
+        n,
+        "production output row count mismatch at n={n} prime={Q}"
+    );
+    assert_eq!(
+        c_prod.cols(),
+        n,
+        "production output col count mismatch at n={n} prime={Q}"
+    );
+    assert_eq!(
+        c_scalar.len(),
+        n * n,
+        "scalar oracle length mismatch at n={n} prime={Q}"
+    );
 
     for i in 0..n {
         for j in 0..n {
@@ -138,7 +152,6 @@ proptest! {
         seed_a in 1u64..=200,
         seed_b in 201u64..=400,
     ) {
-        if n == 0 { return Ok(()); }
         check_phase2_vs_scalar::<7>(n, seed_a, seed_b);
         check_phase2_vs_scalar::<31>(n, seed_a, seed_b);
         check_phase2_vs_scalar::<127>(n, seed_a, seed_b);
@@ -164,7 +177,6 @@ proptest! {
         seed_a in 1u64..=200,
         seed_b in 201u64..=400,
     ) {
-        if n == 0 { return Ok(()); }
         check_phase2_vs_scalar::<257>(n, seed_a, seed_b);
         check_phase2_vs_scalar::<32749>(n, seed_a, seed_b);
         check_phase2_vs_scalar::<65521>(n, seed_a, seed_b);
@@ -188,7 +200,6 @@ proptest! {
         seed_a in 1u64..=200,
         seed_b in 201u64..=400,
     ) {
-        if n == 0 { return Ok(()); }
         check_phase2_vs_scalar::<65537>(n, seed_a, seed_b);
     }
 }
@@ -210,7 +221,6 @@ proptest! {
         seed_a in 1u64..=200,
         seed_b in 201u64..=400,
     ) {
-        if n == 0 { return Ok(()); }
         check_phase2_vs_scalar::<{ M31 }>(n, seed_a, seed_b);
     }
 }

@@ -180,15 +180,18 @@ is the direct bit-exact correctness gate for the new call site.
 ### Methodology
 
 5 sequential trials, CCX1-pinned (`taskset -c 6-11 nice -n -5`), quiet-host check.
-Primes: GF(7), GF(31), GF(127), GF(251). Sizes: n ∈ {64, 256, 1024}.
+Primes: GF(7), GF(31), GF(127), GF(251). Sizes: n ∈ {64, 256, 1024} — all 12
+(prime × n) cells measured.
 Baseline: `dev/bench_results/2026-05-25-41096af5-post-wire-in-aggregate.csv`.
 
-### Results
+### Results — all 11 measured cells (GF(127)/n=64 omitted from baseline; included in CSV)
 
 | prime | n | post-refactor (Gop/s) | baseline (Gop/s) | delta | fflas ratio | verdict |
 |-------|---|----------------------|-----------------|-------|-------------|---------|
+| 7 | 64 | 33.754 | 32.156 | **+4.97%** | — | PASS (closest to ±5% limit) |
 | 7 | 256 | 72.96 | 70.75 | +3.1% | — | PASS |
 | 7 | 1024 | 77.08 | 75.79 | +1.7% | — | PASS |
+| 31 | 64 | 31.410 | 31.482 | −0.23% | — | PASS |
 | 31 | 256 | 69.93 | 70.00 | -0.1% | — | PASS |
 | 31 | 1024 | 76.63 | 76.51 | +0.2% | — | PASS |
 | 127 | 256 | 69.27 | 69.80 | -0.8% | — | PASS |
@@ -197,7 +200,8 @@ Baseline: `dev/bench_results/2026-05-25-41096af5-post-wire-in-aggregate.csv`.
 | 251 | 256 | 71.98 | 69.93 | +2.9% | — | PASS |
 | 251 | 1024 | **95.83** | 94.43 | **+1.5%** | **0.693** | **PASS** |
 
-All cells within ±5% of the 41096af5 baseline.  
+All 11 cells within ±5% of the 41096af5 baseline. The maximum absolute delta
+is GF(7)/n=64 at +4.97% (within the criterion's ±5% bound).
 GF(251)/n=1024: ratio 0.693 vs fflas-ffpack 138.32 Gop/s (threshold 0.667). PASS.
 
 Aggregate CSV: `dev/bench_results/2026-05-25-e8a0c47a-post-refactor-aggregate.csv`  
