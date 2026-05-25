@@ -225,7 +225,7 @@ of `8df0c501`, expected 16–32 based on fgemm crossover data).
 The decision of whether a fast GEMM is available for field `F` is **delegated entirely to
 `gemm_axpy_into_view`'s runtime dispatch**, which auto-selects among (post-40195c09):
 - small-prime byte-lane AVX2 (via `F::try_simd_gemm_classical`) for `P ≤ 251` — available only after 40195c09 lands,
-- medium-prime u16-lane AVX2 (via `F::try_pack_fp_medium_u16` + `try_fp_simd_dot_packed_u16`) for `252 ≤ P < 65536` — available today,
+- medium-prime u16 AVX2 dot (via `dot_product_slices` → `F::try_fp_simd_dot_product` → `fp_medium_try_dot_product`) for `252 ≤ P < 65536` — available today,
 - scalar fallback for all other field types (e.g. `Gf2mWide`).
 
 No compile-time gate per-field is required — the threshold controls crossover and the
@@ -306,17 +306,25 @@ FieldMatrix::inv
 No direct call to `fp_small_try_gemm_classical` is needed in the blocked invert driver;
 the kernel is reached through `gemm_axpy_into_view` after 40195c09 wires that dispatch.
 
-### 4.3 `fp_medium` (medium-prime u16-lane AVX2 path, $252 \le P < 65536$)
+### 4.3 `fp_medium` (medium-prime u16-lane AVX2 dot, $252 \le P < 65536$)
 
-For GF(65521) and all other medium primes, `gemm_axpy_into_view` takes a second fast path
-immediately after the small-prime check fails. Key functions:
+For GF(65521) and all other medium primes, `gemm_axpy_into_view` reaches the AVX2 dot
+kernel through its per-cell `dot_product_slices` dispatch (NOT the packed-u16 GEMM helpers
+used by `gemm()`). Key functions actually on the `gemm_axpy_into_view` path:
 
+- **Per-cell dot dispatcher:** `dot_product_slices` at
+  `crates/gf2-core/src/field/vec.rs:480-492` — called once per output cell from
+  `gemm_axpy_into_view`'s inner loop (matrix.rs:2913). Constructs scratch buffers locally
+  and calls `F::try_fp_simd_dot_product`.
+- **Field-trait hook:** `F::try_fp_simd_dot_product()` (default returns `None`); for
+  `Fp<P>` overridden at `crates/gf2-core/src/gfp/mod.rs:654-661` to delegate to
+  `fp_medium_try_dot_product::<P>`.
+- **AVX2 dot kernel:** `fp_medium_try_dot_product::<P>()` at
+  `crates/gf2-core/src/gfp/simd_ops.rs:1388` (AVX2 entry; non-AVX2 fallback at line 1425) —
+  packs both operands into u16 lanes locally and runs the 16-lane Barrett-reduction inner
+  product.
 - **Eligibility predicate:** `fp_medium_eligible::<P>()` at
   `crates/gf2-core/src/gfp/simd_ops.rs:1245` — returns `true` when `P >= 252 && P < 65536`.
-- **Pack function:** `fp_medium_try_pack_u16::<P>()` at
-  `crates/gf2-core/src/gfp/simd_ops.rs:1443` — converts `&[Fp<P>]` to `&[u16]` raw storage.
-- **Dot kernel:** `fp_medium_try_dot_packed::<P>()` at
-  `crates/gf2-core/src/gfp/simd_ops.rs:1470` — runs the AVX2 16-lane Barrett-reduction inner product.
 - **SIMD implementation:** `gf2-kernels-simd::fp_medium` module
   (detected at startup via `crate::simd::maybe_fp_medium()` at
   `crates/gf2-core/src/lib.rs:215`).
@@ -327,16 +335,26 @@ The call chain for GF(65521) through the blocked invert is:
 FieldMatrix::inv
   └─ panelized_ple(A)                    // Schur update uses medium-prime path
   └─ trsm_lower(L, I)
-       └─ gemm_axpy_into_view            // crates/gf2-core/src/field/matrix.rs:2669
-            └─ F::try_pack_fp_medium_u16()
-            └─ F::try_fp_simd_dot_packed_u16()
-                 └─ fp_medium_try_dot_packed::<65521>(...)
-                      └─ gf2_kernels_simd::fp_medium (AVX2 Barrett u16-lane)
+       └─ gemm_axpy_into_view            // crates/gf2-core/src/field/matrix.rs:2854
+            └─ dot_product_slices         // per output cell; vec.rs:480-492
+                 └─ F::try_fp_simd_dot_product()  // gfp/mod.rs:654-661
+                      └─ fp_medium_try_dot_product::<65521>(...)  // simd_ops.rs:1388
+                           └─ gf2_kernels_simd::fp_medium (AVX2 Barrett u16-lane)
   └─ trsm_upper(E, Y)                    // same path
 ```
 
 No explicit medium-prime dispatch is required in the blocked invert driver itself; it
-inherits the GF(65521) speedup automatically via `gemm_axpy_into_view`.
+inherits the GF(65521) speedup automatically via `gemm_axpy_into_view → dot_product_slices`.
+
+**Note on packed-u16 helpers.** The `gemm()` whole-GEMM path uses a different, more efficient
+helper pair: `F::try_pack_fp_medium_u16` (gfp/mod.rs:665, calls `fp_medium_try_pack_u16` at
+simd_ops.rs:1443) packs each operand once into a u16 buffer, then
+`F::try_fp_simd_dot_packed_u16` (gfp/mod.rs:671, calls `fp_medium_try_dot_packed` at
+simd_ops.rs:1470) runs the dot against the pre-packed buffers. This amortizes packing across
+many output cells. `gemm_axpy_into_view` does NOT use these packed helpers today — its
+per-cell `dot_product_slices` repacks per cell. Closing that gap would be a separate task;
+it is not in scope for `feb15da9` or `8df0c501` and is unrelated to 40195c09 (which lifts
+the small-prime whole-GEMM path, a separate concern).
 
 ### 4.4 Architectural prerequisite (40195c09)
 
@@ -347,8 +365,11 @@ pointed out that the current `gemm_axpy_into_view`
 (`crates/gf2-core/src/field/matrix.rs:2854-2920`) does NOT route the small-prime
 whole-GEMM path — per-cell `dot_product_slices` only auto-dispatches the medium-prime u16
 packed dot. Task 40195c09 adds the missing small-prime dispatch (either scratch-buffer +
-add-into-view, or a fused alpha-beta panel kernel). The implementation child `8df0c501` is
-JIT-wired to depend on 40195c09 landing first.
+add-into-view, or a fused alpha-beta panel kernel). The implementation child `8df0c501`
+has direct JIT deps on `feb15da9` (this design) + `6823c8a0` (panelized PLE impl); since
+`6823c8a0` itself depends on `40195c09`, `8df0c501` transitively depends on `40195c09`
+landing first. (JIT skips direct edges already reachable transitively; `jit graph deps
+8df0c501 --depth 2` shows `40195c09` at level 2.)
 
 Before 40195c09 lands, the trsm-on-identity approach would inherit only the medium-prime
 u16 path (GF(65521) rows 41-43 still close via `fp_medium`). After 40195c09 lands, both
