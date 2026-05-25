@@ -3,7 +3,7 @@
   "epic_short_id": "026fc832",
   "epic_title": "Continue gf2-core SOTA catch-up \u2014 close A8 + \u00a76.3 follow-ups",
   "started_at": "2026-05-24T00:00:00+00:00",
-  "current_wave": 4,
+  "current_wave": "6.5",
   "scope_decision": {
     "session_1_date": "2026-05-24",
     "user_choice": "Option 1: close 615db3b9 as plan-only + drive all 12 items",
@@ -300,6 +300,37 @@
       ]
     },
     {
+      "wave_number": "6.5",
+      "label": "Architectural prereq + parallel GEMM-engineering (filed session 6 post-escalation)",
+      "issues": [
+        {
+          "short_id": "40195c09",
+          "title": "Lift gemm_axpy_into_view with small-prime SIMD fast path",
+          "classification": "implementation",
+          "status": "in_progress_dispatched",
+          "depends_on": [],
+          "model_recommendation": "opus",
+          "expected_duration": "~1-2 days",
+          "dispatched_at": "2026-05-25T20:46:25+00:00",
+          "worktree": "worktree-agent-40195c09",
+          "rationale": "Wave 6 review uncovered dispatch gap: gemm_axpy_into_view's per-cell dot_product_slices only auto-dispatches medium-prime u16; small-prime whole-GEMM is via gemm() only. Blocks 6823c8a0/869ce43b/8df0c501/6613abf4."
+        },
+        {
+          "short_id": "74ba1cdc",
+          "title": "Improve single-thread fgemm engineering: Route A + fp_medium at n=4096",
+          "classification": "implementation",
+          "status": "in_progress_dispatched",
+          "depends_on": [],
+          "model_recommendation": "opus",
+          "expected_duration": "~1-2 weeks (compressed into one agent dispatch; may need multiple rounds)",
+          "dispatched_at": "2026-05-25T20:46:25+00:00",
+          "worktree": "worktree-agent-74ba1cdc",
+          "rationale": "98336ab4 measured 2 SHORTFALL cells (GF(251)/4096 0.536, GF(65521)/4096 0.521). Per-core algorithmic gap (Route A 36% peak vs OpenBLAS 70% peak). User-approved BLIS-style engineering in pure Rust + AVX2."
+        }
+      ],
+      "parallelism_note": "Both run in parallel worktrees anchored at c924890e. CCX1 bench serialization required between the two (only one bench at a time on cores 6-11). 74ba1cdc may not complete in one dispatch; partial-progress is acceptable and lead resumes via session handoff."
+    },
+    {
       "wave_number": "out-of-band",
       "label": "Dense FieldMatrix::rref bug (added session 2, closed session 3)",
       "issues": [
@@ -364,6 +395,18 @@
       "filed_in": "session 2",
       "wired_as": "direct epic dep",
       "closed_in": "session 3"
+    },
+    {
+      "short_id": "40195c09",
+      "rationale": "Wave-6 review uncovered that gemm_axpy_into_view lacks small-prime SIMD fast path; user-approved (Q1) to lift the helper rather than restructure designs",
+      "filed_in": "session 6",
+      "wired_as": "6823c8a0 -> 40195c09 (transitive for 869ce43b/8df0c501/6613abf4); 026fc832 reaches transitively"
+    },
+    {
+      "short_id": "74ba1cdc",
+      "rationale": "98336ab4 SHORTFALL on GF(251)/GF(65521) at n=4096 (per-core algorithmic gap, fflas reference is single-thread); user-approved (Q2) BLIS-style GEMM engineering in pure Rust + AVX2",
+      "filed_in": "session 6",
+      "wired_as": "98336ab4 -> 74ba1cdc"
     }
   ],
   "escalations": [
@@ -408,6 +451,34 @@
       "category": "bd9c6e13 SC#1 empirically falsified \u2014 named seed=1 cell does not actually trigger the bug under the actual dense_random_fp_seeded generator (R0 worker's evidence \u00a7 10)",
       "resolved": true,
       "user_choice": "Amend SC#1: drop seed=1 specificity, require \u22655 cells from 47-cell pre-fix divergence sweep"
+    },
+    {
+      "date": "2026-05-25",
+      "session": 5,
+      "category": "b0fa00af scorecard v1 had 53 cells claimed as 'FAIL routed to 615db3b9' but 615db3b9 was already closed plan-only; SC#5 violated",
+      "resolved": true,
+      "user_choice": "Full panelized GF(p) dense-LA push (Phase 6); filed 8 new tasks (2e8c5a29, 24a93e4e, feb15da9, 98336ab4, 6823c8a0, 869ce43b, 8df0c501, 6613abf4)"
+    },
+    {
+      "date": "2026-05-25",
+      "session": 6,
+      "category": "Wave-6 R1 review uncovered that gemm_axpy_into_view does NOT dispatch the small-prime SIMD fast path; lead's R1 directive was factually wrong. 24a93e4e + feb15da9 R1 FAIL.",
+      "resolved": true,
+      "user_choice": "Option A: file new prereq task 40195c09 to lift gemm_axpy_into_view. Designs cite 40195c09 as prerequisite. R2 reworks updated accordingly."
+    },
+    {
+      "date": "2026-05-25",
+      "session": 6,
+      "category": "98336ab4 SHORTFALL: GF(251)/4096 ratio 0.536, GF(65521)/4096 ratio 0.521. fflas reference verified single-thread per a70b1c70:24; gap is per-core algorithmic (Route A ~36% of f32 peak vs OpenBLAS ~70%).",
+      "resolved": true,
+      "user_choice": "Option B: file new task 74ba1cdc for BLIS-style GEMM engineering in pure Rust + AVX2. Block 98336ab4 close until 74ba1cdc lands. No BLAS dependency."
+    },
+    {
+      "date": "2026-05-25",
+      "session": 6,
+      "category": "feb15da9 R2 FAIL (3rd same-root-cause: helper-chain mismatch through dispatch graph). Per escalation policy 5a.",
+      "resolved": true,
+      "user_choice": "Option A: lead-direct R3 fix. Lead grep-verified actual chain (gemm_axpy_into_view -> dot_product_slices -> F::try_fp_simd_dot_product -> fp_medium_try_dot_product at simd_ops.rs:1388), edited 2 sections (\u00a74.3 + JIT-wired claim), committed 3d6fdaa2. R3 PASS."
     }
   ],
   "rework_counts": {
@@ -419,7 +490,11 @@
     "52cce970": 5,
     "bd9c6e13": 3,
     "68cdf4c8": 3,
-    "91429c1c": 4
+    "91429c1c": 4,
+    "2e8c5a29": 1,
+    "24a93e4e": 2,
+    "feb15da9": 3,
+    "98336ab4": 0
   },
   "session_history": [
     {
@@ -454,6 +529,52 @@
         "Closed 68cdf4c8 (3 review rounds; worktree rebased + merged; post-amendment sweep done lead-direct R2)",
         "91429c1c R0 PASS evidence-wise (research-only recommendation); R1 dispatched for SSOT + doc-sections refactor (sonnet, background, in flight)",
         "Wrote session-3 handoff + updated progress.json"
+      ]
+    },
+    {
+      "session_number": 4,
+      "date": "2026-05-25",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Closed fc182ed5 (route C integer panel; first-try PASS no rework)",
+        "Pre-dispatch criterion audit on 41096af5 SC#7 -> escalation: 'neither clears' branch fired",
+        "User escalation resolved: option 1 (wire route A as default for GF(251)/n>=512; amend GF(251)/n=256 [aspirational])",
+        "Claimed 41096af5; worker NOT dispatched (user stop signal)",
+        "Wrote session-4 handoff"
+      ]
+    },
+    {
+      "session_number": 5,
+      "date": "2026-05-25",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Dispatched + closed 41096af5 (route A wire-in for GF(251)/n>=512)",
+        "Wave 5 dispatch (e8a0c47a + 873cbec1 + b0fa00af in parallel)",
+        "Closed e8a0c47a (R0 + R1 continuation after 529 overload + R2 lead-direct)",
+        "Closed 873cbec1 (Phase 4 ext-field GEMM design)",
+        "b0fa00af v1 published; SC#5 violated (53 cells claimed FAIL routed to closed 615db3b9)",
+        "Escalation: user picked Full panelized GF(p) dense-LA push",
+        "Filed 8 Phase-6 tasks (2e8c5a29, 24a93e4e, feb15da9, 98336ab4, 6823c8a0, 869ce43b, 8df0c501, 6613abf4); DAG wired",
+        "Wrote session-5 handoff"
+      ]
+    },
+    {
+      "session_number": 6,
+      "date": "2026-05-25",
+      "lead": "agent:project-lead (Claude Opus 4.7)",
+      "actions": [
+        "Wave 6 dispatch (2e8c5a29 + 24a93e4e + feb15da9 + 98336ab4 in parallel worktrees, sonnet)",
+        "R0 review: 3/4 FAIL on substantive design findings",
+        "R1 rework dispatch (lead directive: 'route through gemm_axpy_into_view' -- factually wrong)",
+        "R1 review: 2e8c5a29 PASS; 24a93e4e + feb15da9 FAIL citing 'gemm_axpy_into_view lacks small-prime fast path'",
+        "Escalated to user (Q1 dispatch architecture, Q2 98336ab4 SHORTFALL with single-thread fflas finding)",
+        "User resolution: Q1=Option A (lift); Q2=Option B (engineer)",
+        "Filed 40195c09 (lift) + 74ba1cdc (GEMM-engineer); DAG wired",
+        "Wave 6 R2 reworks: 24a93e4e R2 PASS; feb15da9 R2 FAIL (3rd same-root-cause)",
+        "feb15da9 R3 lead-direct fix (grep-verified actual helper chain); R3 PASS",
+        "Wave 6 close: 3 designs DONE (2e8c5a29, 24a93e4e, feb15da9). Worktrees + branches cleaned.",
+        "Wave 6.5 dispatch (40195c09 + 74ba1cdc, parallel worktrees, opus, in background)",
+        "Wrote session-6 handoff + updated progress.json"
       ]
     }
   ]
