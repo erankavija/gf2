@@ -57,8 +57,11 @@ the narrow Schur-complement updates with wide `gemm` calls. The blocked invert a
 (Higham, "Accuracy and Stability of Numerical Algorithms", § 14.1) then replaces the two
 `trtri` + `trtrm` phase with two GEMM-based triangular solves applied directly to the
 identity matrix — i.e., `solve_batch(I)`. This funnels all the dense work through
-`fp_small_try_gemm_classical` at its natural operating width, matching the throughput
-achieved by the standalone `fgemm` benchmarks that are already PASS.
+`gemm_axpy_into_view`'s runtime dispatch, which auto-routes:
+- small-prime ($P \le 251$): `fp_small_try_gemm_classical` (byte-lane AVX2 kernel) — closes A8 rows 34-40, 74
+- medium-prime ($252 \le P < 65536$): `fp_medium` u16-lane path (Barrett-reduction AVX2 kernel) — closes A8 rows 41-43
+
+Both paths achieve the throughput shown in the standalone `fgemm` PASS measurements at the respective primes.
 
 ---
 
@@ -190,9 +193,18 @@ pub fn inv(&self) -> Option<FieldMatrix<F>> {
     // ... square-check and n==0 guard unchanged ...
     if n == 0 { return Some(self.clone()); }
 
-    // NEW: dispatch rule
-    if F::SMALL_PRIME_SIMD_ELIGIBLE && n >= BLOCKED_INVERT_THRESHOLD {
-        return blocked_inv_panelized(self);   // new path (issue 8df0c501)
+    // NEW: panelized fast path for any field with a fast GEMM at this n.
+    // The actual question "is blocked invert beneficial here?" is answered
+    // at runtime by gemm_axpy_into_view's internal dispatch (small-prime
+    // byte-lane AVX2, medium-prime u16-lane AVX2, etc.) and by the
+    // empirically-calibrated threshold below.
+    if n >= BLOCKED_INVERT_THRESHOLD {
+        if let Some(result) = blocked_inv_panelized(self) {
+            return result;
+        }
+        // blocked_inv_panelized returns None iff the matrix is rank-deficient;
+        // fall through to scalar path only if that path is removed later.
+        // For now the rank-deficient case is returned directly as None above.
     }
     // existing scalar-PLE path unchanged below
     let (perm, mut l, mut e, rank) = self.ple();
@@ -200,14 +212,20 @@ pub fn inv(&self) -> Option<FieldMatrix<F>> {
 }
 ```
 
-**Dispatch rule:** Use the panelized path when:
-1. The field type is `Fp<P>` with `P` in the set supported by `fp_small_try_gemm_classical`
-   (i.e., `P ≤ 65521` and `fp_small_enabled::<P>()` returns `true` at runtime), AND
-2. $n \geq$ `BLOCKED_INVERT_THRESHOLD` (a compile-time constant, expected 16 or 32; exact
-   value determined empirically during implementation of `8df0c501`).
+**Dispatch rule:** Use the panelized path when $n \geq$ `BLOCKED_INVERT_THRESHOLD` (a
+`const usize` in `inverse.rs`; exact value determined empirically during implementation
+of `8df0c501`, expected 16–32 based on fgemm crossover data).
 
-For $n <$ threshold (or for field types outside the fast-path set, e.g. `Gf2mWide`),
-the existing scalar-PLE driver runs unchanged.
+The decision of whether a fast GEMM is available for field `F` is **delegated entirely to
+`gemm_axpy_into_view`'s runtime dispatch**, which auto-selects among:
+- small-prime byte-lane AVX2 (via `F::try_simd_gemm_classical`) for `P ≤ 251`,
+- medium-prime u16-lane AVX2 (via `F::try_pack_fp_medium_u16` + `try_fp_simd_dot_packed_u16`) for `252 ≤ P < 65536`,
+- scalar fallback for all other field types (e.g. `Gf2mWide`).
+
+No compile-time gate per-field is required — the threshold controls crossover and the
+GEMM dispatch handles field-type eligibility automatically.
+
+For $n <$ threshold, the existing scalar-PLE driver runs unchanged.
 
 The constant `BLOCKED_INVERT_THRESHOLD` is a `const usize` in `inverse.rs`; the
 implementation in `8df0c501` will benchmark crossover and set the value, recording the
@@ -263,21 +281,54 @@ or f32-modular Candidate F) executed; `false` to defer to the caller's scalar pa
 The `#[cfg(not(feature = "simd"))]` stub at line 903 returns `false` unconditionally,
 so the dispatch is always `simd`-feature-gated.
 
-The blocked invert reaches this kernel indirectly through:
+The blocked invert reaches this kernel indirectly through the small-prime call chain:
 
 ```text
 FieldMatrix::inv
   └─ panelized_ple(A)                    // calls fp_small_try_gemm_classical for Schur
   └─ trsm_lower(L, I)                    // calls gemm_axpy_into_view
-       └─ gemm_into_view / gemm_axpy_into_view
-            └─ Fp::<P>::try_simd_gemm_classical()
+       └─ gemm_axpy_into_view            // crates/gf2-core/src/field/matrix.rs:2642
+            └─ F::try_simd_gemm_classical()
                  └─ fp_small_try_gemm_classical::<P>(...)
+                                         // crates/gf2-core/src/gfp/simd_ops.rs:654
   └─ trsm_upper(E, Y)                    // same path
 ```
 
 No direct call to `fp_small_try_gemm_classical` is needed in the blocked invert driver;
-the kernel is reached through the existing `gemm_into_view` dispatch already wired in
+the kernel is reached through the existing `gemm_axpy_into_view` dispatch already wired in
 `trsm_lower` / `trsm_upper`.
+
+### 4.3 `fp_medium` (medium-prime u16-lane AVX2 path, $252 \le P < 65536$)
+
+For GF(65521) and all other medium primes, `gemm_axpy_into_view` takes a second fast path
+immediately after the small-prime check fails. Key functions:
+
+- **Eligibility predicate:** `fp_medium_eligible::<P>()` at
+  `crates/gf2-core/src/gfp/simd_ops.rs:1245` — returns `true` when `P >= 252 && P < 65536`.
+- **Pack function:** `fp_medium_try_pack_u16::<P>()` at
+  `crates/gf2-core/src/gfp/simd_ops.rs:1443` — converts `&[Fp<P>]` to `&[u16]` raw storage.
+- **Dot kernel:** `fp_medium_try_dot_packed::<P>()` at
+  `crates/gf2-core/src/gfp/simd_ops.rs:1470` — runs the AVX2 16-lane Barrett-reduction inner product.
+- **SIMD implementation:** `gf2-kernels-simd::fp_medium` module
+  (detected at startup via `crate::simd::maybe_fp_medium()` at
+  `crates/gf2-core/src/lib.rs:215`).
+
+The call chain for GF(65521) through the blocked invert is:
+
+```text
+FieldMatrix::inv
+  └─ panelized_ple(A)                    // Schur update uses medium-prime path
+  └─ trsm_lower(L, I)
+       └─ gemm_axpy_into_view            // crates/gf2-core/src/field/matrix.rs:2669
+            └─ F::try_pack_fp_medium_u16()
+            └─ F::try_fp_simd_dot_packed_u16()
+                 └─ fp_medium_try_dot_packed::<65521>(...)
+                      └─ gf2_kernels_simd::fp_medium (AVX2 Barrett u16-lane)
+  └─ trsm_upper(E, Y)                    // same path
+```
+
+No explicit medium-prime dispatch is required in the blocked invert driver itself; it
+inherits the GF(65521) speedup automatically via `gemm_axpy_into_view`.
 
 ---
 
@@ -444,5 +495,10 @@ improvement alone. The TRSM-on-identity work is only paid on full-rank inputs.
 
 The GF(2^31-1) invert cells at n=256,1024/uniform are AMENDED [aspirational] (A4) per the
 Phase 5 scorecard and are not in scope for this blocked-invert design. GF(2^31-1) uses the
-delayed-u128 GEMM fast path (not `fp_small_try_gemm_classical`) and the `SMALL_PRIME_SIMD_ELIGIBLE`
-dispatch gate excludes it from the blocked-invert path.
+delayed-u128 GEMM fast path (not `fp_small_try_gemm_classical` and not `fp_medium`); the
+`BLOCKED_INVERT_THRESHOLD` gate may trigger the panelized path, but because
+`gemm_axpy_into_view` has no dedicated AVX2 kernel for `P = 2^31-1`, the blocked invert
+does not deliver a meaningful speedup over the existing scalar driver for this prime.
+The implementation agent (`8df0c501`) may set a separate, higher threshold for non-SIMD
+primes or add an explicit early-out in `blocked_inv_panelized` — that is a calibration
+decision for `8df0c501`, not a design change here.
