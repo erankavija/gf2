@@ -466,58 +466,8 @@ fn fold_mul_words(mag: &[u64], sgn: &[u64], n: usize) -> Fp<3> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::permanent::bipedal3::permanent_bipedal3_singleword;
     use crate::permanent::ryser::permanent_ryser;
     use crate::testutil::random_matrix;
-
-    // -----------------------------------------------------------------------
-    // Dispatch smoke-test: verify permanent_bipedal3 routes n=65 to the
-    // multi-word path without panicking. Uses a tiny fixed matrix where
-    // the permanent can be verified independently.
-    //
-    // NOTE: The actual permanent computation at n >= 64 runs 2^n Gray steps,
-    // which is astronomically infeasible. Therefore:
-    //   - All tests that call permanent_bipedal3_multiword with n >= 64
-    //     MUST carry #[ignore = "sim: ..."].
-    //   - Fast-tier tests cover the helper functions (counter, fold, dispatch)
-    //     but not the full permanent computation.
-    // -----------------------------------------------------------------------
-
-    /// Dispatching to multi-word path does not panic for n=65 (structure check).
-    ///
-    /// Marked ignore because 2^65 Gray steps is infeasible even in slow tier.
-    /// Exists to document the dispatch contract and allow manual verification.
-    #[test]
-    #[ignore = "sim: n=65 permanent (2^65 Gray steps, infeasible runtime)"]
-    fn test_multiword_dispatch_n65_no_panic() {
-        let n = 65;
-        let seed_base: u64 = 0xa788_6bd8_0065_0001_u64;
-        let row_major = random_matrix::<3>(n, seed_base);
-        let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
-        let _ = permanent_bipedal3_multiword(&mat);
-    }
-
-    /// R3 §9.1 boundary check: n=64 multi-word vs single-word must agree.
-    ///
-    /// Marked ignore because 2^64 Gray steps is infeasible even in slow tier.
-    /// Exists to document the intended correctness contract.
-    #[test]
-    #[ignore = "sim: n=64 boundary cross-check (2^64 Gray steps, infeasible runtime)"]
-    fn test_multiword_n64_matches_singleword() {
-        let n = 64;
-        let seed_base: u64 = 0xa788_6bd8_0064_0000_u64;
-        for trial in 0u64..50 {
-            let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-            let row_major = random_matrix::<3>(n, seed);
-            let mat = Bipedal3Matrix::from_row_major(&row_major, n, n);
-            let expected = permanent_bipedal3_singleword(&mat);
-            let actual = permanent_bipedal3_multiword(&mat);
-            assert_eq!(
-                actual, expected,
-                "n=64 boundary: multi-word vs single-word mismatch, trial={trial}, seed={seed:#018x}"
-            );
-        }
-    }
 
     // -----------------------------------------------------------------------
     // gray_bit_at unit tests
@@ -699,19 +649,14 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Block-decomposable cross-check at n ∈ {65, 72, 96, 128}.
+    // Block-decomposable cross-check at small n ∈ {10, 16, 20}.
     //
-    // Per the criterion-3 amendment recorded in
-    // `dev/active/a7886bd8-amendments-2026-05-11.md`:
-    // construct block-diagonal matrices `[A_{n0} ⊕ I_{n - n0}]` with
-    // n0 ∈ {10, 11, 12} so that `perm(full) = perm(A_{n0}) * perm(I) =
-    // perm_ryser(A_{n0})`. Tests are `#[ignore = "sim: ..."]` since
-    // `permanent_bipedal3_multiword` still walks 2^n Gray steps at runtime,
-    // but the test BODY documents the oracle so a future faster machine
-    // would validate the implementation. Direct ryser cross-check at the
-    // raw n values is impossible (ryser caps at n <= 63), so the
-    // block-decomposable construction is the only way to express the
-    // oracle relation literally at n ∈ {65, 72, 96, 128}.
+    // Construct block-diagonal matrices `[A_{n0} ⊕ I_{n - n0}]` so that
+    // `perm(full) = perm(A_{n0}) * perm(I_{n - n0}) = perm_ryser(A_{n0})`.
+    // This exercises the multi-word kernel on structured input and validates
+    // the `build_block_diagonal` helper plus the oracle relation in
+    // sub-second runtime. Direct large-n cross-check is unavailable because
+    // both the kernel and the Ryser oracle scale as 2^n.
     // -----------------------------------------------------------------------
 
     /// Build a block-diagonal n × n F_3 matrix `[A_{n0} ⊕ I_{n - n0}]` in
@@ -737,21 +682,18 @@ mod tests {
         (full, block)
     }
 
-    fn run_block_diagonal_at_n(n: usize, seed_tag: u64) {
+    fn run_block_diagonal_at_n(n: usize, n0_base: usize, seed_tag: u64) {
         let seed_base: u64 = 0xa788_6bd8_0000_0000_u64
             .wrapping_add((n as u64) << 16)
             .wrapping_add(seed_tag);
-        // 5 matrices per n: criterion-3 amendment requires ≥ 5.
+        // 5 trials per n; n0 cycles through {n0_base, n0_base + 1, n0_base + 2}
+        // so each trial exercises a different block size.
         for trial in 0u64..5 {
             let seed = seed_base.wrapping_add(trial.wrapping_mul(1_000_003));
-            // n0 cycles through {10, 11, 12} so each trial exercises a
-            // different block size.
-            let n0 = 10 + ((trial as usize) % 3);
+            let n0 = n0_base + ((trial as usize) % 3);
             let (full, block) = build_block_diagonal(n, n0, seed);
             let expected = permanent_ryser::<Fp<3>>(&block, n0);
             let mat = Bipedal3Matrix::from_row_major(&full, n, n);
-            // This is the infeasible call: 2^n Gray steps. The assertion
-            // body documents the oracle relation.
             let actual = permanent_bipedal3_multiword(&mat);
             assert_eq!(
                 actual, expected,
@@ -760,31 +702,21 @@ mod tests {
         }
     }
 
-    /// Block-decomposable cross-check at n=65 vs ryser(A_{n0}).
+    /// Block-decomposable cross-check at n=10 (n0 ∈ {5, 6, 7}).
     #[test]
-    #[ignore = "sim: large-n cross-check n=65 (2^65 Gray steps, infeasible runtime)"]
-    fn test_cross_check_n65_block_diagonal() {
-        run_block_diagonal_at_n(65, 0x0065);
+    fn test_block_diagonal_at_n10() {
+        run_block_diagonal_at_n(10, 5, 0x000a);
     }
 
-    /// Block-decomposable cross-check at n=72 vs ryser(A_{n0}).
+    /// Block-decomposable cross-check at n=16 (n0 ∈ {10, 11, 12}).
     #[test]
-    #[ignore = "sim: large-n cross-check n=72 (2^72 Gray steps, infeasible runtime)"]
-    fn test_cross_check_n72_block_diagonal() {
-        run_block_diagonal_at_n(72, 0x0072);
+    fn test_block_diagonal_at_n16() {
+        run_block_diagonal_at_n(16, 10, 0x0010);
     }
 
-    /// Block-decomposable cross-check at n=96 vs ryser(A_{n0}).
+    /// Block-decomposable cross-check at n=20 (n0 ∈ {10, 11, 12}).
     #[test]
-    #[ignore = "sim: large-n cross-check n=96 (2^96 Gray steps, infeasible runtime)"]
-    fn test_cross_check_n96_block_diagonal() {
-        run_block_diagonal_at_n(96, 0x0096);
-    }
-
-    /// Block-decomposable cross-check at n=128 vs ryser(A_{n0}).
-    #[test]
-    #[ignore = "sim: large-n cross-check n=128 (2^128 Gray steps, infeasible runtime)"]
-    fn test_cross_check_n128_block_diagonal() {
-        run_block_diagonal_at_n(128, 0x0128);
+    fn test_block_diagonal_at_n20() {
+        run_block_diagonal_at_n(20, 10, 0x0014);
     }
 }
