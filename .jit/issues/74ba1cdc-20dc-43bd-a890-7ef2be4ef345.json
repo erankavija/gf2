@@ -1,0 +1,26 @@
+{
+  "id": "74ba1cdc-20dc-43bd-a890-7ef2be4ef345",
+  "title": "Improve single-thread fgemm engineering: Route A + fp_medium at n=4096",
+  "description": "Phase 6 parallel task under epic `026fc832`. 98336ab4's n=4096 measurements (commit `3dca7bf7`) reveal that Route A (GF(251)) and fp_medium (GF(65521)) reach ~36-43% of f32 FMA peak throughput on Zen 3, while fflas-ffpack's single-thread reference (verified single-thread per `dev/bench_results/2026-05-24-a70b1c70-phase0-controls.md:24`) reaches ~70%. The user-approved decision (session 6, 2026-05-25) is to close the gap in pure Rust + AVX2 — no BLAS dependency.\n\n## Background\n\nMeasured at n=4096 (5-trial CCX1-pinned, post-`3dca7bf7`):\n\n| Prime | gf2 Gop/s | gf2 GFLOPS | fflas Gop/s | fflas GFLOPS | gap |\n|---|---|---|---|---|---|\n| GF(251) | 85.22 | ~43 | 158.96 | ~80 | 1.87× |\n| GF(65521) | 36.34 | ~18 | 69.72 | ~35 | 1.92× |\n\nTheoretical Zen 3 f32 FMA peak: ~118 GFLOPS/core. OpenBLAS sgemm runs at ~70% of peak; Route A at ~36%.\n\nClosing the gap to PASS (ratio ≤ 1.5×, i.e. ≥ 0.667) requires ~25% per-core throughput improvement on Route A and fp_medium.\n\n## Scope\n\nEngineer Route A and fp_medium with better cache + register-tile + accumulation discipline. Concrete levers (impl agent picks the productive subset):\n\n1. **BLIS-style 3-level cache blocking.** Add MC (rows) + NC (cols) cache blocking levels above the existing KC = 256. Repack the A panel into a contiguous packed buffer (`PackedF32Panel<MC, KC>`) reused across multiple NC chunks of B. Persistent packed-A cache across `gemm` calls of the same shape.\n2. **Deeper register tiling.** Current 4×24 tile uses ~12 of 16 AVX2 registers. Sweep MR × NR variants: 6×16, 8×12, 4×32 (limited by f32 lane count). Pick the variant that minimises spills on Zen 3.\n3. **Longer Barrett-reduction window.** Route A currently reduces every k = 512. Compute the maximum k that avoids f32 mantissa overflow given $p \\le 251$ and lane count; extend the window. fp_medium similarly: extend the u16-pack reduction window.\n4. **Persistent panel packing.** When the same A matrix is reused across multiple `gemm` calls (e.g., in PLE recursion), cache the packed-A representation. This pays off in `fp_small_panel.rs`'s current strategy but is currently per-call.\n5. **Prefetching.** Add `_mm_prefetch` hints for the B-panel ahead of the inner loop. Tune the lookahead distance.\n\n## Success Criteria\n\n- [hard] GF(251) at n=4096: ratio gf2/fflas ≤ 1.5× (gf2 wall ≤ 1.5× fflas wall) on 5-trial CCX1-pinned bench on the Zen 3 reference host.\n- [hard] GF(65521) at n=4096: ratio gf2/fflas ≤ 1.5× on 5-trial CCX1-pinned bench.\n- [hard] No regression on existing PASS cells at n ∈ {64, 256, 1024} for GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) (delta ≤ 5% on CCX1-pinned bench with warmup-matched protocol; use the same 5-trial setup as `dev/bench_results/2026-05-25-41096af5-post-wire-in-aggregate.csv`).\n- [hard] Bit-exact correctness preserved (proptest sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} for all 6 primes).\n- [hard] No BLAS dependency. No external linker change. Pure Rust + AVX2.\n- [hard] Unsafe stays in `gf2-kernels-simd` (no new unsafe in `gf2-core`).\n- [hard] Evidence doc at `dev/bench_results/2026-05-<date>-<this-id>-fgemm-engineering.md` records before/after numbers, the techniques applied, and a non-regression sweep across all (prime, n) cells.\n- [hard] After this task lands, 98336ab4 worker re-benches all n=4096 cells with warmup-matched protocol; 98336ab4 closes PASS for all 6 cells (including the GF(7)/256 -37.3% delta from instruction-cache warmup, which is fixable as part of this task's bench re-run).\n\n## Out of scope\n\n- AVX-512 (epic `7f809931`).\n- BLAS delegation (explicitly excluded per user directive).\n- Multi-threading the single-matrix `gemm` (separate epic if pursued).\n\n## Notes\n\n- Filed session 6 (2026-05-25) after wave-6 review + user decision.\n- Blocks 98336ab4 closure. 98336ab4 stays in_progress until this task lands and the n=4096 re-bench is run.\n- Independent of the panelized-PLE / echelon / invert / solve track; can run parallel with wave 7a + 7b.\n- Reference: BLIS paper (Van Zee & van de Geijn 2015, \"BLIS: A Framework for Rapidly Instantiating BLAS Functionality\"), Goto-Geijn 2008 algorithm.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch",
+    "ppc-kernel:C2"
+  ],
+  "created_at": "2026-05-25T19:57:40.482693112+00:00",
+  "updated_at": "2026-05-25T19:57:40.482701482+00:00"
+}

@@ -5,7 +5,9 @@
   "state": "in_progress",
   "priority": "normal",
   "assignee": "agent:claude",
-  "dependencies": [],
+  "dependencies": [
+    "74ba1cdc-20dc-43bd-a890-7ef2be4ef345"
+  ],
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -21,5 +23,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:10:31.705488697+00:00",
-  "updated_at": "2026-05-25T12:12:45.695867142+00:00"
+  "updated_at": "2026-05-25T19:58:00.251409438+00:00"
 }
