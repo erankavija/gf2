@@ -13,7 +13,14 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "Blocked invert design",
+      "path": "dev/active/feb15da9-blocked-invert-design.md"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
