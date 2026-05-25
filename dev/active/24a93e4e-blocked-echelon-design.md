@@ -107,10 +107,11 @@ $$E[\text{non-pivot rows}, \text{free cols}] \mathrel{-}=
   E[\text{pivot rows}, \text{free cols}]$$
 
 This is a GEMM of shape $(m - r) \times r$ times $r \times (n - r)$ into
-$(m - r) \times (n - r)$. It is dispatched via `gemm_axpy_into_view`
-(`crates/gf2-core/src/field/matrix.rs`, line 2854), which auto-dispatches to
-`fp_small_try_gemm_classical` for small primes ($P \le 251$) and to the u16
-medium-prime path for GF(65521).
+$(m - r) \times (n - r)$. It is dispatched via the 40195c09-lifted
+`gemm_axpy_into_view` (`crates/gf2-core/src/field/matrix.rs`, line 2854),
+which — post-40195c09 lift — auto-dispatches to `fp_small_try_gemm_classical`
+for small primes ($P \le 251$) and to the u16 medium-prime path for GF(65521).
+See §6.3 for the prerequisite details.
 
 **Stage 3b — Pivot rows TRSM (structurally triangular):**
 
@@ -147,10 +148,10 @@ flowchart TD
 **Key insight:** the blocked back-substitution splits into a pivot-row TRSM
 (Stage 3b, structurally required because $E[\text{pivot}, \text{pivot}]$ is
 upper unit triangular after scaling) and a non-pivot-row GEMM (Stage 3a,
-the dominant cost). Stage 3a is dispatched through `gemm_axpy_into_view`
-(`crates/gf2-core/src/field/matrix.rs` line 2854), which auto-selects the
-AVX2 byte-lane path for $P \le 251$ and the u16 medium-prime path for
-GF(65521).
+the dominant cost). Stage 3a is dispatched through the 40195c09-lifted
+`gemm_axpy_into_view` (`crates/gf2-core/src/field/matrix.rs` line 2854),
+which — post-40195c09 lift — auto-selects the AVX2 byte-lane path for
+$P \le 251$ and the u16 medium-prime path for GF(65521). See §6.3.
 
 ---
 
@@ -177,9 +178,11 @@ The call shape passed to `gemm_axpy_into_view` is:
 - `out` = view of `E[non-pivot rows, free cols]`, shape $(m-r) \times r_f$, updated in-place
 
 `gemm_axpy_into_view` (defined at `crates/gf2-core/src/field/matrix.rs` line
-2854) auto-dispatches to `fp_small_try_gemm_classical` for small primes
-($P \le 251$) and to the u16 medium-prime path for GF(65521). This single call
-handles both prime ranges without a separate dispatch in `try_blocked_back_sub`.
+2854) — via the 40195c09-lifted dispatch — auto-dispatches to
+`fp_small_try_gemm_classical` for small primes ($P \le 251$) and to the u16
+medium-prime path for GF(65521). This single call handles both prime ranges
+without a separate dispatch in `try_blocked_back_sub`. See §6.3 for the
+architectural prerequisite details.
 
 **Stage 3b — Pivot rows TRSM**
 
@@ -213,19 +216,31 @@ behavioral change; only the fast path is new.
 ### 3.3 Medium-prime GF(65521) path
 
 GF(65521) echelon closes A8 rows 26-29 (current 1.57×-12.37×) by inheriting
-the `fp_medium` speedup through `gemm_axpy_into_view`. The dispatch chain is:
+the `fp_medium` speedup through `gemm_axpy_into_view`. The current (pre-40195c09)
+dispatch chain goes through `dot_product_slices`'s medium-prime u16 packed dot:
 
 ```
 try_blocked_back_sub (stage 3a)
   -> gemm_axpy_into_view         // crates/gf2-core/src/field/matrix.rs line 2854
+       -> dot_product_slices (per-cell)
+            -> medium-prime u16 packed dot  // P in [252, 65521]
+```
+
+After 40195c09 lands, the whole-GEMM path replaces the per-cell path for all
+supported primes, including GF(65521):
+
+```
+try_blocked_back_sub (stage 3a)
+  -> gemm_axpy_into_view (post-40195c09 lift)
        -> fp_small_try_gemm_classical::<65521>
-            -> fp_medium u16 lane  // medium-prime path, P in [252, 65521]
+            -> fp_medium u16 lane  // whole-panel path, P in [252, 65521]
 ```
 
 No separate u16 echelon kernel is needed. The `try_blocked_back_sub` dispatch
 calls `gemm_axpy_into_view` (not directly `fp_small_try_gemm_classical`), so
-the medium-prime path is auto-inherited for all fields whose
-`fp_small_try_gemm_classical` returns `true` — including GF(65521).
+the medium-prime path is auto-inherited. The per-cell medium-prime u16 dot is
+available both before and after 40195c09; 40195c09 upgrades it to the
+whole-panel path for better amortisation at larger $n$.
 
 ---
 
@@ -257,14 +272,16 @@ not a small/medium prime), deferring to the existing scalar path.
 
 ### 4.2 Dispatch rule
 
-`try_blocked_back_sub` calls `gemm_axpy_into_view`
+`try_blocked_back_sub` calls the 40195c09-lifted `gemm_axpy_into_view`
 (`crates/gf2-core/src/field/matrix.rs` line 2854) for Stage 3a and
 `trsm_upper` (`crates/gf2-core/src/field/triangular.rs` line 258) for Stage
 3b. Both are safe `pub(crate)` functions that keep the unsafe SIMD boundary
 inside `gf2-kernels-simd`, matching the existing invariant in `CLAUDE.md` §
 Key design invariants § 3. The function does not call
-`fp_small_try_gemm_classical` directly; the medium-prime path for GF(65521) is
-auto-inherited via the `gemm_axpy_into_view` dispatch chain.
+`fp_small_try_gemm_classical` directly; the small-prime and medium-prime paths
+are auto-inherited via the post-40195c09 `gemm_axpy_into_view` dispatch chain.
+Before 40195c09 lands, only the medium-prime u16 path is available; the
+small-prime byte-lane path becomes available once 40195c09 is merged. See §6.3.
 
 ### 4.3 `row_echelon` changes
 
@@ -276,41 +293,41 @@ blocked echelon design is purely additive to the back-substitution step.
 
 ## 5. GF(2^31-1) Mersenne31 Strategy
 
-**Decision: separate path, not shared with small-prime infrastructure.**
+**Status: NOT delivered by this design's blocked back-substitution under the current architecture.**
 
-**Rationale:**
+**Background on Mersenne31 storage.** GF(2^31-1) elements are stored as
+canonical `u32` values in `[0, 2^31-2]`. The small-prime panelized kernel
+(`fp_small_panel_gemm` in `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs`)
+operates on `&[u8]` slices with `p: u8` and the inner `_mm256_madd_epi16` loop
+exploits the `p ≤ 251` bound. Mersenne31 cannot reuse this kernel.
 
-1. **Storage layout differs.** GF(2^31-1) elements are stored as canonical
-   `u32` values in `[0, 2^31-2]`, not as canonical `u8` bytes in `[0, P)`.
-   The small-prime panelized kernel (`fp_small_panel_gemm` in
-   `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs`) operates on `&[u8]`
-   slices with `p: u8` and the inner `_mm256_madd_epi16` loop exploits the
-   `p ≤ 251` bound (8-bit values, 16-bit products, 32-bit accumulators with no
-   overflow up to `k = 68 719`). Reusing this kernel for Mersenne31 would
-   require a separate pack/unpack pass from `u32` to `u8` that is not currently
-   implemented and would re-introduce the per-element REDC overhead the design
-   is meant to eliminate.
+**Mersenne31 has its own fast kernel.** `crates/gf2-kernels-simd/src/mersenne.rs`
+provides `MersenneFns` (`m31_batch_mul_fn`, `m31_batch_mul_add_fn`,
+`m31_batch_dot_fn`) dispatched via `detect()`. The Mersenne31 fgemm cells are
+already PASS at all sizes. The echelon FAIL cells (rows 30-33) are attributed
+to the scalar PLE output and scalar back-substitution loop.
 
-2. **Mersenne31 has its own fast path.** `crates/gf2-kernels-simd/src/mersenne.rs`
-   provides `MersenneFns` (`m31_batch_mul_fn`, `m31_batch_mul_add_fn`,
-   `m31_batch_dot_fn`) dispatched via `detect()`. The Mersenne31 fgemm cells
-   are already PASS at all sizes (`GF(2^31-1)` rows in Section 1 of the
-   scorecard). The echelon FAIL cells (rows 30-33) are attributed to the
-   scalar PLE output and scalar back-substitution loop, not to the GEMM kernel
-   itself.
+**Why `gemm_axpy_into_view` does NOT reach `m31_batch_dot_fn`.**
+`SimdVecOps::try_simd_dot_vec` — the inner dispatch used by
+`gemm_axpy_into_view`'s per-cell `dot_product_slices` path — only covers
+`3 <= P <= 251` (see `crates/gf2-core/src/gfp/simd_ops.rs:237-241`). The
+Mersenne31 `m31_batch_dot_fn` kernel at
+`crates/gf2-kernels-simd/src/mersenne.rs` is therefore not reachable via the
+current `gemm_axpy_into_view` path. Task 40195c09 is explicitly out of scope
+for Mersenne31 dispatch (per 40195c09's "Out of scope" section).
 
-3. **Correct approach for Mersenne31.** Because `try_blocked_back_sub` calls
-   `gemm_axpy_into_view` directly for Stage 3a (see §3.1 and §4.2), Mersenne31
-   is handled automatically: `gemm_axpy_into_view` dispatches to the Mersenne31
-   dot-product path via `m31_batch_dot_fn` for GF(2^31-1). No separate
-   code path or conditional dispatch is needed in `try_blocked_back_sub` for
-   Mersenne31 — the `gemm_axpy_into_view` abstraction absorbs the difference.
+**Consequence for A8 rows 30-33.** Mersenne31 echelon (A8 rows 30-33) is NOT
+delivered by this design's blocked back-substitution. Even after 40195c09
+lands, `gemm_axpy_into_view` will not dispatch `m31_batch_dot_fn` for
+GF(2^31-1), so Stage 3a will fall back to the per-cell scalar
+`dot_product_slices` path. Closing rows 30-33 requires a separate
+Mersenne31 path (either extending `gemm_axpy_into_view` with Mersenne31
+dispatch in a follow-up task, or specialising the back-sub for
+`Fp<2^31-1>`). This is documented as Risk M1 in §10.
 
-**Consequence:** The implementation child `869ce43b` implements a single
-`try_blocked_back_sub` that calls `gemm_axpy_into_view` for Stage 3a; the
-function is field-generic and covers small primes ($P \le 251$), medium primes
-(GF(65521)), and Mersenne31 through the existing `gemm_axpy_into_view` dispatch
-table. No separate fast-path variant per prime range is required.
+The implementation child `869ce43b` must surface rows 30-33 as a remaining gap
+and escalate for a follow-up task. Do not pre-amend the success criteria for
+these rows; the gap acknowledgement here is descriptive, not a criterion change.
 
 ---
 
@@ -348,10 +365,23 @@ pub(crate) fn gemm_axpy_into_view<F>(
 `try_blocked_back_sub` calls this function with `alpha = F::neg_one()`,
 `beta = F::one()`, and views sliced to `E[non-pivot rows, pivot cols]`,
 `E[pivot rows, free cols]`, and `E[non-pivot rows, free cols]` respectively.
-This single call covers all supported prime ranges: `gemm_axpy_into_view`
-internally dispatches to `fp_small_try_gemm_classical` for small/medium primes
-($P \le 65521$) and to the Mersenne31 `m31_batch_dot_fn` for GF(2^31-1). The
-echelon design does not call `fp_small_try_gemm_classical` directly.
+
+**Current dispatch (pre-40195c09):** `gemm_axpy_into_view`'s per-cell
+`dot_product_slices` only auto-dispatches the medium-prime u16 packed dot
+(`crates/gf2-core/src/field/vec.rs:480-493`,
+`crates/gf2-core/src/gfp/mod.rs:648-661`). The small-prime whole-GEMM path
+(`fp_small_try_gemm_classical`) is NOT yet reachable from
+`gemm_axpy_into_view`. The R1 reviewer correctly identified this gap.
+
+**Post-40195c09 dispatch:** After task 40195c09 ("Lift `gemm_axpy_into_view`
+with small-prime SIMD fast path") lands, `gemm_axpy_into_view` will
+auto-dispatch `fp_small_try_gemm_classical` for $P \le 251$ and retain the
+medium-prime u16 path for $252 \le P \le 65521$. The echelon design does not
+call `fp_small_try_gemm_classical` directly; the small-prime path is
+inherited via the post-40195c09 dispatch. See §6.3.
+
+**Mersenne31 is not covered:** `gemm_axpy_into_view` does not dispatch the
+Mersenne31 `m31_batch_dot_fn` kernel (see §5 and Risk M1 in §10).
 
 For reference, `fp_small_try_gemm_classical` is defined at
 `crates/gf2-core/src/gfp/simd_ops.rs` line 654 and its underlying AVX2 kernel
@@ -359,7 +389,26 @@ is `fp_small_panel_gemm` in
 `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs` line 121. The echelon
 implementation reaches neither of these directly.
 
-### 6.3 `trsm_lower` — for stage 2
+### 6.3 Architectural prerequisite (40195c09)
+
+The blocked echelon's Stage 3a non-pivot GEMM and Stage 3b pivot-row TRSM both
+reach `fp_small_try_gemm_classical` (for $P \le 251$) ONLY after task
+**40195c09** ("Lift `gemm_axpy_into_view` with small-prime SIMD fast path")
+lands. The R1 reviewer correctly pointed out that the current
+`gemm_axpy_into_view` does NOT route the small-prime whole-GEMM path — per-cell
+`dot_product_slices` only auto-dispatches the medium-prime u16 packed dot
+(`crates/gf2-core/src/field/vec.rs:480-493`,
+`crates/gf2-core/src/gfp/mod.rs:648-661`). Task 40195c09 adds the missing
+dispatch (either scratch-buffer + add-into-view, or a fused alpha-beta panel
+kernel). The implementation child `869ce43b` is JIT-wired to depend on 40195c09
+landing first.
+
+Before 40195c09 lands, the blocked echelon would call `gemm_axpy_into_view` and
+inherit only the medium-prime u16 path. After 40195c09 lands, both small-prime
+and medium-prime paths are auto-dispatched. The design's algorithm is unchanged
+in either case; only the realised speedup depends on 40195c09.
+
+### 6.4 `trsm_lower` — for stage 2
 
 ```rust
 // crates/gf2-core/src/field/triangular.rs, line 320
@@ -367,8 +416,9 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>)
 ```
 
 Used in `row_echelon()` to apply $L^{-1} P^T$. Already dispatches internally
-to `gemm_axpy_into_view`, which calls `fp_small_try_gemm_classical`. No change
-needed here; `trsm_lower` inherits the panelized speedup automatically.
+to `gemm_axpy_into_view`, which — post-40195c09 lift — calls
+`fp_small_try_gemm_classical` for small primes. No change needed here;
+`trsm_lower` inherits the panelized speedup automatically once 40195c09 lands.
 
 ---
 
@@ -472,14 +522,21 @@ RREF").
 Deliverable: production code in `crates/gf2-core/src/field/ple.rs` (and/or
 `matrix.rs`) implementing:
 1. `try_blocked_back_sub` as described in sections 3 and 4.
-2. Mersenne31 fallback to `gemm_axpy_into_view` (section 5).
-3. Proptest sweep (section 7).
-4. Benchmark cells (section 8).
-5. Evidence doc (CSV + markdown) for all 18 cells.
+2. Proptest sweep (section 7).
+3. Benchmark cells (section 8).
+4. Evidence doc (CSV + markdown) for all 18 cells.
+5. Escalation note for rows 30-33 (Mersenne31 gap, see §5 and Risk M1 in §10).
 
-Prerequisites: `2e8c5a29` (PLE design approved) and `6823c8a0` (panelized PLE
-implementation merged to main). The `6613abf4` (triangular solve) sibling can
-run in parallel with `869ce43b` since they touch disjoint code paths.
+Prerequisites:
+- `2e8c5a29` (PLE design approved) and `6823c8a0` (panelized PLE implementation
+  merged to main).
+- **`40195c09`** ("Lift `gemm_axpy_into_view` with small-prime SIMD fast path")
+  merged to main. The small-prime speedup for A8 rows 18-25 and 72-73 is gated
+  on this task; without it, Stage 3a inherits only the medium-prime u16 path.
+  The JIT DAG records `869ce43b` as a dependent of `40195c09`.
+
+The `6613abf4` (triangular solve) sibling can run in parallel with `869ce43b`
+since it touches disjoint code paths.
 
 ---
 
@@ -497,11 +554,10 @@ amend in the design.
 
 Rows 32 and 33 are deficient-regime cells at n=256 and n=1024 with ratios
 7.20× and 7.16×. These are distinct from the uniform cells that were closed by
-the Wave-9 `[E15]` evidence for GF(2^31-1). The Mersenne31 fast path for
-back-substitution (using `gemm_axpy_into_view`) should provide a strong
-speedup here since the deficient path still runs the full back-substitution on
-the non-zero part of the echelon form. If the panelized PLE from `6823c8a0` is
-sufficiently fast for Mersenne31, rows 30-33 should close within 1.5×.
+the Wave-9 `[E15]` evidence for GF(2^31-1). As documented in §5 and Risk M1
+below, the Mersenne31 fast path is NOT reachable from `gemm_axpy_into_view`
+under the current architecture, and 40195c09 is out of scope for Mersenne31
+dispatch. Rows 30-33 will not be closed by this design. See Risk M1.
 
 ### 10.3 Dependency on the panelized PLE (`2e8c5a29` / `6823c8a0`)
 
@@ -520,6 +576,31 @@ does not change this allocation; it is pinned in the existing `rref` allocation
 budget tests. Any additional scratch allocations introduced by
 `try_blocked_back_sub` must be justified and, if they exceed one additional
 `FieldMatrix`, must be escalated via the allocation budget test mechanism.
+
+### Risk M1: Mersenne31 echelon (A8 rows 30-33) not closed by this design
+
+Mersenne31 echelon (A8 rows 30-33) is NOT delivered by this design's blocked
+back-substitution under the current architecture, because:
+
+(a) The panelized PLE design `2e8c5a29` does not specialise for a Mersenne31
+    base case — Stage 1 inherits the generic scalar PLE for Mersenne31.
+(b) `gemm_axpy_into_view` does not dispatch the Mersenne31 dot kernel
+    (`m31_batch_dot_fn` at `crates/gf2-kernels-simd/src/mersenne.rs`). The
+    `SimdVecOps::try_simd_dot_vec` guard at
+    `crates/gf2-core/src/gfp/simd_ops.rs:237-241` only covers `3 <= P <= 251`,
+    so Mersenne31 falls through to the per-cell scalar `dot_product_slices` path.
+(c) Task 40195c09 is explicitly out of scope for Mersenne31 dispatch.
+
+Closing rows 30-33 requires a separate Mersenne31 path — either extending
+`gemm_axpy_into_view` with Mersenne31 whole-GEMM dispatch in a follow-up task,
+or specialising the back-sub for `Fp<2^31-1>`. The implementation child
+`869ce43b` must surface this as a remaining gap and escalate for a follow-up
+task before marking rows 30-33 as closed.
+
+No success-criterion amendment is made here: this risk entry is descriptive, not
+a criterion change. The `[hard]` ≤ 1.5× targets for rows 30-33 remain as
+originally stated; the impl child must escalate via the standard process if
+measurement shows they are not achievable within the current architecture.
 
 ### 10.5 Medium-prime band (GF(65521))
 
