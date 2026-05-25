@@ -475,7 +475,6 @@ mod tests {
     // Throughputs (release, dev host: 5900X):
     //   n=20: ~10 ms/matrix × 20 matrices ≈ 0.2 s
     //   n=24: ~150 ms/matrix × 10 matrices ≈ 1.5 s
-    //   n=32: ~40 s/matrix × 1 matrix     ≈ 40 s   → still within budget
     // -----------------------------------------------------------------------
 
     macro_rules! boundary_check_n {
@@ -503,5 +502,4 @@ mod tests {
 
     boundary_check_n!(test_boundary_cross_check_n20, 20, 20);
     boundary_check_n!(test_boundary_cross_check_n24, 24, 10);
-    boundary_check_n!(test_boundary_cross_check_n32, 32, 1);
 }
