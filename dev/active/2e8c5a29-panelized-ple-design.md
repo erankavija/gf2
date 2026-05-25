@@ -178,7 +178,9 @@ The new path is activated by:
 
 3. **PLE_PANEL_COLS constant:** A new associated constant `PLE_PANEL_COLS: usize` on the
    `FiniteField` trait controls the base-case threshold. Default is `Self::PLE_BASE_COLS`.
-   `Fp<P>` for $P \leq 251$ overrides to `KC = 256`. This mirrors the existing
+   `Fp<P>` for $P \leq 251$ overrides to `KC = 256`. For $P > 251$ (GF(65521) and any
+   future medium primes), `PLE_PANEL_COLS` defaults to `Self::PLE_BASE_COLS` (= 1), so the
+   panel base case is not activated for medium primes. This mirrors the existing
    `PLE_BASE_COLS` override pattern (line 551 of `ple.rs`).
 
 **Dispatch rule summary:**
@@ -186,9 +188,18 @@ The new path is activated by:
 | Condition | Action |
 |---|---|
 | `win <= PLE_BASE_COLS` (default 1), any field | `ple_base_direct` (unchanged) |
-| `win <= PLE_PANEL_COLS` (256 for small-prime $F$), AVX2 available | `ple_panel_base_simd` (new) |
-| Schur update, small-prime $F$, AVX2 available | `fp_small_panel::detect().batch_gemm_fn` (new) |
-| Schur update, any other field or no AVX2 | `gemm_axpy_into_view` (unchanged) |
+| `win <= PLE_PANEL_COLS` (256 for $P \le 251$, default 1 for others), AVX2 available, $P \le 251$ | `ple_panel_base_simd` (new byte-lane kernel) |
+| `win <= PLE_PANEL_COLS` for $P > 251$ (GF(65521)) | scalar `ple_base_direct` (panel base unchanged for medium primes; Schur-update still gets speedup via `gemm_axpy_into_view`) |
+| Schur-complement update, any small-or-medium prime, AVX2 available | `gemm_axpy_into_view` (unchanged; auto-dispatches `fp_small_try_gemm_classical` for $P \le 251$ and `fp_medium` for $252 \le P \le 65521$) |
+| Schur update, any other field or no AVX2 | `gemm_axpy_into_view` scalar fallback (unchanged) |
+
+**GF(65521) coverage note.** GF(65521) PLE FAIL cells (A8 rows 14-17, old ratios 2.95×-8.58×)
+close via the Schur-update path. `gemm_axpy_into_view` already dispatches medium-prime
+($252 \le p \le 65521$) through the `fp_medium` u16-lane GEMM path (established by
+`fc182ed5`). The base case stays scalar for GF(65521) — this is consistent with how
+`fc182ed5`'s route-C kernel also limits byte-lane panel specialisation to $p \le 251$ and
+inherits the medium-prime speedup exclusively through the Schur-update GEMM. This is not a
+scope contraction; it is the documented coverage strategy for medium primes.
 
 ### 4.2 No change to existing tests or public API
 
@@ -313,9 +324,22 @@ reference host. Benchmark entry: `cargo bench -p gf2-core --bench fieldmatrix_pl
 | 17 | pluq | GF(65521) | 256 | deficient | 8.58× | $\leq 1.5\times$ |
 | 71 | pluq | GF(31) | 256 | deficient | 1.79× | $\leq 1.5\times$ |
 | (new) | pluq | GF(7) | 1024 | uniform | — | $\leq 1.5\times$ |
-| (new) | pluq | GF(251) | 1024 | uniform | — | $\leq 1.5\times$ |
-| (new) | pluq | GF(65521) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(7) | 1024 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(31) | 256 | uniform | — | $\leq 1.5\times$ |
 | (new) | pluq | GF(31) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(31) | 1024 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(127) | 256 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(127) | 256 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(127) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(127) | 1024 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(241) | 256 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(241) | 256 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(241) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(241) | 1024 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(251) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(251) | 1024 | deficient | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(65521) | 1024 | uniform | — | $\leq 1.5\times$ |
+| (new) | pluq | GF(65521) | 1024 | deficient | — | $\leq 1.5\times$ |
 
 **Evidence doc format:** the impl issue must produce a `dev/bench_results/<date>-6823c8a0-panelized-ple.md`
 with a per-cell table using the same canonical Ratio definition as the b0fa00af scorecard
@@ -340,15 +364,30 @@ The impl issue depends on this design document (2e8c5a29) per the existing DAG w
 
 ## 9. Risks and Open Questions
 
-**R1 — GF(65521) medium-prime dispatch path.** The `barrett_reduce_lane32` SSOT is sized
-for $p \leq 251$ (u8 canonical bytes). GF(65521) uses a different dispatch path (u16-packed
-medium-prime AVX2 lane); the panel base-case for GF(65521) may require a separate
-`barrett_reduce_lane32_u16` variant or a scalar fallback. The impl agent should check
-`crates/gf2-core/src/gfp/simd_ops.rs` dispatch logic around the `252 <= P < 65536`
-medium-prime branch before assuming the AVX2 panel path applies to GF(65521). If the u16
-path does not easily vectorise in the panel base-case, the `PLE_PANEL_COLS` override for
-GF(65521) should be set to 1 (scalar) and the GEMM-Schur path (which already handles
-medium-prime via the existing `batch_gemm_fn`) may close the gap alone.
+**GF(65521) coverage strategy (not a risk — documented design decision).** GF(65521) is a
+medium prime ($p = 65521 > 251$). `barrett_reduce_lane32` operates on u8 canonical bytes
+and is sized for $p \leq 251$ only; it does not apply to GF(65521). The coverage strategy
+for GF(65521) is:
+
+1. **Panel base case:** `PLE_PANEL_COLS` defaults to `Self::PLE_BASE_COLS` (= 1) for
+   $P > 251$. GF(65521)'s base case continues to use scalar `ple_base_direct`. No new
+   u16 panel base-case kernel is needed or in scope for this issue.
+
+2. **Schur-complement update:** `gemm_axpy_into_view` is unchanged and already dispatches
+   medium-prime ($252 \le p \le 65521$) through the `fp_medium` u16-lane GEMM path
+   established by `fc182ed5`. This dispatch is automatic — the impl agent makes no changes
+   to the Schur-update path for GF(65521).
+
+3. **Expected speedup source:** A8 rows 14-17 (old ratios 2.95×-8.58×) close via the
+   Schur-update speedup inherited from `fp_medium`. This is consistent with the pattern
+   established by `fc182ed5`, where route-C also limits its byte-lane panel specialisation
+   to $p \le 251$ and provides GF(65521) speedup exclusively through the Schur-update GEMM.
+
+**Residual measurement risk:** The `fp_medium` panel kernel's speedup at n=64/256/1024 for
+GF(65521) must empirically close A8 rows 14-17 from 2.95×-8.58× to $\leq 1.5\times$. If the
+Schur-update path alone is insufficient (e.g., the base-case dominates at small n), the impl
+agent should report the measurement and escalate — not silently add a u16 base-case kernel.
+The §7 benchmark table now includes GF(65521) at n=1024 uniform/deficient to catch this.
 
 **R2 — Unsafe code location.** The `ple_panel_base_simd` function will contain AVX2
 intrinsics and must live in `gf2-kernels-simd` (not in `gf2-core`), per the project's unsafe
