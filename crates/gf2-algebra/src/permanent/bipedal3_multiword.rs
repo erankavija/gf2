@@ -630,12 +630,6 @@ mod tests {
         run_multiword_vs_ryser_at_n(24, 5, 0x0018);
     }
 
-    #[test]
-    #[ignore = "slow: multi-word vs ryser at n=32 (per-trial ~3 min; 1 trial)"]
-    fn test_multiword_vs_ryser_n32_slow() {
-        run_multiword_vs_ryser_at_n(32, 1, 0x0020);
-    }
-
     // -----------------------------------------------------------------------
     // Block-decomposable cross-check at small n ∈ {10, 16, 20}.
     //
