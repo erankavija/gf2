@@ -7,12 +7,16 @@
 //! structural Zen-3 micro-architecture grounds. The post-2026-05-06
 //! 5-trial empirical sweep falsified that prediction (see the empirical
 //! note below): Candidate C (`crate::fp_small`) measures 5–10 % faster
-//! than F at every in-scope cell on this host. Production therefore
-//! routes to Candidate C for all `P ≤ 251` (`N_THRESH_PRIME = 252` in
-//! `crates/gf2-core/src/gfp/simd_ops.rs`), and **F is compiled in but
-//! not currently selected at runtime**. F retains forward-compat value
-//! for future hosts (Zen-4+/AVX-VNNI/AVX-512) where the f32-FMA cascade
-//! may pull ahead.
+//! than F at every in-scope cell on this host except GF(251)/n ≥ 512,
+//! where the reworked F variant (route A, [`SmallPrimeF32Fns::batch_gemm_route_a_fn`])
+//! clears 1.5× of fflas-ffpack (ratio 0.683) once the pack cost amortises.
+//! Production therefore routes GF(251)/n ≥ 512 through route A and routes
+//! every other `P ≤ 251` cell through Candidate C (`N_THRESH_PRIME = 251`
+//! combined with `n ≥ 512` in
+//! `crates/gf2-core/src/gfp/simd_ops.rs::select_f32_path`, issue 41096af5).
+//! The legacy `batch_gemm_fn` body is compiled in but no longer selected
+//! at runtime; it retains forward-compat value for future hosts
+//! (Zen-4+/AVX-VNNI/AVX-512) where the f32-FMA cascade may pull ahead.
 //!
 //! All unsafe intrinsics are isolated in `x86/fp_small_f32.rs`; this
 //! module exposes only safe function-pointer wrappers through the

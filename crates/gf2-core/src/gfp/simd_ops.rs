@@ -477,15 +477,21 @@ static ROUTE_A_GF251_ENABLED: AtomicBool = AtomicBool::new(false);
 /// reworked Candidate F path (vectorized AVX2 Barrett output reduction +
 /// lookup-table pack / unpack).
 ///
-/// Default is `false` — production dispatch is unaffected. Call with
-/// `true` in test or bench code to exercise route A; restore to `false`
-/// after the test to avoid cross-test interference (the flag is a process-
-/// wide `AtomicBool`).
+/// As of issue 41096af5, route A is the production default for
+/// GF(251)/n ≥ 512 via `select_f32_path` — this toggle is now an
+/// **explicit override** that additionally forces route A on for
+/// GF(251)/n < 512 (cells that the production dispatch routes to
+/// Candidate C). With the toggle `false` (default), GF(251)/n ≥ 512 still
+/// routes through route A; with the toggle `true`, all GF(251) cells do.
+/// Tests and benches that need to exercise route A at small n flip this
+/// flag; restore to `false` after to avoid cross-test interference (the
+/// flag is a process-wide `AtomicBool`).
 ///
-/// This is the dispatch surface the issue's success criterion 1 names as
-/// the "non-default dispatch toggle (cargo feature OR runtime debug
-/// switch)" exposing the reworked path "without changing default
-/// production behaviour."
+/// Originally added under issue 68cdf4c8 SC#1 as the "non-default
+/// dispatch toggle (cargo feature OR runtime debug switch)" exposing the
+/// reworked path "without changing default production behaviour" — that
+/// remained accurate until 41096af5 wired route A as the production
+/// default for n ≥ 512.
 ///
 /// Scope: only affects `P == 251`; other primes continue to use
 /// Candidate C regardless of this flag.
