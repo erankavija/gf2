@@ -1,0 +1,21 @@
+date,issue,family,operation,field,n,regime,trial,gf2_wall_ns,bench_binary,bench_filter
+2026-05-25,b0fa00af,GF(p),pluq,GF(251),256,uniform,1,4580000,fieldmatrix_ple-2b15d2c195e42f70,pluq/Fp_251/uniform/256
+2026-05-25,b0fa00af,GF(p),pluq,GF(251),256,uniform,2,4704300,fieldmatrix_ple-2b15d2c195e42f70,pluq/Fp_251/uniform/256
+2026-05-25,b0fa00af,GF(p),pluq,GF(251),256,uniform,3,4721600,fieldmatrix_ple-2b15d2c195e42f70,pluq/Fp_251/uniform/256
+2026-05-25,b0fa00af,GF(p),pluq,GF(251),256,uniform,4,4669800,fieldmatrix_ple-2b15d2c195e42f70,pluq/Fp_251/uniform/256
+2026-05-25,b0fa00af,GF(p),pluq,GF(251),256,uniform,5,4719700,fieldmatrix_ple-2b15d2c195e42f70,pluq/Fp_251/uniform/256
+2026-05-25,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,1,831580,rref-41a78ecd968a7c2f,gf2_echelon_target_rows/production_blocked/1024/uniform
+2026-05-25,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,2,830190,rref-41a78ecd968a7c2f,gf2_echelon_target_rows/production_blocked/1024/uniform
+2026-05-25,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,3,833410,rref-41a78ecd968a7c2f,gf2_echelon_target_rows/production_blocked/1024/uniform
+2026-05-25,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,4,885260,rref-41a78ecd968a7c2f,gf2_echelon_target_rows/production_blocked/1024/uniform
+2026-05-25,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,5,828650,rref-41a78ecd968a7c2f,gf2_echelon_target_rows/production_blocked/1024/uniform
+2026-05-25,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,1,16716000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m8/Gf2m8/256
+2026-05-25,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,2,16689000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m8/Gf2m8/256
+2026-05-25,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,3,16798000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m8/Gf2m8/256
+2026-05-25,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,4,16654000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m8/Gf2m8/256
+2026-05-25,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,5,16848000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m8/Gf2m8/256
+2026-05-25,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,1,16814000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m16/Gf2m16/256
+2026-05-25,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,2,16758000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m16/Gf2m16/256
+2026-05-25,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,3,16851000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m16/Gf2m16/256
+2026-05-25,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,4,16982000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m16/Gf2m16/256
+2026-05-25,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,5,16840000,fieldmatrix_gemm-2cca71292287a7d7,gemm/Gf2m16/Gf2m16/256

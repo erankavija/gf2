@@ -267,6 +267,8 @@ captures the per-cell maturity-marker scoping and re-escalation threshold
 (revisit when 615db3b9's Phase 5 downstream-LA-inheritance child lands and
 closes).
 
+**Resolved 2026-05-25 by b0fa00af** — see `dev/bench_results/2026-05-25-b0fa00af-sota-scorecard-final.md` § 7 for the inheritance check. GF(2^31-1)/invert/uniform at n=256 (1.79×) and n=1024 (1.98×) remain AMENDED [aspirational] (A4); the Phase 5 downstream-LA-inheritance check confirms the GF(2^31-1) path is structurally unaffected by 026fc832's small-prime GEMM improvements. Re-escalation: revisit when `615db3b9`'s GF(2^31-1) invert/uniform improvement task lands.
+
 ### SC#2: Correctness tests cover singular and rank-deficient inputs
 
 **Satisfied.** Four new deterministic tests added:
