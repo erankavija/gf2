@@ -3,7 +3,7 @@
   "epic_short_id": "026fc832",
   "epic_title": "Continue gf2-core SOTA catch-up \u2014 close A8 + \u00a76.3 follow-ups",
   "started_at": "2026-05-24T00:00:00+00:00",
-  "current_wave": 3,
+  "current_wave": 4,
   "scope_decision": {
     "session_1_date": "2026-05-24",
     "user_choice": "Option 1: close 615db3b9 as plan-only + drive all 12 items",
@@ -126,13 +126,11 @@
           "short_id": "fc182ed5",
           "title": "Prototype pure integer panelized GF(251) micro-kernel (route C)",
           "classification": "implementation",
-          "status": "pending",
-          "depends_on": [
-            "a70b1c70"
-          ],
-          "primary_files": [
-            "crates/gf2-kernels-simd/src/"
-          ]
+          "status": "done",
+          "completed_at": "2026-05-25T00:00:00+00:00",
+          "rework_count": 0,
+          "model": "opus",
+          "headline_result": "n=64 \u221217% REGRESSION; n=256 SHORTFALL 0.499; n=1024 SHORTFALL 0.540. Decisive: only route A clears 1.5x of fflas at GF(251), only at n=1024. First-try PASS (no rework)."
         }
       ],
       "parallelism_note": "All three touch crates/gf2-kernels-simd (or its Cargo.toml). Session-2 lead decision: SERIAL dispatch (perf prototypes need 5-trial CCX1 single-occupancy bench measurements; the 27bb2f75 cycle proved parallel bench measurements pollute each other). 91429c1c is the exception \u2014 out-of-tree harness in dev/research/blas_sgemm_gf251/, parallel-safe with kernels-simd work in principle, but serialized in practice for consistent bench host conditions."
@@ -145,13 +143,14 @@
           "short_id": "41096af5",
           "title": "Select and wire the GF(251) production route",
           "classification": "implementation",
-          "status": "pending",
+          "status": "in_progress",
           "depends_on": [
             "68cdf4c8",
             "91429c1c",
             "fc182ed5"
           ],
-          "notes": "Decision context after wave 3: route A clears 1.5x only at n=1024 (0.679); route B SHORTFALL at both. Route C verdict TBD. If route C SHORTFALLS at both n=256 and n=1024, route-selection SC#7 escalation branch fires \u2014 no route clears the threshold uniformly."
+          "user_decision": "Session-4 escalation resolved: option 1 \u2014 wire route A as default for GF(251)/n>=512; keep Candidate C for n<512; amend GF(251)/n=256 to [aspirational]; route B research-only; route C dormant behind set_route_c_gf251_enabled.",
+          "notes": "Decision context: only route A clears 1.5x of fflas at GF(251), only at n=1024 (0.679). Routes B and C SHORTFALL at every cell. Route-selection SC#7 escalation branch fired in session 4; user picked option 1 above."
         }
       ]
     },

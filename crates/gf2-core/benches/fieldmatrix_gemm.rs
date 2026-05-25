@@ -294,18 +294,24 @@ fn bench_gemm_fp_241(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_251(c: &mut Criterion) {
-    // Per jit:68cdf4c8 SC#1 / jit:fc182ed5 SC#1: the Phase 1 route-A
-    // f32/FMA cascade and route-C pure-integer panelized micro-kernel
-    // are both non-default runtime debug switches. The bench reads the
-    // launcher-convenience env vars `GF2_GF251_ROUTE_A` and
-    // `GF2_GF251_ROUTE_C` (safe `std::env::var`) and toggles the safe
-    // `AtomicBool` setters in `gf2_core::gfp::simd_ops`. Production
-    // dispatch defaults to Candidate C — this only matters when the
-    // bench driver sets one of the env vars to opt into the A/B/C
-    // comparison.
+    // Per jit:41096af5: route A (reworked Candidate F) is now the
+    // production default for GF(251)/n >= 512. `select_f32_path`
+    // returns `true` for `P == 251 && n >= 512`, routing those cells
+    // through the `from_mont_f32` lookup-table pack + vectorized AVX2
+    // Barrett kernel automatically when the AtomicBool toggle is off.
+    // GF(251)/n < 512 (n=64, n=256) continues to use Candidate C by default.
     //
-    // If both env vars are set, route A wins (the dispatch in
-    // `fp_small_try_gemm_classical` checks the route-A toggle first).
+    // Env var `GF2_GF251_ROUTE_A=1` is an explicit override: it forces
+    // route A ON for any n (including n < 512) via the AtomicBool toggle.
+    // This preserves backward compatibility with the `run_68cdf4c8_route_a_bench.sh`
+    // driver. When the env var is unset, the AtomicBool stays at `false`
+    // (default), so production dispatch is exercised: n >= 512 → route A
+    // (via `select_f32_path`), n < 512 → Candidate C.
+    //
+    // `GF2_GF251_ROUTE_C=1` overrides to route C (Goto/BLIS panel, issue
+    // fc182ed5). Route C is dormant by default and not selected by
+    // `select_f32_path`. If both env vars are set, route A wins (the
+    // dispatch in `fp_small_try_gemm_classical` checks route A first).
     // The bench drivers toggle exactly one route at a time per phase.
     let route_a = std::env::var("GF2_GF251_ROUTE_A")
         .map(|v| v == "1")

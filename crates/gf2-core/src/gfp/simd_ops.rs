@@ -419,22 +419,50 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// `N_THRESH_PRIME = 11` would route GF(7) to C and GF(11)+ to F). The
 /// dispatch wiring is forward-compatible; amending this constant is the
 /// only code change needed when fresh data supports a lower threshold.
+///
+/// **Special case: GF(251)/n ≥ 512 is now routed through the reworked
+/// Candidate F (route A) by default, via an explicit `P == 251 && n >= 512`
+/// predicate in `select_f32_path`. This bypasses N_THRESH_PRIME entirely
+/// and does not affect any other prime. See
+/// `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`.**
 #[cfg(feature = "simd")]
 const N_THRESH_PRIME: u64 = 252;
 
-/// Per-(P, m, k, n) Candidate-F selector.
+/// Per-(P, m, k, n) Candidate-F / route-A selector.
 ///
-/// Returns `true` iff `P ≥ N_THRESH_PRIME && P ≤ 251`. With
-/// `N_THRESH_PRIME = 252` (empirically set — see its doc comment) this
-/// evaluates to `false` for every in-scope small prime, routing all
-/// `p ≤ 251` cells to Candidate C. The `(m, k, n)` parameters are part
-/// of the per-(P, n) rule's signature and are forwarded for forward
-/// compatibility — a future amendment can refine the threshold without
-/// changing the dispatch wiring.
+/// Returns `true` when either:
+///
+/// 1. **GF(251) production default (issue 41096af5):** `P == 251 && n >= 512`.
+///    Route A (reworked Candidate F with `from_mont_f32` lookup-table pack +
+///    vectorized AVX2 Barrett output reduction) clears 1.5× of fflas-ffpack
+///    at n=1024 on the Zen 3 reference host (ratio 0.679, PASS at ≥ 0.667).
+///    Pack cost amortises at n ≥ 512 (≈ 7% overhead at n=1024 vs 28% at
+///    n=256). See the Phase 1 decision document
+///    `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`
+///    for the full side-by-side evidence table and decision-rule application.
+///
+/// 2. **Legacy F-threshold (inactive):** `P >= N_THRESH_PRIME && P <= 251`.
+///    With `N_THRESH_PRIME = 252`, this is always `false` for every in-scope
+///    small prime (GF(7), GF(31), GF(127), GF(241), GF(251) — all ≤ 251).
+///    The condition is kept for forward compatibility; a future amendment
+///    can lower N_THRESH_PRIME without changing the dispatch wiring.
+///
+/// GF(7) / GF(31) / GF(127) / GF(241) are unaffected (rule 1 is `P == 251`
+/// only; rule 2 stays inactive). N_THRESH_PRIME is NOT lowered to activate
+/// this route — doing so would also route those primes through Candidate F
+/// and would violate the non-regression criterion.
 #[cfg(feature = "simd")]
 #[inline]
-#[allow(clippy::impossible_comparisons)] // intentional: N_THRESH_PRIME=252 makes this always false
-const fn select_f32_path<const P: u64>(_m: usize, _k: usize, _n: usize) -> bool {
+#[allow(clippy::impossible_comparisons)] // intentional: N_THRESH_PRIME=252 makes legacy line always false
+const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
+    // GF(251) production default: route A (reworked Candidate F)
+    // clears 1.5x of fflas-ffpack at n>=512 on the Zen-3 reference host.
+    // See dev/bench_results/2026-05-25-41096af5-route-selection-decision.md.
+    if P == 251 && n >= 512 {
+        return true;
+    }
+    // Legacy F-threshold (currently inactive: N_THRESH_PRIME=252 keeps
+    // it disabled for all in-scope primes).
     P >= N_THRESH_PRIME && P <= 251
 }
 
@@ -567,21 +595,35 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// kernel for every output cell against the cached packs. Unpacks the
 /// output and writes it through `out` (`m × n` row-major).
 ///
-/// **Dispatch policy (2026-05-06 prime-sweep sub-amendment):** Candidate C
-/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells on both
-/// AVX2-only and AVX2+FMA3 hosts. The 5-trial criterion sweep over
-/// GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at every
-/// cell; `select_f32_path` returns `false` for all in-scope primes
-/// (`N_THRESH_PRIME = 252`). Candidate F remains compiled in as an upgrade
-/// path for future measurement on a different host or at larger n.
+/// **Dispatch policy (updated 2026-05-25, issue 41096af5):** Candidate C
+/// (`_mm256_madd_epi16`-based) handles all `p ≤ 251` cells except the new
+/// GF(251)/n ≥ 512 production default (route A). The 5-trial criterion sweep
+/// over GF(7)–GF(251) at n ∈ {256, 1024} showed C beats F by 5–10 % at
+/// every cell except GF(251)/n=1024 where route A clears 1.5× of fflas-ffpack
+/// (ratio 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 &&
+/// n >= 512` (the pack-cost amortisation threshold determined by the Phase 1
+/// route-selection decision, `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`);
+/// `N_THRESH_PRIME = 252` keeps the legacy F-threshold inactive for all other primes.
+///
+/// **Route-A dispatch (issues 68cdf4c8 + 41096af5):** route A (reworked
+/// Candidate F: `from_mont_f32` lookup-table pack + vectorized AVX2 Barrett
+/// output reduction) runs in three cases:
+///
+/// 1. `route_a_selected` — explicit AtomicBool toggle via
+///    [`set_route_a_gf251_enabled`]; opt-in for testing and benches at any n.
+/// 2. `f32_selected && P == 251` — production default for n ≥ 512 since
+///    `select_f32_path` returns `true` for `P == 251 && n >= 512` (issue
+///    41096af5 wire-in).
+///
+/// Both cases share the same route-A code block. GF(7) / GF(31) / GF(127) /
+/// GF(241) are never affected — `route_a_selected` is scoped to `P == 251`
+/// and `select_f32_path`'s new branch is also `P == 251 && n >= 512`.
 ///
 /// **Route-A toggle (issue 68cdf4c8):** when [`set_route_a_gf251_enabled`]
 /// has been called with `true` AND `P == 251`, this function routes through
-/// a reworked Candidate F variant with vectorized AVX2 Barrett output
-/// reduction and lookup-table pack / unpack instead of Candidate C. The
-/// toggle is opt-in via a process-wide `AtomicBool`; default production
-/// dispatch is unchanged. See `route_a_gf251_enabled` and
-/// `dev/active/68cdf4c8-route-a-design.md`.
+/// route A for any n (not just n ≥ 512). This preserves backward
+/// compatibility with bench drivers that force route A unconditionally.
+/// See `dev/active/68cdf4c8-route-a-design.md`.
 ///
 /// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
 /// per-call constants (panel-pack heap allocations + Montgomery REDC on
@@ -640,12 +682,20 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
     let route_a_selected = route_a_gf251_enabled::<P>();
     let route_c_selected = route_c_gf251_enabled::<P>();
 
-    if route_a_selected {
-        // Route A (issue 68cdf4c8): reworked Candidate F for GF(251)
-        // with vectorized output reduction and lookup-table pack/unpack.
-        // The toggle is opt-in via `set_route_a_gf251_enabled(true)`; default
-        // production dispatch is unaffected (Candidate C continues to
-        // own all `p ≤ 251` cells).
+    if route_a_selected || (f32_selected && P == 251) {
+        // Route A (issues 68cdf4c8 + 41096af5): reworked Candidate F for
+        // GF(251) with vectorized output reduction and lookup-table pack/unpack.
+        //
+        // Two entry paths:
+        //   (a) `route_a_selected`: explicit AtomicBool toggle via
+        //       `set_route_a_gf251_enabled(true)` — opt-in for any n.
+        //   (b) `f32_selected && P == 251`: production default for n >= 512,
+        //       where `select_f32_path` returns true (pack cost amortises);
+        //       GF(7)/GF(31)/GF(127)/GF(241) and GF(251)/n<512 still use
+        //       Candidate C.
+        //
+        // See `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`
+        // for the Phase 1 decision table and wire-in rationale.
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
             let tables = build_small_prime_tables::<P>();
             let from_mont_f32 = tables.from_mont_f32.as_slice();
