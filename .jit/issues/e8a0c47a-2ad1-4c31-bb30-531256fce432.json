@@ -2,7 +2,7 @@
   "id": "e8a0c47a-2ad1-4c31-bb30-531256fce432",
   "title": "Generalize GF(p) reductions and dispatch policy (615db3b9 Phase 2)",
   "description": "Phase 2 of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 2). After the GF(251) production route is selected and wired (Phase 1 fan-in), generalize the new vectorized modular-reduction primitive across the GF(p) dispatch hierarchy without regressing existing wins.\n\nParent epic: 026fc832. Predecessor: Phase 1 fan-in (route selection task).\n\n## Background\n\nThe plan's Phase 2 (verbatim relevant clauses):\n\n> - Keep exact-prime dispatch ordering unchanged: Fp<65537>, then Mersenne31, then family paths.\n> - Revisit `N_THRESH_PRIME` only with new data; Candidate C currently wins on Zen 3 for p <= 251.\n> - Complete or coordinate with `27bb2f75` for n <= 128 overhead reduction.\n> - Consider a medium-prime cleanup only if the GF(32749)/n=64 0.18% gap becomes worth addressing; it should not distract from GF(251) and GF(2^m).\n> - Make vectorized modular reduction a reusable primitive for f32/double cascade output and integer-panel outputs.\n\n## Success Criteria\n\n- [hard] A reusable vectorized-modular-reduction primitive lives in `crates/gf2-kernels-simd/` and is used by both the GF(251) selected route's output reduction and at least one other call site (e.g., medium-prime u16 dot path or another small-prime kernel).\n- [hard] Exact-prime dispatch ordering (Fp<65537>, then Mersenne31, then family paths) is preserved — verified by reading `crates/gf2-core/src/gfp/simd_ops.rs` and a dispatch-trace test.\n- [hard] Bit-exact correctness preserved across GF(7), GF(31), GF(127), GF(241), GF(251), GF(257), GF(32749), GF(65521), Fp<65537>, Mersenne31 sweep proptests (boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}).\n- [hard] No regression on currently-PASSing GF(p) cells (delta ≤ 5% under same-session measurement at the 5900X reference host) — confirmed by re-running the predecessor scorecard's GF(p) section.\n- [hard] Coordination note in the evidence doc explaining how this work composes with `27bb2f75` (small-n overhead) — either as parallel/independent or as an explicit hand-off.\n- [hard] If `N_THRESH_PRIME` is changed, the evidence doc cites the new 5-trial CCX-pinned measurement that justifies it.\n\n## Out of scope\n\n- Medium-prime cleanup unless the GF(32749)/n=64 0.18% gap is explicitly the focus of this task — defer per the plan.\n- Extension-field GEMM (Phase 4).\n- Sparse-elim / pluq / echelon / invert / solve work — those are Phase 5 / separate issues.\n\n## Notes\n\nThis task can run in parallel with Phase 4 (extension-field GEMM design) and Phase 5 (downstream LA inheritance) once Phase 1 selects the route.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,14 +15,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T07:58:37.754685562Z"
+      "updated_at": "2026-05-25T08:12:15.867756386Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T07:54:14.667703162Z"
+      "updated_at": "2026-05-25T08:12:05.970358974Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-25T08:20:45.374562557Z"
     }
   },
   "context": {},
@@ -41,5 +46,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:32:42.505771705+00:00",
-  "updated_at": "2026-05-25T08:06:27.439837360+00:00"
+  "updated_at": "2026-05-25T08:20:45.904038999+00:00"
 }
