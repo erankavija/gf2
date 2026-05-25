@@ -837,11 +837,7 @@ pub unsafe fn fp_small_spmm_row(
 /// Caller must ensure AVX2 is available at runtime.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub(crate) unsafe fn barrett_reduce_lane32(
-    x: __m256i,
-    mu_vec: __m256i,
-    p_vec: __m256i,
-) -> __m256i {
+pub(crate) unsafe fn barrett_reduce_lane32(x: __m256i, mu_vec: __m256i, p_vec: __m256i) -> __m256i {
     // Compute q = (x * mu32) >> 32 per 32-bit lane.
     // _mm256_mul_epu32 multiplies the even u32 lanes of two u64-shaped
     // vectors and produces u64 results; combining with a shift handles
