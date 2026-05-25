@@ -28,14 +28,23 @@ fflas-ffpack reference at GF(251): n=256 → **128.48 Gop/s**, n=1024 → **138.
 
 Threshold (1.5× of fflas = ratio ≥ 0.667): n=256 → 85.65 Gop/s, n=1024 → 92.21 Gop/s.
 
-| Route | n=64 Gop/s | n=64 ratio | n=256 Gop/s | n=256 ratio | n=1024 Gop/s | n=1024 ratio | Status | Evidence doc |
-|---|---:|---:|---:|---:|---:|---:|---|---|
-| A (in-Rust f32/FMA cascade) | — | — | 70.21 | 0.547 | **93.90** | **0.679** | n=1024 **PASS** (≥ 0.667); n=256 **SHORTFALL** | `dev/bench_results/2026-05-24-68cdf4c8-route-a-f32-cascade.md` |
-| B (BLAS/OpenBLAS sgemm, full) | 16.57 | — | 35.12 | 0.273 | 66.56 | 0.481 | Both **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
-| B (BLAS/OpenBLAS sgemm, canon) | 40.71 | — | 49.62 | 0.386 | 78.26 | 0.566 | Both **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
-| C (pure-integer Goto/BLIS panel) | 27.56 | — | 64.16 | 0.499 | 74.65 | 0.540 | n=64 **REGRESSION** vs Candidate C; n=256/1024 **SHORTFALL** | `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md` |
+| Route | n | GF(251) Gop/s | Ratio vs fflas | Status | Evidence doc |
+|---|---:|---:|---:|---|---|
+| A (in-Rust f32/FMA cascade) | 64 | — | — | not measured | `dev/bench_results/2026-05-24-68cdf4c8-route-a-f32-cascade.md` |
+| A (in-Rust f32/FMA cascade) | 256 | 70.21 | 0.547 | **SHORTFALL** | `dev/bench_results/2026-05-24-68cdf4c8-route-a-f32-cascade.md` |
+| A (in-Rust f32/FMA cascade) | 1024 | **93.90** | **0.679** | **PASS** (≥ 0.667) | `dev/bench_results/2026-05-24-68cdf4c8-route-a-f32-cascade.md` |
+| B (BLAS/OpenBLAS sgemm, full) | 64 | 16.57 | — | not measured vs fflas | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| B (BLAS/OpenBLAS sgemm, full) | 256 | 35.12 | 0.273 | **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| B (BLAS/OpenBLAS sgemm, full) | 1024 | 66.56 | 0.481 | **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| B (BLAS/OpenBLAS sgemm, canon) | 64 | 40.71 | — | not measured vs fflas | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| B (BLAS/OpenBLAS sgemm, canon) | 256 | 49.62 | 0.386 | **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| B (BLAS/OpenBLAS sgemm, canon) | 1024 | 78.26 | 0.566 | **SHORTFALL** | `dev/bench_results/2026-05-24-91429c1c-route-b-blas.md` |
+| C (pure-integer Goto/BLIS panel) | 64 | 27.56 | — | **REGRESSION** vs Candidate C | `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md` |
+| C (pure-integer Goto/BLIS panel) | 256 | 64.16 | 0.499 | **SHORTFALL** | `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md` |
+| C (pure-integer Goto/BLIS panel) | 1024 | 74.65 | 0.540 | **SHORTFALL** | `dev/bench_results/2026-05-24-fc182ed5-route-c-integer-panel.md` |
 
 Candidate C (current production default) at GF(251):
+- n=64: 33.22 Gop/s — no fflas baseline at n=64
 - n=256: 71.27 Gop/s (0.555 of fflas) — SHORTFALL; same-session default phase from route-A bench
 - n=1024: 75.40 Gop/s (0.545 of fflas) — SHORTFALL; same-session default phase from route-A bench
 
@@ -88,12 +97,12 @@ Rationale for the hybrid: route A is the only Phase-1 prototype that clears 1.5�
 
 **Function changed:** `select_f32_path<const P: u64>(_m, _k, n)`
 
-- Before: always returned `false` for all in-scope primes (N_THRESH_PRIME=252 makes `P >= 252 && P <= 251` impossible).
-- After: returns `true` for `P == 251 && n >= 512` (new branch before the legacy threshold check); all other cases unchanged.
+- Before: always returned `false` for all in-scope primes (N_THRESH_PRIME=252 made `P >= 252 && P <= 251` impossible).
+- After: `N_THRESH_PRIME` updated to 251; `select_f32_path` refactored to a single expression `P >= N_THRESH_PRIME && P <= 251 && n >= 512`. With N_THRESH_PRIME=251, this evaluates to `true` only for `P == 251 && n >= 512`.
 
-**Dispatch changed:** `fp_small_try_gemm_classical` guard for the route-A code block changed from `if route_a_selected` to `if route_a_selected || (f32_selected && P == 251)`. This routes the new `select_f32_path` selection through the reworked route-A code (from_mont_f32 lookup-table pack + vectorized AVX2 Barrett reduction), NOT the legacy Candidate F path.
+**Dispatch changed:** `fp_small_try_gemm_classical` guard for the route-A code block is `if route_a_selected || (f32_selected && P == 251)`. The `f32_selected` flag is now the single source of truth for "GF(251)/n>=512 production default"; the `&& P == 251` guard is belt-and-suspenders (compile-time const-generic check, optimised out). This routes through the reworked route-A code (from_mont_f32 lookup-table pack + vectorized AVX2 Barrett reduction), NOT the legacy Candidate F path.
 
-**Other primes affected:** NONE. The rule is `P == 251 && n >= 512`. GF(7), GF(31), GF(127), GF(241) all have `P != 251` and are never affected. N_THRESH_PRIME stays at 252 — it was NOT lowered.
+**Other primes affected:** NONE. GF(7), GF(31), GF(127), GF(241) all have `P < 251` so `P >= N_THRESH_PRIME` evaluates to `false` for them; they remain on Candidate C.
 
 **AtomicBool toggle preserved:** `set_route_a_gf251_enabled(true)` continues to force route A for GF(251) at any n (override for testing/benching at n<512). The new production dispatch is the default-path (toggle=false) behaviour.
 
@@ -154,13 +163,14 @@ The following proptests verify production-dispatch correctness against the scala
 
 ### 8.1 Proptest file: `crates/gf2-core/tests/route_a_gf251_production_dispatch_proptests.rs`
 
-| Proptest name | Shape (m, k, n) | n range | Route (production default) | Status |
-|---|---|---|---|---|
-| `proptest_production_dispatch_boundary_n_values` | m=k=n (square) | {0, 1, 15, 16, 17, 63, 64, 65} | Candidate C (n < 512) | PASS |
-| `proptest_production_dispatch_n512_matches_scalar` | (4, 64, 512) | n=512 | route A (n ≥ 512) | PASS |
-| `proptest_production_dispatch_n1024_matches_scalar` | (4, 64, 1024) | n=1024 | route A (n ≥ 512) | PASS |
+| Proptest name | Shape (m, k, n) | n range | Primes | Route (production default) | Status |
+|---|---|---|---|---|---|
+| `proptest_production_dispatch_boundary_n_values` | m=k=n (square) | {0, 1, 15, 16, 17, 63, 64, 65} | GF(251) | Candidate C (n < 512) | PASS |
+| `proptest_production_dispatch_n512_matches_scalar` | (4, 64, 512) | n=512 | GF(251) | route A (n ≥ 512) | PASS |
+| `proptest_production_dispatch_n1024_matches_scalar` | (4, 64, 1024) | n=1024 | GF(251) | route A (n ≥ 512) | PASS |
+| `proptest_production_dispatch_prime_sweep_boundary_n` | m=k=n (square) | {0, 1, 15, 16, 17, 63, 64, 65} | GF(7), GF(31), GF(127), GF(241), GF(251) | Candidate C (n < 512) | PASS |
 
-All three proptests use `proptest!` macro blocks with `prop_oneof![Just(0), ...]` for the boundary-n block (per SC#9 / 52cce970 R1 review requirement). The n=512 and n=1024 blocks use rectangular shapes to stay within the 5-second CI ceiling.
+All four proptests use `proptest!` macro blocks. The boundary-n blocks use `prop_oneof![Just(0), ...]` (per SC#9 / 52cce970 R1 review requirement). The n=512 and n=1024 blocks use rectangular shapes to stay within the 5-second CI ceiling. The prime-sweep block verifies that the N_THRESH_PRIME=251 wire-in does not affect correctness for GF(7)/GF(31)/GF(127)/GF(241) at boundary lengths (all n < 512 so all stay on Candidate C).
 
 ### 8.2 Existing route-A parity tests (unchanged, still PASS)
 

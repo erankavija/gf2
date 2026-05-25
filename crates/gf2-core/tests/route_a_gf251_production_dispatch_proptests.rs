@@ -8,7 +8,7 @@
 //!     Candidate C otherwise); and
 //!   * A scalar naive GEMM reference using direct field arithmetic.
 //!
-//! Three proptest blocks, per SC#9 of issue 41096af5:
+//! Four proptest blocks, per SC#6 and SC#9 of issue 41096af5:
 //!
 //! 1. `proptest_production_dispatch_boundary_n_values` — GF(251) square GEMM
 //!    at boundary n in `{0, 1, 15, 16, 17, 63, 64, 65}` (n < 512, Candidate C
@@ -20,6 +20,13 @@
 //!
 //! 3. `proptest_production_dispatch_n1024_matches_scalar` — n=1024 (headline
 //!    PASS cell, ratio 0.679 vs fflas-ffpack). Uses rectangular (m=4, k=64).
+//!
+//! 4. `proptest_production_dispatch_prime_sweep_boundary_n` — GF(p) prime
+//!    sweep at boundary n in `{0, 1, 15, 16, 17, 63, 64, 65}` across ALL
+//!    in-scope small primes: GF(7), GF(31), GF(127), GF(241), GF(251).
+//!    All n < 512, so all primes stay on Candidate C regardless of the
+//!    N_THRESH_PRIME=251 wire-in. Verifies correctness is preserved for
+//!    non-GF(251) primes at boundary lengths (SC#6 prime-sweep requirement).
 //!
 //! NOTE: The n=512 and n=1024 blocks use m=4, k=64 to keep the scalar oracle
 //! fast (4 * 64 * N = ~131-262K operations) while still exercising the full
@@ -40,8 +47,6 @@ use std::sync::Mutex;
 
 // Serialise AtomicBool toggle mutations across concurrent test threads.
 static DISPATCH_MUTEX: Mutex<()> = Mutex::new(());
-
-const P: u64 = 251;
 
 // ── Scalar reference ──────────────────────────────────────────────────────────
 
@@ -71,24 +76,33 @@ fn naive_gemm_gf<const Q: u64>(
 // ── Core comparison helper ────────────────────────────────────────────────────
 
 /// Compare the production dispatch output (AtomicBool=false, `select_f32_path`
-/// governs routing) against the scalar naive_gemm_gf reference.
-fn check_production_vs_scalar(m: usize, k: usize, n: usize, seed_a: u64, seed_b: u64) {
+/// governs routing) against the scalar naive_gemm_gf reference, for prime Q.
+///
+/// For Q == 251 && n >= 512: `select_f32_path` returns `true` => route A.
+/// For all other (Q, n) combinations in-scope: Candidate C.
+fn check_production_vs_scalar<const Q: u64>(
+    m: usize,
+    k: usize,
+    n: usize,
+    seed_a: u64,
+    seed_b: u64,
+) {
     if m == 0 || k == 0 || n == 0 {
         return;
     }
 
-    let a_mat = fp_matrix_from_seed::<P>(m, k, seed_a);
-    let b_mat = fp_matrix_from_seed::<P>(k, n, seed_b);
+    let a_mat = fp_matrix_from_seed::<Q>(m, k, seed_a);
+    let b_mat = fp_matrix_from_seed::<Q>(k, n, seed_b);
 
     // Production dispatch with AtomicBool at default (false).
-    // For P==251 && n>=512: select_f32_path returns true => route A.
-    // For n<512: select_f32_path returns false => Candidate C.
+    // For Q==251 && n>=512: select_f32_path returns true => route A.
+    // For n<512 or Q!=251: select_f32_path returns false => Candidate C.
     let _guard = DISPATCH_MUTEX.lock().unwrap();
     set_route_a_gf251_enabled(false);
     let c_prod = gemm(&a_mat, &b_mat);
     set_route_a_gf251_enabled(false); // restore
 
-    let c_scalar = naive_gemm_gf::<P>(&a_mat, &b_mat, m, k, n);
+    let c_scalar = naive_gemm_gf::<Q>(&a_mat, &b_mat, m, k, n);
 
     for i in 0..m {
         for j in 0..n {
@@ -96,7 +110,7 @@ fn check_production_vs_scalar(m: usize, k: usize, n: usize, seed_a: u64, seed_b:
                 c_prod.get(i, j).value(),
                 c_scalar[i * n + j].value(),
                 "production-dispatch vs scalar mismatch at ({i},{j}) \
-                 shape=({m},{k},{n}) seed_a={seed_a} seed_b={seed_b}"
+                 shape=({m},{k},{n}) seed_a={seed_a} seed_b={seed_b} prime={Q}"
             );
         }
     }
@@ -106,9 +120,10 @@ fn check_production_vs_scalar(m: usize, k: usize, n: usize, seed_a: u64, seed_b:
 
 proptest! {
     /// Boundary n values {0, 1, 15, 16, 17, 63, 64, 65}: all < 512, so
-    /// the production dispatch uses Candidate C. Verify output matches scalar.
-    /// The `prop_oneof![Just(0), ...]` form is required by SC#9 (52cce970 R1
-    /// review trap — `#[test]` boundary cases are not equivalent to proptest).
+    /// the production dispatch uses Candidate C. Verify GF(251) output matches
+    /// scalar. The `prop_oneof![Just(0), ...]` form is required by SC#9
+    /// (52cce970 R1 review trap — `#[test]` boundary cases are not equivalent
+    /// to proptest).
     #[test]
     fn proptest_production_dispatch_boundary_n_values(
         n in prop_oneof![
@@ -122,32 +137,64 @@ proptest! {
             return Ok(());
         }
         // Square GEMM at boundary n — all small, scalar reference is fast.
-        check_production_vs_scalar(n, n, n, seed_a, seed_b);
+        check_production_vs_scalar::<251>(n, n, n, seed_a, seed_b);
     }
 }
 
 proptest! {
     /// n=512: first cell in the production route-A dispatch window
     /// (`P == 251 && n >= 512`). Uses rectangular (m=4, k=64) to stay fast.
-    /// Verifies bit-exact correctness of the new default dispatch.
+    /// Verifies bit-exact correctness of the new GF(251) default dispatch.
     #[test]
     fn proptest_production_dispatch_n512_matches_scalar(
         seed_a in 1u64..=100,
         seed_b in 101u64..=200,
     ) {
-        check_production_vs_scalar(4, 64, 512, seed_a, seed_b);
+        check_production_vs_scalar::<251>(4, 64, 512, seed_a, seed_b);
     }
 }
 
 proptest! {
     /// n=1024: headline PASS cell (ratio 0.679 vs fflas-ffpack at threshold
     /// 0.667). Uses rectangular (m=4, k=64) to stay fast. Verifies bit-exact
-    /// correctness of the production route-A dispatch at the measurement cell.
+    /// correctness of the GF(251) production route-A dispatch at the
+    /// measurement cell.
     #[test]
     fn proptest_production_dispatch_n1024_matches_scalar(
         seed_a in 1u64..=100,
         seed_b in 101u64..=200,
     ) {
-        check_production_vs_scalar(4, 64, 1024, seed_a, seed_b);
+        check_production_vs_scalar::<251>(4, 64, 1024, seed_a, seed_b);
+    }
+}
+
+proptest! {
+    /// GF(p) prime-sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.
+    ///
+    /// Covers ALL in-scope small primes: GF(7), GF(31), GF(127), GF(241),
+    /// GF(251). All cells have n < 512, so the production dispatch uses
+    /// Candidate C regardless of the N_THRESH_PRIME=251 wire-in.
+    ///
+    /// SC#6 requirement: bit-exact correctness preserved across the prime
+    /// sweep regardless of the GF(251)/n>=512 wire-in. GF(7)/GF(31)/
+    /// GF(127)/GF(241) must be unaffected by the N_THRESH_PRIME change.
+    #[test]
+    fn proptest_production_dispatch_prime_sweep_boundary_n(
+        n in prop_oneof![
+            Just(0usize), Just(1), Just(15), Just(16),
+            Just(17), Just(63), Just(64), Just(65)
+        ],
+        seed_a in 1u64..=200,
+        seed_b in 201u64..=400,
+    ) {
+        if n == 0 {
+            return Ok(());
+        }
+        // All n < 512 => all primes route through Candidate C.
+        check_production_vs_scalar::<7>(n, n, n, seed_a, seed_b);
+        check_production_vs_scalar::<31>(n, n, n, seed_a, seed_b);
+        check_production_vs_scalar::<127>(n, n, n, seed_a, seed_b);
+        check_production_vs_scalar::<241>(n, n, n, seed_a, seed_b);
+        check_production_vs_scalar::<251>(n, n, n, seed_a, seed_b);
     }
 }
