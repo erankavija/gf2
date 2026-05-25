@@ -13,7 +13,15 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/2e8c5a29-panelized-ple-design.md",
+      "commit": null,
+      "label": "Panelized PLE design",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +29,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:10:00.409082783+00:00",
-  "updated_at": "2026-05-25T12:12:44.117350120+00:00"
+  "updated_at": "2026-05-25T13:37:24.755716162+00:00"
 }
