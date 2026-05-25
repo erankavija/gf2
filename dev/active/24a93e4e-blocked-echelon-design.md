@@ -98,42 +98,59 @@ PLE.
 
 **Stage 3 — Blocked back-substitution (RREF).** The current `rref()` performs
 back-substitution column-by-column in a nested scalar loop. This is the second
-bottleneck. The blocked replacement accumulates the back-substitution as a
-single GEMM call per panel strip using `fp_small_try_gemm_classical` directly.
+bottleneck. The blocked replacement splits back-substitution into two sub-stages:
 
-The idea: given the echelon form $E$ with $r$ pivot rows at columns
-$pc[0] < pc[1] < \ldots < pc[r-1]$, the RREF pivot column elimination step
-"row $k$ -= E[k, pc[i]] * row $i$" for all $k \ne i$ is structurally an
-update
+**Stage 3a — Non-pivot rows GEMM (dominant cost):**
 
 $$E[\text{non-pivot rows}, \text{free cols}] \mathrel{-}=
   E[\text{non-pivot rows}, \text{pivot cols}] \cdot
   E[\text{pivot rows}, \text{free cols}]$$
 
-which is a GEMM of shape $(m - r) \times r$ times $r \times (n - r)$ into
-$(m - r) \times (n - r)$. For the pivot rows themselves (above the pivot), the
-same update applies: the leading pivot block $E[\text{pivot rows}, \text{pivot
-cols}]$ is upper-triangular and the eliminations form a TRSM, but a plain GEMM
-call into `fp_small_try_gemm_classical` can handle this without a separate
-per-column loop.
+This is a GEMM of shape $(m - r) \times r$ times $r \times (n - r)$ into
+$(m - r) \times (n - r)$. It is dispatched via `gemm_axpy_into_view`
+(`crates/gf2-core/src/field/matrix.rs`, line 2854), which auto-dispatches to
+`fp_small_try_gemm_classical` for small primes ($P \le 251$) and to the u16
+medium-prime path for GF(65521).
+
+**Stage 3b — Pivot rows TRSM (structurally triangular):**
+
+After scaling pivot rows so that $E[\text{pivot rows}, \text{pivot cols}]$ is
+upper unit triangular, the pivot rows' free-column entries are back-substituted
+via a triangular solve:
+
+$$\text{trsm\_upper}(E[\text{pivot rows}, \text{pivot cols}],\
+  E[\text{pivot rows}, \text{free cols}])$$
+
+This operates in-place on the pivot rows' free-column block, using
+`trsm_upper` from `crates/gf2-core/src/field/triangular.rs` (line 258). The
+existing `trsm_upper` internally dispatches to `gemm_axpy_into_view` for wide
+stripes, so it inherits the same SIMD fast path.
+
+The pivot columns themselves are explicitly zeroed at the end (set to the
+identity column for each pivot row, zero elsewhere).
 
 ### 2.3 Mermaid pipeline diagram
 
 ```mermaid
 flowchart TD
     A["Input: m×n matrix over GF(p)"] --> B["Panelized PLE\n(sibling 2e8c5a29 / impl 6823c8a0)\nProduces: P, L(m×r), E(r×n), r"]
-    B --> C["trsm_lower(L_full, Pt)\n→ X = L_full⁻¹·Pᵀ\n(dispatch via fp_small_try_gemm_classical)"]
+    B --> C["trsm_lower(L_full, Pt)\n→ X = L_full⁻¹·Pᵀ\n(dispatch via gemm_axpy_into_view)"]
     C --> D["Assemble echelon form\nE_full (m×n, zero-padded)"]
     D --> E["Locate pivot columns pc[0..r]"]
     E --> F["Scale pivot rows to 1\n(scalar, r multiplications per row)"]
-    F --> G["Blocked back-substitution\nPivot-strip GEMM:\nfp_small_try_gemm_classical(\n  A = E[all rows, pivot cols] (m×r),\n  Bt = E[pivot rows, free cols]^T (r × (n-r)),\n  out = E[all rows, free cols] update (m × (n-r))\n)"]
-    G --> H["Output: (X, RREF)"]
+    F --> Gb["Stage 3b: Pivot-row TRSM\ntrsm_upper(\n  E[pivot rows, pivot cols] (r×r, upper unit triangular),\n  E[pivot rows, free cols] (r × (n-r))\n)"]
+    Gb --> Ga["Stage 3a: Non-pivot rows GEMM\ngemm_axpy_into_view(\n  A = E[non-pivot rows, pivot cols] ((m-r)×r),\n  B = E[pivot rows, free cols] (r × (n-r)),\n  out = E[non-pivot rows, free cols] ((m-r) × (n-r))\n)"]
+    Ga --> Hzero["Zero pivot columns\n(identity col for each pivot row)"]
+    Hzero --> H["Output: (X, RREF)"]
 ```
 
-**Key insight:** the blocked back-substitution is a single call into
-`fp_small_try_gemm_classical` for each free-column strip, reducing the
-scalar $O(m \cdot r \cdot (n - r))$ back-substitution to a GEMM that hits the
-cache-blocked AVX2 fast path for $P \le 251$ fields.
+**Key insight:** the blocked back-substitution splits into a pivot-row TRSM
+(Stage 3b, structurally required because $E[\text{pivot}, \text{pivot}]$ is
+upper unit triangular after scaling) and a non-pivot-row GEMM (Stage 3a,
+the dominant cost). Stage 3a is dispatched through `gemm_axpy_into_view`
+(`crates/gf2-core/src/field/matrix.rs` line 2854), which auto-selects the
+AVX2 byte-lane path for $P \le 251$ and the u16 medium-prime path for
+GF(65521).
 
 ---
 
@@ -143,48 +160,72 @@ cache-blocked AVX2 fast path for $P \le 251$ fields.
 
 Let $m$ = rows, $n$ = cols, $r$ = rank, $r_f = n - r$ = number of free columns.
 
-The pivot-column submatrix has shape $m \times r$ (the "elimination matrix").
-The free-column block has shape $r \times r_f$ for pivot rows and
-$(m - r) \times r_f$ for the lower block. The combined back-substitution update is:
+The back-substitution is split into two sub-stages with distinct operand shapes:
 
-$$\underbrace{E[*, \text{free}]}_{m \times r_f} \mathrel{-}=
-  \underbrace{E[*, \text{pivot}]}_{m \times r} \cdot
-  \underbrace{E[\text{pivot rows}, \text{free}]}_{r \times r_f}$$
-
-but restricted to the off-pivot rows only (the pivot rows receive their update
-via the same GEMM, with zeroing of the pivot column handled separately).
-
-Specifically:
+**Stage 3a — Non-pivot rows GEMM**
 
 | Operand | Symbol | Shape | Description |
 |---------|--------|-------|-------------|
-| A | `E_piv` | $m \times r$ | Column of pivot-column values for all rows |
-| Bt | `E_free_T` | $r_f \times r$ | Pivot-row free-column values, transposed |
-| out | `update` | $m \times r_f$ | Accumulated update, subtracted from `E_free` |
+| A | `E_nonpiv_piv` | $(m-r) \times r$ | Pivot-column values for non-pivot rows only |
+| B | `E_piv_free` | $r \times r_f$ | Free-column values for pivot rows |
+| out | `update` | $(m-r) \times r_f$ | Accumulated update, subtracted from `E_nonpiv_free` |
 
-The call shape passed to `fp_small_try_gemm_classical` is:
-- `a` = `E_piv` flattened row-major, length $m \cdot r$
-- `b_t` = `E_free_T` flattened row-major, length $r_f \cdot r$
-- `m` = $m$, `k` = $r$, `n` = $r_f$
-- `out` = destination buffer, length $m \cdot r_f$
+The call shape passed to `gemm_axpy_into_view` is:
+- `alpha` = $-1$ (field element), `beta` = $1$
+- `a` = view of `E[non-pivot rows, pivot cols]`, shape $(m-r) \times r$
+- `b` = view of `E[pivot rows, free cols]`, shape $r \times r_f$
+- `out` = view of `E[non-pivot rows, free cols]`, shape $(m-r) \times r_f$, updated in-place
 
-For small primes ($P \le 251$) these are packed as canonical bytes (`u8`). For
-medium primes ($252 \le P \le 65521$) the same call dispatches to the u16
-vector path already present in `fp_small_try_gemm_classical`. The caller
-computes the canonicalization from `Fp<P>` Montgomery storage to `u8` using the
-pre-built `from_mont` lookup table (same tables used in the panelized GEMM path
-in `crates/gf2-core/src/gfp/simd_ops.rs`).
+`gemm_axpy_into_view` (defined at `crates/gf2-core/src/field/matrix.rs` line
+2854) auto-dispatches to `fp_small_try_gemm_classical` for small primes
+($P \le 251$) and to the u16 medium-prime path for GF(65521). This single call
+handles both prime ranges without a separate dispatch in `try_blocked_back_sub`.
 
-After the GEMM, the update is subtracted: `E_free -= update`. The pivot
-columns themselves are explicitly zeroed (set to the identity column for each
-pivot row, zero elsewhere).
+**Stage 3b — Pivot rows TRSM**
+
+After scaling pivot rows so $E[\text{pivot rows}, \text{pivot cols}]$ is upper
+unit triangular, solve in-place:
+
+| Operand | Symbol | Shape | Description |
+|---------|--------|-------|-------------|
+| A (triangular) | `E_piv_piv` | $r \times r$ | Upper unit triangular pivot block |
+| B (RHS, modified in-place) | `E_piv_free` | $r \times r_f$ | Pivot-row free-column entries |
+
+Call: `trsm_upper(E[pivot rows, pivot cols], E[pivot rows, free cols])` from
+`crates/gf2-core/src/field/triangular.rs` line 258. This function recurses
+internally and calls `gemm_axpy_into_view` for wide stripes, inheriting the
+same SIMD fast path.
+
+**Pivot column zeroing (final step):** After both stages complete, the pivot
+columns are explicitly zeroed: for each pivot row $i$ and its pivot column
+$pc[i]$, set $E[i, pc[i]] = 1$ and $E[k, pc[i]] = 0$ for all $k \ne i$.
 
 ### 3.2 Scalar fallback
 
-When `fp_small_try_gemm_classical` returns `false` (non-AVX2 host, or field
-outside the supported range), the blocked back-substitution falls back to the
-existing scalar pivot-column loop in `rref()`. No behavioral change; only the
-fast path is new.
+When `gemm_axpy_into_view` falls back to scalar (non-AVX2 host, or field
+outside the SIMD-supported range), Stage 3a degrades gracefully to the generic
+scalar dot-product path. Stage 3b (`trsm_upper`) is always available as it is
+not SIMD-gated. If neither Stage 3a nor 3b is available (e.g., a completely
+unsupported field), `try_blocked_back_sub` returns `false` and the existing
+scalar pivot-column loop in `rref()` handles back-substitution unchanged. No
+behavioral change; only the fast path is new.
+
+### 3.3 Medium-prime GF(65521) path
+
+GF(65521) echelon closes A8 rows 26-29 (current 1.57×-12.37×) by inheriting
+the `fp_medium` speedup through `gemm_axpy_into_view`. The dispatch chain is:
+
+```
+try_blocked_back_sub (stage 3a)
+  -> gemm_axpy_into_view         // crates/gf2-core/src/field/matrix.rs line 2854
+       -> fp_small_try_gemm_classical::<65521>
+            -> fp_medium u16 lane  // medium-prime path, P in [252, 65521]
+```
+
+No separate u16 echelon kernel is needed. The `try_blocked_back_sub` dispatch
+calls `gemm_axpy_into_view` (not directly `fp_small_try_gemm_classical`), so
+the medium-prime path is auto-inherited for all fields whose
+`fp_small_try_gemm_classical` returns `true` — including GF(65521).
 
 ---
 
@@ -200,7 +241,7 @@ pub fn rref(&self) -> (FieldMatrix<F>, FieldMatrix<F>) {
     // ... existing early-exit for empty ...
     let (mut x, mut e) = self.row_echelon(); // <- will call panelized PLE via 6823c8a0
     // ... identify pivots ...
-    // NEW: try blocked back-sub via fp_small_try_gemm_classical
+    // NEW: try blocked back-sub (Stage 3a via gemm_axpy_into_view, Stage 3b via trsm_upper)
     if !try_blocked_back_sub(&mut x, &mut e, &pivots) {
         // existing scalar loop (unchanged)
         // ...
@@ -216,11 +257,14 @@ not a small/medium prime), deferring to the existing scalar path.
 
 ### 4.2 Dispatch rule
 
-`try_blocked_back_sub` calls `F::try_simd_gemm_classical` (the safe wrapper
-around `fp_small_try_gemm_classical` that lives on the `FiniteField` trait in
-`crates/gf2-core/src/field/traits.rs`). This keeps the unsafe SIMD boundary
-in `gf2-kernels-simd` and `gf2-core` safe throughout, matching the existing
-invariant in `CLAUDE.md` § Key design invariants § 3.
+`try_blocked_back_sub` calls `gemm_axpy_into_view`
+(`crates/gf2-core/src/field/matrix.rs` line 2854) for Stage 3a and
+`trsm_upper` (`crates/gf2-core/src/field/triangular.rs` line 258) for Stage
+3b. Both are safe `pub(crate)` functions that keep the unsafe SIMD boundary
+inside `gf2-kernels-simd`, matching the existing invariant in `CLAUDE.md` §
+Key design invariants § 3. The function does not call
+`fp_small_try_gemm_classical` directly; the medium-prime path for GF(65521) is
+auto-inherited via the `gemm_axpy_into_view` dispatch chain.
 
 ### 4.3 `row_echelon` changes
 
@@ -255,22 +299,18 @@ blocked echelon design is purely additive to the back-substitution step.
    scalar PLE output and scalar back-substitution loop, not to the GEMM kernel
    itself.
 
-3. **Correct approach for Mersenne31.** The blocked echelon for Mersenne31
-   should call `gemm_axpy_into_view` directly (as `trsm_lower` already does)
-   rather than `fp_small_try_gemm_classical`. The `gemm_axpy_into_view` kernel
-   dispatches to the Mersenne31 dot-product path via `F::try_gf2m_u64_batch_dot_product`
-   (for GF(2^m)) or the generic `dot_product_slices` with `max_unreduced_additions`
-   chunking. For Mersenne31, the `m31_batch_dot_fn` provides the hot inner
-   loop. The blocked back-substitution in stage 3 for Mersenne31 therefore uses
-   `gemm_axpy_into_view` rather than `fp_small_try_gemm_classical`, and the
-   dispatch in `try_blocked_back_sub` returns `false` for Mersenne31, falling
-   back to a direct `gemm_axpy_into_view` call path.
+3. **Correct approach for Mersenne31.** Because `try_blocked_back_sub` calls
+   `gemm_axpy_into_view` directly for Stage 3a (see §3.1 and §4.2), Mersenne31
+   is handled automatically: `gemm_axpy_into_view` dispatches to the Mersenne31
+   dot-product path via `m31_batch_dot_fn` for GF(2^31-1). No separate
+   code path or conditional dispatch is needed in `try_blocked_back_sub` for
+   Mersenne31 — the `gemm_axpy_into_view` abstraction absorbs the difference.
 
-**Consequence:** The implementation child `869ce43b` must implement two
-variants of the blocked back-substitution: one calling
-`fp_small_try_gemm_classical` for $P \le 65521$, and one calling
-`gemm_axpy_into_view` for Mersenne31. Both share the same tiling logic
-and differ only in the inner GEMM call.
+**Consequence:** The implementation child `869ce43b` implements a single
+`try_blocked_back_sub` that calls `gemm_axpy_into_view` for Stage 3a; the
+function is field-generic and covers small primes ($P \le 251$), medium primes
+(GF(65521)), and Mersenne31 through the existing `gemm_axpy_into_view` dispatch
+table. No separate fast-path variant per prime range is required.
 
 ---
 
@@ -290,36 +330,34 @@ If the sibling design has not yet been committed to main at the time of
 dispatching the implementation child `869ce43b`, the implementer must read the
 `2e8c5a29` design doc via `jit doc list 2e8c5a29` / `jit doc show <doc-id>`.
 
-### 6.2 `fp_small_try_gemm_classical` — exact signature and file path
+### 6.2 `gemm_axpy_into_view` — primary call site for Stage 3a
 
-The SSOT GEMM helper is:
+The SSOT GEMM entry point for Stage 3a is:
 
 ```rust
-// crates/gf2-core/src/gfp/simd_ops.rs, line 654 (feature = "simd" variant)
-pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
-    a: &[Fp<P>],
-    b_t: &[Fp<P>],
-    m: usize,
-    k: usize,
-    n: usize,
-    out: &mut [Fp<P>],
-) -> bool
+// crates/gf2-core/src/field/matrix.rs, line 2854
+pub(crate) fn gemm_axpy_into_view<F>(
+    alpha: F,
+    a: &MatView<'_, F>,
+    b: &MatView<'_, F>,
+    beta: F,
+    out: MatViewMut<'_, F>,
+) where F: FiniteField
 ```
 
-It is called from `crates/gf2-core/src/gfp/mod.rs` line 730 via
-`F::try_simd_gemm_classical` on the `FiniteField` trait. The implementation in
-the blocked back-substitution must call through the trait method, not directly
-through `simd_ops::fp_small_try_gemm_classical`, to preserve the abstraction
-boundary and the `#![deny(unsafe_code)]` invariant in `gf2-core`.
+`try_blocked_back_sub` calls this function with `alpha = F::neg_one()`,
+`beta = F::one()`, and views sliced to `E[non-pivot rows, pivot cols]`,
+`E[pivot rows, free cols]`, and `E[non-pivot rows, free cols]` respectively.
+This single call covers all supported prime ranges: `gemm_axpy_into_view`
+internally dispatches to `fp_small_try_gemm_classical` for small/medium primes
+($P \le 65521$) and to the Mersenne31 `m31_batch_dot_fn` for GF(2^31-1). The
+echelon design does not call `fp_small_try_gemm_classical` directly.
 
-The underlying AVX2 kernel is
-`pub unsafe fn fp_small_panel_gemm(a: &[u8], bt: &[u8], m: usize, k: usize, n: usize, p: u8, c: &mut [u8])`
-in `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs` line 121. Access to
-this function is through the `SmallPrimePanelFns::batch_gemm_fn` table returned
-by `fp_small_panel::detect()` in `crates/gf2-kernels-simd/src/fp_small_panel.rs`.
-The safe wrapper `fp_small_panel::batch_gemm_safe` is called by
-`fp_small_try_gemm_classical` internally. The echelon design does not reach
-into `gf2-kernels-simd` directly.
+For reference, `fp_small_try_gemm_classical` is defined at
+`crates/gf2-core/src/gfp/simd_ops.rs` line 654 and its underlying AVX2 kernel
+is `fp_small_panel_gemm` in
+`crates/gf2-kernels-simd/src/x86/fp_small_panel.rs` line 121. The echelon
+implementation reaches neither of these directly.
 
 ### 6.3 `trsm_lower` — for stage 2
 
@@ -408,12 +446,6 @@ Expected speedup: `≥ 1.5×` vs fflas-ffpack for all 18 cells (reaching ratio
 the blocked back-substitution adds the second speedup stage for large-$r$
 inputs.
 
-Cells marked `[aspirational]` if evidence post-implementation shows the
-blocked echelon can reach $\le 1.5\times$ for the large-$n$ GF(251) cells
-(rows 24-25): these cells are dominated by fflas's BLAS sgemm cascade and
-may require a dedicated Mersenne31-style fast path for GF(251) that is not in
-scope of this design.
-
 ### 8.2 Benchmark harness
 
 Use the existing `crates/gf2-core/benches/fieldmatrix_gemm.rs` benchmark
@@ -455,18 +487,11 @@ run in parallel with `869ce43b` since they touch disjoint code paths.
 
 ### 10.1 GF(251) large-n cells (rows 24-25)
 
-Rows 24-25 show ratios 65.82× and 97.06× at GF(251)/n=256. fflas-ffpack routes
-GF(251) echelon through an OpenBLAS sgemm cascade that has access to AVX2 FMA
-units with 8 GFLOPS/s peak. The blocked back-substitution in this design
-uses `fp_small_try_gemm_classical` which operates at the pure-integer AVX2 byte
-level (~4 GOPS/s for byte-lane GEMM on Zen 3). The expected speedup from
-replacing the scalar back-sub with the GEMM-based version is roughly the ratio
-of GEMM throughput to scalar throughput, which is ~10-20×. This may be
-sufficient to bring rows 24-25 below 1.5× of fflas, but is not guaranteed —
-especially for GF(251) where fflas has additional advantage from its BLAS
-cascade. If post-implementation measurement shows rows 24-25 remain above 1.5×,
-the implementer must escalate for an `[aspirational]` amendment before marking
-`869ce43b` done.
+Rows 24-25 (GF(251)/256) had the highest pre-Phase-6 ratios (65.82× / 97.06×).
+The target is ≤ 1.5× uniformly across all 18 cells (§8.1). If post-impl
+measurement falls short of ≤ 1.5× for rows 24-25, the impl agent (869ce43b)
+must escalate per the standard SC-amendment process — do not pre-emptively
+amend in the design.
 
 ### 10.2 GF(2^31-1) deficient echelon (rows 32-33)
 
