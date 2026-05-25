@@ -142,7 +142,6 @@ pub unsafe fn fp_small_panel_gemm(
     let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
     let p_vec32 = _mm256_set1_epi32(p_u32 as i32);
-    let p_vec64 = _mm256_set1_epi64x(p_u32 as i64);
 
     // n-panel count (each panel covers NR output columns).
     let n_panels = n.div_ceil(NR);
@@ -201,7 +200,6 @@ pub unsafe fn fp_small_panel_gemm(
             p,
             mu_vec,
             p_vec32,
-            p_vec64,
             c,
         );
         i_blk += MR;
@@ -221,7 +219,6 @@ pub unsafe fn fp_small_panel_gemm(
                 p,
                 mu_vec,
                 p_vec32,
-                p_vec64,
                 c,
             ),
             2 => run_one_m_block::<2>(
@@ -236,7 +233,6 @@ pub unsafe fn fp_small_panel_gemm(
                 p,
                 mu_vec,
                 p_vec32,
-                p_vec64,
                 c,
             ),
             3 => run_one_m_block::<3>(
@@ -251,7 +247,6 @@ pub unsafe fn fp_small_panel_gemm(
                 p,
                 mu_vec,
                 p_vec32,
-                p_vec64,
                 c,
             ),
             _ => unreachable!(),
@@ -338,7 +333,6 @@ unsafe fn run_one_m_block<const M_EFF: usize>(
     p: u8,
     mu_vec: __m256i,
     p_vec32: __m256i,
-    p_vec64: __m256i,
     c: &mut [u8],
 ) {
     // Pack the A block once and reuse across every n-panel.
@@ -352,7 +346,7 @@ unsafe fn run_one_m_block<const M_EFF: usize>(
         let panel_off = panel_idx * panel_bytes;
         run_one_panel::<M_EFF>(
             &a_pack32, b_packed, panel_off, i_blk, k, n, j_blk, n_eff, k_padded, p, mu_vec,
-            p_vec32, p_vec64, c,
+            p_vec32, c,
         );
     }
 }
@@ -375,10 +369,9 @@ unsafe fn run_one_panel<const M_EFF: usize>(
     j_blk: usize,
     n_eff: usize,
     k_padded: usize,
-    p: u8,
+    _p: u8,
     mu_vec: __m256i,
     p_vec32: __m256i,
-    p_vec64: __m256i,
     c: &mut [u8],
 ) {
     // 12 u32 SIMD accumulators (one per output sub-tile cell).
@@ -464,22 +457,20 @@ unsafe fn run_one_panel<const M_EFF: usize>(
     // `(k_padded / 2) · 2 · (p−1)² = k_padded · (p−1)²`. For
     // p = 251 and k ≤ 2^15 the bound stays well below 2^32 (the
     // u32 overflow cap is k ≤ 2^32 / 62500 ≈ 68 719). We use the
-    // existing 32-bit-lane Barrett SSOT.
-    let p_u32 = p as u32;
-    let _ = p_u32;
+    // Phase-2 SSOT 32-bit-lane Barrett primitive.
     let reduced = [
-        super::fp_small::barrett_reduce_lane32(acc00, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc01, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc02, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc10, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc11, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc12, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc20, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc21, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc22, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc30, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc31, mu_vec, p_vec32, p_vec64),
-        super::fp_small::barrett_reduce_lane32(acc32, mu_vec, p_vec32, p_vec64),
+        super::fp_small::barrett_reduce_lane32(acc00, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc01, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc02, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc10, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc11, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc12, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc20, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc21, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc22, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc30, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc31, mu_vec, p_vec32),
+        super::fp_small::barrett_reduce_lane32(acc32, mu_vec, p_vec32),
     ];
 
     // For each output row in the tile, pack the 3 × 8-i32 sub-tiles

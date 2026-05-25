@@ -696,11 +696,12 @@ pub unsafe fn fp_small_spmm_row(
     let p_u32 = p as u32;
     let p_vec = _mm256_set1_epi32(p_u32 as i32);
     // Use Barrett at 32-bit lane width: q = (x * mu32) >> 32, with
-    // mu32 = ⌊2³² / p⌋. We use _mm256_mul_epu32 to handle 32-bit-lane
-    // multiplication via 64-bit-lane intermediate.
+    // mu32 = ⌊2³² / p⌋. The SSOT `barrett_reduce_lane32` primitive uses
+    // `_mm256_mul_epu32` internally, which only reads the low 32 bits of
+    // each 64-bit lane — broadcasting μ as `epi64x` lets the primitive
+    // skip an in-kernel `set1_epi32` rebuild on every call.
     let mu32 = ((1u64 << 32) / p_u32 as u64) as u32;
     let mu_vec = _mm256_set1_epi64x(mu32 as i64);
-    let p_vec64 = _mm256_set1_epi64x(p_u32 as i64);
 
     let mut j = 0;
     while j + 16 <= n {
@@ -725,10 +726,10 @@ pub unsafe fn fp_small_spmm_row(
             acc_lo = _mm256_add_epi32(acc_lo, plo);
             acc_hi = _mm256_add_epi32(acc_hi, phi);
         }
-        // Reduce each u32 lane mod p via 32-bit Barrett:
-        //   q = (x * mu32) >> 32; r = x - q*p; if (r >= p) r -= p.
-        let lo_red = barrett_reduce_lane32(acc_lo, mu_vec, p_vec, p_vec64);
-        let hi_red = barrett_reduce_lane32(acc_hi, mu_vec, p_vec, p_vec64);
+        // Reduce each u32 lane mod p via the Phase-2 SSOT 32-bit Barrett
+        // primitive (see `barrett_reduce_lane32` below).
+        let lo_red = barrett_reduce_lane32(acc_lo, mu_vec, p_vec);
+        let hi_red = barrett_reduce_lane32(acc_hi, mu_vec, p_vec);
         // Per-lane mapping back to output positions:
         //   prod[0..16]  =  a_h * B[col, j..j+16]  (16 u16 lanes)
         //   AVX2 unpacklo/unpackhi_epi16 are in-lane (per 128-bit half):
@@ -781,26 +782,65 @@ pub unsafe fn fp_small_spmm_row(
     }
 }
 
-/// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)` and
-/// `p ≤ 251`. Returns reduced 32-bit lanes still in u32 form.
+/// 32-bit-lane Barrett reduction: `r = x mod p` for `x ∈ [0, 2³²)`.
 ///
-/// `p_vec64` carries `p` broadcast as 64-bit lanes; it is accepted for
-/// interface symmetry with the calling context in this module but is
-/// not used in the reduction arithmetic. Use
-/// `super::fp_small_f32::barrett_reduce_lane32` (which passes `p_vec`
-/// for `p_vec64`) when calling from the route-A kernel to keep a single
-/// implementation.
+/// The Phase-2 SSOT (issue e8a0c47a) for vectorized modular reduction:
+/// every AVX2 kernel that needs to canonicalise 8 packed u32 lanes
+/// against an odd prime modulus calls this function. Consumers
+/// (post-Phase-2):
+///
+/// 1. `fp_small.rs::fp_small_spmm_row` — sparse-times-dense small-prime
+///    row reducer (this module, same file).
+/// 2. `fp_small_f32.rs::store_and_reduce_tile_route_a` — route-A f32
+///    cascade output reducer for GF(251)/n ≥ 512.
+/// 3. `fp_small_panel.rs::fp_small_panel_gemm` — route-C integer-panel
+///    output reducer.
+/// 4. `fp_medium.rs::fp_medium_batch_mul16` — medium-prime u16 lane-wise
+///    multiply (the second non-GF(251) call site required by issue
+///    e8a0c47a SC#1).
+///
+/// # Algorithm (Granlund-Möller, one-step branchless)
+///
+/// With `μ = ⌊2³² / p⌋`:
+///
+/// 1. `q = ⌊(x · μ) / 2³²⌋` — computed per 32-bit lane via two
+///    `_mm256_mul_epu32` invocations on the even/odd u32 lanes and a
+///    single `>> 32` extraction of each 64-bit product's high half.
+/// 2. `r = x − q · p` via `_mm256_mullo_epi32` + `_mm256_sub_epi32`.
+///    Result is in `[0, 2p)` for every `x < 2³²`.
+/// 3. Conditional subtract via `_mm256_min_epu32(r, r − p)`: when
+///    `r ≥ p`, `r − p < r` as unsigned and `min` picks it; when `r < p`,
+///    `r − p` underflows to a value `> r` (unsigned) and `min` keeps `r`.
+///    Result lands in `[0, p)`.
+///
+/// # Arguments
+///
+/// * `x` — 8 u32 lanes packed into one `__m256i`, each `< 2³²`.
+/// * `mu_vec` — broadcast Barrett constant `μ = ⌊2³² / p⌋`. Either
+///   `_mm256_set1_epi64x(μ as i64)` (preferred by route-A / SpMM, which
+///   want one builder call producing a vector ready for
+///   `_mm256_mul_epu32`) or `_mm256_set1_epi32(μ as i32)` (preferred by
+///   the medium-prime kernel, which broadcasts both `p` and `μ` as
+///   32-bit lanes for symmetry) is acceptable: `_mm256_mul_epu32` only
+///   reads the low 32 bits of each 64-bit lane and both broadcast
+///   styles place `μ` there.
+/// * `p_vec` — broadcast `p` as 8 u32 lanes
+///   (`_mm256_set1_epi32(p as i32)`). Used for the `q · p` correction
+///   and the conditional subtract.
+///
+/// # Returns
+///
+/// 8 reduced u32 lanes, each canonical in `[0, p)`.
 ///
 /// # Safety
 ///
 /// Caller must ensure AVX2 is available at runtime.
 #[inline]
 #[target_feature(enable = "avx2")]
-pub(super) unsafe fn barrett_reduce_lane32(
+pub(crate) unsafe fn barrett_reduce_lane32(
     x: __m256i,
     mu_vec: __m256i,
     p_vec: __m256i,
-    p_vec64: __m256i,
 ) -> __m256i {
     // Compute q = (x * mu32) >> 32 per 32-bit lane.
     // _mm256_mul_epu32 multiplies the even u32 lanes of two u64-shaped
@@ -819,29 +859,18 @@ pub(super) unsafe fn barrett_reduce_lane32(
     let q_odd_shifted = _mm256_slli_epi64::<32>(q_odd_hi);
     let q = _mm256_or_si256(q_even_hi, q_odd_shifted);
 
-    // r = x - q * p
+    // r = x - q * p, with r in [0, 2p).
     let qp = _mm256_mullo_epi32(q, p_vec);
-    let mut r = _mm256_sub_epi32(x, qp);
-    // Conditional subtract: if r >= p, r -= p. We use a single subtract
-    // followed by add-back with a mask. r2 = r - p; if r2 < 0, take r;
-    // else take r2.
-    let r2 = _mm256_sub_epi32(r, p_vec);
-    // r2 < 0 (signed) means r < p; we want r in that case.
-    // mask = (r2 < 0) ? -1 : 0
-    let mask_lt = _mm256_cmpgt_epi32(_mm256_setzero_si256(), r2);
-    // Final: blend r2 (when r >= p) with r (when r < p).
-    r = _mm256_blendv_epi8(r2, r, mask_lt);
-    // Some bounds may still leave r ≥ p if accumulator was very large
-    // (Barrett one-step bounds: r < 2p strictly only for x < p². For
-    // accumulator with nnz_r * (p-1)² up to 2³² we need a second
-    // step.)
-    // Worst case: x < 2³², q = ⌊x * mu / 2³²⌋ ≤ ⌊x / p⌋, x - q*p ∈ [0, 2p).
-    // Reference: Granlund-Möller: with mu = ⌊2³² / p⌋, x = q*p + r, r ∈ [0, p).
-    // The shift+subtract gives r ∈ [0, 2p). One conditional subtract suffices.
-    // But because mu has been truncated, r can be in [0, p + small slack); the
-    // standard form r ∈ [0, 2p) is safe.
-    let _ = p_vec64; // unused but kept for symmetry
-    r
+    let r = _mm256_sub_epi32(x, qp);
+
+    // Conditional subtract: if r >= p, r -= p. `min_epu32(r, r - p)`
+    // picks r - p when r >= p (since r - p < r as unsigned) and keeps r
+    // when r < p (since r - p underflows to a value > r as unsigned).
+    // Bound justification: with μ = ⌊2³² / p⌋ truncated, Granlund-Möller
+    // guarantees r ∈ [0, 2p) for every x < 2³². One conditional subtract
+    // is sufficient — confirmed bit-exact by the per-kernel proptest
+    // suite (10 primes × {0, 1, 15, 16, 17, 63, 64, 65} boundary lengths).
+    _mm256_min_epu32(r, _mm256_sub_epi32(r, p_vec))
 }
 
 #[inline]

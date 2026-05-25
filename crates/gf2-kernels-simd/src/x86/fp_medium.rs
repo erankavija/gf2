@@ -83,53 +83,18 @@ use core::arch::x86_64::*;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// 32-bit-lane Barrett reduction: `x mod P` for `x ∈ [0, P²) ⊆ [0, 2^32)`.
-///
-/// Returns reduced values still in 32-bit lanes (the caller repacks to
-/// u16 with `_mm256_packus_epi32`).
-#[inline]
-#[target_feature(enable = "avx2")]
-unsafe fn barrett_reduce_u32x8(x: __m256i, p: __m256i, m: __m256i) -> __m256i {
-    // q = (x * m) >> 32. We need a u32×u32→u64 mul to recover the high 32
-    // bits. `_mm256_mul_epu32` operates on the even u32 lanes of each 64-bit
-    // lane; we shift and rerun for the odd lanes, then OR the high halves
-    // back together at the right positions.
-    let mask32 = _mm256_set1_epi64x(0xFFFF_FFFF);
-
-    // Even u32 lanes: low 32 bits of each 64-bit lane.
-    let x_even = _mm256_and_si256(x, mask32);
-    let m_even = _mm256_and_si256(m, mask32);
-    // Four 64-bit products. Take the high 32 bits of each → q for even lanes.
-    let prod_even = _mm256_mul_epu32(x_even, m_even);
-    let q_even = _mm256_srli_epi64(prod_even, 32);
-
-    // Odd u32 lanes: shift each 64-bit lane right by 32.
-    let x_odd = _mm256_srli_epi64(x, 32);
-    let m_odd = _mm256_srli_epi64(m, 32);
-    let prod_odd = _mm256_mul_epu32(x_odd, m_odd);
-    let q_odd = _mm256_srli_epi64(prod_odd, 32);
-
-    // Reassemble: even lanes go in u32 lanes {0, 2, 4, 6}; odd lanes go in
-    // {1, 3, 5, 7}. Both `q_even` and `q_odd` currently sit in the low half
-    // of each 64-bit lane.
-    let q = _mm256_or_si256(q_even, _mm256_slli_epi64(q_odd, 32));
-
-    // r = x - q * P (low 32 bits suffice; q * P ≤ x < 2^32).
-    let qp = _mm256_mullo_epi32(q, p);
-    let r = _mm256_sub_epi32(x, qp);
-
-    // Conditional subtract of P when r >= P. Branchless:
-    // `min_epu32(r, r - P)` selects `r - P` when r >= P (since `r - P` is
-    // smaller as a u32) and `r` otherwise (since `r - P` underflows to a
-    // very large u32).
-    _mm256_min_epu32(r, _mm256_sub_epi32(r, p))
-}
-
 /// Lane-wise modular multiplication for 16 u16 values per 256-bit vector.
 ///
 /// Inputs are 16 canonical u16 values per vector (`a, b < P`); output is
 /// 16 canonical u16 values. Internally widens to 32-bit, multiplies, and
-/// Barrett-reduces.
+/// Barrett-reduces via the Phase-2 SSOT primitive
+/// ([`super::fp_small::barrett_reduce_lane32`]).
+///
+/// `m32` carries `μ = ⌊2³² / P⌋` broadcast as 8 u32 lanes; the SSOT
+/// reads only the low 32 bits of each 64-bit lane internally, so either
+/// `_mm256_set1_epi32(μ as i32)` or `_mm256_set1_epi64x(μ as i64)`
+/// works. This kernel uses the `epi32` broadcast to match the rest of
+/// `fp_medium`'s lane-width convention.
 #[inline]
 #[target_feature(enable = "avx2")]
 unsafe fn fp_medium_batch_mul16(a: __m256i, b: __m256i, p32: __m256i, m32: __m256i) -> __m256i {
@@ -146,9 +111,9 @@ unsafe fn fp_medium_batch_mul16(a: __m256i, b: __m256i, p32: __m256i, m32: __m25
     let prod_lo = _mm256_mullo_epi32(a_lo, b_lo);
     let prod_hi = _mm256_mullo_epi32(a_hi, b_hi);
 
-    // Barrett-reduce each 32-bit lane.
-    let red_lo = barrett_reduce_u32x8(prod_lo, p32, m32);
-    let red_hi = barrett_reduce_u32x8(prod_hi, p32, m32);
+    // Barrett-reduce each 32-bit lane via the Phase-2 SSOT primitive.
+    let red_lo = super::fp_small::barrett_reduce_lane32(prod_lo, m32, p32);
+    let red_hi = super::fp_small::barrett_reduce_lane32(prod_hi, m32, p32);
 
     // Repack 32-bit results to 16-bit. `packus_epi32` saturates negative
     // inputs to zero — but our reduced values are already in `[0, P)`, so
