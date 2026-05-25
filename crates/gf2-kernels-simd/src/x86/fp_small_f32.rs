@@ -796,31 +796,6 @@ unsafe fn round_ps_to_epi32(v: __m256) -> __m256i {
     _mm256_cvtps_epi32(rounded)
 }
 
-/// 32-bit-lane Barrett reduction `r = x mod p` for `x ∈ [0, 2³²)` and
-/// `p ≤ 251`. Thin wrapper around [`super::fp_small::barrett_reduce_lane32`]
-/// (Candidate C's SpMM row reducer, the SSOT for this algorithm):
-/// `q = ⌊(x · μ) / 2³²⌋` with `μ = ⌊2³² / p⌋`, then
-/// `r = x − q · p`, followed by one conditional subtract. The result
-/// is in `[0, p)` for every `x < 2³²` when the inner kernel's i32 sum
-/// bound `k · (p−1)² ≤ 4096 · 250² = 2.56 · 10⁸ < 2³¹` holds, which it
-/// does for every in-scope `(n, k)` cell of route A.
-///
-/// Used by the route-A vectorized output reduction (issue 68cdf4c8) to
-/// replace the scalar `% p` loop in `store_and_reduce_tile_route_a`.
-///
-/// # Safety
-///
-/// Caller must ensure AVX2 is available.
-#[inline]
-#[target_feature(enable = "avx2")]
-unsafe fn barrett_reduce_lane32_local(x: __m256i, mu_vec: __m256i, p_vec: __m256i) -> __m256i {
-    // Delegate to the shared impl in fp_small. Pass p_vec as p_vec64 —
-    // that parameter is unused in the reduction (it was kept for interface
-    // symmetry in the fp_small calling context). Inlining eliminates any
-    // overhead; the generated SIMD sequence is identical.
-    super::fp_small::barrett_reduce_lane32(x, mu_vec, p_vec, p_vec)
-}
-
 /// Pack 8 reduced i32 lanes (each in `[0, p)`) into an 8-byte u8 array.
 ///
 /// AVX2 pack instructions are lane-wise across 128-bit halves: a single
@@ -863,10 +838,10 @@ unsafe fn pack_i32x8_to_u8(reduced: __m256i) -> [u8; 8] {
 }
 
 /// Vectorized `store_and_reduce_tile` variant for the route-A rework
-/// (issue 68cdf4c8). Applies an 8-lane SIMD Barrett reduction
-/// (`barrett_reduce_lane32_local`) to each of the 12 i32 accumulator
-/// vectors before storing them, replacing the 96 scalar `% p` calls
-/// in [`store_and_reduce_tile`].
+/// (issue 68cdf4c8). Applies the Phase-2 SSOT 32-bit-lane Barrett
+/// primitive ([`super::fp_small::barrett_reduce_lane32`]) to each of
+/// the 12 i32 accumulator vectors before storing them, replacing the
+/// 96 scalar `% p` calls in [`store_and_reduce_tile`].
 ///
 /// Lane bounds: each `sum_ij` lane holds `Σ_chunks round_ps_to_epi32(acc)`
 /// where each chunk contribution is in `[0, 2²⁴]` and chunks ≤
@@ -914,9 +889,9 @@ unsafe fn store_and_reduce_tile_route_a(
         n_eff: usize,
         dst: *mut u8,
     ) {
-        let r0 = barrett_reduce_lane32_local(s0, mu_vec, p_vec);
-        let r1 = barrett_reduce_lane32_local(s1, mu_vec, p_vec);
-        let r2 = barrett_reduce_lane32_local(s2, mu_vec, p_vec);
+        let r0 = super::fp_small::barrett_reduce_lane32(s0, mu_vec, p_vec);
+        let r1 = super::fp_small::barrett_reduce_lane32(s1, mu_vec, p_vec);
+        let r2 = super::fp_small::barrett_reduce_lane32(s2, mu_vec, p_vec);
         // n_eff ∈ [1, 24] picks how many cells we write into the row.
         if n_eff == N_R {
             // Full 24-lane row: write 8 + 8 + 8.
