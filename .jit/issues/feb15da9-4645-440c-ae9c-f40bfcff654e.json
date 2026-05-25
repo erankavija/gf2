@@ -2,7 +2,7 @@
   "id": "feb15da9-4645-440c-ae9c-f40bfcff654e",
   "title": "Design blocked GF(p) invert via PLE (026fc832 Phase 6)",
   "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a blocked GF(p) invert that uses the panelized PLE (sibling task) followed by two GEMM-based triangular solves on the identity matrix.\n\nParent epic: `026fc832`. Predecessor: panelized PLE design (sibling).\n\n## Background\n\nA8 rows 34-43 (invert GF(7/251/65521) at all n/regimes), row 74 (GF(31) invert). Current `FieldMatrix::inverse` does scalar PLE then forward/back substitution. Replacing with a panelized PLE followed by GEMM-based triangular solves on `I` is the standard blocked-inverse algorithm (Higham, \"Accuracy and Stability of Numerical Algorithms\", § 14.1).\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the blocked invert algorithm (PLE → triangular solves on I) and its dependency on the panelized PLE design.\n- [hard] Test surface specified (proptest A*A⁻¹ = I correctness; rank-deficient inputs → error/panic per existing API).\n- [hard] Benchmark cells listed (matching A8 rows 34-43, 74).\n- [hard] The design names the SSOT helpers it reuses (panelized PLE; `fp_small_try_gemm_classical`).\n- [hard] No production code — design only.\n- [hard] The design lists the single implementation child needed.\n\n## Out of scope\n\n- Implementation.\n- PLE, echelon, solve designs — siblings.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -13,9 +13,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T14:07:21.445090719Z"
+      "updated_at": "2026-05-25T20:43:24.595231729Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-25T20:45:07.339009104Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-25T20:44:51.962203965Z"
     }
   },
   "context": {},
@@ -33,5 +43,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:10:19.347713541+00:00",
-  "updated_at": "2026-05-25T14:12:41.658118613+00:00"
+  "updated_at": "2026-05-25T20:45:12.862061934+00:00"
 }

@@ -2,7 +2,7 @@
   "id": "24a93e4e-ca18-4a21-9e1b-98fad3633f7f",
   "title": "Design blocked GF(p) echelon / RREF kernel (026fc832 Phase 6)",
   "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a blocked GF(p) echelon / RREF kernel that derives from the panelized PLE (sibling task) plus blocked triangular solve.\n\nParent epic: `026fc832`. Predecessor: the panelized PLE design (sibling task in the same wave).\n\n## Background\n\nA8 rows 18-29 (echelon GF(7/251/65521) at all n/regimes), rows 72-73 (GF(31) echelon), and rows 30-33 (echelon GF(2^31-1)). The current `FieldMatrix::rref` uses the (bd9c6e13-fixed) scalar PLE then triangular-solves. Blocking the second pass to use the panelized PLE's L1 factor + GEMM-based triangular-solve is expected to inherit the fgemm speedup and close most echelon FAIL cells.\n\nThe design must address:\n- How the blocked echelon derives from the panelized PLE output (use L1/U1 factors directly).\n- Blocked back-substitution using a panel GEMM call (call into the existing `fp_small_try_gemm_classical` from `gf2-kernels-simd`).\n- Whether GF(2^31-1) Mersenne31 cells require a separate Mersenne31-specialised path or can share the small-prime infrastructure.\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the blocked echelon algorithm, dependency on the panelized PLE (sibling design), and the back-sub blocking.\n- [hard] Test surface specified (proptest correctness vs scalar reference; rank-deficient regimes).\n- [hard] Benchmark cells listed (matching A8 rows 18-33, 72-73).\n- [hard] The design names the SSOT helpers it reuses (panelized PLE, `fp_small_try_gemm_classical`).\n- [hard] No production code — design only.\n- [hard] The design lists the single implementation child needed.\n\n## Out of scope\n\n- Implementation.\n- PLE, invert, solve designs — siblings.\n- Mersenne31 dense-LA if it requires fundamentally different infrastructure (state this in the design with a rationale).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -13,9 +13,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T14:02:18.756762579Z"
+      "updated_at": "2026-05-25T20:03:12.461646202Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-25T20:45:06.352325062Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-25T20:44:45.631010623Z"
     }
   },
   "context": {},
@@ -34,5 +44,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:10:12.042221751+00:00",
-  "updated_at": "2026-05-25T14:07:21.359370274+00:00"
+  "updated_at": "2026-05-25T20:45:12.420194838+00:00"
 }
