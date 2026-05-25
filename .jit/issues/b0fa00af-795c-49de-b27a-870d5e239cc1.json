@@ -6,7 +6,11 @@
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
-    "41096af5-f777-4ad7-86fd-335431f1ab40"
+    "869ce43b-4278-4bf4-815a-3d41eeb52fbe",
+    "8df0c501-9fc0-484f-9600-46d735b10bab",
+    "98336ab4-21c3-49b4-97c7-466263574c7f",
+    "41096af5-f777-4ad7-86fd-335431f1ab40",
+    "6613abf4-0fde-45ec-8280-82da7506b916"
   ],
   "gates_required": [
     "cargo-ci",
@@ -30,5 +34,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:33:22.670238466+00:00",
-  "updated_at": "2026-05-25T09:02:52.870046559+00:00"
+  "updated_at": "2026-05-25T12:11:22.424179948+00:00"
 }

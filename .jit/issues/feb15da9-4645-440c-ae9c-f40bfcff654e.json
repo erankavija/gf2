@@ -1,0 +1,24 @@
+{
+  "id": "feb15da9-4645-440c-ae9c-f40bfcff654e",
+  "title": "Design blocked GF(p) invert via PLE (026fc832 Phase 6)",
+  "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a blocked GF(p) invert that uses the panelized PLE (sibling task) followed by two GEMM-based triangular solves on the identity matrix.\n\nParent epic: `026fc832`. Predecessor: panelized PLE design (sibling).\n\n## Background\n\nA8 rows 34-43 (invert GF(7/251/65521) at all n/regimes), row 74 (GF(31) invert). Current `FieldMatrix::inverse` does scalar PLE then forward/back substitution. Replacing with a panelized PLE followed by GEMM-based triangular solves on `I` is the standard blocked-inverse algorithm (Higham, \"Accuracy and Stability of Numerical Algorithms\", § 14.1).\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the blocked invert algorithm (PLE → triangular solves on I) and its dependency on the panelized PLE design.\n- [hard] Test surface specified (proptest A*A⁻¹ = I correctness; rank-deficient inputs → error/panic per existing API).\n- [hard] Benchmark cells listed (matching A8 rows 34-43, 74).\n- [hard] The design names the SSOT helpers it reuses (panelized PLE; `fp_small_try_gemm_classical`).\n- [hard] No production code — design only.\n- [hard] The design lists the single implementation child needed.\n\n## Out of scope\n\n- Implementation.\n- PLE, echelon, solve designs — siblings.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-25T12:10:19.347713541+00:00",
+  "updated_at": "2026-05-25T12:10:19.347718991+00:00"
+}

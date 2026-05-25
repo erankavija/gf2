@@ -1,0 +1,25 @@
+{
+  "id": "2e8c5a29-818b-4d6b-8e96-1e53037f4c9f",
+  "title": "Design panelized GF(p) PLE/LU kernel (026fc832 Phase 6)",
+  "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a panelized rank-revealing GF(p) PLE/LU kernel for the small-prime family (GF(7/31/127/241/251/65521)).\n\nParent epic: `026fc832`. Predecessor: `b0fa00af` Phase 5 scorecard's § 6 downstream-inheritance evidence shows the existing scalar PLE inherits a 4.55× speedup from the route-A wire-in but still doesn't cross 1.5× of fflas-ffpack. Closing the FAIL cells requires a dedicated panelized algorithm.\n\n## Background\n\nA8 rows 6-17 (pluq GF(7/251/65521) at all n/regimes), row 71 (GF(31) pluq deficient), and downstream cells (invert/solve via PLE) all require this. fflas-ffpack uses a \"recursive PLUQ\" (Dumas-Pernet-Sultan 2017, arXiv:1703.02438) that panelizes the matrix into MR×NR tiles and calls into the panel-GEMM fast path. gf2's current PLE is row-at-a-time scalar.\n\nThe design must address:\n- Panel size selection (MR, NR, KC) consistent with the existing fp_small_panel kernel from `fc182ed5`.\n- Rank-revealing behavior preserved (handle rank-deficient inputs correctly).\n- How the panel kernel for elimination calls into the new shared `barrett_reduce_lane32` SSOT from `e8a0c47a`.\n- Integration with `FieldMatrix::ple_in_place_window` (the current scalar API in `crates/gf2-core/src/field/ple.rs`).\n- Bench cells: GF(251)/n in {256, 1024} primary; GF(7/31/127/241/65521)/n in {256, 1024}; rank-deficient regimes.\n- Test surface: round-trip correctness vs the current scalar PLE for all primes × n × regimes.\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the panelized PLE algorithm, panel size choice with derivation, rank-revealing pivoting strategy, and the integration mechanism with the existing `FieldMatrix::ple_in_place_window` API.\n- [hard] The design lists every test required for correctness validation (per-prime proptest sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}; rank-deficient cases).\n- [hard] The design lists the benchmark cells that will measure speedup (matching A8 rows 6-17, 71 to verify ≥ 1.5× of fflas).\n- [hard] The design names the SSOT helpers it will reuse (`barrett_reduce_lane32` from `e8a0c47a`; panel size constants from `fc182ed5`).\n- [hard] No production code in this task — design only.\n- [hard] The design lists the implementation child issue (single impl task) needed to land this work.\n\n## Out of scope\n\n- Implementation (separate child).\n- Echelon, invert, solve designs — those are sibling tasks.\n- GF(2^31-1) Mersenne31 PLE — that uses a different storage layout; if pursued, must be a separate design task.\n\n## Notes\n\nThis is the foundational design — blocked echelon, invert, and solve all depend on the panelized PLE. The design must be approved before implementation dispatch.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-25T12:10:00.409082783+00:00",
+  "updated_at": "2026-05-25T12:10:00.409088593+00:00"
+}

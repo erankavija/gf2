@@ -1,0 +1,25 @@
+{
+  "id": "98336ab4-21c3-49b4-97c7-466263574c7f",
+  "title": "Extend GF(p) fgemm benchmarks + dispatch to n=4096 (026fc832 Phase 6)",
+  "description": "Phase 6 independent task under epic `026fc832`. Extends the existing GF(p) fgemm benchmarks and dispatch to cover n=4096 cells.\n\nParent epic: `026fc832`. Predecessor: `41096af5` (route-A wire-in at n≥512).\n\n## Background\n\nA8 rows 1-3 (fgemm GF(7/31/65521) at n=4096) currently FAIL at 1.70-2.52× vs fflas. The existing fp_small SIMD path scales to n=4096 but has not been benchmarked there since 027fc832 began. Likely closes with the existing infrastructure (route-A for GF(251), Candidate C for others). If not, scoping note in evidence doc.\n\n## Success Criteria\n\n- [hard] 5-trial CCX1-pinned benchmarks at GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at n=4096 on the 5900X reference host, recorded as CSV + evidence doc.\n- [hard] For every (prime, n=4096) cell measured, the post-bench evidence doc records the ratio vs fflas-ffpack and either marks PASS (≤ 1.5×) or escalates with the gap.\n- [hard] No regression on existing (prime, n) cells PASSing post-`41096af5` (delta ≤ 5%).\n- [hard] If route-A is found to be the optimal path for any (prime, n=4096) cell, the `select_f32_path` dispatch is updated to route accordingly (with the same testing rigor as `41096af5`).\n- [hard] Bit-exact correctness preserved (proptest sweep extended to n=4096 for at least GF(251); other primes covered by inheritance from the dispatch logic verified at smaller n).\n\n## Out of scope\n\n- Other phases (PLE, echelon, invert, solve).\n- AVX-512 (epic `7f809931`).\n\n## Notes\n\nIndependent of the dense-LA design/impl track. Can run in parallel with the design tasks. Light implementation: existing kernels should scale; the work is benchmark + optional dispatch refinement.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-25T12:10:31.705488697+00:00",
+  "updated_at": "2026-05-25T12:10:31.705497667+00:00"
+}
