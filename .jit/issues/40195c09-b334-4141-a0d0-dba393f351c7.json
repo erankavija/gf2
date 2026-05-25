@@ -2,9 +2,9 @@
   "id": "40195c09-b334-4141-a0d0-dba393f351c7",
   "title": "Lift gemm_axpy_into_view with small-prime SIMD fast path (026fc832 Phase 6 prereq)",
   "description": "Phase 6 architectural prerequisite under epic `026fc832`. Wave-6 design reviews uncovered that `gemm_axpy_into_view` (used by all `trsm_*` kernels and by the existing `rref` back-substitution path) does NOT dispatch the small-prime AVX2 whole-GEMM fast path. Currently it does per-cell `dot_product_slices`, which only routes the medium-prime u16 packed dot for primes 252-65521; for small primes ($P \\le 251$) it falls back to scalar. The whole-GEMM small-prime kernel `fp_small_try_gemm_classical` is reachable only via `gemm()`'s dispatch.\n\nThis blocks the Phase 6 echelon (`24a93e4e` design / `869ce43b` impl) and invert (`feb15da9` design / `8df0c501` impl) routes from inheriting the small-prime fast path through TRSM. The user-approved decision (session 6, 2026-05-25) is to **lift** `gemm_axpy_into_view` to dispatch the small-prime fast path, so all current and future TRSM-style code inherits the speedup.\n\n## Background\n\nCurrent dispatch:\n- `gemm()` (`crates/gf2-core/src/field/matrix.rs:2642`): calls `F::try_simd_gemm_classical()` → `fp_small_try_gemm_classical` for $P \\le 251$, packed u16 dot for $252 \\le P \\le 65521$. **Has small-prime fast path.**\n- `gemm_axpy_into_view` (`crates/gf2-core/src/field/matrix.rs:2854-2920`): per-cell loop over `dot_product_slices`. `dot_product_slices` (`crates/gf2-core/src/field/vec.rs:480-492`) calls `F::try_fp_simd_dot_product()` which only routes medium-prime u16 packed dot. **Missing small-prime fast path.**\n- `trsm_lower` (`crates/gf2-core/src/field/triangular.rs:751`) and `trsm_upper` (line 692) both call `gemm_axpy_into_view`. Therefore TRSM inherits the gap.\n\n## Scope\n\nExtend `gemm_axpy_into_view` to dispatch a whole-GEMM small-prime fast path. Two implementation strategies are acceptable:\n\n1. **Scratch-buffer + add-into-view:** When `F::try_simd_gemm_classical` is available, allocate a scratch FieldMatrix of the output shape, call `fp_small_try_gemm_classical` into it, then add-into-view the existing destination with the alpha/beta semantics. One allocation per call.\n\n2. **Direct fused alpha-beta panel kernel:** Add a new SSOT helper `fp_small_try_gemm_axpy_classical<P>` that computes `C = alpha * A * B + beta * C` directly. Avoid the scratch allocation. Larger implementation but cleaner.\n\nImplementation choice is the impl agent's call; both must produce bit-exact results.\n\n## Success Criteria\n\n- [hard] `gemm_axpy_into_view` for `Fp<P>` with $P \\le 251$ reaches `fp_small_try_gemm_classical` (or its alpha-beta variant) when `simd` feature is enabled and AVX2 is available at runtime.\n- [hard] No regression on existing call sites (`trsm_lower`, `trsm_upper`, the recursive PLE Schur-update path) at any (prime, n) cell currently PASSing post-`41096af5` (delta ≤ 5%).\n- [hard] Bit-exact correctness preserved across all primes (proptest sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} for $p \\in \\{7, 31, 127, 241, 251, 65521\\}$).\n- [hard] Unsafe stays in `gf2-kernels-simd` (no new unsafe code in `gf2-core`).\n- [hard] No BLAS dependency; pure Rust + AVX2.\n- [hard] After this task lands, `trsm_lower` + `trsm_upper` at GF(7)/256, GF(251)/256, GF(65521)/256 exhibit measurable speedup over their pre-lift performance (the lift is verified empirically — a 5-trial CCX1-pinned micro-bench in `dev/bench_results/`).\n- [hard] Test coverage explicitly exercises the `gemm_axpy_into_view` small-prime path (a new `#[test]` calls into the function with `Fp<251>` and verifies bit-exact equality vs the existing scalar oracle at n ∈ {16, 64, 256}).\n\n## Out of scope\n\n- The downstream echelon (`869ce43b`), invert (`8df0c501`), solve (`6613abf4`) impls (separate tasks).\n- AVX-512 (epic `7f809931`).\n- Mersenne31 dispatch through `gemm_axpy_into_view` (separate task if needed; current Mersenne31 echelon stays scalar).\n\n## Notes\n\n- Filed session 6 (2026-05-25) after wave-6 review uncovered the dispatch gap.\n- All wave 7a/7b implementation tasks (`6823c8a0`, `869ce43b`, `8df0c501`, `6613abf4`) become dependents of this task.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -13,7 +13,14 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/bench_results/2026-05-26-40195c09-gemm-axpy-lift.md",
+      "commit": null,
+      "label": "gemm_axpy_into_view lift evidence",
+      "doc_type": "implementation"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -21,5 +28,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T19:57:08.997296044+00:00",
-  "updated_at": "2026-05-25T19:57:08.997304844+00:00"
+  "updated_at": "2026-05-25T22:08:08.288996725+00:00"
 }

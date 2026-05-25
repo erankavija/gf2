@@ -1,0 +1,8 @@
+triangular/trsm_upper/Fp_M31/256
+                        time:   [6.7266 ms 6.7434 ms 6.7743 ms]
+triangular/trsm_upper/Gf2m8/256
+                        time:   [482.40 ms 483.98 ms 485.73 ms]
+triangular/trsm_lower/Fp_M31/256
+                        time:   [6.4202 ms 6.4954 ms 6.5724 ms]
+triangular/trsm_lower/Gf2m8/256
+                        time:   [477.27 ms 479.20 ms 481.50 ms]

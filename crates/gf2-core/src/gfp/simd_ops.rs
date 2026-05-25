@@ -2382,6 +2382,39 @@ pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
     fp_small_enabled::<P>() && crate::simd::maybe_fp_small().is_some()
 }
 
+/// Non-allocating availability probe for
+/// [`fp_small_try_gemm_classical`] (issue `40195c09`).
+///
+/// Returns `true` exactly when the small-prime whole-GEMM kernel
+/// would populate `out` for any compatible shape: `P` in the byte-lane
+/// range (`3..=251`) AND a SIMD kernel was detected at runtime (either
+/// Candidate C `maybe_fp_small`, route A `maybe_fp_small_f32`, or route
+/// C `maybe_fp_small_panel`). Used by
+/// [`crate::field::matrix::gemm_axpy_into_view`] to skip the
+/// contiguous-`A` scratch allocation when the kernel would decline.
+#[cfg(feature = "simd")]
+#[inline]
+pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
+    if !fp_small_enabled::<P>() {
+        return false;
+    }
+    // Any of the three small-prime kernels can take the call. The
+    // dispatch order inside `fp_small_try_gemm_classical` is route A
+    // (f32), route C (panel), then Candidate C (byte-lane). Returning
+    // `true` whenever any of them is available exactly mirrors the
+    // "kernel will succeed" condition.
+    crate::simd::maybe_fp_small().is_some()
+        || crate::simd::maybe_fp_small_f32().is_some()
+        || crate::simd::maybe_fp_small_panel().is_some()
+}
+
+/// Non-SIMD stub that always returns `false`.
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
+    false
+}
+
 /// Non-SIMD stub for `PackedFpChainPolys<P>`.
 #[cfg(not(feature = "simd"))]
 pub(crate) struct PackedFpChainPolys<const P: u64>;

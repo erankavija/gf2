@@ -1,0 +1,12 @@
+triangular/trsm_upper/Fp_7/1024
+                        time:   [369.47 ms 371.00 ms 372.46 ms]
+triangular/trsm_upper/Fp_251/1024
+                        time:   [366.04 ms 368.24 ms 370.75 ms]
+triangular/trsm_upper/Fp_65521/1024
+                        time:   [369.71 ms 370.93 ms 372.13 ms]
+triangular/trsm_lower/Fp_7/1024
+                        time:   [373.12 ms 374.80 ms 376.32 ms]
+triangular/trsm_lower/Fp_251/1024
+                        time:   [368.37 ms 369.10 ms 369.83 ms]
+triangular/trsm_lower/Fp_65521/1024
+                        time:   [371.01 ms 372.37 ms 373.71 ms]

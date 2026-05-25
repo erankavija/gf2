@@ -1,0 +1,12 @@
+triangular/trsm_upper/Fp_7/64
+                        time:   [143.30 µs 144.84 µs 146.15 µs]
+triangular/trsm_upper/Fp_251/64
+                        time:   [143.22 µs 144.11 µs 145.00 µs]
+triangular/trsm_upper/Fp_65521/64
+                        time:   [143.15 µs 143.62 µs 144.18 µs]
+triangular/trsm_lower/Fp_7/64
+                        time:   [148.73 µs 150.77 µs 152.64 µs]
+triangular/trsm_lower/Fp_251/64
+                        time:   [144.03 µs 144.90 µs 145.83 µs]
+triangular/trsm_lower/Fp_65521/64
+                        time:   [143.52 µs 143.99 µs 144.64 µs]

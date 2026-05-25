@@ -483,6 +483,34 @@ pub trait FiniteField:
         false
     }
 
+    /// Non-allocating availability probe for [`try_simd_gemm_classical`]
+    /// (issue `40195c09`).
+    ///
+    /// Callers that need to decide whether to allocate the contiguous
+    /// `A` and `out` scratch buffers before calling
+    /// [`try_simd_gemm_classical`] use this probe to skip the
+    /// allocation when the kernel will return `false` regardless (no
+    /// `simd` feature, AVX2 unavailable at runtime, or prime out of the
+    /// `P ≤ 251` byte-lane range). The default returns `false`; `Fp<P>`
+    /// for `P ≤ 251` overrides to return `true` when the `simd` feature
+    /// is enabled and AVX2 is detected.
+    ///
+    /// This is the same probe pattern used by
+    /// [`chain_poly_arith_available`](Self::chain_poly_arith_available)
+    /// for the `try_make_chain_poly_arith` hook.
+    ///
+    /// # Returns
+    ///
+    /// `true` when [`try_simd_gemm_classical`] is expected to populate
+    /// `out` for any shape compatible with the kernel; `false` when the
+    /// caller should not bother allocating the contiguous operand
+    /// scratch.
+    #[doc(hidden)]
+    #[inline]
+    fn has_simd_gemm_classical() -> bool {
+        false
+    }
+
     /// Hidden cyclic-decomposition basis reducer hook
     /// (issue `d1dd266c`).
     ///
