@@ -36,14 +36,15 @@ Ratio definition: gf2 wall / reference wall (lower is better; PASS ≤ 1.5×).
 
 The current `FieldMatrix::inv` (in `crates/gf2-core/src/field/inverse.rs`) calls the
 **scalar PLE** decomposition followed by two in-place triangular inversions (`trtri_lower`,
-`trtri_upper`) and an in-place upper-times-unit-lower product (`trtrm`). Each PLE recursion
-level spawns a `gemm` call and a `trsm_lower` call that dispatch through
-`fp_small_try_gemm_classical` (the AVX2 byte-lane kernel). However, the scalar PLE panel
-is only one column wide (`PLE_BASE_COLS = 1`), so it never builds up sufficient inner-
-dimension width to saturate the AVX2 kernel. The result is that the dominant cost is the
-Schur-complement update loop, which runs column-by-column rather than in cache-friendly
-blocks, and the downstream `trsm` calls are called on sub-matrices too narrow to amortize
-their overhead.
+`trtri_upper`) and an in-place upper-times-unit-lower product (`trtrm`). The scalar PLE
+panel is only one column wide (`PLE_BASE_COLS = 1`). Furthermore, the current
+`gemm_axpy_into_view` (`crates/gf2-core/src/field/matrix.rs:2854-2920`) does NOT route
+the small-prime whole-GEMM path — per-cell `dot_product_slices` auto-dispatches only the
+medium-prime u16 packed dot; the small-prime byte-lane kernel (`fp_small_try_gemm_classical`)
+is NOT reached from `gemm_axpy_into_view` until task 40195c09 lands. The result is that
+the dominant cost is the Schur-complement update loop, which runs column-by-column rather
+than in cache-friendly blocks, and the downstream `trsm` calls are called on sub-matrices
+too narrow to amortize their overhead — and without the small-prime fast path at all.
 
 fflas-ffpack uses a **blocked** LU factorisation (its `fPLUQ` driver) with a panel width of
 `nb = 64` or larger, ensuring every GEMM sub-call is wide enough for the BLAS/float-modular
@@ -56,12 +57,16 @@ Replacing the scalar-pivot PLE with the **panelized PLE** (designed in `2e8c5a29
 the narrow Schur-complement updates with wide `gemm` calls. The blocked invert algorithm
 (Higham, "Accuracy and Stability of Numerical Algorithms", § 14.1) then replaces the two
 `trtri` + `trtrm` phase with two GEMM-based triangular solves applied directly to the
-identity matrix — i.e., `solve_batch(I)`. This funnels all the dense work through
-`gemm_axpy_into_view`'s runtime dispatch, which auto-routes:
-- small-prime ($P \le 251$): `fp_small_try_gemm_classical` (byte-lane AVX2 kernel) — closes A8 rows 34-40, 74
-- medium-prime ($252 \le P < 65536$): `fp_medium` u16-lane path (Barrett-reduction AVX2 kernel) — closes A8 rows 41-43
+identity matrix — i.e., `trsm_lower(L, I)` followed by `trsm_upper(E, Y)`. **After task
+40195c09 lifts `gemm_axpy_into_view` with the small-prime SIMD fast path**, both `trsm_*`
+calls funnel the dense work through `fp_small_try_gemm_classical` (small primes, A8 rows
+34-40, 74) and the existing medium-prime u16 path (GF(65521), rows 41-43), matching the
+standalone fgemm PASS measurements at the respective primes.
 
-Both paths achieve the throughput shown in the standalone `fgemm` PASS measurements at the respective primes.
+Before 40195c09 lands, the trsm-on-identity approach inherits only the medium-prime u16
+path. After 40195c09 lands, both small-prime ($P \le 251$) and medium-prime
+($252 \le P < 65536$) paths are auto-dispatched. The design's algorithm is unchanged in
+either case; only the realised speedup depends on 40195c09.
 
 ---
 
@@ -160,7 +165,8 @@ dispatch to the same `gemm_axpy_into_view` kernel, but at each recursion level t
 RHS width is $n$ (not $b$), so the GEMM inner dimension is always wide. For
 non-Mersenne primes at $n = 64$, the single `trsm_lower(L, I)` call with a $64 \times 64$
 RHS gives a $64 \times 64$ GEMM, which is the regime where `fp_small_try_gemm_classical`
-Route C / Route A execute at peak throughput.
+Route C / Route A execute at peak throughput — **after task 40195c09 wires the small-prime
+dispatch into `gemm_axpy_into_view`** (see §4.4).
 
 ---
 
@@ -195,8 +201,8 @@ pub fn inv(&self) -> Option<FieldMatrix<F>> {
 
     // NEW: panelized fast path for any field with a fast GEMM at this n.
     // The actual question "is blocked invert beneficial here?" is answered
-    // at runtime by gemm_axpy_into_view's internal dispatch (small-prime
-    // byte-lane AVX2, medium-prime u16-lane AVX2, etc.) and by the
+    // at runtime by gemm_axpy_into_view's internal dispatch (post-40195c09:
+    // small-prime byte-lane AVX2; medium-prime u16-lane AVX2) and by the
     // empirically-calibrated threshold below.
     if n >= BLOCKED_INVERT_THRESHOLD {
         if let Some(result) = blocked_inv_panelized(self) {
@@ -217,9 +223,9 @@ pub fn inv(&self) -> Option<FieldMatrix<F>> {
 of `8df0c501`, expected 16–32 based on fgemm crossover data).
 
 The decision of whether a fast GEMM is available for field `F` is **delegated entirely to
-`gemm_axpy_into_view`'s runtime dispatch**, which auto-selects among:
-- small-prime byte-lane AVX2 (via `F::try_simd_gemm_classical`) for `P ≤ 251`,
-- medium-prime u16-lane AVX2 (via `F::try_pack_fp_medium_u16` + `try_fp_simd_dot_packed_u16`) for `252 ≤ P < 65536`,
+`gemm_axpy_into_view`'s runtime dispatch**, which auto-selects among (post-40195c09):
+- small-prime byte-lane AVX2 (via `F::try_simd_gemm_classical`) for `P ≤ 251` — available only after 40195c09 lands,
+- medium-prime u16-lane AVX2 (via `F::try_pack_fp_medium_u16` + `try_fp_simd_dot_packed_u16`) for `252 ≤ P < 65536` — available today,
 - scalar fallback for all other field types (e.g. `Gf2mWide`).
 
 No compile-time gate per-field is required — the threshold controls crossover and the
@@ -281,13 +287,16 @@ or f32-modular Candidate F) executed; `false` to defer to the caller's scalar pa
 The `#[cfg(not(feature = "simd"))]` stub at line 903 returns `false` unconditionally,
 so the dispatch is always `simd`-feature-gated.
 
-The blocked invert reaches this kernel indirectly through the small-prime call chain:
+The blocked invert reaches this kernel indirectly through the small-prime call chain.
+**This path is active only after task 40195c09 lifts `gemm_axpy_into_view` with the
+small-prime dispatch** (see §4.4):
 
 ```text
 FieldMatrix::inv
   └─ panelized_ple(A)                    // calls fp_small_try_gemm_classical for Schur
   └─ trsm_lower(L, I)                    // calls gemm_axpy_into_view
        └─ gemm_axpy_into_view            // crates/gf2-core/src/field/matrix.rs:2642
+            │  (post-40195c09: small-prime dispatch wired here)
             └─ F::try_simd_gemm_classical()
                  └─ fp_small_try_gemm_classical::<P>(...)
                                          // crates/gf2-core/src/gfp/simd_ops.rs:654
@@ -295,8 +304,7 @@ FieldMatrix::inv
 ```
 
 No direct call to `fp_small_try_gemm_classical` is needed in the blocked invert driver;
-the kernel is reached through the existing `gemm_axpy_into_view` dispatch already wired in
-`trsm_lower` / `trsm_upper`.
+the kernel is reached through `gemm_axpy_into_view` after 40195c09 wires that dispatch.
 
 ### 4.3 `fp_medium` (medium-prime u16-lane AVX2 path, $252 \le P < 65536$)
 
@@ -329,6 +337,34 @@ FieldMatrix::inv
 
 No explicit medium-prime dispatch is required in the blocked invert driver itself; it
 inherits the GF(65521) speedup automatically via `gemm_axpy_into_view`.
+
+### 4.4 Architectural prerequisite (40195c09)
+
+The blocked invert's Steps 2 + 3 (`trsm_lower(L, I)` and `trsm_upper(E, Y)`) reach
+`fp_small_try_gemm_classical` (for $P \le 251$) ONLY after task **40195c09** ("Lift
+`gemm_axpy_into_view` with small-prime SIMD fast path") lands. The R1 reviewer correctly
+pointed out that the current `gemm_axpy_into_view`
+(`crates/gf2-core/src/field/matrix.rs:2854-2920`) does NOT route the small-prime
+whole-GEMM path — per-cell `dot_product_slices` only auto-dispatches the medium-prime u16
+packed dot. Task 40195c09 adds the missing small-prime dispatch (either scratch-buffer +
+add-into-view, or a fused alpha-beta panel kernel). The implementation child `8df0c501` is
+JIT-wired to depend on 40195c09 landing first.
+
+Before 40195c09 lands, the trsm-on-identity approach would inherit only the medium-prime
+u16 path (GF(65521) rows 41-43 still close via `fp_medium`). After 40195c09 lands, both
+small-prime ($P \le 251$, A8 rows 34-40, 74) and medium-prime ($252 \le P \le 65521$, rows
+41-43) paths are auto-dispatched. The design's algorithm is unchanged in either case; only
+the realised speedup depends on 40195c09.
+
+The dispatch topology after 40195c09:
+
+```text
+FieldMatrix::inv → panelized_ple(A) → trsm_lower(L, I) → trsm_upper(E, Y)
+                                          ↓ (via 40195c09-lifted gemm_axpy_into_view)
+                                          ↓
+                                          ├─ fp_small_try_gemm_classical (P ≤ 251)
+                                          └─ fp_medium (252 ≤ P ≤ 65521)
+```
 
 ---
 
