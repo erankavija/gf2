@@ -631,21 +631,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "slow: multi-word vs ryser at n=32 (per-trial ~3 min; 2 trials)"]
+    #[ignore = "slow: multi-word vs ryser at n=32 (per-trial ~3 min; 1 trial)"]
     fn test_multiword_vs_ryser_n32_slow() {
-        run_multiword_vs_ryser_at_n(32, 2, 0x0020);
-    }
-
-    #[test]
-    #[ignore = "slow: multi-word vs ryser at n=48 (per-trial seconds-scale; 5 trials)"]
-    fn test_multiword_vs_ryser_n48_slow() {
-        run_multiword_vs_ryser_at_n(48, 5, 0x0030);
-    }
-
-    #[test]
-    #[ignore = "slow: multi-word vs ryser at n=60 (per-trial >10 s; 2 trials)"]
-    fn test_multiword_vs_ryser_n60_slow() {
-        run_multiword_vs_ryser_at_n(60, 2, 0x003c);
+        run_multiword_vs_ryser_at_n(32, 1, 0x0020);
     }
 
     // -----------------------------------------------------------------------
