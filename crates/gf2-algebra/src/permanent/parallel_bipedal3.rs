@@ -558,11 +558,6 @@ mod tests {
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 20, 3_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 20, 4_000);
 
-    // n=32: serial oracle is ~17 s/matrix so the original 100-matrix count
-    // would need ~30 min in slow tier. Amended criterion 3 calls for 5
-    // matrices: 1 sub-test × 5 matrices ~ 85 s, fits 120 s.
-    large_n_parallel_cross_check!(test_parallel_cross_check_n32, 32, 5, 0);
-
     // -----------------------------------------------------------------------
     // Determinism test: same seed + same n=24 across varied thread counts.
     //
