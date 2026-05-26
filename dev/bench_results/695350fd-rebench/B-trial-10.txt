@@ -1,0 +1,14 @@
+nice: cannot set niceness: Permission denied
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0001 s (301k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [16.576 µs 16.581 µs 16.588 µs]
+                        thrpt:  [31.606 Gelem/s 31.620 Gelem/s 31.629 Gelem/s]
+                 change:
+                        time:   [+3.8703% +4.0318% +4.1959%] (p = 0.00 < 0.05)
+                        thrpt:  [-4.0269% -3.8756% -3.7261%]
+                        Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
