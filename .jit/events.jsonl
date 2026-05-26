@@ -5353,3 +5353,7 @@
 {"type":"issue_state_changed","id":"a522eab8-5e69-4352-9837-910326bf4d26","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T11:33:18.964664266Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"fb0495fc-f37f-4f21-808e-5906e2284e36","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T11:33:18.967492147Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"8d8299d2-4e87-4d17-aec3-0fce095cecab","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-26T14:20:44.168674861Z","title":"u16-lane PLE base-case kernel (6823c8a0 Phase 6d)","priority":"normal"}
+{"type":"issue_state_changed","id":"8537f38f-ed81-4241-8b1f-77499bfd9b5c","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T14:21:42.485592406Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"023aae20-4450-40eb-b259-c4472dfee599","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T14:21:42.486786686Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"ebbdbeba-df3c-4fc3-af8f-f87168e9b4a5","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T14:23:25.049390419Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"7db4ba70-1087-40ff-9d70-1da089b31abf","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T14:23:25.052195200Z","assignee":"agent:claude"}
