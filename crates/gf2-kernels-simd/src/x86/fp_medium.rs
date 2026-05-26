@@ -725,6 +725,434 @@ pub unsafe fn fp_medium_spmm_row(
 }
 
 // ---------------------------------------------------------------------------
+// Whole-GEMM panel kernel (jit:74ba1cdc R1)
+// ---------------------------------------------------------------------------
+//
+// Closes the 1.9x ratio gap at GF(65521)/n=4096 by replacing the
+// per-cell `fp_medium_batch_dot` dispatch (16M calls at n=4096) with
+// a panelized GEMM that amortises one A-load across MR output cells
+// per inner k-step. Operand layout mirrors `fp_small_panel_gemm`: A
+// arrives row-major (m * k u16 canonical residues), B arrives row-
+// transpose (n * k u16 canonical), output written row-major (m * n
+// u16 canonical).
+//
+// The kernel splits on the multiplier-MAC regime exactly the way
+// `fp_medium_batch_dot` does:
+//
+// * **p <= 32_767** — signed-safe `_mm256_madd_epi16` path. Each
+//   k-step contributes 2 paired-products into a u32 lane (lane bound
+//   `2 * (p-1)^2 < 2^31`), so a u32 accumulator absorbs
+//   `floor(2^32 / (2 * (p-1)^2))` k-pairs before needing to drain to
+//   u64. This is the same `K_PANEL_PAIRS` bookkeeping
+//   `fp_medium_batch_dot_madd` uses.
+//
+// * **p > 32_767** (the GF(65521) reference cell) — fallback
+//   `mullo_epi16 + mulhi_epu16` path: each k-step produces 16 full
+//   u32 products which we widen straight to u64-lane accumulators.
+//   No panel batching is safe at this prime range (a single u32
+//   product can approach 2^32), so the drain is per-step.
+//
+// Both paths share a common outer panel structure (pack B into
+// NR-major panels once per gemm) and inner MR-row amortization
+// (broadcast MR rows of A against one NR-wide B-load per step).
+
+/// MR register tile rows for the medium-prime panel kernel. Picked
+/// at MR=2 after measuring MR=4 (32 % regression at GF(65521)/n=4096;
+/// 16 u64-lane accumulator ymm vectors + 4 A-broadcasts + ephemeral
+/// product temps blow past the 16-register file and the compiler
+/// spills ~10 ymm per inner step). MR=2 keeps the acc tower at 8 ymm,
+/// leaving the broadcasts + B-load + product temps register-resident.
+const FP_MEDIUM_PANEL_MR: usize = 2;
+
+/// NR register tile cols (one ymm of u16 lanes = 16 cells).
+const FP_MEDIUM_PANEL_NR: usize = 16;
+
+/// Whole-GEMM panel kernel for medium-prime `Fp<P>` with `P in
+/// (251, 65535]`.
+///
+/// Computes `c[i*n + j] = (sum_t a[i*k + t] * bt[j*k + t]) mod p` for
+/// every `(i, j) in [0, m) x [0, n)`. Inputs `a` and `bt` carry
+/// canonical u16 residues (value `< p`); `bt` is the row-major
+/// transpose of B (length `n * k`, row `j` holds column `j` of B).
+///
+/// # Algorithm
+///
+/// 1. Pack B into N-major panels of width `NR = 16` (one ymm of
+///    u16 lanes), each `k x NR` row-major. For each panel and each
+///    k-step the kernel issues one ymm load of B.
+/// 2. Process A in MR-row blocks. For each block, sweep every panel,
+///    holding MR x (NR/4) = MR * 4 u64-lane accumulator vectors live
+///    across the full k axis. Per inner step:
+///    * 1 ymm B-load (16 u16 lanes)
+///    * MR broadcasts of one A scalar each (`_mm256_set1_epi16`)
+///    * MR x (mullo_epi16 + mulhi_epu16) -> MR pairs of u16 product
+///      halves
+///    * MR x (unpacklo/unpackhi_epi16) -> MR x 2 ymm of u32 products
+///    * MR x (4 unpack_epi32 + 4 add_epi64) -> drain into MR x 4 u64
+///      accumulators
+/// 3. After the k sweep, reduce each u64 acc lane mod p and pack the
+///    16-cell row back to canonical u16.
+///
+/// # Safety
+///
+/// Caller must ensure AVX2 is available at runtime, `p in (251, 2^16)`
+/// is an odd prime, and all input lanes are canonical (`< p`).
+///
+/// # Panics
+///
+/// Panics if any slice length disagrees with `m`, `k`, `n`.
+#[target_feature(enable = "avx2")]
+pub unsafe fn fp_medium_gemm_panel(
+    a: &[u16],
+    bt: &[u16],
+    m: usize,
+    k: usize,
+    n: usize,
+    p: u16,
+    c: &mut [u16],
+) {
+    assert_eq!(a.len(), m * k, "fp_medium_gemm_panel: a shape");
+    assert_eq!(bt.len(), n * k, "fp_medium_gemm_panel: bt shape");
+    assert_eq!(c.len(), m * n, "fp_medium_gemm_panel: c shape");
+
+    if m == 0 || k == 0 || n == 0 {
+        return;
+    }
+
+    // Pack B^T into NR-major panels. Panel `pj` covers columns
+    // `pj*NR..min((pj+1)*NR, n)` of the original B; each row of the
+    // panel is a contiguous ymm-aligned u16 slice of NR cells.
+    let n_panels = n.div_ceil(FP_MEDIUM_PANEL_NR);
+    let panel_stride = k * FP_MEDIUM_PANEL_NR;
+    let mut b_packed: Vec<u16> = vec![0u16; n_panels * panel_stride];
+    for panel_idx in 0..n_panels {
+        let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
+        let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
+        let n_eff = j_end - j_blk;
+        let panel_off = panel_idx * panel_stride;
+        for t in 0..k {
+            let dst_row_off = panel_off + t * FP_MEDIUM_PANEL_NR;
+            for j_off in 0..n_eff {
+                b_packed[dst_row_off + j_off] = bt[(j_blk + j_off) * k + t];
+            }
+            // Slack columns (j_off >= n_eff) stay zero from the
+            // initial vec![0u16; _]; the inner kernel still produces
+            // a product for them but the output write below skips
+            // the slack lanes.
+        }
+    }
+
+    // Outer-M: process MR-row blocks (steady-state).
+    let m_full = m - (m % FP_MEDIUM_PANEL_MR);
+    let mut i_blk = 0usize;
+    while i_blk < m_full {
+        for panel_idx in 0..n_panels {
+            let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
+            let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
+            let n_eff = j_end - j_blk;
+            let panel_off = panel_idx * panel_stride;
+            fp_medium_panel_run::<{ FP_MEDIUM_PANEL_MR }>(
+                a, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
+            );
+        }
+        i_blk += FP_MEDIUM_PANEL_MR;
+    }
+    // Trailing rows: split into MR ∈ {3, 2, 1} cases. The dispatch
+    // is monomorphised on M_EFF so the unused row's MAC tower
+    // collapses at codegen.
+    if i_blk < m {
+        let m_eff = m - i_blk;
+        macro_rules! run_trailing {
+            ($me:literal) => {{
+                for panel_idx in 0..n_panels {
+                    let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
+                    let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
+                    let n_eff = j_end - j_blk;
+                    let panel_off = panel_idx * panel_stride;
+                    fp_medium_panel_run::<$me>(
+                        a, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
+                    );
+                }
+            }};
+        }
+        match m_eff {
+            1 => run_trailing!(1),
+            2 => run_trailing!(2),
+            3 => run_trailing!(3),
+            _ => unreachable!("m_eff in 1..MR (with MR=4) cannot exceed 3"),
+        }
+    }
+}
+
+/// One panel-tile inner kernel. Computes a `M_EFF x NR` output tile
+/// (at rows `i_blk..i_blk+M_EFF`, cols `j_blk..j_blk+n_eff`).
+///
+/// Monomorphised on `M_EFF in {1, 2, 3, 4}` so the compiler can prune
+/// the dead rows' MAC ops for the trailing-row cases.
+#[inline]
+#[target_feature(enable = "avx2")]
+#[allow(clippy::too_many_arguments)]
+unsafe fn fp_medium_panel_run<const M_EFF: usize>(
+    a: &[u16],
+    b_packed: &[u16],
+    i_blk: usize,
+    k: usize,
+    n: usize,
+    panel_off: usize,
+    j_blk: usize,
+    n_eff: usize,
+    p: u16,
+    c: &mut [u16],
+) {
+    // Accumulators: each row needs 4 ymm of u64 lanes (4 u64 lanes
+    // per ymm) to cover 16 output cells.
+    let mut acc0_0 = _mm256_setzero_si256();
+    let mut acc0_1 = _mm256_setzero_si256();
+    let mut acc0_2 = _mm256_setzero_si256();
+    let mut acc0_3 = _mm256_setzero_si256();
+    let mut acc1_0 = _mm256_setzero_si256();
+    let mut acc1_1 = _mm256_setzero_si256();
+    let mut acc1_2 = _mm256_setzero_si256();
+    let mut acc1_3 = _mm256_setzero_si256();
+    let mut acc2_0 = _mm256_setzero_si256();
+    let mut acc2_1 = _mm256_setzero_si256();
+    let mut acc2_2 = _mm256_setzero_si256();
+    let mut acc2_3 = _mm256_setzero_si256();
+    let mut acc3_0 = _mm256_setzero_si256();
+    let mut acc3_1 = _mm256_setzero_si256();
+    let mut acc3_2 = _mm256_setzero_si256();
+    let mut acc3_3 = _mm256_setzero_si256();
+    let zero = _mm256_setzero_si256();
+
+    let a_row0_ptr = a.as_ptr().add(i_blk * k);
+    let a_row1_ptr = if M_EFF >= 2 {
+        a.as_ptr().add((i_blk + 1) * k)
+    } else {
+        a_row0_ptr
+    };
+    let a_row2_ptr = if M_EFF >= 3 {
+        a.as_ptr().add((i_blk + 2) * k)
+    } else {
+        a_row0_ptr
+    };
+    let a_row3_ptr = if M_EFF >= 4 {
+        a.as_ptr().add((i_blk + 3) * k)
+    } else {
+        a_row0_ptr
+    };
+    let b_panel_ptr = b_packed.as_ptr().add(panel_off);
+
+    for t in 0..k {
+        // 1 ymm of B (16 u16 lanes covering the panel's 16 cells).
+        let bv = _mm256_loadu_si256(b_panel_ptr.add(t * FP_MEDIUM_PANEL_NR) as *const __m256i);
+
+        if M_EFF >= 1 {
+            let a0_val = *a_row0_ptr.add(t);
+            let av0 = _mm256_set1_epi16(a0_val as i16);
+            let prod_lo = _mm256_mullo_epi16(av0, bv);
+            let prod_hi = _mm256_mulhi_epu16(av0, bv);
+            // unpacklo/unpackhi reconstruct full u32 products (per
+            // 128-bit half).
+            let prod_full_lo = _mm256_unpacklo_epi16(prod_lo, prod_hi);
+            let prod_full_hi = _mm256_unpackhi_epi16(prod_lo, prod_hi);
+            // Widen u32 -> u64 (4 ymm of 4 u64 lanes each).
+            let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
+            let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
+            let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
+            let p_hi_h = _mm256_unpackhi_epi32(prod_full_hi, zero);
+            acc0_0 = _mm256_add_epi64(acc0_0, p_lo_l);
+            acc0_1 = _mm256_add_epi64(acc0_1, p_lo_h);
+            acc0_2 = _mm256_add_epi64(acc0_2, p_hi_l);
+            acc0_3 = _mm256_add_epi64(acc0_3, p_hi_h);
+        }
+        if M_EFF >= 2 {
+            let a1_val = *a_row1_ptr.add(t);
+            let av1 = _mm256_set1_epi16(a1_val as i16);
+            let prod_lo = _mm256_mullo_epi16(av1, bv);
+            let prod_hi = _mm256_mulhi_epu16(av1, bv);
+            let prod_full_lo = _mm256_unpacklo_epi16(prod_lo, prod_hi);
+            let prod_full_hi = _mm256_unpackhi_epi16(prod_lo, prod_hi);
+            let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
+            let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
+            let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
+            let p_hi_h = _mm256_unpackhi_epi32(prod_full_hi, zero);
+            acc1_0 = _mm256_add_epi64(acc1_0, p_lo_l);
+            acc1_1 = _mm256_add_epi64(acc1_1, p_lo_h);
+            acc1_2 = _mm256_add_epi64(acc1_2, p_hi_l);
+            acc1_3 = _mm256_add_epi64(acc1_3, p_hi_h);
+        }
+        if M_EFF >= 3 {
+            let a2_val = *a_row2_ptr.add(t);
+            let av2 = _mm256_set1_epi16(a2_val as i16);
+            let prod_lo = _mm256_mullo_epi16(av2, bv);
+            let prod_hi = _mm256_mulhi_epu16(av2, bv);
+            let prod_full_lo = _mm256_unpacklo_epi16(prod_lo, prod_hi);
+            let prod_full_hi = _mm256_unpackhi_epi16(prod_lo, prod_hi);
+            let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
+            let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
+            let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
+            let p_hi_h = _mm256_unpackhi_epi32(prod_full_hi, zero);
+            acc2_0 = _mm256_add_epi64(acc2_0, p_lo_l);
+            acc2_1 = _mm256_add_epi64(acc2_1, p_lo_h);
+            acc2_2 = _mm256_add_epi64(acc2_2, p_hi_l);
+            acc2_3 = _mm256_add_epi64(acc2_3, p_hi_h);
+        }
+        if M_EFF >= 4 {
+            let a3_val = *a_row3_ptr.add(t);
+            let av3 = _mm256_set1_epi16(a3_val as i16);
+            let prod_lo = _mm256_mullo_epi16(av3, bv);
+            let prod_hi = _mm256_mulhi_epu16(av3, bv);
+            let prod_full_lo = _mm256_unpacklo_epi16(prod_lo, prod_hi);
+            let prod_full_hi = _mm256_unpackhi_epi16(prod_lo, prod_hi);
+            let p_lo_l = _mm256_unpacklo_epi32(prod_full_lo, zero);
+            let p_lo_h = _mm256_unpackhi_epi32(prod_full_lo, zero);
+            let p_hi_l = _mm256_unpacklo_epi32(prod_full_hi, zero);
+            let p_hi_h = _mm256_unpackhi_epi32(prod_full_hi, zero);
+            acc3_0 = _mm256_add_epi64(acc3_0, p_lo_l);
+            acc3_1 = _mm256_add_epi64(acc3_1, p_lo_h);
+            acc3_2 = _mm256_add_epi64(acc3_2, p_hi_l);
+            acc3_3 = _mm256_add_epi64(acc3_3, p_hi_h);
+        }
+    }
+
+    // Reduce per-lane mod p and write the M_EFF rows of the tile to
+    // `c`. The u64 lane layout (from unpack_epi32) maps:
+    //   acc0 (p_lo_l) lanes [0,1, 8,9]
+    //   acc1 (p_lo_h) lanes [2,3, 10,11]
+    //   acc2 (p_hi_l) lanes [4,5, 12,13]
+    //   acc3 (p_hi_h) lanes [6,7, 14,15]
+    // because `_mm256_unpack{lo,hi}_epi16` interleaves the low/high
+    // 128-bit halves and `_mm256_unpack{lo,hi}_epi32` is also lane-
+    // wise. Specifically: bv lane i (i in 0..16) maps to:
+    //   i < 4   -> unpacklo_epi16 lanes 0..3
+    //   i < 8   -> unpackhi_epi16 lanes 0..3
+    //   i < 12  -> unpacklo_epi16 lanes 4..7
+    //   i < 16  -> unpackhi_epi16 lanes 4..7
+    // After unpacklo/unpackhi_epi32:
+    //   prod_full_lo low half (u32 lanes 0..3) -> p_lo_l (u64 lanes 0..1), p_lo_h (u64 lanes 0..1)
+    //   prod_full_lo high half (u32 lanes 4..7) -> p_lo_l hi (u64 lanes 2..3), p_lo_h hi (u64 lanes 2..3)
+    // (And similarly for prod_full_hi). The output-cell -> u64-lane
+    // mapping is therefore non-trivial; we store all four ymm
+    // vectors then walk the u64 lanes in the recovered cell order.
+    let p_u64 = p as u64;
+    let mut row_buf = [0u64; 16];
+    if M_EFF >= 1 {
+        // Lane unpack mapping (verified via the unpack_epi16/32
+        // semantics chain above):
+        //   acc0_0 (p_lo_l)  -> output cells {0, 1, 8, 9}
+        //   acc0_1 (p_lo_h)  -> output cells {2, 3, 10, 11}
+        //   acc0_2 (p_hi_l)  -> output cells {4, 5, 12, 13}
+        //   acc0_3 (p_hi_h)  -> output cells {6, 7, 14, 15}
+        let mut tmp = [0u64; 4];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc0_0);
+        row_buf[0] = tmp[0];
+        row_buf[1] = tmp[1];
+        row_buf[8] = tmp[2];
+        row_buf[9] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc0_1);
+        row_buf[2] = tmp[0];
+        row_buf[3] = tmp[1];
+        row_buf[10] = tmp[2];
+        row_buf[11] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc0_2);
+        row_buf[4] = tmp[0];
+        row_buf[5] = tmp[1];
+        row_buf[12] = tmp[2];
+        row_buf[13] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc0_3);
+        row_buf[6] = tmp[0];
+        row_buf[7] = tmp[1];
+        row_buf[14] = tmp[2];
+        row_buf[15] = tmp[3];
+        let c_row0_base = i_blk * n + j_blk;
+        for j_off in 0..n_eff {
+            *c.get_unchecked_mut(c_row0_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        }
+    }
+    if M_EFF >= 2 {
+        let mut tmp = [0u64; 4];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc1_0);
+        row_buf[0] = tmp[0];
+        row_buf[1] = tmp[1];
+        row_buf[8] = tmp[2];
+        row_buf[9] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc1_1);
+        row_buf[2] = tmp[0];
+        row_buf[3] = tmp[1];
+        row_buf[10] = tmp[2];
+        row_buf[11] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc1_2);
+        row_buf[4] = tmp[0];
+        row_buf[5] = tmp[1];
+        row_buf[12] = tmp[2];
+        row_buf[13] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc1_3);
+        row_buf[6] = tmp[0];
+        row_buf[7] = tmp[1];
+        row_buf[14] = tmp[2];
+        row_buf[15] = tmp[3];
+        let c_row1_base = (i_blk + 1) * n + j_blk;
+        for j_off in 0..n_eff {
+            *c.get_unchecked_mut(c_row1_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        }
+    }
+    if M_EFF >= 3 {
+        let mut tmp = [0u64; 4];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc2_0);
+        row_buf[0] = tmp[0];
+        row_buf[1] = tmp[1];
+        row_buf[8] = tmp[2];
+        row_buf[9] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc2_1);
+        row_buf[2] = tmp[0];
+        row_buf[3] = tmp[1];
+        row_buf[10] = tmp[2];
+        row_buf[11] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc2_2);
+        row_buf[4] = tmp[0];
+        row_buf[5] = tmp[1];
+        row_buf[12] = tmp[2];
+        row_buf[13] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc2_3);
+        row_buf[6] = tmp[0];
+        row_buf[7] = tmp[1];
+        row_buf[14] = tmp[2];
+        row_buf[15] = tmp[3];
+        let c_row2_base = (i_blk + 2) * n + j_blk;
+        for j_off in 0..n_eff {
+            *c.get_unchecked_mut(c_row2_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        }
+    }
+    if M_EFF >= 4 {
+        let mut tmp = [0u64; 4];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc3_0);
+        row_buf[0] = tmp[0];
+        row_buf[1] = tmp[1];
+        row_buf[8] = tmp[2];
+        row_buf[9] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc3_1);
+        row_buf[2] = tmp[0];
+        row_buf[3] = tmp[1];
+        row_buf[10] = tmp[2];
+        row_buf[11] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc3_2);
+        row_buf[4] = tmp[0];
+        row_buf[5] = tmp[1];
+        row_buf[12] = tmp[2];
+        row_buf[13] = tmp[3];
+        _mm256_storeu_si256(tmp.as_mut_ptr() as *mut __m256i, acc3_3);
+        row_buf[6] = tmp[0];
+        row_buf[7] = tmp[1];
+        row_buf[14] = tmp[2];
+        row_buf[15] = tmp[3];
+        let c_row3_base = (i_blk + 3) * n + j_blk;
+        for j_off in 0..n_eff {
+            *c.get_unchecked_mut(c_row3_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -965,6 +1393,102 @@ mod tests {
         unsafe { fp_medium_spmm_row(&a_vals, &a_cols, &b, n, n, p, &mut out) };
         for (j, &val) in out.iter().enumerate().take(n) {
             assert_eq!(val, 0, "j={j}");
+        }
+    }
+
+    fn scalar_gemm_u16(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16) -> Vec<u16> {
+        let mut out = vec![0u16; m * n];
+        for i in 0..m {
+            for j in 0..n {
+                let mut acc: u64 = 0;
+                for t in 0..k {
+                    acc += a[i * k + t] as u64 * bt[j * k + t] as u64;
+                }
+                out[i * n + j] = (acc % p as u64) as u16;
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn gemm_panel_matches_scalar_at_boundary_shapes() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        // Sweep (m, k, n) shapes covering MR/NR/lane-mapping boundaries
+        // plus a few realistic sizes for the GF(65521) reference cell.
+        let cases = [
+            (1usize, 1usize, 1usize),
+            (1, 16, 16),
+            (1, 16, 17),
+            (2, 16, 16),
+            (3, 16, 16),
+            (4, 16, 16),
+            (2, 1, 16),
+            (2, 33, 16),
+            (2, 16, 32),
+            (5, 4, 17),
+            (7, 32, 13),
+            (8, 64, 24),
+            (15, 32, 33),
+            (16, 64, 64),
+            (32, 64, 32),
+        ];
+        for &p in &[257u16, 1009, 8191, 32749, 65521] {
+            for &(m, k, n) in &cases {
+                let a: Vec<u16> = (0..(m * k))
+                    .map(|i| ((i as u32 * 17 + 3) % p as u32) as u16)
+                    .collect();
+                let bt: Vec<u16> = (0..(n * k))
+                    .map(|i| ((i as u32 * 23 + 7) % p as u32) as u16)
+                    .collect();
+                let mut got = vec![0u16; m * n];
+                unsafe { fp_medium_gemm_panel(&a, &bt, m, k, n, p, &mut got) };
+                let expected = scalar_gemm_u16(&a, &bt, m, k, n, p);
+                assert_eq!(got, expected, "p={p} m={m} k={k} n={n}");
+            }
+        }
+    }
+
+    #[test]
+    fn gemm_panel_boundary_values() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        // Worst-case lane saturation: every product is (P-1)² near 2^32.
+        let p = 65521u16;
+        let m = 4;
+        let k = 1024;
+        let n = 16;
+        let a: Vec<u16> = vec![65520u16; m * k];
+        let bt: Vec<u16> = vec![65520u16; n * k];
+        let mut got = vec![0u16; m * n];
+        unsafe { fp_medium_gemm_panel(&a, &bt, m, k, n, p, &mut got) };
+        let cell = ((k as u64) * 65520u64 * 65520u64) % p as u64;
+        for &v in &got {
+            assert_eq!(v as u64, cell);
+        }
+    }
+
+    #[test]
+    fn gemm_panel_zero_outer_dims() {
+        if !std::arch::is_x86_feature_detected!("avx2") {
+            return;
+        }
+        // n=0 and m=0 are no-ops; the kernel must still execute the
+        // early-return path without scribbling on the empty c slice.
+        let p = 65521u16;
+        let mut out0 = vec![];
+        unsafe { fp_medium_gemm_panel(&[], &[], 0, 0, 0, p, &mut out0) };
+        let mut out_m = vec![];
+        unsafe { fp_medium_gemm_panel(&[], &[42u16; 4], 0, 1, 4, p, &mut out_m) };
+        let mut out_n = vec![];
+        unsafe { fp_medium_gemm_panel(&[42u16; 4], &[], 4, 1, 0, p, &mut out_n) };
+        let mut out_k = vec![0u16; 4 * 4];
+        unsafe { fp_medium_gemm_panel(&[], &[], 4, 0, 4, p, &mut out_k) };
+        // k=0 leaves c unchanged at its caller-provided initial value.
+        for &v in &out_k {
+            assert_eq!(v, 0);
         }
     }
 }

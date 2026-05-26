@@ -713,8 +713,14 @@ impl<const P: u64> FiniteField for Fp<P> {
     /// pack thrash that blocks the `dot_product_slices`-level
     /// dispatch from beating scalar at small `n`.
     ///
+    /// Two regimes dispatched by `P`:
+    /// * `P ≤ 251` — byte-lane Route C / Route A / Candidate C
+    ///   (`fp_small_try_gemm_classical`, issue `40195c09`).
+    /// * `P ∈ (251, 65535]` — u16-lane panelized GEMM kernel
+    ///   (`fp_medium_try_gemm_panel`, issue `74ba1cdc` R1).
+    ///
     /// Returns `false` (declining the fast path) when:
-    /// - `P > 251` or `P < 3` (out of byte-lane range);
+    /// - `P > 65535` (out of medium-prime u16-lane range);
     /// - the `simd` feature is disabled;
     /// - AVX2 is unavailable at runtime.
     #[cfg(not(verify_lean))]
@@ -727,7 +733,10 @@ impl<const P: u64> FiniteField for Fp<P> {
         n: usize,
         out: &mut [Self],
     ) -> bool {
-        simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out)
+        if simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out) {
+            return true;
+        }
+        simd_ops::fp_medium_try_gemm_panel::<P>(a, b_t, m, k, n, out)
     }
 
     /// Non-allocating availability probe for the small-prime

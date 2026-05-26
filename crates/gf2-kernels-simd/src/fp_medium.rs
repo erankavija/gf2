@@ -60,6 +60,18 @@ pub type MediumPrimeBatchDotFn = fn(&[u16], &[u16], u16) -> u32;
 /// length `n`.
 pub type MediumPrimeSpmmRowFn = fn(&[u16], &[usize], &[u16], usize, usize, u16, &mut [u16]);
 
+/// Whole-GEMM panel kernel for medium-prime `Fp<P>` with `P ∈ (251,
+/// 65535]`. Computes `c[i*n + j] = (∑_t a[i*k + t] * bt[j*k + t]) mod p`
+/// for every `(i, j) ∈ [0, m) × [0, n)`. Inputs are canonical u16
+/// residues. The transpose `bt` is `n × k` row-major.
+///
+/// Closes the per-cell `MediumPrimeBatchDotFn` dispatch overhead at
+/// large `n` (issue `74ba1cdc`): pre-packs B once per gemm into
+/// `NR = 16` u16-wide N-major panels, then sweeps each `MR = 2` row
+/// block of A against every panel with 8 u64-lane accumulators
+/// resident across the full k axis.
+pub type MediumPrimeGemmPanelFn = fn(&[u16], &[u16], usize, usize, usize, u16, &mut [u16]);
+
 /// Bundle of AVX2 batch operations for medium-prime `Fp<P>`.
 ///
 /// Populated at runtime by [`detect`] when AVX2 is available. All
@@ -92,6 +104,9 @@ pub struct MediumPrimeFns {
     pub batch_dot_fn: MediumPrimeBatchDotFn,
     /// Sparse-times-dense row kernel.
     pub spmm_row_fn: MediumPrimeSpmmRowFn,
+    /// Whole-GEMM panel kernel (`jit:74ba1cdc` — replaces per-cell
+    /// `batch_dot_fn` dispatch in the GEMM caller).
+    pub gemm_panel_fn: MediumPrimeGemmPanelFn,
 }
 
 /// Detect and return the best available medium-prime SIMD bundle.
@@ -117,6 +132,7 @@ fn detect_x86() -> Option<MediumPrimeFns> {
             batch_sub_fn: batch_sub_safe,
             batch_dot_fn: batch_dot_safe,
             spmm_row_fn: spmm_row_safe,
+            gemm_panel_fn: gemm_panel_safe,
         })
     } else {
         None
@@ -159,6 +175,20 @@ fn spmm_row_safe(
 ) {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_spmm_row(a_vals, a_cols, b, b_stride, n, p, out) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn gemm_panel_safe(
+    a: &[u16],
+    bt: &[u16],
+    m: usize,
+    k: usize,
+    n: usize,
+    p: u16,
+    c: &mut [u16],
+) {
+    // Safety: `detect_x86` only returns these pointers when AVX2 is available.
+    unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
 }
 
 #[cfg(test)]
