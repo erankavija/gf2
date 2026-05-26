@@ -1,0 +1,13 @@
+=== Trial 1 (post-c24765df baseline, no source changes) ===
+gemm/Fp_251/Fp_251/64    thrpt:  [32.916 Gelem/s 32.922 Gelem/s 32.928 Gelem/s]  (warmup)
+gemm/Fp_251/Fp_251/4096  thrpt:  [87.491 Gelem/s 87.570 Gelem/s 87.626 Gelem/s]
+gemm/Fp_65521/Fp_65521/64    thrpt:  [11.443 Gelem/s 11.460 Gelem/s 11.478 Gelem/s]  (warmup)
+gemm/Fp_65521/Fp_65521/4096  thrpt:  [36.837 Gelem/s 36.881 Gelem/s 36.921 Gelem/s]
+
+fflas reference (from dev/bench_results/2026-04-26-reference.csv):
+  GF(251) 4096:   158.96 Gop/s
+  GF(65521) 4096: 69.72 Gop/s
+
+Ratios (gf2/fflas):
+  GF(251)   = 158.96 / 87.57 = 1.815  (target <=1.5; gap 1.815 -> 1.5 = need +21.0%)
+  GF(65521) = 69.72  / 36.88 = 1.891  (target <=1.5; gap 1.891 -> 1.5 = need +26.1%)
