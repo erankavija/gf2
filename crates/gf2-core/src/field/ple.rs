@@ -34,8 +34,14 @@
 //!     B-transpose).
 //! - [`row_echelon`](FieldMatrix::row_echelon)`(m × n)`: PLE + the inverted
 //!   `L_full` block + `Pᵀ` + the assembled `E_full`.
-//! - [`rref`](FieldMatrix::rref)`(m × n)`: row_echelon + back-substitution
-//!   over the pivot columns (no extra `FieldMatrix::new`).
+//! - [`rref`](FieldMatrix::rref)`(m × n)`: row_echelon + panelized
+//!   back-substitution (Stage 3a/3b) when `max(m, n) >= BLOCKED_BACK_SUB_MIN_DIM`
+//!   (= 128), allocating 8 scratch `FieldMatrix` instances (`e_piv_piv`,
+//!   `e_piv_free`, `x_piv`, `e_nonpiv_piv`, `e_piv_free_post`, `e_nonpiv_free`,
+//!   `x_piv_post`, `x_nonpiv`); falls through to the scalar loop below the
+//!   threshold. At n=64 uses the scalar loop: total count = `EXPECTED_RREF_N64`
+//!   = 280. At n >= 128 the blocked path adds 8 scratch matrices + trsm
+//!   B-transposes.
 //! - [`lu`](FieldMatrix::lu)`(m × n)`: PLE + 0 (just repackages PLE's
 //!   outputs).
 //! - [`nullspace`](FieldMatrix::nullspace)`(m × n)`: rref + `(n − rank)`
@@ -1667,6 +1673,16 @@ fn pad_l_to_full<F: FiniteField>(
 ///
 /// Returns `true` always (no fallback needed); `r == 0` is handled as
 /// an immediate no-op returning `true`.
+/// Minimum matrix dimension (max(m, n)) below which `try_blocked_back_sub`
+/// returns `false` and lets `rref` fall through to the scalar loop.
+///
+/// Below this threshold the scatter/gather overhead of allocating 8 scratch
+/// `FieldMatrix` instances dominates the back-sub work, regressing `rref`
+/// by up to ~20% vs the scalar loop (observed at GF(M31)/n=64/deficient).
+/// The crossover based on CCX1 measurements (2026-05-27) is between 64 and
+/// 256; a threshold of 128 leaves a ≥5% safety margin in both directions.
+pub(crate) const BLOCKED_BACK_SUB_MIN_DIM: usize = 128;
+
 pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     x: &mut FieldMatrix<F>,
     e: &mut FieldMatrix<F>,
@@ -1678,6 +1694,12 @@ pub(crate) fn try_blocked_back_sub<F: FiniteField>(
     if r == 0 {
         // No pivots — e is all-zero, x is already the identity. Done.
         return true;
+    }
+
+    // For small matrices the scatter/gather overhead exceeds the scalar loop
+    // cost.  Let the caller fall through to the scalar path.
+    if m.max(n) < BLOCKED_BACK_SUB_MIN_DIM {
+        return false;
     }
 
     let zero = e.get(0, 0).zero_like();
@@ -2894,13 +2916,11 @@ mod tests {
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;
     const EXPECTED_ROW_ECHELON_N64: u64 = 280;
-    // RREF now calls try_blocked_back_sub which allocates additional scratch
-    // matrices: e_piv_piv (r×r), x_piv (r×m), plus gemm_axpy_into_view
-    // B-transposes from trsm_upper on x_piv (log₂(64)=6 recursive levels,
-    // each paying 1 transpose alloc) = 2 + 14 = 16 extra vs the original
-    // scalar rref (which had 0 extra beyond row_echelon). Updated as part of
-    // jit:869ce43b blocked back-substitution implementation.
-    const EXPECTED_RREF_N64: u64 = 296;
+    // At n=64, try_blocked_back_sub returns false (n < BLOCKED_BACK_SUB_MIN_DIM
+    // = 128) so rref falls through to the scalar loop — no extra allocations
+    // vs row_echelon. For n >= 128 the blocked path adds 8 scratch matrices +
+    // trsm B-transposes; see BLOCKED_BACK_SUB_MIN_DIM doc comment.
+    const EXPECTED_RREF_N64: u64 = 280;
     const EXPECTED_LU_N64: u64 = 264;
 
     // Boundary lengths chosen per the PLE design doc § 6.1 (jit:6823c8a0)
@@ -3095,6 +3115,8 @@ mod tests {
             (7, "GF(7)", 256, "deficient"),
             (7, "GF(7)", 1024, "uniform"),
             (7, "GF(7)", 1024, "deficient"),
+            (31, "GF(31)", 64, "uniform"),
+            (31, "GF(31)", 64, "deficient"),
             (31, "GF(31)", 256, "uniform"),
             (31, "GF(31)", 256, "deficient"),
             (31, "GF(31)", 1024, "uniform"),
@@ -3132,6 +3154,191 @@ mod tests {
             eprintln!("echelon,{field},{n},{regime},median,,{median_ns}");
         }
         eprintln!("--- echelon-sweep END ---");
+    }
+
+    /// Scalar back-substitution verbatim from pre-`869ce43b` commit `38387525`.
+    ///
+    /// Serves as the state-A anchor for SC#5 same-operation non-regression:
+    /// calling this function on a given matrix is equivalent to calling
+    /// `rref()` at commit `38387525`. The blocked path in the production
+    /// `rref()` is the state-B counterpart.
+    fn rref_scalar_state_a<const P: u64>(
+        a: &FieldMatrix<Fp<P>>,
+    ) -> (FieldMatrix<Fp<P>>, FieldMatrix<Fp<P>>) {
+        let (m, n) = a.shape();
+        if m == 0 || n == 0 {
+            return a.row_echelon();
+        }
+        let (mut x, mut e) = a.row_echelon();
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+
+        let mut pivots: Vec<(usize, usize)> = Vec::new();
+        let mut last: isize = -1;
+        for i in 0..m {
+            let start = (last + 1).max(0) as usize;
+            let mut found: Option<usize> = None;
+            for j in start..n {
+                if e.get(i, j) != zero {
+                    found = Some(j);
+                    break;
+                }
+            }
+            if let Some(p) = found {
+                pivots.push((i, p));
+                last = p as isize;
+            } else {
+                break;
+            }
+        }
+
+        for &(pi, pc) in &pivots {
+            let pivot_val = e.get(pi, pc);
+            if pivot_val != one {
+                let inv = pivot_val
+                    .inv()
+                    .unwrap_or_else(|| panic!("rref: pivot at ({pi}, {pc}) failed to invert"));
+                for j in 0..n {
+                    let v = e.get(pi, j) * inv;
+                    e.set(pi, j, v);
+                }
+                for j in 0..m {
+                    let v = x.get(pi, j) * inv;
+                    x.set(pi, j, v);
+                }
+            }
+            for k in 0..m {
+                if k == pi {
+                    continue;
+                }
+                let factor = e.get(k, pc);
+                if factor == zero {
+                    continue;
+                }
+                for j in 0..n {
+                    let v = e.get(k, j) - factor * e.get(pi, j);
+                    e.set(k, j, v);
+                }
+                for j in 0..m {
+                    let v = x.get(k, j) - factor * x.get(pi, j);
+                    x.set(k, j, v);
+                }
+            }
+        }
+        (x, e)
+    }
+
+    /// Helper: measure both state-A (scalar back-sub) and state-B (blocked
+    /// back-sub) rref on the same matrix, 10 trials each, 3 warm-up calls.
+    ///
+    /// Returns `(median_a_ns, median_b_ns)`. Emits per-trial CSV lines to
+    /// stderr:
+    /// - `rref_A,<field>,<n>,<regime>,<trial>,<wall_ns>,`
+    /// - `rref_B,<field>,<n>,<regime>,<trial>,<wall_ns>,`
+    fn measure_rref_paired_cell<const P: u64>(n: usize, regime: &str, field: &str) -> (u128, u128) {
+        let seed = P
+            .wrapping_mul(0x9E37_79B9)
+            .wrapping_add(n as u64)
+            .wrapping_add(if regime == "deficient" { 0x1234 } else { 0 });
+        let a = if regime == "deficient" {
+            let rank = (n / 2).max(1);
+            let f = random_fp::<P>(n, rank, seed);
+            let g = random_fp::<P>(rank, n, seed.wrapping_add(0xCAFE));
+            gemm(&f, &g)
+        } else {
+            random_fp::<P>(n, n, seed)
+        };
+        // Warm up both paths.
+        for _ in 0..3 {
+            let _ = rref_scalar_state_a::<P>(&a);
+            let _ = a.rref();
+        }
+        let mut samples_a: Vec<u128> = Vec::new();
+        let mut samples_b: Vec<u128> = Vec::new();
+        // Interleave A/B trials to share the same thermal/frequency state.
+        for trial in 1..=10 {
+            let t0 = std::time::Instant::now();
+            let _ = rref_scalar_state_a::<P>(&a);
+            let ns_a = t0.elapsed().as_nanos();
+            samples_a.push(ns_a);
+            eprintln!("rref_A,{field},{n},{regime},{trial},{ns_a},");
+
+            let t1 = std::time::Instant::now();
+            let _ = a.rref();
+            let ns_b = t1.elapsed().as_nanos();
+            samples_b.push(ns_b);
+            eprintln!("rref_B,{field},{n},{regime},{trial},{ns_b},");
+        }
+        samples_a.sort();
+        samples_b.sort();
+        (
+            samples_a[samples_a.len() / 2],
+            samples_b[samples_b.len() / 2],
+        )
+    }
+
+    /// SC#5 non-regression: paired same-operation `rref` delta
+    /// (state A = scalar back-sub @ `38387525` vs state B = blocked back-sub).
+    ///
+    /// Previously-PASSing cells (ratio ≤ 1.5× before `869ce43b`):
+    /// GF(7)/n={64,256,1024}, GF(31)/n={64,256}, GF(65521)/n={64,256,1024},
+    /// GF(M31)/n={64,256,1024}, all uniform + deficient where applicable.
+    ///
+    /// SC#5 is satisfied when every cell's delta
+    /// `(B_median − A_median) / A_median ≤ 5%`.
+    ///
+    /// Run via (CCX1 flock guard required):
+    /// ```bash
+    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    ///   cargo test -p gf2-core --release --all-features --lib \
+    ///   -- --nocapture --ignored field::ple::tests::test_rref_non_regression_wall_time \
+    ///   2>&1 | grep -E 'rref|BEGIN|END'
+    /// ```
+    ///
+    /// Output is CSV emitted to stderr between `--- rref-nonreg BEGIN ---`
+    /// and `--- rref-nonreg END ---`.
+    #[test]
+    #[ignore = "slow: rref SC#5 non-regression paired 10-trial sweep (~30 s)"]
+    fn test_rref_non_regression_wall_time() {
+        // Previously-PASSing cells only (echelon ratio ≤ 1.5× at 38387525).
+        const CELLS: &[(u64, &str, usize, &str)] = &[
+            (7, "GF(7)", 64, "uniform"),
+            (7, "GF(7)", 64, "deficient"),
+            (7, "GF(7)", 256, "uniform"),
+            (7, "GF(7)", 256, "deficient"),
+            (7, "GF(7)", 1024, "uniform"),
+            (7, "GF(7)", 1024, "deficient"),
+            (31, "GF(31)", 64, "uniform"),
+            (31, "GF(31)", 64, "deficient"),
+            (31, "GF(31)", 256, "uniform"),
+            (65521, "GF(65521)", 64, "uniform"),
+            (65521, "GF(65521)", 64, "deficient"),
+            (65521, "GF(65521)", 256, "uniform"),
+            (65521, "GF(65521)", 256, "deficient"),
+            (65521, "GF(65521)", 1024, "uniform"),
+            (65521, "GF(65521)", 1024, "deficient"),
+            (2_147_483_647, "GF(M31)", 64, "uniform"),
+            (2_147_483_647, "GF(M31)", 64, "deficient"),
+            (2_147_483_647, "GF(M31)", 256, "uniform"),
+            (2_147_483_647, "GF(M31)", 256, "deficient"),
+            (2_147_483_647, "GF(M31)", 1024, "uniform"),
+        ];
+        eprintln!("--- rref-nonreg BEGIN ---");
+        eprintln!("op,field,n,regime,trial,wall_ns,wall_median_ns");
+        for &(p, field, n, regime) in CELLS {
+            let (med_a, med_b) = match p {
+                7 => measure_rref_paired_cell::<7>(n, regime, field),
+                31 => measure_rref_paired_cell::<31>(n, regime, field),
+                65521 => measure_rref_paired_cell::<65521>(n, regime, field),
+                2_147_483_647 => measure_rref_paired_cell::<2_147_483_647>(n, regime, field),
+                _ => unreachable!(),
+            };
+            eprintln!("rref_A,{field},{n},{regime},median,,{med_a}");
+            eprintln!("rref_B,{field},{n},{regime},median,,{med_b}");
+            let delta_pct = (med_b as f64 - med_a as f64) / med_a as f64 * 100.0;
+            eprintln!("rref_delta,{field},{n},{regime},,{delta_pct:.2}%,");
+        }
+        eprintln!("--- rref-nonreg END ---");
     }
 
     #[test]
