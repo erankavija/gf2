@@ -1,0 +1,33 @@
+=== Non-regression sweep (post-Lever 1 + Lever 2; trial 1) ===
+Flock-guarded CCX1 bench, taskset -c 6-11.
+Workload: gemm/Fp_<P>/Fp_<P>/<n>
+
+GF(7):      n=64   34.31 Gop/s
+            n=256  73.34 Gop/s
+            n=1024 78.09 Gop/s
+            n=4096 112.83 Gop/s
+
+GF(31):     n=64   32.41 Gop/s
+            n=256  70.72 Gop/s
+            n=1024 77.13 Gop/s
+            n=4096 112.50 Gop/s
+
+GF(127):    n=256  69.10 Gop/s
+            n=1024 77.12 Gop/s
+
+GF(241):    n=256  70.33 Gop/s
+            n=1024 76.97 Gop/s
+
+GF(251):    n=64   32.88 Gop/s
+            n=256  71.37 Gop/s
+            n=1024 96.43 Gop/s
+            n=4096 108.42 Gop/s  <- PASS (ratio 1.466)
+
+GF(65521):  n=64   19.08 Gop/s   (panel kernel; baseline was 11.71 -> +63 %)
+            n=256  --            (need to bench)
+            n=1024 --            (need to bench)
+            n=4096 39.78 Gop/s   <- SHORTFALL (ratio 1.753; target 1.5)
+
+41096af5 baseline comparison cells (from 2026-05-25-41096af5-post-wire-in-aggregate):
+  GF(251)/4096:   85.22 Gop/s -> 108.42 Gop/s  (+27 %)
+  GF(65521)/4096: 36.34 Gop/s -> 39.78  Gop/s  (+ 9 %)
