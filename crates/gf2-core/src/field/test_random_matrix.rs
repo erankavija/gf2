@@ -31,7 +31,7 @@
 //! produce identical matrices on identical platforms (StdRng is
 //! platform-stable for our `cargo test` matrix).
 
-use crate::field::matrix::FieldMatrix;
+use crate::field::matrix::{gemm, FieldMatrix};
 use crate::field::traits::FiniteField;
 use crate::field::vec::FieldVec;
 use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
@@ -80,6 +80,37 @@ pub fn random_fp_invertible<const P: u64>(n: usize, seed: u64) -> FieldMatrix<Fp
          over Fp<{}> after 16 attempts (seed={})",
         n, P, seed
     );
+}
+
+/// Returns a rank-deficient `m × n` matrix over `Fp<P>` with rank exactly
+/// `rank` (must satisfy `rank < m.min(n)`). Constructed as an outer product
+/// `F · G` where `F` is `m × rank` and `G` is `rank × n`, both random.
+///
+/// # Arguments
+///
+/// - `m`, `n` — matrix dimensions.
+/// - `rank` — desired rank; must be `< m.min(n)` for the matrix to be
+///   rank-deficient. The caller is responsible for the precondition.
+/// - `seed` — deterministic seed. `F` uses `seed`; `G` uses
+///   `seed.wrapping_add(0x1234_5678)` to keep the two draws independent.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::test_random_matrix::random_fp_rank_deficient;
+/// let a = random_fp_rank_deficient::<7>(8, 8, 4, 42);
+/// assert_eq!(a.rows(), 8);
+/// assert_eq!(a.cols(), 8);
+/// ```
+pub fn random_fp_rank_deficient<const P: u64>(
+    m: usize,
+    n: usize,
+    rank: usize,
+    seed: u64,
+) -> FieldMatrix<Fp<P>> {
+    let f = random_fp::<P>(m, rank, seed);
+    let g = random_fp::<P>(rank, n, seed.wrapping_add(0x1234_5678));
+    gemm(&f, &g)
 }
 
 // ─── Gf2mWide<1, C> builders ─────────────────────────────────────────────────

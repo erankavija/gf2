@@ -710,7 +710,8 @@ mod tests {
     use super::*;
     use crate::field::matrix::{fieldmatrix_new_count, gemm, reset_fieldmatrix_new_count};
     use crate::field::test_random_matrix::{
-        random_fp, random_fp_invertible, random_gf2m_wide_1, random_gf2m_wide_1_invertible,
+        random_fp, random_fp_invertible, random_fp_rank_deficient, random_gf2m_wide_1,
+        random_gf2m_wide_1_invertible,
     };
     use crate::gf2m::{Gf2mWide, Gf2mWideConfig};
     use crate::gfp::Fp;
@@ -2066,6 +2067,144 @@ mod tests {
                     let recon = gemm(&a, &x);
                     proptest::prop_assert_eq!(&recon, &b, "Fp<65521> n={} k={}", n, k);
                 }
+            }
+        }
+    }
+
+    // ─── Blocked solve_batch correctness — rank-deficient sweep ──────────
+    //
+    // These tests verify that solve_batch returns None for any rank-deficient
+    // square matrix, covering all 6 primes required by SC#2.
+    //
+    // Construction: A = F · G where F is n × rank and G is rank × n (outer
+    // product), giving rank(A) = rank < n. We iterate over SOLVE_BOUNDARY_LENS
+    // as the matrix dimension n, and set rank = n / 2 (skip n < 2 since
+    // rank-deficiency requires rank < n and rank >= 1).
+    //
+    // The proptest seed parameterizes the outer-product factors (different
+    // seeds → different rank-deficient matrices), giving broad coverage beyond
+    // the narrow deterministic cases in test_solve_batch_rank_deficient_*.
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(8))]
+
+        /// solve_batch returns None for rank-deficient Fp<7> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp7(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(7);
+                let a = random_fp_rank_deficient::<7>(n, n, rank, mseed);
+                let b = random_fp::<7>(n, n, mseed.wrapping_add(0xD1));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<7> n={n} rank={rank}: expected None (singular A)"
+                );
+            }
+        }
+
+        /// solve_batch returns None for rank-deficient Fp<31> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp31(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(31);
+                let a = random_fp_rank_deficient::<31>(n, n, rank, mseed);
+                let b = random_fp::<31>(n, n, mseed.wrapping_add(0xD2));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<31> n={n} rank={rank}: expected None (singular A)"
+                );
+            }
+        }
+
+        /// solve_batch returns None for rank-deficient Fp<127> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp127(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(127);
+                let a = random_fp_rank_deficient::<127>(n, n, rank, mseed);
+                let b = random_fp::<127>(n, n, mseed.wrapping_add(0xD3));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<127> n={n} rank={rank}: expected None (singular A)"
+                );
+            }
+        }
+
+        /// solve_batch returns None for rank-deficient Fp<241> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp241(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(241);
+                let a = random_fp_rank_deficient::<241>(n, n, rank, mseed);
+                let b = random_fp::<241>(n, n, mseed.wrapping_add(0xD4));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<241> n={n} rank={rank}: expected None (singular A)"
+                );
+            }
+        }
+
+        /// solve_batch returns None for rank-deficient Fp<251> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp251(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(251);
+                let a = random_fp_rank_deficient::<251>(n, n, rank, mseed);
+                let b = random_fp::<251>(n, n, mseed.wrapping_add(0xD5));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<251> n={n} rank={rank}: expected None (singular A)"
+                );
+            }
+        }
+
+        /// solve_batch returns None for rank-deficient Fp<65521> at boundary sizes.
+        #[test]
+        fn prop_blocked_solve_rank_deficient_fp65521(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                let rank = n / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let mseed = seed
+                    .wrapping_add((n as u64).wrapping_mul(0xDEAD_BEEF))
+                    .wrapping_add(65521);
+                let a = random_fp_rank_deficient::<65521>(n, n, rank, mseed);
+                let b = random_fp::<65521>(n, n, mseed.wrapping_add(0xD6));
+                proptest::prop_assert!(
+                    a.solve_batch(&b).is_none(),
+                    "Fp<65521> n={n} rank={rank}: expected None (singular A)"
+                );
             }
         }
     }
