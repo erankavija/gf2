@@ -1489,6 +1489,95 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     None
 }
 
+/// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
+/// `Fp<P>` with `P ∈ (251, 65535]`. Pre-packs both operands as
+/// Montgomery raw u16 once per gemm call (`O(mk + kn)`), runs the
+/// AVX2 panel kernel, then applies one Montgomery REDC per output
+/// cell (`O(mn)` REDCs vs `O(mn)` `% p` reductions; the difference
+/// is paid once at output time, identical asymptotic cost).
+///
+/// The panel kernel computes `c_canonical[i, j] = (Σ a_pack[i,t] *
+/// b_pack[j,t]) mod p`, which when inputs carry Montgomery raw
+/// storage works out to `R² · Σ a_canonical b_canonical mod p`. The
+/// per-cell REDC then maps `R² · x → R · x = Mont(x)`.
+///
+/// Returns `true` when the kernel ran (and `out` is populated);
+/// `false` when the field is out of range, the `simd` feature is
+/// disabled, or AVX2 detection failed.
+///
+/// # Issue
+///
+/// jit:74ba1cdc R1 — replaces the per-cell `fp_medium_try_dot_packed`
+/// dispatch in the GEMM caller (16M calls at n=4096) with a single
+/// panel kernel call, closing the GF(65521)/n=4096 ratio gap.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
+    a: &[Fp<P>],
+    b_t: &[Fp<P>],
+    m: usize,
+    k: usize,
+    n: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    if !fp_medium_eligible::<P>() {
+        return false;
+    }
+    if m == 0 || k == 0 || n == 0 {
+        return false;
+    }
+    debug_assert_eq!(a.len(), m * k, "fp_medium_try_gemm_panel: a shape");
+    debug_assert_eq!(b_t.len(), n * k, "fp_medium_try_gemm_panel: b_t shape");
+    debug_assert_eq!(out.len(), m * n, "fp_medium_try_gemm_panel: out shape");
+
+    let Some(fns) = crate::simd::maybe_fp_medium() else {
+        return false;
+    };
+
+    // Pack A and B^T as Montgomery raw u16 (pure u64 → u16 truncation,
+    // no REDC per element — same trick `fp_medium_try_dot_packed` uses).
+    GEMM_MEDIUM_A_SCRATCH.with_borrow_mut(|a_u16| {
+        GEMM_MEDIUM_BT_SCRATCH.with_borrow_mut(|bt_u16| {
+            GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
+                a_u16.resize(m * k, 0u16);
+                bt_u16.resize(n * k, 0u16);
+                out_u16.resize(m * n, 0u16);
+                for (dst, src) in a_u16.iter_mut().zip(a.iter()) {
+                    *dst = src.raw_storage() as u16;
+                }
+                for (dst, src) in bt_u16.iter_mut().zip(b_t.iter()) {
+                    *dst = src.raw_storage() as u16;
+                }
+
+                (fns.gemm_panel_fn)(a_u16, bt_u16, m, k, n, P as u16, out_u16);
+
+                // Each `out_u16[i*n + j]` holds `(R² · Σ a_canon · b_canon) mod P`.
+                // One Montgomery REDC maps that to the canonical Montgomery
+                // storage `R · Σ a · b mod P`, matching the storage domain
+                // the caller expects.
+                for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
+                    let r2_sum = word as u128;
+                    let r_sum = super::montgomery::redc::<P>(r2_sum);
+                    *slot = Fp::<P>::from_raw_storage(r_sum);
+                }
+                true
+            })
+        })
+    })
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
+    _a: &[Fp<P>],
+    _b_t: &[Fp<P>],
+    _m: usize,
+    _k: usize,
+    _n: usize,
+    _out: &mut [Fp<P>],
+) -> bool {
+    false
+}
+
 // ---------------------------------------------------------------------------
 // Packed matvec entry points — issue d1dd266c
 // ---------------------------------------------------------------------------
@@ -1538,6 +1627,17 @@ thread_local! {
     static GEMM_SMALL_F32_A_SCRATCH: std::cell::RefCell<Vec<f32>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_SMALL_F32_BT_SCRATCH: std::cell::RefCell<Vec<f32>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    // Medium-prime GEMM scratch (issue 74ba1cdc R1). Pre-packs `a`
+    // and `bt` into u16 buffers via raw-storage truncation; the output
+    // is written to a u16 buffer first then unpacked through REDC into
+    // the caller's `Fp<P>` slot. Buffers grow as needed and are reused
+    // across repeated GEMM calls on the same thread.
+    static GEMM_MEDIUM_A_SCRATCH: std::cell::RefCell<Vec<u16>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_MEDIUM_BT_SCRATCH: std::cell::RefCell<Vec<u16>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_MEDIUM_OUT_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
@@ -2395,17 +2495,23 @@ pub(crate) fn fp_chain_poly_arith_available<const P: u64>() -> bool {
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
-    if !fp_small_enabled::<P>() {
-        return false;
+    if fp_small_enabled::<P>() {
+        // Any of the three small-prime kernels can take the call. The
+        // dispatch order inside `fp_small_try_gemm_classical` is route
+        // A (f32), route C (panel), then Candidate C (byte-lane).
+        // Returning `true` whenever any of them is available exactly
+        // mirrors the "kernel will succeed" condition.
+        return crate::simd::maybe_fp_small().is_some()
+            || crate::simd::maybe_fp_small_f32().is_some()
+            || crate::simd::maybe_fp_small_panel().is_some();
     }
-    // Any of the three small-prime kernels can take the call. The
-    // dispatch order inside `fp_small_try_gemm_classical` is route A
-    // (f32), route C (panel), then Candidate C (byte-lane). Returning
-    // `true` whenever any of them is available exactly mirrors the
-    // "kernel will succeed" condition.
-    crate::simd::maybe_fp_small().is_some()
-        || crate::simd::maybe_fp_small_f32().is_some()
-        || crate::simd::maybe_fp_small_panel().is_some()
+    // Medium-prime panel kernel (issue 74ba1cdc R1): `Fp<P>` with
+    // `P ∈ (251, 65535]` routes through `fp_medium_try_gemm_panel`
+    // inside `try_simd_gemm_classical`.
+    if fp_medium_eligible::<P>() {
+        return crate::simd::maybe_fp_medium().is_some();
+    }
+    false
 }
 
 /// Non-SIMD stub that always returns `false`.
