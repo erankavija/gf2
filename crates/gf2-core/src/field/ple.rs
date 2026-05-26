@@ -609,6 +609,41 @@ fn ple_in_place_window<F: FiniteField>(
         F::PLE_PANEL_COLS,
         F::PLE_BASE_COLS
     );
+
+    // Recursive PLUQ left-looking blocking for small-prime fields (issue
+    // 6823c8a0 R1, design 2e8c5a29 → R1 amendment).
+    //
+    // When the field exposes the AVX2 panel base kernel, we no longer
+    // run the panel kernel over a full `PLE_PANEL_COLS`-wide window in
+    // one shot. The panel kernel's inner Schur update is row-major axpy
+    // (one pivot at a time over a shrinking tail); even with AVX2 byte
+    // lanes its throughput at large win is roughly 8 Gop/s — far below
+    // fflas-ffpack's ~30 Gop/s sgemm-cascade PLUQ. To close the gap we
+    // dispatch the panel kernel only on a narrow leftmost sub-panel
+    // (`PLE_PANEL_RECURSIVE_BASE` columns wide), then update the wide
+    // right tail via the existing `trsm_lower` + `gemm_axpy_into_view`
+    // path. The wide gemm inherits the small-prime whole-GEMM fast path
+    // from issue 40195c09 (lift), which hits the kernel's u8 byte-lane
+    // throughput on the bulk of the operations.
+    //
+    // The threshold below is chosen so the panel kernel still
+    // amortises its packing overhead (canonical-byte scratch pack +
+    // outside-window row permutation) over a useful number of pivots,
+    // but each panel handles few enough columns that the wide GEMM
+    // dominates the work between panels. 32 was selected as a starting
+    // point — see `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md`
+    // for the empirical tuning.
+    const PLE_PANEL_RECURSIVE_BASE: usize = 128;
+    if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
+        return ple_panel_recursive_window::<F>(
+            a,
+            col_lo,
+            col_hi,
+            perm,
+            pivot_cols,
+            PLE_PANEL_RECURSIVE_BASE,
+        );
+    }
     if win <= F::PLE_PANEL_COLS && F::has_simd_ple_panel_base() {
         if let Some(rank) = try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols) {
             return rank;
@@ -684,6 +719,229 @@ fn ple_in_place_window<F: FiniteField>(
         0
     };
 
+    r1 + r2
+}
+
+/// Recursive PLUQ left-looking blocking for small-prime fields (issue
+/// 6823c8a0 R1, design 2e8c5a29 R1 amendment).
+///
+/// Iterates over the column window `[col_lo, col_hi)` in narrow
+/// sub-panels of width `base_cols` each. For every sub-panel:
+///
+/// 1. Dispatch the field's AVX2 panel-base kernel on the sub-panel
+///    covering rows below the running rank cursor. Returns `r_i` new
+///    pivots and appends them to `pivot_cols`.
+/// 2. If the sub-panel produced any pivots AND there are columns
+///    remaining to the right: solve `L11 · X = right_top` (trsm) and
+///    perform the Schur-complement update `right_bot -= L_bot · X`
+///    (gemm). The wide gemm hits the small-prime whole-GEMM fast path
+///    (`gemm_axpy_into_view` → `40195c09` lift) and the medium-prime
+///    panel u16 path for primes outside the byte-lane range.
+/// 3. Advance the rank cursor and the column cursor.
+///
+/// This mirrors the recursive PLUQ shape of Dumas-Pernet-Sultan 2017
+/// (arXiv:1703.02438) — left-looking column-axis split rather than
+/// 2D recursion. The 2D split is structurally equivalent at the cost
+/// of more recursion bookkeeping; the 1D column-axis form has been
+/// sufficient to close the GF(251) ratio gap empirically (see
+/// `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
+///
+/// # Correctness invariants preserved
+///
+/// - The kernel's `pivot_cols` reads from `pivot_cols[start..start+r_i]`
+///   carry **absolute** column indices in the parent matrix (the panel
+///   wrapper offsets the panel-local indices by `col_lo`). This means
+///   `materialise_l1_unit_at_cols` and `materialise_block_at_cols`
+///   continue to see the correct scattered-pivot pattern even when the
+///   left sub-panel is rank-deficient (bd9c6e13 fix preserved).
+/// - The kernel's row swaps are propagated to cells **outside** the
+///   sub-panel via the `try_simd_ple_panel_base` hook. Crucially, those
+///   "outside" cells include both the columns to the left of the
+///   sub-panel (where L's multipliers from earlier sub-panels live)
+///   AND the columns to the right (the not-yet-processed right tail).
+///   The row order remains consistent across the whole matrix at every
+///   step.
+///
+/// # Parameters
+///
+/// * `a` — full-width row-restricted view; only the column window
+///   `[col_lo, col_hi)` is mutated by the elimination, but full-row
+///   swaps propagate across the entire parent column range.
+/// * `col_lo`, `col_hi` — absolute column window in the parent matrix.
+/// * `perm` — row permutation tracker, length = `a.rows()`. Mutated
+///   in place for every row swap performed by the kernel.
+/// * `pivot_cols` — absolute pivot-column accumulator. New pivots are
+///   appended in left-to-right order.
+/// * `base_cols` — width of each sub-panel. Empirically tuned; see the
+///   constant in `ple_in_place_window`.
+fn ple_panel_recursive_window<F: FiniteField>(
+    mut a: MatViewMut<'_, F>,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+    base_cols: usize,
+) -> usize {
+    let m = a.rows();
+    let mut col_cur = col_lo;
+    let mut rank_total = 0usize;
+
+    while col_cur < col_hi && rank_total < m {
+        let sub_hi = (col_cur + base_cols).min(col_hi);
+
+        // Snapshot pivot-cols length so we can slice this sub-panel's
+        // own pivots after the dispatch returns. The dispatch pushes
+        // ABSOLUTE column indices (offset by col_lo of the panel call,
+        // which is `col_cur` here).
+        let pivot_cols_start = pivot_cols.len();
+
+        // Run the panel kernel on rows [rank_total..m] × cols [col_cur, sub_hi).
+        // The panel wrapper requires a view rooted at row 0 of the
+        // working clone (so its kernel-local row_perm indexes from 0).
+        // We split off the top `rank_total` rows and pass the bottom
+        // slice; the kernel handles in-window swaps + outside-window
+        // propagation across the parent's full column range.
+        let r_i_opt = if rank_total == 0 {
+            // Fast path: no top rows to skip. Reborrow `a` for this iteration.
+            try_panel_base_dispatch::<F>(&mut a.reborrow(), col_cur, sub_hi, perm, pivot_cols)
+        } else {
+            // Split off the top `rank_total` rows of a freshly reborrowed
+            // view. The bottom slice sees rows [rank_total..m] of the
+            // parent across the full column range.
+            // `try_panel_base_dispatch` extracts the raw parent slice via
+            // `raw_parts_mut`, so the bottom view's `row_offset =
+            // rank_total` is reflected in the slice the kernel sees.
+            let (_top, mut bot) = a.reborrow().split_rows_mut(rank_total);
+            try_panel_base_dispatch::<F>(
+                &mut bot,
+                col_cur,
+                sub_hi,
+                &mut perm[rank_total..],
+                pivot_cols,
+            )
+        };
+
+        // If the panel declined, fall back to the binary-halving recursive
+        // path on this sub-panel. This branch should only trigger when AVX2
+        // is unavailable at runtime mid-execution, which doesn't happen on
+        // a fixed host; included for defensive correctness.
+        let r_i = match r_i_opt {
+            Some(r) => r,
+            None => {
+                if rank_total == 0 {
+                    ple_in_place_window_no_panel::<F>(
+                        a.reborrow(),
+                        col_cur,
+                        sub_hi,
+                        perm,
+                        pivot_cols,
+                    )
+                } else {
+                    let (_top, bot) = a.reborrow().split_rows_mut(rank_total);
+                    ple_in_place_window_no_panel::<F>(
+                        bot,
+                        col_cur,
+                        sub_hi,
+                        &mut perm[rank_total..],
+                        pivot_cols,
+                    )
+                }
+            }
+        };
+
+        // Inter-block trsm + gemm update on the right tail (if any).
+        //
+        // The new pivots sit at `pivot_cols[pivot_cols_start..pivot_cols_start + r_i]`
+        // and reference ABSOLUTE column indices in the parent matrix
+        // (they live within `[col_cur, sub_hi)`). The L-multipliers
+        // beneath the new pivots live at those same columns in rows
+        // `[rank_total + r_i .. m]`.
+        if r_i > 0 && sub_hi < col_hi {
+            let new_pivots: Vec<usize> =
+                pivot_cols[pivot_cols_start..pivot_cols_start + r_i].to_vec();
+
+            // L1 (r_i × r_i, unit lower-triangular) sourced from rows
+            // [rank_total .. rank_total + r_i] at the new pivot columns.
+            let l1 = materialise_l1_unit_at_cols(&a.as_view(), rank_total, &new_pivots);
+            // trsm_lower solves L1 · X = a[rank_total..rank_total+r_i, sub_hi..col_hi].
+            trsm_lower(
+                l1.submat(.., ..),
+                a.submat_mut(rank_total..rank_total + r_i, sub_hi..col_hi),
+            );
+
+            // Schur complement on rows below the new pivots.
+            if rank_total + r_i < m {
+                let l1_bot = materialise_block_at_cols(
+                    &a.as_view(),
+                    rank_total + r_i,
+                    &new_pivots,
+                    m - rank_total - r_i,
+                );
+                let zero = a.get(0, col_lo).zero_like();
+                let one = zero.one_like();
+                let neg_one = zero - one.clone();
+                let right = a.submat_mut(rank_total.., sub_hi..col_hi);
+                let (a3_mut, a4_mut) = right.split_rows_mut(r_i);
+                let a3_view = a3_mut.as_view();
+                gemm_axpy_into_view(neg_one, &l1_bot.submat(.., ..), &a3_view, one, a4_mut);
+            }
+        }
+
+        rank_total += r_i;
+        col_cur = sub_hi;
+    }
+
+    rank_total
+}
+
+/// Fallback variant of [`ple_in_place_window`] that does NOT take the
+/// SIMD panel-base path even when available. Used by
+/// [`ple_panel_recursive_window`] when the panel dispatch declines mid-
+/// execution (e.g. AVX2 unavailable at runtime). Mirrors the structure
+/// of `ple_in_place_window` minus the panel-base dispatch arm.
+fn ple_in_place_window_no_panel<F: FiniteField>(
+    mut a: MatViewMut<'_, F>,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+) -> usize {
+    let m = a.rows();
+    let win = col_hi.saturating_sub(col_lo);
+    if m == 0 || win == 0 {
+        return 0;
+    }
+    if win <= F::PLE_BASE_COLS {
+        return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
+    }
+
+    let h = win / 2;
+    let mid = col_lo + h;
+    let pivot_cols_start = pivot_cols.len();
+    let r1 = ple_in_place_window_no_panel::<F>(a.reborrow(), col_lo, mid, perm, pivot_cols);
+
+    if r1 > 0 && mid < col_hi {
+        let left_pivots: &[usize] = &pivot_cols[pivot_cols_start..pivot_cols_start + r1];
+        let l1 = materialise_l1_unit_at_cols(&a.as_view(), 0, left_pivots);
+        trsm_lower(l1.submat(.., ..), a.submat_mut(0..r1, mid..col_hi));
+        if r1 < m {
+            let l1_bot = materialise_block_at_cols(&a.as_view(), r1, left_pivots, m - r1);
+            let zero = a.get(0, col_lo).zero_like();
+            let one = zero.one_like();
+            let neg_one = zero - one.clone();
+            let right = a.submat_mut(.., mid..col_hi);
+            let (a3_mut, a4_mut) = right.split_rows_mut(r1);
+            let a3_view = a3_mut.as_view();
+            gemm_axpy_into_view(neg_one, &l1_bot.submat(.., ..), &a3_view, one, a4_mut);
+        }
+    }
+
+    let r2 = if r1 < m && mid < col_hi {
+        let (_top, a4) = a.split_rows_mut(r1);
+        ple_in_place_window_no_panel::<F>(a4, mid, col_hi, &mut perm[r1..], pivot_cols)
+    } else {
+        0
+    };
     r1 + r2
 }
 
