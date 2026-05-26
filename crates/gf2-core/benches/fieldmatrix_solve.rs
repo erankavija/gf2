@@ -65,7 +65,18 @@ impl Gf2mWideConfig<1> for SolveGf2m16Cfg {
 }
 type Gf2m16 = Gf2mWide<1, SolveGf2m16Cfg>;
 
-const SIZES: &[usize] = &[64, 256, 1024, 4096];
+/// Returns the size sweep for this bench run.
+///
+/// Set `GF2_BENCH_SKIP_4096=1` to skip the n=4096 cells (and their
+/// expensive rank-deficient matrix precomputation) when running targeted
+/// CCX1-pinned measurement trials that do not require the largest size.
+fn bench_sizes() -> &'static [usize] {
+    if std::env::var("GF2_BENCH_SKIP_4096").is_ok() {
+        &[64, 256, 1024]
+    } else {
+        &[64, 256, 1024, 4096]
+    }
+}
 
 const REGIMES: &[(&str, u64)] = &[("uniform", 0), ("deficient", 1)];
 
@@ -191,7 +202,7 @@ fn bench_fp_7(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<PRIME_7>, _, _, _>(
         c,
         "Fp_7",
-        SIZES,
+        bench_sizes(),
         fp_matrix_from_seed::<PRIME_7>,
         fp_rank_deficient_from_seed::<PRIME_7>,
         fp_vec_from_seed::<PRIME_7>,
@@ -202,7 +213,7 @@ fn bench_fp_31(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<PRIME_31>, _, _, _>(
         c,
         "Fp_31",
-        SIZES,
+        bench_sizes(),
         fp_matrix_from_seed::<PRIME_31>,
         fp_rank_deficient_from_seed::<PRIME_31>,
         fp_vec_from_seed::<PRIME_31>,
@@ -213,7 +224,7 @@ fn bench_fp_251(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<PRIME_251>, _, _, _>(
         c,
         "Fp_251",
-        SIZES,
+        bench_sizes(),
         fp_matrix_from_seed::<PRIME_251>,
         fp_rank_deficient_from_seed::<PRIME_251>,
         fp_vec_from_seed::<PRIME_251>,
@@ -224,7 +235,7 @@ fn bench_fp_65521(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<PRIME_65521>, _, _, _>(
         c,
         "Fp_65521",
-        SIZES,
+        bench_sizes(),
         fp_matrix_from_seed::<PRIME_65521>,
         fp_rank_deficient_from_seed::<PRIME_65521>,
         fp_vec_from_seed::<PRIME_65521>,
@@ -235,7 +246,7 @@ fn bench_fp_m31(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<MERSENNE_31>, _, _, _>(
         c,
         "Fp_M31",
-        SIZES,
+        bench_sizes(),
         fp_matrix_from_seed::<MERSENNE_31>,
         fp_rank_deficient_from_seed::<MERSENNE_31>,
         fp_vec_from_seed::<MERSENNE_31>,
@@ -246,7 +257,7 @@ fn bench_gf2m8(c: &mut Criterion) {
     run_field::<Gf2m8, _, _, _>(
         c,
         "Gf2m8",
-        SIZES,
+        bench_sizes(),
         gf2m_wide_1_matrix_from_seed::<SolveGf2m8Cfg>,
         gf2m_wide_1_rank_deficient_from_seed::<SolveGf2m8Cfg>,
         gf2m_wide_1_vec_from_seed::<SolveGf2m8Cfg>,
@@ -257,7 +268,7 @@ fn bench_gf2m16(c: &mut Criterion) {
     run_field::<Gf2m16, _, _, _>(
         c,
         "Gf2m16",
-        SIZES,
+        bench_sizes(),
         gf2m_wide_1_matrix_from_seed::<SolveGf2m16Cfg>,
         gf2m_wide_1_rank_deficient_from_seed::<SolveGf2m16Cfg>,
         gf2m_wide_1_vec_from_seed::<SolveGf2m16Cfg>,
