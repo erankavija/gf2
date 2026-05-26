@@ -75,6 +75,36 @@ const N_R: usize = 24;
 /// independently of the chunk cap.
 const K_CHUNK_CAP: usize = 1024;
 
+/// Outer-N panel grouping for the cache-blocked loop nest. Picks an
+/// `n_c_panels` value that keeps the active B-panel slice resident in
+/// the CCX-shared L3 (Zen 3: 32 MB per CCX) while sharing one A-pack
+/// across every panel in the group.
+///
+/// The previous heuristic (2026-05-25 baseline) used an L2 budget
+/// (256 KB), which at `n = 4096, k = 4096` clamps to `n_c_panels = 1`
+/// — degrading the loop nest into one A-pack per panel per i_blk
+/// (`171 × 1024 = 175 000` A-packs) instead of one A-pack per i_blk
+/// across all 171 panels (`1024` A-packs).
+///
+/// The L3 budget (24 MB, 75 % of CCX L3 to leave headroom for the
+/// A-pack scratch + criterion harness state) at `n = 4096, k = 4096`
+/// returns ~64 panels, recovering ~64× more B-reuse per A-pack while
+/// still bounding the active B set to fit in L3. The `min(n_panels)`
+/// clamp handles small-n cells where the simple single-group path is
+/// strictly faster.
+#[inline]
+fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
+    // 24 MB out of Zen 3's 32 MB CCX-shared L3 — leaves ~8 MB headroom
+    // for the A-pack + scratch + criterion harness footprint.
+    const L3_BUDGET_BYTES: usize = 24 * 1024 * 1024;
+    let panel_bytes = k.saturating_mul(N_R).saturating_mul(4);
+    if panel_bytes == 0 {
+        return n_panels.max(1);
+    }
+    let blocked = L3_BUDGET_BYTES / panel_bytes;
+    blocked.max(1).min(n_panels.max(1))
+}
+
 /// Whole-gemm AVX2 + FMA3 f32-cascade kernel for small primes.
 ///
 /// Computes `c[i*n + j] = (∑_t a[i*k + t] · bt[j*k + t]) mod p` for
@@ -199,25 +229,13 @@ pub unsafe fn fp_small_f32_gemm(
     //   but with `n_outer_blocks` ≪ `m / M_R` the trade is favorable
     //   (and `n = 4096` was hard-bound on B-bandwidth without it).
     //
-    // The 16 MB threshold is half of L3; below it we keep the
-    // simple loop nest, above it we cache-block. The 256 KB target
-    // for the outer block is empirically tuned (smaller blocks add
-    // A-pack overhead; larger blocks lose the L2 re-use win).
-    let l3_threshold_bytes: usize = 16 * 1024 * 1024;
-    let total_b_bytes = n_panels * k * N_R * 4;
-    let n_c_panels = if total_b_bytes <= l3_threshold_bytes {
-        // Single outer block — replicates original `for i_blk: for panel:`
-        // loop nest with one A pre-pack per i_blk.
-        n_panels.max(1)
-    } else {
-        let l2_budget_bytes: usize = 256 * 1024;
-        let panel_bytes = k * N_R * 4;
-        let blocked = l2_budget_bytes
-            .checked_div(panel_bytes)
-            .unwrap_or(n_panels)
-            .max(1);
-        blocked.min(n_panels.max(1))
-    };
+    // Outer-N grouping: L3-budgeted shared helper (issue 74ba1cdc R1).
+    // The 2026-05-25 heuristic used an L2 budget which collapses to
+    // `n_c_panels = 1` at `n = 4096, k = 4096`, degrading the loop
+    // nest into 175 000 A-packs instead of 1024. The L3 budget
+    // (`n_c_panels_outer`) recovers ~64-panel groups for that cell
+    // while keeping small-n cells on the single-group path.
+    let n_c_panels = n_c_panels_outer(n_panels, k);
 
     // ── Inner GEMM loop (outer-N cache-blocked) ───────────────────
     //
@@ -230,8 +248,9 @@ pub unsafe fn fp_small_f32_gemm(
     //         run_one_panel(panel, i_blk)
     //
     // The panel slice (active B-data for one outer block) stays
-    // resident in L2 for the duration of the i_blk sweep; cold
-    // panel data only crosses memory once per outer block.
+    // resident in L3 for the duration of the i_blk sweep; cold
+    // panel data only crosses memory once per outer block. One
+    // A-pack per i_blk feeds every panel in the group.
     //
     // Within `run_one_panel` we still split into a `m_eff = M_R = 4`
     // steady-state path and a generic `m_eff < 4` trailing path,
@@ -362,19 +381,8 @@ pub unsafe fn fp_small_f32_gemm_route_a(
     let k_chunk = k_max.min(K_CHUNK_CAP);
     let mut a_pack_f32: Vec<f32> = vec![0.0; M_R * k];
 
-    let l3_threshold_bytes: usize = 16 * 1024 * 1024;
-    let total_b_bytes = n_panels * k * N_R * 4;
-    let n_c_panels = if total_b_bytes <= l3_threshold_bytes {
-        n_panels.max(1)
-    } else {
-        let l2_budget_bytes: usize = 256 * 1024;
-        let panel_bytes = k * N_R * 4;
-        let blocked = l2_budget_bytes
-            .checked_div(panel_bytes)
-            .unwrap_or(n_panels)
-            .max(1);
-        blocked.min(n_panels.max(1))
-    };
+    // Outer-N grouping: shared L3-budgeted helper (issue 74ba1cdc R1).
+    let n_c_panels = n_c_panels_outer(n_panels, k);
 
     let m_full = m - (m % M_R);
     let mut n_outer = 0usize;
