@@ -2,7 +2,7 @@
   "id": "869ce43b-4278-4bf4-815a-3d41eeb52fbe",
   "title": "Implement blocked GF(p) echelon / RREF (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements the blocked echelon/RREF per design `24a93e4e`, building on the panelized PLE implementation.\n\nParent epic: `026fc832`. Predecessors: `24a93e4e` (design), panelized PLE implementation (sibling).\n\n## Background\n\nCloses A8 rows 18-29, 30-33, 72-73 (echelon cells over GF(7/251/65521/2^31-1) and GF(31)).\n\n## Success Criteria\n\n- [hard] Production code implementing the blocked echelon per the approved design.\n- [hard] Bit-exact correctness vs the existing `FieldMatrix::rref` on a proptest sweep across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521), Mersenne31 at boundary lengths plus rank-deficient cases.\n- [hard] 5-trial CCX1-pinned benchmarks at n in {64, 256, 1024} per prime per regime (uniform + deficient where the predecessor scorecard measured both).\n- [hard] Every A8 echelon cell (rows 18-33, 72-73) either PASSes or carries [aspirational] amendment.\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%).\n- [hard] No `unsafe` outside kernel crates.\n- [hard] Reuses panelized PLE + `fp_small_try_gemm_classical` per the design.\n\n## Out of scope\n\n- Sibling impls (PLE, invert, solve).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:11:01.336409034+00:00",
-  "updated_at": "2026-05-25T12:11:19.743744501+00:00"
+  "updated_at": "2026-05-26T19:29:28.858405086+00:00"
 }

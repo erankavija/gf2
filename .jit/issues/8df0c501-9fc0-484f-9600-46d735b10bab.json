@@ -2,7 +2,7 @@
   "id": "8df0c501-9fc0-484f-9600-46d735b10bab",
   "title": "Implement blocked GF(p) invert via PLE (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements blocked GF(p) invert per design `feb15da9`, building on the panelized PLE implementation.\n\nParent epic: `026fc832`. Predecessors: `feb15da9` (design), panelized PLE implementation (sibling).\n\n## Background\n\nCloses A8 rows 34-43, 74 (invert cells over GF(7/251/65521) and GF(31)).\n\n## Success Criteria\n\n- [hard] Production code implementing the blocked invert per the approved design.\n- [hard] Bit-exact correctness: A * A⁻¹ = I for all proptest cases across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths.\n- [hard] 5-trial CCX1-pinned benchmarks at n in {64, 256, 1024} per prime.\n- [hard] Every A8 invert cell (rows 34-43, 74) either PASSes or carries [aspirational] amendment.\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%).\n- [hard] No `unsafe` outside kernel crates.\n- [hard] Reuses panelized PLE + `fp_small_try_gemm_classical`.\n\n## Out of scope\n\n- Sibling impls.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:11:04.214564218+00:00",
-  "updated_at": "2026-05-25T12:11:20.246064644+00:00"
+  "updated_at": "2026-05-26T19:29:28.893890476+00:00"
 }
