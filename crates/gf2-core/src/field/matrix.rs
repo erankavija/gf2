@@ -5527,12 +5527,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp251_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..251,
             beta_v in 0u64..251,
         ) {
             const P: u64 = 251;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
@@ -5567,12 +5567,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp7_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..7,
             beta_v in 0u64..7,
         ) {
             const P: u64 = 7;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
@@ -5607,12 +5607,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp31_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..31,
             beta_v in 0u64..31,
         ) {
             const P: u64 = 31;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
@@ -5647,12 +5647,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp127_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..127,
             beta_v in 0u64..127,
         ) {
             const P: u64 = 127;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
@@ -5687,12 +5687,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp241_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..241,
             beta_v in 0u64..241,
         ) {
             const P: u64 = 241;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
@@ -5727,12 +5727,12 @@ mod tests {
         #[test]
         fn prop_gemm_axpy_into_view_fp65521_matches_oracle(
             seed in 0u64..256,
-            n_idx in 0usize..7,
+            n_idx in 0usize..8,
             alpha_v in 0u64..65521,
             beta_v in 0u64..65521,
         ) {
             const P: u64 = 65521;
-            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            const LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
             let n = LENS[n_idx];
             let m = n;
             let k = n;
