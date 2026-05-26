@@ -630,9 +630,9 @@ fn ple_in_place_window<F: FiniteField>(
     // amortises its packing overhead (canonical-byte scratch pack +
     // outside-window row permutation) over a useful number of pivots,
     // but each panel handles few enough columns that the wide GEMM
-    // dominates the work between panels. 32 was selected as a starting
-    // point — see `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md`
-    // for the empirical tuning.
+    // dominates the work between panels. 128 was empirically selected
+    // from a tuning sweep over {32, 48, 64, 96, 128} — see
+    // `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
     const PLE_PANEL_RECURSIVE_BASE: usize = 128;
     if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
         return ple_panel_recursive_window::<F>(
@@ -2977,7 +2977,7 @@ mod tests {
     }
 
     // Proptest: property-based sweep for the panelized PLE path over
-    // GF(7), GF(251), GF(65521). 32 cases per field at m, n in [1, 96],
+    // all 6 small primes per SC#2. 32 cases per field at m, n in [1, 96],
     // verifying `P · L · E == A`.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 32, .. proptest::test_runner::Config::default() })]
@@ -2989,6 +2989,57 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<7>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp31(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<31>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp127(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<127>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp241(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<241>(m, n, seed);
             let (p, l, e, r) = a.ple();
             let le = if r == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
@@ -3061,6 +3112,66 @@ mod tests {
         }
 
         #[test]
+        fn prop_ple_panelized_rank_deficient_fp31(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<31>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_rank_deficient_fp127(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<127>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_rank_deficient_fp241(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<241>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
         fn prop_ple_panelized_rank_deficient_fp251(
             m in 2usize..32,
             n in 2usize..32,
@@ -3069,6 +3180,26 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<251>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_rank_deficient_fp65521(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<65521>(m, n, rank, seed);
             let (p, l, e, r) = a.ple();
             proptest::prop_assert!(r <= rank);
             let le = if r == 0 {
