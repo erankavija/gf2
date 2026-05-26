@@ -5345,3 +5345,8 @@
 {"type":"gate_failed","id":"a1b96641-795e-4f35-8850-0bd766fa6441","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:26:09.832067960Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"a78438e1-99d4-46ec-a04b-a043eb72f569","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:27:11.341932998Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"23d0155f-fd9d-4f4f-a3fd-a4118ccc05cb","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:27:11.342127808Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"40bfadf0-e6a6-4ff5-bc3a-2611401dfe77","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:17.548549185Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"fb58f83b-0c39-40d3-b0b8-6c70883cdce6","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:34.222531675Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"5f94ce6d-165d-448a-b090-b780747f8300","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.016850727Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"c15cd622-be83-4e17-9e6b-822b83b81619","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.517740230Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"b5ccb8e1-6d7f-4237-8324-236f6bd0405a","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.517769220Z"}
