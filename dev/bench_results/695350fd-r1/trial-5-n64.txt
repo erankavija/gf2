@@ -1,0 +1,78 @@
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fieldmatrix_gemm.rs (target/release/deps/fieldmatrix_gemm-a9afb5653f71c67b)
+Benchmarking gemm/Fp_7/Fp_7/64
+Benchmarking gemm/Fp_7/Fp_7/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/64: Collecting 10 samples in estimated 5.0005 s (309k iterations)
+Benchmarking gemm/Fp_7/Fp_7/64: Analyzing
+gemm/Fp_7/Fp_7/64       time:   [16.191 µs 16.214 µs 16.230 µs]
+                        thrpt:  [32.304 Gelem/s 32.336 Gelem/s 32.382 Gelem/s]
+                 change:
+                        time:   [-0.1733% -0.0346% +0.1122%] (p = 0.67 > 0.05)
+                        thrpt:  [-0.1121% +0.0346% +0.1736%]
+                        No change in performance detected.
+
+Benchmarking gemm/Fp_31/Fp_31/64
+Benchmarking gemm/Fp_31/Fp_31/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/64: Collecting 10 samples in estimated 5.0007 s (292k iterations)
+Benchmarking gemm/Fp_31/Fp_31/64: Analyzing
+gemm/Fp_31/Fp_31/64     time:   [16.738 µs 17.277 µs 18.070 µs]
+                        thrpt:  [29.015 Gelem/s 30.345 Gelem/s 31.324 Gelem/s]
+                 change:
+                        time:   [+0.8302% +3.8404% +8.0880%] (p = 0.03 < 0.05)
+                        thrpt:  [-7.4828% -3.6983% -0.8234%]
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking gemm/Fp_127/Fp_127/64
+Benchmarking gemm/Fp_127/Fp_127/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_127/Fp_127/64: Collecting 10 samples in estimated 5.0005 s (310k iterations)
+Benchmarking gemm/Fp_127/Fp_127/64: Analyzing
+gemm/Fp_127/Fp_127/64   time:   [16.138 µs 16.160 µs 16.173 µs]
+                        thrpt:  [32.418 Gelem/s 32.443 Gelem/s 32.488 Gelem/s]
+                 change:
+                        time:   [+0.4862% +0.6389% +0.7731%] (p = 0.00 < 0.05)
+                        thrpt:  [-0.7671% -0.6349% -0.4839%]
+                        Change within noise threshold.
+
+Benchmarking gemm/Fp_241/Fp_241/64
+Benchmarking gemm/Fp_241/Fp_241/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_241/Fp_241/64: Collecting 10 samples in estimated 5.0006 s (299k iterations)
+Benchmarking gemm/Fp_241/Fp_241/64: Analyzing
+gemm/Fp_241/Fp_241/64   time:   [17.610 µs 17.622 µs 17.637 µs]
+                        thrpt:  [29.726 Gelem/s 29.751 Gelem/s 29.772 Gelem/s]
+                 change:
+                        time:   [+5.4944% +5.7192% +5.9087%] (p = 0.00 < 0.05)
+                        thrpt:  [-5.5791% -5.4098% -5.2082%]
+                        Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0006 s (301k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [16.614 µs 16.623 µs 16.634 µs]
+                        thrpt:  [31.519 Gelem/s 31.540 Gelem/s 31.558 Gelem/s]
+                 change:
+                        time:   [-0.6100% -0.3764% -0.1733%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.1736% +0.3778% +0.6137%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+
+Benchmarking gemm/Fp_65521/Fp_65521/64
+Benchmarking gemm/Fp_65521/Fp_65521/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_65521/Fp_65521/64: Collecting 10 samples in estimated 5.0011 s (179k iterations)
+Benchmarking gemm/Fp_65521/Fp_65521/64: Analyzing
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.841 µs 27.864 µs 27.889 µs]
+                        thrpt:  [18.799 Gelem/s 18.816 Gelem/s 18.831 Gelem/s]
+                 change:
+                        time:   [-0.1167% +0.0612% +0.2686%] (p = 0.56 > 0.05)
+                        thrpt:  [-0.2679% -0.0611% +0.1168%]
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+

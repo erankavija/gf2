@@ -1,0 +1,76 @@
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.04s
+     Running benches/fieldmatrix_gemm.rs (target/release/deps/fieldmatrix_gemm-a9afb5653f71c67b)
+Benchmarking gemm/Fp_7/Fp_7/64
+Benchmarking gemm/Fp_7/Fp_7/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/64: Collecting 10 samples in estimated 5.0001 s (308k iterations)
+Benchmarking gemm/Fp_7/Fp_7/64: Analyzing
+gemm/Fp_7/Fp_7/64       time:   [16.190 µs 16.207 µs 16.220 µs]
+                        thrpt:  [32.323 Gelem/s 32.349 Gelem/s 32.383 Gelem/s]
+                 change:
+                        time:   [-0.9314% -0.7937% -0.6616%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6660% +0.8000% +0.9401%]
+                        Change within noise threshold.
+
+Benchmarking gemm/Fp_31/Fp_31/64
+Benchmarking gemm/Fp_31/Fp_31/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/64: Collecting 10 samples in estimated 5.0001 s (300k iterations)
+Benchmarking gemm/Fp_31/Fp_31/64: Analyzing
+gemm/Fp_31/Fp_31/64     time:   [16.553 µs 16.570 µs 16.593 µs]
+                        thrpt:  [31.598 Gelem/s 31.641 Gelem/s 31.674 Gelem/s]
+                 change:
+                        time:   [-1.6988% -1.0894% -0.4564%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.4585% +1.1014% +1.7281%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking gemm/Fp_127/Fp_127/64
+Benchmarking gemm/Fp_127/Fp_127/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_127/Fp_127/64: Collecting 10 samples in estimated 5.0005 s (310k iterations)
+Benchmarking gemm/Fp_127/Fp_127/64: Analyzing
+gemm/Fp_127/Fp_127/64   time:   [16.029 µs 16.040 µs 16.053 µs]
+                        thrpt:  [32.661 Gelem/s 32.686 Gelem/s 32.709 Gelem/s]
+                 change:
+                        time:   [-0.8467% -0.6849% -0.5243%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.5270% +0.6896% +0.8539%]
+                        Change within noise threshold.
+
+Benchmarking gemm/Fp_241/Fp_241/64
+Benchmarking gemm/Fp_241/Fp_241/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_241/Fp_241/64: Collecting 10 samples in estimated 5.0004 s (298k iterations)
+Benchmarking gemm/Fp_241/Fp_241/64: Analyzing
+gemm/Fp_241/Fp_241/64   time:   [16.655 µs 16.673 µs 16.697 µs]
+                        thrpt:  [31.400 Gelem/s 31.445 Gelem/s 31.479 Gelem/s]
+                 change:
+                        time:   [-1.3328% -1.0057% -0.6681%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6726% +1.0159% +1.3508%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0007 s (300k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [16.667 µs 16.684 µs 16.707 µs]
+                        thrpt:  [31.381 Gelem/s 31.425 Gelem/s 31.457 Gelem/s]
+                 change:
+                        time:   [-0.5995% -0.3778% -0.1285%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.1287% +0.3792% +0.6031%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking gemm/Fp_65521/Fp_65521/64
+Benchmarking gemm/Fp_65521/Fp_65521/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_65521/Fp_65521/64: Collecting 10 samples in estimated 5.0010 s (180k iterations)
+Benchmarking gemm/Fp_65521/Fp_65521/64: Analyzing
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.816 µs 27.854 µs 27.889 µs]
+                        thrpt:  [18.799 Gelem/s 18.823 Gelem/s 18.849 Gelem/s]
+                 change:
+                        time:   [-1.2145% -0.9870% -0.7928%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.7992% +0.9969% +1.2295%]
+                        Change within noise threshold.
+
