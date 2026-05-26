@@ -5558,4 +5558,204 @@ mod tests {
             }
         }
     }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<7>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
+        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
+        #[test]
+        fn prop_gemm_axpy_into_view_fp7_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..7,
+            beta_v in 0u64..7,
+        ) {
+            const P: u64 = 7;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA100 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB100 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC100 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<31>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
+        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
+        #[test]
+        fn prop_gemm_axpy_into_view_fp31_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..31,
+            beta_v in 0u64..31,
+        ) {
+            const P: u64 = 31;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA200 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB200 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC200 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<127>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
+        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
+        #[test]
+        fn prop_gemm_axpy_into_view_fp127_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..127,
+            beta_v in 0u64..127,
+        ) {
+            const P: u64 = 127;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA300 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB300 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC300 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<241>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
+        /// R1 addition to satisfy SC#3 six-prime proptest sweep.
+        #[test]
+        fn prop_gemm_axpy_into_view_fp241_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..241,
+            beta_v in 0u64..241,
+        ) {
+            const P: u64 = 241;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA400 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB400 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC400 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<65521>`
+        /// matrices with random `(α, β)` matches the scalar oracle
+        /// bit-exactly. Covers boundary-length grid {1, 15, 16, 17, 63, 64, 65}.
+        /// R1 addition to satisfy SC#3 six-prime proptest sweep (medium-prime path).
+        #[test]
+        fn prop_gemm_axpy_into_view_fp65521_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..7,
+            alpha_v in 0u64..65521,
+            beta_v in 0u64..65521,
+        ) {
+            const P: u64 = 65521;
+            const LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0xA500 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB500 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC500 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
 }
