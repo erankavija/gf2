@@ -85,6 +85,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp_small::SmallPrimeFns;
     use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
     use gf2_kernels_simd::fp_small_panel::SmallPrimePanelFns;
+    use gf2_kernels_simd::fp_small_ple::SmallPrimePlePanelFns;
     use gf2_kernels_simd::gf2m::Gf2mFns;
     use gf2_kernels_simd::gf2m_batch::Gf2mBatchFns;
     use gf2_kernels_simd::gf2m_gemm::Gf2mGemmFns;
@@ -105,6 +106,7 @@ pub(crate) mod simd {
     static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
     static FP_SMALL_F32_FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
     static FP_SMALL_PANEL_FNS: OnceLock<Option<SmallPrimePanelFns>> = OnceLock::new();
+    static FP_SMALL_PLE_FNS: OnceLock<Option<SmallPrimePlePanelFns>> = OnceLock::new();
     static GF2M_WIDE_FNS: OnceLock<Option<Gf2mWideFns>> = OnceLock::new();
     static TRANSPOSE_FNS: OnceLock<Option<TransposeFns>> = OnceLock::new();
 
@@ -294,6 +296,21 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available small-prime panelized PLE base-case
+    /// kernel for `Fp<P>` with `P <= 251` (issue `6823c8a0`, design
+    /// `2e8c5a29`).
+    ///
+    /// Provides the AVX2 byte-lane Schur-update axpy kernel used by
+    /// the new `ple_in_place_window` panel-base dispatch arm. Returns
+    /// `None` on non-AVX2 hosts; callers fall back to the scalar
+    /// `ple_base_direct` path.
+    #[inline]
+    pub fn maybe_fp_small_ple() -> Option<&'static SmallPrimePlePanelFns> {
+        FP_SMALL_PLE_FNS
+            .get_or_init(gf2_kernels_simd::fp_small_ple::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -369,6 +386,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_small_panel() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_small_ple() -> Option<()> {
         None
     }
 

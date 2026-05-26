@@ -2253,6 +2253,31 @@ impl<'a, F: FiniteField> MatViewMut<'a, F> {
             cols: self.cols,
         }
     }
+
+    /// Crate-internal raw accessors used by the panelized PLE
+    /// dispatcher (`crate::field::ple`, issue `6823c8a0`). Returns the
+    /// underlying contiguous parent-data slice together with the
+    /// view's parent stride, row offset, and column offset. The view
+    /// itself spans `self.rows × self.cols` starting at
+    /// `(row_offset, col_offset)` within a row-major buffer of length
+    /// `parent_rows * parent_cols`.
+    ///
+    /// Intended for kernels that need direct access to a rectangular
+    /// sub-block of the parent storage; safe Rust at the call site
+    /// must still uphold the borrowing rules around the returned
+    /// mutable slice.
+    #[doc(hidden)]
+    #[inline]
+    pub(crate) fn raw_parts_mut(&mut self) -> (&mut [F], usize, usize, usize, usize, usize) {
+        (
+            self.data,
+            self.parent_cols,
+            self.row_offset,
+            self.col_offset,
+            self.rows,
+            self.cols,
+        )
+    }
 }
 
 impl<F: FiniteField> MatrixLike<F> for MatViewMut<'_, F> {
