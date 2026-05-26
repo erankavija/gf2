@@ -1,0 +1,5 @@
+# PLE Schur-update non-regression timing (40195c09)
+# n=256 uniform matrices, 20 iters, median
+ple/Fp_7/256  median=4.658ms  (over 20 iters)
+ple/Fp_251/256  median=4.856ms  (over 20 iters)
+ple/Fp_65521/256  median=4.853ms  (over 20 iters)
