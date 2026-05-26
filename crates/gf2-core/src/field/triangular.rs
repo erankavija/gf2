@@ -195,12 +195,52 @@
 //! diagonal element fails to invert (i.e. the input matrix is singular).
 //! `trmm` and `trtrm` make no inversion calls and so cannot fail on a
 //! singular argument.
+//!
+//! # Blocked triangular solve (Higham § 14.1)
+//!
+//! For fields that expose the [`FiniteField::has_simd_gemm_classical`] fast
+//! path (currently `Fp<P>` with `P ≤ 65535`), the standard recursive
+//! `trsm_upper` / `trsm_lower` generate many small `gemm_axpy_into_view`
+//! calls (one per recursion level). At small `B`-column counts (e.g. `n = 1`
+//! for a single right-hand side), the inner GEMM dimensions become too small
+//! to trigger the whole-GEMM `fp_small_try_gemm_classical` threshold
+//! (`GEMM_AXPY_FAST_PATH_THRESHOLD = 16³ = 4096` cell-triples), so the SIMD
+//! fast path is never reached.
+//!
+//! [`trsm_upper_blocked`] and [`trsm_lower_blocked`] implement Higham § 14.1
+//! right-looking blocked back-substitution: the triangular factor `A` is
+//! tiled into row panels of width [`TRSM_BLOCKED_PANEL_SIZE`] (default 64).
+//! The diagonal tile is solved with the recursive scalar
+//! `trsm_upper/lower_inner`, and the update step
+//!
+//! ```text
+//!   B[0..k·bs, :] -= A[0..k·bs, k·bs..(k+1)·bs] · X[k·bs..(k+1)·bs, :]
+//! ```
+//!
+//! is a single contiguous GEMM whose row dimension grows with every panel.
+//! At `n = 1` and `bs = 64`, panel 3 (`k = 3`) produces a GEMM of shape
+//! `192 × 64 × 1 = 12288 ≥ 4096`, comfortably above the SIMD threshold.
+//!
+//! The blocked variants are dispatched by
+//! [`crate::field::inverse::FieldMatrix::solve_batch`] when
+//! `F::has_simd_gemm_classical()` returns `true` and the matrix is large
+//! enough to benefit; the recursive variants remain for all other fields.
 
 use crate::field::matrix::{
     gemm_axpy_into_view, gemm_axpy_into_view_diag, gemm_into_view, FieldMatrix, MatView,
     MatViewMut, UnitDiag,
 };
 use crate::field::FiniteField;
+
+/// Default row-panel width for the blocked triangular solve
+/// (`trsm_upper_blocked` / `trsm_lower_blocked`).
+///
+/// Chosen empirically: large enough for the update GEMM to surpass
+/// `GEMM_AXPY_FAST_PATH_THRESHOLD = 16³` even at `n = 1` (after two
+/// diagonal tiles the update covers `64 × 64 × 1 = 4096` cell-triples;
+/// after three panels it is `192 × 64 × 1 = 12288`), small enough that
+/// each diagonal block stays within L1 cache on a typical x86-64 core.
+pub(crate) const TRSM_BLOCKED_PANEL_SIZE: usize = 64;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -333,6 +373,145 @@ pub fn trsm_lower<F: FiniteField>(a: MatView<'_, F>, b: MatViewMut<'_, F>) {
         b.rows()
     );
     trsm_lower_inner(a, b);
+}
+
+/// Solves the upper-triangular linear system `A · X = B` using a right-looking
+/// row-panel blocked algorithm (Higham § 14.1).
+///
+/// This variant tiles the `m × m` triangular factor `A` into row panels of
+/// width [`TRSM_BLOCKED_PANEL_SIZE`] and processes them from the last panel
+/// to the first. For each panel the diagonal block is solved with the existing
+/// recursive [`trsm_upper`] (which handles odd sizes and the base threshold),
+/// and the update of all rows above the panel is performed by a single
+/// `gemm_axpy_into_view` call whose row dimension grows with each panel,
+/// ensuring that the whole-GEMM `fp_small_try_gemm_classical` threshold is
+/// reached even when `b` has only one column.
+///
+/// Bit-exact equivalent to [`trsm_upper`] (same field arithmetic; only the
+/// loop order and GEMM tile granularity differ). The proptests in
+/// `tests::prop_blocked_trsm_*` assert bit-exact equality against the
+/// standard recursive path for all boundary lengths.
+///
+/// # Arguments
+///
+/// * `a` — Square `m × m` upper-triangular view.
+/// * `b` — `m × n` right-hand side; overwritten with the solution `X`.
+/// * `block_size` — Row-panel width. Pass [`TRSM_BLOCKED_PANEL_SIZE`] for
+///   the default.
+///
+/// # Panics
+///
+/// Same conditions as [`trsm_upper`]: non-square `a`, mismatched row
+/// counts, or a zero diagonal pivot.
+///
+/// # Complexity
+///
+/// `O(m² · n)` field operations — identical to [`trsm_upper`].
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::field::triangular::{trsm_upper_blocked, TRSM_BLOCKED_PANEL_SIZE};
+/// use gf2_core::gfp::Fp;
+///
+/// // A = [[1, 2], [0, 3]]  (upper triangular, GF(7))
+/// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
+/// a.set(0, 0, Fp::<7>::new(1));
+/// a.set(0, 1, Fp::<7>::new(2));
+/// a.set(1, 1, Fp::<7>::new(3));
+/// let mut b = FieldMatrix::<Fp<7>>::zeros(2, 1);
+/// b.set(0, 0, Fp::<7>::new(1));
+/// b.set(1, 0, Fp::<7>::new(3));
+/// trsm_upper_blocked(a.submat(.., ..), b.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+/// assert_eq!(b.get(1, 0), Fp::<7>::new(1));
+/// assert_eq!(b.get(0, 0), Fp::<7>::new(6));
+/// ```
+pub fn trsm_upper_blocked<F: FiniteField>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
+    assert_eq!(
+        a.rows(),
+        a.cols(),
+        "trsm_upper_blocked: A must be square ({}×{})",
+        a.rows(),
+        a.cols()
+    );
+    assert_eq!(
+        a.rows(),
+        b.rows(),
+        "trsm_upper_blocked: A.rows ({}) must equal B.rows ({})",
+        a.rows(),
+        b.rows()
+    );
+    trsm_upper_blocked_inner(a, b, block_size);
+}
+
+/// Solves the lower-triangular linear system `A · X = B` using a right-looking
+/// row-panel blocked algorithm (Higham § 14.1).
+///
+/// Mirror of [`trsm_upper_blocked`]: tiles `A` into row panels and processes
+/// them from the first panel to the last (forward substitution direction).
+/// Each diagonal block is solved with the existing recursive [`trsm_lower`],
+/// and the update of all rows below the panel is one large GEMM.
+///
+/// Bit-exact equivalent to [`trsm_lower`].
+///
+/// # Arguments
+///
+/// * `a` — Square `m × m` lower-triangular view.
+/// * `b` — `m × n` right-hand side; overwritten with the solution `X`.
+/// * `block_size` — Row-panel width. Pass [`TRSM_BLOCKED_PANEL_SIZE`].
+///
+/// # Panics
+///
+/// Same conditions as [`trsm_lower`].
+///
+/// # Complexity
+///
+/// `O(m² · n)` field operations.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_core::field::matrix::FieldMatrix;
+/// use gf2_core::field::triangular::{trsm_lower_blocked, TRSM_BLOCKED_PANEL_SIZE};
+/// use gf2_core::gfp::Fp;
+///
+/// // A = [[1, 0], [2, 3]]  (lower triangular, GF(7))
+/// let mut a = FieldMatrix::<Fp<7>>::zeros(2, 2);
+/// a.set(0, 0, Fp::<7>::new(1));
+/// a.set(1, 0, Fp::<7>::new(2));
+/// a.set(1, 1, Fp::<7>::new(3));
+/// let mut b = FieldMatrix::<Fp<7>>::zeros(2, 1);
+/// b.set(0, 0, Fp::<7>::new(1));
+/// b.set(1, 0, Fp::<7>::new(3));
+/// trsm_lower_blocked(a.submat(.., ..), b.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+/// assert_eq!(b.get(0, 0), Fp::<7>::new(1));
+/// assert_eq!(b.get(1, 0), Fp::<7>::new(5));
+/// ```
+pub fn trsm_lower_blocked<F: FiniteField>(
+    a: MatView<'_, F>,
+    b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
+    assert_eq!(
+        a.rows(),
+        a.cols(),
+        "trsm_lower_blocked: A must be square ({}×{})",
+        a.rows(),
+        a.cols()
+    );
+    assert_eq!(
+        a.rows(),
+        b.rows(),
+        "trsm_lower_blocked: A.rows ({}) must equal B.rows ({})",
+        a.rows(),
+        b.rows()
+    );
+    trsm_lower_blocked_inner(a, b, block_size);
 }
 
 /// Multiplies `B ← A · B` in place for upper-triangular `A`.
@@ -777,6 +956,128 @@ fn trsm_lower_base<F: FiniteField>(a: &MatView<'_, F>, b: &mut MatViewMut<'_, F>
                 b.set(k, j, v);
             }
         }
+    }
+}
+
+// ─── trsm_upper_blocked ──────────────────────────────────────────────────────
+
+/// Right-looking row-panel blocked upper triangular solve (Higham § 14.1).
+///
+/// Processes panels of `a` from the last to the first. For each panel the
+/// diagonal block is solved with [`trsm_upper_inner`], then the rows above
+/// are updated via a single [`gemm_axpy_into_view`] whose row dimension grows
+/// with each processed panel, allowing the whole-GEMM SIMD fast path to
+/// trigger even when `b` has only one column.
+fn trsm_upper_blocked_inner<F: FiniteField>(
+    a: MatView<'_, F>,
+    mut b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
+    let m = a.rows();
+    let n = b.cols();
+    if m == 0 || n == 0 {
+        return;
+    }
+    // Fall back to the standard recursive solve when blocking offers no benefit.
+    if block_size == 0 || m <= block_size {
+        trsm_upper_inner(a, b);
+        return;
+    }
+    let bs = block_size;
+    let num_blocks = m.div_ceil(bs);
+    let one = a.get(0, 0).one_like();
+    let neg_one = -one.clone();
+    // Process row panels from the last to the first (back-substitution order).
+    for k in (0..num_blocks).rev() {
+        let row_start = k * bs;
+        let row_end = m.min((k + 1) * bs);
+        let bs_k = row_end - row_start; // actual panel height (may be < bs for last panel)
+                                        // Split B at row_start: b_top covers rows [0..row_start],
+                                        // b_bot covers rows [row_start..m].
+                                        // Both are derived from a reborrow so the loop can proceed to the
+                                        // next iteration after this scope ends.
+        let (mut b_top, mut b_bot) = b.reborrow().split_rows_mut(row_start);
+        // Step 1 — solve the diagonal block in b_bot's first bs_k rows.
+        // A[row_start..row_end, row_start..row_end] · X = b_bot[0..bs_k, :].
+        trsm_upper_inner(
+            a.submat(row_start..row_end, row_start..row_end),
+            b_bot.submat_mut(0..bs_k, ..),
+        );
+        // Step 2 — update rows above: B_top -= A_off · X_panel.
+        // A_off = A[0..row_start, row_start..row_end],  (row_start × bs_k)
+        // X_panel = b_bot[0..bs_k, :]                   (bs_k × n, just solved)
+        // GEMM shape: row_start × bs_k × n.  At k=3, bs=64, n=1 this is
+        // 192 × 64 × 1 = 12288 ≥ GEMM_AXPY_FAST_PATH_THRESHOLD = 4096.
+        if row_start > 0 {
+            let a_off = a.submat(0..row_start, row_start..row_end);
+            let x_panel = b_bot.submat(0..bs_k, ..);
+            gemm_axpy_into_view(
+                neg_one.clone(),
+                &a_off,
+                &x_panel,
+                one.clone(),
+                b_top.reborrow(),
+            );
+        }
+        // b_top and b_bot are dropped here; b is available for the next iteration.
+    }
+}
+
+// ─── trsm_lower_blocked ──────────────────────────────────────────────────────
+
+/// Right-looking row-panel blocked lower triangular solve (Higham § 14.1).
+///
+/// Processes panels of `a` from the first to the last. For each panel the
+/// diagonal block is solved with [`trsm_lower_inner`], then the rows below
+/// are updated via a single [`gemm_axpy_into_view`].
+fn trsm_lower_blocked_inner<F: FiniteField>(
+    a: MatView<'_, F>,
+    mut b: MatViewMut<'_, F>,
+    block_size: usize,
+) {
+    let m = a.rows();
+    let n = b.cols();
+    if m == 0 || n == 0 {
+        return;
+    }
+    // Fall back to the standard recursive solve when blocking offers no benefit.
+    if block_size == 0 || m <= block_size {
+        trsm_lower_inner(a, b);
+        return;
+    }
+    let bs = block_size;
+    let num_blocks = m.div_ceil(bs);
+    let one = a.get(0, 0).one_like();
+    let neg_one = -one.clone();
+    // Process row panels from the first to the last (forward substitution order).
+    for k in 0..num_blocks {
+        let row_start = k * bs;
+        let row_end = m.min((k + 1) * bs);
+        // Split B at row_end: b_top covers rows [0..row_end] (includes the
+        // current panel), b_bot covers rows [row_end..m].
+        let (mut b_top, mut b_bot) = b.reborrow().split_rows_mut(row_end);
+        // Step 1 — solve the diagonal block: the current panel within b_top.
+        // A[row_start..row_end, row_start..row_end] · X = b_top[row_start..row_end, :].
+        trsm_lower_inner(
+            a.submat(row_start..row_end, row_start..row_end),
+            b_top.submat_mut(row_start..row_end, ..),
+        );
+        // Step 2 — update rows below: B_bot -= A_off · X_panel.
+        // A_off = A[row_end..m, row_start..row_end]
+        // X_panel = b_top[row_start..row_end, :]
+        // GEMM shape: (m-row_end) × (row_end-row_start) × n.
+        if row_end < m {
+            let a_off = a.submat(row_end..m, row_start..row_end);
+            let x_panel = b_top.submat(row_start..row_end, ..);
+            gemm_axpy_into_view(
+                neg_one.clone(),
+                &a_off,
+                &x_panel,
+                one.clone(),
+                b_bot.reborrow(),
+            );
+        }
+        // b_top and b_bot are dropped here; b is available for the next iteration.
     }
 }
 
@@ -1934,6 +2235,261 @@ mod tests {
             let mut got = l.clone();
             trtrm(got.submat_mut(.., ..), u.submat(.., ..));
             prop_assert_eq!(got, expected);
+        }
+    }
+
+    // ─── Blocked TRSM correctness — boundary-length sweep ────────────────
+    //
+    // For each prime we exhaust all square-matrix sizes from
+    // TRSM_BOUNDARY_LENS (0-size excluded — triangular solve is undefined
+    // on a 0×0 system).  For each `(m, n_rhs)` pair we compare the
+    // blocked variant against the scalar recursive oracle bit-exact.
+    // The seed is varied over 8 proptest cases so each boundary pair is
+    // exercised against 8 different random matrices.
+
+    const TRSM_BOUNDARY_LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(8))]
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<7>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp7(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<7>(m, mseed);
+                    let b = random_fp::<7>(m, n_rhs, mseed.wrapping_add(0xB1));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<7> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<7>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp7(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<7>(m, mseed);
+                    let b = random_fp::<7>(m, n_rhs, mseed.wrapping_add(0xB2));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<7> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<31>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp31(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<31>(m, mseed);
+                    let b = random_fp::<31>(m, n_rhs, mseed.wrapping_add(0xB3));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<31> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<31>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp31(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<31>(m, mseed);
+                    let b = random_fp::<31>(m, n_rhs, mseed.wrapping_add(0xB4));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<31> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<127>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp127(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<127>(m, mseed);
+                    let b = random_fp::<127>(m, n_rhs, mseed.wrapping_add(0xB5));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<127> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<127>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp127(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<127>(m, mseed);
+                    let b = random_fp::<127>(m, n_rhs, mseed.wrapping_add(0xB6));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<127> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<241>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp241(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<241>(m, mseed);
+                    let b = random_fp::<241>(m, n_rhs, mseed.wrapping_add(0xB7));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<241> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<241>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp241(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<241>(m, mseed);
+                    let b = random_fp::<241>(m, n_rhs, mseed.wrapping_add(0xB8));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<241> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<251>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp251(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<251>(m, mseed);
+                    let b = random_fp::<251>(m, n_rhs, mseed.wrapping_add(0xB9));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<251> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<251>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp251(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<251>(m, mseed);
+                    let b = random_fp::<251>(m, n_rhs, mseed.wrapping_add(0xBA));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<251> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked upper-triangular solve vs scalar oracle — Fp<65521>.
+        #[test]
+        fn prop_blocked_trsm_upper_boundary_sweep_fp65521(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_upper_fp::<65521>(m, mseed);
+                    let b = random_fp::<65521>(m, n_rhs, mseed.wrapping_add(0xBB));
+                    let mut x_scalar = b.clone();
+                    trsm_upper(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_upper_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "upper Fp<65521> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
+        }
+
+        /// Blocked lower-triangular solve vs scalar oracle — Fp<65521>.
+        #[test]
+        fn prop_blocked_trsm_lower_boundary_sweep_fp65521(seed in 0u64..1_000_000) {
+            for &m in TRSM_BOUNDARY_LENS {
+                for &n_rhs in TRSM_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n_rhs as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_lower_fp::<65521>(m, mseed);
+                    let b = random_fp::<65521>(m, n_rhs, mseed.wrapping_add(0xBC));
+                    let mut x_scalar = b.clone();
+                    trsm_lower(a.submat(.., ..), x_scalar.submat_mut(.., ..));
+                    let mut x_blocked = b.clone();
+                    trsm_lower_blocked(a.submat(.., ..), x_blocked.submat_mut(.., ..), TRSM_BLOCKED_PANEL_SIZE);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "lower Fp<65521> mismatch m={} n_rhs={}", m, n_rhs);
+                }
+            }
         }
     }
 
