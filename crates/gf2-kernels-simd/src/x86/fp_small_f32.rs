@@ -94,9 +94,13 @@ const K_CHUNK_CAP: usize = 1024;
 /// strictly faster.
 #[inline]
 fn n_c_panels_outer(n_panels: usize, k: usize) -> usize {
-    // 24 MB out of Zen 3's 32 MB CCX-shared L3 — leaves ~8 MB headroom
-    // for the A-pack + scratch + criterion harness footprint.
-    const L3_BUDGET_BYTES: usize = 24 * 1024 * 1024;
+    // 16 MB — half of Zen 3's 32 MB CCX-shared L3. Empirical sweep
+    // at n=4096 (74ba1cdc R1, 2026-05-26): 24 MB delivers 99.3 Gop/s,
+    // 16 MB delivers 108.6 Gop/s (+9.4%), 8 MB delivers 108.0 Gop/s
+    // (within noise of 16 MB), 4 MB regresses to 106.6 Gop/s. The
+    // sweet spot is 8-16 MB; pick 16 MB as the conservative defaults
+    // (more headroom for criterion / shared L3 contention).
+    const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k.saturating_mul(N_R).saturating_mul(4);
     if panel_bytes == 0 {
         return n_panels.max(1);
