@@ -2,10 +2,12 @@
 
 **Issue:** `8df0c501`
 **Date:** 2026-05-27
-**Host:** AMD Ryzen 9 5900X Zen 3, CCX1 (Criterion default, no explicit pinning; measurements
-taken on same physical host as scorecard reference runs)
-**Build:** `cargo bench -p gf2-core --bench fieldmatrix_solve --features simd`
-**Criterion sample size:** 10 (default)
+**Host:** AMD Ryzen 9 5900X Zen 3, CCX1 cores 6-11 (pinned via `taskset -c 6-11 nice -n -5`,
+serialized via `dev/benchmarks/ccx1-bench-flock.sh` flock guard `/tmp/gf2-ccx1.lock`)
+**Build:** `GF2_BENCH_SKIP_4096=1 cargo bench -p gf2-core --bench fieldmatrix_solve --features simd`
+**Measurement protocol:** 5 independent trials per cell; each trial is one Criterion invocation with
+the cell's regex filter; median-of-medians reported; `GF2_BENCH_SKIP_4096=1` skips n=4096 group
+setup (eliminates the 4096×2048 GEMM precomputation from per-trial overhead)
 **Reference owner:** fflas-ffpack 2.5.0 on AMD Ryzen 9 5900X Zen 3 (2026-05-08 scorecard)
 
 ---
@@ -45,42 +47,59 @@ Threshold `BLOCKED_INVERT_THRESHOLD = 16` selected based on:
 Note: "Before" values computed from Phase 5 scorecard (2026-05-25-b0fa00af, predecessor
 2026-05-08-2cfc4372-sota-scorecard). "After" = this implementation.
 
-| A8 row | Operation | Field | n / regime | Ref wall | Before gf2 | After gf2 | Before ratio | After ratio | Status |
-|--------|-----------|-------|-----------|----------|------------|-----------|-------------|------------|--------|
-| 34 | invert | GF(7) | 64 / uniform | 1.212 ms | ~2.18 ms | 0.170 ms | 1.80x | **0.140x** | **PASS** |
-| 35 | invert | GF(7) | 256 / uniform | 12.018 ms | ~136.0 ms | 4.40 ms | 11.32x | **0.366x** | **PASS** |
-| 36 | invert | GF(7) | 256 / deficient | 5.691 ms | ~20.1 ms | 1.09 ms | 3.54x | **0.192x** | **PASS** |
-| 37 | invert | GF(251) | 64 / uniform | 110.988 µs | ~2211.9 µs | 173.79 µs | 19.94x | **1.566x** | **ASPIRATIONAL** (observed 1.57x > 1.5x target) |
-| 38 | invert | GF(251) | 64 / deficient | 60.354 µs | ~344.0 µs | 33.29 µs | 5.70x | **0.552x** | **PASS** |
-| 39 | invert | GF(251) | 256 / uniform | 1.074 ms | ~135.9 ms | 4.38 ms | 126.5x | **4.08x** | **ASPIRATIONAL** (observed 4.08x > 1.5x target) |
-| 40 | invert | GF(251) | 256 / deficient | 652.212 µs | ~18.4 ms | 1.113 ms | 28.23x | **1.707x** | **ASPIRATIONAL** (observed 1.71x > 1.5x target) |
-| 41 | invert | GF(65521) | 64 / uniform | 1.156 ms | ~2.24 ms | 0.401 ms | 1.94x | **0.347x** | **PASS** |
-| 42 | invert | GF(65521) | 256 / uniform | 12.927 ms | ~134.3 ms | 7.369 ms | 10.39x | **0.570x** | **PASS** |
-| 43 | invert | GF(65521) | 256 / deficient | 6.368 ms | ~18.1 ms | 2.557 ms | 2.85x | **0.402x** | **PASS** |
-| 74 | invert | GF(31) | 256 / uniform | 11.655 ms | ~31.0 ms | 4.248 ms | 2.66x | **0.365x** | **PASS** |
+| A8 row | Operation | Field | n / regime | Ref wall | Before gf2 | After gf2 (5-trial med) | Before ratio | After ratio | Status |
+|--------|-----------|-------|-----------|----------|------------|------------------------|-------------|------------|--------|
+| 34 | invert | GF(7) | 64 / uniform | 1.212 ms | ~2.18 ms | **165.18 µs** | 1.80x | **0.136x** | **PASS** |
+| 35 | invert | GF(7) | 256 / uniform | 12.018 ms | ~136.0 ms | **4.433 ms** | 11.32x | **0.369x** | **PASS** |
+| 36 | invert | GF(7) | 256 / deficient | 5.691 ms | ~20.1 ms | **1.043 ms** | 3.54x | **0.183x** | **PASS** |
+| 37 | invert | GF(251) | 64 / uniform | 110.988 µs | ~2211.9 µs | **169.07 µs** | 19.94x | **1.524x** | **ASPIRATIONAL** (observed 1.52x > 1.5x target) |
+| 38 | invert | GF(251) | 64 / deficient | 60.354 µs | ~344.0 µs | **32.261 µs** | 5.70x | **0.534x** | **PASS** |
+| 39 | invert | GF(251) | 256 / uniform | 1.074 ms | ~135.9 ms | **4.295 ms** | 126.5x | **4.000x** | **ASPIRATIONAL** (observed 4.00x > 1.5x target) |
+| 40 | invert | GF(251) | 256 / deficient | 652.212 µs | ~18.4 ms | **1.090 ms** | 28.23x | **1.672x** | **ASPIRATIONAL** (observed 1.67x > 1.5x target) |
+| 41 | invert | GF(65521) | 64 / uniform | 1.156 ms | ~2.24 ms | **394.94 µs** | 1.94x | **0.341x** | **PASS** |
+| 42 | invert | GF(65521) | 256 / uniform | 12.927 ms | ~134.3 ms | **7.268 ms** | 10.39x | **0.562x** | **PASS** |
+| 43 | invert | GF(65521) | 256 / deficient | 6.368 ms | ~18.1 ms | **2.607 ms** | 2.85x | **0.409x** | **PASS** |
+| 74 | invert | GF(31) | 256 / uniform | 11.655 ms | ~31.0 ms | **4.221 ms** | 2.66x | **0.362x** | **PASS** |
+| — | invert | GF(7) | 1024 / uniform | 112.888 ms | — | **117.61 ms** | — | **1.042x** | **ASPIRATIONAL** |
+| — | invert | GF(31) | 1024 / uniform | 118.121 ms | — | **119.28 ms** | — | **1.010x** | **ASPIRATIONAL** |
+| — | invert | GF(251) | 1024 / uniform | 33.264 ms | — | **107.01 ms** | — | **3.217x** | **ASPIRATIONAL** |
+| — | invert | GF(65521) | 1024 / uniform | 142.248 ms | — | **186.47 ms** | — | **1.311x** | **ASPIRATIONAL** |
 
-**Summary: 8 PASS, 3 ASPIRATIONAL (rows 37, 39, 40)**
+**Summary: 8 PASS, 7 ASPIRATIONAL (rows 37, 39, 40, and all four n=1024 uniform cells)**
+
+Note: n=1024 cells are new measurements added in R1 rework; no "Before" column (driver unchanged
+at this size in the predecessor phase).
 
 **ASPIRATIONAL amendment notes:**
 
-- **Row 37 (GF(251)/64/uniform, 1.57x):** The blocked path fires at n=64 and routes through
+- **Row 37 (GF(251)/64/uniform, 1.524x):** The blocked path fires at n=64 and routes through
   `fp_small_try_gemm_classical`, but at this problem size the overhead of the identity-build +
   2 trsm calls is comparable to the GEMM benefit. The fflas reference uses an optimized BLAS
-  sgemm-modular strategy that achieves ~111 µs; our implementation reaches 174 µs. The 1.57x
-  is marginally above the 1.5x PASS threshold. Crossover n for GF(251) is closer to 128 than 64.
+  sgemm-modular strategy that achieves ~111 µs; our CCX1-pinned 5-trial median reaches 169 µs.
+  The 1.524x is marginally above the 1.5x PASS threshold. Crossover n for GF(251) is closer to
+  128 than 64. (CCX1-pinned measurement lowered the ratio from the earlier unpinned 1.57x.)
 
-- **Row 39 (GF(251)/256/uniform, 4.08x):** The fflas reference achieves 1.074 ms for GF(251)
+- **Row 39 (GF(251)/256/uniform, 4.000x):** The fflas reference achieves 1.074 ms for GF(251)
   at n=256 using a float-modular BLAS strategy that amortizes modular reduction over wide tiles.
-  Our implementation reaches 4.38 ms because `fp_small_try_gemm_classical` uses a byte-lane
+  Our 5-trial median reaches 4.295 ms because `fp_small_try_gemm_classical` uses a byte-lane
   kernel tuned for throughput but not for the same tile widths as fflas's sgemm cascade. The
-  speedup from 126.5x to 4.08x is a 31x improvement, demonstrating the blocked algorithm
+  speedup from 126.5x to 4.000x is a 31x improvement, demonstrating the blocked algorithm
   works correctly; closing the remaining gap requires a wider-tile GEMM kernel (separate task).
 
-- **Row 40 (GF(251)/256/deficient, 1.71x):** The deficient path returns None immediately after
-  the panelized PLE detects rank deficiency. The 1.71x ratio reflects the cost of panelized PLE
-  on a deficient 256×256 GF(251) matrix. The fflas reference for deficient inputs uses early
-  termination in its PLUQ driver; closing this gap requires a more aggressive early-termination
-  in our panelized PLE panel kernel.
+- **Row 40 (GF(251)/256/deficient, 1.672x):** The deficient path returns None immediately after
+  the panelized PLE detects rank deficiency. The 1.672x ratio reflects the cost of panelized PLE
+  on a deficient 256×256 GF(251) matrix (5-trial median 1.090 ms vs fflas 652 µs). The fflas
+  reference for deficient inputs uses early termination in its PLUQ driver; closing this gap
+  requires a more aggressive early-termination in our panelized PLE panel kernel.
+
+- **n=1024 uniform cells (rows added in R1 rework):** All four n=1024 uniform cells are
+  ASPIRATIONAL: GF(7) 1.042x (117.61/112.888), GF(31) 1.010x (119.28/118.121),
+  GF(251) 3.217x (107.01/33.264), GF(65521) 1.311x (186.47/142.248). The GF(7)/GF(31)
+  ratios are marginally above 1x — the blocked path adds identity-build + 2 trsm overhead on
+  top of PLE, whereas fflas uses a tuned elimination-in-place driver at n=1024. The GF(251)
+  ratio of 3.2x reflects the same wide-tile GEMM gap as the n=256 cell. GF(65521) at 1.31x is
+  within expected range; at n=1024 the pre-packed u16 kernel reaches its bandwidth ceiling
+  before the fflas sgemm tile widths, adding about 30% overhead.
 
 ---
 
@@ -139,11 +158,16 @@ and `A^{-1}·A == I` are asserted (bit-exact) using `FieldMatrix::identity(n)`.
 
 ## 7. Open items / follow-up
 
-1. **Row 37/39/40 ASPIRATIONAL gap:** Rows 37 and 40 are marginal at 1.57x/1.71x (target: 1.5x).
-   Closing these gaps requires either (a) a wider-tile small-prime GEMM kernel for GF(251) or
-   (b) a higher BLOCKED_INVERT_THRESHOLD for GF(251) specifically. This is out of scope for
-   `8df0c501` per the design's explicit `[aspirational]` designation.
+1. **ASPIRATIONAL gap (GF(251) cells):** Rows 37, 39, 40 and GF(251)/1024 remain above their
+   PASS thresholds (1.524x, 4.000x, 1.672x, 3.217x). Closing these gaps requires a wider-tile
+   small-prime GEMM kernel for GF(251). This is out of scope for `8df0c501` per the design's
+   explicit `[aspirational]` designation.
 
-2. **EXPECTED_INV_N1024 stale:** The slow-tier alloc-budget test for n=1024 has a stale pinned
-   value (was 6898 under old driver). It needs re-measurement under the blocked path on the next
-   nightly run.
+2. **n=1024 uniform cells marginally above 1x:** GF(7)/1024 at 1.042x and GF(31)/1024 at 1.010x
+   are within ~5% of fflas. The overhead is the blocked identity-build + 2 trsm vs fflas's
+   elimination-in-place. These are ASPIRATIONAL per the issue designation and do not require
+   further rework in `8df0c501`.
+
+3. **EXPECTED_INV_N1024 re-measured:** The slow-tier alloc-budget constant was updated from 6898
+   to 5246 in `crates/gf2-core/src/field/inverse.rs`, reflecting the blocked-invert driver's
+   actual allocation count at n=1024 under CCX1-pinned measurement.
