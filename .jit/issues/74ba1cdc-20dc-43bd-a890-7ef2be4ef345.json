@@ -20,6 +20,13 @@
       "label": "fgemm engineering wall-hit evidence (74ba1cdc)",
       "doc_type": "implementation",
       "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-26-74ba1cdc-fgemm-engineering.md",
+      "commit": null,
+      "label": "fgemm engineering R1 evidence (74ba1cdc)",
+      "doc_type": "implementation",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -30,5 +37,5 @@
     "ppc-kernel:C2"
   ],
   "created_at": "2026-05-25T19:57:40.482693112+00:00",
-  "updated_at": "2026-05-25T22:11:35.906488725+00:00"
+  "updated_at": "2026-05-26T11:00:34.835872914+00:00"
 }
