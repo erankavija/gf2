@@ -5363,3 +5363,4 @@
 {"type":"gate_failed","id":"e7fe67f7-1217-4926-b2de-9e1ae5a2c5b8","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T15:59:58.794801093Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"233bb20d-d375-4a65-90fc-239f26f4e60a","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T16:13:20.589692788Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"350d79f5-a0b6-4aac-b25a-e802075b6cec","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T16:20:18.793574597Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"a374d385-5495-495a-b933-58f764287834","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T17:11:21.161801767Z","gate_key":"code-review","updated_by":"auto:executor"}
