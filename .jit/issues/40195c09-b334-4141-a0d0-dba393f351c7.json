@@ -11,7 +11,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-26T04:20:46.871955545Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -28,5 +34,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T19:57:08.997296044+00:00",
-  "updated_at": "2026-05-25T22:08:08.288996725+00:00"
+  "updated_at": "2026-05-26T04:26:02.979423394+00:00"
 }

@@ -5331,3 +5331,4 @@
 {"type":"gate_removed","id":"137d1fd7-778e-4a85-9a4c-3d9abf38036b","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-25T21:55:50.512833935Z","gate_key":"clippy"}
 {"type":"gate_removed","id":"61c35410-7826-4647-b876-5f1bc7661800","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-25T21:55:50.512853165Z","gate_key":"tests"}
 {"type":"gate_removed","id":"c2eafb1f-3ddf-4084-87ff-8a8522de3f13","issue_id":"4cdaf1c5-0d93-4320-bc41-7485e18f94a3","timestamp":"2026-05-25T21:55:50.533416141Z","gate_key":"tests"}
+{"type":"gate_failed","id":"eb2fcffe-cf7e-4241-9d74-2c6f0bdc6a15","issue_id":"40195c09-b334-4141-a0d0-dba393f351c7","timestamp":"2026-05-26T04:26:02.979608634Z","gate_key":"code-review","updated_by":"auto:executor"}
