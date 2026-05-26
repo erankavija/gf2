@@ -2,7 +2,7 @@
   "id": "6823c8a0-ac0b-4b4d-9250-d59272e2f1b9",
   "title": "Implement panelized GF(p) PLE/LU — small-prime family (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements the panelized GF(p) PLE/LU kernel per the design in `2e8c5a29`.\n\nParent epic: `026fc832`. Predecessor: `2e8c5a29` (design).\n\n## Background\n\nImplements the design approved under `2e8c5a29`. Closes A8 rows 6-17, 71 (pluq cells over GF(7/251/65521) and GF(31)).\n\n## Success Criteria\n\n- [hard] Production code implementing the panelized PLE per the approved design at `dev/active/<2e8c5a29-...>-design.md`.\n- [hard] Bit-exact correctness vs the existing scalar PLE on a proptest sweep across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} plus rank-deficient cases. Uses `proptest!` macros.\n- [hard] 5-trial CCX1-pinned benchmarks on the 5900X reference host at n in {64, 256, 1024} for each of the 6 small primes, both uniform and rank-deficient regimes. Recorded as CSV + evidence doc.\n- [hard] Every A8 pluq cell (rows 6-17, 71) either PASSes (ratio ≤ 1.5× vs fflas) or carries an explicit user-approved [aspirational] amendment. Escalate cells that don't cross the threshold.\n- [hard] No regression on currently-PASSing GF(p) cells (delta ≤ 5%). \n- [hard] No `unsafe` outside `gf2-kernels-simd` / `gf2-kernels-hip`. `gf2-core` remains `#![deny(unsafe_code)]`.\n- [hard] Reuses the SSOT helpers named in the design (`barrett_reduce_lane32`, panel size constants).\n\n## Out of scope\n\n- Echelon/invert/solve implementations (sibling tasks; depend on this).\n- Mersenne31 PLE (not in scope of the design).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -24,5 +24,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:10:50.480675089+00:00",
-  "updated_at": "2026-05-25T19:57:57.328607382+00:00"
+  "updated_at": "2026-05-26T09:36:18.153930207+00:00"
 }
