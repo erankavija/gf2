@@ -7,7 +7,7 @@
 ## Current state
 
 - Epic: `026fc832` — state: `backlog` (assignee `agent:project-lead`)
-- Wave in progress: **wave 7a — 6823c8a0 R3 + 695350fd R1 surgical reworks dispatched (background, sonnet)**
+- Wave in progress: **wave 7a — 6823c8a0 R3 + 695350fd R1 sonnet reworks COMPLETED on worktree branches; lead merge + gate runs pending next session**
 - Children summary: 18 done, 2 in_progress (6823c8a0 awaiting R3 gate; 695350fd awaiting R1 gate), 4 backlog (869ce43b, 8df0c501, 6613abf4 — wave 7b; 98336ab4 — blocked on Phase 6e), 4 follow-up tasks filed (68db401b Phase 6d, 0749dbad Phase 6e — both ready/blocked)
 - Active claims: epic + b0fa00af + 98336ab4 + 6823c8a0 + 695350fd
 - Open escalations: **none unresolved**. Session 8/9/10 escalations all answered.
@@ -25,13 +25,13 @@ Massive multi-session arc closing wave 6.5 + wave 7a R0/R1 + filing 3 follow-up 
 - `6823c8a0` R0 (panelized PLE base case) — landed on main (commits `a238ef36..6607005d`). 10/22 cells PASS.
 - `6823c8a0` R1 (recursive PLUQ for GF(251)) — landed on main (`dbe33877..da092c66`). 4 more cells PASS (GF(251)/64 + GF(251)/1024 both regimes). GF(251)/n=256 SHORTFALL.
 - **User decision session 10**: amend GF(251)/n=256 `[aspirational]` at observed 2.35×/2.38×. GF(65521) cells deferred to `68db401b` (Phase 6d, ready). Issue description amended (commit `abc6550a`).
-- **R2 lead-direct (in progress this session)** — extended proptests to all 6 primes + fixed stale base-size comment (commit `fbe154fe`).
-- **R3 lead-direct (in progress this session)** — extended proptests to compare bit-exact vs scalar PLE oracle. Sonnet worker R3 dispatched in background.
+- **R2 lead-direct (this session)** — extended proptests to all 6 primes + fixed stale base-size comment (commit `fbe154fe`). FAILED code-review with new SC#2 strict-reading finding (proptests need bit-exact vs scalar oracle, not just `P·L·E == A` contract).
+- **R3 sonnet (this session, COMPLETED)** — added `pub(super) fn ple_scalar_oracle<F>` helper (calls `ple_in_place_window_no_panel` to bypass SIMD), updated all 12 proptest functions to assert bit-exact equality of `(rank, P, L, E)` between panelized and scalar paths. 12/12 PASS in ~20ms wall. Commit `d8a01b18` on branch `worktree-agent-6823c8a0-r3` (NOT yet merged to main).
 
 ### Wave 6.5 follow-up — Phase 6b in flight
 - `695350fd` R0 (fp_medium u16 BLIS) — landed +1.2% improvement (40.25 Gop/s, ratio 1.732). Worker's µop analysis: AVX2 u16 path is arithmetic-bound; closing requires f64 cascade (filed as Phase 6e `0749dbad`).
 - **User decision session 9**: amended SC#1 to defer GF(65521)/n=4096 to `0749dbad`. 98336ab4 re-wired: `98336ab4 → 0749dbad` (instead of `695350fd`). Issue description amended.
-- **R1 surgical rework (in progress this session)** — sonnet worker dispatched in background to re-bench n=64 cells + cite proptest coverage in evidence doc. Awaiting completion.
+- **R1 sonnet (this session, COMPLETED)** — re-benched n=64 cells for all 6 primes (5-trial CCX1-pinned). GF(7)/n=64 still -6.2% (confirmed: R0 32.18 vs R1 re-bench 32.17 — the elevated 74ba1cdc R1 baseline 34.31 came from a different host-load session); other n=64 cells within ±5%. Added missing GF(127)/n=64 + GF(241)/n=64 cells (first measurements). Added §6.3 "Correctness — proptest boundary-length coverage" citing the 12 proptest functions + 6 deterministic boundary tests + 252/2086/3896 test counts. Commit `7174a2ac` on branch `worktree-agent-695350fd-r1` (NOT yet merged to main).
 
 ### Follow-up tasks filed this multi-session arc (3 total, plus pre-existing 1)
 
@@ -50,10 +50,14 @@ Massive multi-session arc closing wave 6.5 + wave 7a R0/R1 + filing 3 follow-up 
 
 In order of priority:
 
-- [ ] **Wait for the 2 in-flight sonnet workers to complete**:
-  - `6823c8a0` R3 (scalar-oracle proptests) — worktree `agent-6823c8a0-r3` (background)
-  - `695350fd` R1 (re-bench n=64 + proptest citation) — worktree `agent-695350fd-r1` (background)
-- [ ] **Review + merge + close each.** Both should pass code-review on next attempt if the worker correctly addressed the surgical findings.
+- [ ] **Both sonnet workers COMPLETED — merge their worktree branches into main:**
+  - `6823c8a0` R3 worker branch `worktree-agent-6823c8a0-r3` at `d8a01b18` (scalar-oracle proptests). Standard rebase + ff-merge.
+  - `695350fd` R1 worker branch `worktree-agent-695350fd-r1` at `7174a2ac` (re-bench n=64 + §6.3 proptest citation).
+  - Both will likely have `jit doc add` write-through deltas on main's `.jit/issues/<id>.json` — restore main's working tree before ff-merge, then `jit doc add` from main to catch up (standard pattern).
+- [ ] **Re-run code-review gate on each.** Both should now PASS:
+  - 6823c8a0 R3 addresses SC#2 strict-reading (bit-exact vs scalar PLE oracle)
+  - 695350fd R1 addresses SC#2 n=64 sweep + SC#3 proptest citation
+- [ ] **GF(7)/n=64 -6.2% delta caveat**: Re-bench confirmed it's session noise on the UNMODIFIED `fp_small_f32` path (695350fd worker did not touch this code; R0 32.18 ≈ R1 re-bench 32.17). The elevated 74ba1cdc R1 baseline (34.31) was a different host-load session. If the reviewer flags this strict-literal-reading the next session may need to either: (a) re-bench from a 74ba1cdc-R1-matching host-load baseline; (b) escalate as bench-environment-noise on unmodified code; (c) amend SC#2 with explicit user-approved noise-band language. Recommend (b) first.
 - [ ] **Run `cargo-ci` + `doc-review` for both** after code-review PASS.
 - [ ] **Cleanup worktrees** (`git worktree remove ... --force && git branch -D ...`).
 - [ ] **Commit JIT state** for closures.
@@ -114,8 +118,8 @@ None unresolved. The session 8/9/10 escalations were all answered. The 2 in-flig
 
 ```
 /home/vkaskivuo/Projects/gf2                                     fb89b5bf [main]
-/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-6823c8a0-r3 (sonnet R3, scalar-oracle proptests; background)
-/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-695350fd-r1 (sonnet R1, re-bench n=64 + proptest citation; background)
+/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-6823c8a0-r3 (sonnet R3 COMPLETED at d8a01b18; lead merge pending)
+/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-695350fd-r1 (sonnet R1 COMPLETED at 7174a2ac; lead merge pending)
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-9480f8a6    (unrelated; preserved)
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-30e98ef1-d6 (unrelated; preserved)
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-98336ab4    (in_progress; preserved for eventual re-bench after Phase 6e)
