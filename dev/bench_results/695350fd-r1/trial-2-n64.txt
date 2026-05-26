@@ -1,0 +1,85 @@
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.05s
+     Running benches/fieldmatrix_gemm.rs (target/release/deps/fieldmatrix_gemm-a9afb5653f71c67b)
+Benchmarking gemm/Fp_7/Fp_7/64
+Benchmarking gemm/Fp_7/Fp_7/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_7/Fp_7/64: Collecting 10 samples in estimated 5.0008 s (307k iterations)
+Benchmarking gemm/Fp_7/Fp_7/64: Analyzing
+gemm/Fp_7/Fp_7/64       time:   [16.270 µs 16.291 µs 16.312 µs]
+                        thrpt:  [32.141 Gelem/s 32.182 Gelem/s 32.224 Gelem/s]
+                 change:
+                        time:   [-0.4894% -0.3283% -0.1424%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.1426% +0.3294% +0.4918%]
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+Benchmarking gemm/Fp_31/Fp_31/64
+Benchmarking gemm/Fp_31/Fp_31/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_31/Fp_31/64: Collecting 10 samples in estimated 5.0005 s (300k iterations)
+Benchmarking gemm/Fp_31/Fp_31/64: Analyzing
+gemm/Fp_31/Fp_31/64     time:   [16.665 µs 16.686 µs 16.739 µs]
+                        thrpt:  [31.321 Gelem/s 31.421 Gelem/s 31.461 Gelem/s]
+                 change:
+                        time:   [-0.9091% -0.6632% -0.3753%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.3767% +0.6676% +0.9175%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking gemm/Fp_127/Fp_127/64
+Benchmarking gemm/Fp_127/Fp_127/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_127/Fp_127/64: Collecting 10 samples in estimated 5.0003 s (311k iterations)
+Benchmarking gemm/Fp_127/Fp_127/64: Analyzing
+gemm/Fp_127/Fp_127/64   time:   [16.222 µs 16.720 µs 17.741 µs]
+                        thrpt:  [29.553 Gelem/s 31.357 Gelem/s 32.320 Gelem/s]
+                 change:
+                        time:   [-0.9378% +1.7365% +5.8664%] (p = 0.55 > 0.05)
+                        thrpt:  [-5.5413% -1.7068% +0.9467%]
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+Benchmarking gemm/Fp_241/Fp_241/64
+Benchmarking gemm/Fp_241/Fp_241/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_241/Fp_241/64: Collecting 10 samples in estimated 5.0002 s (299k iterations)
+Benchmarking gemm/Fp_241/Fp_241/64: Analyzing
+gemm/Fp_241/Fp_241/64   time:   [16.692 µs 16.737 µs 16.804 µs]
+                        thrpt:  [31.199 Gelem/s 31.325 Gelem/s 31.410 Gelem/s]
+                 change:
+                        time:   [-0.8613% -0.3459% +0.3024%] (p = 0.30 > 0.05)
+                        thrpt:  [-0.3015% +0.3471% +0.8687%]
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0007 s (300k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [16.685 µs 16.707 µs 16.721 µs]
+                        thrpt:  [31.356 Gelem/s 31.381 Gelem/s 31.422 Gelem/s]
+                 change:
+                        time:   [-0.1407% +0.0540% +0.2397%] (p = 0.60 > 0.05)
+                        thrpt:  [-0.2391% -0.0539% +0.1409%]
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+
+Benchmarking gemm/Fp_65521/Fp_65521/64
+Benchmarking gemm/Fp_65521/Fp_65521/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_65521/Fp_65521/64: Collecting 10 samples in estimated 5.0003 s (179k iterations)
+Benchmarking gemm/Fp_65521/Fp_65521/64: Analyzing
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.943 µs 27.953 µs 27.963 µs]
+                        thrpt:  [18.749 Gelem/s 18.756 Gelem/s 18.763 Gelem/s]
+                 change:
+                        time:   [-0.2819% -0.1562% -0.0199%] (p = 0.04 < 0.05)
+                        thrpt:  [+0.0199% +0.1565% +0.2827%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
