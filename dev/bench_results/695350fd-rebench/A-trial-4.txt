@@ -1,0 +1,32 @@
+gemm/Fp_7/Fp_7/64       time:   [15.175 µs 15.188 µs 15.200 µs]
+                        thrpt:  [34.492 Gelem/s 34.519 Gelem/s 34.549 Gelem/s]
+                 change:
+                        time:   [-0.3089% -0.2172% -0.1252%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.1253% +0.2177% +0.3098%]
+                        Change within noise threshold.
+
+gemm/Fp_31/Fp_31/64     time:   [16.027 µs 16.039 µs 16.052 µs]
+                        thrpt:  [32.661 Gelem/s 32.688 Gelem/s 32.712 Gelem/s]
+                 change:
+                        time:   [-0.9119% -0.4526% -0.1253%] (p = 0.03 < 0.05)
+                        thrpt:  [+0.1255% +0.4546% +0.9203%]
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+gemm/Fp_251/Fp_251/64   time:   [15.894 µs 15.913 µs 15.934 µs]
+                        thrpt:  [32.904 Gelem/s 32.947 Gelem/s 32.987 Gelem/s]
+                 change:
+                        time:   [-1.0844% -0.6875% -0.2912%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.2921% +0.6923% +1.0963%]
+                        Change within noise threshold.
+
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.381 µs 27.400 µs 27.414 µs]
+                        thrpt:  [19.125 Gelem/s 19.135 Gelem/s 19.148 Gelem/s]
+                 change:
+                        time:   [-1.4981% -1.0474% -0.6644%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6688% +1.0585% +1.5209%]
+                        Change within noise threshold.
+

@@ -1,0 +1,34 @@
+gemm/Fp_7/Fp_7/64       time:   [15.276 µs 15.290 µs 15.304 µs]
+                        thrpt:  [34.258 Gelem/s 34.290 Gelem/s 34.321 Gelem/s]
+                 change:
+                        time:   [-0.5289% -0.3397% -0.1663%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.1666% +0.3409% +0.5317%]
+                        Change within noise threshold.
+
+gemm/Fp_31/Fp_31/64     time:   [16.067 µs 16.105 µs 16.128 µs]
+                        thrpt:  [32.508 Gelem/s 32.555 Gelem/s 32.630 Gelem/s]
+                 change:
+                        time:   [-0.1736% +0.0276% +0.1991%] (p = 0.79 > 0.05)
+                        thrpt:  [-0.1987% -0.0276% +0.1739%]
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low severe
+  1 (10.00%) high mild
+
+gemm/Fp_251/Fp_251/64   time:   [15.885 µs 15.920 µs 15.955 µs]
+                        thrpt:  [32.860 Gelem/s 32.933 Gelem/s 33.004 Gelem/s]
+                 change:
+                        time:   [+0.0553% +0.2667% +0.4701%] (p = 0.03 < 0.05)
+                        thrpt:  [-0.4679% -0.2660% -0.0552%]
+                        Change within noise threshold.
+
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.472 µs 27.503 µs 27.528 µs]
+                        thrpt:  [19.046 Gelem/s 19.063 Gelem/s 19.085 Gelem/s]
+                 change:
+                        time:   [+0.0822% +0.2695% +0.4659%] (p = 0.02 < 0.05)
+                        thrpt:  [-0.4637% -0.2688% -0.0821%]
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) low mild
+
