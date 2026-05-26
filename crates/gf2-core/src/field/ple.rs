@@ -124,7 +124,7 @@
 //!   returns `(P, L, U)` where `U = E`.
 
 use crate::field::matrix::{gemm_axpy_into_view, FieldMatrix, MatView, MatViewMut};
-use crate::field::triangular::trsm_lower;
+use crate::field::triangular::{trsm_lower, trsm_upper};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 
@@ -1361,6 +1361,14 @@ impl<F: FiniteField> FieldMatrix<F> {
             }
         }
 
+        // Fast path: blocked back-substitution via gemm_axpy_into_view (Stage 3a)
+        // and trsm_upper (Stage 3b). Falls back to the scalar loop when the
+        // blocked path is unavailable (e.g., the inner dims are zero).
+        if try_blocked_back_sub(&mut x, &mut e, &pivots, m, n) {
+            return (x, e);
+        }
+
+        // Scalar fallback (unchanged from original implementation).
         for &(pi, pc) in &pivots {
             // Scale row `pi` so the pivot is 1.
             let pivot_val = e.get(pi, pc);
@@ -1632,6 +1640,227 @@ fn pad_l_to_full<F: FiniteField>(
         full.set(i, i, one.clone());
     }
     full
+}
+
+// ─── Blocked back-substitution (Stage 3a + 3b) ───────────────────────────────
+
+/// Blocked back-substitution for [`FieldMatrix::rref`] (design `24a93e4e`).
+///
+/// Given the echelon form `(x, e)` from [`FieldMatrix::row_echelon`] and the
+/// list of `(pivot_row, pivot_col)` pairs, performs the back-substitution in
+/// three stages:
+///
+/// 1. **Scale** each pivot row so that `e[pi, pc] = 1` (and scale the
+///    corresponding rows of `x`).
+///
+/// 2. **Stage 3b — Pivot rows TRSM.** Extract `E_piv_piv` (the `r×r`
+///    upper unit-triangular pivot-column block) and apply `trsm_upper` to
+///    both `E[pivot rows, free cols]` and `X[pivot rows, *]` to eliminate
+///    the off-diagonal coupling among pivot rows.
+///
+/// 3. **Stage 3a — Non-pivot rows GEMM.** Using the post-3b pivot-row blocks,
+///    eliminate the pivot columns from the non-pivot rows:
+///    - `E[non-pivot rows, free cols] -= E[non-pivot rows, pivot cols] · E[pivot rows, free cols]`
+///    - `X[non-pivot rows, *] -= E[non-pivot rows, pivot cols] · X[pivot rows, *]`
+///
+/// Finally, zero the pivot columns of `e` (set to identity columns).
+///
+/// Returns `true` always (no fallback needed); `r == 0` is handled as
+/// an immediate no-op returning `true`.
+pub(crate) fn try_blocked_back_sub<F: FiniteField>(
+    x: &mut FieldMatrix<F>,
+    e: &mut FieldMatrix<F>,
+    pivots: &[(usize, usize)],
+    m: usize,
+    n: usize,
+) -> bool {
+    let r = pivots.len();
+    if r == 0 {
+        // No pivots — e is all-zero, x is already the identity. Done.
+        return true;
+    }
+
+    let zero = e.get(0, 0).zero_like();
+    let one = zero.one_like();
+    let neg_one = zero.clone() - one.clone();
+
+    // Collect pivot row / column indices in declaration order.
+    let pivot_rows: Vec<usize> = pivots.iter().map(|&(pi, _)| pi).collect();
+    let pivot_cols: Vec<usize> = pivots.iter().map(|&(_, pc)| pc).collect();
+
+    // Non-pivot row and free (non-pivot) column index sets.
+    let is_pivot_row = {
+        let mut v = vec![false; m];
+        for &pi in &pivot_rows {
+            v[pi] = true;
+        }
+        v
+    };
+    let is_pivot_col = {
+        let mut v = vec![false; n];
+        for &pc in &pivot_cols {
+            v[pc] = true;
+        }
+        v
+    };
+    let non_pivot_rows: Vec<usize> = (0..m).filter(|&i| !is_pivot_row[i]).collect();
+    let free_cols: Vec<usize> = (0..n).filter(|&j| !is_pivot_col[j]).collect();
+    let n_nonpiv = non_pivot_rows.len();
+    let n_free = free_cols.len();
+
+    // ── 1. Scale pivot rows so that e[pi, pc] = 1 ────────────────────────────
+    for &(pi, pc) in pivots {
+        let pivot_val = e.get(pi, pc);
+        if pivot_val != one {
+            let inv = pivot_val.inv().unwrap_or_else(|| {
+                panic!("rref blocked: pivot at ({}, {}) not invertible", pi, pc)
+            });
+            for j in 0..n {
+                let v = e.get(pi, j) * inv.clone();
+                e.set(pi, j, v);
+            }
+            for j in 0..m {
+                let v = x.get(pi, j) * inv.clone();
+                x.set(pi, j, v);
+            }
+        }
+    }
+
+    // ── 2. Stage 3b — Pivot rows TRSM ────────────────────────────────────────
+    //
+    // After scaling, E_piv_piv (r×r) is upper unit triangular.  We apply
+    // trsm_upper to BOTH the free-col block of e AND to x[pivot rows, *].
+    // Key: E_piv_piv is the `a` arg to trsm_upper (not `b`) so it is NOT
+    // modified by trsm_upper.  We extract it once and reuse for both calls.
+    let e_piv_piv = {
+        let mut m_pp = FieldMatrix::new(r, r, zero.clone());
+        for (ki, &pi) in pivot_rows.iter().enumerate() {
+            for (kj, &pc) in pivot_cols.iter().enumerate() {
+                m_pp.set(ki, kj, e.get(pi, pc));
+            }
+        }
+        m_pp
+    };
+
+    // 2a. trsm_upper on E[pivot rows, free cols].
+    if n_free > 0 {
+        let mut e_piv_free = FieldMatrix::new(r, n_free, zero.clone());
+        for (ki, &pi) in pivot_rows.iter().enumerate() {
+            for (fj, &fc) in free_cols.iter().enumerate() {
+                e_piv_free.set(ki, fj, e.get(pi, fc));
+            }
+        }
+        trsm_upper(e_piv_piv.submat(.., ..), e_piv_free.submat_mut(.., ..));
+        for (ki, &pi) in pivot_rows.iter().enumerate() {
+            for (fj, &fc) in free_cols.iter().enumerate() {
+                e.set(pi, fc, e_piv_free.get(ki, fj));
+            }
+        }
+    }
+
+    // 2b. trsm_upper on X[pivot rows, *].
+    // (r == 1 case: unit triangular 1×1 with diagonal 1 — trsm is identity, skip.)
+    if r > 1 {
+        let mut x_piv = FieldMatrix::new(r, m, zero.clone());
+        for (ki, &pi) in pivot_rows.iter().enumerate() {
+            for j in 0..m {
+                x_piv.set(ki, j, x.get(pi, j));
+            }
+        }
+        trsm_upper(e_piv_piv.submat(.., ..), x_piv.submat_mut(.., ..));
+        for (ki, &pi) in pivot_rows.iter().enumerate() {
+            for j in 0..m {
+                x.set(pi, j, x_piv.get(ki, j));
+            }
+        }
+    }
+
+    // ── 3. Stage 3a — Non-pivot rows GEMM ────────────────────────────────────
+    //
+    // Uses the post-stage-3b pivot-row values.
+    // E[non-pivot rows, free cols] -= E[non-pivot rows, pivot cols] · E[pivot rows, free cols]
+    // X[non-pivot rows, *]         -= E[non-pivot rows, pivot cols] · X[pivot rows, *]
+    if n_nonpiv > 0 {
+        // E_nonpiv_piv ((m-r)×r): pivot-column values for non-pivot rows.
+        let e_nonpiv_piv = {
+            let mut m_np = FieldMatrix::new(n_nonpiv, r, zero.clone());
+            for (ni, &npi) in non_pivot_rows.iter().enumerate() {
+                for (kj, &pc) in pivot_cols.iter().enumerate() {
+                    m_np.set(ni, kj, e.get(npi, pc));
+                }
+            }
+            m_np
+        };
+
+        // 3a-e: update E[non-pivot rows, free cols].
+        if n_free > 0 {
+            let mut e_piv_free_post = FieldMatrix::new(r, n_free, zero.clone());
+            for (ki, &pi) in pivot_rows.iter().enumerate() {
+                for (fj, &fc) in free_cols.iter().enumerate() {
+                    e_piv_free_post.set(ki, fj, e.get(pi, fc));
+                }
+            }
+            let mut e_nonpiv_free = FieldMatrix::new(n_nonpiv, n_free, zero.clone());
+            for (ni, &npi) in non_pivot_rows.iter().enumerate() {
+                for (fj, &fc) in free_cols.iter().enumerate() {
+                    e_nonpiv_free.set(ni, fj, e.get(npi, fc));
+                }
+            }
+            gemm_axpy_into_view(
+                neg_one.clone(),
+                &e_nonpiv_piv.submat(.., ..),
+                &e_piv_free_post.submat(.., ..),
+                one.clone(),
+                e_nonpiv_free.submat_mut(.., ..),
+            );
+            for (ni, &npi) in non_pivot_rows.iter().enumerate() {
+                for (fj, &fc) in free_cols.iter().enumerate() {
+                    e.set(npi, fc, e_nonpiv_free.get(ni, fj));
+                }
+            }
+        }
+
+        // 3a-x: update X[non-pivot rows, *].
+        {
+            // X_piv (r×m) — post stage-3b, already updated in x.
+            let mut x_piv_post = FieldMatrix::new(r, m, zero.clone());
+            for (ki, &pi) in pivot_rows.iter().enumerate() {
+                for j in 0..m {
+                    x_piv_post.set(ki, j, x.get(pi, j));
+                }
+            }
+            let mut x_nonpiv = FieldMatrix::new(n_nonpiv, m, zero.clone());
+            for (ni, &npi) in non_pivot_rows.iter().enumerate() {
+                for j in 0..m {
+                    x_nonpiv.set(ni, j, x.get(npi, j));
+                }
+            }
+            gemm_axpy_into_view(
+                neg_one,
+                &e_nonpiv_piv.submat(.., ..),
+                &x_piv_post.submat(.., ..),
+                one.clone(),
+                x_nonpiv.submat_mut(.., ..),
+            );
+            for (ni, &npi) in non_pivot_rows.iter().enumerate() {
+                for j in 0..m {
+                    x.set(npi, j, x_nonpiv.get(ni, j));
+                }
+            }
+        }
+    }
+
+    // ── 4. Pivot column zeroing ───────────────────────────────────────────────
+    //
+    // Set e[*, pc] to the identity column: e[pi, pc] = 1, 0 elsewhere.
+    for &(pi, pc) in pivots {
+        for k in 0..m {
+            e.set(k, pc, zero.clone());
+        }
+        e.set(pi, pc, one.clone());
+    }
+
+    true
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -2665,7 +2894,13 @@ mod tests {
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;
     const EXPECTED_ROW_ECHELON_N64: u64 = 280;
-    const EXPECTED_RREF_N64: u64 = 280;
+    // RREF now calls try_blocked_back_sub which allocates additional scratch
+    // matrices: e_piv_piv (r×r), x_piv (r×m), plus gemm_axpy_into_view
+    // B-transposes from trsm_upper on x_piv (log₂(64)=6 recursive levels,
+    // each paying 1 transpose alloc) = 2 + 14 = 16 extra vs the original
+    // scalar rref (which had 0 extra beyond row_echelon). Updated as part of
+    // jit:869ce43b blocked back-substitution implementation.
+    const EXPECTED_RREF_N64: u64 = 296;
     const EXPECTED_LU_N64: u64 = 264;
 
     // Boundary lengths chosen per the PLE design doc § 6.1 (jit:6823c8a0)
@@ -2806,6 +3041,97 @@ mod tests {
         }
         samples.sort();
         samples[samples.len() / 2]
+    }
+
+    /// Helper: measures a single (field, n, regime) cell for `row_echelon`
+    /// with 3 warmup runs + 5 trials, returns the median wall-time in ns.
+    fn measure_echelon_cell<const P: u64>(n: usize, regime: &str, field: &str) -> u128 {
+        let seed = P
+            .wrapping_mul(0x9E37_79B9)
+            .wrapping_add(n as u64)
+            .wrapping_add(if regime == "deficient" { 0x1234 } else { 0 });
+        let a = if regime == "deficient" {
+            let rank = (n / 2).max(1);
+            let f = random_fp::<P>(n, rank, seed);
+            let g = random_fp::<P>(rank, n, seed.wrapping_add(0xCAFE));
+            gemm(&f, &g)
+        } else {
+            random_fp::<P>(n, n, seed)
+        };
+        for _ in 0..3 {
+            let _ = a.row_echelon();
+        }
+        let mut samples: Vec<u128> = Vec::new();
+        for trial in 1..=5 {
+            let start = std::time::Instant::now();
+            let _ = a.row_echelon();
+            let elapsed_ns = start.elapsed().as_nanos();
+            samples.push(elapsed_ns);
+            eprintln!("echelon,{field},{n},{regime},{trial},{elapsed_ns},");
+        }
+        samples.sort();
+        samples[samples.len() / 2]
+    }
+
+    /// Wall-time sweep for the A8 echelon cells (rows 18-33, 72-73).
+    ///
+    /// Run via:
+    /// ```bash
+    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    ///   cargo test -p gf2-core --release --all-features --lib \
+    ///   -- --nocapture --ignored field::ple::tests::test_echelon_wall_time_full_sweep \
+    ///   2>&1 | grep -E 'echelon|BEGIN|END'
+    /// ```
+    ///
+    /// Output is CSV emitted to stderr between `--- echelon-sweep BEGIN ---`
+    /// and `--- echelon-sweep END ---`.
+    #[test]
+    #[ignore = "slow: echelon wall-time sweep for A8 rows 18-33 and 72-73 (~60 s)"]
+    fn test_echelon_wall_time_full_sweep() {
+        const CELLS: &[(u64, &str, usize, &str)] = &[
+            (7, "GF(7)", 64, "uniform"),
+            (7, "GF(7)", 64, "deficient"),
+            (7, "GF(7)", 256, "uniform"),
+            (7, "GF(7)", 256, "deficient"),
+            (7, "GF(7)", 1024, "uniform"),
+            (7, "GF(7)", 1024, "deficient"),
+            (31, "GF(31)", 256, "uniform"),
+            (31, "GF(31)", 256, "deficient"),
+            (31, "GF(31)", 1024, "uniform"),
+            (31, "GF(31)", 1024, "deficient"),
+            (251, "GF(251)", 64, "uniform"),
+            (251, "GF(251)", 64, "deficient"),
+            (251, "GF(251)", 256, "uniform"),
+            (251, "GF(251)", 256, "deficient"),
+            (251, "GF(251)", 1024, "uniform"),
+            (251, "GF(251)", 1024, "deficient"),
+            (65521, "GF(65521)", 64, "uniform"),
+            (65521, "GF(65521)", 64, "deficient"),
+            (65521, "GF(65521)", 256, "uniform"),
+            (65521, "GF(65521)", 256, "deficient"),
+            (65521, "GF(65521)", 1024, "uniform"),
+            (65521, "GF(65521)", 1024, "deficient"),
+            (2_147_483_647, "GF(M31)", 64, "uniform"),
+            (2_147_483_647, "GF(M31)", 64, "deficient"),
+            (2_147_483_647, "GF(M31)", 256, "uniform"),
+            (2_147_483_647, "GF(M31)", 256, "deficient"),
+            (2_147_483_647, "GF(M31)", 1024, "uniform"),
+            (2_147_483_647, "GF(M31)", 1024, "deficient"),
+        ];
+        eprintln!("--- echelon-sweep BEGIN ---");
+        eprintln!("op,field,n,regime,trial,wall_ns,wall_median_ns");
+        for &(p, field, n, regime) in CELLS {
+            let median_ns = match p {
+                7 => measure_echelon_cell::<7>(n, regime, field),
+                31 => measure_echelon_cell::<31>(n, regime, field),
+                251 => measure_echelon_cell::<251>(n, regime, field),
+                65521 => measure_echelon_cell::<65521>(n, regime, field),
+                2_147_483_647 => measure_echelon_cell::<2_147_483_647>(n, regime, field),
+                _ => unreachable!(),
+            };
+            eprintln!("echelon,{field},{n},{regime},median,,{median_ns}");
+        }
+        eprintln!("--- echelon-sweep END ---");
     }
 
     #[test]
@@ -3386,6 +3712,393 @@ mod tests {
                     proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
                     proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
                     proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
+        }
+    }
+
+    // ── RREF blocked back-substitution correctness — proptests ────────────────
+    //
+    // SC#2 (jit:869ce43b): bit-exact correctness of blocked RREF vs the scalar
+    // oracle across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521),
+    // GF(2^31-1) at all boundary (m, n) ∈ PANEL_BOUNDARY_LENS² and for both
+    // uniform and rank-deficient regimes.
+    //
+    // Structure (matches sibling PLE proptests above):
+    // - `proptest!` macro drives seed variance over 0..1_000_000, 8 cases.
+    // - Inner `for m in BOUNDARY_LENS { for n in BOUNDARY_LENS { ... } }` loop
+    //   provides exhaustive boundary-length coverage.
+    // - `rref_scalar_oracle` bypasses any blocked dispatch path, giving the
+    //   bit-exact scalar reference.
+    // - Uniform regime: random matrix of shape (m, n).
+    // - Rank-deficient regime: `m×n` matrix of rank ⌊min(m,n)/2⌋ via outer-product.
+
+    /// Scalar RREF oracle: computes `self.rref()` via the unmodified scalar
+    /// back-substitution loop, bypassing the `try_blocked_back_sub` fast path.
+    /// Used by proptest sweep as the bit-exact reference.
+    ///
+    /// Implementation: calls `row_echelon()` (which already uses the panelized
+    /// PLE), then applies the scalar pivot-column loop verbatim from the original
+    /// `rref()` body (the fallback branch that `try_blocked_back_sub` bypasses).
+    fn rref_scalar_oracle<F: FiniteField>(a: &FieldMatrix<F>) -> (FieldMatrix<F>, FieldMatrix<F>) {
+        let (m, n) = a.shape();
+        if m == 0 || n == 0 {
+            return a.row_echelon();
+        }
+        let (mut x, mut e) = a.row_echelon();
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+        // Identify pivots.
+        let mut pivots: Vec<(usize, usize)> = Vec::new();
+        let mut last: isize = -1;
+        for i in 0..m {
+            let start = (last + 1).max(0) as usize;
+            let mut found: Option<usize> = None;
+            for j in start..n {
+                if e.get(i, j) != zero {
+                    found = Some(j);
+                    break;
+                }
+            }
+            if let Some(p) = found {
+                pivots.push((i, p));
+                last = p as isize;
+            } else {
+                break;
+            }
+        }
+        // Scalar back-substitution (original rref fallback, verbatim).
+        for &(pi, pc) in &pivots {
+            let pivot_val = e.get(pi, pc);
+            if pivot_val != one {
+                let inv = pivot_val.inv().unwrap();
+                for j in 0..n {
+                    let v = e.get(pi, j) * inv.clone();
+                    e.set(pi, j, v);
+                }
+                for j in 0..m {
+                    let v = x.get(pi, j) * inv.clone();
+                    x.set(pi, j, v);
+                }
+            }
+            for k in 0..m {
+                if k == pi {
+                    continue;
+                }
+                let factor = e.get(k, pc);
+                if factor == zero {
+                    continue;
+                }
+                for j in 0..n {
+                    let v = e.get(k, j) - factor.clone() * e.get(pi, j);
+                    e.set(k, j, v);
+                }
+                for j in 0..m {
+                    let v = x.get(k, j) - factor.clone() * x.get(pi, j);
+                    x.set(k, j, v);
+                }
+            }
+        }
+        (x, e)
+    }
+
+    // Boundary-length proptest sweep for blocked RREF across all 7 primes.
+    // Cases: 8 (seed variance); (m, n) exhaustive over PANEL_BOUNDARY_LENS.
+    // Regime: uniform.
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
+
+        // § 6.3 §7.1 — GF(7) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp7(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<7>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(31) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp31(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<31>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(127) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp127(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<127>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(241) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp241(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<241>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(251) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp251(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<251>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(65521) uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_fp65521(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<65521>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+
+        // GF(2^31-1) Mersenne31 uniform boundary sweep
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_uniform_mersenne31(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<MERSENNE_31>(m, n, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} seed={}", m, n, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} seed={}", m, n, mseed);
+                }
+            }
+        }
+    }
+
+    // Rank-deficient regime proptest sweep.
+    // For each (m, n) pair where rank-deficient construction is possible
+    // (min(m, n) >= 2), generate a matrix of rank ⌊min(m,n)/2⌋ and assert
+    // bit-exact RREF output.
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp7(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<7>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp31(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<31>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp127(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<127>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp241(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<241>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp251(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<251>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_fp65521(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<65521>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_blocked_rref_boundary_sweep_deficient_mersenne31(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    let min_dim = m.min(n);
+                    if min_dim < 2 { continue; }
+                    let rank = min_dim / 2;
+                    if rank == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_rank_deficient::<MERSENNE_31>(m, n, rank, mseed);
+                    let (x_blocked, r_blocked) = a.rref();
+                    let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(&r_blocked, &r_scalar,
+                        "R mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
+                    proptest::prop_assert_eq!(&x_blocked, &x_scalar,
+                        "X mismatch m={} n={} rank={} seed={}", m, n, rank, mseed);
                 }
             }
         }
