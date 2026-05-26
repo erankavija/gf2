@@ -1674,6 +1674,12 @@ pub(crate) struct SmallPrimeTables {
     /// L1-resident table load. At `P ≤ 251` the table is 251 × 4 = 1004
     /// bytes, fitting in 16 cache lines.
     from_mont_f32: Vec<f32>,
+    /// `inv_table[v]` — modular inverse of `v` in canonical-byte form,
+    /// for `v ∈ [1, P)`. `inv_table[0]` is unused (kept 0). Used by the
+    /// panelized PLE base-case kernel (issue 6823c8a0) to look up the
+    /// pivot inverse in one L1 load instead of a per-pivot Fermat
+    /// exponentiation. The table is `P` bytes (≤ 251), trivially L1.
+    inv_table: Vec<u8>,
 }
 
 // Global per-prime table cache for small primes (P ≤ 251).
@@ -1714,11 +1720,33 @@ fn build_small_prime_tables<const P: u64>() -> &'static SmallPrimeTables {
             to_mont[canon as usize] = raw;
         }
         let barrett_mu = gf2_kernels_simd::fp_small::barrett_mu_u16(P as u8);
+        // Modular inverse table (issue 6823c8a0): inv_table[v] = v^{P-2}
+        // mod P for v ∈ [1, P). One Fermat exponentiation per prime
+        // value during table init; `O(P log P)` total, paid once per
+        // prime per process.
+        let mut inv_table = vec![0u8; p];
+        for v in 1..p as u64 {
+            let mut result: u64 = 1;
+            let mut base: u64 = v;
+            let mut e: u64 = P - 2;
+            let p_u64: u64 = P;
+            while e > 0 {
+                if e & 1 == 1 {
+                    result = (result * base) % p_u64;
+                }
+                e >>= 1;
+                if e > 0 {
+                    base = (base * base) % p_u64;
+                }
+            }
+            inv_table[v as usize] = result as u8;
+        }
         SmallPrimeTables {
             from_mont,
             to_mont,
             barrett_mu,
             from_mont_f32,
+            inv_table,
         }
     })
 }
@@ -2519,6 +2547,306 @@ pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
 #[inline]
 pub(crate) fn fp_small_gemm_classical_available<const P: u64>() -> bool {
     false
+}
+
+/// Panelized PLE base-case fast path for `Fp<P>` with `P <= 251`
+/// (issue `6823c8a0`, design `2e8c5a29`).
+///
+/// Operates on the column window `[col_lo, col_hi)` of the parent
+/// row-major matrix storage:
+///   1. Packs the window into a canonical-byte scratch buffer (one
+///      `from_mont` table lookup per cell).
+///   2. Invokes the unsafe AVX2 kernel via
+///      `crate::simd::maybe_fp_small_ple()`.
+///   3. Propagates the kernel's row swaps to cells **outside** the
+///      window (the kernel only touched the window's panel bytes).
+///   4. Updates the caller-supplied `perm` and `pivot_cols` based on
+///      the kernel's local result.
+///   5. Unpacks the canonical-byte scratch back into Montgomery
+///      storage in the parent matrix.
+///
+/// Returns `Some(rank)` on success; `None` when the kernel declined
+/// (e.g. `P > 251`, the `simd` feature disabled, AVX2 unavailable at
+/// runtime). The caller falls back to `ple_base_direct` in this case.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_ple_panel_base<const P: u64>(
+    matrix: &mut [Fp<P>],
+    parent_cols: usize,
+    m: usize,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+) -> Option<usize> {
+    if !fp_small_enabled::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_small_ple()?;
+    debug_assert_eq!(
+        matrix.len(),
+        m * parent_cols,
+        "fp_try_ple_panel_base: matrix shape"
+    );
+    debug_assert_eq!(perm.len(), m, "fp_try_ple_panel_base: perm length");
+    debug_assert!(
+        col_lo <= col_hi && col_hi <= parent_cols,
+        "fp_try_ple_panel_base: col window out of bounds"
+    );
+
+    let win = col_hi - col_lo;
+    if m == 0 || win == 0 {
+        return Some(0);
+    }
+
+    let p_u8 = P as u8;
+    let tables = build_small_prime_tables::<P>();
+    let from_mont = tables.from_mont.as_slice();
+    let to_mont = tables.to_mont.as_slice();
+    let inv_table = tables.inv_table.as_slice();
+
+    // Pack the window into canonical bytes: scratch[r * win + c] =
+    // canonical(matrix[r, col_lo + c]).
+    let mut window: Vec<u8> = Vec::with_capacity(m * win);
+    for r in 0..m {
+        let row_base = r * parent_cols + col_lo;
+        for c in 0..win {
+            let raw = matrix[row_base + c].raw_storage() as usize;
+            debug_assert!(raw < from_mont.len());
+            window.push(from_mont[raw]);
+        }
+    }
+
+    // Initialise local row perm tracker.
+    let mut row_perm: Vec<usize> = (0..m).collect();
+    let mut pivot_cols_local: Vec<usize> = Vec::with_capacity(win.min(m));
+
+    // Invoke the kernel via the safe wrapper. The wrapper internally
+    // enters an `unsafe` block only after `detect` confirmed AVX2 at
+    // runtime; the canonical-byte preconditions are upheld by the
+    // `from_mont` pack above.
+    let rank = (fns.ple_panel_base_fn)(
+        &mut window,
+        m,
+        win,
+        p_u8,
+        inv_table,
+        &mut row_perm,
+        &mut pivot_cols_local,
+    );
+
+    // Propagate the kernel's row swaps to cells **outside** the column
+    // window (the kernel only touched the panel bytes; cells in
+    // `[0, col_lo)` and `[col_hi, parent_cols)` of each row still
+    // reflect the pre-call row order).
+    //
+    // `row_perm[k] = original_row_index` means the row that originally
+    // sat at `original_row_index` now sits at position `k`. We need to
+    // physically rearrange the parent matrix rows outside the window
+    // so the post-call matrix has consistent row order across all
+    // columns. We use the cycle decomposition of `row_perm` to do the
+    // outside-window swaps in-place without an extra allocation.
+    apply_row_perm_outside_window::<P>(matrix, parent_cols, m, col_lo, col_hi, &row_perm);
+
+    // Apply the same permutation to the caller's `perm` (full-matrix
+    // permutation tracker).
+    apply_perm_indices(perm, &row_perm);
+
+    // Unpack the (already permuted) window scratch back into Montgomery
+    // storage. After `apply_row_perm_outside_window`, the parent
+    // matrix's rows are now in the post-PLE order outside the window;
+    // we write `window[k * win + c]` into row `k`'s slice at
+    // [col_lo, col_hi).
+    for r in 0..m {
+        let row_base = r * parent_cols + col_lo;
+        for c in 0..win {
+            let canon = window[r * win + c] as usize;
+            debug_assert!(canon < to_mont.len());
+            matrix[row_base + c] = Fp::<P>::from_raw_storage(to_mont[canon]);
+        }
+    }
+
+    // Push panel-relative pivot column offsets as absolute column
+    // indices (offset by `col_lo`).
+    for off in pivot_cols_local {
+        pivot_cols.push(col_lo + off);
+    }
+
+    Some(rank)
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_ple_panel_base<const P: u64>(
+    _matrix: &mut [Fp<P>],
+    _parent_cols: usize,
+    _m: usize,
+    _col_lo: usize,
+    _col_hi: usize,
+    _perm: &mut [usize],
+    _pivot_cols: &mut Vec<usize>,
+) -> Option<usize> {
+    None
+}
+
+/// Non-allocating availability probe for [`fp_try_ple_panel_base`]
+/// (issue `6823c8a0`).
+#[cfg(feature = "simd")]
+#[inline]
+pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
+    fp_small_enabled::<P>() && crate::simd::maybe_fp_small_ple().is_some()
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
+    false
+}
+
+/// Physically rearrange the rows of `matrix` according to `row_perm`,
+/// **leaving the column window `[col_lo, col_hi)` untouched** (the
+/// kernel already permuted those bytes in its own scratch buffer).
+///
+/// `row_perm[k]` = original row index that now sits at row `k`. We
+/// build a buffer of size `m` recording, for each original row, where
+/// it now lives; then swap the outside-window cells via cycle
+/// decomposition so each row's external cells are moved exactly once.
+#[cfg(feature = "simd")]
+fn apply_row_perm_outside_window<const P: u64>(
+    matrix: &mut [Fp<P>],
+    parent_cols: usize,
+    m: usize,
+    col_lo: usize,
+    col_hi: usize,
+    row_perm: &[usize],
+) {
+    if col_lo == 0 && col_hi == parent_cols {
+        // Window spans the full row width; nothing to swap outside.
+        return;
+    }
+    // Compute the inverse: `inv[src] = dst`, meaning the row originally
+    // at index `src` now lives at row `dst`. We use this to walk
+    // cycles.
+    let mut where_now: Vec<usize> = vec![0; m];
+    for (dst, &src) in row_perm.iter().enumerate() {
+        where_now[src] = dst;
+    }
+
+    // Identity case fast-out.
+    if where_now.iter().enumerate().all(|(i, &v)| i == v) {
+        return;
+    }
+
+    // Cycle walk: visit each row, follow `where_now` until we return.
+    // For each cycle of length > 1, swap the outside-window cells
+    // around the cycle.
+    let mut visited = vec![false; m];
+    for start in 0..m {
+        if visited[start] || where_now[start] == start {
+            visited[start] = true;
+            continue;
+        }
+        // Walk the cycle starting at `start`. We'll perform a sequence
+        // of pairwise swaps that achieve the same permutation.
+        //
+        // Strategy: for cycle (r0, r1, r2, ..., rk) where r0 is the
+        // smallest unvisited, with row originally at r_i moving to
+        // position r_{i+1 mod k+1}, we can apply the cycle by doing
+        // k swaps: swap(r_0, r_1), swap(r_0, r_2), ..., swap(r_0, r_k).
+        // After these k swaps, the row originally at r_i is at
+        // position r_{i+1 mod k+1}. This walks each row exactly once
+        // among the cycle's non-pivot positions.
+        //
+        // We need to be careful: the row_perm encodes "now-row's
+        // original index"; we need to ensure outside-window cells end
+        // up at the row indices that match the kernel's window cells.
+        //
+        // Approach: use `row_perm` directly. After the kernel call,
+        // window[k * win + c] holds the cell that should sit at row k
+        // post-PLE. Outside the window, the cell at row k should be
+        // the original cell at row `row_perm[k]`. So we need:
+        //   matrix_outside[k, :] = matrix_outside_original[row_perm[k], :]
+        //
+        // Equivalently, for each k, copy original-row `row_perm[k]`'s
+        // outside-window cells into row `k`. Since rows can move both
+        // ways, we use a per-cycle scratch swap.
+        //
+        // Simplest correct (allocation-free per cycle): copy the cycle
+        // out into a stack/heap buffer, then write back. For
+        // `parent_cols - win` outside cells per row, the buffer cost
+        // is bounded by `cycle_len * (parent_cols - win)` field
+        // elements; cycles are short in practice (rank-revealing PLE
+        // generates a small number of swaps).
+        //
+        // For clarity and correctness we use a small Vec per cycle.
+        let mut cycle: Vec<usize> = Vec::new();
+        let mut cur = start;
+        while !visited[cur] {
+            cycle.push(cur);
+            visited[cur] = true;
+            cur = where_now[cur];
+        }
+        // `cycle` lists positions [r_0, r_1, ..., r_{k}] in walk order
+        // where row originally at r_i now lives at r_{i+1 mod len}.
+        // Hence the row at the **new** position r_{i+1} came from the
+        // **original** position r_i. Equivalently:
+        //   new_row(r_{i+1 mod len}) = orig_row(r_i)
+        //
+        // We want to physically move the outside-window cells so that
+        // `matrix[new_pos]` carries `original_matrix[orig_pos]`.
+        //
+        // Buffer the original outside-window cells for every row in
+        // the cycle, then redistribute.
+        let outside_len_left = col_lo;
+        let outside_len_right = parent_cols - col_hi;
+        let outside_total = outside_len_left + outside_len_right;
+        if outside_total == 0 {
+            continue;
+        }
+        let mut buf: Vec<Fp<P>> = Vec::with_capacity(cycle.len() * outside_total);
+        // First read all the original cells.
+        for &pos in &cycle {
+            let row_base = pos * parent_cols;
+            for c in 0..col_lo {
+                buf.push(matrix[row_base + c]);
+            }
+            for c in col_hi..parent_cols {
+                buf.push(matrix[row_base + c]);
+            }
+        }
+        // Now write back: for cycle index i (so new-position
+        // r_{i+1 mod len} should receive the original cells of r_i),
+        // write buf[i * outside_total .. (i+1) * outside_total] into
+        // row `cycle[(i + 1) mod len]`'s outside cells.
+        for i in 0..cycle.len() {
+            let dst_pos = cycle[(i + 1) % cycle.len()];
+            let dst_row_base = dst_pos * parent_cols;
+            let buf_base = i * outside_total;
+            matrix[dst_row_base..dst_row_base + col_lo]
+                .copy_from_slice(&buf[buf_base..buf_base + col_lo]);
+            matrix[dst_row_base + col_hi..dst_row_base + col_hi + outside_len_right]
+                .copy_from_slice(
+                    &buf[buf_base + outside_len_left
+                        ..buf_base + outside_len_left + outside_len_right],
+                );
+        }
+    }
+}
+
+/// Compose `perm` with `row_perm` (apply `row_perm` to the existing
+/// `perm` slots).
+///
+/// `perm` is the caller's permutation tracker (length `m`); the
+/// kernel's local `row_perm` says "the row originally at `row_perm[k]`
+/// now sits at row `k`". After composition, `perm[k]` reflects the
+/// composed source-index.
+#[cfg(feature = "simd")]
+fn apply_perm_indices(perm: &mut [usize], row_perm: &[usize]) {
+    debug_assert_eq!(perm.len(), row_perm.len());
+    // perm_new[k] = perm_old[row_perm[k]]
+    let perm_old: Vec<usize> = perm.to_vec();
+    for (k, slot) in perm.iter_mut().enumerate() {
+        *slot = perm_old[row_perm[k]];
+    }
 }
 
 /// Non-SIMD stub for `PackedFpChainPolys<P>`.

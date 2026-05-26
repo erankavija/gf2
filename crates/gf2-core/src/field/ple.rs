@@ -481,6 +481,42 @@ fn ple_base_direct<F: FiniteField>(
     rank
 }
 
+/// Panelized SIMD base-case dispatch helper (issue `6823c8a0`,
+/// design `2e8c5a29`).
+///
+/// Called by [`ple_in_place_window`] when the column window is at or
+/// below the field's `PLE_PANEL_COLS` threshold and the field's
+/// `has_simd_ple_panel_base` returns `true`. Extracts the parent
+/// matrix's raw storage from the `MatViewMut`, invokes the field's
+/// `try_simd_ple_panel_base` hook, and returns `Some(rank)` on
+/// success or `None` if the kernel declined (caller then falls back
+/// to the recursive trsm + gemm split or scalar `ple_base_direct`).
+///
+/// The kernel operates on the column window `[col_lo, col_hi)` of
+/// the row range `[row_offset, row_offset + rows)`. It handles the
+/// pivot search, swap, scale, and Schur update; the caller's
+/// permutation tracker `perm` (length = view rows) and absolute
+/// pivot column indices are updated in place.
+fn try_panel_base_dispatch<F: FiniteField>(
+    a: &mut MatViewMut<'_, F>,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+) -> Option<usize> {
+    let (data, parent_cols, row_offset, col_offset, rows, cols) = a.raw_parts_mut();
+    debug_assert_eq!(col_offset, 0, "ple panel dispatch: view col_offset != 0");
+    debug_assert!(
+        col_lo <= col_hi && col_hi <= cols,
+        "ple panel dispatch: col window out of bounds"
+    );
+    // Build the sub-slice spanning the view's rows.
+    let row_start = row_offset * parent_cols;
+    let row_end = row_start + rows * parent_cols;
+    let sub = &mut data[row_start..row_end];
+    F::try_simd_ple_panel_base(sub, parent_cols, rows, col_lo, col_hi, perm, pivot_cols)
+}
+
 /// In-place PLE on the supplied [`MatViewMut`]. Records destination →
 /// source row swaps in `perm` (caller-managed). Writes the L-factor's
 /// strict-lower entries directly into `a`'s storage; the leading pivot
@@ -553,6 +589,30 @@ fn ple_in_place_window<F: FiniteField>(
     // Complexity: O(m · win²) element operations per call.
     if win <= F::PLE_BASE_COLS {
         return ple_base_direct(&mut a, col_lo, col_hi, perm, pivot_cols);
+    }
+
+    // Panelized SIMD base case (issue 6823c8a0, design 2e8c5a29).
+    //
+    // When `win <= F::PLE_PANEL_COLS` (= 256 for `Fp<P>` with P ≤ 251,
+    // default = PLE_BASE_COLS otherwise) and the field has registered
+    // a panel-base kernel via `try_simd_ple_panel_base`, dispatch
+    // through the AVX2 panel kernel. Falls through to the recursive
+    // trsm+gemm split below when the kernel declines or the field has
+    // no panel path.
+    //
+    // The `PLE_PANEL_COLS >= PLE_BASE_COLS` invariant (R4 from the
+    // design doc) is asserted in debug builds; release builds trust
+    // the trait impl.
+    debug_assert!(
+        F::PLE_PANEL_COLS >= F::PLE_BASE_COLS,
+        "PLE_PANEL_COLS ({}) must be >= PLE_BASE_COLS ({})",
+        F::PLE_PANEL_COLS,
+        F::PLE_BASE_COLS
+    );
+    if win <= F::PLE_PANEL_COLS && F::has_simd_ple_panel_base() {
+        if let Some(rank) = try_panel_base_dispatch::<F>(&mut a, col_lo, col_hi, perm, pivot_cols) {
+            return rank;
+        }
     }
 
     let h = win / 2;
@@ -2349,4 +2409,246 @@ mod tests {
     const EXPECTED_ROW_ECHELON_N64: u64 = 280;
     const EXPECTED_RREF_N64: u64 = 280;
     const EXPECTED_LU_N64: u64 = 264;
+
+    // ── Panelized PLE proptest sweep (jit:6823c8a0, design 2e8c5a29) ─────────
+    //
+    // For every small prime in `{7, 31, 127, 241, 251, 65521}` and every
+    // boundary length in `{0, 1, 15, 16, 17, 63, 64, 65}`, generate a
+    // deterministic random matrix and verify the panelized PLE
+    // decomposition matches its mathematical contract `P · L · E == A`
+    // and produces a row-echelon `E`, exactly as `check_ple` requires.
+    //
+    // GF(7)/GF(31)/GF(127)/GF(241)/GF(251) take the panel-base dispatch
+    // (`PLE_PANEL_COLS = 256` per `gfp/mod.rs`); GF(65521) takes the
+    // scalar `ple_base_direct` (PLE_PANEL_COLS = 1) with Schur-update
+    // SIMD inherited from `gemm_axpy_into_view`'s medium-prime fast
+    // path (issue 74ba1cdc R1). The same harness covers both.
+    //
+    // Boundary lengths chosen per the PLE design doc § 6.1 (jit:6823c8a0)
+    // and the gf2-core word-boundary test convention (0, 1, 63, 64, 65)
+    // plus the 16-byte AVX2 boundary (15, 16, 17).
+    const PANEL_BOUNDARY_LENS: &[usize] = &[0, 1, 15, 16, 17, 63, 64, 65];
+
+    /// Helper: run `check_ple` for every (m, n) boundary pair on `Fp<P>`.
+    fn boundary_sweep_fp<const P: u64>() {
+        for &m in PANEL_BOUNDARY_LENS {
+            for &n in PANEL_BOUNDARY_LENS {
+                if m == 0 && n == 0 {
+                    continue; // empty matrix; check_ple handles separately
+                }
+                let seed = (P.wrapping_mul(0x9E37_79B9) ^ (m as u64).wrapping_mul(31))
+                    .wrapping_add(n as u64);
+                let a = random_fp::<P>(m, n, seed);
+                if m == 0 || n == 0 {
+                    let (_p, _l, _e, r) = a.ple();
+                    assert_eq!(r, 0, "empty matrix rank for P={P} m={m} n={n}");
+                } else {
+                    check_ple(&a);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp7() {
+        boundary_sweep_fp::<7>();
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp31() {
+        boundary_sweep_fp::<31>();
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp127() {
+        boundary_sweep_fp::<127>();
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp241() {
+        boundary_sweep_fp::<241>();
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp251() {
+        boundary_sweep_fp::<251>();
+    }
+
+    #[test]
+    fn test_ple_panelized_boundary_sweep_fp65521() {
+        boundary_sweep_fp::<65521>();
+    }
+
+    /// Helper: build a rank-deficient matrix of shape (m, n) over Fp<P>
+    /// with rank exactly `min(m, n) / 2`, via outer-product `F · G`.
+    fn random_fp_rank_deficient<const P: u64>(
+        m: usize,
+        n: usize,
+        rank: usize,
+        seed: u64,
+    ) -> FieldMatrix<Fp<P>> {
+        let f = random_fp::<P>(m, rank, seed);
+        let g = random_fp::<P>(rank, n, seed.wrapping_add(0x1234_5678));
+        gemm(&f, &g)
+    }
+
+    /// Helper: run `check_ple` on a rank-deficient input for every
+    /// (m, n) boundary pair where rank-deficient construction is possible.
+    fn rank_deficient_sweep_fp<const P: u64>() {
+        for &m in PANEL_BOUNDARY_LENS {
+            for &n in PANEL_BOUNDARY_LENS {
+                let min_dim = m.min(n);
+                if min_dim < 2 {
+                    continue;
+                }
+                let rank = min_dim / 2;
+                if rank == 0 {
+                    continue;
+                }
+                let seed = (P.wrapping_mul(0xC2B2_AE3D) ^ (m as u64).wrapping_mul(0x9E37))
+                    .wrapping_add(n as u64);
+                let a = random_fp_rank_deficient::<P>(m, n, rank, seed);
+                let r = check_ple(&a);
+                assert!(
+                    r <= rank,
+                    "rank-deficient construction violated: P={P} m={m} n={n} rank≤{rank} got {r}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp7() {
+        rank_deficient_sweep_fp::<7>();
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp31() {
+        rank_deficient_sweep_fp::<31>();
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp127() {
+        rank_deficient_sweep_fp::<127>();
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp241() {
+        rank_deficient_sweep_fp::<241>();
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp251() {
+        rank_deficient_sweep_fp::<251>();
+    }
+
+    #[test]
+    fn test_ple_panelized_rank_deficient_fp65521() {
+        rank_deficient_sweep_fp::<65521>();
+    }
+
+    // Proptest: property-based sweep for the panelized PLE path over
+    // GF(7), GF(251), GF(65521). 32 cases per field at m, n in [1, 96],
+    // verifying `P · L · E == A`.
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config { cases: 32, .. proptest::test_runner::Config::default() })]
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp7(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<7>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp251(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<251>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_matches_contract_fp65521(
+            m in 1usize..96,
+            n in 1usize..96,
+            seed in 0u64..1_000_000,
+        ) {
+            let a = random_fp::<65521>(m, n, seed);
+            let (p, l, e, r) = a.ple();
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+    }
+
+    // Cross-field rank-deficient proptest: builds rank-deficient matrices
+    // via outer-product construction and verifies the panelized PLE still
+    // honours `P · L · E == A` and reports `rank <= constructed_rank`.
+    proptest::proptest! {
+        #![proptest_config(proptest::test_runner::Config { cases: 16, .. proptest::test_runner::Config::default() })]
+
+        #[test]
+        fn prop_ple_panelized_rank_deficient_fp7(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<7>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+
+        #[test]
+        fn prop_ple_panelized_rank_deficient_fp251(
+            m in 2usize..32,
+            n in 2usize..32,
+            seed in 0u64..1_000_000,
+        ) {
+            let rank = m.min(n) / 2;
+            if rank == 0 { return Ok(()); }
+            let a = random_fp_rank_deficient::<251>(m, n, rank, seed);
+            let (p, l, e, r) = a.ple();
+            proptest::prop_assert!(r <= rank);
+            let le = if r == 0 {
+                zero_matrix_like(a.rows(), a.cols(), &a)
+            } else {
+                gemm(&l, &e)
+            };
+            let rebuild = p.apply(&le);
+            proptest::prop_assert_eq!(rebuild, a);
+        }
+    }
 }

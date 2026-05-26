@@ -890,6 +890,102 @@ pub trait FiniteField:
     /// - GF(2^m) fields (XOR arithmetic) may prefer larger values since
     ///   element ops are near-free compared to function call overhead.
     const PLE_BASE_COLS: usize = 1;
+
+    /// Column-window width at which [`FieldMatrix::ple`]'s block-recursive
+    /// driver switches from the recursive trsm+gemm strategy to the
+    /// **panelized** SIMD base case (issue `6823c8a0`, design `2e8c5a29`).
+    ///
+    /// This threshold dispatches the AVX2 panel-base kernel
+    /// ([`crate::field::ple::ple_in_place_window`] → SIMD panel-base path)
+    /// when the column window `win <= PLE_PANEL_COLS`, AVX2 is available,
+    /// and the field has registered a panel-base kernel via
+    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base).
+    ///
+    /// # Default and override
+    ///
+    /// The default value equals [`PLE_BASE_COLS`](Self::PLE_BASE_COLS),
+    /// which disables the panel dispatch: `win <= PLE_PANEL_COLS` is then
+    /// equivalent to `win <= PLE_BASE_COLS`, and the existing scalar
+    /// `ple_base_direct` handles it. Fields with a panel-base AVX2 kernel
+    /// (currently `Fp<P>` for `P <= 251`) override this to a larger value
+    /// (e.g. `KC = 256` from the route-C panel kernel) so the panel path
+    /// activates for moderate window widths.
+    ///
+    /// # Invariant
+    ///
+    /// `PLE_PANEL_COLS >= PLE_BASE_COLS` must hold. When the panel path
+    /// is unavailable (no AVX2 host or field declines), the recursive
+    /// driver still hits the scalar single-column base case at
+    /// `PLE_BASE_COLS` regardless of the panel threshold.
+    ///
+    /// # Soft contract
+    ///
+    /// This knob is **soft** — correctness is independent of it. The PLE
+    /// property tests in `src/field/ple.rs` exercise correctness at all
+    /// input sizes across all field flavours.
+    const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS;
+
+    /// Optional panelized PLE base-case fast path for small windows
+    /// (issue `6823c8a0`, design `2e8c5a29`).
+    ///
+    /// When `Some(rank)` is returned, the kernel populated the matrix
+    /// window `[col_lo, col_hi)` of rows `[0, m)` with the in-place PLE
+    /// compact storage (same convention as the scalar
+    /// [`crate::field::ple::ple_base_direct`]), updated `perm` for any
+    /// row swaps, and pushed pivot column indices to `pivot_cols`. When
+    /// `None` is returned, the caller falls back to
+    /// [`crate::field::ple::ple_base_direct`].
+    ///
+    /// The kernel is responsible for applying full-row swaps to cells
+    /// **outside** the `[col_lo, col_hi)` window via direct access to
+    /// the parent storage `matrix` (length `m * parent_cols`).
+    ///
+    /// # Arguments
+    ///
+    /// * `matrix` — full row-major parent storage, length `m * parent_cols`.
+    /// * `parent_cols` — number of columns in the parent matrix.
+    /// * `m` — number of rows.
+    /// * `col_lo`, `col_hi` — column window `[col_lo, col_hi)` (within
+    ///   `0..parent_cols`).
+    /// * `perm` — row permutation tracker, length `m`. Mutated for any
+    ///   row swap performed by the kernel.
+    /// * `pivot_cols` — pivot-column accumulator. Absolute column indices
+    ///   (within the parent matrix) are pushed in left-to-right order.
+    ///
+    /// # Returns
+    ///
+    /// `Some(rank)` on success; `None` when the kernel declined (e.g.
+    /// AVX2 unavailable, prime out of range, or feature disabled).
+    #[doc(hidden)]
+    #[inline]
+    fn try_simd_ple_panel_base(
+        matrix: &mut [Self],
+        parent_cols: usize,
+        m: usize,
+        col_lo: usize,
+        col_hi: usize,
+        perm: &mut [usize],
+        pivot_cols: &mut Vec<usize>,
+    ) -> Option<usize> {
+        let _ = (matrix, parent_cols, m, col_lo, col_hi, perm, pivot_cols);
+        None
+    }
+
+    /// Non-allocating availability probe for
+    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base)
+    /// (issue `6823c8a0`).
+    ///
+    /// Callers (specifically
+    /// [`crate::field::ple::ple_in_place_window`]) use this probe to
+    /// decide whether to take the panel-base dispatch arm. The default
+    /// returns `false`; `Fp<P>` for `P <= 251` overrides to return
+    /// `true` when the `simd` feature is enabled and AVX2 is detected
+    /// at runtime.
+    #[doc(hidden)]
+    #[inline]
+    fn has_simd_ple_panel_base() -> bool {
+        false
+    }
 }
 
 /// Extension of [`FiniteField`] for types that are `Copy` and have zero-cost identity constructors.

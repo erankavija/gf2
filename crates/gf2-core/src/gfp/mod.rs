@@ -867,6 +867,69 @@ impl<const P: u64> FiniteField for Fp<P> {
     ) -> Option<crate::field::poly::FieldPoly<Self>> {
         crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
     }
+
+    /// Panelized PLE base-case threshold for `Fp<P>` (issue `6823c8a0`,
+    /// design `2e8c5a29`). For `P <= 251` we override to `KC = 256`
+    /// (the route-C panel kernel's k-axis cache-blocking factor,
+    /// `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`), so the
+    /// SIMD panel-base path activates on every column window up to 256.
+    /// For `P > 251` (e.g. GF(65521)) we keep the default
+    /// `PLE_BASE_COLS` so the scalar base case continues to handle
+    /// medium-prime fields; the medium-prime Schur-update GEMM speedup
+    /// still applies automatically via `gemm_axpy_into_view`'s
+    /// auto-dispatch (issue `74ba1cdc` R1 / lift `40195c09`).
+    const PLE_PANEL_COLS: usize = {
+        if P <= 251 {
+            // KC = 256 (panel kernel L1d-fit blocking factor; see
+            // `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`).
+            256
+        } else {
+            // Default = PLE_BASE_COLS (=1) so the panel dispatch is
+            // disabled for medium primes; the recursive trsm+gemm path
+            // continues to drive these fields with the medium-prime
+            // Schur-update GEMM speedup inherited from `74ba1cdc`.
+            1
+        }
+    };
+
+    /// Panelized PLE base-case fast path for `Fp<P>` with `P <= 251`
+    /// (issue `6823c8a0`, design `2e8c5a29`). Routes through the AVX2
+    /// byte-lane panel kernel
+    /// (`crate::simd::maybe_fp_small_ple`), with row-major axpy-style
+    /// inner Schur update over canonical-byte panel rows. Returns
+    /// `None` for `P > 251` or when AVX2 is unavailable; the caller
+    /// then falls back to scalar `ple_base_direct`.
+    #[cfg(not(verify_lean))]
+    #[inline]
+    fn try_simd_ple_panel_base(
+        matrix: &mut [Self],
+        parent_cols: usize,
+        m: usize,
+        col_lo: usize,
+        col_hi: usize,
+        perm: &mut [usize],
+        pivot_cols: &mut Vec<usize>,
+    ) -> Option<usize> {
+        simd_ops::fp_try_ple_panel_base::<P>(
+            matrix,
+            parent_cols,
+            m,
+            col_lo,
+            col_hi,
+            perm,
+            pivot_cols,
+        )
+    }
+
+    /// Non-allocating availability probe for
+    /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base).
+    /// Returns `true` when `P <= 251`, the `simd` feature is enabled,
+    /// and AVX2 was detected at runtime.
+    #[cfg(not(verify_lean))]
+    #[inline]
+    fn has_simd_ple_panel_base() -> bool {
+        simd_ops::fp_ple_panel_base_available::<P>()
+    }
 }
 
 // ---------------------------------------------------------------------------
