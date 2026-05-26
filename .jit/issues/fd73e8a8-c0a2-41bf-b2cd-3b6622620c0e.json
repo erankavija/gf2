@@ -12,29 +12,37 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.199537415Z"
+      "updated_at": "2026-05-25T21:54:59.199442475Z"
     },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-05-25T21:54:59.199490595Z"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "pending",
       "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.199442475Z"
+      "updated_at": "2026-05-25T21:54:59.199537415Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/fd73e8a8-resumable-runner.md",
+      "commit": null,
+      "label": "Design doc — resumable observable SimulationRunner",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-25T21:46:52.878530297+00:00",
-  "updated_at": "2026-05-25T21:55:50.412425247+00:00"
+  "updated_at": "2026-05-26T19:56:57.122985268+00:00"
 }

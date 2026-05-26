@@ -2,12 +2,10 @@
   "id": "a18956a4-915b-47c0-873c-73c48eb5acfe",
   "title": "DVB-T2 BCH+LDPC concatenation codec",
   "description": "## Goal\n\nProvide a single concatenated DVB-T2 codec API that wraps the existing\nBCH outer code and LDPC inner code into one encode / decode call,\nmatching the ETSI EN 302 755 v1.4.1 §6 chain ordering exactly. This is\nthe integration point the campaign runner targets; without it, every\ncaller would have to hand-stitch BCH ⇄ LDPC and risk spec-divergent\nordering.\n\n## Context\n\nToday the BCH (`crates/gf2-coding/src/bch/dvb_t2/`) and LDPC\n(`crates/gf2-coding/src/ldpc/dvb_t2/`) codecs are constructed\nindependently. The TP04 → TP05 → TP06 chain is verified for one\nconfiguration (VV001-CR35) but only via manual stitching in tests.\n\nPer ETSI EN 302 755 v1.4.1 §6.1 and Table 6a (Normal frame) /\nTable 7a (Short frame), the encode order is:\n\n```\nBBFRAME (k_bch bits) → BCH encode → +192 parity bits\n                    → LDPC encode → +(N − k_ldpc) parity bits\n                    → FECFRAME (N bits, ready for bit interleaver)\n```\n\nThe decode order on the receive side is LDPC belief propagation first\n(soft input), then BCH hard-decision error correction on the\ninformation field.\n\nThis task wraps that ordering and the per-config k values behind a\nsingle API.\n\n## Deliverables\n\n1. New module: `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` (or\n   similarly named; placement under `ldpc/dvb_t2/` keeps the\n   spec-aware glue colocated with the inner code).\n2. Public type, e.g. `DvbT2Concat`, with at minimum:\n   - `pub fn new(frame_size: FrameSize, code_rate: CodeRate)\n        -> Result<Self, Error>`\n   - `pub fn encode(&self, bbframe: &BitVec) -> BitVec`\n   - `pub fn decode_soft(&self, llrs: &[Llr])\n        -> Result<BitVec, DecodeError>`\n3. Constructor mirrors the existing `BchCode::dvb_t2` /\n   `LdpcCode::dvb_t2` constructors so callers can swap individual\n   codecs for the concatenated one.\n4. Roundtrip unit tests for the 3 in-scope configurations\n   (Normal × {1/2, 2/3, 3/4}) with random payloads and zero noise.\n5. End-to-end TP04 → TP06 vector test for at least one configuration,\n   re-using the existing verified vector loader.\n\n## Success criteria\n\n- [hard] All 3 in-scope (Normal × {1/2, 2/3, 3/4}) configurations\n  round-trip random payloads bit-exact at zero noise.\n- [hard] Existing TP04 → TP06 verified vector continues to pass through\n  the new concatenated API (no regression in the legacy hand-stitched\n  test).\n- [hard] No new `unsafe`; new module satisfies\n  `#![deny(unsafe_code)]`.\n- [hard] Encoded length matches EN 302 755 Table 6a for each of the\n  3 covered configurations (asserted in tests).\n- [hard] Public API has rustdoc with the standard sections\n  (description, arguments, examples that compile under\n  `cargo test --doc`, panics, complexity).\n\n## Non-goals\n\n- The 9 out-of-scope LDPC configurations (Short × all rates,\n  Normal × {3/5, 4/5, 5/6}) may either return `Err(Unsupported)` from\n  `new` or be wired without test coverage; the campaign only\n  exercises the 3.\n- No QAM mapping — that lives in NEW-2 (campaign runner).\n- No bit interleaver — that is 87a2402f.\n- No decoder algorithm changes — uses the existing belief-propagation\n  LDPC decoder and the existing BCH decoder.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
-  "dependencies": [
-    "cef2e631-0109-4889-b560-2191ea1a1d20"
-  ],
+  "dependencies": [],
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -32,5 +30,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-25T21:46:55.438271959+00:00",
-  "updated_at": "2026-05-25T21:55:50.433630273+00:00"
+  "updated_at": "2026-05-26T19:56:46.175120186+00:00"
 }
