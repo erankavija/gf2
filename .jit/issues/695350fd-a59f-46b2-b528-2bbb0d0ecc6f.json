@@ -11,7 +11,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-26T15:53:03.357187855Z"
+    }
+  },
   "context": {},
   "documents": [
     {
@@ -30,5 +36,5 @@
     "ppc-kernel:C2"
   ],
   "created_at": "2026-05-26T11:18:04.360173406+00:00",
-  "updated_at": "2026-05-26T15:32:28.530043498+00:00"
+  "updated_at": "2026-05-26T15:59:58.794605323+00:00"
 }

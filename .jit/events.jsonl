@@ -5358,3 +5358,6 @@
 {"type":"issue_state_changed","id":"ebbdbeba-df3c-4fc3-af8f-f87168e9b4a5","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T14:23:25.049390419Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"7db4ba70-1087-40ff-9d70-1da089b31abf","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T14:23:25.052195200Z","assignee":"agent:claude"}
 {"type":"issue_created","id":"edc444ab-3e8f-40b4-bc79-01a2f4b5fb0a","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-26T15:31:59.225427724Z","title":"f64 GEMM cascade for fp_medium (695350fd Phase 6e)","priority":"normal"}
+{"type":"gate_failed","id":"6eecc3aa-9475-481b-80ea-37f603cb2d09","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T15:32:53.572042153Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"969a27f6-1db7-470e-83b3-fd9de302c107","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T15:33:10.268967820Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"e7fe67f7-1217-4926-b2de-9e1ae5a2c5b8","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T15:59:58.794801093Z","gate_key":"code-review","updated_by":"auto:executor"}
