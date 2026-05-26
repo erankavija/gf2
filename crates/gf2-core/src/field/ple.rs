@@ -2976,9 +2976,52 @@ mod tests {
         rank_deficient_sweep_fp::<65521>();
     }
 
+    /// Scalar PLE oracle: runs the full PLE factorisation on `a` using
+    /// `ple_in_place_window_no_panel`, which explicitly bypasses the
+    /// SIMD panel-base dispatch path. Used by proptests as the bit-exact
+    /// reference to compare the panelized output against.
+    ///
+    /// The oracle is semantically identical to `FieldMatrix::ple` but
+    /// calls `ple_in_place_window_no_panel` instead of `ple_in_place`
+    /// so the panel-base SIMD kernel is never invoked, giving a pure
+    /// scalar result.
+    pub(super) fn ple_scalar_oracle<F: FiniteField>(
+        a: &FieldMatrix<F>,
+    ) -> (Permutation, FieldMatrix<F>, FieldMatrix<F>, usize) {
+        let (m, n) = a.shape();
+        if m == 0 || n == 0 {
+            let l = zero_matrix_like(m, 0, a);
+            let e = zero_matrix_like(0, n, a);
+            return (Permutation::identity(m), l, e, 0);
+        }
+        let mut working = a.clone();
+        let mut perm: Vec<usize> = (0..m).collect();
+        let max_rank = m.min(n);
+        let mut pivot_cols: Vec<usize> = Vec::with_capacity(max_rank);
+        let rank = ple_in_place_window_no_panel::<F>(
+            working.submat_mut(.., ..),
+            0,
+            n,
+            &mut perm,
+            &mut pivot_cols,
+        );
+        let (l, e) = split_compact(&working, rank, &pivot_cols);
+        let inverse_perm = invert_perm(&perm);
+        (Permutation::from_indices(inverse_perm), l, e, rank)
+    }
+
     // Proptest: property-based sweep for the panelized PLE path over
-    // all 6 small primes per SC#2. 32 cases per field at m, n in [1, 96],
-    // verifying `P · L · E == A`.
+    // all 6 small primes per SC#2. 32 cases per field at m, n in [1, 96].
+    //
+    // Each test:
+    //   1. Generates a random matrix `a`.
+    //   2. Runs the panelized PLE (`a.ple()`) — may invoke the AVX2 panel
+    //      kernel for P ≤ 251.
+    //   3. Runs the scalar oracle (`ple_scalar_oracle(&a)`) — forces the
+    //      `ple_in_place_window_no_panel` path, bypassing all SIMD dispatch.
+    //   4. Asserts bit-exact equality of
+    //      `(P_panel, L_panel, E_panel, r_panel) == (P_scalar, L_scalar, E_scalar, r_scalar)`.
+    //   5. Also verifies the `P · L · E == A` contract as a sanity check.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 32, .. proptest::test_runner::Config::default() })]
 
@@ -2989,13 +3032,19 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<7>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            // Sanity: P · L · E == A.
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3006,13 +3055,18 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<31>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3023,13 +3077,18 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<127>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3040,13 +3099,18 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<241>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3057,13 +3121,18 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<251>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3074,20 +3143,26 @@ mod tests {
             seed in 0u64..1_000_000,
         ) {
             let a = random_fp::<65521>(m, n, seed);
-            let (p, l, e, r) = a.ple();
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
     }
 
     // Cross-field rank-deficient proptest: builds rank-deficient matrices
-    // via outer-product construction and verifies the panelized PLE still
-    // honours `P · L · E == A` and reports `rank <= constructed_rank`.
+    // via outer-product construction and verifies panelized PLE output
+    // is bit-exact vs the scalar oracle, reports `rank <= constructed_rank`,
+    // and honours `P · L · E == A`.
     proptest::proptest! {
         #![proptest_config(proptest::test_runner::Config { cases: 16, .. proptest::test_runner::Config::default() })]
 
@@ -3100,14 +3175,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<7>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3120,14 +3200,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<31>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3140,14 +3225,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<127>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3160,14 +3250,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<241>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3180,14 +3275,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<251>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
 
@@ -3200,14 +3300,19 @@ mod tests {
             let rank = m.min(n) / 2;
             if rank == 0 { return Ok(()); }
             let a = random_fp_rank_deficient::<65521>(m, n, rank, seed);
-            let (p, l, e, r) = a.ple();
-            proptest::prop_assert!(r <= rank);
-            let le = if r == 0 {
+            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+            proptest::prop_assert!(r_panel <= rank, "rank bound violated");
+            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch");
+            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch");
+            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch");
+            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch");
+            let le = if r_panel == 0 {
                 zero_matrix_like(a.rows(), a.cols(), &a)
             } else {
-                gemm(&l, &e)
+                gemm(&l_panel, &e_panel)
             };
-            let rebuild = p.apply(&le);
+            let rebuild = p_panel.apply(&le);
             proptest::prop_assert_eq!(rebuild, a);
         }
     }
