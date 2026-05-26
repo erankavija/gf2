@@ -2476,6 +2476,111 @@ mod tests {
         eprintln!("pluq GF(251) n=256 uniform median: {median_us} µs (samples {samples:?})");
     }
 
+    /// Full panelized-PLE measurement sweep across the A8-row cells
+    /// (rows 6-17, 71) plus the new R1-amendment cells per the design
+    /// doc § 7. Emits one CSV line per cell to stderr in the format
+    /// `op,field,n,regime,trial,wall_ns,wall_median_ns`. 5 trials per
+    /// cell, with 3 warmup runs first.
+    ///
+    /// To capture the output, run with the CCX1 flock wrapper:
+    /// ```bash
+    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    ///   cargo test -p gf2-core --release --all-features --lib -- \
+    ///     --ignored --nocapture --test-threads 1 \
+    ///     'test_ple_panelized_wall_time_full_sweep'
+    /// ```
+    /// (stderr lines bracketed by `--- panelized-ple-sweep BEGIN/END ---`
+    /// markers are the canonical CSV emission.)
+    #[test]
+    #[ignore = "slow: full panelized PLE wall-time sweep (~30 s)"]
+    fn test_ple_panelized_wall_time_full_sweep() {
+        const CELLS: &[(u64, &str, usize, &str)] = &[
+            (7, "GF(7)", 64, "uniform"),
+            (7, "GF(7)", 64, "deficient"),
+            (7, "GF(7)", 256, "uniform"),
+            (7, "GF(7)", 256, "deficient"),
+            (7, "GF(7)", 1024, "uniform"),
+            (7, "GF(7)", 1024, "deficient"),
+            (31, "GF(31)", 64, "uniform"),
+            (31, "GF(31)", 64, "deficient"),
+            (31, "GF(31)", 256, "uniform"),
+            (31, "GF(31)", 256, "deficient"),
+            (31, "GF(31)", 1024, "uniform"),
+            (31, "GF(31)", 1024, "deficient"),
+            (127, "GF(127)", 64, "uniform"),
+            (127, "GF(127)", 64, "deficient"),
+            (127, "GF(127)", 256, "uniform"),
+            (127, "GF(127)", 256, "deficient"),
+            (127, "GF(127)", 1024, "uniform"),
+            (127, "GF(127)", 1024, "deficient"),
+            (241, "GF(241)", 64, "uniform"),
+            (241, "GF(241)", 64, "deficient"),
+            (241, "GF(241)", 256, "uniform"),
+            (241, "GF(241)", 256, "deficient"),
+            (241, "GF(241)", 1024, "uniform"),
+            (241, "GF(241)", 1024, "deficient"),
+            (251, "GF(251)", 64, "uniform"),
+            (251, "GF(251)", 64, "deficient"),
+            (251, "GF(251)", 256, "uniform"),
+            (251, "GF(251)", 256, "deficient"),
+            (251, "GF(251)", 1024, "uniform"),
+            (251, "GF(251)", 1024, "deficient"),
+            (65521, "GF(65521)", 64, "uniform"),
+            (65521, "GF(65521)", 64, "deficient"),
+            (65521, "GF(65521)", 256, "uniform"),
+            (65521, "GF(65521)", 256, "deficient"),
+            (65521, "GF(65521)", 1024, "uniform"),
+            (65521, "GF(65521)", 1024, "deficient"),
+        ];
+        eprintln!("--- panelized-ple-sweep BEGIN ---");
+        eprintln!("op,field,n,regime,trial,wall_ns,wall_median_ns");
+        for &(p, field, n, regime) in CELLS {
+            let median_ns = match p {
+                7 => measure_cell::<7>(n, regime, field),
+                31 => measure_cell::<31>(n, regime, field),
+                127 => measure_cell::<127>(n, regime, field),
+                241 => measure_cell::<241>(n, regime, field),
+                251 => measure_cell::<251>(n, regime, field),
+                65521 => measure_cell::<65521>(n, regime, field),
+                _ => unreachable!(),
+            };
+            eprintln!("pluq,{field},{n},{regime},median,,{median_ns}");
+        }
+        eprintln!("--- panelized-ple-sweep END ---");
+    }
+
+    /// Helper for `test_ple_panelized_wall_time_full_sweep`: measures
+    /// a single (field, n, regime) cell with 3 warmup runs + 5 trials,
+    /// returns the median wall-time in ns, and emits one CSV row per
+    /// trial to stderr.
+    fn measure_cell<const P: u64>(n: usize, regime: &str, field: &str) -> u128 {
+        let seed = P
+            .wrapping_mul(0x9E37_79B9)
+            .wrapping_add(n as u64)
+            .wrapping_add(if regime == "deficient" { 0x1234 } else { 0 });
+        let a = if regime == "deficient" {
+            let rank = (n / 2).max(1);
+            let f = random_fp::<P>(n, rank, seed);
+            let g = random_fp::<P>(rank, n, seed.wrapping_add(0xCAFE));
+            gemm(&f, &g)
+        } else {
+            random_fp::<P>(n, n, seed)
+        };
+        for _ in 0..3 {
+            let _ = a.ple();
+        }
+        let mut samples: Vec<u128> = Vec::new();
+        for trial in 1..=5 {
+            let start = std::time::Instant::now();
+            let _ = a.ple();
+            let elapsed_ns = start.elapsed().as_nanos();
+            samples.push(elapsed_ns);
+            eprintln!("pluq,{field},{n},{regime},{trial},{elapsed_ns},");
+        }
+        samples.sort();
+        samples[samples.len() / 2]
+    }
+
     #[test]
     fn test_ple_panelized_dispatch_active_for_small_primes() {
         // Sanity probe: confirm `PLE_PANEL_COLS` and
@@ -2490,16 +2595,27 @@ mod tests {
         assert_eq!(<Fp<MERSENNE_31> as FiniteField>::PLE_PANEL_COLS, 1);
 
         // `has_simd_ple_panel_base()` should be true for P <= 251 on
-        // any AVX2 host. If this fails on AVX2, the dispatcher is not
-        // wired correctly.
-        if std::arch::is_x86_feature_detected!("avx2") {
-            assert!(<Fp<7> as FiniteField>::has_simd_ple_panel_base());
-            assert!(<Fp<31> as FiniteField>::has_simd_ple_panel_base());
-            assert!(<Fp<127> as FiniteField>::has_simd_ple_panel_base());
-            assert!(<Fp<241> as FiniteField>::has_simd_ple_panel_base());
-            assert!(<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+        // any AVX2 host **when the `simd` feature is enabled**. Without
+        // the simd feature it always returns false (the kernel
+        // dispatch is feature-gated). Detect both axes.
+        #[cfg(feature = "simd")]
+        {
+            if std::arch::is_x86_feature_detected!("avx2") {
+                assert!(<Fp<7> as FiniteField>::has_simd_ple_panel_base());
+                assert!(<Fp<31> as FiniteField>::has_simd_ple_panel_base());
+                assert!(<Fp<127> as FiniteField>::has_simd_ple_panel_base());
+                assert!(<Fp<241> as FiniteField>::has_simd_ple_panel_base());
+                assert!(<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+            }
         }
-        // P > 251 must NOT advertise the panel kernel.
+        #[cfg(not(feature = "simd"))]
+        {
+            // Without `simd`, every prime should report false.
+            assert!(!<Fp<7> as FiniteField>::has_simd_ple_panel_base());
+            assert!(!<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+        }
+        // P > 251 must NEVER advertise the panel kernel (regardless of
+        // `simd` feature).
         assert!(!<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
         assert!(!<Fp<MERSENNE_31> as FiniteField>::has_simd_ple_panel_base());
     }
