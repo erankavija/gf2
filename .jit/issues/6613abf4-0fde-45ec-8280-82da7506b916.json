@@ -2,9 +2,9 @@
   "id": "6613abf4-0fde-45ec-8280-82da7506b916",
   "title": "Implement blocked GF(p) triangular solve (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements blocked GF(p) triangular solve building on the panelized PLE implementation. No separate design — uses standard blocked back-substitution algorithm (Higham § 14.1).\n\nParent epic: `026fc832`. Predecessor: panelized PLE implementation (sibling).\n\n## Background\n\nCloses A8 rows 47-58, 75 (solve cells over GF(7/251/65521) and GF(31)).\n\n## Success Criteria\n\n- [hard] Production code implementing blocked triangular solve calling into the panelized PLE + `fp_small_try_gemm_classical`.\n- [hard] Bit-exact correctness vs the existing scalar solve on a proptest sweep across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths plus rank-deficient regimes.\n- [hard] 5-trial CCX1-pinned benchmarks at n in {64, 256, 1024} per prime per regime.\n- [hard] Every A8 solve cell (rows 47-58, 75) either PASSes or carries [aspirational] amendment.\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%).\n- [hard] No `unsafe` outside kernel crates.\n- [hard] Brief design rationale in the impl task's evidence doc explaining the blocking strategy (no separate design task because the algorithm is standard).\n\n## Out of scope\n\n- Sibling impls.\n- New PLE algorithm work (reuse the sibling's output).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "6823c8a0-ac0b-4b4d-9250-d59272e2f1b9"
   ],
@@ -22,5 +22,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:11:10.787513208+00:00",
-  "updated_at": "2026-05-26T19:29:28.811324762+00:00"
+  "updated_at": "2026-05-26T20:11:55.675110166+00:00"
 }
