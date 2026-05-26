@@ -3257,126 +3257,137 @@ mod tests {
     }
 
     // Boundary-length proptest sweep per SC#2 (jit:6823c8a0): for every
-    // small prime in `{7, 31, 127, 241, 251, 65521}` and every boundary
-    // length pair `(m, n)` drawn from `PANEL_BOUNDARY_LENS`
-    // `{0, 1, 15, 16, 17, 63, 64, 65}`, generate a deterministic random
-    // matrix and assert bit-exact equality of `(P, L, E, rank)` between
-    // the panelized PLE and the scalar oracle. The empty `(0, 0)`
-    // matrix is excluded; degenerate rows/cols (one of m, n is 0) are
-    // checked for rank=0 only since L/E are trivially empty.
+    // small prime in `{7, 31, 127, 241, 251, 65521}` the inner test body
+    // exhaustively iterates **all** `(m, n)` pairs drawn from
+    // `PANEL_BOUNDARY_LENS = {0, 1, 15, 16, 17, 63, 64, 65}` and asserts
+    // bit-exact equality of `(P, L, E, rank)` between the panelized PLE
+    // and the scalar oracle. The empty `(0, 0)` matrix is excluded
+    // (`a.ple()` returns rank 0 trivially); every other boundary pair —
+    // including degenerate-shape `m=0` or `n=0` rows/columns — is
+    // covered every proptest case.
     //
-    // Strategy: with 64 cases and 64 (m, n) pairs, sampling is
-    // statistically thorough; each pair is hit in expectation once per
-    // run. Seed range 0..1M deduplicates against any cached state.
+    // The proptest macro drives **seed variance** rather than `(m, n)`
+    // sampling: each of the 8 cases per prime fans out the matrix
+    // generator's seed over `0u64..1_000_000`, so every boundary pair is
+    // tested 8 times against 8 different random matrices in addition to
+    // the standalone single-seed coverage. This gives both deterministic
+    // exhaustive boundary coverage AND randomized matrix variance — both
+    // halves of "proptest sweep at boundary lengths" per the SC.
     proptest::proptest! {
-        #![proptest_config(proptest::test_runner::Config { cases: 64, .. proptest::test_runner::Config::default() })]
+        #![proptest_config(proptest::test_runner::Config { cases: 8, .. proptest::test_runner::Config::default() })]
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp7(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<7>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp7(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<7>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp31(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<31>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp31(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<31>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp127(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<127>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp127(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<127>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp241(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<241>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp241(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<241>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp251(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<251>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp251(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<251>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
 
         #[test]
-        fn prop_ple_panelized_boundary_sweep_fp65521(
-            m_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            n_idx in 0usize..PANEL_BOUNDARY_LENS.len(),
-            seed in 0u64..1_000_000,
-        ) {
-            let m = PANEL_BOUNDARY_LENS[m_idx];
-            let n = PANEL_BOUNDARY_LENS[n_idx];
-            if m == 0 && n == 0 { return Ok(()); }
-            let a = random_fp::<65521>(m, n, seed);
-            let (p_panel, l_panel, e_panel, r_panel) = a.ple();
-            let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
-            proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
-            proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+        fn prop_ple_panelized_boundary_sweep_fp65521(seed in 0u64..1_000_000) {
+            for &m in PANEL_BOUNDARY_LENS {
+                for &n in PANEL_BOUNDARY_LENS {
+                    if m == 0 && n == 0 { continue; }
+                    let mseed = seed
+                        .wrapping_add((m as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((n as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp::<65521>(m, n, mseed);
+                    let (p_panel, l_panel, e_panel, r_panel) = a.ple();
+                    let (p_scalar, l_scalar, e_scalar, r_scalar) = ple_scalar_oracle(&a);
+                    proptest::prop_assert_eq!(r_panel, r_scalar, "rank mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&p_panel, &p_scalar, "P mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&l_panel, &l_scalar, "L mismatch m={} n={}", m, n);
+                    proptest::prop_assert_eq!(&e_panel, &e_scalar, "E mismatch m={} n={}", m, n);
+                }
+            }
         }
     }
 }
