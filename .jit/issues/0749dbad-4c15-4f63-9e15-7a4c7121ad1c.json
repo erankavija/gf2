@@ -1,0 +1,26 @@
+{
+  "id": "0749dbad-4c15-4f63-9e15-7a4c7121ad1c",
+  "title": "f64 GEMM cascade for fp_medium (695350fd Phase 6e)",
+  "description": "Phase 6e follow-up under epic `026fc832`. 695350fd R0 (commits `0de86fd9..191a69c8`) hit a structural wall on GF(65521)/n=4096: AVX2 u16-mulhi-mullo MAC is arithmetic-bound at ~40 Gop/s (kernel achieves 106% of estimated shuffle-pipe ceiling). fflas's 69.72 Gop/s matches Zen-3 f64 FMA peak (70 GFLOP/s = 2 × 8 lanes × 4.4 GHz) — strongly suggesting fflas uses an f64 GEMM cascade for fp_medium primes.\n\nClosing GF(65521)/n=4096 (and improving the Schur-update path for GF(65521) PLE in 68db401b) requires a new f64 cascade kernel for fp_medium, analogous to Route A's f32 cascade for fp_small (which closed GF(251) via the 41096af5 wire-in + 74ba1cdc R1 BLIS restructure).\n\n## Background\n\nAfter 695350fd R0:\n- GF(65521)/n=4096: 40.25 Gop/s (was 39.78 post-74ba1cdc R1); ratio 1.732 (was 1.753)\n- The +1.2% improvement landed; the AVX2 u16 ceiling is now well-characterised\n- fflas uses ~70 Gop/s ≈ Zen3 f64 FMA peak; gf2's u16 path is at 57% of that\n\nArchitectural pattern: For GF(p) with p ≤ 65521, an f64 cascade represents each element as f64, performs the f64 GEMM (vendor-tuned at near-peak), then reduces mod p via Barrett. This is fflas's approach for medium primes via OpenBLAS's dgemm. **gf2 needs an in-Rust + AVX2 analogue.**\n\nRoute A is the precedent for fp_small (f32 cascade). The f64 cascade for fp_medium is structurally similar but at f64 precision:\n- 4 f64 lanes per AVX2 register (vs 8 f32 lanes)\n- Mantissa: 52 bits (vs 23 for f32)\n- Max product: p² ≤ 65520² ≈ 2³² → fits in f64 mantissa with k_max ≈ 2²⁰ MACs between reductions\n- 1 FMA per MAC; reduction every k_max ≈ 1M MACs\n\n## Scope\n\nAdd a new f64 cascade GEMM kernel for fp_medium primes. Wire it into the existing dispatch chain so `gemm` + `gemm_axpy_into_view` route the new kernel when `(251 < P < 65536) && AVX2_avail && shape_threshold_met`.\n\n1. **New SSOT helper**: `crates/gf2-kernels-simd/src/x86/fp_medium_f64.rs` — AVX2 f64 cascade kernel with BLIS-style MC/KC/NC blocking (apply the 74ba1cdc R1 + 695350fd R0 lessons learned).\n2. **Safe wrapper** in `crates/gf2-kernels-simd/src/fp_medium_f64.rs`.\n3. **`Fp<P>` dispatch override** for `P` in (251, 65536) — add `try_simd_gemm_classical_f64` analogue.\n4. **Dispatch hook**: extend `gemm` (matrix.rs:2642) + `gemm_axpy_into_view` (matrix.rs:2854, post-40195c09-lift) to call the f64 kernel for medium primes at appropriate sizes.\n5. **Threshold tuning** — the f64 cascade has packing overhead; tune the size threshold empirically (likely n ≥ 256 or 512).\n\n## Success Criteria\n\n- [hard] GF(65521) at n=4096: ratio gf2/fflas ≤ 1.5× on 5-trial CCX1-pinned bench (flock-guarded via `dev/benchmarks/ccx1-bench-flock.sh`) on the Zen 3 reference host. Reference: 69.72 Gop/s fflas single-thread.\n- [hard] No regression on existing PASS cells at n ∈ {64, 256, 1024} for all 6 primes (delta ≤ 5%). Baselines: post-695350fd evidence + 74ba1cdc R1 evidence.\n- [hard] Bit-exact correctness preserved across all primes — proptest sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.\n- [hard] No BLAS dependency. No external linker change. Pure Rust + AVX2.\n- [hard] Unsafe stays in `gf2-kernels-simd` (no new unsafe in `gf2-core`).\n- [hard] Evidence doc records pre/post numbers + non-regression sweep + reproducibility commands.\n- [hard] After landing, 98336ab4 worker re-benches all n=4096 cells with warmup-matched protocol; 98336ab4 closes PASS for all 6 cells (already a follow-on dep).\n\n## Out of scope\n\n- Route A / GF(251) — closed by 74ba1cdc R1.\n- u16 BLIS restructure on the existing fp_medium kernel — 695350fd already landed the +1.2% improvement; further u16 work is bounded by the arithmetic ceiling.\n- AVX-512 — epic `7f809931`.\n- BLAS delegation — user-rejected.\n- Multi-threading — separate epic.\n- GF(65521) PLE base case — `68db401b` (Phase 6d). The f64 cascade may benefit 68db401b's Schur-update path; coordinate at impl time.\n\n## Notes\n\n- Filed session 9 (2026-05-26) per user-approved deferral of 695350fd SC#1.\n- Reference: 695350fd R0 evidence doc (`dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` § 9 has the f64 cascade design sketch + µop analysis); 74ba1cdc R1 evidence (Route A f32 cascade precedent).\n- Estimated effort: 1-2 weeks of focused engineering (similar to 74ba1cdc R1's scope on Route A).",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "epic:gf2-core-sota-stretch",
+    "ppc-kernel:C2"
+  ],
+  "created_at": "2026-05-26T15:31:59.225132604+00:00",
+  "updated_at": "2026-05-26T15:31:59.225137934+00:00"
+}
