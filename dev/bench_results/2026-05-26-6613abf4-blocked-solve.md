@@ -162,9 +162,12 @@ direct Criterion walls from `dev/bench_results/2026-05-08-pending-cell-measureme
 > the entire solve; (b) at n=256 with 4 panels of bs=64, panels 1 and 0 have
 > update shapes 64×64×1 = 4,096 and 128×64×1 = 8,192 — only the latter two
 > panels hit the fast path. The remaining gap is the PLE (factorisation) cost
-> and the fact that n=64 has no update GEMM at all. These cells are structural
-> FAIL and route to `615db3b9` for further work (e.g. blocked PLE or direct
-> TRSM SIMD kernels).
+> and the fact that n=64 has no update GEMM at all.
+>
+> Rows 51-52 (GF(251)/n=64): deferred to follow-up task `d36cc414`.
+> Rows 53-54 (GF(251)/n=256): `[aspirational]` — inheriting the GF(251)/n=256
+> PLE-side gap from `6823c8a0`; the 2.3-2.4× ratio is an improvement over the
+> 35-40× pre-task baseline but does not yet meet the ≤1.5× contract.
 
 ### 4.4 GF(65521) — solve
 
@@ -184,7 +187,9 @@ direct Criterion walls from `dev/bench_results/2026-05-08-pending-cell-measureme
 > GF(65521)/n=64 cells remain FAIL. GF(65521) uses the medium-prime GEMM path
 > (P ∈ [252, 65535]), which has higher per-operation overhead than small-prime
 > byte-lanes. At n=64 there is no update GEMM (single panel = diagonal block
-> only), so blocking provides no benefit. These cells route to `615db3b9`.
+> only), so blocking provides no benefit.
+>
+> Rows 55-56 (GF(65521)/n=64): deferred to follow-up task `9138d86c`.
 
 ---
 
@@ -199,30 +204,35 @@ A8 rows 47–58 (solve/GF(7)/GF(251)/GF(65521) × all n/regimes) and row 75
 | 48 | GF(7) | 64 / deficient | 2.36× | **0.192×** | **PASS** |
 | 49 | GF(7) | 256 / uniform | 7.56× | **0.398×** | **PASS** |
 | 50 | GF(7) | 256 / deficient | 10.56× | **0.522×** | **PASS** |
-| 51 | GF(251) | 64 / uniform | 15.13× | **1.674×** | **FAIL** [→`615db3b9`] |
-| 52 | GF(251) | 64 / deficient | 17.92× | **1.728×** | **FAIL** [→`615db3b9`] |
-| 53 | GF(251) | 256 / uniform | 35.33× | **2.331×** | **FAIL** [→`615db3b9`] |
-| 54 | GF(251) | 256 / deficient | 39.57× | **2.400×** | **FAIL** [→`615db3b9`] |
-| 55 | GF(65521) | 64 / uniform | 3.34× | **2.095×** | **FAIL** [→`615db3b9`] |
-| 56 | GF(65521) | 64 / deficient | 3.39× | **1.833×** | **FAIL** [→`615db3b9`] |
+| 51 | GF(251) | 64 / uniform | 15.13× | **1.674×** | **FAIL** [→`d36cc414`] |
+| 52 | GF(251) | 64 / deficient | 17.92× | **1.728×** | **FAIL** [→`d36cc414`] |
+| 53 | GF(251) | 256 / uniform | 35.33× | **2.331×** | **FAIL** `[aspirational]` [→`6823c8a0`] |
+| 54 | GF(251) | 256 / deficient | 39.57× | **2.400×** | **FAIL** `[aspirational]` [→`6823c8a0`] |
+| 55 | GF(65521) | 64 / uniform | 3.34× | **2.095×** | **FAIL** [→`9138d86c`] |
+| 56 | GF(65521) | 64 / deficient | 3.39× | **1.833×** | **FAIL** [→`9138d86c`] |
 | 57 | GF(65521) | 256 / uniform | 7.37× | **1.247×** | **PASS** |
 | 58 | GF(65521) | 256 / deficient | 8.38× | **1.210×** | **PASS** |
 | 75 | GF(31) | 256 / deficient | 1.69× | **0.521×** | **PASS** |
 
 **Summary:**
 - Rows 47–50 (GF(7) × 4): all PASS (new). Old ratio range 2.27–10.56×; new 0.170–0.522×.
-- Rows 51–54 (GF(251) × 4): all FAIL, but massively improved (15–40× → 1.7–2.4×). Structural gap remains. Routes to `615db3b9`.
-- Rows 55–56 (GF(65521)/64): FAIL (3.34–3.39× → 1.83–2.10×). Improved but above 1.5×. Routes to `615db3b9`.
+- Rows 51–52 (GF(251)/64): FAIL (15–18× → 1.7×). Improved but above 1.5×. Deferred to `d36cc414`.
+- Rows 53–54 (GF(251)/256): FAIL `[aspirational]` (35–40× → 2.3–2.4×). Inheriting GF(251)/n=256 PLE-side gap from `6823c8a0`. Deferred to `6823c8a0`.
+- Rows 55–56 (GF(65521)/64): FAIL (3.34–3.39× → 1.83–2.10×). Improved but above 1.5×. Deferred to `9138d86c`.
 - Rows 57–58 (GF(65521)/256): PASS (7.37–8.38× → 1.21–1.25×).
 - Row 75 (GF(31)/256/deficient): PASS (1.69× → 0.521×).
 
 **Cells closed by 6613abf4: A8 rows 47–50, 57–58, 75 (7 cells FAIL→PASS).**
-**Cells still FAIL: A8 rows 51–56 (6 cells). All route to `615db3b9`.**
+**Cells still FAIL: A8 rows 51–56 (6 cells).**
+- Rows 51–52: deferred to `d36cc414`.
+- Rows 53–54: `[aspirational]`, inheriting `6823c8a0` GF(251)/n=256 PLE-side gap.
+- Rows 55–56: deferred to `9138d86c`.
 
-SC#4 note: The remaining FAIL cells (rows 51–56) all retain their `[→615db3b9]`
-routing from the predecessor scorecard. No new `[aspirational]` amendments are
-needed — these cells have no aspirational marker in the predecessor scorecard
-and remain FAIL with the same follow-up routing.
+SC#4 note: The routing above reflects the issue amendment committed in `06cef9fe`.
+Rows 53–54 carry `[aspirational]` because the GF(251)/n=256 gap was inherited from
+the predecessor task `6823c8a0` and is bounded by PLE factorisation cost, not
+algorithmic error. Rows 51–52 and 55–56 are `[hard]` FAIL cells deferred to
+dedicated follow-up tasks.
 
 ---
 
