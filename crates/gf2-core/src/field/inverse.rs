@@ -61,7 +61,10 @@
 //! Moore–Penrose pseudo-inverse manually.
 
 use crate::field::matrix::FieldMatrix;
-use crate::field::triangular::{trsm_lower, trsm_upper, trtri_lower, trtri_upper, trtrm};
+use crate::field::triangular::{
+    trsm_lower, trsm_lower_blocked, trsm_upper, trsm_upper_blocked, trtri_lower, trtri_upper,
+    trtrm, TRSM_BLOCKED_PANEL_SIZE,
+};
 use crate::field::vec::FieldVec;
 use crate::field::FiniteField;
 
@@ -409,11 +412,31 @@ impl<F: FiniteField> FieldMatrix<F> {
 
         // Solve L · Y' = Y in place. L is n×n unit lower-triangular at
         // full rank. Result overwrites y.
-        trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
+        // Dispatch to the blocked variant when the field exposes the AVX2
+        // whole-GEMM fast path and the matrix is large enough to benefit
+        // (the first blocking update lands at panel k=1, GEMM shape
+        // bs × bs × k, which hits the threshold at bs = 64 even for k=1).
+        if F::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
+            trsm_lower_blocked(
+                l.submat(.., ..),
+                y.submat_mut(.., ..),
+                TRSM_BLOCKED_PANEL_SIZE,
+            );
+        } else {
+            trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
+        }
 
         // Solve E · X = Y' in place. E is n×n upper-triangular at full
         // rank (pivots on the leading diagonal because rank == n).
-        trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
+        if F::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
+            trsm_upper_blocked(
+                e.submat(.., ..),
+                y.submat_mut(.., ..),
+                TRSM_BLOCKED_PANEL_SIZE,
+            );
+        } else {
+            trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
+        }
 
         Some(y)
     }
@@ -1924,4 +1947,123 @@ mod tests {
     // The existing test_inv_matches_reference_fp7/fp251/fp65521/mersenne31 tests
     // now exercise both the scalar path (n ≤ 15) and the blocked path (n = 16, 32).
     // No new test is needed; the boundary coverage is already present.
+    // ─── Blocked solve_batch correctness — boundary-length sweep ─────────
+    //
+    // These tests verify that the blocked-TRSM dispatch in solve_batch
+    // is correct: A · solve_batch(A, B) == B for square full-rank A and
+    // arbitrary B.  The blocked path is only activated when
+    // F::has_simd_gemm_classical() is true AND n >= TRSM_BLOCKED_PANEL_SIZE,
+    // so we include sizes both below and at/above the panel boundary.
+    //
+    // Note: rank-deficient inputs are covered by test_solve_batch_rank_deficient_*
+    // above; here we focus on correctness across the blocked/unblocked
+    // boundary sizes (1, 15, 16, 17, 63, 64, 65) for six primes.
+
+    const SOLVE_BOUNDARY_LENS: &[usize] = &[1, 15, 16, 17, 63, 64, 65];
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(8))]
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<7>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp7(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<7>(n, mseed);
+                    let b = random_fp::<7>(n, k, mseed.wrapping_add(0xC1));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<7> n={} k={}", n, k);
+                }
+            }
+        }
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<31>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp31(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<31>(n, mseed);
+                    let b = random_fp::<31>(n, k, mseed.wrapping_add(0xC2));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<31> n={} k={}", n, k);
+                }
+            }
+        }
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<127>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp127(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<127>(n, mseed);
+                    let b = random_fp::<127>(n, k, mseed.wrapping_add(0xC3));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<127> n={} k={}", n, k);
+                }
+            }
+        }
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<241>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp241(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<241>(n, mseed);
+                    let b = random_fp::<241>(n, k, mseed.wrapping_add(0xC4));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<241> n={} k={}", n, k);
+                }
+            }
+        }
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<251>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp251(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<251>(n, mseed);
+                    let b = random_fp::<251>(n, k, mseed.wrapping_add(0xC5));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<251> n={} k={}", n, k);
+                }
+            }
+        }
+
+        /// Blocked solve_batch round-trip: A · X == B for Fp<65521>.
+        #[test]
+        fn prop_blocked_solve_boundary_sweep_fp65521(seed in 0u64..1_000_000) {
+            for &n in SOLVE_BOUNDARY_LENS {
+                for &k in SOLVE_BOUNDARY_LENS {
+                    let mseed = seed
+                        .wrapping_add((n as u64).wrapping_mul(0x9E37_79B9))
+                        .wrapping_add((k as u64).wrapping_mul(0x517C_C1B7));
+                    let a = random_fp_invertible::<65521>(n, mseed);
+                    let b = random_fp::<65521>(n, k, mseed.wrapping_add(0xC6));
+                    let x = a.solve_batch(&b).expect("full-rank");
+                    let recon = gemm(&a, &x);
+                    proptest::prop_assert_eq!(&recon, &b, "Fp<65521> n={} k={}", n, k);
+                }
+            }
+        }
+    }
 }
