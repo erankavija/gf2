@@ -45,6 +45,8 @@ use seed::{
 
 const PRIME_7: u64 = 7;
 const PRIME_31: u64 = 31;
+const PRIME_127: u64 = 127;
+const PRIME_241: u64 = 241;
 const PRIME_251: u64 = 251;
 const PRIME_65521: u64 = 65521;
 const MERSENNE_31: u64 = 2_147_483_647;
@@ -242,6 +244,26 @@ fn bench_fp_31(c: &mut Criterion) {
     );
 }
 
+fn bench_fp_127(c: &mut Criterion) {
+    run_field::<gf2_core::gfp::Fp<PRIME_127>, _, _>(
+        c,
+        "Fp_127",
+        SIZES,
+        fp_matrix_from_seed::<PRIME_127>,
+        fp_rank_deficient_from_seed::<PRIME_127>,
+    );
+}
+
+fn bench_fp_241(c: &mut Criterion) {
+    run_field::<gf2_core::gfp::Fp<PRIME_241>, _, _>(
+        c,
+        "Fp_241",
+        SIZES,
+        fp_matrix_from_seed::<PRIME_241>,
+        fp_rank_deficient_from_seed::<PRIME_241>,
+    );
+}
+
 fn bench_fp_251(c: &mut Criterion) {
     run_field::<gf2_core::gfp::Fp<PRIME_251>, _, _>(
         c,
@@ -300,6 +322,8 @@ criterion_group! {
     targets =
         bench_fp_7,
         bench_fp_31,
+        bench_fp_127,
+        bench_fp_241,
         bench_fp_251,
         bench_fp_65521,
         bench_fp_m31,

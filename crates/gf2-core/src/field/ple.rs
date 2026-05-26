@@ -2449,6 +2449,61 @@ mod tests {
         }
     }
 
+    /// Sanity wall-time measurement: runs `FieldMatrix::ple` on a
+    /// `256 × 256` GF(251) matrix five times and prints the median per-call
+    /// duration. Output is informational only; the test always passes
+    /// (the goal is to catch the case where the panelized dispatch is
+    /// either not active or actively making things slower, by giving the
+    /// developer a quick numeric handle). The b0fa00af pre-change
+    /// baseline was ~4.7 ms.
+    #[test]
+    #[ignore = "slow: wall-time probe for panelized PLE; informational only"]
+    fn test_ple_panelized_wall_time_probe_gf251_256_uniform() {
+        let n = 256;
+        let a = random_fp::<251>(n, n, 0xC3FAu64);
+        // Warmup.
+        for _ in 0..3 {
+            let _ = a.ple();
+        }
+        let mut samples: Vec<u128> = Vec::new();
+        for _ in 0..5 {
+            let start = std::time::Instant::now();
+            let _ = a.ple();
+            samples.push(start.elapsed().as_micros());
+        }
+        samples.sort();
+        let median_us = samples[samples.len() / 2];
+        eprintln!("pluq GF(251) n=256 uniform median: {median_us} µs (samples {samples:?})");
+    }
+
+    #[test]
+    fn test_ple_panelized_dispatch_active_for_small_primes() {
+        // Sanity probe: confirm `PLE_PANEL_COLS` and
+        // `has_simd_ple_panel_base` resolve to the expected values for
+        // each in-scope field.
+        assert_eq!(<Fp<7> as FiniteField>::PLE_PANEL_COLS, 256);
+        assert_eq!(<Fp<31> as FiniteField>::PLE_PANEL_COLS, 256);
+        assert_eq!(<Fp<127> as FiniteField>::PLE_PANEL_COLS, 256);
+        assert_eq!(<Fp<241> as FiniteField>::PLE_PANEL_COLS, 256);
+        assert_eq!(<Fp<251> as FiniteField>::PLE_PANEL_COLS, 256);
+        assert_eq!(<Fp<65521> as FiniteField>::PLE_PANEL_COLS, 1);
+        assert_eq!(<Fp<MERSENNE_31> as FiniteField>::PLE_PANEL_COLS, 1);
+
+        // `has_simd_ple_panel_base()` should be true for P <= 251 on
+        // any AVX2 host. If this fails on AVX2, the dispatcher is not
+        // wired correctly.
+        if std::arch::is_x86_feature_detected!("avx2") {
+            assert!(<Fp<7> as FiniteField>::has_simd_ple_panel_base());
+            assert!(<Fp<31> as FiniteField>::has_simd_ple_panel_base());
+            assert!(<Fp<127> as FiniteField>::has_simd_ple_panel_base());
+            assert!(<Fp<241> as FiniteField>::has_simd_ple_panel_base());
+            assert!(<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+        }
+        // P > 251 must NOT advertise the panel kernel.
+        assert!(!<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
+        assert!(!<Fp<MERSENNE_31> as FiniteField>::has_simd_ple_panel_base());
+    }
+
     #[test]
     fn test_ple_panelized_boundary_sweep_fp7() {
         boundary_sweep_fp::<7>();
