@@ -178,15 +178,7 @@ fn spmm_row_safe(
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-fn gemm_panel_safe(
-    a: &[u16],
-    bt: &[u16],
-    m: usize,
-    k: usize,
-    n: usize,
-    p: u16,
-    c: &mut [u16],
-) {
+fn gemm_panel_safe(a: &[u16], bt: &[u16], m: usize, k: usize, n: usize, p: u16, c: &mut [u16]) {
     // Safety: `detect_x86` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::fp_medium::fp_medium_gemm_panel(a, bt, m, k, n, p, c) }
 }

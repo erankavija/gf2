@@ -756,12 +756,14 @@ pub unsafe fn fp_medium_spmm_row(
 // NR-major panels once per gemm) and inner MR-row amortization
 // (broadcast MR rows of A against one NR-wide B-load per step).
 
-/// MR register tile rows for the medium-prime panel kernel. Picked
-/// at MR=2 after measuring MR=4 (32 % regression at GF(65521)/n=4096;
-/// 16 u64-lane accumulator ymm vectors + 4 A-broadcasts + ephemeral
-/// product temps blow past the 16-register file and the compiler
-/// spills ~10 ymm per inner step). MR=2 keeps the acc tower at 8 ymm,
-/// leaving the broadcasts + B-load + product temps register-resident.
+/// MR register tile rows for the medium-prime panel kernel. Empirical
+/// sweep (74ba1cdc R1, GF(65521)/n=4096):
+///   MR=2 -> 39.6 Gop/s   (peak; 8 acc ymm fits cleanly)
+///   MR=3 -> 31.3 Gop/s   (-21 % vs MR=2; 12 acc ymm spills 4-6)
+///   MR=4 -> 25.9 Gop/s   (-35 % vs MR=2; 16 acc ymm spills 8-10)
+/// The widen-to-u64 path holds 4 u64 acc ymm per row; any MR > 2
+/// exceeds the 16-register file once we count the B-load + MR
+/// broadcasts + product temps.
 const FP_MEDIUM_PANEL_MR: usize = 2;
 
 /// NR register tile cols (one ymm of u16 lanes = 16 cells).
@@ -944,6 +946,10 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
 
     for t in 0..k {
         // 1 ymm of B (16 u16 lanes covering the panel's 16 cells).
+        // The Zen-3 L1d hardware prefetcher already covers the
+        // contiguous 32-byte panel stride; an explicit `_mm_prefetch`
+        // measured -1.3 % at n=4096 (74ba1cdc R1 sweep) so we leave
+        // the inner loop free of it.
         let bv = _mm256_loadu_si256(b_panel_ptr.add(t * FP_MEDIUM_PANEL_NR) as *const __m256i);
 
         if M_EFF >= 1 {
@@ -1065,8 +1071,8 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         row_buf[14] = tmp[2];
         row_buf[15] = tmp[3];
         let c_row0_base = i_blk * n + j_blk;
-        for j_off in 0..n_eff {
-            *c.get_unchecked_mut(c_row0_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        for (j_off, slot) in row_buf.iter().take(n_eff).enumerate() {
+            *c.get_unchecked_mut(c_row0_base + j_off) = (*slot % p_u64) as u16;
         }
     }
     if M_EFF >= 2 {
@@ -1092,8 +1098,8 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         row_buf[14] = tmp[2];
         row_buf[15] = tmp[3];
         let c_row1_base = (i_blk + 1) * n + j_blk;
-        for j_off in 0..n_eff {
-            *c.get_unchecked_mut(c_row1_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        for (j_off, slot) in row_buf.iter().take(n_eff).enumerate() {
+            *c.get_unchecked_mut(c_row1_base + j_off) = (*slot % p_u64) as u16;
         }
     }
     if M_EFF >= 3 {
@@ -1119,8 +1125,8 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         row_buf[14] = tmp[2];
         row_buf[15] = tmp[3];
         let c_row2_base = (i_blk + 2) * n + j_blk;
-        for j_off in 0..n_eff {
-            *c.get_unchecked_mut(c_row2_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        for (j_off, slot) in row_buf.iter().take(n_eff).enumerate() {
+            *c.get_unchecked_mut(c_row2_base + j_off) = (*slot % p_u64) as u16;
         }
     }
     if M_EFF >= 4 {
@@ -1146,8 +1152,8 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         row_buf[14] = tmp[2];
         row_buf[15] = tmp[3];
         let c_row3_base = (i_blk + 3) * n + j_blk;
-        for j_off in 0..n_eff {
-            *c.get_unchecked_mut(c_row3_base + j_off) = (row_buf[j_off] % p_u64) as u16;
+        for (j_off, slot) in row_buf.iter().take(n_eff).enumerate() {
+            *c.get_unchecked_mut(c_row3_base + j_off) = (*slot % p_u64) as u16;
         }
     }
 }
