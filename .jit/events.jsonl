@@ -5341,3 +5341,4 @@
 {"type":"issue_state_changed","id":"9d2e83cf-e3a7-47b6-86af-b1feca8121e9","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T09:36:18.154141557Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"6297f1f8-f172-4d59-aba7-76776561e5c1","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T09:37:06.180809367Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"054e33e7-8ad9-46d6-aa00-cedee6ba2312","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T09:37:06.183675018Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"c503142e-5ee7-4818-b46f-f926f5db24ad","issue_id":"695350fd-a59f-46b2-b528-2bbb0d0ecc6f","timestamp":"2026-05-26T11:18:04.360490146Z","title":"fp_medium u16-lane BLIS MC/KC restructure (74ba1cdc Phase 6b)","priority":"normal"}

@@ -8,8 +8,27 @@
 | Host | Linux 7.0.3-arch1-1 / Zen 3 (AMD Ryzen 9 5900X), AVX2+FMA, no AVX-512 |
 | Toolchain | rustc 1.95.0 |
 | Branch | `worktree-agent-74ba1cdc-r1` (anchored to `c24765df`) |
-| Status | **PARTIAL PASS** — GF(251) PASS; GF(65521) SHORTFALL (gap +17 %) |
+| Status | **PASS** with user-approved SC#2 deferral to `695350fd` (see § 1.1) |
 | Supersedes | `dev/bench_results/2026-05-25-74ba1cdc-fgemm-engineering.md` (R0 wall-hit) |
+
+## 1.1 SC#2 amendment — user-approved deferral to 695350fd
+
+Original SC#2: "GF(65521) at n=4096: ratio gf2/fflas ≤ 1.5× on 5-trial CCX1-pinned bench on the Zen 3 reference host."
+
+**Amendment (2026-05-26, user-approved):** SC#2 is honoured by deferring the
+remaining +17% gap on GF(65521)/4096 to follow-up task **`695350fd`** ("fp_medium
+u16-lane BLIS MC/KC restructure (74ba1cdc Phase 6b)"). 74ba1cdc closes PASS for
+SC#1 (GF(251)/4096 ratio 1.466) and for all non-regression / correctness
+criteria. The GF(65521)/4096 cell is owned by `695350fd` for closure.
+
+98336ab4 dependency re-points to `695350fd` (instead of `74ba1cdc`) for the
+full-PASS n=4096 re-bench. The R1 engineering progress on fp_medium (the new
+`fp_medium_gemm_panel` kernel, MR=2 NR=16, +9.5% throughput vs baseline) is
+the foundation that `695350fd` builds on.
+
+This amendment is recorded per `feedback_hard_criterion_self_satisfaction` and
+`feedback_no_autonomous_amendments` (user gave explicit approval via the
+session-8 escalation).
 
 ---
 
