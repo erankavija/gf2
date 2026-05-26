@@ -2,7 +2,7 @@
   "id": "695350fd-a59f-46b2-b528-2bbb0d0ecc6f",
   "title": "fp_medium u16-lane BLIS MC/KC restructure (74ba1cdc Phase 6b)",
   "description": "Phase 6b follow-up under epic `026fc832`. 74ba1cdc R1 closed GF(251)/n=4096 to PASS (ratio 1.458) but GF(65521)/n=4096 remained SHORTFALL at ratio 1.753. The R1 worker tried MR=3 and MR=4 register-tile variants on the new fp_medium panel kernel but both regressed (-21% and -35%) due to register spills.\n\n## Amendment (2026-05-26, user-approved, session 9)\n\n695350fd R0 (commits `0de86fd9..191a69c8`) landed a +1.2% improvement (40.25 Gop/s, ratio 1.732) on GF(65521)/n=4096 via BLIS NC outer cache blocking + MR-interleaved A-pack scratch. R0 worker's µop analysis found the AVX2 u16-mulhi-mullo MAC path is **arithmetic-bound at ~40 Gop/s** (kernel achieves 106% of estimated shuffle-pipe ceiling). fflas's 69.72 Gop/s matches Zen-3 f64 FMA peak (70 GFLOP/s) → fflas likely uses an f64 GEMM cascade.\n\n**User chose: file Phase 6e `0749dbad`** (\"f64 GEMM cascade for fp_medium\") as the architectural follow-up. The u16 path improvement is bounded by the AVX2 arithmetic ceiling; further work requires a new f64 cascade kernel analogous to Route A's f32 path.\n\n**Amended SC#1 reads:** \"GF(65521) at n=4096 PASS via follow-up `0749dbad`. Within 695350fd, the +1.2% improvement is documented (40.25 Gop/s vs 39.78 baseline, ratio 1.753 → 1.732); full closure deferred to `0749dbad`.\"\n\n**Amended SC#7 reads:** \"98336ab4's full-PASS re-bench depends on `0749dbad` landing (not `695350fd` alone). DAG re-wired: `98336ab4` now depends on `0749dbad` instead of `695350fd`.\"\n\nOriginal SC#1 + SC#7 preserved in the **Original Success Criteria** subsection below for audit. All other SCs remain `[hard]` and are verified for 695350fd closure.\n\n## Background\n\nR1 fp_medium changes (`crates/gf2-kernels-simd/src/x86/fp_medium.rs`, new in commit `ba4a10e9`):\n- Introduced `fp_medium_gemm_panel` with MR=2, NR=16 (chosen to fit 16 AVX2 ymm registers without spills).\n- Brought GF(65521)/n=4096 from 36.34 to 39.78 Gop/s (+9.5%).\n- Ratio improved from 1.92 to 1.753; PASS threshold is 1.5 → gap +17%.\n\nThe MR=2, NR=16 tile is register-pressure-limited.\n\n## Scope (R0 — implemented)\n\nRestructure `fp_medium_gemm_panel` with BLIS-style 3-level cache blocking + tuned register tile. Keep MR=2 (MR=3/4 register-spill regressions confirmed).\n\n## Success Criteria (current — amended 2026-05-26)\n\n- [hard] [AMENDED 2026-05-26 — see Amendment block above] GF(65521) at n=4096 PASS via follow-up `0749dbad`. Within 695350fd, document the +1.2% improvement (40.25 Gop/s, ratio 1.732) in the evidence doc; full closure deferred to `0749dbad`.\n- [hard] No regression on existing PASS cells at n ∈ {64, 256, 1024} for all 6 primes (delta ≤ 5%).\n- [hard] Bit-exact correctness preserved (proptest sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} for all 6 primes).\n- [hard] No BLAS dependency; pure Rust + AVX2.\n- [hard] Unsafe stays in `gf2-kernels-simd` (no new unsafe in `gf2-core`).\n- [hard] Evidence doc at `dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` records before/after numbers + non-regression sweep + reproducibility commands.\n- [hard] [AMENDED 2026-05-26 — see Amendment block above] 98336ab4's full-PASS re-bench depends on `0749dbad` landing (not `695350fd` alone). DAG re-wired: `98336ab4` now depends on `0749dbad` instead of `695350fd`.\n\n## Original Success Criteria (pre-amendment, preserved for audit)\n\n- [hard] GF(65521) at n=4096: ratio gf2/fflas ≤ 1.5× on 5-trial CCX1-pinned bench (flock-guarded) on the Zen 3 reference host. Reference: 69.72 Gop/s fflas single-thread.\n- [hard] After this task lands, 98336ab4 worker re-benches all n=4096 cells; 98336ab4 closes PASS for all 6 cells.\n\n## Out of scope\n\n- Route A / GF(251) work (closed by 74ba1cdc R1).\n- AVX-512 (epic `7f809931`).\n- BLAS delegation (user-rejected).\n- Multi-threading.\n\n## Notes\n\n- Filed session 8 (2026-05-26) per user-approved deferral of 74ba1cdc SC#2.\n- R0 landed +1.2% improvement and characterised the AVX2 u16 arithmetic ceiling.\n- Phase 6e (`0749dbad`) filed session 9 to pursue the f64 cascade approach.\n- Reference: 74ba1cdc R0 + R1 evidence docs.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -12,10 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-26T20:10:05.072127642Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-26T15:53:03.357187855Z"
+      "updated_at": "2026-05-26T20:09:48.778525980Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-26T20:02:22.821184051Z"
     }
   },
   "context": {},
@@ -36,5 +46,5 @@
     "ppc-kernel:C2"
   ],
   "created_at": "2026-05-26T11:18:04.360173406+00:00",
-  "updated_at": "2026-05-26T15:59:58.794605323+00:00"
+  "updated_at": "2026-05-26T20:10:08.316349540+00:00"
 }
