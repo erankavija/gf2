@@ -5350,3 +5350,6 @@
 {"type":"gate_passed","id":"5f94ce6d-165d-448a-b090-b780747f8300","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.016850727Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"c15cd622-be83-4e17-9e6b-822b83b81619","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.517740230Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"b5ccb8e1-6d7f-4237-8324-236f6bd0405a","issue_id":"74ba1cdc-20dc-43bd-a890-7ef2be4ef345","timestamp":"2026-05-26T11:32:39.517769220Z"}
+{"type":"issue_state_changed","id":"a522eab8-5e69-4352-9837-910326bf4d26","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T11:33:18.964664266Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"fb0495fc-f37f-4f21-808e-5906e2284e36","issue_id":"6823c8a0-ac0b-4b4d-9250-d59272e2f1b9","timestamp":"2026-05-26T11:33:18.967492147Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"8d8299d2-4e87-4d17-aec3-0fce095cecab","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-26T14:20:44.168674861Z","title":"u16-lane PLE base-case kernel (6823c8a0 Phase 6d)","priority":"normal"}
