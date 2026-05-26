@@ -6,18 +6,21 @@
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "27bb2f75-7305-4ae2-8cfe-512696bf4fcc",
-    "695350fd-a59f-46b2-b528-2bbb0d0ecc6f",
-    "52cce970-8142-4ff9-ac19-95ed994fee38",
-    "873cbec1-6c55-44db-9685-f6c8a2614eb6",
-    "b0fa00af-795c-49de-b27a-870d5e239cc1",
-    "74ba1cdc-20dc-43bd-a890-7ef2be4ef345",
     "e8a0c47a-2ad1-4c31-bb30-531256fce432",
-    "68db401b-7118-4cd6-be40-c3c5002abde4",
-    "aaa847cf-1f94-42a4-9ddc-513a04c92b5a",
+    "695350fd-a59f-46b2-b528-2bbb0d0ecc6f",
+    "6a7d4c8e-6b06-4987-bb2a-88143b102ed4",
+    "5ce13bae-61db-4df2-85b1-87447f643cd8",
     "bd9c6e13-a2ee-4968-8dd9-45a7f13e04c8",
+    "aaa847cf-1f94-42a4-9ddc-513a04c92b5a",
+    "68db401b-7118-4cd6-be40-c3c5002abde4",
+    "27bb2f75-7305-4ae2-8cfe-512696bf4fcc",
     "615db3b9-9dbf-44b6-a9e4-7f60d6009a09",
-    "5ce13bae-61db-4df2-85b1-87447f643cd8"
+    "d36cc414-7bb9-4937-969a-9ab581681a8b",
+    "9138d86c-eccf-4756-91f5-0bb4b1080e4b",
+    "873cbec1-6c55-44db-9685-f6c8a2614eb6",
+    "52cce970-8142-4ff9-ac19-95ed994fee38",
+    "b0fa00af-795c-49de-b27a-870d5e239cc1",
+    "74ba1cdc-20dc-43bd-a890-7ef2be4ef345"
   ],
   "gates_required": [
     "code-review",
@@ -43,5 +46,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-08T21:53:15.427284885+00:00",
-  "updated_at": "2026-05-26T19:25:05.946552146+00:00"
+  "updated_at": "2026-05-26T22:03:57.183770604+00:00"
 }

@@ -1,0 +1,24 @@
+{
+  "id": "d36cc414-7bb9-4937-969a-9ab581681a8b",
+  "title": "GF(251)/n=64 borderline investigation (wave-7b rows 23, 37, 40, 51, 52)",
+  "description": "Investigation task filed under epic `026fc832`. Predecessors: wave 7b implementation issues `869ce43b`, `8df0c501`, `6613abf4` all closed cells just over the 1.5× threshold on GF(251)/n=64 (1.566×–1.728×).\n\n## Background\n\nWave 7b's blocked echelon (`869ce43b`), invert (`8df0c501`), and solve (`6613abf4`) implementations all close large blocks of A8 cells but each leaves 1-2 cells at GF(251)/n=64 just over the 1.5× threshold:\n\n| A8 row | Op | Field/n/regime | Ratio | Source |\n|---|---|---|---:|---|\n| 23 | echelon | GF(251)/64/deficient | 1.60× | 869ce43b |\n| 37 | invert | GF(251)/64/uniform | 1.566× | 8df0c501 |\n| 40 | invert | GF(251)/256/deficient | 1.707× | 8df0c501 |\n| 51 | solve | GF(251)/64/uniform | 1.674× | 6613abf4 |\n| 52 | solve | GF(251)/64/deficient | 1.728× | 6613abf4 |\n\nThe cluster (1.566×–1.728×) suggests a common dispatch-path overhead rather than 5 distinct architectural gaps. Hypothesis: at n=64 for `Fp<251>`, the panelized PLE + Schur-update path's per-call setup cost (panel-base SIMD probe, identity-build, perm-vector allocation, etc.) dominates the actual compute.\n\n## Success Criteria\n\n- [hard] Identify the dominant per-call overhead at GF(251)/n=64 across the wave-7b ops (profile via `cargo flamegraph` or `perf stat` + manual timing decomposition). Document findings in a new evidence doc.\n- [hard] Either:\n  (a) Land a dispatch-path optimization that brings all 5 cells to ≤ 1.5×, OR\n  (b) Document the structural-gap analysis and recommend per-cell [aspirational] amendments to wave-7b issue descriptions (with the dominant-cost decomposition as evidence).\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%, paired tight-session bench).\n- [hard] If a fix is landed, bit-exact correctness preserved across all 7 prime sweeps (reuse existing wave-7b proptests).\n- [hard] No `unsafe` outside kernel crates.\n\n## Out of scope\n\n- Mersenne31 dispatch gap (separate follow-up).\n- GF(65521)/n=64 solve gap (separate follow-up).\n- GF(251)/n=256 cells (already amended [aspirational] inheriting 6823c8a0 PLE-side gap).",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "epic:gf2-core-sota-stretch"
+  ],
+  "created_at": "2026-05-26T22:03:46.579326530+00:00",
+  "updated_at": "2026-05-26T22:03:46.579335260+00:00"
+}
