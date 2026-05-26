@@ -1495,12 +1495,15 @@ mod tests {
     // below the actual measurement; the test now uses `assert_eq!`
     // against this pinned value.
     //
-    // NOTE (8df0c501, 2026-05-26): n=1024 >= BLOCKED_INVERT_THRESHOLD,
-    // so the blocked path now runs. This value was measured under the old
-    // scalar-pivot + trtrm driver and is now stale. The slow-tier test
-    // will fail on next nightly run; the lead should re-measure and update
-    // this constant. Fast-tier CI is not affected (test is #[ignore]).
-    const EXPECTED_INV_N1024: u64 = 6898;
+    // Re-measured 2026-05-27 (8df0c501 R1 rework) under the blocked-invert
+    // driver (blocked_inv_panelized path). n=1024 >= BLOCKED_INVERT_THRESHOLD,
+    // so the blocked path (ple + identity + 2 trsm + column-permute) now runs
+    // instead of the old scalar-pivot + trtri + trtrm driver. The new count
+    // (5246) is lower than the old value (6898) because the two trsm calls on
+    // the n×n identity RHS fold output directly into the RHS buffer instead of
+    // materialising a separate (m-h)×h scratch per recursion level.
+    // Measured by slow-tier nextest run on 2026-05-27 (worktree agent-8df0c501).
+    const EXPECTED_INV_N1024: u64 = 5246;
     const EXPECTED_SOLVE_N64: u64 = 294;
     const EXPECTED_DET_N64: u64 = 264;
 
