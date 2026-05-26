@@ -150,22 +150,23 @@ pub unsafe fn ple_panel_base_canonical(
             row_perm.swap(rank, piv);
         }
 
-        // Step 3: scale. Read the pivot value, look up its inverse,
-        // then update column `col` of rows (rank+1..m) to be the
-        // L-multipliers `a[k, col] * inv mod p`.
+        // Step 3+4: fused scale + Schur update.
+        //
+        // For each row `k in (rank+1)..m`:
+        //   - Compute multiplier `mult = window[k, col] * inv mod p`
+        //     and write back to `window[k, col]` (L-multiplier).
+        //   - Update tail `window[k, col+1..win] -= mult *
+        //     window[rank, col+1..win]` (mod p) via AVX2 axpy.
+        //
+        // Fusing eliminates the separate column-strided scalar scale
+        // pass and lets us keep the multiplier `mult` in a register
+        // across the SIMD tail update.
         let pivot_val = *window.get_unchecked(rank * win + col);
         debug_assert!(pivot_val != 0, "panel base: zero pivot post-search");
         let inv = *inv_table.get_unchecked(pivot_val as usize) as u32;
 
         if rank + 1 < m {
-            scale_column_below_pivot(window, win, col, rank, m, p, inv, mu_vec, p_vec32);
-        }
-
-        // Step 4: Schur update (row-major axpy form). For each row
-        // `k in (rank+1)..m`, update
-        //   window[k, col+1..win] -= window[k, col] * window[rank, col+1..win]  (mod p)
-        if rank + 1 < m && col + 1 < win {
-            schur_update_panel(window, win, col, rank, m, p, mu_vec, p_vec32);
+            fused_scale_and_schur(window, win, col, rank, m, p, inv, mu_vec, p_vec32);
         }
 
         // Step 5: record this pivot's column offset (local within
@@ -208,14 +209,23 @@ unsafe fn swap_panel_rows(window: &mut [u8], win: usize, r1: usize, r2: usize) {
     }
 }
 
-/// Scale column `col` below row `rank` by `inv` (mod p).
+/// Fused scale + Schur-complement update for one pivot column.
 ///
-/// Replaces `window[k, col]` with `(window[k, col] * inv) mod p` for
-/// `k in (rank+1)..m`. Uses 8-lane u32 batches with SSOT
-/// `barrett_reduce_lane32` reduction.
+/// For each row `k in (rank+1)..m`:
+///   1. Compute the L-multiplier `mult = window[k, col] * inv mod p`
+///      and write it back into `window[k, col]`. This replaces the
+///      separate column-strided scale loop.
+///   2. Update the tail `window[k, col+1..win] -= mult *
+///      window[rank, col+1..win]` (mod p) via AVX2 axpy: 8-lane u32
+///      MUL + SSOT `barrett_reduce_lane32` + conditional-subtract pack.
+///
+/// Fusing keeps `mult` in a register and removes the separate scalar
+/// pass over the pivot column below the pivot row, cutting the
+/// per-pivot scalar work from `O(m)` to one scalar-mod-mul per row
+/// (still required for the multiplier computation).
 #[inline]
 #[target_feature(enable = "avx2")]
-unsafe fn scale_column_below_pivot(
+unsafe fn fused_scale_and_schur(
     window: &mut [u8],
     win: usize,
     col: usize,
@@ -226,80 +236,33 @@ unsafe fn scale_column_below_pivot(
     mu_vec: __m256i,
     p_vec32: __m256i,
 ) {
-    let start = rank + 1;
-    if start >= m {
-        return;
-    }
-    // Column-strided access (stride = win), so we do per-element
-    // scalar updates here — the scale step is O(m) per pivot column;
-    // it is dominated by the O(m * win) Schur update, so scalar is fine.
-    // Future optimisation: AVX2-gather batch if `m * num_pivots` becomes
-    // a hotspot in profiling.
-    let _ = (mu_vec, p_vec32); // unused for the scalar-stride scale path
-    let p_u32 = p as u32;
-    for k in start..m {
-        let v = *window.get_unchecked(k * win + col) as u32;
-        let mul = v * inv;
-        let red = mul % p_u32;
-        *window.get_unchecked_mut(k * win + col) = red as u8;
-    }
-}
-
-/// Row-major Schur-complement update for one pivot column.
-///
-/// For each row `k in (rank+1)..m`, computes
-/// `window[k, col+1..win] -= mult_k * window[rank, col+1..win]` mod p
-/// where `mult_k = window[k, col]` (the L-multiplier just written in
-/// the scale step).
-///
-/// Each row's axpy runs in 8-lane u32 SIMD blocks: load 8 canonical
-/// bytes from the pivot row and from row `k`, multiply by the
-/// scalar broadcast multiplier, accumulate the lane-pair MAC, reduce
-/// mod p via `barrett_reduce_lane32`, then subtract the canonical
-/// reduced product from row `k`'s slice with a conditional add
-/// (the conditional add restores canonical range `[0, p)`).
-///
-/// Tail elements (fewer than 8 columns remaining) are processed scalar.
-#[inline]
-#[target_feature(enable = "avx2")]
-unsafe fn schur_update_panel(
-    window: &mut [u8],
-    win: usize,
-    col: usize,
-    rank: usize,
-    m: usize,
-    p: u8,
-    mu_vec: __m256i,
-    p_vec32: __m256i,
-) {
     let tail_start = col + 1;
-    if tail_start >= win {
-        return;
-    }
     let tail_len = win - tail_start;
 
-    // Snapshot the pivot row's slice into a temporary buffer so the
-    // inner loop can broadcast contiguous lanes without aliasing the
-    // mutable `window` slice.
-    //
-    // Length is at most `win <= 256`, so a 256-byte stack buffer
-    // suffices.
+    // Snapshot the pivot row's tail into a stack buffer so the inner
+    // loop can broadcast contiguous lanes without aliasing the
+    // mutable `window` slice. The tail length is at most `win <= 256`.
     let mut pivot_buf = [0u8; 256];
     debug_assert!(tail_len <= 256);
-    let pivot_base = rank * win + tail_start;
-    for c in 0..tail_len {
-        pivot_buf[c] = *window.get_unchecked(pivot_base + c);
+    if tail_len > 0 {
+        let pivot_base = rank * win + tail_start;
+        for c in 0..tail_len {
+            pivot_buf[c] = *window.get_unchecked(pivot_base + c);
+        }
     }
     let pivot_slice: &[u8] = &pivot_buf[..tail_len];
 
     let p_u32 = p as u32;
     let p_vec_sub = p_vec32; // alias for clarity below
 
-    // For each row k in (rank+1..m): row-axpy on `window[k, tail_start..win]`.
+    // For each row k in (rank+1..m).
     for k in (rank + 1)..m {
-        let mult = *window.get_unchecked(k * win + col) as u32;
-        if mult == 0 {
-            continue; // no update needed
+        // Step 1: compute multiplier and write back as L-multiplier.
+        let v = *window.get_unchecked(k * win + col) as u32;
+        let mult = (v * inv) % p_u32;
+        *window.get_unchecked_mut(k * win + col) = mult as u8;
+        if mult == 0 || tail_len == 0 {
+            continue;
         }
         let mult_vec = _mm256_set1_epi32(mult as i32);
 
