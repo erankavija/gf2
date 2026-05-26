@@ -769,6 +769,48 @@ const FP_MEDIUM_PANEL_MR: usize = 2;
 /// NR register tile cols (one ymm of u16 lanes = 16 cells).
 const FP_MEDIUM_PANEL_NR: usize = 16;
 
+/// Outer-N panel grouping (BLIS NC blocking) for the medium-prime
+/// panel kernel (`jit:695350fd`). Picks a `nc_panels` value that
+/// keeps the active B-data slab resident in the CCX-shared L3
+/// (Zen 3: 32 MB per CCX) while sharing one A-pack across every
+/// panel in the group.
+///
+/// Without NC blocking, every i_blk strip's panel sweep touches the
+/// full `b_packed` (`n_panels * k * NR * 2` u16). At `n=k=4096,
+/// NR=16` that is `256 * 4096 * 16 * 2 = 32 MB` — exactly the size
+/// of Zen 3's L3, so the panels evict each other and each i_blk
+/// strip ends up reloading `b_packed` from DRAM. With `m / MR =
+/// 2048` strips this is `2048 * 32 MB = 64 GB` of B-traffic per
+/// gemm call.
+///
+/// With NC blocking sized to leave room in L3 for the criterion
+/// harness / OS / A-pack scratches, the active B-data slab stays
+/// L3-resident for the full m sweep; each panel byte is read from
+/// DRAM once per gemm instead of `m / MR` times.
+///
+/// 16 MB is the conservative midpoint that mirrors Route A's
+/// (`fp_small_f32.rs::n_c_panels_outer`) calibration. The u16 path
+/// has half the per-cell density of the u32 f32 path used by Route
+/// A, so the same byte budget translates to twice as many u16
+/// panels per outer block — and at the same byte count the L3
+/// pressure is identical, so the budget transfers directly.
+#[inline]
+fn fp_medium_nc_panels_outer(n_panels: usize, k: usize) -> usize {
+    // 16 MB — half of Zen 3's 32 MB CCX-shared L3. Matches the Route
+    // A calibration in `fp_small_f32.rs::n_c_panels_outer` (74ba1cdc
+    // R1, 16 MB sweet spot). The empirical sweep for u16 lanes lives
+    // in `dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md`.
+    const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
+    let panel_bytes = k
+        .saturating_mul(FP_MEDIUM_PANEL_NR)
+        .saturating_mul(core::mem::size_of::<u16>());
+    if panel_bytes == 0 {
+        return n_panels.max(1);
+    }
+    let blocked = L3_BUDGET_BYTES / panel_bytes;
+    blocked.max(1).min(n_panels.max(1))
+}
+
 /// Whole-GEMM panel kernel for medium-prime `Fp<P>` with `P in
 /// (251, 65535]`.
 ///
@@ -844,44 +886,114 @@ pub unsafe fn fp_medium_gemm_panel(
         }
     }
 
-    // Outer-M: process MR-row blocks (steady-state).
+    // BLIS NC outer cache-blocking: for each outer-N panel group, sweep
+    // every M-row block before moving on. Within one outer group the
+    // active B slab is bounded by `fp_medium_nc_panels_outer` so it
+    // stays L3-resident across the full m sweep (each panel byte is
+    // read from DRAM once per gemm instead of `m / MR` times). The
+    // A-pack scratch (MR-interleaved, MR * k u16) is reused across
+    // every panel in the outer group, so the strided-A reads of the
+    // old layout become a single sequential read per i_blk.
+    let nc_panels = fp_medium_nc_panels_outer(n_panels, k);
+
+    // A-pack scratch: MR-interleaved row-major buffer.
+    //   a_pack[t * MR + r] = a[(i_blk + r) * k + t]
+    // Filled once per i_blk; consumed by every panel in the outer
+    // group. This converts the `MR` strided cache-line reads per
+    // k-step into one contiguous `MR * 2` byte read, recovering the
+    // unit-stride pattern the Zen 3 L1d prefetcher tracks best.
+    let mut a_pack: Vec<u16> = vec![0u16; FP_MEDIUM_PANEL_MR * k];
+
     let m_full = m - (m % FP_MEDIUM_PANEL_MR);
-    let mut i_blk = 0usize;
-    while i_blk < m_full {
-        for panel_idx in 0..n_panels {
-            let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
-            let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
-            let n_eff = j_end - j_blk;
-            let panel_off = panel_idx * panel_stride;
-            fp_medium_panel_run::<{ FP_MEDIUM_PANEL_MR }>(
-                a, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
-            );
+    let mut n_outer = 0usize;
+    while n_outer < n_panels {
+        let n_outer_end = (n_outer + nc_panels).min(n_panels);
+
+        let mut i_blk = 0usize;
+        while i_blk < m_full {
+            fp_medium_pack_a_block::<{ FP_MEDIUM_PANEL_MR }>(a, i_blk, k, &mut a_pack);
+            for panel_idx in n_outer..n_outer_end {
+                let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
+                let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
+                let n_eff = j_end - j_blk;
+                let panel_off = panel_idx * panel_stride;
+                fp_medium_panel_run::<{ FP_MEDIUM_PANEL_MR }>(
+                    &a_pack, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
+                );
+            }
+            i_blk += FP_MEDIUM_PANEL_MR;
         }
-        i_blk += FP_MEDIUM_PANEL_MR;
+        // Trailing rows: split into MR ∈ {3, 2, 1} cases. The dispatch
+        // is monomorphised on M_EFF so the unused row's MAC tower
+        // collapses at codegen.
+        if i_blk < m {
+            let m_eff = m - i_blk;
+            macro_rules! run_trailing {
+                ($me:literal) => {{
+                    fp_medium_pack_a_block::<$me>(a, i_blk, k, &mut a_pack);
+                    for panel_idx in n_outer..n_outer_end {
+                        let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
+                        let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
+                        let n_eff = j_end - j_blk;
+                        let panel_off = panel_idx * panel_stride;
+                        fp_medium_panel_run::<$me>(
+                            &a_pack, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
+                        );
+                    }
+                }};
+            }
+            // With FP_MEDIUM_PANEL_MR = 2 the only trailing case is
+            // m_eff == 1. The match keeps M_EFF in {2, 3} reachable
+            // (they monomorphise but never execute) so a future MR
+            // bump only needs to widen the dispatch here.
+            match m_eff {
+                1 => run_trailing!(1),
+                2 => run_trailing!(2),
+                3 => run_trailing!(3),
+                _ => unreachable!("m_eff in 1..MR (with MR<=4) cannot exceed 3"),
+            }
+        }
+        n_outer = n_outer_end;
     }
-    // Trailing rows: split into MR ∈ {3, 2, 1} cases. The dispatch
-    // is monomorphised on M_EFF so the unused row's MAC tower
-    // collapses at codegen.
-    if i_blk < m {
-        let m_eff = m - i_blk;
-        macro_rules! run_trailing {
-            ($me:literal) => {{
-                for panel_idx in 0..n_panels {
-                    let j_blk = panel_idx * FP_MEDIUM_PANEL_NR;
-                    let j_end = (j_blk + FP_MEDIUM_PANEL_NR).min(n);
-                    let n_eff = j_end - j_blk;
-                    let panel_off = panel_idx * panel_stride;
-                    fp_medium_panel_run::<$me>(
-                        a, &b_packed, i_blk, k, n, panel_off, j_blk, n_eff, p, c,
-                    );
-                }
-            }};
+}
+
+/// Pack `M_EFF` rows of `a` starting at row `i_blk` into the MR-
+/// interleaved scratch `a_pack`, layout `a_pack[t * MR + r] =
+/// a[(i_blk + r) * k + t]`. Caller guarantees `a_pack.len() >=
+/// FP_MEDIUM_PANEL_MR * k` and `M_EFF <= FP_MEDIUM_PANEL_MR`.
+///
+/// Monomorphised on `M_EFF` so the row-fold loop collapses to a
+/// straight stride-2 write for the steady-state `M_EFF == MR ==
+/// 2` case and to a single unit-stride write for `M_EFF == 1`.
+#[inline]
+#[target_feature(enable = "avx2")]
+unsafe fn fp_medium_pack_a_block<const M_EFF: usize>(
+    a: &[u16],
+    i_blk: usize,
+    k: usize,
+    a_pack: &mut [u16],
+) {
+    // For each t, write MR contiguous u16 lanes into a_pack. Slack
+    // rows (r >= M_EFF) stay at the previous block's residue but are
+    // never read by the inner kernel (the kernel guards every row
+    // body with `if M_EFF >= ...`), so leaving them stale is sound.
+    debug_assert!(M_EFF <= FP_MEDIUM_PANEL_MR);
+    debug_assert!(a_pack.len() >= FP_MEDIUM_PANEL_MR * k);
+    debug_assert!(a.len() >= (i_blk + M_EFF) * k);
+    for t in 0..k {
+        let dst = a_pack.as_mut_ptr().add(t * FP_MEDIUM_PANEL_MR);
+        // Unrolled small-MR loop: keep the writes obvious to LLVM.
+        if M_EFF >= 1 {
+            *dst = *a.get_unchecked(i_blk * k + t);
         }
-        match m_eff {
-            1 => run_trailing!(1),
-            2 => run_trailing!(2),
-            3 => run_trailing!(3),
-            _ => unreachable!("m_eff in 1..MR (with MR=4) cannot exceed 3"),
+        if M_EFF >= 2 {
+            *dst.add(1) = *a.get_unchecked((i_blk + 1) * k + t);
+        }
+        if M_EFF >= 3 {
+            *dst.add(2) = *a.get_unchecked((i_blk + 2) * k + t);
+        }
+        if M_EFF >= 4 {
+            *dst.add(3) = *a.get_unchecked((i_blk + 3) * k + t);
         }
     }
 }
@@ -891,11 +1003,16 @@ pub unsafe fn fp_medium_gemm_panel(
 ///
 /// Monomorphised on `M_EFF in {1, 2, 3, 4}` so the compiler can prune
 /// the dead rows' MAC ops for the trailing-row cases.
+///
+/// `a_pack` is the MR-interleaved buffer prepared by
+/// `fp_medium_pack_a_block`: `a_pack[t * MR + r]` holds the A row-`r`
+/// value at column `t` for the current i_blk strip. This converts
+/// the MR row reads per k-step into a single contiguous load.
 #[inline]
 #[target_feature(enable = "avx2")]
 #[allow(clippy::too_many_arguments)]
 unsafe fn fp_medium_panel_run<const M_EFF: usize>(
-    a: &[u16],
+    a_pack: &[u16],
     b_packed: &[u16],
     i_blk: usize,
     k: usize,
@@ -926,22 +1043,7 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
     let mut acc3_3 = _mm256_setzero_si256();
     let zero = _mm256_setzero_si256();
 
-    let a_row0_ptr = a.as_ptr().add(i_blk * k);
-    let a_row1_ptr = if M_EFF >= 2 {
-        a.as_ptr().add((i_blk + 1) * k)
-    } else {
-        a_row0_ptr
-    };
-    let a_row2_ptr = if M_EFF >= 3 {
-        a.as_ptr().add((i_blk + 2) * k)
-    } else {
-        a_row0_ptr
-    };
-    let a_row3_ptr = if M_EFF >= 4 {
-        a.as_ptr().add((i_blk + 3) * k)
-    } else {
-        a_row0_ptr
-    };
+    let a_pack_ptr = a_pack.as_ptr();
     let b_panel_ptr = b_packed.as_ptr().add(panel_off);
 
     for t in 0..k {
@@ -952,8 +1054,13 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
         // the inner loop free of it.
         let bv = _mm256_loadu_si256(b_panel_ptr.add(t * FP_MEDIUM_PANEL_NR) as *const __m256i);
 
+        // A-pack lookup: `a_pack[t * MR + r]` holds row-r's column-t
+        // value for the current i_blk strip. Reads are unit-stride
+        // across `t`, packing `MR` u16 lanes per cache line.
+        let a_pack_t_base = a_pack_ptr.add(t * FP_MEDIUM_PANEL_MR);
+
         if M_EFF >= 1 {
-            let a0_val = *a_row0_ptr.add(t);
+            let a0_val = *a_pack_t_base;
             let av0 = _mm256_set1_epi16(a0_val as i16);
             let prod_lo = _mm256_mullo_epi16(av0, bv);
             let prod_hi = _mm256_mulhi_epu16(av0, bv);
@@ -972,7 +1079,7 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
             acc0_3 = _mm256_add_epi64(acc0_3, p_hi_h);
         }
         if M_EFF >= 2 {
-            let a1_val = *a_row1_ptr.add(t);
+            let a1_val = *a_pack_t_base.add(1);
             let av1 = _mm256_set1_epi16(a1_val as i16);
             let prod_lo = _mm256_mullo_epi16(av1, bv);
             let prod_hi = _mm256_mulhi_epu16(av1, bv);
@@ -988,7 +1095,7 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
             acc1_3 = _mm256_add_epi64(acc1_3, p_hi_h);
         }
         if M_EFF >= 3 {
-            let a2_val = *a_row2_ptr.add(t);
+            let a2_val = *a_pack_t_base.add(2);
             let av2 = _mm256_set1_epi16(a2_val as i16);
             let prod_lo = _mm256_mullo_epi16(av2, bv);
             let prod_hi = _mm256_mulhi_epu16(av2, bv);
@@ -1004,7 +1111,7 @@ unsafe fn fp_medium_panel_run<const M_EFF: usize>(
             acc2_3 = _mm256_add_epi64(acc2_3, p_hi_h);
         }
         if M_EFF >= 4 {
-            let a3_val = *a_row3_ptr.add(t);
+            let a3_val = *a_pack_t_base.add(3);
             let av3 = _mm256_set1_epi16(a3_val as i16);
             let prod_lo = _mm256_mullo_epi16(av3, bv);
             let prod_hi = _mm256_mulhi_epu16(av3, bv);
