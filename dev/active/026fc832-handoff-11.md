@@ -9,12 +9,21 @@
 - Epic: `026fc832` — state: `backlog` (assignee `agent:project-lead`)
 - Wave 7a: **DONE** (6823c8a0 closed all 3 gates; merged)
 - Phase 6b (695350fd): **DONE** (closed all 3 gates after R2 paired re-bench refuted the GF(7)/n=64 regression flag)
-- Wave 7b in flight: **3 R1 rework workers running in background worktrees** (sonnet, dispatched 2026-05-27 ~01:23 UTC)
-  - 869ce43b R1 worker — fixes for CSV missing GF(31)/n=64 + non-regression baseline + stale docstring
-  - 8df0c501 R1 worker — re-bench with CCX1 flock + add n=1024 cells
-  - 6613abf4 R1 worker — add rank-deficient proptest sweep + fix evidence doc routing
-- Epic dep DAG expanded this session: now contains 15 children (was 9). New: `695350fd`, `74ba1cdc`, `68db401b`, `6a7d4c8e`, `9138d86c`, `d36cc414`.
+- **Wave 7b: DONE** (all 3 implementations closed after R1 rework — 869ce43b + 6613abf4 closed on first R1 review pass; 8df0c501 needed an R2 lead-direct trial-file fix for GF(31)/n=64)
+- Epic dep DAG: 15 children (10 done, 4 ready, 1 in_progress). New this session: `695350fd`, `74ba1cdc`, `68db401b`, `6a7d4c8e`, `9138d86c`, `d36cc414`.
 - Open escalations: **none unresolved**. Session 11 escalations all answered.
+
+### Remaining work (4 ready follow-ups + 1 in_progress + 2 transitive)
+
+| Issue | State | Path |
+|---|---|---|
+| `6a7d4c8e` | ready | M31 echelon: wire m31_batch_dot_fn into gemm_axpy_into_view (closes 869ce43b row 33) |
+| `9138d86c` | ready | GF(65521)/n=64 blocked solve kernel (closes 6613abf4 rows 55, 56) |
+| `d36cc414` | ready | GF(251)/n=64 borderline investigation (covers wave-7b rows 23, 37, 40, 51, 52) |
+| `68db401b` | ready | u16-lane PLE base-case kernel (Phase 6d) |
+| `0749dbad` | ready (transitive via 695350fd) | f64 GEMM cascade (Phase 6e) |
+| `98336ab4` | in_progress (blocked on `0749dbad`) | GF(p) fgemm n=4096 re-bench |
+| `b0fa00af` | in_progress | v2 SOTA scorecard re-publish (Wave 8 — depends on everything above) |
 
 ## What happened this session
 
@@ -61,16 +70,18 @@
 
 In order of priority:
 
-- [ ] **Wait for 3 R1 rework workers to complete** (notification IDs: aaf3380129b050436, a7df023d5f245a2dc, af17489645f15e686).
-- [ ] **Rebase + ff-merge each R1 branch** to main. Conflict at end-of-file (test blocks both added) is likely; resolve by keeping both. Run leak check (`scripts/check-leak-into-main.sh`).
-- [ ] **Re-run cargo-ci + code-review serially** (per `feedback_parallel_cargo_ci`) on each issue. Code-reviews in serial chain via `jit gate pass <id> code-review` from Bash (NEVER MCP — `feedback_code_review_via_jit_cli`).
-- [ ] **Investigate flaky bipedal3 test** `permanent::bipedal3::tests::test_simd_vs_scalar_n24` (timed out at 5.006s, just 6ms over the 5s nextest limit). Likely needs `#[ignore = "slow"]` if it consistently runs near 5s. File a separate JIT task for this — NOT in 869ce43b scope.
-- [ ] **Close wave 7b R1 issues** if all gates PASS. Cleanup worktrees.
-- [ ] **Phase 6d (`68db401b`) + Phase 6e (`0749dbad`)** — dispatch. Each multi-day. Probably 1-2 separate worker dispatches each.
-- [ ] **98336ab4 re-bench + close** — after `0749dbad` lands.
-- [ ] **Wave 8 (`b0fa00af` v2 scorecard)** — after wave 7b + Phase 6d/6e + 98336ab4.
-- [ ] **Run the 3 new follow-up tasks**: `6a7d4c8e`, `9138d86c`, `d36cc414`. Each could close the deferred cells from wave 7b.
-- [ ] **Epic close (Section 10)** — after wave 8 + follow-ups close, OR after user decides which follow-ups to defer to a successor epic.
+- [x] ~~Wait for 3 R1 rework workers~~ — all completed; merged; gates passed.
+- [x] ~~Close wave 7b R1 issues~~ — 869ce43b, 8df0c501, 6613abf4 all closed.
+- [ ] **Dispatch the 3 small/medium follow-up tasks in parallel worktrees:**
+  - `6a7d4c8e` — M31 echelon GEMM-axpy dispatch (single-file kernel change in `gfp/simd_ops.rs` + `matrix.rs`)
+  - `9138d86c` — GF(65521)/n=64 blocked solve kernel (likely a new dispatch path in `triangular.rs`)
+  - `d36cc414` — GF(251)/n=64 borderline investigation (profile + write evidence doc; may not modify production code)
+  - These could all run in parallel via the worktree-dispatch protocol. Sonnet model fine for the first two; opus may be appropriate for d36cc414 since it's an investigation requiring judgment.
+- [ ] **Dispatch Phase 6d (`68db401b`) + Phase 6e (`0749dbad`)** — each is multi-day and probably needs its own breakdown task before implementation. Both are kernel work.
+- [ ] **98336ab4 re-bench + close** — after `0749dbad` lands. Pre-existing worktree at `.claude/worktrees/agent-98336ab4` is preserved.
+- [ ] **Investigate flaky bipedal3 test** `permanent::bipedal3::tests::test_simd_vs_scalar_n24` (was flagged in 869ce43b R0 review but didn't recur in R1). Likely needs `#[ignore = "slow"]` if it consistently runs near 5s. NOT in 869ce43b scope — file a separate JIT task.
+- [ ] **Wave 8 (`b0fa00af` v2 scorecard)** — after the follow-ups + Phase 6d/6e + 98336ab4 close. Holds the bulk of the "close the loop" work.
+- [ ] **Epic close (Section 10)** — after wave 8 + follow-ups close, OR after user decides which follow-ups to defer to a successor epic. The cumulative complexity (4 distinct architectural gaps now tracked: GF(251)/n=256 Schur-update, GF(251)/n=64 borderline, M31 GEMM-axpy dispatch, GF(65521)/n=64 solve) may justify a successor epic decision.
 
 ## Traps — do not repeat these
 
@@ -115,16 +126,15 @@ None unresolved. The session 11 escalations were all answered:
 ## Active worktrees + branches at session-11 end
 
 ```
-/home/vkaskivuo/Projects/gf2                                     adc7ce20 [main]
+/home/vkaskivuo/Projects/gf2                                     9a9322d6 [main]
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-30e98ef1-d6 (unrelated; preserved)
-/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-6613abf4    R1 sonnet rework in flight
-/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-869ce43b    R1 sonnet rework in flight
-/home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-8df0c501    R1 sonnet rework in flight
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-9480f8a6    (unrelated; preserved)
 /home/vkaskivuo/Projects/gf2/.claude/worktrees/agent-98336ab4    (in_progress; preserved for eventual re-bench after Phase 6e)
 ```
 
-Main HEAD at end of session 11: `adc7ce20` (chore commit recording wave 7b R0 gate runs).
+All wave-7b worktrees cleaned up at session end.
+
+Main HEAD at end of session 11: `9a9322d6` (chore commit closing 8df0c501 R2).
 
 ## Session 11 commit chain (selected high-impact)
 
@@ -138,5 +148,14 @@ Main HEAD at end of session 11: `adc7ce20` (chore commit recording wave 7b R0 ga
 - `38387525`: 695350fd closure
 - `06cef9fe`: wave 7b amendments + 3 follow-up tasks filed
 - `adc7ce20`: record wave 7b R0 gate runs (cargo-ci PASS, code-review FAIL)
+- `a4c04a91`: mid-session handoff (this doc, initial version)
+- `bc717f5f`: 869ce43b R1 — GF(31)/n=64 cells + BLOCKED_BACK_SUB_MIN_DIM=128 threshold + same-op non-regression bench
+- `dc01b954`: 8df0c501 R1 — CCX1-pinned 5-trial medians + n=1024 cells + raw trial files
+- `a972cc35`: 6613abf4 R1 — rank-deficient proptest sweep + evidence doc routing fix
+- `83854b3a`: close 869ce43b + 6613abf4 (all gates pass on R1 first review)
+- `85949af3`: 8df0c501 R2 — add missing GF(31)/n=64 trial files (single-finding fix)
+- `9a9322d6`: close 8df0c501 (all gates pass on R2)
 
-The remaining work — wave 7b R1 close, Phase 6d/6e dispatch, follow-up task closure, 98336ab4 re-bench, wave 8 b0fa00af v2, epic close — represents multiple future sessions. Cumulative complexity continues to grow (4 distinct architectural gaps now tracked: GF(251)/n=256 Schur-update, GF(251)/n=64 borderline, M31 GEMM-axpy dispatch, GF(65521)/n=64 solve). The user's pattern of "investigate before amend" is keeping the contract honest while making forward progress.
+**Session 11 summary**: 5 issues closed (6823c8a0, 695350fd, 869ce43b, 8df0c501, 6613abf4). 3 follow-up tasks filed (6a7d4c8e, 9138d86c, d36cc414). 4 new memory entries (parallel-cargo-ci, pgrep-self-match, MCP-code-review-timeout, worker-self-amendment guard).
+
+The remaining work — 4 ready follow-ups + Phase 6d/6e + 98336ab4 + Wave 8 + epic close — represents multiple future sessions. Cumulative complexity continues to grow (4 distinct architectural gaps now tracked: GF(251)/n=256 Schur-update, GF(251)/n=64 borderline, M31 GEMM-axpy dispatch, GF(65521)/n=64 solve). The user's pattern of "investigate before amend" is keeping the contract honest while making forward progress.
