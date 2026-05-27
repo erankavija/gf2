@@ -75,6 +75,8 @@ pub mod product;
 
 // SIMD detection is now handled internally in llr.rs via once_cell::Lazy
 pub mod simulation;
+#[cfg(any(test, feature = "test-support"))]
+pub mod test_support;
 pub mod traits;
 
 // Re-export main types

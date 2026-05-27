@@ -350,7 +350,7 @@ impl DvbT2BitInterleaver {
     ///
     /// # Panics
     ///
-    /// Panics if `bits.len_bits() != frame_bits()`.
+    /// Panics if `bits.len() != frame_bits()`.
     ///
     /// # Examples
     ///
@@ -404,7 +404,7 @@ impl DvbT2BitInterleaver {
     ///
     /// # Panics
     ///
-    /// Panics if `bits.len_bits() != frame_bits()`.
+    /// Panics if `bits.len() != frame_bits()`.
     ///
     /// # Examples
     ///
