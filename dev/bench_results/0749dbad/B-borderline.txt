@@ -1,0 +1,28 @@
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.07s
+     Running benches/fieldmatrix_gemm.rs (target/release/deps/fieldmatrix_gemm-6298cb64c0e6daf7)
+Benchmarking gemm/Fp_251/Fp_251/64
+Benchmarking gemm/Fp_251/Fp_251/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_251/Fp_251/64: Collecting 10 samples in estimated 5.0000 s (298k iterations)
+Benchmarking gemm/Fp_251/Fp_251/64: Analyzing
+gemm/Fp_251/Fp_251/64   time:   [16.782 µs 16.806 µs 16.834 µs]
+                        thrpt:  [31.145 Gelem/s 31.197 Gelem/s 31.240 Gelem/s]
+                 change:
+                        time:   [-4.1797% -3.2999% -2.2300%] (p = 0.00 < 0.05)
+                        thrpt:  [+2.2809% +3.4125% +4.3620%]
+                        Performance has improved.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking gemm/Fp_65521/Fp_65521/64
+Benchmarking gemm/Fp_65521/Fp_65521/64: Warming up for 3.0000 s
+Benchmarking gemm/Fp_65521/Fp_65521/64: Collecting 10 samples in estimated 5.0008 s (179k iterations)
+Benchmarking gemm/Fp_65521/Fp_65521/64: Analyzing
+gemm/Fp_65521/Fp_65521/64
+                        time:   [27.900 µs 27.946 µs 28.008 µs]
+                        thrpt:  [18.719 Gelem/s 18.761 Gelem/s 18.792 Gelem/s]
+                 change:
+                        time:   [-4.4332% -2.1049% -0.6318%] (p = 0.05 < 0.05)
+                        thrpt:  [+0.6358% +2.1501% +4.6389%]
+                        Change within noise threshold.
+

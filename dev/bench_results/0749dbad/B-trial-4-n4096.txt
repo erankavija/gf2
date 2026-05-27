@@ -1,0 +1,17 @@
+nice: cannot set niceness: Permission denied
+    Finished `bench` profile [optimized] target(s) in 0.04s
+     Running benches/fieldmatrix_gemm.rs (target/release/deps/fieldmatrix_gemm-6298cb64c0e6daf7)
+Benchmarking gemm/Fp_65521/Fp_65521/4096
+Benchmarking gemm/Fp_65521/Fp_65521/4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 24.6s.
+Benchmarking gemm/Fp_65521/Fp_65521/4096: Collecting 10 samples in estimated 24.607 s (10 iterations)
+Benchmarking gemm/Fp_65521/Fp_65521/4096: Analyzing
+gemm/Fp_65521/Fp_65521/4096
+                        time:   [3.2339 s 4.8309 s 6.6168 s]
+                        thrpt:  [20.771 Gelem/s 28.450 Gelem/s 42.499 Gelem/s]
+                 change:
+                        time:   [+25.938% +88.191% +153.71%] (p = 0.02 < 0.05)
+                        thrpt:  [-60.585% -46.863% -20.596%]
+                        Performance has regressed.
+
