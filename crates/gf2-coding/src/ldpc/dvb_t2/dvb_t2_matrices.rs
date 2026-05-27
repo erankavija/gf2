@@ -1013,3 +1013,124 @@ pub const NORMAL_RATE_5_6_TABLE: &[&[usize]] = &[
     &[28, 4683, 2131],
     &[29, 7347, 8027],
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Parse a DVB-T2 table source file.
+    ///
+    /// Lines starting with `#` are treated as comments and skipped.
+    /// All other non-empty lines must consist of space-separated non-negative
+    /// integers; each such line is one table row.
+    fn parse_txt_table(text: &str) -> Vec<Vec<usize>> {
+        text.lines()
+            .filter(|line| !line.starts_with('#') && !line.trim().is_empty())
+            .map(|line| {
+                line.split_whitespace()
+                    .map(|tok| {
+                        tok.parse::<usize>()
+                            .expect("non-integer token in table file")
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn assert_table_matches(parsed: Vec<Vec<usize>>, constant: &[&[usize]], label: &str) {
+        assert_eq!(
+            parsed.len(),
+            constant.len(),
+            "{label}: row count mismatch (txt={}, const={})",
+            parsed.len(),
+            constant.len(),
+        );
+        for (row_idx, (p_row, c_row)) in parsed.iter().zip(constant.iter()).enumerate() {
+            assert_eq!(p_row.as_slice(), *c_row, "{label}: row {row_idx} mismatch",);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_1_2() {
+        let text = include_str!("table_a_1_R1_2_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_1_2_TABLE, "NORMAL_RATE_1_2");
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_3_5() {
+        let text = include_str!("table_a_2_R3_5_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_3_5_TABLE, "NORMAL_RATE_3_5");
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_2_3() {
+        let text = include_str!("table_a_3_R2_3_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_2_3_TABLE, "NORMAL_RATE_2_3");
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_3_4() {
+        let text = include_str!("table_a_4_R3_4_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_3_4_TABLE, "NORMAL_RATE_3_4");
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_4_5() {
+        let text = include_str!("table_a_5_R4_5_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_4_5_TABLE, "NORMAL_RATE_4_5");
+    }
+
+    #[test]
+    fn test_roundtrip_normal_rate_5_6() {
+        let text = include_str!("table_a_6_R5_6_N64800.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, NORMAL_RATE_5_6_TABLE, "NORMAL_RATE_5_6");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_1_2() {
+        let text = include_str!("table_b_1_R1_2_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_1_2_TABLE, "SHORT_RATE_1_2");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_3_5() {
+        let text = include_str!("table_b_2_R3_5_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_3_5_TABLE, "SHORT_RATE_3_5");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_2_3() {
+        let text = include_str!("table_b_3_R2_3_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_2_3_TABLE, "SHORT_RATE_2_3");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_3_4() {
+        let text = include_str!("table_b_4_R3_4_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_3_4_TABLE, "SHORT_RATE_3_4");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_4_5() {
+        let text = include_str!("table_b_5_R4_5_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_4_5_TABLE, "SHORT_RATE_4_5");
+    }
+
+    #[test]
+    fn test_roundtrip_short_rate_5_6() {
+        let text = include_str!("table_b_6_R5_6_N16200.txt");
+        let parsed = parse_txt_table(text);
+        assert_table_matches(parsed, SHORT_RATE_5_6_TABLE, "SHORT_RATE_5_6");
+    }
+}

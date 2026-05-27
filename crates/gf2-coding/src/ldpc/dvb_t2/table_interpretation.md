@@ -24,14 +24,20 @@ Where:
 
 ### Parameters by Configuration
 
-| Frame  | Rate | n     | k     | m     | q  | Z   | Blocks |
-|--------|------|-------|-------|-------|----|----|--------|
-| Normal | 1/2  | 64800 | 32400 | 32400 | 90 | 360| 90     |
-| Normal | 3/5  | 64800 | 38880 | 25920 | 96 | 360| 108    |
-| Normal | 2/3  | 64800 | 43200 | 21600 | 60 | 360| 120    |
-| Normal | 3/4  | 64800 | 48600 | 16200 | 45 | 360| 135    |
-| Normal | 4/5  | 64800 | 51840 | 12960 | 36 | 360| 144    |
-| Normal | 5/6  | 64800 | 54000 | 10800 | 30 | 360| 150    |
+| Frame  | Rate | n     | k     | m     | q  | Z   | Blocks | ETSI Annex/Table |
+|--------|------|-------|-------|-------|----|----|--------|-----------------|
+| Normal | 1/2  | 64800 | 32400 | 32400 | 90 | 360| 90     | A, Table A.1    |
+| Normal | 3/5  | 64800 | 38880 | 25920 | 72 | 360| 108    | A, Table A.2    |
+| Normal | 2/3  | 64800 | 43200 | 21600 | 60 | 360| 120    | A, Table A.3    |
+| Normal | 3/4  | 64800 | 48600 | 16200 | 45 | 360| 135    | A, Table A.4    |
+| Normal | 4/5  | 64800 | 51840 | 12960 | 36 | 360| 144    | A, Table A.5    |
+| Normal | 5/6  | 64800 | 54000 | 10800 | 30 | 360| 150    | A, Table A.6    |
+| Short  | 1/2  | 16200 | 7200  | 9000  | 25 | 360| 20     | B, Table B.1    |
+| Short  | 3/5  | 16200 | 9720  | 6480  | 18 | 360| 27     | B, Table B.2    |
+| Short  | 2/3  | 16200 | 10800 | 5400  | 15 | 360| 30     | B, Table B.3    |
+| Short  | 3/4  | 16200 | 11880 | 4320  | 12 | 360| 33     | B, Table B.4    |
+| Short  | 4/5  | 16200 | 12600 | 3600  | 10 | 360| 35     | B, Table B.5    |
+| Short  | 5/6  | 16200 | 13320 | 2880  | 8  | 360| 37     | B, Table B.6    |
 
 ## Dual-Diagonal Parity Structure
 
@@ -73,9 +79,35 @@ Unlike pure QC-LDPC codes, DVB-T2 matrices:
 
 This requires direct sparse matrix construction rather than simple QC expansion.
 
+## Source File Format (.txt)
+
+Each configuration has a corresponding `.txt` source file that serves as the
+auditable origin of the Rust constants in `dvb_t2_matrices.rs`.
+
+### Parsing Rules
+
+1. **Comment lines**: Lines beginning with `#` are comments and must be ignored
+   by any parser. They carry provenance information (ETSI table reference,
+   parameters, date).
+2. **Data lines**: All other non-empty lines contain space-separated non-negative
+   integers. Each data line is one table row; the integers are the base parity
+   indices for that 360-bit information block.
+3. **Row order**: Rows appear in order (block 0 first, block `blocks-1` last),
+   matching the Rust const row order exactly.
+4. **File naming**: `table_<annex>_<seq>_R<rate>_N<n>.txt` where `<annex>` is
+   `a` (Normal) or `b` (Short), `<seq>` is the ETSI table sequence number,
+   `<rate>` is the code rate with `_` separator (e.g., `R3_5`), and `<n>` is
+   the codeword length (64800 or 16200).
+
+### Round-Trip Invariant
+
+The round-trip test in `dvb_t2_matrices.rs` parses each `.txt` file and asserts
+element-wise equality with the corresponding Rust constant. This guarantees
+zero drift between the source-of-truth text files and the compiled constants.
+
 ## Implementation
 
 See:
 - `builder.rs`: Edge list construction algorithm
 - `params.rs`: Configuration parameters
-- `dvb_t2_matrices.rs`: Standard tables
+- `dvb_t2_matrices.rs`: Standard tables (also contains round-trip tests)
