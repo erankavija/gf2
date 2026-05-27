@@ -21,15 +21,15 @@
       "updated_by": null,
       "updated_at": "2026-05-25T21:54:59.234598745Z"
     },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.234540055Z"
-    },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.234580215Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T17:00:36.571506080Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T17:00:22.761848939Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.648467440+00:00",
-  "updated_at": "2026-05-27T16:50:11.021020009+00:00"
+  "updated_at": "2026-05-27T17:06:07.686353773+00:00"
 }
