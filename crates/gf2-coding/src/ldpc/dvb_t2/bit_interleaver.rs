@@ -259,31 +259,34 @@ impl DvbT2BitInterleaver {
         let config = InterleaverConfig::from_modcod(modcod);
         let n = config.nc * config.nr;
 
-        // Build the forward permutation following §6.1.3:
+        // Build the inverse permutation following ETSI EN 302 755 v1.4.1 §6.1.3:
         //
-        //   Write: input bit `i` is placed at column `c = i mod Nc`,
-        //          row `r = i / Nc` of the matrix (column-major write).
+        //   Write (column-by-column): input bit `i` is placed at column
+        //          `c = i / Nr`, row `r = i mod Nr` of the matrix.
+        //          The input index stored at (row r, col c) is `c * Nr + r`.
         //
-        //   Read with twist: the output bit at position
-        //          `out = r * Nc + c`  (row-major read)
-        //          comes from row `(r + tc[c]) mod Nr` of column `c`,
-        //          i.e. from input index `((r + tc[c]) mod Nr) * Nc + c`.
+        //   Read with twist (row-by-row): the output bit at position `j`
+        //          reads from row `r = j / Nc`, column `c = j mod Nc`,
+        //          but with per-column cyclic twist applied:
+        //          actual_row = (j / Nc + tc[j mod Nc]) mod Nr
+        //          actual_col = j mod Nc
         //
-        //   So `inverse[r * Nc + c] = ((r + tc[c]) mod Nr) * Nc + c`.
+        //   Spec formula (§6.1.3):
+        //     output[j] = input[(j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)]
         //
-        //   The forward permutation is the inverse of that.
+        //   Therefore:
+        //     inverse[j] = (j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)
 
         let nc = config.nc;
         let nr = config.nr;
-        let mut inverse = vec![0usize; n];
-        for r in 0..nr {
-            for c in 0..nc {
-                let out_idx = r * nc + c;
+        let inverse: Vec<usize> = (0..n)
+            .map(|j| {
+                let c = j % nc;
+                let r = j / nc;
                 let src_row = (r + config.twist[c]) % nr;
-                let src_idx = src_row * nc + c; // column-major: src_idx = src_row * nc + c
-                inverse[out_idx] = src_idx;
-            }
-        }
+                c * nr + src_row
+            })
+            .collect();
 
         // Forward: for each input index i, find where it appears in inverse.
         let mut forward = vec![0usize; n];
@@ -857,53 +860,95 @@ mod tests {
         il.deinterleave_llrs(&wrong);
     }
 
-    // --- QPSK identity (no twist, column-row is pure block permutation) -----
+    // --- QPSK permutation (non-trivial: interleaves two columns) -----------
 
-    /// For QPSK, verify that a specific known small pattern permutes correctly.
+    /// Verify the correct non-trivial QPSK permutation per §6.1.3.
     ///
-    /// With Nc=2, Nr=4 (8 bits), writing column by column:
-    ///   col 0: bits 0,1,2,3
-    ///   col 1: bits 4,5,6,7
+    /// QPSK: Nc=2, tc=[0,0].  Short FECFRAME: Nr=8100, N=16200.
     ///
-    /// Matrix (row-major):
-    ///   row 0: [b0, b4]
-    ///   row 1: [b1, b5]
-    ///   row 2: [b2, b6]
-    ///   row 3: [b3, b7]
+    /// Spec formula: output[j] = input[(j mod 2) * 8100 + (j/2 + 0) mod 8100]
     ///
-    /// Reading row by row (no twist): b0,b4,b1,b5,b2,b6,b3,b7
+    /// For the first 8 output positions:
+    ///   output[0] = input[0*8100 + 0] = input[0]
+    ///   output[1] = input[1*8100 + 0] = input[8100]
+    ///   output[2] = input[0*8100 + 1] = input[1]
+    ///   output[3] = input[1*8100 + 1] = input[8101]
+    ///   output[4] = input[0*8100 + 2] = input[2]
+    ///   output[5] = input[1*8100 + 2] = input[8102]
+    ///   output[6] = input[0*8100 + 3] = input[3]
+    ///   output[7] = input[1*8100 + 3] = input[8103]
     ///
-    /// We verify this on the Short FECFRAME by checking a small "virtual"
-    /// structure: use the inverse permutation table directly.
-    ///
-    /// NOTE: The DVB-T2 Short FECFRAME has Nr=8100 (Nc=2); the permutation
-    /// is deterministic so we check the first 8 elements of the permutation.
+    /// This is NOT identity — QPSK interleaves bits from col 0 and col 1.
     #[test]
-    fn test_qpsk_first_8_permutation_structure() {
+    fn test_qpsk_permutation_non_trivial() {
         let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
         let il = DvbT2BitInterleaver::new(modcod);
+        let nr = il.num_rows(); // 8100
 
-        // With Nc=2, Nr=8100 and no twist:
-        //   forward[i]: source bit i goes to output position...
-        //   inverse[j]: output position j comes from source bit...
-        //
-        // Writing col by col: src bit i -> col c = i%2, row r = i/2.
-        // Output (row-major, no twist): out_idx = r*2 + c = (i/2)*2 + (i%2) = i.
-        // So QPSK with no twist is the identity permutation!
-        let nc = il.num_columns();
-        let nr = il.num_rows();
-        for r in 0..nr.min(4) {
-            for c in 0..nc {
-                let out = r * nc + c;
-                let src = il.inverse[out];
-                // Without twist: src_row = (r + 0) % nr = r; src = r*nc+c = out.
-                assert_eq!(
-                    src, out,
-                    "QPSK (no twist) should be identity at [{},{}]",
-                    r, c
-                );
-            }
+        // Verify first 8 inverse entries against spec formula.
+        let expected = [0, nr, 1, nr + 1, 2, nr + 2, 3, nr + 3];
+        for (j, &exp) in expected.iter().enumerate() {
+            assert_eq!(
+                il.inverse[j], exp,
+                "QPSK inverse[{}]: expected input[{}], got input[{}]",
+                j, exp, il.inverse[j]
+            );
         }
+
+        // Also verify non-identity: output[1] != input[1] (it's input[Nr]).
+        assert_ne!(
+            il.inverse[1], 1,
+            "QPSK must NOT be identity: inverse[1] should be {} (Nr), not 1",
+            nr
+        );
+    }
+
+    /// Spec-compliance forward-only test for QPSK.
+    ///
+    /// Constructs an input with specific bits set at positions 0, Nr, 1, Nr+1
+    /// (matching the QPSK matrix write layout), runs interleave, and asserts
+    /// the output matches the hand-derived expected pattern per §6.1.3.
+    ///
+    /// With Nr=8100, Nc=2, tc=[0,0]:
+    ///   Input bits set at positions: 0, 8100, 1, 8101
+    ///   Spec formula output[j] = input[(j%2)*Nr + j/2]:
+    ///     output[0] = input[0]    = 1  (set)
+    ///     output[1] = input[8100] = 1  (set)
+    ///     output[2] = input[1]    = 1  (set)
+    ///     output[3] = input[8101] = 1  (set)
+    ///     output[4] = input[2]    = 0
+    ///     ...all others = 0
+    #[test]
+    fn test_qpsk_spec_compliance_forward() {
+        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
+        let il = DvbT2BitInterleaver::new(modcod);
+        let n = il.frame_bits(); // 64800
+        let nr = il.num_rows(); // 32400
+
+        // Set input bits at positions 0, Nr, 1, Nr+1.
+        let mut input = BitVec::zeros(n);
+        input.set(0, true);
+        input.set(nr, true);
+        input.set(1, true);
+        input.set(nr + 1, true);
+
+        let output = il.interleave(&input);
+
+        // Per spec: output[j] = input[(j%2)*Nr + j/2]
+        // output[0] = input[0]     = 1
+        // output[1] = input[Nr]    = 1
+        // output[2] = input[1]     = 1
+        // output[3] = input[Nr+1]  = 1
+        // output[4] = input[2]     = 0
+        assert!(output.get(0), "output[0] should be 1 (from input[0])");
+        assert!(output.get(1), "output[1] should be 1 (from input[Nr])");
+        assert!(output.get(2), "output[2] should be 1 (from input[1])");
+        assert!(output.get(3), "output[3] should be 1 (from input[Nr+1])");
+        assert!(!output.get(4), "output[4] should be 0 (from input[2])");
+
+        // Total set bits must equal 4 (permutation preserves popcount).
+        let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
+        assert_eq!(popcount, 4, "permutation must preserve popcount");
     }
 
     // --- 16-QAM twist verification ------------------------------------------
@@ -911,8 +956,12 @@ mod tests {
     /// Verify that the twist shifts the source row correctly for 16-QAM.
     ///
     /// From Table 9 (Normal), Table 9a (Short): tc = [0, 2, 4, 4].
-    /// For column c and output row r:
-    ///   inverse[r * Nc + c] = ((r + tc[c]) % Nr) * Nc + c
+    ///
+    /// Per spec formula (§6.1.3):
+    ///   inverse[j] = (j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)
+    ///
+    /// Equivalently for output index j = r*Nc+c (r = j/Nc, c = j%Nc):
+    ///   inverse[j] = c * Nr + ((r + tc[c]) mod Nr)
     #[test]
     fn test_qam16_twist_application() {
         let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
@@ -925,13 +974,164 @@ mod tests {
             for (c, &tc) in twist.iter().enumerate() {
                 let out = r * nc + c;
                 let expected_src_row = (r + tc) % nr;
-                let expected_src = expected_src_row * nc + c;
+                // Column-major input indexing: column c starts at c*Nr.
+                let expected_src = c * nr + expected_src_row;
                 assert_eq!(
                     il.inverse[out], expected_src,
-                    "16-QAM twist: inverse[{},{}] wrong",
+                    "16-QAM twist: inverse[row={},col={}] wrong",
                     r, c
                 );
             }
+        }
+    }
+
+    // --- Word-boundary edge cases -------------------------------------------
+
+    /// Roundtrip identity at word-boundary bit positions (0, 1, 63, 64, 65
+    /// relative to a multiple of Nc) for QPSK, 16-QAM, 64-QAM Normal frames.
+    ///
+    /// For each configuration, a FECFRAME is constructed with exactly one bit
+    /// set at the boundary position; interleave→deinterleave must recover it.
+    ///
+    /// "Word boundary" here means bit index near multiples of 64 (u64 word
+    /// size in BitVec), tested via offsets 0, 1, 63, 64, 65 from the start
+    /// of the FECFRAME (all of which fall within the first few columns).
+    #[test]
+    fn test_word_boundary_roundtrip() {
+        // Boundary offsets relative to index 0.
+        let offsets: &[usize] = &[0, 1, 63, 64, 65];
+
+        for &modulation in &[
+            DvbT2Modulation::Qpsk,
+            DvbT2Modulation::Qam16,
+            DvbT2Modulation::Qam64,
+        ] {
+            let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, modulation);
+            let il = DvbT2BitInterleaver::new(modcod);
+            let n = il.frame_bits();
+
+            for &pos in offsets {
+                if pos >= n {
+                    continue;
+                }
+                let mut input = BitVec::zeros(n);
+                input.set(pos, true);
+                let recovered = il.deinterleave(&il.interleave(&input));
+                assert_eq!(
+                    recovered, input,
+                    "word-boundary roundtrip failed at pos={} for {:?}",
+                    pos, modulation
+                );
+            }
+        }
+    }
+
+    /// Same word-boundary roundtrip for Short FECFRAME.
+    #[test]
+    fn test_word_boundary_roundtrip_short() {
+        let offsets: &[usize] = &[0, 1, 63, 64, 65];
+
+        for &modulation in &[
+            DvbT2Modulation::Qpsk,
+            DvbT2Modulation::Qam16,
+            DvbT2Modulation::Qam64,
+        ] {
+            let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, modulation);
+            let il = DvbT2BitInterleaver::new(modcod);
+            let n = il.frame_bits();
+
+            for &pos in offsets {
+                if pos >= n {
+                    continue;
+                }
+                let mut input = BitVec::zeros(n);
+                input.set(pos, true);
+                let recovered = il.deinterleave(&il.interleave(&input));
+                assert_eq!(
+                    recovered, input,
+                    "word-boundary roundtrip (Short) failed at pos={} for {:?}",
+                    pos, modulation
+                );
+            }
+        }
+    }
+
+    // --- TP07a path-A spec-compliance unit test (§6.1.3 independent evidence) -
+
+    /// Spec-compliance forward test for Normal, Rate1_2, 16-QAM.
+    ///
+    /// Constructs an input with bit 0 set (column 0, row 0 in column-major
+    /// layout), runs interleave, and verifies the output position per the
+    /// spec formula:
+    ///   output[j] = input[(j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)]
+    ///
+    /// For Normal 16-QAM: Nc=4, Nr=16200, tc=[0,2,4,4].
+    ///   Input bit 0 is at column-major address c=0, r=0.
+    ///   The output index j that maps to src=0 satisfies:
+    ///     (j mod 4) * 16200 + (j/4 + tc[j mod 4]) mod 16200 = 0
+    ///   => j mod 4 = 0 (so c=0), and (j/4 + 0) mod 16200 = 0
+    ///   => j/4 = 0, so j = 0.
+    ///   Therefore output[0] = 1, all others = 0.
+    ///
+    /// Input bit 16200 (column 1, row 0) maps to j where:
+    ///   (j mod 4) = 1 and (j/4 + tc[1]) mod 16200 = 0
+    ///   => j/4 = (16200 - 2) mod 16200 = 16198, j = 16198*4 + 1 = 64793.
+    ///
+    /// This test independently proves the permutation is spec-compliant
+    /// without relying on roundtrip self-cancellation (Path A evidence for
+    /// the TP07a end-to-end criterion).
+    #[test]
+    fn test_16qam_normal_spec_compliance_forward() {
+        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+        let il = DvbT2BitInterleaver::new(modcod);
+        let n = il.frame_bits(); // 64800
+        let nr = il.num_rows(); // 16200
+        let nc = il.num_columns(); // 4
+        let twist = il.twist_offsets().to_vec(); // [0, 2, 4, 4]
+
+        // Test 1: input bit 0 (c=0, r=0) → output position 0.
+        {
+            let mut input = BitVec::zeros(n);
+            input.set(0, true);
+            let output = il.interleave(&input);
+            // Expected output position j=0: (0%4)*Nr + (0/4+tc[0])%Nr = 0 → src=0.
+            assert!(
+                output.get(0),
+                "16-QAM Normal: input[0] should map to output[0]"
+            );
+            let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
+            assert_eq!(popcount, 1, "popcount must be 1");
+        }
+
+        // Test 2: input bit 1*Nr = 16200 (c=1, r=0) → output position 64793.
+        // j such that j%4=1 and (j/4 + tc[1]) % Nr = 0
+        // => j/4 = (Nr - tc[1]) % Nr = (16200 - 2) % 16200 = 16198
+        // => j = 16198*4 + 1 = 64793
+        {
+            let src = nr; // column 1, row 0 (address = 1*Nr + 0 = Nr)
+            let expected_j = ((nr - twist[1]) % nr) * nc + 1;
+            let mut input = BitVec::zeros(n);
+            input.set(src, true);
+            let output = il.interleave(&input);
+            assert!(
+                output.get(expected_j),
+                "16-QAM Normal: input[{}] (c=1,r=0) should map to output[{}], twist[1]={}",
+                src,
+                expected_j,
+                twist[1]
+            );
+            let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
+            assert_eq!(popcount, 1, "popcount must be 1");
+        }
+
+        // Test 3: verify forward[i] == j iff inverse[j] == i (sanity on first Nr entries).
+        for i in 0..nr.min(20) {
+            let j = il.forward[i];
+            assert_eq!(
+                il.inverse[j], i,
+                "forward/inverse consistency failed at i={}",
+                i
+            );
         }
     }
 }
