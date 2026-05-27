@@ -303,9 +303,11 @@ pub struct DvbT2BitInterleaver {
 impl DvbT2BitInterleaver {
     /// Creates a new interleaver for the given MODCOD.
     ///
-    /// Precomputes forward and inverse permutation tables that compose
-    /// both the parity-interleaving stage and the column-twist stage
-    /// from ETSI EN 302 755 v1.4.1 §6.1.3.
+    /// Precomputes forward and inverse permutation tables.  For QPSK,
+    /// ETSI EN 302 755 v1.4.1 §6.1.3 does not apply: both tables are
+    /// the identity permutation and bits pass through unchanged.  For
+    /// 16-QAM and 64-QAM the tables compose the parity-interleaving
+    /// stage (stage 1) and the column-twist stage (stage 2) from §6.1.3.
     ///
     /// # Arguments
     ///
@@ -340,6 +342,19 @@ impl DvbT2BitInterleaver {
     pub fn new(modcod: DvbT2Modcod) -> Self {
         let config = InterleaverConfig::from_modcod(modcod);
         let n = config.nc * config.nr;
+
+        // QPSK: §6.1.3 is scoped to "16-QAM, 64-QAM and 256-QAM" only.
+        // The LDPC output Λ passes through unchanged — both permutation
+        // tables are the identity.
+        if modcod.modulation == DvbT2Modulation::Qpsk {
+            let identity: Vec<usize> = (0..n).collect();
+            return DvbT2BitInterleaver {
+                config,
+                forward: identity.clone(),
+                inverse: identity,
+            };
+        }
+
         let nc = config.nc;
         let nr = config.nr;
         let k = config.k_ldpc;
@@ -352,8 +367,7 @@ impl DvbT2BitInterleaver {
         //   parity_perm[i] = i                          for 0 ≤ i < K_ldpc
         //   parity_perm[K + 360·t + s] = K + Q·s + t   for 0 ≤ s < 360, 0 ≤ t < Q
         //
-        //   For QPSK, q = 0 so no parity interleaving occurs (parity_perm = identity).
-        //   For 16-QAM / 64-QAM, Q = (N − K) / 360.
+        //   Q = (N − K) / 360.
         let mut parity_perm: Vec<usize> = (0..n).collect();
         if q > 0 {
             for s in 0..360usize {
@@ -368,18 +382,10 @@ impl DvbT2BitInterleaver {
         //   Write: u_i → col c_i = i / Nr, row r_i = (i + tc[c_i]) mod Nr
         //   Read:  v_j ← col c_j = j mod Nc, row r_j = j / Nc
         //
-        //   Composing: v[j] = u[parity_perm_inv[i]] where i maps to (c_j, r_j
-        //   after untwist).  Since the column-twist stage reads U (parity-interleaved),
-        //   the combined forward permutation is:
-        //
-        //   forward_combined[i] = col_twist_output_position_of_parity_interleaved_i
-        //
         //   It is easier to build the *inverse* directly:
         //
         //   inv_col_twist[j] = (j mod Nc) * Nr + ((j / Nc - tc[j mod Nc] + Nr) % Nr)
         //   inverse[j] = parity_perm[ inv_col_twist[j] ]
-        //
-        // For QPSK, parity_perm is identity so inverse[j] = inv_col_twist[j].
         let inverse: Vec<usize> = (0..n)
             .map(|j| {
                 let c = j % nc;
@@ -1015,95 +1021,48 @@ mod tests {
         il.deinterleave_llrs(&wrong);
     }
 
-    // --- QPSK permutation (non-trivial: interleaves two columns) -----------
+    // --- QPSK identity (§6.1.3 out of scope for QPSK) ----------------------
 
-    /// Verify the correct non-trivial QPSK permutation per §6.1.3.
+    /// QPSK passes bits through unchanged: `interleave(bits) == bits`.
     ///
-    /// QPSK: Nc=2, tc=[0,0].  Short FECFRAME: Nr=8100, N=16200.
-    ///
-    /// For QPSK, no parity interleaving is applied (§6.1.3 is for
-    /// 16-QAM/64-QAM only).  The column-twist permutation with Nc=2
-    /// and tc=[0,0] reads:
-    ///   inverse[j] = (j mod 2) * Nr + (j / 2)
-    ///
-    /// For the first 8 output positions:
-    ///   inverse[0] = 0*8100 + 0 = 0
-    ///   inverse[1] = 1*8100 + 0 = 8100
-    ///   inverse[2] = 0*8100 + 1 = 1
-    ///   inverse[3] = 1*8100 + 1 = 8101
-    ///   ...
-    ///
-    /// This is NOT identity — QPSK interleaves bits from col 0 and col 1.
+    /// ETSI EN 302 755 v1.4.1 §6.1.3 is titled "Bit Interleaving
+    /// (for 16-QAM, 64-QAM and 256-QAM)" — QPSK is explicitly out of scope.
+    /// For QPSK the LDPC output Λ passes through the §6.1.3 stage as-is
+    /// (identity permutation); no parity interleaving and no column-twist
+    /// interleaving are applied.
     #[test]
-    fn test_qpsk_permutation_non_trivial() {
-        let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
-        let il = DvbT2BitInterleaver::new(modcod);
-        let nr = il.num_rows(); // 8100
+    fn test_qpsk_identity() {
+        // Test both Normal and Short frames, two rates, with a pseudo-random input.
+        for &fs in &[FrameSize::Normal, FrameSize::Short] {
+            for &rate in &[CodeRate::Rate1_2, CodeRate::Rate3_4] {
+                let modcod = DvbT2Modcod::new(fs, rate, DvbT2Modulation::Qpsk);
+                let il = DvbT2BitInterleaver::new(modcod);
+                let n = il.frame_bits();
 
-        // Verify first 8 inverse entries against spec formula.
-        let expected = [0, nr, 1, nr + 1, 2, nr + 2, 3, nr + 3];
-        for (j, &exp) in expected.iter().enumerate() {
-            assert_eq!(
-                il.inverse[j], exp,
-                "QPSK inverse[{}]: expected input[{}], got input[{}]",
-                j, exp, il.inverse[j]
-            );
+                // LCG pseudo-random input.
+                let mut state: u64 = 0xC0FFEE_DEADBEEF_u64;
+                let input = bitvec_from_bools((0..n).map(|_| {
+                    state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    (state >> 63) != 0
+                }));
+
+                // Forward: interleave must be identity for QPSK.
+                let interleaved = il.interleave(&input);
+                assert_eq!(
+                    interleaved, input,
+                    "QPSK interleave must be identity for {:?} {:?}",
+                    fs, rate
+                );
+
+                // Inverse: deinterleave must also be identity.
+                let deinterleaved = il.deinterleave(&input);
+                assert_eq!(
+                    deinterleaved, input,
+                    "QPSK deinterleave must be identity for {:?} {:?}",
+                    fs, rate
+                );
+            }
         }
-
-        // Also verify non-identity: output[1] != input[1] (it's input[Nr]).
-        assert_ne!(
-            il.inverse[1], 1,
-            "QPSK must NOT be identity: inverse[1] should be {} (Nr), not 1",
-            nr
-        );
-    }
-
-    /// Spec-compliance forward-only test for QPSK.
-    ///
-    /// Constructs an input with specific bits set at positions 0, Nr, 1, Nr+1
-    /// (matching the QPSK matrix write layout), runs interleave, and asserts
-    /// the output matches the hand-derived expected pattern per §6.1.3.
-    ///
-    /// With Nr=32400, Nc=2, tc=[0,0]:
-    ///   Input bits set at positions: 0, 32400, 1, 32401
-    ///   Spec formula output[j] = input[(j%2)*Nr + j/2]:
-    ///     output[0] = input[0]      = 1  (set)
-    ///     output[1] = input[32400]  = 1  (set)
-    ///     output[2] = input[1]      = 1  (set)
-    ///     output[3] = input[32401]  = 1  (set)
-    ///     output[4] = input[2]      = 0
-    ///     ...all others = 0
-    #[test]
-    fn test_qpsk_spec_compliance_forward() {
-        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
-        let il = DvbT2BitInterleaver::new(modcod);
-        let n = il.frame_bits(); // 64800
-        let nr = il.num_rows(); // 32400
-
-        // Set input bits at positions 0, Nr, 1, Nr+1.
-        let mut input = BitVec::zeros(n);
-        input.set(0, true);
-        input.set(nr, true);
-        input.set(1, true);
-        input.set(nr + 1, true);
-
-        let output = il.interleave(&input);
-
-        // Per spec: output[j] = input[(j%2)*Nr + j/2]
-        // output[0] = input[0]     = 1
-        // output[1] = input[Nr]    = 1
-        // output[2] = input[1]     = 1
-        // output[3] = input[Nr+1]  = 1
-        // output[4] = input[2]     = 0
-        assert!(output.get(0), "output[0] should be 1 (from input[0])");
-        assert!(output.get(1), "output[1] should be 1 (from input[Nr])");
-        assert!(output.get(2), "output[2] should be 1 (from input[1])");
-        assert!(output.get(3), "output[3] should be 1 (from input[Nr+1])");
-        assert!(!output.get(4), "output[4] should be 0 (from input[2])");
-
-        // Total set bits must equal 4 (permutation preserves popcount).
-        let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
-        assert_eq!(popcount, 4, "permutation must preserve popcount");
     }
 
     // --- 64-QAM column-twist verification (spec Table 9/10) -----------------
