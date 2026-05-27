@@ -12,24 +12,29 @@
 //!
 //! # Noiseless test strategy
 //!
-//! Rather than routing through an AWGN channel (which would require a
-//! simulation harness and is covered by a separate issue), these tests
-//! synthesize noiseless LLRs directly from the interleaved FECFRAME bits:
-//! bit 0 → LLR = +10.0, bit 1 → LLR = −10.0. This exercises the full
-//! interleaver path — the LLRs are in interleaved order going into
-//! `deinterleave_llrs`, exactly as they would be after a QAM demapper
-//! operating on noiseless received symbols.
+//! The full BICM roundtrip tests (both slow- and fast-tier) route through the
+//! actual QAM mapper and soft demapper using a very small noise variance
+//! (1e-6), which produces high-confidence LLRs equivalent to noiseless
+//! reception.  The chain exercised is:
 //!
-//! The QAM map→demap roundtrip is also exercised separately to confirm the
-//! modem path is wired correctly.
+//! ```text
+//! BBFRAME -> BCH+LDPC encode -> interleave
+//!        -> mapper.map_bits -> (noiseless receive, noise_var = 1e-6)
+//!        -> demapper.demap_llrs -> deinterleave_llrs -> decode_soft -> BBFRAME
+//! ```
+//!
+//! The fast-tier LLR-path tests (`test_interleaver_llr_path_identity_*`) use
+//! `noiseless_llrs_from_bitvec` for structural verification of the interleaver
+//! permutation only -- no LDPC encoding or QAM involved.
 //!
 //! # Tier
 //!
-//! All 3 × 2 in-scope configuration roundtrip tests are marked
+//! The 3 x 2 Normal-frame roundtrip tests are marked
 //! `#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]`
-//! because `DvbT2Concat::encode` triggers the O(n²/64) LDPC RU
-//! preprocessing on the first call.  The QAM-path unit tests run in the
-//! fast tier (no encoding/decoding).
+//! because `DvbT2Concat::encode` triggers the O(n^2/64) LDPC RU
+//! preprocessing on the first call.  A single Short x Rate 1/2 x QPSK
+//! fast-tier roundtrip test provides immediate full-chain coverage without
+//! hitting the slow threshold.
 //!
 //! # In-scope configurations
 //!
@@ -290,25 +295,28 @@ fn test_interleaver_llr_path_identity_64qam_normal() {
 }
 
 // ---------------------------------------------------------------------------
-// Slow-tier: full end-to-end BICM roundtrip tests
+// Full end-to-end BICM roundtrip helper
 //
-// These call `DvbT2Concat::encode` which triggers LDPC RU preprocessing
-// (O(n²/64), approx 2-10 s for Normal frames). All are marked slow.
-//
-// The noiseless strategy: LLRs are synthesized directly from the interleaved
-// FECFRAME bits (bit 0 → +10.0, bit 1 → −10.0), then passed through
-// `deinterleave_llrs` before `decode_soft`. This is equivalent to what a
-// perfect QAM demapper would produce and avoids AWGN simulation noise.
+// Used by both the fast-tier Short-frame test and the slow-tier Normal-frame
+// tests.  Routes through the actual QAM mapper and soft demapper with
+// noise_var = 1e-6 (effectively noiseless), matching the documented
+// end-to-end chain from the example.
 // ---------------------------------------------------------------------------
 
-/// Run the full BICM chain for one (rate, modulation) pair and assert
-/// bit-exact BBFRAME recovery.
+/// Run the full BICM chain for one (frame_size, rate, modulation) triple and
+/// assert bit-exact BBFRAME recovery.
 ///
 /// Chain:
-///   BBFRAME → concat.encode → interleave → (noiseless LLRs)
-///          → deinterleave_llrs → concat.decode_soft → BBFRAME
-fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
-    let frame_size = FrameSize::Normal;
+///   BBFRAME -> concat.encode -> interleave
+///          -> mapper.map_bits -> (noise_var = 1e-6)
+///          -> demapper.demap_llrs -> deinterleave_llrs
+///          -> concat.decode_soft -> BBFRAME
+fn run_full_bicm_roundtrip_fs(
+    frame_size: FrameSize,
+    code_rate: CodeRate,
+    modulation: DvbT2Modulation,
+    seed: u64,
+) {
     let concat = DvbT2Concat::new(frame_size, code_rate).expect("unsupported configuration");
 
     let modcod = DvbT2Modcod::new(frame_size, code_rate, modulation);
@@ -328,23 +336,46 @@ fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, see
     // Step 1: build random BBFRAME.
     let bbframe_in = random_bbframe(concat.k_bch(), seed);
 
-    // Step 2: BCH + LDPC encode → FECFRAME.
+    // Step 2: BCH + LDPC encode -> FECFRAME.
     let fecframe = concat.encode(&bbframe_in);
     assert_eq!(fecframe.len(), concat.n_ldpc());
 
-    // Step 3: bit interleave → interleaved FECFRAME.
+    // Step 3: bit interleave -> interleaved FECFRAME.
     let interleaved = interleaver.interleave(&fecframe);
     assert_eq!(interleaved.len(), concat.n_ldpc());
 
-    // Step 4: synthesize noiseless LLRs in interleaved order.
-    // These represent what a perfect QAM demapper would output.
-    let interleaved_llrs = noiseless_llrs_from_bitvec(&interleaved, 10.0);
+    // Step 4: QAM map -- interleaved bits -> I/Q symbols.
+    let spec = ModemSpec::<f32>::gray_square_qam(qam_order(modulation));
+    let m = spec.bits_per_symbol() as usize;
+    let num_symbols = concat.n_ldpc() / m;
+    assert_eq!(concat.n_ldpc() % m, 0);
+    let mapper = spec.preferred_mapper();
+    let demapper = spec.preferred_soft_demapper();
+    let interleaved_bits = bitvec_to_bools(&interleaved);
+    let mut tx_i = vec![0.0_f32; num_symbols];
+    let mut tx_q = vec![0.0_f32; num_symbols];
+    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
 
-    // Step 5: deinterleave LLRs back to FECFRAME order.
+    // Step 5: QAM soft demap -- I/Q -> interleaved LLRs (noise_var = 1e-6).
+    let noise_var = vec![1e-6_f32; num_symbols];
+    let mut interleaved_llrs = vec![Llr::new(0.0); concat.n_ldpc()];
+    demapper.demap_llrs(
+        DemapInput {
+            rx_i: &tx_i,
+            rx_q: &tx_q,
+            gain_i: None,
+            gain_q: None,
+            noise_var: &noise_var,
+            method: DemapMethod::MaxLog,
+        },
+        &mut interleaved_llrs,
+    );
+
+    // Step 6: deinterleave LLRs back to FECFRAME order.
     let fecframe_llrs = interleaver.deinterleave_llrs(&interleaved_llrs);
     assert_eq!(fecframe_llrs.len(), concat.n_ldpc());
 
-    // Step 6: LDPC + BCH decode → recovered BBFRAME.
+    // Step 7: LDPC + BCH decode -> recovered BBFRAME.
     let bbframe_out = concat
         .decode_soft(&fecframe_llrs)
         .expect("LDPC decode failed");
@@ -352,12 +383,44 @@ fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, see
     // Assert bit-exact recovery.
     assert_eq!(
         bbframe_out, bbframe_in,
-        "BICM roundtrip mismatch for Normal × {:?} × {:?}",
-        code_rate, modulation
+        "BICM roundtrip mismatch for {:?} x {:?} x {:?}",
+        frame_size, code_rate, modulation
     );
 }
 
-/// Full BICM roundtrip: Normal × Rate 1/2 × 16-QAM.
+/// Convenience wrapper for Normal-frame roundtrip (used by slow-tier tests).
+fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
+    run_full_bicm_roundtrip_fs(FrameSize::Normal, code_rate, modulation, seed);
+}
+
+// ---------------------------------------------------------------------------
+// Fast-tier: full end-to-end BICM roundtrip — Short x Rate 1/2 x QPSK
+//
+// Short frame (n=16200) LDPC preprocessing is ~16x cheaper than Normal
+// (n=64800, O(n^2/64)), finishing well within the 5 s fast-tier limit.
+// This test exercises the complete documented call sequence -- including
+// QAM map/demap -- on a pseudo-random payload without hitting the slow tier.
+// ---------------------------------------------------------------------------
+
+/// Full BICM roundtrip via QAM map/demap: Short x Rate 1/2 x QPSK.
+///
+/// Exercises the complete chain:
+///   BBFRAME -> BCH+LDPC encode -> interleave -> mapper.map_bits
+///          -> demapper.demap_llrs (noise_var = 1e-6)
+///          -> deinterleave_llrs -> decode_soft -> BBFRAME
+///
+/// Short frame keeps preprocessing within the 5 s fast-tier limit.
+#[test]
+fn test_bicm_roundtrip_short_rate1_2_qpsk() {
+    run_full_bicm_roundtrip_fs(
+        FrameSize::Short,
+        CodeRate::Rate1_2,
+        DvbT2Modulation::Qpsk,
+        0xA1B2_C3D4_E5F6_0718,
+    );
+}
+
+/// Full BICM roundtrip: Normal x Rate 1/2 x 16-QAM.
 #[test]
 #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
 fn test_bicm_roundtrip_normal_rate1_2_16qam() {
