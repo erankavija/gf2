@@ -5441,3 +5441,4 @@
 {"type":"issue_claimed","id":"becad2be-5ef5-4d1b-bb05-2170911dabdf","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T12:18:27.176473773Z","assignee":"agent:claude"}
 {"type":"issue_state_changed","id":"6b64d63b-b0d0-4380-ae94-9be8adee596d","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T12:18:28.167304526Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"386cd04d-c47b-4434-878f-5be43edc8127","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T12:18:28.170116697Z","assignee":"agent:claude"}
+{"type":"issue_state_changed","id":"2b947d17-f0b2-413a-b1b7-6ff8fec029b3","issue_id":"2928ccce-700a-46ff-88c7-6998915f9fdf","timestamp":"2026-05-27T12:30:40.020589431Z","from":"backlog","to":"in_progress"}
