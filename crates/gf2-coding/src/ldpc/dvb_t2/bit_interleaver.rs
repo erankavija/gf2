@@ -370,7 +370,7 @@ impl DvbT2BitInterleaver {
     /// let interleaver = DvbT2BitInterleaver::new(modcod);
     /// let bits = BitVec::zeros(interleaver.frame_bits());
     /// let interleaved = interleaver.interleave(&bits);
-    /// assert_eq!(interleaved.len_bits(), interleaver.frame_bits());
+    /// assert_eq!(interleaved.len(), interleaver.frame_bits());
     /// ```
     ///
     /// # Complexity
