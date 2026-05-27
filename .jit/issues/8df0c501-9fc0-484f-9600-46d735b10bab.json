@@ -2,7 +2,7 @@
   "id": "8df0c501-9fc0-484f-9600-46d735b10bab",
   "title": "Implement blocked GF(p) invert via PLE (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements blocked GF(p) invert per design `feb15da9`, building on the panelized PLE implementation.\n\nParent epic: `026fc832`. Predecessors: `feb15da9` (design), panelized PLE implementation (sibling).\n\n## Amendment (2026-05-27, user-approved, session 11)\n\nR0 evidence (`dev/bench_results/2026-05-27-8df0c501-blocked-invert.md`) closed 8 of 11 A8 invert cells PASS (rows 34, 35, 36, 38, 41, 42, 43, 74). The remaining 3 cells are routed per user-approved decision (session 11 AskUserQuestion: \"Investigate GF(251)/n=64 borderline first; amend the rest\"):\n\n- **Row 39** (GF(251)/n=256/uniform @ 4.08×): `[aspirational]` inheriting the `6823c8a0` GF(251)/n=256 PLE-side gap. The blocked invert's `trsm_lower` + `trsm_upper` calls inherit the PLE bottleneck at this cell. Closure requires the blocked Schur-update kernel or float-cascade PLE work tracked under 6823c8a0's existing [aspirational] amendment.\n- **Row 37** (GF(251)/n=64/uniform @ 1.566×): deferred to follow-up task `d36cc414` (GF(251)/n=64 borderline investigation).\n- **Row 40** (GF(251)/n=256/deficient @ 1.707×): deferred to follow-up task `d36cc414` (GF(251)/n=64 borderline investigation covers the same dispatch-path overhead pattern at GF(251) sizes near the panel threshold).\n\n## Background\n\nCloses A8 rows 34-43, 74 (invert cells over GF(7/251/65521) and GF(31)).\n\n## Success Criteria (current — amended 2026-05-27)\n\n- [hard] Production code implementing the blocked invert per the approved design.\n- [hard] Bit-exact correctness: A * A⁻¹ = I for all proptest cases across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths.\n- [hard] 5-trial CCX1-pinned benchmarks at n in {64, 256, 1024} per prime.\n- [hard] [AMENDED 2026-05-27 — see Amendment block above] Every A8 invert cell (rows 34-43, 74) either PASSes (ratio ≤ 1.5× vs fflas) OR carries an explicit user-approved [aspirational] amendment OR is closed by a named follow-up task. Row 39 is [aspirational] at 4.08× inheriting 6823c8a0's GF(251)/n=256 PLE-side gap. Rows 37 and 40 are deferred to `d36cc414`.\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%).\n- [hard] No `unsafe` outside kernel crates.\n- [hard] Reuses panelized PLE + `fp_small_try_gemm_classical`.\n\n## Original Success Criteria (pre-amendment, preserved for audit)\n\n- [hard] Every A8 invert cell (rows 34-43, 74) either PASSes or carries [aspirational] amendment.\n\n## Out of scope\n\n- Sibling impls.\n- GF(251)/n=256/uniform invert (amended `[aspirational]` 2026-05-27).\n- GF(251)/n=64 + n=256/deficient invert (deferred to `d36cc414`).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T00:04:01.760924770Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-26T23:49:32.217626501Z"
+      "updated_at": "2026-05-27T00:25:38.730047695Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-27T00:25:55.298910326Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T00:17:47.060099510Z"
     }
   },
   "context": {},
@@ -34,5 +39,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:11:04.214564218+00:00",
-  "updated_at": "2026-05-27T00:09:08.787749211+00:00"
+  "updated_at": "2026-05-27T00:25:55.808787092+00:00"
 }
