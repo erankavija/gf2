@@ -82,6 +82,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::fp_medium::MediumPrimeFns;
+    use gf2_kernels_simd::fp_medium_ple::MediumPrimePlePanelFns;
     use gf2_kernels_simd::fp_small::SmallPrimeFns;
     use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
     use gf2_kernels_simd::fp_small_panel::SmallPrimePanelFns;
@@ -103,6 +104,7 @@ pub(crate) mod simd {
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
+    static FP_MEDIUM_PLE_FNS: OnceLock<Option<MediumPrimePlePanelFns>> = OnceLock::new();
     static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
     static FP_SMALL_F32_FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
     static FP_SMALL_PANEL_FNS: OnceLock<Option<SmallPrimePanelFns>> = OnceLock::new();
@@ -311,6 +313,21 @@ pub(crate) mod simd {
             .as_ref()
     }
 
+    /// Returns the best available medium-prime panelized PLE base-case
+    /// kernel for `Fp<P>` with `P ∈ (251, 65536)` (issue `68db401b`,
+    /// design `2e8c5a29` § 9).
+    ///
+    /// Provides the AVX2 u16-lane Schur-update axpy kernel used by the
+    /// `ple_in_place_window` panel-base dispatch arm for medium primes.
+    /// Returns `None` on non-AVX2 hosts; callers fall back to the
+    /// scalar `ple_base_direct` path.
+    #[inline]
+    pub fn maybe_fp_medium_ple() -> Option<&'static MediumPrimePlePanelFns> {
+        FP_MEDIUM_PLE_FNS
+            .get_or_init(gf2_kernels_simd::fp_medium_ple::detect)
+            .as_ref()
+    }
+
     /// Returns the best available fixed-size wide GF(2^m) carry-less multiply
     /// kernels, if any.
     ///
@@ -392,6 +409,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_small_ple() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_medium_ple() -> Option<()> {
         None
     }
 

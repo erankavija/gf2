@@ -2700,6 +2700,21 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
     perm: &mut [usize],
     pivot_cols: &mut Vec<usize>,
 ) -> Option<usize> {
+    // Route by P range: small primes (≤ 251) go through the byte-lane
+    // kernel; medium primes ((251, 65536)) go through the u16-lane
+    // kernel (issue `68db401b`). Other primes return `None` and the
+    // caller falls back to scalar `ple_base_direct`.
+    if fp_medium_eligible::<P>() {
+        return fp_try_ple_panel_base_medium::<P>(
+            matrix,
+            parent_cols,
+            m,
+            col_lo,
+            col_hi,
+            perm,
+            pivot_cols,
+        );
+    }
     if !fp_small_enabled::<P>() {
         return None;
     }
@@ -2815,6 +2830,9 @@ pub(crate) fn fp_try_ple_panel_base<const P: u64>(
 #[cfg(feature = "simd")]
 #[inline]
 pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
+    if fp_medium_eligible::<P>() {
+        return crate::simd::maybe_fp_medium_ple().is_some();
+    }
     fp_small_enabled::<P>() && crate::simd::maybe_fp_small_ple().is_some()
 }
 
@@ -2822,6 +2840,191 @@ pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
 #[inline]
 pub(crate) fn fp_ple_panel_base_available<const P: u64>() -> bool {
     false
+}
+
+// ---------------------------------------------------------------------------
+// Medium-prime PLE base-case dispatch (jit:68db401b)
+// ---------------------------------------------------------------------------
+
+/// Per-prime u16 inverse table for medium primes `Fp<P>` (`P ∈ (251,
+/// 65536)`). `inv_table[v]` is the modular inverse of `v` for `v ∈
+/// [1, P)`; `inv_table[0]` is unused (kept 0).
+///
+/// Built once per prime per process via [`build_medium_prime_inv_table`]
+/// and cached in a global mutex-guarded map; on subsequent calls a
+/// `&'static [u16]` slice is returned via `Box::leak` (the table is
+/// permanently retained for the process lifetime, which is acceptable —
+/// 65521 × 2 = 128 KB at most, one allocation per prime).
+#[cfg(feature = "simd")]
+#[allow(clippy::explicit_auto_deref)]
+fn build_medium_prime_inv_table<const P: u64>() -> &'static [u16] {
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+    use std::sync::OnceLock;
+
+    static MEDIUM_INV_TABLES: OnceLock<Mutex<HashMap<u64, &'static [u16]>>> = OnceLock::new();
+    let map = MEDIUM_INV_TABLES.get_or_init(|| Mutex::new(HashMap::new()));
+
+    {
+        let guard = map.lock().expect("medium inv-table mutex poisoned");
+        if let Some(slot) = guard.get(&P) {
+            return slot;
+        }
+    }
+
+    // Compute the table outside the lock: O(P log P) Fermat
+    // exponentiations. At P = 65521 this is ~65520 * ~16 = ~1M small
+    // ops, paid once per prime per process.
+    let p_u64 = P;
+    let mut table = vec![0u16; p_u64 as usize];
+    for v in 1..p_u64 {
+        let mut result: u64 = 1;
+        let mut base: u64 = v;
+        let mut e: u64 = p_u64 - 2;
+        while e > 0 {
+            if e & 1 == 1 {
+                result = (result * base) % p_u64;
+            }
+            e >>= 1;
+            if e > 0 {
+                base = (base * base) % p_u64;
+            }
+        }
+        table[v as usize] = result as u16;
+    }
+    let leaked: &'static [u16] = Box::leak(table.into_boxed_slice());
+
+    let mut guard = map.lock().expect("medium inv-table mutex poisoned");
+    // Another thread may have raced ahead and inserted while we were
+    // computing. If so, drop our table (it's already leaked — small
+    // permanent leak; happens at most once per prime per concurrent
+    // race) and return the winner.
+    // `&'static [u16]` is `Copy`, so `*entry(...)` copies the slice
+    // handle out of the `&mut &'static [u16]` returned by `or_insert`,
+    // releasing the lock guard's borrow before the function returns.
+    // clippy's `explicit_auto_deref` suggestion does not apply here: the
+    // function signature returns `&'static [u16]`, not `&mut &'static
+    // [u16]`, so the explicit `*` is required to drop one indirection.
+    *guard.entry(P).or_insert(leaked)
+}
+
+/// Medium-prime PLE base-case dispatch helper (issue `68db401b`,
+/// design `2e8c5a29` § 9).
+///
+/// Operates on `Fp<P>` matrices with `P ∈ (251, 65536)`. Packs the
+/// column window into canonical u16 storage via `Fp::value()`, invokes
+/// the AVX2 u16-lane panel-base kernel via
+/// [`crate::simd::maybe_fp_medium_ple`], propagates row swaps to cells
+/// outside the column window via cycle decomposition, and unpacks the
+/// (already-permuted) window scratch back into Montgomery storage via
+/// `Fp::new`.
+///
+/// Returns `Some(rank)` on success; `None` when the kernel declined
+/// (P out of range, simd feature disabled, AVX2 unavailable). The
+/// caller falls back to `ple_base_direct` in this case.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
+    matrix: &mut [Fp<P>],
+    parent_cols: usize,
+    m: usize,
+    col_lo: usize,
+    col_hi: usize,
+    perm: &mut [usize],
+    pivot_cols: &mut Vec<usize>,
+) -> Option<usize> {
+    if !fp_medium_eligible::<P>() {
+        return None;
+    }
+    let fns = crate::simd::maybe_fp_medium_ple()?;
+    debug_assert_eq!(
+        matrix.len(),
+        m * parent_cols,
+        "fp_try_ple_panel_base_medium: matrix shape"
+    );
+    debug_assert_eq!(perm.len(), m, "fp_try_ple_panel_base_medium: perm length");
+    debug_assert!(
+        col_lo <= col_hi && col_hi <= parent_cols,
+        "fp_try_ple_panel_base_medium: col window out of bounds"
+    );
+
+    let win = col_hi - col_lo;
+    if m == 0 || win == 0 {
+        return Some(0);
+    }
+
+    let p_u16 = P as u16;
+    let inv_table = build_medium_prime_inv_table::<P>();
+
+    // Pack the window into canonical u16: scratch[r * win + c] =
+    // value(matrix[r, col_lo + c]). Round-tripping through `Fp::value()`
+    // performs one REDC per cell, but this is amortised by the SIMD
+    // Schur update inside the kernel.
+    let mut window: Vec<u16> = Vec::with_capacity(m * win);
+    for r in 0..m {
+        let row_base = r * parent_cols + col_lo;
+        for c in 0..win {
+            let canon = matrix[row_base + c].value() as u16;
+            debug_assert!((canon as u64) < P, "non-canonical cell");
+            window.push(canon);
+        }
+    }
+
+    // Initialise local row perm tracker.
+    let mut row_perm: Vec<usize> = (0..m).collect();
+    let mut pivot_cols_local: Vec<usize> = Vec::with_capacity(win.min(m));
+
+    // Invoke the kernel via the safe wrapper.
+    let rank = (fns.ple_panel_base_fn)(
+        &mut window,
+        m,
+        win,
+        p_u16,
+        inv_table,
+        &mut row_perm,
+        &mut pivot_cols_local,
+    );
+
+    // Propagate the kernel's row swaps to cells outside the column
+    // window (same cycle-decomposition helper used by the small-prime
+    // path).
+    apply_row_perm_outside_window::<P>(matrix, parent_cols, m, col_lo, col_hi, &row_perm);
+
+    // Apply the same permutation to the caller's `perm` (full-matrix
+    // permutation tracker).
+    apply_perm_indices(perm, &row_perm);
+
+    // Unpack the (already permuted) window scratch back into
+    // Montgomery storage via `Fp::new` (one REDC per cell).
+    for r in 0..m {
+        let row_base = r * parent_cols + col_lo;
+        for c in 0..win {
+            let canon = window[r * win + c] as u64;
+            debug_assert!(canon < P, "non-canonical cell post-kernel");
+            matrix[row_base + c] = Fp::<P>::new(canon);
+        }
+    }
+
+    // Push panel-relative pivot column offsets as absolute column
+    // indices (offset by `col_lo`).
+    for off in pivot_cols_local {
+        pivot_cols.push(col_lo + off);
+    }
+
+    Some(rank)
+}
+
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
+    _matrix: &mut [Fp<P>],
+    _parent_cols: usize,
+    _m: usize,
+    _col_lo: usize,
+    _col_hi: usize,
+    _perm: &mut [usize],
+    _pivot_cols: &mut Vec<usize>,
+) -> Option<usize> {
+    None
 }
 
 /// Physically rearrange the rows of `matrix` according to `row_perm`,
