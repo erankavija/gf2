@@ -20,8 +20,10 @@
 //! assert_eq!(code.n(), 64800);
 //! ```
 
+pub mod bit_interleaver;
 pub(crate) mod builder;
 pub(crate) mod dvb_t2_matrices;
 pub(crate) mod params;
 
+pub use bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
 pub use params::{DvbParams, FrameSize};
