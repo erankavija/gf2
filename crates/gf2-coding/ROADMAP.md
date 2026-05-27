@@ -322,15 +322,21 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 **See**: [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md)
 
 ## Phase C10.7: Full FEC Chain (2-3 weeks, after C11.1-11.2 complete)
-- [ ] QAM modulation (QPSK, 16/64/256-QAM)
-- [ ] Bit interleaving (DVB-T2 column-row)
-- [ ] System integration (BCH + LDPC + QAM)
-- [ ] FER simulation over AWGN
-- [ ] Full TP04 → TP05 → TP06 → TP07a validation
-  (**Note 2026-05-27, issue 4cdaf1c5**: TP07a in all available ETSI CSP vectors
-  includes §6.1.4 + §6.1.5 stages; §6.1.3-only validation is blocked until
-  §6.1.4 and §6.1.5 are implemented.  Empirical finding documented in
-  `crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs` and `docs/DVB_T2.md`.)
+- [x] QAM modulation (QPSK, 16-QAM, 64-QAM via Gray-coded mapper/demapper;
+  256-QAM out of scope for the AWGN campaign)
+- [x] Bit interleaving (DVB-T2 column-row + parity interleave, §6.1.3) —
+  verified bit-exact against ETSI TP07a (VV020 16-QAM Rate 1/2,
+  VV009 64-QAM Rate 2/3, VV014 64-QAM Rate 3/4); issues 87a2402f + 548a8563.
+- [x] System integration (BCH + LDPC + bit interleaver + QAM) — issue 003e4088.
+- [ ] FER simulation over AWGN — campaign infrastructure ready
+  (152388f4 binary, fd73e8a8 resumable runner); production runs queued
+  (e4849f07).
+- [x] Full TP04 → TP05 → TP06 → TP07a validation — TP04→TP06 verified
+  (202/202 blocks), TP06→TP07a verified (3 vectors × 10 blocks, 0 diffs);
+  issues 4cdaf1c5 + 548a8563. The TP07 (without `a`) file represents
+  later pipeline stages (§6.1.4 cell-word demux + §6.1.5 cell interleaver)
+  that are NOT required for AWGN FER simulation and are out of scope
+  for this epic.
 - [ ] Live DVB-T2 reception demo with SDR hardware
 
 **See**: [docs/DVB_T2.md](docs/DVB_T2.md) for implementation and verification status
