@@ -25,7 +25,7 @@
 //! # Scope
 //!
 //! This implementation covers the three LDPC code rates that appear in
-//! the issue scope — 1/2, 3/5, 2/3 — crossed with 16-QAM and 64-QAM,
+//! the issue scope — 1/2, 2/3, 3/4 — crossed with 16-QAM and 64-QAM,
 //! for both Normal (64800 bits) and Short (16200 bits) FECFRAMEs.
 //! QPSK is included for completeness (no twist, η_mod = 2).
 //!
@@ -73,7 +73,7 @@ impl DvbT2Modulation {
 /// # Arguments
 ///
 /// * `frame_size` — Normal (64800) or Short (16200) FECFRAME.
-/// * `code_rate` — LDPC code rate.  Only rates 1/2, 3/5, and 2/3 are
+/// * `code_rate` — LDPC code rate.  Only rates 1/2, 2/3, and 3/4 are
 ///   in scope for the current implementation; other rates will panic.
 /// * `modulation` — QPSK, 16-QAM, or 64-QAM.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -118,8 +118,8 @@ impl InterleaverConfig {
     ///
     /// # Panics
     ///
-    /// Panics if `modcod.code_rate` is not one of Rate1_2, Rate3_5,
-    /// Rate2_3 (the three rates currently in scope).
+    /// Panics if `modcod.code_rate` is not one of Rate1_2, Rate2_3,
+    /// Rate3_4 (the three rates currently in scope).
     fn from_modcod(modcod: DvbT2Modcod) -> Self {
         let n = match modcod.frame_size {
             FrameSize::Normal => 64800,
@@ -156,10 +156,10 @@ impl InterleaverConfig {
         // The code rate is validated to ensure only in-scope rates are used;
         // the twist tables themselves are modulation-dependent only.
         match modcod.code_rate {
-            CodeRate::Rate1_2 | CodeRate::Rate3_5 | CodeRate::Rate2_3 => {}
+            CodeRate::Rate1_2 | CodeRate::Rate2_3 | CodeRate::Rate3_4 => {}
             other => panic!(
                 "DvbT2BitInterleaver: code rate {:?} is not in scope \
-                 (only Rate1_2, Rate3_5, Rate2_3 are supported)",
+                 (only Rate1_2, Rate2_3, Rate3_4 are supported)",
                 other
             ),
         }
@@ -231,8 +231,8 @@ impl DvbT2BitInterleaver {
     ///
     /// # Panics
     ///
-    /// Panics if `modcod.code_rate` is not one of `Rate1_2`, `Rate3_5`,
-    /// `Rate2_3` (the three rates currently in scope).
+    /// Panics if `modcod.code_rate` is not one of `Rate1_2`, `Rate2_3`,
+    /// `Rate3_4` (the three rates currently in scope).
     ///
     /// # Examples
     ///
@@ -506,7 +506,7 @@ mod tests {
     fn in_scope_modcods() -> Vec<DvbT2Modcod> {
         let mut v = Vec::new();
         for &fs in &[FrameSize::Normal, FrameSize::Short] {
-            for &rate in &[CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3] {
+            for &rate in &[CodeRate::Rate1_2, CodeRate::Rate2_3, CodeRate::Rate3_4] {
                 for &modulation in &[
                     DvbT2Modulation::Qpsk,
                     DvbT2Modulation::Qam16,
@@ -579,7 +579,7 @@ mod tests {
     /// for Normal frames (spec success criterion).
     #[test]
     fn test_roundtrip_all_in_scope_rates_normal() {
-        for &rate in &[CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3] {
+        for &rate in &[CodeRate::Rate1_2, CodeRate::Rate2_3, CodeRate::Rate3_4] {
             for &modulation in &[DvbT2Modulation::Qam16, DvbT2Modulation::Qam64] {
                 let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
                 let il = DvbT2BitInterleaver::new(modcod);
@@ -604,7 +604,7 @@ mod tests {
     /// Same cross-product for Short frames.
     #[test]
     fn test_roundtrip_all_in_scope_rates_short() {
-        for &rate in &[CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3] {
+        for &rate in &[CodeRate::Rate1_2, CodeRate::Rate2_3, CodeRate::Rate3_4] {
             for &modulation in &[DvbT2Modulation::Qam16, DvbT2Modulation::Qam64] {
                 let modcod = DvbT2Modcod::new(FrameSize::Short, rate, modulation);
                 let il = DvbT2BitInterleaver::new(modcod);
@@ -623,6 +623,66 @@ mod tests {
                     rate, modulation
                 );
             }
+        }
+    }
+
+    // --- Explicit Rate3_4 roundtrip (enforceable per success criterion) ------
+
+    /// Rate3_4 × {16-QAM, 64-QAM} × Normal FECFRAME roundtrip.
+    ///
+    /// Per ETSI EN 302 755 v1.4.1 §6.1.3 Table 9 (Normal FECFRAME):
+    ///   16-QAM: Nc=4, Nr=16200, N=64800, twist=[0,2,4,4]
+    ///   64-QAM: Nc=6, Nr=10800, N=64800, twist=[0,7,20,20,21,7]
+    /// (Nc × Nr = 64800 in both cases.)
+    #[test]
+    fn test_roundtrip_rate3_4_normal() {
+        for &modulation in &[DvbT2Modulation::Qam16, DvbT2Modulation::Qam64] {
+            let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate3_4, modulation);
+            let il = DvbT2BitInterleaver::new(modcod);
+            let n = il.frame_bits();
+            assert_eq!(n, 64800, "Rate3_4 Normal frame must be 64800 bits");
+
+            let mut state: u64 = 0xFEDC_BA98_7654_3210u64;
+            let input = bitvec_from_bools((0..n).map(|_| {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                (state >> 63) != 0
+            }));
+
+            let recovered = il.deinterleave(&il.interleave(&input));
+            assert_eq!(
+                recovered, input,
+                "roundtrip failed for Normal Rate3_4 {:?}",
+                modulation
+            );
+        }
+    }
+
+    /// Rate3_4 × {16-QAM, 64-QAM} × Short FECFRAME roundtrip.
+    ///
+    /// Per ETSI EN 302 755 v1.4.1 §6.1.3 Table 9a (Short FECFRAME):
+    ///   16-QAM: Nc=4, Nr=4050, N=16200, twist=[0,2,4,4]
+    ///   64-QAM: Nc=6, Nr=2700, N=16200, twist=[0,7,20,20,21,7]
+    /// (Nc × Nr = 16200 in both cases.)
+    #[test]
+    fn test_roundtrip_rate3_4_short() {
+        for &modulation in &[DvbT2Modulation::Qam16, DvbT2Modulation::Qam64] {
+            let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate3_4, modulation);
+            let il = DvbT2BitInterleaver::new(modcod);
+            let n = il.frame_bits();
+            assert_eq!(n, 16200, "Rate3_4 Short frame must be 16200 bits");
+
+            let mut state: u64 = 0x0102_0304_0506_0708u64;
+            let input = bitvec_from_bools((0..n).map(|_| {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+                (state >> 63) != 0
+            }));
+
+            let recovered = il.deinterleave(&il.interleave(&input));
+            assert_eq!(
+                recovered, input,
+                "roundtrip failed for Short Rate3_4 {:?}",
+                modulation
+            );
         }
     }
 
@@ -706,7 +766,7 @@ mod tests {
                 FrameSize::Normal => 64800,
                 FrameSize::Short => 16200,
             };
-            for &rate in &[CodeRate::Rate1_2, CodeRate::Rate3_5, CodeRate::Rate2_3] {
+            for &rate in &[CodeRate::Rate1_2, CodeRate::Rate2_3, CodeRate::Rate3_4] {
                 for &modulation in &[
                     DvbT2Modulation::Qpsk,
                     DvbT2Modulation::Qam16,
@@ -763,7 +823,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "not in scope")]
     fn test_out_of_scope_rate_panics() {
-        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate3_4, DvbT2Modulation::Qam16);
+        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate4_5, DvbT2Modulation::Qam16);
         DvbT2BitInterleaver::new(modcod);
     }
 
