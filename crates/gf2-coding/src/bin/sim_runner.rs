@@ -419,6 +419,9 @@ fn build_sim_config(curve: &CurveConfig, output_dir: &str, seed: u64) -> Simulat
         max_decoder_iterations: 50,
         rng_seed: Some(seed),
         output_path: Some(PathBuf::from(output_csv)),
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     }
 }
 

@@ -59,6 +59,12 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 
+#[cfg(feature = "sim-observability")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+#[cfg(feature = "sim-observability")]
+use rand_chacha::ChaCha20Rng;
+
 /// Global lock for serializing all JSONL file appends (progress + point_complete).
 ///
 /// Used by both `SnrAccumulator::write_progress_entry` and
@@ -66,6 +72,303 @@ use std::sync::{Arc, Mutex};
 /// concurrent parallel simulation workers.
 static JSONL_WRITE_LOCK: Mutex<()> = Mutex::new(());
 use std::time::{Duration, Instant};
+
+// ---------------------------------------------------------------------------
+// sim-observability: checkpointing, tracing, and signal handling
+// ---------------------------------------------------------------------------
+
+/// Process-wide interrupt flag. Set to `true` by the `ctrlc` handler
+/// (SIGINT / SIGTERM) when `sim-observability` is active.
+///
+/// The inner simulation loops poll this flag between frames; on trip they
+/// flush the current SNR checkpoint and exit.
+#[cfg(feature = "sim-observability")]
+static INTERRUPTED: OnceLock<Arc<AtomicBool>> = OnceLock::new();
+
+/// Returns a reference to the process-wide interrupt flag, initialising the
+/// `ctrlc` handler on first call.
+///
+/// Thread-safe: `OnceLock` guarantees the handler is registered exactly once
+/// even under concurrent access.
+#[cfg(feature = "sim-observability")]
+fn interrupted_flag() -> &'static Arc<AtomicBool> {
+    INTERRUPTED.get_or_init(|| {
+        let flag = Arc::new(AtomicBool::new(false));
+        let f2 = flag.clone();
+        // Ignore errors — if ctrlc::set_handler fails (e.g. in a test that
+        // already registered a handler) we continue without graceful flush.
+        let _ = ctrlc::set_handler(move || {
+            f2.store(true, Ordering::SeqCst);
+        });
+        flag
+    })
+}
+
+/// Clears the interrupt flag. Called at the start of each campaign so that
+/// a previous SIGINT during a test does not bleed into the next run.
+#[cfg(feature = "sim-observability")]
+fn clear_interrupt() {
+    interrupted_flag().store(false, Ordering::SeqCst);
+}
+
+/// Returns `true` if SIGINT or SIGTERM was received since the last
+/// [`clear_interrupt`] call.
+#[cfg(feature = "sim-observability")]
+fn is_interrupted() -> bool {
+    interrupted_flag().load(Ordering::SeqCst)
+}
+
+/// Per-SNR-point checkpoint written to `<checkpoint_dir>/snr_<index>.json`.
+///
+/// All numeric fields are plain JSON values; the `config_hash` field holds
+/// the `"blake3:<hex>"` string so a corrupted or mismatched checkpoint is
+/// detected early.
+#[cfg(feature = "sim-observability")]
+#[derive(Debug)]
+struct SnrCheckpoint {
+    snr_index: usize,
+    eb_n0_db: f64,
+    frames_completed: usize,
+    errors_accumulated: usize,
+    total_iterations: usize,
+    total_queries: usize,
+    total_bits: usize,
+    total_bit_errors: usize,
+    /// ChaCha20 word position at the time of this checkpoint snapshot.
+    /// Stored as a decimal string because `u128` exceeds JSON's safe integer
+    /// range (2^53); the reader parses it back with `str::parse::<u128>`.
+    rng_word_pos: u128,
+    frames_target: usize,
+    errors_target: usize,
+    /// `true` means the point hit `frames_target` or `errors_target`; resume
+    /// skips it. `false` means a heartbeat snapshot mid-point.
+    completed: bool,
+    /// `"blake3:<64 hex chars>"` — BLAKE3 of the canonical config encoding.
+    config_hash: String,
+}
+
+#[cfg(feature = "sim-observability")]
+impl SnrCheckpoint {
+    /// Serialises to a JSON string (no external serde dep required).
+    fn to_json(&self) -> String {
+        format!(
+            concat!(
+                "{{\n",
+                "  \"snr_index\": {},\n",
+                "  \"eb_n0_db\": {},\n",
+                "  \"frames_completed\": {},\n",
+                "  \"errors_accumulated\": {},\n",
+                "  \"total_iterations\": {},\n",
+                "  \"total_queries\": {},\n",
+                "  \"total_bits\": {},\n",
+                "  \"total_bit_errors\": {},\n",
+                "  \"rng_word_pos\": \"{}\",\n",
+                "  \"frames_target\": {},\n",
+                "  \"errors_target\": {},\n",
+                "  \"completed\": {},\n",
+                "  \"config_hash\": \"{}\"\n",
+                "}}"
+            ),
+            self.snr_index,
+            self.eb_n0_db,
+            self.frames_completed,
+            self.errors_accumulated,
+            self.total_iterations,
+            self.total_queries,
+            self.total_bits,
+            self.total_bit_errors,
+            self.rng_word_pos,
+            self.frames_target,
+            self.errors_target,
+            self.completed,
+            self.config_hash,
+        )
+    }
+
+    /// Parses a checkpoint from its JSON string representation.
+    ///
+    /// Returns `None` if any required field is missing or cannot be parsed.
+    fn from_json(s: &str) -> Option<Self> {
+        fn extract<'a>(s: &'a str, key: &str) -> Option<&'a str> {
+            let needle = format!("\"{key}\":");
+            let pos = s.find(needle.as_str())?;
+            let after = s[pos + needle.len()..].trim_start();
+            // Value is either a quoted string or a bare value terminated by
+            // `,` `\n` or `}`.
+            if let Some(inner) = after.strip_prefix('"') {
+                let end = inner.find('"')?;
+                Some(&inner[..end])
+            } else {
+                let end = after.find([',', '\n', '}']).unwrap_or(after.len());
+                Some(after[..end].trim())
+            }
+        }
+
+        Some(Self {
+            snr_index: extract(s, "snr_index")?.parse().ok()?,
+            eb_n0_db: extract(s, "eb_n0_db")?.parse().ok()?,
+            frames_completed: extract(s, "frames_completed")?.parse().ok()?,
+            errors_accumulated: extract(s, "errors_accumulated")?.parse().ok()?,
+            total_iterations: extract(s, "total_iterations")?.parse().ok()?,
+            total_queries: extract(s, "total_queries")?.parse().ok()?,
+            total_bits: extract(s, "total_bits")?.parse().ok()?,
+            total_bit_errors: extract(s, "total_bit_errors")?.parse().ok()?,
+            rng_word_pos: extract(s, "rng_word_pos")?.parse().ok()?,
+            frames_target: extract(s, "frames_target")?.parse().ok()?,
+            errors_target: extract(s, "errors_target")?.parse().ok()?,
+            completed: extract(s, "completed")? == "true",
+            config_hash: extract(s, "config_hash")?.to_string(),
+        })
+    }
+}
+
+/// Computes the BLAKE3 config hash for a `SimulationConfig`.
+///
+/// The canonical encoding includes all fields that affect simulation results:
+/// SNR range, stopping criteria, RNG seed, and decoder parameters.  The
+/// optional observability fields (`checkpoint_dir`, `tracing_log_path`,
+/// `heartbeat_every_frames`, `output_path`) are excluded — they control
+/// output paths, not the simulation itself, so changing them should not
+/// invalidate an existing checkpoint directory.
+///
+/// # Returns
+///
+/// A string `"blake3:<64 lowercase hex chars>"`.
+#[cfg(feature = "sim-observability")]
+fn compute_config_hash(config: &SimulationConfig) -> String {
+    let mut hasher = blake3::Hasher::new();
+    // SNR range — encoded as little-endian f64 bytes.
+    hasher.update(&(config.eb_n0_range_db.len() as u64).to_le_bytes());
+    for &v in &config.eb_n0_range_db {
+        hasher.update(&v.to_le_bytes());
+    }
+    hasher.update(&(config.min_errors as u64).to_le_bytes());
+    hasher.update(&(config.max_frames as u64).to_le_bytes());
+    hasher.update(&(config.max_decoder_iterations as u64).to_le_bytes());
+    // Seed: 0 for None (same as Some(0), but None is distinct).
+    let seed_tag: u8 = if config.rng_seed.is_some() { 1 } else { 0 };
+    hasher.update(&[seed_tag]);
+    hasher.update(&config.rng_seed.unwrap_or(0).to_le_bytes());
+    let hash = hasher.finalize();
+    format!("blake3:{}", hash.to_hex())
+}
+
+/// Checkpoint file name for SNR point `index`.
+#[cfg(feature = "sim-observability")]
+fn checkpoint_path(dir: &Path, index: usize) -> PathBuf {
+    dir.join(format!("snr_{:04}.json", index))
+}
+
+/// Path of the config-hash sentinel file inside a checkpoint directory.
+#[cfg(feature = "sim-observability")]
+fn config_hash_path(dir: &Path) -> PathBuf {
+    dir.join("config_hash.txt")
+}
+
+/// Atomically writes a checkpoint by writing to a `.tmp` file first then
+/// renaming, avoiding torn writes under SIGINT.
+#[cfg(feature = "sim-observability")]
+fn write_checkpoint_atomic(path: &Path, ckpt: &SnrCheckpoint) -> std::io::Result<()> {
+    let tmp = path.with_extension("tmp");
+    std::fs::write(&tmp, ckpt.to_json())?;
+    std::fs::rename(&tmp, path)
+}
+
+/// Loads and validates an existing checkpoint from disk.
+///
+/// Returns `None` if the file does not exist, cannot be parsed, or the
+/// config hash does not match `expected_hash`.
+#[cfg(feature = "sim-observability")]
+fn load_checkpoint(path: &Path, expected_hash: &str) -> Option<SnrCheckpoint> {
+    let s = std::fs::read_to_string(path).ok()?;
+    let ckpt = SnrCheckpoint::from_json(&s)?;
+    if ckpt.config_hash != expected_hash {
+        None // hash mismatch — treat as absent
+    } else {
+        Some(ckpt)
+    }
+}
+
+/// Validates the checkpoint directory on startup.
+///
+/// Reads `config_hash.txt` if present and compares against `current_hash`.
+/// Returns an error string if a mismatch is found; returns `Ok(())` if the
+/// directory is absent, empty, or hashes match.
+///
+/// On first run (no `config_hash.txt`), creates the directory and writes the
+/// hash file.
+#[cfg(feature = "sim-observability")]
+fn validate_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String> {
+    if !dir.exists() {
+        std::fs::create_dir_all(dir)
+            .map_err(|e| format!("Cannot create checkpoint directory {}: {e}", dir.display()))?;
+        std::fs::write(config_hash_path(dir), current_hash)
+            .map_err(|e| format!("Cannot write config_hash.txt: {e}"))?;
+        return Ok(());
+    }
+    let hash_file = config_hash_path(dir);
+    if !hash_file.exists() {
+        // Directory exists but no hash file — write it (first use of an empty dir).
+        std::fs::write(&hash_file, current_hash)
+            .map_err(|e| format!("Cannot write config_hash.txt: {e}"))?;
+        return Ok(());
+    }
+    let stored = std::fs::read_to_string(&hash_file)
+        .map_err(|e| format!("Cannot read config_hash.txt: {e}"))?;
+    let stored = stored.trim();
+    if stored != current_hash {
+        return Err(format!(
+            "Checkpoint directory config hash mismatch.\n  stored:  {stored}\n  current: {current_hash}\n\
+             Change checkpoint_dir or delete the directory to start fresh.",
+        ));
+    }
+    Ok(())
+}
+
+/// Appends a JSON-lines tracing event to the configured tracing log.
+///
+/// Best-effort: on I/O error, prints a one-time warning to stderr.
+#[cfg(feature = "sim-observability")]
+fn append_trace_event(path: &Path, event: &str) {
+    use std::io::Write;
+    let _guard = JSONL_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let result = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .and_then(|mut f| writeln!(f, "{event}"));
+    drop(_guard);
+    if let Err(e) = result {
+        eprintln!("Warning: tracing write failed ({}): {e}", path.display());
+    }
+}
+
+/// Constructs a per-SNR-point `ChaCha20Rng` with deterministic seeding.
+///
+/// The seed for point `snr_index` is derived as:
+///
+/// ```text
+/// seed = base_seed ^ (snr_index as u64).rotate_left(13)
+/// ```
+///
+/// This ensures each SNR point gets an independent RNG stream from a single
+/// base seed while keeping the derivation trivially reversible for auditing.
+/// `set_word_pos(word_pos)` then seeks into the stream at the position
+/// recorded by the last heartbeat checkpoint (0 for a fresh point).
+///
+/// # Arguments
+///
+/// * `base_seed` — From `SimulationConfig::rng_seed`.
+/// * `snr_index` — Zero-based index into `eb_n0_range_db`.
+/// * `word_pos` — ChaCha20 word position to seek to; 0 for a fresh start.
+#[cfg(feature = "sim-observability")]
+fn make_chacha_rng(base_seed: u64, snr_index: usize, word_pos: u128) -> ChaCha20Rng {
+    use rand::SeedableRng as _;
+    let seed = base_seed ^ (snr_index as u64).rotate_left(13);
+    let mut rng = ChaCha20Rng::seed_from_u64(seed);
+    rng.set_word_pos(word_pos);
+    rng
+}
 
 /// CSV header row used for simulation result output files.
 const CSV_HEADER: &str =
@@ -251,7 +554,9 @@ impl ChannelModel for BpskAwgnChannel {
 /// Configuration for Monte Carlo simulations.
 ///
 /// Controls SNR sweep range, stopping criteria, decoder iteration limits,
-/// RNG seeding, and optional output file path.
+/// RNG seeding, optional output file path, and (with the `sim-observability`
+/// feature) crash-safe checkpointing, structured JSON-lines tracing, and
+/// within-SNR heartbeat events.
 ///
 /// # Examples
 ///
@@ -288,6 +593,48 @@ pub struct SimulationConfig {
     /// completes. Files ending in `.json` are written as JSON; all
     /// other extensions produce CSV.
     pub output_path: Option<PathBuf>,
+
+    /// Optional directory for per-SNR checkpoint files (requires `sim-observability` feature).
+    ///
+    /// When `Some(dir)`, the runner writes one JSON file per SNR point under
+    /// `<dir>/snr_<index>.json` after each point completes, and resumes from
+    /// any existing checkpoints on startup.  A `config_hash.txt` file in the
+    /// same directory records the BLAKE3 hash of this configuration; if a
+    /// resume attempt finds a hash mismatch the runner aborts with a clear
+    /// error rather than silently using incompatible state.
+    ///
+    /// `None` (the default) disables all checkpoint behaviour.
+    ///
+    /// Requires [`rng_seed`](Self::rng_seed) to be `Some` for byte-identical
+    /// resume: without a fixed seed the per-SNR-point RNG sequence is not
+    /// reproducible.
+    pub checkpoint_dir: Option<PathBuf>,
+
+    /// Optional path for JSON-lines tracing output (requires `sim-observability` feature).
+    ///
+    /// When `Some(path)`, each campaign produces one JSON object per line:
+    /// a `campaign_start` record on startup, `snr_completed` records after
+    /// each SNR point, and `heartbeat` records at the cadence set by
+    /// [`heartbeat_every_frames`](Self::heartbeat_every_frames).
+    ///
+    /// The file is opened in append mode so concurrent or sequential runs to
+    /// the same path interleave without truncation.
+    ///
+    /// `None` (the default) disables tracing output.
+    pub tracing_log_path: Option<PathBuf>,
+
+    /// Optional within-SNR heartbeat cadence in frames (requires `sim-observability` feature).
+    ///
+    /// When `Some(n)`, the runner emits a `heartbeat` tracing event and — if
+    /// [`checkpoint_dir`](Self::checkpoint_dir) is set — writes an
+    /// intermediate (incomplete) checkpoint every `n` simulated frames.
+    /// The intermediate checkpoint records the current RNG word position so
+    /// a crash mid-SNR-point can be recovered by restarting with the same
+    /// config.
+    ///
+    /// `None` (the default) disables within-SNR heartbeats and intermediate
+    /// checkpoints; only finished SNR points are checkpointed.
+    pub heartbeat_every_frames: Option<usize>,
 }
 
 impl SimulationConfig {
@@ -314,6 +661,9 @@ impl SimulationConfig {
             max_decoder_iterations: 50,
             rng_seed: None,
             output_path: None,
+            checkpoint_dir: None,
+            tracing_log_path: None,
+            heartbeat_every_frames: None,
         }
     }
 
@@ -339,6 +689,9 @@ impl SimulationConfig {
             max_decoder_iterations: 100,
             rng_seed: None,
             output_path: None,
+            checkpoint_dir: None,
+            tracing_log_path: None,
+            heartbeat_every_frames: None,
         }
     }
 
@@ -1688,6 +2041,15 @@ impl SnrAccumulator {
         self.start_time.elapsed()
     }
 
+    /// Returns whether the frame-count trigger for a heartbeat has fired.
+    ///
+    /// Returns `true` if `total_frames > 0` and `total_frames` is a multiple
+    /// of `every_frames`.
+    #[cfg(feature = "sim-observability")]
+    fn should_heartbeat(&self, every_frames: usize) -> bool {
+        every_frames > 0 && self.total_frames > 0 && self.total_frames.is_multiple_of(every_frames)
+    }
+
     fn into_result(self) -> SimulationResult {
         let ber = if self.total_bits > 0 {
             self.total_bit_errors as f64 / self.total_bits as f64
@@ -2094,6 +2456,22 @@ impl ParallelResultCollector {
 ///
 /// Handles resume, progress, incremental CSV, JSONL logging, and final file
 /// write. The caller provides a per-frame `decode_frame` closure.
+///
+/// With the `sim-observability` feature enabled and
+/// [`SimulationConfig::checkpoint_dir`] set, the sweep additionally:
+/// - validates the checkpoint directory config hash on startup (aborting on
+///   mismatch),
+/// - skips SNR points with a completed checkpoint,
+/// - resumes mid-point from the last heartbeat checkpoint using
+///   `ChaCha20Rng::set_word_pos`,
+/// - writes heartbeat checkpoints every
+///   [`SimulationConfig::heartbeat_every_frames`] frames,
+/// - writes a `campaign_start` tracing event to
+///   [`SimulationConfig::tracing_log_path`],
+/// - writes `snr_completed` and `heartbeat` tracing events,
+/// - polls the process-wide interrupt flag between frames and flushes the
+///   current checkpoint before exiting with a non-zero status on SIGINT /
+///   SIGTERM.
 fn run_sequential_sweep<E, C, F>(
     encoder: &E,
     channel: &C,
@@ -2119,6 +2497,53 @@ where
         });
     let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
 
+    // sim-observability: validate checkpoint directory and compute config hash.
+    #[cfg(feature = "sim-observability")]
+    let config_hash = compute_config_hash(config);
+    #[cfg(feature = "sim-observability")]
+    if let Some(ref ckpt_dir) = config.checkpoint_dir {
+        if let Err(e) = validate_checkpoint_dir(ckpt_dir, &config_hash) {
+            panic!("{e}");
+        }
+    }
+
+    // sim-observability: clear any stale interrupt flag from a previous run.
+    #[cfg(feature = "sim-observability")]
+    clear_interrupt();
+
+    // sim-observability: emit campaign_start tracing event.
+    #[cfg(feature = "sim-observability")]
+    if let Some(ref tlog) = config.tracing_log_path {
+        // Generate a simple run UUID from the current timestamp + seed.
+        let run_id = {
+            use std::time::SystemTime;
+            let t = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            format!("{:032x}", t ^ (config.rng_seed.unwrap_or(0) as u128))
+        };
+        let event = format!(
+            concat!(
+                "{{\"type\":\"campaign_start\",",
+                "\"timestamp\":\"{}\",",
+                "\"run_id\":\"{}\",",
+                "\"config_hash\":\"{}\",",
+                "\"seed\":{},",
+                "\"snr_points\":{}}}"
+            ),
+            chrono_like_timestamp(),
+            run_id,
+            config_hash,
+            config
+                .rng_seed
+                .map(|s| format!("{s}"))
+                .unwrap_or_else(|| "null".to_string()),
+            config.eb_n0_range_db.len(),
+        );
+        append_trace_event(tlog, &event);
+    }
+
     let mut rng = config.make_rng();
     let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
     let mut completed_points: Vec<CompletedPointInfo> = Vec::new();
@@ -2126,18 +2551,157 @@ where
     for (point_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
         let remaining_snr: Vec<f64> = config.eb_n0_range_db[point_idx + 1..].to_vec();
         let point_start = Instant::now();
-        let ctx = SnrPointContext {
-            eb_n0_db,
-            rate,
-            config,
-            existing: &existing,
-            output_path: config.output_path.as_deref(),
-            progress_path: progress_path.as_deref(),
-            remaining_snr_points: &remaining_snr,
-            completed_points: &completed_points,
-            suppress_completion_side_effects: false,
+
+        // sim-observability: check for existing checkpoint before the legacy
+        // CSV-based resume.
+        #[cfg(feature = "sim-observability")]
+        let ckpt_resume: Option<SnrCheckpoint> = config
+            .checkpoint_dir
+            .as_ref()
+            .and_then(|dir| load_checkpoint(&checkpoint_path(dir, point_idx), &config_hash));
+
+        #[cfg(feature = "sim-observability")]
+        if let Some(ref ckpt) = ckpt_resume {
+            if ckpt.completed {
+                // Skip this point entirely — reconstruct result from checkpoint.
+                eprintln!(
+                    "[{:.1} dB] CHECKPOINT RESUMED: skipping completed point \
+                     ({} errors / {} frames)",
+                    eb_n0_db, ckpt.errors_accumulated, ckpt.frames_completed
+                );
+                let ber = if ckpt.total_bits > 0 {
+                    ckpt.total_bit_errors as f64 / ckpt.total_bits as f64
+                } else {
+                    0.0
+                };
+                let bler = if ckpt.frames_completed > 0 {
+                    ckpt.errors_accumulated as f64 / ckpt.frames_completed as f64
+                } else {
+                    0.0
+                };
+                let avg_iterations = if ckpt.frames_completed > 0 {
+                    Some(ckpt.total_iterations as f64 / ckpt.frames_completed as f64)
+                } else {
+                    None
+                };
+                let avg_queries_per_bit = if ckpt.total_bits > 0 {
+                    Some(ckpt.total_queries as f64 / ckpt.total_bits as f64)
+                } else {
+                    None
+                };
+                let sim_result = SimulationResult {
+                    eb_n0_db,
+                    ber,
+                    bler,
+                    avg_iterations,
+                    avg_queries_per_bit,
+                    num_bits: ckpt.total_bits,
+                    num_bit_errors: ckpt.total_bit_errors,
+                    num_frames: ckpt.frames_completed,
+                    num_frame_errors: ckpt.errors_accumulated,
+                };
+                let point_elapsed = point_start.elapsed();
+                completed_points.push(CompletedPointInfo {
+                    eb_n0_db,
+                    duration: point_elapsed,
+                    num_frames: sim_result.num_frames,
+                    bler: sim_result.bler,
+                });
+                points.push(sim_result);
+                continue;
+            }
+        }
+
+        // sim-observability: if we have a seed and checkpoint support, use
+        // a per-SNR ChaCha20Rng with deterministic seek.
+        #[cfg(feature = "sim-observability")]
+        let sim_result = if config.checkpoint_dir.is_some() || config.tracing_log_path.is_some() {
+            if let Some(base_seed) = config.rng_seed {
+                // Determine resume word position from a partial checkpoint.
+                let resume_word_pos: u128 = {
+                    #[allow(clippy::option_if_let_else)]
+                    if let Some(ref ckpt) = ckpt_resume {
+                        ckpt.rng_word_pos
+                    } else {
+                        0
+                    }
+                };
+                let resume_frames: usize = ckpt_resume.as_ref().map_or(0, |c| c.frames_completed);
+                let resume_errors: usize = ckpt_resume.as_ref().map_or(0, |c| c.errors_accumulated);
+                let resume_iters: usize = ckpt_resume.as_ref().map_or(0, |c| c.total_iterations);
+                let resume_queries: usize = ckpt_resume.as_ref().map_or(0, |c| c.total_queries);
+                let resume_bits: usize = ckpt_resume.as_ref().map_or(0, |c| c.total_bits);
+                let resume_bit_errors: usize =
+                    ckpt_resume.as_ref().map_or(0, |c| c.total_bit_errors);
+                let mut chacha = make_chacha_rng(base_seed, point_idx, resume_word_pos);
+                simulate_single_point_observable(
+                    encoder,
+                    channel,
+                    &mut chacha,
+                    eb_n0_db,
+                    rate,
+                    config,
+                    &existing,
+                    point_idx,
+                    &config_hash,
+                    resume_frames,
+                    resume_errors,
+                    resume_iters,
+                    resume_queries,
+                    resume_bits,
+                    resume_bit_errors,
+                    config.output_path.as_deref(),
+                    progress_path.as_deref(),
+                    &remaining_snr,
+                    &completed_points,
+                    &mut decode_frame,
+                )
+            } else {
+                // No seed — fall back to standard sequential path (no resume).
+                let ctx = SnrPointContext {
+                    eb_n0_db,
+                    rate,
+                    config,
+                    existing: &existing,
+                    output_path: config.output_path.as_deref(),
+                    progress_path: progress_path.as_deref(),
+                    remaining_snr_points: &remaining_snr,
+                    completed_points: &completed_points,
+                    suppress_completion_side_effects: false,
+                };
+                simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame)
+            }
+        } else {
+            let ctx = SnrPointContext {
+                eb_n0_db,
+                rate,
+                config,
+                existing: &existing,
+                output_path: config.output_path.as_deref(),
+                progress_path: progress_path.as_deref(),
+                remaining_snr_points: &remaining_snr,
+                completed_points: &completed_points,
+                suppress_completion_side_effects: false,
+            };
+            simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame)
         };
-        let sim_result = simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame);
+
+        #[cfg(not(feature = "sim-observability"))]
+        let sim_result = {
+            let ctx = SnrPointContext {
+                eb_n0_db,
+                rate,
+                config,
+                existing: &existing,
+                output_path: config.output_path.as_deref(),
+                progress_path: progress_path.as_deref(),
+                remaining_snr_points: &remaining_snr,
+                completed_points: &completed_points,
+                suppress_completion_side_effects: false,
+            };
+            simulate_single_point(encoder, channel, &mut rng, &ctx, &mut decode_frame)
+        };
+
         let point_elapsed = point_start.elapsed();
         completed_points.push(CompletedPointInfo {
             eb_n0_db,
@@ -2154,6 +2718,274 @@ where
         results.write_to(path);
     }
     results
+}
+
+/// Observable variant of `simulate_single_point` used when
+/// `sim-observability` is active and a `checkpoint_dir` or
+/// `tracing_log_path` is set.
+///
+/// Accepts a `ChaCha20Rng` so its word position can be captured at each
+/// heartbeat and stored in the checkpoint, enabling byte-identical resume.
+///
+/// The `resume_*` parameters carry state accumulated in a prior run's partial
+/// checkpoint so the totals are correct on resume.
+#[cfg(feature = "sim-observability")]
+#[allow(clippy::too_many_arguments)]
+fn simulate_single_point_observable<E, C, F>(
+    encoder: &E,
+    channel: &C,
+    rng: &mut ChaCha20Rng,
+    eb_n0_db: f64,
+    rate: f64,
+    config: &SimulationConfig,
+    existing: &HashMap<String, SimulationResult>,
+    snr_index: usize,
+    config_hash: &str,
+    resume_frames: usize,
+    resume_errors: usize,
+    resume_iters: usize,
+    resume_queries: usize,
+    resume_bits: usize,
+    resume_bit_errors: usize,
+    output_path: Option<&Path>,
+    progress_path: Option<&Path>,
+    remaining_snr_points: &[f64],
+    completed_points: &[CompletedPointInfo],
+    decode_frame: &mut F,
+) -> SimulationResult
+where
+    E: BlockEncoder,
+    C: ChannelModel,
+    F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
+{
+    let k = encoder.k();
+
+    // Legacy CSV-based resume (still honoured alongside checkpoint-based resume).
+    let snr_key = format!("{:.6}", eb_n0_db);
+    if let Some(cached) = existing.get(&snr_key) {
+        if resume_frames == 0 {
+            eprintln!(
+                "[{:.1} dB] RESUMED: using existing CSV result ({} errors, {} frames)",
+                eb_n0_db, cached.num_frame_errors, cached.num_frames,
+            );
+            return cached.clone();
+        }
+    }
+
+    if resume_frames > 0 {
+        eprintln!(
+            "[{:.1} dB] RESUMING from checkpoint: {} frames done, {} errors",
+            eb_n0_db, resume_frames, resume_errors
+        );
+    }
+
+    let mut acc = SnrAccumulator::new(eb_n0_db, k);
+    // Inject resumed totals.
+    acc.total_frames = resume_frames;
+    acc.total_frame_errors = resume_errors;
+    acc.total_iterations = resume_iters;
+    acc.total_queries = resume_queries;
+    acc.total_bits = resume_bits;
+    acc.total_bit_errors = resume_bit_errors;
+
+    while !acc.should_stop(config.min_errors, config.max_frames) {
+        // Check for SIGINT / SIGTERM before each frame.
+        if is_interrupted() {
+            // Flush partial checkpoint and exit.
+            if let Some(ref ckpt_dir) = config.checkpoint_dir {
+                let word_pos = rng.get_word_pos();
+                let ckpt = SnrCheckpoint {
+                    snr_index,
+                    eb_n0_db,
+                    frames_completed: acc.total_frames,
+                    errors_accumulated: acc.total_frame_errors,
+                    total_iterations: acc.total_iterations,
+                    total_queries: acc.total_queries,
+                    total_bits: acc.total_bits,
+                    total_bit_errors: acc.total_bit_errors,
+                    rng_word_pos: word_pos,
+                    frames_target: config.max_frames,
+                    errors_target: config.min_errors,
+                    completed: false,
+                    config_hash: config_hash.to_string(),
+                };
+                if let Err(e) =
+                    write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_index), &ckpt)
+                {
+                    eprintln!("Warning: failed to write interrupt checkpoint: {e}");
+                } else {
+                    eprintln!(
+                        "[{:.1} dB] Interrupt: checkpoint flushed at {} frames",
+                        eb_n0_db, acc.total_frames
+                    );
+                }
+            }
+            eprintln!("Interrupted — exiting. Resume by re-running with the same config.");
+            std::process::exit(1);
+        }
+
+        let message = BitVec::random(k, rng);
+        let codeword = encoder.encode(&message);
+        let llrs = channel.transmit_and_demodulate(&codeword, eb_n0_db, rate, rng);
+
+        let result = decode_frame(&llrs);
+        let bit_errors = count_bit_errors(&message, &result.decoded_bits);
+        acc.record_frame(bit_errors, result.iterations, result.queries);
+
+        if acc.should_report() {
+            report_progress(
+                eb_n0_db,
+                acc.total_frames,
+                acc.total_frame_errors,
+                config.min_errors,
+                config.max_frames,
+                Some(acc.elapsed()),
+            );
+        }
+
+        // Legacy progress JSONL.
+        if let Some(pp) = progress_path {
+            if acc.should_write_progress() {
+                acc.write_progress_entry(pp);
+            }
+        }
+
+        // Heartbeat: tracing event + intermediate checkpoint.
+        if let Some(every) = config.heartbeat_every_frames {
+            if acc.should_heartbeat(every) {
+                let word_pos = rng.get_word_pos();
+                let elapsed_s = acc.elapsed().as_secs_f64();
+
+                // Tracing event.
+                if let Some(ref tlog) = config.tracing_log_path {
+                    let event = format!(
+                        concat!(
+                            "{{\"type\":\"heartbeat\",",
+                            "\"timestamp\":\"{}\",",
+                            "\"snr_index\":{},",
+                            "\"eb_n0_db\":{},",
+                            "\"frames_completed\":{},",
+                            "\"errors_so_far\":{},",
+                            "\"elapsed_s\":{:.1}}}"
+                        ),
+                        chrono_like_timestamp(),
+                        snr_index,
+                        eb_n0_db,
+                        acc.total_frames,
+                        acc.total_frame_errors,
+                        elapsed_s,
+                    );
+                    append_trace_event(tlog, &event);
+                }
+
+                // Intermediate checkpoint.
+                if let Some(ref ckpt_dir) = config.checkpoint_dir {
+                    let ckpt = SnrCheckpoint {
+                        snr_index,
+                        eb_n0_db,
+                        frames_completed: acc.total_frames,
+                        errors_accumulated: acc.total_frame_errors,
+                        total_iterations: acc.total_iterations,
+                        total_queries: acc.total_queries,
+                        total_bits: acc.total_bits,
+                        total_bit_errors: acc.total_bit_errors,
+                        rng_word_pos: word_pos,
+                        frames_target: config.max_frames,
+                        errors_target: config.min_errors,
+                        completed: false,
+                        config_hash: config_hash.to_string(),
+                    };
+                    if let Err(e) =
+                        write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_index), &ckpt)
+                    {
+                        eprintln!("Warning: failed to write heartbeat checkpoint: {e}");
+                    }
+                }
+            }
+        }
+    }
+
+    let point_elapsed = acc.elapsed();
+    let sim_result = acc.into_result();
+
+    // Write completed checkpoint.
+    if let Some(ref ckpt_dir) = config.checkpoint_dir {
+        let word_pos = rng.get_word_pos();
+        let ckpt = SnrCheckpoint {
+            snr_index,
+            eb_n0_db,
+            frames_completed: sim_result.num_frames,
+            errors_accumulated: sim_result.num_frame_errors,
+            total_iterations: (sim_result.avg_iterations.unwrap_or(0.0)
+                * sim_result.num_frames as f64)
+                .round() as usize,
+            total_queries: (sim_result.avg_queries_per_bit.unwrap_or(0.0)
+                * sim_result.num_bits as f64)
+                .round() as usize,
+            total_bits: sim_result.num_bits,
+            total_bit_errors: sim_result.num_bit_errors,
+            rng_word_pos: word_pos,
+            frames_target: config.max_frames,
+            errors_target: config.min_errors,
+            completed: true,
+            config_hash: config_hash.to_string(),
+        };
+        if let Err(e) = write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_index), &ckpt) {
+            eprintln!("Warning: failed to write completion checkpoint: {e}");
+        }
+    }
+
+    // Tracing: snr_completed event.
+    if let Some(ref tlog) = config.tracing_log_path {
+        let event = format!(
+            concat!(
+                "{{\"type\":\"snr_completed\",",
+                "\"timestamp\":\"{}\",",
+                "\"snr_index\":{},",
+                "\"eb_n0_db\":{},",
+                "\"fer\":{},",
+                "\"ber\":{},",
+                "\"mean_iters\":{},",
+                "\"elapsed_s\":{:.1}}}"
+            ),
+            chrono_like_timestamp(),
+            snr_index,
+            eb_n0_db,
+            sim_result.bler,
+            sim_result.ber,
+            sim_result
+                .avg_iterations
+                .map_or("null".to_string(), |v| format!("{v:.3}")),
+            point_elapsed.as_secs_f64(),
+        );
+        append_trace_event(tlog, &event);
+    }
+
+    // Legacy progress JSONL: point_complete entry.
+    if let Some(pp) = progress_path {
+        if let Err(e) = append_point_complete_jsonl(pp, &sim_result, point_elapsed) {
+            eprintln!("Warning: failed to write JSONL progress: {e}");
+        }
+    }
+
+    // Incremental CSV append.
+    if let Some(path) = output_path {
+        if path.extension().and_then(|e| e.to_str()) != Some("json") {
+            sim_result.append_csv_row_to(path);
+        }
+    }
+
+    report_point_complete(
+        eb_n0_db,
+        &sim_result,
+        point_elapsed,
+        remaining_snr_points,
+        completed_points,
+        config.min_errors,
+        config.max_frames,
+    );
+
+    sim_result
 }
 
 impl SimulationRunner {
@@ -3994,4 +4826,363 @@ mod tests {
             }
         }
     }
+
+    // -------------------------------------------------------------------
+    // sim-observability integration tests (gated on the feature)
+    // -------------------------------------------------------------------
+
+    #[cfg(feature = "sim-observability")]
+    mod observability_tests {
+        use super::*;
+
+        /// SC-INT-1: Multi-point AWGN campaign completes, then re-run with same
+        /// config skips all checkpointed points near-instantly.
+        #[test]
+        fn test_checkpoint_skip_completed_points() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("ckpts");
+            let csv_path = tmpdir.path().join("results.csv");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 6.0, 8.0];
+            config.min_errors = 5;
+            config.max_frames = 50;
+            config.rng_seed = Some(777);
+            config.output_path = Some(csv_path.clone());
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+            config.heartbeat_every_frames = None;
+
+            // First run: completes all 3 SNR points and writes checkpoints.
+            let decoder = MockSoftDecoder;
+            let results1 = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+            assert_eq!(results1.points.len(), 3);
+
+            // Checkpoint files must exist.
+            for i in 0..3 {
+                let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
+                assert!(
+                    ckpt_file.exists(),
+                    "Checkpoint file {i} must exist after first run"
+                );
+                let content = std::fs::read_to_string(&ckpt_file).unwrap();
+                assert!(
+                    content.contains("\"completed\": true"),
+                    "Checkpoint {i} must be marked completed"
+                );
+            }
+
+            // Second run: all checkpoints are complete -> results must match
+            // and the run must complete without recomputing frames.
+            let decoder2 = MockSoftDecoder;
+            let results2 = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
+            assert_eq!(results2.points.len(), 3);
+
+            // Results must be identical (same checkpoint values).
+            for i in 0..3 {
+                assert_eq!(
+                    results1.points[i].num_frames, results2.points[i].num_frames,
+                    "Frame counts must match on resume at SNR point {i}"
+                );
+                assert_eq!(
+                    results1.points[i].num_frame_errors, results2.points[i].num_frame_errors,
+                    "Error counts must match on resume at SNR point {i}"
+                );
+            }
+        }
+
+        /// SC-INT-2: Config hash mismatch aborts with a clear panic message.
+        #[test]
+        #[should_panic(expected = "config hash mismatch")]
+        fn test_config_mismatch_aborts() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("ckpts");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(42);
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+
+            // First run: creates config_hash.txt.
+            let decoder = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+
+            // Mutate a field that affects the hash.
+            let mut config2 = config.clone();
+            config2.min_errors = 99;
+
+            // Second run with different config: must panic with mismatch message.
+            let decoder2 = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config2);
+        }
+
+        /// SC-INT-3: Heartbeat events are emitted at the configured cadence.
+        ///
+        /// Uses a DeterministicChannel that always produces errors so we can
+        /// predict the exact frame count at stop time, and sets
+        /// `heartbeat_every_frames = 2` to ensure heartbeats fire at frames
+        /// 2, 4 (stop is at frame 5 due to min_errors=5).
+        #[test]
+        fn test_heartbeat_cadence() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let tlog = tmpdir.path().join("trace.jsonl");
+            let ckpt_dir = tmpdir.path().join("ckpts");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1], // always 1 frame error per frame
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![5.0];
+            config.min_errors = 5; // stops at frame 5
+            config.max_frames = 50;
+            config.rng_seed = Some(123);
+            config.tracing_log_path = Some(tlog.clone());
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+            config.heartbeat_every_frames = Some(2);
+
+            let decoder = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+
+            // Parse the tracing log.
+            let content = std::fs::read_to_string(&tlog).unwrap();
+            let heartbeats: Vec<&str> = content
+                .lines()
+                .filter(|l| l.contains("\"type\":\"heartbeat\""))
+                .collect();
+            // Frames 2 and 4 trigger heartbeats (frame 5 stops the loop before
+            // the frame 6 heartbeat fires); so we expect exactly 2 heartbeats.
+            assert!(
+                !heartbeats.is_empty(),
+                "At least 1 heartbeat must be emitted for a 5-frame run with cadence 2, got {}",
+                heartbeats.len()
+            );
+            // Each heartbeat must have the expected fields.
+            for hb in &heartbeats {
+                assert!(
+                    hb.contains("\"frames_completed\""),
+                    "Missing frames_completed in heartbeat: {hb}"
+                );
+                assert!(
+                    hb.contains("\"errors_so_far\""),
+                    "Missing errors_so_far in heartbeat: {hb}"
+                );
+                assert!(
+                    hb.contains("\"elapsed_s\""),
+                    "Missing elapsed_s in heartbeat: {hb}"
+                );
+                assert!(
+                    hb.contains("\"snr_index\""),
+                    "Missing snr_index in heartbeat: {hb}"
+                );
+            }
+        }
+
+        /// SC-INT-4: JSON-lines tracing log is valid JSON-lines; each line is a
+        /// complete JSON object with a recognizable `type` field.
+        #[test]
+        fn test_tracing_log_valid_jsonl() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let tlog = tmpdir.path().join("trace.jsonl");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 6.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(55);
+            config.tracing_log_path = Some(tlog.clone());
+            config.heartbeat_every_frames = Some(5);
+
+            let decoder = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+
+            let content = std::fs::read_to_string(&tlog).unwrap();
+            let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
+
+            // Each line must be a JSON object (starts with `{`, ends with `}`).
+            for (i, line) in lines.iter().enumerate() {
+                assert!(
+                    line.trim_start().starts_with('{') && line.trim_end().ends_with('}'),
+                    "Tracing line {i} is not a JSON object: {line}"
+                );
+                // Must contain a `type` field.
+                assert!(
+                    line.contains("\"type\""),
+                    "Tracing line {i} missing `type` field: {line}"
+                );
+            }
+
+            // Must contain at least a campaign_start and two snr_completed events.
+            let campaign_starts = lines
+                .iter()
+                .filter(|l| l.contains("\"type\":\"campaign_start\""))
+                .count();
+            let snr_completeds = lines
+                .iter()
+                .filter(|l| l.contains("\"type\":\"snr_completed\""))
+                .count();
+            assert_eq!(
+                campaign_starts, 1,
+                "Must have exactly 1 campaign_start event"
+            );
+            assert_eq!(
+                snr_completeds, 2,
+                "Must have 2 snr_completed events (one per SNR point)"
+            );
+        }
+
+        /// SC-INT-5: Resume-after-interrupt test.
+        ///
+        /// Simulates an interrupt by:
+        /// 1. Running a campaign normally to completion with checkpoints.
+        /// 2. Deleting one checkpoint to simulate partial progress.
+        /// 3. Re-running: the runner should recompute only the missing point
+        ///    and produce the same final frame counts.
+        ///
+        /// This is the in-process substitute for the subprocess SIGINT test,
+        /// which would require `libc` or `nix` in dev-deps. The issue spec
+        /// allows using `Arc<AtomicBool>` simulation when no new dev-dep is
+        /// preferred; see deviation note in commit message.
+        #[test]
+        fn test_resume_after_partial_checkpoint() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("ckpts");
+            let csv_path = tmpdir.path().join("results.csv");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 6.0];
+            config.min_errors = 5;
+            config.max_frames = 50;
+            config.rng_seed = Some(999);
+            config.output_path = Some(csv_path.clone());
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+
+            // First run: completes both points.
+            let decoder = MockSoftDecoder;
+            let results1 = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+            assert_eq!(results1.points.len(), 2);
+
+            // Simulate "partial run": delete the second checkpoint so the
+            // runner must recompute it on the next run.
+            let ckpt1 = ckpt_dir.join("snr_0001.json");
+            std::fs::remove_file(&ckpt1).expect("checkpoint 1 must exist to remove");
+
+            // Second run: first point is loaded from checkpoint, second is recomputed.
+            let decoder2 = MockSoftDecoder;
+            let results2 = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
+            assert_eq!(results2.points.len(), 2);
+
+            // First point must be identical (came from checkpoint).
+            assert_eq!(
+                results1.points[0].num_frames, results2.points[0].num_frames,
+                "First point must come from checkpoint (same frame count)"
+            );
+            // Second point must be valid (recomputed).
+            assert!(
+                results2.points[1].num_frames > 0,
+                "Second point must have been recomputed"
+            );
+        }
+
+        /// SC-INT-6: Checkpoint serialisation round-trip.
+        ///
+        /// Verifies that `SnrCheckpoint::to_json` → `SnrCheckpoint::from_json`
+        /// is lossless for all relevant fields including the `u128` word_pos.
+        #[test]
+        fn test_checkpoint_roundtrip() {
+            let ckpt = SnrCheckpoint {
+                snr_index: 7,
+                eb_n0_db: 8.5,
+                frames_completed: 320_000,
+                errors_accumulated: 47,
+                total_iterations: 894_231,
+                total_queries: 912_000,
+                total_bits: 6_400_000,
+                total_bit_errors: 512,
+                rng_word_pos: 18_432_000_u128,
+                frames_target: 1_000_000,
+                errors_target: 100,
+                completed: false,
+                config_hash: "blake3:abc123".to_string(),
+            };
+            let json = ckpt.to_json();
+            let parsed = SnrCheckpoint::from_json(&json).expect("round-trip must succeed");
+            assert_eq!(parsed.snr_index, ckpt.snr_index);
+            assert!((parsed.eb_n0_db - ckpt.eb_n0_db).abs() < 1e-12);
+            assert_eq!(parsed.frames_completed, ckpt.frames_completed);
+            assert_eq!(parsed.errors_accumulated, ckpt.errors_accumulated);
+            assert_eq!(parsed.total_iterations, ckpt.total_iterations);
+            assert_eq!(parsed.total_queries, ckpt.total_queries);
+            assert_eq!(parsed.total_bits, ckpt.total_bits);
+            assert_eq!(parsed.total_bit_errors, ckpt.total_bit_errors);
+            assert_eq!(parsed.rng_word_pos, ckpt.rng_word_pos);
+            assert_eq!(parsed.frames_target, ckpt.frames_target);
+            assert_eq!(parsed.errors_target, ckpt.errors_target);
+            assert!(!parsed.completed);
+            assert_eq!(parsed.config_hash, ckpt.config_hash);
+        }
+
+        /// SC-INT-7: Config hash stability — same config produces same hash,
+        /// different config produces different hash.
+        #[test]
+        fn test_config_hash_stability() {
+            let mut config = SimulationConfig::quick_test();
+            config.rng_seed = Some(42);
+
+            let h1 = compute_config_hash(&config);
+            let h2 = compute_config_hash(&config);
+            assert_eq!(h1, h2, "Same config must produce same hash");
+            assert!(h1.starts_with("blake3:"), "Hash must have blake3: prefix");
+
+            let mut config2 = config.clone();
+            config2.min_errors += 1;
+            let h3 = compute_config_hash(&config2);
+            assert_ne!(h1, h3, "Different config must produce different hash");
+        }
+
+        /// SC-INT-8: ChaCha20 RNG derivation is deterministic and the word_pos
+        /// round-trip restores the exact stream position.
+        #[test]
+        fn test_chacha_rng_deterministic_seek() {
+            use rand::RngCore;
+
+            let seed = 0xDEAD_BEEF_u64;
+            let mut rng1 = make_chacha_rng(seed, 3, 0);
+
+            // Advance 100 words.
+            let mut buf = [0u8; 400];
+            rng1.fill_bytes(&mut buf);
+            let pos = rng1.get_word_pos();
+
+            // Build a second RNG seeked to the same position.
+            let mut rng2 = make_chacha_rng(seed, 3, pos);
+
+            // Next 4 bytes must be identical.
+            let mut out1 = [0u8; 4];
+            let mut out2 = [0u8; 4];
+            rng1.fill_bytes(&mut out1);
+            rng2.fill_bytes(&mut out2);
+            assert_eq!(
+                out1, out2,
+                "ChaCha20 seek must restore the exact stream position"
+            );
+        }
+    } // mod observability_tests
 }

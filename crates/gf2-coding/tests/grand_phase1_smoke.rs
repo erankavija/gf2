@@ -136,6 +136,9 @@ fn test_fig3_ldpc_simulation_runner() {
         max_decoder_iterations: 50,
         rng_seed: Some(99),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
 
     let results = SimulationRunner::run_coded_iterative(&encoder, &mut decoder, &channel, &config);

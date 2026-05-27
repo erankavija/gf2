@@ -38,6 +38,9 @@ fn bpsk_config() -> SimulationConfig {
         max_decoder_iterations: 0,
         rng_seed: Some(0x80F2_18CA),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     }
 }
 
@@ -53,6 +56,9 @@ fn qam16_config() -> SimulationConfig {
         max_decoder_iterations: 0,
         rng_seed: Some(0x80F2_18CA_u64.wrapping_mul(0x9E37_79B9_7F4A_7C15)),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     }
 }
 
@@ -378,6 +384,9 @@ fn test_analysis_capture_multi_snr_aggregation_matches_sum_of_single_point_sweep
         max_decoder_iterations: 0,
         rng_seed: Some(0xAAAA_5555),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
     const RNG_SEED: u64 = 0xAAAA_5555;
 
