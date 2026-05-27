@@ -5,7 +5,9 @@
   "state": "in_progress",
   "priority": "high",
   "assignee": "agent:claude",
-  "dependencies": [],
+  "dependencies": [
+    "548a8563-8e67-4956-8e1f-d44803eca4d1"
+  ],
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -19,5 +21,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-27T19:23:29.718708666+00:00",
-  "updated_at": "2026-05-27T19:23:52.741689703+00:00"
+  "updated_at": "2026-05-27T20:49:10.314306402+00:00"
 }

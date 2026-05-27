@@ -5514,3 +5514,6 @@
 {"type":"issue_created","id":"411a5e37-80cf-45c0-bb57-3d140d670b21","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:29.719415167Z","title":"Implement DVB-T2 §6.1.4 bit-to-cell-word demuxer","priority":"high"}
 {"type":"issue_state_changed","id":"05d88f8f-874d-4d06-9144-312ce5b05cc3","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:52.741629353Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"6c1963cd-e8f3-4ab1-ae31-41fb551f7d66","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:52.741849833Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"df377a9f-c7b4-4514-840f-652b731afa81","issue_id":"548a8563-8e67-4956-8e1f-d44803eca4d1","timestamp":"2026-05-27T20:49:06.162772524Z","title":"Add §6.1.3 parity interleaving to DVB-T2 bit interleaver","priority":"high"}
+{"type":"issue_state_changed","id":"fc4846c0-a7fa-4af6-b0f1-7fc9d0da9628","issue_id":"548a8563-8e67-4956-8e1f-d44803eca4d1","timestamp":"2026-05-27T20:49:10.809696204Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"9f396d4e-de25-4faf-877e-399b7982752c","issue_id":"548a8563-8e67-4956-8e1f-d44803eca4d1","timestamp":"2026-05-27T20:49:10.809863644Z","assignee":"agent:claude"}
