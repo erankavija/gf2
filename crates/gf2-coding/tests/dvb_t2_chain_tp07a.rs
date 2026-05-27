@@ -4,17 +4,22 @@
 //!
 //! After adding §6.1.3 parity interleaving to `DvbT2BitInterleaver` (issue
 //! 548a8563), the §6.1.3-only output now matches TP07a **bit-exact** for all
-//! in-scope 64-QAM Normal FECFRAME vectors:
+//! in-scope 16-QAM and 64-QAM Normal FECFRAME vectors:
 //!
 //! | Vector            | Modulation | Code rate | §6.1.3 vs TP07a (parity+col-twist) |
 //! |-------------------|------------|-----------|-------------------------------------|
+//! | VV020-FEF_CSP     | 16-QAM     | Rate 1/2  | **0**/64800 diffs — PASS            |
 //! | VV009-4KFFT_CSP   | 64-QAM     | Rate 2/3  | **0**/64800 diffs — PASS            |
 //! | VV014-64QAM34_CSP | 64-QAM     | Rate 3/4  | **0**/64800 diffs — PASS            |
 //!
 //! This confirms that TP07a in the CSP reference streams represents the output
-//! of §6.1.3 (parity interleaving + column-twist interleaving) for 64-QAM
-//! Normal FECFRAME vectors.  TP07 (without the 'a' suffix) is the output of
-//! the §6.1.4 cell-word demux stage.
+//! of §6.1.3 (parity interleaving + column-twist interleaving) for 16-QAM and
+//! 64-QAM Normal FECFRAME vectors.  TP07 (without the 'a' suffix) is the output
+//! of the §6.1.4 cell-word demux stage.
+//!
+//! Note: VV005-8KFFT_CSP (K_ldpc=38880, 8100 cells/block in TP08) is 256-QAM
+//! Rate 3/5 Normal — out of scope for §6.1.3.  The 16-QAM Rate 1/2 reference
+//! is VV020-FEF_CSP.
 //!
 //! # Earlier finding (2026-05-27, issue 4cdaf1c5) — now superseded
 //!
@@ -28,8 +33,8 @@
 //!
 //! # What this test suite validates
 //!
-//! 1. **Empirical bit-exact match** — for VV009 (64-QAM Rate 2/3) and
-//!    VV014 (64-QAM Rate 3/4) the test asserts that
+//! 1. **Empirical bit-exact match** — for VV020 (16-QAM Rate 1/2), VV009
+//!    (64-QAM Rate 2/3), and VV014 (64-QAM Rate 3/4) the test asserts that
 //!    `interleaver.interleave(tp06_block) == tp07a_block` bit-exactly for
 //!    the first 10 blocks of each vector.  Also verifies the inverse:
 //!    `deinterleave(tp07a) == tp06`.
@@ -443,32 +448,41 @@ fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
     }
 }
 
-/// Bit-exact §6.1.3 forward match for VV009 (64-QAM Rate 2/3) and
-/// VV014 (64-QAM Rate 3/4) against TP07a, verifying the parity
-/// interleaving + column-twist implementation (issue 548a8563).
+/// Bit-exact §6.1.3 forward match for VV020 (16-QAM Rate 1/2), VV009
+/// (64-QAM Rate 2/3), and VV014 (64-QAM Rate 3/4) against TP07a, verifying
+/// the parity interleaving + column-twist implementation (issue 548a8563).
 ///
 /// # Success criterion
 ///
-/// For each of the two in-scope ETSI vectors, `interleaver.interleave(tp06_block)`
+/// For each of the three in-scope ETSI vectors, `interleaver.interleave(tp06_block)`
 /// must equal `tp07a_block` bit-exactly for all tested blocks (≥ first 10).
 /// The inverse `deinterleaver.deinterleave(tp07a_block) == tp06_block` is
 /// also verified.
 ///
 /// # Vectors under test
 ///
+/// * **VV020-FEF_CSP** — Normal FECFRAME, 16-QAM, Rate 1/2.
+///   K_ldpc = 32400, Q_ldpc = 90, N_ldpc = 64800.
 /// * **VV009-4KFFT_CSP** — Normal FECFRAME, 64-QAM, Rate 2/3.
 ///   K_ldpc = 43200, Q_ldpc = 60, N_ldpc = 64800.
 /// * **VV014-64QAM34_CSP** — Normal FECFRAME, 64-QAM, Rate 3/4.
 ///   K_ldpc = 48600, Q_ldpc = 45, N_ldpc = 64800.
+///
+/// # Note on VV005-8KFFT_CSP
+///
+/// VV005 is 256-QAM Rate 3/5 Normal (K_ldpc=38880, 8100 cells/block in TP08).
+/// It is out of scope for the §6.1.3 bit interleaver (256-QAM requires §6.1.4/§6.1.5).
+/// The correct 16-QAM Rate 1/2 Normal reference vector is VV020-FEF_CSP.
 #[test]
 #[ignore = "external: DVB-T2 ETSI vectors at /data/specs/dvb/streams/ required"]
-fn test_tp06_to_tp07a_parity_interleave_vv009_vv014() {
+fn test_tp06_to_tp07a_parity_interleave_vv005_vv009_vv014() {
     const BASE: &str = "/data/specs/dvb/streams";
     const MAX_BLOCKS: usize = 10;
     const N_FEC: usize = 64800;
 
     // (dir_name, code_rate, modulation)
     let test_cases = [
+        ("VV020-FEF_CSP", CodeRate::Rate1_2, DvbT2Modulation::Qam16),
         ("VV009-4KFFT_CSP", CodeRate::Rate2_3, DvbT2Modulation::Qam64),
         (
             "VV014-64QAM34_CSP",
