@@ -5450,3 +5450,7 @@
 {"type":"issue_claimed","id":"552862fa-955f-44cc-ad6b-fc0c32c81d26","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T12:31:22.348418151Z","assignee":"agent:claude"}
 {"type":"issue_state_changed","id":"641b8c64-532b-41a1-8ca0-394624f1ab5f","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T12:31:23.050599652Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"7730633b-f81e-4265-a3c8-872d07c4b479","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T12:31:23.053591003Z","assignee":"agent:claude"}
+{"type":"gate_passed","id":"ddc8c33e-18bc-45b0-a66c-17059efa068b","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T12:57:14.647937367Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"c12d9c4b-a318-409d-a019-72b04c86b0e2","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T13:04:49.825739915Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"6cead710-eb14-425c-9ebc-b91cdfc20944","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T13:05:19.878695093Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"4045b67f-474a-4d95-9e97-85e68898ba2c","issue_id":"cef2e631-0109-4889-b560-2191ea1a1d20","timestamp":"2026-05-27T13:05:19.878727833Z"}

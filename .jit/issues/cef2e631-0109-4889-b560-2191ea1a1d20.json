@@ -2,7 +2,7 @@
   "id": "cef2e631-0109-4889-b560-2191ea1a1d20",
   "title": "Populate remaining 11 DVB-T2 LDPC table data files",
   "description": "## Goal\n\nPopulate the 11 missing DVB-T2 LDPC parity-check matrix source files\nin `.txt` form to match the format of the one existing source file,\n`crates/gf2-coding/src/ldpc/dvb_t2/table_a_1_R1_2_N64800.txt`.\n\nAll 12 Rust constants are already in\n`crates/gf2-coding/src/ldpc/dvb_t2/dvb_t2_matrices.rs`; this task\nprovides the auditable source-of-truth from which those constants\nwere (or could be) derived, plus a parser-roundtrip test that\ncatches drift between the two.\n\n## Context\n\nToday only NORMAL_RATE_1_2 has its raw ETSI table committed as a\n`.txt` source file. The other 11 configurations have Rust consts but\nno source file documenting where the numbers came from. This makes\nfuture audit / re-derivation difficult.\n\nThe format spec lives at\n`crates/gf2-coding/src/ldpc/dvb_t2/table_interpretation.md`.\n\nThe 11 missing tables, by ETSI EN 302 755 v1.4.1 Annex A name:\n\n| Frame  | Rate | Suggested filename             | N      |\n|--------|------|--------------------------------|--------|\n| Normal | 3/5  | `table_a_2_R3_5_N64800.txt`    | 64 800 |\n| Normal | 2/3  | `table_a_3_R2_3_N64800.txt`    | 64 800 |\n| Normal | 3/4  | `table_a_4_R3_4_N64800.txt`    | 64 800 |\n| Normal | 4/5  | `table_a_5_R4_5_N64800.txt`    | 64 800 |\n| Normal | 5/6  | `table_a_6_R5_6_N64800.txt`    | 64 800 |\n| Short  | 1/2  | `table_b_1_R1_2_N16200.txt`    | 16 200 |\n| Short  | 3/5  | `table_b_2_R3_5_N16200.txt`    | 16 200 |\n| Short  | 2/3  | `table_b_3_R2_3_N16200.txt`    | 16 200 |\n| Short  | 3/4  | `table_b_4_R3_4_N16200.txt`    | 16 200 |\n| Short  | 4/5  | `table_b_5_R4_5_N16200.txt`    | 16 200 |\n| Short  | 5/6  | `table_b_6_R5_6_N16200.txt`    | 16 200 |\n\n## Deliverables\n\n1. 11 `.txt` source files matching the existing format.\n2. A round-trip test in `dvb_t2_matrices.rs` (or a sibling test\n   module) that parses each `.txt` file and asserts equality with\n   the corresponding Rust constant — catches drift between the two\n   in either direction.\n3. Each new `.txt` file's header cites the ETSI EN 302 755 v1.4.1\n   Annex / table number it comes from.\n\n## Success criteria\n\n- [hard] All 11 `.txt` files committed and parseable.\n- [hard] Round-trip test passes: parsing each `.txt` yields the same\n  table data as the corresponding Rust const.\n- [hard] `table_interpretation.md` updated if a parsing rule is\n  ambiguous against any of the new tables.\n\n## Non-goals\n\n- No change to existing Rust consts (only validation against the\n  source).\n- No change to LDPC encoder or decoder behaviour.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -11,15 +11,15 @@
     "code-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.253923490Z"
-    },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.253960500Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T12:58:05.843901225Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T12:56:09.894886231Z"
     }
   },
   "context": {},
@@ -30,5 +30,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.743110695+00:00",
-  "updated_at": "2026-05-27T12:31:23.050679792+00:00"
+  "updated_at": "2026-05-27T13:05:19.878745973+00:00"
 }
