@@ -16,6 +16,10 @@ Complete implementation of DVB-T2 LDPC and BCH forward error correction codes, f
 | **LDPC Encoding** | ✅ Verified | 202/202 blocks | 3.85 Mbps |
 | **LDPC Decoding** | ✅ Verified | 202/202 blocks | 8.29 Mbps (parallel) |
 | **Full FEC Chain** | ✅ Ready | - | Real-time capable |
+| **Bit Interleaver §6.1.3** | ✅ Implemented | Roundtrip identity only | - |
+| **Cell-word demux §6.1.4** | ⏭ Not yet | - | - |
+| **Cell interleaver §6.1.5** | ⏭ Not yet | - | - |
+| **TP06 → TP07a chain** | ⚠️ Multi-stage TP07a | Blocked (§6.1.4/§6.1.5) | - |
 
 ---
 
@@ -34,6 +38,14 @@ Complete implementation of DVB-T2 LDPC and BCH forward error correction codes, f
 ```
 TP04 (38,688 bits) → BCH → TP05 (38,880 bits) → LDPC → TP06 (64,800 bits)
 ```
+
+**TP07a boundary note**: TP07a in all available ETSI DVB-T2 CSP test vectors is the
+output of the full §6.1.3 (bit interleaver) + §6.1.4 (cell-word demux) + §6.1.5
+(cell interleaver) pipeline, not §6.1.3 alone.  This was empirically confirmed on
+2026-05-27 (issue 4cdaf1c5) across six in-scope Normal FECFRAME vectors
+(VV004, VV007, VV009, VV014, VV020, VV035): the §6.1.3-only output versus TP07a
+showed ~50 % bit differences on every vector, consistent with statistically
+unrelated data.  §6.1.4 + §6.1.5 implementation is deferred to a follow-on issue.
 
 ### Setup
 

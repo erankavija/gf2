@@ -327,6 +327,10 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 - [ ] System integration (BCH + LDPC + QAM)
 - [ ] FER simulation over AWGN
 - [ ] Full TP04 → TP05 → TP06 → TP07a validation
+  (**Note 2026-05-27, issue 4cdaf1c5**: TP07a in all available ETSI CSP vectors
+  includes §6.1.4 + §6.1.5 stages; §6.1.3-only validation is blocked until
+  §6.1.4 and §6.1.5 are implemented.  Empirical finding documented in
+  `crates/gf2-coding/tests/dvb_t2_chain_tp07a.rs` and `docs/DVB_T2.md`.)
 - [ ] Live DVB-T2 reception demo with SDR hardware
 
 **See**: [docs/DVB_T2.md](docs/DVB_T2.md) for implementation and verification status
