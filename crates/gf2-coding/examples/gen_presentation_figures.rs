@@ -139,6 +139,9 @@ fn run_ber_sweep<C: ChannelModel>(channel: &C, eb_n0_db: &[f64], max_frames: usi
         max_decoder_iterations: 0,
         rng_seed: Some(0xBEEF_5EED_F1F1_F1F1),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
     let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
     let results = SimulationRunner::run_uncoded_ber_with_channel(channel, &config, &mut rng);
@@ -245,6 +248,9 @@ fn simulate_per_bit_mi_16qam() -> PerBitMiSweep {
             max_decoder_iterations: 0,
             rng_seed: Some(0xD4851C3D_u64.wrapping_mul(eb_n0.to_bits())),
             output_path: None,
+            checkpoint_dir: None,
+            tracing_log_path: None,
+            heartbeat_every_frames: None,
         };
         let mut rng = StdRng::seed_from_u64(config.rng_seed.unwrap());
         {
@@ -356,6 +362,9 @@ fn simulate_llr_histograms_16qam() -> Vec<PerBitChannelStats> {
         max_decoder_iterations: 0,
         rng_seed: Some(0xAA55_CC33_F0F0_5A5A),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
 
     let hist_cfg = HistogramConfig {

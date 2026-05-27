@@ -49,6 +49,9 @@ fn bench_config() -> SimulationConfig {
         max_decoder_iterations: 1,
         rng_seed: Some(BENCH_SEED),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     }
 }
 

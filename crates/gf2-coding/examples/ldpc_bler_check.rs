@@ -20,6 +20,9 @@ fn main() {
         max_decoder_iterations: 50,
         rng_seed: Some(42),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
 
     let nms = SimulationRunner::run_coded_iterative(&rm_code, &mut decoder_nms, &channel, &config);
