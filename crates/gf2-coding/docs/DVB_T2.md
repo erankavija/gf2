@@ -16,10 +16,10 @@ Complete implementation of DVB-T2 LDPC and BCH forward error correction codes, f
 | **LDPC Encoding** | ✅ Verified | 202/202 blocks | 3.85 Mbps |
 | **LDPC Decoding** | ✅ Verified | 202/202 blocks | 8.29 Mbps (parallel) |
 | **Full FEC Chain** | ✅ Ready | - | Real-time capable |
-| **Bit Interleaver §6.1.3** | ✅ Implemented | Roundtrip identity only | - |
+| **Bit Interleaver §6.1.3** | ✅ Verified | Bit-exact vs ETSI TP07a (VV020/VV009/VV014) | - |
 | **Cell-word demux §6.1.4** | ⏭ Not yet | - | - |
 | **Cell interleaver §6.1.5** | ⏭ Not yet | - | - |
-| **TP06 → TP07a chain** | ⚠️ Multi-stage TP07a | Blocked (§6.1.4/§6.1.5) | - |
+| **TP06 → TP07a chain** | ✅ Verified | 10 blocks × 3 vectors, 0/64800 diffs each | - |
 
 ---
 
@@ -39,13 +39,22 @@ Complete implementation of DVB-T2 LDPC and BCH forward error correction codes, f
 TP04 (38,688 bits) → BCH → TP05 (38,880 bits) → LDPC → TP06 (64,800 bits)
 ```
 
-**TP07a boundary note**: TP07a in all available ETSI DVB-T2 CSP test vectors is the
-output of the full §6.1.3 (bit interleaver) + §6.1.4 (cell-word demux) + §6.1.5
-(cell interleaver) pipeline, not §6.1.3 alone.  This was empirically confirmed on
-2026-05-27 (issue 4cdaf1c5) across six in-scope Normal FECFRAME vectors
-(VV004, VV007, VV009, VV014, VV020, VV035): the §6.1.3-only output versus TP07a
-showed ~50 % bit differences on every vector, consistent with statistically
-unrelated data.  §6.1.4 + §6.1.5 implementation is deferred to a follow-on issue.
+**TP07a boundary note** (updated 2026-05-28 after the parity-interleaver fix in
+issue 548a8563): TP07a in the published ETSI DVB-T2 CSP test vectors IS the
+output of the full §6.1.3 bit interleaver — parity interleaving followed by
+column-twist interleaving.  The earlier "multi-stage" finding (issue 4cdaf1c5
+session 2026-05-27) was an artefact of `DvbT2BitInterleaver` then implementing
+only the column-twist sub-stage; once the parity-interleaver sub-stage was
+added per §6.1.3 of EN 302 755 v1.4.1, the §6.1.3 output matches TP07a bit-
+exact on VV020 (16-QAM Rate 1/2), VV009 (64-QAM Rate 2/3), and VV014
+(64-QAM Rate 3/4).  See `tests/dvb_t2_chain_tp07a.rs`.
+
+For QPSK, §6.1.3 is explicitly excluded by the spec ("for 16-QAM, 64-QAM and
+256-QAM"); `DvbT2BitInterleaver` passes QPSK through as identity.  The
+"TP07" file (without the `a` suffix) — distinct from TP07a — corresponds to
+later pipeline stages (§6.1.4 cell-word demux and/or §6.1.5 cell
+interleaver), which are NOT implemented and NOT required for the AWGN FER
+campaign delivered by this epic.
 
 ### Setup
 
