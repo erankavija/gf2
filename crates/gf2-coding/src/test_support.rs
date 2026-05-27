@@ -69,3 +69,37 @@ pub fn tp_path(config_dir: &Path, tp: &str) -> PathBuf {
         .join(format!("TestPoint{}", tp_base))
         .join(format!("VV001-CR35_TP{}_CSP.txt", tp))
 }
+
+/// Builds the canonical path to a test-point file for an arbitrary
+/// `VV<num>-<name>_CSP` directory.
+///
+/// Infers the file stem from the directory basename by stripping the
+/// trailing `_CSP` suffix (if present), then constructs:
+/// `<config_dir>/TestPoint<NN>/<file-stem>_TP<NN>_CSP.txt`
+///
+/// For example, given `config_dir = ".../VV014-64QAM34_CSP"` and
+/// `tp = "07a"`, the resulting path is:
+/// `.../VV014-64QAM34_CSP/TestPoint07/VV014-64QAM34_TP07a_CSP.txt`
+///
+/// `tp` may include an alphabetic suffix (e.g., `"07a"`); the
+/// `TestPoint<NN>` directory uses only the numeric prefix.
+///
+/// # Panics
+///
+/// Panics if `config_dir` has no file name (e.g. it is `/`).
+pub fn tp_path_for(config_dir: &Path, tp: &str) -> PathBuf {
+    let dir_name = config_dir
+        .file_name()
+        .expect("config_dir must have a file name")
+        .to_string_lossy();
+    // Strip the trailing `_CSP` suffix to get the file stem used inside
+    // the directory (e.g., `VV014-64QAM34_CSP` → `VV014-64QAM34`).
+    let file_stem = dir_name
+        .strip_suffix("_CSP")
+        .unwrap_or(&dir_name)
+        .to_owned();
+    let tp_base = tp.trim_end_matches(|c: char| c.is_ascii_alphabetic());
+    config_dir
+        .join(format!("TestPoint{tp_base}"))
+        .join(format!("{file_stem}_TP{tp}_CSP.txt"))
+}
