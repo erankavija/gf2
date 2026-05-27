@@ -2,7 +2,7 @@
   "id": "9138d86c-eccf-4756-91f5-0bb4b1080e4b",
   "title": "GF(65521)/n=64 blocked solve kernel (6613abf4 rows 55, 56 follow-up)",
   "description": "Phase 6 follow-up filed under epic `026fc832`. Predecessor: `6613abf4` (blocked triangular solve R0 closed 7/13 PASS; rows 55, 56 routed here).\n\n## Background\n\nThe `6613abf4` blocked triangular solve closes 7 of 13 A8 solve cells but FAILs rows 55 + 56 at GF(65521)/n=64 (2.10× and 1.83×). Root cause documented at `dev/bench_results/2026-05-26-6613abf4-blocked-solve.md` § 7: at n=64 with the `TRSM_BLOCKED_PANEL_SIZE = 64` threshold, the blocked-TRSM dispatch is not active (n is exactly the threshold; per-panel update GEMM shape is too small for the medium-prime u16 packed kernel). The medium-prime u16 path also doesn't activate at the per-cell-dot level because the criterion in `gemm_axpy_into_view` for the u16 kernel is similar.\n\nSibling cells GF(65521)/n=256 and n=1024 PASS (rows 57-58 at 1.247×, 1.210×). The structural gap is specifically for the n=64 / medium-prime / single-column-RHS regime.\n\n## Success Criteria\n\n- [hard] A blocked solve dispatch path for GF(65521)/n=64 that closes both rows 55 (uniform) and 56 (deficient) at ≤ 1.5× vs fflas, OR carries explicit user-approved [aspirational] amendment for each cell.\n- [hard] No regression on currently-PASSing GF(65521) cells (delta ≤ 5%, paired tight-session bench).\n- [hard] Bit-exact correctness preserved (reuse `prop_blocked_solve_boundary_sweep_fp65521` at the existing inverse.rs location).\n- [hard] No `unsafe` outside kernel crates.\n\n## Out of scope\n\n- GF(251)/n=64 cells (covered by separate borderline investigation task).\n- Non-medium-prime solve paths.\n- Echelon and invert ops (sibling wave-7b issues).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -11,7 +11,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T05:25:35.998874644Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T05:30:22.600175391Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-27T05:36:19.101660157Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -20,5 +36,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-26T22:03:32.864187086+00:00",
-  "updated_at": "2026-05-27T04:11:58.285693456+00:00"
+  "updated_at": "2026-05-27T05:37:30.979433671+00:00"
 }
