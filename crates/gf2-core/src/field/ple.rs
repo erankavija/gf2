@@ -3351,12 +3351,16 @@ mod tests {
         assert_eq!(<Fp<127> as FiniteField>::PLE_PANEL_COLS, 256);
         assert_eq!(<Fp<241> as FiniteField>::PLE_PANEL_COLS, 256);
         assert_eq!(<Fp<251> as FiniteField>::PLE_PANEL_COLS, 256);
-        assert_eq!(<Fp<65521> as FiniteField>::PLE_PANEL_COLS, 1);
+        // GF(65521) now uses the medium-prime u16-lane PLE base case
+        // (issue `68db401b`); `PLE_PANEL_COLS = 128` matches `KC_U16`.
+        assert_eq!(<Fp<65521> as FiniteField>::PLE_PANEL_COLS, 128);
+        // Mersenne-31 has P >= 65536; the panel base case is unchanged.
         assert_eq!(<Fp<MERSENNE_31> as FiniteField>::PLE_PANEL_COLS, 1);
 
-        // `has_simd_ple_panel_base()` should be true for P <= 251 on
-        // any AVX2 host **when the `simd` feature is enabled**. Without
-        // the simd feature it always returns false (the kernel
+        // `has_simd_ple_panel_base()` should be true for P <= 251 AND
+        // for 252 <= P < 65536 (medium primes, e.g. GF(65521); issue
+        // `68db401b`) on any AVX2 host with the `simd` feature.
+        // Without the simd feature it always returns false (the kernel
         // dispatch is feature-gated). Detect both axes.
         #[cfg(feature = "simd")]
         {
@@ -3366,6 +3370,7 @@ mod tests {
                 assert!(<Fp<127> as FiniteField>::has_simd_ple_panel_base());
                 assert!(<Fp<241> as FiniteField>::has_simd_ple_panel_base());
                 assert!(<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+                assert!(<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
             }
         }
         #[cfg(not(feature = "simd"))]
@@ -3373,10 +3378,11 @@ mod tests {
             // Without `simd`, every prime should report false.
             assert!(!<Fp<7> as FiniteField>::has_simd_ple_panel_base());
             assert!(!<Fp<251> as FiniteField>::has_simd_ple_panel_base());
+            assert!(!<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
         }
-        // P > 251 must NEVER advertise the panel kernel (regardless of
-        // `simd` feature).
-        assert!(!<Fp<65521> as FiniteField>::has_simd_ple_panel_base());
+        // P >= 65536 must NEVER advertise the panel kernel — both
+        // byte-lane (P <= 251) and u16-lane (252..65536) kernels exclude
+        // it.
         assert!(!<Fp<MERSENNE_31> as FiniteField>::has_simd_ple_panel_base());
     }
 
