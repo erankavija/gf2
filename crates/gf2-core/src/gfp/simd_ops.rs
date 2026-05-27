@@ -2153,9 +2153,11 @@ impl<const P: u64> crate::field::matrix::PackedMatvec<Fp<P>> for PackedFpMatrix<
 
 #[cfg(not(feature = "simd"))]
 #[derive(Debug)]
+#[allow(dead_code)] // No-simd stub; constructed only from feature-gated code paths.
 pub(crate) struct PackedFpMatrix<const P: u64>;
 
 #[cfg(not(feature = "simd"))]
+#[allow(dead_code)] // No-simd stubs; called only from feature-gated code paths.
 impl<const P: u64> PackedFpMatrix<P> {
     pub(crate) fn try_pack(_rows: &[Fp<P>], _m: usize, _k: usize) -> Option<Self> {
         None
@@ -2510,9 +2512,11 @@ pub(crate) fn fp_try_make_basis_reducer<const P: u64>(
 }
 
 #[cfg(not(feature = "simd"))]
+#[allow(dead_code)] // No-simd stub; constructed only from feature-gated code paths.
 pub(crate) struct PackedFpBasis<const P: u64>;
 
 #[cfg(not(feature = "simd"))]
+#[allow(dead_code)] // No-simd stubs; called only from feature-gated code paths.
 impl<const P: u64> PackedFpBasis<P> {
     pub(crate) fn try_new(_n: usize) -> Option<Self> {
         None
@@ -2521,6 +2525,7 @@ impl<const P: u64> PackedFpBasis<P> {
 }
 
 #[cfg(not(feature = "simd"))]
+#[allow(dead_code)] // No-simd stub; called only from feature-gated code paths.
 pub(crate) fn fp_reduce_packed<const P: u64>(
     _v: &[Fp<P>],
     _basis: &PackedFpBasis<P>,
@@ -3129,6 +3134,7 @@ pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
 
 #[cfg(not(feature = "simd"))]
 #[inline]
+#[allow(dead_code)] // No-simd stub; called only from feature-gated code paths.
 pub(crate) fn fp_try_ple_panel_base_medium<const P: u64>(
     _matrix: &mut [Fp<P>],
     _parent_cols: usize,
@@ -3290,6 +3296,7 @@ fn apply_perm_indices(perm: &mut [usize], row_perm: &[usize]) {
 
 /// Non-SIMD stub for `PackedFpChainPolys<P>`.
 #[cfg(not(feature = "simd"))]
+#[allow(dead_code)] // No-simd stub; constructed only from feature-gated code paths.
 pub(crate) struct PackedFpChainPolys<const P: u64>;
 
 /// Non-SIMD stub that always returns `None`.
