@@ -15,7 +15,7 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T13:26:16.247361013Z"
+      "updated_at": "2026-05-27T14:29:04.700387246Z"
     },
     "doc-review": {
       "status": "pending",
@@ -44,5 +44,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-25T21:46:52.878530297+00:00",
-  "updated_at": "2026-05-27T13:31:29.861589759+00:00"
+  "updated_at": "2026-05-27T14:29:10.412255390+00:00"
 }
