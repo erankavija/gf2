@@ -34,6 +34,10 @@ tempfile = "3.8"
 thiserror = "1.0"
 num_cpus = "1.17.0"
 serde_json = "1.0"
+# Self-dev-dependency enabling `test-support` for integration tests that
+# share helpers with crate-internal unit tests (ETSI CSP test-point
+# parser, etc.). Pattern matches gf2-algebra.
+gf2-coding = { path = ".", features = ["test-support"] }
 # SVG plot generation for the d4851c3d presentation figures example only.
 # Default-features disabled: we only need the SVG backend, not the bitmap
 # / font backends, which keeps the build lean.
@@ -61,6 +65,12 @@ sim-observability = [
     "dep:rand_chacha", "dep:blake3", "dep:ctrlc",
     "dep:tracing", "dep:tracing-subscriber",
 ]
+# Exposes `gf2_coding::test_support` to integration tests that need to
+# share helpers with crate-internal unit tests (e.g., the ETSI CSP
+# test-point parser used by both `concat.rs` and the bit-interleaver
+# integration test). Default-off; integration tests enable it via the
+# self-referenced dev-dependency.
+test-support = []
 
 # Binaries are auto-discovered in src/bin/
 # - generate_ldpc_cache: Generate DVB-T2 LDPC encoding cache files

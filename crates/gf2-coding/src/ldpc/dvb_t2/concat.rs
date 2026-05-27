@@ -726,50 +726,7 @@ mod tests {
             return;
         }
 
-        // Parse a test-point text file into a list of BitVec blocks.
-        // Each block is delimited by comment/header lines starting with '%' or '#'.
-        fn parse_tp_blocks(path: &std::path::Path) -> Vec<BitVec> {
-            let text = std::fs::read_to_string(path)
-                .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
-            let mut blocks: Vec<BitVec> = Vec::new();
-            let mut current: Option<BitVec> = None;
-            for line in text.lines() {
-                let line = line.trim();
-                if line.is_empty() {
-                    continue;
-                }
-                if line.starts_with('%') || line.starts_with('#') {
-                    if let Some(bv) = current.take() {
-                        if !bv.is_empty() {
-                            blocks.push(bv);
-                        }
-                    }
-                    current = Some(BitVec::new());
-                    continue;
-                }
-                let bv = current.get_or_insert_with(BitVec::new);
-                for ch in line.chars() {
-                    match ch {
-                        '0' => bv.push_bit(false),
-                        '1' => bv.push_bit(true),
-                        _ => {}
-                    }
-                }
-            }
-            if let Some(bv) = current {
-                if !bv.is_empty() {
-                    blocks.push(bv);
-                }
-            }
-            blocks
-        }
-
-        fn tp_path(config_dir: &std::path::Path, tp: &str) -> PathBuf {
-            let tp_base = tp.trim_end_matches(|c: char| c.is_ascii_alphabetic());
-            config_dir
-                .join(format!("TestPoint{}", tp_base))
-                .join(format!("VV001-CR35_TP{}_CSP.txt", tp))
-        }
+        use crate::test_support::{parse_tp_blocks, tp_path};
 
         let tp04_blocks = parse_tp_blocks(&tp_path(&config_dir, "04"));
         let tp06_blocks = parse_tp_blocks(&tp_path(&config_dir, "06"));

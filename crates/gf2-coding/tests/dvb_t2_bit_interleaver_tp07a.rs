@@ -39,58 +39,12 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::CodeRate;
 
-// ---------------------------------------------------------------------------
-// Helper: parse a CSP test-point file into a list of BitVec blocks.
-//
-// Matches the parser in `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs`
-// (function `parse_tp_blocks` in the inline test).  Lines starting with
-// `%` or `#` act as block delimiters; data lines contain `0`/`1` chars.
-// ---------------------------------------------------------------------------
-fn parse_tp_blocks(path: &std::path::Path) -> Vec<gf2_core::BitVec> {
-    let text = std::fs::read_to_string(path)
-        .unwrap_or_else(|e| panic!("cannot read {}: {}", path.display(), e));
-    let mut blocks: Vec<gf2_core::BitVec> = Vec::new();
-    let mut current: Option<gf2_core::BitVec> = None;
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        if line.starts_with('%') || line.starts_with('#') {
-            if let Some(bv) = current.take() {
-                if !bv.is_empty() {
-                    blocks.push(bv);
-                }
-            }
-            current = Some(gf2_core::BitVec::new());
-            continue;
-        }
-        let bv = current.get_or_insert_with(gf2_core::BitVec::new);
-        for ch in line.chars() {
-            match ch {
-                '0' => bv.push_bit(false),
-                '1' => bv.push_bit(true),
-                _ => {}
-            }
-        }
-    }
-    if let Some(bv) = current {
-        if !bv.is_empty() {
-            blocks.push(bv);
-        }
-    }
-    blocks
-}
-
-/// Returns the path to a CSP test-point file within `config_dir`.
-fn tp_path(config_dir: &std::path::Path, tp: &str) -> PathBuf {
-    // Strip trailing alpha suffix to get the TestPoint directory number.
-    // E.g. "07a" → "07", "06" → "06".
-    let tp_base = tp.trim_end_matches(|c: char| c.is_ascii_alphabetic());
-    config_dir
-        .join(format!("TestPoint{}", tp_base))
-        .join(format!("VV001-CR35_TP{}_CSP.txt", tp))
-}
+// CSP test-point file parser + path builder are factored into the
+// crate's shared `test_support` module so the inline test in
+// `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` (TP04 → TP06 vector
+// check) and this integration test share one definition. Enabled by
+// the `test-support` feature on the self-referenced dev-dependency.
+use gf2_coding::test_support::{parse_tp_blocks, tp_path};
 
 // ---------------------------------------------------------------------------
 // Tests
