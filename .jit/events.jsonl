@@ -5475,3 +5475,11 @@
 {"type":"gate_failed","id":"8321e99e-9f57-4f17-8774-53cbf366cfcb","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T14:36:01.720487596Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"a3d978cf-a456-4c0a-85c7-311a5c92e23a","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T14:37:15.409794929Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"5a18be50-52a6-434f-9dc7-4a0d9b026949","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T14:47:15.674876596Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"4ea901ad-6001-46b3-9e1b-69ccf8582d5f","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T14:56:21.272111712Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"2b709a15-aa75-4af2-9eb1-68e6820d991b","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T15:01:54.901271004Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"b6094aed-4fae-4d9e-a93f-99e2ca11c222","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T15:07:20.086237651Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"a8cd6d28-c9c2-4ffa-8422-d8eabc64ee96","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T15:08:18.303795107Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"8a2fdbdd-e312-4f77-be3d-8f29dab1e380","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-27T15:09:34.618894361Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"2f04a5a7-db33-4571-b392-96afcedc8888","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:26.250715613Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"f239cbcf-401c-43c5-afce-bd3e8866828c","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:38.621225182Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"6ad4e4e4-5628-46f5-8f37-81c991fb0f23","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:38.621254792Z"}
