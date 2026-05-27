@@ -1601,6 +1601,33 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
     None
 }
 
+/// Per-(P, m, k, n) f64-cascade selector for medium primes (issue `0749dbad`,
+/// Phase 6e).
+///
+/// Returns `true` when the f64-FMA cascade is the production-preferred path
+/// for this size. The cascade has a non-trivial pack overhead (one
+/// `Fp::value()` REDC per A/B^T element, two `Vec<f64>` scratches of size
+/// `m·k` and `n·k`), so the per-element pack cost is paid up front; below a
+/// size threshold the u16 panel kernel wins because its pack is a pure
+/// `u64 → u16` truncation (no REDC per element).
+///
+/// Threshold `n >= 512`: the f64 pack cost is ~3-4× the u16 pack cost
+/// (REDC vs truncation), and the panel kernel's inner-loop throughput
+/// advantage (~70 Gop/s vs ~40 Gop/s on Zen 3) only amortises that
+/// overhead at n ≥ 512. Below n=512 the u16 kernel + its lighter pack
+/// stays competitive.
+#[cfg(feature = "simd")]
+#[inline]
+const fn select_f64_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
+    // Pack-cost amortisation knee: at n=4096 the inner-loop time dominates
+    // (≈ 95 % of wall) and the cascade clears 1.5× of fflas; at n=1024 the
+    // inner-loop is ≈ 80 % of wall; at n=512 the pack overhead is ~15 %
+    // (still amortised); at n=256 the pack approaches 25 % and the u16
+    // kernel's lighter pack wins. The threshold mirrors Route A's
+    // `select_f32_path` n ≥ 512 calibration for fp_small.
+    P > 251 && P < 65536 && n >= 512
+}
+
 /// GEMM helper: whole-GEMM panelized AVX2 kernel for medium-prime
 /// `Fp<P>` with `P ∈ (251, 65535]`. Pre-packs both operands as
 /// Montgomery raw u16 once per gemm call (`O(mk + kn)`), runs the
@@ -1617,11 +1644,22 @@ pub(crate) fn fp_medium_try_dot_packed<const P: u64>(
 /// `false` when the field is out of range, the `simd` feature is
 /// disabled, or AVX2 detection failed.
 ///
+/// # Dispatch policy (updated 2026-05-27, issue `0749dbad`)
+///
+/// For sufficiently large cells (`n ≥ 512`) on AVX2 + FMA3 hosts the
+/// **f64 cascade** in [`fp_medium_f64_try_gemm`] is preferred: it
+/// reaches Zen 3's f64 FMA back-end (~70 Gop/s) versus the u16 panel
+/// kernel's shuffle-pipe-bound ~40 Gop/s. Below the threshold the
+/// u16 path stays — its pack is a pure `u64 → u16` truncation (no
+/// REDC per element), avoiding the cascade's per-element
+/// `Fp::value()` REDC.
+///
 /// # Issue
 ///
-/// jit:74ba1cdc R1 — replaces the per-cell `fp_medium_try_dot_packed`
-/// dispatch in the GEMM caller (16M calls at n=4096) with a single
-/// panel kernel call, closing the GF(65521)/n=4096 ratio gap.
+/// jit:74ba1cdc R1 — original u16 panel kernel (closes large-n gap at
+/// ratio ≤ 1.5 for primes ≤ 32 767).
+/// jit:0749dbad — f64 cascade dispatch override for `n ≥ 512`, closes
+/// the GF(65521)/n=4096 ratio gap to ≤ 1.5×.
 #[cfg(feature = "simd")]
 pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     a: &[Fp<P>],
@@ -1640,6 +1678,15 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
     debug_assert_eq!(a.len(), m * k, "fp_medium_try_gemm_panel: a shape");
     debug_assert_eq!(b_t.len(), n * k, "fp_medium_try_gemm_panel: b_t shape");
     debug_assert_eq!(out.len(), m * n, "fp_medium_try_gemm_panel: out shape");
+
+    // f64 cascade override (issue 0749dbad, Phase 6e). Selected when the
+    // (prime, size) cell sits above the pack-amortisation threshold AND
+    // the AVX2 + FMA3 kernel is available. The cascade reaches Zen 3's
+    // f64 FMA back-end (~70 Gop/s); the u16 panel kernel sits at
+    // ~40 Gop/s (695350fd R0 post-mortem § 4-5).
+    if select_f64_path::<P>(m, k, n) && fp_medium_f64_try_gemm::<P>(a, b_t, m, k, n, out) {
+        return true;
+    }
 
     let Some(fns) = crate::simd::maybe_fp_medium() else {
         return false;
@@ -1670,6 +1717,63 @@ pub(crate) fn fp_medium_try_gemm_panel<const P: u64>(
                     let r2_sum = word as u128;
                     let r_sum = super::montgomery::redc::<P>(r2_sum);
                     *slot = Fp::<P>::from_raw_storage(r_sum);
+                }
+                true
+            })
+        })
+    })
+}
+
+/// f64-cascade GEMM helper for medium primes (issue `0749dbad`,
+/// Phase 6e). Pre-packs A and B^T as canonical f64 (via per-element
+/// `Fp::value()` REDC), runs the AVX2 + FMA3 dgemm micro-kernel, then
+/// re-packs the canonical-u16 output as `Fp::new(u as u64)` per cell.
+///
+/// Returns `true` when the kernel ran (and `out` is populated); `false`
+/// when AVX2 + FMA3 is unavailable at runtime.
+///
+/// The caller is expected to have gated this through
+/// [`select_f64_path`] — there is no internal shape gate beyond the
+/// AVX2 + FMA3 detection.
+#[cfg(feature = "simd")]
+fn fp_medium_f64_try_gemm<const P: u64>(
+    a: &[Fp<P>],
+    b_t: &[Fp<P>],
+    m: usize,
+    k: usize,
+    n: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    let Some(fns_f64) = crate::simd::maybe_fp_medium_f64() else {
+        return false;
+    };
+    GEMM_MEDIUM_F64_A_SCRATCH.with_borrow_mut(|a_f64| {
+        GEMM_MEDIUM_F64_BT_SCRATCH.with_borrow_mut(|bt_f64| {
+            GEMM_MEDIUM_OUT_SCRATCH.with_borrow_mut(|out_u16| {
+                a_f64.resize(m * k, 0.0f64);
+                bt_f64.resize(n * k, 0.0f64);
+                out_u16.resize(m * n, 0u16);
+
+                // Per-element `Fp::value()` REDC: maps Montgomery raw
+                // storage to canonical `[0, P)` and stores as f64.
+                // O(mk + nk) REDCs vs the u16 panel kernel's O(mn)
+                // REDCs at output time — for k > n the f64 path pays
+                // less, for k < n more; at the bench cells (m = k = n
+                // square) the two paths pay the same total REDCs but
+                // arrange them differently.
+                for (dst, src) in a_f64.iter_mut().zip(a.iter()) {
+                    *dst = src.value() as f64;
+                }
+                for (dst, src) in bt_f64.iter_mut().zip(b_t.iter()) {
+                    *dst = src.value() as f64;
+                }
+
+                (fns_f64.batch_gemm_fn)(a_f64, bt_f64, m, k, n, P as u16, out_u16);
+
+                // Re-pack canonical u16 → Montgomery storage via
+                // `Fp::new(u as u64)`. One REDC per output cell.
+                for (slot, &word) in out.iter_mut().zip(out_u16.iter()) {
+                    *slot = Fp::<P>::new(word as u64);
                 }
                 true
             })
@@ -1750,6 +1854,16 @@ thread_local! {
     static GEMM_MEDIUM_BT_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_MEDIUM_OUT_SCRATCH: std::cell::RefCell<Vec<u16>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    // f64-cascade scratch (issue 0749dbad). Pre-packs `a` and `bt` into
+    // canonical f64 buffers via `Fp::value()`; the output is written to
+    // the existing `GEMM_MEDIUM_OUT_SCRATCH` u16 buffer first and then
+    // unpacked through `Fp::new` into the caller's `Fp<P>` slot. Buffers
+    // grow as needed and are reused across repeated GEMM calls on the
+    // same thread.
+    static GEMM_MEDIUM_F64_A_SCRATCH: std::cell::RefCell<Vec<f64>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_MEDIUM_F64_BT_SCRATCH: std::cell::RefCell<Vec<f64>> =
         const { std::cell::RefCell::new(Vec::new()) };
     // Mersenne-31 GEMM scratch (issue 6a7d4c8e). Pre-packs `a` and `bt`
     // into u32 canonical buffers (direct `raw_storage() as u32` — M31
