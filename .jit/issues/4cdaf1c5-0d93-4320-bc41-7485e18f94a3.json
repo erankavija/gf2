@@ -2,7 +2,7 @@
   "id": "4cdaf1c5-0d93-4320-bc41-7485e18f94a3",
   "title": "Validate full TP04 -> TP05 -> TP06 -> TP07a DVB-T2 chain",
   "description": "## Goal\n\nExtend the existing TP04 → TP06 verified vector chain through TP07a\n(post-bit-interleaver), validating bit-exact agreement with the ETSI\ntest vectors for at least the 3 in-scope DVB-T2 MODCODs\n(Normal × {1/2, 2/3, 3/4}).\n\n## Context\n\nThe chain (per `crates/gf2-coding/docs/DVB_T2.md` and ETSI TR 102 831\n§4):\n\n| TP    | After stage              | Length (rate 1/2)      |\n|-------|--------------------------|------------------------|\n| TP04  | BBFRAME (BCH input)      | 32 208 bits            |\n| TP05  | BCH out (LDPC input)     | 32 400 bits            |\n| TP06  | LDPC out (FECFRAME)      | 64 800 bits            |\n| TP07a | After bit interleaver    | 64 800 bits, permuted  |\n\nTP04 → TP06 is already verified end-to-end on VV001-CR35 (202/202\nblocks match in both directions, per `ROADMAP.md`). TP07a is not yet\ncovered; that step requires the DVB-T2 column-row bit interleaver\nfrom 87a2402f.\n\nThe ETSI reference vectors live behind the `DVB_TEST_VECTORS_PATH`\nenvironment variable and are loaded via the existing harness under\n`crates/gf2-coding/tests/`.\n\n## Deliverables\n\n1. New test (or extended existing test) that loads the ETSI vectors\n   for at least the 3 in-scope configurations and verifies:\n   - TP06 → TP07a forward matches the reference bit-exact,\n   - TP07a → TP06 reverse matches TP06 bit-exact\n     (interleaver-inverse correctness).\n2. The test carries `#[ignore = \"external: DVB-T2 ETSI vectors\"]` so\n   it does not run in the default fast tier (matches the existing\n   `DVB_TEST_VECTORS_PATH` pattern).\n3. `ROADMAP.md` and `crates/gf2-coding/docs/DVB_T2.md` updated to\n   mark TP07a as covered.\n\n## Success criteria\n\n- [hard] TP06 → TP07a forward matches the reference bit-exact for\n  each of the 3 in-scope configurations.\n- [hard] TP07a → TP06 reverse matches TP06 bit-exact for each tested\n  configuration.\n- [hard] Test guarded behind `DVB_TEST_VECTORS_PATH` and the\n  existing external-vector pattern; default fast-tier CI is\n  unaffected.\n- [hard] Documentation updated.\n\n## Hard prereq\n\nThe DVB-T2 column-row bit interleaver from 87a2402f must exist for\nthis task to begin.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,20 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T22:25:06.580965133Z"
-    },
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:46.379442367Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-27T22:35:02.414220752Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T22:24:55.780423163Z"
+      "updated_at": "2026-05-27T22:33:29.043966919Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T22:33:42.836198145Z"
     }
   },
   "context": {},
@@ -38,5 +38,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.792877398+00:00",
-  "updated_at": "2026-05-27T22:31:28.501941461+00:00"
+  "updated_at": "2026-05-27T22:35:03.429832823+00:00"
 }
