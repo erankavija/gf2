@@ -733,23 +733,37 @@ impl<const P: u64> FiniteField for Fp<P> {
         n: usize,
         out: &mut [Self],
     ) -> bool {
+        // Mersenne31 whole-GEMM: must be checked FIRST because
+        // `use_specialized_storage(M31) == true`, which means
+        // `fp_small_enabled` and `fp_medium_eligible` both return
+        // `false` for P == M31.  Without this guard the call falls
+        // through to scalar `dot_product_slices` for every M31 GEMM.
+        // Issue `6a7d4c8e`.
+        if simd_ops::fp_m31_try_gemm_classical::<P>(a, b_t, m, k, n, out) {
+            return true;
+        }
         if simd_ops::fp_small_try_gemm_classical::<P>(a, b_t, m, k, n, out) {
             return true;
         }
         simd_ops::fp_medium_try_gemm_panel::<P>(a, b_t, m, k, n, out)
     }
 
-    /// Non-allocating availability probe for the small-prime
-    /// whole-GEMM kernel (issue `40195c09`). Returns `true` when
-    /// `P ≤ 251`, the `simd` feature is enabled, and an AVX2 kernel
-    /// was detected at runtime. Used by
-    /// [`crate::field::matrix::gemm_axpy_into_view`] to decide
-    /// whether to allocate the contiguous-`A` scratch buffer before
-    /// dispatching the kernel.
+    /// Non-allocating availability probe for the whole-GEMM fast path
+    /// (issues `40195c09`, `6a7d4c8e`). Returns `true` when a SIMD
+    /// kernel is available for this prime:
+    ///
+    /// - `P == 2^31 - 1` (Mersenne31): AVX2 `m31_batch_dot_fn`.
+    /// - `P ≤ 251`: byte-lane AVX2 (Candidate C / route A / route C).
+    /// - `P ∈ (251, 65535]`: u16-lane AVX2 panel kernel.
+    ///
+    /// Used by [`crate::field::matrix::gemm_axpy_into_view`] to skip
+    /// the contiguous-`A` scratch allocation when the kernel will
+    /// decline regardless.
     #[cfg(not(verify_lean))]
     #[inline]
     fn has_simd_gemm_classical() -> bool {
-        simd_ops::fp_small_gemm_classical_available::<P>()
+        simd_ops::fp_m31_gemm_classical_available::<P>()
+            || simd_ops::fp_small_gemm_classical_available::<P>()
     }
 
     /// Constructs a packed basis reducer for the cyclic-decomposition
