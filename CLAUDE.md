@@ -130,7 +130,7 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 | `traits` | `BlockEncoder`, `HardDecisionDecoder`, `GeneratorMatrixAccess` — unified interfaces |
 | `llr` | `Llr` type (f32 by default, f64 with `llr-f64` feature) for soft-decision decoding |
 | `channel` | AWGN channel simulation with BPSK modulation |
-| `simulation` | BER/FER simulation harness |
+| `simulation` | BER/FER simulation harness; with `sim-observability` feature: per-SNR JSON checkpoints (`checkpoint_dir`), JSON-lines tracing (`tracing_log_path`), within-SNR heartbeats (`heartbeat_every_frames`), SIGINT/SIGTERM flush via `ctrlc`, deterministic `ChaCha20Rng` seek for byte-identical resume |
 
 ### Key design invariants
 
@@ -153,6 +153,7 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 | `gf2-coding` | `simd` | Propagates to `gf2-core/simd` (default on) |
 | `gf2-coding` | `parallel` | Rayon BCH/LDPC batch |
 | `gf2-coding` | `llr-f64` | Use f64 instead of f32 for LLRs |
+| `gf2-coding` | `sim-observability` | Checkpointing, SIGINT flush, JSON-lines tracing, ChaCha20 RNG seek (default on; embedded users can opt out with `default-features = false`) |
 | `gf2-algebra` | `simd` | AVX2 dispatch for `permanent_bipedal3` (default on) |
 | `gf2-algebra` | `parallel` | Rayon `permanent_bipedal3_parallel` (default on) |
 | `gf2-algebra` | `f5` | `Packed5`, `Packed5Matrix`, `permanent_bipedal5` (default on) |

@@ -52,6 +52,9 @@ fn run() -> Result<(), String> {
         max_decoder_iterations: 0,
         rng_seed: Some(0xA5A5_A5A5),
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
 
     // ---- 1. QPSK over AWGN via ModemChannelAdapter ----------------------

@@ -22,6 +22,9 @@ fn main() {
         max_decoder_iterations: 1,
         rng_seed: None,
         output_path: None,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        heartbeat_every_frames: None,
     };
 
     println!(
