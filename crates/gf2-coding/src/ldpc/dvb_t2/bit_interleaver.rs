@@ -24,10 +24,19 @@
 //!
 //! # Scope
 //!
-//! This implementation covers the three LDPC code rates that appear in
-//! the issue scope — 1/2, 2/3, 3/4 — crossed with 16-QAM and 64-QAM,
-//! for both Normal (64800 bits) and Short (16200 bits) FECFRAMEs.
-//! QPSK is included for completeness (no twist, η_mod = 2).
+//! This implementation covers four LDPC code rates crossed with
+//! QPSK, 16-QAM, and 64-QAM, for both Normal (64800 bits) and
+//! Short (16200 bits) FECFRAMEs:
+//!
+//! * Rate 1/2, Rate 2/3, Rate 3/4 — original in-scope rates.
+//! * Rate 3/5 (Normal frame only) — added to support end-to-end
+//!   testing against VV001-CR35 test vectors.
+//!
+//! Short-frame Rate 3/5 is not in scope for this implementation.
+//! Note: the VV001-CR35 ETSI reference vectors use 256-QAM with
+//! cell interleaving (§6.1.4/§6.1.5), which is beyond the scope
+//! of this module (§6.1.3 only). Full chain validation will be
+//! addressed in a separate issue.
 //!
 //! # References
 //!
@@ -43,7 +52,9 @@ use crate::llr::Llr;
 /// Modulation order for DVB-T2 bit-interleaver parameterisation.
 ///
 /// Only QAM orders that produce distinct interleaver configurations are
-/// represented (QPSK, 16-QAM, 64-QAM). 256-QAM is not yet in scope.
+/// represented (QPSK, 16-QAM, 64-QAM). 256-QAM is not in scope for
+/// the §6.1.3 bit-only interleaver; it additionally requires the
+/// cell word demux and cell interleaver stages (§6.1.4/§6.1.5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DvbT2Modulation {
     /// QPSK: 2 bits per cell, no column twist.
@@ -73,8 +84,9 @@ impl DvbT2Modulation {
 /// # Arguments
 ///
 /// * `frame_size` — Normal (64800) or Short (16200) FECFRAME.
-/// * `code_rate` — LDPC code rate.  Only rates 1/2, 2/3, and 3/4 are
-///   in scope for the current implementation; other rates will panic.
+/// * `code_rate` — LDPC code rate.  Rates 1/2, 2/3, 3/4, and 3/5
+///   (Normal frame only) are supported; other rates will panic.
+///   Short-frame Rate 3/5 is not in scope.
 /// * `modulation` — QPSK, 16-QAM, or 64-QAM.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DvbT2Modcod {
@@ -119,7 +131,8 @@ impl InterleaverConfig {
     /// # Panics
     ///
     /// Panics if `modcod.code_rate` is not one of Rate1_2, Rate2_3,
-    /// Rate3_4 (the three rates currently in scope).
+    /// Rate3_4, or Rate3_5 (Normal frame only).  Short-frame Rate3_5
+    /// is not in scope and will panic.
     fn from_modcod(modcod: DvbT2Modcod) -> Self {
         let n = match modcod.frame_size {
             FrameSize::Normal => 64800,
@@ -155,11 +168,15 @@ impl InterleaverConfig {
         //
         // The code rate is validated to ensure only in-scope rates are used;
         // the twist tables themselves are modulation-dependent only.
-        match modcod.code_rate {
-            CodeRate::Rate1_2 | CodeRate::Rate2_3 | CodeRate::Rate3_4 => {}
-            other => panic!(
+        match (modcod.code_rate, modcod.frame_size) {
+            (CodeRate::Rate1_2 | CodeRate::Rate2_3 | CodeRate::Rate3_4, _) => {}
+            (CodeRate::Rate3_5, FrameSize::Normal) => {}
+            (CodeRate::Rate3_5, FrameSize::Short) => {
+                panic!("DvbT2BitInterleaver: Rate3_5 Short frame is not in scope")
+            }
+            (other, _) => panic!(
                 "DvbT2BitInterleaver: code rate {:?} is not in scope \
-                 (only Rate1_2, Rate2_3, Rate3_4 are supported)",
+                 (supported: Rate1_2, Rate2_3, Rate3_4, Rate3_5 Normal)",
                 other
             ),
         }
@@ -232,7 +249,7 @@ impl DvbT2BitInterleaver {
     /// # Panics
     ///
     /// Panics if `modcod.code_rate` is not one of `Rate1_2`, `Rate2_3`,
-    /// `Rate3_4` (the three rates currently in scope).
+    /// `Rate3_4`, or `Rate3_5` (Normal frame only).
     ///
     /// # Examples
     ///
@@ -1056,7 +1073,14 @@ mod tests {
         }
     }
 
-    // --- TP07a path-A spec-compliance unit test (§6.1.3 independent evidence) -
+    // --- Spec-compliance unit test (§6.1.3 formula independent evidence) ---
+    //
+    // This test verifies a specific single-bit mapping against the spec
+    // formula for Normal, Rate1_2, 16-QAM.  It is independent evidence
+    // that the permutation is correct, complementing the roundtrip tests.
+    //
+    // Note: the end-to-end TP07a vector validation against VV001-CR35 is
+    // in the integration test `dvb_t2_bit_interleaver_tp07a.rs`.
 
     /// Spec-compliance forward test for Normal, Rate1_2, 16-QAM.
     ///
@@ -1077,9 +1101,9 @@ mod tests {
     ///   (j mod 4) = 1 and (j/4 + tc[1]) mod 16200 = 0
     ///   => j/4 = (16200 - 2) mod 16200 = 16198, j = 16198*4 + 1 = 64793.
     ///
-    /// This test independently proves the permutation is spec-compliant
-    /// without relying on roundtrip self-cancellation (Path A evidence for
-    /// the TP07a end-to-end criterion).
+    /// This is a formula-correctness check, not the TP07a end-to-end
+    /// vector validation (which lives in the integration test file
+    /// `crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs`).
     #[test]
     fn test_16qam_normal_spec_compliance_forward() {
         let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
