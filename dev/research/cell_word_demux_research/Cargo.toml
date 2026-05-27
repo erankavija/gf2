@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "cell_word_demux_research"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gf2-coding = { path = "../../../crates/gf2-coding", features = ["test-support"] }
+gf2-core = { path = "../../../crates/gf2-core" }
