@@ -5483,3 +5483,4 @@
 {"type":"gate_passed","id":"2f04a5a7-db33-4571-b392-96afcedc8888","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:26.250715613Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"f239cbcf-401c-43c5-afce-bd3e8866828c","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:38.621225182Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"6ad4e4e4-5628-46f5-8f37-81c991fb0f23","issue_id":"68db401b-7118-4cd6-be40-c3c5002abde4","timestamp":"2026-05-27T15:10:38.621254792Z"}
+{"type":"gate_failed","id":"85291f2b-13bc-40ca-b4cb-831413700c56","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T15:11:28.920868103Z","gate_key":"code-review","updated_by":"auto:executor"}
