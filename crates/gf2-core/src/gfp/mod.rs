@@ -882,37 +882,54 @@ impl<const P: u64> FiniteField for Fp<P> {
         crate::field::extension_wiedemann::try_extension_wiedemann_fp::<P>(a)
     }
 
-    /// Panelized PLE base-case threshold for `Fp<P>` (issue `6823c8a0`,
-    /// design `2e8c5a29`). For `P <= 251` we override to `KC = 256`
-    /// (the route-C panel kernel's k-axis cache-blocking factor,
-    /// `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`), so the
-    /// SIMD panel-base path activates on every column window up to 256.
-    /// For `P > 251` (e.g. GF(65521)) we keep the default
-    /// `PLE_BASE_COLS` so the scalar base case continues to handle
-    /// medium-prime fields; the medium-prime Schur-update GEMM speedup
-    /// still applies automatically via `gemm_axpy_into_view`'s
-    /// auto-dispatch (issue `74ba1cdc` R1 / lift `40195c09`).
+    /// Panelized PLE base-case threshold for `Fp<P>` (issues `6823c8a0`,
+    /// `68db401b`, design `2e8c5a29`).
+    ///
+    /// * For `P <= 251` we override to `KC = 256` (the route-C panel
+    ///   kernel's k-axis cache-blocking factor,
+    ///   `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`), so
+    ///   the byte-lane SIMD panel-base path activates on every column
+    ///   window up to 256.
+    /// * For `252 <= P < 65536` (medium primes — reference GF(65521))
+    ///   we override to `128` (issue `68db401b`). The u16-lane panel-
+    ///   base kernel has half the lane density (16 → 8 u16 per AVX2
+    ///   tile compared to 16 u8 for byte lanes) and a smaller pivot-
+    ///   row stack scratch budget, so `KC_U16 = 128` keeps the panel
+    ///   L1d-resident while still amortising the per-pivot fixed
+    ///   overheads.
+    /// * For `P >= 65536` we keep the default `PLE_BASE_COLS` (= 1) —
+    ///   the generic 64-bit Montgomery path drives these fields with
+    ///   no specialised panel kernel.
     const PLE_PANEL_COLS: usize = {
         if P <= 251 {
-            // KC = 256 (panel kernel L1d-fit blocking factor; see
-            // `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`).
+            // KC = 256 (byte-lane panel kernel L1d-fit blocking
+            // factor; see `crates/gf2-kernels-simd/src/x86/fp_small_panel.rs:102`).
             256
+        } else if P < 65536 {
+            // KC_U16 = 128 (medium-prime u16-lane PLE base-case
+            // kernel, issue `68db401b`).
+            128
         } else {
             // Default = PLE_BASE_COLS (=1) so the panel dispatch is
-            // disabled for medium primes; the recursive trsm+gemm path
-            // continues to drive these fields with the medium-prime
-            // Schur-update GEMM speedup inherited from `74ba1cdc`.
+            // disabled for large-prime fields; the recursive trsm+gemm
+            // path continues to drive these.
             1
         }
     };
 
-    /// Panelized PLE base-case fast path for `Fp<P>` with `P <= 251`
-    /// (issue `6823c8a0`, design `2e8c5a29`). Routes through the AVX2
-    /// byte-lane panel kernel
-    /// (`crate::simd::maybe_fp_small_ple`), with row-major axpy-style
-    /// inner Schur update over canonical-byte panel rows. Returns
-    /// `None` for `P > 251` or when AVX2 is unavailable; the caller
-    /// then falls back to scalar `ple_base_direct`.
+    /// Panelized PLE base-case fast path for `Fp<P>` (issues `6823c8a0`
+    /// + `68db401b`, design `2e8c5a29`).
+    ///
+    /// Routes by `P`:
+    /// * `P <= 251` — AVX2 byte-lane panel kernel via
+    ///   [`crate::simd::maybe_fp_small_ple`], row-major axpy Schur
+    ///   update over canonical-byte panel rows.
+    /// * `252 <= P < 65536` — AVX2 u16-lane panel kernel via
+    ///   [`crate::simd::maybe_fp_medium_ple`] (issue `68db401b`),
+    ///   row-major axpy Schur update over canonical u16 panel rows
+    ///   with widening-to-u32 multiply and the SSOT Barrett reduction.
+    /// * Otherwise: returns `None` and the caller falls back to scalar
+    ///   `ple_base_direct`.
     #[cfg(not(verify_lean))]
     #[inline]
     fn try_simd_ple_panel_base(
@@ -937,8 +954,10 @@ impl<const P: u64> FiniteField for Fp<P> {
 
     /// Non-allocating availability probe for
     /// [`try_simd_ple_panel_base`](Self::try_simd_ple_panel_base).
-    /// Returns `true` when `P <= 251`, the `simd` feature is enabled,
-    /// and AVX2 was detected at runtime.
+    /// Returns `true` when `P <= 251` and the small-prime PLE panel
+    /// kernel is registered, or when `252 <= P < 65536` and the medium-
+    /// prime PLE panel kernel is registered (issue `68db401b`). Both
+    /// require the `simd` feature and runtime-detected AVX2.
     #[cfg(not(verify_lean))]
     #[inline]
     fn has_simd_ple_panel_base() -> bool {
