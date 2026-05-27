@@ -6,6 +6,7 @@
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
+    "a7b1bb21-834c-434f-8d61-17b829f5592d",
     "003e4088-d24d-4b58-961f-d82df215ff7c"
   ],
   "gates_required": [
@@ -38,5 +39,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.792877398+00:00",
-  "updated_at": "2026-05-27T19:01:18.244547119+00:00"
+  "updated_at": "2026-05-27T19:23:35.534681970+00:00"
 }

@@ -5511,3 +5511,6 @@
 {"type":"issue_state_changed","id":"bf0e410d-cc4c-4d59-8cc6-d6d45d08d98a","issue_id":"fcb09e6f-a39e-47d1-976e-beed7ba24a07","timestamp":"2026-05-27T17:21:55.523886141Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"c4ec07c8-8b37-4906-9c2e-1c3533469e8b","issue_id":"4cdaf1c5-0d93-4320-bc41-7485e18f94a3","timestamp":"2026-05-27T19:01:18.244355389Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"dadefae4-d438-4f69-8112-09fbd3ed7acd","issue_id":"4cdaf1c5-0d93-4320-bc41-7485e18f94a3","timestamp":"2026-05-27T19:01:18.244705549Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"411a5e37-80cf-45c0-bb57-3d140d670b21","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:29.719415167Z","title":"Implement DVB-T2 §6.1.4 bit-to-cell-word demuxer","priority":"high"}
+{"type":"issue_state_changed","id":"05d88f8f-874d-4d06-9144-312ce5b05cc3","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:52.741629353Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"6c1963cd-e8f3-4ab1-ae31-41fb551f7d66","issue_id":"a7b1bb21-834c-434f-8d61-17b829f5592d","timestamp":"2026-05-27T19:23:52.741849833Z","assignee":"agent:claude"}

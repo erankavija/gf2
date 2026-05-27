@@ -1,0 +1,23 @@
+{
+  "id": "a7b1bb21-834c-434f-8d61-17b829f5592d",
+  "title": "Implement DVB-T2 §6.1.4 bit-to-cell-word demuxer",
+  "description": "## Goal\n\nImplement ETSI EN 302 755 v1.4.1 §6.1.4 \"Demultiplexing of bits into cell words\" so that the existing TP06→TP07a chain validation (`4cdaf1c5`) can verify forward bit-exact agreement with the published ETSI test vectors.\n\n## Context (block diagram per ETSI reference-streams documentation)\n\n```\n... LDPC 6 → Bit Interleaver → TP7 → Bit-to-cell Demux → TP7a → QAM Mapper → TP8 → ...\n```\n\nTP7a is the output of §6.1.4. The §6.1.4 stage demultiplexes the bit-interleaver output (`N` bits) into `N / η_MOD` cell words of `η_MOD` bits each, where `η_MOD` is the modulation order (2 for QPSK, 4 for 16-QAM, 6 for 64-QAM).\n\nThe 4cdaf1c5 worker's empirical analysis on 6 in-scope ETSI vectors showed ~50% diff rate between bit-interleaver-only output and TP07a, which matches the expected diff rate for ETSI's §6.1.4 sub-stream demux (output bit `k` corresponds to input bit at `substream * (N / η_MOD) + cell_index` where `substream = k mod η_MOD`, `cell_index = k / η_MOD`). So §6.1.4 alone should close the TP07a gap; §6.1.5 (cell interleaver, TP10) is downstream and out of scope here.\n\n## Deliverables\n\n1. New module: `crates/gf2-coding/src/ldpc/dvb_t2/cell_word_demux.rs`.\n\n2. Public type, e.g. `DvbT2CellWordDemux`, with at minimum:\n   - `pub fn new(modulation: DvbT2Modulation) -> Self` (reuses `DvbT2Modulation` from `bit_interleaver.rs`).\n   - `pub fn demux(&self, bits: &BitVec) -> BitVec` — forward §6.1.4 permutation.\n   - `pub fn inverse(&self, bits: &BitVec) -> BitVec` — inverse permutation for the receive path.\n   - `pub fn inverse_llrs(&self, llrs: &[Llr]) -> Vec<Llr>` — LLR-domain inverse.\n\n3. Implement the exact §6.1.4 demux per Table 11 / 11a of ETSI EN 302 755 v1.4.1:\n   - For each modulation (QPSK, 16-QAM, 64-QAM), apply the spec's bit-to-sub-stream demux pattern.\n   - QPSK (η_MOD = 2): identity demux (per spec) — verify and document.\n   - 16-QAM (η_MOD = 4): 4 sub-streams, deterministic bit-to-cell pattern from Table 11.\n   - 64-QAM (η_MOD = 6): 6 sub-streams, deterministic pattern from Table 11a.\n\n4. Unit tests:\n   - Roundtrip identity: `inverse(demux(x)) == x` for random inputs at each modulation.\n   - LLR-domain inverse: `inverse_llrs` reorders LLRs to match `inverse` applied to a hard-decision BitVec.\n   - Spec-compliance forward test: for at least one modulation, construct an input with known bit pattern and verify the output matches a hand-derived expected pattern per the spec formula.\n   - Word-boundary edge cases (0, 1, 63, 64, 65 bits offset).\n\n## Success criteria\n\n- [hard] Roundtrip identity holds for QPSK, 16-QAM, 64-QAM at both Normal frame (N=64800) and Short frame (N=16200).\n- [hard] LLR-domain inverse preserves ordering (verified via index-tagging test).\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n- [hard] Public API has standard rustdoc (description, arguments, examples that compile, panics, complexity).\n\n## Non-goals\n\n- §6.1.5 cell interleaver (separate task; not required for TP07a per ETSI block diagram).\n- QAM rotation (§6.1.7, TP8a) — separate stage.\n- Time interleaver (§6.5).\n- Production wiring into the BICM chain — `4cdaf1c5` consumes the demux as part of its TP07a validation; `003e4088` and `152388f4` do NOT need the demux (their FER simulation uses Gray-QAM mapping directly from the bit-interleaved stream, which is equivalent to mapping post-demux for purposes of bit-error-rate measurement).\n\n## Spec reference\n\nETSI EN 302 755 v1.4.1 §6.1.4 (\"Demultiplexing of bits into cell words\") and Tables 11 / 11a for the per-modulation demux patterns.",
+  "state": "in_progress",
+  "priority": "high",
+  "assignee": "agent:claude",
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
+  ],
+  "created_at": "2026-05-27T19:23:29.718708666+00:00",
+  "updated_at": "2026-05-27T19:23:52.741689703+00:00"
+}
