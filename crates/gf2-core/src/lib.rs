@@ -82,6 +82,7 @@ pub(crate) mod simd {
     use gf2_kernels_simd::fp65537::Fp65537Fns;
     use gf2_kernels_simd::fp_generic::FpGenericFns;
     use gf2_kernels_simd::fp_medium::MediumPrimeFns;
+    use gf2_kernels_simd::fp_medium_f64::FpMediumF64Fns;
     use gf2_kernels_simd::fp_small::SmallPrimeFns;
     use gf2_kernels_simd::fp_small_f32::SmallPrimeF32Fns;
     use gf2_kernels_simd::fp_small_panel::SmallPrimePanelFns;
@@ -103,6 +104,7 @@ pub(crate) mod simd {
     static FP65537_FNS: OnceLock<Option<Fp65537Fns>> = OnceLock::new();
     static FP_GENERIC_FNS: OnceLock<Option<FpGenericFns>> = OnceLock::new();
     static FP_MEDIUM_FNS: OnceLock<Option<MediumPrimeFns>> = OnceLock::new();
+    static FP_MEDIUM_F64_FNS: OnceLock<Option<FpMediumF64Fns>> = OnceLock::new();
     static FP_SMALL_FNS: OnceLock<Option<SmallPrimeFns>> = OnceLock::new();
     static FP_SMALL_F32_FNS: OnceLock<Option<SmallPrimeF32Fns>> = OnceLock::new();
     static FP_SMALL_PANEL_FNS: OnceLock<Option<SmallPrimePanelFns>> = OnceLock::new();
@@ -217,6 +219,33 @@ pub(crate) mod simd {
     pub fn maybe_fp_medium() -> Option<&'static MediumPrimeFns> {
         FP_MEDIUM_FNS
             .get_or_init(gf2_kernels_simd::fp_medium::detect)
+            .as_ref()
+    }
+
+    /// Returns the medium-prime `Fp<P>` AVX2 + FMA3 f64-cascade GEMM
+    /// kernel, if any (issue `0749dbad`, Phase 6e).
+    ///
+    /// Provides an in-Rust f64-FMA dgemm micro-kernel for canonical-u16
+    /// `Fp<P>` operands with `P ∈ (251, 65535]`. The kernel mirrors
+    /// Route A's f32 cascade for `P ≤ 251` (in
+    /// [`maybe_fp_small_f32`]) at f64 lane density: 4 f64 lanes per
+    /// AVX2 register, `4 × 12` register tile, and a vectorised f64
+    /// Barrett reduction (`r = x - p · round(x · (1/p))`) at the end
+    /// of the k-axis.
+    ///
+    /// The 695350fd R0 post-mortem
+    /// (`dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` § 9)
+    /// identified the f64 cascade as the structural lever required to
+    /// close GF(65521)/n=4096 — the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
+    /// kernel sits at ~92 % of its arithmetic ceiling (~40 Gop/s) while
+    /// fflas-ffpack's `Modular<double>` peak (~70 Gop/s) matches Zen 3's
+    /// f64 FMA back-end exactly. This kernel reaches the same back-end.
+    ///
+    /// Returns `None` on hosts without AVX2 + FMA3.
+    #[inline]
+    pub fn maybe_fp_medium_f64() -> Option<&'static FpMediumF64Fns> {
+        FP_MEDIUM_F64_FNS
+            .get_or_init(gf2_kernels_simd::fp_medium_f64::detect)
             .as_ref()
     }
 
@@ -368,6 +397,12 @@ pub(crate) mod simd {
     #[allow(dead_code)]
     #[inline]
     pub fn maybe_fp_medium() -> Option<()> {
+        None
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn maybe_fp_medium_f64() -> Option<()> {
         None
     }
 

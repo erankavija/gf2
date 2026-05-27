@@ -21,6 +21,7 @@ pub(crate) mod clmul;
 pub(crate) mod fp65537;
 pub(crate) mod fp_generic;
 pub(crate) mod fp_medium;
+pub(crate) mod fp_medium_f64;
 pub(crate) mod fp_small;
 pub(crate) mod fp_small_f32;
 pub(crate) mod fp_small_panel;
