@@ -46,6 +46,8 @@ use crate::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
 use crate::llr::Llr;
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
 use gf2_core::BitVec;
+use once_cell::sync::OnceCell;
+use std::sync::Mutex;
 
 use super::FrameSize;
 use crate::bch::CodeRate;
@@ -54,9 +56,27 @@ use crate::bch::CodeRate;
 use crate::bch::dvb_t2::FrameSize as BchFrameSize;
 
 /// Error type returned by [`DvbT2Concat::new`] and [`DvbT2Concat::decode_soft`].
+///
+/// Variants cover the two failure modes: an unsupported (frame_size, code_rate)
+/// pair at construction time, and LDPC convergence failure at decode time.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::dvb_t2::{concat::{DvbT2Concat, ConcatError}, FrameSize};
+/// use gf2_coding::CodeRate;
+///
+/// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+/// assert_eq!(codec.k_bch(), 32208);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConcatError {
     /// The (frame_size, code_rate) pair is not covered by this implementation.
+    ///
+    /// # Fields
+    ///
+    /// * `frame_size` — The requested [`FrameSize`].
+    /// * `code_rate`  — The requested [`CodeRate`].
     Unsupported {
         /// Requested frame size.
         frame_size: FrameSize,
@@ -66,6 +86,11 @@ pub enum ConcatError {
     /// LDPC belief propagation did not converge; the BCH codeword may contain
     /// residual errors. The partially-decoded BBFRAME is returned as the
     /// payload.
+    ///
+    /// # Fields
+    ///
+    /// * `bbframe`    — Best estimate of the BBFRAME (BCH-corrected where possible).
+    /// * `iterations` — Number of BP iterations performed before giving up.
     LdpcDecodeFailed {
         /// Best estimate of the BBFRAME (BCH-corrected where possible).
         bbframe: BitVec,
@@ -103,8 +128,10 @@ impl std::error::Error for ConcatError {}
 /// [`DvbT2Concat::decode_soft`].
 ///
 /// The LDPC encoder is initialised lazily on the first call to
-/// [`encode`](Self::encode) to avoid the O(n²/64) preprocessing cost at
-/// construction time. Decoder initialisation is O(nnz) and happens eagerly.
+/// [`encode`](Self::encode) (stored in a [`OnceCell`]) to avoid the O(n²/64)
+/// preprocessing cost at construction time. The LDPC decoder is wrapped in a
+/// [`Mutex`] so that `decode_soft` takes `&self` while still allowing BP
+/// scratch-buffer mutation; this also makes `DvbT2Concat` [`Sync`].
 ///
 /// # Arguments to `new`
 ///
@@ -126,10 +153,11 @@ pub struct DvbT2Concat {
     bch_decoder: BchDecoder,
     /// LDPC code (held to construct the encoder lazily).
     ldpc_code: LdpcCode,
-    /// LDPC encoder (Richardson-Urbanke), initialised on first encode.
-    ldpc_encoder: Option<LdpcEncoder>,
+    /// LDPC encoder (Richardson-Urbanke), initialised on first encode call.
+    ldpc_encoder: OnceCell<LdpcEncoder>,
     /// LDPC decoder (belief propagation, with early termination).
-    ldpc_decoder: LdpcDecoder,
+    /// Wrapped in a Mutex so decode_soft can take &self.
+    ldpc_decoder: Mutex<LdpcDecoder>,
     /// BCH information block size (BBFRAME bits).
     k_bch: usize,
     /// BCH codeword length = LDPC input length.
@@ -212,8 +240,8 @@ impl DvbT2Concat {
             bch_encoder,
             bch_decoder,
             ldpc_code,
-            ldpc_encoder: None, // Initialised lazily on first encode.
-            ldpc_decoder,
+            ldpc_encoder: OnceCell::new(),
+            ldpc_decoder: Mutex::new(ldpc_decoder),
             k_bch,
             k_ldpc,
             n_ldpc,
@@ -221,21 +249,27 @@ impl DvbT2Concat {
         })
     }
 
-    /// Returns a reference to the LDPC encoder, initialising it if necessary.
-    ///
-    /// The first call preprocesses the RU encoding matrices (expensive for
-    /// DVB-T2 Normal frame codes).
-    fn ldpc_encoder(&mut self) -> &LdpcEncoder {
-        if self.ldpc_encoder.is_none() {
-            self.ldpc_encoder = Some(LdpcEncoder::new(self.ldpc_code.clone()));
-        }
-        self.ldpc_encoder.as_ref().unwrap()
-    }
-
     /// Size of the BBFRAME (BCH information block) in bits.
     ///
     /// This is the expected length of the `bbframe` argument passed to
     /// [`encode`](Self::encode).
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance.
+    ///
+    /// # Returns
+    ///
+    /// Number of BBFRAME bits (equals `k` of the BCH code for this
+    /// configuration).
+    ///
+    /// # Panics
+    ///
+    /// Never panics.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     ///
     /// # Examples
     ///
@@ -252,8 +286,25 @@ impl DvbT2Concat {
 
     /// LDPC input (= BCH codeword) length in bits.
     ///
-    /// Equals `k_bch + BCH_parity_bits` (192 or 160 depending on the
-    /// configuration).
+    /// Equals `k_bch + BCH_parity_bits` (192 for Normal frames, 160 for Short
+    /// frames).
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance.
+    ///
+    /// # Returns
+    ///
+    /// Number of LDPC input bits (equals `n` of the BCH code = `k` of the
+    /// LDPC code for this configuration).
+    ///
+    /// # Panics
+    ///
+    /// Never panics.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     ///
     /// # Examples
     ///
@@ -272,6 +323,23 @@ impl DvbT2Concat {
     ///
     /// 64800 for Normal frames, 16200 for Short frames.
     ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance.
+    ///
+    /// # Returns
+    ///
+    /// Number of FECFRAME bits (equals `n` of the LDPC code for this
+    /// configuration).
+    ///
+    /// # Panics
+    ///
+    /// Never panics.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    ///
     /// # Examples
     ///
     /// ```
@@ -289,12 +357,18 @@ impl DvbT2Concat {
     ///
     /// # Arguments
     ///
+    /// * `&mut self`     — The codec instance (mutable because the iteration
+    ///   limit is stored inside the struct).
     /// * `max_iterations` — Maximum BP iterations for each call to
-    ///   [`decode_soft`](Self::decode_soft).
+    ///   [`decode_soft`](Self::decode_soft). Must be ≥ 1.
     ///
     /// # Panics
     ///
     /// Panics if `max_iterations` is zero.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
     ///
     /// # Examples
     ///
@@ -315,16 +389,19 @@ impl DvbT2Concat {
     /// Applies BCH outer encoding followed by LDPC inner encoding, producing
     /// a FECFRAME ready for the bit interleaver and constellation mapper.
     ///
-    /// On the first call the LDPC RU encoding matrices are preprocessed;
-    /// subsequent calls use the cached result.
+    /// On the first call the LDPC RU encoding matrices are preprocessed and
+    /// cached in a [`OnceCell`]; subsequent calls use the cached result without
+    /// any synchronisation overhead.
     ///
     /// # Arguments
     ///
-    /// * `bbframe` — Information bits (`k_bch` bits).
+    /// * `&self`    — The codec instance (shared reference; interior mutability
+    ///   handles lazy encoder initialisation via [`OnceCell`]).
+    /// * `bbframe`  — Information bits; must be exactly `k_bch()` bits long.
     ///
     /// # Returns
     ///
-    /// FECFRAME codeword (`n_ldpc` bits = 64800 for Normal, 16200 for Short).
+    /// FECFRAME codeword (`n_ldpc` bits — 64800 for Normal, 16200 for Short).
     ///
     /// # Panics
     ///
@@ -343,12 +420,12 @@ impl DvbT2Concat {
     /// use gf2_coding::CodeRate;
     /// use gf2_core::BitVec;
     ///
-    /// let mut codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
     /// let bbframe = BitVec::zeros(codec.k_bch());
     /// let fecframe = codec.encode(&bbframe);
     /// assert_eq!(fecframe.len(), codec.n_ldpc());
     /// ```
-    pub fn encode(&mut self, bbframe: &BitVec) -> BitVec {
+    pub fn encode(&self, bbframe: &BitVec) -> BitVec {
         assert_eq!(
             bbframe.len(),
             self.k_bch,
@@ -362,8 +439,11 @@ impl DvbT2Concat {
         debug_assert_eq!(bch_codeword.len(), self.k_ldpc);
 
         // Step 2: LDPC inner encode — k_ldpc → n_ldpc bits.
-        // Initialises the encoder lazily on the first call.
-        let fecframe = self.ldpc_encoder().encode(&bch_codeword);
+        // Initialises the encoder lazily on the first call via OnceCell.
+        let encoder = self
+            .ldpc_encoder
+            .get_or_init(|| LdpcEncoder::new(self.ldpc_code.clone()));
+        let fecframe = encoder.encode(&bch_codeword);
         debug_assert_eq!(fecframe.len(), self.n_ldpc);
 
         fecframe
@@ -377,9 +457,13 @@ impl DvbT2Concat {
     /// in positions 0..k_ldpc-1). BCH hard-decision decoding then extracts and
     /// corrects the BBFRAME.
     ///
+    /// The LDPC decoder is wrapped in a [`Mutex`] so this method takes a shared
+    /// reference; the lock is held only for the duration of the BP iterations.
+    ///
     /// # Arguments
     ///
-    /// * `llrs` — Channel LLRs, one per FECFRAME bit (`n_ldpc` values).
+    /// * `&self` — The codec instance (shared reference).
+    /// * `llrs`  — Channel LLRs, one per FECFRAME bit (`n_ldpc` values).
     ///   Positive LLR → more likely 0; negative LLR → more likely 1.
     ///
     /// # Returns
@@ -405,13 +489,13 @@ impl DvbT2Concat {
     /// use gf2_coding::CodeRate;
     /// use gf2_core::BitVec;
     ///
-    /// let mut codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
     /// // Zero-noise LLRs for the all-zeros FECFRAME:
     /// let llrs: Vec<Llr> = vec![Llr::new(10.0); codec.n_ldpc()];
     /// let bbframe = codec.decode_soft(&llrs).unwrap();
     /// assert_eq!(bbframe.len(), codec.k_bch());
     /// ```
-    pub fn decode_soft(&mut self, llrs: &[Llr]) -> Result<BitVec, ConcatError> {
+    pub fn decode_soft(&self, llrs: &[Llr]) -> Result<BitVec, ConcatError> {
         assert_eq!(
             llrs.len(),
             self.n_ldpc,
@@ -423,8 +507,11 @@ impl DvbT2Concat {
         // Step 1: LDPC inner decode — produce the full n_ldpc-bit codeword.
         // `decode_to_codeword` runs BP and returns all n bits (not just the
         // k message bits), so we can extract the BCH codeword directly.
+        // Acquire the mutex for the duration of BP only.
         let ldpc_result = self
             .ldpc_decoder
+            .lock()
+            .expect("LDPC decoder mutex poisoned")
             .decode_to_codeword(llrs, self.max_ldpc_iterations);
 
         let full_codeword = ldpc_result.decoded_bits;
@@ -532,7 +619,7 @@ mod tests {
     #[test]
     #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_1_2() {
-        let mut codec =
+        let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).expect("construction failed");
 
         let mut bbframe_in = BitVec::with_capacity(codec.k_bch());
@@ -562,7 +649,7 @@ mod tests {
     #[test]
     #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_2_3() {
-        let mut codec =
+        let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate2_3).expect("construction failed");
 
         let mut bbframe_in = BitVec::with_capacity(codec.k_bch());
@@ -591,7 +678,7 @@ mod tests {
     #[test]
     #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_3_4() {
-        let mut codec =
+        let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate3_4).expect("construction failed");
 
         let mut bbframe_in = BitVec::with_capacity(codec.k_bch());
@@ -695,7 +782,7 @@ mod tests {
         );
 
         // VV001-CR35 = Normal frame, Rate 3/5.
-        let mut codec =
+        let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate3_5).expect("construction failed");
 
         let tp04_block = &tp04_blocks[0];
