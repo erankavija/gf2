@@ -2,7 +2,7 @@
   "epic_id": "2928ccce-700a-46ff-88c7-6998915f9fdf",
   "epic_short_id": "2928ccce",
   "epic_title": "DVB-T2 AWGN simulation campaign — Normal frame, rates 1/2 / 2/3 / 3/4",
-  "current_wave": 1,
+  "current_wave": 2,
   "wave_5_policy": "lead-delivers-calibration-only; user runs production sims and closes epic",
   "waves": [
     {
@@ -15,7 +15,7 @@
           "title": "Implement DVB-T2 bit interleaving (column-row)",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review"],
-          "status": "rework_r2_in_flight",
+          "status": "done",
           "rework_reason": "Worker hardcoded Rate3_5 as in-scope; epic's in-scope set is Rate3_4."
         },
         {
@@ -24,7 +24,7 @@
           "title": "DVB-T2 BCH+LDPC concatenation codec",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review"],
-          "status": "rework_r2_in_flight",
+          "status": "done",
           "rework_reason": "code-review FAIL: missing standard rustdoc sections on public getters + ConcatError; encode/decode_soft take &mut self instead of spec &self.",
           "merged_to_main_at_commit": "f778933e"
         },
@@ -34,7 +34,7 @@
           "title": "Resumable observable SimulationRunner",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "rework_r2_in_flight",
+          "status": "done",
           "rework_reason": "code-review FAIL: tracing crate absent; observability not wired into uncoded + parallel paths; weak tests; spans missing; RNG formula deviation.",
           "merged_to_main_at_commit": "20e89bdf"
         },
