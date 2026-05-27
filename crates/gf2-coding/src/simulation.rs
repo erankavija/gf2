@@ -1200,6 +1200,24 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         guard
     };
 
+    // sim-observability: validate checkpoint directory and compute config hash.
+    // Per-SNR-boundary checkpointing only; within-SNR heartbeat resume is not
+    // implemented for this path (uncoded simulations are typically fast enough
+    // that per-SNR granularity is sufficient, and StdRng does not support
+    // ChaCha20-style seek).
+    #[cfg(feature = "sim-observability")]
+    let config_hash = compute_config_hash(config);
+    #[cfg(feature = "sim-observability")]
+    if let Some(ref ckpt_dir) = config.checkpoint_dir {
+        if let Err(e) = validate_checkpoint_dir(ckpt_dir, &config_hash) {
+            panic!("{e}");
+        }
+    }
+
+    // sim-observability: clear any stale interrupt flag from a previous run.
+    #[cfg(feature = "sim-observability")]
+    clear_interrupt();
+
     /// Nominal batch length. See
     /// [`SimulationRunner::run_uncoded_ber_with_channel`] for the
     /// rationale behind the value and the alignment rounding.
@@ -1253,6 +1271,43 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
 
     let mut results = Vec::with_capacity(config.eb_n0_range_db.len());
     for (snr_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
+        // sim-observability: check for an existing completed checkpoint.
+        // Per-SNR-boundary granularity only; within-SNR heartbeat resume is
+        // not implemented for the uncoded path (see function-level rustdoc).
+        #[cfg(feature = "sim-observability")]
+        let ckpt_resume: Option<SnrCheckpoint> = config
+            .checkpoint_dir
+            .as_ref()
+            .and_then(|dir| load_checkpoint(&checkpoint_path(dir, snr_idx), &config_hash));
+
+        #[cfg(feature = "sim-observability")]
+        if let Some(ref ckpt) = ckpt_resume {
+            if ckpt.completed {
+                eprintln!(
+                    "[{:.1} dB] CHECKPOINT RESUMED: skipping completed uncoded point \
+                     ({} bit errors / {} bits)",
+                    eb_n0_db, ckpt.total_bit_errors, ckpt.total_bits
+                );
+                let ber = if ckpt.total_bits > 0 {
+                    ckpt.total_bit_errors as f64 / ckpt.total_bits as f64
+                } else {
+                    0.0
+                };
+                results.push(SimulationResult {
+                    eb_n0_db,
+                    ber,
+                    bler: 0.0,
+                    avg_iterations: None,
+                    avg_queries_per_bit: None,
+                    num_bits: ckpt.total_bits,
+                    num_bit_errors: ckpt.total_bit_errors,
+                    num_frames: 0,
+                    num_frame_errors: 0,
+                });
+                continue;
+            }
+        }
+
         // sim-observability: per-SNR span.
         #[cfg(feature = "sim-observability")]
         let _snr_guard = tracing::info_span!(
@@ -1333,6 +1388,34 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             mean_iters = Option::<f64>::None,
             elapsed_seconds = point_start.elapsed().as_secs_f64(),
         );
+
+        // sim-observability: write a completed checkpoint after each SNR point.
+        // Per-SNR-boundary granularity only; within-SNR heartbeat is not
+        // implemented for the uncoded path (uncoded simulations are fast enough
+        // that per-SNR granularity is sufficient; StdRng also lacks ChaCha20's
+        // `set_word_pos` seek, so byte-identical within-SNR resume is not
+        // available here).
+        #[cfg(feature = "sim-observability")]
+        if let Some(ref ckpt_dir) = config.checkpoint_dir {
+            let ckpt = SnrCheckpoint {
+                snr_index: snr_idx,
+                eb_n0_db,
+                frames_completed: 0, // uncoded: no frame concept
+                errors_accumulated: 0,
+                total_iterations: 0,
+                total_queries: 0,
+                total_bits,
+                total_bit_errors: total_errors,
+                rng_word_pos: 0, // no seek support on uncoded path
+                frames_target: config.max_frames,
+                errors_target: config.min_errors,
+                completed: true,
+                config_hash: config_hash.clone(),
+            };
+            if let Err(e) = write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_idx), &ckpt) {
+                eprintln!("[sim-observability] Failed to write uncoded checkpoint: {e}");
+            }
+        }
 
         results.push(SimulationResult {
             eb_n0_db,
@@ -3284,13 +3367,30 @@ impl SimulationRunner {
         #[cfg(feature = "sim-observability")]
         let _tracing_guard = setup_tracing_guard(config);
 
+        // sim-observability: compute config hash and validate checkpoint directory.
+        // Per-SNR-boundary checkpointing only; within-SNR heartbeat resume is
+        // architecturally unavailable with rayon-parallel SNR-point dispatch
+        // (workers run concurrently and checkpoints are only written after each
+        // worker returns its completed result to the main thread).
+        #[cfg(feature = "sim-observability")]
+        let config_hash = compute_config_hash(config);
+        #[cfg(feature = "sim-observability")]
+        if let Some(ref ckpt_dir) = config.checkpoint_dir {
+            if let Err(e) = validate_checkpoint_dir(ckpt_dir, &config_hash) {
+                panic!("{e}");
+            }
+        }
+
+        // sim-observability: clear any stale interrupt flag.
+        #[cfg(feature = "sim-observability")]
+        clear_interrupt();
+
         // sim-observability: open campaign span and emit campaign_start event.
         // The Dispatch is cloned so each rayon worker can re-enter it on their
         // own thread via `tracing::dispatcher::with_default`.
         #[cfg(feature = "sim-observability")]
         let _campaign_guard = {
             use std::time::SystemTime;
-            let config_hash = compute_config_hash(config);
             let run_uuid = {
                 let t = SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
@@ -3344,6 +3444,84 @@ impl SimulationRunner {
         let progress_path = config.output_path.as_ref().map(|p| progress_path_for(p));
         let worker_progress_path = progress_path.clone();
 
+        // sim-observability: pre-load any completed checkpoint results and build
+        // a filtered list of SNR indices still needing computation.
+        // `checkpoint_results` maps snr_idx -> SimulationResult for already-done points.
+        #[cfg(feature = "sim-observability")]
+        let checkpoint_results: Vec<Option<SimulationResult>> = {
+            (0..total_points)
+                .map(|idx| {
+                    let ckpt_opt = config
+                        .checkpoint_dir
+                        .as_ref()
+                        .and_then(|dir| load_checkpoint(&checkpoint_path(dir, idx), &config_hash));
+                    if let Some(ckpt) = ckpt_opt {
+                        if ckpt.completed {
+                            let ber = if ckpt.total_bits > 0 {
+                                ckpt.total_bit_errors as f64 / ckpt.total_bits as f64
+                            } else {
+                                0.0
+                            };
+                            let bler = if ckpt.frames_completed > 0 {
+                                ckpt.errors_accumulated as f64 / ckpt.frames_completed as f64
+                            } else {
+                                0.0
+                            };
+                            let avg_iterations = if ckpt.frames_completed > 0 {
+                                Some(ckpt.total_iterations as f64 / ckpt.frames_completed as f64)
+                            } else {
+                                None
+                            };
+                            eprintln!(
+                                "[{:.1} dB] CHECKPOINT RESUMED: skipping completed parallel point \
+                                 ({} frame errors / {} frames)",
+                                ckpt.eb_n0_db, ckpt.errors_accumulated, ckpt.frames_completed
+                            );
+                            Some(SimulationResult {
+                                eb_n0_db: ckpt.eb_n0_db,
+                                ber,
+                                bler,
+                                avg_iterations,
+                                avg_queries_per_bit: None,
+                                num_bits: ckpt.total_bits,
+                                num_bit_errors: ckpt.total_bit_errors,
+                                num_frames: ckpt.frames_completed,
+                                num_frame_errors: ckpt.errors_accumulated,
+                            })
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
+
+        // Build the list of (original_idx, eb_n0_db) pairs that still need work.
+        // When sim-observability is disabled, all points need work.
+        let pending_points: Vec<(usize, f64)> = {
+            #[cfg(feature = "sim-observability")]
+            {
+                config
+                    .eb_n0_range_db
+                    .iter()
+                    .enumerate()
+                    .filter(|&(idx, _)| checkpoint_results[idx].is_none())
+                    .map(|(idx, &db)| (idx, db))
+                    .collect()
+            }
+            #[cfg(not(feature = "sim-observability"))]
+            {
+                config
+                    .eb_n0_range_db
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, &db)| (idx, db))
+                    .collect()
+            }
+        };
+
         let collector = Arc::new(Mutex::new(ParallelResultCollector::new(
             total_points,
             csv_output,
@@ -3353,9 +3531,23 @@ impl SimulationRunner {
             config.max_frames,
         )));
 
+        // sim-observability: pre-populate the collector with checkpoint results
+        // so the final aggregation includes all SNR points.
+        #[cfg(feature = "sim-observability")]
+        {
+            let mut coll = collector
+                .lock()
+                .expect("ParallelResultCollector lock poisoned");
+            for (idx, opt) in checkpoint_results.iter().enumerate() {
+                if let Some(ref result) = opt {
+                    coll.record_completed_point(idx, result.clone(), std::time::Duration::ZERO);
+                }
+            }
+        }
+
         // Worker closure: simulates one SNR point, then locks the collector
         // briefly to record the result with immediate CSV/JSONL writes.
-        let simulate_and_record = |(idx, &eb_n0_db): (usize, &f64)| {
+        let simulate_and_record = |(idx, eb_n0_db): (usize, f64)| {
             // sim-observability: install the campaign subscriber on this rayon
             // worker thread for the duration of the closure.  `set_default`
             // is thread-local; the guard restores the previous dispatch on drop.
@@ -3420,6 +3612,38 @@ impl SimulationRunner {
                 elapsed_seconds = point_elapsed.as_secs_f64(),
             );
 
+            // sim-observability: write a completed checkpoint after this SNR point.
+            // Within-SNR heartbeat is not implemented for the parallel path —
+            // workers run concurrently and can only checkpoint at completion
+            // boundaries (see function-level rustdoc).
+            #[cfg(feature = "sim-observability")]
+            if let Some(ref ckpt_dir) = config.checkpoint_dir {
+                let ckpt = SnrCheckpoint {
+                    snr_index: idx,
+                    eb_n0_db,
+                    frames_completed: result.num_frames,
+                    errors_accumulated: result.num_frame_errors,
+                    total_iterations: result
+                        .avg_iterations
+                        .map(|a| (a * result.num_frames as f64).round() as usize)
+                        .unwrap_or(0),
+                    total_queries: result
+                        .avg_queries_per_bit
+                        .map(|q| (q * result.num_bits as f64).round() as usize)
+                        .unwrap_or(0),
+                    total_bits: result.num_bits,
+                    total_bit_errors: result.num_bit_errors,
+                    rng_word_pos: 0, // no seek support on parallel path
+                    frames_target: config.max_frames,
+                    errors_target: config.min_errors,
+                    completed: true,
+                    config_hash: config_hash.clone(),
+                };
+                if let Err(e) = write_checkpoint_atomic(&checkpoint_path(ckpt_dir, idx), &ckpt) {
+                    eprintln!("[sim-observability] Failed to write parallel checkpoint: {e}");
+                }
+            }
+
             // Lock the collector only for the brief I/O + bookkeeping window.
             let mut coll = collector
                 .lock()
@@ -3430,19 +3654,11 @@ impl SimulationRunner {
         #[cfg(feature = "parallel")]
         {
             use rayon::prelude::*;
-            config
-                .eb_n0_range_db
-                .par_iter()
-                .enumerate()
-                .for_each(simulate_and_record);
+            pending_points.into_par_iter().for_each(simulate_and_record);
         }
         #[cfg(not(feature = "parallel"))]
         {
-            config
-                .eb_n0_range_db
-                .iter()
-                .enumerate()
-                .for_each(simulate_and_record);
+            pending_points.into_iter().for_each(simulate_and_record);
         }
 
         let points = Arc::try_unwrap(collector)
@@ -5495,6 +5711,300 @@ mod tests {
                 out1, out2,
                 "ChaCha20 seek must restore the exact stream position"
             );
+        }
+
+        /// SC-INT-9: `run_uncoded_ber_with_channel` emits tracing events in the
+        /// expected shape.
+        ///
+        /// Configures a short 2-SNR campaign with a `tracing_log_path`, runs the
+        /// uncoded path, and asserts:
+        /// - Every non-empty line parses as a JSON object.
+        /// - Exactly one `campaign_start` event with `config_hash`, `run_uuid`, `seed`.
+        /// - Exactly two `snr_completed` events (one per SNR point) each carrying
+        ///   `eb_n0_db`, `ber`, `fer`, and `elapsed_seconds`.
+        #[test]
+        fn test_uncoded_tracing_events() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let tlog = tmpdir.path().join("uncoded_trace.jsonl");
+
+            let channel = BpskAwgnChannel;
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 8.0];
+            config.min_errors = 3;
+            config.max_frames = 30;
+            config.rng_seed = Some(77);
+            config.tracing_log_path = Some(tlog.clone());
+
+            let mut rng = rand::rngs::StdRng::seed_from_u64(77);
+            let _ = SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng);
+
+            let content = std::fs::read_to_string(&tlog).unwrap();
+
+            let objects: Vec<serde_json::Value> = content
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .enumerate()
+                .map(|(i, line)| {
+                    serde_json::from_str::<serde_json::Value>(line).unwrap_or_else(|e| {
+                        panic!("uncoded trace line {i} is not valid JSON: {e}\nline: {line}")
+                    })
+                })
+                .collect();
+
+            let campaign_starts: Vec<_> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "campaign_start")
+                .collect();
+            let snr_completeds: Vec<_> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "snr_completed")
+                .collect();
+
+            assert_eq!(
+                campaign_starts.len(),
+                1,
+                "uncoded path must emit exactly 1 campaign_start"
+            );
+            assert_eq!(
+                snr_completeds.len(),
+                2,
+                "uncoded path must emit exactly 2 snr_completed events"
+            );
+
+            // campaign_start: required fields.
+            let cs = campaign_starts[0]["fields"].as_object().unwrap();
+            assert!(
+                cs.contains_key("config_hash"),
+                "campaign_start missing config_hash"
+            );
+            assert!(
+                cs.contains_key("run_uuid"),
+                "campaign_start missing run_uuid"
+            );
+            assert!(cs.contains_key("seed"), "campaign_start missing seed");
+
+            // snr_completed: required fields.
+            for (i, sc) in snr_completeds.iter().enumerate() {
+                let f = sc["fields"]
+                    .as_object()
+                    .unwrap_or_else(|| panic!("snr_completed[{i}] has no 'fields' object"));
+                for key in &["eb_n0_db", "ber", "fer", "elapsed_seconds"] {
+                    assert!(
+                        f.contains_key(*key),
+                        "snr_completed[{i}] missing fields.{key}"
+                    );
+                }
+            }
+        }
+
+        /// SC-INT-10: `run_uncoded_ber_with_channel` checkpoint skip — second run
+        /// loads from checkpoint and skips recomputation.
+        ///
+        /// Runs the uncoded path twice with the same config and checkpoint dir.
+        /// After the first run, asserts checkpoint files exist and are marked
+        /// `completed: true`.  The second run must produce results with the same
+        /// values (loaded from checkpoint, not recomputed).
+        #[test]
+        fn test_uncoded_checkpoint_skip() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("uncoded_ckpts");
+
+            let channel = BpskAwgnChannel;
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 8.0];
+            config.min_errors = 3;
+            config.max_frames = 30;
+            config.rng_seed = Some(88);
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+
+            // First run: computes and writes checkpoints.
+            let mut rng1 = rand::rngs::StdRng::seed_from_u64(88);
+            let results1 =
+                SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng1);
+            assert_eq!(results1.len(), 2);
+
+            // Checkpoint files must exist.
+            for i in 0..2_usize {
+                let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
+                assert!(ckpt_file.exists(), "Uncoded checkpoint {i} must exist");
+                let content = std::fs::read_to_string(&ckpt_file).unwrap();
+                assert!(
+                    content.contains("\"completed\": true"),
+                    "Uncoded checkpoint {i} must be marked completed"
+                );
+            }
+
+            // Second run: loads from checkpoints; results must match.
+            let mut rng2 = rand::rngs::StdRng::seed_from_u64(99); // different seed irrelevant
+            let results2 =
+                SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng2);
+            assert_eq!(results2.len(), 2);
+
+            for i in 0..2 {
+                assert_eq!(
+                    results1[i].num_bits, results2[i].num_bits,
+                    "Uncoded checkpoint resume: num_bits must match at SNR point {i}"
+                );
+                assert_eq!(
+                    results1[i].num_bit_errors, results2[i].num_bit_errors,
+                    "Uncoded checkpoint resume: num_bit_errors must match at SNR point {i}"
+                );
+            }
+        }
+
+        /// SC-INT-11: `run_coded_iterative_parallel` emits tracing events in the
+        /// expected shape.
+        ///
+        /// Configures a short 2-SNR parallel campaign with `tracing_log_path`,
+        /// runs it, and asserts:
+        /// - Every non-empty line parses as a JSON object.
+        /// - Exactly one `campaign_start` event with `config_hash`, `run_uuid`, `seed`.
+        /// - Exactly two `snr_completed` events (one per SNR) with `eb_n0_db`,
+        ///   `fer`, `ber`, and `elapsed_seconds`.
+        #[test]
+        fn test_parallel_tracing_events() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let tlog = tmpdir.path().join("parallel_trace.jsonl");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 8.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(42);
+            config.tracing_log_path = Some(tlog.clone());
+
+            let _ = SimulationRunner::run_coded_iterative_parallel(
+                &encoder,
+                || MockIterativeDecoder { last_iterations: 0 },
+                &channel,
+                &config,
+            );
+
+            let content = std::fs::read_to_string(&tlog).unwrap();
+
+            let objects: Vec<serde_json::Value> = content
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .enumerate()
+                .map(|(i, line)| {
+                    serde_json::from_str::<serde_json::Value>(line).unwrap_or_else(|e| {
+                        panic!("parallel trace line {i} is not valid JSON: {e}\nline: {line}")
+                    })
+                })
+                .collect();
+
+            let campaign_starts: Vec<_> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "campaign_start")
+                .collect();
+            let snr_completeds: Vec<_> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "snr_completed")
+                .collect();
+
+            assert_eq!(
+                campaign_starts.len(),
+                1,
+                "parallel path must emit exactly 1 campaign_start"
+            );
+            assert_eq!(
+                snr_completeds.len(),
+                2,
+                "parallel path must emit exactly 2 snr_completed events"
+            );
+
+            // campaign_start: required fields.
+            let cs = campaign_starts[0]["fields"].as_object().unwrap();
+            assert!(
+                cs.contains_key("config_hash"),
+                "campaign_start missing config_hash"
+            );
+            assert!(
+                cs.contains_key("run_uuid"),
+                "campaign_start missing run_uuid"
+            );
+            assert!(cs.contains_key("seed"), "campaign_start missing seed");
+
+            // snr_completed: required fields.
+            for (i, sc) in snr_completeds.iter().enumerate() {
+                let f = sc["fields"]
+                    .as_object()
+                    .unwrap_or_else(|| panic!("snr_completed[{i}] has no 'fields' object"));
+                for key in &["eb_n0_db", "fer", "ber", "elapsed_seconds"] {
+                    assert!(
+                        f.contains_key(*key),
+                        "snr_completed[{i}] missing fields.{key}"
+                    );
+                }
+            }
+        }
+
+        /// SC-INT-12: `run_coded_iterative_parallel` checkpoint skip — second run
+        /// loads from checkpoint and skips recomputation.
+        ///
+        /// Runs the parallel path twice with the same config and checkpoint dir.
+        /// After the first run, asserts checkpoint files exist and are marked
+        /// `completed: true`.  The second run must produce results with the same
+        /// frame counts and error counts (loaded from checkpoint).
+        #[test]
+        fn test_parallel_checkpoint_skip() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("parallel_ckpts");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0, 8.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(42);
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+
+            // First run: computes and writes checkpoints.
+            let results1 = SimulationRunner::run_coded_iterative_parallel(
+                &encoder,
+                || MockIterativeDecoder { last_iterations: 0 },
+                &channel,
+                &config,
+            );
+            assert_eq!(results1.points.len(), 2);
+
+            // Checkpoint files must exist.
+            for i in 0..2_usize {
+                let ckpt_file = ckpt_dir.join(format!("snr_{:04}.json", i));
+                assert!(ckpt_file.exists(), "Parallel checkpoint {i} must exist");
+                let content = std::fs::read_to_string(&ckpt_file).unwrap();
+                assert!(
+                    content.contains("\"completed\": true"),
+                    "Parallel checkpoint {i} must be marked completed"
+                );
+            }
+
+            // Second run: loads from checkpoints; results must match.
+            let results2 = SimulationRunner::run_coded_iterative_parallel(
+                &encoder,
+                || MockIterativeDecoder { last_iterations: 0 },
+                &channel,
+                &config,
+            );
+            assert_eq!(results2.points.len(), 2);
+
+            for i in 0..2 {
+                assert_eq!(
+                    results1.points[i].num_frames, results2.points[i].num_frames,
+                    "Parallel checkpoint resume: num_frames must match at SNR point {i}"
+                );
+                assert_eq!(
+                    results1.points[i].num_frame_errors, results2.points[i].num_frame_errors,
+                    "Parallel checkpoint resume: num_frame_errors must match at SNR point {i}"
+                );
+            }
         }
     } // mod observability_tests
 }
