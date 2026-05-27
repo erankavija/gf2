@@ -5486,3 +5486,10 @@
 {"type":"gate_failed","id":"85291f2b-13bc-40ca-b4cb-831413700c56","issue_id":"fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e","timestamp":"2026-05-27T15:11:28.920868103Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"58497119-0a16-4d30-95d4-c3f946f888c5","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T15:13:15.542081327Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"0e3ce412-534b-440f-8e48-15bfeed2f75b","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T15:18:27.885715499Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"9d31787e-43dc-4d2d-b2cf-0dcbc5db56ea","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:07:29.530127410Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"b24354b3-6944-4dd4-aa73-2c86dac0b966","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:12:41.337660709Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"5c6761cc-aacf-4d63-8b38-70dda84057fd","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:18:32.241101133Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"0d428ddc-a8dc-469d-b910-45344c44a863","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:24:28.986481189Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"c192b96b-7378-4cfe-80a6-b52867caaba2","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:24:36.446591603Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"d7f87144-8a9e-40a5-87f5-c0312c5c8b9b","issue_id":"87a2402f-f076-4775-a265-294271b29944","timestamp":"2026-05-27T16:24:36.446622173Z"}
+{"type":"issue_state_changed","id":"9d76be8a-3830-4262-b68b-2f8142755b56","issue_id":"003e4088-d24d-4b58-961f-d82df215ff7c","timestamp":"2026-05-27T16:24:36.470998740Z","from":"backlog","to":"ready"}
