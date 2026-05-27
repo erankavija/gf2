@@ -17,6 +17,7 @@ pub mod clmul_scalar;
 pub mod fp65537;
 pub mod fp_generic;
 pub mod fp_medium;
+pub mod fp_medium_f64;
 pub mod fp_medium_ple;
 pub mod fp_small;
 pub mod fp_small_f32;

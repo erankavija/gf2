@@ -160,6 +160,79 @@ proptest! {
     }
 }
 
+/// Compare production `gemm()` output against the scalar naive oracle for a
+/// non-square shape (m × k) · (k × n). This is needed for the issue-0749dbad
+/// f64-cascade boundary sweep below: we want to exercise the f64 path (gated
+/// on `n ≥ 512`) while keeping `m` and `k` small enough that the proptest
+/// budget stays under the 5 s nextest limit.
+fn check_dispatch_vs_scalar_rect<const Q: u64>(
+    m: usize,
+    k: usize,
+    n: usize,
+    seed_a: u64,
+    seed_b: u64,
+) {
+    let a_mat = fp_matrix_from_seed::<Q>(m, k, seed_a);
+    let b_mat = fp_matrix_from_seed::<Q>(k, n, seed_b);
+
+    let _guard = DISPATCH_MUTEX.lock().unwrap();
+    let c_prod = gemm(&a_mat, &b_mat);
+
+    let c_scalar = naive_gemm_gf::<Q>(&a_mat, &b_mat, m, k, n);
+
+    assert_eq!(c_prod.rows(), m);
+    assert_eq!(c_prod.cols(), n);
+
+    for i in 0..m {
+        for j in 0..n {
+            assert_eq!(
+                c_prod.get(i, j).value(),
+                c_scalar[i * n + j].value(),
+                "dispatch vs scalar mismatch at ({i},{j}) m={m} k={k} n={n} \
+                 seed_a={seed_a} seed_b={seed_b} prime={Q}"
+            );
+        }
+    }
+}
+
+proptest! {
+    // Heavy n=512+ kernel calls — keep proptest budget very small so we stay
+    // inside the 5 s nextest limit.
+    #![proptest_config(ProptestConfig::with_cases(2))]
+
+    /// Issue 0749dbad SC#3: medium-prime f64-cascade dispatch at boundary
+    /// lengths within the `n >= 512` f64-cascade window.
+    ///
+    /// The 0749dbad f64 cascade is gated on `n >= 512` (see
+    /// `select_f64_path` in `crates/gf2-core/src/gfp/simd_ops.rs`). The
+    /// existing `proptest_phase2_medium_prime_sweep_boundary_n` block
+    /// (n ∈ {0..65}) exercises the u16 panel kernel only; this block
+    /// covers the f64 dispatch by sweeping `n` at boundary offsets *above
+    /// the f64 threshold*. We keep `m` and `k` boundary-sized (so the
+    /// total work stays bounded) and let `n` slide across the dispatch
+    /// boundary so both paths see the boundary panel arithmetic.
+    ///
+    /// Cell shapes: `m ∈ {1, 4, 17}`, `k ∈ {1, 17, 65}`,
+    /// `n ∈ {512, 513, 527, 1024, 1025}`. The k=1 case sets the inner-
+    /// loop trip count to one (single FMA per cell — the most sensitive
+    /// configuration for the Barrett reduction's quotient-rounding
+    /// correctness).
+    #[test]
+    fn proptest_0749dbad_medium_f64_cascade_boundary(
+        m in prop_oneof![Just(1usize), Just(4), Just(17)],
+        k in prop_oneof![Just(1usize), Just(17), Just(65)],
+        n in prop_oneof![
+            Just(512usize), Just(513), Just(527), Just(1024), Just(1025)
+        ],
+        seed_a in 1u64..=200,
+        seed_b in 201u64..=400,
+    ) {
+        check_dispatch_vs_scalar_rect::<257>(m, k, n, seed_a, seed_b);
+        check_dispatch_vs_scalar_rect::<32749>(m, k, n, seed_a, seed_b);
+        check_dispatch_vs_scalar_rect::<65521>(m, k, n, seed_a, seed_b);
+    }
+}
+
 proptest! {
     /// Phase 2 SC#3: medium-prime sweep (GF(257), GF(32749), GF(65521)) at
     /// boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.
