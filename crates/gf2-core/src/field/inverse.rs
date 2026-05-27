@@ -2248,14 +2248,13 @@ mod tests {
     }
 
     /// `solve_batch` returns `None` for rank-deficient GF(65521) n=64 (row 56 guard).
+    ///
+    /// Construct an exact rank-32 matrix via the canonical
+    /// `random_fp_rank_deficient` helper (matching the regime used by the bench
+    /// harness for "deficient" inputs — see `crates/gf2-core/benches/...`).
     #[test]
     fn test_solve_batch_fp65521_n64_rank_deficient_returns_none() {
-        // Construct a rank-32 matrix by duplicating the first 32 rows into the second 32.
-        let mut a = random_fp::<65521>(64, 64, 0xDEAD_9138_D86C_0003);
-        for j in 0..64 {
-            let v = a.get(0, j);
-            a.set(32, j, v);
-        }
+        let a = random_fp_rank_deficient::<65521>(64, 64, 32, 0xDEAD_9138_D86C_0003);
         let b = random_fp::<65521>(64, 1, 0xBEEF_9138_D86C_0003);
         assert!(
             a.solve_batch(&b).is_none(),
