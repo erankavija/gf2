@@ -276,17 +276,34 @@ fn write_checkpoint_atomic(path: &Path, ckpt: &SnrCheckpoint) -> std::io::Result
 
 /// Loads and validates an existing checkpoint from disk.
 ///
-/// Returns `None` if the file does not exist, cannot be parsed, or the
-/// config hash does not match `expected_hash`.
+/// Returns `None` if the file does not exist or cannot be parsed.
+///
+/// # Panics
+///
+/// Panics if the file exists and parses successfully but the stored
+/// `config_hash` does not match `expected_hash`. This is a deliberate
+/// abort: a per-file hash mismatch means the checkpoint directory contains
+/// stale data from a different campaign config, and silently skipping it
+/// would cause the runner to overwrite valid results.  The user must either
+/// delete the stale checkpoint or point `checkpoint_dir` at a fresh
+/// directory.
 #[cfg(feature = "sim-observability")]
 fn load_checkpoint(path: &Path, expected_hash: &str) -> Option<SnrCheckpoint> {
     let s = std::fs::read_to_string(path).ok()?;
     let ckpt = SnrCheckpoint::from_json(&s)?;
     if ckpt.config_hash != expected_hash {
-        None // hash mismatch — treat as absent
-    } else {
-        Some(ckpt)
+        panic!(
+            "Per-checkpoint config hash mismatch at {}.\n  \
+             stored:   {}\n  \
+             expected: {}\n  \
+             The checkpoint was written by a different campaign config. \
+             Delete the checkpoint directory or use a matching config.",
+            path.display(),
+            ckpt.config_hash,
+            expected_hash,
+        );
     }
+    Some(ckpt)
 }
 
 /// Validates the checkpoint directory on startup.
@@ -1417,6 +1434,25 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
             }
         }
 
+        // sim-observability: check for SIGINT / SIGTERM after each SNR
+        // boundary checkpoint is safely on disk.  Per the path-scoping note:
+        // the uncoded path exits on the next-SNR boundary when interrupted.
+        #[cfg(feature = "sim-observability")]
+        if is_interrupted() {
+            tracing::info!(
+                name: "campaign_interrupted",
+                event_type = "campaign_interrupted",
+                last_snr_index = snr_idx,
+                last_eb_n0_db = eb_n0_db,
+            );
+            eprintln!(
+                "Interrupted after uncoded SNR point {} ({:.1} dB). \
+                 Resume by re-running with the same config.",
+                snr_idx, eb_n0_db
+            );
+            std::process::exit(1);
+        }
+
         results.push(SimulationResult {
             eb_n0_db,
             ber,
@@ -1516,8 +1552,21 @@ impl SimulationRunner {
     /// * `channel` - Any [`ChannelModel`] implementation. `rate = 1.0` is
     ///   passed for every call because this is an uncoded sweep.
     /// * `config` - Simulation configuration. `eb_n0_range_db`, `min_errors`,
-    ///   and `max_frames` are consumed; the decoder-iteration and output
-    ///   fields are ignored (this is an uncoded runner).
+    ///   and `max_frames` are consumed. `decoder_iterations` is ignored (this
+    ///   is an uncoded runner).
+    ///
+    ///   With the `sim-observability` feature (default on):
+    ///   - `checkpoint_dir` IS honored: per-SNR-boundary checkpoints are
+    ///     written after each SNR point completes; completed points are
+    ///     skipped on resume.
+    ///   - `tracing_log_path` IS honored: campaign and per-SNR spans plus
+    ///     completion events are emitted as JSON lines.
+    ///   - `heartbeat_every_frames` is NOT honored for this path (per the
+    ///     path-scoping note in [`SimulationRunner`]): the uncoded path
+    ///     batches bits rather than framing them, so within-SNR resume
+    ///     granularity is unavailable. A SIGINT or SIGTERM while an SNR
+    ///     point is in flight will flush the completed checkpoint only on the
+    ///     next SNR boundary; the in-flight SNR point is re-run on resume.
     /// * `rng` - Random source used for both bit generation and channel
     ///   noise. A single RNG feeds both so deterministic seeding is
     ///   honoured end-to-end.
@@ -3310,6 +3359,23 @@ impl SimulationRunner {
     ///   Must be `Send + Sync` for parallel access.
     /// * `config` - Simulation configuration controlling sweep parameters.
     ///
+    ///   With the `sim-observability` feature (default on):
+    ///   - `checkpoint_dir` IS honored: per-SNR-boundary checkpoints are written
+    ///     after each worker finishes its SNR point; completed points are skipped
+    ///     in subsequent runs.
+    ///   - `tracing_log_path` IS honored: campaign and per-SNR spans plus
+    ///     completion events are emitted as JSON lines (worker threads inherit the
+    ///     main-thread subscriber via `tracing::dispatcher::set_default`).
+    ///   - `heartbeat_every_frames` is NOT honored for this path (per the
+    ///     path-scoping note in [`SimulationRunner`]): rayon workers use per-worker
+    ///     [`rand::rngs::StdRng`] which has no `set_word_pos` seek, so
+    ///     within-SNR resume is architecturally unavailable. Users needing mid-SNR
+    ///     recovery should use [`SimulationRunner::run_coded_iterative`] instead.
+    ///   - A SIGINT or SIGTERM is handled at the per-SNR boundary: any worker
+    ///     that has not yet started its SNR point skips it; after the rayon
+    ///     `for_each` completes the runner checks the interrupt flag and exits
+    ///     non-zero if it was set.
+    ///
     /// # Returns
     ///
     /// Aggregated [`SimulationResults`] with one entry per SNR point, ordered
@@ -3548,6 +3614,17 @@ impl SimulationRunner {
         // Worker closure: simulates one SNR point, then locks the collector
         // briefly to record the result with immediate CSV/JSONL writes.
         let simulate_and_record = |(idx, eb_n0_db): (usize, f64)| {
+            // sim-observability: check for SIGINT / SIGTERM at the SNR boundary
+            // before starting work.  The parallel path exits on the next-SNR
+            // boundary per the path-scoping note: within-SNR interrupts are only
+            // fully handled by the sequential coded path.  Workers that have not
+            // yet started simply skip their point; the outer loop checks the flag
+            // again after all workers return and exits non-zero if it was set.
+            #[cfg(feature = "sim-observability")]
+            if is_interrupted() {
+                return;
+            }
+
             // sim-observability: install the campaign subscriber on this rayon
             // worker thread for the duration of the closure.  `set_default`
             // is thread-local; the guard restores the previous dispatch on drop.
@@ -3659,6 +3736,19 @@ impl SimulationRunner {
         #[cfg(not(feature = "parallel"))]
         {
             pending_points.into_iter().for_each(simulate_and_record);
+        }
+
+        // sim-observability: after all workers return, check whether the
+        // interrupt flag was set.  Any completed SNR points have already
+        // been checkpointed by their workers; the outer-loop check here is
+        // the per-SNR-boundary exit point for the parallel path.
+        #[cfg(feature = "sim-observability")]
+        if is_interrupted() {
+            eprintln!(
+                "Interrupted during parallel sweep — exiting. \
+                 Resume by re-running with the same config."
+            );
+            std::process::exit(1);
         }
 
         let points = Arc::try_unwrap(collector)
@@ -5312,6 +5402,53 @@ mod tests {
             // Second run with different config: must panic with mismatch message.
             let decoder2 = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config2);
+        }
+
+        /// SC-INT-2b: Per-file checkpoint config-hash mismatch aborts with a
+        /// clear panic message rather than silently re-running the point.
+        ///
+        /// Writes a checkpoint with the correct config hash, then overwrites
+        /// its `config_hash` field with a stale value and re-runs.  The runner
+        /// must panic naming the tampered file rather than treating the
+        /// checkpoint as absent and overwriting it.
+        #[test]
+        #[should_panic(expected = "Per-checkpoint config hash mismatch")]
+        fn test_per_file_hash_mismatch_aborts() {
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ckpt_dir = tmpdir.path().join("ckpts");
+
+            let encoder = MockEncoder;
+            let channel = DeterministicChannel {
+                flip_positions: vec![0, 1],
+            };
+            let mut config = SimulationConfig::quick_test();
+            config.eb_n0_range_db = vec![4.0];
+            config.min_errors = 3;
+            config.max_frames = 20;
+            config.rng_seed = Some(42);
+            config.checkpoint_dir = Some(ckpt_dir.clone());
+
+            // First run: writes snr_0000.json with the correct config hash.
+            let decoder = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
+
+            // Verify the checkpoint was written.
+            let ckpt_file = ckpt_dir.join("snr_0000.json");
+            assert!(
+                ckpt_file.exists(),
+                "checkpoint must be written after first run"
+            );
+
+            // Tamper the per-file config_hash field so it no longer matches.
+            let content = std::fs::read_to_string(&ckpt_file).unwrap();
+            let tampered = content.replace("blake3:", "blake3:aaaa_tampered_");
+            // Ensure the replacement actually changed something.
+            assert_ne!(content, tampered, "tampering must change the file content");
+            std::fs::write(&ckpt_file, tampered).unwrap();
+
+            // Second run with the same config: must panic on per-file hash mismatch.
+            let decoder2 = MockSoftDecoder;
+            let _ = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
         }
 
         /// SC-INT-3: Heartbeat events are emitted at the configured cadence.
