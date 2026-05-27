@@ -15,7 +15,8 @@
           "title": "Implement DVB-T2 bit interleaving (column-row)",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review"],
-          "status": "pending"
+          "status": "rework_r2_in_flight",
+          "rework_reason": "Worker hardcoded Rate3_5 as in-scope; epic's in-scope set is Rate3_4."
         },
         {
           "id": "a18956a4-915b-47c0-873c-73c48eb5acfe",
@@ -23,7 +24,9 @@
           "title": "DVB-T2 BCH+LDPC concatenation codec",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review"],
-          "status": "pending"
+          "status": "rework_r2_in_flight",
+          "rework_reason": "code-review FAIL: missing standard rustdoc sections on public getters + ConcatError; encode/decode_soft take &mut self instead of spec &self.",
+          "merged_to_main_at_commit": "f778933e"
         },
         {
           "id": "fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e",
@@ -31,7 +34,9 @@
           "title": "Resumable observable SimulationRunner",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "pending"
+          "status": "rework_r2_in_flight",
+          "rework_reason": "code-review FAIL: tracing crate absent; observability not wired into uncoded + parallel paths; weak tests; spans missing; RNG formula deviation.",
+          "merged_to_main_at_commit": "20e89bdf"
         },
         {
           "id": "cef2e631-0109-4889-b560-2191ea1a1d20",
@@ -39,7 +44,8 @@
           "title": "Populate remaining 11 DVB-T2 LDPC table data files",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review"],
-          "status": "pending"
+          "status": "done",
+          "closed_at_commit": "22add158"
         }
       ]
     },
@@ -109,6 +115,10 @@
       "at": "2026-05-27"
     }
   ],
-  "rework_counts": {},
+  "rework_counts": {
+    "87a2402f": 1,
+    "a18956a4": 1,
+    "fd73e8a8": 1
+  },
   "started_at": "2026-05-27T15:30:00Z"
 }
