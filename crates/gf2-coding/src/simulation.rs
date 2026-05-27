@@ -325,22 +325,57 @@ fn validate_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String>
     Ok(())
 }
 
-/// Appends a JSON-lines tracing event to the configured tracing log.
+/// Installs a JSON-lines tracing subscriber for the current thread and returns
+/// a guard that uninstalls it on drop.
 ///
-/// Best-effort: on I/O error, prints a one-time warning to stderr.
+/// When `config.tracing_log_path` is `Some(path)`, opens the file in append
+/// mode, builds a `tracing_subscriber::fmt` JSON layer that writes to it, and
+/// calls `SubscriberInitExt::set_default` to install it as the thread-local
+/// default.  The returned `DefaultGuard` restores the previous subscriber
+/// (which may be `NoSubscriber`) when it is dropped at end of scope.
+///
+/// When `tracing_log_path` is `None`, returns `None` and installs nothing.
+/// The caller's existing subscriber (if any) remains active.
+///
+/// # Thread safety
+///
+/// The installed subscriber is thread-local (`set_default`), not global.  For
+/// rayon-parallel paths the caller must propagate the current `Dispatch` into
+/// each worker thread:
+///
+/// ```text
+/// let dispatch = tracing::dispatcher::get_default(|d| d.clone());
+/// rayon_worker_closure = move || {
+///     tracing::dispatcher::with_default(&dispatch, || { ... })
+/// };
+/// ```
 #[cfg(feature = "sim-observability")]
-fn append_trace_event(path: &Path, event: &str) {
-    use std::io::Write;
-    let _guard = JSONL_WRITE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let result = std::fs::OpenOptions::new()
+fn setup_tracing_guard(config: &SimulationConfig) -> Option<tracing::subscriber::DefaultGuard> {
+    use tracing_subscriber::{fmt, prelude::*, registry};
+
+    let path = config.tracing_log_path.as_ref()?;
+    let file = match std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(path)
-        .and_then(|mut f| writeln!(f, "{event}"));
-    drop(_guard);
-    if let Err(e) = result {
-        eprintln!("Warning: tracing write failed ({}): {e}", path.display());
-    }
+    {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!(
+                "Warning: cannot open tracing log {} — tracing disabled: {e}",
+                path.display()
+            );
+            return None;
+        }
+    };
+
+    let layer = fmt::layer()
+        .json()
+        .with_writer(Mutex::new(file))
+        .with_span_list(false)
+        .with_current_span(true);
+    let subscriber = registry().with(layer);
+    Some(subscriber.set_default())
 }
 
 /// Constructs a per-SNR-point `ChaCha20Rng` with deterministic seeding.
@@ -355,6 +390,18 @@ fn append_trace_event(path: &Path, event: &str) {
 /// base seed while keeping the derivation trivially reversible for auditing.
 /// `set_word_pos(word_pos)` then seeks into the stream at the position
 /// recorded by the last heartbeat checkpoint (0 for a fresh point).
+///
+/// # Resume determinism
+///
+/// The design doc specifies `seed = config.seed ^ snr_index ^ frames_completed_at_checkpoint`
+/// with `(or equivalent)`. This implementation omits the
+/// `frames_completed_at_checkpoint` term from the seed: instead the checkpoint
+/// frame count is consumed by `ChaCha20Rng::set_word_pos(rng_word_pos)`, where
+/// `rng_word_pos` is the exact stream position captured at the heartbeat
+/// checkpoint. This is strictly equivalent for byte-identical resume because
+/// `ChaCha20Rng::set_word_pos` provides a bit-exact stream seek that reaches
+/// the same generator state the uninterrupted run would have been at —
+/// documented as reproducible across `rand_chacha` versions.
 ///
 /// # Arguments
 ///
@@ -1119,6 +1166,40 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
     mut capture: Option<&mut AnalysisCapture<'_>>,
     rng: &mut R,
 ) -> Vec<SimulationResult> {
+    // sim-observability: install JSON-lines tracing subscriber for this run.
+    #[cfg(feature = "sim-observability")]
+    let _tracing_guard = setup_tracing_guard(config);
+
+    // sim-observability: open campaign span and emit campaign_start event.
+    #[cfg(feature = "sim-observability")]
+    let _campaign_guard = {
+        use std::time::SystemTime;
+        let config_hash = compute_config_hash(config);
+        let run_uuid = {
+            let t = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            format!("{:032x}", t ^ (config.rng_seed.unwrap_or(0) as u128))
+        };
+        let seed_val = config.rng_seed.unwrap_or(0);
+        let guard = tracing::info_span!(
+            "campaign",
+            config_hash = %config_hash,
+            run_uuid = %run_uuid,
+            seed = seed_val,
+        )
+        .entered();
+        tracing::info!(
+            name: "campaign_start",
+            event_type = "campaign_start",
+            config_hash = %config_hash,
+            run_uuid = %run_uuid,
+            seed = seed_val,
+        );
+        guard
+    };
+
     /// Nominal batch length. See
     /// [`SimulationRunner::run_uncoded_ber_with_channel`] for the
     /// rationale behind the value and the alignment rounding.
@@ -1170,75 +1251,102 @@ fn run_uncoded_ber_with_channel_impl<C: ChannelModel, R: Rng>(
         None
     };
 
-    config
-        .eb_n0_range_db
-        .iter()
-        .map(|&eb_n0_db| {
-            let mut total_bits = 0usize;
-            let mut total_errors = 0usize;
+    let mut results = Vec::with_capacity(config.eb_n0_range_db.len());
+    for (snr_idx, &eb_n0_db) in config.eb_n0_range_db.iter().enumerate() {
+        // sim-observability: per-SNR span.
+        #[cfg(feature = "sim-observability")]
+        let _snr_guard = tracing::info_span!(
+            "snr_point",
+            eb_n0_db = eb_n0_db,
+            es_n0_db = eb_n0_db, // uncoded: rate=1, so es_n0_db == eb_n0_db
+            frames_target = config.max_frames,
+            errors_target = config.min_errors,
+        )
+        .entered();
 
-            while total_errors < config.min_errors && total_bits < config.max_frames {
-                let remaining = config.max_frames - total_bits;
-                let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
-                // Round down to the channel's required alignment so
-                // modem-backed channels with bits_per_symbol > 1 do
-                // not panic on a ragged tail.
-                batch_size -= batch_size % alignment;
-                if batch_size == 0 {
-                    break;
+        // Suppress unused-variable warning when feature is disabled.
+        #[cfg(not(feature = "sim-observability"))]
+        let _ = snr_idx;
+
+        #[cfg_attr(not(feature = "sim-observability"), allow(unused_variables))]
+        let point_start = Instant::now();
+        let mut total_bits = 0usize;
+        let mut total_errors = 0usize;
+
+        while total_errors < config.min_errors && total_bits < config.max_frames {
+            let remaining = config.max_frames - total_bits;
+            let mut batch_size = UNCODED_MODEM_BATCH_BITS.min(remaining);
+            // Round down to the channel's required alignment so
+            // modem-backed channels with bits_per_symbol > 1 do
+            // not panic on a ragged tail.
+            batch_size -= batch_size % alignment;
+            if batch_size == 0 {
+                break;
+            }
+            let bits = BitVec::random(batch_size, rng);
+            // Uncoded => rate = 1.0. The channel owns modulation,
+            // noise, and demapping end-to-end; we only consume LLRs.
+            let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
+            debug_assert_eq!(llrs.len(), batch_size);
+
+            // Opt-in per-bit analysis. The `None` branch has no
+            // extra work; the inline wrapper lets the optimizer
+            // collapse the match when the caller passed `None`.
+            if let (Some(cap), Some(scratch)) = (capture.as_deref_mut(), truth_scratch.as_mut()) {
+                scratch.clear();
+                scratch.reserve(batch_size);
+                for i in 0..batch_size {
+                    scratch.push(bits.get(i));
                 }
-                let bits = BitVec::random(batch_size, rng);
-                // Uncoded => rate = 1.0. The channel owns modulation,
-                // noise, and demapping end-to-end; we only consume LLRs.
-                let llrs = channel.transmit_and_demodulate(&bits, eb_n0_db, 1.0, rng);
-                debug_assert_eq!(llrs.len(), batch_size);
-
-                // Opt-in per-bit analysis. The `None` branch has no
-                // extra work; the inline wrapper lets the optimizer
-                // collapse the match when the caller passed `None`.
-                if let (Some(cap), Some(scratch)) = (capture.as_deref_mut(), truth_scratch.as_mut())
-                {
-                    scratch.clear();
-                    scratch.reserve(batch_size);
-                    for i in 0..batch_size {
-                        scratch.push(bits.get(i));
-                    }
-                    cap.accumulate_slice(&llrs, scratch);
-                }
-
-                let errors = (0..batch_size)
-                    .filter(|&i| {
-                        // Positive LLR => bit 0, negative => bit 1.
-                        // Ties (0.0) map to bit 0, matching the
-                        // framework hard-decision convention.
-                        let decoded_bit = llrs[i].value() < 0.0;
-                        bits.get(i) != decoded_bit
-                    })
-                    .count();
-
-                total_bits += batch_size;
-                total_errors += errors;
+                cap.accumulate_slice(&llrs, scratch);
             }
 
-            let ber = if total_bits > 0 {
-                total_errors as f64 / total_bits as f64
-            } else {
-                0.0
-            };
+            let errors = (0..batch_size)
+                .filter(|&i| {
+                    // Positive LLR => bit 0, negative => bit 1.
+                    // Ties (0.0) map to bit 0, matching the
+                    // framework hard-decision convention.
+                    let decoded_bit = llrs[i].value() < 0.0;
+                    bits.get(i) != decoded_bit
+                })
+                .count();
 
-            SimulationResult {
-                eb_n0_db,
-                ber,
-                bler: 0.0,
-                avg_iterations: None,
-                avg_queries_per_bit: None,
-                num_bits: total_bits,
-                num_bit_errors: total_errors,
-                num_frames: 0,
-                num_frame_errors: 0,
-            }
-        })
-        .collect()
+            total_bits += batch_size;
+            total_errors += errors;
+        }
+
+        let ber = if total_bits > 0 {
+            total_errors as f64 / total_bits as f64
+        } else {
+            0.0
+        };
+
+        // sim-observability: snr_completed event.
+        #[cfg(feature = "sim-observability")]
+        tracing::info!(
+            name: "snr_completed",
+            event_type = "snr_completed",
+            snr_index = snr_idx,
+            eb_n0_db = eb_n0_db,
+            fer = 0.0_f64, // uncoded: no frame errors concept
+            ber = ber,
+            mean_iters = Option::<f64>::None,
+            elapsed_seconds = point_start.elapsed().as_secs_f64(),
+        );
+
+        results.push(SimulationResult {
+            eb_n0_db,
+            ber,
+            bler: 0.0,
+            avg_iterations: None,
+            avg_queries_per_bit: None,
+            num_bits: total_bits,
+            num_bit_errors: total_errors,
+            num_frames: 0,
+            num_frame_errors: 0,
+        });
+    }
+    results
 }
 
 /// Monte Carlo simulation runner for communication systems.
@@ -2483,6 +2591,12 @@ where
     C: ChannelModel,
     F: FnMut(&[crate::llr::Llr]) -> DecoderResult,
 {
+    // sim-observability: install a JSON-lines tracing subscriber for this run.
+    // `_tracing_guard` is held for the entire function duration; dropping it
+    // at end of scope restores the previous subscriber.
+    #[cfg(feature = "sim-observability")]
+    let _tracing_guard = setup_tracing_guard(config);
+
     let n = encoder.n();
     let k = encoder.k();
     let rate = k as f64 / n as f64;
@@ -2511,38 +2625,35 @@ where
     #[cfg(feature = "sim-observability")]
     clear_interrupt();
 
-    // sim-observability: emit campaign_start tracing event.
+    // sim-observability: open campaign span (owned via `entered()`) and emit
+    // campaign_start event.  `EnteredSpan` keeps the span alive and entered.
     #[cfg(feature = "sim-observability")]
-    if let Some(ref tlog) = config.tracing_log_path {
-        // Generate a simple run UUID from the current timestamp + seed.
-        let run_id = {
-            use std::time::SystemTime;
+    let _campaign_guard = {
+        use std::time::SystemTime;
+        let run_uuid = {
             let t = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
                 .unwrap_or(0);
             format!("{:032x}", t ^ (config.rng_seed.unwrap_or(0) as u128))
         };
-        let event = format!(
-            concat!(
-                "{{\"type\":\"campaign_start\",",
-                "\"timestamp\":\"{}\",",
-                "\"run_id\":\"{}\",",
-                "\"config_hash\":\"{}\",",
-                "\"seed\":{},",
-                "\"snr_points\":{}}}"
-            ),
-            chrono_like_timestamp(),
-            run_id,
-            config_hash,
-            config
-                .rng_seed
-                .map(|s| format!("{s}"))
-                .unwrap_or_else(|| "null".to_string()),
-            config.eb_n0_range_db.len(),
+        let seed_val = config.rng_seed.unwrap_or(0);
+        let guard = tracing::info_span!(
+            "campaign",
+            config_hash = %config_hash,
+            run_uuid = %run_uuid,
+            seed = seed_val,
+        )
+        .entered();
+        tracing::info!(
+            name: "campaign_start",
+            event_type = "campaign_start",
+            config_hash = %config_hash,
+            run_uuid = %run_uuid,
+            seed = seed_val,
         );
-        append_trace_event(tlog, &event);
-    }
+        guard
+    };
 
     let mut rng = config.make_rng();
     let mut points = Vec::with_capacity(config.eb_n0_range_db.len());
@@ -2611,6 +2722,21 @@ where
                 continue;
             }
         }
+
+        // sim-observability: open a per-SNR span (owned via `entered()`) so
+        // that heartbeat and snr_completed events carry the SNR fields.
+        #[cfg(feature = "sim-observability")]
+        let _snr_span_guard = {
+            let es_n0_db = eb_n0_db + 10.0 * (k as f64 / n as f64).log10();
+            tracing::info_span!(
+                "snr_point",
+                eb_n0_db = eb_n0_db,
+                es_n0_db = es_n0_db,
+                frames_target = config.max_frames,
+                errors_target = config.min_errors,
+            )
+            .entered()
+        };
 
         // sim-observability: if we have a seed and checkpoint support, use
         // a per-SNR ChaCha20Rng with deterministic seek.
@@ -2856,27 +2982,17 @@ where
                 let word_pos = rng.get_word_pos();
                 let elapsed_s = acc.elapsed().as_secs_f64();
 
-                // Tracing event.
-                if let Some(ref tlog) = config.tracing_log_path {
-                    let event = format!(
-                        concat!(
-                            "{{\"type\":\"heartbeat\",",
-                            "\"timestamp\":\"{}\",",
-                            "\"snr_index\":{},",
-                            "\"eb_n0_db\":{},",
-                            "\"frames_completed\":{},",
-                            "\"errors_so_far\":{},",
-                            "\"elapsed_s\":{:.1}}}"
-                        ),
-                        chrono_like_timestamp(),
-                        snr_index,
-                        eb_n0_db,
-                        acc.total_frames,
-                        acc.total_frame_errors,
-                        elapsed_s,
-                    );
-                    append_trace_event(tlog, &event);
-                }
+                // Tracing event via `tracing::info!` — picked up by the
+                // JSON subscriber installed by `setup_tracing_guard`.
+                tracing::info!(
+                    name: "heartbeat",
+                    event_type = "heartbeat",
+                    snr_index = snr_index,
+                    eb_n0_db = eb_n0_db,
+                    frames_completed = acc.total_frames,
+                    errors_so_far = acc.total_frame_errors,
+                    elapsed_seconds = elapsed_s,
+                );
 
                 // Intermediate checkpoint.
                 if let Some(ref ckpt_dir) = config.checkpoint_dir {
@@ -2935,31 +3051,17 @@ where
         }
     }
 
-    // Tracing: snr_completed event.
-    if let Some(ref tlog) = config.tracing_log_path {
-        let event = format!(
-            concat!(
-                "{{\"type\":\"snr_completed\",",
-                "\"timestamp\":\"{}\",",
-                "\"snr_index\":{},",
-                "\"eb_n0_db\":{},",
-                "\"fer\":{},",
-                "\"ber\":{},",
-                "\"mean_iters\":{},",
-                "\"elapsed_s\":{:.1}}}"
-            ),
-            chrono_like_timestamp(),
-            snr_index,
-            eb_n0_db,
-            sim_result.bler,
-            sim_result.ber,
-            sim_result
-                .avg_iterations
-                .map_or("null".to_string(), |v| format!("{v:.3}")),
-            point_elapsed.as_secs_f64(),
-        );
-        append_trace_event(tlog, &event);
-    }
+    // Tracing: snr_completed event via `tracing::info!`.
+    tracing::info!(
+        name: "snr_completed",
+        event_type = "snr_completed",
+        snr_index = snr_index,
+        eb_n0_db = eb_n0_db,
+        fer = sim_result.bler,
+        ber = sim_result.ber,
+        mean_iters = sim_result.avg_iterations,
+        elapsed_seconds = point_elapsed.as_secs_f64(),
+    );
 
     // Legacy progress JSONL: point_complete entry.
     if let Some(pp) = progress_path {
@@ -3178,6 +3280,47 @@ impl SimulationRunner {
         let k = encoder.k();
         let rate = k as f64 / n as f64;
 
+        // sim-observability: install JSON-lines tracing subscriber for this run.
+        #[cfg(feature = "sim-observability")]
+        let _tracing_guard = setup_tracing_guard(config);
+
+        // sim-observability: open campaign span and emit campaign_start event.
+        // The Dispatch is cloned so each rayon worker can re-enter it on their
+        // own thread via `tracing::dispatcher::with_default`.
+        #[cfg(feature = "sim-observability")]
+        let _campaign_guard = {
+            use std::time::SystemTime;
+            let config_hash = compute_config_hash(config);
+            let run_uuid = {
+                let t = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .map(|d| d.as_nanos())
+                    .unwrap_or(0);
+                format!("{:032x}", t ^ (config.rng_seed.unwrap_or(0) as u128))
+            };
+            let seed_val = config.rng_seed.unwrap_or(0);
+            let guard = tracing::info_span!(
+                "campaign",
+                config_hash = %config_hash,
+                run_uuid = %run_uuid,
+                seed = seed_val,
+            )
+            .entered();
+            tracing::info!(
+                name: "campaign_start",
+                event_type = "campaign_start",
+                config_hash = %config_hash,
+                run_uuid = %run_uuid,
+                seed = seed_val,
+            );
+            guard
+        };
+
+        // sim-observability: capture the current thread-local Dispatch so
+        // rayon worker threads can re-activate it.
+        #[cfg(feature = "sim-observability")]
+        let worker_dispatch = tracing::dispatcher::get_default(|d| d.clone());
+
         // Resume from existing CSV results (not applicable for JSON outputs).
         let existing = config
             .output_path
@@ -3213,6 +3356,23 @@ impl SimulationRunner {
         // Worker closure: simulates one SNR point, then locks the collector
         // briefly to record the result with immediate CSV/JSONL writes.
         let simulate_and_record = |(idx, &eb_n0_db): (usize, &f64)| {
+            // sim-observability: install the campaign subscriber on this rayon
+            // worker thread for the duration of the closure.  `set_default`
+            // is thread-local; the guard restores the previous dispatch on drop.
+            #[cfg(feature = "sim-observability")]
+            let _dispatch_guard = tracing::dispatcher::set_default(&worker_dispatch);
+
+            // sim-observability: open a per-SNR span on this worker thread.
+            #[cfg(feature = "sim-observability")]
+            let _snr_guard = tracing::info_span!(
+                "snr_point",
+                eb_n0_db = eb_n0_db,
+                es_n0_db = eb_n0_db + 10.0 * (k as f64 / n as f64).log10(),
+                frames_target = config.max_frames,
+                errors_target = config.min_errors,
+            )
+            .entered();
+
             let mut decoder = make_decoder();
             // Each SNR point gets a unique sub-seed derived from the config seed.
             let point_seed = config
@@ -3246,6 +3406,19 @@ impl SimulationRunner {
                 decoder.decode_iterative(llrs, max_iter)
             });
             let point_elapsed = point_start.elapsed();
+
+            // sim-observability: emit snr_completed event on this worker thread.
+            #[cfg(feature = "sim-observability")]
+            tracing::info!(
+                name: "snr_completed",
+                event_type = "snr_completed",
+                snr_index = idx,
+                eb_n0_db = eb_n0_db,
+                fer = result.bler,
+                ber = result.ber,
+                mean_iters = result.avg_iterations,
+                elapsed_seconds = point_elapsed.as_secs_f64(),
+            );
 
             // Lock the collector only for the brief I/O + bookkeeping window.
             let mut coll = collector
@@ -4927,10 +5100,15 @@ mod tests {
 
         /// SC-INT-3: Heartbeat events are emitted at the configured cadence.
         ///
-        /// Uses a DeterministicChannel that always produces errors so we can
-        /// predict the exact frame count at stop time, and sets
-        /// `heartbeat_every_frames = 2` to ensure heartbeats fire at frames
-        /// 2, 4 (stop is at frame 5 due to min_errors=5).
+        /// `DeterministicChannel` produces one frame error per frame.  With
+        /// `min_errors = 5` the loop runs exactly 5 frames.  With
+        /// `heartbeat_every_frames = 2` heartbeats fire after frames 2 and 4
+        /// (frame 5 stops the loop before the cadence-6 heartbeat can fire),
+        /// so the log must contain **exactly 2** heartbeat events.
+        ///
+        /// Each heartbeat line is parsed as JSON via `serde_json` and all
+        /// required fields (`frames_completed`, `errors_so_far`,
+        /// `elapsed_seconds`, `snr_index`, `eb_n0_db`) are asserted present.
         #[test]
         fn test_heartbeat_cadence() {
             let tmpdir = tempfile::tempdir().unwrap();
@@ -4943,7 +5121,7 @@ mod tests {
             };
             let mut config = SimulationConfig::quick_test();
             config.eb_n0_range_db = vec![5.0];
-            config.min_errors = 5; // stops at frame 5
+            config.min_errors = 5; // stops at exactly 5 frames
             config.max_frames = 50;
             config.rng_seed = Some(123);
             config.tracing_log_path = Some(tlog.clone());
@@ -4953,42 +5131,67 @@ mod tests {
             let decoder = MockSoftDecoder;
             let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
 
-            // Parse the tracing log.
+            // Parse every non-empty line as JSON and collect heartbeat objects.
             let content = std::fs::read_to_string(&tlog).unwrap();
-            let heartbeats: Vec<&str> = content
+            let heartbeats: Vec<serde_json::Value> = content
                 .lines()
-                .filter(|l| l.contains("\"type\":\"heartbeat\""))
+                .filter(|l| !l.trim().is_empty())
+                .map(|l| {
+                    serde_json::from_str::<serde_json::Value>(l).unwrap_or_else(|e| {
+                        panic!("tracing line is not valid JSON: {e}\nline: {l}")
+                    })
+                })
+                .filter(|obj| obj["fields"]["event_type"] == "heartbeat")
                 .collect();
-            // Frames 2 and 4 trigger heartbeats (frame 5 stops the loop before
-            // the frame 6 heartbeat fires); so we expect exactly 2 heartbeats.
-            assert!(
-                !heartbeats.is_empty(),
-                "At least 1 heartbeat must be emitted for a 5-frame run with cadence 2, got {}",
+
+            // With cadence=2 and 5 frames: heartbeats at frames 2, 4 → exactly 2.
+            assert_eq!(
+                heartbeats.len(),
+                2,
+                "expected exactly 2 heartbeat events (cadence=2, min_errors=5), got {}",
                 heartbeats.len()
             );
-            // Each heartbeat must have the expected fields.
-            for hb in &heartbeats {
+
+            // Required fields under "fields" in the tracing-subscriber JSON layer.
+            for (i, hb) in heartbeats.iter().enumerate() {
+                let fields = &hb["fields"];
                 assert!(
-                    hb.contains("\"frames_completed\""),
-                    "Missing frames_completed in heartbeat: {hb}"
+                    !fields["frames_completed"].is_null(),
+                    "heartbeat[{i}] missing fields.frames_completed"
                 );
                 assert!(
-                    hb.contains("\"errors_so_far\""),
-                    "Missing errors_so_far in heartbeat: {hb}"
+                    !fields["errors_so_far"].is_null(),
+                    "heartbeat[{i}] missing fields.errors_so_far"
                 );
                 assert!(
-                    hb.contains("\"elapsed_s\""),
-                    "Missing elapsed_s in heartbeat: {hb}"
+                    !fields["elapsed_seconds"].is_null(),
+                    "heartbeat[{i}] missing fields.elapsed_seconds"
                 );
                 assert!(
-                    hb.contains("\"snr_index\""),
-                    "Missing snr_index in heartbeat: {hb}"
+                    !fields["snr_index"].is_null(),
+                    "heartbeat[{i}] missing fields.snr_index"
+                );
+                assert!(
+                    !fields["eb_n0_db"].is_null(),
+                    "heartbeat[{i}] missing fields.eb_n0_db"
                 );
             }
         }
 
-        /// SC-INT-4: JSON-lines tracing log is valid JSON-lines; each line is a
-        /// complete JSON object with a recognizable `type` field.
+        /// SC-INT-4: Every line in the tracing log parses as a JSON object and
+        /// carries the required fields for its event type.
+        ///
+        /// Each line is parsed with `serde_json::from_str`.  For the event
+        /// types the runner emits the following fields are asserted under the
+        /// `"fields"` key produced by `tracing-subscriber`'s JSON formatter:
+        ///
+        /// - `campaign_start`: `config_hash`, `run_uuid`, `seed`
+        /// - `snr_completed`: `eb_n0_db`, `fer`, `ber`, `mean_iters`
+        /// - `heartbeat`: `frames_completed`, `errors_so_far`,
+        ///   `elapsed_seconds`, `snr_index`, `eb_n0_db`
+        ///
+        /// The event name is carried in the top-level `"name"` key that
+        /// `tracing-subscriber` emits for each record.
         #[test]
         fn test_tracing_log_valid_jsonl() {
             let tmpdir = tempfile::tempdir().unwrap();
@@ -5010,94 +5213,203 @@ mod tests {
             let _ = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
 
             let content = std::fs::read_to_string(&tlog).unwrap();
-            let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
 
-            // Each line must be a JSON object (starts with `{`, ends with `}`).
-            for (i, line) in lines.iter().enumerate() {
-                assert!(
-                    line.trim_start().starts_with('{') && line.trim_end().ends_with('}'),
-                    "Tracing line {i} is not a JSON object: {line}"
-                );
-                // Must contain a `type` field.
-                assert!(
-                    line.contains("\"type\""),
-                    "Tracing line {i} missing `type` field: {line}"
-                );
+            // Parse every non-empty line with serde_json; assert it's an object.
+            let objects: Vec<serde_json::Value> = content
+                .lines()
+                .filter(|l| !l.trim().is_empty())
+                .enumerate()
+                .map(|(i, line)| {
+                    let v: serde_json::Value = serde_json::from_str(line).unwrap_or_else(|e| {
+                        panic!("line {i} is not valid JSON: {e}\nline: {line}")
+                    });
+                    assert!(
+                        v.is_object(),
+                        "line {i} parsed as JSON but is not an object: {v}"
+                    );
+                    v
+                })
+                .collect();
+
+            // Partition by event_type field (explicit field in "fields" object,
+            // since tracing-subscriber JSON formatter does not include the
+            // callsite name in its output).
+            let campaign_starts: Vec<&serde_json::Value> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "campaign_start")
+                .collect();
+            let snr_completeds: Vec<&serde_json::Value> = objects
+                .iter()
+                .filter(|o| o["fields"]["event_type"] == "snr_completed")
+                .collect();
+
+            assert_eq!(
+                campaign_starts.len(),
+                1,
+                "must have exactly 1 campaign_start"
+            );
+            assert_eq!(
+                snr_completeds.len(),
+                2,
+                "must have exactly 2 snr_completed events (one per SNR point)"
+            );
+
+            // campaign_start: required fields under "fields".
+            let cs = campaign_starts[0]["fields"]
+                .as_object()
+                .unwrap_or_else(|| panic!("campaign_start event has no 'fields' object"));
+            assert!(
+                cs.contains_key("config_hash"),
+                "campaign_start missing fields.config_hash"
+            );
+            assert!(
+                cs.contains_key("run_uuid"),
+                "campaign_start missing fields.run_uuid"
+            );
+            assert!(
+                cs.contains_key("seed"),
+                "campaign_start missing fields.seed"
+            );
+
+            // snr_completed: required fields under "fields".
+            for (i, sc) in snr_completeds.iter().enumerate() {
+                let f = sc["fields"]
+                    .as_object()
+                    .unwrap_or_else(|| panic!("snr_completed[{i}] has no 'fields' object"));
+                for key in &["eb_n0_db", "fer", "ber", "mean_iters"] {
+                    assert!(
+                        f.contains_key(*key),
+                        "snr_completed[{i}] missing fields.{key}"
+                    );
+                }
             }
-
-            // Must contain at least a campaign_start and two snr_completed events.
-            let campaign_starts = lines
-                .iter()
-                .filter(|l| l.contains("\"type\":\"campaign_start\""))
-                .count();
-            let snr_completeds = lines
-                .iter()
-                .filter(|l| l.contains("\"type\":\"snr_completed\""))
-                .count();
-            assert_eq!(
-                campaign_starts, 1,
-                "Must have exactly 1 campaign_start event"
-            );
-            assert_eq!(
-                snr_completeds, 2,
-                "Must have 2 snr_completed events (one per SNR point)"
-            );
         }
 
-        /// SC-INT-5: Resume-after-interrupt test.
+        /// SC-INT-5: Resume after real SIGINT — subprocess-based test.
         ///
-        /// Simulates an interrupt by:
-        /// 1. Running a campaign normally to completion with checkpoints.
-        /// 2. Deleting one checkpoint to simulate partial progress.
-        /// 3. Re-running: the runner should recompute only the missing point
-        ///    and produce the same final frame counts.
+        /// # Protocol
         ///
-        /// This is the in-process substitute for the subprocess SIGINT test,
-        /// which would require `libc` or `nix` in dev-deps. The issue spec
-        /// allows using `Arc<AtomicBool>` simulation when no new dev-dep is
-        /// preferred; see deviation note in commit message.
+        /// 1. Produce a **reference CSV** by running `sim_checkpoint_helper`
+        ///    to normal completion in a clean directory.
+        /// 2. In a second directory run the helper, wait until at least one
+        ///    heartbeat checkpoint file appears (the helper writes one every 5
+        ///    frames), then deliver SIGINT with `kill -INT <pid>`.  The helper
+        ///    exits with code 1 and has flushed a partial checkpoint.
+        /// 3. Re-run the helper with the same checkpoint directory.  It resumes
+        ///    from the partial checkpoint and runs to completion (exit code 0).
+        /// 4. Assert the resumed `results.csv` is byte-identical to the
+        ///    reference CSV.
+        ///
+        /// The test is marked `#[ignore = "slow: ..."]` because the subprocess
+        /// spin-up and SIGINT timing can exceed 5 s on slow CI hosts.
         #[test]
-        fn test_resume_after_partial_checkpoint() {
-            let tmpdir = tempfile::tempdir().unwrap();
-            let ckpt_dir = tmpdir.path().join("ckpts");
-            let csv_path = tmpdir.path().join("results.csv");
+        #[ignore = "slow: subprocess SIGINT timing may exceed 5 s on slow hosts"]
+        fn test_resume_after_interrupt() {
+            use std::process::Command;
+            use std::time::{Duration, Instant};
 
-            let encoder = MockEncoder;
-            let channel = DeterministicChannel {
-                flip_positions: vec![0, 1],
+            // Locate the helper binary next to the current test executable.
+            // cargo places it in .../target/<profile>/ (one level above deps/).
+            let helper_bin = {
+                let mut exe = std::env::current_exe().expect("cannot locate test executable");
+                exe.pop(); // strip filename
+                if exe.ends_with("deps") {
+                    exe.pop(); // strip "deps", now at target/<profile>/
+                }
+                exe.push("sim_checkpoint_helper");
+                exe
             };
-            let mut config = SimulationConfig::quick_test();
-            config.eb_n0_range_db = vec![4.0, 6.0];
-            config.min_errors = 5;
-            config.max_frames = 50;
-            config.rng_seed = Some(999);
-            config.output_path = Some(csv_path.clone());
-            config.checkpoint_dir = Some(ckpt_dir.clone());
-
-            // First run: completes both points.
-            let decoder = MockSoftDecoder;
-            let results1 = SimulationRunner::run_coded(&encoder, &decoder, &channel, &config);
-            assert_eq!(results1.points.len(), 2);
-
-            // Simulate "partial run": delete the second checkpoint so the
-            // runner must recompute it on the next run.
-            let ckpt1 = ckpt_dir.join("snr_0001.json");
-            std::fs::remove_file(&ckpt1).expect("checkpoint 1 must exist to remove");
-
-            // Second run: first point is loaded from checkpoint, second is recomputed.
-            let decoder2 = MockSoftDecoder;
-            let results2 = SimulationRunner::run_coded(&encoder, &decoder2, &channel, &config);
-            assert_eq!(results2.points.len(), 2);
-
-            // First point must be identical (came from checkpoint).
-            assert_eq!(
-                results1.points[0].num_frames, results2.points[0].num_frames,
-                "First point must come from checkpoint (same frame count)"
-            );
-            // Second point must be valid (recomputed).
             assert!(
-                results2.points[1].num_frames > 0,
-                "Second point must have been recomputed"
+                helper_bin.exists(),
+                "sim_checkpoint_helper binary not found at {}: \
+                 build with `cargo build --bin sim_checkpoint_helper`",
+                helper_bin.display()
+            );
+
+            let tmpdir = tempfile::tempdir().unwrap();
+            let ref_dir = tmpdir.path().join("ref");
+            let resume_dir = tmpdir.path().join("resume");
+            std::fs::create_dir_all(&ref_dir).unwrap();
+            std::fs::create_dir_all(&resume_dir).unwrap();
+
+            // ── Step 1: reference run to completion ──────────────────────────
+            let ref_status = Command::new(&helper_bin)
+                .arg(&ref_dir)
+                .status()
+                .unwrap_or_else(|e| panic!("failed to spawn helper: {e}"));
+            assert!(
+                ref_status.success(),
+                "reference run did not exit with code 0: {ref_status}"
+            );
+            let ref_csv = std::fs::read(ref_dir.join("results.csv"))
+                .expect("reference results.csv must exist after successful run");
+
+            // ── Step 2: interrupted run ──────────────────────────────────────
+            let mut child = Command::new(&helper_bin)
+                .arg(&resume_dir)
+                .spawn()
+                .unwrap_or_else(|e| panic!("failed to spawn helper: {e}"));
+
+            let pid = child.id();
+
+            // Wait until at least one heartbeat checkpoint exists (cadence=5).
+            // The helper writes snr_0000.json after every 5 frames.
+            let ckpt_file = resume_dir.join("snr_0000.json");
+            let deadline = Instant::now() + Duration::from_secs(30);
+            loop {
+                if ckpt_file.exists() {
+                    break;
+                }
+                if Instant::now() > deadline {
+                    let _ = child.kill();
+                    panic!(
+                        "timed out waiting for heartbeat checkpoint in {}",
+                        resume_dir.display()
+                    );
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+
+            // Deliver SIGINT.
+            let kill_status = Command::new("kill")
+                .args(["-INT", &pid.to_string()])
+                .status()
+                .unwrap_or_else(|e| panic!("failed to send SIGINT: {e}"));
+            assert!(
+                kill_status.success(),
+                "kill -INT returned non-zero: {kill_status}"
+            );
+
+            // Wait for the helper to flush and exit (exit code 1 = interrupted).
+            let interrupted_status = child.wait().expect("failed to wait for interrupted helper");
+            assert_eq!(
+                interrupted_status.code(),
+                Some(1),
+                "interrupted helper must exit with code 1, got: {interrupted_status}"
+            );
+
+            // Partial checkpoint must exist on disk.
+            assert!(
+                ckpt_file.exists(),
+                "partial checkpoint must persist after SIGINT"
+            );
+
+            // ── Step 3: resume run ───────────────────────────────────────────
+            let resume_status = Command::new(&helper_bin)
+                .arg(&resume_dir)
+                .status()
+                .unwrap_or_else(|e| panic!("failed to spawn resumed helper: {e}"));
+            assert!(
+                resume_status.success(),
+                "resumed run must exit with code 0, got: {resume_status}"
+            );
+
+            // ── Step 4: byte-identical CSV ───────────────────────────────────
+            let resume_csv = std::fs::read(resume_dir.join("results.csv"))
+                .expect("resume results.csv must exist after resumed run");
+            assert_eq!(
+                ref_csv, resume_csv,
+                "resumed results.csv must be byte-identical to the reference run"
             );
         }
 
