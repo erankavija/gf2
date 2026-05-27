@@ -240,7 +240,7 @@ use crate::field::FiniteField;
 /// diagonal tiles the update covers `64 × 64 × 1 = 4096` cell-triples;
 /// after three panels it is `192 × 64 × 1 = 12288`), small enough that
 /// each diagonal block stays within L1 cache on a typical x86-64 core.
-pub(crate) const TRSM_BLOCKED_PANEL_SIZE: usize = 64;
+pub const TRSM_BLOCKED_PANEL_SIZE: usize = 64;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 

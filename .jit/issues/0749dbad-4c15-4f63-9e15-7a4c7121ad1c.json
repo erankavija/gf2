@@ -12,15 +12,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-27T14:29:22.946560726Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-27T14:29:10.263601397Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T14:36:40.045551731Z"
     }
   },
   "context": {},
@@ -33,5 +33,5 @@
     "ppc-kernel:C2"
   ],
   "created_at": "2026-05-26T15:31:59.225132604+00:00",
-  "updated_at": "2026-05-27T14:36:01.720296386+00:00"
+  "updated_at": "2026-05-27T14:47:15.674157926+00:00"
 }
