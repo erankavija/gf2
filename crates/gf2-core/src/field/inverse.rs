@@ -2208,4 +2208,331 @@ mod tests {
             }
         }
     }
+
+    // ─── d36cc414: GF(251)/n=64 borderline cost decomposition ────────────
+    //
+    // The five wave-7b borderline cells (rows 23, 37, 40, 51, 52) all land in
+    // 1.566x..1.728x of the fflas reference at GF(251). This test instruments
+    // each phase of the three ops (echelon/invert/solve) at n=64 to identify
+    // whether a single per-call setup cost dominates (fixable) or the panelized
+    // PLE itself is at-floor for this size (structural).
+    //
+    // Output CSV (stderr, between BEGIN/END markers):
+    //   op,phase,field,n,regime,trial,wall_ns
+
+    /// Build the same GF(251) input matrices used by the wave-7b benches.
+    fn build_borderline_input<const P: u64>(n: usize, regime: &str) -> FieldMatrix<Fp<P>> {
+        let seed = P
+            .wrapping_mul(0x9E37_79B9)
+            .wrapping_add(n as u64)
+            .wrapping_add(if regime == "deficient" { 0x1234 } else { 0 });
+        if regime == "deficient" {
+            let rank = (n / 2).max(1);
+            let f = random_fp::<P>(n, rank, seed);
+            let g = random_fp::<P>(rank, n, seed.wrapping_add(0xCAFE));
+            gemm(&f, &g)
+        } else {
+            random_fp_invertible::<P>(n, seed)
+        }
+    }
+
+    /// Echelon (row_echelon) decomposition: PLE -> pad_l -> build_pt -> trsm -> build_e_full.
+    fn decompose_echelon<const P: u64>(a: &FieldMatrix<Fp<P>>, regime: &str, trial: usize) {
+        let n = a.rows();
+        // Phase 1: PLE
+        let t = std::time::Instant::now();
+        let (p, l, e, _r) = a.ple();
+        let ns_ple = t.elapsed().as_nanos();
+        // Phase 2: pad L_full
+        let t = std::time::Instant::now();
+        let l_full = {
+            let zero = a.get(0, 0).zero_like();
+            let one = zero.one_like();
+            let mut lf = FieldMatrix::new(n, n, zero);
+            for i in 0..l.rows() {
+                for j in 0..l.cols() {
+                    lf.set(i, j, l.get(i, j));
+                }
+            }
+            for j in l.cols()..n {
+                lf.set(j, j, one);
+            }
+            lf
+        };
+        let ns_pad_l = t.elapsed().as_nanos();
+        // Phase 3: build P^T
+        let t = std::time::Instant::now();
+        let mut p_t = {
+            let zero = a.get(0, 0).zero_like();
+            let one = zero.one_like();
+            let mut pt = FieldMatrix::new(n, n, zero);
+            for (i, &src) in p.indices().iter().enumerate() {
+                pt.set(src, i, one);
+            }
+            pt
+        };
+        let ns_build_pt = t.elapsed().as_nanos();
+        // Phase 4: trsm_lower(L_full, P^T)
+        let t = std::time::Instant::now();
+        trsm_lower(l_full.submat(.., ..), p_t.submat_mut(.., ..));
+        let ns_trsm = t.elapsed().as_nanos();
+        // Phase 5: build E_full
+        let t = std::time::Instant::now();
+        let _e_full = {
+            let zero = a.get(0, 0).zero_like();
+            let r = e.rows();
+            let mut ef = FieldMatrix::new(n, n, zero);
+            for i in 0..r {
+                for j in 0..n {
+                    ef.set(i, j, e.get(i, j));
+                }
+            }
+            ef
+        };
+        let ns_build_e = t.elapsed().as_nanos();
+        eprintln!("decomp,echelon,ple,GF(251),{n},{regime},{trial},{ns_ple}");
+        eprintln!("decomp,echelon,pad_l_full,GF(251),{n},{regime},{trial},{ns_pad_l}");
+        eprintln!("decomp,echelon,build_pt,GF(251),{n},{regime},{trial},{ns_build_pt}");
+        eprintln!("decomp,echelon,trsm_lower,GF(251),{n},{regime},{trial},{ns_trsm}");
+        eprintln!("decomp,echelon,build_e_full,GF(251),{n},{regime},{trial},{ns_build_e}");
+    }
+
+    /// Invert (uniform path) decomposition: PLE -> build_I -> trsm_lower -> trsm_upper -> col_perm.
+    fn decompose_invert<const P: u64>(a: &FieldMatrix<Fp<P>>, regime: &str, trial: usize) {
+        let n = a.rows();
+        // Phase 1: PLE
+        let t = std::time::Instant::now();
+        let (perm, l, e, rank) = a.ple();
+        let ns_ple = t.elapsed().as_nanos();
+        if rank < n {
+            // Deficient: invert returns None right after this; the n=256
+            // deficient case (row 40) is dominated by PLE.
+            eprintln!("decomp,invert,ple,GF(251),{n},{regime},{trial},{ns_ple}");
+            eprintln!("decomp,invert,rank_deficient_early_exit,GF(251),{n},{regime},{trial},0");
+            return;
+        }
+        // Phase 2: build identity
+        let t = std::time::Instant::now();
+        let zero = a.get(0, 0).zero_like();
+        let one = zero.one_like();
+        let mut y = FieldMatrix::new(n, n, zero);
+        for i in 0..n {
+            y.set(i, i, one);
+        }
+        let ns_build_i = t.elapsed().as_nanos();
+        // Phase 3: trsm_lower(L, I)
+        let t = std::time::Instant::now();
+        trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
+        let ns_trsm_lower = t.elapsed().as_nanos();
+        // Phase 4: trsm_upper(E, Y)
+        let t = std::time::Instant::now();
+        trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
+        let ns_trsm_upper = t.elapsed().as_nanos();
+        // Phase 5: column permutation
+        let t = std::time::Instant::now();
+        let perm_idx = perm.indices();
+        let mut out = FieldMatrix::new(n, n, zero);
+        for i in 0..n {
+            for (j, &src_col) in perm_idx.iter().enumerate() {
+                out.set(i, j, y.get(i, src_col));
+            }
+        }
+        let ns_col_perm = t.elapsed().as_nanos();
+        eprintln!("decomp,invert,ple,GF(251),{n},{regime},{trial},{ns_ple}");
+        eprintln!("decomp,invert,build_identity,GF(251),{n},{regime},{trial},{ns_build_i}");
+        eprintln!("decomp,invert,trsm_lower,GF(251),{n},{regime},{trial},{ns_trsm_lower}");
+        eprintln!("decomp,invert,trsm_upper,GF(251),{n},{regime},{trial},{ns_trsm_upper}");
+        eprintln!("decomp,invert,col_perm,GF(251),{n},{regime},{trial},{ns_col_perm}");
+    }
+
+    /// Solve decomposition: wrap b -> PLE -> permute -> trsm_lower -> trsm_upper -> unwrap.
+    fn decompose_solve<const P: u64>(
+        a: &FieldMatrix<Fp<P>>,
+        b: &FieldVec<Fp<P>>,
+        regime: &str,
+        trial: usize,
+    ) {
+        let n = a.rows();
+        // Phase 1: wrap b -> n×1 FieldMatrix (mirrors `solve` -> `solve_batch`)
+        let t = std::time::Instant::now();
+        let zero = b.get(0).zero_like();
+        let mut b_mat = FieldMatrix::new(n, 1, zero);
+        for i in 0..n {
+            b_mat.set(i, 0, *b.get(i));
+        }
+        let ns_wrap = t.elapsed().as_nanos();
+        // Phase 2: PLE
+        let t = std::time::Instant::now();
+        let (perm, l, e, rank) = a.ple();
+        let ns_ple = t.elapsed().as_nanos();
+        if rank < n {
+            eprintln!("decomp,solve,wrap_b,GF(251),{n},{regime},{trial},{ns_wrap}");
+            eprintln!("decomp,solve,ple,GF(251),{n},{regime},{trial},{ns_ple}");
+            eprintln!("decomp,solve,rank_deficient_early_exit,GF(251),{n},{regime},{trial},0");
+            return;
+        }
+        // Phase 3: row permute b
+        let t = std::time::Instant::now();
+        let mut y = perm.inverse().apply(&b_mat);
+        let ns_perm = t.elapsed().as_nanos();
+        // Phase 4: blocked TRSM lower (falls back to recursive at n=64)
+        let t = std::time::Instant::now();
+        if <Fp<P> as FiniteField>::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
+            trsm_lower_blocked(
+                l.submat(.., ..),
+                y.submat_mut(.., ..),
+                TRSM_BLOCKED_PANEL_SIZE,
+            );
+        } else {
+            trsm_lower(l.submat(.., ..), y.submat_mut(.., ..));
+        }
+        let ns_trsm_lower = t.elapsed().as_nanos();
+        // Phase 5: blocked TRSM upper
+        let t = std::time::Instant::now();
+        if <Fp<P> as FiniteField>::has_simd_gemm_classical() && n >= TRSM_BLOCKED_PANEL_SIZE {
+            trsm_upper_blocked(
+                e.submat(.., ..),
+                y.submat_mut(.., ..),
+                TRSM_BLOCKED_PANEL_SIZE,
+            );
+        } else {
+            trsm_upper(e.submat(.., ..), y.submat_mut(.., ..));
+        }
+        let ns_trsm_upper = t.elapsed().as_nanos();
+        // Phase 6: unwrap to FieldVec
+        let t = std::time::Instant::now();
+        let mut x = FieldVec::zeros_from(n, b.get(0));
+        for i in 0..n {
+            x.set(i, y.get(i, 0));
+        }
+        let ns_unwrap = t.elapsed().as_nanos();
+        eprintln!("decomp,solve,wrap_b,GF(251),{n},{regime},{trial},{ns_wrap}");
+        eprintln!("decomp,solve,ple,GF(251),{n},{regime},{trial},{ns_ple}");
+        eprintln!("decomp,solve,row_perm,GF(251),{n},{regime},{trial},{ns_perm}");
+        eprintln!("decomp,solve,trsm_lower,GF(251),{n},{regime},{trial},{ns_trsm_lower}");
+        eprintln!("decomp,solve,trsm_upper,GF(251),{n},{regime},{trial},{ns_trsm_upper}");
+        eprintln!("decomp,solve,unwrap,GF(251),{n},{regime},{trial},{ns_unwrap}");
+    }
+
+    /// d36cc414 cost-decomposition harness for GF(251)/n=64 (rows 23, 37, 40, 51, 52).
+    ///
+    /// Run via:
+    /// ```bash
+    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    ///   cargo test -p gf2-core --release --all-features --lib \
+    ///   -- --nocapture --ignored \
+    ///   field::inverse::tests::test_gf251_n64_borderline_cost_decomposition \
+    ///   2>&1 | grep -E 'decomp|whole|BEGIN|END'
+    /// ```
+    ///
+    /// Emits two CSV blocks to stderr:
+    ///
+    /// - `--- d36cc414-decomp BEGIN/END ---`: phase-level wall times for each
+    ///   op at GF(251)/n=64 (and n=256 for row 40).
+    /// - `--- d36cc414-whole BEGIN/END ---`: control 5-trial whole-op wall
+    ///   times so we can confirm the decomp sums are within a sensible
+    ///   inflation factor of the integrated path (per evidence doc the
+    ///   integrated medians at these cells are 103-169 µs).
+    #[test]
+    #[ignore = "slow: GF(251)/n=64 cost decomposition for d36cc414 (~10 s)"]
+    fn test_gf251_n64_borderline_cost_decomposition() {
+        // Cells in scope: 23 (echelon/64/def), 37 (invert/64/uni),
+        // 40 (invert/256/def), 51 (solve/64/uni), 52 (solve/64/def).
+        const ECHELON_CELLS: &[(usize, &str)] = &[(64, "deficient")];
+        const INVERT_CELLS: &[(usize, &str)] = &[(64, "uniform"), (256, "deficient")];
+        const SOLVE_CELLS: &[(usize, &str)] = &[(64, "uniform"), (64, "deficient")];
+
+        eprintln!("--- d36cc414-decomp BEGIN ---");
+        eprintln!("op,phase,field,n,regime,trial,wall_ns");
+
+        // Echelon decomposition
+        for &(n, regime) in ECHELON_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            // Warm up
+            for _ in 0..3 {
+                let _ = a.row_echelon();
+            }
+            for trial in 1..=5 {
+                decompose_echelon::<251>(&a, regime, trial);
+            }
+        }
+        // Invert decomposition
+        for &(n, regime) in INVERT_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            for _ in 0..3 {
+                let _ = a.inv();
+            }
+            for trial in 1..=5 {
+                decompose_invert::<251>(&a, regime, trial);
+            }
+        }
+        // Solve decomposition
+        for &(n, regime) in SOLVE_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            // Build an n-vector RHS (matches `solve` API used by the bench).
+            let zero = a.get(0, 0).zero_like();
+            let mut b = FieldVec::zeros_from(n, &zero);
+            // Deterministic non-trivial entries.
+            for i in 0..n {
+                b.set(i, Fp::<251>::new(((i as u64).wrapping_mul(13) + 7) % 251));
+            }
+            for _ in 0..3 {
+                let _ = a.solve(&b);
+            }
+            for trial in 1..=5 {
+                decompose_solve::<251>(&a, &b, regime, trial);
+            }
+        }
+        eprintln!("--- d36cc414-decomp END ---");
+
+        // ── Control: whole-op 5-trial wall-time on identical inputs ────────
+        //
+        // Confirms the integrated path is reachable from the same input
+        // matrices; lets us cross-check that the decomp totals are within a
+        // reasonable inflation factor of the production op wall time.
+        eprintln!("--- d36cc414-whole BEGIN ---");
+        eprintln!("op,field,n,regime,trial,wall_ns");
+        for &(n, regime) in ECHELON_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            for _ in 0..3 {
+                let _ = a.row_echelon();
+            }
+            for trial in 1..=5 {
+                let t = std::time::Instant::now();
+                let _ = a.row_echelon();
+                let ns = t.elapsed().as_nanos();
+                eprintln!("echelon,GF(251),{n},{regime},{trial},{ns}");
+            }
+        }
+        for &(n, regime) in INVERT_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            for _ in 0..3 {
+                let _ = a.inv();
+            }
+            for trial in 1..=5 {
+                let t = std::time::Instant::now();
+                let _ = a.inv();
+                let ns = t.elapsed().as_nanos();
+                eprintln!("invert,GF(251),{n},{regime},{trial},{ns}");
+            }
+        }
+        for &(n, regime) in SOLVE_CELLS {
+            let a = build_borderline_input::<251>(n, regime);
+            let zero = a.get(0, 0).zero_like();
+            let mut b = FieldVec::zeros_from(n, &zero);
+            for i in 0..n {
+                b.set(i, Fp::<251>::new(((i as u64).wrapping_mul(13) + 7) % 251));
+            }
+            for _ in 0..3 {
+                let _ = a.solve(&b);
+            }
+            for trial in 1..=5 {
+                let t = std::time::Instant::now();
+                let _ = a.solve(&b);
+                let ns = t.elapsed().as_nanos();
+                eprintln!("solve,GF(251),{n},{regime},{trial},{ns}");
+            }
+        }
+        eprintln!("--- d36cc414-whole END ---");
+    }
 }
