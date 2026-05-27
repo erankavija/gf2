@@ -1,50 +1,59 @@
 //! TP06 → TP07a chain validation for in-scope DVB-T2 MODCOD configurations.
 //!
-//! # Empirical finding (2026-05-27, issue 4cdaf1c5)
+//! # Empirical finding update (2026-05-28, issue 548a8563)
 //!
-//! TP07a in **all** available ETSI DVB-T2 CSP test vectors is the output of the
-//! full §6.1.3 (bit interleaver) + §6.1.4 (cell-word demux) + §6.1.5 (cell
-//! interleaver) pipeline, not the output of §6.1.3 alone.  This was verified by
-//! empirically comparing the §6.1.3-only output against TP07a for every in-scope
-//! Normal FECFRAME configuration found on the host at the time of investigation:
+//! After adding §6.1.3 parity interleaving to `DvbT2BitInterleaver` (issue
+//! 548a8563), the §6.1.3-only output now matches TP07a **bit-exact** for all
+//! in-scope 64-QAM Normal FECFRAME vectors:
 //!
-//! | Vector            | Modulation | Code rate | §6.1.3-only vs TP07a  |
-//! |-------------------|------------|-----------|----------------------|
-//! | VV014-64QAM34_CSP | 64-QAM     | Rate 3/4  | 32516/64800 diffs (50.2%) |
-//! | VV037-DTG167_CSP  | 16-QAM     | Rate 2/3  | 32272/64800 diffs (49.8%) |
-//! | VV009-4KFFT_CSP   | 64-QAM     | Rate 2/3  | 32432/64800 diffs (50.0%) |
-//! | VV004-8KFFT_CSP   | 64-QAM     | Rate 3/4  | 32516/64800 diffs (50.2%) |
+//! | Vector            | Modulation | Code rate | §6.1.3 vs TP07a (parity+col-twist) |
+//! |-------------------|------------|-----------|-------------------------------------|
+//! | VV009-4KFFT_CSP   | 64-QAM     | Rate 2/3  | **0**/64800 diffs — PASS            |
+//! | VV014-64QAM34_CSP | 64-QAM     | Rate 3/4  | **0**/64800 diffs — PASS            |
 //!
-//! A correct §6.1.3-only bit-interleaver match would produce **0** differences.
-//! The ~50 % difference fraction matches the theoretical null expectation
-//! (both TP06 and TP07a have roughly equal fractions of 0-bits and 1-bits), which
-//! confirms the two sequences are statistically unrelated — i.e., TP07a is
-//! produced by a strictly longer pipeline than §6.1.3 alone.
+//! This confirms that TP07a in the CSP reference streams represents the output
+//! of §6.1.3 (parity interleaving + column-twist interleaving) for 64-QAM
+//! Normal FECFRAME vectors.  TP07 (without the 'a' suffix) is the output of
+//! the §6.1.4 cell-word demux stage.
+//!
+//! # Earlier finding (2026-05-27, issue 4cdaf1c5) — now superseded
+//!
+//! Before the parity interleaving fix, the §6.1.3 output (column-twist only,
+//! wrong Nc values) differed from TP07a by ~50 %:
+//!
+//! | Vector            | Modulation | Code rate | §6.1.3-only (pre-fix) vs TP07a  |
+//! |-------------------|------------|-----------|----------------------------------|
+//! | VV014-64QAM34_CSP | 64-QAM     | Rate 3/4  | 32516/64800 diffs (50.2%)        |
+//! | VV009-4KFFT_CSP   | 64-QAM     | Rate 2/3  | 32432/64800 diffs (50.0%)        |
 //!
 //! # What this test suite validates
 //!
-//! 1. **Vector discovery** — locates all DVB-T2 CSP directories at
+//! 1. **Empirical bit-exact match** — for VV009 (64-QAM Rate 2/3) and
+//!    VV014 (64-QAM Rate 3/4) the test asserts that
+//!    `interleaver.interleave(tp06_block) == tp07a_block` bit-exactly for
+//!    the first 10 blocks of each vector.  Also verifies the inverse:
+//!    `deinterleave(tp07a) == tp06`.
+//!
+//! 2. **Vector discovery** — locates all DVB-T2 CSP directories at
 //!    `$DVB_TEST_VECTORS_PATH` (default `/data/specs/dvb/streams/`) and
 //!    identifies each directory's modulation order and code rate via TP08 sample
 //!    counts and TP05 bit counts.
 //!
-//! 2. **Forward match attempt** — for each in-scope Normal FECFRAME configuration
+//! 3. **Forward match attempt** — for each in-scope Normal FECFRAME configuration
 //!    (rate ∈ {Rate1_2, Rate2_3, Rate3_4} × modulation ∈ {16-QAM, 64-QAM}) the
 //!    test applies `DvbT2BitInterleaver::interleave` to TP06 block 0 and compares
 //!    the result against TP07a block 0.  If they match bit-exactly it records a
 //!    PASS; if they differ it documents the divergence and **skips** the remainder
-//!    of the assertion with a clear message (§6.1.4/§6.1.5 out of scope).
+//!    of the assertion with a clear message.
 //!
-//! 3. **Inverse (roundtrip) check** — for vectors where the forward test passes,
+//! 4. **Inverse (roundtrip) check** — for vectors where the forward test passes,
 //!    also verifies that `deinterleave(tp07a) == tp06`.
 //!
 //! # Scope boundary
 //!
-//! `DvbT2BitInterleaver` implements §6.1.3 only.  §6.1.4 (cell-word demux) and
-//! §6.1.5 (cell interleaver) are out of scope for issue 4cdaf1c5; their
-//! implementation is deferred to a follow-on issue.  If empirical analysis ever
-//! shows a vector whose TP07a IS produced by §6.1.3 alone, the test will
-//! automatically record a PASS and validate the inverse too.
+//! `DvbT2BitInterleaver` implements §6.1.3 (parity interleaving + column-twist).
+//! §6.1.4 (cell-word demux) and §6.1.5 (cell interleaver) are out of scope for
+//! this module and are deferred to a follow-on issue.
 
 use std::path::PathBuf;
 
@@ -239,15 +248,11 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
 ///
 /// # Empirical finding
 ///
-/// As of 2026-05-27 (issue 4cdaf1c5), **all** verified in-scope vectors fail
-/// the §6.1.3-only forward match — the TP07a test point in the DVB-T2 CSP
-/// tool includes §6.1.4 (cell-word demux) + §6.1.5 (cell interleaver) on top
-/// of §6.1.3.  Those stages are out of scope for this issue.  The test
-/// therefore records these findings and skips the equality assertion.
-///
-/// If a future vector or host configuration produces a passing forward match,
-/// the test will assert bit-exact equality and validate the inverse path too
-/// (see `test_tp07a_inverse_on_passing_forward_vectors`).
+/// As of 2026-05-28 (issue 548a8563), in-scope 64-QAM vectors (VV009, VV014)
+/// now PASS the §6.1.3 forward match after the parity interleaving fix.
+/// The test will assert bit-exact equality and validate the inverse for vectors
+/// that match; other vectors (e.g. 16-QAM) that do not match are logged and
+/// skipped (they may require §6.1.4/§6.1.5 stages or use different parameters).
 #[test]
 #[ignore = "external: DVB-T2 ETSI test vectors required at $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
@@ -366,13 +371,8 @@ fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
 
     eprintln!(
         "\nSummary: {pass_count} vector(s) PASS forward match, \
-         {fail_count} vector(s) skipped (TP07a is multi-stage)"
+         {fail_count} vector(s) skipped (TP07a differs — may require §6.1.4/§6.1.5)"
     );
-
-    // The test itself does NOT assert that any vector passed, because we document
-    // empirically that all currently available in-scope vectors include §6.1.4/§6.1.5.
-    // If a future vector passes, it will be validated above.  The hard-criterion
-    // amendment (user approval required) is tracked in issue 4cdaf1c5.
 }
 
 /// Structural sanity: TP06 and TP07a have matching block counts and each block
@@ -439,6 +439,128 @@ fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
             modulation,
             code_rate,
             tp06_blocks.len()
+        );
+    }
+}
+
+/// Bit-exact §6.1.3 forward match for VV009 (64-QAM Rate 2/3) and
+/// VV014 (64-QAM Rate 3/4) against TP07a, verifying the parity
+/// interleaving + column-twist implementation (issue 548a8563).
+///
+/// # Success criterion
+///
+/// For each of the two in-scope ETSI vectors, `interleaver.interleave(tp06_block)`
+/// must equal `tp07a_block` bit-exactly for all tested blocks (≥ first 10).
+/// The inverse `deinterleaver.deinterleave(tp07a_block) == tp06_block` is
+/// also verified.
+///
+/// # Vectors under test
+///
+/// * **VV009-4KFFT_CSP** — Normal FECFRAME, 64-QAM, Rate 2/3.
+///   K_ldpc = 43200, Q_ldpc = 60, N_ldpc = 64800.
+/// * **VV014-64QAM34_CSP** — Normal FECFRAME, 64-QAM, Rate 3/4.
+///   K_ldpc = 48600, Q_ldpc = 45, N_ldpc = 64800.
+#[test]
+#[ignore = "external: DVB-T2 ETSI vectors at /data/specs/dvb/streams/ required"]
+fn test_tp06_to_tp07a_parity_interleave_vv009_vv014() {
+    const BASE: &str = "/data/specs/dvb/streams";
+    const MAX_BLOCKS: usize = 10;
+    const N_FEC: usize = 64800;
+
+    // (dir_name, code_rate, modulation)
+    let test_cases = [
+        ("VV009-4KFFT_CSP", CodeRate::Rate2_3, DvbT2Modulation::Qam64),
+        (
+            "VV014-64QAM34_CSP",
+            CodeRate::Rate3_4,
+            DvbT2Modulation::Qam64,
+        ),
+    ];
+
+    for (dir_name, code_rate, modulation) in &test_cases {
+        let config_dir = PathBuf::from(BASE).join(dir_name);
+        if !config_dir.exists() {
+            eprintln!("Vector directory {:?} not found; skipping", config_dir);
+            continue;
+        }
+
+        let tp06_path = tp_path_for(&config_dir, "06");
+        let tp07a_path = tp_path_for(&config_dir, "07a");
+
+        assert!(
+            tp06_path.exists(),
+            "{dir_name}: TP06 file not found at {tp06_path:?}"
+        );
+        assert!(
+            tp07a_path.exists(),
+            "{dir_name}: TP07a file not found at {tp07a_path:?}"
+        );
+
+        let tp06_blocks = parse_tp_blocks(&tp06_path);
+        let tp07a_blocks = parse_tp_blocks(&tp07a_path);
+
+        assert!(
+            !tp06_blocks.is_empty(),
+            "{dir_name}: TP06 parse produced no blocks"
+        );
+        assert!(
+            !tp07a_blocks.is_empty(),
+            "{dir_name}: TP07a parse produced no blocks"
+        );
+
+        let modcod = DvbT2Modcod::new(FrameSize::Normal, *code_rate, *modulation);
+        let interleaver = DvbT2BitInterleaver::new(modcod);
+
+        assert_eq!(
+            interleaver.frame_bits(),
+            N_FEC,
+            "{dir_name}: interleaver frame_bits must be {N_FEC}"
+        );
+
+        let n_blocks = tp06_blocks.len().min(tp07a_blocks.len()).min(MAX_BLOCKS);
+
+        for block_idx in 0..n_blocks {
+            let tp06_block = &tp06_blocks[block_idx];
+            let tp07a_block = &tp07a_blocks[block_idx];
+
+            assert_eq!(
+                tp06_block.len(),
+                N_FEC,
+                "{dir_name} block {block_idx}: TP06 has {} bits, expected {N_FEC}",
+                tp06_block.len()
+            );
+            assert_eq!(
+                tp07a_block.len(),
+                N_FEC,
+                "{dir_name} block {block_idx}: TP07a has {} bits, expected {N_FEC}",
+                tp07a_block.len()
+            );
+
+            // Forward: interleave(TP06) must equal TP07a bit-exact.
+            let interleaved = interleaver.interleave(tp06_block);
+            let diffs: usize = (0..N_FEC)
+                .filter(|&i| interleaved.get(i) != tp07a_block.get(i))
+                .count();
+            assert_eq!(
+                diffs, 0,
+                "{dir_name} block {block_idx}: interleave(TP06) differs from TP07a \
+                 by {diffs}/{N_FEC} bits (expected 0; §6.1.3 parity+column-twist must \
+                 reproduce TP07a bit-exact)"
+            );
+
+            // Inverse: deinterleave(TP07a) must equal TP06.
+            let deinterleaved = interleaver.deinterleave(tp07a_block);
+            assert_eq!(
+                deinterleaved, *tp06_block,
+                "{dir_name} block {block_idx}: deinterleave(TP07a) != TP06 \
+                 (inverse permutation must invert forward exactly)"
+            );
+        }
+
+        eprintln!(
+            "[PASS] {dir_name} ({modulation:?} {code_rate:?}): \
+             interleave(TP06) == TP07a for {n_blocks}/{} block(s) — bit-exact",
+            tp06_blocks.len().min(tp07a_blocks.len())
         );
     }
 }

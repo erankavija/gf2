@@ -1,26 +1,54 @@
-//! DVB-T2 column-row (block) bit interleaver.
+//! DVB-T2 bit interleaver: parity interleaving + column-twist interleaving.
 //!
-//! Implements the two-stage bit interleaving process defined in
+//! Implements the full two-stage bit interleaving process defined in
 //! ETSI EN 302 755 v1.4.1, §6.1.3 ("Bit Interleaving").
 //!
 //! # Algorithm
 //!
-//! Given an FECFRAME of `N` coded bits mapped to `N / η_mod` cells with
-//! `η_mod` bits per cell (modulation order), the interleaver proceeds in
-//! two stages:
+//! Given an FECFRAME of `N_ldpc` coded bits (the LDPC encoder output Λ),
+//! the bit interleaver applies two sequential stages to produce V:
 //!
-//! **Stage 1 — column-row write/read.**
-//! Bits are written column by column into a matrix of dimensions
-//! `Nc` (columns) × `Nr` (rows) and read back row by row.
-//! Parameters `(Nc, Nr)` depend on the FECFRAME size and the
-//! modulation order according to Table 9 / Table 9a of the spec.
+//! **Stage 1 — parity interleaving (16-QAM and 64-QAM only).**
+//! The `K_ldpc` information bits pass through unchanged.  The parity
+//! bits are permuted by:
 //!
-//! **Stage 2 — column twist (16-QAM and 64-QAM only).**
-//! Before reading, each column `c` is cyclically rotated upwards by a
-//! twist offset `t_c` (tabulated in Table 9 of the spec), so the bit
-//! read from row `r` of column `c` originates from row
-//! `(r + t_c) mod Nr`.
-//! QPSK has no twist (`t_c = 0` for all `c`).
+//! ```text
+//! u_i = λ_i                                     for 0 ≤ i < K_ldpc
+//! u_{K_ldpc + 360·t + s} = λ_{K_ldpc + Q·s + t}  for 0 ≤ s < 360, 0 ≤ t < Q
+//! ```
+//!
+//! where `Q = (N_ldpc − K_ldpc) / 360`.
+//!
+//! **Stage 2 — column-twist interleaving (16-QAM and 64-QAM only).**
+//! The parity-interleaved bits U are serially written column-wise into
+//! a matrix of `Nc` columns × `Nr` rows (the write start position of
+//! column `c` is twisted by `tc[c]`), then read out row-wise:
+//!
+//! ```text
+//! Write: u_i → column  c_i = i / Nr,  row  r_i = (i + tc[c_i]) mod Nr
+//! Read:  v_j ← column  c_j = j mod Nc, row  r_j = j / Nc
+//! ```
+//!
+//! Parameters `(Nc, Nr, tc[])` come from Tables 9 and 10 of the spec
+//! (different from η_mod — see table below).
+//!
+//! For **QPSK** the entire §6.1.3 section does not apply; the bits pass
+//! through without interleaving (Nc = 2, Nr = N/2, all twists zero).
+//!
+//! # Interleaver parameters (ETSI EN 302 755 v1.4.1, Tables 9 and 10)
+//!
+//! ```text
+//! ┌─────────┬──────────────┬────┬───────┬──────────────────────────────────┐
+//! │ Modul.  │ N_ldpc       │ Nc │  Nr   │ twist offsets tc[0..Nc-1]         │
+//! ├─────────┼──────────────┼────┼───────┼──────────────────────────────────┤
+//! │ QPSK    │ 64 800       │  2 │ 32400 │ 0, 0                              │
+//! │ QPSK    │ 16 200       │  2 │  8100 │ 0, 0                              │
+//! │ 16-QAM  │ 64 800       │  8 │  8100 │ 0, 0, 2, 4, 4, 5, 7, 7           │
+//! │ 16-QAM  │ 16 200       │  8 │  2025 │ 0, 0, 0, 1, 7, 20, 20, 21        │
+//! │ 64-QAM  │ 64 800       │ 12 │  5400 │ 0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9│
+//! │ 64-QAM  │ 16 200       │ 12 │  1350 │ 0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7│
+//! └─────────┴──────────────┴────┴───────┴──────────────────────────────────┘
+//! ```
 //!
 //! # Scope
 //!
@@ -40,11 +68,11 @@
 //!
 //! # References
 //!
-//! - ETSI EN 302 755 v1.4.1, §6.1.3, Table 9 (Normal FECFRAME),
-//!   Table 9a (Short FECFRAME).
+//! - ETSI EN 302 755 v1.4.1, §6.1.3, Table 9 (combined Normal+Short),
+//!   Table 10 (column twisting parameters).
 
 use crate::bch::CodeRate;
-use crate::ldpc::dvb_t2::params::FrameSize;
+use crate::ldpc::dvb_t2::params::{DvbParams, FrameSize};
 use gf2_core::BitVec;
 
 use crate::llr::Llr;
@@ -57,16 +85,21 @@ use crate::llr::Llr;
 /// cell word demux and cell interleaver stages (§6.1.4/§6.1.5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DvbT2Modulation {
-    /// QPSK: 2 bits per cell, no column twist.
+    /// QPSK: 2 bits per cell, no §6.1.3 interleaving applied.
     Qpsk,
-    /// 16-QAM: 4 bits per cell, column-twist per Table 9 / 9a.
+    /// 16-QAM: 4 bits per cell, parity interleave + column-twist per
+    /// Tables 9 and 10 (Nc=8).
     Qam16,
-    /// 64-QAM: 6 bits per cell, column-twist per Table 9 / 9a.
+    /// 64-QAM: 6 bits per cell, parity interleave + column-twist per
+    /// Tables 9 and 10 (Nc=12).
     Qam64,
 }
 
 impl DvbT2Modulation {
     /// Number of coded bits per QAM cell (η_mod in the spec).
+    ///
+    /// Note: η_mod differs from the interleaver column count `Nc`.
+    /// For 16-QAM η_mod = 4 but Nc = 8; for 64-QAM η_mod = 6 but Nc = 12.
     pub fn bits_per_cell(self) -> usize {
         match self {
             DvbT2Modulation::Qpsk => 2,
@@ -78,8 +111,8 @@ impl DvbT2Modulation {
 
 /// MODCOD selector for the DVB-T2 bit interleaver.
 ///
-/// Selects the interleaver parameters `(Nc, Nr, twist[])` from
-/// Tables 9 and 9a of ETSI EN 302 755 v1.4.1 §6.1.3.
+/// Selects the interleaver parameters `(Nc, Nr, twist[], K_ldpc, Q_ldpc)` from
+/// Tables 9 and 10 of ETSI EN 302 755 v1.4.1 §6.1.3.
 ///
 /// # Arguments
 ///
@@ -111,18 +144,25 @@ impl DvbT2Modcod {
 
 /// Interleaver configuration derived from the spec tables.
 ///
-/// All field values are verbatim from ETSI EN 302 755 v1.4.1 §6.1.3.
+/// All field values are verbatim from ETSI EN 302 755 v1.4.1 §6.1.3,
+/// Tables 9 and 10.
 #[derive(Debug, Clone)]
 struct InterleaverConfig {
-    /// Number of columns (Nc = η_mod = bits per cell).
+    /// Number of columns (Nc from Table 9 — NOT equal to η_mod).
     nc: usize,
-    /// Number of rows (Nr = N / Nc where N is FECFRAME length).
+    /// Number of rows (Nr = N_ldpc / Nc, from Table 9).
     nr: usize,
-    /// Column-twist offsets, one per column (tc[0..Nc]).
+    /// Column-twist offsets, one per column (tc[0..Nc]), from Table 10.
     ///
-    /// From Table 9 (Normal FECFRAME) or Table 9a (Short FECFRAME).
-    /// QPSK has all zeros; 16-QAM and 64-QAM have non-zero entries.
+    /// QPSK has all zeros; 16-QAM (Nc=8) and 64-QAM (Nc=12) have
+    /// values from Table 10.
     twist: Vec<usize>,
+    /// K_ldpc: number of information bits in the FECFRAME.
+    /// Used to compute Q_ldpc for the parity interleaving stage.
+    k_ldpc: usize,
+    /// Q_ldpc = (N_ldpc − K_ldpc) / 360.
+    /// Zero for QPSK (no parity interleaving).
+    q_ldpc: usize,
 }
 
 impl InterleaverConfig {
@@ -138,36 +178,8 @@ impl InterleaverConfig {
             FrameSize::Normal => 64800,
             FrameSize::Short => 16200,
         };
-        let nc = modcod.modulation.bits_per_cell();
-        let nr = n / nc;
 
-        // Column-twist values are quoted verbatim from:
-        //
-        // ETSI EN 302 755 v1.4.1, §6.1.3
-        //
-        // Table 9 — Normal FECFRAME interleaver parameters
-        // ┌──────────┬────┬───────┬───────────────────────────────────────┐
-        // │ Modul.   │ Nc │  Nr   │ twist offsets tc[0] … tc[Nc-1]        │
-        // ├──────────┼────┼───────┼───────────────────────────────────────┤
-        // │ QPSK     │  2 │ 32400 │ 0, 0                                  │
-        // │ 16-QAM   │  4 │ 16200 │ 0, 2, 4, 4                            │
-        // │ 64-QAM   │  6 │ 10800 │ 0, 7, 20, 20, 21, 7                   │
-        // └──────────┴────┴───────┴───────────────────────────────────────┘
-        //
-        // Table 9a — Short FECFRAME interleaver parameters
-        // ┌──────────┬────┬───────┬───────────────────────────────────────┐
-        // │ Modul.   │ Nc │  Nr   │ twist offsets tc[0] … tc[Nc-1]        │
-        // ├──────────┼────┼───────┼───────────────────────────────────────┤
-        // │ QPSK     │  2 │  8100 │ 0, 0                                  │
-        // │ 16-QAM   │  4 │  4050 │ 0, 2, 4, 4                            │
-        // │ 64-QAM   │  6 │  2700 │ 0, 7, 20, 20, 21, 7                   │
-        // └──────────┴────┴───────┴───────────────────────────────────────┘
-        //
-        // Note: the twist offsets are independent of frame size and code
-        // rate — they depend solely on the modulation order.
-        //
-        // The code rate is validated to ensure only in-scope rates are used;
-        // the twist tables themselves are modulation-dependent only.
+        // Validate code rate scope.
         match (modcod.code_rate, modcod.frame_size) {
             (CodeRate::Rate1_2 | CodeRate::Rate2_3 | CodeRate::Rate3_4, _) => {}
             (CodeRate::Rate3_5, FrameSize::Normal) => {}
@@ -181,22 +193,74 @@ impl InterleaverConfig {
             ),
         }
 
-        let twist = match modcod.modulation {
-            DvbT2Modulation::Qpsk => vec![0, 0],
-            DvbT2Modulation::Qam16 => vec![0, 2, 4, 4],
-            DvbT2Modulation::Qam64 => vec![0, 7, 20, 20, 21, 7],
+        // Nc and twist values from ETSI EN 302 755 v1.4.1, Tables 9 and 10.
+        //
+        // NOTE: Nc is NOT equal to η_mod (bits per cell). Per Table 9:
+        //   QPSK:   Nc = 2  (η_mod = 2)
+        //   16-QAM: Nc = 8  (η_mod = 4)
+        //   64-QAM: Nc = 12 (η_mod = 6)
+        //
+        // Table 10: Column twisting parameter tc
+        // ┌─────────┬────┬──────────────┬──────────────────────────────────────┐
+        // │ Modul.  │ Nc │   N_ldpc     │ tc[0] … tc[Nc-1]                     │
+        // ├─────────┼────┼──────────────┼──────────────────────────────────────┤
+        // │ QPSK    │  2 │ 64800/16200  │ 0, 0                                 │
+        // │ 16-QAM  │  8 │ 64 800       │ 0, 0, 2, 4, 4, 5, 7, 7               │
+        // │ 16-QAM  │  8 │ 16 200       │ 0, 0, 0, 1, 7, 20, 20, 21            │
+        // │ 64-QAM  │ 12 │ 64 800       │ 0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9  │
+        // │ 64-QAM  │ 12 │ 16 200       │ 0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7  │
+        // └─────────┴────┴──────────────┴──────────────────────────────────────┘
+        let (nc, twist): (usize, Vec<usize>) = match (modcod.modulation, modcod.frame_size) {
+            (DvbT2Modulation::Qpsk, _) => (2, vec![0, 0]),
+            (DvbT2Modulation::Qam16, FrameSize::Normal) => (8, vec![0, 0, 2, 4, 4, 5, 7, 7]),
+            (DvbT2Modulation::Qam16, FrameSize::Short) => (8, vec![0, 0, 0, 1, 7, 20, 20, 21]),
+            (DvbT2Modulation::Qam64, FrameSize::Normal) => {
+                (12, vec![0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9])
+            }
+            (DvbT2Modulation::Qam64, FrameSize::Short) => {
+                (12, vec![0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7])
+            }
+        };
+        let nr = n / nc;
+
+        // K_ldpc and Q_ldpc for parity interleaving.
+        // Per §6.1.3: Q_ldpc = (N_ldpc − K_ldpc) / 360.
+        // For QPSK, §6.1.3 does not apply: Q_ldpc = 0 (no parity interleaving).
+        let (k_ldpc, q_ldpc) = if modcod.modulation == DvbT2Modulation::Qpsk {
+            (n, 0)
+        } else {
+            let dvb_params = DvbParams::for_code(modcod.frame_size, modcod.code_rate);
+            let k = dvb_params.k;
+            let q = (n - k) / 360;
+            (k, q)
         };
 
-        InterleaverConfig { nc, nr, twist }
+        InterleaverConfig {
+            nc,
+            nr,
+            twist,
+            k_ldpc,
+            q_ldpc,
+        }
     }
 }
 
-/// DVB-T2 column-row block bit interleaver.
+/// DVB-T2 bit interleaver (§6.1.3): parity interleaving + column-twist.
 ///
-/// Implements the two-stage bit interleaving process from
-/// ETSI EN 302 755 v1.4.1 §6.1.3.  Bits are written into an
-/// `Nr × Nc` matrix column by column, then read back row by row
-/// (with a per-column cyclic twist for 16-QAM and 64-QAM).
+/// Implements the full two-stage bit interleaving process from
+/// ETSI EN 302 755 v1.4.1 §6.1.3.
+///
+/// **Stage 1 — parity interleaving** (16-QAM and 64-QAM only):
+/// Information bits are unchanged; parity bits at positions `K_ldpc..N_ldpc`
+/// are permuted by `u_{K+360t+s} = λ_{K+Q·s+t}` (0 ≤ s < 360, 0 ≤ t < Q).
+///
+/// **Stage 2 — column-twist interleaving** (16-QAM and 64-QAM only):
+/// Parity-interleaved bits U are written column-wise into an `Nc × Nr`
+/// matrix (with per-column twist) and read row-wise to produce V.
+///
+/// Both stages are composed into a single precomputed permutation table
+/// so `interleave` and `deinterleave` run in O(N) with no intermediate
+/// allocation.
 ///
 /// # Construction
 ///
@@ -226,7 +290,7 @@ impl InterleaverConfig {
 /// `deinterleave_llrs`: O(N).
 #[derive(Debug, Clone)]
 pub struct DvbT2BitInterleaver {
-    /// Interleaver configuration (Nc, Nr, twist).
+    /// Interleaver configuration (Nc, Nr, twist, K_ldpc, Q_ldpc).
     config: InterleaverConfig,
     /// Forward permutation: `forward[i]` is the output index for input
     /// bit `i`.  Size = Nc × Nr.
@@ -239,8 +303,9 @@ pub struct DvbT2BitInterleaver {
 impl DvbT2BitInterleaver {
     /// Creates a new interleaver for the given MODCOD.
     ///
-    /// Precomputes forward and inverse permutation tables derived from
-    /// the ETSI EN 302 755 v1.4.1 §6.1.3 column-row algorithm.
+    /// Precomputes forward and inverse permutation tables that compose
+    /// both the parity-interleaving stage and the column-twist stage
+    /// from ETSI EN 302 755 v1.4.1 §6.1.3.
     ///
     /// # Arguments
     ///
@@ -275,37 +340,57 @@ impl DvbT2BitInterleaver {
     pub fn new(modcod: DvbT2Modcod) -> Self {
         let config = InterleaverConfig::from_modcod(modcod);
         let n = config.nc * config.nr;
-
-        // Build the inverse permutation following ETSI EN 302 755 v1.4.1 §6.1.3:
-        //
-        //   Write (column-by-column): input bit `i` is placed at column
-        //          `c = i / Nr`, row `r = i mod Nr` of the matrix.
-        //          The input index stored at (row r, col c) is `c * Nr + r`.
-        //
-        //   Read with twist (row-by-row): the output bit at position `j`
-        //          reads from row `r = j / Nc`, column `c = j mod Nc`,
-        //          but with per-column cyclic twist applied:
-        //          actual_row = (j / Nc + tc[j mod Nc]) mod Nr
-        //          actual_col = j mod Nc
-        //
-        //   Spec formula (§6.1.3):
-        //     output[j] = input[(j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)]
-        //
-        //   Therefore:
-        //     inverse[j] = (j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)
-
         let nc = config.nc;
         let nr = config.nr;
+        let k = config.k_ldpc;
+        let q = config.q_ldpc;
+
+        // Build the composed permutation in two steps.
+        //
+        // Step A: parity interleaving (§6.1.3 stage 1).
+        //
+        //   parity_perm[i] = i                          for 0 ≤ i < K_ldpc
+        //   parity_perm[K + 360·t + s] = K + Q·s + t   for 0 ≤ s < 360, 0 ≤ t < Q
+        //
+        //   For QPSK, q = 0 so no parity interleaving occurs (parity_perm = identity).
+        //   For 16-QAM / 64-QAM, Q = (N − K) / 360.
+        let mut parity_perm: Vec<usize> = (0..n).collect();
+        if q > 0 {
+            for s in 0..360usize {
+                for t in 0..q {
+                    parity_perm[k + 360 * t + s] = k + q * s + t;
+                }
+            }
+        }
+
+        // Step B: column-twist interleaving (§6.1.3 stage 2).
+        //
+        //   Write: u_i → col c_i = i / Nr, row r_i = (i + tc[c_i]) mod Nr
+        //   Read:  v_j ← col c_j = j mod Nc, row r_j = j / Nc
+        //
+        //   Composing: v[j] = u[parity_perm_inv[i]] where i maps to (c_j, r_j
+        //   after untwist).  Since the column-twist stage reads U (parity-interleaved),
+        //   the combined forward permutation is:
+        //
+        //   forward_combined[i] = col_twist_output_position_of_parity_interleaved_i
+        //
+        //   It is easier to build the *inverse* directly:
+        //
+        //   inv_col_twist[j] = (j mod Nc) * Nr + ((j / Nc - tc[j mod Nc] + Nr) % Nr)
+        //   inverse[j] = parity_perm[ inv_col_twist[j] ]
+        //
+        // For QPSK, parity_perm is identity so inverse[j] = inv_col_twist[j].
         let inverse: Vec<usize> = (0..n)
             .map(|j| {
                 let c = j % nc;
                 let r = j / nc;
-                let src_row = (r + config.twist[c]) % nr;
-                c * nr + src_row
+                let src_row = (r + nr - config.twist[c] % nr) % nr;
+                let col_twist_src = c * nr + src_row;
+                parity_perm[col_twist_src]
             })
             .collect();
 
-        // Forward: for each input index i, find where it appears in inverse.
+        // Forward is the inverse of the inverse permutation.
         let mut forward = vec![0usize; n];
         for (out, &src) in inverse.iter().enumerate() {
             forward[src] = out;
@@ -323,30 +408,33 @@ impl DvbT2BitInterleaver {
         self.config.nc * self.config.nr
     }
 
-    /// Number of interleaver columns (Nc = bits per QAM cell).
+    /// Number of interleaver columns (Nc from Table 9 — NOT η_mod).
+    ///
+    /// Note: 16-QAM has Nc=8 (not 4), 64-QAM has Nc=12 (not 6), per
+    /// Table 9 of ETSI EN 302 755 v1.4.1.
     pub fn num_columns(&self) -> usize {
         self.config.nc
     }
 
-    /// Number of interleaver rows (Nr = frame_bits / Nc).
+    /// Number of interleaver rows (Nr = frame_bits / Nc, from Table 9).
     pub fn num_rows(&self) -> usize {
         self.config.nr
     }
 
-    /// Column-twist offsets (one per column, from Table 9 / 9a).
+    /// Column-twist offsets (one per column, from Table 10).
     pub fn twist_offsets(&self) -> &[usize] {
         &self.config.twist
     }
 
-    /// Interleaves a bit vector according to the DVB-T2 column-row algorithm.
+    /// Interleaves a bit vector according to the DVB-T2 §6.1.3 algorithm.
     ///
-    /// Bits are written column by column into an `Nr × Nc` matrix (with
-    /// per-column twist) and read back row by row to produce the
-    /// interleaved output.
+    /// Applies the composed permutation that encodes both the parity
+    /// interleaving stage and the column-twist stage.
     ///
     /// # Arguments
     ///
-    /// * `bits` — Input [`BitVec`] of exactly `frame_bits()` bits.
+    /// * `bits` — Input [`BitVec`] of exactly `frame_bits()` bits
+    ///   (the LDPC encoder output Λ).
     ///
     /// # Panics
     ///
@@ -521,8 +609,8 @@ mod tests {
         bv
     }
 
-    // Helper: all MODCOD combinations in scope (3 rates × 2 modulations
-    // × 2 frame sizes = 12 configurations, plus QPSK for completeness).
+    // Helper: all MODCOD combinations in scope (3 rates × 3 modulations
+    // × 2 frame sizes = 18 configurations).
     fn in_scope_modcods() -> Vec<DvbT2Modcod> {
         let mut v = Vec::new();
         for &fs in &[FrameSize::Normal, FrameSize::Short] {
@@ -651,8 +739,8 @@ mod tests {
     /// Rate3_4 × {16-QAM, 64-QAM} × Normal FECFRAME roundtrip.
     ///
     /// Per ETSI EN 302 755 v1.4.1 §6.1.3 Table 9 (Normal FECFRAME):
-    ///   16-QAM: Nc=4, Nr=16200, N=64800, twist=[0,2,4,4]
-    ///   64-QAM: Nc=6, Nr=10800, N=64800, twist=[0,7,20,20,21,7]
+    ///   16-QAM: Nc=8, Nr=8100, N=64800, twist=[0,0,2,4,4,5,7,7]
+    ///   64-QAM: Nc=12, Nr=5400, N=64800, twist=[0,0,2,2,3,4,4,5,5,7,8,9]
     /// (Nc × Nr = 64800 in both cases.)
     #[test]
     fn test_roundtrip_rate3_4_normal() {
@@ -679,9 +767,9 @@ mod tests {
 
     /// Rate3_4 × {16-QAM, 64-QAM} × Short FECFRAME roundtrip.
     ///
-    /// Per ETSI EN 302 755 v1.4.1 §6.1.3 Table 9a (Short FECFRAME):
-    ///   16-QAM: Nc=4, Nr=4050, N=16200, twist=[0,2,4,4]
-    ///   64-QAM: Nc=6, Nr=2700, N=16200, twist=[0,7,20,20,21,7]
+    /// Per ETSI EN 302 755 v1.4.1 §6.1.3 Table 9 (Short FECFRAME):
+    ///   16-QAM: Nc=8, Nr=2025, N=16200, twist=[0,0,0,1,7,20,20,21]
+    ///   64-QAM: Nc=12, Nr=1350, N=16200, twist=[0,0,0,2,2,2,3,3,3,6,7,7]
     /// (Nc × Nr = 16200 in both cases.)
     #[test]
     fn test_roundtrip_rate3_4_short() {
@@ -806,37 +894,87 @@ mod tests {
         }
     }
 
-    /// Verify the twist offsets from Table 9 / 9a.
+    /// Verify the Nc values from Table 9 of ETSI EN 302 755 v1.4.1.
     ///
-    /// From ETSI EN 302 755 v1.4.1 §6.1.3:
-    ///   QPSK:   [0, 0]
-    ///   16-QAM: [0, 2, 4, 4]
-    ///   64-QAM: [0, 7, 20, 20, 21, 7]
+    /// QPSK: Nc=2, 16-QAM: Nc=8, 64-QAM: Nc=12.
+    /// These are frame-size-independent (Nc depends only on modulation).
+    #[test]
+    fn test_nc_matches_spec_table9() {
+        for &fs in &[FrameSize::Normal, FrameSize::Short] {
+            let qpsk = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
+            assert_eq!(
+                DvbT2BitInterleaver::new(qpsk).num_columns(),
+                2,
+                "QPSK must have Nc=2"
+            );
+
+            let qam16 = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+            assert_eq!(
+                DvbT2BitInterleaver::new(qam16).num_columns(),
+                8,
+                "16-QAM must have Nc=8 (not η_mod=4)"
+            );
+
+            let qam64 = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
+            assert_eq!(
+                DvbT2BitInterleaver::new(qam64).num_columns(),
+                12,
+                "64-QAM must have Nc=12 (not η_mod=6)"
+            );
+        }
+    }
+
+    /// Verify the twist offsets from Table 10 of ETSI EN 302 755 v1.4.1.
+    ///
+    /// Table 10 (Column twisting parameter tc):
+    ///   QPSK:               [0, 0]
+    ///   16-QAM Normal:      [0, 0, 2, 4, 4, 5, 7, 7]
+    ///   16-QAM Short:       [0, 0, 0, 1, 7, 20, 20, 21]
+    ///   64-QAM Normal:      [0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9]
+    ///   64-QAM Short:       [0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7]
     #[test]
     fn test_twist_offsets_match_spec() {
-        // Twist values are independent of frame size / code rate.
+        // QPSK twist is independent of frame size and code rate.
         for &fs in &[FrameSize::Normal, FrameSize::Short] {
             let m = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qpsk);
             assert_eq!(
                 DvbT2BitInterleaver::new(m).twist_offsets(),
-                &[0, 0],
+                &[0usize, 0],
                 "QPSK twist mismatch"
             );
-
-            let m16 = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-            assert_eq!(
-                DvbT2BitInterleaver::new(m16).twist_offsets(),
-                &[0, 2, 4, 4],
-                "16-QAM twist mismatch"
-            );
-
-            let m64 = DvbT2Modcod::new(fs, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
-            assert_eq!(
-                DvbT2BitInterleaver::new(m64).twist_offsets(),
-                &[0, 7, 20, 20, 21, 7],
-                "64-QAM twist mismatch"
-            );
         }
+
+        // 16-QAM Normal: Table 10 gives [0, 0, 2, 4, 4, 5, 7, 7].
+        let m16n = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+        assert_eq!(
+            DvbT2BitInterleaver::new(m16n).twist_offsets(),
+            &[0usize, 0, 2, 4, 4, 5, 7, 7],
+            "16-QAM Normal twist mismatch"
+        );
+
+        // 16-QAM Short: Table 10 gives [0, 0, 0, 1, 7, 20, 20, 21].
+        let m16s = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+        assert_eq!(
+            DvbT2BitInterleaver::new(m16s).twist_offsets(),
+            &[0usize, 0, 0, 1, 7, 20, 20, 21],
+            "16-QAM Short twist mismatch"
+        );
+
+        // 64-QAM Normal: Table 10 gives [0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9].
+        let m64n = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
+        assert_eq!(
+            DvbT2BitInterleaver::new(m64n).twist_offsets(),
+            &[0usize, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9],
+            "64-QAM Normal twist mismatch"
+        );
+
+        // 64-QAM Short: Table 10 gives [0, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7].
+        let m64s = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
+        assert_eq!(
+            DvbT2BitInterleaver::new(m64s).twist_offsets(),
+            &[0usize, 0, 0, 2, 2, 2, 3, 3, 3, 6, 7, 7],
+            "64-QAM Short twist mismatch"
+        );
     }
 
     /// Out-of-scope rate panics.
@@ -883,17 +1021,17 @@ mod tests {
     ///
     /// QPSK: Nc=2, tc=[0,0].  Short FECFRAME: Nr=8100, N=16200.
     ///
-    /// Spec formula: output[j] = input[(j mod 2) * 8100 + (j/2 + 0) mod 8100]
+    /// For QPSK, no parity interleaving is applied (§6.1.3 is for
+    /// 16-QAM/64-QAM only).  The column-twist permutation with Nc=2
+    /// and tc=[0,0] reads:
+    ///   inverse[j] = (j mod 2) * Nr + (j / 2)
     ///
     /// For the first 8 output positions:
-    ///   output[0] = input[0*8100 + 0] = input[0]
-    ///   output[1] = input[1*8100 + 0] = input[8100]
-    ///   output[2] = input[0*8100 + 1] = input[1]
-    ///   output[3] = input[1*8100 + 1] = input[8101]
-    ///   output[4] = input[0*8100 + 2] = input[2]
-    ///   output[5] = input[1*8100 + 2] = input[8102]
-    ///   output[6] = input[0*8100 + 3] = input[3]
-    ///   output[7] = input[1*8100 + 3] = input[8103]
+    ///   inverse[0] = 0*8100 + 0 = 0
+    ///   inverse[1] = 1*8100 + 0 = 8100
+    ///   inverse[2] = 0*8100 + 1 = 1
+    ///   inverse[3] = 1*8100 + 1 = 8101
+    ///   ...
     ///
     /// This is NOT identity — QPSK interleaves bits from col 0 and col 1.
     #[test]
@@ -926,14 +1064,14 @@ mod tests {
     /// (matching the QPSK matrix write layout), runs interleave, and asserts
     /// the output matches the hand-derived expected pattern per §6.1.3.
     ///
-    /// With Nr=8100, Nc=2, tc=[0,0]:
-    ///   Input bits set at positions: 0, 8100, 1, 8101
+    /// With Nr=32400, Nc=2, tc=[0,0]:
+    ///   Input bits set at positions: 0, 32400, 1, 32401
     ///   Spec formula output[j] = input[(j%2)*Nr + j/2]:
-    ///     output[0] = input[0]    = 1  (set)
-    ///     output[1] = input[8100] = 1  (set)
-    ///     output[2] = input[1]    = 1  (set)
-    ///     output[3] = input[8101] = 1  (set)
-    ///     output[4] = input[2]    = 0
+    ///     output[0] = input[0]      = 1  (set)
+    ///     output[1] = input[32400]  = 1  (set)
+    ///     output[2] = input[1]      = 1  (set)
+    ///     output[3] = input[32401]  = 1  (set)
+    ///     output[4] = input[2]      = 0
     ///     ...all others = 0
     #[test]
     fn test_qpsk_spec_compliance_forward() {
@@ -968,37 +1106,58 @@ mod tests {
         assert_eq!(popcount, 4, "permutation must preserve popcount");
     }
 
-    // --- 16-QAM twist verification ------------------------------------------
+    // --- 64-QAM column-twist verification (spec Table 9/10) -----------------
 
-    /// Verify that the twist shifts the source row correctly for 16-QAM.
+    /// Verify the column-twist interleaver indices for 64-QAM Normal FECFRAME.
     ///
-    /// From Table 9 (Normal), Table 9a (Short): tc = [0, 2, 4, 4].
+    /// Per ETSI EN 302 755 v1.4.1 §6.1.3, for 64-QAM Normal (Nc=12, Nr=5400):
     ///
-    /// Per spec formula (§6.1.3):
-    ///   inverse[j] = (j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)
+    ///   v[0..11] = u[0, 5400, 16198, 21598, 26997, 32396, 37796,
+    ///                43195, 48595, 53993, 59392, 64791]
     ///
-    /// Equivalently for output index j = r*Nc+c (r = j/Nc, c = j%Nc):
-    ///   inverse[j] = c * Nr + ((r + tc[c]) mod Nr)
+    /// This tests only the column-twist stage (using QPSK to avoid parity
+    /// interleaving, then manually verifying the formula with Rate1_2 64-QAM).
+    ///
+    /// For Rate1_2 64-QAM: Q = (64800-32400)/360 = 90, so parity interleaving
+    /// DOES modify indices ≥ K=32400.  The first 12 outputs (j=0..11) read from
+    /// rows 0 of each column:
+    ///   v[j] source = col*Nr + (0 - tc[col] + Nr) % Nr  (for row_j=0)
     #[test]
-    fn test_qam16_twist_application() {
-        let modcod = DvbT2Modcod::new(FrameSize::Short, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+    fn test_64qam_normal_col_twist_spec_example() {
+        // Use Rate1_2 Normal 64-QAM.
+        // K = 32400, Q = 90, N = 64800, Nc = 12, Nr = 5400
+        // tc = [0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9]
+        // For j in [0..12] (row=0):
+        //   v[j] reads from col=j, row=(0-tc[j]+5400)%5400 of U.
+        //   For col 0: row=(0-0+5400)%5400=0, src=0*5400+0=0 → U[0]=Λ[0]
+        //   For col 1: row=(0-0+5400)%5400=0, src=1*5400+0=5400 → U[5400]=Λ[5400]
+        //   For col 2: row=(0-2+5400)%5400=5398, src=2*5400+5398=16198 → U[16198]=Λ[16198]
+        //     (all these indices < K=32400, so parity perm is identity there)
+        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam64);
         let il = DvbT2BitInterleaver::new(modcod);
-        let nc = il.num_columns(); // 4
-        let nr = il.num_rows(); // 4050
-        let twist = il.twist_offsets().to_vec();
+        let nr = il.num_rows(); // 5400
+        let nc = il.num_columns(); // 12
+        let twist = il.twist_offsets().to_vec(); // [0,0,2,2,3,4,4,5,5,7,8,9]
 
-        for r in 0..nr.min(10) {
-            for (c, &tc) in twist.iter().enumerate() {
-                let out = r * nc + c;
-                let expected_src_row = (r + tc) % nr;
-                // Column-major input indexing: column c starts at c*Nr.
-                let expected_src = c * nr + expected_src_row;
-                assert_eq!(
-                    il.inverse[out], expected_src,
-                    "16-QAM twist: inverse[row={},col={}] wrong",
-                    r, c
-                );
-            }
+        assert_eq!(nc, 12, "64-QAM Normal must have Nc=12");
+        assert_eq!(nr, 5400, "64-QAM Normal must have Nr=5400");
+        assert_eq!(twist, vec![0, 0, 2, 2, 3, 4, 4, 5, 5, 7, 8, 9]);
+
+        // Spec example values for j=0..11 (first row of output):
+        let spec_example = [
+            0usize, 5400, 16198, 21598, 26997, 32396, 37796, 43195, 48595, 53993, 59392, 64791,
+        ];
+        // NOTE: indices ≥ K=32400 pass through parity interleaving, so the
+        // inverse[j] for indices with col ≥ 6 will differ from spec_example
+        // because parity_perm maps them.  Only verify columns 0..5 (src < K).
+        // For col 2: src = 16198 < 32400, so parity perm is identity. ✓
+        for (j, &expected) in spec_example.iter().enumerate().take(6) {
+            // cols 0..5 all have src < K=32400 for the j=col case
+            assert_eq!(
+                il.inverse[j], expected,
+                "64-QAM inverse[{}] should be {} (spec example), got {}",
+                j, expected, il.inverse[j]
+            );
         }
     }
 
@@ -1006,13 +1165,6 @@ mod tests {
 
     /// Roundtrip identity at word-boundary bit positions (0, 1, 63, 64, 65
     /// relative to a multiple of Nc) for QPSK, 16-QAM, 64-QAM Normal frames.
-    ///
-    /// For each configuration, a FECFRAME is constructed with exactly one bit
-    /// set at the boundary position; interleave→deinterleave must recover it.
-    ///
-    /// "Word boundary" here means bit index near multiples of 64 (u64 word
-    /// size in BitVec), tested via offsets 0, 1, 63, 64, 65 from the start
-    /// of the FECFRAME (all of which fall within the first few columns).
     #[test]
     fn test_word_boundary_roundtrip() {
         // Boundary offsets relative to index 0.
@@ -1070,92 +1222,6 @@ mod tests {
                     pos, modulation
                 );
             }
-        }
-    }
-
-    // --- Spec-compliance unit test (§6.1.3 formula independent evidence) ---
-    //
-    // This test verifies a specific single-bit mapping against the spec
-    // formula for Normal, Rate1_2, 16-QAM.  It is independent evidence
-    // that the permutation is correct, complementing the roundtrip tests.
-    //
-    // Note: the end-to-end TP07a vector validation against VV001-CR35 is
-    // in the integration test `dvb_t2_bit_interleaver_tp07a.rs`.
-
-    /// Spec-compliance forward test for Normal, Rate1_2, 16-QAM.
-    ///
-    /// Constructs an input with bit 0 set (column 0, row 0 in column-major
-    /// layout), runs interleave, and verifies the output position per the
-    /// spec formula:
-    ///   output[j] = input[(j mod Nc) * Nr + ((j / Nc + tc[j mod Nc]) mod Nr)]
-    ///
-    /// For Normal 16-QAM: Nc=4, Nr=16200, tc=[0,2,4,4].
-    ///   Input bit 0 is at column-major address c=0, r=0.
-    ///   The output index j that maps to src=0 satisfies:
-    ///     (j mod 4) * 16200 + (j/4 + tc[j mod 4]) mod 16200 = 0
-    ///   => j mod 4 = 0 (so c=0), and (j/4 + 0) mod 16200 = 0
-    ///   => j/4 = 0, so j = 0.
-    ///   Therefore output[0] = 1, all others = 0.
-    ///
-    /// Input bit 16200 (column 1, row 0) maps to j where:
-    ///   (j mod 4) = 1 and (j/4 + tc[1]) mod 16200 = 0
-    ///   => j/4 = (16200 - 2) mod 16200 = 16198, j = 16198*4 + 1 = 64793.
-    ///
-    /// This is a formula-correctness check, not the TP07a end-to-end
-    /// vector validation (which lives in the integration test file
-    /// `crates/gf2-coding/tests/dvb_t2_bit_interleaver_tp07a.rs`).
-    #[test]
-    fn test_16qam_normal_spec_compliance_forward() {
-        let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-        let il = DvbT2BitInterleaver::new(modcod);
-        let n = il.frame_bits(); // 64800
-        let nr = il.num_rows(); // 16200
-        let nc = il.num_columns(); // 4
-        let twist = il.twist_offsets().to_vec(); // [0, 2, 4, 4]
-
-        // Test 1: input bit 0 (c=0, r=0) → output position 0.
-        {
-            let mut input = BitVec::zeros(n);
-            input.set(0, true);
-            let output = il.interleave(&input);
-            // Expected output position j=0: (0%4)*Nr + (0/4+tc[0])%Nr = 0 → src=0.
-            assert!(
-                output.get(0),
-                "16-QAM Normal: input[0] should map to output[0]"
-            );
-            let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
-            assert_eq!(popcount, 1, "popcount must be 1");
-        }
-
-        // Test 2: input bit 1*Nr = 16200 (c=1, r=0) → output position 64793.
-        // j such that j%4=1 and (j/4 + tc[1]) % Nr = 0
-        // => j/4 = (Nr - tc[1]) % Nr = (16200 - 2) % 16200 = 16198
-        // => j = 16198*4 + 1 = 64793
-        {
-            let src = nr; // column 1, row 0 (address = 1*Nr + 0 = Nr)
-            let expected_j = ((nr - twist[1]) % nr) * nc + 1;
-            let mut input = BitVec::zeros(n);
-            input.set(src, true);
-            let output = il.interleave(&input);
-            assert!(
-                output.get(expected_j),
-                "16-QAM Normal: input[{}] (c=1,r=0) should map to output[{}], twist[1]={}",
-                src,
-                expected_j,
-                twist[1]
-            );
-            let popcount: usize = (0..n).filter(|&i| output.get(i)).count();
-            assert_eq!(popcount, 1, "popcount must be 1");
-        }
-
-        // Test 3: verify forward[i] == j iff inverse[j] == i (sanity on first Nr entries).
-        for i in 0..nr.min(20) {
-            let j = il.forward[i];
-            assert_eq!(
-                il.inverse[j], i,
-                "forward/inverse consistency failed at i={}",
-                i
-            );
         }
     }
 }
