@@ -474,11 +474,16 @@ fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
 /// It is out of scope for the §6.1.3 bit interleaver (256-QAM requires §6.1.4/§6.1.5).
 /// The correct 16-QAM Rate 1/2 Normal reference vector is VV020-FEF_CSP.
 #[test]
-#[ignore = "external: DVB-T2 ETSI vectors at /data/specs/dvb/streams/ required"]
-fn test_tp06_to_tp07a_parity_interleave_vv005_vv009_vv014() {
-    const BASE: &str = "/data/specs/dvb/streams";
+#[ignore = "external: DVB-T2 ETSI vectors at $DVB_TEST_VECTORS_PATH required"]
+fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
     const MAX_BLOCKS: usize = 10;
     const N_FEC: usize = 64800;
+
+    // Resolve vector base path from the standard env var (used by the
+    // rest of the gf2-coding external-vector test pattern), with a
+    // sensible host-local default.
+    let base = std::env::var("DVB_TEST_VECTORS_PATH")
+        .unwrap_or_else(|_| "/data/specs/dvb/streams".to_owned());
 
     // (dir_name, code_rate, modulation)
     let test_cases = [
@@ -490,13 +495,16 @@ fn test_tp06_to_tp07a_parity_interleave_vv005_vv009_vv014() {
             DvbT2Modulation::Qam64,
         ),
     ];
+    let expected_tested = test_cases.len();
+    let mut tested_count = 0usize;
 
     for (dir_name, code_rate, modulation) in &test_cases {
-        let config_dir = PathBuf::from(BASE).join(dir_name);
+        let config_dir = PathBuf::from(&base).join(dir_name);
         if !config_dir.exists() {
             eprintln!("Vector directory {:?} not found; skipping", config_dir);
             continue;
         }
+        tested_count += 1;
 
         let tp06_path = tp_path_for(&config_dir, "06");
         let tp07a_path = tp_path_for(&config_dir, "07a");
@@ -577,4 +585,14 @@ fn test_tp06_to_tp07a_parity_interleave_vv005_vv009_vv014() {
             tp06_blocks.len().min(tp07a_blocks.len())
         );
     }
+
+    // The [hard] criterion requires bit-exact forward + reverse on all
+    // 3 in-scope configurations.  Silent skips would let the test pass
+    // vacuously; enforce that all 3 were exercised when the test runs.
+    assert_eq!(
+        tested_count, expected_tested,
+        "expected to exercise {expected_tested} ETSI vectors but only {tested_count} \
+         were present at {base:?}; set DVB_TEST_VECTORS_PATH to a tree containing \
+         VV020-FEF_CSP, VV009-4KFFT_CSP, and VV014-64QAM34_CSP",
+    );
 }
