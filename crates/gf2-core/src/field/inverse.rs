@@ -2208,4 +2208,58 @@ mod tests {
             }
         }
     }
+
+    // ─── jit:9138d86c — GF(65521)/n=64 medium-prime packed-dot dispatch ──────
+    //
+    // Focused deterministic tests that exercise the n=64 / single-column-RHS
+    // regime for GF(65521). These are the shapes that were FAIL (rows 55-56 in
+    // the A8 scorecard) before the `gemm_axpy_into_view` medium-prime threshold
+    // fix. Correctness is the primary guard; the performance regression is
+    // measured separately in bench_results/2026-05-27-9138d86c-fp65521-n64-solve.md.
+    //
+    // The tests cover:
+    //   - n=64 / k=1 (single RHS — the exact shape that triggered the gap)
+    //   - n=64 / k=64 (square RHS — exercises more of the packed-dot path)
+    //   - n=64 with rank-deficient A → None (deficient regime row 56)
+
+    /// `solve_batch` returns correct X for GF(65521) n=64 with k=1 RHS.
+    ///
+    /// This is the exact shape that exposed the n=64 medium-prime gap: a single
+    /// RHS column forces the TRSM recursion to generate update GEMMs of shape
+    /// m×k×1 with m*k*1 < 4096, which previously bypassed the medium-prime
+    /// pre-pack path and hit the per-cell scratch-allocating fallback instead.
+    #[test]
+    fn test_solve_batch_fp65521_n64_single_rhs_correctness() {
+        let a = random_fp_invertible::<65521>(64, 0xDEAD_9138_D86C_0001);
+        let b = random_fp::<65521>(64, 1, 0xBEEF_9138_D86C_0001);
+        let x = a.solve_batch(&b).expect("full-rank 64×64 GF(65521)");
+        let recon = gemm(&a, &x);
+        assert_eq!(recon, b, "A·X != B for GF(65521) n=64 k=1");
+    }
+
+    /// `solve_batch` returns correct X for GF(65521) n=64 with k=64 RHS.
+    #[test]
+    fn test_solve_batch_fp65521_n64_square_rhs_correctness() {
+        let a = random_fp_invertible::<65521>(64, 0xDEAD_9138_D86C_0002);
+        let b = random_fp::<65521>(64, 64, 0xBEEF_9138_D86C_0002);
+        let x = a.solve_batch(&b).expect("full-rank 64×64 GF(65521)");
+        let recon = gemm(&a, &x);
+        assert_eq!(recon, b, "A·X != B for GF(65521) n=64 k=64");
+    }
+
+    /// `solve_batch` returns `None` for rank-deficient GF(65521) n=64 (row 56 guard).
+    #[test]
+    fn test_solve_batch_fp65521_n64_rank_deficient_returns_none() {
+        // Construct a rank-32 matrix by duplicating the first 32 rows into the second 32.
+        let mut a = random_fp::<65521>(64, 64, 0xDEAD_9138_D86C_0003);
+        for j in 0..64 {
+            let v = a.get(0, j);
+            a.set(32, j, v);
+        }
+        let b = random_fp::<65521>(64, 1, 0xBEEF_9138_D86C_0003);
+        assert!(
+            a.solve_batch(&b).is_none(),
+            "GF(65521) n=64 rank-deficient: expected None"
+        );
+    }
 }
