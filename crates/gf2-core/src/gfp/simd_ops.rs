@@ -282,6 +282,118 @@ fn fpm31_try_mul_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Vec<Fp<
     None
 }
 
+/// Whole-GEMM fast path for `Fp<2^31 - 1>` (Mersenne31) using the
+/// AVX2 `m31_batch_dot_fn` kernel (issue `6a7d4c8e`).
+///
+/// Pre-packs both operands into contiguous `u32` buffers once per
+/// GEMM call (`O(mk + kn)`), then for each output cell `(i, j)`
+/// invokes the batch-dot kernel on the pre-packed row slices
+/// (`O(mn)` kernel calls, each `O(k)` work). The pack step uses
+/// direct `raw_storage() as u32` truncation — `Fp<M31>` uses
+/// canonical storage (`raw_storage()` returns the value in `[0,
+/// 2^31-1)`), so no Montgomery REDC round-trip is needed.
+///
+/// Returns `true` when the kernel populated `out`; `false` when the
+/// field is not M31, the `simd` feature is disabled, or AVX2 is
+/// unavailable at runtime.
+///
+/// # Arguments
+///
+/// * `a`   — `m × k` flattened row-major `Fp<M31>` slice.
+/// * `b_t` — `n × k` flattened row-major `Fp<M31>` slice (already
+///   transposed by the caller).
+/// * `m`, `k`, `n` — matrix dimensions.
+/// * `out` — `m × n` output slice; written cell-by-cell.
+///
+/// # Complexity
+///
+/// `O(m·k·n)` Mersenne multiplications, with AVX2 vectorisation
+/// factor of 8 per lane via `m31_batch_dot_fn`.
+#[cfg(feature = "simd")]
+pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
+    a: &[Fp<P>],
+    b_t: &[Fp<P>],
+    m: usize,
+    k: usize,
+    n: usize,
+    out: &mut [Fp<P>],
+) -> bool {
+    if P != M31 {
+        return false;
+    }
+    if m == 0 || k == 0 || n == 0 {
+        return false;
+    }
+    debug_assert_eq!(a.len(), m * k, "fp_m31_try_gemm_classical: a shape");
+    debug_assert_eq!(b_t.len(), n * k, "fp_m31_try_gemm_classical: b_t shape");
+    debug_assert_eq!(out.len(), m * n, "fp_m31_try_gemm_classical: out shape");
+
+    let Some(fns) = crate::simd::maybe_mersenne() else {
+        return false;
+    };
+
+    GEMM_M31_A_SCRATCH.with_borrow_mut(|a_u32| {
+        GEMM_M31_BT_SCRATCH.with_borrow_mut(|bt_u32| {
+            // Pack A and B^T into canonical u32 buffers.
+            // M31 uses canonical storage: raw_storage() is already in [0, M31).
+            a_u32.resize(m * k, 0u32);
+            bt_u32.resize(n * k, 0u32);
+            for (dst, src) in a_u32.iter_mut().zip(a.iter()) {
+                *dst = src.raw_storage() as u32;
+            }
+            for (dst, src) in bt_u32.iter_mut().zip(b_t.iter()) {
+                *dst = src.raw_storage() as u32;
+            }
+
+            // For each output cell (i, j), compute the dot product of
+            // row i of A against row j of B^T (= column j of B) via
+            // the AVX2 m31_batch_dot_fn kernel.
+            for i in 0..m {
+                let a_row = &a_u32[i * k..(i + 1) * k];
+                for j in 0..n {
+                    let bt_row = &bt_u32[j * k..(j + 1) * k];
+                    let dot = (fns.m31_batch_dot_fn)(a_row, bt_row);
+                    out[i * n + j] = Fp::<P>::from_raw_storage(dot as u64);
+                }
+            }
+        })
+    });
+    true
+}
+
+/// Non-SIMD stub for `fp_m31_try_gemm_classical`; always returns `false`.
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_m31_try_gemm_classical<const P: u64>(
+    _a: &[Fp<P>],
+    _b_t: &[Fp<P>],
+    _m: usize,
+    _k: usize,
+    _n: usize,
+    _out: &mut [Fp<P>],
+) -> bool {
+    false
+}
+
+/// Non-allocating availability probe for `fp_m31_try_gemm_classical`.
+///
+/// Returns `true` when `P == 2^31 - 1`, the `simd` feature is enabled,
+/// and AVX2 was detected at runtime. Used by
+/// [`crate::field::matrix::gemm_axpy_into_view`] to decide whether to
+/// allocate the contiguous-`A` scratch buffer before dispatching.
+#[cfg(feature = "simd")]
+#[inline]
+pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
+    P == M31 && crate::simd::maybe_mersenne().is_some()
+}
+
+/// Non-SIMD stub for `fp_m31_gemm_classical_available`; always returns `false`.
+#[cfg(not(feature = "simd"))]
+#[inline]
+pub(crate) fn fp_m31_gemm_classical_available<const P: u64>() -> bool {
+    false
+}
+
 // ---------------------------------------------------------------------------
 // Small-prime (P <= 251) SIMD helpers.
 //
@@ -1638,6 +1750,16 @@ thread_local! {
     static GEMM_MEDIUM_BT_SCRATCH: std::cell::RefCell<Vec<u16>> =
         const { std::cell::RefCell::new(Vec::new()) };
     static GEMM_MEDIUM_OUT_SCRATCH: std::cell::RefCell<Vec<u16>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    // Mersenne-31 GEMM scratch (issue 6a7d4c8e). Pre-packs `a` and `bt`
+    // into u32 canonical buffers (direct `raw_storage() as u32` — M31
+    // uses canonical storage, no REDC needed). The output is a u32 buffer
+    // written by `m31_batch_dot_fn`; unpacked back into `Fp<M31>` by
+    // direct `from_raw_storage`. Buffers grow as needed and are reused
+    // across repeated GEMM calls on the same thread.
+    static GEMM_M31_A_SCRATCH: std::cell::RefCell<Vec<u32>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    static GEMM_M31_BT_SCRATCH: std::cell::RefCell<Vec<u32>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 

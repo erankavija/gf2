@@ -5783,4 +5783,158 @@ mod tests {
             }
         }
     }
+
+    // ─── gemm_axpy_into_view Mersenne31 SIMD dispatch tests (issue 6a7d4c8e) ──
+
+    /// Deterministic correctness test for the Mersenne31 whole-GEMM
+    /// fast path in `gemm_axpy_into_view`. Verifies bit-exact equality
+    /// against the scalar oracle at `n ∈ {16, 64, 256}` — sizes above
+    /// `GEMM_AXPY_FAST_PATH_THRESHOLD = 4096` (i.e. n³ ≥ 4096) trigger
+    /// the `fp_m31_try_gemm_classical` dispatch.
+    ///
+    /// Issue: `6a7d4c8e` (wire `m31_batch_dot_fn` into `gemm_axpy_into_view`).
+    #[test]
+    fn test_gemm_axpy_into_view_mersenne31_simd_path() {
+        // M31 = 2^31 - 1
+        const P: u64 = (1u64 << 31) - 1;
+        // n=16 is below the 16³=4096 threshold so it falls through to
+        // per-cell scalar; n=64 (64³=262144) and n=256 (256³>4096) hit
+        // the whole-GEMM fast path when AVX2 is available.
+        for &n in &[16usize, 64, 256] {
+            let m = n;
+            let k = n;
+            let a = random_fp_matrix::<P>(m, k, 0x6A7D_4C8E ^ n as u64);
+            let b = random_fp_matrix::<P>(k, n, 0x4C8E_6A7D ^ n as u64);
+            let c = random_fp_matrix::<P>(m, n, 0x8E7D_4A6C ^ n as u64);
+
+            let alpha = Fp::<P>::new(3);
+            let beta = Fp::<P>::new(5);
+
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+
+            for i in 0..m {
+                for j in 0..n {
+                    assert_eq!(
+                        got.get(i, j),
+                        want.get(i, j),
+                        "Fp<M31> gemm_axpy_into_view cell mismatch at n={n} \
+                         i={i} j={j} alpha=3 beta=5"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Boundary-length sweep for the Mersenne31 SIMD path. Covers the
+    /// SIMD lane boundaries `{0, 1, 7, 8, 9, 63, 64, 65}` for M31
+    /// (AVX2 M31 kernel processes 8 u32 lanes per iteration).
+    /// Includes `(α, β)` mixes: submul `(M31-1, 1)`, addmul `(1, 1)`,
+    /// copy-overwrite `(1, 0)`, scale `(3, 5)`.
+    ///
+    /// Issue: `6a7d4c8e`.
+    #[test]
+    fn test_gemm_axpy_into_view_mersenne31_boundary_lengths() {
+        const P: u64 = (1u64 << 31) - 1;
+        // 8 is the AVX2 M31 lane width; boundary lengths around it.
+        const LENS: &[usize] = &[0, 1, 7, 8, 9, 63, 64, 65];
+        let pairs: &[(u64, u64)] = &[(P - 1, 1), (1, 1), (0, 1), (1, 0), (3, 5)];
+        for &n in LENS {
+            if n == 0 {
+                let a = random_fp_matrix::<P>(2, 3, 0xBB00 ^ n as u64);
+                let b = random_fp_matrix::<P>(3, 0, 0xCC00 ^ n as u64);
+                let mut got = FieldMatrix::<Fp<P>>::zeros(2, 0);
+                gemm_axpy_into_view(
+                    Fp::<P>::new(1),
+                    &a.submat(.., ..),
+                    &b.submat(.., ..),
+                    Fp::<P>::new(1),
+                    got.submat_mut(.., ..),
+                );
+                assert_eq!(got.shape(), (2, 0), "M31 n=0 empty out shape");
+                continue;
+            }
+            let m = n;
+            let k = n;
+            for &(av, bv) in pairs {
+                let alpha = Fp::<P>::new(av);
+                let beta = Fp::<P>::new(bv);
+                let a = random_fp_matrix::<P>(m, k, 0xAA00 ^ n as u64 ^ av);
+                let b = random_fp_matrix::<P>(k, n, 0xBB00 ^ n as u64 ^ av);
+                let c = random_fp_matrix::<P>(m, n, 0xCC00 ^ n as u64 ^ av);
+                let mut got = c.clone();
+                gemm_axpy_into_view(
+                    alpha,
+                    &a.submat(.., ..),
+                    &b.submat(.., ..),
+                    beta,
+                    got.submat_mut(.., ..),
+                );
+                let mut want = c.clone();
+                scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+                for i in 0..m {
+                    for j in 0..n {
+                        assert_eq!(
+                            got.get(i, j),
+                            want.get(i, j),
+                            "M31 boundary: n={n} alpha={av} beta={bv} i={i} j={j}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    proptest! {
+        /// Property: `gemm_axpy_into_view` at random `Fp<M31>` matrices
+        /// with random `(α, β)` matches the scalar oracle bit-exactly.
+        /// Covers boundary-length grid `{0, 1, 7, 8, 9, 63, 64, 65}`.
+        ///
+        /// Issue: `6a7d4c8e`.
+        #[test]
+        fn prop_gemm_axpy_into_view_mersenne31_matches_oracle(
+            seed in 0u64..256,
+            n_idx in 0usize..8,
+            alpha_v in 0u64..((1u64 << 31) - 1),
+            beta_v in 0u64..((1u64 << 31) - 1),
+        ) {
+            const P: u64 = (1u64 << 31) - 1;
+            const LENS: &[usize] = &[0, 1, 7, 8, 9, 63, 64, 65];
+            let n = LENS[n_idx];
+            let m = n;
+            let k = n;
+            if n == 0 {
+                return Ok(());
+            }
+            let a = random_fp_matrix::<P>(m, k, 0xA500 ^ seed);
+            let b = random_fp_matrix::<P>(k, n, 0xB500 ^ seed);
+            let c = random_fp_matrix::<P>(m, n, 0xC500 ^ seed);
+            let alpha = Fp::<P>::new(alpha_v);
+            let beta = Fp::<P>::new(beta_v);
+            let mut got = c.clone();
+            gemm_axpy_into_view(
+                alpha,
+                &a.submat(.., ..),
+                &b.submat(.., ..),
+                beta,
+                got.submat_mut(.., ..),
+            );
+            let mut want = c.clone();
+            scalar_axpy_reference::<P>(alpha, &a, &b, beta, &mut want);
+            for i in 0..m {
+                for j in 0..n {
+                    prop_assert_eq!(got.get(i, j), want.get(i, j));
+                }
+            }
+        }
+    }
 }
