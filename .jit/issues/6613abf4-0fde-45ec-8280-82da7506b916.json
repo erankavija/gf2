@@ -2,7 +2,7 @@
   "id": "6613abf4-0fde-45ec-8280-82da7506b916",
   "title": "Implement blocked GF(p) triangular solve (026fc832 Phase 6)",
   "description": "Phase 6 implementation task under epic `026fc832`. Implements blocked GF(p) triangular solve building on the panelized PLE implementation. No separate design — uses standard blocked back-substitution algorithm (Higham § 14.1).\n\nParent epic: `026fc832`. Predecessor: panelized PLE implementation (sibling).\n\n## Amendment (2026-05-27, user-approved, session 11)\n\nR0 evidence (`dev/bench_results/2026-05-26-6613abf4-blocked-solve.md`) closed 7 of 13 A8 solve cells PASS (rows 47-50, 57, 58, 75). The remaining 6 cells are routed per user-approved decision (session 11 AskUserQuestion: \"Investigate GF(251)/n=64 borderline first; amend the rest\"):\n\n- **Rows 53, 54** (GF(251)/n=256 uniform + deficient @ 2.331× / 2.400×): `[aspirational]` inheriting the `6823c8a0` GF(251)/n=256 PLE-side gap. The blocked solve's TRSM updates inherit the PLE bottleneck at this cell. Closure requires the blocked Schur-update kernel or float-cascade PLE work tracked under 6823c8a0's existing [aspirational] amendment.\n- **Rows 51, 52** (GF(251)/n=64 uniform + deficient @ 1.674× / 1.728×): deferred to follow-up task `d36cc414` (GF(251)/n=64 borderline investigation).\n- **Rows 55, 56** (GF(65521)/n=64 uniform + deficient @ 2.095× / 1.833×): deferred to follow-up task `9138d86c` (GF(65521)/n=64 blocked solve kernel).\n\n## Background\n\nCloses A8 rows 47-58, 75 (solve cells over GF(7/251/65521) and GF(31)).\n\n## Success Criteria (current — amended 2026-05-27)\n\n- [hard] Production code implementing blocked triangular solve calling into the panelized PLE + `fp_small_try_gemm_classical`.\n- [hard] Bit-exact correctness vs the existing scalar solve on a proptest sweep across GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at boundary lengths plus rank-deficient regimes.\n- [hard] 5-trial CCX1-pinned benchmarks at n in {64, 256, 1024} per prime per regime.\n- [hard] [AMENDED 2026-05-27 — see Amendment block above] Every A8 solve cell (rows 47-58, 75) either PASSes (ratio ≤ 1.5× vs fflas) OR carries an explicit user-approved [aspirational] amendment OR is closed by a named follow-up task. Rows 53, 54 are [aspirational] at 2.331× / 2.400× inheriting 6823c8a0's GF(251)/n=256 PLE-side gap. Rows 51, 52 are deferred to `d36cc414`. Rows 55, 56 are deferred to `9138d86c`.\n- [hard] No regression on currently-PASSing cells (delta ≤ 5%).\n- [hard] No `unsafe` outside kernel crates.\n- [hard] Brief design rationale in the impl task's evidence doc explaining the blocking strategy (no separate design task because the algorithm is standard).\n\n## Original Success Criteria (pre-amendment, preserved for audit)\n\n- [hard] Every A8 solve cell (rows 47-58, 75) either PASSes or carries [aspirational] amendment.\n\n## Out of scope\n\n- Sibling impls.\n- New PLE algorithm work (reuse the sibling's output).\n- GF(251)/n=256 solve cells (amended `[aspirational]` 2026-05-27).\n- GF(251)/n=64 solve cells (deferred to `d36cc414`).\n- GF(65521)/n=64 solve cells (deferred to `9138d86c`).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,15 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-26T22:22:07.718509209Z"
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-27T00:17:54.998844011Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-26T22:11:12.505124561Z"
+      "updated_at": "2026-05-26T23:49:37.645307134Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T00:09:08.863614712Z"
     }
   },
   "context": {},
@@ -33,5 +38,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-25T12:11:10.787513208+00:00",
-  "updated_at": "2026-05-26T22:27:03.284721291+00:00"
+  "updated_at": "2026-05-27T00:17:56.368293543+00:00"
 }
