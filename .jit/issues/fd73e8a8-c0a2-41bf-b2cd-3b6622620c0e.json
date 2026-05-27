@@ -13,9 +13,9 @@
   ],
   "gates_status": {
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.199442475Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T13:26:16.247361013Z"
     },
     "doc-review": {
       "status": "pending",
@@ -23,9 +23,9 @@
       "updated_at": "2026-05-25T21:54:59.199537415Z"
     },
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-05-25T21:54:59.199490595Z"
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-27T13:26:25.697724487Z"
     }
   },
   "context": {},
@@ -44,5 +44,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-25T21:46:52.878530297+00:00",
-  "updated_at": "2026-05-27T12:31:22.345439650+00:00"
+  "updated_at": "2026-05-27T13:31:29.861589759+00:00"
 }
