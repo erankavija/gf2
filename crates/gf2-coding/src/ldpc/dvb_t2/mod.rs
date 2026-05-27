@@ -21,6 +21,7 @@
 //! ```
 
 pub(crate) mod builder;
+pub mod concat;
 pub(crate) mod dvb_t2_matrices;
 pub(crate) mod params;
 
