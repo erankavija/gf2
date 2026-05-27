@@ -125,12 +125,19 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 |--------|---------|
 | `linear` | `LinearBlockCode`, `SyndromeTableDecoder` — Hamming codes |
 | `bch/` | BCH codes with Berlekamp-Massey + Chien search; `dvb_t2/` sub-module contains all 12 DVB-T2 configurations |
-| `ldpc/` | Belief-propagation decoder; `dvb_t2/` has tables from ETSI EN 302 755; `encoding/` uses Richardson-Urbanke with cache |
+| `ldpc/` | Belief-propagation decoder; `dvb_t2/` has tables from ETSI EN 302 755; `encoding/` uses Richardson-Urbanke with cache; `dvb_t2/concat.rs` = `DvbT2Concat` (BCH+LDPC concatenated codec); `dvb_t2/bit_interleaver.rs` = `DvbT2BitInterleaver` (column-row bit interleaver) |
+| `modem/` | Gray-QAM mapper (`GrayQamMapper`), fast demapper (`FastGrayQamDemapper`), `ModemSpec` preset workflow; see `examples/dvb_t2_bicm_chain.rs` for the canonical BICM chain composition |
 | `convolutional` | Viterbi decoder skeleton |
 | `traits` | `BlockEncoder`, `HardDecisionDecoder`, `GeneratorMatrixAccess` — unified interfaces |
 | `llr` | `Llr` type (f32 by default, f64 with `llr-f64` feature) for soft-decision decoding |
 | `channel` | AWGN channel simulation with BPSK modulation |
 | `simulation` | BER/FER simulation harness; with `sim-observability` feature: per-SNR JSON checkpoints (`checkpoint_dir`), JSON-lines tracing (`tracing_log_path`), within-SNR heartbeats (`heartbeat_every_frames`), SIGINT/SIGTERM flush via `ctrlc`, deterministic `ChaCha20Rng` seek for byte-identical resume. Checkpoint/resume support: `run_coded` / `run_coded_iterative` / `run_with_decoder`: full per-SNR + within-SNR (heartbeat) checkpointing via `ChaCha20Rng::set_word_pos`; `run_uncoded_ber_with_channel`: per-SNR-boundary checkpointing only (heartbeat resume not implemented; uncoded paths are fast enough that per-SNR granularity is sufficient); `run_coded_iterative_parallel`: per-SNR-boundary checkpointing only (within-SNR heartbeat resume is architecturally unavailable with rayon-parallel SNR-point dispatch). |
+
+Integration tests of note:
+- `tests/dvb_t2_bicm_chain.rs` — end-to-end BICM roundtrip for Normal × {1/2, 2/3, 3/4} × {16-QAM, 64-QAM} (6 configs); slow tier (requires LDPC encoder, ~2-10 s per config).
+
+Examples of note:
+- `examples/dvb_t2_bicm_chain.rs` — canonical DVB-T2 BICM chain demonstration (Normal × 1/2 × 16-QAM forward + inverse composition); slow to run (same LDPC encoder constraint).
 
 ### Key design invariants
 
