@@ -130,7 +130,7 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 | `traits` | `BlockEncoder`, `HardDecisionDecoder`, `GeneratorMatrixAccess` — unified interfaces |
 | `llr` | `Llr` type (f32 by default, f64 with `llr-f64` feature) for soft-decision decoding |
 | `channel` | AWGN channel simulation with BPSK modulation |
-| `simulation` | BER/FER simulation harness; with `sim-observability` feature: per-SNR JSON checkpoints (`checkpoint_dir`), JSON-lines tracing (`tracing_log_path`), within-SNR heartbeats (`heartbeat_every_frames`), SIGINT/SIGTERM flush via `ctrlc`, deterministic `ChaCha20Rng` seek for byte-identical resume |
+| `simulation` | BER/FER simulation harness; with `sim-observability` feature: per-SNR JSON checkpoints (`checkpoint_dir`), JSON-lines tracing (`tracing_log_path`), within-SNR heartbeats (`heartbeat_every_frames`), SIGINT/SIGTERM flush via `ctrlc`, deterministic `ChaCha20Rng` seek for byte-identical resume. Checkpoint/resume support: `run_coded` / `run_coded_iterative` / `run_with_decoder`: full per-SNR + within-SNR (heartbeat) checkpointing via `ChaCha20Rng::set_word_pos`; `run_uncoded_ber_with_channel`: per-SNR-boundary checkpointing only (heartbeat resume not implemented; uncoded paths are fast enough that per-SNR granularity is sufficient); `run_coded_iterative_parallel`: per-SNR-boundary checkpointing only (within-SNR heartbeat resume is architecturally unavailable with rayon-parallel SNR-point dispatch). |
 
 ### Key design invariants
 
