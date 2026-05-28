@@ -59,7 +59,7 @@
           "title": "Integrate BCH + LDPC + interleaver + QAM into unified FEC chain",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -73,7 +73,8 @@
           "title": "Validate full TP04 -> TP05 -> TP06 -> TP07a DVB-T2 chain",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "pending"
+          "status": "done",
+          "note": "TP07a = §6.1.3 output (post parity-interleave + column-twist), verified bit-exact on VV020/VV009/VV014. Required parity-interleaver fix (548a8563)."
         }
       ]
     },
@@ -87,7 +88,7 @@
           "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
           "classification": "implementation",
           "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -101,13 +102,17 @@
           "title": "Run FER simulation over AWGN for full DVB-T2 FEC chain",
           "classification": "execution",
           "gates": ["code-review", "doc-review"],
-          "status": "pending",
-          "delivery_scope": "calibration smoke + plan doc + handoff; production runs by user"
+          "status": "ready_for_user_production_runs",
+          "delivery_scope": "calibration smoke + PLAN.md + README.md delivered; production runs (multi-day) + final closure are user-side",
+          "calibration_finding": "Runner + chain correct (FER=0 at high SNR). Waterfall knee ~7.0 dB vs ETSI QEF 6.0 dB → ~1-1.5 dB gap from plain MinSum + MaxLog. Closing the [hard] 0.5 dB gap likely needs NormalizedMinSum/SumProduct + ExactLogMap tuning (allowed by epic)."
         }
       ]
     }
   ],
-  "created_during_execution": [],
+  "created_during_execution": [
+    {"short_id": "548a8563", "title": "Add §6.1.3 parity interleaving to DVB-T2 bit interleaver", "status": "done", "reason": "Calibration/TP07a work surfaced that 87a2402f shipped only the column-twist sub-stage; parity interleaving (+ corrected Nc=8/12 tables) was missing. Verified bit-exact vs ETSI TP07a after fix."},
+    {"short_id": "a7b1bb21", "title": "Implement DVB-T2 §6.1.4 bit-to-cell-word demuxer", "status": "rejected:obsolete", "reason": "Created when TP07a was believed to be §6.1.4 output; empirically TP07a is §6.1.3 output, so §6.1.4 is not needed for this epic."}
+  ],
   "escalations": [
     {
       "topic": "Wave 5 production run scope",

@@ -1,83 +1,132 @@
-# Handoff — DVB-T2 AWGN simulation campaign (2928ccce) — session 1
+# Handoff — DVB-T2 AWGN simulation campaign (2928ccce) — session 1 (final)
 
-**Date:** 2026-05-27
+**Date:** 2026-05-28
 **Session number:** 1
-**Prior handoffs:** none
+**Prior handoffs:** none (this supersedes the in-flight versions)
 
 ## Current state
 
-- Epic: `2928ccce` — state: `in_progress`
-- Wave in progress: Wave 3 (extended)
+- Epic: `2928ccce` — state: `in_progress` (cannot close — see below)
+- All implementation/validation waves COMPLETE. Only the user-side
+  production campaign remains.
 - Children summary:
-  - **Done (5)**: `cef2e631`, `a18956a4`, `87a2402f`, `fd73e8a8`, `003e4088`
-  - **In progress (2)**: `4cdaf1c5` (TP07a — scaffold landed at `263ca764`; needs forward-chain validation after a7b1bb21), `a7b1bb21` (§6.1.4 demux — dispatched directly on main, running in background)
-  - **Backlog/ready (2)**: `152388f4` (Wave 4), `e4849f07` (Wave 5)
-- Active claims: `a7b1bb21` claimed by `agent:claude`; `4cdaf1c5` claimed by `agent:claude` (worker done, awaiting follow-up); epic `2928ccce` claimed by `agent:project-lead`
-- Open escalations: none currently — `a7b1bb21` is the lead's response to the user's "expand scope" decision on TP07a multi-stage finding
-- Progress file: `dev/active/2928ccce-progress.json` (current_wave=2; needs update to reflect Wave 3 extension when next-session lead can verify gate states)
+  - **Done (8)**: `cef2e631`, `a18956a4`, `87a2402f`, `fd73e8a8`,
+    `003e4088`, `4cdaf1c5`, `152388f4`, plus created-in-flight
+    `548a8563` (parity-interleaver fix).
+  - **Rejected (1)**: `a7b1bb21` (§6.1.4 demux — obsolete; see below).
+  - **Ready for user (1)**: `e4849f07` (production FER runs).
+- Progress file: `dev/active/2928ccce-progress.json` (current).
 
-## What just happened
+## Why the epic is not closed
 
-- **Wave 1 (closed)**: 4 issues, many reworks (87a2402f r3 + r4 user-authorised, fd73e8a8 r1 + r2 + r3 + r4 user-authorised), 2 user-authorised criterion amendments (87a2402f TP07a defer, fd73e8a8 heartbeat path-scoping).
-- **Wave 2 (closed)**: 003e4088 BICM chain integration. r1 fixed a QAM-bypass bug in the 6-config roundtrip helper + added a fast-tier QPSK roundtrip test. User-directed audit removed a TP07a criterion that belonged in 4cdaf1c5.
-- **Wave 3 (extended scope)**:
-  - 4cdaf1c5 worker (commit `263ca764`) discovered empirically that ALL 6 in-scope ETSI vectors (VV004, VV007, VV009, VV014, VV020, VV035 — found at `/data/specs/dvb/t2/streams/`) show ~50% bit-diff between bit-interleaver output and TP07a. NONE are §6.1.3-only.
-  - The ETSI reference-streams documentation block diagram (verified at `/data/specs/dvb/t2/documentation/DVB-T2-ReferenceStreamsDocumentation1_2.txt:30-50ish`) shows TP7a = §6.1.4 (bit-to-cell-word demux) output. §6.1.5 (cell interleaver) is TP10 — well downstream, not needed for TP07a.
-  - User authorised scope expansion. Created `a7b1bb21` for §6.1.4 implementation. Wired as dep of `4cdaf1c5`. Dispatched a7b1bb21 worker on main.
+`e4849f07` (the terminal child) requires six production FER curves
+(≥10⁶ frames each, multi-day wall-clock) plus PNG overlays and a
+≤0.5 dB gap to the ETSI reference. Per the agreed Wave-5 scope (user
+chose "lead delivers calibration smoke, user runs prod" at session
+start), the lead delivered the calibration smoke + PLAN.md + README.md;
+the production runs and final closure are user-side. The epic closes
+once `e4849f07`'s artefacts land.
 
-## What to do next
+## What was delivered this session
 
-1. [ ] On a7b1bb21 completion notification: review verdict, run gates (`jit gate pass a7b1bb21 cargo-ci`, then `code-review`). The dispatch prompt requires EMPIRICAL VERIFICATION against the ETSI vectors as part of the worker's checklist — confirm the worker actually did this before accepting (it's the only reliable test that §6.1.4 is correct).
-2. [ ] Close a7b1bb21.
-3. [ ] Re-claim + re-dispatch 4cdaf1c5 with the new §6.1.4 available. The dispatch prompt should ask the worker to extend `tests/dvb_t2_chain_tp07a.rs` to: (a) compose `DvbT2BitInterleaver::interleave` → `DvbT2CellWordDemux::demux`, (b) assert bit-exact match against TP07a for the 6 in-scope ETSI vectors, (c) also implement the reverse chain. Should be a small dispatch since the scaffold exists.
-4. [ ] Close 4cdaf1c5.
-5. [ ] Wave 4 = `152388f4` campaign runner binary. Single-worker dispatch. Spec doc at `dev/active/152388f4-campaign-runner.md`. Reference TOML at `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml` (worker creates if absent).
-6. [ ] Wave 5 = calibration smoke only (per user choice). Lead runs `cargo run --release --bin dvb_t2_awgn_campaign -- --calibrate ...` for the 6 (rate × modulation) configs; writes PLAN.md + README.md under `dev/benchmarks/dvb_t2_awgn/`; writes the user-facing handoff for the multi-day production runs. Does NOT close `e4849f07`.
-7. [ ] After Wave 5: epic `2928ccce` cannot close (transitively blocked by `e4849f07` waiting on user-side production sims). Write a final session handoff explaining this and stop.
+- **Infrastructure + codec (Wave 1)**: 11 LDPC table source files +
+  roundtrip tests (cef2e631); BCH+LDPC concat codec with `&self` API
+  via OnceCell/Mutex (a18956a4); DVB-T2 §6.1.3 bit interleaver
+  (87a2402f, then completed by 548a8563); resumable observable
+  `SimulationRunner` with tracing + per-SNR checkpoints + subprocess
+  SIGINT resume (fd73e8a8).
+- **Integration (Wave 2)**: documented BICM chain composition +
+  example + integration test (003e4088).
+- **Validation (Wave 3)**: TP06→TP07a bit-exact against ETSI vectors
+  for VV020/VV009/VV014 (4cdaf1c5 + 548a8563).
+- **Runner (Wave 4)**: `dvb_t2_awgn_campaign` binary (SSOT-clean,
+  delegates to SimulationRunner), `plot.py`, ETSI TS 102 831 Table 44
+  reference TOML, resume integration test (152388f4).
+- **Calibration (Wave 5, partial)**: 6-config calibration smoke +
+  PLAN.md + README.md under `dev/benchmarks/dvb_t2_awgn/`.
+
+## What to do next (user / next-session lead)
+
+1. [ ] **Tune the decoder/demapper to close the ~1-1.5 dB gap** before
+   production (see README.md "Key finding"). The chain decodes
+   correctly but the default plain-`MinSum` LDPC + `MaxLog` demap
+   waterfalls ~1-1.5 dB worse than the ETSI QEF threshold. Switch to
+   `NormalizedMinSum(~0.75)` or `SumProduct` decoding + `ExactLogMap`
+   demapping (both allowed by the epic's "tuning parameters" clause).
+   Re-run the r1/2 16-QAM calibration to confirm the knee moves toward
+   ~6.0-6.5 dB.
+2. [ ] Re-centre the per-config `--esn0-range` brackets in PLAN.md on
+   the tuned waterfall knees.
+3. [ ] Run the six production sweeps per PLAN.md (≥100 frame errors at
+   the FER=10⁻⁴ bracket). Each is resumable via `--resume`.
+4. [ ] Plot each with `plot.py`; record the achieved gap per curve.
+5. [ ] If any curve's gap > 0.5 dB after tuning, escalate per the
+   amendment/escalation policy before closing (the 0.5 dB is the
+   epic's [hard] target; "measurements not guesses" — a data-backed
+   amendment may be warranted).
+6. [ ] Commit the six CSV/PNG/closure-note artefacts under
+   `dev/benchmarks/dvb_t2_awgn/`, then close `e4849f07` and `2928ccce`.
 
 ## Traps — do not repeat these
 
-- **Do NOT cd into a worktree in one Bash call, then run `git merge` in the next.** Shell cwd persists across Bash tool calls. Use `git -C /home/vkaskivuo/Projects/gf2 ...` to anchor on main. Trap evidence: this session's first merge of cef2e631 landed in `worktree-agent-fd73e8a8` instead of main; recovered via reset.
-
-- **Do NOT trust `check-leak-into-main.sh` when run from a worktree shell.** Always run from `/home/vkaskivuo/Projects/gf2/`.
-
-- **Do NOT believe worker self-reports verbatim.** Multiple bugs slipped through worker reports: 87a2402f's `Rate3_5` typo (correct: Rate3_4), 87a2402f's row-major-instead-of-column-major permutation (self-roundtrip masked it), 003e4088's QAM-bypass helper. Always grep the actual code; add hand-derived spec-compliance forward-only tests when correctness depends on a permutation.
-
-- **Do NOT authorise spec deviations in dispatch prompts that contradict [hard] criteria.** Escalate to user instead.
-
-- **TP07a in published ETSI vectors is §6.1.4 output (NOT §6.1.3 alone).** Confirmed empirically on 6 in-scope ETSI vectors + block diagram check. The 87a2402f bit interleaver implements only §6.1.3. To validate TP07a, the full §6.1.3 + §6.1.4 chain is required (a7b1bb21 closes this gap). §6.1.5 cell interleaver is TP10, NOT needed for TP07a.
-
-- **VV001-CR35 is Rate3/5 × 256-QAM** (NOT QPSK as 87a2402f's pre-r4 dispatch assumed). Both Rate3/5 and 256-QAM are OUT of the epic's in-scope set (Normal × {1/2, 2/3, 3/4} × {16-QAM, 64-QAM}).
-
-- **In-scope ETSI vectors at `/data/specs/dvb/t2/streams/`** (per 4cdaf1c5 worker's discovery):
-  - `VV004-8KFFT_CSP` (64-QAM × Rate3/4)
-  - `VV007-16KFFT_CSP` (16-QAM × Rate2/3)
-  - `VV009-4KFFT_CSP` (64-QAM × Rate2/3)
-  - `VV014-64QAM34_CSP` (64-QAM × Rate3/4)
-  - `VV020-FEF_CSP` (16-QAM × Rate1/2)
-  - `VV035-DTG052_CSP` (64-QAM × Rate3/4)
-  Modulation inferred from TP08 sample count / block count (32400=QPSK, 16200=16-QAM, 10800=64-QAM, 8100=256-QAM per 64800-bit Normal frame). Code rate from TP05 k value relative to TP06 N=64800.
-
-- **`run_coded_iterative_parallel` uses `StdRng`, not `ChaCha20Rng`.** Within-SNR heartbeat resume is architecturally unavailable on this path; fd73e8a8's criterion 5 was amended to scope heartbeats to sequential coded paths.
-
-- **gf2-coding has a `test-support` feature.** Integration tests under `tests/` that need to share helpers with crate-internal unit tests must depend on `gf2-coding = { path = ".", features = ["test-support"] }` (already added). Currently exposes `parse_tp_blocks`, `tp_path` (VV001-CR35 hardcoded), and `tp_path_for` (arbitrary VV*_CSP directory).
-
-- **Cargo-ci 300-second JIT default is tight on cold-build cargo workspaces.** Run `./scripts/cargo-ci.sh` manually first to warm `target/`, then re-call the gate.
-
-- **The reviewer is always right** (per user 2026-05-27): when reviewer flags a criterion as unmet, fix structurally (move criterion to the right issue, or implement what's needed) rather than amend-to-defer. Past amendments (87a2402f, fd73e8a8) stand because the user approved them at the time; future findings default to STRUCTURAL fix unless user explicitly authorises amendment.
+- **Shell cwd persists across Bash calls.** Never `cd` into a worktree
+  then `git merge` in a later call — it lands on the wrong branch. Use
+  `git -C /home/vkaskivuo/Projects/gf2 ...`. (Cost a recovery this
+  session.)
+- **`check-leak-into-main.sh` honours cwd** — run it from the main repo
+  root, not a worktree.
+- **Do not trust worker self-reports verbatim.** Bugs that passed
+  worker self-tests this session: Rate3_5-vs-Rate3_4 scope typo;
+  row-major-vs-column-major permutation (self-roundtrip masked it);
+  QAM-bypass test helper; and the BIG one — the bit interleaver
+  shipped (87a2402f, all gates green) MISSING the entire §6.1.3
+  parity-interleaving sub-stage. Self-consistent roundtrip tests do
+  NOT catch spec-divergence. Always add a test against EXTERNAL
+  reference data (ETSI vectors) when correctness is spec-defined.
+- **`jit gate pass <id> code-review` via the MCP times out at 600 s**;
+  the AI reviewer often runs longer. Run it via the CLI in a
+  background Bash task instead: `jit gate pass <id> code-review --by
+  agent:project-lead` with `run_in_background: true`. (Per user
+  instruction this session.) Do NOT invoke `./scripts/ai-review.sh`
+  directly.
+- **`pgrep -f <pat>` self-matches** — never use it in a wait loop.
+- **ETSI vectors moved** to `/data/specs/dvb/t2/streams/` (old
+  `/data/specs/dvb/streams/` is gone). Docs at
+  `/data/specs/dvb/t2/documentation/`. TS 102 831 (impl guidelines,
+  AWGN C/N tables) at
+  `/data/specs/etsi/deliver/etsi_ts/102800_102899/102831/01.02.01_60/`.
+- **TP07a = §6.1.3 output** (parity interleave + column twist), NOT
+  §6.1.4. TP07 (no `a`) = §6.1.4 cell-word-demux output (not
+  implemented; not needed for this epic). VV001-CR35 is QPSK Rate3/5
+  (earlier workers mislabeled it 256-QAM). Verify modulation from
+  TP08 cells/block: 32400=QPSK, 16200=16-QAM, 10800=64-QAM,
+  8100=256-QAM (Normal 64800-bit frame).
+- **wall_seconds + ber are non-deterministic across processes**
+  (wall-clock; AVX2 f32 non-associativity in LDPC min-sum). The resume
+  byte-identity criterion was amended (user-approved) to deterministic
+  columns only (es_n0_db, fer, frames, errors, mean_iters).
+- **`run_coded_iterative_parallel` uses StdRng** (no within-SNR
+  heartbeat resume); per-SNR-boundary resume only.
+- **Reviewer is contract enforcer** — fix structurally or escalate;
+  don't argue. Several criteria were amended this session WITH user
+  approval (87a2402f TP07a, fd73e8a8 heartbeat scoping, 003e4088 TP07a
+  removal, 152388f4 resume byte-identity). Never amend without
+  approval.
 
 ## Open questions needing user input
 
-- None currently open. a7b1bb21 is running.
+- **Decoder/demapper tuning vs gap criterion** (the one live decision):
+  the calibration shows ~1-1.5 dB gap with the default MinSum+MaxLog.
+  Tune before production (recommended) or accept + amend the 0.5 dB
+  criterion with data. The lead will surface this in the session
+  report.
 
 ## Reference artefacts
 
 - Epic: `jit issue show 2928ccce`
-- Design docs in `dev/active/`:
-  - `152388f4-campaign-runner.md` (Wave 4 campaign runner spec)
-  - `fd73e8a8-resumable-runner.md` (Wave 1 runner observability spec; amended path-scoping is in the issue description)
+- Campaign artefacts: `dev/benchmarks/dvb_t2_awgn/{PLAN.md,README.md,smoke/,plot.py}`
+- Reference TOML: `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`
+- Binary: `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
+- ETSI vectors: `/data/specs/dvb/t2/streams/`; TS 102 831:
+  `/data/specs/etsi/deliver/etsi_ts/102800_102899/102831/01.02.01_60/ts_102831v010201p.txt`
 - Progress file: `dev/active/2928ccce-progress.json`
-- ETSI test vectors: `/data/specs/dvb/t2/streams/` (80 streams total); reference-streams documentation: `/data/specs/dvb/t2/documentation/DVB-T2-ReferenceStreamsDocumentation1_2.txt`
-- Wave-5 artefact target: `dev/benchmarks/dvb_t2_awgn/` (per task `e4849f07`)
-- Project escalation policy: `~/.claude/skills/project-lead/references/escalation-policy.md`
-- Worktree dispatch protocol: `~/.claude/skills/project-lead/references/worktree-dispatch-protocol.md`
