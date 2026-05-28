@@ -1,0 +1,23 @@
+# warmup-matched non-regression (SC#3): gf2-now vs gf2-baseline
+"# filter gemm/Fp_(7|31|127|241|251|65521)/.../(64|256|1024)$ -- n=64 first warms Candidate-C i-cache, matching 41096af5"
+# 5-trial median per cell. delta_pct = (new - baseline)/baseline*100. verdict PASS iff |delta| <= 5%.
+# GF(7/31/127/251) baseline = 41096af5 post-wire-in aggregate. GF(241)/GF(65521) not in 41096af5; baseline = 0749dbad post-f64-cascade (most-recent prior gf2).
+prime,n,new_gop_s_5trial_median,baseline_gop_s,delta_pct,verdict,baseline_source
+7,64,33.228,32.156,+3.33,PASS,41096af5 aggregate
+7,256,72.336,70.746,+2.25,PASS,41096af5 aggregate
+7,1024,74.793,75.791,-1.32,PASS,41096af5 aggregate
+31,64,32.299,31.482,+2.60,PASS,41096af5 aggregate
+31,256,70.925,69.996,+1.33,PASS,41096af5 aggregate
+31,1024,74.682,76.509,-2.39,PASS,41096af5 aggregate
+127,64,32.210,,,n/a,no prior PASSing baseline (informational)
+127,256,70.798,69.804,+1.42,PASS,41096af5 aggregate
+127,1024,74.631,76.191,-2.05,PASS,41096af5 aggregate
+241,64,32.667,32.670,-0.01,PASS,0749dbad post-f64-cascade
+241,256,70.556,70.720,-0.23,PASS,0749dbad post-f64-cascade
+241,1024,74.638,73.170,+2.01,PASS,0749dbad post-f64-cascade
+251,64,30.273,31.521,-3.96,PASS,41096af5 aggregate
+251,256,69.554,69.926,-0.53,PASS,41096af5 aggregate
+251,1024,95.395,94.425,+1.03,PASS,41096af5 aggregate
+65521,64,18.702,18.760,-0.31,PASS,0749dbad post-f64-cascade
+65521,256,31.919,31.480,+1.40,PASS,0749dbad post-f64-cascade
+65521,1024,53.808,52.920,+1.68,PASS,0749dbad post-f64-cascade
