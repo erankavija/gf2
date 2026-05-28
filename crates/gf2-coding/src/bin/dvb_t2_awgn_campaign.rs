@@ -67,12 +67,20 @@
 //! Under `<output-dir>/`:
 //! - `curve_<rate>_<mod>.csv` — per-SNR results (columns: `es_n0_db, fer, ber,
 //!   frames, errors, mean_iters, wall_seconds`).
+//!   Two columns are inherently non-deterministic across separate process
+//!   invocations and are excluded from the resume byte-identity assertion:
+//!   `wall_seconds` (average wall-clock time per SNR point for this invocation)
+//!   and `ber` (derived from LDPC belief-propagation f32 output whose
+//!   intermediate values may differ due to SIMD dispatch over variable-length
+//!   inputs).  The discrete columns `es_n0_db`, `fer`, `frames`, `errors`, and
+//!   `mean_iters` are deterministic and asserted byte-identical by the resume
+//!   integration test.
 //! - `tracing.jsonl` — structured tracing log (one record per event), written
 //!   by the `sim-observability` layer of `SimulationRunner`.
 //! - `README.md` — invocation, seed, host info, total wall-clock.
 //! - `checkpoints/` — per-SNR JSON files with BLAKE3-verified config hash,
 //!   written by `SimulationRunner`'s checkpoint subsystem.
-//! - `calibration_<rate>_<mod>.csv` (only when `--calibrate`).
+//! - `calibration/calibration_<rate>_<mod>.csv` (only when `--calibrate`).
 //!
 //! # Plotting
 //!
@@ -758,8 +766,10 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     // Output paths.
     let csv_path = if is_calib {
-        args.output_dir
-            .join(calib_csv_name(args.rate, args.modulation))
+        let calib_dir = args.output_dir.join("calibration");
+        std::fs::create_dir_all(&calib_dir)
+            .map_err(|e| format!("Cannot create calibration dir: {e}"))?;
+        calib_dir.join(calib_csv_name(args.rate, args.modulation))
     } else {
         args.output_dir
             .join(curve_csv_name(args.rate, args.modulation))
