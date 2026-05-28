@@ -21,8 +21,8 @@
 - **Wave 1 (closed)**: 4 issues, many reworks (87a2402f r3 + r4 user-authorised, fd73e8a8 r1 + r2 + r3 + r4 user-authorised), 2 user-authorised criterion amendments (87a2402f TP07a defer, fd73e8a8 heartbeat path-scoping).
 - **Wave 2 (closed)**: 003e4088 BICM chain integration. r1 fixed a QAM-bypass bug in the 6-config roundtrip helper + added a fast-tier QPSK roundtrip test. User-directed audit removed a TP07a criterion that belonged in 4cdaf1c5.
 - **Wave 3 (extended scope)**:
-  - 4cdaf1c5 worker (commit `263ca764`) discovered empirically that ALL 6 in-scope ETSI vectors (VV004, VV007, VV009, VV014, VV020, VV035 — found at `/data/specs/dvb/streams/`) show ~50% bit-diff between bit-interleaver output and TP07a. NONE are §6.1.3-only.
-  - The ETSI reference-streams documentation block diagram (verified at `/data/specs/dvb/wp-content/uploads/2021/01/T2_0587_DVB-T2-ReferenceStreamsDocumentation1_2-.txt:30-50ish`) shows TP7a = §6.1.4 (bit-to-cell-word demux) output. §6.1.5 (cell interleaver) is TP10 — well downstream, not needed for TP07a.
+  - 4cdaf1c5 worker (commit `263ca764`) discovered empirically that ALL 6 in-scope ETSI vectors (VV004, VV007, VV009, VV014, VV020, VV035 — found at `/data/specs/dvb/t2/streams/`) show ~50% bit-diff between bit-interleaver output and TP07a. NONE are §6.1.3-only.
+  - The ETSI reference-streams documentation block diagram (verified at `/data/specs/dvb/t2/documentation/DVB-T2-ReferenceStreamsDocumentation1_2.txt:30-50ish`) shows TP7a = §6.1.4 (bit-to-cell-word demux) output. §6.1.5 (cell interleaver) is TP10 — well downstream, not needed for TP07a.
   - User authorised scope expansion. Created `a7b1bb21` for §6.1.4 implementation. Wired as dep of `4cdaf1c5`. Dispatched a7b1bb21 worker on main.
 
 ## What to do next
@@ -49,7 +49,7 @@
 
 - **VV001-CR35 is Rate3/5 × 256-QAM** (NOT QPSK as 87a2402f's pre-r4 dispatch assumed). Both Rate3/5 and 256-QAM are OUT of the epic's in-scope set (Normal × {1/2, 2/3, 3/4} × {16-QAM, 64-QAM}).
 
-- **In-scope ETSI vectors at `/data/specs/dvb/streams/`** (per 4cdaf1c5 worker's discovery):
+- **In-scope ETSI vectors at `/data/specs/dvb/t2/streams/`** (per 4cdaf1c5 worker's discovery):
   - `VV004-8KFFT_CSP` (64-QAM × Rate3/4)
   - `VV007-16KFFT_CSP` (16-QAM × Rate2/3)
   - `VV009-4KFFT_CSP` (64-QAM × Rate2/3)
@@ -77,7 +77,7 @@
   - `152388f4-campaign-runner.md` (Wave 4 campaign runner spec)
   - `fd73e8a8-resumable-runner.md` (Wave 1 runner observability spec; amended path-scoping is in the issue description)
 - Progress file: `dev/active/2928ccce-progress.json`
-- ETSI test vectors: `/data/specs/dvb/streams/` (80 streams total); reference-streams documentation: `/data/specs/dvb/wp-content/uploads/2021/01/T2_0587_DVB-T2-ReferenceStreamsDocumentation1_2-.txt`
+- ETSI test vectors: `/data/specs/dvb/t2/streams/` (80 streams total); reference-streams documentation: `/data/specs/dvb/t2/documentation/DVB-T2-ReferenceStreamsDocumentation1_2.txt`
 - Wave-5 artefact target: `dev/benchmarks/dvb_t2_awgn/` (per task `e4849f07`)
 - Project escalation policy: `~/.claude/skills/project-lead/references/escalation-policy.md`
 - Worktree dispatch protocol: `~/.claude/skills/project-lead/references/worktree-dispatch-protocol.md`
