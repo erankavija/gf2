@@ -54,6 +54,89 @@ unsafe fn avx2_m4rm_gray_xor16(acc: &mut [[u64; 8]; 2], src: &[u64]) {
     }
 }
 
+/// AVX2 full Gray-code table build for stride_words == 4 (256-bit rows).
+///
+/// One YMM register holds the running accumulator; each Gray step is a single
+/// load + XOR + store. The Gray-walk control (curr_gray, flipped bit) is scalar
+/// and matrix-data-independent, so it stays out of the SIMD critical path.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_m4rm_gray_build4(
+    buffer: &mut [u64],
+    panel: &[u64],
+    stride_words: usize,
+    table_size: usize,
+    valid_rows: usize,
+) {
+    debug_assert_eq!(stride_words, 4);
+    debug_assert!(buffer.len() >= table_size * stride_words);
+    debug_assert!(panel.len() >= valid_rows * stride_words);
+
+    let buf = buffer.as_mut_ptr() as *mut u8;
+    let pan = panel.as_ptr() as *const u8;
+
+    // Entry 0 is the zero vector.
+    let zero = _mm256_setzero_si256();
+    storeu(buf, zero);
+
+    let mut acc = zero;
+    let mut prev_gray = 0usize;
+    let mut i = 1usize;
+    while i < table_size {
+        let curr_gray = i ^ (i >> 1);
+        let bit_pos = (prev_gray ^ curr_gray).trailing_zeros() as usize;
+        if bit_pos < valid_rows {
+            let row = loadu(pan.add(bit_pos * 32));
+            acc = _mm256_xor_si256(acc, row);
+        }
+        storeu(buf.add(curr_gray * 32), acc);
+        prev_gray = curr_gray;
+        i += 1;
+    }
+}
+
+/// AVX2 full Gray-code table build for stride_words == 8 (512-bit rows).
+///
+/// Two YMM accumulators cover the 8-word row; identical Gray-walk control flow
+/// to the stride-4 builder.
+#[target_feature(enable = "avx2")]
+unsafe fn avx2_m4rm_gray_build8(
+    buffer: &mut [u64],
+    panel: &[u64],
+    stride_words: usize,
+    table_size: usize,
+    valid_rows: usize,
+) {
+    debug_assert_eq!(stride_words, 8);
+    debug_assert!(buffer.len() >= table_size * stride_words);
+    debug_assert!(panel.len() >= valid_rows * stride_words);
+
+    let buf = buffer.as_mut_ptr() as *mut u8;
+    let pan = panel.as_ptr() as *const u8;
+
+    let zero = _mm256_setzero_si256();
+    storeu(buf, zero);
+    storeu(buf.add(32), zero);
+
+    let mut acc0 = zero;
+    let mut acc1 = zero;
+    let mut prev_gray = 0usize;
+    let mut i = 1usize;
+    while i < table_size {
+        let curr_gray = i ^ (i >> 1);
+        let bit_pos = (prev_gray ^ curr_gray).trailing_zeros() as usize;
+        if bit_pos < valid_rows {
+            let base = bit_pos * 64;
+            acc0 = _mm256_xor_si256(acc0, loadu(pan.add(base)));
+            acc1 = _mm256_xor_si256(acc1, loadu(pan.add(base + 32)));
+        }
+        let dst = buf.add(curr_gray * 64);
+        storeu(dst, acc0);
+        storeu(dst.add(32), acc1);
+        prev_gray = curr_gray;
+        i += 1;
+    }
+}
+
 #[target_feature(enable = "avx2")]
 unsafe fn avx2_m4rm_tile8x4(
     c_block: &mut [u64],
@@ -493,6 +576,42 @@ pub(crate) fn fns() -> LogicalFns {
         );
         unsafe { avx2_m4rm_gray_xor16(acc, src) }
     }
+    fn m4rm_gray_build4_fn(
+        buffer: &mut [u64],
+        panel: &[u64],
+        stride_words: usize,
+        table_size: usize,
+        valid_rows: usize,
+    ) {
+        assert_eq!(stride_words, 4, "m4rm_gray_build4: stride_words must be 4");
+        assert!(
+            buffer.len() >= table_size * stride_words,
+            "m4rm_gray_build4: buffer too small"
+        );
+        assert!(
+            panel.len() >= valid_rows * stride_words,
+            "m4rm_gray_build4: panel too small"
+        );
+        unsafe { avx2_m4rm_gray_build4(buffer, panel, stride_words, table_size, valid_rows) }
+    }
+    fn m4rm_gray_build8_fn(
+        buffer: &mut [u64],
+        panel: &[u64],
+        stride_words: usize,
+        table_size: usize,
+        valid_rows: usize,
+    ) {
+        assert_eq!(stride_words, 8, "m4rm_gray_build8: stride_words must be 8");
+        assert!(
+            buffer.len() >= table_size * stride_words,
+            "m4rm_gray_build8: buffer too small"
+        );
+        assert!(
+            panel.len() >= valid_rows * stride_words,
+            "m4rm_gray_build8: panel too small"
+        );
+        unsafe { avx2_m4rm_gray_build8(buffer, panel, stride_words, table_size, valid_rows) }
+    }
     fn m4rm_tile8x4_fn(
         c_block: &mut [u64],
         stride_words: usize,
@@ -578,6 +697,8 @@ pub(crate) fn fns() -> LogicalFns {
         or_fn,
         xor_fn,
         m4rm_gray_xor16_fn,
+        m4rm_gray_build4_fn,
+        m4rm_gray_build8_fn,
         m4rm_tile8x4_fn,
         m4rm_tile8xn_fn,
         not_fn,
@@ -662,5 +783,76 @@ mod tests {
         let mut acc = [[0u64; 8]; 2];
         let src = [0u64; 15];
         (fns.m4rm_gray_xor16_fn)(&mut acc, &src);
+    }
+
+    /// Scalar reference Gray-code table build: entry `g` = XOR of panel rows
+    /// whose bit is set in the binary index `g` (only `valid_rows` rows count).
+    fn scalar_gray_build(
+        panel: &[u64],
+        stride: usize,
+        table_size: usize,
+        valid_rows: usize,
+    ) -> Vec<u64> {
+        let mut buf = vec![0u64; table_size * stride];
+        for g in 0..table_size {
+            let off = g * stride;
+            for bit in 0..valid_rows {
+                if (g & (1 << bit)) != 0 {
+                    for w in 0..stride {
+                        buf[off + w] ^= panel[bit * stride + w];
+                    }
+                }
+            }
+        }
+        buf
+    }
+
+    fn pseudo_panel(rows: usize, stride: usize, seed: u64) -> Vec<u64> {
+        let mut s = seed | 1;
+        let mut out = vec![0u64; rows * stride];
+        for v in out.iter_mut() {
+            s ^= s << 13;
+            s ^= s >> 7;
+            s ^= s << 17;
+            *v = s;
+        }
+        out
+    }
+
+    #[test]
+    fn test_m4rm_gray_build4_matches_scalar() {
+        let fns = fns();
+        let stride = 4;
+        for valid_rows in 1..=8usize {
+            let table_size = 1usize << valid_rows;
+            let panel = pseudo_panel(valid_rows, stride, 0xA53C_9E11 ^ valid_rows as u64);
+            let expected = scalar_gray_build(&panel, stride, table_size, valid_rows);
+            let mut got = vec![0u64; table_size * stride];
+            (fns.m4rm_gray_build4_fn)(&mut got, &panel, stride, table_size, valid_rows);
+            assert_eq!(got, expected, "stride4 build mismatch at k={valid_rows}");
+        }
+    }
+
+    #[test]
+    fn test_m4rm_gray_build8_matches_scalar() {
+        let fns = fns();
+        let stride = 8;
+        for valid_rows in 1..=8usize {
+            let table_size = 1usize << valid_rows;
+            let panel = pseudo_panel(valid_rows, stride, 0x71B2_44DD ^ valid_rows as u64);
+            let expected = scalar_gray_build(&panel, stride, table_size, valid_rows);
+            let mut got = vec![0u64; table_size * stride];
+            (fns.m4rm_gray_build8_fn)(&mut got, &panel, stride, table_size, valid_rows);
+            assert_eq!(got, expected, "stride8 build mismatch at k={valid_rows}");
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "m4rm_gray_build4: stride_words must be 4")]
+    fn test_m4rm_gray_build4_rejects_wrong_stride() {
+        let fns = fns();
+        let mut buf = vec![0u64; 8];
+        let panel = vec![0u64; 8];
+        (fns.m4rm_gray_build4_fn)(&mut buf, &panel, 8, 2, 1);
     }
 }
