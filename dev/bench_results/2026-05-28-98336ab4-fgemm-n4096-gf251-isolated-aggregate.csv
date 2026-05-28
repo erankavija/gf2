@@ -1,0 +1,7 @@
+# GF(251)/n=4096 isolated single-prime bench -- aggregate over the 5 trials.
+# n_trials = 5 (see per-trial file 2026-05-28-98336ab4-fgemm-n4096-gf251-isolated.csv).
+# median_gop_s is the 5-trial median of the per-trial display medians.
+# q1/q3 are the 2nd-smallest / 2nd-largest of the 5 values; iqr = q3 - q1.
+# wall_ratio = fflas_gop_s / median_gop_s; verdict PASS iff wall_ratio <= 1.5.
+prime,n,route,n_trials,median_gop_s,q1,q3,iqr,min,max,fflas_gop_s,throughput_ratio,wall_ratio,verdict
+251,4096,isolated,5,106.715,104.387,107.717,3.331,102.211,107.757,158.964,0.6713,1.4896,PASS

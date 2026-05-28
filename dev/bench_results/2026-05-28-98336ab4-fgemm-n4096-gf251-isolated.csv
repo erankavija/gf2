@@ -1,9 +1,11 @@
+# GF(251)/n=4096 isolated single-prime bench -- per-trial raw data (exactly 5 trials).
+# Filter: gemm/Fp_251/Fp_251/4096$ (no other prime runs in the process).
+# Gop/s = 2 * 4096^3 / median_ns. median_ns from per-trial estimates.json snapshot.
+# Aggregate (median/IQR/ratio/verdict) is in the sibling file:
+#   2026-05-28-98336ab4-fgemm-n4096-gf251-isolated-aggregate.csv
 prime,n,trial,route,median_ns,gop_s
 251,4096,1,isolated,1275922650.0,107.7173
 251,4096,2,isolated,1344654354.5,102.2114
 251,4096,3,isolated,1316633122.0,104.3867
 251,4096,4,isolated,1287911413.5,106.7146
 251,4096,5,isolated,1275450380.0,107.7572
-
-prime,n,route,median_gop_s,q1,q3,iqr,min,max,fflas_gop_s,throughput_ratio,wall_ratio,verdict
-251,4096,isolated,106.715,104.387,107.717,3.331,102.211,107.757,158.964,0.6713,1.4896,PASS
