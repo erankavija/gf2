@@ -56,11 +56,11 @@ Relative to the v1 draft (`2026-05-25-b0fa00af-sota-scorecard-final.md`, which s
 
 Inherited-correct from the v1 draft (carried forward, re-verified against their evidence docs): 27bb2f75 (GF(7)/GF(31)/n=64 fgemm), 52cce970 (charpoly/minpoly closures), aaa847cf (GF(2) M4RM invert), 5ce13bae (Markowitz sparse RREF), 41096af5 (route-A GF(251)/n=1024), e24f7839 (GF(2^m) GEMM), e8a0c47a (Phase 2 non-regression).
 
-**A8 disposition tally (all 76 rows + appendix rows):** see § 8. Final state: **PASS / AMENDED / EXCLUDED / UNRESOLVED-BLOCKER** — there is exactly **one unresolved blocker** (A8 rows 4-5, matmul GF(2)/n=64,256; see § 8.1 and the BLOCKER callout). Every other A8 cell is PASS, AMENDED-with-citation, or EXCLUDED.
+**A8 disposition tally (all 76 rows + appendix rows):** see § 8. Final state: **every A8 cell is PASS, AMENDED-with-citation, or EXCLUDED — zero bare-FAIL.** The last two cells (A8 rows 4-5, matmul GF(2)/n=64,256) were closed to PASS by successor task `bdf60780` (n=64 **1.213×**, n=256 **1.070×**; § 4.4, § 8.1). **SC#5 is SATISFIED.**
 
-> **BLOCKER (must be resolved before SC#5 is satisfied):** A8 rows 4-5 (matmul GF(2) at n=64 and n=256) cannot be dispositioned. Story `974a85bd` owns them; its published parity report `dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md` closes matmul GF(2) only at n=1024 (1.18×, [hard] PASS) and n=4096 (1.50×, [hard] PASS) — it does **not** disposition n=64,256, which sit below the M4RM crossover (n=256 is 13.5× behind M4RI per `2026-05-04-0fd48627-gf2-m4ri-profile.md`). The predecessor scorecard A8.2 records "No successor task filed yet — flagged in § A8.2." No user-approved `[aspirational]` amendment or EXCLUSION exists for these two cells anywhere in the repo. They are recorded below as **FAIL (UNRESOLVED)** pending lead escalation; this worker has no authority to amend a success criterion.
+> **BLOCKER — RESOLVED 2026-05-28 (retained for audit trail; see RESOLUTION below):** At v2-publication time, A8 rows 4-5 (matmul GF(2) at n=64 and n=256) could not be dispositioned. Story `974a85bd` owns them; its published parity report `dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md` closes matmul GF(2) only at n=1024 (1.18×, [hard] PASS) and n=4096 (1.50×, [hard] PASS) — it does **not** disposition n=64,256, which sit below the M4RM crossover (n=256 is 13.5× behind M4RI per `2026-05-04-0fd48627-gf2-m4ri-profile.md`). The predecessor scorecard A8.2 records "No successor task filed yet — flagged in § A8.2." No user-approved `[aspirational]` amendment or EXCLUSION exists for these two cells anywhere in the repo. They are recorded below as **FAIL (UNRESOLVED)** pending lead escalation; this worker has no authority to amend a success criterion.
 >
-> **RESOLUTION (lead, 2026-05-28):** Escalated to the user; per their decision (escalation option B — *file a successor task and pursue real closure rather than amend/exclude*), successor task **`bdf60780`** ("Close matmul GF(2) small-n (n=64, n=256) to M4RI parity") has been filed and wired as a blocker of `b0fa00af`. These two cells remain FAIL pending `bdf60780`'s closure; `b0fa00af` stays `in_progress` until `bdf60780` lands and rows 4-5 are re-measured ≤ 1.5× (PASS). SC#5 is satisfied at that point — every other A8 cell is already PASS / AMENDED-with-citation / EXCLUDED.
+> **RESOLUTION (lead, 2026-05-28):** Escalated to the user; per their decision (escalation option B — *file a successor task and pursue real closure rather than amend/exclude*), successor task **`bdf60780`** ("Close matmul GF(2) small-n (n=64, n=256) to M4RI parity") has been filed and wired as a blocker of `b0fa00af`. **CLOSED 2026-05-28:** `bdf60780` landed `done` — rows 4-5 were genuinely closed (real engineering, not amended): n=64 **1.213×** and n=256 **1.070×** vs canonical M4RI, both ≤ 1.5× with comfortable margin (see § 4.4 + `[Ebdf]`). The true starting gap was 2.73×/2.54× (the prior "1.79×/1.72×" had compared a stale gf2 number against a non-canonical M4RI baseline). Both cells are now PASS. **SC#5 is SATISFIED** — every A8 cell is PASS / AMENDED-with-citation / EXCLUDED, zero bare-FAIL.
 
 ---
 
@@ -223,8 +223,8 @@ Carried forward from the v1 draft (52cce970 closures), re-verified against `[E52
 
 | Operation | n | regime | Ratio | Status | Evidence |
 |---|---:|---|---:|---|---|
-| matmul | 64 | — | **1.79×** | **FAIL → routed to successor `bdf60780`** (filed 2026-05-28, user option B; see § 3 RESOLUTION / § 8.1) | `[E13]` `[E0fd]` |
-| matmul | 256 | — | **1.72×** | **FAIL → routed to successor `bdf60780`** (filed 2026-05-28, user option B; see § 3 RESOLUTION / § 8.1) | `[E13]` `[E0fd]` |
+| matmul | 64 | — | **1.213×** | **PASS [hard] ✓NEW** (was FAIL — true gap 2.73× vs canonical M4RI; closed by `bdf60780`) | `[Ebdf]` |
+| matmul | 256 | — | **1.070×** | **PASS [hard] ✓NEW** (was FAIL — true gap 2.54×; closed by `bdf60780`) | `[Ebdf]` |
 | matmul | 1024 | — | 1.18× | PASS [hard] | `[E13]` |
 | matmul | 4096 | — | 1.50× | PASS [hard] (threshold edge) | `[E13]` |
 | echelon | 64–1024 | uniform+deficient | 1.03×–1.39× | PASS (all 6) | `[E13]` |
@@ -426,8 +426,8 @@ Final disposition of every A8 routing entry from `2026-05-08-2cfc4372-sota-score
 | 1 | fgemm | GF(7) | 4096 | 1.70× | `98336ab4` | **PASS** 1.227× |
 | 2 | fgemm | GF(31) | 4096 | 1.76× | `98336ab4` | **PASS** 1.263× |
 | 3 | fgemm | GF(65521) | 4096 | 2.52× | `98336ab4`/`0749dbad` | **PASS** 1.243× |
-| **4** | **matmul** | **GF(2)** | **64** | **1.79×** | `bdf60780` | **FAIL → successor `bdf60780` (user option B, 2026-05-28; § 8.1)** |
-| **5** | **matmul** | **GF(2)** | **256** | **1.72×** | `bdf60780` | **FAIL → successor `bdf60780` (user option B, 2026-05-28; § 8.1)** |
+| **4** | **matmul** | **GF(2)** | **64** | 2.73× (true) | `bdf60780` | **PASS 1.213×** ✓NEW (closed 2026-05-28) |
+| **5** | **matmul** | **GF(2)** | **256** | 2.54× (true) | `bdf60780` | **PASS 1.070×** ✓NEW (closed 2026-05-28) |
 | 6-9 | pluq | GF(7) | all 64,256 | 2.09–10.09× | `6823c8a0` | **PASS** 0.217–0.623× |
 | 10-11 | pluq | GF(251) | 64 | 12.85–14.55× | `68db401b` | **PASS** 1.243×/1.385× |
 | 12-13 | pluq | GF(251) | 256 | 37.67–40.01× | `6823c8a0` | AMENDED [aspirational] (session-11) |
@@ -478,25 +478,22 @@ Final disposition of every A8 routing entry from `2026-05-08-2cfc4372-sota-score
 
 ### 8.1 SC#5 verdict
 
-**SC#5 is NOT YET satisfied** because A8 rows 4-5 (matmul GF(2)/n=64,256) remain **FAIL, routed to successor `bdf60780`** (real-closure path, not yet landed):
+**SC#5 is SATISFIED.** Every cell previously routed via Annex A8 is now PASS, AMENDED-with-citation, or EXCLUDED — **zero bare-FAIL**.
 
-- Story `974a85bd` owns these cells. Its published parity report `[E13]` (`2026-05-06-111a3967-gf2-parity-evidence.md`) closes matmul GF(2) only at n=1024 ([hard] PASS 1.18×) and n=4096 ([hard] PASS 1.50×). The n=64,256 cells are below the M4RM crossover and are NOT dispositioned by that report (n=256 measured at 13.5× behind M4RI, `[E0fd]`).
-- The predecessor scorecard's Annex A8.2 explicitly records "No successor task filed yet — flagged in § A8.2."
-- No prior user-approved `[aspirational]` amendment or EXCLUSION for these two cells existed anywhere in the repo.
+The last two cells (A8 rows 4-5, matmul GF(2)/n=64,256) have the following history:
 
-**Lead escalation outcome (2026-05-28):** escalated to the user; per their decision (option B — *pursue real closure*), successor task **`bdf60780`** ("Close matmul GF(2) small-n (n=64, n=256) to M4RI parity") was filed with a `[hard]` ≤ 1.5× target and wired as a blocker of `b0fa00af` (and transitively of epic `026fc832`). The user explicitly declined the `[aspirational]`-amend and EXCLUDE options. Therefore:
+- Story `974a85bd` owned these cells but its parity report `[E13]` only dispositioned matmul GF(2) at n=1024 ([hard] PASS 1.18×) and n=4096 ([hard] PASS 1.50×) — it never covered n=64,256 (below the M4RM crossover; no `[aspirational]` amendment or EXCLUSION existed anywhere).
+- **Lead escalation outcome (2026-05-28):** escalated to the user; per their decision (option B — *pursue real closure*, declining the amend/exclude options), successor task **`bdf60780`** was filed with a `[hard]` ≤ 1.5× target.
+- **`bdf60780` closed `done` (2026-05-28):** real engineering (AVX2 Gray-table builders + small-n k_block heuristic + lowered register-tile gate) brought n=64 to **1.213×** and n=256 to **1.070×** vs canonical M4RI — both PASS with 19%/29% margin, from a true starting gap of 2.73×/2.54×. No regression at n=1024/4096; correctness proptests green. Evidence `[Ebdf]`.
 
-- Rows 4-5 stay **FAIL** in this scorecard until `bdf60780` lands.
-- `b0fa00af` and epic `026fc832` remain `in_progress` until `bdf60780` closes `done` and rows 4-5 are re-measured ≤ 1.5× (PASS), at which point this scorecard is updated to PASS and SC#5 is satisfied.
+Rows 4-5 are therefore **PASS**, and SC#5 — the binding constraint of this issue — is fully satisfied. `b0fa00af` and epic `026fc832` can close.
 
-**Every other A8 cell is already PASS, AMENDED-with-citation, or EXCLUDED.** The only open item is `bdf60780`'s closure of rows 4-5.
-
-### 8.2 Tally (excluding the 2 unresolved blocker cells)
+### 8.2 Tally (all A8 + appendix rows)
 
 - **PASS** (direct/evidence-doc): A8 rows 1-3, 6-11, 14-22, 26-58 (PASS subset), 62, 64, 66-76, A5, A6, A7/1024, A7/4096.
 - **AMENDED [aspirational]** (user-approved, cited): rows 12-13, 23-25, 37, 39-40, 51-54, 61, 63, 65, A7/{64,256}, A2, A3, + the four 8df0c501 n=1024-uniform invert cells + the two A4 GF(2^31-1)/invert/uniform cells.
 - **EXCLUDED**: §6.3 (11 cells: GF(2^4) matmul ×3, GF(2) pluq/solve ×8) + §6.1/§6.2 (20 cells: no-independent-oracle).
-- **FAIL → successor `bdf60780`** (real-closure path, user option B 2026-05-28): A8 rows 4-5 (matmul GF(2)/n=64,256). `b0fa00af` + epic stay open until `bdf60780` lands.
+- **PASS ✓NEW (closed by `bdf60780`, 2026-05-28)**: A8 rows 4-5 (matmul GF(2)/n=64 1.213×, n=256 1.070×). The final two FAIL cells, closed by real engineering. **Zero bare-FAIL cells remain.**
 
 ---
 
@@ -504,7 +501,7 @@ Final disposition of every A8 routing entry from `2026-05-08-2cfc4372-sota-score
 
 Per SC#7, cells PASSing in the predecessor scorecard must not regress > 5% under same-session measurement. Confirmed by: (a) the 98336ab4 warmup-matched non-regression sweep (`[E98]` § 4 — all 18 GF(p) fgemm cells with a prior PASSing baseline within ±5%); (b) the per-issue non-regression sweeps in `[E68m]` § "Non-regression", `[E86]` § 4, `[E6a]` § 4, `[E8d]` § 4, `[E66]` § 6, `[E91]` § 5.2 (all previously-PASSing GF(p) dense-LA cells improved or within ±5%); (c) the § 6 downstream-inheritance measurements (this scorecard).
 
-No cell PASSing in the predecessor regressed beyond 5% on a same-code basis. SC#7 satisfied for all dispositioned cells. (The two unresolved blocker cells were already FAIL in the predecessor; no regression possible.)
+No cell PASSing in the predecessor regressed beyond 5% on a same-code basis. SC#7 satisfied for all cells. (The matmul GF(2) n=64,256 cells were already FAIL in the predecessor and are now PASS via `bdf60780` — an improvement, not a regression.)
 
 ---
 
@@ -543,6 +540,7 @@ No cell PASSing in the predecessor regressed beyond 5% on a same-code basis. SC#
 | `[Ed3]` | `dev/bench_results/2026-05-27-d36cc414-gf251-n64-borderline.md` | GF(251)/n=64 borderline decomposition (branch b; [aspirational] rows 23,37,40,51,52) |
 | `[E98]` | `dev/bench_results/2026-05-28-98336ab4-fgemm-n4096.md` | GF(p) fgemm n=4096 closure (all 6 PASS) |
 | `[Eds]` | `dev/bench_results/2026-05-28-b0fa00af-downstream-inheritance.csv` | This scorecard's downstream-inheritance bench CSV (§ 6) |
+| `[Ebdf]` | `dev/bench_results/2026-05-28-bdf60780-matmul-gf2-smalln.md` | matmul GF(2) small-n M4RI parity closure (A8 rows 4-5: n=64 1.213×, n=256 1.070×) |
 | handoff-11 | `dev/active/026fc832-handoff-11.md` | Session-11 amendment escalation (rows 24-25,39,53-54 [aspirational]) |
 | handoff-12 | `dev/active/026fc832-handoff-12.md` | Session-12 amendment escalation (user "apply all 5", commit 93dc5125; rows 23,37,40,51,52) |
 | predecessor | `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` | Predecessor SOTA scorecard (superseded) |
