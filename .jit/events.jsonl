@@ -5553,3 +5553,10 @@
 {"type":"gate_passed","id":"7fb6cc40-5fa0-4049-8adf-7c4282ed506c","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-28T13:54:02.063731778Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"ae089f8e-160a-48fb-afa5-a5306b22a4b6","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-28T14:00:45.546698645Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"544b8157-d9c0-44e6-bb5c-d4a57f8d98f6","issue_id":"0749dbad-4c15-4f63-9e15-7a4c7121ad1c","timestamp":"2026-05-28T14:00:45.546731955Z"}
+{"type":"gate_passed","id":"833f57e4-94fb-4218-874d-6e9fc0845560","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T14:52:54.764448501Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"a1e92e68-53fe-40b0-98c6-ce26a462c17b","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:02:25.414940616Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"44b5cacd-427c-4602-89ab-a1ae85aa6a64","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:25:28.622495184Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"685026f8-7065-4433-817d-64a209a5aece","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:44.813451970Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"4f138e2f-2abe-40a5-aa73-2482bd8bc554","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:51.613364505Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
+{"type":"issue_state_changed","id":"20d27789-6bd5-435d-adb2-58428829cefe","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:58.351711213Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"0b50f797-1252-48dd-99b9-d735d467e483","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:58.351743883Z"}
