@@ -1,0 +1,14 @@
+nice: cannot set niceness: Permission denied
+Benchmarking gemm/Fp_251/Fp_251/4096
+Benchmarking gemm/Fp_251/Fp_251/4096: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 13.4s.
+Benchmarking gemm/Fp_251/Fp_251/4096: Collecting 10 samples in estimated 13.419 s (10 iterations)
+Benchmarking gemm/Fp_251/Fp_251/4096: Analyzing
+gemm/Fp_251/Fp_251/4096 time:   [1.2721 s 1.2807 s 1.2899 s]
+                        thrpt:  [106.55 Gelem/s 107.32 Gelem/s 108.04 Gelem/s]
+                 change:
+                        time:   [-1.9578% -0.9335% +0.1644%] (p = 0.13 > 0.05)
+                        thrpt:  [-0.1641% +0.9423% +1.9969%]
+                        No change in performance detected.
+
