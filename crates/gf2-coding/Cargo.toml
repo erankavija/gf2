@@ -77,6 +77,12 @@ test-support = []
 # - validate_ldpc_cache: Comprehensive LDPC validation with error correction
 # - check_encoding: Quick encoding sanity check
 
+# dvb_t2_awgn_campaign uses blake3/rand_chacha/ctrlc for resume and
+# checkpoint support; those are gated on sim-observability (default on).
+[[bin]]
+name = "dvb_t2_awgn_campaign"
+required-features = ["sim-observability"]
+
 # Sparse-side CSV emitter for the post-PPC scorecard (jit:47698404).
 # Mirrors the dense emitter's example layout in `crates/gf2-core/examples/`.
 [[example]]

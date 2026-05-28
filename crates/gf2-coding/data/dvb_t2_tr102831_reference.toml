@@ -1,0 +1,81 @@
+# DVB-T2 AWGN reference points for the six in-scope MODCODs
+# (Normal frame, code rates 1/2, 2/3, 3/4 x 16-QAM and 64-QAM).
+#
+# Source: ETSI TR 102 831 v1.2.1 (2012-10),
+#   "Digital Video Broadcasting (DVB);
+#    Implementation guidelines for a second generation digital
+#    terrestrial television broadcasting system (DVB-T2)".
+#
+# Hand-extraction status: values below are PLACEHOLDER estimates derived
+# from the Shannon capacity curve plus approximately 1.5 dB gap, consistent
+# with DVB-T2 waterfall behaviour.  Replace with data read from the actual
+# figures in TR 102 831 once access to the document is available.
+#
+# Section naming: normal_r<num>_<den>_<modulation>
+# Columns: (es_n0_db, fer) pairs along the simulated FER waterfall.
+# The FER values listed span from ~0.1 down to ~1e-4 (the target operating
+# point for DVB-T2 systems).
+#
+# Plot script looks up the section whose key matches
+#   "normal_r{rate_str}_{mod_str}"
+# where rate_str = "1_2" for rate 1/2 etc., mod_str = "16qam" or "64qam".
+
+[normal_r1_2_16qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 1/2)"
+# Shannon capacity for 16-QAM rate 1/2: Es/N0 ≈ 3.7 dB; waterfall at ~5.5 dB.
+points = [
+  [4.5, 1.0e-1],
+  [5.0, 1.0e-2],
+  [5.5, 1.0e-3],
+  [6.0, 1.0e-4],
+]
+
+[normal_r2_3_16qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 2/3)"
+# Shannon capacity for 16-QAM rate 2/3: Es/N0 ≈ 5.5 dB; waterfall at ~7.5 dB.
+points = [
+  [6.5, 1.0e-1],
+  [7.0, 1.0e-2],
+  [7.5, 1.0e-3],
+  [8.0, 1.0e-4],
+]
+
+[normal_r3_4_16qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 3/4)"
+# Shannon capacity for 16-QAM rate 3/4: Es/N0 ≈ 7.0 dB; waterfall at ~9.0 dB.
+points = [
+  [8.0, 1.0e-1],
+  [8.5, 1.0e-2],
+  [9.0, 1.0e-3],
+  [9.5, 1.0e-4],
+]
+
+[normal_r1_2_64qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 1/2)"
+# Shannon capacity for 64-QAM rate 1/2: Es/N0 ≈ 5.3 dB; waterfall at ~7.5 dB.
+points = [
+  [6.5, 1.0e-1],
+  [7.0, 1.0e-2],
+  [7.5, 1.0e-3],
+  [8.0, 1.0e-4],
+]
+
+[normal_r2_3_64qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 2/3)"
+# Shannon capacity for 64-QAM rate 2/3: Es/N0 ≈ 7.7 dB; waterfall at ~10.0 dB.
+points = [
+  [9.0, 1.0e-1],
+  [9.5, 1.0e-2],
+  [10.0, 1.0e-3],
+  [10.5, 1.0e-4],
+]
+
+[normal_r3_4_64qam]
+source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 3/4)"
+# Shannon capacity for 64-QAM rate 3/4: Es/N0 ≈ 9.5 dB; waterfall at ~12.0 dB.
+points = [
+  [10.5, 1.0e-1],
+  [11.0, 1.0e-2],
+  [11.5, 1.0e-3],
+  [12.0, 1.0e-4],
+]
