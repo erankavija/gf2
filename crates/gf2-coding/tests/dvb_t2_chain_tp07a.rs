@@ -40,7 +40,7 @@
 //!    `deinterleave(tp07a) == tp06`.
 //!
 //! 2. **Vector discovery** — locates all DVB-T2 CSP directories at
-//!    `$DVB_TEST_VECTORS_PATH` (default `/data/specs/dvb/streams/`) and
+//!    `$DVB_TEST_VECTORS_PATH` (default `/data/specs/dvb/t2/streams/`) and
 //!    identifies each directory's modulation order and code rate via TP08 sample
 //!    counts and TP05 bit counts.
 //!
@@ -78,11 +78,11 @@ use gf2_coding::test_support::{parse_tp_blocks, tp_path_for};
 ///
 /// Preference order:
 /// 1. `$DVB_TEST_VECTORS_PATH` environment variable.
-/// 2. `/data/specs/dvb/streams/` (host-local default).
+/// 2. `/data/specs/dvb/t2/streams/` (host-local default).
 fn dvb_vectors_base() -> PathBuf {
     std::env::var("DVB_TEST_VECTORS_PATH")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("/data/specs/dvb/streams"))
+        .unwrap_or_else(|_| PathBuf::from("/data/specs/dvb/t2/streams"))
 }
 
 /// Count data lines (lines that are neither comments nor blank) in a CSP file.
@@ -483,7 +483,7 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
     // rest of the gf2-coding external-vector test pattern), with a
     // sensible host-local default.
     let base = std::env::var("DVB_TEST_VECTORS_PATH")
-        .unwrap_or_else(|_| "/data/specs/dvb/streams".to_owned());
+        .unwrap_or_else(|_| "/data/specs/dvb/t2/streams".to_owned());
 
     // (dir_name, code_rate, modulation)
     let test_cases = [
