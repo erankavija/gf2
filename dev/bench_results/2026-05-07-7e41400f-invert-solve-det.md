@@ -267,7 +267,7 @@ captures the per-cell maturity-marker scoping and re-escalation threshold
 (revisit when 615db3b9's Phase 5 downstream-LA-inheritance child lands and
 closes).
 
-**Resolved 2026-05-25 by b0fa00af** — see `dev/bench_results/2026-05-25-b0fa00af-sota-scorecard-final.md` § 7 for the inheritance check. GF(2^31-1)/invert/uniform at n=256 (1.79×) and n=1024 (1.98×) remain AMENDED [aspirational] (A4); the Phase 5 downstream-LA-inheritance check confirms the GF(2^31-1) path is structurally unaffected by 026fc832's small-prime GEMM improvements. Re-escalation: revisit when `615db3b9`'s GF(2^31-1) invert/uniform improvement task lands.
+**Resolved 2026-05-28 by b0fa00af (v2 scorecard)** — see `dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md` § 6 (downstream-LA inheritance) and § 7 (Path-A resolution). This supersedes the interim 2026-05-25 v1-draft reference. GF(2^31-1)/invert/uniform at n=256 (1.79×) and n=1024 (1.98×) remain AMENDED [aspirational] (A4): the post-026fc832 Phase 6 dense-LA wave targeted the GF(7)/GF(31)/GF(251)/GF(65521) small/medium primes (panelized PLE, blocked echelon/invert/solve), not Mersenne31's already-fast delayed-u128 GEMM path, so these two cells are structurally unchanged. The § 6 downstream-inheritance check confirms the GF(p) PLE/invert inheritance pattern from GEMM improvements is intact for the small/medium primes. Re-escalation threshold unchanged: revisit when `615db3b9`'s GF(2^31-1) invert/uniform improvement task lands.
 
 ### SC#2: Correctness tests cover singular and rank-deficient inputs
 
