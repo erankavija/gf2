@@ -612,6 +612,21 @@ impl BitMatrix {
         &mut self.data[start..start + self.stride_words]
     }
 
+    /// Returns a contiguous immutable slice spanning `row_count` rows from
+    /// `row_start`, in row-major (`stride_words`-strided) layout.
+    #[inline]
+    pub(crate) fn row_words_block(&self, row_start: usize, row_count: usize) -> &[u64] {
+        assert!(
+            row_start <= self.rows && row_count <= self.rows - row_start,
+            "row block {}..{} out of bounds (rows={})",
+            row_start,
+            row_start + row_count,
+            self.rows
+        );
+        let start = row_start * self.stride_words;
+        &self.data[start..start + row_count * self.stride_words]
+    }
+
     #[inline]
     pub(crate) fn row_words_block_mut(&mut self, row_start: usize, row_count: usize) -> &mut [u64] {
         assert!(

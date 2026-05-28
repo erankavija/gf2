@@ -61,6 +61,22 @@ pub type M4rmTile8x4Fn = fn(&mut [u64], usize, usize, &[u64], &[usize; 8]);
 /// multiple-of-four word offset.
 pub type M4rmTile8xNFn = fn(&mut [u64], usize, &[u64], &[usize; 8]);
 
+/// Full Gray-code table builder for narrow rows.
+///
+/// Builds an entire `table_size`-entry Gray-code table into `buffer`, given the
+/// `valid_rows` contiguous panel rows of B in `panel` (each `stride_words` wide).
+/// `buffer` and `panel` are laid out row-major with `stride_words` words per
+/// entry/row. Entry 0 is the zero vector; entry `g` holds the XOR of panel rows
+/// whose bit is set in binary index `g`. Only the first `valid_rows` panel rows
+/// contribute (the rest are treated as absent, matching the M4RM tail panel).
+///
+/// # Panics
+///
+/// Panics if `buffer` is smaller than `table_size * stride_words`, if `panel`
+/// is smaller than `valid_rows * stride_words`, or if `stride_words` is not the
+/// width this builder specializes for.
+pub type M4rmGrayBuildFn = fn(&mut [u64], &[u64], usize, usize, usize);
+
 /// Set of accelerated logical operations. Each function must have identical
 /// semantics to the scalar implementation (in-place dst modification, slice length min).
 #[derive(Copy, Clone)]
@@ -69,6 +85,8 @@ pub struct LogicalFns {
     pub or_fn: fn(&mut [u64], &[u64]),
     pub xor_fn: fn(&mut [u64], &[u64]),
     pub m4rm_gray_xor16_fn: fn(&mut [[u64; 8]; 2], &[u64]),
+    pub m4rm_gray_build4_fn: M4rmGrayBuildFn,
+    pub m4rm_gray_build8_fn: M4rmGrayBuildFn,
     pub m4rm_tile8x4_fn: M4rmTile8x4Fn,
     pub m4rm_tile8xn_fn: M4rmTile8xNFn,
     pub not_fn: fn(&mut [u64]),
