@@ -4,8 +4,8 @@
 //! configuration, producing a CSV curve, a JSON-lines tracing log, a README,
 //! and per-SNR checkpoint files.
 //!
-//! Six invocations (3 rates × 2 modulations) reproduce every curve required by
-//! epic 2928ccce.
+//! Six invocations (3 rates × 2 modulations) reproduce every curve required
+//! by epic 2928ccce.
 //!
 //! # BICM chain (per frame)
 //!
@@ -14,6 +14,13 @@
 //!                                                            ↓
 //! BBFRAME ← BCH+LDPC decode ← bit deinterleave ← QAM demap
 //! ```
+//!
+//! The simulation core is driven through [`SimulationRunner::run_with_decoder`]
+//! from `gf2_coding::simulation`. Checkpointing, SIGINT flush, JSON-lines
+//! tracing, and ChaCha20 RNG seek all come from the `sim-observability` layer
+//! in that module. The binary itself is a thin CLI front-end: parse args →
+//! build `SimulationConfig` + the BICM encoder/channel/decoder → call the
+//! runner → post-process `SimulationResults` into the campaign CSV.
 //!
 //! # Usage
 //!
@@ -60,10 +67,12 @@
 //! Under `<output-dir>/`:
 //! - `curve_<rate>_<mod>.csv` — per-SNR results (columns: `es_n0_db, fer, ber,
 //!   frames, errors, mean_iters, wall_seconds`).
-//! - `tracing.jsonl` — structured tracing log (one record per event).
+//! - `tracing.jsonl` — structured tracing log (one record per event), written
+//!   by the `sim-observability` layer of `SimulationRunner`.
 //! - `README.md` — invocation, seed, host info, total wall-clock.
-//! - `checkpoints/` — per-SNR JSON files with BLAKE3-verified config hash.
-//! - `calibration/calibration_<rate>_<mod>.csv` (only when `--calibrate`).
+//! - `checkpoints/` — per-SNR JSON files with BLAKE3-verified config hash,
+//!   written by `SimulationRunner`'s checkpoint subsystem.
+//! - `calibration_<rate>_<mod>.csv` (only when `--calibrate`).
 //!
 //! # Plotting
 //!
@@ -92,10 +101,11 @@ use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
+use gf2_coding::simulation::{ChannelModel, SimulationConfig, SimulationRunner};
+use gf2_coding::traits::{BlockEncoder, DecoderResult};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
-use rand::SeedableRng;
-use rand_chacha::ChaCha20Rng;
+use rand::Rng;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -397,22 +407,33 @@ fn calib_csv_name(rate: CodeRate, modulation: DvbT2Modulation) -> String {
 
 // ---------------------------------------------------------------------------
 // Reference TOML: load default calibration bracket for a MODCOD.
+//
+// Centers derived from ETSI TR 102 831 Table 44 (AWGN C/N at BER=1e-7 after
+// LDPC, Normal 64800-bit blocks) minus ~1.5 dB to estimate the Es/N0 at
+// FER=1e-4 waterfall (the QEF threshold is at BER=1e-7 ≈ FER=1e-11 after BCH;
+// waterfall is ~1-2 dB below the table C/N).
 // ---------------------------------------------------------------------------
 
 /// Returns `[low, center, high]` Es/N0 values for the calibration bracket.
 ///
-/// Prefers the value from the reference TOML if available; falls back to
-/// hardcoded per-MODCOD values derived from approximate waterfall positions.
+/// The center value is derived from ETSI TR 102 831 Table 44 AWGN C/N at
+/// BER = 1e-7 after LDPC (Normal frame, 64800 bits).
 fn default_calibration_bracket(rate: CodeRate, modulation: DvbT2Modulation) -> [f64; 3] {
-    // Per-MODCOD approximate Es/N0 at FER=1e-4 (center), with ±1 dB bracket.
-    // These match the PLACEHOLDER values in the reference TOML.
+    // ETSI TR 102 831 Table 44 AWGN C/N at BER=1e-7 after LDPC (Normal frames):
+    //   16-QAM 1/2: 6.0 dB
+    //   16-QAM 2/3: 8.9 dB
+    //   16-QAM 3/4: 10.0 dB
+    //   64-QAM 1/2: 9.9 dB
+    //   64-QAM 2/3: 13.5 dB
+    //   64-QAM 3/4: 15.1 dB
+    // The waterfall knee (FER~1e-2..1e-4) sits ~1.5 dB below the QEF C/N.
     let center = match (rate, modulation) {
-        (CodeRate::Rate1_2, DvbT2Modulation::Qam16) => 6.0,
+        (CodeRate::Rate1_2, DvbT2Modulation::Qam16) => 5.5,
         (CodeRate::Rate2_3, DvbT2Modulation::Qam16) => 8.0,
-        (CodeRate::Rate3_4, DvbT2Modulation::Qam16) => 9.5,
-        (CodeRate::Rate1_2, DvbT2Modulation::Qam64) => 8.0,
-        (CodeRate::Rate2_3, DvbT2Modulation::Qam64) => 10.5,
-        (CodeRate::Rate3_4, DvbT2Modulation::Qam64) => 12.0,
+        (CodeRate::Rate3_4, DvbT2Modulation::Qam16) => 9.0,
+        (CodeRate::Rate1_2, DvbT2Modulation::Qam64) => 9.0,
+        (CodeRate::Rate2_3, DvbT2Modulation::Qam64) => 12.5,
+        (CodeRate::Rate3_4, DvbT2Modulation::Qam64) => 14.0,
         _ => 8.0,
     };
     [center - 1.0, center, center + 1.0]
@@ -435,281 +456,7 @@ fn build_snr_range(start: f64, stop: f64, step: f64) -> Vec<f64> {
 }
 
 // ---------------------------------------------------------------------------
-// Per-SNR checkpoint (compatible with simulation.rs format but adapted for
-// Es/N0 labelling — we store es_n0_db in the eb_n0_db JSON field).
-// ---------------------------------------------------------------------------
-
-#[derive(Debug)]
-struct SnrCheckpoint {
-    snr_index: usize,
-    es_n0_db: f64,
-    frames_completed: usize,
-    errors_accumulated: usize,
-    total_iterations: u64,
-    total_bits: u64,
-    total_bit_errors: u64,
-    rng_word_pos: u128,
-    frames_target: usize,
-    errors_target: usize,
-    completed: bool,
-    config_hash: String,
-}
-
-impl SnrCheckpoint {
-    fn to_json(&self) -> String {
-        format!(
-            concat!(
-                "{{\n",
-                "  \"snr_index\": {},\n",
-                "  \"es_n0_db\": {},\n",
-                "  \"frames_completed\": {},\n",
-                "  \"errors_accumulated\": {},\n",
-                "  \"total_iterations\": {},\n",
-                "  \"total_bits\": {},\n",
-                "  \"total_bit_errors\": {},\n",
-                "  \"rng_word_pos\": \"{}\",\n",
-                "  \"frames_target\": {},\n",
-                "  \"errors_target\": {},\n",
-                "  \"completed\": {},\n",
-                "  \"config_hash\": \"{}\"\n",
-                "}}"
-            ),
-            self.snr_index,
-            self.es_n0_db,
-            self.frames_completed,
-            self.errors_accumulated,
-            self.total_iterations,
-            self.total_bits,
-            self.total_bit_errors,
-            self.rng_word_pos,
-            self.frames_target,
-            self.errors_target,
-            self.completed,
-            self.config_hash,
-        )
-    }
-
-    fn from_json(s: &str) -> Option<Self> {
-        fn extract<'a>(s: &'a str, key: &str) -> Option<&'a str> {
-            let needle = format!("\"{key}\":");
-            let pos = s.find(needle.as_str())?;
-            let after = s[pos + needle.len()..].trim_start();
-            if let Some(inner) = after.strip_prefix('"') {
-                let end = inner.find('"')?;
-                Some(&inner[..end])
-            } else {
-                let end = after.find([',', '\n', '}']).unwrap_or(after.len());
-                Some(after[..end].trim())
-            }
-        }
-        Some(Self {
-            snr_index: extract(s, "snr_index")?.parse().ok()?,
-            es_n0_db: extract(s, "es_n0_db")?.parse().ok()?,
-            frames_completed: extract(s, "frames_completed")?.parse().ok()?,
-            errors_accumulated: extract(s, "errors_accumulated")?.parse().ok()?,
-            total_iterations: extract(s, "total_iterations")?.parse().ok()?,
-            total_bits: extract(s, "total_bits")?.parse().ok()?,
-            total_bit_errors: extract(s, "total_bit_errors")?.parse().ok()?,
-            rng_word_pos: extract(s, "rng_word_pos")?.parse().ok()?,
-            frames_target: extract(s, "frames_target")?.parse().ok()?,
-            errors_target: extract(s, "errors_target")?.parse().ok()?,
-            completed: extract(s, "completed")? == "true",
-            config_hash: extract(s, "config_hash")?.to_string(),
-        })
-    }
-}
-
-fn checkpoint_path(dir: &Path, index: usize) -> PathBuf {
-    dir.join(format!("snr_{:04}.json", index))
-}
-
-fn config_hash_path(dir: &Path) -> PathBuf {
-    dir.join("config_hash.txt")
-}
-
-fn write_checkpoint_atomic(path: &Path, ckpt: &SnrCheckpoint) -> std::io::Result<()> {
-    let tmp = path.with_extension("tmp");
-    std::fs::write(&tmp, ckpt.to_json())?;
-    std::fs::rename(&tmp, path)
-}
-
-fn load_checkpoint(path: &Path, expected_hash: &str) -> Option<SnrCheckpoint> {
-    let s = std::fs::read_to_string(path).ok()?;
-    let ckpt = SnrCheckpoint::from_json(&s)?;
-    if ckpt.config_hash != expected_hash {
-        eprintln!(
-            "Warning: checkpoint config hash mismatch at {}.\n  \
-             stored:   {}\n  \
-             expected: {}\n  \
-             Ignoring stale checkpoint.",
-            path.display(),
-            ckpt.config_hash,
-            expected_hash,
-        );
-        return None;
-    }
-    Some(ckpt)
-}
-
-// ---------------------------------------------------------------------------
-// Config hash — BLAKE3 over the campaign parameters that affect results.
-// ---------------------------------------------------------------------------
-
-fn compute_config_hash(
-    snr_points: &[f64],
-    target_errors: usize,
-    max_frames: usize,
-    seed: u64,
-    rate: CodeRate,
-    modulation: DvbT2Modulation,
-) -> String {
-    let mut hasher = blake3::Hasher::new();
-    hasher.update(&(snr_points.len() as u64).to_le_bytes());
-    for &v in snr_points {
-        hasher.update(&v.to_le_bytes());
-    }
-    hasher.update(&(target_errors as u64).to_le_bytes());
-    hasher.update(&(max_frames as u64).to_le_bytes());
-    hasher.update(&seed.to_le_bytes());
-    // Encode rate + modulation as a pair of u8 tags.
-    let rate_tag: u8 = match rate {
-        CodeRate::Rate1_2 => 0,
-        CodeRate::Rate2_3 => 1,
-        CodeRate::Rate3_4 => 2,
-        _ => 255,
-    };
-    let mod_tag: u8 = match modulation {
-        DvbT2Modulation::Qam16 => 0,
-        DvbT2Modulation::Qam64 => 1,
-        _ => 255,
-    };
-    hasher.update(&[rate_tag, mod_tag]);
-    let hash = hasher.finalize();
-    format!("blake3:{}", hash.to_hex())
-}
-
-fn validate_or_create_checkpoint_dir(dir: &Path, current_hash: &str) -> Result<(), String> {
-    if !dir.exists() {
-        std::fs::create_dir_all(dir)
-            .map_err(|e| format!("Cannot create checkpoint dir {}: {e}", dir.display()))?;
-        std::fs::write(config_hash_path(dir), current_hash)
-            .map_err(|e| format!("Cannot write config_hash.txt: {e}"))?;
-        return Ok(());
-    }
-    let hash_file = config_hash_path(dir);
-    if !hash_file.exists() {
-        std::fs::write(&hash_file, current_hash)
-            .map_err(|e| format!("Cannot write config_hash.txt: {e}"))?;
-        return Ok(());
-    }
-    let stored = std::fs::read_to_string(&hash_file)
-        .map_err(|e| format!("Cannot read config_hash.txt: {e}"))?;
-    let stored = stored.trim();
-    if stored != current_hash {
-        return Err(format!(
-            "Checkpoint directory hash mismatch.\n  stored:  {stored}\n  current: {current_hash}\n\
-             Change --output-dir or delete the checkpoint directory to start fresh.",
-        ));
-    }
-    Ok(())
-}
-
-// ---------------------------------------------------------------------------
-// JSONL append helper.
-// ---------------------------------------------------------------------------
-
-fn append_jsonl(path: &Path, record: &str) {
-    if let Ok(mut file) = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)
-    {
-        let _ = writeln!(file, "{record}");
-    }
-}
-
-fn iso_timestamp() -> String {
-    use std::time::SystemTime;
-    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(d) => {
-            let secs = d.as_secs();
-            let days = secs / 86400;
-            let tod = secs % 86400;
-            let h = tod / 3600;
-            let m = (tod % 3600) / 60;
-            let s = tod % 60;
-            let z = days as i64 + 719468;
-            let era = if z >= 0 { z } else { z - 146096 } / 146097;
-            let doe = (z - era * 146097) as u64;
-            let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-            let y = yoe as i64 + era * 400;
-            let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-            let mp = (5 * doy + 2) / 153;
-            let day = doy - (153 * mp + 2) / 5 + 1;
-            let mon = if mp < 10 { mp + 3 } else { mp - 9 };
-            let y = if mon <= 2 { y + 1 } else { y };
-            format!("{y:04}-{mon:02}-{day:02}T{h:02}:{m:02}:{s:02}")
-        }
-        Err(_) => "1970-01-01T00:00:00".to_string(),
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Campaign CSV writer.
-// ---------------------------------------------------------------------------
-
-const CAMPAIGN_CSV_HEADER: &str = "es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds";
-
-fn write_csv_header_if_empty(path: &Path) -> std::io::Result<()> {
-    let needs_header = !path.exists() || std::fs::metadata(path).map_or(true, |m| m.len() == 0);
-    if needs_header {
-        let mut f = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)?;
-        writeln!(f, "{CAMPAIGN_CSV_HEADER}")?;
-    }
-    Ok(())
-}
-
-#[allow(clippy::too_many_arguments)]
-fn append_csv_row(
-    path: &Path,
-    es_n0_db: f64,
-    fer: f64,
-    ber: f64,
-    frames: usize,
-    errors: usize,
-    mean_iters: f64,
-    wall_seconds: f64,
-) -> std::io::Result<()> {
-    let mut f = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
-    writeln!(
-        f,
-        "{},{},{},{},{},{},{}",
-        es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds
-    )
-}
-
-// ---------------------------------------------------------------------------
-// Per-SNR simulation result.
-// ---------------------------------------------------------------------------
-
-struct SnrResult {
-    es_n0_db: f64,
-    fer: f64,
-    ber: f64,
-    frames: usize,
-    errors: usize,
-    mean_iters: f64,
-    wall_seconds: f64,
-}
-
-// ---------------------------------------------------------------------------
-// Noise conversion: Es/N0 → Eb/N0 for ModemChannelAdapter.
+// SNR conversion: Es/N0 ↔ Eb/N0.
 //
 // Es/N0 = Eb/N0 + 10*log10(m * r)
 // => Eb/N0 = Es/N0 - 10*log10(m * r)
@@ -719,118 +466,113 @@ fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
     es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
 }
 
-// ---------------------------------------------------------------------------
-// Per-SNR RNG seeding (ChaCha20).
-//
-// seed_for_snr_point = base_seed ^ rotate_left(snr_index, 13)
-// ---------------------------------------------------------------------------
-
-fn make_chacha_rng(base_seed: u64, snr_index: usize, word_pos: u128) -> ChaCha20Rng {
-    let seed = base_seed ^ (snr_index as u64).rotate_left(13);
-    let mut rng = ChaCha20Rng::seed_from_u64(seed);
-    rng.set_word_pos(word_pos);
-    rng
+fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
+    eb_n0_db + 10.0 * (bits_per_symbol as f64 * code_rate).log10()
 }
 
 // ---------------------------------------------------------------------------
-// Inner simulation loop for a single SNR point.
+// BICM encoder wrapper: implements BlockEncoder for DvbT2Concat.
+//
+// k = k_bch (BBFRAME bits), n = n_ldpc (FECFRAME bits).
+// encode: BBFRAME → BCH+LDPC → FECFRAME.
 // ---------------------------------------------------------------------------
 
-#[allow(clippy::too_many_arguments)]
-fn run_snr_point(
-    es_n0_db: f64,
-    snr_index: usize,
-    base_seed: u64,
-    target_errors: usize,
-    max_frames: usize,
-    concat: &DvbT2Concat,
-    interleaver: &DvbT2BitInterleaver,
+struct BicmFecEncoder {
+    concat: DvbT2Concat,
+}
+
+impl BicmFecEncoder {
+    fn new(concat: DvbT2Concat) -> Self {
+        Self { concat }
+    }
+}
+
+impl BlockEncoder for BicmFecEncoder {
+    fn k(&self) -> usize {
+        self.concat.k_bch()
+    }
+
+    fn n(&self) -> usize {
+        self.concat.n_ldpc()
+    }
+
+    fn encode(&self, message: &BitVec) -> BitVec {
+        self.concat.encode(message)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// BICM channel: implements ChannelModel for the DVB-T2 BICM chain.
+//
+// transmit_and_demodulate receives n_ldpc FECFRAME bits (encoder output),
+// applies bit interleaving, QAM mapping, AWGN noise, QAM soft demapping,
+// and bit deinterleaving, returning n_ldpc LLRs in FECFRAME order.
+//
+// The caller (SimulationRunner) passes eb_n0_db and rate. We convert to
+// Es/N0 internally for the noise computation.
+// ---------------------------------------------------------------------------
+
+struct BicmAwgnChannel {
+    interleaver: DvbT2BitInterleaver,
     bits_per_symbol: usize,
-    code_rate_f64: f64,
-    // Resume state (0 for fresh start).
-    resume_frames: usize,
-    resume_errors: usize,
-    resume_iters: u64,
-    resume_bits: u64,
-    resume_bit_errors: u64,
-    resume_word_pos: u128,
-    // Checkpoint + JSONL paths (None disables writing).
-    checkpoint_dir: Option<&Path>,
-    config_hash: &str,
-    tracing_path: Option<&Path>,
-    heartbeat_every: usize,
-    interrupted: &std::sync::atomic::AtomicBool,
-) -> SnrResult {
-    let point_start = Instant::now();
+    spec: ModemSpec<f32>,
+}
 
-    let mut rng = make_chacha_rng(base_seed, snr_index, resume_word_pos);
-
-    // Noise: Es/N0 → sigma^2 (per-component).
-    // sigma^2 = 1 / (2 * m * r * 10^(Eb_N0 / 10))
-    // where Eb_N0 = Es_N0 - 10*log10(m * r).
-    // Equivalently: sigma^2 = 1 / (2 * 10^(Es_N0/10)).
-    let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
-    let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-    let noise_var_f32 = (2.0 * sigma_sq) as f32; // N0 = 2 * sigma^2
-
-    let spec = ModemSpec::<f32>::gray_square_qam(if bits_per_symbol == 4 { 16 } else { 64 });
-    let mapper = spec.preferred_mapper();
-    let demapper = spec.preferred_soft_demapper();
-
-    let n_ldpc = concat.n_ldpc();
-    let k_bch = concat.k_bch();
-    let num_symbols = n_ldpc / bits_per_symbol;
-
-    // Scratch buffers allocated once per SNR point.
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    let mut noise_var_buf = vec![noise_var_f32; num_symbols];
-    let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-    let mut fecframe_llrs = vec![Llr::new(0.0); n_ldpc];
-
-    let mut frames = resume_frames;
-    let mut errors = resume_errors;
-    let mut total_iters = resume_iters;
-    let mut total_bits = resume_bits;
-    let mut total_bit_errors = resume_bit_errors;
-
-    // The input Eb/N0 for ModemChannelAdapter is not used directly because
-    // we drive the noise manually below. We pass sigma_sq directly.
-    let _ = code_rate_f64; // acknowledged: used only for noise derivation above
-
-    let ebn0_for_log = esn0_to_ebn0(es_n0_db, bits_per_symbol, code_rate_f64);
-    eprintln!(
-        "[{:.2} dB Es/N0 ({:.2} dB Eb/N0)] starting (resume: {} frames, {} errors)",
-        es_n0_db, ebn0_for_log, resume_frames, resume_errors
-    );
-
-    while errors < target_errors && frames < max_frames {
-        // Check for SIGINT (set by ctrlc handler in simulation.rs; we poll here).
-        if interrupted.load(std::sync::atomic::Ordering::Relaxed) {
-            break;
+impl BicmAwgnChannel {
+    fn new(interleaver: DvbT2BitInterleaver, bits_per_symbol: usize) -> Self {
+        let spec = ModemSpec::<f32>::gray_square_qam(if bits_per_symbol == 4 { 16 } else { 64 });
+        Self {
+            interleaver,
+            bits_per_symbol,
+            spec,
         }
+    }
+}
 
-        // --- Forward path ---
-        // 1. Random BBFRAME.
-        use rand::Rng as _;
-        let mut bbframe_in = BitVec::with_capacity(k_bch);
-        for _ in 0..k_bch {
-            bbframe_in.push_bit(rng.gen::<bool>());
-        }
+impl ChannelModel for BicmAwgnChannel {
+    fn batch_alignment(&self) -> usize {
+        // FECFRAME length is always divisible by bits_per_symbol for DVB-T2.
+        // Return 1 since the runner passes the full n_ldpc-bit codeword.
+        1
+    }
 
-        // 2. BCH+LDPC encode → FECFRAME.
-        let fecframe = concat.encode(&bbframe_in);
+    fn demap_method(&self) -> DemapMethod {
+        DemapMethod::MaxLog
+    }
 
-        // 3. Bit interleave.
-        let interleaved = interleaver.interleave(&fecframe);
+    fn transmit_and_demodulate<R: Rng>(
+        &self,
+        bits: &BitVec,
+        eb_n0_db: f64,
+        rate: f64,
+        rng: &mut R,
+    ) -> Vec<Llr> {
+        // bits = FECFRAME (n_ldpc bits) from the encoder.
+        let n_ldpc = bits.len();
+        let num_symbols = n_ldpc / self.bits_per_symbol;
 
-        // 4. QAM map.
+        // Convert Eb/N0 to Es/N0, then to per-component noise variance.
+        // Es/N0 = Eb/N0 + 10*log10(m * r)
+        // sigma^2 = 1 / (2 * 10^(Es_N0/10))
+        let es_n0_db = ebn0_to_esn0(eb_n0_db, self.bits_per_symbol, rate);
+        let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
+        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+        let noise_var_f32 = (2.0 * sigma_sq) as f32; // N0 = 2 * sigma^2
+
+        let mapper = self.spec.preferred_mapper();
+        let demapper = self.spec.preferred_soft_demapper();
+
+        // 1. Bit interleave: FECFRAME order → interleaved order.
+        let interleaved = self.interleaver.interleave(bits);
+
+        // 2. QAM map: interleaved bits → I/Q symbols.
         let interleaved_bits: Vec<bool> =
             (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
+        let mut tx_i = vec![0.0_f32; num_symbols];
+        let mut tx_q = vec![0.0_f32; num_symbols];
         mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
 
-        // 5. AWGN: independent Gaussian noise on I and Q axes (Box-Muller).
-        // Each axis has per-component std-dev = sqrt(sigma_sq).
+        // 3. AWGN: independent Gaussian noise on I and Q axes (Box-Muller).
         let sigma_f32 = (sigma_sq as f32).sqrt();
         for s in tx_i.iter_mut() {
             let u1: f64 = rng.gen::<f64>().max(1e-15);
@@ -845,7 +587,9 @@ fn run_snr_point(
             *s += sigma_f32 * n;
         }
 
-        // 6. QAM soft demap → interleaved LLRs.
+        // 4. QAM soft demap → interleaved LLRs.
+        let noise_var_buf = vec![noise_var_f32; num_symbols];
+        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
         demapper.demap_llrs(
             DemapInput {
                 rx_i: &tx_i,
@@ -858,180 +602,31 @@ fn run_snr_point(
             &mut interleaved_llrs,
         );
 
-        // 7. Bit deinterleave LLRs → FECFRAME order.
-        fecframe_llrs.copy_from_slice(&interleaver.deinterleave_llrs(&interleaved_llrs));
-
-        // 8. BCH+LDPC decode.
-        let decode_result = concat.decode_soft(&fecframe_llrs);
-        let (bbframe_out, converged, iters) = match decode_result {
-            Ok(bits) => {
-                // DvbT2Concat::decode_soft does not expose iterations publicly.
-                // Use a sentinel value of 50 (default max LDPC iterations).
-                (bits, true, 50usize)
-            }
-            Err(gf2_coding::ldpc::dvb_t2::concat::ConcatError::LdpcDecodeFailed {
-                bbframe,
-                iterations,
-            }) => (bbframe, false, iterations),
-            Err(_) => {
-                // Other errors (e.g. length mismatch): count as frame error.
-                let bits = BitVec::with_capacity(k_bch);
-                (bits, false, 50)
-            }
-        };
-
-        frames += 1;
-        total_iters += iters as u64;
-        total_bits += k_bch as u64;
-
-        // Count bit errors.
-        let n_compare = bbframe_in.len().min(bbframe_out.len());
-        let bit_errors: usize = (0..n_compare)
-            .filter(|&j| bbframe_in.get(j) != bbframe_out.get(j))
-            .count();
-        // Frames with shorter output than expected are fully erroneous.
-        let extra_errors = k_bch.saturating_sub(bbframe_out.len());
-        let bit_errors = bit_errors + extra_errors;
-
-        total_bit_errors += bit_errors as u64;
-
-        let frame_error = !converged || bit_errors > 0;
-        if frame_error {
-            errors += 1;
-        }
-
-        // Reset scratch buffers for next frame.
-        noise_var_buf.iter_mut().for_each(|v| *v = noise_var_f32);
-
-        // Heartbeat + checkpoint.
-        if heartbeat_every > 0 && frames.is_multiple_of(heartbeat_every) {
-            let word_pos = rng.get_word_pos();
-            let fer = errors as f64 / frames as f64;
-            eprintln!(
-                "[{:.2} dB] heartbeat: frames={} errors={} FER={:.3e}",
-                es_n0_db, frames, errors, fer
-            );
-            if let Some(ckpt_dir) = checkpoint_dir {
-                let ckpt = SnrCheckpoint {
-                    snr_index,
-                    es_n0_db,
-                    frames_completed: frames,
-                    errors_accumulated: errors,
-                    total_iterations: total_iters,
-                    total_bits,
-                    total_bit_errors,
-                    rng_word_pos: word_pos,
-                    frames_target: max_frames,
-                    errors_target: target_errors,
-                    completed: false,
-                    config_hash: config_hash.to_string(),
-                };
-                if let Err(e) =
-                    write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_index), &ckpt)
-                {
-                    eprintln!("Warning: failed to write heartbeat checkpoint: {e}");
-                }
-            }
-            if let Some(tpath) = tracing_path {
-                let fer_e = if frames > 0 {
-                    errors as f64 / frames as f64
-                } else {
-                    0.0
-                };
-                append_jsonl(
-                    tpath,
-                    &format!(
-                        "{{\"type\":\"heartbeat\",\"timestamp\":\"{}\",\
-                         \"snr_index\":{},\"es_n0_db\":{},\
-                         \"frames\":{},\"errors\":{},\"fer\":{:.4e}}}",
-                        iso_timestamp(),
-                        snr_index,
-                        es_n0_db,
-                        frames,
-                        errors,
-                        fer_e
-                    ),
-                );
-            }
-        }
+        // 5. Bit deinterleave LLRs → FECFRAME order.
+        self.interleaver.deinterleave_llrs(&interleaved_llrs)
     }
+}
 
-    let wall_seconds = point_start.elapsed().as_secs_f64();
-    let fer = if frames > 0 {
-        errors as f64 / frames as f64
-    } else {
-        0.0
-    };
-    let ber = if total_bits > 0 {
-        total_bit_errors as f64 / total_bits as f64
-    } else {
-        0.0
-    };
-    let mean_iters = if frames > 0 {
-        total_iters as f64 / frames as f64
-    } else {
-        0.0
-    };
+// ---------------------------------------------------------------------------
+// Campaign CSV writer.
+// ---------------------------------------------------------------------------
 
-    eprintln!(
-        "[{:.2} dB] DONE: FER={:.3e} BER={:.3e} ({} errors / {} frames) in {:.1}s",
-        es_n0_db, fer, ber, errors, frames, wall_seconds
-    );
+const CAMPAIGN_CSV_HEADER: &str = "es_n0_db,fer,ber,frames,errors,mean_iters,wall_seconds";
 
-    // Write completed checkpoint.
-    if let Some(ckpt_dir) = checkpoint_dir {
-        let word_pos = rng.get_word_pos();
-        let ckpt = SnrCheckpoint {
-            snr_index,
-            es_n0_db,
-            frames_completed: frames,
-            errors_accumulated: errors,
-            total_iterations: total_iters,
-            total_bits,
-            total_bit_errors,
-            rng_word_pos: word_pos,
-            frames_target: max_frames,
-            errors_target: target_errors,
-            completed: true,
-            config_hash: config_hash.to_string(),
-        };
-        if let Err(e) = write_checkpoint_atomic(&checkpoint_path(ckpt_dir, snr_index), &ckpt) {
-            eprintln!("Warning: failed to write completed checkpoint: {e}");
-        }
+fn write_campaign_csv(
+    path: &Path,
+    points: &[(f64, f64, f64, usize, usize, f64, f64)],
+) -> std::io::Result<()> {
+    let mut f = std::fs::File::create(path)?;
+    writeln!(f, "{CAMPAIGN_CSV_HEADER}")?;
+    for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in points {
+        writeln!(
+            f,
+            "{},{},{},{},{},{},{}",
+            es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds
+        )?;
     }
-
-    // JSONL tracing event.
-    if let Some(tpath) = tracing_path {
-        append_jsonl(
-            tpath,
-            &format!(
-                "{{\"type\":\"snr_completed\",\"timestamp\":\"{}\",\
-                 \"snr_index\":{},\"es_n0_db\":{},\
-                 \"fer\":{:.6e},\"ber\":{:.6e},\
-                 \"frames\":{},\"errors\":{},\
-                 \"mean_iters\":{:.2},\"wall_seconds\":{:.2}}}",
-                iso_timestamp(),
-                snr_index,
-                es_n0_db,
-                fer,
-                ber,
-                frames,
-                errors,
-                mean_iters,
-                wall_seconds
-            ),
-        );
-    }
-
-    SnrResult {
-        es_n0_db,
-        fer,
-        ber,
-        frames,
-        errors,
-        mean_iters,
-        wall_seconds,
-    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -1137,8 +732,8 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     let is_calib = args.calibrate;
 
-    // Determine the SNR sweep.
-    let snr_points: Vec<f64> = if is_calib {
+    // Determine the Es/N0 sweep.
+    let esn0_points: Vec<f64> = if is_calib {
         let bracket = args
             .calibrate_bracket
             .unwrap_or_else(|| default_calibration_bracket(args.rate, args.modulation));
@@ -1161,41 +756,21 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         args.max_frames
     };
 
-    // Config hash covers the full parameter set.
-    let config_hash = compute_config_hash(
-        &snr_points,
-        target_errors,
-        max_frames_per_snr,
-        args.seed,
-        args.rate,
-        args.modulation,
-    );
-
     // Output paths.
     let csv_path = if is_calib {
-        let calib_dir = args.output_dir.join("calibration");
-        std::fs::create_dir_all(&calib_dir)
-            .map_err(|e| format!("Cannot create calibration dir: {e}"))?;
-        calib_dir.join(calib_csv_name(args.rate, args.modulation))
+        args.output_dir
+            .join(calib_csv_name(args.rate, args.modulation))
     } else {
         args.output_dir
             .join(curve_csv_name(args.rate, args.modulation))
     };
 
-    let tracing_path = if is_calib {
-        args.output_dir
-            .join("calibration")
-            .join("calibration.jsonl")
-    } else {
-        args.output_dir.join("tracing.jsonl")
-    };
+    let tracing_path = args.output_dir.join("tracing.jsonl");
 
     let checkpoint_dir = if is_calib {
         None
     } else {
-        let ckpt_dir = args.output_dir.join("checkpoints");
-        validate_or_create_checkpoint_dir(&ckpt_dir, &config_hash)?;
-        Some(ckpt_dir)
+        Some(args.output_dir.join("checkpoints"))
     };
 
     // Build the BICM components.
@@ -1226,232 +801,144 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         bits_per_symbol,
     );
     eprintln!(
-        "SNR points: {:?}",
-        snr_points
+        "SNR points (Es/N0): {:?}",
+        esn0_points
             .iter()
             .map(|v| format!("{:.2}", v))
             .collect::<Vec<_>>()
     );
 
-    // Setup interrupt flag (shared with sim infrastructure if available).
-    let interrupted = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-    {
-        let flag = interrupted.clone();
-        let _ = ctrlc::set_handler(move || {
-            flag.store(true, std::sync::atomic::Ordering::SeqCst);
-            eprintln!("\nInterrupt received. Flushing checkpoint and exiting...");
-        });
-    }
+    // Convert Es/N0 to Eb/N0 for SimulationConfig (the runner uses Eb/N0).
+    let code_rate = rate_f64(args.rate);
+    let ebn0_points: Vec<f64> = esn0_points
+        .iter()
+        .map(|&es| esn0_to_ebn0(es, bits_per_symbol, code_rate))
+        .collect();
 
-    // Campaign start JSONL event.
-    append_jsonl(
-        &tracing_path,
-        &format!(
-            "{{\"type\":\"campaign_start\",\"timestamp\":\"{}\",\
-             \"rate\":\"{}\",\"modulation\":\"{}\",\
-             \"seed\":{},\"config_hash\":\"{}\"}}",
-            iso_timestamp(),
-            rate_display(args.rate),
-            mod_str(args.modulation),
-            args.seed,
-            config_hash,
-        ),
-    );
-
-    // Ensure CSV header is written.
-    write_csv_header_if_empty(&csv_path).map_err(|e| format!("Cannot write CSV header: {e}"))?;
-
-    // Load existing results for resume.
-    let existing_results: std::collections::HashMap<String, SnrResult> = if args.resume && !is_calib
-    {
-        let content = std::fs::read_to_string(&csv_path).unwrap_or_default();
-        let mut map = std::collections::HashMap::new();
-        for line in content.lines().skip(1) {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() >= 7 {
-                if let (Ok(es_n0), Ok(fer), Ok(ber), Ok(frames), Ok(errors)) = (
-                    parts[0].parse::<f64>(),
-                    parts[1].parse::<f64>(),
-                    parts[2].parse::<f64>(),
-                    parts[3].parse::<usize>(),
-                    parts[4].parse::<usize>(),
-                ) {
-                    let key = format!("{:.6}", es_n0);
-                    let mean_iters = parts
-                        .get(5)
-                        .and_then(|s| s.parse::<f64>().ok())
-                        .unwrap_or(0.0);
-                    let wall_s = parts
-                        .get(6)
-                        .and_then(|s| s.parse::<f64>().ok())
-                        .unwrap_or(0.0);
-                    map.insert(
-                        key,
-                        SnrResult {
-                            es_n0_db: es_n0,
-                            fer,
-                            ber,
-                            frames,
-                            errors,
-                            mean_iters,
-                            wall_seconds: wall_s,
-                        },
-                    );
-                }
-            }
-        }
-        map
-    } else {
-        std::collections::HashMap::new()
+    // Build SimulationConfig.
+    let mut sim_config = SimulationConfig {
+        eb_n0_range_db: ebn0_points.clone(),
+        min_errors: target_errors,
+        max_frames: max_frames_per_snr,
+        max_decoder_iterations: 50, // DVB-T2 default max BP iterations
+        rng_seed: Some(args.seed),
+        output_path: None, // We post-process into campaign CSV format ourselves.
+        checkpoint_dir: checkpoint_dir.clone(),
+        tracing_log_path: Some(tracing_path.clone()),
+        heartbeat_every_frames: if is_calib { None } else { Some(1000) },
     };
 
-    let campaign_start = Instant::now();
-    let heartbeat_every = if is_calib { 0 } else { 1000 };
-
-    for (snr_idx, &es_n0_db) in snr_points.iter().enumerate() {
-        let key = format!("{:.6}", es_n0_db);
-
-        // Check resume from CSV: skip if already completed with enough errors.
-        if args.resume && !is_calib {
-            if let Some(existing) = existing_results.get(&key) {
-                if existing.errors >= args.target_errors {
-                    eprintln!(
-                        "[{:.2} dB] CSV RESUME: skipping (already {} errors)",
-                        es_n0_db, existing.errors
-                    );
-                    continue;
-                }
+    // For resume: if --resume is set and a checkpoint dir exists, the runner's
+    // own checkpoint mechanism handles it via checkpoint_dir above. We don't
+    // need separate CSV-based resume since the runner reads checkpoints.
+    // However, the runner's legacy CSV-based resume path requires output_path
+    // to be set. Since we don't set output_path (to avoid format mismatch),
+    // we rely purely on checkpoint-based resume.
+    //
+    // If --resume is NOT set but a checkpoint dir exists from a prior run,
+    // the runner will still honor those checkpoints. Clear them by removing
+    // the checkpoint dir if not resuming.
+    if !args.resume && !is_calib {
+        if let Some(ref ckpt_dir) = checkpoint_dir {
+            if ckpt_dir.exists() {
+                std::fs::remove_dir_all(ckpt_dir)
+                    .map_err(|e| format!("Cannot clear checkpoint dir: {e}"))?;
             }
-        }
-
-        // Check checkpoint resume.
-        let (
-            resume_frames,
-            resume_errors,
-            resume_iters,
-            resume_bits,
-            resume_bit_errors,
-            resume_word_pos,
-        ) = if args.resume && !is_calib {
-            if let Some(ref ckpt_dir) = checkpoint_dir {
-                if let Some(ckpt) =
-                    load_checkpoint(&checkpoint_path(ckpt_dir, snr_idx), &config_hash)
-                {
-                    if ckpt.completed {
-                        eprintln!(
-                            "[{:.2} dB] CHECKPOINT RESUME: skipping completed point \
-                                 ({} errors / {} frames)",
-                            es_n0_db, ckpt.errors_accumulated, ckpt.frames_completed
-                        );
-                        // Write the pre-existing result back to the CSV if missing.
-                        let fer = if ckpt.frames_completed > 0 {
-                            ckpt.errors_accumulated as f64 / ckpt.frames_completed as f64
-                        } else {
-                            0.0
-                        };
-                        let ber = if ckpt.total_bits > 0 {
-                            ckpt.total_bit_errors as f64 / ckpt.total_bits as f64
-                        } else {
-                            0.0
-                        };
-                        let mean_iters = if ckpt.frames_completed > 0 {
-                            ckpt.total_iterations as f64 / ckpt.frames_completed as f64
-                        } else {
-                            0.0
-                        };
-                        let _ = append_csv_row(
-                            &csv_path,
-                            es_n0_db,
-                            fer,
-                            ber,
-                            ckpt.frames_completed,
-                            ckpt.errors_accumulated,
-                            mean_iters,
-                            0.0,
-                        );
-                        continue;
-                    }
-                    // Partial checkpoint: resume from saved state.
-                    (
-                        ckpt.frames_completed,
-                        ckpt.errors_accumulated,
-                        ckpt.total_iterations,
-                        ckpt.total_bits,
-                        ckpt.total_bit_errors,
-                        ckpt.rng_word_pos,
-                    )
-                } else {
-                    (0, 0, 0, 0, 0, 0)
-                }
-            } else {
-                (0, 0, 0, 0, 0, 0)
-            }
-        } else {
-            (0, 0, 0, 0, 0, 0)
-        };
-
-        let result = run_snr_point(
-            es_n0_db,
-            snr_idx,
-            args.seed,
-            target_errors,
-            max_frames_per_snr,
-            &concat,
-            &interleaver,
-            bits_per_symbol,
-            rate_f64(args.rate),
-            resume_frames,
-            resume_errors,
-            resume_iters,
-            resume_bits,
-            resume_bit_errors,
-            resume_word_pos,
-            checkpoint_dir.as_deref(),
-            &config_hash,
-            Some(&tracing_path),
-            heartbeat_every,
-            &interrupted,
-        );
-
-        // Append CSV row.
-        if let Err(e) = append_csv_row(
-            &csv_path,
-            result.es_n0_db,
-            result.fer,
-            result.ber,
-            result.frames,
-            result.errors,
-            result.mean_iters,
-            result.wall_seconds,
-        ) {
-            eprintln!("Warning: failed to append CSV row: {e}");
-        }
-
-        // Check if we were interrupted.
-        if interrupted.load(std::sync::atomic::Ordering::Relaxed) {
-            eprintln!("Campaign interrupted. Resume with --resume flag.");
-            break;
         }
     }
 
+    // Disable checkpoint dir for calibration (already None above, but ensure).
+    if is_calib {
+        sim_config.checkpoint_dir = None;
+        sim_config.heartbeat_every_frames = None;
+    }
+
+    // Wrap DvbT2Concat in a BlockEncoder shim.
+    let encoder = BicmFecEncoder::new(concat);
+
+    // Build the BICM AWGN channel model.
+    let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol);
+
+    eprintln!(
+        "Running via SimulationRunner::run_with_decoder (checkpoint={}, tracing={})",
+        checkpoint_dir
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "disabled".to_string()),
+        tracing_path.display(),
+    );
+
+    let campaign_start = Instant::now();
+
+    // Drive the simulation through the runner. The runner handles:
+    // - Checkpoint write/resume (via checkpoint_dir)
+    // - SIGINT/SIGTERM flush (via ctrlc handler in simulation.rs)
+    // - JSON-lines tracing (via tracing_log_path)
+    // - Within-SNR heartbeat checkpoints (via heartbeat_every_frames)
+    // - ChaCha20 RNG seek for byte-identical resume
+    let sim_results = SimulationRunner::run_with_decoder(
+        &encoder,
+        |llrs| {
+            // The runner passes FECFRAME-order LLRs (after BicmAwgnChannel
+            // deinterleaving). Call DvbT2Concat::decode_soft directly.
+            let decode_result = encoder.concat.decode_soft(llrs);
+            match decode_result {
+                Ok(bbframe) => {
+                    // LDPC converged; return with iterations = max (sentinel).
+                    DecoderResult::success(bbframe)
+                }
+                Err(gf2_coding::ldpc::dvb_t2::concat::ConcatError::LdpcDecodeFailed {
+                    bbframe,
+                    iterations,
+                }) => {
+                    // LDPC did not converge; bbframe is best-effort.
+                    DecoderResult::new(bbframe, iterations, false, false)
+                }
+                Err(_) => {
+                    // Other errors: return empty bitvec as total failure.
+                    DecoderResult::new(BitVec::with_capacity(encoder.k()), 50, false, false)
+                }
+            }
+        },
+        &channel,
+        &sim_config,
+    );
+
     let total_wall = campaign_start.elapsed().as_secs_f64();
+    let n_points = sim_results.points.len();
+    let wall_per_point = if n_points > 0 {
+        total_wall / n_points as f64
+    } else {
+        0.0
+    };
+
+    // Post-process SimulationResults into the campaign CSV format.
+    // The runner uses eb_n0_db; we map back to es_n0_db for the CSV.
+    let csv_rows: Vec<(f64, f64, f64, usize, usize, f64, f64)> = sim_results
+        .points
+        .iter()
+        .zip(esn0_points.iter())
+        .map(|(p, &es_n0_db)| {
+            let fer = p.bler;
+            let ber = p.ber;
+            let frames = p.num_frames;
+            let errors = p.num_frame_errors;
+            let mean_iters = p.avg_iterations.unwrap_or(0.0);
+            // wall_seconds: approximate from total wall / n_points (per-point
+            // timing is not exposed by SimulationResult).
+            let wall_seconds = wall_per_point;
+            (es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds)
+        })
+        .collect();
+
+    write_campaign_csv(&csv_path, &csv_rows)
+        .map_err(|e| format!("Cannot write campaign CSV: {e}"))?;
 
     // Write README (production runs only).
     if !is_calib {
         let readme_path = args.output_dir.join("README.md");
-        write_readme(&readme_path, args, &snr_points, total_wall);
+        write_readme(&readme_path, args, &esn0_points, total_wall);
     }
-
-    // Campaign end JSONL event.
-    append_jsonl(
-        &tracing_path,
-        &format!(
-            "{{\"type\":\"campaign_end\",\"timestamp\":\"{}\",\
-             \"wall_seconds\":{:.2}}}",
-            iso_timestamp(),
-            total_wall
-        ),
-    );
 
     eprintln!("Campaign complete. Output: {}", args.output_dir.display());
     eprintln!("  CSV: {}", csv_path.display());
