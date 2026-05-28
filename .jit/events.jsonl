@@ -5560,3 +5560,4 @@
 {"type":"gate_passed","id":"4f138e2f-2abe-40a5-aa73-2482bd8bc554","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:51.613364505Z","gate_key":"doc-review","updated_by":"agent:project-lead"}
 {"type":"issue_state_changed","id":"20d27789-6bd5-435d-adb2-58428829cefe","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:58.351711213Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"0b50f797-1252-48dd-99b9-d735d467e483","issue_id":"98336ab4-21c3-49b4-97c7-466263574c7f","timestamp":"2026-05-28T15:32:58.351743883Z"}
+{"type":"issue_created","id":"1cad3c1e-e96b-4d32-a4c6-7c5eea08f330","issue_id":"bdf60780-1130-40f4-a474-d0f17657bf15","timestamp":"2026-05-28T18:05:47.497474606Z","title":"Close matmul GF(2) small-n (n=64, n=256) to M4RI parity","priority":"normal"}

@@ -59,6 +59,8 @@ Inherited-correct from the v1 draft (carried forward, re-verified against their 
 **A8 disposition tally (all 76 rows + appendix rows):** see § 8. Final state: **PASS / AMENDED / EXCLUDED / UNRESOLVED-BLOCKER** — there is exactly **one unresolved blocker** (A8 rows 4-5, matmul GF(2)/n=64,256; see § 8.1 and the BLOCKER callout). Every other A8 cell is PASS, AMENDED-with-citation, or EXCLUDED.
 
 > **BLOCKER (must be resolved before SC#5 is satisfied):** A8 rows 4-5 (matmul GF(2) at n=64 and n=256) cannot be dispositioned. Story `974a85bd` owns them; its published parity report `dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md` closes matmul GF(2) only at n=1024 (1.18×, [hard] PASS) and n=4096 (1.50×, [hard] PASS) — it does **not** disposition n=64,256, which sit below the M4RM crossover (n=256 is 13.5× behind M4RI per `2026-05-04-0fd48627-gf2-m4ri-profile.md`). The predecessor scorecard A8.2 records "No successor task filed yet — flagged in § A8.2." No user-approved `[aspirational]` amendment or EXCLUSION exists for these two cells anywhere in the repo. They are recorded below as **FAIL (UNRESOLVED)** pending lead escalation; this worker has no authority to amend a success criterion.
+>
+> **RESOLUTION (lead, 2026-05-28):** Escalated to the user; per their decision (escalation option B — *file a successor task and pursue real closure rather than amend/exclude*), successor task **`bdf60780`** ("Close matmul GF(2) small-n (n=64, n=256) to M4RI parity") has been filed and wired as a blocker of `b0fa00af`. These two cells remain FAIL pending `bdf60780`'s closure; `b0fa00af` stays `in_progress` until `bdf60780` lands and rows 4-5 are re-measured ≤ 1.5× (PASS). SC#5 is satisfied at that point — every other A8 cell is already PASS / AMENDED-with-citation / EXCLUDED.
 
 ---
 
@@ -221,8 +223,8 @@ Carried forward from the v1 draft (52cce970 closures), re-verified against `[E52
 
 | Operation | n | regime | Ratio | Status | Evidence |
 |---|---:|---|---:|---|---|
-| matmul | 64 | — | **1.79×** | **FAIL (UNRESOLVED — see § 3 BLOCKER / § 8.1)** [→`974a85bd`] | `[E13]` `[E0fd]` |
-| matmul | 256 | — | **1.72×** | **FAIL (UNRESOLVED — see § 3 BLOCKER / § 8.1)** [→`974a85bd`] | `[E13]` `[E0fd]` |
+| matmul | 64 | — | **1.79×** | **FAIL → routed to successor `bdf60780`** (filed 2026-05-28, user option B; see § 3 RESOLUTION / § 8.1) | `[E13]` `[E0fd]` |
+| matmul | 256 | — | **1.72×** | **FAIL → routed to successor `bdf60780`** (filed 2026-05-28, user option B; see § 3 RESOLUTION / § 8.1) | `[E13]` `[E0fd]` |
 | matmul | 1024 | — | 1.18× | PASS [hard] | `[E13]` |
 | matmul | 4096 | — | 1.50× | PASS [hard] (threshold edge) | `[E13]` |
 | echelon | 64–1024 | uniform+deficient | 1.03×–1.39× | PASS (all 6) | `[E13]` |
@@ -424,8 +426,8 @@ Final disposition of every A8 routing entry from `2026-05-08-2cfc4372-sota-score
 | 1 | fgemm | GF(7) | 4096 | 1.70× | `98336ab4` | **PASS** 1.227× |
 | 2 | fgemm | GF(31) | 4096 | 1.76× | `98336ab4` | **PASS** 1.263× |
 | 3 | fgemm | GF(65521) | 4096 | 2.52× | `98336ab4`/`0749dbad` | **PASS** 1.243× |
-| **4** | **matmul** | **GF(2)** | **64** | **1.79×** | `974a85bd` | **FAIL (UNRESOLVED — BLOCKER; § 8.1)** |
-| **5** | **matmul** | **GF(2)** | **256** | **1.72×** | `974a85bd` | **FAIL (UNRESOLVED — BLOCKER; § 8.1)** |
+| **4** | **matmul** | **GF(2)** | **64** | **1.79×** | `bdf60780` | **FAIL → successor `bdf60780` (user option B, 2026-05-28; § 8.1)** |
+| **5** | **matmul** | **GF(2)** | **256** | **1.72×** | `bdf60780` | **FAIL → successor `bdf60780` (user option B, 2026-05-28; § 8.1)** |
 | 6-9 | pluq | GF(7) | all 64,256 | 2.09–10.09× | `6823c8a0` | **PASS** 0.217–0.623× |
 | 10-11 | pluq | GF(251) | 64 | 12.85–14.55× | `68db401b` | **PASS** 1.243×/1.385× |
 | 12-13 | pluq | GF(251) | 256 | 37.67–40.01× | `6823c8a0` | AMENDED [aspirational] (session-11) |
@@ -476,25 +478,25 @@ Final disposition of every A8 routing entry from `2026-05-08-2cfc4372-sota-score
 
 ### 8.1 SC#5 verdict
 
-**SC#5 is NOT YET satisfied** because A8 rows 4-5 (matmul GF(2)/n=64,256) remain **FAIL (UNRESOLVED)**:
+**SC#5 is NOT YET satisfied** because A8 rows 4-5 (matmul GF(2)/n=64,256) remain **FAIL, routed to successor `bdf60780`** (real-closure path, not yet landed):
 
 - Story `974a85bd` owns these cells. Its published parity report `[E13]` (`2026-05-06-111a3967-gf2-parity-evidence.md`) closes matmul GF(2) only at n=1024 ([hard] PASS 1.18×) and n=4096 ([hard] PASS 1.50×). The n=64,256 cells are below the M4RM crossover and are NOT dispositioned by that report (n=256 measured at 13.5× behind M4RI, `[E0fd]`).
 - The predecessor scorecard's Annex A8.2 explicitly records "No successor task filed yet — flagged in § A8.2."
-- No user-approved `[aspirational]` amendment or EXCLUSION for these two cells exists anywhere in the repo (`dev/`, decks, plans, all session handoffs were searched).
+- No prior user-approved `[aspirational]` amendment or EXCLUSION for these two cells existed anywhere in the repo.
 
-Per SC#5 ("no cell may remain in FAIL state without an explicit user-approved amendment") and the project's `feedback_no_autonomous_amendments` rule, this worker has **not** invented an amendment. These two cells are flagged for lead escalation to the user. Possible dispositions (user decision):
-1. File a successor task (e.g. small-n GF(2) matmul dispatch) and route rows 4-5 there with a `[hard]` FAIL→follow-up amendment, OR
-2. Approve an `[aspirational]` amendment with documented below-crossover cause (cf. the GF(p) n=64 per-call-overhead precedent in A5/A6), OR
-3. Reclassify as EXCLUDED if the small-n regime is declared out of scope.
+**Lead escalation outcome (2026-05-28):** escalated to the user; per their decision (option B — *pursue real closure*), successor task **`bdf60780`** ("Close matmul GF(2) small-n (n=64, n=256) to M4RI parity") was filed with a `[hard]` ≤ 1.5× target and wired as a blocker of `b0fa00af` (and transitively of epic `026fc832`). The user explicitly declined the `[aspirational]`-amend and EXCLUDE options. Therefore:
 
-**Every other A8 cell is PASS, AMENDED-with-citation, or EXCLUDED.** Once rows 4-5 are dispositioned by the user, SC#5 is satisfied.
+- Rows 4-5 stay **FAIL** in this scorecard until `bdf60780` lands.
+- `b0fa00af` and epic `026fc832` remain `in_progress` until `bdf60780` closes `done` and rows 4-5 are re-measured ≤ 1.5× (PASS), at which point this scorecard is updated to PASS and SC#5 is satisfied.
+
+**Every other A8 cell is already PASS, AMENDED-with-citation, or EXCLUDED.** The only open item is `bdf60780`'s closure of rows 4-5.
 
 ### 8.2 Tally (excluding the 2 unresolved blocker cells)
 
 - **PASS** (direct/evidence-doc): A8 rows 1-3, 6-11, 14-22, 26-58 (PASS subset), 62, 64, 66-76, A5, A6, A7/1024, A7/4096.
 - **AMENDED [aspirational]** (user-approved, cited): rows 12-13, 23-25, 37, 39-40, 51-54, 61, 63, 65, A7/{64,256}, A2, A3, + the four 8df0c501 n=1024-uniform invert cells + the two A4 GF(2^31-1)/invert/uniform cells.
 - **EXCLUDED**: §6.3 (11 cells: GF(2^4) matmul ×3, GF(2) pluq/solve ×8) + §6.1/§6.2 (20 cells: no-independent-oracle).
-- **FAIL (UNRESOLVED — BLOCKER)**: A8 rows 4-5 (matmul GF(2)/n=64,256).
+- **FAIL → successor `bdf60780`** (real-closure path, user option B 2026-05-28): A8 rows 4-5 (matmul GF(2)/n=64,256). `b0fa00af` + epic stay open until `bdf60780` lands.
 
 ---
 
