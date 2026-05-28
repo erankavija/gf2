@@ -1,0 +1,21 @@
+date,issue,family,operation,field,n,regime,trial,gf2_wall_ns,bench_binary,bench_filter,note
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(7),256,uniform,1,1267900,fieldmatrix_ple,pluq/Fp_7/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(7),256,uniform,2,1270000,fieldmatrix_ple,pluq/Fp_7/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(7),256,uniform,3,1271400,fieldmatrix_ple,pluq/Fp_7/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(7),256,uniform,4,1268300,fieldmatrix_ple,pluq/Fp_7/uniform/256,confirm-10sample-criterion-median
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(251),256,uniform,1,1327100,fieldmatrix_ple,pluq/Fp_251/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(251),256,uniform,2,1330400,fieldmatrix_ple,pluq/Fp_251/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(251),256,uniform,3,1323900,fieldmatrix_ple,pluq/Fp_251/uniform/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(p),pluq/PLE,GF(251),256,uniform,4,1326400,fieldmatrix_ple,pluq/Fp_251/uniform/256,confirm-10sample-criterion-median
+2026-05-28,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,1,826650,rref,gf2_echelon_target_rows/production_blocked/1024/uniform,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2),echelon/rref,GF(2),1024,uniform,2,826540,rref,gf2_echelon_target_rows/production_blocked/1024/uniform,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,1,16146000,fieldmatrix_gemm,gemm/Gf2m8/Gf2m8/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,2,16142000,fieldmatrix_gemm,gemm/Gf2m8/Gf2m8/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,3,16133000,fieldmatrix_gemm,gemm/Gf2m8/Gf2m8/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,4,16123000,fieldmatrix_gemm,gemm/Gf2m8/Gf2m8/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,GF(2^m),fgemm/matmul,GF(2^8),256,square,5,16167000,fieldmatrix_gemm,gemm/Gf2m8/Gf2m8/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,1,16376000,fieldmatrix_gemm,gemm/Gf2m16/Gf2m16/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,2,16353000,fieldmatrix_gemm,gemm/Gf2m16/Gf2m16/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,3,16380000,fieldmatrix_gemm,gemm/Gf2m16/Gf2m16/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,4,16389000,fieldmatrix_gemm,gemm/Gf2m16/Gf2m16/256,5-trial-CCX1-pinned
+2026-05-28,b0fa00af,Ext-field (GF(2^m) proxy),fgemm/matmul,GF(2^16),256,square,5,16373000,fieldmatrix_gemm,gemm/Gf2m16/Gf2m16/256,5-trial-CCX1-pinned
