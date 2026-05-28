@@ -2,7 +2,7 @@
   "epic_id": "2928ccce-700a-46ff-88c7-6998915f9fdf",
   "epic_short_id": "2928ccce",
   "epic_title": "DVB-T2 AWGN simulation campaign — Normal frame, rates 1/2 / 2/3 / 3/4",
-  "current_wave": 2,
+  "current_wave": 5,
   "wave_5_policy": "lead-delivers-calibration-only; user runs production sims and closes epic",
   "waves": [
     {
