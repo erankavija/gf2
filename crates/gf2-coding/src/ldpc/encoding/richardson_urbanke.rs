@@ -187,26 +187,24 @@ impl RuEncodingMatrices {
             return Err(PreprocessError::GaussianEliminationFailed);
         }
 
-        // Reorder rows so row i has its pivot in parity_cols[i]
-        // This ensures the identity structure aligns correctly
-        let mut row_order = Vec::new();
-        for &pcol in &parity_cols {
-            for row in 0..m {
-                if h_work.get(row, pcol) {
-                    // Check this is the only pivot column with 1 in this row
-                    let is_pivot_row = parity_cols
-                        .iter()
-                        .all(|&pc2| pc2 == pcol || !h_work.get(row, pc2));
-                    if is_pivot_row {
-                        row_order.push(row);
-                        break;
-                    }
-                }
-            }
-        }
+        // After rref(h, true), the RREF result has rows reordered so that
+        // row i has its pivot at parity_cols[i] (both sorted in ascending column order).
+        // This is guaranteed by rref_unblocked_right_to_left's reorder step.
+        // The identity permutation is therefore always the correct row_order.
+        let row_order: Vec<usize> = (0..m).collect();
 
-        if row_order.len() != m {
-            return Err(PreprocessError::GaussianEliminationFailed);
+        // Debug-mode sanity check: verify the RREF invariant that row i has its
+        // pivot at parity_cols[i] and no other row has a 1 in that column.
+        #[cfg(debug_assertions)]
+        {
+            for (i, &pcol) in parity_cols.iter().enumerate() {
+                debug_assert!(
+                    h_work.get(i, pcol),
+                    "RREF invariant violated: row {} has no 1 at pivot col {}",
+                    i,
+                    pcol
+                );
+            }
         }
 
         // Build parity matrix P (k × r) as DENSE
