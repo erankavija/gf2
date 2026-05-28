@@ -169,6 +169,22 @@ proptest! {
 }
 
 proptest! {
+    /// n=4096: extended correctness check for issue 98336ab4.
+    ///
+    /// n=4096 is in the production route-A window (`P == 251 && n >= 512`);
+    /// `select_f32_path` returns `true`. Uses rectangular shape (m=4, k=16)
+    /// to bound scalar oracle runtime (4 * 16 * 4096 ≈ 262 K operations)
+    /// while still exercising the full `select_f32_path` branch.
+    #[test]
+    fn proptest_production_dispatch_n4096_matches_scalar(
+        seed_a in 1u64..=50,
+        seed_b in 51u64..=100,
+    ) {
+        check_production_vs_scalar::<251>(4, 16, 4096, seed_a, seed_b);
+    }
+}
+
+proptest! {
     /// GF(p) prime-sweep at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.
     ///
     /// Covers ALL in-scope small primes: GF(7), GF(31), GF(127), GF(241),
