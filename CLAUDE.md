@@ -48,6 +48,20 @@ cargo run -p gf2-coding --example dvb_t2_ldpc_basic
 cargo run -p gf2-coding --example ldpc_awgn --release
 cargo run -p gf2-algebra --example permanent_demo --release
 
+# DVB-T2 BICM AWGN campaign runner (one invocation per rate×modulation pair)
+# Binary:  crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs
+# Plotter: dev/benchmarks/dvb_t2_awgn/plot.py
+# Reference TOML: crates/gf2-coding/data/dvb_t2_tr102831_reference.toml
+cargo run --release --bin dvb_t2_awgn_campaign -- \
+    --rate 1/2 --modulation 16qam \
+    --esn0-range 4.0:7.0:0.5 --target-errors 100 \
+    --output-dir /tmp/dvb_r12_16qam --seed 42
+# After a campaign, produce a PNG overlay vs ETSI TR 102 831 reference:
+# python3 dev/benchmarks/dvb_t2_awgn/plot.py \
+#     --curve-csv /tmp/dvb_r12_16qam/curve_1_2_16qam.csv \
+#     --reference-toml crates/gf2-coding/data/dvb_t2_tr102831_reference.toml \
+#     --output /tmp/dvb_r12_16qam/curve_1_2_16qam.png
+
 # Lean4 verification pipeline (requires charon + aeneas + elan)
 ./scripts/verify-lean.sh
 

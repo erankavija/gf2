@@ -1,81 +1,81 @@
 # DVB-T2 AWGN reference points for the six in-scope MODCODs
-# (Normal frame, code rates 1/2, 2/3, 3/4 x 16-QAM and 64-QAM).
+# (Normal frame, code rates 1/2, 2/3, 3/4 × 16-QAM and 64-QAM).
 #
-# Source: ETSI TR 102 831 v1.2.1 (2012-10),
+# Source: ETSI TS 102 831 v1.2.1 (2012-08),
 #   "Digital Video Broadcasting (DVB);
 #    Implementation guidelines for a second generation digital
 #    terrestrial television broadcasting system (DVB-T2)".
 #
-# Hand-extraction status: values below are PLACEHOLDER estimates derived
-# from the Shannon capacity curve plus approximately 1.5 dB gap, consistent
-# with DVB-T2 waterfall behaviour.  Replace with data read from the actual
-# figures in TR 102 831 once access to the document is available.
+# The values below are QEF (quasi-error-free) C/N thresholds for the Gaussian
+# (AWGN) channel, extracted from Table 44 of TS 102 831 (Section 14.2).
+# Table 44 is titled:
+#   "Required raw (C/N)0 to achieve a BER = 1 × 10-7 after LDPC decoding"
+#   LDPC block length: 64 800 bits (Normal frame).
+#
+# These are SINGLE operating-point thresholds, not full FER waterfall curves.
+# The C/N (Es/N0) value listed is the simulated requirement at BER = 1e-7
+# after LDPC decoding, which corresponds to approximately BER = 1e-11 after
+# the BCH outer code (quasi-error-free reception).
+#
+# The `points` field holds one anchor: [es_n0_db, approximate_fer] where
+# approximate_fer = 1e-4 is used as a representative QEF operating point.
+# The actual BER target in the spec is 1e-7 after LDPC, not a FER value;
+# the FER at this threshold is approximately 1e-4 (DVB-T2 QEF definition).
+#
+# Perfect channel estimation, perfect synchronisation, no phase noise, and
+# Genie-Aided demapping assumed (see TS 102 831 Section 14.2 preamble).
+# These raw C/N values do not include pilot-boosting or implementation margins.
 #
 # Section naming: normal_r<num>_<den>_<modulation>
-# Columns: (es_n0_db, fer) pairs along the simulated FER waterfall.
-# The FER values listed span from ~0.1 down to ~1e-4 (the target operating
-# point for DVB-T2 systems).
-#
 # Plot script looks up the section whose key matches
 #   "normal_r{rate_str}_{mod_str}"
 # where rate_str = "1_2" for rate 1/2 etc., mod_str = "16qam" or "64qam".
 
 [normal_r1_2_16qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 1/2)"
-# Shannon capacity for 16-QAM rate 1/2: Es/N0 ≈ 3.7 dB; waterfall at ~5.5 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 16-QAM rate 1/2, Spectral Efficiency = 1.99 bits/s/Hz
+# Required (C/N)0 (AWGN) = 6.0 dB at BER = 1e-7 after LDPC
+# [es_n0_db, approximate_fer_at_qef_threshold]
 points = [
-  [4.5, 1.0e-1],
-  [5.0, 1.0e-2],
-  [5.5, 1.0e-3],
   [6.0, 1.0e-4],
 ]
 
 [normal_r2_3_16qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 2/3)"
-# Shannon capacity for 16-QAM rate 2/3: Es/N0 ≈ 5.5 dB; waterfall at ~7.5 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 16-QAM rate 2/3, Spectral Efficiency = 2.66 bits/s/Hz
+# Required (C/N)0 (AWGN) = 8.9 dB at BER = 1e-7 after LDPC
 points = [
-  [6.5, 1.0e-1],
-  [7.0, 1.0e-2],
-  [7.5, 1.0e-3],
-  [8.0, 1.0e-4],
+  [8.9, 1.0e-4],
 ]
 
 [normal_r3_4_16qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 10 (Normal BICM 16-QAM 3/4)"
-# Shannon capacity for 16-QAM rate 3/4: Es/N0 ≈ 7.0 dB; waterfall at ~9.0 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 16-QAM rate 3/4, Spectral Efficiency = 2.99 bits/s/Hz
+# Required (C/N)0 (AWGN) = 10.0 dB at BER = 1e-7 after LDPC
 points = [
-  [8.0, 1.0e-1],
-  [8.5, 1.0e-2],
-  [9.0, 1.0e-3],
-  [9.5, 1.0e-4],
+  [10.0, 1.0e-4],
 ]
 
 [normal_r1_2_64qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 1/2)"
-# Shannon capacity for 64-QAM rate 1/2: Es/N0 ≈ 5.3 dB; waterfall at ~7.5 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 64-QAM rate 1/2, Spectral Efficiency = 2.98 bits/s/Hz
+# Required (C/N)0 (AWGN) = 9.9 dB at BER = 1e-7 after LDPC
 points = [
-  [6.5, 1.0e-1],
-  [7.0, 1.0e-2],
-  [7.5, 1.0e-3],
-  [8.0, 1.0e-4],
+  [9.9, 1.0e-4],
 ]
 
 [normal_r2_3_64qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 2/3)"
-# Shannon capacity for 64-QAM rate 2/3: Es/N0 ≈ 7.7 dB; waterfall at ~10.0 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 64-QAM rate 2/3, Spectral Efficiency = 3.99 bits/s/Hz
+# Required (C/N)0 (AWGN) = 13.5 dB at BER = 1e-7 after LDPC
 points = [
-  [9.0, 1.0e-1],
-  [9.5, 1.0e-2],
-  [10.0, 1.0e-3],
-  [10.5, 1.0e-4],
+  [13.5, 1.0e-4],
 ]
 
 [normal_r3_4_64qam]
-source = "PLACEHOLDER: needs hand-extraction from TR 102 831 Fig 12 (Normal BICM 64-QAM 3/4)"
-# Shannon capacity for 64-QAM rate 3/4: Es/N0 ≈ 9.5 dB; waterfall at ~12.0 dB.
+source = "TS 102 831 v1.2.1 Table 44, Section 14.2, AWGN Gaussian channel, Normal frame (64800 bits), BER=1e-7 after LDPC. QEF C/N anchor: single threshold point, not a FER waterfall curve."
+# 64-QAM rate 3/4, Spectral Efficiency = 4.48 bits/s/Hz
+# Required (C/N)0 (AWGN) = 15.1 dB at BER = 1e-7 after LDPC
 points = [
-  [10.5, 1.0e-1],
-  [11.0, 1.0e-2],
-  [11.5, 1.0e-3],
-  [12.0, 1.0e-4],
+  [15.1, 1.0e-4],
 ]
