@@ -66,13 +66,13 @@ const MERSENNE_31: u64 = 2_147_483_647;
 /// inform the structural crossover question.
 const SQUARE_SIZES_SMALL_PRIME: &[usize] = &[256, 1024];
 
-/// Sizes for the GF(127)/GF(241) non-regression sweep including n=64
-/// (jit:695350fd R1 — SC#2 completion): n ∈ {64, 256, 1024}.
-/// n=64 is included to close the non-regression gap surfaced in R0 code-review.
-/// n=4096 is omitted: both primes go through fp_small_f32 (P ≤ 251) which is
-/// unchanged by 695350fd and n=4096 is not in scope for the SOTA-catch-up
-/// criteria on these primes.
-const SQUARE_SIZES_SMALL_PRIME_WITH_N64: &[usize] = &[64, 256, 1024];
+/// Sizes for the GF(127)/GF(241) benchmark sweep including n=64 and n=4096
+/// (jit:98336ab4 SC#1 — consolidated n=4096 re-bench for all 6 primes):
+/// n ∈ {64, 256, 1024, 4096}.
+/// n=64 is retained per 695350fd R1 non-regression requirement (SC#2 completion).
+/// n=4096 is added so the 98336ab4 bench filter
+/// `gemm/Fp_(7|31|127|241|251|65521)/.../4096$` captures all 6 primes.
+const SQUARE_SIZES_SMALL_PRIME_N64_TO_4096: &[usize] = &[64, 256, 1024, 4096];
 
 /// Sizes for the GF(31) small-prime sweep including n=64 and n=4096
 /// (issue 27bb2f75). The n=64 cell is the per-call-overhead target of the
@@ -282,25 +282,27 @@ fn bench_gemm_fp_31(c: &mut Criterion) {
 }
 
 fn bench_gemm_fp_127(c: &mut Criterion) {
-    // Uses SQUARE_SIZES_SMALL_PRIME_WITH_N64 (n ∈ {64, 256, 1024}) to include
-    // the n=64 cell required by the 695350fd R1 non-regression sweep (SC#2).
+    // Uses SQUARE_SIZES_SMALL_PRIME_N64_TO_4096 (n ∈ {64, 256, 1024, 4096}).
+    // n=64 retained per 695350fd R1 non-regression (SC#2); n=4096 added by
+    // 98336ab4 SC#1 (consolidated 6-prime n=4096 re-bench).
     bench_square::<gf2_core::gfp::Fp<PRIME_127>, _>(
         c,
         "gemm/Fp_127",
         "Fp_127",
-        SQUARE_SIZES_SMALL_PRIME_WITH_N64,
+        SQUARE_SIZES_SMALL_PRIME_N64_TO_4096,
         fp_matrix_from_seed::<PRIME_127>,
     );
 }
 
 fn bench_gemm_fp_241(c: &mut Criterion) {
-    // Uses SQUARE_SIZES_SMALL_PRIME_WITH_N64 (n ∈ {64, 256, 1024}) to include
-    // the n=64 cell required by the 695350fd R1 non-regression sweep (SC#2).
+    // Uses SQUARE_SIZES_SMALL_PRIME_N64_TO_4096 (n ∈ {64, 256, 1024, 4096}).
+    // n=64 retained per 695350fd R1 non-regression (SC#2); n=4096 added by
+    // 98336ab4 SC#1 (consolidated 6-prime n=4096 re-bench).
     bench_square::<gf2_core::gfp::Fp<PRIME_241>, _>(
         c,
         "gemm/Fp_241",
         "Fp_241",
-        SQUARE_SIZES_SMALL_PRIME_WITH_N64,
+        SQUARE_SIZES_SMALL_PRIME_N64_TO_4096,
         fp_matrix_from_seed::<PRIME_241>,
     );
 }
