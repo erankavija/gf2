@@ -427,9 +427,10 @@ impl DvbT2Concat {
     /// Applies BCH outer encoding followed by LDPC inner encoding, producing
     /// a FECFRAME ready for the bit interleaver and constellation mapper.
     ///
-    /// On the first call the LDPC RU encoding matrices are preprocessed and
-    /// cached in a [`OnceCell`]; subsequent calls use the cached result without
-    /// any synchronisation overhead.
+    /// DVB-T2 LDPC codes use the linear-time IRA staircase accumulator
+    /// encoder (no Gauss/RREF preprocessing). The inner [`LdpcEncoder`] is
+    /// constructed lazily on the first call and cached in a [`OnceCell`];
+    /// subsequent calls reuse it without any synchronisation overhead.
     ///
     /// # Arguments
     ///
@@ -692,14 +693,13 @@ mod tests {
     }
 
     // -----------------------------------------------------------------------
-    // Roundtrip tests — call encode() + decode_soft(); the first encode()
-    // triggers LdpcEncoder::new() which preprocesses the RU encoding matrices
-    // (O(n²/64) ≈ 2-10 s for DVB-T2 Normal frame). Marked slow accordingly.
+    // Roundtrip tests — call encode() + decode_soft(). DVB-T2 codes use the
+    // linear-time IRA staircase encoder, so the first encode() call is
+    // milliseconds; these tests run in the fast tier.
     // -----------------------------------------------------------------------
 
     /// Zero-noise roundtrip: Normal frame 1/2, pseudo-random payload.
     #[test]
-    #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_1_2() {
         let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).expect("construction failed");
@@ -729,7 +729,6 @@ mod tests {
 
     /// Zero-noise roundtrip: Normal frame 2/3, pseudo-random payload.
     #[test]
-    #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_2_3() {
         let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate2_3).expect("construction failed");
@@ -758,7 +757,6 @@ mod tests {
 
     /// Zero-noise roundtrip: Normal frame 3/4, pseudo-random payload.
     #[test]
-    #[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
     fn test_roundtrip_normal_rate_3_4() {
         let codec =
             DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate3_4).expect("construction failed");
