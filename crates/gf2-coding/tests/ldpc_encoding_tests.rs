@@ -110,12 +110,14 @@ fn test_ru_encoding_is_systematic() {
 // ============================================================================
 
 #[test]
-#[ignore = "Slow: preprocesses all 6 DVB-T2 Short configs (~8-10 seconds)"]
 fn test_dvb_t2_preprocessing_all_configs() {
     use gf2_coding::bch::CodeRate;
     use gf2_coding::ldpc::{encoding::EncodingCache, LdpcEncoder};
+    use gf2_coding::traits::BlockEncoder;
 
-    // Use cache to make this test fast
+    // DVB-T2 codes now use the IRA staircase encoder: O(nnz) construction,
+    // no RREF, no cache required. This test verifies all 6 short configs
+    // can be constructed and used instantly.
     let cache = EncodingCache::new();
 
     let rates = [
@@ -128,18 +130,26 @@ fn test_dvb_t2_preprocessing_all_configs() {
     ];
 
     for rate in &rates {
-        // Test short frames with cache
+        // Test short frames: IRA path is selected automatically
         let code_short = LdpcCode::dvb_t2_short(*rate);
-        let _encoder = LdpcEncoder::with_cache(code_short, &cache);
-        // If we get here, preprocessing succeeded
+        let encoder = LdpcEncoder::with_cache(code_short.clone(), &cache);
+        assert!(encoder.is_ira(), "DVB-T2 short should use IRA encoder");
+
+        // Verify a zero message encodes to a valid codeword
+        let msg = BitVec::zeros(code_short.k());
+        let cw = encoder.encode(&msg);
+        assert!(code_short.is_valid_codeword(&cw), "H·c must be zero");
     }
 
-    // Verify all 6 configs were cached
-    assert_eq!(cache.stats().entries, 6);
+    // IRA path bypasses the RREF cache — no entries expected.
+    assert_eq!(
+        cache.stats().entries,
+        0,
+        "IRA encoders do not populate the RREF cache"
+    );
 }
 
 #[test]
-#[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
 fn test_ldpc_encoder_creation() {
     use gf2_coding::bch::CodeRate;
     use gf2_coding::ldpc::{encoding::EncodingCache, LdpcEncoder};
@@ -171,7 +181,6 @@ fn test_ldpc_encoder_creation() {
 }
 
 #[test]
-#[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
 fn test_dvb_t2_encoded_codewords_valid() {
     use gf2_coding::bch::CodeRate;
     use gf2_coding::ldpc::{encoding::EncodingCache, LdpcEncoder};

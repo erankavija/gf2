@@ -38,7 +38,6 @@ mod systematic_encoding_basic_tests {
 
     /// Test that LdpcEncoder exists and can be constructed
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_ldpc_encoder_construction() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
@@ -49,7 +48,6 @@ mod systematic_encoding_basic_tests {
 
     /// Test systematic encoding: message appears in first k positions
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_systematic_form() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
@@ -78,7 +76,6 @@ mod systematic_encoding_basic_tests {
 
     /// Test that encoded codeword is valid (syndrome is zero)
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encoded_codeword_is_valid() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
@@ -96,7 +93,6 @@ mod systematic_encoding_basic_tests {
 
     /// Test encoding multiple messages
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encode_multiple_messages() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
@@ -137,7 +133,6 @@ mod systematic_encoding_linearity_tests {
 
     /// Test linearity: encode(m1 ⊕ m2) = encode(m1) ⊕ encode(m2)
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encoding_linearity() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
@@ -180,7 +175,6 @@ mod systematic_encoding_linearity_tests {
 
     /// Test that encoding zero message produces zero codeword
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_zero_message_encodes_to_zero() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
@@ -202,7 +196,6 @@ mod dvb_t2_encoding_tests {
 
     /// Test all DVB-T2 Normal frame configurations
     #[test]
-    #[ignore = "Very slow: preprocesses all 6 DVB-T2 Normal configs (~30-60 seconds)"]
     fn test_dvb_t2_normal_all_rates() {
         let rates = vec![
             CodeRate::Rate1_2,
@@ -229,7 +222,6 @@ mod dvb_t2_encoding_tests {
 
     /// Test all DVB-T2 Short frame configurations
     #[test]
-    #[ignore = "Slow: preprocesses all 6 DVB-T2 Short configs (~8-10 seconds)"]
     fn test_dvb_t2_short_all_rates() {
         let rates = vec![
             CodeRate::Rate1_2,
@@ -261,7 +253,6 @@ mod parity_computation_tests {
 
     /// Test that parity bits are actually computed (not all zero for non-zero message)
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_parity_bits_computed() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
@@ -291,7 +282,6 @@ mod parity_computation_tests {
 
     /// Test parity structure for DVB-T2 (dual-diagonal property)
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_dvb_t2_parity_structure() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
@@ -317,7 +307,6 @@ mod edge_case_tests {
 
     /// Test encoding with message length exactly k
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_encode_exact_length() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());
@@ -330,7 +319,6 @@ mod edge_case_tests {
 
     /// Test encoding preserves all message bits
     #[test]
-    #[ignore = "Slow: DVB-T2 preprocessing (~2 seconds)"]
     fn test_all_message_bits_preserved() {
         let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
         let encoder = create_encoder(code, try_load_cache().as_ref());

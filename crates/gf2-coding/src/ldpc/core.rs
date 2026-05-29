@@ -142,8 +142,20 @@ impl LdpcCode {
         syndrome.count_ones() == 0
     }
 
-    /// Returns the parity-check matrix.
-    pub(crate) fn parity_check_matrix(&self) -> &SpBitMatrixDual {
+    /// Returns the parity-check matrix H (m × n).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::LdpcCode;
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let h = code.parity_check_matrix();
+    /// assert_eq!(h.rows(), code.m());
+    /// assert_eq!(h.cols(), code.n());
+    /// ```
+    pub fn parity_check_matrix(&self) -> &SpBitMatrixDual {
         &self.h
     }
 
@@ -1430,79 +1442,181 @@ impl IterativeSoftDecoder for LdpcDecoder {
     }
 }
 
+/// Internal encoder implementation selected at construction time.
+enum EncoderImpl {
+    /// Staircase accumulator for dual-diagonal IRA codes (e.g. DVB-T2).
+    /// O(edges) construction and encoding; no matrix densification.
+    Ira(std::sync::Arc<crate::ldpc::encoding::IraEncoder>),
+    /// Richardson-Urbanke RREF-based encoder for general LDPC codes.
+    /// Used when the code does not have standard systematic layout (cols 0..k).
+    Ru(std::sync::Arc<crate::ldpc::encoding::RuEncodingMatrices>),
+}
+
+// Manual Clone: Arc impls Clone so this is straightforward.
+impl Clone for EncoderImpl {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Ira(a) => Self::Ira(a.clone()),
+            Self::Ru(a) => Self::Ru(a.clone()),
+        }
+    }
+}
+
+impl std::fmt::Debug for EncoderImpl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ira(_) => f.write_str("EncoderImpl::Ira"),
+            Self::Ru(_) => f.write_str("EncoderImpl::Ru"),
+        }
+    }
+}
+
 /// LDPC encoder for systematic encoding.
 ///
-/// Encodes messages into systematic LDPC codewords: [message | parity].
-/// Uses Richardson-Urbanke preprocessing for efficient encoding.
+/// Encodes messages into systematic LDPC codewords: `[message | parity]`.
+///
+/// For DVB-T2 LDPC codes (and any code whose parity-check matrix has
+/// systematic columns `0..k` and a dual-diagonal parity region), construction
+/// uses the linear-time IRA staircase accumulator — no matrix densification,
+/// no RREF. Encoder construction is O(nnz) and completes in microseconds.
+///
+/// For general LDPC codes that do not have this structure, the encoder falls
+/// back to the Richardson-Urbanke RREF-based preprocessing path.
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```
 /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 /// use gf2_coding::traits::BlockEncoder;
 /// use gf2_coding::CodeRate;
 /// use gf2_core::BitVec;
 ///
 /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-/// let encoder = LdpcEncoder::new(code);
+/// let encoder = LdpcEncoder::new(code.clone());
 ///
 /// let message = BitVec::zeros(encoder.k());
 /// let codeword = encoder.encode(&message);
 ///
 /// assert_eq!(codeword.len(), encoder.n());
+/// assert!(code.is_valid_codeword(&codeword));
 /// ```
 pub struct LdpcEncoder {
     code: LdpcCode,
-    encoding_matrices: std::sync::Arc<crate::ldpc::encoding::RuEncodingMatrices>,
+    impl_: EncoderImpl,
 }
 
 impl LdpcEncoder {
-    /// Creates a new LDPC encoder WITHOUT cache.
+    /// Returns `true` when this encoder uses the IRA staircase accumulator.
     ///
-    /// Preprocesses the parity-check matrix for efficient encoding.
-    /// This operation is expensive (2-10 seconds for DVB-T2 codes) but
-    /// done only once per encoder instance.
-    ///
-    /// For faster encoder creation when working with multiple encoders
-    /// of the same configuration, use [`LdpcEncoder::with_cache`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the parity-check matrix preprocessing fails.
+    /// DVB-T2 codes always use the IRA path. Non-DVB-T2 codes with a
+    /// non-standard systematic layout use the Richardson-Urbanke path.
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```
     /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
     /// use gf2_coding::CodeRate;
     ///
     /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     /// let encoder = LdpcEncoder::new(code);
-    /// // Takes 2-3 seconds, but no cache needed
+    /// assert!(encoder.is_ira());
+    /// ```
+    pub fn is_ira(&self) -> bool {
+        matches!(self.impl_, EncoderImpl::Ira(_))
+    }
+
+    /// Creates a new LDPC encoder, automatically selecting the fastest path.
+    ///
+    /// For DVB-T2 codes (and any code with systematic columns `0..k`), the
+    /// IRA staircase accumulator is used. Construction is O(nnz) and completes
+    /// in microseconds. For other codes, falls back to Richardson-Urbanke
+    /// RREF preprocessing (expensive: 2-10 seconds for Normal DVB-T2 frames).
+    ///
+    /// For multiple encoders of the same non-IRA configuration, prefer
+    /// [`LdpcEncoder::with_cache`] to amortise the RREF cost.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parity-check matrix preprocessing fails (non-IRA path).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let encoder = LdpcEncoder::new(code);
+    /// // IRA path: completes in microseconds
+    /// assert!(encoder.is_ira());
     /// ```
     pub fn new(code: LdpcCode) -> Self {
-        let encoding_matrices =
-            crate::ldpc::encoding::RuEncodingMatrices::preprocess(code.parity_check_matrix())
-                .expect("Failed to preprocess LDPC code for encoding");
+        let impl_ = Self::build_impl(&code);
+        Self { code, impl_ }
+    }
 
-        Self {
-            code,
-            encoding_matrices: std::sync::Arc::new(encoding_matrices),
+    /// Detect whether the parity part of `h` is dual-diagonal (IRA structure).
+    ///
+    /// The dual-diagonal parity structure requires exactly:
+    /// - Row 0: parity columns = {k}          (single diagonal entry)
+    /// - Row p (p > 0): parity columns = {k+p, k+p-1}  (diagonal + sub-diagonal)
+    ///
+    /// This is O(nnz) and checked against the actual parity-check matrix.
+    fn has_dual_diagonal_parity(h: &SpBitMatrixDual, k: usize) -> bool {
+        let m = h.rows();
+        if m == 0 {
+            return false;
+        }
+
+        // Row 0: must have exactly one parity entry at column k.
+        let row0_parity: Vec<usize> = h.row_iter(0).filter(|&c| c >= k).collect();
+        if row0_parity != [k] {
+            return false;
+        }
+
+        // Rows 1..m-1: must have exactly two parity entries at {k+p, k+p-1}.
+        for p in 1..m {
+            let mut parity_cols: Vec<usize> = h.row_iter(p).filter(|&c| c >= k).collect();
+            parity_cols.sort_unstable();
+            if parity_cols != [k + p - 1, k + p] {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Detect whether a code has standard systematic layout (cols 0..k) and
+    /// dual-diagonal parity, and build the appropriate encoder implementation.
+    fn build_impl(code: &LdpcCode) -> EncoderImpl {
+        let k = code.k();
+        let h = code.parity_check_matrix();
+
+        if Self::has_dual_diagonal_parity(h, k) {
+            let ira = crate::ldpc::encoding::IraEncoder::new(h, k);
+            EncoderImpl::Ira(std::sync::Arc::new(ira))
+        } else {
+            let ru = crate::ldpc::encoding::RuEncodingMatrices::preprocess(h)
+                .expect("Failed to preprocess LDPC code for encoding");
+            EncoderImpl::Ru(std::sync::Arc::new(ru))
         }
     }
 
     /// Creates a new LDPC encoder WITH cache (opt-in performance boost).
     ///
-    /// Uses the provided cache to avoid expensive preprocessing when creating
-    /// multiple encoders for the same LDPC code configuration.
+    /// Uses the provided cache to avoid expensive RREF preprocessing when
+    /// creating multiple encoders for the same LDPC code configuration.
+    /// Codes with standard systematic layout (e.g. DVB-T2) skip the RREF
+    /// entirely via the IRA path; the cache is only consulted for other codes.
     ///
-    /// - First call: preprocesses and caches (2-10 seconds)
-    /// - Subsequent calls: instant (<1μs)
+    /// - DVB-T2 and standard-systematic codes: instant (IRA path, no cache needed)
+    /// - Other codes — first call: preprocesses and caches (2-10 seconds)
+    /// - Other codes — subsequent calls: instant (<1 μs)
     ///
     /// # Arguments
     ///
     /// * `code` - LDPC code to encode with
-    /// * `cache` - Encoding cache to use
+    /// * `cache` - Encoding cache to use for non-IRA codes
     ///
     /// # Panics
     ///
@@ -1518,35 +1632,37 @@ impl LdpcEncoder {
     /// let cache = EncodingCache::new();
     /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
     ///
-    /// // First call: slow but caches
+    /// // DVB-T2: always uses IRA path, cache not needed but accepted
     /// let enc1 = LdpcEncoder::with_cache(code.clone(), &cache);
-    ///
-    /// // Second call: instant
     /// let enc2 = LdpcEncoder::with_cache(code, &cache);
     /// ```
     pub fn with_cache(code: LdpcCode, cache: &crate::ldpc::encoding::EncodingCache) -> Self {
-        let key = crate::ldpc::encoding::CacheKey::from_params(
-            code.n(),
-            code.k(),
-            code.parity_check_matrix(),
-        );
+        let h = code.parity_check_matrix();
+        let k = code.k();
 
-        let encoding_matrices = cache
-            .get_or_compute(key, code.parity_check_matrix())
-            .expect("Failed to preprocess LDPC code for encoding");
+        // Same IRA detection as `new`: dual-diagonal parity → IRA path.
+        let impl_ = if Self::has_dual_diagonal_parity(h, k) {
+            let ira = crate::ldpc::encoding::IraEncoder::new(h, k);
+            EncoderImpl::Ira(std::sync::Arc::new(ira))
+        } else {
+            let key = crate::ldpc::encoding::CacheKey::from_params(code.n(), code.k(), h);
+            let ru = cache
+                .get_or_compute(key, h)
+                .expect("Failed to preprocess LDPC code for encoding");
+            EncoderImpl::Ru(ru)
+        };
 
-        Self {
-            code,
-            encoding_matrices,
-        }
+        Self { code, impl_ }
     }
 }
 
 impl LdpcEncoder {
-    /// Encodes multiple messages in batch using ComputeBackend.
+    /// Encodes multiple messages in batch.
     ///
-    /// Uses the default CpuBackend which automatically selects SIMD kernels
-    /// and parallel processing when the `parallel` feature is enabled.
+    /// For IRA-encoded codes, messages are encoded sequentially (the IRA path
+    /// has no dense matrix multiply to parallelize). For RU-encoded codes,
+    /// uses the default `CpuBackend` which selects SIMD kernels and parallel
+    /// processing when the `parallel` feature is enabled.
     ///
     /// # Examples
     ///
@@ -1574,9 +1690,13 @@ impl LdpcEncoder {
     /// assert_eq!(codewords[0].len(), code.n());
     /// ```
     pub fn encode_batch(&self, messages: &[BitVec]) -> Vec<BitVec> {
-        // Use default CpuBackend for batch operations
-        let backend = gf2_core::compute::CpuBackend::new();
-        self.encoding_matrices.encode_batch(messages, &backend)
+        match &self.impl_ {
+            EncoderImpl::Ira(ira) => messages.iter().map(|m| ira.encode(m)).collect(),
+            EncoderImpl::Ru(ru) => {
+                let backend = gf2_core::compute::CpuBackend::new();
+                ru.encode_batch(messages, &backend)
+            }
+        }
     }
 }
 
@@ -1598,7 +1718,10 @@ impl crate::traits::BlockEncoder for LdpcEncoder {
             self.k()
         );
 
-        self.encoding_matrices.encode(message)
+        match &self.impl_ {
+            EncoderImpl::Ira(ira) => ira.encode(message),
+            EncoderImpl::Ru(ru) => ru.encode(message),
+        }
     }
 }
 
