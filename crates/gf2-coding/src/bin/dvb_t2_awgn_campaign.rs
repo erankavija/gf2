@@ -1048,3 +1048,66 @@ fn main() {
         std::process::exit(1);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_decoder_minsum() {
+        let cfg = parse_decoder("minsum").expect("minsum parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::MinSum);
+    }
+
+    #[test]
+    fn parse_decoder_sumproduct_and_spa_alias() {
+        let cfg_spa = parse_decoder("spa").expect("spa parse");
+        let cfg_sp = parse_decoder("sumproduct").expect("sumproduct parse");
+        assert_eq!(cfg_spa.algorithm(), DecoderAlgorithm::SumProduct);
+        assert_eq!(cfg_sp.algorithm(), DecoderAlgorithm::SumProduct);
+    }
+
+    #[test]
+    fn parse_decoder_nms_with_alpha() {
+        let cfg = parse_decoder("nms:0.75").expect("nms parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::NormalizedMinSum(0.75));
+    }
+
+    #[test]
+    fn parse_decoder_oms_with_beta() {
+        let cfg = parse_decoder("oms:0.5").expect("oms parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::OffsetMinSum(0.5));
+    }
+
+    #[test]
+    fn parse_decoder_is_case_insensitive() {
+        let cfg = parse_decoder("MinSum").expect("case-insensitive parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::MinSum);
+    }
+
+    #[test]
+    fn parse_decoder_rejects_unknown_name() {
+        assert!(parse_decoder("rubbish").is_err());
+    }
+
+    #[test]
+    fn parse_decoder_rejects_unparseable_alpha() {
+        assert!(parse_decoder("nms:notanumber").is_err());
+    }
+
+    #[test]
+    fn parse_demap_known_methods() {
+        assert_eq!(parse_demap("maxlog").unwrap(), DemapMethod::MaxLog);
+        assert_eq!(parse_demap("MaxLog").unwrap(), DemapMethod::MaxLog);
+        assert_eq!(
+            parse_demap("exactlogmap").unwrap(),
+            DemapMethod::ExactLogMap
+        );
+        assert_eq!(parse_demap("exact").unwrap(), DemapMethod::ExactLogMap);
+    }
+
+    #[test]
+    fn parse_demap_rejects_unknown() {
+        assert!(parse_demap("softoutput").is_err());
+    }
+}
