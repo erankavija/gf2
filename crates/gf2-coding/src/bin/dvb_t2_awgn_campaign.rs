@@ -240,12 +240,25 @@ fn parse_decoder(s: &str) -> Result<DecoderConfig, String> {
             let a: f32 = alpha
                 .parse()
                 .map_err(|_| format!("Cannot parse nms alpha '{}' as f32", alpha))?;
+            // DecoderConfig::new panics on out-of-range alpha; validate here
+            // so the CLI returns a clean error instead.
+            if !a.is_finite() || a <= 0.0 || a > 1.0 {
+                return Err(format!(
+                    "nms alpha must be finite and in (0.0, 1.0]; got {}",
+                    a
+                ));
+            }
             DecoderAlgorithm::NormalizedMinSum(a)
         }
         ["oms", beta] => {
             let b: f32 = beta
                 .parse()
                 .map_err(|_| format!("Cannot parse oms beta '{}' as f32", beta))?;
+            // DecoderConfig::new panics on negative or non-finite beta;
+            // validate here so the CLI returns a clean error instead.
+            if !b.is_finite() || b < 0.0 {
+                return Err(format!("oms beta must be finite and >= 0.0; got {}", b));
+            }
             DecoderAlgorithm::OffsetMinSum(b)
         }
         _ => {
@@ -1093,6 +1106,38 @@ mod tests {
     #[test]
     fn parse_decoder_rejects_unparseable_alpha() {
         assert!(parse_decoder("nms:notanumber").is_err());
+    }
+
+    #[test]
+    fn parse_decoder_rejects_invalid_nms_alpha_range() {
+        // DecoderConfig::new would panic on these; the parser must reject them.
+        assert!(parse_decoder("nms:0.0").is_err()); // alpha = 0 is the boundary excluded by (0, 1]
+        assert!(parse_decoder("nms:1.5").is_err()); // alpha > 1
+        assert!(parse_decoder("nms:-0.25").is_err()); // negative
+        assert!(parse_decoder("nms:NaN").is_err()); // non-finite
+        assert!(parse_decoder("nms:inf").is_err()); // non-finite
+    }
+
+    #[test]
+    fn parse_decoder_rejects_invalid_oms_beta_range() {
+        // DecoderConfig::new would panic on these; the parser must reject them.
+        assert!(parse_decoder("oms:-0.1").is_err()); // negative
+        assert!(parse_decoder("oms:NaN").is_err()); // non-finite
+        assert!(parse_decoder("oms:inf").is_err()); // non-finite
+    }
+
+    #[test]
+    fn parse_decoder_accepts_nms_boundary_one() {
+        // alpha = 1.0 is the inclusive upper bound — must be accepted.
+        let cfg = parse_decoder("nms:1.0").expect("nms:1.0 parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::NormalizedMinSum(1.0));
+    }
+
+    #[test]
+    fn parse_decoder_accepts_oms_zero_beta() {
+        // beta = 0.0 is the inclusive lower bound — must be accepted.
+        let cfg = parse_decoder("oms:0.0").expect("oms:0.0 parse");
+        assert_eq!(cfg.algorithm(), DecoderAlgorithm::OffsetMinSum(0.0));
     }
 
     #[test]
