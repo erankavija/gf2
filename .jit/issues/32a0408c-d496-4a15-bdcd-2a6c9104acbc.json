@@ -1,0 +1,23 @@
+{
+  "id": "32a0408c-d496-4a15-bdcd-2a6c9104acbc",
+  "title": "Decoder and demap method selection in DVB-T2 AWGN campaign runner",
+  "description": "Add CLI selection of the LDPC belief-propagation decoder algorithm and the QAM soft-demap method to the DVB-T2 BICM AWGN campaign runner, so the campaign can be tuned toward the ETSI reference instead of being locked to plain min-sum with max-log demapping.\n\n## Background\n\nThe campaign runner (`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`) previously hardcoded `DemapMethod::MaxLog` and used the `DvbT2Concat` default LDPC decoder, which is plain `DecoderAlgorithm::MinSum`. A calibration smoke run showed this default configuration sits roughly 1.0–1.5 dB above the ETSI TS 102 831 QEF thresholds at the bracketing SNR points — exceeding the campaign's $\\le 0.5$ dB gap target. Normalized-min-sum (or sum-product) decoding plus exact log-MAP demapping recover most of that gap. Both decoder variants and both demap methods already exist in the codebase; only the runner lacked a way to select them.\n\n## Success Criteria\n\n- [ ] [hard] The campaign binary accepts `--decoder` (values `minsum`, `nms:ALPHA`, `oms:BETA`, `sumproduct`) and `--demap` (values `maxlog`, `exactlogmap`), parsing each into the corresponding `DecoderConfig` / `DemapMethod`, with a clear error on unrecognized values.\n- [ ] [hard] The selected demap method is used by the BICM channel (no hardcoded `MaxLog`), and the selected decoder configuration is applied to the `DvbT2Concat` codec before decoding.\n- [ ] [hard] `DvbT2Concat` exposes a way to override its LDPC decoder configuration that rebuilds the decoder with the supplied algorithm.\n- [ ] [hard] Omitting both flags preserves prior behavior (`minsum`, `maxlog`), so existing artefacts and resume byte-identity are unaffected.\n\n## Notes\n\n- This capability was implemented during an AWGN-campaign session as a prerequisite for meeting the campaign's gap target; it is tracked as its own task because the campaign simulation issue is execution-only and forbids new code.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
+  ],
+  "created_at": "2026-05-29T21:36:15.348037418+00:00",
+  "updated_at": "2026-05-29T21:36:15.348048858+00:00"
+}
