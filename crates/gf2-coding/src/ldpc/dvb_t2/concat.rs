@@ -42,7 +42,7 @@
 //! ```
 
 use crate::bch::{BchCode, BchDecoder, BchEncoder};
-use crate::ldpc::{LdpcCode, LdpcDecoder, LdpcEncoder};
+use crate::ldpc::{DecoderConfig, LdpcCode, LdpcDecoder, LdpcEncoder};
 use crate::llr::Llr;
 use crate::traits::{BlockEncoder, HardDecisionDecoder};
 use gf2_core::BitVec;
@@ -382,6 +382,44 @@ impl DvbT2Concat {
     pub fn set_max_ldpc_iterations(&mut self, max_iterations: usize) {
         assert!(max_iterations > 0, "max_iterations must be positive");
         self.max_ldpc_iterations = max_iterations;
+    }
+
+    /// Override the LDPC belief-propagation decoder configuration.
+    ///
+    /// Rebuilds the internal decoder with the supplied [`DecoderConfig`]
+    /// (algorithm + early-termination policy). The default decoder is plain
+    /// [`DecoderAlgorithm::MinSum`](crate::ldpc::DecoderAlgorithm::MinSum);
+    /// selecting `NormalizedMinSum` or `SumProduct` trades decode throughput
+    /// for additional coding gain.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` — The codec instance (mutable: the decoder is rebuilt).
+    /// * `config`    — Replacement [`DecoderConfig`].
+    ///
+    /// # Panics
+    ///
+    /// Never panics.
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz) for decoder graph reallocation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let mut codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// codec.set_decoder_config(DecoderConfig::new(
+    ///     DecoderAlgorithm::NormalizedMinSum(0.75),
+    ///     true,
+    /// ));
+    /// ```
+    pub fn set_decoder_config(&mut self, config: DecoderConfig) {
+        self.ldpc_decoder = Mutex::new(LdpcDecoder::with_config(self.ldpc_code.clone(), config));
     }
 
     /// Encode a BBFRAME into a FECFRAME (BCH → LDPC).
