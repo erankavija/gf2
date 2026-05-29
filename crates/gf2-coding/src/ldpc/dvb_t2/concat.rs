@@ -647,6 +647,50 @@ mod tests {
         }
     }
 
+    /// Verify [`DvbT2Concat::set_decoder_config`] rebuilds the internal LDPC
+    /// belief-propagation decoder with the supplied algorithm and that
+    /// decoding still recovers a zero-noise codeword afterward.
+    ///
+    /// Uses Short frame 1/2 with manually-constructed clean LLRs to stay in
+    /// the fast tier — no encode() call, so no RREF preprocessing runs.
+    #[test]
+    fn test_set_decoder_config_rebuilds_decoder() {
+        use crate::ldpc::DecoderAlgorithm;
+
+        let mut codec =
+            DvbT2Concat::new(FrameSize::Short, CodeRate::Rate1_2).expect("construction failed");
+
+        // High-magnitude positive LLRs signal the all-zero codeword (no noise).
+        let llrs: Vec<Llr> = vec![Llr::new(10.0); codec.n_ldpc()];
+        let zero_bbframe = BitVec::zeros(codec.k_bch());
+
+        // Default decoder (MinSum) converges to the all-zero BBFRAME.
+        let bbframe_default = codec.decode_soft(&llrs).expect("default decode failed");
+        assert_eq!(
+            bbframe_default, zero_bbframe,
+            "default MinSum did not converge to zero codeword on clean LLRs"
+        );
+
+        // Swap in normalized min-sum and re-decode.
+        codec.set_decoder_config(DecoderConfig::new(
+            DecoderAlgorithm::NormalizedMinSum(0.75),
+            true,
+        ));
+        let bbframe_nms = codec.decode_soft(&llrs).expect("NMS decode failed");
+        assert_eq!(
+            bbframe_nms, zero_bbframe,
+            "NMS(0.75) did not converge to zero codeword after set_decoder_config"
+        );
+
+        // Swap to sum-product and verify the decoder still functions.
+        codec.set_decoder_config(DecoderConfig::new(DecoderAlgorithm::SumProduct, true));
+        let bbframe_spa = codec.decode_soft(&llrs).expect("SPA decode failed");
+        assert_eq!(
+            bbframe_spa, zero_bbframe,
+            "SumProduct did not converge to zero codeword after set_decoder_config"
+        );
+    }
+
     // -----------------------------------------------------------------------
     // Roundtrip tests — call encode() + decode_soft(); the first encode()
     // triggers LdpcEncoder::new() which preprocesses the RU encoding matrices
