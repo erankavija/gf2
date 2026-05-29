@@ -849,7 +849,8 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     };
 
     // Build the BICM components.
-    let mut concat = DvbT2Concat::new(FrameSize::Normal, args.rate).map_err(|e| format!("{e:?}"))?;
+    let mut concat =
+        DvbT2Concat::new(FrameSize::Normal, args.rate).map_err(|e| format!("{e:?}"))?;
     concat.set_decoder_config(args.decoder);
     let modcod = DvbT2Modcod::new(FrameSize::Normal, args.rate, args.modulation);
     let interleaver = DvbT2BitInterleaver::new(modcod);
