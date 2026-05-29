@@ -107,6 +107,7 @@ use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
 };
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 use gf2_coding::ldpc::dvb_t2::FrameSize;
+use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::llr::Llr;
 use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
 use gf2_coding::simulation::{ChannelModel, SimulationConfig, SimulationRunner};
@@ -138,6 +139,10 @@ struct Args {
     calibrate_frames: usize,
     /// Optional explicit 3-point bracket [low, center, high] for calibration.
     calibrate_bracket: Option<[f64; 3]>,
+    /// LDPC belief-propagation decoder configuration.
+    decoder: DecoderConfig,
+    /// QAM soft-demapping method.
+    demap: DemapMethod,
 }
 
 fn print_usage() {
@@ -157,6 +162,8 @@ fn print_usage() {
            --calibrate                      Run calibration sweep instead of full campaign\n\
            --calibrate-frames <N>           Frames per calibration point [default: 1000]\n\
            --calibrate-bracket <a:b:c>      Custom 3-point Es/N0 bracket for calibration\n\
+           --decoder <spec>                 LDPC decoder: minsum | nms:<alpha> | oms:<beta> | sumproduct [default: minsum]\n\
+           --demap <method>                 QAM demap: maxlog | exactlogmap [default: maxlog]\n\
          "
     );
 }
@@ -224,6 +231,44 @@ fn parse_bracket(s: &str) -> Result<[f64; 3], String> {
     Ok([a, b, c])
 }
 
+fn parse_decoder(s: &str) -> Result<DecoderConfig, String> {
+    let lower = s.to_lowercase();
+    let algorithm = match lower.split(':').collect::<Vec<_>>().as_slice() {
+        ["minsum"] => DecoderAlgorithm::MinSum,
+        ["sumproduct"] | ["spa"] => DecoderAlgorithm::SumProduct,
+        ["nms", alpha] => {
+            let a: f32 = alpha
+                .parse()
+                .map_err(|_| format!("Cannot parse nms alpha '{}' as f32", alpha))?;
+            DecoderAlgorithm::NormalizedMinSum(a)
+        }
+        ["oms", beta] => {
+            let b: f32 = beta
+                .parse()
+                .map_err(|_| format!("Cannot parse oms beta '{}' as f32", beta))?;
+            DecoderAlgorithm::OffsetMinSum(b)
+        }
+        _ => {
+            return Err(format!(
+                "Unknown decoder '{}'; supported: minsum, nms:<alpha>, oms:<beta>, sumproduct",
+                s
+            ))
+        }
+    };
+    Ok(DecoderConfig::new(algorithm, true))
+}
+
+fn parse_demap(s: &str) -> Result<DemapMethod, String> {
+    match s.to_lowercase().as_str() {
+        "maxlog" => Ok(DemapMethod::MaxLog),
+        "exactlogmap" | "exact" => Ok(DemapMethod::ExactLogMap),
+        other => Err(format!(
+            "Unknown demap method '{}'; supported: maxlog, exactlogmap",
+            other
+        )),
+    }
+}
+
 fn parse_args() -> Result<Args, String> {
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let mut rate: Option<CodeRate> = None;
@@ -238,6 +283,8 @@ fn parse_args() -> Result<Args, String> {
     let mut calibrate = false;
     let mut calibrate_frames: usize = 1000;
     let mut calibrate_bracket: Option<[f64; 3]> = None;
+    let mut decoder = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
+    let mut demap = DemapMethod::MaxLog;
 
     let mut i = 0;
     while i < argv.len() {
@@ -328,6 +375,20 @@ fn parse_args() -> Result<Args, String> {
                     .ok_or_else(|| "--calibrate-bracket requires a value".to_string())?;
                 calibrate_bracket = Some(parse_bracket(s)?);
             }
+            "--decoder" => {
+                i += 1;
+                let s = argv
+                    .get(i)
+                    .ok_or_else(|| "--decoder requires a value".to_string())?;
+                decoder = parse_decoder(s)?;
+            }
+            "--demap" => {
+                i += 1;
+                let s = argv
+                    .get(i)
+                    .ok_or_else(|| "--demap requires a value".to_string())?;
+                demap = parse_demap(s)?;
+            }
             "--help" | "-h" => {
                 print_usage();
                 std::process::exit(0);
@@ -363,6 +424,8 @@ fn parse_args() -> Result<Args, String> {
         calibrate,
         calibrate_frames,
         calibrate_bracket,
+        decoder,
+        demap,
     })
 }
 
@@ -524,15 +587,17 @@ struct BicmAwgnChannel {
     interleaver: DvbT2BitInterleaver,
     bits_per_symbol: usize,
     spec: ModemSpec<f32>,
+    demap: DemapMethod,
 }
 
 impl BicmAwgnChannel {
-    fn new(interleaver: DvbT2BitInterleaver, bits_per_symbol: usize) -> Self {
+    fn new(interleaver: DvbT2BitInterleaver, bits_per_symbol: usize, demap: DemapMethod) -> Self {
         let spec = ModemSpec::<f32>::gray_square_qam(if bits_per_symbol == 4 { 16 } else { 64 });
         Self {
             interleaver,
             bits_per_symbol,
             spec,
+            demap,
         }
     }
 }
@@ -545,7 +610,7 @@ impl ChannelModel for BicmAwgnChannel {
     }
 
     fn demap_method(&self) -> DemapMethod {
-        DemapMethod::MaxLog
+        self.demap
     }
 
     fn transmit_and_demodulate<R: Rng>(
@@ -605,7 +670,7 @@ impl ChannelModel for BicmAwgnChannel {
                 gain_i: None,
                 gain_q: None,
                 noise_var: &noise_var_buf,
-                method: DemapMethod::MaxLog,
+                method: self.demap,
             },
             &mut interleaved_llrs,
         );
@@ -784,7 +849,8 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     };
 
     // Build the BICM components.
-    let concat = DvbT2Concat::new(FrameSize::Normal, args.rate).map_err(|e| format!("{e:?}"))?;
+    let mut concat = DvbT2Concat::new(FrameSize::Normal, args.rate).map_err(|e| format!("{e:?}"))?;
+    concat.set_decoder_config(args.decoder);
     let modcod = DvbT2Modcod::new(FrameSize::Normal, args.rate, args.modulation);
     let interleaver = DvbT2BitInterleaver::new(modcod);
     let bits_per_symbol = match args.modulation {
@@ -803,12 +869,14 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     }
 
     eprintln!(
-        "Campaign: {} {} | n_ldpc={} k_bch={} bits/sym={}",
+        "Campaign: {} {} | n_ldpc={} k_bch={} bits/sym={} | decoder={:?} demap={:?}",
         rate_display(args.rate),
         mod_str(args.modulation),
         concat.n_ldpc(),
         concat.k_bch(),
         bits_per_symbol,
+        args.decoder.algorithm(),
+        args.demap,
     );
     eprintln!(
         "SNR points (Es/N0): {:?}",
@@ -867,7 +935,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     let encoder = BicmFecEncoder::new(concat);
 
     // Build the BICM AWGN channel model.
-    let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol);
+    let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol, args.demap);
 
     eprintln!(
         "Running via SimulationRunner::run_with_decoder (checkpoint={}, tracing={})",
