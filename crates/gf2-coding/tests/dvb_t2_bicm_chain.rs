@@ -30,11 +30,14 @@
 //! # Tier
 //!
 //! The 3 x 2 Normal-frame roundtrip tests are marked
-//! `#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]`
-//! because `DvbT2Concat::encode` triggers the O(n^2/64) LDPC RU
-//! preprocessing on the first call.  A single Short x Rate 1/2 x QPSK
-//! fast-tier roundtrip test provides immediate full-chain coverage without
-//! hitting the slow threshold.
+//! `#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]`.
+//! With the IRA staircase encoder the first `concat.encode` is no longer the
+//! bottleneck, but the full chain on Normal frames (n=64800), running BCH
+//! and LDPC encode, interleave, QAM map, AWGN, soft demap, deinterleave,
+//! and BP decode end-to-end, still exceeds the 5 s per-test fast-tier
+//! budget on release builds under contention. A single Short x Rate 1/2 x
+//! QPSK fast-tier roundtrip test provides immediate full-chain coverage
+//! without hitting the slow threshold.
 //!
 //! # In-scope configurations
 //!
@@ -396,8 +399,8 @@ fn run_full_bicm_roundtrip(code_rate: CodeRate, modulation: DvbT2Modulation, see
 // ---------------------------------------------------------------------------
 // Fast-tier: full end-to-end BICM roundtrip — Short x Rate 1/2 x QPSK
 //
-// Short frame (n=16200) LDPC preprocessing is ~16x cheaper than Normal
-// (n=64800, O(n^2/64)), finishing well within the 5 s fast-tier limit.
+// Short frame (n=16200) is ~16x cheaper than Normal (n=64800) on the
+// BICM chain wall-clock, finishing well within the 5 s fast-tier limit.
 // This test exercises the complete documented call sequence -- including
 // QAM map/demap -- on a pseudo-random payload without hitting the slow tier.
 // ---------------------------------------------------------------------------
@@ -422,7 +425,7 @@ fn test_bicm_roundtrip_short_rate1_2_qpsk() {
 
 /// Full BICM roundtrip: Normal x Rate 1/2 x 16-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate1_2_16qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate1_2,
@@ -433,7 +436,7 @@ fn test_bicm_roundtrip_normal_rate1_2_16qam() {
 
 /// Full BICM roundtrip: Normal × Rate 1/2 × 64-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate1_2_64qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate1_2,
@@ -444,7 +447,7 @@ fn test_bicm_roundtrip_normal_rate1_2_64qam() {
 
 /// Full BICM roundtrip: Normal × Rate 2/3 × 16-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate2_3_16qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate2_3,
@@ -455,7 +458,7 @@ fn test_bicm_roundtrip_normal_rate2_3_16qam() {
 
 /// Full BICM roundtrip: Normal × Rate 2/3 × 64-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate2_3_64qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate2_3,
@@ -466,7 +469,7 @@ fn test_bicm_roundtrip_normal_rate2_3_64qam() {
 
 /// Full BICM roundtrip: Normal × Rate 3/4 × 16-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate3_4_16qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate3_4,
@@ -477,7 +480,7 @@ fn test_bicm_roundtrip_normal_rate3_4_16qam() {
 
 /// Full BICM roundtrip: Normal × Rate 3/4 × 64-QAM.
 #[test]
-#[ignore = "slow: LdpcEncoder::new for Normal frame takes 2-10 s"]
+#[ignore = "slow: Normal-frame BICM roundtrip exceeds 5 s fast-tier budget"]
 fn test_bicm_roundtrip_normal_rate3_4_64qam() {
     run_full_bicm_roundtrip(
         CodeRate::Rate3_4,

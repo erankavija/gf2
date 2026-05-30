@@ -49,8 +49,8 @@
 //! let mapper = spec.preferred_mapper();
 //!
 //! // 4. BCH + LDPC encode: BBFRAME → FECFRAME (n_ldpc bits).
-//! //    NOTE: the first call initialises the LDPC encoder (O(n²/64) for
-//! //    Normal frames, ~2-10 s). Subsequent calls are O(nnz).
+//! //    The first call constructs the IRA staircase encoder lazily; all
+//! //    DVB-T2 calls are O(nnz) with no RREF preprocessing.
 //! let bbframe = BitVec::zeros(concat.k_bch());
 //! let fecframe = concat.encode(&bbframe); // n_ldpc bits
 //!
