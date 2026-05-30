@@ -3,7 +3,7 @@
   "epic_short_id": "026fc832",
   "epic_title": "Continue gf2-core SOTA catch-up \u2014 close A8 + \u00a76.3 follow-ups",
   "started_at": "2026-05-24T00:00:00+00:00",
-  "current_wave": "6.5",
+  "current_wave": "close-out (blocked on external DVB-T2 fast-tier regression)",
   "scope_decision": {
     "session_1_date": "2026-05-24",
     "user_choice": "Option 1: close 615db3b9 as plan-only + drive all 12 items",
@@ -190,13 +190,13 @@
             "6613abf4",
             "98336ab4"
           ],
-          "v1_headline_result": "Scorecard v1 published 2026-05-25 (commit e062dda7). Closed ~19 PASS + 7 AMENDED [aspirational] from A8. § 8 left 53 cells in FAIL state pointing to 615db3b9. Per user escalation 2026-05-25, this violates SC#5 and the epic cannot close with FAIL cells; user picked 'Full panelized dense-LA push'. b0fa00af stays in_progress until Phase 6 impls land and the scorecard is re-published with the new closures."
+          "v1_headline_result": "Scorecard v1 published 2026-05-25 (commit e062dda7). Closed ~19 PASS + 7 AMENDED [aspirational] from A8. \u00a7 8 left 53 cells in FAIL state pointing to 615db3b9. Per user escalation 2026-05-25, this violates SC#5 and the epic cannot close with FAIL cells; user picked 'Full panelized dense-LA push'. b0fa00af stays in_progress until Phase 6 impls land and the scorecard is re-published with the new closures."
         }
       ]
     },
     {
       "wave_number": 6,
-      "label": "Phase 6 — panelized dense-LA designs + n=4096 fgemm extension (filed session 5 post-escalation)",
+      "label": "Phase 6 \u2014 panelized dense-LA designs + n=4096 fgemm extension (filed session 5 post-escalation)",
       "issues": [
         {
           "short_id": "2e8c5a29",
@@ -239,14 +239,16 @@
     },
     {
       "wave_number": "7a",
-      "label": "Phase 6 — panelized PLE implementation (foundational; echelon/invert/solve depend on this)",
+      "label": "Phase 6 \u2014 panelized PLE implementation (foundational; echelon/invert/solve depend on this)",
       "issues": [
         {
           "short_id": "6823c8a0",
-          "title": "Implement panelized GF(p) PLE/LU — small-prime family",
+          "title": "Implement panelized GF(p) PLE/LU \u2014 small-prime family",
           "classification": "implementation",
           "status": "backlog",
-          "depends_on": ["2e8c5a29"],
+          "depends_on": [
+            "2e8c5a29"
+          ],
           "model_recommendation": "opus",
           "expected_duration": "~3-5 days"
         }
@@ -254,14 +256,17 @@
     },
     {
       "wave_number": "7b",
-      "label": "Phase 6 — echelon + invert + solve implementations (parallel after PLE lands)",
+      "label": "Phase 6 \u2014 echelon + invert + solve implementations (parallel after PLE lands)",
       "issues": [
         {
           "short_id": "869ce43b",
           "title": "Implement blocked GF(p) echelon / RREF",
           "classification": "implementation",
           "status": "backlog",
-          "depends_on": ["24a93e4e", "6823c8a0"],
+          "depends_on": [
+            "24a93e4e",
+            "6823c8a0"
+          ],
           "model_recommendation": "opus",
           "expected_duration": "~3-5 days"
         },
@@ -270,7 +275,10 @@
           "title": "Implement blocked GF(p) invert via PLE",
           "classification": "implementation",
           "status": "backlog",
-          "depends_on": ["feb15da9", "6823c8a0"],
+          "depends_on": [
+            "feb15da9",
+            "6823c8a0"
+          ],
           "model_recommendation": "opus",
           "expected_duration": "~3-5 days"
         },
@@ -279,7 +287,9 @@
           "title": "Implement blocked GF(p) triangular solve",
           "classification": "implementation",
           "status": "backlog",
-          "depends_on": ["6823c8a0"],
+          "depends_on": [
+            "6823c8a0"
+          ],
           "model_recommendation": "opus",
           "expected_duration": "~3-5 days"
         }
@@ -288,14 +298,20 @@
     },
     {
       "wave_number": 8,
-      "label": "Phase 6 — re-publish b0fa00af scorecard with Phase 6 closures",
+      "label": "Phase 6 \u2014 re-publish b0fa00af scorecard with Phase 6 closures",
       "issues": [
         {
           "short_id": "b0fa00af",
           "title": "Publish cross-family dense LA SOTA scorecard (Phase 5/6)",
           "classification": "documentation",
           "status": "v2_pending",
-          "depends_on": ["6823c8a0", "869ce43b", "8df0c501", "6613abf4", "98336ab4"]
+          "depends_on": [
+            "6823c8a0",
+            "869ce43b",
+            "8df0c501",
+            "6613abf4",
+            "98336ab4"
+          ]
         }
       ]
     },
@@ -479,6 +495,13 @@
       "category": "feb15da9 R2 FAIL (3rd same-root-cause: helper-chain mismatch through dispatch graph). Per escalation policy 5a.",
       "resolved": true,
       "user_choice": "Option A: lead-direct R3 fix. Lead grep-verified actual chain (gemm_axpy_into_view -> dot_product_slices -> F::try_fp_simd_dot_product -> fp_medium_try_dot_product at simd_ops.rs:1388), edited 2 sections (\u00a74.3 + JIT-wired claim), committed 3d6fdaa2. R3 PASS."
+    },
+    {
+      "date": "2026-05-31",
+      "session": 16,
+      "category": "Epic cargo-ci gate blocked by DVB-T2 lead's two dvb_t2_encoding_tests (test_dvb_t2_normal_all_rates / test_dvb_t2_short_all_rates) timing out under full-suite parallel contention (~4s isolated, >5s under load) after their commit 599b868b lifted the #[ignore=slow] markers. Outside epic scope.",
+      "resolved": false,
+      "user_choice": "Defer to DVB-T2 lead: wait for them to fix their tests; no cross-domain edits, no gate bypass. Re-run epic gate and close once main fast tier is green."
     }
   ],
   "rework_counts": {
@@ -576,6 +599,11 @@
         "Wave 6.5 dispatch (40195c09 + 74ba1cdc, parallel worktrees, opus, in background)",
         "Wrote session-6 handoff + updated progress.json"
       ]
+    },
+    {
+      "session": 16,
+      "date": "2026-05-31",
+      "summary": "Closed b0fa00af (last child) -> done: cleared the transient code-review CAPIError glitch, fixed the one real finding (stale v2 scorecard attachment label, SC#6), both gates green, committed edbcf718. All 15/15 children now done; epic auto-advanced backlog->ready. Epic close blocked only on epic cargo-ci gate, which fails on the DVB-T2 lead's two timing-out tests (deferred to that lead per user)."
     }
   ]
 }
