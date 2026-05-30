@@ -337,3 +337,103 @@ fn test_ira_vs_rref_normal_rate_1_2() {
         );
     }
 }
+
+/// Normal Rate 3/5: IRA vs RREF bit identity (RREF takes several minutes).
+#[test]
+#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 3/5 takes several minutes"]
+fn test_ira_vs_rref_normal_rate_3_5() {
+    use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let ira_enc = LdpcEncoder::new(code.clone());
+    let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix()).unwrap();
+
+    for seed in 0u8..5 {
+        let msg = make_message(seed, code.k());
+        assert_eq!(
+            ira_enc.encode(&msg),
+            ru.encode(&msg),
+            "Normal Rate3/5 seed={seed}: IRA vs RREF mismatch"
+        );
+    }
+}
+
+/// Normal Rate 2/3: IRA vs RREF bit identity (RREF takes several minutes).
+#[test]
+#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 2/3 takes several minutes"]
+fn test_ira_vs_rref_normal_rate_2_3() {
+    use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate2_3);
+    let ira_enc = LdpcEncoder::new(code.clone());
+    let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix()).unwrap();
+
+    for seed in 0u8..5 {
+        let msg = make_message(seed, code.k());
+        assert_eq!(
+            ira_enc.encode(&msg),
+            ru.encode(&msg),
+            "Normal Rate2/3 seed={seed}: IRA vs RREF mismatch"
+        );
+    }
+}
+
+/// Normal Rate 3/4: IRA vs RREF bit identity (RREF takes several minutes).
+#[test]
+#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 3/4 takes several minutes"]
+fn test_ira_vs_rref_normal_rate_3_4() {
+    use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_4);
+    let ira_enc = LdpcEncoder::new(code.clone());
+    let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix()).unwrap();
+
+    for seed in 0u8..5 {
+        let msg = make_message(seed, code.k());
+        assert_eq!(
+            ira_enc.encode(&msg),
+            ru.encode(&msg),
+            "Normal Rate3/4 seed={seed}: IRA vs RREF mismatch"
+        );
+    }
+}
+
+/// Normal Rate 4/5: IRA vs RREF bit identity (RREF takes several minutes).
+#[test]
+#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 4/5 takes several minutes"]
+fn test_ira_vs_rref_normal_rate_4_5() {
+    use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate4_5);
+    let ira_enc = LdpcEncoder::new(code.clone());
+    let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix()).unwrap();
+
+    for seed in 0u8..5 {
+        let msg = make_message(seed, code.k());
+        assert_eq!(
+            ira_enc.encode(&msg),
+            ru.encode(&msg),
+            "Normal Rate4/5 seed={seed}: IRA vs RREF mismatch"
+        );
+    }
+}
+
+/// Normal Rate 5/6: IRA vs RREF bit identity (RREF takes several minutes).
+#[test]
+#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 5/6 takes several minutes"]
+fn test_ira_vs_rref_normal_rate_5_6() {
+    use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate5_6);
+    let ira_enc = LdpcEncoder::new(code.clone());
+    let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix()).unwrap();
+
+    for seed in 0u8..5 {
+        let msg = make_message(seed, code.k());
+        assert_eq!(
+            ira_enc.encode(&msg),
+            ru.encode(&msg),
+            "Normal Rate5/6 seed={seed}: IRA vs RREF mismatch"
+        );
+    }
+}
