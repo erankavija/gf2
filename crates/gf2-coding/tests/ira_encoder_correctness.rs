@@ -188,13 +188,17 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
 
 /// Short Rate 1/2: IRA output must be bit-identical to RREF output.
 ///
-/// This is the automated fast-tier guard on the [hard] bit-identity success
-/// criterion of issue 82dd7384. RREF preprocessing for a Short-frame code
-/// takes a couple of seconds; the per-seed encode comparisons are
-/// microseconds, so we run several seeds while keeping the test comfortably
-/// under the 5 s fast-tier budget. The broader rate matrix (3/5..5/6, plus
-/// Normal frames) is covered by the slow-tier tests below.
+/// Marked slow because RREF preprocessing of a Short DVB-T2 code takes
+/// ~2-3 s on an idle host and substantially more under CPU contention,
+/// which makes a direct RREF comparison unreliable inside the fast tier's
+/// 5 s per-test hard kill. The [hard] bit-identity criterion is covered in
+/// the fast tier algebraically by [`test_ira_short_syndrome_zero_all_rates`]
+/// and [`test_ira_normal_syndrome_zero_all_rates`] above: those tests
+/// verify both `H · c^T = 0` and `c[0..k] == message`, which together
+/// uniquely identify the systematic codeword and therefore imply
+/// bit-identity with any other correct systematic encoder (RREF included).
 #[test]
+#[ignore = "slow: RREF preprocessing for Short DVB-T2 takes ~2-3 s per rate (load-sensitive at 5 s fast-tier budget)"]
 fn test_ira_vs_rref_short_rate_1_2() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
 
@@ -205,7 +209,7 @@ fn test_ira_vs_rref_short_rate_1_2() {
     let ru = RuEncodingMatrices::preprocess(code.parity_check_matrix())
         .expect("RREF preprocessing failed");
 
-    for seed in 0u8..5 {
+    for seed in 0u8..20 {
         let msg = make_message(seed, code.k());
 
         let ira_cw = ira_enc.encode(&msg);
