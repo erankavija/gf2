@@ -2,7 +2,7 @@
   "id": "b0fa00af-795c-49de-b27a-870d5e239cc1",
   "title": "Publish cross-family dense LA SOTA scorecard (615db3b9 Phase 5)",
   "description": "Phase 5 of the finite-field LA SOTA catch-up plan (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 5). Produces the cross-family dense LA SOTA scorecard that supersedes `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` and records the post-026fc832 closure state across GF(p), GF(2), GF(2^m), extension fields, and downstream operations.\n\nParent epic: 026fc832. Predecessor: Phase 1 fan-in (route selection task); also reads results from the four other epic-026fc832 implementation tasks (27bb2f75, 52cce970, aaa847cf, 5ce13bae) and from already-done e24f7839. Downstream-LA inheritance verification is included here (the plan's Phase 5 \"Downstream dense LA inheritance\" pass).\n\n## Background\n\nThe plan's Phase 5 says the cross-family scorecard should consolidate results across GF(p), GF(2), GF(2^m), extension fields, and downstream operations after GEMM improvements land. Phase 5's \"Downstream dense LA inheritance\" pass verifies that triangular solve/multiply, PLE/LU/rank/determinant, RREF/echelon, charpoly/minpoly, and expression/fusion paths inherit the GEMM speedups via blocked algorithms rather than needing per-operation optimization.\n\nThis task also closes the stale-narrative reference in `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` § Path A amendment text.\n\n## Success Criteria\n\n- [hard] An updated SOTA scorecard markdown doc that supersedes `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` and records the post-026fc832 closure state for every cell that was newly closed by 027fc832's implementation tasks (route selection's wire-in, 27bb2f75, 52cce970, aaa847cf, 5ce13bae) plus the GF(2^m) cells closed by e24f7839.\n- [hard] The new scorecard uses the same canonical Ratio definition (`gf2 wall / ref wall`, PASS = ≤ 1.5×) and the same evidence-doc-precedence rule as the predecessor scorecard.\n- [hard] Downstream-LA inheritance verification: at least one downstream-operation cell per family (e.g., GF(p) PLE/invert at n=256, GF(2) RREF at n=1024) is re-measured and recorded to show inheritance from the GEMM improvements is intact. If a downstream cell regresses by > 5%, the regression is recorded and a follow-up issue filed.\n- [hard] The Path-A amendment text in `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` § (\"revisit when 615db3b9's Phase 5 downstream-LA-inheritance child lands and closes\") is resolved — either by updating it to reference this task's evidence doc, or by demonstrating the cells now PASS.\n- [hard] All cells previously routed via 97bf0879's Annex A8 are either marked PASS, AMENDED (with citation to the user-approved amendment), or EXCLUDED — no cell may remain in FAIL state without an explicit user-approved amendment.\n- [hard] The new scorecard is attached to this issue via `jit doc add`.\n- [hard] No regression on cells PASSing in the predecessor scorecard (delta ≤ 5% under same-session measurement on the 5900X reference host).\n\n## Out of scope\n\n- New implementation work — Phase 5 is a measurement / publication task, not an optimization task.\n- AVX-512 cells — those live under epic 7f809931.\n\n## Notes\n\nThis task is the \"deliverable\" closure of epic 026fc832. Its evidence doc is the artefact that demonstrates the epic's hard SC#2 (\"An updated SOTA scorecard supersedes ... and records the new measurements ... for every cell newly closed by these follow-ups\").",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -19,35 +19,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
+    "cargo-ci": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T20:11:53.993469887Z"
+      "updated_at": "2026-05-28T19:49:14.872338419Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-30T22:18:33.180131179Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-28T20:18:26.059415948Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T19:49:14.872338419Z"
     }
   },
   "context": {},
   "documents": [
     {
-      "path": "dev/bench_results/2026-05-25-b0fa00af-sota-scorecard-final.md",
+      "path": "dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md",
       "commit": null,
-      "label": "Phase 5 terminal SOTA scorecard — supersedes 2026-05-08-2cfc4372",
+      "label": "v2 cross-family SOTA scorecard (FINAL) — every A8 cell PASS/AMENDED-with-citation/EXCLUDED; rows 4-5 closed PASS via bdf60780; zero bare-FAIL; SC#5 satisfied",
       "doc_type": "design",
       "format": "markdown"
     },
     {
-      "path": "dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md",
+      "path": "dev/bench_results/2026-05-25-b0fa00af-sota-scorecard-final.md",
       "commit": null,
-      "label": "v2 cross-family SOTA scorecard — all A8 cells PASS/AMENDED/EXCLUDED except rows 4-5 (→bdf60780)",
+      "label": "Interim Phase-5 scorecard (2026-05-25) — SUPERSEDED by v2 2026-05-28; retained for audit trail",
       "doc_type": "design",
       "format": "markdown"
     }
@@ -58,5 +58,5 @@
     "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-24T00:33:22.670238466+00:00",
-  "updated_at": "2026-05-28T20:18:26.059419908+00:00"
+  "updated_at": "2026-05-30T22:20:32.889761128+00:00"
 }
