@@ -12,7 +12,9 @@
 //!
 //! Prerequisites:
 //! - DVB-T2 test vectors at $DVB_TEST_VECTORS_PATH or ~/dvb_test_vectors
-//! - Pre-computed LDPC cache at data/ldpc/dvb_t2/ (optional but recommended)
+//! - Pre-computed LDPC cache at data/ldpc/dvb_t2/ (optional; the IRA
+//!   staircase encoder used for DVB-T2 needs no preprocessing, so the
+//!   cache is only useful for non-IRA codes that fall back to RREF)
 //!
 //! Run with: cargo test --test dvb_t2_ldpc_verification_suite -- --ignored --nocapture
 
@@ -35,8 +37,8 @@ fn try_load_cache() -> Option<EncodingCache> {
         EncodingCache::from_directory(&cache_dir).ok()
     } else {
         eprintln!("Note: No pre-computed cache found at {:?}", cache_dir);
-        eprintln!("      Encoding will compute generator matrices on first use (slow)");
-        eprintln!("      Run: cargo run --release --bin generate_ldpc_cache");
+        eprintln!("      DVB-T2 codes use the IRA staircase encoder (instant)");
+        eprintln!("      so the cache is only needed for non-IRA fallback codes.");
         None
     }
 }
@@ -49,7 +51,9 @@ fn create_encoder(code: LdpcCode, cache: Option<&EncodingCache>) -> LdpcEncoder 
             LdpcEncoder::with_cache(code, c)
         }
         None => {
-            eprintln!("Creating encoder without cache (this may take 2-10 seconds)...");
+            // For DVB-T2 codes LdpcEncoder::new returns instantly via the
+            // IRA path; the 2-10 s preprocessing only applies to non-IRA
+            // codes that fall back to Richardson-Urbanke RREF.
             LdpcEncoder::new(code)
         }
     }
