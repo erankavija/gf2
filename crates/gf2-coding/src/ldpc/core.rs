@@ -1586,20 +1586,33 @@ impl LdpcEncoder {
         true
     }
 
-    /// Detect whether a code has standard systematic layout (cols 0..k) and
-    /// dual-diagonal parity, and build the appropriate encoder implementation.
-    fn build_impl(code: &LdpcCode) -> EncoderImpl {
-        let k = code.k();
+    /// If the code has standard systematic layout (cols 0..k) and
+    /// dual-diagonal parity, build the linear-time IRA encoder. Returns
+    /// `None` for codes that need the generic RREF path.
+    ///
+    /// Single source of truth for IRA dispatch — shared by [`Self::new`] and
+    /// [`Self::with_cache`] so a future encoder variant only has to be added
+    /// here.
+    fn try_build_ira(code: &LdpcCode) -> Option<EncoderImpl> {
         let h = code.parity_check_matrix();
-
+        let k = code.k();
         if Self::has_dual_diagonal_parity(h, k) {
             let ira = crate::ldpc::encoding::IraEncoder::new(h, k);
-            EncoderImpl::Ira(std::sync::Arc::new(ira))
+            Some(EncoderImpl::Ira(std::sync::Arc::new(ira)))
         } else {
+            None
+        }
+    }
+
+    /// Build the encoder implementation for a code: prefer the IRA path when
+    /// it applies, else fall through to a freshly-preprocessed RREF encoder.
+    fn build_impl(code: &LdpcCode) -> EncoderImpl {
+        Self::try_build_ira(code).unwrap_or_else(|| {
+            let h = code.parity_check_matrix();
             let ru = crate::ldpc::encoding::RuEncodingMatrices::preprocess(h)
                 .expect("Failed to preprocess LDPC code for encoding");
             EncoderImpl::Ru(std::sync::Arc::new(ru))
-        }
+        })
     }
 
     /// Creates a new LDPC encoder WITH cache (opt-in performance boost).
@@ -1637,20 +1650,16 @@ impl LdpcEncoder {
     /// let enc2 = LdpcEncoder::with_cache(code, &cache);
     /// ```
     pub fn with_cache(code: LdpcCode, cache: &crate::ldpc::encoding::EncodingCache) -> Self {
-        let h = code.parity_check_matrix();
-        let k = code.k();
-
-        // Same IRA detection as `new`: dual-diagonal parity → IRA path.
-        let impl_ = if Self::has_dual_diagonal_parity(h, k) {
-            let ira = crate::ldpc::encoding::IraEncoder::new(h, k);
-            EncoderImpl::Ira(std::sync::Arc::new(ira))
-        } else {
+        // IRA dispatch is shared with `Self::new` via `try_build_ira`; the
+        // cache is only consulted on the RREF fallback path.
+        let impl_ = Self::try_build_ira(&code).unwrap_or_else(|| {
+            let h = code.parity_check_matrix();
             let key = crate::ldpc::encoding::CacheKey::from_params(code.n(), code.k(), h);
             let ru = cache
                 .get_or_compute(key, h)
                 .expect("Failed to preprocess LDPC code for encoding");
             EncoderImpl::Ru(ru)
-        };
+        });
 
         Self { code, impl_ }
     }

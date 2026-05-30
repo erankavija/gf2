@@ -128,10 +128,11 @@ impl std::error::Error for ConcatError {}
 /// [`DvbT2Concat::decode_soft`].
 ///
 /// The LDPC encoder is initialised lazily on the first call to
-/// [`encode`](Self::encode) (stored in a [`OnceCell`]) to avoid the O(n²/64)
-/// preprocessing cost at construction time. The LDPC decoder is wrapped in a
-/// [`Mutex`] so that `decode_soft` takes `&self` while still allowing BP
-/// scratch-buffer mutation; this also makes `DvbT2Concat` [`Sync`].
+/// [`encode`](Self::encode) (stored in a [`OnceCell`]). For DVB-T2 codes the
+/// encoder is the linear-time IRA staircase accumulator, so construction is
+/// O(nnz) — no Gauss/RREF preprocessing runs on this path. The LDPC decoder
+/// is wrapped in a [`Mutex`] so that `decode_soft` takes `&self` while still
+/// allowing BP scratch-buffer mutation; this also makes `DvbT2Concat` [`Sync`].
 ///
 /// # Arguments to `new`
 ///
@@ -142,8 +143,8 @@ impl std::error::Error for ConcatError {}
 ///
 /// - Construction: O(nnz) for decoder graph allocation; O(1) for all other
 ///   fields.
-/// - First call to `encode`: O(n²/64) for LDPC RU preprocessing. Cached
-///   inside the encoder for subsequent calls.
+/// - First call to `encode`: O(nnz) for IRA encoder construction (no RREF on
+///   the DVB-T2 path). Cached inside the encoder for subsequent calls.
 /// - Subsequent `encode` calls: O(nnz).
 /// - `decode_soft`: O(max_iterations × nnz) + O(k_ldpc) for BCH.
 pub struct DvbT2Concat {
@@ -153,7 +154,8 @@ pub struct DvbT2Concat {
     bch_decoder: BchDecoder,
     /// LDPC code (held to construct the encoder lazily).
     ldpc_code: LdpcCode,
-    /// LDPC encoder (Richardson-Urbanke), initialised on first encode call.
+    /// LDPC encoder (IRA staircase accumulator for DVB-T2), initialised on
+    /// first encode call.
     ldpc_encoder: OnceCell<LdpcEncoder>,
     /// LDPC decoder (belief propagation, with early termination).
     /// Wrapped in a Mutex so decode_soft can take &self.
@@ -448,7 +450,7 @@ impl DvbT2Concat {
     ///
     /// # Complexity
     ///
-    /// First call: O(n²/64) for encoder preprocessing + O(k_bch) BCH +
+    /// First call: O(nnz) for IRA encoder construction + O(k_bch) BCH +
     /// O(nnz) LDPC.
     /// Subsequent calls: O(k_bch) BCH + O(nnz) LDPC.
     ///
