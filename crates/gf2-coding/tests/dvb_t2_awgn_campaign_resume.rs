@@ -33,8 +33,8 @@
 //! The test is marked `#[ignore]` because it requires SIGINT timing that is
 //! inherently slow: the runner needs to complete at least one full SNR point
 //! before SIGINT is sent, and the per-SNR-point runtime at minimum frame
-//! budgets is 2–10 s on release builds (the first call initialises the
-//! Richardson-Urbanke LDPC encoder, which takes that long for Normal frames).
+//! budgets is multiple seconds on release builds (BCH + LDPC encode plus BP
+//! decode over a few hundred Normal-frame codewords per SNR).
 //!
 //! Run manually when validating resumability:
 //!
@@ -120,8 +120,8 @@ fn resume_byte_identity() {
         .expect("Failed to spawn dvb_t2_awgn_campaign for interrupted run");
 
     // Wait for first SNR-completed event in the JSONL log (up to 600 s).
-    // The first SNR point includes one-time Richardson-Urbanke LDPC encoder
-    // initialisation which can take 3-6 minutes on Normal-frame configs.
+    // The first SNR point cost is dominated by BP decoding the frame budget
+    // for that SNR; lazy IRA encoder construction is O(nnz) and negligible.
     let timeout = Duration::from_secs(600);
     let started = Instant::now();
     let mut first_snr_done = false;

@@ -144,10 +144,10 @@ fn main() {
     // ------------------------------------------------------------------
     // Step 2: Forward path — BCH + LDPC encode
     // ------------------------------------------------------------------
-    // NOTE: The first call to concat.encode triggers LdpcEncoder::new,
-    // which preprocesses Richardson-Urbanke encoding matrices (O(n²/64)).
-    // For Normal frames this takes 2-10 s. Subsequent calls are O(nnz).
-    println!("Encoding... (first call initialises LDPC encoder, may take a few seconds)");
+    // The first call to concat.encode lazily constructs the IRA staircase
+    // encoder (DVB-T2 LDPC codes have dual-diagonal parity, so no RREF
+    // preprocessing runs). Both first and subsequent calls are O(nnz).
+    println!("Encoding...");
     let fecframe = concat.encode(&bbframe_in);
     assert_eq!(fecframe.len(), concat.n_ldpc());
     println!("FECFRAME: {} bits", fecframe.len());
