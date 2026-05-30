@@ -5633,3 +5633,5 @@
 {"type":"issue_state_changed","id":"4dd4d1b0-deb7-4423-a5bd-c0af1d1c6cf7","issue_id":"82dd7384-1e61-4042-84b6-dc60675eb340","timestamp":"2026-05-30T23:01:49.149756002Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"f023fef9-340a-49ee-98a1-9dc7a965b4ff","issue_id":"82dd7384-1e61-4042-84b6-dc60675eb340","timestamp":"2026-05-30T23:01:49.149791802Z"}
 {"type":"issue_state_changed","id":"f0e90f4e-03c5-4372-a429-8e4fd7d6d4f8","issue_id":"e4849f07-2871-42c6-b65b-aa7edb942b72","timestamp":"2026-05-30T23:01:49.427985011Z","from":"backlog","to":"ready"}
+{"type":"issue_created","id":"cc362360-9ecd-4451-baaa-5ab10fe2ab05","issue_id":"3eeb57f6-91cc-4833-9415-a0b34ed9678d","timestamp":"2026-05-30T23:04:50.480620941Z","title":"Sub-byte GF(2^4) storage + matmul (Gf2mWide<u4>) to close §6.3 EXCLUDED cells","priority":"normal"}
+{"type":"issue_state_changed","id":"9015f01c-1477-4c64-ad24-0aefe9b5a8e2","issue_id":"b117c95e-3d65-4474-af7c-709a8c08bdc5","timestamp":"2026-05-30T23:05:04.213818760Z","from":"ready","to":"backlog"}

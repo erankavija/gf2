@@ -1,0 +1,36 @@
+{
+  "id": "3eeb57f6-91cc-4833-9415-a0b34ed9678d",
+  "title": "Sub-byte GF(2^4) storage + matmul (Gf2mWide<u4>) to close §6.3 EXCLUDED cells",
+  "description": "Sub-byte (nibble-packed or bit-sliced) GF(2^4) storage + dense matmul, to close the 3 EXCLUDED [§ 6.3] cells that epic `026fc832` could not (matmul × GF(2^4) at n=64, 256, 1024). These cells were EXCLUDED in the terminal scorecard solely because gf2-core has no sub-byte GF(2^4) representation — see `dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md:245` (\"matmul | GF(2^4) | 64–1024 | — (no impl) | EXCLUDED [§6.3] (no `Gf2mWide<u4>`)\").\n\n## Background\n\nEpic `026fc832` (gf2-core SOTA catch-up, closed-done 2026-05-31) closed every Annex-A8 FAIL cell, but its aspirational SC#6 left 3 GF(2^4) matmul cells EXCLUDED because they need a storage variant that does not exist. This is the unfiled follow-up that SC#6 explicitly named:\n\n> \"[aspirational] … the 3 GF(2^4) cells require a `Gf2mWide<u4>` follow-up to be filed.\"\n\nThe existing panelized GF(2^m) GEMM path (`e24f7839`) already PASSes for GF(2^8) and GF(2^16) (scorecard § 6.3, GF(2^16)/256 = 0.0259× M4RIE), but it stores one field element per `u8`+ word. For GF(2^4) that wastes half the storage bandwidth, which is exactly where M4RIE's nibble/bit-sliced representation wins.\n\n**Important scoping constraint:** `UintExt` is **sealed to `u8`, `u16`, `u32`, `u64`, `u128`** (`crates/gf2-core/src/gf2m/uint_ext.rs:22`). There is no `u4`, so `Gf2mWide<u4>` cannot be a literal `UintExt` instantiation. The first deliverable is a representation decision (e.g. two nibbles per byte, or 4-bit-plane bit-slicing à la M4RIE's \"method of four Russians for extension fields\"), captured in a short design doc before the matmul kernel is written. The name `Gf2mWide<u4>` is the placeholder from the scorecard; the actual type/module name is at the implementer's discretion.\n\n## Reference (SOTA target)\n\n- Reference library: **M4RIE** `20250128` (the GF(2^m) analog of M4RI). Promotion evidence: `dev/plans/m4rie_promotion_evidence.md` (`[E11]`). Reference CSV: `dev/bench_results/2026-05-04-507b0036-m4rie-reference.csv`.\n- Canonical Ratio (same as predecessor scorecards): `gf2 wall / M4RIE wall`, **PASS = ≤ 1.5×**.\n- M4RIE GF(2^4) matmul walls on the pinned 5900X host (uniform regime):\n  - n=64: **36,512 ns** (deficient 36,426 ns)\n  - n=256: **534,494 ns** (deficient 431,312 ns)\n  - n=1024: **7,043,410 ns** (deficient 6,817,024 ns)\n- Bitwise-equality contract: M4RIE harness cross-checks element-wise against `ref_gf2m_mul` and M4RIE's own scalar at n=16 (protocol § 6). GF(2^4) minpoly `0x13` is accepted directly by `gf2e_init`.\n\n## Success Criteria\n\n- [hard] A sub-byte GF(2^4) storage type and dense matmul land in `gf2-core` (kernel SIMD, if any, isolated in `gf2-kernels-simd`). A short design doc recording the representation choice (nibble-pack vs bit-slice) and its rationale is attached to this issue via `jit doc add` before the kernel is finalized.\n- [hard] Bit-exact correctness: element-wise equality of A·B over GF(2^4) against the independent `ref_gf2m_mul` oracle, plus proptests at boundary dimensions {0, 1, 15, 16, 17, 63, 64, 65} and GF(2^4) field-axiom coverage.\n- [hard] No `unsafe` leaks outside `gf2-kernels-simd` / `gf2-kernels-hip`; `gf2-core` remains `#![deny(unsafe_code)]`.\n- [hard] The 3 §6.3 GF(2^4) matmul cells (n=64, 256, 1024) are re-measured on the pinned 5900X host and recorded in a scorecard update that supersedes `dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md` for those cells, with raw walls + ratio-to-M4RIE, moving them from EXCLUDED [§6.3] to PASS or AMENDED.\n- [hard] If SIMD kernels are added, the `asm-artefact-present` contract is satisfied (sibling `*.asm.txt` under `crates/gf2-kernels-simd/src/x86/asm/`).\n- [hard] No regression on the GF(2^8)/GF(2^16) matmul cells already PASSing via `e24f7839` (delta ≤ 5% under same-session measurement).\n- [aspirational] matmul GF(2^4) at n=64, 256, 1024 reaches ≤ 1.5× the M4RIE walls above. This crossover is unsupported by any prior gf2-core GF(2^4) measurement (the path is currently unimplemented), so the threshold is provisional per the project's maturity-marker convention; correctness and the re-measurement-into-scorecard above are [hard] regardless of whether the 1.5× crossover is reached.\n\n## Out of scope\n\n- GF(2^4) echelon / RREF (M4RIE promotion is matmul-only; echelon was explicitly excluded — see `m4rie_promotion_evidence.md` § \"Target-matrix designation\").\n- GF(2^8)/GF(2^16) re-optimization (already PASS via `e24f7839`).\n- AVX-512 kernels (route to epic `7f809931` per project convention).\n- GPU offload (separate epic).\n\n## Notes\n\n- Parent milestone: `b117c95e` (gf2-core competitive performance long-running tracker); wired as a direct milestone dependency.\n- Predecessor epic: `026fc832` (closed-done 2026-05-31); this closes its aspirational SC#6 GF(2^4) remainder.\n- The companion 8 GF(2) pluq/solve §6.3 cells are a separate structural absence (`BitMatrix::pluq` / `solve_left` unimplemented) and are NOT in scope here.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/plans/m4rie_promotion_evidence.md",
+      "commit": null,
+      "label": "M4RIE reference promotion (GF(2^4) matmul SOTA target, [E11])",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md",
+      "commit": null,
+      "label": "026fc832 terminal scorecard — GF(2^4) matmul cells EXCLUDED at line 245",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
+  "labels": [
+    "type:task",
+    "component:gf2-core",
+    "component:gf2-kernels-simd",
+    "milestone:gf2-core-perf"
+  ],
+  "created_at": "2026-05-30T23:04:50.480162211+00:00",
+  "updated_at": "2026-05-30T23:05:04.229039984+00:00"
+}
