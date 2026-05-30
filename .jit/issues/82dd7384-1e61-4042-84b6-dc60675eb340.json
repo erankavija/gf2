@@ -2,7 +2,7 @@
   "id": "82dd7384-1e61-4042-84b6-dc60675eb340",
   "title": "Linear-time DVB-T2 LDPC encoder via dual-diagonal staircase accumulator",
   "description": "Replace the dense Richardson-Urbanke RREF preprocessing used for DVB-T2 LDPC encoding with the standard linear-time accumulator encoder that exploits the codes' dual-diagonal (IRA) parity structure. This removes a multi-minute, per-process preprocessing cost from the encode path.\n\n## Background\n\nDVB-T2 LDPC codes are Irregular Repeat-Accumulate codes: the parity part of the parity-check matrix is dual-diagonal (a staircase), so the parity bits can be computed directly by accumulation in $O(n)$ time with no matrix inversion.\n\nThe current implementation (`crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs`) instead takes the generic path: it densifies $H$ and runs a full reduced-row-echelon-form reduction to build a generator matrix. For a Normal frame at rate $1/2$ this is a $32400 \\times 64800$ GF(2) RREF (~$10^{12}$ word operations), which takes minutes. `DvbT2Concat` constructs the encoder via `LdpcEncoder::new` (no disk cache), so this cost is paid on every process launch and every resume, once per configuration — currently the dominant wall-clock cost of the AWGN campaign before any frames are simulated.\n\nThe standard encoder accumulates information-bit contributions into parity accumulators (using the per-rate address tables already present in the DVB-T2 table data), then applies the staircase pass:\n\n$$\np_0 = s_0, \\qquad p_i = s_i \\oplus p_{i-1} \\quad (1 \\le i < m)\n$$\n\nwhere $s_i$ is the accumulated contribution of the information bits to check $i$ and $m = n - k$. The dual-diagonal parity structure is already documented in `crates/gf2-coding/src/ldpc/dvb_t2/builder.rs`.\n\n## Success Criteria\n\n- [ ] [hard] For every supported DVB-T2 configuration (Normal and Short frames, all constructible rates), the new encoder produces FECFRAMEs bit-identical to the current RREF-based Richardson-Urbanke encoder on randomized BBFRAMEs (property test over many seeds).\n- [ ] [hard] Produced codewords satisfy $H c^{\\mathsf{T}} = 0$ for all supported configurations.\n- [ ] [hard] The DVB-T2 encode path performs no dense densification and no Gauss/RREF of the parity-check matrix; encoding uses the staircase accumulator. Verifiable by inspection and by the absence of any `rref` / generator-inversion call on the DVB-T2 encode path.\n- [ ] [hard] `DvbT2Concat::encode` and the DVB-T2 BICM campaign binary use the new encoder; the existing fast-tier test suite passes unchanged.\n- [ ] [aspirational] Encoder construction plus first Normal-frame encode completes in well under 1 s (versus the current multi-minute RREF), measured on the campaign host and recorded in the closing note.\n\n## Notes\n\n- The roundtrip tests in `crates/gf2-coding/src/ldpc/dvb_t2/concat.rs` currently carry `#[ignore = \"slow: LdpcEncoder::new for Normal frame takes 2-10 s\"]`; these should become fast once the RREF is gone, so re-evaluate their `#[ignore]` markers as part of this work.\n- Scope is the DVB-T2 encode path only. The generic Richardson-Urbanke encoder may remain for non-IRA codes; this task changes which encoder DVB-T2 selects, not the generic fallback.\n- This work unblocks the DVB-T2 AWGN FER campaign, whose calibration and production runs are currently gated on per-launch encoder preprocessing time.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -10,7 +10,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-30T22:59:37.057563730Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-30T22:59:54.457106488Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -19,5 +30,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-29T21:32:24.018499654+00:00",
-  "updated_at": "2026-05-29T21:44:54.274919164+00:00"
+  "updated_at": "2026-05-30T23:01:49.149807442+00:00"
 }
