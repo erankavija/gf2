@@ -71,6 +71,12 @@ unsafe fn avx2_m4rm_gray_build4(
     debug_assert!(buffer.len() >= table_size * stride_words);
     debug_assert!(panel.len() >= valid_rows * stride_words);
 
+    // SAFETY: the wrapper asserts `buffer.len() >= table_size * stride_words`
+    // and `panel.len() >= valid_rows * stride_words` with `stride_words == 4`
+    // (32 bytes/row). Every store targets `curr_gray * 32` bytes with
+    // `curr_gray < table_size`, and every panel load reads `bit_pos * 32` bytes
+    // guarded by `bit_pos < valid_rows`; all unaligned 32-byte accesses stay
+    // within those bounds and never alias `panel` mutably.
     let buf = buffer.as_mut_ptr() as *mut u8;
     let pan = panel.as_ptr() as *const u8;
 
@@ -110,6 +116,12 @@ unsafe fn avx2_m4rm_gray_build8(
     debug_assert!(buffer.len() >= table_size * stride_words);
     debug_assert!(panel.len() >= valid_rows * stride_words);
 
+    // SAFETY: the wrapper asserts `buffer.len() >= table_size * stride_words`
+    // and `panel.len() >= valid_rows * stride_words` with `stride_words == 8`
+    // (64 bytes/row). Each store pair targets `curr_gray * 64` and `+ 32` bytes
+    // with `curr_gray < table_size`, and each panel load pair reads `bit_pos *
+    // 64` and `+ 32` bytes guarded by `bit_pos < valid_rows`; all unaligned
+    // 32-byte accesses stay within those bounds and never alias `panel` mutably.
     let buf = buffer.as_mut_ptr() as *mut u8;
     let pan = panel.as_ptr() as *const u8;
 
