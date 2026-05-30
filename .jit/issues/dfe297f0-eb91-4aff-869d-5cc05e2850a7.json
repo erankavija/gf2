@@ -2,9 +2,9 @@
   "id": "dfe297f0-eb91-4aff-869d-5cc05e2850a7",
   "title": "Pin GPU prototype baselines",
   "description": "Pin baseline measurements for the GPU prototype wave before implementation issues claim speedups.\n\n## Background\n\nGPU speedups must compare against stable baselines and the best current production CPU path. The baseline manifest should cover existing BCJR HIP behavior and CPU comparators for LDPC BP and BCH syndrome evaluation.\n\n## Success Criteria\n\n- [hard] Baseline artifacts record commit hash, CPU model, GPU model, ROCm version, `hipcc` path/version, thread count, and benchmark commands.\n- [hard] LDPC BP baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] BCH syndrome baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] Existing BCJR HIP baseline captures direct/default-stream submission behavior for scheduler comparisons.\n- [hard] Baseline manifest paths are documented for downstream LDPC, BCH, and scheduler tasks.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -22,5 +22,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-04-29T22:50:01.750966187+00:00",
-  "updated_at": "2026-04-29T22:50:01.750972267+00:00"
+  "updated_at": "2026-05-30T23:22:18.071613169+00:00"
 }
