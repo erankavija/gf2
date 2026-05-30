@@ -191,7 +191,11 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
 }
 
 // ---------------------------------------------------------------------------
-// Bit-identity vs RREF (Short frames only — RREF is too slow for Normal)
+// Bit-identity vs RREF — slow tier only. All twelve (Short and Normal) configs
+// are covered below; each test is `#[ignore]` because RREF preprocessing is
+// load-sensitive against the 5 s fast-tier hard kill (Short ~2-3 s, Normal
+// several minutes). The fast-tier syndrome + systematic tests above
+// algebraically imply this bit-identity.
 // ---------------------------------------------------------------------------
 
 /// Short Rate 1/2: IRA output must be bit-identical to RREF output.
