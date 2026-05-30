@@ -2,7 +2,7 @@
   "id": "b117c95e-3d65-4474-af7c-709a8c08bdc5",
   "title": "gf2-core competitive performance",
   "description": "Long-running tracker for performance work targeting Magma/Sage parity in `gf2-core` and pushing beyond on extension-field tower arithmetic. Currently scoped to one epic; future performance epics (gf2-coding LDPC throughput, GPU offload research) will hang under this milestone.\n\n## Background\n\nThe project vision is research-grade finite-field computing competitive with specialized computer algebra systems (Magma/Sage). This milestone exists so that performance-oriented epics share a coherent home and can be tracked against the same benchmarking baseline. The scoped epic is `gf2-core-ppc-spiral` — a comprehensive PPC-spiral sweep through every scalar gap in `gf2-core` with proof-of-gain at every spiral step.\n\n## Success Criteria\n\n- [hard] Every Tier A–D kernel from epic `gf2-core-ppc-spiral` ships its proof-of-gain artefact (criterion delta + asm + perf-stat).\n- [hard] No `unsafe` outside `gf2-kernels-simd` / `gf2-kernels-hip` (apex constraint preserved).\n- [hard] MSRV drift only happens with explicit user approval per `escalation-policy.md`.\n- [aspirational] On a representative workload (LDPC-coded simulation, tower-field GEMM), `gf2-core` matches or beats Magma 2.28 on a single core.\n\n## Notes\n\nFuture performance epics (gf2-coding LDPC throughput, GPU offload research, verification coverage) can hang under this milestone without restructuring.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -38,5 +38,5 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:23:54.395404062+00:00",
-  "updated_at": "2026-05-17T23:39:28.250202424+00:00"
+  "updated_at": "2026-05-30T22:59:37.943046203+00:00"
 }
