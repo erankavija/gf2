@@ -39,15 +39,17 @@ The pipeline is automated via `scripts/verify-lean.sh`.
 
 - **Location**: `/data/aeneas-build/charon/`
 - **Cargo.toml**: `/data/aeneas-build/charon/charon/Cargo.toml` (nested subdirectory)
-- **Base**: `https://github.com/AeneasVerif/charon` at rev `24a17b5e` (after PR #1049)
-- **Rust toolchain**: `nightly-2026-02-07` (required for rustc internals access)
-- **3 local patches applied** (see [Charon Patches](#charon-patches) below)
+- **Base**: `https://github.com/AeneasVerif/charon` at rev `e069223a` (the commit
+  pinned by Aeneas main via `/data/aeneas-build/charon-pin`; issue 150d7d79)
+- **Rust toolchain**: `nightly-2026-02-22` (required for rustc internals access;
+  components `rustc-dev, llvm-tools-preview, rust-src, miri`)
+- **4 local patches applied** (see [Charon Patches](#charon-patches) below)
 
 To rebuild after modifying patches:
 
 ```bash
 cd /data/aeneas-build/charon
-RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path charon
+RUSTUP_TOOLCHAIN=nightly-2026-02-22 cargo install --path charon
 ```
 
 ### Aeneas
@@ -55,17 +57,16 @@ RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path charon
 - **Location**: `/data/aeneas-build/` (also the work tree for the local build)
 - **Binary**: `~/.cargo/bin/aeneas`
 - **Upstream**: `https://github.com/AeneasVerif/aeneas`
-- **Base rev**: `61db79841bbcead08e6e3f9bce72b8b5e89dfca3` (after PRs #819, #820, #823, #825)
-- **Local change**: `charon-pin` updated to match our patched Charon base.
-  No Aeneas source code modifications.
-- **Notable upstream changes** (since `c23de932`):
-  - PR #825: Loop body refactoring (auxiliary functions, `rust_loop`/`rust_loop_body` simp attrs)
-  - PR #823: Array range indexing progress specs
-  - PR #819: Fix `leadingZeros` implementation
+- **Base rev**: `0f99a049` (tag nightly-2026.05.30; issue 150d7d79)
+- **Local change**: none. `charon-pin` already declares Charon `e069223a` (the
+  pair we build); no Aeneas source modifications.
+- **Note**: this upgrade (5fc8fdf2 → 0f99a049) made the scalar ops
+  `overflowing_sub`/`wrapping_*` pure (consumed via `lift`) and renamed the
+  `progress` tactic to `step`; see issue 150d7d79 / `dev/active/150d7d79-toolchain-upgrade.md`.
 
 ### Lean4
 
-- **Version**: v4.28.0-rc1 (pinned in `proofs/lean-toolchain`)
+- **Version**: v4.30.0-rc2 (pinned in `proofs/lean-toolchain`)
 - **Installed via**: [elan](https://github.com/leanprover/elan)
 - **Dependencies**: Aeneas stdlib (local path), Mathlib (via `proofs/lakefile.lean`)
 
@@ -297,5 +298,5 @@ on already-processed files will silently skip the fixup.
 
 ```bash
 cd /data/aeneas-build/charon
-RUSTUP_TOOLCHAIN=nightly-2026-02-07 cargo install --path charon
+RUSTUP_TOOLCHAIN=nightly-2026-02-22 cargo install --path charon
 ```

@@ -70,11 +70,11 @@ Commit regenerated files when Rust source under `gfp/`, `gfpn/`, or `gf2m/` chan
    curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh
    ```
 
-2. **Charon** — our pipeline uses a patched local build at `/data/aeneas-build/charon/` (upstream base plus three HRTB / associated-type fixes). Requires nightly `nightly-2026-02-07`:
+2. **Charon** — our pipeline uses a patched local build at `/data/aeneas-build/charon/` (upstream base `e069223a` plus four HRTB / associated-type / pretty-printer fixes; see `patches/charon-e069223a-assoc-type-fixes.patch`). Requires nightly `nightly-2026-02-22`:
 
    ```bash
-   rustup toolchain install nightly-2026-02-07
-   rustup component add rustc-dev llvm-tools-preview rust-src --toolchain nightly-2026-02-07
+   rustup toolchain install nightly-2026-02-22
+   rustup component add rustc-dev llvm-tools-preview rust-src miri --toolchain nightly-2026-02-22
    ```
 
 3. **Aeneas** — OCaml 5 via opam:
@@ -83,8 +83,9 @@ Commit regenerated files when Rust source under `gfp/`, `gfpn/`, or `gf2m/` chan
    opam init && eval $(opam env)
    opam install ppx_deriving visitors easy_logging zarith yojson core_unix \
        odoc ocamlgraph menhir unionFind zarith progress domainslib dune
-   git clone --depth 1 https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
-   cd /tmp/aeneas && make setup-charon && make build-dev
+   git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
+   cd /tmp/aeneas && git checkout 0f99a049   # pins Charon to e069223a via charon-pin
+   make setup-charon && make build-dev
    cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
    ```
 

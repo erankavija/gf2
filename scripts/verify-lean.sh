@@ -77,7 +77,7 @@ mkdir -p "$(dirname "$LLBC_FILE")"
 #
 # Narrow Charon workaround: enable cfg(verify_lean) so ExtConfig exposes
 # NON_RESIDUE() as a trait method instead of an associated const during extraction.
-# Charon 0.1.173 rejects associated consts whose type is an associated type of
+# Charon (e069223a) rejects associated consts whose type is an associated type of
 # Self (Self::BaseField) before Aeneas sees the arithmetic. This keeps gfp/gfpn
 # production arithmetic transparent; only the config-level beta accessor shape is
 # changed for extraction and can be removed when Charon handles that pattern.

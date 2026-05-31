@@ -142,25 +142,25 @@ jobs:
     - name: Install Rust nightly (for Charon)
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: nightly-2026-02-07
-        components: rustc-dev, llvm-tools-preview, rust-src
+        toolchain: nightly-2026-02-22
+        components: rustc-dev, llvm-tools-preview, rust-src, miri
 
     - name: Cache Charon binary
       id: cache-charon
       uses: actions/cache@v4
       with:
         path: ~/.cargo/bin/charon*
-        key: charon-patched-419f53b6-${{ hashFiles('patches/charon-419f53b6-assoc-type-fixes.patch') }}
+        key: charon-patched-e069223a-${{ hashFiles('patches/charon-e069223a-assoc-type-fixes.patch') }}
 
     - name: Install Charon (patched)
       if: steps.cache-charon.outputs.cache-hit != 'true'
       run: |
         git clone https://github.com/AeneasVerif/charon.git /tmp/charon
         cd /tmp/charon
-        git checkout 419f53b6
-        git apply $GITHUB_WORKSPACE/patches/charon-419f53b6-assoc-type-fixes.patch
+        git checkout e069223a
+        git apply $GITHUB_WORKSPACE/patches/charon-e069223a-assoc-type-fixes.patch
         cd charon
-        cargo +nightly-2026-02-07 install --path . --locked
+        cargo +nightly-2026-02-22 install --path . --locked
 
     - name: Install OCaml and Aeneas
       run: |
@@ -172,7 +172,7 @@ jobs:
           odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
         git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
         cd /tmp/aeneas
-        git checkout 1180be60c7a0
+        git checkout 0f99a049
         make setup-charon && make build-dev
         cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
 
