@@ -208,7 +208,12 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_normal(rate);
-            let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
+            // DVB-T2 is dual-diagonal IRA: `LdpcEncoder::new` builds the
+            // linear-time IRA staircase encoder directly (~ms). Avoid
+            // `try_load_cache()`, whose ~600 ms disk load per rate is pure
+            // overhead here (the IRA path never consults the cache) and pushed
+            // the all-rates sweep over the 5 s fast-tier budget on CI.
+            let encoder = LdpcEncoder::new(code.clone());
 
             // Encode a simple message
             let message = BitVec::zeros(encoder.k());
@@ -234,7 +239,9 @@ mod dvb_t2_encoding_tests {
 
         for rate in rates {
             let code = LdpcCode::dvb_t2_short(rate);
-            let encoder = create_encoder(code.clone(), try_load_cache().as_ref());
+            // See `test_dvb_t2_normal_all_rates`: use the IRA fast path directly
+            // and skip the redundant per-rate cache load.
+            let encoder = LdpcEncoder::new(code.clone());
 
             // Encode a simple message
             let message = BitVec::zeros(encoder.k());
