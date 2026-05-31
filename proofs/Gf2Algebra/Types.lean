@@ -73,12 +73,13 @@ structure core.ops.arith.AddAssign (Self : Type) (Rhs : Type) where
     Visibility: public -/
 @[rust_trait "gf2_core::field::traits::FiniteField"
   (parentClauses := ["corecloneCloneInst", "corecmpPartialEqInst", "corecmpEqInst", "corehashHashInst", "corefmtDebugInst", "coreopsarithAddInst", "coreopsarithAddSelfSharedSelfSelfInst", "coreopsarithSubInst", "coreopsarithSubSelfSharedSelfSelfInst", "coreopsarithMulInst", "coreopsarithMulSelfSharedSelfSelfInst", "coreopsarithDivInst", "coreopsarithDivSelfSharedSelfSelfInst", "coreopsarithNegInst", "coreopsarithAddAssignInst", "coreopsarithAddAssignSelfSharedSelfInst", "corecloneCloneInst", "corefmtDebugInst", "corecmpPartialEqInst", "corecmpEqInst", "corecloneCloneInst", "coreopsarithAddInst", "coreopsarithAddAssignInst"])
-  (consts := ["WINOGRAD_THRESHOLD", "TRI_BASE_THRESHOLD", "PLE_BASE_COLS"])]
+  (consts := ["WINOGRAD_THRESHOLD", "TRI_BASE_THRESHOLD", "PLE_BASE_COLS", "PLE_PANEL_COLS"])]
 structure gf2_core.field.traits.FiniteField (Self : Type) (Self_Characteristic
   : Type) (Self_Wide : Type) where
   WINOGRAD_THRESHOLD : Result Std.Usize
   TRI_BASE_THRESHOLD : Result Std.Usize
   PLE_BASE_COLS : Result Std.Usize
+  PLE_PANEL_COLS : Result Std.Usize
   corecloneCloneInst : core.clone.Clone Self
   corecmpPartialEqInst : core.cmp.PartialEq Self Self
   corecmpEqInst : core.cmp.Eq Self
@@ -127,7 +128,7 @@ structure packed.bipedal3.Bipedal3 where
   mag : Std.U64
   sgn : Std.U64
 
-/-- [gf2_algebra::packed::bipedal3::{core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 164:52-174:17 -/
 @[reducible]
 def packed.bipedal3.DebugBipedal3.fmt.closure := packed.bipedal3.Bipedal3
@@ -162,7 +163,7 @@ structure packed.bipedal3.Bipedal3Vec where
   sgn : alloc.vec.Vec Std.U64
   len_lanes : Std.Usize
 
-/-- [gf2_algebra::packed::bipedal3::{core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Vec}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1792:17-1804:13 -/
 @[reducible]
 def packed.bipedal3.DebugBipedal3Vec.fmt.closure := packed.bipedal3.Bipedal3Vec
@@ -191,7 +192,7 @@ structure packed.PackedFieldVec (Self : Type) (F : Type) (Self_Element : Type)
   mul_assign : Self → Self → Result Self
   all_zero : Self → Result Bool
 
-/-- [gf2_algebra::packed::bipedal3::{gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3 : u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
 @[reducible]
 def packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure
@@ -206,12 +207,12 @@ structure packed.bipedal3.Bipedal3Matrix where
   rows : Std.Usize
   cols : Std.Usize
 
-/-- [gf2_algebra::packed::bipedal3::{core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2942:25-2942:59 -/
 def packed.bipedal3.DebugBipedal3Matrix.fmt.closure.closure :=
   packed.bipedal3.Bipedal3Matrix × Std.Usize
 
-/-- [gf2_algebra::packed::bipedal3::{core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl core::fmt::Debug for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2940:17-2944:13 -/
 @[reducible]
 def packed.bipedal3.DebugBipedal3Matrix.fmt.closure :=
@@ -240,7 +241,7 @@ structure packed.packed5.Packed5 where
   b1 : Std.U64
   b2 : Std.U64
 
-/-- [gf2_algebra::packed::packed5::{core::fmt::Debug for gf2_algebra::packed::packed5::Packed5}::fmt::closure]
+/-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 305:55-305:79 -/
 @[reducible]
 def packed.packed5.DebugPacked5.fmt.closure := packed.packed5.Packed5
@@ -254,12 +255,12 @@ structure packed.packed5.Packed5Vec where
   b2 : alloc.vec.Vec Std.U64
   len_lanes : Std.Usize
 
-/-- [gf2_algebra::packed::packed5::{core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure]
+/-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Vec}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 959:54-959:77 -/
 @[reducible]
 def packed.packed5.DebugPacked5Vec.fmt.closure := packed.packed5.Packed5Vec
 
-/-- [gf2_algebra::packed::packed5::{gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5 : u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
 @[reducible]
 def packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure
@@ -274,12 +275,12 @@ structure packed.packed5.Packed5Matrix where
   rows : Std.Usize
   cols : Std.Usize
 
-/-- [gf2_algebra::packed::packed5::{core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure]
+/-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1428:25-1428:59 -/
 def packed.packed5.DebugPacked5Matrix.fmt.closure.closure :=
   packed.packed5.Packed5Matrix × Std.Usize
 
-/-- [gf2_algebra::packed::packed5::{core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure]
+/-- [gf2_algebra::packed::packed5::{impl core::fmt::Debug for gf2_algebra::packed::packed5::Packed5Matrix}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1426:17-1430:13 -/
 @[reducible]
 def packed.packed5.DebugPacked5Matrix.fmt.closure :=
@@ -313,12 +314,12 @@ structure packed.packed7.Packed7Vec where
   words : alloc.vec.Vec Std.U64
   len_lanes : Std.Usize
 
-/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Vec}::fmt::closure]
+/-- [gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Vec}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1042:17-1046:13 -/
 @[reducible]
 def packed.packed7.DebugPacked7Vec.fmt.closure := packed.packed7.Packed7Vec
 
-/-- [gf2_algebra::packed::packed7::{gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7 : u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1294:30-1294:41 -/
 @[reducible]
 def packed.packed7.PackedFieldVecPacked7VecFp7Packed7U64U128U64U128.all_zero.closure
@@ -333,12 +334,12 @@ structure packed.packed7.Packed7Matrix where
   rows : Std.Usize
   cols : Std.Usize
 
-/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure::closure]
+/-- [gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure::closure]
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1399:25-1399:59 -/
 def packed.packed7.DebugPacked7Matrix.fmt.closure.closure :=
   packed.packed7.Packed7Matrix × Std.Usize
 
-/-- [gf2_algebra::packed::packed7::{core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure]
+/-- [gf2_algebra::packed::packed7::{impl core::fmt::Debug for gf2_algebra::packed::packed7::Packed7Matrix}::fmt::closure]
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1397:17-1401:13 -/
 @[reducible]
 def packed.packed7.DebugPacked7Matrix.fmt.closure :=

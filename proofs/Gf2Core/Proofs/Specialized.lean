@@ -448,27 +448,27 @@ theorem mersenne_reduce_u64_correct (N : Std.U32) (x : Std.U64)
   have hrv_lt2p : rv < 2 * (2 ^ N.val - 1) := by
     have hm : s1v % 2 ^ N.val < 2 ^ N.val := hi3_lt
     rw [hrv_def]; omega
-  -- overflowing_sub r p = ok (⟨r.bv - p.bv⟩, decide (r.val < p.val))
   have hr_val : r.val = rv := hr
-  -- Compute the overflowing_sub-then-branch tail as a single ok value.
-  have htail : (do
-      let (sub, borrow) ← core.num.U64.overflowing_sub r p
-      if borrow then ok r else ok sub)
-      = ok (if r.val < p.val then r else (⟨r.bv - p.bv⟩ : Std.U64)) := by
-    simp only [core.num.U64.overflowing_sub, bind_tc_ok]
-    by_cases hb : r.val < p.val
-    · simp [hb]
-    · simp [hb]
-  rw [htail]
+  -- New Aeneas Std (0f99a049): `overflowing_sub` is now a PURE op consumed via
+  -- `lift`; the WP evaluates it to `(⟨r.bv - p.bv⟩, BitVec.usubOverflow r.bv p.bv)`
+  -- bound by a `let (sub, borrow) := …`. That tail is *definitionally*
+  -- `if (overflowing_sub r p).2 then ok r else ok (overflowing_sub r p).1`; `change`
+  -- exposes it (avoiding the `let`-pair that `simp` will not iota-reduce here), the
+  -- borrow flag reduces to `decide (r.val < p.val)`, and `spec_ok` discharges the WP.
+  change spec (if (core.num.U64.overflowing_sub r p).2 then ok r
+               else ok (core.num.U64.overflowing_sub r p).1) _
+  simp only [core.num.U64.overflowing_sub, UScalar.overflowing_sub,
+             show BitVec.usubOverflow r.bv p.bv = decide (r.val < p.val) from rfl,
+             decide_eq_true_eq]
   by_cases hb : r.val < p.val
   · -- borrow true ⇒ r.val < p.val ⇒ r already canonical
-    simp only [hb, if_true, spec, theta, wp_return]
+    simp only [hb, if_true, spec_ok]
     rw [hr_val] at hb ⊢
     rw [hp] at hb
     -- rv < 2^N-1, and rv ≡ x mod (2^N-1) ⇒ rv = x % (2^N-1)
     rw [← hrv_cong, Nat.mod_eq_of_lt hb]
   · -- borrow false ⇒ r.val ≥ p.val ⇒ result = r - p
-    simp only [hb, if_false, spec, theta, wp_return]
+    simp only [hb, if_false, spec_ok]
     push_neg at hb
     have hple : p.val ≤ r.val := hb
     have hsub_val : (⟨r.bv - p.bv⟩ : Std.U64).val = r.val - p.val := by
@@ -687,22 +687,21 @@ theorem mersenne_reduce_correct (N : Std.U32) (x : Std.U128)
   have hrv_lt : rv < 2 ^ N.val + 2 := by
     rw [hrv_def]; omega
   have hr_val : r.val = rv := hr
-  -- overflowing_sub r p tail
-  have htail : (do
-      let (sub, borrow) ← core.num.U64.overflowing_sub r p
-      if borrow then ok r else ok sub)
-      = ok (if r.val < p.val then r else (⟨r.bv - p.bv⟩ : Std.U64)) := by
-    simp only [core.num.U64.overflowing_sub, bind_tc_ok]
-    by_cases hb : r.val < p.val
-    · simp [hb]
-    · simp [hb]
-  rw [htail]
+  -- New Aeneas Std (0f99a049): `overflowing_sub` is a PURE op evaluated by the WP
+  -- to `(⟨r.bv - p.bv⟩, BitVec.usubOverflow r.bv p.bv)` bound by a `let`. `change`
+  -- exposes the definitionally-equal `if (overflowing_sub r p).2 then ok r else
+  -- ok (overflowing_sub r p).1`; the borrow flag is `decide (r.val < p.val)`.
+  change spec (if (core.num.U64.overflowing_sub r p).2 then ok r
+               else ok (core.num.U64.overflowing_sub r p).1) _
+  simp only [core.num.U64.overflowing_sub, UScalar.overflowing_sub,
+             show BitVec.usubOverflow r.bv p.bv = decide (r.val < p.val) from rfl,
+             decide_eq_true_eq]
   by_cases hb : r.val < p.val
-  · simp only [hb, if_true, spec, theta, wp_return]
+  · simp only [hb, if_true, spec_ok]
     rw [hr_val] at hb ⊢
     rw [hp] at hb
     rw [← hrv_cong, Nat.mod_eq_of_lt hb]
-  · simp only [hb, if_false, spec, theta, wp_return]
+  · simp only [hb, if_false, spec_ok]
     push_neg at hb
     have hple : p.val ≤ r.val := hb
     have hsub_val : (⟨r.bv - p.bv⟩ : Std.U64).val = r.val - p.val := by

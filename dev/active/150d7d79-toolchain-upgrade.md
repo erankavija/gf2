@@ -39,8 +39,27 @@ Pre-verified 2026-05-31: the working-tree diff of patches 1-4 applies cleanly to
 
 Aeneas Lean backend churn (+1829 / −475, 25 files) between `5fc8fdf2` and `0f99a049`: `Std/WP.lean`, `Std/Scalar/Core.lean`, `Std/Scalar/OverflowingOps/*`, `Tactic/Setup.lean`, `Tactic/Step/Step.lean`, `SimpScalar`/`SimpLists`. Likely breakage in `proofs/Gf2Core/Proofs/MontgomeryRoundtrip.lean` wrapping-op lemma chains and possibly `FunsExternal.lean` hand defs. Fix in-place; never weaken a theorem or add a sorry to make the build pass.
 
-## Migration result (fill in on completion)
+## Migration result (2026-05-31, completed)
 
-- Final pair: _tbd_
-- Patches surviving: _tbd_
-- Proof files that needed fixes: _tbd_
+- **Final pair:** Aeneas `0f99a049` (tag nightly-2026.05.30) + Charon `e069223a`. `charon-pin` reads `e069223a` and matches the installed Charon. rustc `nightly-2026-02-22` installed with `rustc-dev, llvm-tools-preview, rust-src, miri`. Lean/Mathlib unchanged at `v4.30.0-rc2`.
+- **Patches surviving:** all 4 Charon patches still required and applied cleanly at `e069223a` (none made redundant by upstream). 3 untracked UI test files restored. Rebased diff saved at `dev/active/charon-patch-backup-2026-05-15/expand_and_fmt-rebased-150d7d79.patch`.
+- **Extraction-pipeline fixes (3):**
+  1. `verify-lean.sh`: opaqued the three `gfp::specialized::batch_*_mersenne31` functions (Aeneas dropped the slice `.zip` iterator instances). Non-proof-target batch helpers; minor coverage delta noted.
+  2. `fix-aeneas-dupes.py`: added `PLE_PANEL_COLS` (new trait const, default `Self::PLE_BASE_COLS` = 1) to the const-default inline table.
+  3. `proofs/Gf2Core/FunsExternal.lean`: removed the obsolete hand-written `overflowing_sub` override (now native-pure in Aeneas Std, consumed via `lift`).
+- **Hand-proof files that needed fixes (4):** `Gf2Core/Proofs/Specialized.lean` (2 `overflowing_sub`-tail lemmas), `Gf2Core/Proofs/Progress.lean` (retyped `overflowing_sub_val` to the pure equation; ported `redc/mont_add/mont_sub_progress`), `Gf2Core/Proofs/MontgomeryRoundtrip.lean` (`redc_value_spec`, `mont_add_value_spec`), `Gf2Algebra/Proofs/Packed7Correctness.lean` (array safe-vs-panic index bridge via `getElem!_pos`). Root cause: Aeneas 0f99a049 made `overflowing_sub`/`wrapping_*` pure (consumed via `lift`) and `Array.index_usize`/`step` now yields the proof-carrying `[i]` form. No theorem weakened; zero new `sorry`.
+- **Verification:** `./scripts/verify-lean.sh` → "All steps passed"; strict `lake-build` → "no sorry warnings in hand-written Proofs/ files" (2179 jobs).
+- **Known cosmetic follow-up (not blocking):** Aeneas renamed the `progress` tactic to `step`; existing `progress` uses (e.g. `Gf2Core/Proofs/Gf2mInverse.lean`) emit deprecation warnings. Non-fatal; a future cleanup can migrate `progress` → `step`.
+
+## Aeneas-bundled agent skills (discovered during this migration)
+
+The Aeneas checkout ships agent skill files at `/data/aeneas-build/documentation/skills/`
+(symlinked to `.claude/skills/` and `.github/instructions/`). Directly relevant to this
+project's verification work: `aeneas-crypto-verification` (Montgomery/modular-arithmetic
+proof strategies), `aeneas-lean-core` (translation model, pure-vs-Result, `lift`, pitfalls),
+`aeneas-tactics-quickref` (`step` vs `progress`, banned tactics), `lean-lsp-mcp`
+(interactive proof MCP — faster than blind `lake build` cycles), `proof-patterns`,
+`launching-proof-agents` / `agent-fleet-management` / `verification-campaigns`. These were
+upgraded alongside the binaries and document the exact new-Std API that broke the proofs.
+Candidate integration: wire the relevant skill files into the gf2 repo and/or stand up the
+lean-lsp-mcp server for future verification work (pending user approval — changes project config).

@@ -34,13 +34,12 @@ axiom U64.Insts.CoreHashHash.hash
 def core.num.U64.wrapping_neg (x : Std.U64) : Result Std.U64 :=
   ok (UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) x)
 
-/- [core::num::{u64}::overflowing_sub]:
-   Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2868:8-2868:69
-   Name pattern: [core::num::{u64}::overflowing_sub]
-   Defined: mirrors overflowing_add pattern from Aeneas stdlib -/
-@[rust_fun "core::num::{u64}::overflowing_sub"]
-def core.num.U64.overflowing_sub (x y : Std.U64) : Result (Std.U64 × Bool) :=
-  ok (⟨x.bv - y.bv⟩, decide (x.val < y.val))
+-- Note: `core::num::{u64}::overflowing_sub` is now provided natively by the
+-- Aeneas Lean Std (backends/lean/Aeneas/Std/Scalar/OverflowingOps/Sub.lean,
+-- Aeneas 0f99a049) as a *pure* `U64 → U64 → (U64 × Bool)`; the generated code
+-- consumes it via `lift`. The previous hand-written `Result`-returning override
+-- conflicted with it ("expected a product type"). Removed in the toolchain
+-- upgrade (jit:150d7d79).
 
 /- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
    Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41

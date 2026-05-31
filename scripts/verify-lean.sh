@@ -5,22 +5,26 @@
 # translates to Lean4 via Aeneas, and verifies with lake build.
 #
 # Prerequisites:
-#   - charon (v0.1.173, pinned to Aeneas compatibility)
-#   - aeneas (built from 1180be60)
+#   - charon (upstream e069223a + 4 project-local patches; built with rustc
+#     nightly-2026-02-22 per charon/rust-toolchain)
+#   - aeneas (upstream 0f99a049, unmodified)
 #   - elan / lean / lake
 #
 # Usage: ./scripts/verify-lean.sh
 #
-# Toolchain (as of issue 2e544a34, 2026-05-15):
-#   * Charon: upstream HEAD `1ec8d4bb` (2026-05-13) + 3 project-local
-#     patches (HRTB-erase, SelfClause/Local(0,0) fallback in
-#     `lookup_type_replacement`, implied-clause constraint propagation)
-#     + 1 obsolete-asserts removal in `pretty/fmt_with_ctx.rs`
-#     `DynPredicate::fmt_with_ctx`. Patches preserved at
-#     `dev/active/charon-patch-backup-2026-05-15/`.
-#   * Aeneas: upstream HEAD `5fc8fdf2` (2026-05-15), unmodified.
+# Toolchain (as of issue 150d7d79, 2026-05-31):
+#   * Charon: upstream HEAD `e069223a` (the commit pinned by Aeneas main via
+#     `/data/aeneas-build/charon-pin`) + 4 project-local patches (HRTB-erase,
+#     SelfClause/Local(0,0) fallback in `lookup_type_replacement`,
+#     implied-clause constraint propagation — all in
+#     `expand_associated_types.rs` — plus the obsolete-asserts removal in
+#     `pretty/fmt_with_ctx.rs` `DynPredicate::fmt_with_ctx`). All four patches
+#     still apply cleanly and are still required at e069223a. Patches preserved
+#     at `dev/active/charon-patch-backup-2026-05-15/` (rebased copy:
+#     `expand_and_fmt-rebased-150d7d79.patch`).
+#   * Aeneas: upstream HEAD `0f99a049` (tag nightly-2026.05.30), unmodified.
 #   * Lean: v4.30.0-rc2; Mathlib: v4.30.0-rc2 (see `proofs/lean-toolchain`,
-#     `proofs/lakefile.lean`).
+#     `proofs/lakefile.lean`) — unchanged across the 150d7d79 upgrade.
 #
 # Workarounds in place (issue 9efd9c39):
 #   * `crates/gf2-core/src/gfp/mod.rs` — 11 SIMD-fast-path overrides on the
@@ -29,6 +33,22 @@
 #     existing `verify_lean` cfg for `ExtConfig::NON_RESIDUE`.
 #   * `--opaque 'gf2_core::gfp::simd_ops'` below: keeps the SIMD-ops
 #     module out of the LLBC.
+#   * `--opaque` on the three `gf2_core::gfp::specialized::batch_*_mersenne31`
+#     functions (added in 150d7d79): Aeneas 0f99a049 no longer ships the slice
+#     iterator `.zip` instances those functions extract to. They are batch SIMD
+#     helpers, not proof targets, so opaquing only those three (not the whole
+#     `specialized` module — its scalar reductions are called by transparent
+#     gfp code) keeps the extraction clean. Minor coverage delta vs the prior
+#     trio, which extracted them transparently.
+#   * `DEFAULT_CONST_BODIES['PLE_PANEL_COLS']` in fix-aeneas-dupes.py (150d7d79):
+#     `const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS` (= 1 by default) is
+#     referenced via the unemitted `.default` sibling for non-overriding
+#     instances; inlined the same way as PLE_BASE_COLS.
+#   * `proofs/Gf2Core/FunsExternal.lean` (150d7d79): the hand-written
+#     `core.num.U64.overflowing_sub` override was REMOVED — Aeneas 0f99a049 now
+#     provides it natively as a pure `U64 → U64 → (U64 × Bool)` (consumed via
+#     `lift`); the old `Result`-returning override conflicted ("expected a
+#     product type"). `wrapping_neg` is still hand-provided (Std has no native).
 #   * `scripts/fix-aeneas-dupes.py` `inline_default_methods()` pass:
 #     post-processes Aeneas-generated `Funs.lean` files to inline trait
 #     defaults at instance-dictionary call sites (Aeneas at upstream HEAD
@@ -75,6 +95,9 @@ charon cargo \
   --opaque 'gf2_core::gf2m::barrett' \
   --opaque 'gf2_core::gfpn::batch' \
   --opaque 'gf2_core::gfp::simd_ops' \
+  --opaque 'gf2_core::gfp::specialized::batch_mul_mersenne31' \
+  --opaque 'gf2_core::gfp::specialized::batch_mul_add_mersenne31' \
+  --opaque 'gf2_core::gfp::specialized::batch_dot_mersenne31' \
   --opaque 'gf2_core::bitvec' \
   --opaque 'gf2_core::bitslice' \
   --opaque 'gf2_core::matrix' \
@@ -233,8 +256,8 @@ text = re.sub(
 path.write_text(text)
 PY
 
-# Workaround: Aeneas (1180be60) cannot translate 16 gfpn function bodies from
-# Charon (419f53b6+) LLBC. Restore known-good implementations from previous
+# Workaround: Aeneas (0f99a049) cannot translate some gfpn function bodies from
+# Charon (e069223a) LLBC. Restore known-good implementations from previous
 # working extraction. See fix-aeneas-sorrys.py docstring for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
 

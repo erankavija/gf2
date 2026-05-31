@@ -24,11 +24,11 @@ namespace FpProgress
 
 These let the `progress` tactic reason through our custom defs. -/
 
-@[progress]
-theorem overflowing_sub_spec (x y : Std.U64) :
-    core.num.U64.overflowing_sub x y ⦃ r =>
-      r.fst.bv = x.bv - y.bv ∧ r.snd = decide (x.val < y.val) ⦄ := by
-  simp only [core.num.U64.overflowing_sub, spec, theta, wp_return]; trivial
+-- New Aeneas Std (0f99a049): `core.num.U64.overflowing_sub` is now a PURE function
+-- `U64 → U64 → (U64 × Bool)` (was `Result (U64 × Bool)`), tagged `@[step_pure_def]`,
+-- so `step`/`progress` steps it natively as a pure value. The previous `⦃ ⦄` WP
+-- `@[progress]` spec is therefore obsolete; the pure value equation lives in
+-- `overflowing_sub_val` below.
 
 @[progress]
 theorem wrapping_neg_spec (x : Std.U64) :
@@ -147,16 +147,13 @@ theorem wrapping_neg_ok (x : Std.U64) :
     ∃ r, core.num.U64.wrapping_neg x = ok r :=
   ⟨_, rfl⟩
 
-theorem overflowing_sub_ok (x y : Std.U64) :
-    ∃ r, core.num.U64.overflowing_sub x y = ok r :=
-  ⟨_, rfl⟩
-
 theorem wrapping_neg_val (x : Std.U64) :
     core.num.U64.wrapping_neg x = ok (UScalar.wrapping_sub (⟨0#64⟩ : Std.U64) x) := rfl
 
+-- New Aeneas Std (0f99a049): `overflowing_sub` is a pure `(U64 × Bool)` value (not a
+-- `Result`); the borrow flag `BitVec.usubOverflow x.bv y.bv` is `decide (x.val < y.val)`.
 theorem overflowing_sub_val (x y : Std.U64) :
-    core.num.U64.overflowing_sub x y =
-      ok (⟨x.bv - y.bv⟩, decide (x.val < y.val)) := rfl
+    core.num.U64.overflowing_sub x y = (⟨x.bv - y.bv⟩, decide (x.val < y.val)) := rfl
 
 /-! ## compute_p_inv progress -/
 
@@ -220,23 +217,22 @@ theorem redc_progress {P : Std.U64} {t : Std.U128}
   progress as ⟨i3, hi3⟩
   progress as ⟨i4, hi4⟩
   progress as ⟨u, hu⟩
-  progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
-  progress as ⟨i5, hi5⟩
+  -- New Aeneas Std (0f99a049): `overflowing_sub` is pure; `overflowing_sub_val` gives
+  -- the unconditional `(⟨u.bv - P.bv⟩, decide (u.val < P.val))`. Rewrite it and fold
+  -- the `lift` bind so `result`/`borrow` are these explicit components.
+  rw [overflowing_sub_val]
+  simp only [lift, bind_tc_ok]
+  -- Goal: (let (result, borrow) := (⟨u.bv - P.bv⟩, decide (u.val < P.val));
+  --        do i6 ← wrapping_neg (cast_fromBool borrow); ok (wrapping_add result (i6 &&& P)))
+  --       ⦃ r => r.val < P.val ⦄. `change` exposes the projected (let-free) form.
+  change spec (do
+      let i6 ← core.num.U64.wrapping_neg
+        (UScalar.cast_fromBool .U64 (decide (u.val < P.val)))
+      ok (core.num.U64.wrapping_add (⟨u.bv - P.bv⟩ : Std.U64) (i6 &&& P))) _
   progress as ⟨neg_i, hneg_i⟩
-  progress as ⟨correction, hcorrection⟩
-  -- Rewrite to match cond_sub_val pattern
-  have h_result_eq : discr_v = (⟨u.bv - P.bv⟩ : Std.U64) := by
-    apply UScalar.val_eq_imp
-    show discr_v.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
-  have h_corr_struct : correction = neg_i &&& P := by
-    apply UScalar.val_eq_imp; exact hcorrection
-  have cast_fromBool_val : ∀ (b : Bool),
-      (UScalar.cast_fromBool .U64 b).val = b.toNat := by
-    intro b; cases b <;> native_decide
-  have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr_b := by
-    apply UScalar.val_eq_imp
-    rw [hi5, cast_fromBool_val]
-  rw [h_result_eq, h_corr_struct, hneg_i, h_i5_eq, hdiscr2]
+  rw [hneg_i]
+  -- `progress` + `spec_ok` (@[simp]) reduce the WP to the `cond_sub_val` conclusion:
+  -- `(wrapping_add ⟨u.bv - P.bv⟩ ((wrapping_sub 0 (cast_fromBool (decide …))) &&& P)).val < P.val`.
   apply cond_sub_val
   -- Prove u.val < 2 * P.val via REDC bound chain
   have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
@@ -328,23 +324,18 @@ theorem mont_add_progress {P : Std.U64} {a b : Std.U64}
   have hspec : gfp.montgomery.mont_add P a b ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
-    progress as ⟨i, hi⟩
-    progress as ⟨neg_i, hneg_i⟩
-    progress as ⟨correction, hcorrection⟩
     have hsum_lt : sum.val < 2 * P.val := by omega
-    have h_result_eq : discr_v = (⟨sum.bv - P.bv⟩ : Std.U64) := by
-      apply UScalar.val_eq_imp
-      show discr_v.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
-    have h_corr_struct : correction = neg_i &&& P := by
-      apply UScalar.val_eq_imp; exact hcorrection
-    have cast_fromBool_val : ∀ (b : Bool),
-        (UScalar.cast_fromBool .U64 b).val = b.toNat := by
-      intro b; cases b <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
-      apply UScalar.val_eq_imp
-      rw [hi, cast_fromBool_val]
-    rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
+    -- New Aeneas Std (0f99a049): `overflowing_sub` is pure; rewrite it to the explicit
+    -- `(⟨sum.bv - P.bv⟩, decide (sum.val < P.val))`, fold the `lift`, then `change`
+    -- exposes the let-free form; `progress` the `wrapping_neg` and apply `cond_sub_val`.
+    rw [overflowing_sub_val]
+    simp only [lift, bind_tc_ok]
+    change spec (do
+        let i1 ← core.num.U64.wrapping_neg
+          (UScalar.cast_fromBool .U64 (decide (sum.val < P.val)))
+        ok (core.num.U64.wrapping_add (⟨sum.bv - P.bv⟩ : Std.U64) (i1 &&& P))) _
+    progress as ⟨neg_i, hneg_i⟩
+    rw [hneg_i]
     exact cond_sub_val sum P hsum_lt
   exact spec_imp_exists hspec
 
@@ -353,22 +344,17 @@ theorem mont_sub_progress {P : Std.U64} {a b : Std.U64}
     ∃ r, gfp.montgomery.mont_sub P a b = ok r ∧ r.val < P.val := by
   have hspec : gfp.montgomery.mont_sub P a b ⦃ r => r.val < P.val ⦄ := by
     unfold gfp.montgomery.mont_sub
-    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
-    progress as ⟨i, hi⟩
+    -- New Aeneas Std (0f99a049): `overflowing_sub` is pure; rewrite it to the explicit
+    -- `(⟨a.bv - b.bv⟩, decide (a.val < b.val))`, fold the `lift`, then `change`
+    -- exposes the let-free form; `progress` the `wrapping_neg` and apply `cond_add_back_val`.
+    rw [overflowing_sub_val]
+    simp only [lift, bind_tc_ok]
+    change spec (do
+        let i1 ← core.num.U64.wrapping_neg
+          (UScalar.cast_fromBool .U64 (decide (a.val < b.val)))
+        ok (core.num.U64.wrapping_add (⟨a.bv - b.bv⟩ : Std.U64) (i1 &&& P))) _
     progress as ⟨neg_i, hneg_i⟩
-    progress as ⟨correction, hcorrection⟩
-    have h_result_eq : discr_v = (⟨a.bv - b.bv⟩ : Std.U64) := by
-      apply UScalar.val_eq_imp
-      show discr_v.bv.toNat = (a.bv - b.bv).toNat; rw [hdiscr1]
-    have h_corr_struct : correction = neg_i &&& P := by
-      apply UScalar.val_eq_imp; exact hcorrection
-    have cast_fromBool_val : ∀ (bl : Bool),
-        (UScalar.cast_fromBool .U64 bl).val = bl.toNat := by
-      intro bl; cases bl <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
-      apply UScalar.val_eq_imp
-      rw [hi, cast_fromBool_val]
-    rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
+    rw [hneg_i]
     exact cond_add_back_val a b P ha hb hP.2.2
   exact spec_imp_exists hspec
 
