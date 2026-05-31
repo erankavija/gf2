@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Replace Aeneas-generated 'sorry' function bodies with known-good implementations.
 
-Aeneas (1180be60) cannot translate certain gfpn function bodies from the LLBC
-produced by Charon (419f53b6+). The error is "Assertion failed: new value doesn't
+Aeneas (0f99a049) cannot translate certain gfpn function bodies from the LLBC
+produced by Charon (e069223a). The error is "Assertion failed: new value doesn't
 have the same type as its destination" for trait impl ops (Add, Sub, Neg, Mul) on
 QuadraticExt and CubicExt. This script restores the correct bodies, which are
 semantically equivalent to the Rust source and were previously generated correctly
