@@ -2,7 +2,7 @@
   "id": "150d7d79-0f0b-418b-b719-b9a757c81f63",
   "title": "Upgrade Charon/Aeneas/Lean verification toolchain to latest compatible upstream",
   "description": "Advance the Charon → Aeneas → Lean4 verification pipeline from its current pinned trio to the latest **compatible** upstream pair, and re-establish a green `verify-lean` + `lake-build` run with all hand-written proofs intact.\n\n## Background\n\nThe verification pipeline (`scripts/verify-lean.sh`) is pinned to a Charon/Aeneas/Lean trio fixed during issue `2e544a34` (2026-05-15). Upstream has moved substantially since:\n\n| Component | Current pin | Target | Gap |\n|---|---|---|---|\n| Charon | `1ec8d4bb` (`nightly-2026.05.14`) + 2 patched files + 3 untracked UI tests | `e069223a` | 94 commits |\n| Aeneas | `5fc8fdf2` (clean) | `0f99a049` (`main`, tag `nightly-2026.05.30`) | 122 commits |\n| Lean | `v4.30.0-rc2` | `v4.30.0-rc2` | none |\n| Mathlib | `v4.30.0-rc2` | `v4.30.0-rc2` | none |\n| rustc (builds Charon) | `nightly-2026-02-07` | `nightly-2026-02-22` | bump |\n\n**Target is the compatible *pair*, not each repo's own HEAD.** Upstream Aeneas `main` declares its required Charon commit in `/data/aeneas-build/charon-pin` = `e069223a`. Charon's own `main` (`1a639c02`) is 23 commits beyond that pin and must NOT be chased — the two halves must advance together to the Aeneas-declared pin.\n\nLocal Aeneas tree is clean. Local Charon carries 4 documented project-local patches (header of `scripts/verify-lean.sh`, lines 14-23): HRTB-erase + SelfClause/Local(0,0) fallback + implied-clause-constraint propagation (all in `expand_associated_types.rs`), plus the obsolete-asserts removal in `pretty/fmt_with_ctx.rs`. Backups at `dev/active/charon-patch-backup-2026-05-15/`.\n\n### Pre-verified migration facts (from the 2026-05-31 analysis session)\n\n- **Patches still apply cleanly to `e069223a`.** Test-applied the working-tree diff onto the target: `expand_associated_types.rs` is untouched upstream across the 94 commits; `pretty/fmt_with_ctx.rs` saw 9 upstream commits but none hit the patched lines — the assert block (`assert!(regions.is_empty())` … `assert_eq!(types.len(), 1)`) still exists at lines 422/425 of the target, so the patch remains both necessary and applicable.\n- **Lean compiler is unchanged** (`v4.30.0-rc2`) — no Lean/Mathlib bump.\n- **The real risk is the Aeneas Lean backend library**, not the compiler: `backends/lean/Aeneas/` changed by +1829 / −475 across 25 files between `5fc8fdf2` and `0f99a049`. Files intersecting our proofs: `Std/WP.lean`, `Std/Scalar/Core.lean` + `Std/Scalar/OverflowingOps/*` (restructured), `Tactic/Setup.lean`, `Tactic/Step/Step.lean`, and the `SimpScalar`/`SimpLists` sets. Expect lemma renames / tactic retuning to break the hand-written proofs in `proofs/Gf2Core/Proofs/` (esp. `MontgomeryRoundtrip.lean`'s wrapping-op lemma chains) and possibly the `FunsExternal.lean` hand defs.\n- **Stale doc nits to fix regardless:** `verify-lean.sh` header lines 8-9 still claim `charon v0.1.173` / `aeneas 1180be60`, contradicting the authoritative block at lines 14-23; the post-processing comments at lines 236-237 still reference `Aeneas (1180be60)`.\n\n## Scope\n\nIn scope: advancing the installed Charon (`/data/aeneas-build/charon`) and Aeneas (`/data/aeneas-build`) checkouts to the target pair, rebuilding both binaries, reapplying/re-validating the Charon patches, fixing whatever breaks in the generated extraction and the hand-written proofs, and refreshing all version banners/docs.\n\nOut of scope: adding new proof content, new verification targets, or changing what is proved. This is a toolchain-currency migration that must preserve the existing proof coverage exactly.\n\n## Success Criteria\n\n- [ ] [hard] Installed Charon is at upstream `e069223a` with the 4 project-local patches reapplied; `charon --version`/`git -C /data/aeneas-build/charon rev-parse HEAD` confirms the base commit.\n- [ ] [hard] Installed Aeneas is at upstream `0f99a049` (tag `nightly-2026.05.30`), clean tree; `git -C /data/aeneas-build rev-parse HEAD` confirms.\n- [ ] [hard] `/data/aeneas-build/charon-pin` reads `e069223a` and matches the installed Charon (mutually-consistent pair).\n- [ ] [hard] The rustc toolchain required to build the new Charon (`nightly-2026-02-22`, components `rustc-dev, llvm-tools-preview, rust-src, miri`) is installed.\n- [ ] [hard] `scripts/verify-lean.sh` runs end-to-end clean on the new trio (the `verify-lean` gate passes) — Charon extraction → Aeneas translation → post-processing → `lake build` all succeed for both `gf2-core` and `gf2-algebra`.\n- [ ] [hard] `lake build` is green with **no new `sorry`** in hand-written `proofs/**/Proofs/` files beyond the single pre-existing documented `p_inv_value_spec` sorry (the `lake-build` strict gate passes).\n- [ ] [hard] Proof coverage is preserved: every theorem that was proved before the migration is still proved after (no theorem silently axiomatised or deleted to make the build pass). Any proof that required a fix is fixed in-place, not weakened.\n- [ ] [hard] Each of the 4 Charon patches is re-evaluated against `e069223a`; any patch made redundant by an upstream fix is dropped (with a note), and any still-required patch is reapplied. The patch backup directory and `verify-lean.sh` header reflect the final set.\n- [ ] [hard] `scripts/verify-lean.sh` version banner (lines 8-9 and 14-23) and post-processing comments (lines 236-237) are updated to the new trio; no stale `v0.1.173` / `1180be60` references remain anywhere in the script.\n- [ ] [hard] CLAUDE.md and the auto-memory Charon/Aeneas notes are updated where they name specific commits/paths that this migration changes.\n- [ ] [hard] A short migration note is recorded in the linked design doc capturing: final commit pair, which patches survived, and which proof files needed fixes.\n\n## Verification\n\n```bash\n# end-to-end (the verify-lean gate wraps this)\n./scripts/verify-lean.sh\n# strict proof build (the lake-build gate wraps this)\ncd proofs && lake build   # via scripts/lake-build-strict.sh: no new sorrys\n# pair consistency\ngit -C /data/aeneas-build rev-parse HEAD          # 0f99a049...\ngit -C /data/aeneas-build/charon rev-parse HEAD   # e069223a...\ncat /data/aeneas-build/charon-pin                 # e069223a...\n```\n\n## Coverage-delta acknowledgment (user-approved 2026-05-31)\n\nCode-review flagged that this migration opaques three previously-transparent functions: `gf2_core::gfp::specialized::{batch_mul_mersenne31, batch_mul_add_mersenne31, batch_dot_mersenne31}`. Verified: **zero theorems ever targeted these functions** - they were extracted-transparent but un-proven (batch SIMD helpers, not proof targets). The upgraded Aeneas Std (0f99a049) dropped the slice-`.zip` iterator instances they translate to, making transparent extraction infeasible without follow-up work. The `[hard]` criterion \"every theorem that was proved before is still proved after\" is therefore literally satisfied - no theorem was axiomatised or deleted.\n\nThe user explicitly accepted this extraction-transparency delta (option \"Accept documented delta\") and requested a follow-up to revisit it. Tracked by issue **de3ec390** (\"Restore extraction coverage for gfp::specialized batch_*_mersenne31 functions\"), which depends on this issue.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -14,15 +14,30 @@
     "fmt"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
+    "verify-lean": {
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-05-31T10:43:43.446833055Z"
+      "updated_at": "2026-05-31T12:12:25.980883634Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-31T12:19:13.929767679Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-31T12:12:39.330181173Z"
     },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-31T10:53:57.451472143Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-05-31T12:23:37.913694745Z"
     }
   },
   "context": {},
@@ -40,5 +55,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-05-31T09:26:02.542490040+00:00",
-  "updated_at": "2026-05-31T12:12:09.827368312+00:00"
+  "updated_at": "2026-05-31T12:23:37.934485511+00:00"
 }

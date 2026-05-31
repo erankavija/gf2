@@ -2,7 +2,7 @@
   "id": "de3ec390-e827-493c-90c3-b2f48fdb4e52",
   "title": "Restore extraction coverage for gfp::specialized batch_*_mersenne31 functions",
   "description": "Restore transparent Charon/Aeneas extraction for the three `gf2_core::gfp::specialized::batch_*_mersenne31` functions, which were marked `--opaque` during the toolchain upgrade (issue 150d7d79) because the upgraded Aeneas Std (0f99a049) no longer ships the slice-iterator `.zip` instances they extract to.\n\n## Background\n\nDuring the Charon `e069223a` / Aeneas `0f99a049` toolchain upgrade (150d7d79), `scripts/verify-lean.sh` was changed to `--opaque` three functions:\n\n- `gf2_core::gfp::specialized::batch_mul_mersenne31`\n- `gf2_core::gfp::specialized::batch_mul_add_mersenne31`\n- `gf2_core::gfp::specialized::batch_dot_mersenne31`\n\nEach uses `acc.iter_mut().zip(a.iter().zip(b.iter()))`-style iterator chains. The previous Aeneas (5fc8fdf2) translated those slice `.zip` iterator instances; 0f99a049 does not, so they extracted to `Unknown constant ...IteratorIteratorSharedAT.zip`. They were extracted transparently before the upgrade but **no theorem ever targeted them** (they are batch SIMD helpers, not proof targets), so the upgrade lost no proof/theorem coverage - only extraction transparency of three un-proven functions. The user explicitly accepted this delta for 150d7d79 and asked to revisit it here.\n\n## Possible approaches (to be evaluated)\n\n1. Reproduce the dropped slice-`.zip` iterator instances as project-local `FunsExternal`/Std definitions so the functions translate again.\n2. Rewrite the three functions in `crates/gf2-core/src/gfp/specialized.rs` to use index-based loops instead of iterator `.zip` (extracts natively; touches production source, needs its own tests).\n3. Wait for / contribute an upstream Aeneas fix that restores slice-`.zip` iterator translation, then drop the `--opaque` lines.\n\nInvestigate feasibility/cost of each and pick one. If a correctness proof for these batch kernels is also desired, state that as a separate deliverable.\n\n## Success Criteria\n\n- [ ] [hard] The three `batch_*_mersenne31` functions are no longer `--opaque` in `scripts/verify-lean.sh` (or an explicit, user-approved decision is recorded that transparent extraction is infeasible and they stay opaque permanently, with the reason).\n- [ ] [hard] `scripts/verify-lean.sh` runs end-to-end clean (verify-lean gate) and `lake build` is green with no new `sorry` (lake-build gate) after the change.\n- [ ] [hard] No regression to the proofs that already pass under 150d7d79's trio.\n- [ ] [hard] The chosen approach is documented (design note attached via `jit doc add`), including why the other approaches were rejected.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -21,5 +21,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-05-31T12:11:54.255756957+00:00",
-  "updated_at": "2026-05-31T12:12:09.793707043+00:00"
+  "updated_at": "2026-05-31T12:23:38.213273911+00:00"
 }
