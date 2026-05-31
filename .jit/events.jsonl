@@ -5642,3 +5642,6 @@
 {"type":"gate_passed","id":"c20fb1f4-a0d2-496e-85ff-c4d24bceb795","issue_id":"dfe297f0-eb91-4aff-869d-5cc05e2850a7","timestamp":"2026-05-30T23:37:02.048707217Z","gate_key":"doc-review","updated_by":null}
 {"type":"issue_state_changed","id":"5b504c21-9eb6-49af-8602-ae44baa86b05","issue_id":"dfe297f0-eb91-4aff-869d-5cc05e2850a7","timestamp":"2026-05-30T23:37:02.068340212Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"e026d161-e7fa-44c9-9f22-33a13d260dec","issue_id":"dfe297f0-eb91-4aff-869d-5cc05e2850a7","timestamp":"2026-05-30T23:37:02.068369292Z"}
+{"type":"issue_created","id":"053a8217-72a4-4cc6-b93b-8a425d6e6930","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:26:02.542787760Z","title":"Upgrade Charon/Aeneas/Lean verification toolchain to latest compatible upstream","priority":"normal"}
+{"type":"issue_state_changed","id":"ef9082fc-7b87-455d-a0d7-984ca487c89e","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:27:10.301198416Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"fbcb39c5-9cca-460a-bdef-f09a96cb102d","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:27:10.301396666Z","assignee":"agent:claude"}
