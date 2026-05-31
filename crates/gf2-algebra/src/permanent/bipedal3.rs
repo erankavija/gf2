@@ -609,15 +609,18 @@ mod tests {
         simd_vs_scalar_cross_check(16, 100, 0x686e_e1b5_0000_0010_u64);
     }
 
-    /// T13 SIMD-vs-scalar cross-check for n=24: 10 random matrices (fast
+    /// T13 SIMD-vs-scalar cross-check for n=24: 3 random matrices (fast
     /// tier).
     ///
-    /// Fast tier: 2^24 ~16M steps × 10 matrices × 2 passes (SIMD + scalar)
-    /// ≈ 0.5 s total in release mode; within the 5 s per-test CI limit.
-    /// The full 100-matrix run is covered by `test_simd_vs_scalar_n24_slow`.
+    /// Fast tier: 2^24 ~16M steps × 3 matrices × 2 passes (SIMD + scalar).
+    /// On a developer machine with AVX2 this is ~0.15 s, but on shared CI
+    /// runners (where the "SIMD" pass may fall back to scalar and cores are
+    /// throttled) 10 matrices exceeded the 5 s per-test budget — so the
+    /// fast-tier smoke check uses 3 matrices. The full 100-matrix run is
+    /// covered by `test_simd_vs_scalar_n24_slow`.
     #[test]
     fn test_simd_vs_scalar_n24() {
-        simd_vs_scalar_cross_check(24, 10, 0x686e_e1b5_0000_0018_u64);
+        simd_vs_scalar_cross_check(24, 3, 0x686e_e1b5_0000_0018_u64);
     }
 
     /// T13 SIMD-vs-scalar cross-check for n=24: 100 random matrices (slow
