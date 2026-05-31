@@ -16,9 +16,13 @@ This runs automatically as Step 3 of `scripts/verify-lean.sh`.
 ## FunsExternal.lean hand-edited definitions
 
 `FunsExternal.lean` replaces Aeneas axioms with concrete definitions for
-`wrapping_neg`, `overflowing_sub`, and U128 `add`/`add_assign`. The
-`verify-lean.sh` script only seeds from the template on first run; it never
-overwrites the hand-edited file.
+`wrapping_neg` and U128 `add`/`add_assign`. The `verify-lean.sh` script only
+seeds from the template on first run; it never overwrites the hand-edited file.
+
+`overflowing_sub` was previously hand-defined here too, but Aeneas 0f99a049
+provides it natively as a pure `U64 → U64 → (U64 × Bool)` (consumed via `lift`);
+the hand-written `Result`-returning override conflicted with it and was removed
+(issue 150d7d79).
 
 ## Opaque modules
 

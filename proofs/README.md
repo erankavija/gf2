@@ -26,7 +26,7 @@ Committed alongside the generated files:
 
 | File | Contents |
 |---|---|
-| `Gf2Core/FunsExternal.lean` | Concrete defs (replacing four external axioms, e.g. `wrapping_neg`, `overflowing_sub`, `U128 add`) |
+| `Gf2Core/FunsExternal.lean` | Concrete defs replacing external axioms, e.g. `wrapping_neg`, `U128 add`/`add_assign`. (`overflowing_sub` is no longer hand-defined — Aeneas 0f99a049 provides it natively as a pure op.) |
 
 Hand-written proofs under `Gf2Core/Proofs/`:
 
@@ -93,4 +93,4 @@ See `dev/lean4-verification-pipeline.md` for the full rebuild procedure and the 
 
 ## Status
 
-The committed Lean project builds with `lake build`, and the full regeneration pipeline (`./scripts/verify-lean.sh`) succeeds with the toolchain described above. The generated extraction still uses a small set of documented external axioms for opaque standard-library/out-of-scope items, and some hand-written progress lemmas remain admitted with `sorry`; do not treat the current tree as a zero-axiom/zero-sorry proof corpus. The strongest completed prime-field results remain centered on the Montgomery-backed path (for example `montgomery_roundtrip` and related modular-arithmetic lemmas), while the extracted Rust surface now also exposes the specialized-prime selection path for future proof work.
+The committed Lean project builds with `lake build`, and the full regeneration pipeline (`./scripts/verify-lean.sh`) succeeds with the toolchain described above. The **hand-written proofs under `Proofs/` are `sorry`-free** (enforced by the strict `lake-build` gate). The corpus is not, however, zero-axiom: the generated extraction relies on a small set of documented external axioms for opaque standard-library/out-of-scope items, and Aeneas emits extraction-artefact `sorry`s in the generated `Funs.lean` that are suppressed with `set_option warn.sorry false` (these are generated code, not hand-written proofs). The strongest completed prime-field results remain centered on the Montgomery-backed path (for example `montgomery_roundtrip` and related modular-arithmetic lemmas), while the extracted Rust surface now also exposes the specialized-prime selection path for future proof work.
