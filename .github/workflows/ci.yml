@@ -53,16 +53,16 @@ jobs:
       uses: taiki-e/install-action@nextest
 
     - name: Build
-      run: cargo build --workspace --verbose --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo build --workspace --release --verbose --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Run tests
-      run: cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64 --profile ci
+      run: cargo nextest run --workspace --release --features simd,parallel,visualization,io,rand,llr-f64 --profile ci
 
     - name: Build documentation
-      run: cargo doc --workspace --no-deps --features simd,parallel,visualization,io,rand,llr-f64
+      run: cargo doc --workspace --release --no-deps --features simd,parallel,visualization,io,rand,llr-f64
 
     - name: Build benchmarks
-      run: cargo build --workspace --benches
+      run: cargo build --workspace --release --benches
 
   coverage:
     name: Coverage Badges
@@ -120,10 +120,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Kani ships its own (lagging) bundled rustc. After the MSRV bump to 1.95
+    # (2026-04-27) cargo hard-errors that Kani's toolchain is too old, and
+    # current cargo-kani has no `--ignore-rust-version` passthrough (its cargo
+    # arg set is a fixed allowlist). Relax `rust-version` for THIS CI job only
+    # (the checkout is ephemeral; the committed MSRV is unchanged) so the
+    # rust-version gate does not block the model-checking harnesses.
+    - name: Relax MSRV for Kani's bundled toolchain (CI-only)
+      run: |
+        find crates dev/research -name Cargo.toml \
+          -exec sed -i 's/^rust-version = .*/rust-version = "1.80"/' {} +
+
     - name: Kani verification
       uses: model-checking/kani-github-action@v1
       with:
-        args: -p gf2-core --ignore-rust-version
+        kani-version: '0.66.0'
+        args: -p gf2-core
 
   lean-verify:
     name: Lean Verification
