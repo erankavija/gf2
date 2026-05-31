@@ -140,9 +140,10 @@ jobs:
       with:
         kani-version: '0.66.0'
         # `-j` verifies harnesses in parallel across the runner's cores
-        # (stabilised in Kani 0.63). The 25 harnesses ran ~34 min sequentially
-        # and risked being cut off near the end; parallel they finish in ~10 min.
-        args: -p gf2-core -j
+        # (stabilised in Kani 0.63); it requires `--output-format=terse`. The 25
+        # harnesses ran ~34 min sequentially and risked being cut off near the
+        # end; parallel they finish in ~10 min.
+        args: -p gf2-core -j --output-format=terse
 
   lean-verify:
     name: Lean Verification
