@@ -449,7 +449,12 @@ theorem binary_op_word_spec
       -- (r ||| i9).val = lutSum … (i+1) = r.val + byte · 256^i
       have hi10val : i10.val.toNat = i.val.toNat + 1 := by
         rw [hi10]; omega
-      have hi7val : i7.val = (L.val[keyv.val]!).val := by rw [hi7]
+      -- New Aeneas Std (0f99a049): `Array.index_usize` / `step` yields the safe,
+      -- proof-carrying `getElem` form `i7 = (↑L)[↑keyv]` rather than the panic form
+      -- `(↑L)[↑keyv]!`. Bridge the two with `getElem!_pos` (valid since `keyv` is in
+      -- bounds: `keyv.val < 65536 = L.length`).
+      have hi7val : i7.val = (L.val[keyv.val]!).val := by
+        rw [hi7, getElem!_pos (L.val) keyv.val]
       have hi7le : i7.val ≤ 255 := by
         have := U8.lt_succ_max i7; omega
       have hcastU64 : (UScalar.cast .U64 i7).val = i7.val := by

@@ -25,7 +25,7 @@ axiom core.array.from_fn
   core.ops.function.FnMut F Std.Usize T) :
   F → Result (Array T N)
 
-/-- [core::cmp::impls::{core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
+/-- [core::cmp::impls::{impl core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
     Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
     Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq]
     Visibility: public -/
@@ -43,7 +43,9 @@ axiom core.fmt.builders.DebugStruct.field
   :
   core.fmt.builders.DebugStruct → Str → Dyn (fun _dyn => core.fmt.Debug _dyn) →
     Result (core.fmt.builders.DebugStruct × (core.fmt.builders.DebugStruct →
-    core.fmt.builders.DebugStruct))
+    core.fmt.builders.DebugStruct) × (core.fmt.builders.DebugStruct →
+    core.fmt.builders.DebugStruct → (core.fmt.builders.DebugStruct ×
+    core.fmt.builders.DebugStruct)))
 
 /-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::finish]:
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 244:4-244:43
@@ -54,7 +56,8 @@ axiom core.fmt.builders.DebugStruct.field
 axiom core.fmt.builders.DebugStruct.finish
   :
   core.fmt.builders.DebugStruct → Result ((core.result.Result Unit
-    core.fmt.Error) × core.fmt.builders.DebugStruct)
+    core.fmt.Error) × core.fmt.builders.DebugStruct ×
+    (core.fmt.builders.DebugStruct → core.fmt.builders.DebugStruct))
 
 /-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]:
     Source: '/rustc/library/core/src/fmt/mod.rs', lines 2441:4-2441:76
@@ -64,9 +67,9 @@ axiom core.fmt.builders.DebugStruct.finish
 axiom core.fmt.Formatter.debug_struct
   :
   core.fmt.Formatter → Str → Result (core.fmt.builders.DebugStruct ×
-    core.fmt.Formatter)
+    (core.fmt.builders.DebugStruct → core.fmt.Formatter))
 
-/-- [core::hash::impls::{core::hash::Hash for u64}::hash]:
+/-- [core::hash::impls::{impl core::hash::Hash for u64}::hash]:
     Source: '/rustc/library/core/src/hash/mod.rs', lines 812:16-812:56
     Name pattern: [core::hash::impls::{core::hash::Hash<u64>}::hash]
     Visibility: public -/
@@ -74,7 +77,7 @@ axiom core.fmt.Formatter.debug_struct
 axiom U64.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.U64 → H → Result H
 
-/-- [core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<(usize, Clause0_Item)> for core::iter::adapters::enumerate::Enumerate<I>}::next]:
+/-- [core::iter::adapters::enumerate::{impl core::iter::traits::iterator::Iterator<(usize, Clause0_Item)> for core::iter::adapters::enumerate::Enumerate<I>}::next]:
     Source: '/rustc/library/core/src/iter/adapters/enumerate.rs', lines 79:4-79:64
     Name pattern: [core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<core::iter::adapters::enumerate::Enumerate<@I>, (usize, @Clause0_Item)>}::next]
     Visibility: public -/
@@ -87,7 +90,7 @@ axiom
   core.iter.adapters.enumerate.Enumerate I → Result ((Option (Std.Usize ×
     Clause0_Item)) × (core.iter.adapters.enumerate.Enumerate I))
 
-/-- [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::collect]:
+/-- [core::iter::adapters::map::{impl core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::collect]:
     Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
     Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect]
     Visibility: public -/
@@ -101,7 +104,7 @@ axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
   core.iter.traits.collect.FromIterator B1 B) :
   core.iter.adapters.map.Map I F → Result B1
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::next]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::next]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 84:4-84:44
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next]
     Visibility: public -/
@@ -115,7 +118,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.next
   core.iter.adapters.zip.Zip A B → Result ((Option (Clause0_Item ×
     Clause1_Item)) × (core.iter.adapters.zip.Zip A B))
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::all]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::all]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::all]
     Visibility: public -/
@@ -131,7 +134,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.all
   core.iter.adapters.zip.Zip A B → F → Result (Bool ×
     (core.iter.adapters.zip.Zip A B))
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::collect]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::collect]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::collect]
     Visibility: public -/
@@ -147,7 +150,7 @@ axiom
   B1 (Clause0_Item × Clause1_Item)) :
   core.iter.adapters.zip.Zip A B → Result B1
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::enumerate]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::enumerate]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::enumerate]
     Visibility: public -/
@@ -162,7 +165,7 @@ axiom
   core.iter.adapters.zip.Zip A B → Result
     (core.iter.adapters.enumerate.Enumerate (core.iter.adapters.zip.Zip A B))
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::map]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::map]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::map]
     Visibility: public -/
@@ -178,7 +181,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.map
   core.iter.adapters.zip.Zip A B → F → Result (core.iter.adapters.map.Map
     (core.iter.adapters.zip.Zip A B) F)
 
-/-- [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::zip]:
+/-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::zip]:
     Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip]
     Visibility: public -/
@@ -194,7 +197,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
   core.iter.adapters.zip.Zip A B → U → Result (core.iter.adapters.zip.Zip
     (core.iter.adapters.zip.Zip A B) Clause2_IntoIter)
 
-/-- [core::iter::range::{core::iter::range::Step for u64}::backward_checked]:
+/-- [core::iter::range::{impl core::iter::range::Step for u64}::backward_checked]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 289:16-289:74
     Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::backward_checked]
     Visibility: public -/
@@ -203,7 +206,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
 axiom U64.Insts.CoreIterRangeStep.backward_checked
   : Std.U64 → Std.Usize → Result (Option Std.U64)
 
-/-- [core::iter::range::{core::iter::range::Step for u64}::forward_checked]:
+/-- [core::iter::range::{impl core::iter::range::Step for u64}::forward_checked]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 281:16-281:73
     Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::forward_checked]
     Visibility: public -/
@@ -212,7 +215,7 @@ axiom U64.Insts.CoreIterRangeStep.backward_checked
 axiom U64.Insts.CoreIterRangeStep.forward_checked
   : Std.U64 → Std.Usize → Result (Option Std.U64)
 
-/-- [core::iter::range::{core::iter::range::Step for u64}::steps_between]:
+/-- [core::iter::range::{impl core::iter::range::Step for u64}::steps_between]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 270:16-270:84
     Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::steps_between]
     Visibility: public -/
@@ -220,7 +223,7 @@ axiom U64.Insts.CoreIterRangeStep.forward_checked
 axiom U64.Insts.CoreIterRangeStep.steps_between
   : Std.U64 → Std.U64 → Result (Std.Usize × (Option Std.Usize))
 
-/-- [core::iter::range::{core::iter::range::Step for u128}::backward_checked]:
+/-- [core::iter::range::{impl core::iter::range::Step for u128}::backward_checked]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 388:16-388:74
     Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::backward_checked]
     Visibility: public -/
@@ -229,7 +232,7 @@ axiom U64.Insts.CoreIterRangeStep.steps_between
 axiom U128.Insts.CoreIterRangeStep.backward_checked
   : Std.U128 → Std.Usize → Result (Option Std.U128)
 
-/-- [core::iter::range::{core::iter::range::Step for u128}::forward_checked]:
+/-- [core::iter::range::{impl core::iter::range::Step for u128}::forward_checked]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 383:16-383:73
     Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::forward_checked]
     Visibility: public -/
@@ -238,7 +241,7 @@ axiom U128.Insts.CoreIterRangeStep.backward_checked
 axiom U128.Insts.CoreIterRangeStep.forward_checked
   : Std.U128 → Std.Usize → Result (Option Std.U128)
 
-/-- [core::iter::range::{core::iter::range::Step for u128}::steps_between]:
+/-- [core::iter::range::{impl core::iter::range::Step for u128}::steps_between]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 370:16-370:84
     Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::steps_between]
     Visibility: public -/
@@ -246,7 +249,7 @@ axiom U128.Insts.CoreIterRangeStep.forward_checked
 axiom U128.Insts.CoreIterRangeStep.steps_between
   : Std.U128 → Std.U128 → Result (Std.Usize × (Option Std.Usize))
 
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::all]:
+/-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::all]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::all]
     Visibility: public -/
@@ -257,7 +260,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.all
   (opsfunctionFnMutFTupleABoolInst : core.ops.function.FnMut F A Bool) :
   core.ops.range.Range A → F → Result (Bool × (core.ops.range.Range A))
 
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::collect]:
+/-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::collect]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect]
     Visibility: public -/
@@ -268,7 +271,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.collect
   (traitscollectFromIteratorInst : core.iter.traits.collect.FromIterator B A) :
   core.ops.range.Range A → Result B
 
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::map]:
+/-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::map]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map]
     Visibility: public -/
@@ -280,7 +283,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
   core.ops.range.Range A → F → Result (core.iter.adapters.map.Map
     (core.ops.range.Range A) F)
 
-/-- [core::iter::range::{core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::zip]:
+/-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::zip]:
     Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::zip]
     Visibility: public -/
@@ -340,20 +343,20 @@ axiom core.iter.traits.iterator.Iterator.all.default
   Self → F → Result (Bool × Self)
 
 /-- [core::num::{u128}::trailing_zeros]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 174:8-174:48
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 177:8-177:48
     Name pattern: [core::num::{u128}::trailing_zeros]
     Visibility: public -/
 @[rust_fun "core::num::{u128}::trailing_zeros"]
 axiom core.num.U128.trailing_zeros : Std.U128 → Result Std.U32
 
 /-- [core::num::{usize}::div_ceil]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3597:8-3597:54
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3657:8-3657:54
     Name pattern: [core::num::{usize}::div_ceil]
     Visibility: public -/
 @[rust_fun "core::num::{usize}::div_ceil"]
 axiom core.num.Usize.div_ceil : Std.Usize → Std.Usize → Result Std.Usize
 
-/-- [core::ops::arith::{core::ops::arith::Add<u128, u128> for u128}::add]:
+/-- [core::ops::arith::{impl core::ops::arith::Add<u128, u128> for u128}::add]:
     Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
     Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add]
     Visibility: public -/
@@ -361,7 +364,7 @@ axiom core.num.Usize.div_ceil : Std.Usize → Std.Usize → Result Std.Usize
 axiom U128.Insts.CoreOpsArithAddU128U128.add
   : Std.U128 → Std.U128 → Result Std.U128
 
-/-- [core::ops::arith::{core::ops::arith::AddAssign<u128> for u128}::add_assign]:
+/-- [core::ops::arith::{impl core::ops::arith::AddAssign<u128> for u128}::add_assign]:
     Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
     Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign]
     Visibility: public -/
@@ -390,7 +393,7 @@ axiom core.ops.range.RangeInclusive.contains
   core.cmp.PartialOrd U Idx) :
   core.ops.range.RangeInclusive Idx → U → Result Bool
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::all]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a T> for core::slice::iter::Iter<'a, T>}::all]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 309:12-312:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::all]
     Visibility: public -/
@@ -401,7 +404,7 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.all
   core.ops.function.FnMut F T Bool) :
   core.slice.iter.Iter T → F → Result (Bool × (core.slice.iter.Iter T))
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::collect]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a T> for core::slice::iter::Iter<'a, T>}::collect]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::collect]
     Visibility: public -/
@@ -412,7 +415,7 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.collect
   core.iter.traits.collect.FromIterator B T) :
   core.slice.iter.Iter T → Result B
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::map]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a T> for core::slice::iter::Iter<'a, T>}::map]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::map]
     Visibility: public -/
@@ -424,7 +427,7 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.map
   core.slice.iter.Iter T → F → Result (core.iter.adapters.map.Map
     (core.slice.iter.Iter T) F)
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a (T)> for core::slice::iter::Iter<'a, T>}::zip]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a T> for core::slice::iter::Iter<'a, T>}::zip]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::Iter<'a, @T>, &'a @T>}::zip]
     Visibility: public -/
@@ -437,7 +440,7 @@ axiom core.slice.iter.Iter.Insts.CoreIterTraitsIteratorIteratorSharedAT.zip
   core.slice.iter.Iter T → U → Result (core.iter.adapters.zip.Zip
     (core.slice.iter.Iter T) Clause0_IntoIter)
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::all]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a mut T> for core::slice::iter::IterMut<'a, T>}::all]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 309:12-312:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::all]
     Visibility: public -/
@@ -449,7 +452,7 @@ axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.all
   core.slice.iter.IterMut T → F → Result (Bool × (core.slice.iter.IterMut T) ×
     (core.slice.iter.IterMut T → core.slice.iter.IterMut T))
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::collect]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a mut T> for core::slice::iter::IterMut<'a, T>}::collect]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::collect]
     Visibility: public -/
@@ -460,7 +463,7 @@ axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.collect
   core.iter.traits.collect.FromIterator B T) :
   core.slice.iter.IterMut T → Result (B × (core.slice.iter.IterMut T))
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::enumerate]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a mut T> for core::slice::iter::IterMut<'a, T>}::enumerate]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::enumerate]
     Visibility: public -/
@@ -473,7 +476,7 @@ axiom
     (core.slice.iter.IterMut T)) × (core.iter.adapters.enumerate.Enumerate
     (core.slice.iter.IterMut T) → core.slice.iter.IterMut T))
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::map]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a mut T> for core::slice::iter::IterMut<'a, T>}::map]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::map]
     Visibility: public -/
@@ -486,7 +489,7 @@ axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.map
     (core.slice.iter.IterMut T) F) × (core.iter.adapters.map.Map
     (core.slice.iter.IterMut T) F → core.slice.iter.IterMut T))
 
-/-- [core::slice::iter::{core::iter::traits::iterator::Iterator<&'a mut (T)> for core::slice::iter::IterMut<'a, T>}::zip]:
+/-- [core::slice::iter::{impl core::iter::traits::iterator::Iterator<&'a mut T> for core::slice::iter::IterMut<'a, T>}::zip]:
     Source: '/rustc/library/core/src/slice/iter/macros.rs', lines 153:8-153:45
     Name pattern: [core::slice::iter::{core::iter::traits::iterator::Iterator<core::slice::iter::IterMut<'a, @T>, &'a mut @T>}::zip]
     Visibility: public -/
@@ -501,7 +504,7 @@ axiom core.slice.iter.IterMut.Insts.CoreIterTraitsIteratorIteratorMutAT.zip
     (core.slice.iter.IterMut T) Clause0_IntoIter → core.slice.iter.IterMut T))
 
 /-- [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 797:4-797:35
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 825:4-825:35
     Name pattern: [gf2_core::field::traits::FiniteField::WINOGRAD_THRESHOLD]
     Visibility: public -/
 @[trait_default, rust_const
@@ -512,7 +515,7 @@ axiom gf2_core.field.traits.FiniteField.WINOGRAD_THRESHOLD.default {Self :
   : Result Std.Usize
 
 /-- [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 830:4-830:35
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 858:4-858:35
     Name pattern: [gf2_core::field::traits::FiniteField::TRI_BASE_THRESHOLD]
     Visibility: public -/
 @[trait_default, rust_const
@@ -523,7 +526,7 @@ axiom gf2_core.field.traits.FiniteField.TRI_BASE_THRESHOLD.default {Self :
   : Result Std.Usize
 
 /-- [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
-    Source: 'crates/gf2-core/src/field/traits.rs', lines 864:4-864:30
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 892:4-892:30
     Name pattern: [gf2_core::field::traits::FiniteField::PLE_BASE_COLS]
     Visibility: public -/
 @[trait_default, rust_const
@@ -533,7 +536,18 @@ axiom gf2_core.field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
   gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
   : Result Std.Usize
 
-/-- [gf2_core::gfp::{core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
+/-- [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
+    Source: 'crates/gf2-core/src/field/traits.rs', lines 926:4-926:31
+    Name pattern: [gf2_core::field::traits::FiniteField::PLE_PANEL_COLS]
+    Visibility: public -/
+@[trait_default, rust_const
+  "gf2_core::field::traits::FiniteField::PLE_PANEL_COLS"]
+axiom gf2_core.field.traits.FiniteField.PLE_PANEL_COLS.default {Self : Type}
+  {Clause0_Characteristic : Type} {Clause0_Wide : Type} (FiniteFieldInst :
+  gf2_core.field.traits.FiniteField Self Clause0_Characteristic Clause0_Wide)
+  : Result Std.Usize
+
+/-- [gf2_core::gfp::{impl core::clone::Clone for gf2_core::gfp::Fp<P>}::clone]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:9-133:14
     Name pattern: [gf2_core::gfp::{core::clone::Clone<gf2_core::gfp::Fp<@P>>}::clone]
     Visibility: public -/
@@ -541,7 +555,7 @@ axiom gf2_core.field.traits.FiniteField.PLE_BASE_COLS.default {Self : Type}
 axiom gf2_core.gfp.Fp.Insts.CoreCloneClone.clone
   {P : Std.U64} : gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::eq]:
+/-- [gf2_core::gfp::{impl core::cmp::PartialEq<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::eq]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:22-133:31
     Name pattern: [gf2_core::gfp::{core::cmp::PartialEq<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::eq]
     Visibility: public -/
@@ -550,7 +564,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreCloneClone.clone
 axiom gf2_core.gfp.Fp.Insts.CoreCmpPartialEqFp.eq
   {P : Std.U64} : gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result Bool
 
-/-- [gf2_core::gfp::{core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfp::{impl core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35
     Name pattern: [gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_receiver_is_total_eq]
     Visibility: public -/
@@ -559,7 +573,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreCmpPartialEqFp.eq
 axiom gf2_core.gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Unit
 
-/-- [gf2_core::gfp::{core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
+/-- [gf2_core::gfp::{impl core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:37-133:41
     Name pattern: [gf2_core::gfp::{core::hash::Hash<gf2_core::gfp::Fp<@P>>}::hash]
     Visibility: public -/
@@ -568,7 +582,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreHashHash.hash
   {__H : Type} {P : Std.U64} (corehashHasherInst : core.hash.Hasher __H) :
   gf2_core.gfp.Fp P → __H → Result __H
 
-/-- [gf2_core::gfp::{core::fmt::Debug for gf2_core::gfp::Fp<P>}::fmt]:
+/-- [gf2_core::gfp::{impl core::fmt::Debug for gf2_core::gfp::Fp<P>}::fmt]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 137:4-137:60
     Name pattern: [gf2_core::gfp::{core::fmt::Debug<gf2_core::gfp::Fp<@P>>}::fmt]
     Visibility: public -/
@@ -592,7 +606,7 @@ axiom gf2_core.gfp.Fp.new (P : Std.U64) : Std.U64 → Result (gf2_core.gfp.Fp P)
 @[rust_fun "gf2_core::gfp::{gf2_core::gfp::Fp<@P>}::value"]
 axiom gf2_core.gfp.Fp.value {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U64
 
-/-- [gf2_core::gfp::{core::ops::arith::Add<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Add<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 322:4-322:35
     Name pattern: [gf2_core::gfp::{core::ops::arith::Add<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::add]
     Visibility: public -/
@@ -602,7 +616,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithAddFpFp.add
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Sub<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Sub<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 340:4-340:35
     Name pattern: [gf2_core::gfp::{core::ops::arith::Sub<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::sub]
     Visibility: public -/
@@ -612,7 +626,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithSubFpFp.sub
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Mul<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Mul<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 363:4-363:35
     Name pattern: [gf2_core::gfp::{core::ops::arith::Mul<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::mul]
     Visibility: public -/
@@ -622,7 +636,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::neg]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Neg<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::neg]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 385:4-385:24
     Name pattern: [gf2_core::gfp::{core::ops::arith::Neg<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::neg]
     Visibility: public -/
@@ -631,7 +645,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithMulFpFp.mul
 axiom gf2_core.gfp.Fp.Insts.CoreOpsArithNegFp.neg
   {P : Std.U64} : gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Div<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Div<gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 408:4-408:35
     Name pattern: [gf2_core::gfp::{core::ops::arith::Div<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::div]
     Visibility: public -/
@@ -641,7 +655,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithDivFpFp.div
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::AddAssign<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add_assign]:
+/-- [gf2_core::gfp::{impl core::ops::arith::AddAssign<gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add_assign]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 419:4-419:39
     Name pattern: [gf2_core::gfp::{core::ops::arith::AddAssign<gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::add_assign]
     Visibility: public -/
@@ -651,7 +665,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignFp.add_assign
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::AddAssign<&0 (gf2_core::gfp::Fp<P>)> for gf2_core::gfp::Fp<P>}::add_assign]:
+/-- [gf2_core::gfp::{impl core::ops::arith::AddAssign<&'_0 gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add_assign]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 426:4-426:40
     Name pattern: [gf2_core::gfp::{core::ops::arith::AddAssign<gf2_core::gfp::Fp<@P>, &'0 gf2_core::gfp::Fp<@P>>}::add_assign]
     Visibility: public -/
@@ -661,7 +675,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithAddAssignShared0Fp.add_assign
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Add<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Add<&'_0 gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::add]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 438:4-438:38
     Name pattern: [gf2_core::gfp::{core::ops::arith::Add<gf2_core::gfp::Fp<@P>, &'0 gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::add]
     Visibility: public -/
@@ -671,7 +685,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithAddShared0FpFp.add
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Sub<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Sub<&'_0 gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::sub]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 454:4-454:38
     Name pattern: [gf2_core::gfp::{core::ops::arith::Sub<gf2_core::gfp::Fp<@P>, &'0 gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::sub]
     Visibility: public -/
@@ -681,7 +695,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithSubShared0FpFp.sub
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Mul<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Mul<&'_0 gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::mul]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 470:4-470:38
     Name pattern: [gf2_core::gfp::{core::ops::arith::Mul<gf2_core::gfp::Fp<@P>, &'0 gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::mul]
     Visibility: public -/
@@ -691,7 +705,7 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithMulShared0FpFp.mul
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{core::ops::arith::Div<&0 (gf2_core::gfp::Fp<P>), gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
+/-- [gf2_core::gfp::{impl core::ops::arith::Div<&'_0 gf2_core::gfp::Fp<P>, gf2_core::gfp::Fp<P>> for gf2_core::gfp::Fp<P>}::div]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 486:4-486:38
     Name pattern: [gf2_core::gfp::{core::ops::arith::Div<gf2_core::gfp::Fp<@P>, &'0 gf2_core::gfp::Fp<@P>, gf2_core::gfp::Fp<@P>>}::div]
     Visibility: public -/
@@ -701,7 +715,17 @@ axiom gf2_core.gfp.Fp.Insts.CoreOpsArithDivShared0FpFp.div
   {P : Std.U64} :
   gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::PLE_PANEL_COLS]
+    Source: 'crates/gf2-core/src/gfp/mod.rs', lines 903:4-903:31
+    Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::PLE_PANEL_COLS]
+    Visibility: public -/
+@[rust_const
+  "gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::PLE_PANEL_COLS"]
+axiom
+  gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.PLE_PANEL_COLS (P
+  : Std.U64) : Result Std.Usize
+
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::max_unreduced_additions]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 675:4-675:41
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::max_unreduced_additions]
     Visibility: public -/
@@ -711,7 +735,7 @@ axiom
   gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.max_unreduced_additions
   (P : Std.U64) : Result Std.Usize
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::reduce_wide]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::reduce_wide]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 634:4-634:39
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::reduce_wide]
     Visibility: public -/
@@ -720,7 +744,7 @@ axiom
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.reduce_wide
   (P : Std.U64) : Std.U128 → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::mul_to_wide]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::mul_to_wide]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 604:4-604:45
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::mul_to_wide]
     Visibility: public -/
@@ -729,7 +753,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.reduce_wide
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.mul_to_wide
   {P : Std.U64} : gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result Std.U128
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::to_wide]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::to_wide]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 599:4-599:29
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::to_wide]
     Visibility: public -/
@@ -738,7 +762,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.mul_to_wide
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.to_wide
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U128
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::one_like]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::one_like]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 575:4-575:30
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::one_like]
     Visibility: public -/
@@ -747,7 +771,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.to_wide
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.one_like
   {P : Std.U64} : gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::zero_like]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::zero_like]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 570:4-570:31
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::zero_like]
     Visibility: public -/
@@ -756,7 +780,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.one_like
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.zero_like
   {P : Std.U64} : gf2_core.gfp.Fp P → Result (gf2_core.gfp.Fp P)
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::inv]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::inv]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 544:4-544:33
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::inv]
     Visibility: public -/
@@ -765,7 +789,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.zero_like
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
   {P : Std.U64} : gf2_core.gfp.Fp P → Result (Option (gf2_core.gfp.Fp P))
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_one]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_one]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 531:4-531:28
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::is_one]
     Visibility: public -/
@@ -774,7 +798,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.inv
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_one
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Bool
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_zero]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::is_zero]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 526:4-526:29
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::is_zero]
     Visibility: public -/
@@ -783,7 +807,7 @@ axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_one
 axiom gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.is_zero
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Bool
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::extension_degree]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::extension_degree]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 521:4-521:39
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::extension_degree]
     Visibility: public -/
@@ -793,7 +817,7 @@ axiom
   gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.extension_degree
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.Usize
 
-/-- [gf2_core::gfp::{gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::characteristic]:
+/-- [gf2_core::gfp::{impl gf2_core::field::traits::FiniteField<u64, u128> for gf2_core::gfp::Fp<P>}::characteristic]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 516:4-516:35
     Name pattern: [gf2_core::gfp::{gf2_core::field::traits::FiniteField<gf2_core::gfp::Fp<@P>, u64, u128>}::characteristic]
     Visibility: public -/
@@ -803,38 +827,38 @@ axiom
   gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U64
 
-/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 137:0-137:23
     Visibility: public -/
 axiom packed.bipedal3.Bipedal3.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.bipedal3.Bipedal3 → Result Unit
 
-/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1769:0-1769:26
     Visibility: public -/
 axiom packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.bipedal3.Bipedal3Vec → Result Unit
 
-/-- [gf2_algebra::packed::bipedal3::{core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2912:0-2912:29
     Visibility: public -/
 axiom
   packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.bipedal3.Bipedal3Matrix → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 260:0-260:22
     Visibility: public -/
 axiom packed.packed5.Packed5.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.packed5.Packed5 → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 939:0-939:25
     Visibility: public -/
 axiom packed.packed5.Packed5Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.packed5.Packed5Vec → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1417:0-1417:28
     Visibility: public -/
 axiom packed.packed5.Packed5Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
@@ -867,13 +891,13 @@ axiom packed.packed7.SUB_LUT : Result (Array Std.U8 65536#usize)
     Visibility: public -/
 axiom packed.packed7.MUL_LUT : Result (Array Std.U8 65536#usize)
 
-/-- [gf2_algebra::packed::packed7::{core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Vec}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1021:0-1021:25
     Visibility: public -/
 axiom packed.packed7.Packed7Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
   : packed.packed7.Packed7Vec → Result Unit
 
-/-- [gf2_algebra::packed::packed7::{core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Matrix}::assert_receiver_is_total_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1378:0-1378:28
     Visibility: public -/
 axiom packed.packed7.Packed7Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq

@@ -17,13 +17,6 @@ set_option maxRecDepth 2048
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 88:0-88:34
     Name pattern: [core::fmt::builders::DebugStruct]
     Visibility: public -/
-@[rust_type "core::fmt::builders::DebugStruct"]
+@[rust_type "core::fmt::builders::DebugStruct" (mutRegions := #[0])]
 axiom core.fmt.builders.DebugStruct : Type
-
-/-- [core::iter::adapters::zip::Zip]
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 15:0-15:20
-    Name pattern: [core::iter::adapters::zip::Zip]
-    Visibility: public -/
-@[rust_type "core::iter::adapters::zip::Zip"]
-axiom core.iter.adapters.zip.Zip (A : Type) (B : Type) : Type
 

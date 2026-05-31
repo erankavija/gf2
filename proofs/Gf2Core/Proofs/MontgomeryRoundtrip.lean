@@ -395,10 +395,6 @@ theorem redc_value_spec {P : Std.U64} {t : Std.U128}
     progress as ⟨i3, hi3⟩           -- checked U128 add: t + mp
     progress as ⟨i4, hi4⟩           -- i3 >>> 64
     progress as ⟨u, hu⟩             -- cast U64 i4
-    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩  -- overflowing_sub u P
-    progress as ⟨i5, hi5⟩           -- cast_fromBool
-    progress as ⟨neg_i, hneg_i⟩     -- wrapping_neg
-    progress as ⟨correction, hcorrection⟩  -- AND
     -- Establish intermediate value equalities
     have h_i1_val : i1.val = m.val := by rw [hi1]; exact U64.cast_U128_val_eq m
     have h_i2_val : i2.val = P.val := by rw [hi2]; exact U64.cast_U128_val_eq P
@@ -415,19 +411,17 @@ theorem redc_value_spec {P : Std.U64} {t : Std.U128}
       rw [hu]; exact UScalar.cast_val_mod_pow_of_inBounds_eq .U64 i4 (by
         have := hP.2.2; scalar_tac)
     have hu_lt_2P : u.val < 2 * P.val := by rw [hu_val_eq]; exact hi4_lt
-    -- Rewrite to match cond_sub pattern
-    have h_result_eq : discr_v = (⟨u.bv - P.bv⟩ : Std.U64) := by
-      apply UScalar.val_eq_imp
-      show discr_v.bv.toNat = (u.bv - P.bv).toNat; rw [hdiscr1]
-    have h_corr_struct : correction = neg_i &&& P := by
-      apply UScalar.val_eq_imp; exact hcorrection
-    have cast_fromBool_val : ∀ (b : Bool),
-        (UScalar.cast_fromBool .U64 b).val = b.toNat := by
-      intro b; cases b <;> native_decide
-    have h_i5_eq : i5 = UScalar.cast_fromBool .U64 discr_b := by
-      apply UScalar.val_eq_imp
-      rw [hi5, cast_fromBool_val]
-    rw [h_result_eq, h_corr_struct, hneg_i, h_i5_eq, hdiscr2]
+    -- New Aeneas Std (0f99a049): `overflowing_sub` is pure; rewrite it to the explicit
+    -- `(⟨u.bv - P.bv⟩, decide (u.val < P.val))`, fold the `lift`, then `change` exposes
+    -- the let-free form and `progress` the `wrapping_neg` to match the cond_sub pattern.
+    rw [FpProgress.overflowing_sub_val]
+    simp only [lift, bind_tc_ok]
+    change spec (do
+        let i5 ← core.num.U64.wrapping_neg
+          (UScalar.cast_fromBool .U64 (decide (u.val < P.val)))
+        ok (core.num.U64.wrapping_add (⟨u.bv - P.bv⟩ : Std.U64) (i5 &&& P))) _
+    progress as ⟨neg_i, hneg_i⟩
+    rw [hneg_i]
     constructor
     · -- Part 1: bounds
       exact FpProgress.cond_sub_val u P hu_lt_2P
@@ -637,23 +631,18 @@ private theorem mont_add_value_spec {P : Std.U64} {a b : Std.U64}
       r.val < P.val ∧ r.val % P.val = (a.val + b.val) % P.val ⦄ := by
     unfold gfp.montgomery.mont_add
     progress as ⟨sum, hsum⟩
-    progress as ⟨discr_v, discr_b, hdiscr1, hdiscr2⟩
-    progress as ⟨i, hi⟩
-    progress as ⟨neg_i, hneg_i⟩
-    progress as ⟨correction, hcorrection⟩
     have hsum_lt : sum.val < 2 * P.val := by omega
-    have h_result_eq : discr_v = (⟨sum.bv - P.bv⟩ : Std.U64) := by
-      apply UScalar.val_eq_imp
-      show discr_v.bv.toNat = (sum.bv - P.bv).toNat; rw [hdiscr1]
-    have h_corr_struct : correction = neg_i &&& P := by
-      apply UScalar.val_eq_imp; exact hcorrection
-    have cast_fromBool_val : ∀ (b : Bool),
-        (UScalar.cast_fromBool .U64 b).val = b.toNat := by
-      intro b; cases b <;> native_decide
-    have h_i_eq : i = UScalar.cast_fromBool .U64 discr_b := by
-      apply UScalar.val_eq_imp
-      rw [hi, cast_fromBool_val]
-    rw [h_result_eq, h_corr_struct, hneg_i, h_i_eq, hdiscr2]
+    -- New Aeneas Std (0f99a049): `overflowing_sub` is pure; rewrite it to the explicit
+    -- `(⟨sum.bv - P.bv⟩, decide (sum.val < P.val))`, fold the `lift`, `change` to the
+    -- let-free form, and `progress` the `wrapping_neg` to match the cond_sub pattern.
+    rw [FpProgress.overflowing_sub_val]
+    simp only [lift, bind_tc_ok]
+    change spec (do
+        let i ← core.num.U64.wrapping_neg
+          (UScalar.cast_fromBool .U64 (decide (sum.val < P.val)))
+        ok (core.num.U64.wrapping_add (⟨sum.bv - P.bv⟩ : Std.U64) (i &&& P))) _
+    progress as ⟨neg_i, hneg_i⟩
+    rw [hneg_i]
     constructor
     · exact FpProgress.cond_sub_val sum P hsum_lt
     · have hfinal_mod := cond_sub_mod_eq sum P hsum_lt hP_pos
