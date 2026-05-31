@@ -6,19 +6,19 @@
   "priority": "normal",
   "assignee": null,
   "dependencies": [
-    "88ca7d2f-5045-4356-8ee3-e4e26876847d",
-    "150d7d79-0f0b-418b-b719-b9a757c81f63",
-    "5f3d0ff9-801a-4747-9a71-9f0a75024c4a",
-    "0056e853-0be7-48ec-8407-ea16bcc45392",
-    "35007c4c-91e3-4d14-b2df-04e3fcad83d0",
     "9b3452e9-2a34-43ea-8ba7-d80acdb8e2fd",
-    "be331e20-11a0-40d0-a36f-a56467f6cbde",
-    "4eaa31a0-7f19-4902-b247-464fcd6aa2da",
+    "35007c4c-91e3-4d14-b2df-04e3fcad83d0",
+    "e2c649cd-12e6-430a-be7a-7cd5165695b0",
     "1b929ce5-122d-40f3-b579-617869cfc70a",
     "3931ac6f-b4d2-4e74-a697-1b6032447ac5",
-    "cef2e631-0109-4889-b560-2191ea1a1d20",
-    "e2c649cd-12e6-430a-be7a-7cd5165695b0",
-    "315f4de5-4681-4981-86de-3e2189dacdfb"
+    "315f4de5-4681-4981-86de-3e2189dacdfb",
+    "4eaa31a0-7f19-4902-b247-464fcd6aa2da",
+    "0056e853-0be7-48ec-8407-ea16bcc45392",
+    "5f3d0ff9-801a-4747-9a71-9f0a75024c4a",
+    "be331e20-11a0-40d0-a36f-a56467f6cbde",
+    "88ca7d2f-5045-4356-8ee3-e4e26876847d",
+    "de3ec390-e827-493c-90c3-b2f48fdb4e52",
+    "cef2e631-0109-4889-b560-2191ea1a1d20"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -30,5 +30,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-02-21T19:35:51.583905100+00:00",
-  "updated_at": "2026-05-31T09:26:30.818960310+00:00"
+  "updated_at": "2026-05-31T12:12:09.817654310+00:00"
 }

@@ -5645,3 +5645,7 @@
 {"type":"issue_created","id":"053a8217-72a4-4cc6-b93b-8a425d6e6930","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:26:02.542787760Z","title":"Upgrade Charon/Aeneas/Lean verification toolchain to latest compatible upstream","priority":"normal"}
 {"type":"issue_state_changed","id":"ef9082fc-7b87-455d-a0d7-984ca487c89e","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:27:10.301198416Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"fbcb39c5-9cca-460a-bdef-f09a96cb102d","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T09:27:10.301396666Z","assignee":"agent:claude"}
+{"type":"gate_failed","id":"523b468d-c347-4e55-8c39-4dafb9ecf25b","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T10:53:57.670726186Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"2710fd5f-b94e-478d-944a-1be7f51b1623","issue_id":"150d7d79-0f0b-418b-b719-b9a757c81f63","timestamp":"2026-05-31T10:53:58.556361149Z","gate_key":"lake-build","updated_by":"auto:executor"}
+{"type":"issue_created","id":"d7f49abf-57f1-454f-a291-d1e8b7ea2520","issue_id":"de3ec390-e827-493c-90c3-b2f48fdb4e52","timestamp":"2026-05-31T12:11:54.256121477Z","title":"Restore extraction coverage for gfp::specialized batch_*_mersenne31 functions","priority":"normal"}
+{"type":"issue_state_changed","id":"941154f9-402e-4ad4-b1ed-df68c5f3970c","issue_id":"de3ec390-e827-493c-90c3-b2f48fdb4e52","timestamp":"2026-05-31T12:12:09.793859993Z","from":"ready","to":"backlog"}
