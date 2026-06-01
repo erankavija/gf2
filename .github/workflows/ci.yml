@@ -119,8 +119,9 @@ jobs:
     # each take ~6-7 min and ~GBs of CBMC memory; running them alongside the
     # rest OOM-killed/preempted the free runner. They are exhaustively verified
     # nightly instead (see .github/workflows/ci-slow.yml, harness filter
-    # `gf256`). This ceiling guards against a runaway solver.
-    timeout-minutes: 30
+    # `gf256`). The 22 lighter harnesses take ~32 min and run cleanly (no OOM);
+    # the ceiling has margin for slow runners (CBMC times vary ~2.5x by runner).
+    timeout-minutes: 50
     permissions:
       contents: read
 
