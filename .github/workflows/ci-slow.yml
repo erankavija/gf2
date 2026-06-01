@@ -39,3 +39,32 @@ jobs:
 
     - name: Run slow / simulation tests
       run: cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64 --release --profile slow --run-ignored ignored-only
+
+  kani-heavy:
+    name: Kani Verification (heavy GF(256) harnesses)
+    runs-on: ubuntu-latest
+    # The three GF(256) table harnesses each take ~6-7 min of CBMC solving and
+    # are too memory-heavy to run alongside the rest on the blocking CI runner
+    # (.github/workflows/ci.yml runs everything else). Verify them here nightly,
+    # sequentially, so peak memory stays at one harness.
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Kani's bundled rustc lags the project MSRV (1.95); relax `rust-version`
+    # for this CI-only checkout so the rust-version gate does not block. See the
+    # matching step in .github/workflows/ci.yml.
+    - name: Relax MSRV for Kani's bundled toolchain (CI-only)
+      run: |
+        find crates dev/research -name Cargo.toml \
+          -exec sed -i 's/^rust-version = .*/rust-version = "1.80"/' {} +
+
+    - name: Kani verification (GF(256) tables)
+      uses: model-checking/kani-github-action@v1
+      with:
+        kani-version: '0.66.0'
+        # `gf256` matches the three table_*_gf256 harnesses only.
+        args: -p gf2-core --harness gf256

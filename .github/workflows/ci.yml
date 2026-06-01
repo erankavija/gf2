@@ -114,10 +114,13 @@ jobs:
   kani:
     name: Kani Verification
     runs-on: ubuntu-latest
-    # The ~25 BMC harnesses run ~1-2 min each; `-j` (below) parallelises them
-    # across the runner's cores. This ceiling guards against a runaway solver
-    # without cutting off a healthy run (which completes in well under it).
-    timeout-minutes: 45
+    # Blocking gate runs the lighter harnesses only. The three GF(256) table
+    # harnesses (table_{consistency,inverse_correct,mul_matches_schoolbook}_gf256)
+    # each take ~6-7 min and ~GBs of CBMC memory; running them alongside the
+    # rest OOM-killed/preempted the free runner. They are exhaustively verified
+    # nightly instead (see .github/workflows/ci-slow.yml, harness filter
+    # `gf256`). This ceiling guards against a runaway solver.
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -139,12 +142,11 @@ jobs:
       uses: model-checking/kani-github-action@v1
       with:
         kani-version: '0.66.0'
-        # Verify harnesses with 2-way parallelism (`-j 2`, stabilised in Kani
-        # 0.63; requires `--output-format=terse`). Fully parallel (`-j` = all
-        # cores) ran 4 CBMC processes at once and OOM-killed the runner VM
-        # ("runner received a shutdown signal"); `-j 2` bounds peak memory while
-        # still roughly halving the ~34 min sequential runtime.
-        args: -p gf2-core -j 2 --output-format=terse
+        # Run every harness EXCEPT the three heavy GF(256) ones (verified
+        # nightly). `--harness` is an OR-matched substring filter, repeatable:
+        # `bitvec` (15) + `gf16` (3) + `kernels::ops` (4) = all 22 lighter
+        # harnesses. Sequential (no -j) keeps peak CBMC memory to one harness.
+        args: -p gf2-core --harness bitvec --harness gf16 --harness kernels::ops
 
   lean-verify:
     name: Lean Verification
