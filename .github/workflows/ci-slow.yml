@@ -46,8 +46,9 @@ jobs:
     # The three GF(256) table harnesses each take ~6-7 min of CBMC solving and
     # are too memory-heavy to run alongside the rest on the blocking CI runner
     # (.github/workflows/ci.yml runs everything else). Verify them here nightly,
-    # sequentially, so peak memory stays at one harness.
-    timeout-minutes: 60
+    # sequentially, so peak memory stays at one harness. ~20 min nominal; ceiling
+    # has wide margin for slow runners (CBMC times vary ~2.5x by runner).
+    timeout-minutes: 90
     permissions:
       contents: read
 
