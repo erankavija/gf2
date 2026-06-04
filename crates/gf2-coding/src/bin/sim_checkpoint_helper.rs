@@ -31,8 +31,33 @@ fn main() {
     {
         use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
         use gf2_coding::linear::LinearBlockCode;
-        use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
+        use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationRunner};
+        use gf2_coding::Llr;
+        use gf2_core::BitVec;
         use std::path::PathBuf;
+        use std::time::Duration;
+
+        // Per-frame sleep wrapper so the test's 50 ms SIGINT poll arrives while
+        // the simulation is still running.  Without it, Hamming(7,4) at BLER=1.0
+        // finishes all 10 frames in < 1 ms — before the polling loop can fire.
+        // 20 ms × 10 frames = 200 ms total; heartbeat at frame 5 = 100 ms, leaving
+        // a 100 ms window for the test to send SIGINT.
+        struct ThrottledChannel {
+            inner: BpskAwgnChannel,
+            delay: Duration,
+        }
+        impl ChannelModel for ThrottledChannel {
+            fn transmit_and_demodulate<R: rand::Rng>(
+                &self,
+                bits: &BitVec,
+                eb_n0_db: f64,
+                rate: f64,
+                rng: &mut R,
+            ) -> Vec<Llr> {
+                std::thread::sleep(self.delay);
+                self.inner.transmit_and_demodulate(bits, eb_n0_db, rate, rng)
+            }
+        }
 
         let args: Vec<String> = std::env::args().collect();
         if args.len() != 2 {
@@ -53,7 +78,10 @@ fn main() {
             .expect("Hamming code must have H")
             .clone();
         let decoder = OrbGrand::new(h, OrbGrandConfig::default());
-        let channel = BpskAwgnChannel;
+        let channel = ThrottledChannel {
+            inner: BpskAwgnChannel,
+            delay: Duration::from_millis(20),
+        };
 
         let config = SimulationConfig {
             eb_n0_range_db: vec![0.0], // low SNR -> fast frame errors
