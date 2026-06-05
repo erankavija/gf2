@@ -1,0 +1,24 @@
+{
+  "id": "3fcb7025-7f12-4d47-930d-3c9116bac421",
+  "title": "Within-SNR frame parallelism for SimulationRunner",
+  "description": "## Goal\n\nAdd within-SNR frame parallelism to `SimulationRunner` so a single\nSNR point can saturate all available cores. Today `run_with_decoder`\n(`crates/gf2-coding/src/simulation.rs:3828`) and `run_coded_iterative`\nprocess frames serially within an SNR point; the only existing\nparallel variant, `run_coded_iterative_parallel`, parallelises\n**across** SNR points only. The DVB-T2 production campaign\n(`e4849f07`) cannot reach the FER=10⁻⁴ frame-error target in\nreasonable wall-clock without this.\n\n## Why now\n\nMeasured during the 2026-06-05 production launch of `e4849f07`:\nsingle-thread throughput is **1.6 frames/sec** on AMD Ryzen 9 5900X\nfor the DVB-T2 r1/2 16-QAM SumProduct chain (n_ldpc=64800,\nbits/sym=4, ExactLogMap demap). At the [hard] criterion of ≥100\nerrors at the FER≈10⁻⁴ bracket point, this is ~10⁶ frames ≈ **7\ndays per deep SNR point per config × 6 configs**. The runner uses\n`NLWP=2` (one worker + main thread) at 100% on a single core out of\n24 — `verified via ps -o pid,nlwp,pcpu` during the run.\n\nPartial r1/2 16-QAM data already collected (preserved in\n`dev/benchmarks/dvb_t2_awgn/curve_1_2_16qam/checkpoints/`) shows the\nimplementation is on-target: FER=0.465 at Es/N0=6.0 dB (ETSI\nthreshold), FER<2.7e-5 at Es/N0=6.25 dB after 37 555 frames. The\n≤0.5 dB gap target is plausibly met; we just cannot formally\nbracket it in current wall-clock budget.\n\n## Deliverables\n\n1. New parallel API on `SimulationRunner` that dispatches frames\n   within one SNR point across rayon workers. Either a new method\n   (e.g. `run_with_decoder_parallel`) or a `parallelism: usize`\n   parameter on `run_with_decoder`. Caller surface to be decided\n   during design — the campaign binary\n   (`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs:971`) must\n   be able to opt in without losing observability features (tracing,\n   checkpointing).\n2. Determinism: result CSV columns (`fer`, `frames`, `errors`,\n   `mean_iters`) must be **byte-identical** to a single-thread run\n   at the same seed. Each worker owns an independent\n   `ChaCha20Rng::set_word_pos`-ed clone, advancing by a fixed\n   chunk-size step; aggregation is order-independent (sum of\n   per-worker counts).\n3. Heartbeat / checkpoint behaviour: at minimum, per-SNR-boundary\n   checkpoint as in `run_coded_iterative_parallel`. Within-SNR\n   heartbeat resume is a nice-to-have; if architecturally hard, can\n   defer with a follow-up issue.\n4. Update campaign binary to use the new parallel API by default,\n   with a CLI knob to opt back to single-thread for byte-identity\n   regression tests.\n\n## Success criteria\n\n- [hard] Property test: parallel run on N workers (N ∈ {1, 2, 4, 8})\n  produces byte-identical `fer`, `frames`, `errors`, `mean_iters`\n  vs single-thread for the same seed across at least 3 (rate, mod)\n  configurations (e.g. r1/2 16qam, r2/3 64qam, r3/4 64qam).\n- [hard] Throughput on AMD Ryzen 9 5900X (24 threads) ≥ **12x**\n  single-thread for DVB-T2 r1/2 16-QAM at Es/N0=6.5 dB (deep\n  waterfall, low mean_iters case). Reported in\n  `dev/benchmarks/dvb_t2_awgn/parallel_throughput.md`.\n- [hard] Campaign binary integrates the new API; running r1/2\n  16-QAM at the existing 0.25 dB bracket completes with ≥100\n  errors at every bracket point in ≤ 24h wall-clock.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`\n  outside the kernel crates.\n- [hard] Documentation: `crates/gf2-coding/src/simulation.rs`\n  module-level rustdoc updated; CLAUDE.md \"Test tiers\" /\n  \"Architecture\" sections updated where the runner is described.\n\n## Non-goals\n\n- No new channel models.\n- No changes to the encoder, decoder, or BICM chain.\n- GPU dispatch path remains the existing `--gpu` reservation.\n\n## Notes for the implementer\n\n- `ChaCha20Rng::set_word_pos` is already used by the\n  resume/checkpoint path (`simulation.rs`); the per-worker offset\n  scheme is a natural extension.\n- The current per-frame cost (~0.6 s for r1/2 16-QAM) is\n  encoder+demap+decode-dominated; ensure the IRA encoder cache\n  (`crates/gf2-coding/src/ldpc/encoding/`) and decoder state are\n  safely shareable across workers (immutable codec, mutable\n  per-worker scratch).\n- Coordinate with the existing tracing/Subscriber install in\n  `run_coded_iterative_parallel` (see comment around line 3486 for\n  per-rayon-worker `Dispatch` propagation).",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T18:50:39.966846512+00:00",
+  "updated_at": "2026-06-05T19:58:09.624018998+00:00"
+}

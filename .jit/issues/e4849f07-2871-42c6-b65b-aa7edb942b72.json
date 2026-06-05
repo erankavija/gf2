@@ -6,10 +6,11 @@
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
     "152388f4-2018-47ff-8dc1-c3594c84e466",
     "32a0408c-d496-4a15-bdcd-2a6c9104acbc",
-    "82dd7384-1e61-4042-84b6-dc60675eb340"
+    "82dd7384-1e61-4042-84b6-dc60675eb340",
+    "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
+    "3fcb7025-7f12-4d47-930d-3c9116bac421"
   ],
   "gates_required": [
     "doc-review",
@@ -35,5 +36,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-02-21T19:35:51.787951418+00:00",
-  "updated_at": "2026-05-30T23:01:49.427798221+00:00"
+  "updated_at": "2026-06-05T18:50:48.868793529+00:00"
 }
