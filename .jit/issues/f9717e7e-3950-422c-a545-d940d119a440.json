@@ -6,8 +6,13 @@
   "priority": "high",
   "assignee": null,
   "dependencies": [
+    "bcf7776d-a8f0-4a18-9361-ef257b847e48",
     "3fcb7025-7f12-4d47-930d-3c9116bac421",
-    "ec530af9-4f06-4eca-a699-ad072a1f5af8"
+    "ec530af9-4f06-4eca-a699-ad072a1f5af8",
+    "1f588e2a-f145-4c96-996a-fffe284c83f9",
+    "5d0a3fad-b307-4e1a-bf8b-bad16a652895",
+    "a5635da5-1bae-4619-9579-566d70a2f5d7",
+    "9e853c62-6e5a-4307-ac63-44217d753662"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -20,5 +25,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T19:57:19.102973904+00:00",
-  "updated_at": "2026-06-05T19:58:09.145441441+00:00"
+  "updated_at": "2026-06-05T22:06:03.494009439+00:00"
 }

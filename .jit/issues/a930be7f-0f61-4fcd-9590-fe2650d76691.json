@@ -1,0 +1,27 @@
+{
+  "id": "a930be7f-0f61-4fcd-9590-fe2650d76691",
+  "title": "GPU LDPC belief-propagation batch decode kernel",
+  "description": "## Goal\n\nLDPC belief-propagation batch decode kernel on gfx1030 covering\nDVB-T2 n=64800 today; designed for per-`i_LS` 5G NR shift tables\nso the same kernel parameterises both standards.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages for gf2-sim pipeline)\nwithin epic `gf2-sim` (`f9717e7e`). May absorb in-scope work from\n`epic:hip-gpu-prototype` (`806eb14e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] GPU LDPC BP hard-decision output matches CPU decoder\n  for DVB-T2 n=64800 at fixed RNG state and BP algorithm\n  (MinSum / NMS / SumProduct).\n- [hard] `parallelism-pays` gate: receipt records GPU batch\n  decode throughput ≥ 10× single-thread CPU baseline on\n  gfx1030 at deep-waterfall mean_iters.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "36075e4c-9813-48cd-bee6-5fc28de15818"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "parallelism-pays"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:03:40.776920338+00:00",
+  "updated_at": "2026-06-05T22:06:15.458618742+00:00"
+}

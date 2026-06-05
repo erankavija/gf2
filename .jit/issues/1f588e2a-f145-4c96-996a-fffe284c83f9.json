@@ -1,0 +1,28 @@
+{
+  "id": "1f588e2a-f145-4c96-996a-fffe284c83f9",
+  "title": "GPU stages for gf2-sim pipeline",
+  "description": "## Goal\n\nLand the GPU side of the `gf2-sim` pipeline: HIP host\ninfrastructure, deterministic ChaCha20 + AWGN GPU kernel, LDPC\nbelief-propagation batch decode kernel, Gray-QAM soft-demap\nintegration, OOM auto-fallback and kernel hard-fail handling,\nand the GPU-vs-CPU byte-identity harness.\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Runs in parallel with\nthe CPU foundation story (lockstep handoff via the Phase 0\ndesign doc `ec530af9`). Kernels live in the existing crate\n`gf2-kernels-hip`; the host-side dispatcher lives in `gf2-sim`\nbehind feature `hip`.\n\n## Deliverables (themes)\n\n- HIP host infrastructure: stream pool, allocator wrappers,\n  deterministic-launch helpers, multi-arch dispatch shim\n  (gfx1030 today; gfx1100 / gfx1200 / MI seams documented).\n- GPU ChaCha20 + Box-Muller AWGN producing the same byte stream\n  as the host ChaCha20 partitioning.\n- LDPC BP batch decode kernel (DVB-T2 n=64800; designed for\n  per-`i_LS` 5G NR shift tables).\n- Gray-QAM soft-demap GPU integration (wraps existing\n  `demap_batch`).\n- OOM auto-fallback to CPU stage; kernel / driver hard-fail\n  with diagnostic dump.\n- Byte-identity harness comparing CPU-only vs CPU+GPU paths\n  for `fer` / `frames` / `errors` / `mean_iters` on the DVB-T2\n  chain.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] GPU-vs-CPU byte-identity property test passes on the\n  DVB-T2 chain at a fixed seed.\n- [hard] Receipt artefact under\n  `dev/benchmarks/gf2-sim/gpu-stages-receipts.md` records\n  per-kernel throughput on gfx1030 + the byte-identity\n  attestation.\n- [hard] CLAUDE.md updated with the HIP dispatch model and\n  multi-arch target list.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals; multi-GPU implementation is out\nof scope (seams only).",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "a930be7f-0f61-4fcd-9590-fe2650d76691",
+    "ed575f15-e185-409f-9cc2-f76e3a998425",
+    "d3f1616a-7fc8-4aa8-89e4-aedd9f35874b",
+    "36075e4c-9813-48cd-bee6-5fc28de15818",
+    "f6004add-c25c-409e-b136-b488d28f925e",
+    "14f59c2d-2818-45fb-927d-86d425c35e08"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:01:23.256740063+00:00",
+  "updated_at": "2026-06-05T22:06:05.519632949+00:00"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "f6004add-c25c-409e-b136-b488d28f925e",
+  "title": "GPU ChaCha20 and Box-Muller AWGN kernel",
+  "description": "## Goal\n\nDevice-side ChaCha20 kernel + Box-Muller AWGN sampler producing\nbyte-identical noise stream to the host ChaCha20 partitioning\nscheme at the same seed and per-worker `set_word_pos` offset.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages for gf2-sim pipeline)\nwithin epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] GPU ChaCha20 kernel output matches host\n  `ChaCha20Rng::set_word_pos(N)` stream bit-for-bit at fixed\n  seed + offset; AWGN samples match within documented FP\n  tolerance.\n- [hard] `parallelism-pays` gate: receipt records GPU\n  noise-generation throughput vs single-thread CPU baseline on\n  gfx1030.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "36075e4c-9813-48cd-bee6-5fc28de15818"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "parallelism-pays"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:03:33.640096006+00:00",
+  "updated_at": "2026-06-05T22:06:14.413631693+00:00"
+}

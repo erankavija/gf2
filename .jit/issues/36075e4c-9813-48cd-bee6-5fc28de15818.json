@@ -1,0 +1,26 @@
+{
+  "id": "36075e4c-9813-48cd-bee6-5fc28de15818",
+  "title": "HIP host infrastructure (stream pool, allocator, multi-arch dispatch)",
+  "description": "## Goal\n\nStand up the HIP host infrastructure: stream pool, allocator\nwrappers, deterministic-launch helpers, and multi-arch dispatch\nshim. gfx1030 is the only CI target today; gfx1100 / gfx1200 /\nMI series seams documented per Phase 0 design doc.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages for gf2-sim pipeline)\nwithin epic `gf2-sim` (`f9717e7e`). Lives split between\n`gf2-kernels-hip` (FFI / kernels) and `gf2-sim` (host-side\ndispatcher behind feature `hip`). Placeholder body — project-lead\nexpands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] HIP stream pool, allocator wrappers, and\n  deterministic-launch helpers compile clean under\n  `--features hip` on gfx1030; multi-arch dispatch shim selects\n  the gfx1030 path with `tracing::warn` fallback for other archs.\n\n## Non-goals\n\nMulti-GPU implementation (epic non-goals).",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "ec530af9-4f06-4eca-a699-ad072a1f5af8"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:03:27.652818303+00:00",
+  "updated_at": "2026-06-05T22:06:13.902659317+00:00"
+}

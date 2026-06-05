@@ -1,0 +1,26 @@
+{
+  "id": "bbf6b6ee-8ddd-420a-9e56-0319297aac55",
+  "title": "Migrate dvb_t2_awgn_campaign binary to gf2-sim pipeline",
+  "description": "## Goal\n\nMigrate `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs` from\n`SimulationRunner::run_with_decoder` to the new gf2-sim hybrid\npipeline. Preserve all existing CLI flags (`--decoder`,\n`--demap`, `--calibrate*`, `--resume`, `--esn0-range`,\n`--target-errors`, `--max-frames`, `--seed`, `--output-dir`);\nwire `--gpu` to the new HIP-backed path.\n\n## Context\n\nTask under story `5d0a3fad` (DVB-T2 BICM application on\ngf2-sim) within epic `gf2-sim` (`f9717e7e`). This task is the\ndownstream dep that `e4849f07` (in `epic:dvb-t2-awgn-campaign`)\nwill be wired to. Placeholder body — project-lead expands during\nclaim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Campaign binary runs end-to-end via the gf2-sim\n  pipeline; all existing CLI flags pass through; the byte-identity\n  contract on `fer` / `frames` / `errors` / `mean_iters` is\n  preserved.\n- [hard] `parallelism-pays` gate: smoke campaign for r1/2 16qam\n  at the existing PLAN.md bracket completes with ≥100 errors at\n  every bracket point in ≤ 24h wall-clock on AMD Ryzen 9 5900X.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "8c8302c8-45c7-400b-8640-587c068fe255"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "parallelism-pays"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:04:41.140272298+00:00",
+  "updated_at": "2026-06-05T22:06:22.003350905+00:00"
+}

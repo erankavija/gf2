@@ -1,0 +1,24 @@
+{
+  "id": "5d0a3fad-b307-4e1a-bf8b-bad16a652895",
+  "title": "DVB-T2 BICM application on gf2-sim",
+  "description": "## Goal\n\nUse the new `gf2-sim` pipeline to express the DVB-T2 BICM AWGN\nchain via the typestate-builder preset, migrate the existing\ncampaign binary to the new pipeline, and provide the CPU-vs-GPU\nbyte-identity regression for the DVB-T2 chain. This story\nunblocks the multi-day production sweep tracked by\n`e4849f07` (which stays in `epic:dvb-t2-awgn-campaign`).\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Sequencing-blocked on\nthe hybrid executor story. The DVB-T2 campaign artefacts and\nclosure note are owned by the existing\n`epic:dvb-t2-awgn-campaign`; this story delivers only the\npipeline-side work.\n\n## Deliverables (themes)\n\n- DVB-T2 preset using the typestate builder; graph-API example\n  for reference.\n- Migrate `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`\n  from `SimulationRunner::run_with_decoder` to the new pipeline,\n  preserving `--decoder`, `--demap`, and the `--gpu`\n  CLI-surface reservation.\n- CPU-vs-GPU byte-identity regression for the DVB-T2 chain on\n  the four deterministic columns at a fixed seed.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] Byte-identity regression passes for the DVB-T2 chain\n  across {CPU-only, CPU-parallel, CPU+GPU} executions at the\n  same seed.\n- [hard] Campaign binary, when invoked at the existing\n  `dev/benchmarks/dvb_t2_awgn/PLAN.md` brackets, reaches the\n  ≥ 100 frame-error criterion at each bracket point in\n  ≤ 24h wall-clock per (rate, modulation) configuration.\n- [hard] `e4849f07` (in `epic:dvb-t2-awgn-campaign`) is\n  unblocked by the binary wire-up task in this story (cross-epic\n  dep).\n\n## Non-goals\n\n- The closure note and PNG overlays remain part of `e4849f07`'s\n  scope, not this story.\n- 5G NR work — handled by the next story.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "0d9cb8e3-1a83-4079-a6f9-bf59e35cba05",
+    "bbf6b6ee-8ddd-420a-9e56-0319297aac55",
+    "8c8302c8-45c7-400b-8640-587c068fe255"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:01:43.595240612+00:00",
+  "updated_at": "2026-06-05T22:06:06.975717155+00:00"
+}

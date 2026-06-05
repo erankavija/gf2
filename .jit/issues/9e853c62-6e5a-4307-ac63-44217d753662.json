@@ -1,0 +1,25 @@
+{
+  "id": "9e853c62-6e5a-4307-ac63-44217d753662",
+  "title": "Hybrid CPU+GPU executor for gf2-sim",
+  "description": "## Goal\n\nBuild the hybrid executor that schedules CPU and GPU stages on a\nsingle host: rayon workers paired with HIP streams, async overlap\nof CPU batch N+1 against GPU batch N, branching-DAG topology\nsupport, resume / heartbeat across the hybrid path, and the\nfailure-mode wiring (OOM auto-fallback, kernel hard-fail with\ndiagnostic dump).\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Sequencing-blocked on\nboth the CPU foundation story and the GPU stages story; pulls\ntheir primitives together into a working pipeline.\n\n## Deliverables (themes)\n\n- Pipeline scheduler: rayon worker pool, HIP stream per worker,\n  CPU↔GPU async overlap.\n- DAG topology executor: build-time topology check via\n  connector typestate; runtime topo sort.\n- Resume / heartbeat checkpointing across in-flight GPU batches\n  (drain semantics, schema from Phase 0 design doc).\n- Failure-mode wiring: OOM ⇒ auto-fallback to CPU + `tracing::warn`;\n  kernel / driver error ⇒ hard fail with diagnostic dump.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] Hybrid path produces byte-identity for the four\n  deterministic columns vs CPU-only path on a representative\n  chain.\n- [hard] Receipt artefact under\n  `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md` records\n  the combined CPU+GPU throughput on the calibration chain.\n- [hard] CLAUDE.md updated with the executor's worker / stream\n  pairing model and the failure-mode policy.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "de160fc5-724f-437a-8303-145737a6a71d",
+    "571c11c4-8ff1-43b8-b05e-fde41a446c98",
+    "75c22fa8-2396-41ef-8270-b58c3edd6684",
+    "42eac5cc-d805-410e-9b1b-a269d51b2f0f"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:story",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:01:32.152895518+00:00",
+  "updated_at": "2026-06-05T22:06:06.485178325+00:00"
+}

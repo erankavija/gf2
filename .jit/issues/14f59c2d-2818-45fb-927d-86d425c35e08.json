@@ -1,0 +1,27 @@
+{
+  "id": "14f59c2d-2818-45fb-927d-86d425c35e08",
+  "title": "GPU-vs-CPU byte-identity harness (DVB-T2 chain)",
+  "description": "## Goal\n\nProperty-test harness asserting byte-identity of the four\ndeterministic columns between CPU-only and CPU+GPU paths on the\nDVB-T2 chain at a fixed seed.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages for gf2-sim pipeline)\nwithin epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Property test asserts byte-identity for `fer` /\n  `frames` / `errors` / `mean_iters` between CPU-only and\n  CPU+GPU paths at fixed seed for ≥3 DVB-T2 MODCOD configurations.\n\n## Non-goals\n\nBER excluded from byte-identity per status-quo contract.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "ed575f15-e185-409f-9cc2-f76e3a998425"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:03:55.033635107+00:00",
+  "updated_at": "2026-06-05T22:06:17.428022816+00:00"
+}

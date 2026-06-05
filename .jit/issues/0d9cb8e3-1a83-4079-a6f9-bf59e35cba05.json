@@ -1,0 +1,26 @@
+{
+  "id": "0d9cb8e3-1a83-4079-a6f9-bf59e35cba05",
+  "title": "CPU-vs-GPU byte-identity regression for DVB-T2 chain",
+  "description": "## Goal\n\nRegression test asserting byte-identity of the four deterministic\ncolumns across {CPU-only, CPU-parallel, CPU+GPU} executions at\nthe same seed for all six in-scope DVB-T2 MODCODs.\n\n## Context\n\nTask under story `5d0a3fad` (DVB-T2 BICM application on\ngf2-sim) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Regression test asserts byte-identity of `fer` /\n  `frames` / `errors` / `mean_iters` across {CPU-only,\n  CPU-parallel-24-thread, CPU+GPU on gfx1030} at the same seed\n  for all six DVB-T2 MODCODs.\n\n## Non-goals\n\nBER excluded from byte-identity per status-quo contract.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "bbf6b6ee-8ddd-420a-9e56-0319297aac55"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:04:45.458919153+00:00",
+  "updated_at": "2026-06-05T22:06:22.993837028+00:00"
+}

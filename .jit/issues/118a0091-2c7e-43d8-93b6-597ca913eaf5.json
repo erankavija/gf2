@@ -1,0 +1,25 @@
+{
+  "id": "118a0091-2c7e-43d8-93b6-597ca913eaf5",
+  "title": "gf2-sim crate scaffolding (Pipeline, Stage, Connector primitives)",
+  "description": "## Goal\n\nStand up the `gf2-sim` crate with `Pipeline`, `Stage<I, O>`,\n`Connector`, batch types, and error-type primitives per the\nPhase 0 design doc.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation for gf2-sim\npipeline) within epic `gf2-sim` (`f9717e7e`). Locked architecture\nfrom the 2026-06-05 interview applies; see the epic description.\nPlaceholder body — project-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract before\n  significant implementation work begins.\n- [hard] New crate `gf2-sim` builds clean under\n  `cargo build --workspace --all-features --release`; exposes\n  `Pipeline`, `Stage<I, O>`, `Connector`, batch types, and\n  error types per the design doc.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "ec530af9-4f06-4eca-a699-ad072a1f5af8"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:02:50.954566093+00:00",
+  "updated_at": "2026-06-05T22:06:09.432759058+00:00"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "110e45cc-0574-46e6-8648-74f416a3f434",
+  "title": "Researcher onboarding examples and rustdoc for gf2-sim",
+  "description": "## Goal\n\nResearcher-facing onboarding: `crates/gf2-sim/examples/` covering\nDVB-T2 preset, 5G NR preset, and a novel-chain example via the\ngraph API. Rustdoc walk-through landing pages for the typestate\nbuilder and the graph API.\n\n## Context\n\nTask under story `a5635da5` (5G NR LDPC real-time and research\nenablers) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] `crates/gf2-sim/examples/` contains DVB-T2,\n  5G NR, and graph-API novel-chain examples; each runs via\n  `cargo run -p gf2-sim --example <name>` (or `--features hip`\n  where applicable) and produces documented output.\n- [hard] `doc-review` gate: rustdoc cover for `gf2-sim` provides\n  a chain-construction quickstart, links to the example files,\n  and explains the determinism contract.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "acf9b11a-e7c6-44d6-a157-77a60f68e9d0"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:05:17.741615079+00:00",
+  "updated_at": "2026-06-05T22:06:27.045486827+00:00"
+}

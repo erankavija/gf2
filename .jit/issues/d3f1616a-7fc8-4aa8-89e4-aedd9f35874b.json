@@ -1,0 +1,27 @@
+{
+  "id": "d3f1616a-7fc8-4aa8-89e4-aedd9f35874b",
+  "title": "GPU Gray-QAM soft demap integration",
+  "description": "## Goal\n\nIntegrate the existing `gf2-kernels-hip::demap_batch` Gray-QAM\nsoft-demap kernel as a `Stage` in the gf2-sim pipeline.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages for gf2-sim pipeline)\nwithin epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] GPU demap LLRs match CPU `FastGrayQamDemapper` output\n  to documented FP tolerance for 16-QAM and 64-QAM at fixed\n  channel realisation.\n- [hard] `parallelism-pays` gate: receipt records GPU demap\n  throughput vs CPU baseline on gfx1030.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "36075e4c-9813-48cd-bee6-5fc28de15818"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "parallelism-pays"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "component:gf2-kernels-hip",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:03:45.349813276+00:00",
+  "updated_at": "2026-06-05T22:06:15.959137436+00:00"
+}

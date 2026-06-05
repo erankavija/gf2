@@ -20,29 +20,17 @@
       "auto": true,
       "example_integration": null
     },
-    "doc-review": {
+    "asm-artefact-present": {
       "version": 1,
-      "key": "doc-review",
-      "title": "Documentation review completed",
-      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
-      "stage": "postcheck",
-      "mode": "manual",
-      "priority": 100,
-      "reserved": {},
-      "auto": false,
-      "example_integration": null
-    },
-    "verify-lean": {
-      "version": 1,
-      "key": "verify-lean",
-      "title": "Lean extraction regenerates",
-      "description": "scripts/verify-lean.sh must regenerate LLBC+Lean from current Rust and lake build the result successfully (Charon -> Aeneas -> lake). Wraps scripts/verify-lean.sh.",
+      "key": "asm-artefact-present",
+      "title": "ASM artefact present",
+      "description": "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "./scripts/verify-lean.sh",
-        "timeout_seconds": 1200,
+        "command": "./scripts/asm-artefact-present.sh",
+        "timeout_seconds": 300,
         "working_dir": null,
         "env": {},
         "pass_context": false
@@ -72,17 +60,17 @@
       "auto": true,
       "example_integration": null
     },
-    "fmt": {
+    "cargo-kani": {
       "version": 1,
-      "key": "fmt",
-      "title": "Code formatted",
-      "description": "Code must be formatted with cargo fmt",
+      "key": "cargo-kani",
+      "title": "Kani proof harnesses pass",
+      "description": "cargo kani must pass all bounded model checking harnesses",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "cargo fmt --check",
-        "timeout_seconds": 30,
+        "command": "cargo kani",
+        "timeout_seconds": 1800,
         "working_dir": null,
         "env": {},
         "pass_context": false
@@ -112,80 +100,17 @@
       "auto": true,
       "example_integration": null
     },
-    "code-review": {
+    "verify-lean": {
       "version": 1,
-      "key": "code-review",
-      "title": "Code Review",
-      "description": "AI-powered code review against gf2 project standards",
+      "key": "verify-lean",
+      "title": "Lean extraction regenerates",
+      "description": "scripts/verify-lean.sh must regenerate LLBC+Lean from current Rust and lake build the result successfully (Charon -> Aeneas -> lake). Wraps scripts/verify-lean.sh.",
       "stage": "postcheck",
       "mode": "auto",
       "checker": {
         "type": "exec",
-        "command": "./scripts/ai-review.sh",
-        "timeout_seconds": 1800,
-        "working_dir": null,
-        "env": {
-          "REVIEWER_AGENT": "copilot -s --model gpt-5.4 --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
-        },
-        "pass_context": true,
-        "prompt_file": "./scripts/code-review-prompt.md"
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "lake-build": {
-      "version": 1,
-      "key": "lake-build",
-      "title": "Lean4 proofs compile",
-      "description": "lake build must succeed AND no sorry warnings in hand-written Proofs/ files (issue 2e544a34). Wraps lake build via scripts/lake-build-strict.sh.",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "./scripts/lake-build-strict.sh",
-        "timeout_seconds": 600,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "cargo-kani": {
-      "version": 1,
-      "key": "cargo-kani",
-      "title": "Kani proof harnesses pass",
-      "description": "cargo kani must pass all bounded model checking harnesses",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "cargo kani",
-        "timeout_seconds": 1800,
-        "working_dir": null,
-        "env": {},
-        "pass_context": false
-      },
-      "priority": 100,
-      "reserved": {},
-      "auto": true,
-      "example_integration": null
-    },
-    "asm-artefact-present": {
-      "version": 1,
-      "key": "asm-artefact-present",
-      "title": "ASM artefact present",
-      "description": "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update",
-      "stage": "postcheck",
-      "mode": "auto",
-      "checker": {
-        "type": "exec",
-        "command": "./scripts/asm-artefact-present.sh",
-        "timeout_seconds": 300,
+        "command": "./scripts/verify-lean.sh",
+        "timeout_seconds": 1200,
         "working_dir": null,
         "env": {},
         "pass_context": false
@@ -221,6 +146,93 @@
         "working_dir": null,
         "env": {},
         "pass_context": true
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "parallelism-pays": {
+      "version": 1,
+      "key": "parallelism-pays",
+      "title": "Parallelism speedup demonstrated",
+      "description": "Measured speedup vs single-thread (or single-CPU-host for GPU-included tasks) baseline meets the per-task target documented in the task's success criteria. Receipt artefact (benchmark CSV or markdown summary) committed under dev/benchmarks/gf2-sim/. Attestation: lead/operator records the measurement, baseline, and observed speedup before passing.",
+      "stage": "postcheck",
+      "mode": "manual",
+      "priority": 100,
+      "reserved": {},
+      "auto": false,
+      "example_integration": null
+    },
+    "lake-build": {
+      "version": 1,
+      "key": "lake-build",
+      "title": "Lean4 proofs compile",
+      "description": "lake build must succeed AND no sorry warnings in hand-written Proofs/ files (issue 2e544a34). Wraps lake build via scripts/lake-build-strict.sh.",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/lake-build-strict.sh",
+        "timeout_seconds": 600,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "fmt": {
+      "version": 1,
+      "key": "fmt",
+      "title": "Code formatted",
+      "description": "Code must be formatted with cargo fmt",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "cargo fmt --check",
+        "timeout_seconds": 30,
+        "working_dir": null,
+        "env": {},
+        "pass_context": false
+      },
+      "priority": 100,
+      "reserved": {},
+      "auto": true,
+      "example_integration": null
+    },
+    "doc-review": {
+      "version": 1,
+      "key": "doc-review",
+      "title": "Documentation review completed",
+      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
+      "stage": "postcheck",
+      "mode": "manual",
+      "priority": 100,
+      "reserved": {},
+      "auto": false,
+      "example_integration": null
+    },
+    "code-review": {
+      "version": 1,
+      "key": "code-review",
+      "title": "Code Review",
+      "description": "AI-powered code review against gf2 project standards",
+      "stage": "postcheck",
+      "mode": "auto",
+      "checker": {
+        "type": "exec",
+        "command": "./scripts/ai-review.sh",
+        "timeout_seconds": 1800,
+        "working_dir": null,
+        "env": {
+          "REVIEWER_AGENT": "copilot -s --model gpt-5.4 --allow-tool \"shell(cargo test)\" --allow-tool \"shell(cargo clippy)\" --allow-tool \"shell(cargo fmt)\" --allow-tool \"shell(cargo bench)\""
+        },
+        "pass_context": true,
+        "prompt_file": "./scripts/code-review-prompt.md"
       },
       "priority": 100,
       "reserved": {},

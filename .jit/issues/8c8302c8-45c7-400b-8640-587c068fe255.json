@@ -1,0 +1,25 @@
+{
+  "id": "8c8302c8-45c7-400b-8640-587c068fe255",
+  "title": "DVB-T2 preset and graph-API example for gf2-sim",
+  "description": "## Goal\n\nExpress the full DVB-T2 BICM chain (BCH + LDPC + bit\ninterleaver + Gray-QAM + AWGN + soft demap + inverse) via the\ntypestate-builder preset; provide a graph-API example that\nconstructs the same chain piece-by-piece.\n\n## Context\n\nTask under story `5d0a3fad` (DVB-T2 BICM application on\ngf2-sim) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Both forms (typestate preset + graph-API construction)\n  produce byte-identical output for a fixed input batch on the\n  full DVB-T2 BICM forward + inverse chain at all six in-scope\n  MODCODs.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "9e853c62-6e5a-4307-ac63-44217d753662"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:04:32.017545848+00:00",
+  "updated_at": "2026-06-05T22:06:21.547150994+00:00"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "acf9b11a-e7c6-44d6-a157-77a60f68e9d0",
+  "title": "5G NR LDPC base graphs and per-i_LS shift tables (BG1+BG2, key rates)",
+  "description": "## Goal\n\nLand the 3GPP TS 38.212 LDPC base graphs (BG1, BG2) and the\nper-`i_LS` shift tables for all 8 lifting sets, covering rates\n{1/3, 1/2, 2/3, 5/6}. Verified bit-exact vs reference test\nvectors.\n\n## Context\n\nTask under story `a5635da5` (5G NR LDPC real-time and research\nenablers) within epic `gf2-sim` (`f9717e7e`). Per-`i_LS`\ncorrectness is a known trap recorded in agent memory — single\nlifting-set tables cause ~2 dB BLER loss; the per-`i_LS` indexing\nmust be honoured. Placeholder body — project-lead expands during\nclaim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] BG1 and BG2 base graphs + per-`i_LS` shift tables for\n  all 8 lifting sets and rates {1/3, 1/2, 2/3, 5/6} verified\n  bit-exact against 3GPP TS 38.212 reference test vectors;\n  per-`i_LS` indexing tested explicitly.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "5d0a3fad-b307-4e1a-bf8b-bad16a652895"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "tests"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:04:56.704475851+00:00",
+  "updated_at": "2026-06-05T22:06:24.496306138+00:00"
+}

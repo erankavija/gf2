@@ -1,0 +1,25 @@
+{
+  "id": "42eac5cc-d805-410e-9b1b-a269d51b2f0f",
+  "title": "Failure mode wiring (OOM auto-fallback, kernel hard-fail)",
+  "description": "## Goal\n\nWire the executor-level failure-mode policy: OOM ⇒ CPU-stage\nauto-fallback with `tracing::warn`; kernel / driver error ⇒\nhard fail with diagnostic dump. CLI override available for\nreproducibility-critical experiments.\n\n## Context\n\nTask under story `9e853c62` (Hybrid CPU+GPU executor for\ngf2-sim) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Fault-injection tests cover OOM (auto-fallback path)\n  and kernel error (hard-fail with diagnostic dump); CLI flag\n  flips OOM behaviour to hard-fail and reproduces deterministic\n  failure on the same seed.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "75c22fa8-2396-41ef-8270-b58c3edd6684"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:04:21.666730116+00:00",
+  "updated_at": "2026-06-05T22:06:20.497659554+00:00"
+}

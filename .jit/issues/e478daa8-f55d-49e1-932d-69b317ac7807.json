@@ -1,0 +1,25 @@
+{
+  "id": "e478daa8-f55d-49e1-932d-69b317ac7807",
+  "title": "5G NR LDPC typestate builder preset",
+  "description": "## Goal\n\n5G NR LDPC chain preset via the typestate builder: any\n(BG, lifting set, rate) in scope expressible with compile-time\nparameter check.\n\n## Context\n\nTask under story `a5635da5` (5G NR LDPC real-time and research\nenablers) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] 5G NR LDPC chain expressible via the typestate builder\n  for every (BG, lifting set, rate) combination in scope;\n  compile-time error on invalid parameter combinations.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "acf9b11a-e7c6-44d6-a157-77a60f68e9d0"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:05:01.235071537+00:00",
+  "updated_at": "2026-06-05T22:06:24.998467352+00:00"
+}

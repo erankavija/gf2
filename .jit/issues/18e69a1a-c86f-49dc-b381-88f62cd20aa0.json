@@ -1,0 +1,25 @@
+{
+  "id": "18e69a1a-c86f-49dc-b381-88f62cd20aa0",
+  "title": "Comparison harness vs aff3ct and IT++",
+  "description": "## Goal\n\nSide-by-side comparison harness producing AWGN BLER curves for\nDVB-T2 r1/2 16-QAM and at least one 5G NR LDPC configuration vs\naff3ct or IT++ on the same channel parameters.\n\n## Context\n\nTask under story `a5635da5` (5G NR LDPC real-time and research\nenablers) within epic `gf2-sim` (`f9717e7e`). Placeholder body —\nproject-lead expands during claim.\n\n## Success Criteria\n\n- [hard] Project-lead expands this section with verifiable\n  acceptance conditions consistent with the parent story's\n  deliverables and the epic's architecture contract.\n- [hard] Comparison curves committed under\n  `dev/benchmarks/gf2-sim/comparison/` for at least one DVB-T2\n  configuration and one 5G NR LDPC configuration vs at least one\n  of aff3ct or IT++.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "23d3525f-fa74-4cac-9a3a-86d941606808"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:gf2-sim"
+  ],
+  "created_at": "2026-06-05T22:05:12.306993295+00:00",
+  "updated_at": "2026-06-05T22:06:26.512251745+00:00"
+}
