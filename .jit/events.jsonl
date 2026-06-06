@@ -5728,3 +5728,5 @@
 {"type":"issue_state_changed","id":"7a0f5865-a652-4283-8a92-c5b05d9483a9","issue_id":"110e45cc-0574-46e6-8648-74f416a3f434","timestamp":"2026-06-05T22:06:27.045665558Z","from":"ready","to":"backlog"}
 {"type":"issue_created","id":"cd57df21-d976-4979-9f0b-8908880f5a26","issue_id":"c0b1702d-7cbe-4cfe-868d-611746defac1","timestamp":"2026-06-06T21:26:33.468359581Z","title":"Single-thread baseline measurement on simulation.rs run_with_decoder","priority":"high"}
 {"type":"issue_state_changed","id":"c9f10fa0-ad5f-4967-9652-ed1e0e4633d4","issue_id":"c0b1702d-7cbe-4cfe-868d-611746defac1","timestamp":"2026-06-06T21:26:42.947813523Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"9bc1f77a-34d1-4be5-93b3-95ba5c90e0a6","issue_id":"ec530af9-4f06-4eca-a699-ad072a1f5af8","timestamp":"2026-06-06T22:12:49.367115212Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"6b44aecb-9b89-4da5-87dd-1d69eaf60d84","issue_id":"ec530af9-4f06-4eca-a699-ad072a1f5af8","timestamp":"2026-06-06T22:12:49.367458072Z","assignee":"agent:project-lead"}
