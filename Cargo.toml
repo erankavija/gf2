@@ -4,6 +4,7 @@ members = [
 	"crates/gf2-coding",
 	"crates/gf2-algebra",
 	"crates/gf2-kernels-simd",
+	"crates/gf2-sim",
 ]
 # HIP crate excluded from default workspace — requires ROCm/hipcc.
 # Build explicitly: cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml

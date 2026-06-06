@@ -1,0 +1,28 @@
+[package]
+name = "gf2-sim"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "Research-grade CPU+GPU FEC simulation pipeline (Pipeline/Stage/Connector) built on gf2-coding"
+license = "MIT"
+keywords = ["coding-theory", "simulation", "pipeline", "gf2"]
+categories = ["algorithms", "simulation", "mathematics"]
+rust-version = "1.95"
+
+# Dependency block per pipeline design doc (ec530af9) §5 "Crate-boundary diagram".
+[dependencies]
+gf2-core = { path = "../gf2-core" }
+gf2-coding = { path = "../gf2-coding" }
+gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
+rayon = "1"
+rand_chacha = "0.9" # Q1 decision: future-aligned
+rand = "0.9"
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+ctrlc = "3" # for SIGINT handler in 5f12e7ff
+blake3 = "1" # for v2 checkpoint config_hash
+
+[features]
+default = []
+hip = ["dep:gf2-kernels-hip"]
+llr-f64 = []
