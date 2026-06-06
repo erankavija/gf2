@@ -1,0 +1,7 @@
+# Per-arch kernel blobs and the auto-generated build probes produced by
+# build.rs (design doc §6). Everything under kernels/ is a build artifact:
+# `build.rs` writes a `probe.cpp` per gfx target when no real kernel source is
+# present yet (next wave: f6004add / a930be7f / d3f1616a) and compiles each to
+# a `*.co` code-object blob via hipcc. All of it is regenerated on every build
+# and must not be committed.
+kernels/
