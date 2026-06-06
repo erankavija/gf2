@@ -94,11 +94,12 @@ Two tiers. Use the fast tier by default. Never run the slow tier as an agent.
 
 ## Architecture
 
-This is a Cargo workspace with four production crates:
+This is a Cargo workspace with five production crates:
 
 - **`gf2-core`** (`crates/gf2-core/`) — Low-level primitives. No dependencies on the other workspace crates. All purely mathematical operations, data structures, and algorithms go here.
 - **`gf2-coding`** (`crates/gf2-coding/`) — Error-correcting codes; depends on `gf2-core`.
 - **`gf2-algebra`** (`crates/gf2-algebra/`) — Packed F_3 / F_5 / F_7 element types and fast matrix permanents (bipedal F_3, packed F_5 / F_7) on CPU (scalar, AVX2, Rayon) and HIP/ROCm GPU. Depends on `gf2-core`. Delivers the `gf2-algebra-permanent` epic: ~10.6x single-thread AVX2 speedup over the in-tree Rust reference at n=36; GPU batch ~28-30x CPU-SIMD at n=24/28 (M=256); F_5/F_7 packed kernels; Lean V1 bipedal F_3 correctness proof complete, Lean V2 (Ryser bounded n<=63) in progress.
+- **`gf2-sim`** (`crates/gf2-sim/`) — CPU+GPU pipeline: research-grade FEC simulation harness composing `gf2-coding` codes into a parallel, optionally GPU-accelerated, deterministic pipeline via `Pipeline` / `Stage` / `Connector` primitives. Depends on `gf2-core` and `gf2-coding`; optional HIP/ROCm acceleration behind feature `hip`. The v2 successor to `gf2_coding::simulation`. `#![deny(unsafe_code)]`. Design SSOT: `dev/active/ec530af9-pipeline-design.md`.
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64).
 - **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype, and gf2-algebra batch permanents). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or `gf2-algebra`, or by building the crate with its own manifest.
 
@@ -180,6 +181,8 @@ Examples of note:
 | `gf2-algebra` | `f5` | `Packed5`, `Packed5Matrix`, `permanent_bipedal5` (default on) |
 | `gf2-algebra` | `f7` | `Packed7`, `Packed7Matrix`, `permanent_bipedal7` (default on) |
 | `gf2-algebra` | `hip` | HIP/ROCm GPU batch permanents (`gpu` module; requires hipcc) |
+| `gf2-sim` | `hip` | HIP/ROCm GPU pipeline stages via `gf2-kernels-hip` (`gpu` module; default off) |
+| `gf2-sim` | `llr-f64` | Use f64 instead of f32 for LLRs (default off) |
 
 ## Testing conventions
 
