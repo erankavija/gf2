@@ -18,10 +18,11 @@ use crate::stage::TypedBatch;
 ///
 /// ```
 /// use gf2_sim::connector::Connector;
-/// use gf2_sim::stage::TypedBatch;
+/// use gf2_sim::stage::BatchSize;
 ///
+/// // `TypedBatch` is auto-implemented for any `BatchSize` batch type.
 /// struct Bits(Vec<u8>);
-/// impl TypedBatch for Bits {
+/// impl BatchSize for Bits {
 ///     fn batch_size(&self) -> usize {
 ///         self.0.len()
 ///     }
