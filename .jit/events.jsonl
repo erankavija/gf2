@@ -5742,3 +5742,6 @@
 {"type":"issue_state_changed","id":"8d136b76-eb57-4f96-9759-61958584b6b8","issue_id":"c0b1702d-7cbe-4cfe-868d-611746defac1","timestamp":"2026-06-06T22:40:41.447797378Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"bff744dd-f379-413e-9619-0300a9576d4e","issue_id":"c0b1702d-7cbe-4cfe-868d-611746defac1","timestamp":"2026-06-06T22:40:41.448010578Z","assignee":"agent:claude"}
 {"type":"issue_state_changed","id":"389d73f9-5315-4534-ab94-1beed2c1bb59","issue_id":"f9717e7e-3950-422c-a545-d940d119a440","timestamp":"2026-06-06T22:46:27.362900775Z","from":"backlog","to":"in_progress"}
+{"type":"gate_failed","id":"b597b379-68b1-44f0-b266-db41111d5081","issue_id":"118a0091-2c7e-43d8-93b6-597ca913eaf5","timestamp":"2026-06-06T23:00:20.676999708Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"857b176d-9c78-433e-93f5-eab6dfb3afd5","issue_id":"118a0091-2c7e-43d8-93b6-597ca913eaf5","timestamp":"2026-06-06T23:06:07.621980070Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"679348d1-3132-4927-86dd-f0814c872830","issue_id":"118a0091-2c7e-43d8-93b6-597ca913eaf5","timestamp":"2026-06-06T23:14:14.266947500Z","gate_key":"code-review","updated_by":"auto:executor"}
