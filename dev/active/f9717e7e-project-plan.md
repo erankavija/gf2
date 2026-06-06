@@ -43,7 +43,7 @@ ID-map (canonical short IDs throughout the rest of this document):
 | Phase | Story | Tasks |
 |---|---|---|
 | 0 | (single task) | `ec530af9` (design doc) |
-| A | `bcf7776d` | `118a0091`, `3fcb7025`, `81d05bab`, `c09d3e95`, `db9836e4`, `5f12e7ff`, `48a0db6c` |
+| A | `bcf7776d` | `118a0091`, **`c0b1702d`** (baseline measurement, added 2026-06-07), `3fcb7025`, `81d05bab`, `c09d3e95`, `db9836e4`, `5f12e7ff`, `48a0db6c` |
 | B | `1f588e2a` | `36075e4c`, `f6004add`, `a930be7f`, `d3f1616a`, `ed575f15`, `14f59c2d` |
 | C | `9e853c62` | `75c22fa8`, `de160fc5`, `571c11c4`, `42eac5cc` |
 | D | `5d0a3fad` | `8c8302c8`, `bbf6b6ee`, `0d9cb8e3` |
@@ -69,10 +69,10 @@ ID-map (canonical short IDs throughout the rest of this document):
 
   | Wave | Issues (in parallel) | Notes |
   |---|---|---|
-  | A.1 | `118a0091` | crate scaffolding — single writer |
-  | A.2 | `3fcb7025`, `81d05bab`, `c09d3e95`, `db9836e4` | 4-way fan-out; **worktree isolation required** (memory rule `feedback_parallel_agent_isolation`) |
-  | A.3 | `5f12e7ff` | waits on `3fcb7025` |
-  | A.4 | `48a0db6c` | waits on `db9836e4`, `5f12e7ff` |
+  | A.1 | `118a0091`, `c0b1702d` | scaffolding + baseline measurement run in parallel; `c0b1702d` exercises only the legacy `simulation.rs` path so no conflict with `118a0091`'s new crate scaffolding |
+  | A.2 | `3fcb7025`, `81d05bab`, `c09d3e95`, `db9836e4` | 4-way fan-out; **worktree isolation required** (memory rule `feedback_parallel_agent_isolation`); `3fcb7025` additionally depends on `c0b1702d`'s baseline receipt being committed |
+  | A.3 | `5f12e7ff` | waits on `3fcb7025` and on `db9836e4` (audit C5 fix 2026-06-07) |
+  | A.4 | `48a0db6c` | waits on `db9836e4`, `5f12e7ff`; CLAUDE.md update sub-bullet (Phase A close) |
 
 - **Done =** all 7 tasks done with their gates green; Story `bcf7776d`
   success criteria met (determinism property test passes for ≥ 3
@@ -141,9 +141,10 @@ ID-map (canonical short IDs throughout the rest of this document):
   | Wave | Issues (in parallel) | Notes |
   |---|---|---|
   | E.1 | `acf9b11a` | base graphs + per-`i_LS` shift tables (memory `feedback_ldpc_shift_tables` is the relevant trap) |
-  | E.2 | `e478daa8`, `110e45cc` | preset + onboarding can fan-out |
-  | E.3 | `23d3525f` | kernel tuning to real-time; long iteration loop on gfx1030 |
-  | E.4 | `18e69a1a` | comparison harness |
+  | E.2 | `e478daa8` | 5G NR typestate preset |
+  | E.3 | `23d3525f` | kernel tuning to real-time; concrete target = BG1, `i_LS` = 8, Z = 384, rate 1/2, BLER ≤ 10⁻², ≥ 200 Mbps decoded TB throughput on gfx1030 (audit C1 fix 2026-06-07) |
+  | E.4 | `18e69a1a` | comparison harness vs aff3ct / IT++ |
+  | E.5 | `110e45cc` | onboarding examples + CLAUDE.md (Phase E + epic close); waits on `e478daa8` and `8c8302c8` (audit H4 fix 2026-06-07) |
 
 - **Done =** all 5 tasks done; Story `a5635da5` success criteria met;
   receipts logged in `5g-nr-realtime.md` and `comparison/`.
@@ -210,6 +211,17 @@ lead claims and transitions to `in_progress` BEFORE Agent dispatch.
 **Tasks bearing the gate (7):**
 `3fcb7025`, `f6004add`, `a930be7f`, `d3f1616a`, `75c22fa8`, `bbf6b6ee`,
 `23d3525f`.
+
+**Dual-baseline reporting (post-audit refinement, 2026-06-07,
+user-approved per Q4)**: every receipt MUST report both the
+single-thread CPU baseline (from `c0b1702d`) AND the
+CPU-24-thread baseline (from `3fcb7025`'s receipt) where
+applicable. The single-thread number is the headline number for
+the gate; the 24-thread number is the diagnostic number that
+prevents a GPU receipt from "passing" while actually being
+slower than the 24-thread CPU implementation. `a930be7f` (GPU
+LDPC BP) carries an additional `[hard]` threshold: ≥ 3× the
+24-thread CPU baseline.
 
 **Receipt entry format** (per task), aggregated in
 `dev/benchmarks/gf2-sim/parallelism-receipts.md`:
@@ -350,11 +362,50 @@ change in existing encoders.
 
 1. This plan document (`dev/active/f9717e7e-project-plan.md`), attached
    to the epic via `jit doc add`.
-2. SSOT audit findings recorded in the adversarial-reviewer output and
-   surfaced to the user (no autonomous fixes to issue bodies).
-3. Updated commit history (single chore commit covering this plan +
-   `jit doc add` linkage).
+2. The Phase 0 design doc at
+   `dev/active/ec530af9-pipeline-design.md`, attached to `ec530af9`.
+3. The new leaf task `c0b1702d` (single-thread baseline measurement)
+   added to Phase A.
+4. All 24 placeholder task bodies expanded to implementer-ready
+   detail.
+5. Epic body refined to remove duplicated DVB-T2 closure criteria
+   (now SSOT-pinned in `e4849f07`), fix the critical-path numbering,
+   and concretise the Phase E real-time target.
+6. `e4849f07` body refreshed: TS-vs-TR typo corrected and cross-
+   reference made explicit.
+7. DAG edges added: `5f12e7ff → db9836e4`, `110e45cc → e478daa8`
+   (the implied edge to `8c8302c8` is transitively reachable),
+   `3fcb7025 → c0b1702d`, `bcf7776d → c0b1702d`, `c0b1702d → ec530af9`.
 
-No worker dispatched; no state transitions on the child tasks; no
-amendments to issue bodies. The epic remains in `backlog` state until
-its child deps complete.
+## §13 Post-audit refinements (2026-06-07)
+
+The 2026-06-07 adversarial-review pass produced 23 findings; the
+user-approved autonomous remediations are listed in epic
+`f9717e7e`'s description (§"Post-audit refinements"). The
+corresponding plan-side updates:
+
+| Audit finding | Plan section | Resolution |
+|---|---|---|
+| B1, C3 (D wall-clock) | §2 Phase D | `bbf6b6ee` criterion changed to speedup-vs-legacy; wall-clock owned by `e4849f07` |
+| B2 (placeholder bodies) | §1 SSOT map | All 24 task bodies expanded; placeholders gone |
+| C1 (E real-time undefined) | §2 Phase E | Concrete target pinned: BG1, Z=384, r1/2, BLER ≤ 10⁻², ≥ 200 Mbps |
+| C2 (Phase B baseline) | §5 Receipt schema | Dual-baseline reporting required (single-thread + CPU-24-thread); `a930be7f` ≥ 3× CPU-24 |
+| C5 (heartbeat missing channel) | §2 Phase A Wave A.3 | Edge `5f12e7ff → db9836e4` added |
+| C6 (epic critical-path) | §2 ID-map | Epic body diagram rewritten using story IDs; plan ID-map unchanged |
+| H1, H2 (duplicated criteria) | §1 SSOT map | `e4849f07` is now the sole SSOT for the gap and frame-error criteria |
+| H4 (110e45cc missing deps) | §2 Phase E Wave E.5 | Edges to `e478daa8` and `8c8302c8` added; moved to Wave E.5 |
+| H5 (OOM seam) | §2 Phases B + C | GPU stages signal; executor handles fallback; codified in `ec530af9` design doc §8 |
+| H6 (CLAUDE.md owners) | §7 | Folded into each phase's closing task (`48a0db6c`, `14f59c2d`, `0d9cb8e3`, `110e45cc`) |
+| H7 (§12 design doc) | n/a | Phase 0 design doc §12 lists every public API that moves vs stays |
+| H8 (baseline task) | §2 Phase A Wave A.1 | New task `c0b1702d` added |
+| L1 (TS/TR typo) | n/a | Corrected in `e4849f07` body |
+| M1 (receipts dir) | n/a | Folded into `118a0091` scaffolding |
+| M2 (Wave A.2 conflicts) | §2 Phase A Wave A.2 | Phase 0 design doc §1 pre-allocates module skeleton |
+| M5 (CI feature gating) | §2 Phase D Wave D.3 | `0d9cb8e3` body now mandates `#[cfg(feature = "hip")]` |
+
+Project state after this pass: every leaf task body is
+implementer-ready; the DAG is sound; the Phase 0 design contract
+exists. The epic remains in `backlog` state pending child
+completion. The next step, gated on user approval at the Phase 0
+review milestone, is to dispatch the Phase 0 design doc review and
+begin Wave A.1 + B.1.
