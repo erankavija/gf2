@@ -77,4 +77,39 @@ extern "C" {
     pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
     pub fn hip_memcpy_d2h(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
     pub fn hip_device_synchronize() -> c_int;
+
+    // ---- Host-runtime wrappers (hip/host_runtime.hip) --------------------
+    // Stream management.
+    pub fn hip_stream_create(stream: *mut *mut c_void) -> c_int;
+    pub fn hip_stream_destroy(stream: *mut c_void) -> c_int;
+    pub fn hip_stream_synchronize(stream: *mut c_void) -> c_int;
+    pub fn hip_stream_query(stream: *mut c_void) -> c_int;
+
+    // Device selection / introspection.
+    pub fn hip_set_device(device_id: c_int) -> c_int;
+    pub fn hip_device_get_count(count: *mut c_int) -> c_int;
+    pub fn hip_device_compute_capability(
+        device_id: c_int,
+        major: *mut c_int,
+        minor: *mut c_int,
+    ) -> c_int;
+    pub fn hip_mem_get_info(free_bytes: *mut usize, total_bytes: *mut usize) -> c_int;
+
+    // Pinned host memory.
+    pub fn hip_host_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
+    pub fn hip_host_free(ptr: *mut c_void) -> c_int;
+
+    // Stream-ordered transfers.
+    pub fn hip_memcpy_h2d_async(
+        dst: *mut c_void,
+        src: *const c_void,
+        size: usize,
+        stream: *mut c_void,
+    ) -> c_int;
+    pub fn hip_memcpy_d2h_async(
+        dst: *mut c_void,
+        src: *const c_void,
+        size: usize,
+        stream: *mut c_void,
+    ) -> c_int;
 }

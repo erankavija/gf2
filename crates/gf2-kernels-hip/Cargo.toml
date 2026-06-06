@@ -15,6 +15,7 @@ hip = []
 
 [dependencies]
 gf2-core = { path = "../gf2-core" }
+tracing = "0.1"
 
 [build-dependencies]
 cc = "1"
