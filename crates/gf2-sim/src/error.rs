@@ -19,6 +19,23 @@ pub enum StageError {
     Recoverable(RecoverableError),
     /// A fatal error; the run aborts.
     Fatal(FatalError),
+    /// A type-erased batch or scratch could not be downcast to the concrete
+    /// type the stage expects.
+    ///
+    /// Raised by [`AnyStage::process_any`](crate::AnyStage::process_any) when
+    /// the runtime batch type does not match the stage's compile-time input
+    /// type, or when the supplied scratch does not match the stage's
+    /// `Scratch` type. A well-formed pipeline (whose [`Edge`](crate::Edge) types were
+    /// validated at build time) never produces this at runtime; it indicates
+    /// the erased plumbing was wired with mismatched types and is therefore a
+    /// logic error rather than a recoverable condition.
+    TypeMismatch {
+        /// The [`TypeId`](std::any::TypeId) the stage expected.
+        expected: std::any::TypeId,
+        /// The [`TypeId`](std::any::TypeId) actually supplied, if it could be
+        /// determined.
+        actual: std::any::TypeId,
+    },
 }
 
 /// An error the executor may recover from by substituting a CPU fallback.
@@ -154,6 +171,10 @@ impl std::fmt::Display for StageError {
         match self {
             StageError::Recoverable(e) => write!(f, "recoverable stage error: {e:?}"),
             StageError::Fatal(e) => write!(f, "fatal stage error: {e:?}"),
+            StageError::TypeMismatch { expected, actual } => write!(
+                f,
+                "type-erased downcast failed: expected {expected:?}, got {actual:?}"
+            ),
         }
     }
 }

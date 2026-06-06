@@ -25,4 +25,4 @@ blake3 = "1" # for v2 checkpoint config_hash
 [features]
 default = []
 hip = ["dep:gf2-kernels-hip"]
-llr-f64 = []
+llr-f64 = ["gf2-coding/llr-f64"]

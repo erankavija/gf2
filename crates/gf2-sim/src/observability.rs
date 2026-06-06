@@ -64,7 +64,14 @@ impl Drop for CampaignSubscriberGuard {
 /// let _guard = install_campaign_subscriber(&cfg);
 /// // tracing events are routed until `_guard` is dropped.
 /// ```
-pub fn install_campaign_subscriber(config: &PipelineConfig) -> impl Drop {
+///
+/// # Must use
+///
+/// Returns the concrete [`CampaignSubscriberGuard`] (rather than `impl Drop`)
+/// so the type's `#[must_use]` propagates to call sites: dropping the guard
+/// immediately — `install_campaign_subscriber(&cfg);` — uninstalls the
+/// subscriber and is almost certainly a bug. Bind it to a live `let`.
+pub fn install_campaign_subscriber(config: &PipelineConfig) -> CampaignSubscriberGuard {
     // Phase A stub. The full implementation (owned by `bbf6b6ee`) opens
     // `config.tracing_log_path` in append mode and installs a JSON
     // `tracing_subscriber::fmt` layer, returning its `DefaultGuard`.
