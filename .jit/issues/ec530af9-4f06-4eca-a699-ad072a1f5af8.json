@@ -11,12 +11,20 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/ec530af9-pipeline-design.md",
+      "commit": null,
+      "label": "Phase 0 design doc — gf2-sim pipeline",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T19:58:03.187448317+00:00",
-  "updated_at": "2026-06-05T19:58:03.187456627+00:00"
+  "updated_at": "2026-06-06T21:25:53.628456143+00:00"
 }
