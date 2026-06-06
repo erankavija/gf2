@@ -11,7 +11,7 @@
 //! | Module | Purpose |
 //! |--------|---------|
 //! | [`pipeline`] | [`Pipeline`] and its batch-submission API |
-//! | [`stage`] | [`Stage`], [`AnyStage`], [`TypedBatch`], [`AnyScratch`] |
+//! | [`stage`] | [`Stage`], [`AnyStage`], [`ErasedStage`], [`erase`], [`TypedBatch`], [`AnyScratch`] |
 //! | [`connector`] | [`Connector`], [`Edge`], [`StageId`] |
 //! | [`error`] | [`StageError`], [`RecoverableError`], [`FatalError`], [`BuildError`] |
 //! | [`config`] | [`PipelineConfig`] (with `From<&SimulationConfig>`) |
@@ -56,4 +56,7 @@ pub use error::{BuildError, FatalError, RecoverableError, StageError};
 #[doc(inline)]
 pub use pipeline::Pipeline;
 #[doc(inline)]
-pub use stage::{AnyScratch, AnyStage, ExecutionClass, FallbackKind, Stage, TypedBatch};
+pub use stage::{
+    erase, AnyScratch, AnyStage, BatchSize, ErasedStage, ExecutionClass, FallbackKind, Stage,
+    TypedBatch,
+};

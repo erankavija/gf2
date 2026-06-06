@@ -65,7 +65,45 @@ impl Pipeline {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BatchHandle {
     /// The unique batch identifier.
-    pub batch_id: u64,
+    batch_id: u64,
     /// The SNR-point index this batch belongs to.
-    pub snr_idx: u32,
+    snr_idx: u32,
+}
+
+impl BatchHandle {
+    /// Constructs a handle for the given batch and SNR-point index.
+    ///
+    /// Crate-private: handles are minted only by `Pipeline::submit` (landing
+    /// with the graph wave `c09d3e95`); callers obtain them opaquely and feed
+    /// them back to `Pipeline::collect`. The design doc (§1) specifies private
+    /// fields so the buffer-reference machinery can be added later without a
+    /// breaking change.
+    // Scaffolding: the only caller (`Pipeline::submit`) lands with the graph
+    // wave `c09d3e95`; exercised now by the unit test below.
+    #[allow(dead_code)]
+    pub(crate) fn new(batch_id: u64, snr_idx: u32) -> Self {
+        Self { batch_id, snr_idx }
+    }
+
+    /// Returns the unique batch identifier.
+    pub fn batch_id(&self) -> u64 {
+        self.batch_id
+    }
+
+    /// Returns the SNR-point index this batch belongs to.
+    pub fn snr_idx(&self) -> u32 {
+        self.snr_idx
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_batch_handle_accessors_are_read_only() {
+        let h = BatchHandle::new(7, 3);
+        assert_eq!(h.batch_id(), 7);
+        assert_eq!(h.snr_idx(), 3);
+    }
 }
