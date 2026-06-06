@@ -31,7 +31,9 @@ fn main() {
     {
         use gf2_coding::grand::{OrbGrand, OrbGrandConfig};
         use gf2_coding::linear::LinearBlockCode;
-        use gf2_coding::simulation::{BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationRunner};
+        use gf2_coding::simulation::{
+            BpskAwgnChannel, ChannelModel, SimulationConfig, SimulationRunner,
+        };
         use gf2_coding::Llr;
         use gf2_core::BitVec;
         use std::path::PathBuf;
@@ -55,7 +57,8 @@ fn main() {
                 rng: &mut R,
             ) -> Vec<Llr> {
                 std::thread::sleep(self.delay);
-                self.inner.transmit_and_demodulate(bits, eb_n0_db, rate, rng)
+                self.inner
+                    .transmit_and_demodulate(bits, eb_n0_db, rate, rng)
             }
         }
 
