@@ -2,7 +2,7 @@
   "id": "118a0091-2c7e-43d8-93b6-597ca913eaf5",
   "title": "gf2-sim crate scaffolding (Pipeline, Stage, Connector primitives)",
   "description": "## Goal\n\nStand up the new `gf2-sim` crate with the scaffolding agreed in the\nPhase 0 design doc: `Pipeline`, `Stage`, `Connector` primitives,\nbatch types, error types, `PipelineConfig`, `observability` stub, and\nthe pre-allocated module skeleton that lets Wave A.2 fan out without\nmerge conflict.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §1 (module skeleton)\nand §5 (crate-boundary diagram) are the canonical reference for the\ndeliverables here. Wave A.1: this task is the only one in the wave;\nmust complete before Wave A.2 (`3fcb7025`, `81d05bab`, `c09d3e95`,\n`db9836e4`) starts.\n\n## Deliverables\n\n1. New crate `crates/gf2-sim/` with `Cargo.toml` per design-doc §5:\n   - workspace member added to root `Cargo.toml`\n   - deps: `gf2-core`, `gf2-coding`, `rayon`, `rand_chacha`, `tracing`,\n     `serde`\n   - optional dep: `gf2-kernels-hip` behind feature `hip`\n   - features: `default = []`, `hip = [\"dep:gf2-kernels-hip\"]`,\n     `llr-f64 = []`\n   - `#![deny(unsafe_code)]` at the top of `src/lib.rs`.\n2. Module skeleton from design-doc §1, with empty stubs in each\n   directory so subsequent Wave A.2 / Phase B / Phase C tasks have\n   non-conflicting module homes:\n\n   ```\n   crates/gf2-sim/src/\n     lib.rs, pipeline.rs, stage.rs, error.rs, config.rs,\n     observability.rs,\n     parallel/mod.rs, presets/{mod.rs,dvb_t2.rs},\n     graph/mod.rs, channels/{mod.rs,awgn.rs,rayleigh.rs,rician.rs},\n     checkpoint/mod.rs, executor/mod.rs, gpu/mod.rs\n   ```\n\n3. Trait + type definitions from design-doc §1 lifted to code:\n   `Stage<I, O>`, `Connector<T>`, `Pipeline`, `PipelineConfig`,\n   `StageError`, `RecoverableError`, `FatalError`, `ExecutionClass`,\n   `BatchHandle`, `AnyStage` (type-erased trait object boilerplate).\n4. `PipelineConfig` is the v2 successor to\n   `gf2_coding::simulation::SimulationConfig`; field set per\n   design-doc §12. Conversion `From<SimulationConfig>` provided so\n   `bbf6b6ee` migration is mechanical.\n5. `observability::install_campaign_subscriber()` stub matching the\n   signature used in `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`\n   so the campaign binary can call into the new crate without churn\n   when `bbf6b6ee` lands.\n6. Receipts directory bootstrap: create\n   `dev/benchmarks/gf2-sim/README.md` with a short index pointing to\n   the per-phase receipt files (`cpu-foundation-receipts.md`,\n   `gpu-stages-receipts.md`, `hybrid-executor-receipts.md`,\n   `parallelism-receipts.md`, `5g-nr-realtime.md`, `comparison/`).\n   This resolves audit finding M1 (no task owned the receipts dir\n   creation).\n7. CLAUDE.md amendment: add `gf2-sim` to the \"Architecture\" crate list\n   (with one-line summary and feature table) and to the \"Test tiers\"\n   section as appropriate. Do NOT amend the determinism contract\n   section yet — Phase 0 design doc §11 is the SSOT for that, and the\n   amendment lands when `48a0db6c` (the determinism test suite)\n   closes Phase A.\n\n## Success Criteria\n\n- [hard] `cargo build --workspace --all-features --release` builds\n  the new crate clean (zero warnings).\n- [hard] `cargo test -p gf2-sim --release` passes (empty test suite is\n  acceptable; subsequent tasks add tests).\n- [hard] `cargo clippy -p gf2-sim --all-targets -- -D warnings` green.\n- [hard] `dev/benchmarks/gf2-sim/README.md` exists with the index\n  described in deliverable 6.\n- [hard] `CLAUDE.md` lists `gf2-sim` in the workspace crate table with\n  the \"CPU+GPU pipeline\" summary and the feature table.\n- [hard] `cargo doc --no-deps -p gf2-sim` produces rustdoc without\n  warnings; every public item has the doc-comment skeleton (full doc\n  body filled in by the owning sub-task).\n- [hard] No new `unsafe` outside `gf2-kernels-hip`; `gf2-sim` is\n  `#![deny(unsafe_code)]`.\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- No parallel dispatch logic (owned by `3fcb7025`).\n- No channel implementations (owned by `db9836e4`).\n- No GPU code (owned by Phase B `36075e4c`).\n- No preset content (owned by `81d05bab`).\n- No graph API content (owned by `c09d3e95`).\n- No tests beyond a smoke build check.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -16,12 +16,12 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-06T23:06:01.203045563Z"
+      "updated_at": "2026-06-06T23:24:21.516462695Z"
     },
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-06T23:06:21.133083295Z"
+      "updated_at": "2026-06-06T23:24:42.506571880Z"
     }
   },
   "context": {},
@@ -32,5 +32,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:02:50.954566093+00:00",
-  "updated_at": "2026-06-06T23:14:14.266764940+00:00"
+  "updated_at": "2026-06-06T23:26:45.916386198+00:00"
 }
