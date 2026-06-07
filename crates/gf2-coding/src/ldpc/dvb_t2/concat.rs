@@ -537,6 +537,61 @@ impl DvbT2Concat {
     /// assert_eq!(bbframe.len(), codec.k_bch());
     /// ```
     pub fn decode_soft(&self, llrs: &[Llr]) -> Result<BitVec, ConcatError> {
+        self.decode_soft_counted(llrs)
+            .map(|(bbframe, _iterations)| bbframe)
+    }
+
+    /// Decode a received FECFRAME LLR sequence, also returning the LDPC BP
+    /// iteration count on convergence.
+    ///
+    /// Identical to [`decode_soft`](Self::decode_soft) in every respect except
+    /// that the success arm carries the number of belief-propagation iterations
+    /// the LDPC inner decoder ran (the real decoder effort, not a sentinel).
+    /// [`decode_soft`](Self::decode_soft) is a thin wrapper that discards this
+    /// count. Use this method when the iteration count is part of the result
+    /// contract (e.g. a simulation harness reporting `mean_iters`).
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance (shared reference).
+    /// * `llrs`  — Channel LLRs, one per FECFRAME bit (`n_ldpc` values).
+    ///   Positive LLR → more likely 0; negative LLR → more likely 1.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok((bbframe, iterations))` — BBFRAME (`k_bch` bits) when LDPC
+    ///   converged, paired with the BP iteration count consumed to converge.
+    ///
+    /// # Errors
+    ///
+    /// * `Err(ConcatError::LdpcDecodeFailed { bbframe, iterations })` — LDPC did
+    ///   not converge within `max_ldpc_iterations`; the returned `bbframe` is a
+    ///   best-effort estimate (BCH-corrected) but may contain uncorrected
+    ///   errors, and `iterations` is the (capped) BP iteration count.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llrs.len() != n_ldpc()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(max_iterations × nnz) for LDPC + O(k_ldpc) for BCH.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
+    /// use gf2_coding::llr::Llr;
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// // Zero-noise LLRs for the all-zeros FECFRAME:
+    /// let llrs: Vec<Llr> = vec![Llr::new(10.0); codec.n_ldpc()];
+    /// let (bbframe, iters) = codec.decode_soft_counted(&llrs).unwrap();
+    /// assert_eq!(bbframe.len(), codec.k_bch());
+    /// assert!(iters >= 1);
+    /// ```
+    pub fn decode_soft_counted(&self, llrs: &[Llr]) -> Result<(BitVec, usize), ConcatError> {
         assert_eq!(
             llrs.len(),
             self.n_ldpc,
@@ -572,7 +627,7 @@ impl DvbT2Concat {
         debug_assert_eq!(bbframe.len(), self.k_bch);
 
         if converged {
-            Ok(bbframe)
+            Ok((bbframe, iterations))
         } else {
             Err(ConcatError::LdpcDecodeFailed {
                 bbframe,

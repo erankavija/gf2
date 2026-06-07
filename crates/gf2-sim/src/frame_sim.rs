@@ -265,12 +265,17 @@ impl DvbT2BicmFrameSim {
     /// 3. Bit-interleave → Gray-QAM map to I/Q symbols.
     /// 4. Add independent Box-Muller AWGN on the I and Q axes.
     /// 5. Soft-demap (with the true channel `N0`) → bit-deinterleave LLRs.
-    /// 6. LDPC+BCH soft-decode back to a BBFRAME estimate.
+    /// 6. LDPC+BCH soft-decode (via
+    ///    [`decode_soft_counted`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat::decode_soft_counted))
+    ///    back to a BBFRAME estimate plus the real BP iteration count.
     /// 7. Count information-bit errors vs the transmitted `message`.
     ///
     /// A frame is "in error" iff any information bit differs. Non-converged LDPC
     /// decodes keep their best-effort BBFRAME estimate (matching the baseline's
-    /// `LdpcDecodeFailed` handling).
+    /// `LdpcDecodeFailed` handling). The reported `iterations` is the genuine BP
+    /// depth on both the converged and non-converged arms (not a sentinel), so
+    /// the aggregated `mean_iters` is a real, byte-identical-across-workers
+    /// quantity.
     ///
     /// # Arguments
     ///
@@ -309,10 +314,12 @@ impl DvbT2BicmFrameSim {
             },
         );
 
-        // 6. Decode (mirror the baseline closure; sentinel iteration 1 on
-        // convergence, the real iteration count on non-convergence).
-        let (decoded, iterations) = match self.codec.decode_soft(&llrs) {
-            Ok(bbframe) => (bbframe, 1u64),
+        // 6. Decode. `decode_soft_counted` reports the real BP iteration count
+        // on both arms — the true decoder effort, so `mean_iters` reflects
+        // genuine per-frame depth (not a sentinel) and its byte-identity across
+        // worker counts is a meaningful guarantee.
+        let (decoded, iterations) = match self.codec.decode_soft_counted(&llrs) {
+            Ok((bbframe, iters)) => (bbframe, iters as u64),
             Err(ConcatError::LdpcDecodeFailed {
                 bbframe,
                 iterations,
