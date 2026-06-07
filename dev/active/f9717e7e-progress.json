@@ -28,7 +28,7 @@
       {"short_id": "48a0db6c", "title": "CPU parallelism determinism property test suite (Phase A close)", "status": "pending", "note": "needs db9836e4 + 5f12e7ff; CLAUDE.md determinism-contract update"}
     ]},
     {"wave": "B.1", "status": "done", "issues": [
-      {"short_id": "36075e4c", "title": "HIP host infrastructure", "status": "gating", "note": "commit 2b25b443; pre-warm cargo-ci passed (132s); running gates"}
+      {"short_id": "36075e4c", "title": "HIP host infrastructure", "status": "done", "note": "DONE 2026-06-07. Merged a8c8361f (8a38c3e7); code-review found round-6 left DeviceBuffer::new allocating on CURRENT device while preflight was device-scoped. User-approved lead fix 8f990d15: select_device/restore_device helpers, new scopes hipMalloc to device_id; adversarial pre-review PASS, both gates green."}
     ]},
     {"wave": "B.2", "status": "pending", "issues": [
       {"short_id": "f6004add", "title": "GPU ChaCha20 + Box-Muller AWGN kernel", "status": "pending"},
