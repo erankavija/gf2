@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "raw_labels": {
+      "items": {
+        "pattern": "^(epic|story|ppc-kernel|milestone|type|resolution|component):",
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

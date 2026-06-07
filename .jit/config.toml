@@ -35,9 +35,6 @@ strictness = "loose"
 # Auto-assign this type when creating issues without a type:* label.
 default_type = "task"
 
-# Require exactly one type:* label per issue.
-require_type_label = false
-
 # Warning toggles (both enabled by default; set to false to silence):
 # warn_orphaned_leaves = true       # tasks that carry no parent epic/story label
 # warn_strategic_consistency = true # hierarchy inconsistencies across issues
