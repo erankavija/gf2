@@ -19,7 +19,7 @@
 //! [`GfxTarget::load_blob`]. gfx1030 is the only CI target today; the others
 //! are documented seams that are unexercised until hardware is available.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::{check_hip, ffi, HipError};
 
@@ -191,7 +191,25 @@ impl GfxTarget {
 
         let arch_name = Self::query_arch_name(device_id)?;
         match Self::from_arch_name(&arch_name) {
-            Some(target) => Ok(target),
+            // Recognized AND this build produced a usable blob for it.
+            Some(target) if target.has_compiled_blob() => Ok(target),
+            // Recognized by name, but this build has no compiled blob for it
+            // (best-effort arches are skipped when the toolchain lacks their
+            // device libraries — e.g. gfx940 here). Treat as unsupported so the
+            // dispatcher warns and falls back, instead of reporting a target
+            // whose blob would fail to load at launch time.
+            Some(target) => {
+                tracing::warn!(
+                    device_id,
+                    gcn_arch_name = %arch_name,
+                    "recognized gfx arch '{arch_name}' has no compiled kernel blob \
+                     in this build; falling back to CPU stage"
+                );
+                let _ = target;
+                Err(HipError::UnsupportedArch {
+                    gcn_arch_name: arch_name,
+                })
+            }
             None => {
                 tracing::warn!(
                     device_id,
@@ -254,6 +272,31 @@ impl GfxTarget {
             .join(self.as_str())
     }
 
+    /// Returns `true` if this build compiled at least one kernel blob (`*.co`)
+    /// for this target.
+    ///
+    /// `build.rs` compiles `gfx1030` blobs unconditionally but treats every
+    /// other target as best-effort — skipped when the toolchain lacks that
+    /// arch's device libraries. A target whose name
+    /// [`from_arch_name`](Self::from_arch_name) recognizes may therefore still
+    /// have no usable blob in this build, in which case
+    /// [`detect_device`](Self::detect_device) reports it as
+    /// [`HipError::UnsupportedArch`] so the dispatcher warns and falls back to
+    /// the CPU stage rather than failing at kernel-launch time.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// // gfx1030 blobs are compiled unconditionally, so after a build this is
+    /// // true on a host with the ROCm toolchain.
+    /// assert!(GfxTarget::Gfx1030.has_compiled_blob());
+    /// ```
+    pub fn has_compiled_blob(self) -> bool {
+        dir_contains_co(&self.blob_dir())
+    }
+
     /// Loads a named kernel blob (`<kernel>.co`) for this target.
     ///
     /// Returns the raw bytes for handoff to `hipModuleLoadData` by the kernel
@@ -290,6 +333,20 @@ impl GfxTarget {
             source: e.to_string(),
         })
     }
+}
+
+/// Returns `true` if `dir` exists and contains at least one compiled kernel
+/// blob (a file with a `.co` extension). A missing/unreadable directory reads
+/// as "no blob" (`false`), which is the correct conservative answer for the
+/// best-effort multi-arch fall-back path.
+fn dir_contains_co(dir: &Path) -> bool {
+    std::fs::read_dir(dir)
+        .map(|entries| {
+            entries.flatten().any(|e| {
+                e.path().extension().and_then(|x| x.to_str()) == Some("co")
+            })
+        })
+        .unwrap_or(false)
 }
 
 #[cfg(test)]
@@ -406,5 +463,41 @@ mod tests {
             ),
             Err(e) => panic!("arch detection failed on gfx1030 host: {e}"),
         }
+    }
+
+    #[test]
+    fn test_gfx1030_has_compiled_blob_after_build() {
+        // build.rs compiles gfx1030 unconditionally, so its blob dir holds at
+        // least the probe `.co` after a build.
+        assert!(
+            GfxTarget::Gfx1030.has_compiled_blob(),
+            "gfx1030 blob must exist after build"
+        );
+    }
+
+    #[test]
+    fn test_dir_contains_co_distinguishes_skipped_blob() {
+        // A recognized arch whose build was SKIPPED leaves a dir with no `.co`;
+        // detect_device treats that as UnsupportedArch (warn + CPU fallback).
+        let tmp =
+            std::env::temp_dir().join(format!("gf2_hip_blobtest_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+        assert!(!dir_contains_co(&tmp), "empty dir has no compiled blob");
+        std::fs::write(tmp.join("probe.cpp"), b"// source only").unwrap();
+        assert!(
+            !dir_contains_co(&tmp),
+            "a dir with only a .cpp source (build skipped/failed) is not usable"
+        );
+        std::fs::write(tmp.join("probe.co"), b"\0blob").unwrap();
+        assert!(dir_contains_co(&tmp), "a dir with a .co blob is usable");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_dir_contains_co_missing_dir_is_false() {
+        let missing = std::env::temp_dir().join("gf2_hip_definitely_missing_dir_xyz");
+        let _ = std::fs::remove_dir_all(&missing);
+        assert!(!dir_contains_co(&missing), "missing dir reads as no blob");
     }
 }
