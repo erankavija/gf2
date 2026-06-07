@@ -12,8 +12,8 @@
       {"short_id": "19ae6540", "title": "gf2-sim batch types + DVB-T2 BICM Stage wrappers (FOUNDATION)", "status": "ready", "note": "single writer (edits lib.rs); must land before A.2b. Supersedes 81d05bab deliverable 2."}
     ]},
     {"wave": "A.2b", "status": "pending", "issues": [
-      {"short_id": "3fcb7025", "title": "Within-SNR frame parallelism + deterministic aggregation", "status": "pending", "note": "needs 19ae6540 + c0b1702d; owns WorkerCtx/seek/strides; uses FND stages + inline AWGN for its DVB-T2 throughput/determinism evidence; carries parallelism-pays gate"},
-      {"short_id": "c09d3e95", "title": "Graph-based chain construction API", "status": "pending", "note": "needs 19ae6540; criterion-1 DVB-T2 chain uses FND stages (noiseless roundtrip)"}
+      {"short_id": "3fcb7025", "title": "Within-SNR frame parallelism + deterministic aggregation", "status": "pending", "note": "needs 19ae6540 + c0b1702d; owns WorkerCtx/seek/strides; uses FND stages + inline AWGN for its DVB-T2 throughput/determinism evidence; carries parallelism-pays gate. HOLD for uncontended machine (>=12x single-thread vs 1.6216 fps baseline must measure cleanly)."},
+      {"short_id": "c09d3e95", "title": "Graph-based chain construction API", "status": "held_open", "note": "CODE DONE + merged (85d8fd9a) + panic fix (659b2249: build() validates fallback regs, no panic on dup/OOR cpu id). cargo-ci PASS; code-review FAIL on criterion-1 only (matches downstream preset 81d05bab, which is a stub). USER DECISION 2026-06-07: HOLD c09d3e95 OPEN (in_progress) until 81d05bab lands preset_vs_graph.rs; do NOT amend criterion. COUPLING WARNING: 81d05bab depends on c09d3e95 in the DAG, so holding c09d3e95 not-done will block 81d05bab availability at wave A.2d -- resolve then (close both together, or dispatch 81d05bab's preset+equality work as the unit that finally satisfies c09d3e95 criterion-1)."}
     ]},
     {"wave": "A.2c", "status": "pending", "issues": [
       {"short_id": "db9836e4", "title": "CPU AWGN/Rayleigh/Rician channel stages", "status": "pending", "note": "needs 3fcb7025 (WorkerCtx) + 19ae6540 (batch types)"}
@@ -68,9 +68,11 @@
     "19ae6540 -> 118a0091; {3fcb7025,c09d3e95,db9836e4,81d05bab} -> 19ae6540; db9836e4 -> 3fcb7025; 81d05bab -> {c09d3e95,db9836e4}"
   ],
   "escalations": [
-    {"date": "2026-06-07", "topic": "Phase A shared DVB-T2 stage-wrapper/batch-type foundation", "resolution": "user chose: New shared foundation task (19ae6540)"}
+    {"date": "2026-06-07", "topic": "Phase A shared DVB-T2 stage-wrapper/batch-type foundation", "resolution": "user chose: New shared foundation task (19ae6540)"},
+    {"date": "2026-06-07", "topic": "36075e4c past MAX rework (#3); code-review found DeviceBuffer::new allocates on current device not device_id", "resolution": "user chose: Lead applies device-scoping fix (8f990d15). Counter reset; gates green; DONE."},
+    {"date": "2026-06-07", "topic": "c09d3e95 criterion-1 references downstream preset (81d05bab) that does not exist; code-review FAIL", "resolution": "user chose: HOLD c09d3e95 open until 81d05bab lands preset_vs_graph.rs (do NOT amend criterion). Panic finding fixed separately (659b2249)."}
   ],
-  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": 3, "19ae6540": 2},
+  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": "3 (then user-approved lead fix reset)", "19ae6540": 2, "c09d3e95": "code-review round 1 FAIL (panic fix landed; criterion-1 held per user)"},
   "rework_judgment_notes": [
     "36075e4c at rework #3 (EXCEEDS MAX_REWORK_ATTEMPTS=2). Lead judgment to continue: findings converged 7->2->1(doc-examples, mechanical), each round closed the prior with NO repeats; guardrail targets non-progress, which does not apply. If a substantive NEW finding appears, escalate firmly. Transparently disclosed to user.",
     "19ae6540 at rework #2 (within MAX): findings 2->1(SymbolBatch per-frame invariant, mechanical). The code-review reviewer surfaces one deeper finding per round (thorough); both tasks converging."
@@ -87,19 +89,22 @@
     "36075e4c at rework #2 (MAX_REWORK_ATTEMPTS=2). New round-2 findings were DEEPER (Sync contract, load_blob code:0), not repeats — so within budget. If rework#2 fails, ESCALATE."
   ],
   "started_at": "2026-06-07T00:00:00Z",
-  "paused": {
-    "at": "2026-06-07 (user requested pause; awaiting go-ahead before further review/merge/gate/dispatch)",
-    "done": ["ec530af9 (Phase 0)", "118a0091 (A.1 scaffolding)", "c0b1702d (A.1 baseline)", "19ae6540 (A.2a foundation)"],
-    "in_flight_workers": [
-      {"id": "36075e4c", "branch": "worktree-agent-36075e4c", "status": "WORKER DONE - commit a8c8361f, held for resume (merge+pre-review+gate)", "base": "2ba26e62", "agent": "a958f24b26a9ab978", "task": "round-6 fixes DONE: build-time arch manifest (env GF2_HIP_COMPILED_ARCHS), HipDispatcher::new calls detect_device+fallback, new_with_fallback honors device_id via device_mem_info_for. All gates green locally. User approved continuing (option: fix all 3, pre-review, re-gate)."},
-      {"id": "c09d3e95", "branch": "worktree-agent-c09d3e95", "status": "WORKER DONE - commit 4be31a38, held for resume (merge+pre-review+gate)", "base": "ecc5ab05", "agent": "a066722794b995fdb", "task": "A.2b graph API DONE: Chain/connect/build (Kahn topo-sort, cycle/type/disconnected/NoFallback detection, weak-connectivity check), built on foundation stages; DVB-T2 graph roundtrip self-satisfied vs DvbT2Concat ground truth (graph-vs-preset equality explicitly owned by 81d05bab). Added Pipeline::from_parts + stages(). All gates green locally; every public item has # Examples."}
+  "resume_2026_06_07": {
+    "summary": "User gave go-ahead; processed BOTH held workers.",
+    "done": ["ec530af9 (Phase 0)", "118a0091 (A.1 scaffolding)", "c0b1702d (A.1 baseline)", "19ae6540 (A.2a foundation)", "36075e4c (B.1 HIP host infra) -- CLOSED this session"],
+    "worker_36075e4c": "MERGED a8c8361f (8a38c3e7). Adversarial pre-review PASS. code-review FAIL: round-6 left DeviceBuffer::new allocating on CURRENT device while preflight was device-scoped. User-approved LEAD FIX 8f990d15 (select_device/restore_device helpers; new scopes hipMalloc to device_id; buffer bound-then-freed on rare restore-fail path). Re-pre-review PASS, cargo-ci + code-review GREEN. DONE.",
+    "worker_c09d3e95": "MERGED 4be31a38 (85d8fd9a). DVB-T2 doc example added (9d10ed18, deliverable 4). cargo-ci PASS. code-review FAIL on 2 findings: (1) criterion-1 downstream-preset deferral -> USER: hold open (see waves A.2b note); (2) build() panic on malformed fallback regs -> FIXED 659b2249. HELD OPEN (in_progress) per user.",
+    "next_actions": [
+      "B.2 GPU kernels (f6004add ChaCha20+Box-Muller AWGN, a930be7f LDPC BP batch [>=3x CPU-24 perf gate], d3f1616a Gray-QAM soft demap) are UNBLOCKED now that 36075e4c is done. They touch crates/gf2-kernels-hip/{hip,src} + gf2-sim/src/gpu -- run conflict analysis; serialize or worktree-isolate. a930be7f wants an uncontended machine for its perf threshold.",
+      "3fcb7025 (A.2b) still to dispatch -- HOLD for uncontended machine (parallelism-pays >=12x vs 1.6216 fps). db9836e4 (A.2c) needs 3fcb7025's WorkerCtx + foundation batch types.",
+      "81d05bab (A.2d preset) will satisfy c09d3e95 criterion-1 (preset_vs_graph.rs). It DAG-depends on c09d3e95 -- since c09d3e95 is held not-done, resolve the coupling at A.2d (likely close c09d3e95 together with 81d05bab once preset_vs_graph.rs proves graph-vs-preset byte-equality).",
+      "Phase order remaining: A.2b(3fcb7025)->A.2c(db9836e4)->A.2d(81d05bab + close c09d3e95)->A.3(5f12e7ff)->A.4(48a0db6c close Phase A); B.2->B.3(ed575f15)->B.4(14f59c2d close Phase B); then C->D->E per waves array."
     ],
-    "on_resume": [
-      "For EACH finished worker: (1) merge its branch into main, (2) run adversarial pre-review (general-purpose, mirrors scripts/code-review-prompt.md), (3) fix findings, (4) pre-warm cargo-ci, (5) gate cargo-ci + code-review BARE (no | tail masking), (6) mark done. Do NOT run a cargo-ci gate while any worktree worker is building (contention flakes 5s nextest tests).",
-      "After 36075e4c closes -> B.2 (f6004add, a930be7f, d3f1616a GPU kernels) unblocks.",
-      "After c09d3e95 closes -> 81d05bab (A.2d preset) is closer (also needs db9836e4).",
-      "3fcb7025 (A.2b) still to dispatch — HOLD for an uncontended machine so its parallelism-pays throughput (>=12x single-thread, baseline 1.6216 fps from c0b1702d) measures cleanly. db9836e4 (A.2c) needs 3fcb7025's WorkerCtx + foundation batch types.",
-      "Phase order remaining: A.2b(3fcb7025)->A.2c(db9836e4)->A.2d(81d05bab)->A.3(5f12e7ff)->A.4(48a0db6c close Phase A); B.2->B.3(ed575f15)->B.4(14f59c2d close Phase B); then C->D->E per waves array."
+    "process_reminders": [
+      "Before EVERY code-review gate: dispatch own adversarial reviewer + fix blocking/high first. NOTE: the adversarial reviewer is NOT a perfect oracle -- on 36075e4c it missed the device-scoped-alloc bug, on c09d3e95 it missed the register_fallback panic. The formal gate caught both. Treat pre-review as risk-reduction, not a guarantee.",
+      "cargo-ci: PRE-WARM ./scripts/cargo-ci.sh after each merge (cold HIP build > 300s gate timeout; incremental ~10-130s). Gate BARE (no | tail). Don't gate while CPU contended (instantaneous %CPU matters, not load avg).",
+      "nextest does NOT run doc tests; cargo-ci won't catch a broken # Examples. Validate doc examples with `cargo test --doc -p <crate>` before gating.",
+      "Lead-owned files (.jit/, dev/active/*-progress.json) must be restored to main's HEAD after merging a worker branch (git checkout HEAD -- .jit/ dev/active/f9717e7e-progress.json; git reset)."
     ]
   }
 }
