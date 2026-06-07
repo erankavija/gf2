@@ -50,27 +50,42 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
 
-/// ChaCha20 words reserved per SNR point (design doc §3): `2^56`.
+/// ChaCha20 **32-bit words** reserved per SNR point (design doc §3): `2^56`.
 ///
-/// Far above any practical run; guarantees distinct SNR points never share
-/// stream regions.
+/// All strides here are in ChaCha20 32-bit word units — the unit of
+/// [`ChaCha20Rng::set_word_pos`] / [`ChaCha20Rng::get_word_pos`] in
+/// `rand_chacha 0.9` (`BLOCK_WORDS = 16`, position is "the offset from the start
+/// of the stream, in 32-bit words"). Far above any practical run; guarantees
+/// distinct SNR points never share stream regions.
 pub const SNR_STRIDE: u128 = 1 << 56;
 
-/// ChaCha20 words reserved per worker partition (design doc §3): `2^40` (1 TB).
+/// ChaCha20 32-bit words reserved per worker partition (design doc §3): `2^40`
+/// (4 TiB of stream).
 ///
-/// At [`FRAME_STRIDE`]` = 2^16` this admits `2^24` (≈ 16 M) frames per worker
-/// partition before a worker would run into the next worker's region.
+/// At [`FRAME_STRIDE`]` = 2^19` this admits `2^21` (≈ 2 M) frames per worker
+/// partition before a worker would run into the next worker's region — still
+/// ample for any realistic SNR point.
 pub const WORKER_STRIDE: u128 = 1 << 40;
 
-/// ChaCha20 words reserved per frame (design doc §3): `2^16` (65536 words =
-/// 512 KB).
+/// ChaCha20 32-bit words reserved per frame (design doc §3, amended 2026-06-07):
+/// `2^19` (524288 words = 2 MiB of stream).
 ///
-/// Roughly 3× headroom over the worst-case per-frame noise draw for DVB-T2
-/// 64-QAM and 5G NR BG1 `Z = 384` (see design-doc §3 arithmetic check).
-pub const FRAME_STRIDE: u128 = 1 << 16;
+/// Sized for the **measured** worst-case per-frame draw. The per-frame noise
+/// sampler draws two `f64` uniforms per Gaussian sample
+/// ([`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)), i.e.
+/// **4 ChaCha20 32-bit words per noise sample**. The binding (largest) DVB-T2
+/// case is **r1/2 16-QAM Normal** — 16-QAM packs fewer bits/symbol than 64-QAM
+/// so it has *more* symbols (n=64800 → 16200 symbols × 2 axes = 32400 noise
+/// samples → 129 600 words), plus the random BBFRAME fill (~1008 words) ≈
+/// **130 608 words/frame** (verified by
+/// [`tests::test_worst_case_frame_draw_under_stride`]). `2^19` gives ~4×
+/// headroom. The original `2^16` value undercounted (it assumed ~1 word/sample
+/// f32 noise and only checked 64-QAM), letting consecutive frames' regions
+/// overlap; this amendment fixes that.
+pub const FRAME_STRIDE: u128 = 1 << 19;
 
 /// Debug-assert headroom (design doc §3): a frame must draw at most
-/// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` ChaCha20 words.
+/// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` ChaCha20 32-bit words.
 pub const DEBUG_ASSERT_WORD_MARGIN: u128 = 1024;
 
 /// Computes the per-worker ChaCha20 word-position seek offset (design doc §3).
@@ -79,10 +94,14 @@ pub const DEBUG_ASSERT_WORD_MARGIN: u128 = 1024;
 ///
 /// ```text
 /// worker_offset(seed, snr_idx, worker_idx, frame_idx_in_worker) =
-///     snr_idx * SNR_STRIDE                       // 2^56 words per SNR
-///   + (worker_idx as u128) * WORKER_STRIDE       // 2^40 words per worker
-///   + (frame_idx_in_worker as u128) * FRAME_STRIDE  // 2^16 words per frame
+///     snr_idx * SNR_STRIDE                       // 2^56 32-bit words per SNR
+///   + (worker_idx as u128) * WORKER_STRIDE       // 2^40 32-bit words per worker
+///   + (frame_idx_in_worker as u128) * FRAME_STRIDE  // 2^19 32-bit words per frame
 /// ```
+///
+/// All strides are in ChaCha20 **32-bit word** units (the unit of
+/// [`ChaCha20Rng::set_word_pos`]). Only the `FRAME_STRIDE` constant changed in
+/// the 2026-06-07 amendment; the formula shape is unchanged.
 ///
 /// The `seed` argument is part of the §3 signature but does *not* enter the
 /// offset: the base seed selects the ChaCha20 *stream* (via
@@ -319,7 +338,7 @@ impl WorkerCtx {
     ///
     /// Seeks to [`worker_offset`]`(seed, snr_idx, worker_idx, frame_idx_in_worker)`.
     /// After this call the next `random()` draws begin at the frame's reserved
-    /// 512 KB ChaCha20 region.
+    /// [`FRAME_STRIDE`]-word (2 MiB) ChaCha20 region.
     ///
     /// # Arguments
     ///
@@ -359,6 +378,18 @@ impl WorkerCtx {
     #[must_use]
     pub fn worker_idx(&self) -> usize {
         self.worker_idx
+    }
+
+    /// The RNG's current absolute word position (ChaCha20 **32-bit words**).
+    ///
+    /// Mirrors [`ChaCha20Rng::get_word_pos`]; exposed so consumers (the Phase C
+    /// checkpoint writer, and the per-frame-draw regression guard) can measure
+    /// how far into a frame's reserved [`FRAME_STRIDE`] region the noise draws
+    /// advanced.
+    #[inline]
+    #[must_use]
+    pub fn current_word_pos(&self) -> u128 {
+        self.rng.get_word_pos()
     }
 
     /// Debug-asserts the per-frame draw stayed within its reserved region.
@@ -635,7 +666,7 @@ mod tests {
 
     #[test]
     fn test_strides_are_power_of_two_and_ordered() {
-        assert_eq!(FRAME_STRIDE, 1 << 16);
+        assert_eq!(FRAME_STRIDE, 1 << 19);
         assert_eq!(WORKER_STRIDE, 1 << 40);
         assert_eq!(SNR_STRIDE, 1 << 56);
         const _: () = assert!(FRAME_STRIDE < WORKER_STRIDE);
@@ -770,5 +801,91 @@ mod tests {
         );
         assert_eq!(counters.frames, 20);
         assert_eq!(factory_calls.load(Ordering::Relaxed), 4);
+    }
+
+    /// Measures the actual ChaCha20 32-bit-word draw of one simulated frame.
+    ///
+    /// Reseeks the worker to frame 0's region, snapshots the word position,
+    /// simulates one frame (which draws the random BBFRAME then the AWGN noise),
+    /// and returns the advance. BP decode draws nothing from the stream, so this
+    /// is the full per-frame draw.
+    fn measure_frame_word_draw(
+        rate: gf2_coding::CodeRate,
+        modulation: gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation,
+    ) -> u128 {
+        use crate::frame_sim::DvbT2BicmFrameSim;
+        use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+        use gf2_coding::modem::DemapMethod;
+
+        // High Es/N0 so the frame decodes quickly; the noise draw count does not
+        // depend on SNR (it is purely num_symbols-driven), so any value works.
+        let sim = DvbT2BicmFrameSim::new(
+            rate,
+            modulation,
+            12.0,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+            DemapMethod::ExactLogMap,
+        );
+        let mut ctx = WorkerCtx::new(1, 0, 0);
+        ctx.reseek_to_frame(0);
+        let start = ctx.current_word_pos();
+        let _ = sim.simulate_frame(0, &mut ctx);
+        ctx.current_word_pos() - start
+    }
+
+    /// Regression guard (design doc §3, 2026-06-07 amendment): the worst-case
+    /// per-frame ChaCha20 draw must stay strictly within a frame's reserved
+    /// region so consecutive frames' RNG streams never overlap.
+    ///
+    /// The binding case is **r1/2 16-QAM Normal** — 16-QAM has more symbols than
+    /// 64-QAM (fewer bits/symbol) so it draws the most AWGN noise. Fast tier:
+    /// one Normal-frame encode+decode at high SNR is well under 5 s.
+    #[test]
+    fn test_worst_case_frame_draw_under_stride() {
+        use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+        use gf2_coding::CodeRate;
+
+        let draw_16qam = measure_frame_word_draw(CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+        let draw_64qam = measure_frame_word_draw(CodeRate::Rate1_2, DvbT2Modulation::Qam64);
+
+        // Visible under `--no-capture` for receipt/design-doc bookkeeping.
+        eprintln!(
+            "per-frame ChaCha20 32-bit-word draw: 16-QAM Normal = {draw_16qam}, \
+             64-QAM Normal = {draw_64qam}; FRAME_STRIDE = {FRAME_STRIDE} \
+             (headroom {:.2}x)",
+            FRAME_STRIDE as f64 / draw_16qam as f64
+        );
+
+        // 16-QAM is the binding (largest) case: more symbols → more noise draws.
+        assert!(
+            draw_16qam > draw_64qam,
+            "expected 16-QAM to draw more than 64-QAM (more symbols); \
+             16qam={draw_16qam} 64qam={draw_64qam}"
+        );
+
+        // Sanity: the measured 16-QAM draw matches the design-doc §3 arithmetic
+        // (~130 608 words: 32400 noise samples × 4 words + ~1008 BBFRAME words).
+        // Allow a wide band so an incidental layout change does not flake, but
+        // catch an order-of-magnitude regression.
+        assert!(
+            (120_000..=140_000).contains(&draw_16qam),
+            "16-QAM Normal per-frame draw {draw_16qam} outside the expected \
+             ~130 608-word band; design-doc §3 arithmetic needs revisiting"
+        );
+
+        // The binding guarantee: the worst case fits, with margin, inside one
+        // frame's reserved region.
+        let budget = FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN;
+        assert!(
+            draw_16qam < budget,
+            "worst-case per-frame draw {draw_16qam} must be < FRAME_STRIDE - \
+             margin = {budget} (FRAME_STRIDE = {FRAME_STRIDE}); raise FRAME_STRIDE"
+        );
+
+        // And confirm the headroom factor is comfortable (>= 3x).
+        assert!(
+            (draw_16qam as f64) * 3.0 <= FRAME_STRIDE as f64,
+            "headroom factor < 3x: draw {draw_16qam} vs FRAME_STRIDE {FRAME_STRIDE}"
+        );
     }
 }
