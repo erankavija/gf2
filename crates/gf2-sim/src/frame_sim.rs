@@ -34,16 +34,20 @@
 //! that makes the aggregate byte-identical across worker counts (design doc §3,
 //! §11).
 
-use gf2_coding::dvb_t2_bicm_harness::{ebn0_to_esn0, esn0_to_ebn0, rate_f64};
+use rand::Rng as _;
+
+use gf2_coding::dvb_t2_bicm_harness::{
+    box_muller_cos, ebn0_to_esn0, esn0_to_ebn0, rate_f64, BicmAwgnChannel,
+};
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2Concat};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::DecoderConfig;
-use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
+use gf2_coding::modem::DemapMethod;
 use gf2_coding::simulation::count_bit_errors;
-use gf2_coding::{CodeRate, Llr};
+use gf2_coding::CodeRate;
 use gf2_core::BitVec;
 
 use crate::parallel::{FrameOutcome, WorkerCtx};
@@ -75,7 +79,12 @@ const DECODE_HARD_FAIL_ITERS: u64 = 50;
 ///
 /// # Examples
 ///
-/// ```
+/// `no_run`: a full n=64800 encode+decode is too heavy for an unoptimised
+/// doctest build (doctests run without `--release`). The example still compiles,
+/// satisfying the public-API example requirement; the executed coverage lives in
+/// the `--release` unit/integration tests.
+///
+/// ```no_run
 /// use std::num::NonZeroUsize;
 /// use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 /// use gf2_sim::parallel::run_snr_point;
@@ -106,10 +115,11 @@ pub struct DvbT2BicmFrameSim {
     rate: CodeRate,
     modulation: DvbT2Modulation,
     decoder: DecoderConfig,
-    codec: DvbT2Concat,
-    interleaver: DvbT2BitInterleaver,
-    spec: ModemSpec<f32>,
     demap: DemapMethod,
+    codec: DvbT2Concat,
+    /// The canonical DVB-T2 BICM-AWGN transmit/demod chain (SSOT in
+    /// `gf2-coding`); the frame kernel only supplies the noise draws.
+    channel: BicmAwgnChannel,
     bits_per_symbol: usize,
     k: usize,
     es_n0_db: f64,
@@ -173,13 +183,14 @@ impl DvbT2BicmFrameSim {
         codec.set_decoder_config(decoder);
 
         let bits_per_symbol = modulation.bits_per_cell();
-        let order = 1usize << bits_per_symbol;
-        let spec = ModemSpec::<f32>::gray_square_qam(order);
 
         let modcod = DvbT2Modcod::new(FrameSize::Normal, rate, modulation);
         let interleaver = DvbT2BitInterleaver::new(modcod);
+        // The canonical BICM-AWGN chain (SSOT in gf2-coding); the frame kernel
+        // supplies only the per-axis noise draws.
+        let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol, demap);
 
-        // AWGN parameters (identical formula to BicmAwgnChannel):
+        // AWGN parameters (same formula the channel's eb_n0 path computes):
         //   sigma_sq = 1 / (2 * 10^(Es/N0 / 10)),  N0 = 2 * sigma_sq.
         let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
         let sigma_sq = 1.0 / (2.0 * es_n0_lin);
@@ -192,10 +203,9 @@ impl DvbT2BicmFrameSim {
             rate,
             modulation,
             decoder,
-            codec,
-            interleaver,
-            spec,
             demap,
+            codec,
+            channel,
             bits_per_symbol,
             k,
             es_n0_db,
@@ -283,43 +293,21 @@ impl DvbT2BicmFrameSim {
         let message = random_bitvec(self.k, rng);
         // 2. Encode.
         let codeword = self.codec.encode(&message);
-        let n_ldpc = codeword.len();
-        let num_symbols = n_ldpc / self.bits_per_symbol;
 
-        // 3. Bit-interleave then Gray-QAM map.
-        let interleaved = self.interleaver.interleave(&codeword);
-        let interleaved_bits: Vec<bool> =
-            (0..interleaved.len()).map(|b| interleaved.get(b)).collect();
-        let mut tx_i = vec![0.0_f32; num_symbols];
-        let mut tx_q = vec![0.0_f32; num_symbols];
-        let mapper = self.spec.preferred_mapper();
-        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-        // 4. AWGN: independent Box-Muller noise on each axis (same draw order as
-        // the baseline: all I-axis samples first, then all Q-axis samples).
-        for s in tx_i.iter_mut() {
-            *s += self.sigma * box_muller(rng);
-        }
-        for s in tx_q.iter_mut() {
-            *s += self.sigma * box_muller(rng);
-        }
-
-        // 5. Soft-demap with the true channel N0, then deinterleave.
-        let noise_var_buf = vec![self.noise_var; num_symbols];
-        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-        let demapper = self.spec.preferred_soft_demapper();
-        demapper.demap_llrs(
-            DemapInput {
-                rx_i: &tx_i,
-                rx_q: &tx_q,
-                gain_i: None,
-                gain_q: None,
-                noise_var: &noise_var_buf,
-                method: self.demap,
+        // 3-5. Interleave → QAM-map → per-axis AWGN → soft-demap → deinterleave,
+        // delegated to the canonical chain in gf2-coding. The noise draws come
+        // from the per-worker rand_chacha 0.9 stream (draw u1 then u2 per sample,
+        // all I-axis samples then all Q-axis samples — the chain's draw contract).
+        let llrs = self.channel.transmit_and_demodulate_with_noise(
+            &codeword,
+            self.sigma,
+            self.noise_var,
+            || {
+                let u1 = rng.random::<f64>();
+                let u2 = rng.random::<f64>();
+                box_muller_cos(u1, u2)
             },
-            &mut interleaved_llrs,
         );
-        let llrs = self.interleaver.deinterleave_llrs(&interleaved_llrs);
 
         // 6. Decode (mirror the baseline closure; sentinel iteration 1 on
         // convergence, the real iteration count on non-convergence).
@@ -365,18 +353,6 @@ fn random_bitvec<R: rand::Rng>(len_bits: usize, rng: &mut R) -> BitVec {
         data[last] &= mask;
     }
     BitVec::from_words(data, len_bits)
-}
-
-/// One standard-normal sample via the Box-Muller transform.
-///
-/// Draws two uniforms from `rng` and returns one Gaussian sample (the cosine
-/// branch), matching the legacy baseline harness's per-axis noise generation
-/// exactly. Draws `u1` then `u2`; clamps `u1` away from zero to avoid `ln(0)`.
-#[inline]
-fn box_muller<R: rand::Rng>(rng: &mut R) -> f32 {
-    let u1: f64 = rng.random::<f64>().max(1e-15);
-    let u2: f64 = rng.random::<f64>();
-    ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32
 }
 
 #[cfg(test)]
