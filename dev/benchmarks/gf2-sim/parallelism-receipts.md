@@ -28,8 +28,13 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   than the legacy path, so the gate divisor is the more conservative legacy
   baseline.)
 - **Required threshold (from task body):** >= 12x
-- **Verdict:** PASS — attested by `agent:3fcb7025` on branch
-  `worktree-agent-3fcb7025` (the `feat(jit:3fcb7025)` implementation commit).
+- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `691fe43152`
+  (the BICM-AWGN SSOT refactor; impl originally landed at `22e9c66d`). This
+  receipt-SHA citation lands in the immediate follow-up commit, since the
+  hash of a commit cannot be embedded in its own content. Post-refactor
+  throughput spot-check (120 frames, 3 repeats, quiet machine): 24-thread
+  **21.66 fps ± 0.22** → **13.36x**, within run-to-run variance of the
+  headline sweep below — the refactor is behavior- and performance-preserving.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/parallel_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`).
