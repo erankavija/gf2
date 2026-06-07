@@ -86,5 +86,20 @@
     "MANDATORY (user directive 2026-06-07): before EVERY `jit gate pass <id> code-review`, dispatch your OWN adversarial reviewer (general-purpose, read-only) that mirrors scripts/code-review-prompt.md, and FIX its blocking/high findings first. This front-loads review and avoids the multi-round gate-rework churn seen on 118a0091/c0b1702d/36075e4c/19ae6540. Pay special attention to: # Examples on every public item, documented-invariant enforcement, Send/Sync soundness, env-sensitive tests, build hygiene, SSOT duplication.",
     "36075e4c at rework #2 (MAX_REWORK_ATTEMPTS=2). New round-2 findings were DEEPER (Sync contract, load_blob code:0), not repeats — so within budget. If rework#2 fails, ESCALATE."
   ],
-  "started_at": "2026-06-07T00:00:00Z"
+  "started_at": "2026-06-07T00:00:00Z",
+  "paused": {
+    "at": "2026-06-07 (user requested pause; awaiting go-ahead before further review/merge/gate/dispatch)",
+    "done": ["ec530af9 (Phase 0)", "118a0091 (A.1 scaffolding)", "c0b1702d (A.1 baseline)", "19ae6540 (A.2a foundation)"],
+    "in_flight_workers": [
+      {"id": "36075e4c", "branch": "worktree-agent-36075e4c", "base": "2ba26e62", "agent": "a958f24b26a9ab978", "task": "round-6 fixes: build-time arch manifest (env GF2_HIP_COMPILED_ARCHS), HipDispatcher::new calls detect_device+fallback, new_with_fallback honors device_id. cargo-ci already green; this addresses the 6th code-review round. User approved continuing (option: fix all 3, pre-review, re-gate)."},
+      {"id": "c09d3e95", "branch": "worktree-agent-c09d3e95", "base": "ecc5ab05", "agent": "a066722794b995fdb", "task": "A.2b graph API (Chain/connect/build, cycle/type/disconnected detection), built on foundation stages; criterion-1 self-satisfied vs DvbT2Concat ground truth (graph-vs-preset equality owned by 81d05bab)."}
+    ],
+    "on_resume": [
+      "For EACH finished worker: (1) merge its branch into main, (2) run adversarial pre-review (general-purpose, mirrors scripts/code-review-prompt.md), (3) fix findings, (4) pre-warm cargo-ci, (5) gate cargo-ci + code-review BARE (no | tail masking), (6) mark done. Do NOT run a cargo-ci gate while any worktree worker is building (contention flakes 5s nextest tests).",
+      "After 36075e4c closes -> B.2 (f6004add, a930be7f, d3f1616a GPU kernels) unblocks.",
+      "After c09d3e95 closes -> 81d05bab (A.2d preset) is closer (also needs db9836e4).",
+      "3fcb7025 (A.2b) still to dispatch — HOLD for an uncontended machine so its parallelism-pays throughput (>=12x single-thread, baseline 1.6216 fps from c0b1702d) measures cleanly. db9836e4 (A.2c) needs 3fcb7025's WorkerCtx + foundation batch types.",
+      "Phase order remaining: A.2b(3fcb7025)->A.2c(db9836e4)->A.2d(81d05bab)->A.3(5f12e7ff)->A.4(48a0db6c close Phase A); B.2->B.3(ed575f15)->B.4(14f59c2d close Phase B); then C->D->E per waves array."
+    ]
+  }
 }
