@@ -20,6 +20,11 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   iteration depth (via `DvbT2Concat::decode_soft_counted`), byte-identical
   across all worker counts {1,2,4,8,24} (frames converge above the waterfall but
   the early-termination depth is a genuine per-frame quantity, not a sentinel).
+  Per-frame RNG budget: each frame seeks to its own `FRAME_STRIDE = 2^19`
+  (32-bit-word) region; the measured worst-case per-frame draw is 130 608 words
+  for the largest config (r1/2 16-QAM Normal), ~4× under the stride, so
+  consecutive frames' noise streams never overlap (design-doc §3, amended
+  2026-06-07; guarded by `parallel::tests::test_worst_case_frame_draw_under_stride`).
 - **Observed throughput:** **21.79 fps ± 0.03** (24 threads, 144 frames, 3 repeats);
   confirmation run **21.47 fps ± 0.26** (24 threads, 120 frames, 5 repeats).
   New-pipeline single-thread reference: **2.06 fps ± 0.01**.
@@ -30,13 +35,15 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   than the legacy path, so the gate divisor is the more conservative legacy
   baseline.)
 - **Required threshold (from task body):** >= 12x
-- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `d4e7a67b26`
-  (the real-BP-iteration-count fix; earlier impl/refactor at `22e9c66d` /
-  `691fe43152`). This receipt-SHA citation lands in the immediate follow-up
-  commit, since the hash of a commit cannot be embedded in its own content.
-  Throughput re-measured after the fix (120 frames, 3 repeats, quiet machine):
-  24-thread **21.81 fps ± 0.19** → **13.45x**, within run-to-run variance of the
-  prior sweeps — the fix is behavior- and performance-preserving.
+- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `5572374c75`
+  (the FRAME_STRIDE = 2^19 fix; earlier impl/refactor/iter-count work at
+  `22e9c66d` / `691fe43152` / `d4e7a67b26`). This receipt-SHA citation lands in
+  the immediate follow-up commit, since the hash of a commit cannot be embedded
+  in its own content. Throughput re-measured after the FRAME_STRIDE amendment
+  (120 frames, 3 repeats, quiet machine): 24-thread **21.42 fps ± 0.04** →
+  **13.21x**, within run-to-run variance of the prior sweeps (the amendment only
+  changes absolute RNG offsets, not the compute) — behavior- and
+  performance-preserving.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/parallel_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`).
