@@ -17,7 +17,7 @@
 
 #[cfg(feature = "hip")]
 mod imp {
-    use gf2_kernels_hip::host::{HipStreamPool, PinnedHostBuffer};
+    use gf2_kernels_hip::host::{GfxTarget, HipStreamPool, PinnedHostBuffer};
     use gf2_kernels_hip::HipError;
 
     use crate::error::{FatalError, RecoverableError, StageError};
@@ -145,6 +145,10 @@ mod imp {
     /// pinned buffers are owned (moved in via `Send`), never shared by `&`.
     pub struct HipDispatcher {
         device_id: i32,
+        /// The gfx target detected at construction (design doc §6). Stored for
+        /// diagnostics — kept so a future kernel stage can select the matching
+        /// blob without re-probing.
+        target: GfxTarget,
         streams: HipStreamPool,
         scratch: Vec<StageScratch>,
     }
@@ -152,21 +156,39 @@ mod imp {
     impl HipDispatcher {
         /// Builds a dispatcher with `n_streams` streams on `device_id`.
         ///
+        /// Construction first **detects** the device's gfx target via
+        /// [`GfxTarget::detect_device`] (design doc §6) — this is the production
+        /// invocation of detection, so the documented warn+fallback path is
+        /// actually exercised. On an unsupported arch (no compiled kernel blob)
+        /// or an absent device the detection error is mapped through
+        /// [`map_hip_error`] and **returned**, so the Phase C executor refuses
+        /// to build the dispatcher and receives the recoverable/fatal signal
+        /// (`UnsupportedArch` → recoverable CPU fallback; `NoDevice` → fatal
+        /// `DeviceUnavailable`). Only after a successful detect is the stream
+        /// pool created.
+        ///
         /// # Arguments
         ///
-        /// * `device_id` - The HIP device to bind the stream pool to.
+        /// * `device_id` - The HIP device to detect and bind the stream pool to.
         /// * `n_streams` - Number of streams (typically the worker count). Must
         ///   be non-zero (delegated to `HipStreamPool::new`).
         ///
         /// # Errors
         ///
-        /// Returns a [`StageError`] if the stream pool cannot be created. An OOM
-        /// is surfaced as recoverable; any other HIP failure as fatal.
+        /// Returns a [`StageError`] if arch detection fails (recoverable for an
+        /// unsupported arch, fatal for an absent device) or the stream pool
+        /// cannot be created. An OOM is surfaced as recoverable; any other HIP
+        /// failure as fatal.
         pub fn new(device_id: i32, n_streams: usize) -> Result<Self, StageError> {
+            // Production detect: refuse to build on an unsupported/absent GPU and
+            // hand the executor the recoverable/fatal fallback signal (design §6/§8).
+            let target = GfxTarget::detect_device(device_id)
+                .map_err(|e| map_hip_error(e, "GfxTarget::detect_device"))?;
             let streams = HipStreamPool::new(device_id, n_streams)
                 .map_err(|e| map_hip_error(e, "HipStreamPool::new"))?;
             Ok(Self {
                 device_id,
+                target,
                 streams,
                 scratch: Vec::new(),
             })
@@ -187,6 +209,13 @@ mod imp {
         /// The device this dispatcher's resources are bound to.
         pub fn device_id(&self) -> i32 {
             self.device_id
+        }
+
+        /// The gfx target detected for this dispatcher's device at construction
+        /// (design doc §6). Exposed for diagnostics and for a future kernel
+        /// stage to select the matching blob without re-probing.
+        pub fn target(&self) -> GfxTarget {
+            self.target
         }
 
         /// Borrows the shared stream pool.
@@ -347,6 +376,9 @@ mod imp {
 
             let mut disp = HipDispatcher::new(0, 4).expect("build dispatcher on gfx1030");
             assert_eq!(disp.device_id(), 0);
+            // Construction detected the device's gfx target (production detect
+            // path); this CI host is a gfx1030 (RX 6950 XT).
+            assert_eq!(disp.target(), GfxTarget::Gfx1030);
             assert_eq!(disp.streams().len(), 4);
 
             // Acquire a stream from the shared pool (round-robin path).
@@ -358,6 +390,39 @@ mod imp {
 
             let buf = DeviceBuffer::<f32>::new(256, disp.device_id()).expect("device alloc");
             assert_eq!(buf.len(), 256);
+        }
+
+        /// Finding (round 6): `HipDispatcher::new` runs detection at
+        /// construction and returns the mapped `StageError` on a bad device — an
+        /// UnsupportedArch yields a recoverable CPU-fallback signal and a
+        /// NoDevice yields a fatal `DeviceUnavailable`. This CI host is a healthy
+        /// gfx1030, so we cannot force a bad device here; instead we assert the
+        /// exact mapping arms `new` routes detection errors through, documenting
+        /// the production fallback/fatal contract without depending on absent
+        /// hardware.
+        #[test]
+        fn test_dispatcher_new_detect_error_mapping() {
+            // UnsupportedArch (no compiled blob for the active arch) → recoverable
+            // CPU fallback, NOT fatal — so a production caller continues on CPU.
+            let unsupported = HipError::UnsupportedArch {
+                gcn_arch_name: "gfx908".to_string(),
+            };
+            match map_hip_error(unsupported, "GfxTarget::detect_device") {
+                StageError::Recoverable(RecoverableError::Transient(cause)) => {
+                    assert!(
+                        cause.to_string().contains("gfx908"),
+                        "fallback cause should name the unsupported arch, got: {cause}"
+                    );
+                }
+                other => panic!("expected recoverable fallback from detect, got {other:?}"),
+            }
+
+            // NoDevice (no GPU visible) → fatal DeviceUnavailable — construction
+            // aborts and the user re-runs with --cpu-only.
+            match map_hip_error(HipError::NoDevice, "GfxTarget::detect_device") {
+                StageError::Fatal(FatalError::DeviceUnavailable) => {}
+                other => panic!("expected fatal DeviceUnavailable from detect, got {other:?}"),
+            }
         }
 
         /// End-to-end OOM path on the real GPU: a `DeviceBuffer` request larger

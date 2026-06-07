@@ -19,9 +19,19 @@
 //! [`GfxTarget::load_blob`]. gfx1030 is the only CI target today; the others
 //! are documented seams that are unexercised until hardware is available.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::{check_hip, ffi, HipError};
+
+/// Comma-separated list of gfx targets THIS build actually compiled a usable
+/// kernel blob for (emitted by `build.rs` as `GF2_HIP_COMPILED_ARCHS`).
+/// gfx1030 is always present (mandatory); best-effort arches appear only when
+/// hipcc succeeded. Empty string when none compiled.
+///
+/// `has_compiled_blob` consults THIS build-time manifest — not a runtime scan
+/// of the gitignored `kernels/` output dir, where stale residue from a prior
+/// build could wrongly report support.
+const COMPILED_ARCHS: &str = env!("GF2_HIP_COMPILED_ARCHS");
 
 /// Capacity of the arch-name buffer handed to `hip_device_get_arch_name`.
 /// `gcnArchName` plus any feature suffix (e.g. `"gfx942:sramecc+:xnack-"`) is
@@ -272,12 +282,16 @@ impl GfxTarget {
             .join(self.as_str())
     }
 
-    /// Returns `true` if this build compiled at least one kernel blob (`*.co`)
-    /// for this target.
+    /// Returns `true` if **this build** compiled a usable kernel blob for this
+    /// target.
     ///
-    /// `build.rs` compiles `gfx1030` blobs unconditionally but treats every
-    /// other target as best-effort — skipped when the toolchain lacks that
-    /// arch's device libraries. A target whose name
+    /// The answer comes from the compile-time `GF2_HIP_COMPILED_ARCHS` manifest
+    /// emitted by `build.rs` — NOT a runtime scan of the gitignored
+    /// `kernels/<target>/` output dir, where stale residue from a prior build
+    /// could wrongly report support. `build.rs` compiles `gfx1030` blobs
+    /// unconditionally (so this is always `true` for gfx1030 after a build) but
+    /// treats every other target as best-effort — skipped when the toolchain
+    /// lacks that arch's device libraries. A target whose name
     /// [`from_arch_name`](Self::from_arch_name) recognizes may therefore still
     /// have no usable blob in this build, in which case
     /// [`detect_device`](Self::detect_device) reports it as
@@ -294,7 +308,7 @@ impl GfxTarget {
     /// assert!(GfxTarget::Gfx1030.has_compiled_blob());
     /// ```
     pub fn has_compiled_blob(self) -> bool {
-        dir_contains_co(&self.blob_dir())
+        arch_in_manifest(self.as_str(), COMPILED_ARCHS)
     }
 
     /// Loads a named kernel blob (`<kernel>.co`) for this target.
@@ -335,18 +349,14 @@ impl GfxTarget {
     }
 }
 
-/// Returns `true` if `dir` exists and contains at least one compiled kernel
-/// blob (a file with a `.co` extension). A missing/unreadable directory reads
-/// as "no blob" (`false`), which is the correct conservative answer for the
-/// best-effort multi-arch fall-back path.
-fn dir_contains_co(dir: &Path) -> bool {
-    std::fs::read_dir(dir)
-        .map(|entries| {
-            entries
-                .flatten()
-                .any(|e| e.path().extension().and_then(|x| x.to_str()) == Some("co"))
-        })
-        .unwrap_or(false)
+/// Returns `true` if `name` appears as a comma-separated entry in the
+/// build-time `GF2_HIP_COMPILED_ARCHS` manifest `csv`.
+///
+/// Pure string membership over the comma-separated `as_str()` names emitted by
+/// `build.rs`; empty entries (from an empty manifest) never match a real arch
+/// name. Factored out so the parsing is unit-testable with fixed strings.
+fn arch_in_manifest(name: &str, csv: &str) -> bool {
+    csv.split(',').any(|entry| entry == name)
 }
 
 #[cfg(test)]
@@ -475,31 +485,35 @@ mod tests {
         );
     }
 
+    /// `arch_in_manifest` is pure comma-separated membership over the build-time
+    /// `GF2_HIP_COMPILED_ARCHS` manifest. A recognized arch absent from the
+    /// manifest (build SKIPPED it) reports no blob, so `detect_device` treats it
+    /// as UnsupportedArch (warn + CPU fallback).
     #[test]
-    fn test_dir_contains_co_distinguishes_skipped_blob() {
-        // A recognized arch whose build was SKIPPED leaves a dir with no `.co`;
-        // detect_device treats that as UnsupportedArch (warn + CPU fallback).
-        let tmp = std::env::temp_dir().join(format!("gf2_hip_blobtest_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
-        assert!(!dir_contains_co(&tmp), "empty dir has no compiled blob");
-        std::fs::write(tmp.join("probe.cpp"), b"// source only").unwrap();
+    fn test_arch_in_manifest_membership() {
+        // A multi-arch manifest: only listed names match.
+        let csv = "gfx1030,gfx942";
+        assert!(arch_in_manifest("gfx1030", csv));
+        assert!(arch_in_manifest("gfx942", csv));
         assert!(
-            !dir_contains_co(&tmp),
-            "a dir with only a .cpp source (build skipped/failed) is not usable"
+            !arch_in_manifest("gfx940", csv),
+            "an arch absent from the manifest (build skipped it) has no blob"
         );
-        std::fs::write(tmp.join("probe.co"), b"\0blob").unwrap();
-        assert!(dir_contains_co(&tmp), "a dir with a .co blob is usable");
-        let _ = std::fs::remove_dir_all(&tmp);
+        assert!(!arch_in_manifest("gfx1100", csv));
+
+        // A single-entry manifest (the common gfx1030-only build).
+        assert!(arch_in_manifest("gfx1030", "gfx1030"));
+        assert!(!arch_in_manifest("gfx942", "gfx1030"));
     }
 
+    /// An empty manifest (no arch compiled) must never match a real arch name —
+    /// in particular the empty string produced by `"".split(',')` must not be
+    /// taken as a wildcard.
     #[test]
-    fn test_dir_contains_co_missing_dir_is_false() {
-        let missing = std::env::temp_dir().join(format!(
-            "gf2_hip_definitely_missing_dir_{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&missing);
-        assert!(!dir_contains_co(&missing), "missing dir reads as no blob");
+    fn test_arch_in_manifest_empty_matches_nothing() {
+        assert!(!arch_in_manifest("gfx1030", ""));
+        assert!(!arch_in_manifest("gfx942", ""));
+        // A real arch name is never empty, so the lone empty split entry is inert.
+        assert!(!arch_in_manifest("", "gfx1030"));
     }
 }

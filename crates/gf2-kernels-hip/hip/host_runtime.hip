@@ -47,6 +47,13 @@ int hip_set_device(int device_id) {
     return static_cast<int>(hipSetDevice(device_id));
 }
 
+// Writes the calling host thread's currently-active HIP device index to
+// `*device_id`. Used to save/restore the current device around a device-scoped
+// query (e.g. per-device hipMemGetInfo) so the caller's selection is preserved.
+int hip_get_device(int* device_id) {
+    return static_cast<int>(hipGetDevice(device_id));
+}
+
 // Writes the number of visible HIP devices to `*count`. Returns hipSuccess
 // even when count == 0 (the caller maps 0 → DeviceUnavailable per §8).
 int hip_device_get_count(int* count) {
