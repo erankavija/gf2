@@ -25,6 +25,13 @@
 
 pub(crate) mod ffi;
 
+/// Host-side HIP infrastructure: stream pool, allocator wrappers,
+/// deterministic-launch helpers, and multi-arch dispatch (design doc §6).
+///
+/// All types here are `unsafe`-free at the call site — every `unsafe` FFI
+/// call lives behind a safe RAII wrapper or a `// SAFETY:`-annotated block.
+pub mod host;
+
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
 /// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.
@@ -36,28 +43,81 @@ use std::ffi::c_void;
 use std::ptr;
 
 /// Error type for HIP operations.
+///
+/// The common case is [`HipError::Hip`], carrying the raw `hipError_t` code
+/// and the name of the API call that failed. [`HipError::OutOfMemory`] is a
+/// distinguished variant the pipeline executor catches to substitute a CPU
+/// fallback (design doc §8); the `gf2-sim` boundary
+/// (`crates/gf2-sim/src/gpu/mod.rs`) maps it to
+/// `gf2_sim::RecoverableError::OutOfMemory`. `gf2-kernels-hip` deliberately
+/// does **not** depend on `gf2-sim` — the mapping lives on the `gf2-sim`
+/// side to avoid a dependency inversion.
 #[derive(Debug, Clone)]
-pub struct HipError {
-    /// HIP error code (0 = hipSuccess).
-    pub code: i32,
-    /// Name of the HIP API call that failed.
-    pub context: &'static str,
+pub enum HipError {
+    /// A HIP API call failed with a non-zero `hipError_t` code.
+    Hip {
+        /// HIP error code (0 = hipSuccess; never stored here).
+        code: i32,
+        /// Name of the HIP API call that failed.
+        context: &'static str,
+    },
+    /// A device allocation failed because the device is out of memory.
+    ///
+    /// Distinguished from [`HipError::Hip`] so the pipeline executor can
+    /// catch it and substitute a CPU fallback rather than aborting. Mapped
+    /// to `gf2_sim::RecoverableError::OutOfMemory` at the `gf2-sim`
+    /// boundary.
+    OutOfMemory {
+        /// The HIP device that ran out of memory.
+        device_id: i32,
+        /// The allocation size, in bytes, that failed.
+        bytes_requested: usize,
+    },
+}
+
+impl HipError {
+    /// Returns the underlying `hipError_t` code for a [`HipError::Hip`], or
+    /// `hipErrorOutOfMemory` (2) for an [`HipError::OutOfMemory`].
+    pub fn code(&self) -> i32 {
+        match self {
+            HipError::Hip { code, .. } => *code,
+            // hipErrorOutOfMemory is canonically 2.
+            HipError::OutOfMemory { .. } => 2,
+        }
+    }
 }
 
 impl std::fmt::Display for HipError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "HIP error {} in {}", self.code, self.context)
+        match self {
+            HipError::Hip { code, context } => {
+                write!(f, "HIP error {code} in {context}")
+            }
+            HipError::OutOfMemory {
+                device_id,
+                bytes_requested,
+            } => write!(
+                f,
+                "HIP out of memory on device {device_id}: {bytes_requested} bytes requested"
+            ),
+        }
     }
 }
 
 impl std::error::Error for HipError {}
 
+/// `hipError_t` code for `hipErrorOutOfMemory` (== `hipErrorMemoryAllocation`).
+pub(crate) const HIP_ERROR_OUT_OF_MEMORY: i32 = 2;
+
+/// `hipError_t` code for `hipErrorNotReady` (async work still pending).
+pub(crate) const HIP_ERROR_NOT_READY: i32 = 600;
+
 /// Check a HIP return code, returning Err on failure.
-fn check_hip(code: i32, context: &'static str) -> Result<(), HipError> {
+pub(crate) fn check_hip(code: i32, context: &'static str) -> Result<(), HipError> {
     if code == 0 {
         Ok(())
     } else {
-        Err(HipError { code, context })
+        Err(HipError::Hip { code, context })
     }
 }
 
