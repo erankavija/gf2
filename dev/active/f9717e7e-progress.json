@@ -70,13 +70,16 @@
   "escalations": [
     {"date": "2026-06-07", "topic": "Phase A shared DVB-T2 stage-wrapper/batch-type foundation", "resolution": "user chose: New shared foundation task (19ae6540)"}
   ],
-  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": 1},
+  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": 2},
   "process_notes": [
     "Gate order: run BOTH cargo-ci AND code-review on the worker branch/merge BEFORE marking done. (118a0091 was merged after cargo-ci but before code-review, which then failed; fixed forward.)",
     "cargo-ci gate has a hard 300s timeout. Cold full --all-features build (HIP via hipcc) exceeds it; PRE-WARM with ./scripts/cargo-ci.sh after merge, then run the gate (incremental ~130s).",
     "Pre-existing main breakage fixed: sim_checkpoint_helper.rs was fmt-dirty (commit d456b685), making cargo-ci fmt step red independent of this epic.",
     "Disk at 93% (70GB main target/). Workers MUST use targeted -p builds, not --workspace --all-features, in worktrees.",
-    "Background worker wait-loops end their turn on each Monitor poll, causing notification churn; instruct a single PID-exit wait."
+    "Background worker wait-loops end their turn on each Monitor poll, causing notification churn; instruct a single PID-exit wait.",
+    "CRITICAL: never run a cargo-ci gate on main while a worktree worker is BUILDING — CPU contention times out 5s-limit nextest tests => flaky FAIL (hit on 36075e4c gate while foundation worker built). code-review gates DON'T build (reviewer can't run cargo in sandbox), so those CAN overlap a worker build. Serialize cargo-ci vs worker builds.",
+    "Do NOT pipe `jit gate pass` through `| tail` — it masks the gate's real exit code with tail's 0. Run bare and check recorded gate status.",
+    "36075e4c at rework #2 (MAX_REWORK_ATTEMPTS=2). New round-2 findings were DEEPER (Sync contract, load_blob code:0), not repeats — so within budget. If rework#2 fails, ESCALATE."
   ],
   "started_at": "2026-06-07T00:00:00Z"
 }
