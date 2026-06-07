@@ -1,0 +1,19 @@
+[package]
+name = "baseline_runner"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+description = "Single-thread baseline measurement harness for gf2-sim epic"
+
+# Standalone crate — NOT a workspace member.
+[workspace]
+
+[dependencies]
+gf2-coding = { path = "../../../../crates/gf2-coding" }
+gf2-core = { path = "../../../../crates/gf2-core" }
+rand = "0.8"
+rayon = "1.10"
+
+[[bin]]
+name = "baseline_runner"
+path = "src/main.rs"
