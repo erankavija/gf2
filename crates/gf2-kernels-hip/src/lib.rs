@@ -115,6 +115,20 @@ impl HipError {
     /// `hipErrorNoDevice` (100), `hipErrorInvalidDevice` (101), or
     /// `hipErrorFileNotFound` (301) for a [`HipError::BlobLoad`]. Never returns
     /// `0` (which means `hipSuccess`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::HipError;
+    ///
+    /// assert_eq!(HipError::NoDevice.code(), 100);
+    /// assert_eq!(
+    ///     HipError::OutOfMemory { device_id: 0, bytes_requested: 1 << 40 }.code(),
+    ///     2
+    /// );
+    /// // A typed variant never masquerades as hipSuccess (0).
+    /// assert_ne!(HipError::NoDevice.code(), 0);
+    /// ```
     pub fn code(&self) -> i32 {
         match self {
             HipError::Hip { code, .. } => *code,
@@ -326,11 +340,7 @@ impl GpuBcjrBatch {
         )?;
 
         // Upload h_cols (persistent — same trellis for all decodes)
-        // SAFETY: h_cols is a valid &[u32]; reinterpreting as &[u8] with
-        // len * 4 bytes is safe because u32 has no padding and align >= 1.
-        let h_bytes: &[u8] =
-            unsafe { std::slice::from_raw_parts(h_cols.as_ptr() as *const u8, h_cols.len() * 4) };
-        d_h_cols.copy_from_host(h_bytes)?;
+        d_h_cols.copy_from_host(u32_slice_as_bytes(h_cols))?;
 
         Ok(Self {
             d_h_cols,
@@ -428,12 +438,7 @@ impl GpuBcjrBatch {
         for inp in inputs {
             flat_llrs.extend_from_slice(inp);
         }
-        // SAFETY: Reinterpreting &[f32] as &[u8] with len*4 bytes is safe
-        // (f32 has no padding, alignment >= 1 for u8).
-        let llr_bytes: &[u8] = unsafe {
-            std::slice::from_raw_parts(flat_llrs.as_ptr() as *const u8, flat_llrs.len() * 4)
-        };
-        self.d_llrs.copy_from_host(llr_bytes)?;
+        self.d_llrs.copy_from_host(f32_slice_as_bytes(&flat_llrs))?;
 
         // Launch kernel
         // SAFETY: All device pointers were allocated in `new()` with sufficient
@@ -464,11 +469,8 @@ impl GpuBcjrBatch {
 
         // Download APP results
         let mut flat_app = vec![0.0f32; batch_size * n];
-        // SAFETY: Reinterpreting &mut [f32] as &mut [u8] is safe (no padding).
-        let app_bytes: &mut [u8] = unsafe {
-            std::slice::from_raw_parts_mut(flat_app.as_mut_ptr() as *mut u8, flat_app.len() * 4)
-        };
-        self.d_app.copy_to_host(app_bytes)?;
+        self.d_app
+            .copy_to_host(f32_slice_as_bytes_mut(&mut flat_app))?;
 
         // Split into per-decode vectors and compute extrinsic
         let mut app_out = Vec::with_capacity(batch_size);
@@ -488,6 +490,18 @@ impl GpuBcjrBatch {
 
         Ok((app_out, ext_out))
     }
+}
+
+/// Reinterprets a `&[u32]` as a byte slice for H→D copies.
+///
+/// Same rationale as [`f32_slice_as_bytes`]: `u32` has no padding bits and u8
+/// alignment is 1. Centralizes the trellis-index upload so no call site
+/// hand-rolls the `from_raw_parts` reinterpretation.
+#[inline]
+fn u32_slice_as_bytes(src: &[u32]) -> &[u8] {
+    // SAFETY: u32 has no padding and u8 alignment is 1; the byte count is
+    // computed from `src` so the slice spans the same memory region.
+    unsafe { std::slice::from_raw_parts(src.as_ptr() as *const u8, std::mem::size_of_val(src)) }
 }
 
 /// Reinterprets a `&[f32]` as a byte slice for H→D copies.
@@ -850,11 +864,14 @@ impl GpuGrayQamDemapper {
     }
 }
 
-// SAFETY: all contained device buffers are `DecoderDeviceBuffer`, which wraps
-// the `Send` `host::DeviceBuffer<u8>`; the configuration fields are plain
-// `Copy` values. (The bound is satisfied automatically, but the explicit impl
-// documents the invariant at the type boundary.)
-unsafe impl Send for GpuGrayQamDemapper {}
+// `GpuGrayQamDemapper` is `Send` by auto-derive: every field is either a
+// `DecoderDeviceBuffer` (which wraps the `Send` `host::DeviceBuffer<u8>`) or a
+// plain `Copy` scalar. No explicit `unsafe impl Send` is needed (an explicit
+// impl would only duplicate the auto-derived bound and add unsafe surface).
+const _: fn() = || {
+    fn assert_send<T: Send>() {}
+    assert_send::<GpuGrayQamDemapper>();
+};
 
 #[cfg(test)]
 mod tests {

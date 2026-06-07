@@ -496,7 +496,8 @@ mod tests {
 
     #[test]
     fn test_dir_contains_co_missing_dir_is_false() {
-        let missing = std::env::temp_dir().join("gf2_hip_definitely_missing_dir_xyz");
+        let missing = std::env::temp_dir()
+            .join(format!("gf2_hip_definitely_missing_dir_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&missing);
         assert!(!dir_contains_co(&missing), "missing dir reads as no blob");
     }
