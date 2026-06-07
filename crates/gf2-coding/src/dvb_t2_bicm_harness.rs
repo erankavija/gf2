@@ -77,6 +77,40 @@ pub fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f6
 }
 
 // ---------------------------------------------------------------------------
+// Box-Muller noise
+// ---------------------------------------------------------------------------
+
+/// One standard-normal sample via the cosine branch of the Box-Muller transform.
+///
+/// This is the **single source of truth** for the per-axis AWGN noise sample
+/// used by the DVB-T2 BICM chain (both [`BicmAwgnChannel`] and the `gf2-sim`
+/// parallel frame kernel). The caller supplies the two uniforms; this function
+/// applies the `u1.max(1e-15)` clamp internally (to avoid `ln(0)`) and returns
+/// `((-2*ln(u1)).sqrt() * cos(2*pi*u2)) as f32`. Keeping the formula here lets
+/// each call site choose its own RNG (e.g. `rand 0.8` vs `rand_chacha 0.9`)
+/// while sharing identical noise math.
+///
+/// # Arguments
+///
+/// - `u1`: First uniform in `[0, 1)` (clamped to `>= 1e-15` internally).
+/// - `u2`: Second uniform in `[0, 1)`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
+/// // u2 = 0 → cos(0) = 1, so the sample is +sqrt(-2 ln u1).
+/// let n = box_muller_cos(0.5_f64.exp().recip(), 0.0);
+/// // u1 = e^-0.5 → -2 ln u1 = 1 → sqrt = 1.
+/// assert!((n - 1.0).abs() < 1e-6);
+/// ```
+#[inline]
+pub fn box_muller_cos(u1: f64, u2: f64) -> f32 {
+    let u1 = u1.max(1e-15);
+    ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32
+}
+
+// ---------------------------------------------------------------------------
 // Naming helpers
 // ---------------------------------------------------------------------------
 
@@ -254,6 +288,107 @@ impl BicmAwgnChannel {
             demap,
         }
     }
+
+    /// Runs the canonical DVB-T2 BICM-AWGN transmit/demod chain with a
+    /// caller-supplied noise generator.
+    ///
+    /// This is the **single source of truth** for the chain math
+    /// (bit-interleave → QAM-map → per-axis AWGN → QAM-soft-demap →
+    /// bit-deinterleave). The `eb_n0`-driven [`ChannelModel`] implementation and
+    /// the `gf2-sim` parallel frame kernel both call this method; they differ
+    /// only in how they draw noise samples (which RNG / version), which is why
+    /// `sigma` / `noise_var` and the noise generator are passed in rather than
+    /// derived from an SNR here.
+    ///
+    /// # Arguments
+    ///
+    /// - `bits`: FECFRAME codeword (`n_ldpc` bits).
+    /// - `sigma`: Per-axis noise standard deviation (`sqrt(sigma_sq)`); each
+    ///   noise sample is scaled by this before being added to the symbol axis.
+    /// - `noise_var`: Per-symbol total complex noise variance (`N0 = 2*sigma_sq`)
+    ///   passed to the soft demapper.
+    /// - `next_noise`: Standard-normal sample generator. **Draw contract:** it is
+    ///   called `num_symbols` times for the I axis first, then `num_symbols`
+    ///   times for the Q axis, in that order, where
+    ///   `num_symbols = bits.len() / bits_per_symbol`.
+    ///
+    /// # Returns
+    ///
+    /// FECFRAME-order soft LLRs (`n_ldpc` values).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_coding::dvb_t2_bicm_harness::{BicmAwgnChannel, box_muller_cos};
+    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::{DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation};
+    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
+    /// use gf2_coding::modem::DemapMethod;
+    /// use gf2_coding::CodeRate;
+    /// use gf2_core::BitVec;
+    /// use rand::Rng;
+    ///
+    /// let modcod = DvbT2Modcod::new(FrameSize::Normal, CodeRate::Rate1_2, DvbT2Modulation::Qam16);
+    /// let il = DvbT2BitInterleaver::new(modcod);
+    /// let channel = BicmAwgnChannel::new(il, 4, DemapMethod::ExactLogMap);
+    /// let codeword = BitVec::zeros(64800);
+    /// let mut rng = rand::thread_rng();
+    /// let llrs = channel.transmit_and_demodulate_with_noise(&codeword, 0.5, 0.5, || {
+    ///     let u1 = rng.gen::<f64>();
+    ///     let u2 = rng.gen::<f64>();
+    ///     box_muller_cos(u1, u2)
+    /// });
+    /// assert_eq!(llrs.len(), 64800);
+    /// ```
+    pub fn transmit_and_demodulate_with_noise(
+        &self,
+        bits: &BitVec,
+        sigma: f32,
+        noise_var: f32,
+        mut next_noise: impl FnMut() -> f32,
+    ) -> Vec<Llr> {
+        let n_ldpc = bits.len();
+        let num_symbols = n_ldpc / self.bits_per_symbol;
+
+        let mapper = self.spec.preferred_mapper();
+        let demapper = self.spec.preferred_soft_demapper();
+
+        // 1. Bit interleave: FECFRAME order → interleaved order.
+        let interleaved = self.interleaver.interleave(bits);
+
+        // 2. QAM map: interleaved bits → I/Q symbols.
+        let interleaved_bits: Vec<bool> =
+            (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
+        let mut tx_i = vec![0.0_f32; num_symbols];
+        let mut tx_q = vec![0.0_f32; num_symbols];
+        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
+
+        // 3. AWGN: independent noise on the I axis (all symbols) then the Q axis
+        //    (all symbols), per the documented draw contract.
+        for s in tx_i.iter_mut() {
+            *s += sigma * next_noise();
+        }
+        for s in tx_q.iter_mut() {
+            *s += sigma * next_noise();
+        }
+
+        // 4. QAM soft demap → interleaved LLRs.
+        let noise_var_buf = vec![noise_var; num_symbols];
+        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
+        demapper.demap_llrs(
+            DemapInput {
+                rx_i: &tx_i,
+                rx_q: &tx_q,
+                gain_i: None,
+                gain_q: None,
+                noise_var: &noise_var_buf,
+                method: self.demap,
+            },
+            &mut interleaved_llrs,
+        );
+
+        // 5. Bit deinterleave LLRs → FECFRAME order.
+        self.interleaver.deinterleave_llrs(&interleaved_llrs)
+    }
 }
 
 impl ChannelModel for BicmAwgnChannel {
@@ -274,62 +409,22 @@ impl ChannelModel for BicmAwgnChannel {
         rate: f64,
         rng: &mut R,
     ) -> Vec<Llr> {
-        let n_ldpc = bits.len();
-        let num_symbols = n_ldpc / self.bits_per_symbol;
-
         // Convert Eb/N0 → Es/N0 → per-component noise variance.
         // Es/N0 = Eb/N0 + 10*log10(m * r)
         // sigma^2 = 1 / (2 * 10^(Es_N0/10))
         let es_n0_db = ebn0_to_esn0(eb_n0_db, self.bits_per_symbol, rate);
         let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
         let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+        let sigma_f32 = (sigma_sq as f32).sqrt();
         let noise_var_f32 = (2.0 * sigma_sq) as f32; // N0 = 2 * sigma^2
 
-        let mapper = self.spec.preferred_mapper();
-        let demapper = self.spec.preferred_soft_demapper();
-
-        // 1. Bit interleave: FECFRAME order → interleaved order.
-        let interleaved = self.interleaver.interleave(bits);
-
-        // 2. QAM map: interleaved bits → I/Q symbols.
-        let interleaved_bits: Vec<bool> =
-            (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
-        let mut tx_i = vec![0.0_f32; num_symbols];
-        let mut tx_q = vec![0.0_f32; num_symbols];
-        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-        // 3. AWGN: independent Gaussian noise on I and Q axes (Box-Muller).
-        let sigma_f32 = (sigma_sq as f32).sqrt();
-        for s in tx_i.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-        for s in tx_q.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-
-        // 4. QAM soft demap → interleaved LLRs.
-        let noise_var_buf = vec![noise_var_f32; num_symbols];
-        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-        demapper.demap_llrs(
-            DemapInput {
-                rx_i: &tx_i,
-                rx_q: &tx_q,
-                gain_i: None,
-                gain_q: None,
-                noise_var: &noise_var_buf,
-                method: self.demap,
-            },
-            &mut interleaved_llrs,
-        );
-
-        // 5. Bit deinterleave LLRs → FECFRAME order.
-        self.interleaver.deinterleave_llrs(&interleaved_llrs)
+        // Delegate to the canonical chain; draw u1 then u2 per sample so the
+        // byte stream is unchanged from the prior inline implementation.
+        self.transmit_and_demodulate_with_noise(bits, sigma_f32, noise_var_f32, || {
+            let u1 = rng.gen::<f64>();
+            let u2 = rng.gen::<f64>();
+            box_muller_cos(u1, u2)
+        })
     }
 }
 
