@@ -1,0 +1,7 @@
+# Ephemeral DVB-T2 AWGN campaign run output (per-curve logs, JSON-lines
+# traces, and checkpoint dirs produced by dvb_t2_awgn_campaign). The committed
+# reference artefacts in this directory are PLAN.md, README.md, plot.py, the
+# TOML/CSV references, and smoke/. Actual campaign curves are written to an
+# --output-dir (typically under /tmp); any curve_* dir that lands here is a
+# local run and must not be tracked.
+curve_*/
