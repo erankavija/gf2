@@ -450,3 +450,71 @@ impl<T> Drop for PinnedHostBuffer<T> {
 // SAFETY: the pinned host pointer is owned exclusively by this buffer; moving
 // it across threads is sound for `T: Send` because no aliasing handle escapes.
 unsafe impl<T: Send> Send for PinnedHostBuffer<T> {}
+
+#[cfg(all(test, feature = "hip"))]
+mod tests {
+    use super::*;
+    use crate::host::streams::HipStream;
+
+    /// A zero-length DeviceBuffer is a valid empty handle with no allocation
+    /// (no GPU required for the empty path).
+    #[test]
+    fn test_device_buffer_empty_is_null() {
+        let buf = DeviceBuffer::<f32>::new(0, 0).expect("empty buffer");
+        assert!(buf.is_empty());
+        assert_eq!(buf.len(), 0);
+        assert!(buf.as_ptr().is_null());
+    }
+
+    /// Synchronous H2D then D2H through a DeviceBuffer round-trips the payload
+    /// byte-for-byte (Finding 7). Gated to the gfx1030 host.
+    #[test]
+    fn test_device_buffer_h2d_d2h_roundtrip() {
+        let src: Vec<f32> = (0..64).map(|i| i as f32 * 1.5).collect();
+        let buf = DeviceBuffer::<f32>::new(src.len(), 0).expect("alloc device buffer");
+        buf.copy_from_host(&src).expect("H2D");
+        let mut dst = vec![0.0f32; src.len()];
+        buf.copy_to_host(&mut dst).expect("D2H");
+        assert_eq!(src, dst, "device round-trip must be byte-identical");
+    }
+
+    /// Staged async round-trip: host → pinned → device → pinned → host over a
+    /// stream, synchronized before reading back (Finding 7).
+    #[test]
+    fn test_pinned_async_roundtrip_over_stream() {
+        let n = 32usize;
+        let stream = HipStream::new().expect("create stream");
+        let mut h2d = PinnedHostBuffer::<f32>::new(n, 0).expect("pinned in");
+        for (i, slot) in h2d.as_mut_slice().iter_mut().enumerate() {
+            *slot = i as f32 - 7.0;
+        }
+        let dev = DeviceBuffer::<f32>::new(n, 0).expect("device buffer");
+        dev.copy_from_pinned_async(&h2d, &stream)
+            .expect("async H2D");
+        let mut d2h = PinnedHostBuffer::<f32>::new(n, 0).expect("pinned out");
+        dev.copy_to_pinned_async(&mut d2h, &stream)
+            .expect("async D2H");
+        stream.synchronize().expect("drain stream");
+        assert_eq!(
+            h2d.as_slice(),
+            d2h.as_slice(),
+            "staged async round-trip must preserve the payload"
+        );
+    }
+
+    /// `new_with_fallback` pre-flights an over-large request against total
+    /// device memory and reports a structured OOM (not a panic).
+    #[test]
+    fn test_device_buffer_oom_is_structured() {
+        let huge = 256usize * 1024 * 1024 * 1024; // 256 GiB of u8
+        let err = DeviceBuffer::<u8>::new_with_fallback(huge, 0)
+            .err()
+            .expect("256 GiB allocation must fail");
+        match err {
+            HipError::OutOfMemory {
+                bytes_requested, ..
+            } => assert_eq!(bytes_requested, huge),
+            other => panic!("expected structured OOM, got {other}"),
+        }
+    }
+}
