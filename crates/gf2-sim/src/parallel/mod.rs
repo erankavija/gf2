@@ -62,27 +62,30 @@ pub const SNR_STRIDE: u128 = 1 << 56;
 /// ChaCha20 32-bit words reserved per worker partition (design doc §3): `2^40`
 /// (4 TiB of stream).
 ///
-/// At [`FRAME_STRIDE`]` = 2^19` this admits `2^21` (≈ 2 M) frames per worker
+/// At [`FRAME_STRIDE`]` = 2^20` this admits `2^20` (≈ 1 M) frames per worker
 /// partition before a worker would run into the next worker's region — still
 /// ample for any realistic SNR point.
 pub const WORKER_STRIDE: u128 = 1 << 40;
 
 /// ChaCha20 32-bit words reserved per frame (design doc §3, amended 2026-06-07):
-/// `2^19` (524288 words = 2 MiB of stream).
+/// `2^20` (1048576 words = 4 MiB of stream).
 ///
 /// Sized for the **measured** worst-case per-frame draw. The per-frame noise
 /// sampler draws two `f64` uniforms per Gaussian sample
 /// ([`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)), i.e.
 /// **4 ChaCha20 32-bit words per noise sample**. The binding (largest) DVB-T2
-/// case is **r1/2 16-QAM Normal** — 16-QAM packs fewer bits/symbol than 64-QAM
-/// so it has *more* symbols (n=64800 → 16200 symbols × 2 axes = 32400 noise
-/// samples → 129 600 words), plus the random BBFRAME fill (~1008 words) ≈
-/// **130 608 words/frame** (verified by
-/// [`tests::test_worst_case_frame_draw_under_stride`]). `2^19` gives ~4×
-/// headroom. The original `2^16` value undercounted (it assumed ~1 word/sample
-/// f32 noise and only checked 64-QAM), letting consecutive frames' regions
-/// overlap; this amendment fixes that.
-pub const FRAME_STRIDE: u128 = 1 << 19;
+/// case is **r1/2 QPSK Normal** — QPSK packs the *fewest* bits/symbol (2), so it
+/// has the *most* symbols (n=64800 → 32400 symbols × 2 axes = 64800 noise
+/// samples → 259 200 words), plus the random BBFRAME fill (~1008 words) ≈
+/// **260 208 words/frame** (verified by
+/// [`tests::test_worst_case_frame_draw_under_stride`]; 16-QAM measures 130 608,
+/// 64-QAM 87 408 — fewer bits/symbol ⇒ more symbols ⇒ more draws, so the
+/// lowest-order modulation binds). `2^20` gives ~4× headroom. Earlier values
+/// undercounted: `2^16` assumed ~1 word/sample f32 noise; `2^19` correctly
+/// counted f64 draws but only checked up to 16-QAM, missing that QPSK draws ~2×
+/// more. Each frame's region must not overlap its neighbour's, so the stride
+/// must exceed the worst-case draw of *any* supported modulation.
+pub const FRAME_STRIDE: u128 = 1 << 20;
 
 /// Debug-assert headroom (design doc §3): a frame must draw at most
 /// `FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN` ChaCha20 32-bit words.
@@ -96,7 +99,7 @@ pub const DEBUG_ASSERT_WORD_MARGIN: u128 = 1024;
 /// worker_offset(seed, snr_idx, worker_idx, frame_idx_in_worker) =
 ///     snr_idx * SNR_STRIDE                       // 2^56 32-bit words per SNR
 ///   + (worker_idx as u128) * WORKER_STRIDE       // 2^40 32-bit words per worker
-///   + (frame_idx_in_worker as u128) * FRAME_STRIDE  // 2^19 32-bit words per frame
+///   + (frame_idx_in_worker as u128) * FRAME_STRIDE  // 2^20 32-bit words per frame
 /// ```
 ///
 /// All strides are in ChaCha20 **32-bit word** units (the unit of
@@ -338,7 +341,7 @@ impl WorkerCtx {
     ///
     /// Seeks to [`worker_offset`]`(seed, snr_idx, worker_idx, frame_idx_in_worker)`.
     /// After this call the next `random()` draws begin at the frame's reserved
-    /// [`FRAME_STRIDE`]-word (2 MiB) ChaCha20 region.
+    /// [`FRAME_STRIDE`]-word (4 MiB) ChaCha20 region.
     ///
     /// # Arguments
     ///
@@ -666,7 +669,7 @@ mod tests {
 
     #[test]
     fn test_strides_are_power_of_two_and_ordered() {
-        assert_eq!(FRAME_STRIDE, 1 << 19);
+        assert_eq!(FRAME_STRIDE, 1 << 20);
         assert_eq!(WORKER_STRIDE, 1 << 40);
         assert_eq!(SNR_STRIDE, 1 << 56);
         const _: () = assert!(FRAME_STRIDE < WORKER_STRIDE);
@@ -834,58 +837,80 @@ mod tests {
     }
 
     /// Regression guard (design doc §3, 2026-06-07 amendment): the worst-case
-    /// per-frame ChaCha20 draw must stay strictly within a frame's reserved
-    /// region so consecutive frames' RNG streams never overlap.
+    /// per-frame ChaCha20 draw across **every supported modulation** must stay
+    /// strictly within a frame's reserved region so consecutive frames' RNG
+    /// streams never overlap.
     ///
-    /// The binding case is **r1/2 16-QAM Normal** — 16-QAM has more symbols than
-    /// 64-QAM (fewer bits/symbol) so it draws the most AWGN noise. Fast tier:
-    /// one Normal-frame encode+decode at high SNR is well under 5 s.
+    /// The binding case is **r1/2 QPSK Normal** — QPSK packs the *fewest*
+    /// bits/symbol (2), so it has the *most* symbols → the most AWGN noise draws.
+    /// The test enumerates all three `DvbT2Modulation` variants (QPSK, 16-QAM,
+    /// 64-QAM), measures each, and asserts QPSK is the maximum, that the max fits
+    /// under `FRAME_STRIDE - margin`, and that headroom is ≥ 3×. Fast tier: three
+    /// Normal-frame encode+decode at high SNR total well under 5 s.
     #[test]
     fn test_worst_case_frame_draw_under_stride() {
         use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
         use gf2_coding::CodeRate;
 
-        let draw_16qam = measure_frame_word_draw(CodeRate::Rate1_2, DvbT2Modulation::Qam16);
-        let draw_64qam = measure_frame_word_draw(CodeRate::Rate1_2, DvbT2Modulation::Qam64);
+        // Every modulation the sim supports, lowest bits/symbol first (QPSK=2,
+        // 16-QAM=4, 64-QAM=6). Lower order ⇒ more symbols ⇒ more noise draws.
+        let mods = [
+            ("QPSK", DvbT2Modulation::Qpsk),
+            ("16-QAM", DvbT2Modulation::Qam16),
+            ("64-QAM", DvbT2Modulation::Qam64),
+        ];
+        let draws: Vec<(&str, u128)> = mods
+            .iter()
+            .map(|&(name, m)| (name, measure_frame_word_draw(CodeRate::Rate1_2, m)))
+            .collect();
 
         // Visible under `--no-capture` for receipt/design-doc bookkeeping.
-        eprintln!(
-            "per-frame ChaCha20 32-bit-word draw: 16-QAM Normal = {draw_16qam}, \
-             64-QAM Normal = {draw_64qam}; FRAME_STRIDE = {FRAME_STRIDE} \
-             (headroom {:.2}x)",
-            FRAME_STRIDE as f64 / draw_16qam as f64
-        );
+        for (name, d) in &draws {
+            eprintln!(
+                "per-frame ChaCha20 32-bit-word draw: {name} Normal = {d} \
+                 (headroom {:.2}x)",
+                FRAME_STRIDE as f64 / *d as f64
+            );
+        }
 
-        // 16-QAM is the binding (largest) case: more symbols → more noise draws.
+        let qpsk = draws[0].1;
+        let qam16 = draws[1].1;
+        let qam64 = draws[2].1;
+
+        // QPSK is the binding (largest) case: lowest bits/symbol ⇒ most symbols
+        // ⇒ most noise draws. Confirm the strict ordering QPSK > 16-QAM > 64-QAM.
         assert!(
-            draw_16qam > draw_64qam,
-            "expected 16-QAM to draw more than 64-QAM (more symbols); \
-             16qam={draw_16qam} 64qam={draw_64qam}"
+            qpsk > qam16 && qam16 > qam64,
+            "expected draw order QPSK > 16-QAM > 64-QAM (fewer bits/symbol ⇒ \
+             more symbols); got qpsk={qpsk} 16qam={qam16} 64qam={qam64}"
         );
 
-        // Sanity: the measured 16-QAM draw matches the design-doc §3 arithmetic
-        // (~130 608 words: 32400 noise samples × 4 words + ~1008 BBFRAME words).
-        // Allow a wide band so an incidental layout change does not flake, but
-        // catch an order-of-magnitude regression.
+        let worst = draws.iter().map(|&(_, d)| d).max().expect("non-empty");
+        assert_eq!(worst, qpsk, "QPSK must be the maximum draw");
+
+        // Sanity: the measured QPSK draw matches the design-doc §3 arithmetic
+        // (~260 208 words: 64800 noise samples × 4 words + ~1008 BBFRAME words).
+        // Wide band tolerates incidental layout drift but catches an
+        // order-of-magnitude regression.
         assert!(
-            (120_000..=140_000).contains(&draw_16qam),
-            "16-QAM Normal per-frame draw {draw_16qam} outside the expected \
-             ~130 608-word band; design-doc §3 arithmetic needs revisiting"
+            (250_000..=270_000).contains(&qpsk),
+            "QPSK Normal per-frame draw {qpsk} outside the expected ~260 208-word \
+             band; design-doc §3 arithmetic needs revisiting"
         );
 
-        // The binding guarantee: the worst case fits, with margin, inside one
-        // frame's reserved region.
+        // The binding guarantee: the worst case across all modulations fits,
+        // with margin, inside one frame's reserved region.
         let budget = FRAME_STRIDE - DEBUG_ASSERT_WORD_MARGIN;
         assert!(
-            draw_16qam < budget,
-            "worst-case per-frame draw {draw_16qam} must be < FRAME_STRIDE - \
+            worst < budget,
+            "worst-case per-frame draw {worst} (QPSK) must be < FRAME_STRIDE - \
              margin = {budget} (FRAME_STRIDE = {FRAME_STRIDE}); raise FRAME_STRIDE"
         );
 
-        // And confirm the headroom factor is comfortable (>= 3x).
+        // And confirm the headroom factor is comfortable (≥ 3×).
         assert!(
-            (draw_16qam as f64) * 3.0 <= FRAME_STRIDE as f64,
-            "headroom factor < 3x: draw {draw_16qam} vs FRAME_STRIDE {FRAME_STRIDE}"
+            (worst as f64) * 3.0 <= FRAME_STRIDE as f64,
+            "headroom factor < 3x: worst draw {worst} vs FRAME_STRIDE {FRAME_STRIDE}"
         );
     }
 }
