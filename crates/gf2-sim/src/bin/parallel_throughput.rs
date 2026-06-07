@@ -92,14 +92,15 @@ fn main() {
     );
 
     println!(
-        "{:>8} {:>12} {:>10} {:>10} {:>10}",
-        "workers", "fps_mean", "fps_sigma", "speedup", "frames"
+        "{:>8} {:>12} {:>10} {:>10} {:>10} {:>11}",
+        "workers", "fps_mean", "fps_sigma", "speedup", "frames", "mean_iters"
     );
 
     for &w in &workers {
         let p = NonZeroUsize::new(w).expect("worker count is non-zero");
         let mut fps_samples = Vec::with_capacity(repeats);
         let mut last_frames = 0u64;
+        let mut last_mean_iters = 0.0_f64;
         for _ in 0..repeats {
             let start = Instant::now();
             let counters = run_snr_point(
@@ -112,6 +113,9 @@ fn main() {
             );
             let secs = start.elapsed().as_secs_f64();
             last_frames = counters.frames;
+            // Real mean BP iterations per frame (no longer a sentinel); the same
+            // across worker counts at a fixed seed (byte-identity contract).
+            last_mean_iters = counters.mean_iters();
             let fps = counters.frames as f64 / secs;
             fps_samples.push(fps);
         }
@@ -123,6 +127,8 @@ fn main() {
             / fps_samples.len() as f64;
         let sigma = var.sqrt();
         let speedup = mean / SINGLE_THREAD_BASELINE_FPS;
-        println!("{w:>8} {mean:>12.4} {sigma:>10.4} {speedup:>9.2}x {last_frames:>10}");
+        println!(
+            "{w:>8} {mean:>12.4} {sigma:>10.4} {speedup:>9.2}x {last_frames:>10} {last_mean_iters:>11.3}"
+        );
     }
 }
