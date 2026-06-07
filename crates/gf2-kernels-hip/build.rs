@@ -72,7 +72,14 @@ fn main() {
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal5.hip");
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal7.hip");
     }
-    println!("cargo:rerun-if-changed=kernels");
+    // NOTE: do NOT `rerun-if-changed=kernels`. `compile_arch_blobs` WRITES the
+    // generated `<name>.co` blobs (and any best-effort probe) into
+    // `kernels/<target>/`, so watching that directory makes this script
+    // self-invalidating — every build mutates a watched path and forces the
+    // next build to recompile the arch blobs. Real kernel sources live under
+    // `hip/` (watched above); Phase B kernel owners adding `.cpp` sources under
+    // `kernels/<target>/` must emit `rerun-if-changed` for those specific
+    // SOURCE files only, never the output directory.
     println!("cargo:rerun-if-env-changed=ROCM_PATH");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
