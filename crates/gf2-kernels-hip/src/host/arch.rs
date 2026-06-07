@@ -66,6 +66,15 @@ impl GfxTarget {
     /// The canonical gfx identifier string (e.g. `"gfx1030"`), matching the
     /// `--offload-arch=<target>` argument and the `kernels/<target>/` blob
     /// directory name.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// assert_eq!(GfxTarget::Gfx1030.as_str(), "gfx1030");
+    /// assert_eq!(GfxTarget::Gfx942.as_str(), "gfx942");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             GfxTarget::Gfx1030 => "gfx1030",
@@ -93,6 +102,20 @@ impl GfxTarget {
     /// # Arguments
     ///
     /// * `name` - The `gcnArchName` string from `hipGetDeviceProperties`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// // The feature suffix is stripped before matching.
+    /// assert_eq!(
+    ///     GfxTarget::from_arch_name("gfx942:sramecc+:xnack-"),
+    ///     Some(GfxTarget::Gfx942)
+    /// );
+    /// // An arch this build has no blob for maps to None.
+    /// assert_eq!(GfxTarget::from_arch_name("gfx908"), None);
+    /// ```
     pub fn from_arch_name(name: &str) -> Option<Self> {
         // Strip the optional feature suffix: "gfx942:sramecc+:xnack-" → "gfx942".
         let head = name.split(':').next().unwrap_or(name).trim();
@@ -108,6 +131,18 @@ impl GfxTarget {
     /// equivalent stage (design doc §6 / §8). A host with no visible device
     /// returns [`HipError::NoDevice`].
     ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// match GfxTarget::detect() {
+    ///     Ok(target) => println!("detected {}", target.as_str()),
+    ///     Err(e) => eprintln!("no usable GPU: {e}"),
+    /// }
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`HipError::NoDevice`] if no device is present,
@@ -121,6 +156,20 @@ impl GfxTarget {
     ///
     /// See [`GfxTarget::detect`]; this variant lets the §7 multi-GPU seam probe
     /// each device.
+    ///
+    /// # Arguments
+    ///
+    /// * `device_id` - The HIP device index to probe.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// // Probe device 0 (requires a real HIP device, hence `no_run`).
+    /// let target = GfxTarget::detect_device(0).expect("a usable GPU on device 0");
+    /// println!("device 0 is {}", target.as_str());
+    /// ```
     ///
     /// # Errors
     ///
@@ -190,6 +239,15 @@ impl GfxTarget {
     ///
     /// The blobs (`*.co`) are produced by `build.rs`; consumers load a specific
     /// kernel via [`GfxTarget::load_blob`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// let dir = GfxTarget::Gfx1030.blob_dir();
+    /// assert!(dir.ends_with("kernels/gfx1030"));
+    /// ```
     pub fn blob_dir(self) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("kernels")
@@ -206,6 +264,17 @@ impl GfxTarget {
     /// # Arguments
     ///
     /// * `kernel` - The blob basename without the `.co` extension.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::GfxTarget;
+    ///
+    /// // Reads `kernels/gfx1030/bcjr.co` (requires the blob to exist on disk,
+    /// // hence `no_run`); a missing blob yields a typed `HipError::BlobLoad`.
+    /// let bytes = GfxTarget::Gfx1030.load_blob("bcjr").expect("blob present");
+    /// println!("loaded {} bytes", bytes.len());
+    /// ```
     ///
     /// # Errors
     ///

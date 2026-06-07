@@ -33,6 +33,16 @@ impl HipStream {
     /// Callers that need a specific device must `hipSetDevice` first;
     /// [`HipStreamPool::new`] does this before creating its streams.
     ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStream;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let stream = HipStream::new().expect("create a HIP stream");
+    /// stream.synchronize().expect("drain the (empty) stream");
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`HipError::Hip`] if `hipStreamCreate` fails.
@@ -52,6 +62,16 @@ impl HipStream {
     ///
     /// The handle is valid for the lifetime of this [`HipStream`]. Callers must
     /// not destroy it; `Drop` owns that.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStream;
+    ///
+    /// let stream = HipStream::new().expect("create a HIP stream");
+    /// let raw = stream.as_raw(); // hand to a kernel-launch FFI call
+    /// assert!(!raw.is_null());
+    /// ```
     pub fn as_raw(&self) -> *mut c_void {
         self.raw
     }
@@ -61,6 +81,16 @@ impl HipStream {
     /// This is the per-stream synchronization used by the drain-for-checkpoint
     /// contract (design doc §4); it does **not** block unrelated streams, unlike
     /// `hipDeviceSynchronize`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStream;
+    ///
+    /// let stream = HipStream::new().expect("create a HIP stream");
+    /// // ... enqueue async work on `stream` ...
+    /// stream.synchronize().expect("wait for this stream's work to finish");
+    /// ```
     ///
     /// # Errors
     ///
@@ -78,6 +108,16 @@ impl HipStream {
     /// (`hipErrorNotReady`).
     ///
     /// Any other HIP error is surfaced as `Err`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStream;
+    ///
+    /// let stream = HipStream::new().expect("create a HIP stream");
+    /// // A freshly created stream has no pending work, so it reports idle.
+    /// assert!(stream.is_idle().expect("query the stream"));
+    /// ```
     ///
     /// # Errors
     ///
@@ -175,6 +215,17 @@ impl HipStreamPool {
     /// * `device_id` - The HIP device the streams are created on.
     /// * `n` - The number of streams to create. Must be non-zero.
     ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let pool = HipStreamPool::new(0, 4).expect("create a 4-stream pool");
+    /// assert_eq!(pool.len(), 4);
+    /// assert_eq!(pool.device_id(), 0);
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`HipError::Hip`] if `hipSetDevice` or any `hipStreamCreate`
@@ -205,17 +256,44 @@ impl HipStreamPool {
     }
 
     /// Returns the device this pool's streams are bound to.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 2).expect("create a 2-stream pool");
+    /// assert_eq!(pool.device_id(), 0);
+    /// ```
     pub fn device_id(&self) -> i32 {
         self.device_id
     }
 
     /// Returns the number of streams in the pool.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 3).expect("create a 3-stream pool");
+    /// assert_eq!(pool.len(), 3);
+    /// ```
     pub fn len(&self) -> usize {
         self.streams.len()
     }
 
     /// Returns `true` if the pool has no streams. Always `false` for a pool
     /// built by [`HipStreamPool::new`] (which rejects `n == 0`).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 1).expect("create a 1-stream pool");
+    /// assert!(!pool.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.streams.is_empty()
     }
@@ -226,6 +304,20 @@ impl HipStreamPool {
     /// size. This is the deterministic default — successive calls visit streams
     /// in a fixed, reproducible order, which keeps multi-stream dispatch
     /// consistent with the determinism contract (design doc §11).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 2).expect("create a 2-stream pool");
+    /// // Successive acquisitions round-robin through the pool's streams.
+    /// let s0 = pool.acquire();
+    /// let s1 = pool.acquire();
+    /// assert_ne!(s0.as_raw(), s1.as_raw());
+    /// // The third acquisition wraps back to the first stream.
+    /// assert_eq!(pool.acquire().as_raw(), s0.as_raw());
+    /// ```
     ///
     /// # Complexity
     ///
@@ -247,6 +339,17 @@ impl HipStreamPool {
     /// `hipErrorNotReady`) is **not** swallowed: it propagates as `Err` so a
     /// real HIP runtime fault surfaces instead of being masked as "busy"
     /// (Finding 4 / design doc §8).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 4).expect("create a 4-stream pool");
+    /// // Prefer a drained stream; falls back to round-robin if all are busy.
+    /// let stream = pool.acquire_idle().expect("query streams without a fault");
+    /// stream.synchronize().expect("drain before reuse");
+    /// ```
     ///
     /// # Errors
     ///
@@ -278,6 +381,16 @@ impl HipStreamPool {
     ///
     /// Used at the drain-for-checkpoint boundary (design doc §4) to ensure all
     /// in-flight work has committed before the executor latches worker counters.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 4).expect("create a 4-stream pool");
+    /// // ... dispatch work across the pool's streams ...
+    /// pool.synchronize_all().expect("drain every stream for a checkpoint");
+    /// ```
     ///
     /// # Errors
     ///
