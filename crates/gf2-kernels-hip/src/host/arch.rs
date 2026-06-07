@@ -2,10 +2,17 @@
 //! (design doc §6).
 //!
 //! [`GfxTarget`] enumerates the compile-time gfx target list from design doc
-//! §6. [`GfxTarget::detect`] reads the device's compute capability via
-//! `hipDeviceGetAttribute` and maps `(major, minor)` to a target. On an
-//! unrecognized arch it emits a `tracing::warn!` and the caller falls back to
-//! the CPU equivalent stage (consistent with the §8 OOM policy).
+//! §6. [`GfxTarget::detect`] reads the device's GCN arch **name** via
+//! `hipGetDeviceProperties().gcnArchName` and maps the name string (e.g.
+//! `"gfx1030"`, `"gfx940"`, `"gfx942"`) to a target. The name is the
+//! authoritative discriminator: compute capability cannot distinguish the
+//! gfx940 and gfx942 CDNA3 steppings, which load different kernel blobs.
+//!
+//! On an arch this build has no blob for, detection returns
+//! [`HipError::UnsupportedArch`]; the dispatcher emits a `tracing::warn!` and
+//! falls back to the CPU-equivalent stage (consistent with the §8 OOM policy).
+//! A host with no visible device returns [`HipError::NoDevice`], which the
+//! `gf2-sim` boundary maps to `FatalError::DeviceUnavailable` (design doc §8).
 //!
 //! Per-arch kernel blobs are produced by `build.rs` (one `*.co` per target
 //! under `kernels/<target>/`) and loaded by [`GfxTarget::blob_dir`] /
@@ -15,6 +22,12 @@
 use std::path::PathBuf;
 
 use crate::{check_hip, ffi, HipError};
+
+/// Capacity of the arch-name buffer handed to `hip_device_get_arch_name`.
+/// `gcnArchName` plus any feature suffix (e.g. `"gfx942:sramecc+:xnack-"`) is
+/// comfortably under this; truncation only affects the (already-stripped)
+/// suffix, never the `gfxNNNN` head.
+const ARCH_NAME_BUF_LEN: usize = 256;
 
 /// A compile-time gfx kernel target (design doc §6).
 ///
@@ -64,38 +77,42 @@ impl GfxTarget {
         }
     }
 
-    /// Maps a HIP compute capability `(major, minor)` to a [`GfxTarget`].
+    /// Maps a GCN arch **name** string to a [`GfxTarget`].
     ///
-    /// Returns `None` for an unrecognized capability. Note that the CDNA3
-    /// steppings gfx940 and gfx942 both report compute capability `(9, 4)`; this
-    /// mapping resolves the ambiguity to [`GfxTarget::Gfx942`] (the newer
-    /// stepping). The distinction does not affect gfx1030, the only target
-    /// exercised today.
-    pub fn from_compute_capability(major: i32, minor: i32) -> Option<Self> {
-        match (major, minor) {
-            (10, 3) => Some(GfxTarget::Gfx1030),
-            (11, 0) => Some(GfxTarget::Gfx1100),
-            (12, 0) => Some(GfxTarget::Gfx1200),
-            (9, 0) => Some(GfxTarget::Gfx90a),
-            // gfx940 and gfx942 are indistinguishable by compute capability;
-            // resolve to the newer stepping.
-            (9, 4) => Some(GfxTarget::Gfx942),
-            _ => None,
-        }
+    /// The name is matched against the canonical `gfxNNNN` head of
+    /// `gcnArchName`. Any feature suffix (e.g. `":sramecc+:xnack-"`) is stripped
+    /// before matching, so `"gfx942:sramecc+"` and `"gfx942"` both map to
+    /// [`GfxTarget::Gfx942`]. Returns `None` for an arch this build has no blob
+    /// for.
+    ///
+    /// Unlike compute-capability matching, this distinguishes the CDNA3
+    /// steppings gfx940 and gfx942 — which report the **same** compute
+    /// capability but load **different** kernel blobs — by their distinct name
+    /// strings.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The `gcnArchName` string from `hipGetDeviceProperties`.
+    pub fn from_arch_name(name: &str) -> Option<Self> {
+        // Strip the optional feature suffix: "gfx942:sramecc+:xnack-" → "gfx942".
+        let head = name.split(':').next().unwrap_or(name).trim();
+        GfxTarget::ALL.into_iter().find(|t| t.as_str() == head)
     }
 
     /// Detects the gfx target of HIP device 0 at runtime.
     ///
-    /// Reads the compute capability via `hipDeviceGetAttribute` and maps it to a
-    /// [`GfxTarget`]. On an arch this build does not recognize, emits a
-    /// `tracing::warn!` carrying the device id and capability, and returns
-    /// [`HipError::Hip`] with context `"GfxTarget::detect: unsupported arch"` so
-    /// the caller falls back to the CPU equivalent stage (design doc §6 / §8).
+    /// Reads the device's GCN arch name via `gcnArchName` and maps it to a
+    /// [`GfxTarget`]. On an arch this build has no kernel blob for, emits a
+    /// `tracing::warn!` carrying the device id and arch name and returns
+    /// [`HipError::UnsupportedArch`] so the caller falls back to the CPU
+    /// equivalent stage (design doc §6 / §8). A host with no visible device
+    /// returns [`HipError::NoDevice`].
     ///
     /// # Errors
     ///
-    /// Returns [`HipError::Hip`] if no device is present, if the capability
-    /// query fails, or if the capability is unrecognized.
+    /// Returns [`HipError::NoDevice`] if no device is present,
+    /// [`HipError::UnsupportedArch`] for an arch with no blob, or
+    /// [`HipError::Hip`] if the underlying HIP query fails.
     pub fn detect() -> Result<Self, HipError> {
         Self::detect_device(0)
     }
@@ -107,8 +124,9 @@ impl GfxTarget {
     ///
     /// # Errors
     ///
-    /// Returns [`HipError::Hip`] if the device count is zero, the capability
-    /// query fails, or the capability is unrecognized.
+    /// Returns [`HipError::NoDevice`] if the device count is zero,
+    /// [`HipError::UnsupportedArch`] for an arch with no blob, or
+    /// [`HipError::Hip`] if the underlying HIP query fails.
     pub fn detect_device(device_id: i32) -> Result<Self, HipError> {
         // Guard: a host with no GPU must not be probed (design doc §8 maps a
         // zero device count to DeviceUnavailable at the gf2-sim boundary).
@@ -119,36 +137,52 @@ impl GfxTarget {
             "hipGetDeviceCount",
         )?;
         if count <= 0 {
-            return Err(HipError::Hip {
-                code: 0,
-                context: "GfxTarget::detect: no HIP devices",
-            });
+            return Err(HipError::NoDevice);
         }
 
-        let mut major: i32 = 0;
-        let mut minor: i32 = 0;
-        // SAFETY: both out-pointers are valid; the runtime writes them on
-        // success. `device_id` is validated by the runtime.
-        check_hip(
-            unsafe { ffi::hip_device_compute_capability(device_id, &mut major, &mut minor) },
-            "hipDeviceGetAttribute(ComputeCapability)",
-        )?;
-
-        match Self::from_compute_capability(major, minor) {
+        let arch_name = Self::query_arch_name(device_id)?;
+        match Self::from_arch_name(&arch_name) {
             Some(target) => Ok(target),
             None => {
                 tracing::warn!(
                     device_id,
-                    cc_major = major,
-                    cc_minor = minor,
-                    "unsupported gfx arch (cc {major}.{minor}); falling back to CPU stage"
+                    gcn_arch_name = %arch_name,
+                    "unsupported gfx arch '{arch_name}'; falling back to CPU stage"
                 );
-                Err(HipError::Hip {
-                    code: 0,
-                    context: "GfxTarget::detect: unsupported arch",
+                Err(HipError::UnsupportedArch {
+                    gcn_arch_name: arch_name,
                 })
             }
         }
+    }
+
+    /// Reads the raw `gcnArchName` string of `device_id`.
+    ///
+    /// Internal helper for [`detect_device`](GfxTarget::detect_device).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError::Hip`] if the underlying `hipGetDeviceProperties`
+    /// query fails.
+    fn query_arch_name(device_id: i32) -> Result<String, HipError> {
+        let mut buf = [0i8; ARCH_NAME_BUF_LEN];
+        // SAFETY: `buf` is a valid writable buffer of `ARCH_NAME_BUF_LEN` bytes;
+        // the shim writes at most that many bytes and always NUL-terminates.
+        check_hip(
+            unsafe {
+                ffi::hip_device_get_arch_name(
+                    device_id,
+                    buf.as_mut_ptr().cast::<std::os::raw::c_char>(),
+                    ARCH_NAME_BUF_LEN,
+                )
+            },
+            "hipGetDeviceProperties(gcnArchName)",
+        )?;
+        // Find the NUL terminator and decode the leading bytes as UTF-8 (arch
+        // names are ASCII).
+        let nul = buf.iter().position(|&b| b == 0).unwrap_or(buf.len());
+        let bytes: Vec<u8> = buf[..nul].iter().map(|&b| b as u8).collect();
+        Ok(String::from_utf8_lossy(&bytes).into_owned())
     }
 
     /// Directory holding this target's precompiled kernel blobs,
@@ -192,29 +226,55 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_compute_capability_mapping() {
+    fn test_arch_name_mapping() {
         assert_eq!(
-            GfxTarget::from_compute_capability(10, 3),
+            GfxTarget::from_arch_name("gfx1030"),
             Some(GfxTarget::Gfx1030)
         );
         assert_eq!(
-            GfxTarget::from_compute_capability(11, 0),
+            GfxTarget::from_arch_name("gfx1100"),
             Some(GfxTarget::Gfx1100)
         );
         assert_eq!(
-            GfxTarget::from_compute_capability(12, 0),
+            GfxTarget::from_arch_name("gfx1200"),
             Some(GfxTarget::Gfx1200)
         );
-        assert_eq!(
-            GfxTarget::from_compute_capability(9, 0),
-            Some(GfxTarget::Gfx90a)
+        assert_eq!(GfxTarget::from_arch_name("gfx90a"), Some(GfxTarget::Gfx90a));
+        assert_eq!(GfxTarget::from_arch_name("gfx940"), Some(GfxTarget::Gfx940));
+        assert_eq!(GfxTarget::from_arch_name("gfx942"), Some(GfxTarget::Gfx942));
+        // Unknown arch → None (caller emits warn + CPU fallback).
+        assert_eq!(GfxTarget::from_arch_name("gfx908"), None);
+        assert_eq!(GfxTarget::from_arch_name(""), None);
+    }
+
+    /// gfx940 and gfx942 share a compute capability but are distinct targets;
+    /// name-based detection must keep them apart (Finding 2).
+    #[test]
+    fn test_gfx940_vs_gfx942_distinct() {
+        assert_eq!(GfxTarget::from_arch_name("gfx940"), Some(GfxTarget::Gfx940));
+        assert_eq!(GfxTarget::from_arch_name("gfx942"), Some(GfxTarget::Gfx942));
+        assert_ne!(
+            GfxTarget::from_arch_name("gfx940"),
+            GfxTarget::from_arch_name("gfx942")
         );
-        // gfx940/gfx942 both report (9, 4) → resolve to the newer stepping.
+    }
+
+    /// The `gcnArchName` feature suffix (e.g. ":sramecc+:xnack-") must be
+    /// stripped before matching.
+    #[test]
+    fn test_arch_name_strips_feature_suffix() {
         assert_eq!(
-            GfxTarget::from_compute_capability(9, 4),
+            GfxTarget::from_arch_name("gfx942:sramecc+:xnack-"),
             Some(GfxTarget::Gfx942)
         );
-        assert_eq!(GfxTarget::from_compute_capability(7, 5), None);
+        assert_eq!(
+            GfxTarget::from_arch_name("gfx90a:xnack-"),
+            Some(GfxTarget::Gfx90a)
+        );
+        assert_eq!(
+            GfxTarget::from_arch_name("gfx1030:xnack-"),
+            Some(GfxTarget::Gfx1030)
+        );
     }
 
     #[test]

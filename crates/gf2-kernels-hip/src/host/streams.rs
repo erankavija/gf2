@@ -203,23 +203,40 @@ impl HipStreamPool {
     /// Acquires the oldest idle stream, falling back to round-robin.
     ///
     /// Probes streams in round-robin order and returns the first that reports
-    /// idle via `hipStreamQuery`. If none are idle (or a query errors), returns
-    /// the next round-robin stream so the caller always makes progress.
+    /// idle via `hipStreamQuery` (`hipSuccess`). A stream that is merely still
+    /// busy (`hipErrorNotReady`) is skipped — that is the normal "not idle"
+    /// signal, not an error. If **every** stream is busy, the next round-robin
+    /// stream is returned so the caller always makes progress.
+    ///
+    /// A genuine `hipStreamQuery` failure (any code other than `hipSuccess` or
+    /// `hipErrorNotReady`) is **not** swallowed: it propagates as `Err` so a
+    /// real HIP runtime fault surfaces instead of being masked as "busy"
+    /// (Finding 4 / design doc §8).
+    ///
+    /// # Errors
+    ///
+    /// Returns the first non-`hipErrorNotReady` [`HipError`] reported by
+    /// `hipStreamQuery` while probing.
     ///
     /// # Complexity
     ///
     /// O(`n`) stream queries in the worst case.
-    pub fn acquire_idle(&self) -> &HipStream {
+    pub fn acquire_idle(&self) -> Result<&HipStream, HipError> {
         let n = self.streams.len();
         let start = self.next.fetch_add(1, Ordering::Relaxed) % n;
         for offset in 0..n {
             let idx = (start + offset) % n;
-            if matches!(self.streams[idx].is_idle(), Ok(true)) {
-                return &self.streams[idx];
+            // `is_idle` already distinguishes hipSuccess (Ok(true)),
+            // hipErrorNotReady (Ok(false) — still busy, skip), and any other
+            // code (Err — a real fault we must surface).
+            match self.streams[idx].is_idle() {
+                Ok(true) => return Ok(&self.streams[idx]),
+                Ok(false) => continue,
+                Err(e) => return Err(e),
             }
         }
-        // None idle (or queries errored): fall back to round-robin progress.
-        &self.streams[start]
+        // None idle, but no query errored: fall back to round-robin progress.
+        Ok(&self.streams[start])
     }
 
     /// Synchronizes every stream in the pool.
@@ -236,5 +253,52 @@ impl HipStreamPool {
             s.synchronize()?;
         }
         Ok(())
+    }
+}
+
+#[cfg(all(test, feature = "hip"))]
+mod tests {
+    use super::*;
+
+    /// Round-robin acquisition visits streams in a fixed cyclic order
+    /// (determinism contract, design doc §11). Gated to the gfx1030 host.
+    #[test]
+    fn test_acquire_round_robin_order() {
+        let pool = HipStreamPool::new(0, 3).expect("create 3-stream pool");
+        // Record the pointer identity of three successive acquisitions; with a
+        // freshly-zeroed cursor they must be streams 0, 1, 2 then wrap to 0.
+        let a = pool.acquire().as_raw();
+        let b = pool.acquire().as_raw();
+        let c = pool.acquire().as_raw();
+        let d = pool.acquire().as_raw();
+        assert_ne!(a, b);
+        assert_ne!(b, c);
+        assert_eq!(a, d, "round-robin must wrap after n acquisitions");
+    }
+
+    /// `acquire_idle` returns an idle stream when all streams are drained, and
+    /// never errors on the happy path (Finding 4: not-ready is skipped, only a
+    /// genuine fault propagates — none occurs here).
+    #[test]
+    fn test_acquire_idle_returns_drained_stream() {
+        let pool = HipStreamPool::new(0, 2).expect("create 2-stream pool");
+        pool.synchronize_all().expect("drain");
+        // All streams are idle, so this must succeed (Ok), not error.
+        let s = pool
+            .acquire_idle()
+            .expect("idle acquisition must not error");
+        assert!(
+            s.is_idle().expect("query a drained stream"),
+            "returned stream must be idle after a full drain"
+        );
+    }
+
+    /// A freshly created, never-used stream reports idle (hipSuccess), exercising
+    /// the `is_idle` Ok(true) arm — the hipErrorNotReady (Ok(false)) and Err
+    /// arms are the not-ready-vs-error distinction acquire_idle relies on.
+    #[test]
+    fn test_is_idle_on_fresh_stream() {
+        let s = HipStream::new().expect("create stream");
+        assert!(s.is_idle().expect("query fresh stream is not an error"));
     }
 }

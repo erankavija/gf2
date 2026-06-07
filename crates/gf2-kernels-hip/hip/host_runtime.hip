@@ -53,17 +53,30 @@ int hip_device_get_count(int* count) {
     return static_cast<int>(hipGetDeviceCount(count));
 }
 
-// Reads the compute-capability major/minor of `device_id` via
-// hipDeviceGetAttribute. Both out-params are written on success. This is the
-// arch-detection primitive of design doc §6.
-int hip_device_compute_capability(int device_id, int* major, int* minor) {
-    hipError_t e = hipDeviceGetAttribute(
-        major, hipDeviceAttributeComputeCapabilityMajor, device_id);
+// Writes the device's GCN arch name (e.g. "gfx1030", "gfx940", "gfx942") into
+// the caller-provided buffer `buf` of capacity `buf_len` bytes. The name is
+// the canonical arch identifier from hipDeviceProp_t.gcnArchName and is the
+// authoritative discriminator for kernel-blob selection (design doc §6) — it
+// distinguishes steppings that share a compute capability (gfx940 vs gfx942).
+// The buffer is always NUL-terminated on success (truncated if too small).
+// Returns hipSuccess (0) on success, the hipError_t cast to int otherwise.
+int hip_device_get_arch_name(int device_id, char* buf, size_t buf_len) {
+    if (buf == nullptr || buf_len == 0) {
+        return static_cast<int>(hipErrorInvalidValue);
+    }
+    hipDeviceProp_t props;
+    hipError_t e = hipGetDeviceProperties(&props, device_id);
     if (e != hipSuccess) {
         return static_cast<int>(e);
     }
-    return static_cast<int>(hipDeviceGetAttribute(
-        minor, hipDeviceAttributeComputeCapabilityMinor, device_id));
+    // gcnArchName may include a feature suffix (e.g. "gfx942:sramecc+:xnack-");
+    // copy the full string and let the Rust side split on ':'.
+    size_t i = 0;
+    for (; i + 1 < buf_len && props.gcnArchName[i] != '\0'; ++i) {
+        buf[i] = props.gcnArchName[i];
+    }
+    buf[i] = '\0';
+    return static_cast<int>(hipSuccess);
 }
 
 // Writes free and total device memory (bytes) for the current device.
