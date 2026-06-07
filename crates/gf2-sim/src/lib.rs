@@ -60,6 +60,8 @@ pub use connector::{Connector, Edge, StageId};
 #[doc(inline)]
 pub use error::{BuildError, FatalError, RecoverableError, StageError};
 #[doc(inline)]
+pub use graph::Chain;
+#[doc(inline)]
 pub use pipeline::Pipeline;
 #[doc(inline)]
 pub use stage::{

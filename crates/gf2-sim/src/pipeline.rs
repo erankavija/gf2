@@ -34,9 +34,84 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
+    /// Assembles a pipeline from its already-validated parts.
+    ///
+    /// Crate-private: the only caller is [`Chain::build`](crate::graph::Chain::build)
+    /// (the graph wave `c09d3e95`), which performs the topological sort, type
+    /// re-validation, cycle/connectivity checks, and GPU-fallback extraction
+    /// before handing the ordered parts here. Keeping this out of the public API
+    /// preserves the design-doc §1 invariant that a `Pipeline` is only ever
+    /// obtained through a validating builder.
+    ///
+    /// # Arguments
+    ///
+    /// * `stages` — the type-erased stages in topological order.
+    /// * `edges` — the directed edges among those stages.
+    /// * `fallbacks` — CPU fallbacks keyed by the GPU stage they substitute.
+    /// * `config` — the run configuration.
+    pub(crate) fn from_parts(
+        stages: Vec<Box<dyn AnyStage>>,
+        edges: Vec<Edge>,
+        fallbacks: HashMap<StageId, Box<dyn AnyStage>>,
+        config: PipelineConfig,
+    ) -> Self {
+        Self {
+            stages,
+            edges,
+            fallbacks,
+            config,
+        }
+    }
+
     /// Returns the number of stages in this pipeline.
     pub fn stage_count(&self) -> usize {
         self.stages.len()
+    }
+
+    /// Returns the type-erased stages in topological order.
+    ///
+    /// The order is the linearisation [`Chain::build`](crate::graph::Chain::build)
+    /// produced; consumers (the Phase C executor `de160fc5`, and roundtrip tests
+    /// that drive the chain via [`AnyStage::process_any`])
+    /// step through the stages in this order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_sim::graph::Chain;
+    /// use gf2_sim::stage::{erase, BatchSize, ExecutionClass, Stage};
+    /// use gf2_sim::error::StageError;
+    ///
+    /// #[derive(Clone)]
+    /// struct B(u8);
+    /// impl BatchSize for B {
+    ///     fn batch_size(&self) -> usize {
+    ///         1
+    ///     }
+    /// }
+    /// struct Id;
+    /// impl Stage<B, B> for Id {
+    ///     type Scratch = ();
+    ///     type CpuFallback = Self;
+    ///     fn process(&self, i: &B, _: &mut ()) -> Result<B, StageError> {
+    ///         Ok(i.clone())
+    ///     }
+    ///     fn execution_class(&self) -> ExecutionClass {
+    ///         ExecutionClass::CpuOnly
+    ///     }
+    /// }
+    ///
+    /// let mut chain = Chain::new();
+    /// let a = chain.add(erase(Id));
+    /// let b = chain.add(erase(Id));
+    /// chain.connect(a, b).unwrap();
+    /// let pipeline = chain.build().unwrap();
+    /// // The first stage's input type matches the second stage's input type
+    /// // (both `B`), and there are two stages in topological order.
+    /// assert_eq!(pipeline.stages().len(), 2);
+    /// ```
+    pub fn stages(&self) -> &[Box<dyn AnyStage>] {
+        &self.stages
     }
 
     /// Returns the edges connecting the stages.
