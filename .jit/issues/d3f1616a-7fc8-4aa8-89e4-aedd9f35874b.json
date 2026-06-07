@@ -2,7 +2,7 @@
   "id": "d3f1616a-7fc8-4aa8-89e4-aedd9f35874b",
   "title": "GPU Gray-QAM soft demap integration",
   "description": "## Goal\n\nWrap the existing `gf2-kernels-hip::demap_batch` Gray-QAM soft-demap\nkernel as a `Stage` in the gf2-sim pipeline.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §8 (OOM signalled, not\ndispatched). The kernel + host wrapper at\n`crates/gf2-kernels-hip/src/lib.rs::demap_batch` already exists.\nWave B.2 fan-out from `36075e4c`.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/gpu/demap.rs` (under `--features hip`):\n   - `pub struct GpuGrayQamDemapper { method: DemapMethod, m: u8 }`\n     implementing `Stage<SymbolBatch, LlrBatch>`.\n   - `cpu_fallback()` returns\n     `gf2_coding::modem::FastGrayQamDemapper`.\n2. Byte-identity test (under `--features hip`) in\n   `tests/gpu_demap_byte_identity.rs`:\n   - For 16-QAM and 64-QAM at fixed channel realisation:\n     GPU LLR output matches CPU `FastGrayQamDemapper` LLRs to\n     ≤ 2 ulp f32 (allowance for SIMD vs SIMT reduction order\n     differences in MaxLog; ExactLogMap may need slightly more\n     tolerance — record actual measured tolerance in the test).\n3. Parallelism-pays receipt entry per project plan §5 schema:\n   - GPU demap throughput vs single-thread CPU baseline (≥ 5×).\n   - GPU demap throughput vs CPU-24-thread baseline (for\n     diagnostic comparability).\n\n## Success Criteria\n\n- [hard] GPU demap LLRs match CPU `FastGrayQamDemapper` to ≤ 2 ulp\n  for 16-QAM and 64-QAM at fixed channel realisation; actual\n  measured tolerance recorded in the test source as a constant.\n- [hard] `parallelism-pays` gate: receipt records GPU throughput\n  ≥ 5× single-thread CPU baseline (from `c0b1702d`) AND reports\n  CPU-24-thread comparison for diagnostic value.\n- [hard] `cpu_fallback()` returns the CPU demapper; integration\n  verified by Phase B `ed575f15`.\n- [hard] `cargo-ci`, `code-review`, `parallelism-pays` gates green.\n\n## Non-goals\n\n- No new modulation orders (epic scope is 16-QAM + 64-QAM via the\n  existing kernel).\n- No multi-device dispatch (epic non-goal).",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -23,5 +23,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:45.349813276+00:00",
-  "updated_at": "2026-06-06T21:30:32.323588658+00:00"
+  "updated_at": "2026-06-07T11:34:25.437691544+00:00"
 }
