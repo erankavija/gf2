@@ -4,14 +4,15 @@
 //! pool, allocator wrappers, deterministic-launch helpers, multi-arch
 //! detection) lives in the `gf2-kernels-hip` kernel crate so that all `unsafe`
 //! FFI is isolated there. This module is the `gf2-sim`-side consumer: it owns a
-//! [`HipDispatcher`] (a stream pool plus per-stage scratch) and translates the
+//! `HipDispatcher` (a stream pool plus per-stage scratch) and translates the
 //! kernel crate's `HipError` into the pipeline's [`StageError`] hierarchy.
 //!
 //! The item bodies are gated on `feature = "hip"`; the module home itself is
 //! declared unconditionally in `lib.rs` so the crate builds (and documents)
-//! cleanly with the feature off.
+//! cleanly with the feature off. (`HipDispatcher` is a plain code span rather
+//! than an intra-doc link because the type exists only under `feature = "hip"`,
+//! so the link would be unresolved on the default no-hip documentation build.)
 //!
-//! [`HipDispatcher`]: HipDispatcher
 //! [`StageError`]: crate::error::StageError
 
 #[cfg(feature = "hip")]
