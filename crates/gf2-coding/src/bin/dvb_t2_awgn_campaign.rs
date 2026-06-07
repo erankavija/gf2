@@ -102,19 +102,20 @@
 
 #![deny(unsafe_code)]
 
+use gf2_coding::dvb_t2_bicm_harness::{
+    esn0_to_ebn0, mod_str, rate_display, rate_f64, rate_underscore, BicmAwgnChannel, BicmFecEncoder,
+};
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-use gf2_coding::llr::Llr;
-use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
-use gf2_coding::simulation::{ChannelModel, SimulationConfig, SimulationRunner};
+use gf2_coding::modem::DemapMethod;
+use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 use gf2_coding::traits::{BlockEncoder, DecoderResult};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
-use rand::Rng;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -443,42 +444,11 @@ fn parse_args() -> Result<Args, String> {
 }
 
 // ---------------------------------------------------------------------------
-// Naming helpers.
+// Naming helpers (campaign-local aliases that forward to the shared harness).
 // ---------------------------------------------------------------------------
 
 fn rate_str(r: CodeRate) -> &'static str {
-    match r {
-        CodeRate::Rate1_2 => "1_2",
-        CodeRate::Rate2_3 => "2_3",
-        CodeRate::Rate3_4 => "3_4",
-        _ => "unknown",
-    }
-}
-
-fn rate_f64(r: CodeRate) -> f64 {
-    match r {
-        CodeRate::Rate1_2 => 0.5,
-        CodeRate::Rate2_3 => 2.0 / 3.0,
-        CodeRate::Rate3_4 => 0.75,
-        _ => 1.0,
-    }
-}
-
-fn rate_display(r: CodeRate) -> &'static str {
-    match r {
-        CodeRate::Rate1_2 => "1/2",
-        CodeRate::Rate2_3 => "2/3",
-        CodeRate::Rate3_4 => "3/4",
-        _ => "?",
-    }
-}
-
-fn mod_str(m: DvbT2Modulation) -> &'static str {
-    match m {
-        DvbT2Modulation::Qam16 => "16qam",
-        DvbT2Modulation::Qam64 => "64qam",
-        _ => "unknown",
-    }
+    rate_underscore(r)
 }
 
 fn curve_csv_name(rate: CodeRate, modulation: DvbT2Modulation) -> String {
@@ -537,160 +507,6 @@ fn build_snr_range(start: f64, stop: f64, step: f64) -> Vec<f64> {
         })
         .filter(|&v| v <= stop + step * 0.001)
         .collect()
-}
-
-// ---------------------------------------------------------------------------
-// SNR conversion: Es/N0 ↔ Eb/N0.
-//
-// Es/N0 = Eb/N0 + 10*log10(m * r)
-// => Eb/N0 = Es/N0 - 10*log10(m * r)
-// ---------------------------------------------------------------------------
-
-fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
-
-fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    eb_n0_db + 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
-
-// ---------------------------------------------------------------------------
-// BICM encoder wrapper: implements BlockEncoder for DvbT2Concat.
-//
-// k = k_bch (BBFRAME bits), n = n_ldpc (FECFRAME bits).
-// encode: BBFRAME → BCH+LDPC → FECFRAME.
-// ---------------------------------------------------------------------------
-
-struct BicmFecEncoder {
-    concat: DvbT2Concat,
-}
-
-impl BicmFecEncoder {
-    fn new(concat: DvbT2Concat) -> Self {
-        Self { concat }
-    }
-}
-
-impl BlockEncoder for BicmFecEncoder {
-    fn k(&self) -> usize {
-        self.concat.k_bch()
-    }
-
-    fn n(&self) -> usize {
-        self.concat.n_ldpc()
-    }
-
-    fn encode(&self, message: &BitVec) -> BitVec {
-        self.concat.encode(message)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// BICM channel: implements ChannelModel for the DVB-T2 BICM chain.
-//
-// transmit_and_demodulate receives n_ldpc FECFRAME bits (encoder output),
-// applies bit interleaving, QAM mapping, AWGN noise, QAM soft demapping,
-// and bit deinterleaving, returning n_ldpc LLRs in FECFRAME order.
-//
-// The caller (SimulationRunner) passes eb_n0_db and rate. We convert to
-// Es/N0 internally for the noise computation.
-// ---------------------------------------------------------------------------
-
-struct BicmAwgnChannel {
-    interleaver: DvbT2BitInterleaver,
-    bits_per_symbol: usize,
-    spec: ModemSpec<f32>,
-    demap: DemapMethod,
-}
-
-impl BicmAwgnChannel {
-    fn new(interleaver: DvbT2BitInterleaver, bits_per_symbol: usize, demap: DemapMethod) -> Self {
-        let spec = ModemSpec::<f32>::gray_square_qam(if bits_per_symbol == 4 { 16 } else { 64 });
-        Self {
-            interleaver,
-            bits_per_symbol,
-            spec,
-            demap,
-        }
-    }
-}
-
-impl ChannelModel for BicmAwgnChannel {
-    fn batch_alignment(&self) -> usize {
-        // FECFRAME length is always divisible by bits_per_symbol for DVB-T2.
-        // Return 1 since the runner passes the full n_ldpc-bit codeword.
-        1
-    }
-
-    fn demap_method(&self) -> DemapMethod {
-        self.demap
-    }
-
-    fn transmit_and_demodulate<R: Rng>(
-        &self,
-        bits: &BitVec,
-        eb_n0_db: f64,
-        rate: f64,
-        rng: &mut R,
-    ) -> Vec<Llr> {
-        // bits = FECFRAME (n_ldpc bits) from the encoder.
-        let n_ldpc = bits.len();
-        let num_symbols = n_ldpc / self.bits_per_symbol;
-
-        // Convert Eb/N0 to Es/N0, then to per-component noise variance.
-        // Es/N0 = Eb/N0 + 10*log10(m * r)
-        // sigma^2 = 1 / (2 * 10^(Es_N0/10))
-        let es_n0_db = ebn0_to_esn0(eb_n0_db, self.bits_per_symbol, rate);
-        let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
-        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-        let noise_var_f32 = (2.0 * sigma_sq) as f32; // N0 = 2 * sigma^2
-
-        let mapper = self.spec.preferred_mapper();
-        let demapper = self.spec.preferred_soft_demapper();
-
-        // 1. Bit interleave: FECFRAME order → interleaved order.
-        let interleaved = self.interleaver.interleave(bits);
-
-        // 2. QAM map: interleaved bits → I/Q symbols.
-        let interleaved_bits: Vec<bool> =
-            (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
-        let mut tx_i = vec![0.0_f32; num_symbols];
-        let mut tx_q = vec![0.0_f32; num_symbols];
-        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-        // 3. AWGN: independent Gaussian noise on I and Q axes (Box-Muller).
-        let sigma_f32 = (sigma_sq as f32).sqrt();
-        for s in tx_i.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-        for s in tx_q.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-
-        // 4. QAM soft demap → interleaved LLRs.
-        let noise_var_buf = vec![noise_var_f32; num_symbols];
-        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-        demapper.demap_llrs(
-            DemapInput {
-                rx_i: &tx_i,
-                rx_q: &tx_q,
-                gain_i: None,
-                gain_q: None,
-                noise_var: &noise_var_buf,
-                method: self.demap,
-            },
-            &mut interleaved_llrs,
-        );
-
-        // 5. Bit deinterleave LLRs → FECFRAME order.
-        self.interleaver.deinterleave_llrs(&interleaved_llrs)
-    }
 }
 
 // ---------------------------------------------------------------------------
