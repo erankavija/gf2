@@ -289,27 +289,32 @@ an internal pool to amortise allocation across batches.
 `[fixed: B3, C3, H4]` Stride values raised per Q4; seed-derivation
 note added per Q2; aggregation-order hedge removed.
 
-> **Amendment 2026-06-07 (user-approved).** `FRAME_STRIDE` raised from
-> `2^16` to `2^19`, and the stride **unit corrected to ChaCha20 32-bit
-> words** (the original text said "u64 words" / "512 KB", which is wrong
-> for `rand_chacha 0.9`, whose `set_word_pos`/`get_word_pos` are in
+> **Amendment 2026-06-07 (user-approved).** `FRAME_STRIDE` is **`2^20`**
+> (raised from the original `2^16`), and the stride **unit is ChaCha20
+> 32-bit words** (the original text said "u64 words" / "512 KB", which is
+> wrong for `rand_chacha 0.9`, whose `set_word_pos`/`get_word_pos` are in
 > 32-bit words — `BLOCK_WORDS = 16`, "the offset from the start of the
 > stream, in 32-bit words", `rand_chacha-0.9.0/src/chacha.rs:207`). The
-> original arithmetic check undercounted twice: (a) it assumed f32 noise
+> original arithmetic undercounted twice: (a) it assumed f32 noise
 > (~1 word/sample), but the implementation draws **two `f64` uniforms per
 > Gaussian sample** via `box_muller_cos` = **4 ChaCha20 32-bit words per
-> noise sample**; (b) it checked only 64-QAM, but **16-QAM is the binding
-> (largest) case** because fewer bits/symbol → more symbols → more noise
-> samples. The **measured** worst-case per-frame draw is **130 608 32-bit
-> words** for r1/2 16-QAM Normal (64-QAM Normal measures 87 408), so the
-> old `2^16 = 65 536` budget was ~2× *under* the real draw — consecutive
-> frames' RNG regions overlapped, sharing noise samples (deterministic, so
+> noise sample**; (b) it reasoned from 64-QAM, but the binding (largest)
+> case is the **lowest-order modulation** — fewer bits/symbol → more
+> symbols → more noise samples. **`QPSK` (2 bits/symbol) is the worst
+> case, NOT 16-QAM**: r1/2 QPSK Normal draws a **measured 260 208 32-bit
+> words/frame** (n=64800 → 32400 symbols × 2 axes = 64800 noise samples ×
+> 4 words = 259 200, plus ~1008 BBFRAME words), versus 16-QAM Normal
+> 130 608 and 64-QAM Normal 87 408. The original `2^16 = 65 536` budget
+> was ~4× *under* the QPSK draw, so consecutive frames' RNG regions
+> overlapped, sharing noise samples (deterministic, so
 > byte-identity-across-workers still held, but the inter-frame noise was
-> correlated — unacceptable for a research-grade FER simulator). The
-> measured number is asserted by
-> `gf2-sim parallel::tests::test_worst_case_frame_draw_under_stride`. The
+> correlated — unacceptable for a research-grade FER simulator). All three
+> measured draws are asserted by
+> `gf2-sim parallel::tests::test_worst_case_frame_draw_under_stride`, which
+> enumerates every supported modulation and checks QPSK binds. The
 > `worker_offset` formula *shape* is unchanged; only the `FRAME_STRIDE`
-> constant moved.
+> constant moved. (An intermediate value of `2^19` sized for 16-QAM only,
+> giving just ~2× headroom over QPSK; `2^20` restores the ~4× design goal.)
 
 Each per-(SNR, worker) tuple owns an independent `ChaCha20Rng` from
 `rand_chacha 0.9` (see §5). All strides are in ChaCha20 **32-bit word**
@@ -319,7 +324,7 @@ units. Seek offset:
 worker_offset(seed, snr_idx, worker_idx, frame_idx_in_worker) =
     snr_idx * SNR_STRIDE                                  // 2^56 32-bit words per SNR
   + (worker_idx as u128) * WORKER_STRIDE                  // 2^40 32-bit words per worker
-  + (frame_idx_in_worker as u128) * FRAME_STRIDE          // 2^19 32-bit words per frame
+  + (frame_idx_in_worker as u128) * FRAME_STRIDE          // 2^20 32-bit words per frame
 ```
 
 Constants (FRAME_STRIDE revised 2026-06-07; all units = ChaCha20 32-bit words):
@@ -327,23 +332,25 @@ Constants (FRAME_STRIDE revised 2026-06-07; all units = ChaCha20 32-bit words):
 | Constant | Value | Notes |
 |---|---|---|
 | `SNR_STRIDE` | `1 << 56` | 2^56 32-bit words per SNR; far above any practical run |
-| `WORKER_STRIDE` | `1 << 40` | 2^40 32-bit words per worker = 4 TiB; 2^21 = 2M frames/worker at FRAME_STRIDE=2^19 |
-| `FRAME_STRIDE` | `1 << 19` | 524288 32-bit words = 2 MiB per frame; ~4× headroom over the measured 130 608-word worst case (r1/2 16-QAM Normal) |
+| `WORKER_STRIDE` | `1 << 40` | 2^40 32-bit words per worker = 4 TiB; 2^20 = 1M frames/worker at FRAME_STRIDE=2^20 |
+| `FRAME_STRIDE` | `1 << 20` | 1048576 32-bit words = 4 MiB per frame; ~4× headroom over the measured 260 208-word worst case (r1/2 QPSK Normal) |
 
 Arithmetic check (real f64-Box-Muller cost; **measured**, not estimated):
 the per-frame noise sampler draws two `f64` uniforms per Gaussian sample
 (`box_muller_cos(u1, u2)`), i.e. **4 ChaCha20 32-bit words per noise
-sample**. DVB-T2 n=64800 with **16-QAM** (4 bits/symbol — the binding
-case, *more* symbols than 64-QAM): 64800/4 = 16200 complex symbols →
-2 axes × 16200 = 32400 noise samples × 4 words = **129 600 words** for
-AWGN, plus the random BBFRAME fill (~1008 words for the rate-1/2 k_bch
-drawn as u64s) ≈ **130 608 words/frame** (measured exactly; 64-QAM Normal
-measures 87 408, confirming 16-QAM binds). BP decode draws nothing from
-the noise stream (Phase 0 §10: BP messages are computed, not sampled).
-`FRAME_STRIDE = 2^19 = 524 288` gives **4.01× headroom**; the debug assert
-is `noise_words_drawn ≤ FRAME_STRIDE - 1024`.
+sample**. The binding case is the *lowest-order* modulation (most symbols).
+DVB-T2 n=64800 with **QPSK** (2 bits/symbol): 64800/2 = 32400 complex
+symbols → 2 axes × 32400 = 64800 noise samples × 4 words = **259 200
+words** for AWGN, plus the random BBFRAME fill (~1008 words for the
+rate-1/2 k_bch drawn as u64s) ≈ **260 208 words/frame** (measured exactly).
+For comparison 16-QAM Normal measures 130 608 and 64-QAM Normal 87 408 —
+fewer bits/symbol ⇒ more symbols ⇒ more draws, confirming QPSK binds. BP
+decode draws nothing from the noise stream (Phase 0 §10: BP messages are
+computed, not sampled). `FRAME_STRIDE = 2^20 = 1 048 576` gives **4.03×
+headroom** over QPSK; the debug assert is
+`noise_words_drawn ≤ FRAME_STRIDE - 1024`.
 
-Total `worker_offset` fits in 128 bits when frame_idx ≤ 2^21 and
+Total `worker_offset` fits in 128 bits when frame_idx ≤ 2^20 and
 worker_idx ≤ 2^16 (and far beyond). ChaCha20Rng's `set_word_pos` takes
 `u128` (verified at `rand_chacha-0.9.0/src/chacha.rs`).
 
@@ -881,8 +888,10 @@ section serving as a self-check, not a content section).
       erasure + concrete types for `AnyStage`, `StageScratch`,
       `BatchHandle`, `Edge`, `BuildError`
 - [x] §2 SoA↔AoS conversions
-- [x] §3 ChaCha20 per-worker seek scheme (FRAME_STRIDE=2^16,
-      WORKER_STRIDE=2^40, SNR_STRIDE=2^56; legacy compat dropped)
+- [x] §3 ChaCha20 per-worker seek scheme (FRAME_STRIDE=2^20,
+      WORKER_STRIDE=2^40, SNR_STRIDE=2^56; 32-bit-word units; legacy
+      compat dropped; FRAME_STRIDE sized for the QPSK-Normal worst case
+      per the 2026-06-07 amendment)
 - [x] §4 Heartbeat-checkpoint schema v2 (no v1 back-compat;
       migration tool provided)
 - [x] §5 Crate-boundary diagram + `rand_chacha = "0.9"`

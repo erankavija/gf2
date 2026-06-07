@@ -271,7 +271,7 @@ impl BicmAwgnChannel {
     /// # Arguments
     ///
     /// - `interleaver`: Pre-configured [`DvbT2BitInterleaver`] for the MODCOD.
-    /// - `bits_per_symbol`: 4 for 16-QAM, 6 for 64-QAM.
+    /// - `bits_per_symbol`: 2 for QPSK, 4 for 16-QAM, 6 for 64-QAM.
     /// - `demap`: Soft-demapping method ([`DemapMethod::MaxLog`] or
     ///   [`DemapMethod::ExactLogMap`]).
     pub fn new(
@@ -279,7 +279,10 @@ impl BicmAwgnChannel {
         bits_per_symbol: usize,
         demap: DemapMethod,
     ) -> Self {
-        let order = if bits_per_symbol == 4 { 16 } else { 64 };
+        // Gray-square-QAM constellation order = 2^bits_per_symbol: QPSK→4,
+        // 16-QAM→16, 64-QAM→64. (The earlier `if ==4 {16} else {64}` mis-mapped
+        // QPSK to order 64, panicking on the symbol-count mismatch.)
+        let order = 1usize << bits_per_symbol;
         let spec = ModemSpec::<f32>::gray_square_qam(order);
         Self {
             interleaver,
