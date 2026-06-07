@@ -209,14 +209,16 @@ impl GfxTarget {
     ///
     /// # Errors
     ///
-    /// Returns [`HipError::Hip`] with context `"GfxTarget::load_blob"` if the
-    /// blob file is missing or unreadable (e.g. a seam-only arch whose blob was
-    /// not compiled on this host).
+    /// Returns [`HipError::BlobLoad`] carrying the offending path if the blob
+    /// file is missing or unreadable (e.g. a seam-only arch whose blob was not
+    /// compiled on this host). This is a host-side file-I/O failure, so it is
+    /// **not** reported as a [`HipError::Hip`] with a fabricated `hipError_t`
+    /// code (code `0` would falsely read as `hipSuccess`).
     pub fn load_blob(self, kernel: &str) -> Result<Vec<u8>, HipError> {
         let path = self.blob_dir().join(format!("{kernel}.co"));
-        std::fs::read(&path).map_err(|_| HipError::Hip {
-            code: 0,
-            context: "GfxTarget::load_blob",
+        std::fs::read(&path).map_err(|e| HipError::BlobLoad {
+            path,
+            source: e.to_string(),
         })
     }
 }
@@ -289,6 +291,37 @@ mod tests {
     fn test_blob_dir_layout() {
         let dir = GfxTarget::Gfx1030.blob_dir();
         assert!(dir.ends_with("kernels/gfx1030"));
+    }
+
+    /// A missing blob must surface a typed [`HipError::BlobLoad`] carrying the
+    /// offending path — NOT a `HipError::Hip { code: 0 }`, which would falsely
+    /// read as `hipSuccess` (Round-2 Finding B).
+    #[test]
+    fn test_load_blob_missing_is_typed_blobload_not_success_code() {
+        // No arch has a kernel named this, so the read must fail.
+        let err = GfxTarget::Gfx1030
+            .load_blob("definitely_no_such_kernel_xyz")
+            .expect_err("missing blob must fail");
+        match &err {
+            HipError::BlobLoad { path, source } => {
+                assert!(
+                    path.ends_with("definitely_no_such_kernel_xyz.co"),
+                    "BlobLoad must carry the offending path, got {path:?}"
+                );
+                assert!(!source.is_empty(), "BlobLoad should describe the io error");
+            }
+            other => panic!("expected HipError::BlobLoad, got {other:?}"),
+        }
+        // The reported code must be a real, non-zero sentinel — never 0
+        // (hipSuccess). hipErrorFileNotFound is canonically 301.
+        assert_ne!(
+            err.code(),
+            0,
+            "blob-load failure must not report hipSuccess"
+        );
+        assert_eq!(err.code(), 301);
+        // Display must mention the path.
+        assert!(err.to_string().contains("definitely_no_such_kernel_xyz"));
     }
 
     /// Runtime arch detection on this gfx1030 CI host. Gated to the `hip`

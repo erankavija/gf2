@@ -40,6 +40,11 @@ mod imp {
     /// - `HipError::NoDevice` → [`FatalError::DeviceUnavailable`] (wrapped in
     ///   [`StageError::Fatal`]) — a host with no GPU aborts construction; the
     ///   user re-runs with `--cpu-only` (design doc §8).
+    /// - `HipError::BlobLoad` → [`FatalError::KernelLaunch`] (wrapped in
+    ///   [`StageError::Fatal`]) — a missing/unreadable kernel blob for the
+    ///   *active* arch is a build/configuration fault, not a transient or
+    ///   OOM condition, so it aborts the run. The blob's `hipErrorFileNotFound`
+    ///   sentinel (301) and the offending path are preserved for diagnostics.
     /// - `HipError::Hip` → [`FatalError::KernelLaunch`] (wrapped in
     ///   [`StageError::Fatal`]) — any other HIP failure aborts the run with
     ///   the raw `hipError_t` code preserved for diagnostics.
@@ -70,6 +75,16 @@ mod imp {
                 ))
             }
             HipError::NoDevice => StageError::Fatal(FatalError::DeviceUnavailable),
+            ref e @ HipError::BlobLoad {
+                ref path,
+                ref source,
+            } => StageError::Fatal(FatalError::KernelLaunch {
+                // `code()` returns the hipErrorFileNotFound sentinel (301) for a
+                // BlobLoad — never the fabricated `0` the old path emitted.
+                hip_code: e.code(),
+                kernel,
+                args: format!("blob load failed for '{}': {source}", path.display()),
+            }),
             HipError::Hip { code, context } => StageError::Fatal(FatalError::KernelLaunch {
                 hip_code: code,
                 kernel,
@@ -112,6 +127,22 @@ mod imp {
     /// out round-robin / oldest-idle) and the per-stage [`StageScratch`]. v1 is
     /// single-device; the design doc §7 multi-GPU seam replaces the single pool
     /// with a per-device map without changing this type's stage-facing API.
+    ///
+    /// # Concurrency model (design § Phase C scheduler `75c22fa8`)
+    ///
+    /// The dispatcher is **owned by the orchestrator thread**, not shared by
+    /// `&` across rayon workers — its [`StageScratch`] embeds a
+    /// `PinnedHostBuffer`, which is `Send`-only (a staging buffer mutated in
+    /// place, never aliased across threads), so `HipDispatcher` is itself
+    /// `Send` but not `Sync`.
+    ///
+    /// What *is* shared by reference across workers is the **stream pool**: the
+    /// orchestrator borrows it once via [`streams`](HipDispatcher::streams) and
+    /// hands the resulting `&HipStreamPool` to the worker pool. `HipStreamPool`
+    /// is `Sync` (its streams are `Sync` opaque HIP handles), so each worker can
+    /// call `acquire` / `acquire_idle` concurrently to obtain a *distinct*
+    /// stream from the shared atomic round-robin cursor. Per-worker device and
+    /// pinned buffers are owned (moved in via `Send`), never shared by `&`.
     pub struct HipDispatcher {
         device_id: i32,
         streams: HipStreamPool,
@@ -183,6 +214,29 @@ mod imp {
         }
     }
 
+    /// Compile-time enforcement of the concurrency contract documented on
+    /// [`HipDispatcher`]: the shared `HipStreamPool` must be `Send + Sync` (it is
+    /// handed to rayon workers by `&`), while the dispatcher itself is `Send`
+    /// (orchestrator-owned, moved between threads) but NOT required to be `Sync`
+    /// — it embeds `Send`-only pinned scratch. These assertions fail to compile
+    /// if a future change breaks the documented bounds.
+    #[cfg(test)]
+    mod sync_contract {
+        use super::*;
+        use gf2_kernels_hip::host::HipStreamPool;
+
+        const fn _assert_send<T: Send>() {}
+        const fn _assert_sync<T: Sync>() {}
+
+        const _: () = {
+            // The pool is shared by `&` across rayon workers: Send + Sync.
+            _assert_send::<HipStreamPool>();
+            _assert_sync::<HipStreamPool>();
+            // The dispatcher is orchestrator-owned and moved between threads.
+            _assert_send::<HipDispatcher>();
+        };
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -240,6 +294,35 @@ mod imp {
                     );
                 }
                 other => panic!("expected recoverable Transient fallback, got {other:?}"),
+            }
+        }
+
+        /// Round-2 Finding B: a blob-load I/O failure maps to a fatal
+        /// `KernelLaunch` (missing blob for the active arch is a configuration
+        /// fault, not OOM/CPU-fallback). The hip_code must be the real
+        /// `hipErrorFileNotFound` sentinel (301), never the fabricated `0`, and
+        /// the offending path must survive into the diagnostic `args`.
+        #[test]
+        fn test_map_blob_load_is_fatal_kernel_launch() {
+            let err = HipError::BlobLoad {
+                path: std::path::PathBuf::from("/kernels/gfx1030/bcjr.co"),
+                source: "No such file or directory (os error 2)".to_string(),
+            };
+            match map_hip_error(err, "load") {
+                StageError::Fatal(FatalError::KernelLaunch {
+                    hip_code,
+                    kernel,
+                    args,
+                }) => {
+                    assert_ne!(hip_code, 0, "must not report hipSuccess for an I/O failure");
+                    assert_eq!(hip_code, 301);
+                    assert_eq!(kernel, "load");
+                    assert!(
+                        args.contains("bcjr.co"),
+                        "diagnostic args should carry the offending blob path, got: {args}"
+                    );
+                }
+                other => panic!("expected fatal KernelLaunch for blob load, got {other:?}"),
             }
         }
 
