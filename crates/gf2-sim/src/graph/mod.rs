@@ -406,6 +406,10 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 1);
     /// ```
     pub fn register_fallback(&mut self, gpu_stage: StageId, cpu_stage: StageId) {
+        // Records the pairing only; validity (in-range ids, each CPU target used
+        // for exactly one GPU stage) is checked by [`Chain::build`], which
+        // returns [`BuildError::Disconnected`] for a malformed registration
+        // rather than panicking.
         self.fallbacks.push((gpu_stage, cpu_stage));
     }
 
@@ -424,7 +428,10 @@ impl Chain {
     /// * [`BuildError::TypeMismatch`] — an edge joins incompatible types.
     /// * [`BuildError::Cyclic`] — the graph contains a cycle.
     /// * [`BuildError::Disconnected`] — the graph is not a single
-    ///   weakly-connected component (e.g. multiple disjoint roots/sinks).
+    ///   weakly-connected component (e.g. multiple disjoint roots/sinks), or a
+    ///   fallback registration references an out-of-range stage id or reuses one
+    ///   CPU fallback for more than one GPU stage. The offending id(s) are
+    ///   listed in `stages`.
     ///
     /// # Examples
     ///
@@ -464,6 +471,29 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 3);
     /// ```
     pub fn build(mut self) -> Result<Pipeline, BuildError> {
+        // 0. Validate fallback registrations up front so malformed input fails
+        //    via `Result` rather than panicking in the materialisation step
+        //    below (which indexes `slots[cpu]` and `take()`s each target once).
+        //    `register_fallback` performs no validation, so both an out-of-range
+        //    id and a CPU target reused across multiple GPU stages are reachable
+        //    here. Each referenced stage id must be in range, and each CPU
+        //    fallback target must back exactly one GPU stage.
+        let n_stages = self.stages.len() as u32;
+        let mut seen_cpu: HashSet<StageId> = HashSet::new();
+        for &(gpu, cpu) in &self.fallbacks {
+            if gpu.0 >= n_stages {
+                return Err(BuildError::Disconnected { stages: vec![gpu] });
+            }
+            if cpu.0 >= n_stages {
+                return Err(BuildError::Disconnected { stages: vec![cpu] });
+            }
+            if !seen_cpu.insert(cpu) {
+                // A CPU fallback backs exactly one GPU stage; otherwise the
+                // materialiser would move the same boxed stage out twice.
+                return Err(BuildError::Disconnected { stages: vec![cpu] });
+            }
+        }
+
         // 1. Fallback presence: every GPU-only stage needs a registered CPU
         //    fallback. The set of stages that ARE fallbacks is excluded from the
         //    graph (they are substitution targets, reachable only on OOM).
@@ -885,6 +915,39 @@ mod tests {
         // target.
         assert_eq!(pipeline.stage_count(), 1);
         assert_eq!(pipeline.fallback_count(), 1);
+    }
+
+    #[test]
+    fn test_build_rejects_duplicate_fallback_target() {
+        // One CPU stage registered as the fallback for two GPU stages: the
+        // materialiser can only move the boxed CPU stage out once, so build()
+        // must reject this via `Result`, not panic on the second `take()`.
+        let mut chain = Chain::new();
+        let g1 = chain.add(erase(GpuBitId));
+        let g2 = chain.add(erase(GpuBitId));
+        let cpu = chain.add(erase(BitId));
+        chain.register_fallback(g1, cpu);
+        chain.register_fallback(g2, cpu);
+        match chain.build() {
+            Err(BuildError::Disconnected { stages }) => assert_eq!(stages, vec![cpu]),
+            Err(other) => panic!("expected Disconnected for duplicate fallback, got {other:?}"),
+            Ok(_) => panic!("expected Disconnected, got a built pipeline"),
+        }
+    }
+
+    #[test]
+    fn test_build_rejects_out_of_range_fallback_id() {
+        // A fallback referencing a stage id that `add()` never returned must
+        // fail via `Result`, not an out-of-bounds index panic in materialisation.
+        let mut chain = Chain::new();
+        let g = chain.add(erase(GpuBitId));
+        let bogus = StageId(99);
+        chain.register_fallback(g, bogus);
+        match chain.build() {
+            Err(BuildError::Disconnected { stages }) => assert_eq!(stages, vec![bogus]),
+            Err(other) => panic!("expected Disconnected for out-of-range id, got {other:?}"),
+            Ok(_) => panic!("expected Disconnected, got a built pipeline"),
+        }
     }
 
     #[test]
