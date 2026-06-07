@@ -63,6 +63,7 @@ pub mod channel;
 pub mod convolutional;
 pub mod crc;
 pub mod drm;
+pub mod dvb_t2_bicm_harness;
 pub mod fading;
 pub mod gldpc;
 pub mod grand;

@@ -22,7 +22,7 @@
 //! # SNR points
 //!
 //! Three MODCODs are swept:
-//!   - r1/2 16-QAM:  Es/N0 in {5.0, 6.0, 7.5} dB
+//!   - r1/2 16-QAM:  Es/N0 in {5.0, 6.25, 7.5} dB
 //!   - r2/3 16-QAM:  Es/N0 in {7.9, 8.9, 10.4} dB
 //!   - r1/2 64-QAM:  Es/N0 in {8.9, 9.9, 11.4} dB
 //!
@@ -35,60 +35,24 @@
 
 #![deny(unsafe_code)]
 
+use gf2_coding::dvb_t2_bicm_harness::{
+    esn0_to_ebn0, mod_str, parse_baseline_csv, rate_display as rate_str, rate_f64,
+    BaselineCellResult, BicmAwgnChannel, BicmFecEncoder, BASELINE_MATRIX_CELL_COUNT,
+};
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
     DvbT2BitInterleaver, DvbT2Modcod, DvbT2Modulation,
 };
 use gf2_coding::ldpc::dvb_t2::concat::{ConcatError, DvbT2Concat};
 use gf2_coding::ldpc::dvb_t2::FrameSize;
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
-use gf2_coding::llr::Llr;
-use gf2_coding::modem::{BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, ModemSpec};
-use gf2_coding::simulation::{ChannelModel, SimulationConfig, SimulationRunner};
+use gf2_coding::modem::DemapMethod;
+use gf2_coding::simulation::{SimulationConfig, SimulationRunner};
 use gf2_coding::traits::{BlockEncoder, DecoderResult};
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
-use rand::Rng;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-
-// ---------------------------------------------------------------------------
-// Helpers mirrored from dvb_t2_awgn_campaign.rs
-// ---------------------------------------------------------------------------
-
-fn esn0_to_ebn0(es_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    es_n0_db - 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
-
-fn ebn0_to_esn0(eb_n0_db: f64, bits_per_symbol: usize, code_rate: f64) -> f64 {
-    eb_n0_db + 10.0 * (bits_per_symbol as f64 * code_rate).log10()
-}
-
-fn rate_f64(r: CodeRate) -> f64 {
-    match r {
-        CodeRate::Rate1_2 => 0.5,
-        CodeRate::Rate2_3 => 2.0 / 3.0,
-        CodeRate::Rate3_4 => 0.75,
-        _ => 1.0,
-    }
-}
-
-fn rate_str(r: CodeRate) -> &'static str {
-    match r {
-        CodeRate::Rate1_2 => "1/2",
-        CodeRate::Rate2_3 => "2/3",
-        CodeRate::Rate3_4 => "3/4",
-        _ => "?",
-    }
-}
-
-fn mod_str(m: DvbT2Modulation) -> &'static str {
-    match m {
-        DvbT2Modulation::Qam16 => "16qam",
-        DvbT2Modulation::Qam64 => "64qam",
-        _ => "?",
-    }
-}
 
 fn decoder_str(alg: &DecoderAlgorithm) -> String {
     match alg {
@@ -106,168 +70,9 @@ fn demap_str(d: DemapMethod) -> &'static str {
     }
 }
 
-// ---------------------------------------------------------------------------
-// BICM encoder wrapper (same structure as in the campaign binary)
-// ---------------------------------------------------------------------------
-
-struct BicmFecEncoder {
-    concat: DvbT2Concat,
-}
-
-impl BicmFecEncoder {
-    fn new(concat: DvbT2Concat) -> Self {
-        Self { concat }
-    }
-}
-
-impl BlockEncoder for BicmFecEncoder {
-    fn k(&self) -> usize {
-        self.concat.k_bch()
-    }
-
-    fn n(&self) -> usize {
-        self.concat.n_ldpc()
-    }
-
-    fn encode(&self, message: &BitVec) -> BitVec {
-        self.concat.encode(message)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// BICM AWGN channel wrapper (same structure as in the campaign binary)
-// ---------------------------------------------------------------------------
-
-struct BicmAwgnChannel {
-    interleaver: DvbT2BitInterleaver,
-    bits_per_symbol: usize,
-    spec: ModemSpec<f32>,
-    demap: DemapMethod,
-}
-
-impl BicmAwgnChannel {
-    fn new(interleaver: DvbT2BitInterleaver, bits_per_symbol: usize, demap: DemapMethod) -> Self {
-        let spec = ModemSpec::<f32>::gray_square_qam(if bits_per_symbol == 4 { 16 } else { 64 });
-        Self {
-            interleaver,
-            bits_per_symbol,
-            spec,
-            demap,
-        }
-    }
-}
-
-impl ChannelModel for BicmAwgnChannel {
-    fn batch_alignment(&self) -> usize {
-        1
-    }
-
-    fn demap_method(&self) -> DemapMethod {
-        self.demap
-    }
-
-    fn transmit_and_demodulate<R: Rng>(
-        &self,
-        bits: &BitVec,
-        eb_n0_db: f64,
-        rate: f64,
-        rng: &mut R,
-    ) -> Vec<Llr> {
-        let n_ldpc = bits.len();
-        let num_symbols = n_ldpc / self.bits_per_symbol;
-
-        let es_n0_db = ebn0_to_esn0(eb_n0_db, self.bits_per_symbol, rate);
-        let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
-        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-        let noise_var_f32 = (2.0 * sigma_sq) as f32;
-
-        let mapper = self.spec.preferred_mapper();
-        let demapper = self.spec.preferred_soft_demapper();
-
-        let interleaved = self.interleaver.interleave(bits);
-        let interleaved_bits: Vec<bool> =
-            (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
-        let mut tx_i = vec![0.0_f32; num_symbols];
-        let mut tx_q = vec![0.0_f32; num_symbols];
-        mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
-
-        let sigma_f32 = (sigma_sq as f32).sqrt();
-        for s in tx_i.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-        for s in tx_q.iter_mut() {
-            let u1: f64 = rng.gen::<f64>().max(1e-15);
-            let u2: f64 = rng.gen::<f64>();
-            let n = ((-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()) as f32;
-            *s += sigma_f32 * n;
-        }
-
-        let noise_var_buf = vec![noise_var_f32; num_symbols];
-        let mut interleaved_llrs = vec![Llr::new(0.0); n_ldpc];
-        demapper.demap_llrs(
-            DemapInput {
-                rx_i: &tx_i,
-                rx_q: &tx_q,
-                gain_i: None,
-                gain_q: None,
-                noise_var: &noise_var_buf,
-                method: self.demap,
-            },
-            &mut interleaved_llrs,
-        );
-
-        self.interleaver.deinterleave_llrs(&interleaved_llrs)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Cell result record
-// ---------------------------------------------------------------------------
-
-#[derive(Debug, Clone)]
-struct CellResult {
-    rate: &'static str,
-    modulation: &'static str,
-    es_n0_db: f64,
-    decoder: String,
-    demap: &'static str,
-    frames: usize,
-    wall_seconds: f64,
-    frames_per_sec: f64,
-    mean_iters: f64,
-    ber: f64,
-    fer: f64,
-    commit_sha: String,
-    date: String,
-}
-
-impl CellResult {
-    fn csv_header() -> &'static str {
-        "rate,modulation,es_n0_db,decoder,demap,frames,wall_seconds,frames_per_sec,mean_iters,ber,fer,commit_sha,date"
-    }
-
-    fn to_csv_row(&self) -> String {
-        format!(
-            "{},{},{:.2},{},{},{},{:.3},{:.4},{:.3},{:.6},{:.6},{},{}",
-            self.rate,
-            self.modulation,
-            self.es_n0_db,
-            self.decoder,
-            self.demap,
-            self.frames,
-            self.wall_seconds,
-            self.frames_per_sec,
-            self.mean_iters,
-            self.ber,
-            self.fer,
-            self.commit_sha,
-            self.date,
-        )
-    }
-}
+// CellResult is provided by gf2_coding::dvb_t2_bicm_harness::BaselineCellResult.
+// Use the shared type directly to avoid duplication.
+type CellResult = BaselineCellResult;
 
 // ---------------------------------------------------------------------------
 // Matrix sweep configuration
@@ -287,25 +92,13 @@ struct Cell {
 fn build_matrix() -> Vec<Cell> {
     // SNR points per MODCOD (pre-waterfall, waterfall-mid, deep-waterfall).
     // Anchored to ETSI TS 102 831 Table 44 QEF C/N thresholds for SumProduct+ExactLogMap:
-    //   r1/2 16-QAM: QEF ~6.0 dB  => {5.0, 6.0, 7.5}
+    //   r1/2 16-QAM: QEF ~6.0 dB  => {5.0, 6.25, 7.5}
     //   r2/3 16-QAM: QEF ~8.9 dB  => {7.9, 8.9, 10.4}
     //   r1/2 64-QAM: QEF ~9.9 dB  => {8.9, 9.9, 11.4}
     let modcods: &[(CodeRate, DvbT2Modulation, &[f64])] = &[
-        (
-            CodeRate::Rate1_2,
-            DvbT2Modulation::Qam16,
-            &[5.0, 6.25, 7.5],
-        ),
-        (
-            CodeRate::Rate2_3,
-            DvbT2Modulation::Qam16,
-            &[7.9, 8.9, 10.4],
-        ),
-        (
-            CodeRate::Rate1_2,
-            DvbT2Modulation::Qam64,
-            &[8.9, 9.9, 11.4],
-        ),
+        (CodeRate::Rate1_2, DvbT2Modulation::Qam16, &[5.0, 6.25, 7.5]),
+        (CodeRate::Rate2_3, DvbT2Modulation::Qam16, &[7.9, 8.9, 10.4]),
+        (CodeRate::Rate1_2, DvbT2Modulation::Qam64, &[8.9, 9.9, 11.4]),
     ];
 
     let decoder_demap_pairs: &[(DecoderAlgorithm, DemapMethod)] = &[
@@ -359,56 +152,12 @@ fn today_date() -> String {
     out.unwrap_or_else(|| "unknown".to_string())
 }
 
-// ---------------------------------------------------------------------------
-// Delta report helper
-// ---------------------------------------------------------------------------
-
+// load_csv_results delegates to the shared parse_baseline_csv helper from
+// gf2_coding::dvb_t2_bicm_harness. The file-IO wrapper stays here since it is
+// thin CLI scaffolding.
 fn load_csv_results(path: &Path) -> Vec<CellResult> {
     let content = std::fs::read_to_string(path).unwrap_or_default();
-    let mut out = Vec::new();
-    for line in content.lines().skip(1) {
-        let f: Vec<&str> = line.split(',').collect();
-        if f.len() < 13 {
-            continue;
-        }
-        let Ok(es_n0_db) = f[2].parse::<f64>() else {
-            continue;
-        };
-        let Ok(frames) = f[5].parse::<usize>() else {
-            continue;
-        };
-        let Ok(wall_seconds) = f[6].parse::<f64>() else {
-            continue;
-        };
-        let Ok(frames_per_sec) = f[7].parse::<f64>() else {
-            continue;
-        };
-        let Ok(mean_iters) = f[8].parse::<f64>() else {
-            continue;
-        };
-        let Ok(ber) = f[9].parse::<f64>() else {
-            continue;
-        };
-        let Ok(fer) = f[10].parse::<f64>() else {
-            continue;
-        };
-        out.push(CellResult {
-            rate: Box::leak(f[0].to_string().into_boxed_str()),
-            modulation: Box::leak(f[1].to_string().into_boxed_str()),
-            es_n0_db,
-            decoder: f[3].to_string(),
-            demap: Box::leak(f[4].to_string().into_boxed_str()),
-            frames,
-            wall_seconds,
-            frames_per_sec,
-            mean_iters,
-            ber,
-            fer,
-            commit_sha: f[11].to_string(),
-            date: f[12].to_string(),
-        });
-    }
-    out
+    parse_baseline_csv(&content)
 }
 
 // ---------------------------------------------------------------------------
@@ -450,9 +199,8 @@ fn main() {
         i += 1;
     }
 
-    let output_path = output_path.unwrap_or_else(|| {
-        PathBuf::from("dev/benchmarks/gf2-sim/baseline-single-thread.csv")
-    });
+    let output_path = output_path
+        .unwrap_or_else(|| PathBuf::from("dev/benchmarks/gf2-sim/baseline-single-thread.csv"));
 
     // Pin rayon to 1 thread so any incidental rayon usage (e.g., in the SIMD
     // dispatch layer) cannot inflate our single-thread measurement.
@@ -463,6 +211,10 @@ fn main() {
 
     let cells = build_matrix();
     let total_cells = cells.len();
+    debug_assert_eq!(
+        total_cells, BASELINE_MATRIX_CELL_COUNT,
+        "build_matrix() count must match the documented constant"
+    );
     let commit_sha = git_commit_sha();
     let date = today_date();
 
@@ -546,12 +298,9 @@ fn main() {
                         bbframe,
                         iterations,
                     }) => DecoderResult::new(bbframe, iterations, false, false),
-                    Err(_) => DecoderResult::new(
-                        BitVec::with_capacity(encoder.k()),
-                        50,
-                        false,
-                        false,
-                    ),
+                    Err(_) => {
+                        DecoderResult::new(BitVec::with_capacity(encoder.k()), 50, false, false)
+                    }
                 }
             },
             &channel,
@@ -575,11 +324,11 @@ fn main() {
         );
 
         let cell_result = CellResult {
-            rate: rate_str(cell.rate),
-            modulation: mod_str(cell.modulation),
+            rate: rate_str(cell.rate).to_string(),
+            modulation: mod_str(cell.modulation).to_string(),
             es_n0_db: cell.esn0_db,
             decoder: decoder_algo_str,
-            demap: demap_s,
+            demap: demap_s.to_string(),
             frames: pt.num_frames,
             wall_seconds: cell_wall,
             frames_per_sec,
@@ -633,13 +382,15 @@ fn main() {
     if let Some(ref cmp) = compare_path {
         let baseline = load_csv_results(cmp);
         if baseline.is_empty() {
-            eprintln!("Warning: could not load comparison baseline from {}", cmp.display());
+            eprintln!(
+                "Warning: could not load comparison baseline from {}",
+                cmp.display()
+            );
         } else {
             eprintln!("\n--- Delta vs {} ---", cmp.display());
             eprintln!(
                 "{:<6} {:<8} {:>7} {:<28} {:<14} {:>9} {:>9} {:>9}",
-                "rate", "mod", "Es/N0", "decoder", "demap",
-                "fps_new", "fps_ref", "delta%"
+                "rate", "mod", "Es/N0", "decoder", "demap", "fps_new", "fps_ref", "delta%"
             );
             for r in &results {
                 let bline = baseline.iter().find(|b| {
@@ -650,7 +401,8 @@ fn main() {
                         && b.demap == r.demap
                 });
                 if let Some(b) = bline {
-                    let delta_pct = (r.frames_per_sec - b.frames_per_sec) / b.frames_per_sec * 100.0;
+                    let delta_pct =
+                        (r.frames_per_sec - b.frames_per_sec) / b.frames_per_sec * 100.0;
                     eprintln!(
                         "{:<6} {:<8} {:>7.2} {:<28} {:<14} {:>9.3} {:>9.3} {:>+9.1}%",
                         r.rate,
