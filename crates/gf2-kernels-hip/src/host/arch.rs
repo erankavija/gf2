@@ -342,9 +342,9 @@ impl GfxTarget {
 fn dir_contains_co(dir: &Path) -> bool {
     std::fs::read_dir(dir)
         .map(|entries| {
-            entries.flatten().any(|e| {
-                e.path().extension().and_then(|x| x.to_str()) == Some("co")
-            })
+            entries
+                .flatten()
+                .any(|e| e.path().extension().and_then(|x| x.to_str()) == Some("co"))
         })
         .unwrap_or(false)
 }
@@ -479,8 +479,7 @@ mod tests {
     fn test_dir_contains_co_distinguishes_skipped_blob() {
         // A recognized arch whose build was SKIPPED leaves a dir with no `.co`;
         // detect_device treats that as UnsupportedArch (warn + CPU fallback).
-        let tmp =
-            std::env::temp_dir().join(format!("gf2_hip_blobtest_{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("gf2_hip_blobtest_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(&tmp).unwrap();
         assert!(!dir_contains_co(&tmp), "empty dir has no compiled blob");
@@ -496,8 +495,10 @@ mod tests {
 
     #[test]
     fn test_dir_contains_co_missing_dir_is_false() {
-        let missing = std::env::temp_dir()
-            .join(format!("gf2_hip_definitely_missing_dir_{}", std::process::id()));
+        let missing = std::env::temp_dir().join(format!(
+            "gf2_hip_definitely_missing_dir_{}",
+            std::process::id()
+        ));
         let _ = std::fs::remove_dir_all(&missing);
         assert!(!dir_contains_co(&missing), "missing dir reads as no blob");
     }
