@@ -111,7 +111,10 @@ impl SymbolBatch {
     ///
     /// # Panics
     ///
-    /// Panics if `i.len() != q.len()`.
+    /// Panics if `i.len() != q.len()` (mismatched frame counts), or if any
+    /// frame `f` has `i[f].len() != q[f].len()` (mismatched per-frame I/Q lane
+    /// lengths). Both conditions violate the SoA invariant that every symbol
+    /// has paired in-phase and quadrature components.
     ///
     /// # Examples
     ///
@@ -129,6 +132,16 @@ impl SymbolBatch {
             i.len(),
             q.len()
         );
+        for (f, (i_frame, q_frame)) in i.iter().zip(q.iter()).enumerate() {
+            assert_eq!(
+                i_frame.len(),
+                q_frame.len(),
+                "SymbolBatch: frame {} I lane length ({}) must equal Q lane length ({})",
+                f,
+                i_frame.len(),
+                q_frame.len()
+            );
+        }
         Self { i, q }
     }
 }
@@ -267,6 +280,15 @@ mod tests {
     #[should_panic(expected = "frame count")]
     fn test_symbol_batch_mismatched_lanes_panic() {
         let _ = SymbolBatch::new(vec![vec![0.0_f32]], vec![]);
+    }
+
+    #[test]
+    #[should_panic(expected = "frame 0 I lane length")]
+    fn test_symbol_batch_mismatched_per_frame_lane_lengths_panic() {
+        // Outer frame counts match (1 == 1), but frame 0 has 4 I-lane samples
+        // and 3 Q-lane samples — a per-frame I/Q pairing violation that must be
+        // rejected by the constructor, not deferred to the demapper.
+        let _ = SymbolBatch::new(vec![vec![0.0_f32; 4]], vec![vec![0.0_f32; 3]]);
     }
 
     #[test]
