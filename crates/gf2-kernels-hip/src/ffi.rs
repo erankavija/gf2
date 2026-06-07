@@ -87,6 +87,7 @@ extern "C" {
 
     // Device selection / introspection.
     pub fn hip_set_device(device_id: c_int) -> c_int;
+    pub fn hip_get_device(device_id: *mut c_int) -> c_int;
     pub fn hip_device_get_count(count: *mut c_int) -> c_int;
     /// Writes the device's GCN arch name (`hipDeviceProp_t.gcnArchName`, e.g.
     /// `"gfx1030"`, `"gfx940"`, `"gfx942"`) into `buf` (capacity `buf_len`

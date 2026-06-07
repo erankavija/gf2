@@ -18,10 +18,12 @@ use std::ptr;
 use crate::host::streams::HipStream;
 use crate::{ffi, HipError, HIP_ERROR_OUT_OF_MEMORY};
 
-/// Returns the free / total device memory (bytes) for the current device.
+/// Returns the free / total device memory (bytes) for the **current** device.
 ///
 /// Thin safe wrapper over `hipMemGetInfo`, exposed so the allocator can
-/// pre-flight large requests and the dispatcher can report headroom.
+/// pre-flight large requests and the dispatcher can report headroom. Queries
+/// whichever device the calling host thread last selected; use
+/// [`device_mem_info_for`] to query a specific device by id.
 ///
 /// # Examples
 ///
@@ -49,6 +51,83 @@ pub fn device_mem_info() -> Result<(usize, usize), HipError> {
             context: "hipMemGetInfo",
         })
     }
+}
+
+/// Returns the free / total device memory (bytes) for a **specific** device.
+///
+/// `hipMemGetInfo` always reports the *current* device, so this temporarily
+/// selects `device_id` (saving and restoring the previously-current device)
+/// around the query. On a multi-GPU host this is what lets
+/// [`DeviceBuffer::new_with_fallback`] pre-flight against the device it will
+/// actually allocate on, rather than whichever device happens to be current
+/// (design doc §7 multi-GPU seam).
+///
+/// The previously-current device is restored even when the query fails; if the
+/// initial save (`hipGetDevice`) fails, no device switch is performed.
+///
+/// # Arguments
+///
+/// * `device_id` - The HIP device index whose memory to query.
+///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_kernels_hip::host::alloc::device_mem_info_for;
+///
+/// // Requires a real HIP device, so this is `no_run`.
+/// let (free, total) = device_mem_info_for(0).expect("query device 0 memory");
+/// assert!(free <= total);
+/// ```
+///
+/// # Errors
+///
+/// Returns [`HipError::Hip`] if `hipGetDevice`, `hipSetDevice`, or
+/// `hipMemGetInfo` fails.
+pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
+    // Save the currently-current device so we can restore it after the query.
+    let mut prev: i32 = 0;
+    // SAFETY: `&mut prev` is a valid out-pointer the runtime writes on success.
+    let code = unsafe { ffi::hip_get_device(&mut prev) };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "hipGetDevice",
+        });
+    }
+
+    // Select the requested device for the query.
+    // SAFETY: `hip_set_device` takes a device index; the runtime validates it.
+    let code = unsafe { ffi::hip_set_device(device_id) };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "hipSetDevice",
+        });
+    }
+
+    // Query memory on the now-current (requested) device.
+    let mut free_bytes: usize = 0;
+    let mut total_bytes: usize = 0;
+    // SAFETY: both out-pointers are valid; the runtime writes them on success.
+    let query_code = unsafe { ffi::hip_mem_get_info(&mut free_bytes, &mut total_bytes) };
+
+    // Restore the previously-current device regardless of the query outcome.
+    // SAFETY: `prev` was just read from `hipGetDevice`, so it is a valid index.
+    let restore_code = unsafe { ffi::hip_set_device(prev) };
+
+    if query_code != 0 {
+        return Err(HipError::Hip {
+            code: query_code,
+            context: "hipMemGetInfo",
+        });
+    }
+    if restore_code != 0 {
+        return Err(HipError::Hip {
+            code: restore_code,
+            context: "hipSetDevice(restore)",
+        });
+    }
+    Ok((free_bytes, total_bytes))
 }
 
 /// An RAII device allocation of `len` values of type `T`.
@@ -169,10 +248,12 @@ impl<T> DeviceBuffer<T> {
     pub fn new_with_fallback(len: usize, device_id: i32) -> Result<Self, HipError> {
         let bytes = len.saturating_mul(std::mem::size_of::<T>());
         if bytes > 0 {
-            // Pre-flight: if the request is larger than the device's total
-            // memory, report OOM without troubling the driver. `hipMemGetInfo`
-            // errors are tolerated (we fall through to the real hipMalloc).
-            if let Ok((_free, total)) = device_mem_info() {
+            // Pre-flight against `device_id`'s OWN total memory (not whichever
+            // device is current) so the check is correct on a multi-GPU host.
+            // If the request exceeds total, report OOM without troubling the
+            // driver. `hipMemGetInfo` errors are tolerated (we fall through to
+            // the real hipMalloc on `device_id`).
+            if let Ok((_free, total)) = device_mem_info_for(device_id) {
                 if bytes > total {
                     return Err(HipError::OutOfMemory {
                         device_id,
@@ -762,8 +843,9 @@ mod tests {
         );
     }
 
-    /// `new_with_fallback` pre-flights an over-large request against total
-    /// device memory and reports a structured OOM (not a panic).
+    /// `new_with_fallback` pre-flights an over-large request against the target
+    /// device's total memory (via the device-scoped `device_mem_info_for`) and
+    /// reports a structured OOM (not a panic).
     #[test]
     fn test_device_buffer_oom_is_structured() {
         let huge = 256usize * 1024 * 1024 * 1024; // 256 GiB of u8
@@ -772,9 +854,33 @@ mod tests {
             .expect("256 GiB allocation must fail");
         match err {
             HipError::OutOfMemory {
-                bytes_requested, ..
-            } => assert_eq!(bytes_requested, huge),
+                bytes_requested,
+                device_id,
+            } => {
+                assert_eq!(bytes_requested, huge);
+                assert_eq!(device_id, 0, "OOM must carry the requested device id");
+            }
             other => panic!("expected structured OOM, got {other}"),
         }
+    }
+
+    /// The device-scoped query honors its `device_id` argument and restores the
+    /// previously-current device. On this single-GPU gfx1030 host device 0 is
+    /// the only valid index; the query must agree with the current-device
+    /// `device_mem_info` and leave device 0 selected afterwards.
+    #[test]
+    fn test_device_mem_info_for_honors_device_id() {
+        let (free0, total0) = device_mem_info_for(0).expect("device 0 mem info");
+        assert!(free0 <= total0, "free must not exceed total");
+        assert!(total0 > 0, "a real GPU reports nonzero total memory");
+
+        // After the scoped query the current device is restored, so the
+        // current-device query targets the same device 0 and sees the same
+        // total memory.
+        let (_free_cur, total_cur) = device_mem_info().expect("current device mem info");
+        assert_eq!(
+            total_cur, total0,
+            "device 0 must remain current after the scoped query"
+        );
     }
 }
