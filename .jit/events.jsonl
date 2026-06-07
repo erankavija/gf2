@@ -5806,3 +5806,5 @@
 {"type":"gate_passed","id":"b24cfa82-660c-485e-892a-b06a5cf59474","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T16:32:35.981520108Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"5abf2425-cdd2-4076-80d7-d0536d92ec50","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T16:37:54.453701714Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"7c480e2f-d7fe-4a2c-ba07-dcdcf2ee2ccd","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:04:24.656437830Z","gate_key":"parallelism-pays","updated_by":"agent:project-lead (benchmark invalid: host under heavy external load bg3 ~340% CPU; re-measure on quiet machine)"}
+{"type":"issue_state_changed","id":"1f261c9b-f410-4341-9602-4ce8a624c10b","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:06:43.877213542Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"1bd74556-8a1f-48f4-8686-5dcd80a7d27a","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:06:43.877423902Z","assignee":"agent:project-lead"}
