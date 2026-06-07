@@ -25,7 +25,7 @@ pub mod arch;
 pub mod launch;
 pub mod streams;
 
-pub use alloc::{DeviceBuffer, PinnedHostBuffer};
+pub use alloc::{device_mem_info, DeviceBuffer, PinnedHostBuffer};
 pub use arch::GfxTarget;
 pub use launch::{LaunchDims, MAX_BLOCK_THREADS};
 pub use streams::{HipStream, HipStreamPool};

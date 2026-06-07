@@ -364,7 +364,21 @@ mod imp {
         /// than device memory must return a recoverable OOM error, not panic.
         #[test]
         fn test_forced_oom_returns_recoverable_not_panic() {
-            use gf2_kernels_hip::host::DeviceBuffer;
+            use gf2_kernels_hip::host::{device_mem_info, DeviceBuffer};
+
+            // `new_with_fallback` only GUARANTEES a structured OOM when it can
+            // first read total device memory via `device_mem_info`. On a host
+            // built with `feature = "hip"` but no usable GPU, that pre-flight
+            // fails and the request would fall through to `hipMalloc`, yielding
+            // a non-OOM HIP error instead. Skip rather than spuriously panic so
+            // the assertion is only made where it is actually guaranteed.
+            if device_mem_info().is_err() {
+                eprintln!(
+                    "skipping test_forced_oom_returns_recoverable_not_panic: \
+                     no usable GPU (device_mem_info failed)"
+                );
+                return;
+            }
 
             // Request far more than any GPU has (256 GiB of u8).
             // `new_with_fallback` pre-flights against total device memory and
