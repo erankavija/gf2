@@ -73,6 +73,26 @@ pub enum HipError {
         /// The allocation size, in bytes, that failed.
         bytes_requested: usize,
     },
+    /// No HIP device is visible to the runtime (`hipGetDeviceCount() == 0`).
+    ///
+    /// Distinguished from [`HipError::Hip`] so the `gf2-sim` boundary can map
+    /// it to `FatalError::DeviceUnavailable` (design doc §8): the run aborts at
+    /// pipeline construction with a clear "no GPU" diagnostic and the user
+    /// re-runs with `--cpu-only`.
+    NoDevice,
+    /// The detected device runs a gfx arch this build does not have a kernel
+    /// blob for.
+    ///
+    /// Distinguished from [`HipError::Hip`] so the dispatcher can emit a
+    /// `tracing::warn!` and fall back to the CPU-equivalent stage rather than
+    /// hard-failing (design doc §6). The `gf2-sim` boundary maps it to a
+    /// [recoverable](../gf2_sim/error/enum.RecoverableError.html) error so the
+    /// executor substitutes the CPU fallback on the affected batches.
+    UnsupportedArch {
+        /// The device's GCN arch name as reported by `gcnArchName` (e.g.
+        /// `"gfx908"`), with any feature suffix stripped.
+        gcn_arch_name: String,
+    },
 }
 
 impl HipError {
@@ -83,6 +103,11 @@ impl HipError {
             HipError::Hip { code, .. } => *code,
             // hipErrorOutOfMemory is canonically 2.
             HipError::OutOfMemory { .. } => 2,
+            // hipErrorNoDevice is canonically 100.
+            HipError::NoDevice => 100,
+            // hipErrorInvalidDevice is canonically 101; we reuse it for an
+            // arch this build has no blob for (a device-capability mismatch).
+            HipError::UnsupportedArch { .. } => 101,
         }
     }
 }
@@ -99,6 +124,11 @@ impl std::fmt::Display for HipError {
             } => write!(
                 f,
                 "HIP out of memory on device {device_id}: {bytes_requested} bytes requested"
+            ),
+            HipError::NoDevice => write!(f, "no HIP device visible to the runtime"),
+            HipError::UnsupportedArch { gcn_arch_name } => write!(
+                f,
+                "unsupported gfx arch '{gcn_arch_name}': no kernel blob for this build"
             ),
         }
     }
@@ -160,81 +190,55 @@ pub fn extract_h_cols(h: &gf2_core::BitMatrix) -> Vec<u32> {
     h.cols_as_u32_masks()
 }
 
-/// RAII wrapper for a HIP device allocation.
+/// Byte-oriented RAII device allocation used by the in-crate decoder/demapper
+/// kernels (`GpuBcjrBatch`, `GpuGrayQamDemapper`, `permanent`).
+///
+/// This is a thin, byte-sized adapter over the canonical generic
+/// [`host::DeviceBuffer<u8>`](crate::host::DeviceBuffer) — the single
+/// hipMalloc/hipFree RAII primitive in this crate (SSOT). It exists only to
+/// preserve the byte-slice `copy_from_host(&[u8])` / `copy_to_host(&mut [u8])`
+/// interface the existing kernels reinterpret typed payloads through; all the
+/// allocation, free, and memcpy logic lives in `host::DeviceBuffer`.
 ///
 /// Accessible within the crate (`pub(crate)`) so the `permanent` submodule
-/// can use it for the safe host-dispatch wrappers without re-duplicating
-/// the alloc/free boilerplate.
-pub(crate) struct DeviceBuffer {
-    ptr: *mut c_void,
-    size: usize,
+/// can reuse it without re-duplicating the alloc/free boilerplate.
+pub(crate) struct DecoderDeviceBuffer {
+    inner: host::DeviceBuffer<u8>,
 }
 
-impl DeviceBuffer {
+impl DecoderDeviceBuffer {
     pub(crate) fn new(size: usize) -> Result<Self, HipError> {
-        let mut ptr: *mut c_void = ptr::null_mut();
-        // SAFETY: hip_malloc writes a valid device pointer to `ptr` on success.
-        // The pointer is freed in Drop. `size` is validated by the HIP runtime.
-        check_hip(unsafe { ffi::hip_malloc(&mut ptr, size) }, "hipMalloc")?;
-        Ok(Self { ptr, size })
+        // Device 0: the in-crate decoder/demapper kernels are single-device.
+        let inner = host::DeviceBuffer::<u8>::new(size, 0)?;
+        Ok(Self { inner })
     }
 
     pub(crate) fn as_ptr(&self) -> *const c_void {
-        self.ptr as *const c_void
+        self.inner.as_ptr()
     }
 
     pub(crate) fn as_mut_ptr(&self) -> *mut c_void {
-        self.ptr
+        self.inner.as_mut_ptr()
     }
 
     pub(crate) fn copy_from_host(&self, src: &[u8]) -> Result<(), HipError> {
-        assert!(src.len() <= self.size);
-        // SAFETY: `self.ptr` is a valid device allocation of `self.size` bytes.
-        // `src` is a valid host slice. HIP copies `src.len()` bytes H→D.
-        check_hip(
-            unsafe { ffi::hip_memcpy_h2d(self.ptr, src.as_ptr() as *const c_void, src.len()) },
-            "hipMemcpy H2D",
-        )
+        self.inner.copy_from_host(src)
     }
 
     pub(crate) fn copy_to_host(&self, dst: &mut [u8]) -> Result<(), HipError> {
-        assert!(dst.len() <= self.size);
-        // SAFETY: `self.ptr` is a valid device allocation. `dst` is a valid
-        // mutable host slice. HIP copies `dst.len()` bytes D→H.
-        check_hip(
-            unsafe { ffi::hip_memcpy_d2h(dst.as_mut_ptr() as *mut c_void, self.ptr, dst.len()) },
-            "hipMemcpy D2H",
-        )
+        self.inner.copy_to_host(dst)
     }
 }
-
-impl Drop for DeviceBuffer {
-    fn drop(&mut self) {
-        if !self.ptr.is_null() {
-            // SAFETY: `self.ptr` was allocated by `hip_malloc` in `new()` and
-            // has not been freed yet (we only free in Drop, which runs once).
-            unsafe {
-                ffi::hip_free(self.ptr);
-            }
-        }
-    }
-}
-
-// SAFETY: HIP device pointers are opaque handles managed by the HIP runtime,
-// which is thread-safe. The pointer is not dereferenced on the host — all
-// access goes through HIP API calls (hipMemcpy, kernel launch) which
-// synchronize internally. Sending the handle to another thread is safe.
-unsafe impl Send for DeviceBuffer {}
 
 /// GPU-accelerated batch BCJR decoder.
 ///
 /// Holds persistent device allocations for the trellis columns and workspace
 /// buffers. Reusable across multiple `decode_batch` calls.
 pub struct GpuBcjrBatch {
-    d_h_cols: DeviceBuffer,
-    d_llrs: DeviceBuffer,
-    d_app: DeviceBuffer,
-    d_alpha_ws: DeviceBuffer,
+    d_h_cols: DecoderDeviceBuffer,
+    d_llrs: DecoderDeviceBuffer,
+    d_app: DecoderDeviceBuffer,
+    d_alpha_ws: DecoderDeviceBuffer,
     n: usize,
     k: usize,
     num_states: usize,
@@ -288,11 +292,12 @@ impl GpuBcjrBatch {
         );
 
         // Allocate device buffers
-        let d_h_cols = DeviceBuffer::new(n * std::mem::size_of::<u32>())?;
-        let d_llrs = DeviceBuffer::new(max_batch * n * std::mem::size_of::<f32>())?;
-        let d_app = DeviceBuffer::new(max_batch * n * std::mem::size_of::<f32>())?;
-        let d_alpha_ws =
-            DeviceBuffer::new(max_batch * (n + 1) * num_states * std::mem::size_of::<f32>())?;
+        let d_h_cols = DecoderDeviceBuffer::new(n * std::mem::size_of::<u32>())?;
+        let d_llrs = DecoderDeviceBuffer::new(max_batch * n * std::mem::size_of::<f32>())?;
+        let d_app = DecoderDeviceBuffer::new(max_batch * n * std::mem::size_of::<f32>())?;
+        let d_alpha_ws = DecoderDeviceBuffer::new(
+            max_batch * (n + 1) * num_states * std::mem::size_of::<f32>(),
+        )?;
 
         // Upload h_cols (persistent — same trellis for all decodes)
         // SAFETY: h_cols is a valid &[u32]; reinterpreting as &[u8] with
@@ -522,13 +527,13 @@ fn f32_slice_as_bytes_mut(dst: &mut [f32]) -> &mut [u8] {
 /// assert_eq!(llrs.len(), 4 * 4);
 /// ```
 pub struct GpuGrayQamDemapper {
-    d_rx_i: DeviceBuffer,
-    d_rx_q: DeviceBuffer,
-    d_gain_i: DeviceBuffer,
-    d_gain_q: DeviceBuffer,
-    d_noise_var: DeviceBuffer,
-    d_pam_levels: DeviceBuffer,
-    d_out_llrs: DeviceBuffer,
+    d_rx_i: DecoderDeviceBuffer,
+    d_rx_q: DecoderDeviceBuffer,
+    d_gain_i: DecoderDeviceBuffer,
+    d_gain_q: DecoderDeviceBuffer,
+    d_noise_var: DecoderDeviceBuffer,
+    d_pam_levels: DecoderDeviceBuffer,
+    d_out_llrs: DecoderDeviceBuffer,
     axis_len: usize,
     m: u8,
     m_half: u8,
@@ -595,13 +600,13 @@ impl GpuGrayQamDemapper {
         );
 
         let f32_size = std::mem::size_of::<f32>();
-        let d_rx_i = DeviceBuffer::new(max_batch * f32_size)?;
-        let d_rx_q = DeviceBuffer::new(max_batch * f32_size)?;
-        let d_gain_i = DeviceBuffer::new(max_batch * f32_size)?;
-        let d_gain_q = DeviceBuffer::new(max_batch * f32_size)?;
-        let d_noise_var = DeviceBuffer::new(max_batch * f32_size)?;
-        let d_pam_levels = DeviceBuffer::new(axis_len * f32_size)?;
-        let d_out_llrs = DeviceBuffer::new(max_batch * (m as usize) * f32_size)?;
+        let d_rx_i = DecoderDeviceBuffer::new(max_batch * f32_size)?;
+        let d_rx_q = DecoderDeviceBuffer::new(max_batch * f32_size)?;
+        let d_gain_i = DecoderDeviceBuffer::new(max_batch * f32_size)?;
+        let d_gain_q = DecoderDeviceBuffer::new(max_batch * f32_size)?;
+        let d_noise_var = DecoderDeviceBuffer::new(max_batch * f32_size)?;
+        let d_pam_levels = DecoderDeviceBuffer::new(axis_len * f32_size)?;
+        let d_out_llrs = DecoderDeviceBuffer::new(max_batch * (m as usize) * f32_size)?;
 
         // Upload PAM levels once (persistent for the lifetime of self).
         // The matching assertion on `pam_levels.len()` above guarantees
@@ -819,8 +824,10 @@ impl GpuGrayQamDemapper {
     }
 }
 
-// SAFETY: all contained device buffers are `Send` (see the impl on
-// `DeviceBuffer`); the configuration fields are plain `Copy` values.
+// SAFETY: all contained device buffers are `DecoderDeviceBuffer`, which wraps
+// the `Send` `host::DeviceBuffer<u8>`; the configuration fields are plain
+// `Copy` values. (The bound is satisfied automatically, but the explicit impl
+// documents the invariant at the type boundary.)
 unsafe impl Send for GpuGrayQamDemapper {}
 
 #[cfg(test)]

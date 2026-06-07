@@ -88,10 +88,15 @@ extern "C" {
     // Device selection / introspection.
     pub fn hip_set_device(device_id: c_int) -> c_int;
     pub fn hip_device_get_count(count: *mut c_int) -> c_int;
-    pub fn hip_device_compute_capability(
+    /// Writes the device's GCN arch name (`hipDeviceProp_t.gcnArchName`, e.g.
+    /// `"gfx1030"`, `"gfx940"`, `"gfx942"`) into `buf` (capacity `buf_len`
+    /// bytes), NUL-terminated. This is the authoritative kernel-blob
+    /// discriminator (design doc §6); compute capability cannot distinguish
+    /// gfx940 from gfx942.
+    pub fn hip_device_get_arch_name(
         device_id: c_int,
-        major: *mut c_int,
-        minor: *mut c_int,
+        buf: *mut std::os::raw::c_char,
+        buf_len: usize,
     ) -> c_int;
     pub fn hip_mem_get_info(free_bytes: *mut usize, total_bytes: *mut usize) -> c_int;
 

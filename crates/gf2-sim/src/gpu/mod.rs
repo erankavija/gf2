@@ -31,15 +31,23 @@ mod imp {
     ///   fallback on the offending batch and continue. The `--strict-gpu`
     ///   promotion to [`FatalError::OutOfMemory`] is the executor's job
     ///   (`42eac5cc`), not this function's.
+    /// - `HipError::UnsupportedArch` → [`RecoverableError::Transient`] (wrapped
+    ///   in [`StageError::Recoverable`]) **after** a `tracing::warn!`, so the
+    ///   executor falls back to the CPU-equivalent stage rather than aborting
+    ///   (design doc §6: an arch with no kernel blob warns + falls back, the
+    ///   same response as OOM). It is **not** a fatal `KernelLaunch`.
+    /// - `HipError::NoDevice` → [`FatalError::DeviceUnavailable`] (wrapped in
+    ///   [`StageError::Fatal`]) — a host with no GPU aborts construction; the
+    ///   user re-runs with `--cpu-only` (design doc §8).
     /// - `HipError::Hip` → [`FatalError::KernelLaunch`] (wrapped in
-    ///   [`StageError::Fatal`]) — any non-OOM HIP failure aborts the run with
+    ///   [`StageError::Fatal`]) — any other HIP failure aborts the run with
     ///   the raw `hipError_t` code preserved for diagnostics.
     ///
     /// # Arguments
     ///
     /// * `err` - The error returned by a `gf2-kernels-hip` call.
     /// * `kernel` - A static name for the failing operation, recorded in the
-    ///   resulting [`FatalError::KernelLaunch`] for non-OOM errors.
+    ///   resulting [`FatalError::KernelLaunch`] for generic HIP errors.
     pub fn map_hip_error(err: HipError, kernel: &'static str) -> StageError {
         match err {
             HipError::OutOfMemory {
@@ -49,6 +57,18 @@ mod imp {
                 device_id,
                 bytes_requested,
             }),
+            HipError::UnsupportedArch { gcn_arch_name } => {
+                tracing::warn!(
+                    kernel,
+                    gcn_arch_name = %gcn_arch_name,
+                    "unsupported gfx arch '{gcn_arch_name}'; falling back to CPU stage"
+                );
+                StageError::Recoverable(RecoverableError::Transient(
+                    format!("unsupported gfx arch '{gcn_arch_name}': falling back to CPU stage")
+                        .into(),
+                ))
+            }
+            HipError::NoDevice => StageError::Fatal(FatalError::DeviceUnavailable),
             HipError::Hip { code, context } => StageError::Fatal(FatalError::KernelLaunch {
                 hip_code: code,
                 kernel,
@@ -199,6 +219,61 @@ mod imp {
                 }
                 other => panic!("expected fatal KernelLaunch, got {other:?}"),
             }
+        }
+
+        /// Finding 1: an unsupported arch must NOT abort as fatal. It maps to a
+        /// recoverable error (warn + CPU fallback per design §6), so the
+        /// end-to-end "warn + fall back" path is expressible at this boundary.
+        /// Simulated by constructing the typed error directly (this host is a
+        /// gfx1030, so real detection never produces UnsupportedArch here).
+        #[test]
+        fn test_map_unsupported_arch_is_recoverable_not_fatal() {
+            let err = HipError::UnsupportedArch {
+                gcn_arch_name: "gfx908".to_string(),
+            };
+            match map_hip_error(err, "detect") {
+                StageError::Recoverable(RecoverableError::Transient(cause)) => {
+                    assert!(
+                        cause.to_string().contains("gfx908"),
+                        "transient cause should name the offending arch, got: {cause}"
+                    );
+                }
+                other => panic!("expected recoverable Transient fallback, got {other:?}"),
+            }
+        }
+
+        /// Finding 1: a host with no GPU maps to the dedicated
+        /// `DeviceUnavailable` fatal, not a generic `KernelLaunch`.
+        #[test]
+        fn test_map_no_device_is_device_unavailable() {
+            match map_hip_error(HipError::NoDevice, "detect") {
+                StageError::Fatal(FatalError::DeviceUnavailable) => {}
+                other => panic!("expected fatal DeviceUnavailable, got {other:?}"),
+            }
+        }
+
+        /// Finding 6: exercise `HipDispatcher` end-to-end on the gfx1030 host —
+        /// build it, acquire a stream from its pool, and allocate a small
+        /// `DeviceBuffer` — so it is covered rather than dead code. Phase B
+        /// kernel stages (`ed575f15` and the next-wave kernel owners) and the
+        /// Phase C executor (`42eac5cc`) are the production consumers.
+        #[test]
+        fn test_dispatcher_acquires_stream_and_allocates() {
+            use gf2_kernels_hip::host::DeviceBuffer;
+
+            let mut disp = HipDispatcher::new(0, 4).expect("build dispatcher on gfx1030");
+            assert_eq!(disp.device_id(), 0);
+            assert_eq!(disp.streams().len(), 4);
+
+            // Acquire a stream from the shared pool (round-robin path).
+            let _stream = disp.streams().acquire();
+
+            // Reserve per-stage scratch and allocate a small device buffer.
+            let idx = disp.add_stage_scratch(128).expect("pinned scratch");
+            assert_eq!(disp.scratch(idx).staging.len(), 128);
+
+            let buf = DeviceBuffer::<f32>::new(256, disp.device_id()).expect("device alloc");
+            assert_eq!(buf.len(), 256);
         }
 
         /// End-to-end OOM path on the real GPU: a `DeviceBuffer` request larger
