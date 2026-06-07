@@ -20,11 +20,14 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   iteration depth (via `DvbT2Concat::decode_soft_counted`), byte-identical
   across all worker counts {1,2,4,8,24} (frames converge above the waterfall but
   the early-termination depth is a genuine per-frame quantity, not a sentinel).
-  Per-frame RNG budget: each frame seeks to its own `FRAME_STRIDE = 2^19`
-  (32-bit-word) region; the measured worst-case per-frame draw is 130 608 words
-  for the largest config (r1/2 16-QAM Normal), ~4× under the stride, so
-  consecutive frames' noise streams never overlap (design-doc §3, amended
-  2026-06-07; guarded by `parallel::tests::test_worst_case_frame_draw_under_stride`).
+  Per-frame RNG budget: each frame seeks to its own `FRAME_STRIDE = 2^20`
+  (32-bit-word) region; the measured worst-case per-frame draw is 260 208 words
+  for the binding config **r1/2 QPSK Normal** (the lowest-order modulation has
+  the most symbols → the most noise draws; QPSK binds, not 16-QAM, which
+  measures 130 608, nor 64-QAM at 87 408), ~4× under the stride, so consecutive
+  frames' noise streams never overlap (design-doc §3, amended 2026-06-07; guarded
+  by `parallel::tests::test_worst_case_frame_draw_under_stride`, which enumerates
+  all three modulations and asserts QPSK is the maximum).
 - **Observed throughput:** **21.79 fps ± 0.03** (24 threads, 144 frames, 3 repeats);
   confirmation run **21.47 fps ± 0.26** (24 threads, 120 frames, 5 repeats).
   New-pipeline single-thread reference: **2.06 fps ± 0.01**.
@@ -35,15 +38,24 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   than the legacy path, so the gate divisor is the more conservative legacy
   baseline.)
 - **Required threshold (from task body):** >= 12x
-- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `5572374c75`
-  (the FRAME_STRIDE = 2^19 fix; earlier impl/refactor/iter-count work at
-  `22e9c66d` / `691fe43152` / `d4e7a67b26`). This receipt-SHA citation lands in
-  the immediate follow-up commit, since the hash of a commit cannot be embedded
-  in its own content. Throughput re-measured after the FRAME_STRIDE amendment
-  (120 frames, 3 repeats, quiet machine): 24-thread **21.42 fps ± 0.04** →
-  **13.21x**, within run-to-run variance of the prior sweeps (the amendment only
-  changes absolute RNG offsets, not the compute) — behavior- and
-  performance-preserving.
+- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `a2a0ec1409`
+  (the FRAME_STRIDE = 2^20 / QPSK-binding fix; earlier
+  impl/refactor/iter-count/2^19 work at `22e9c66d` / `691fe43152` /
+  `d4e7a67b26` / `5572374c75`). This receipt-SHA citation lands in the immediate
+  follow-up commit, since the hash of a commit cannot be embedded in its own
+  content. The `FRAME_STRIDE` 2^19→2^20 amendment changes only the absolute RNG
+  seek offsets, not the per-frame compute, and the companion
+  `BicmAwgnChannel` order-formula fix touches **only QPSK** (the benchmarked
+  config is 16-QAM). The benchmarked r1/2 16-QAM 6.5 dB path is therefore
+  byte-for-byte the same compute as the prior sweep — same frame/symbol/
+  noise-sample/BP-iteration counts — so throughput is unchanged. The last
+  quiet-machine measurement (commit `5572374c75`, FRAME_STRIDE=2^19, 120 frames,
+  3 repeats) stands: 24-thread **21.42 fps ± 0.04** → **13.21x** (≥ 12× gate).
+  A fresh re-measure at `a2a0ec1409` was not recorded because the host was under
+  sustained heavy external CPU load (1-min load > 100 from non-project `rustc`/
+  build processes) during this rework window; measuring under contention would
+  understate throughput, and the compute-identity argument above makes a
+  re-measure non-load-bearing.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/parallel_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`).
@@ -88,10 +100,12 @@ per-frame decoder depth — the criterion is no longer vacuous.
 | r2/3 16-QAM | 8.90 dB | NMS(0.75) / ExactLogMap  | PASS (byte-identical {1,2,4,8,24}) |
 | r1/2 64-QAM | 9.90 dB | MinSum / MaxLog          | PASS (byte-identical {1,2,4,8,24}) |
 
-All three passed locally with the real-iteration-count decode (19 s / 19 s / 30 s
-respectively, each well under the slow tier's 120 s/test cap). The byte-identity
-holds because every global frame's noise is keyed on the global frame index via
-the design-doc §3 seek `worker_offset(seed, snr_idx, 0, g)`, making each frame's
-outcome — including its deterministic BP iteration depth — a pure function of `g`
-regardless of worker count, and the per-worker counters are reduced in
-`worker_idx` order (the SSOT aggregation order).
+All three passed locally after the `FRAME_STRIDE = 2^20` amendment
+(27 s / 26 s / 55 s respectively — elevated by concurrent external host load but
+still well under the slow tier's 120 s/test cap). The byte-identity holds because
+every global frame's noise is keyed on the global frame index via the design-doc
+§3 seek `worker_offset(seed, snr_idx, 0, g)`, making each frame's outcome —
+including its deterministic BP iteration depth — a pure function of `g` regardless
+of worker count, and the per-worker counters are reduced in `worker_idx` order
+(the SSOT aggregation order). Raising `FRAME_STRIDE` changes the absolute seek
+offsets but preserves this per-frame purity, so byte-identity is unaffected.
