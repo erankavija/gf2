@@ -870,8 +870,9 @@ pub fn init_permanent_gf7_from_slices(
 //
 // The unsafe FFI surface above requires device pointers (obtained from
 // hipMalloc) and must be called within `unsafe` blocks. The three safe
-// wrappers below hide all of that behind the `DeviceBuffer` RAII helper
-// from `crate` (lib.rs) and the `check_hip` panic-on-error helper.
+// wrappers below hide all of that behind the `DecoderDeviceBuffer` RAII
+// helper from `crate` (lib.rs) — a byte-oriented adapter over the canonical
+// `host::DeviceBuffer<u8>` — and the `check_hip` panic-on-error helper.
 //
 // `gf2-algebra::gpu` calls these from its `#![deny(unsafe_code)]`
 // environment, so they must be entirely safe on the Rust side. Any HIP
@@ -887,7 +888,7 @@ pub fn init_permanent_gf7_from_slices(
 //   5. Calls `hipDeviceSynchronize`.
 //   6. Copies outputs D2H.
 //   7. Returns the output as `Vec<u64>`. Device memory is freed by `Drop`
-//      on the `DeviceBuffer` RAII wrappers.
+//      on the `DecoderDeviceBuffer` RAII wrappers.
 // ---------------------------------------------------------------------------
 
 /// Run the F_3 permanent GPU kernel on a batch of pre-serialised matrices
@@ -949,9 +950,9 @@ pub fn permanent_gf3_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
     let total_bytes = m * n * n;
     let out_bytes = m * std::mem::size_of::<u64>();
 
-    let d_mat = crate::DeviceBuffer::new(total_bytes)
+    let d_mat = crate::DecoderDeviceBuffer::new(total_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: {e}"));
-    let d_out = crate::DeviceBuffer::new(out_bytes)
+    let d_out = crate::DecoderDeviceBuffer::new(out_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf3_batch_dispatch: {e}"));
 
     d_mat
@@ -1047,9 +1048,9 @@ pub fn permanent_gf5_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
     let total_bytes = m * n * n;
     let out_bytes = m * std::mem::size_of::<u64>();
 
-    let d_mat = crate::DeviceBuffer::new(total_bytes)
+    let d_mat = crate::DecoderDeviceBuffer::new(total_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: {e}"));
-    let d_out = crate::DeviceBuffer::new(out_bytes)
+    let d_out = crate::DecoderDeviceBuffer::new(out_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf5_batch_dispatch: {e}"));
 
     d_mat
@@ -1151,9 +1152,9 @@ pub fn permanent_gf7_batch_dispatch(host_matrices: &[u8], n: usize, m: usize) ->
     let total_bytes = m * n * n;
     let out_bytes = m * std::mem::size_of::<u64>();
 
-    let d_mat = crate::DeviceBuffer::new(total_bytes)
+    let d_mat = crate::DecoderDeviceBuffer::new(total_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: {e}"));
-    let d_out = crate::DeviceBuffer::new(out_bytes)
+    let d_out = crate::DecoderDeviceBuffer::new(out_bytes)
         .unwrap_or_else(|e| panic!("permanent_gf7_batch_dispatch: {e}"));
 
     d_mat

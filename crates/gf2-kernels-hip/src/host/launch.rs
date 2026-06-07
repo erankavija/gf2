@@ -17,6 +17,13 @@
 //! single, reviewed way to compute their launch geometry so the obligation is
 //! mechanically enforced at the launch boundary rather than restated per
 //! kernel.
+//!
+//! Note: the pre-existing in-crate launch sites in `lib.rs`
+//! (`launch_bcjr_batch`, `launch_gray_qam_demap`) compute their grid/block
+//! inside the `.hip` kernel sources and predate this helper; rewiring them to
+//! `LaunchDims` would alter their launch geometry and is therefore deferred to
+//! the Phase B kernel owners, who adopt `LaunchDims` as they bring the
+//! per-arch `.co` blobs online.
 
 /// The fixed block size (threads per block) the pipeline kernels launch with.
 ///

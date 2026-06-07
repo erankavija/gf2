@@ -101,7 +101,33 @@ This is a Cargo workspace with five production crates:
 - **`gf2-algebra`** (`crates/gf2-algebra/`) — Packed F_3 / F_5 / F_7 element types and fast matrix permanents (bipedal F_3, packed F_5 / F_7) on CPU (scalar, AVX2, Rayon) and HIP/ROCm GPU. Depends on `gf2-core`. Delivers the `gf2-algebra-permanent` epic: ~10.6x single-thread AVX2 speedup over the in-tree Rust reference at n=36; GPU batch ~28-30x CPU-SIMD at n=24/28 (M=256); F_5/F_7 packed kernels; Lean V1 bipedal F_3 correctness proof complete, Lean V2 (Ryser bounded n<=63) in progress.
 - **`gf2-sim`** (`crates/gf2-sim/`) — CPU+GPU pipeline: research-grade FEC simulation harness composing `gf2-coding` codes into a parallel, optionally GPU-accelerated, deterministic pipeline via `Pipeline` / `Stage` / `Connector` primitives. Depends on `gf2-core` and `gf2-coding`; optional HIP/ROCm acceleration behind feature `hip`. The v2 successor to `gf2_coding::simulation`. `#![deny(unsafe_code)]`. Design SSOT: `dev/active/ec530af9-pipeline-design.md`.
 - **`gf2-kernels-simd`** (`crates/gf2-kernels-simd/`) — Isolated unsafe SIMD kernels (AVX2/AVX512/AARCH64).
-- **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype, and gf2-algebra batch permanents). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or `gf2-algebra`, or by building the crate with its own manifest.
+- **`gf2-kernels-hip`** (`crates/gf2-kernels-hip/`) — Isolated unsafe HIP/ROCm GPU kernels (device FFI, gfx1030; currently BCJR batch decode + Gray-QAM soft demap prototype, and gf2-algebra batch permanents). Excluded from the default workspace so non-ROCm hosts still build cleanly; opt in via `--features hip` on `gf2-coding` or `gf2-algebra`, or by building the crate with its own manifest. The `host/` module provides the `gf2-sim` GPU pipeline host plumbing (design doc §6) — see the HIP host dispatcher model below.
+
+#### Multi-arch HIP targets (design doc §6)
+
+The compile-time gfx target list. gfx1030 is the CI target compiled and exercised today; the rest are documented seams whose kernel blobs are best-effort-compiled by `build.rs` and whose runtime detection is wired but unexercised until matching hardware is available.
+
+| Target | Arch family | Status |
+|--------|-------------|--------|
+| gfx1030 | RDNA2 (RX 6800/6900/6950 XT) | CI target today |
+| gfx1100 | RDNA3 (RX 7900 XT/XTX) | seam only |
+| gfx1200 | RDNA4 | seam only |
+| gfx90a | CDNA2 (MI200) | seam only |
+| gfx940 | CDNA3 (MI300 gfx940 stepping) | seam only |
+| gfx942 | CDNA3 (MI300 gfx942 stepping) | seam only |
+
+Runtime detection (`GfxTarget::detect` in `host/arch.rs`) reads the device's `gcnArchName` and maps the name string to a `GfxTarget`. Detection is **name-based, not compute-capability-based**: gfx940 and gfx942 share a compute capability but load different kernel blobs, so only the name string distinguishes them. Any `gcnArchName` feature suffix (e.g. `:sramecc+:xnack-`) is stripped before matching.
+
+#### HIP host dispatcher model (design doc §6, §8)
+
+The `gf2-sim` GPU pipeline (`feature = "hip"`) is built on host plumbing in `gf2-kernels-hip::host`:
+
+- **`HipStreamPool`** (`host/streams.rs`) — fixed-size pool of RAII `HipStream`s bound to one device; hands out streams round-robin (`acquire`, deterministic) or oldest-idle (`acquire_idle`, which surfaces genuine `hipStreamQuery` faults as `Err` while skipping merely-busy `hipErrorNotReady` streams).
+- **`DeviceBuffer<T>` / `PinnedHostBuffer<T>`** (`host/alloc.rs`) — the single canonical RAII `hipMalloc`/`hipFree` (and pinned `hipHostMalloc`) primitives. The in-crate decoder/demapper/permanent kernels use `DecoderDeviceBuffer`, a byte-oriented adapter over `host::DeviceBuffer<u8>` (no second hipMalloc/hipFree implementation).
+- **`GfxTarget`** (`host/arch.rs`) — name-based multi-arch detection (above).
+- **`HipDispatcher`** (`gf2-sim/src/gpu/mod.rs`) — owns the `HipStreamPool` plus per-stage scratch; the `gf2-sim`-side consumer the Phase B kernel stages and Phase C executor build on.
+
+Error mapping at the `gf2-sim` boundary (`map_hip_error` in `gf2-sim/src/gpu/mod.rs`, design doc §8): `HipError::OutOfMemory` → `RecoverableError::OutOfMemory` (executor substitutes the CPU fallback; `--strict-gpu` promotes to fatal in the executor); `HipError::UnsupportedArch` → `RecoverableError::Transient` after a `tracing::warn!` (CPU fallback per §6, **not** fatal); `HipError::NoDevice` → `FatalError::DeviceUnavailable`; any other `HipError::Hip` → `FatalError::KernelLaunch`.
 
 Unsafe code lives exclusively in these two kernel crates; everything else uses `#![deny(unsafe_code)]`. Standalone `dev/research/<crate>/` stubs (non-workspace prototypes) are exempt: they may contain `unsafe` if necessary to exercise the surface they prototype, provided each `pub unsafe fn` carries a top-of-function `// SAFETY:` comment explaining the preconditions the caller must uphold. Production crates remain bound by the kernel-crates-only rule.
 - **`proofs/`** — Lean4 formal verification of `gfp/` and `gfpn/` field arithmetic and `gf2-algebra::packed::bipedal3` correctness, auto-generated via Charon/Aeneas. See `proofs/README.md`. Covers `Fp<P>` (Montgomery arithmetic), `QuadraticExt`, `CubicExt` (tower extensions), and bipedal F_3 add/sub/mul/neg.
