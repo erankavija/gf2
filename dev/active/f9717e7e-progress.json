@@ -31,9 +31,9 @@
       {"short_id": "36075e4c", "title": "HIP host infrastructure", "status": "done", "note": "DONE 2026-06-07. Merged a8c8361f (8a38c3e7); code-review found round-6 left DeviceBuffer::new allocating on CURRENT device while preflight was device-scoped. User-approved lead fix 8f990d15: select_device/restore_device helpers, new scopes hipMalloc to device_id; adversarial pre-review PASS, both gates green."}
     ]},
     {"wave": "B.2", "status": "pending", "issues": [
-      {"short_id": "f6004add", "title": "GPU ChaCha20 + Box-Muller AWGN kernel", "status": "pending"},
-      {"short_id": "a930be7f", "title": "GPU LDPC BP batch decode kernel", "status": "pending", "note": "parallelism-pays + >=3x CPU-24 threshold"},
-      {"short_id": "d3f1616a", "title": "GPU Gray-QAM soft demap integration", "status": "pending"}
+      {"short_id": "f6004add", "title": "GPU ChaCha20 + Box-Muller AWGN kernel", "status": "pending", "note": "COUPLING (found 2026-06-07): criterion-3 parallelism-pays receipt must report GPU throughput vs 3fcb7025's CPU-24-thread baseline receipt. 3fcb7025 is NOT done -> do NOT dispatch f6004add until 3fcb7025's receipt exists, else the worker guesses a missing artifact (same trap as c09d3e95 criterion-1). Also perf-gated (>=10x single-thread) -> uncontended machine. Only formal JIT dep is 36075e4c (done), so the 3fcb7025 coupling is SOFT and must be enforced by dispatch order, not the DAG."},
+      {"short_id": "a930be7f", "title": "GPU LDPC BP batch decode kernel", "status": "pending", "note": "parallelism-pays + >=3x CPU-24 threshold; same 3fcb7025 CPU-24-receipt coupling + uncontended-machine need as f6004add"},
+      {"short_id": "d3f1616a", "title": "GPU Gray-QAM soft demap integration", "status": "pending", "note": "check for the same CPU-24-receipt coupling before dispatch"}
     ]},
     {"wave": "B.3", "status": "pending", "issues": [
       {"short_id": "ed575f15", "title": "GPU OOM auto-fallback and kernel hard-fail", "status": "pending"}
