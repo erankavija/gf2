@@ -15,20 +15,20 @@
     "parallelism-pays"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-07T16:32:40.592333107Z"
-    },
-    "parallelism-pays": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-05T22:00:53.775939638Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-07T16:32:29.768149520Z"
+    },
+    "parallelism-pays": {
+      "status": "failed",
+      "updated_by": "agent:project-lead (benchmark invalid: host under heavy external load bg3 ~340% CPU; re-measure on quiet machine)",
+      "updated_at": "2026-06-07T19:04:24.656256740Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-07T16:32:40.592333107Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T18:50:39.966846512+00:00",
-  "updated_at": "2026-06-07T16:37:54.453506104+00:00"
+  "updated_at": "2026-06-07T19:04:24.656261390+00:00"
 }

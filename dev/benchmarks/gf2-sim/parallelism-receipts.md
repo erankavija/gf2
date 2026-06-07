@@ -10,6 +10,17 @@ divisor for every speedup gate here. This file establishes the canonical CPU
 
 ## 3fcb7025 — Within-SNR frame parallelism + deterministic aggregation
 
+> **⚠ THROUGHPUT FIGURES BELOW ARE INVALID / PROVISIONAL (2026-06-07).** All
+> speedup numbers in this entry were measured while the host carried heavy
+> external CPU load (a `bg3` process at ~340% CPU; 5/15-min load ≈ 80), which
+> only *understates* throughput. The `parallelism-pays` gate has been set back
+> to FAILED pending a clean re-measurement on a verified-quiet machine
+> (`cat /proc/loadavg` ≈ 0, no foreign CPU hogs). The ≥12× threshold is very
+> likely still met (contention can only lower the measured value, and even the
+> contaminated runs read ~13×), but a credible receipt requires a clean
+> measurement before the gate is re-attested and 3fcb7025 is closed. Re-run:
+> `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`.
+
 - **Date:** 2026-06-07
 - **Hardware:** CPU=AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU=n/a (CPU-only task)
 - **Baseline configuration:** single-thread
