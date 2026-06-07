@@ -18,7 +18,8 @@
 //! | [`error`] | [`StageError`], [`RecoverableError`], [`FatalError`], [`BuildError`] |
 //! | [`config`] | [`PipelineConfig`] (with `From<&SimulationConfig>`) |
 //! | [`observability`] | tracing setup, [`observability::install_campaign_subscriber`] |
-//! | [`parallel`] | per-worker dispatch + ChaCha20 seek (owned by `3fcb7025`) |
+//! | [`parallel`] | per-worker dispatch + ChaCha20 seek + counter reduction (owned by `3fcb7025`) |
+//! | [`frame_sim`] | reusable DVB-T2 BICM-AWGN single-frame simulation kernel (owned by `3fcb7025`) |
 //! | [`presets`] | typestate preset builders (owned by `81d05bab`) |
 //! | [`graph`] | graph API + `build()` (owned by `c09d3e95`) |
 //! | [`channels`] | channel stages (owned by `db9836e4`) |
@@ -42,6 +43,7 @@ pub mod config;
 pub mod connector;
 pub mod error;
 pub mod executor;
+pub mod frame_sim;
 pub mod gpu;
 pub mod graph;
 pub mod observability;
@@ -60,7 +62,14 @@ pub use connector::{Connector, Edge, StageId};
 #[doc(inline)]
 pub use error::{BuildError, FatalError, RecoverableError, StageError};
 #[doc(inline)]
+pub use frame_sim::DvbT2BicmFrameSim;
+#[doc(inline)]
 pub use graph::Chain;
+#[doc(inline)]
+pub use parallel::{
+    run_snr_point, run_snr_point_stateless, worker_offset, FrameOutcome, WorkerCounters, WorkerCtx,
+    FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
+};
 #[doc(inline)]
 pub use pipeline::Pipeline;
 #[doc(inline)]
