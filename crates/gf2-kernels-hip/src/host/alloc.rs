@@ -338,6 +338,13 @@ impl<T> Drop for DeviceBuffer<T> {
 
 // SAFETY: device pointers are opaque handles managed by the thread-safe HIP
 // runtime and never dereferenced on the host. Moving across threads is sound.
+//
+// `DeviceBuffer` is deliberately `Send`-only and NOT `Sync`: `copy_from_host`
+// and `copy_from_pinned_async` mutate device memory through a *shared* `&self`,
+// so handing two threads a `&DeviceBuffer` to the SAME buffer would allow
+// concurrent H2D writes — a genuine data race. The concurrency model is
+// per-worker-owned buffers (each worker owns its own `DeviceBuffer`, moved in
+// via `Send`), never a buffer shared by `&` across workers.
 unsafe impl<T: Send> Send for DeviceBuffer<T> {}
 
 /// An RAII page-locked (pinned) host allocation of `len` values of `T`.
@@ -449,6 +456,13 @@ impl<T> Drop for PinnedHostBuffer<T> {
 
 // SAFETY: the pinned host pointer is owned exclusively by this buffer; moving
 // it across threads is sound for `T: Send` because no aliasing handle escapes.
+//
+// `PinnedHostBuffer` is deliberately `Send`-only and NOT `Sync`. It is a
+// staging buffer mutated in place (`as_mut_slice`, async D2H into it) and is
+// owned per-worker (e.g. inside a `HipDispatcher`'s `StageScratch`), never
+// shared by `&` across workers. Keeping it `Send`-only matches the buffer
+// concurrency doctrine documented on `DeviceBuffer` and keeps `HipDispatcher`
+// (which embeds one) from auto-deriving a `Sync` its scratch cannot honour.
 unsafe impl<T: Send> Send for PinnedHostBuffer<T> {}
 
 #[cfg(all(test, feature = "hip"))]

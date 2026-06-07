@@ -17,7 +17,12 @@ use crate::{check_hip, ffi, HipError, HIP_ERROR_NOT_READY};
 /// The contained handle is created by `hipStreamCreate` in [`HipStream::new`]
 /// and destroyed by `hipStreamDestroy` in `Drop`. The handle is an opaque
 /// pointer managed by the thread-safe HIP runtime; it is never dereferenced on
-/// the host, so [`HipStream`] is [`Send`].
+/// the host, so [`HipStream`] is both [`Send`] and [`Sync`]. `Sync` is what lets
+/// a [`HipStreamPool`] hand out `&HipStream` borrows to concurrent rayon workers
+/// (see the pool's `unsafe impl Sync` SAFETY note): none of `HipStream`'s
+/// `&self` methods mutate host state — they only issue HIP runtime calls
+/// (`hipStreamSynchronize`, `hipStreamQuery`), which the runtime serializes
+/// internally, or return the opaque handle.
 pub struct HipStream {
     raw: *mut c_void,
 }
@@ -112,6 +117,16 @@ impl Drop for HipStream {
 // sound; all access goes through HIP API calls that synchronize internally.
 unsafe impl Send for HipStream {}
 
+// SAFETY: sharing a `&HipStream` across threads is sound. None of `HipStream`'s
+// `&self` methods mutate host-visible state: `as_raw` only copies the opaque
+// handle, and `synchronize` / `is_idle` issue `hipStreamSynchronize` /
+// `hipStreamQuery`, which the HIP runtime documents as thread-safe for
+// concurrent calls (it serializes them internally). `Drop` runs once with
+// exclusive ownership, so there is no shared-`&` destroy race. Two threads
+// calling these on the SAME stream observe well-defined HIP-runtime behaviour
+// (e.g. both block until the stream drains), not a Rust-level data race.
+unsafe impl Sync for HipStream {}
+
 /// A fixed-size pool of [`HipStream`]s bound to a single device.
 ///
 /// The pool owns `n` streams and hands them out round-robin via
@@ -120,11 +135,31 @@ unsafe impl Send for HipStream {}
 /// `hipStreamQuery` to prefer a drained stream). Both return a borrow whose
 /// lifetime is tied to the pool — the executor keeps the pool alive for the
 /// duration of a campaign.
+///
+/// # Thread safety
+///
+/// `HipStreamPool` is both [`Send`] and [`Sync`] (the latter is
+/// auto-derived: its fields are an `i32`, an `AtomicUsize`, and a
+/// `Vec<HipStream>` over the `Sync` [`HipStream`]). This is what makes the
+/// design's Phase C scheduler model sound: a *single* pool is shared by
+/// reference (`&HipStreamPool`) across the rayon worker pool, and each worker
+/// calls [`acquire`](HipStreamPool::acquire) /
+/// [`acquire_idle`](HipStreamPool::acquire_idle) to obtain a stream. The atomic
+/// round-robin cursor advances once per acquisition, so concurrent workers
+/// receive *distinct* streams as long as in-flight acquisitions number `<= n`;
+/// with more than `n` simultaneous workers the cursor wraps and two workers may
+/// legitimately share a `&HipStream`, which is sound precisely because
+/// [`HipStream`] is `Sync` (its `&self` methods are read-only or thread-safe
+/// HIP calls). No worker ever drives a stream through a mutable alias.
+///
+/// A [compile-time assertion](self) in the test module enforces the `Send +
+/// Sync` bound so the documented concurrency contract cannot silently regress.
 pub struct HipStreamPool {
     device_id: i32,
     streams: Vec<HipStream>,
-    /// Round-robin cursor. Atomic so `&self` acquisition is usable from the
-    /// rayon worker pool without external locking.
+    /// Round-robin cursor. Atomic so `&self` acquisition is usable concurrently
+    /// from the rayon worker pool without external locking (see the type-level
+    /// "Thread safety" note).
     next: AtomicUsize,
 }
 
@@ -254,6 +289,28 @@ impl HipStreamPool {
         }
         Ok(())
     }
+}
+
+/// Compile-time enforcement of the [`HipStreamPool`] / [`HipStream`]
+/// thread-safety contract. These run on every build (no GPU required): if a
+/// future change removes `Sync` from `HipStream` (or otherwise breaks the
+/// pool's auto-`Sync`), this module fails to compile, catching the regression
+/// before it reaches the docs/types-consistency reviewer.
+#[cfg(test)]
+mod sync_contract {
+    use super::*;
+
+    const fn _assert_send<T: Send>() {}
+    const fn _assert_sync<T: Sync>() {}
+
+    // The pool is shared by `&` across rayon workers (Phase C scheduler), so it
+    // must be both Send and Sync; a single HipStream is shared the same way.
+    const _: () = {
+        _assert_send::<HipStream>();
+        _assert_sync::<HipStream>();
+        _assert_send::<HipStreamPool>();
+        _assert_sync::<HipStreamPool>();
+    };
 }
 
 #[cfg(all(test, feature = "hip"))]
