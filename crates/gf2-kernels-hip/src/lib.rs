@@ -93,11 +93,28 @@ pub enum HipError {
         /// `"gfx908"`), with any feature suffix stripped.
         gcn_arch_name: String,
     },
+    /// A precompiled kernel blob (`*.co`) could not be read from disk.
+    ///
+    /// This is a host-side **file-I/O** failure, not a `hipError_t`, so it is a
+    /// dedicated variant rather than a [`HipError::Hip`] with a fabricated code
+    /// (code `0` everywhere else means `hipSuccess`). A missing blob for the
+    /// *active* arch is a build/configuration fault — the `gf2-sim` boundary
+    /// maps it to a fatal `KernelLaunch` (design doc §8), not OOM/CPU-fallback.
+    BlobLoad {
+        /// The blob path that failed to load.
+        path: std::path::PathBuf,
+        /// The underlying `std::io::Error` rendered as a string (kept as a
+        /// `String` so `HipError` stays `Clone`).
+        source: String,
+    },
 }
 
 impl HipError {
-    /// Returns the underlying `hipError_t` code for a [`HipError::Hip`], or
-    /// `hipErrorOutOfMemory` (2) for an [`HipError::OutOfMemory`].
+    /// Returns the underlying `hipError_t` code for a [`HipError::Hip`], or the
+    /// canonical sentinel for each typed variant: `hipErrorOutOfMemory` (2),
+    /// `hipErrorNoDevice` (100), `hipErrorInvalidDevice` (101), or
+    /// `hipErrorFileNotFound` (301) for a [`HipError::BlobLoad`]. Never returns
+    /// `0` (which means `hipSuccess`).
     pub fn code(&self) -> i32 {
         match self {
             HipError::Hip { code, .. } => *code,
@@ -108,6 +125,10 @@ impl HipError {
             // hipErrorInvalidDevice is canonically 101; we reuse it for an
             // arch this build has no blob for (a device-capability mismatch).
             HipError::UnsupportedArch { .. } => 101,
+            // hipErrorFileNotFound is canonically 301; a blob-load failure is a
+            // host-side file-I/O fault, so we surface that sentinel rather than
+            // a fabricated success code.
+            HipError::BlobLoad { .. } => 301,
         }
     }
 }
@@ -129,6 +150,11 @@ impl std::fmt::Display for HipError {
             HipError::UnsupportedArch { gcn_arch_name } => write!(
                 f,
                 "unsupported gfx arch '{gcn_arch_name}': no kernel blob for this build"
+            ),
+            HipError::BlobLoad { path, source } => write!(
+                f,
+                "failed to load kernel blob '{}': {source}",
+                path.display()
             ),
         }
     }
