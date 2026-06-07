@@ -83,6 +83,7 @@
     "Background worker wait-loops end their turn on each Monitor poll, causing notification churn; instruct a single PID-exit wait.",
     "CRITICAL: never run a cargo-ci gate on main while a worktree worker is BUILDING — CPU contention times out 5s-limit nextest tests => flaky FAIL (hit on 36075e4c gate while foundation worker built). code-review gates DON'T build (reviewer can't run cargo in sandbox), so those CAN overlap a worker build. Serialize cargo-ci vs worker builds.",
     "Do NOT pipe `jit gate pass` through `| tail` — it masks the gate's real exit code with tail's 0. Run bare and check recorded gate status.",
+    "MANDATORY (user directive 2026-06-07): before EVERY `jit gate pass <id> code-review`, dispatch your OWN adversarial reviewer (general-purpose, read-only) that mirrors scripts/code-review-prompt.md, and FIX its blocking/high findings first. This front-loads review and avoids the multi-round gate-rework churn seen on 118a0091/c0b1702d/36075e4c/19ae6540. Pay special attention to: # Examples on every public item, documented-invariant enforcement, Send/Sync soundness, env-sensitive tests, build hygiene, SSOT duplication.",
     "36075e4c at rework #2 (MAX_REWORK_ATTEMPTS=2). New round-2 findings were DEEPER (Sync contract, load_blob code:0), not repeats — so within budget. If rework#2 fails, ESCALATE."
   ],
   "started_at": "2026-06-07T00:00:00Z"
