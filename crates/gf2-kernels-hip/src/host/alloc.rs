@@ -84,26 +84,9 @@ pub fn device_mem_info() -> Result<(usize, usize), HipError> {
 /// Returns [`HipError::Hip`] if `hipGetDevice`, `hipSetDevice`, or
 /// `hipMemGetInfo` fails.
 pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
-    // Save the currently-current device so we can restore it after the query.
-    let mut prev: i32 = 0;
-    // SAFETY: `&mut prev` is a valid out-pointer the runtime writes on success.
-    let code = unsafe { ffi::hip_get_device(&mut prev) };
-    if code != 0 {
-        return Err(HipError::Hip {
-            code,
-            context: "hipGetDevice",
-        });
-    }
-
-    // Select the requested device for the query.
-    // SAFETY: `hip_set_device` takes a device index; the runtime validates it.
-    let code = unsafe { ffi::hip_set_device(device_id) };
-    if code != 0 {
-        return Err(HipError::Hip {
-            code,
-            context: "hipSetDevice",
-        });
-    }
+    // Select the requested device (saving the previously-current one) so
+    // `hipMemGetInfo` — which reports the *current* device — queries `device_id`.
+    let prev = select_device(device_id)?;
 
     // Query memory on the now-current (requested) device.
     let mut free_bytes: usize = 0;
@@ -112,8 +95,7 @@ pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
     let query_code = unsafe { ffi::hip_mem_get_info(&mut free_bytes, &mut total_bytes) };
 
     // Restore the previously-current device regardless of the query outcome.
-    // SAFETY: `prev` was just read from `hipGetDevice`, so it is a valid index.
-    let restore_code = unsafe { ffi::hip_set_device(prev) };
+    let restore_code = restore_device(prev);
 
     if query_code != 0 {
         return Err(HipError::Hip {
@@ -128,6 +110,45 @@ pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
         });
     }
     Ok((free_bytes, total_bytes))
+}
+
+/// Selects `device_id` as the current HIP device, returning the
+/// previously-current device so the caller can restore it.
+///
+/// `hipMalloc` and `hipMemGetInfo` act on whatever device is *current*, so the
+/// device-scoped allocator and memory-query paths wrap their runtime call in
+/// `select_device` / [`restore_device`] to target the requested device on a
+/// multi-GPU host (design doc §7 seam). If `hipGetDevice` fails no switch is
+/// performed; if `hipSetDevice` fails the current device is unchanged, so the
+/// caller has nothing to restore.
+fn select_device(device_id: i32) -> Result<i32, HipError> {
+    let mut prev: i32 = 0;
+    // SAFETY: `&mut prev` is a valid out-pointer the runtime writes on success.
+    let code = unsafe { ffi::hip_get_device(&mut prev) };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "hipGetDevice",
+        });
+    }
+    // SAFETY: `hip_set_device` takes a device index; the runtime validates it.
+    let code = unsafe { ffi::hip_set_device(device_id) };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "hipSetDevice",
+        });
+    }
+    Ok(prev)
+}
+
+/// Restores `prev` as the current HIP device, returning the raw status code
+/// (`0` = success) so the caller can apply its own error precedence (the
+/// primary runtime call's failure should usually take precedence over a restore
+/// failure). Paired with [`select_device`].
+fn restore_device(prev: i32) -> i32 {
+    // SAFETY: `prev` was obtained from `hipGetDevice`, so it is a valid index.
+    unsafe { ffi::hip_set_device(prev) }
 }
 
 /// An RAII device allocation of `len` values of type `T`.
@@ -154,8 +175,11 @@ impl<T> DeviceBuffer<T> {
     ///
     /// * `len` - Number of `T` elements. `len == 0` is permitted and yields an
     ///   empty buffer with a null device pointer (no `hipMalloc` is issued).
-    /// * `device_id` - The HIP device to allocate on. Recorded so the OOM error
-    ///   carries it; the caller is responsible for having selected the device.
+    /// * `device_id` - The HIP device to allocate on. The allocation is scoped
+    ///   to this device: it is temporarily selected for the `hipMalloc` and the
+    ///   previously-current device is restored afterward, so the recorded
+    ///   `device_id` is the genuine allocation target (correct on a multi-GPU
+    ///   host, design doc §7 seam) and the OOM error carries it.
     ///
     /// # Examples
     ///
@@ -174,7 +198,7 @@ impl<T> DeviceBuffer<T> {
     ///
     /// # Complexity
     ///
-    /// O(1) host-side; one `hipMalloc`.
+    /// O(1) host-side; a device select, one `hipMalloc`, and a device restore.
     pub fn new(len: usize, device_id: i32) -> Result<Self, HipError> {
         let bytes = len.saturating_mul(std::mem::size_of::<T>());
         if len == 0 || bytes == 0 {
@@ -185,38 +209,64 @@ impl<T> DeviceBuffer<T> {
                 _marker: PhantomData,
             });
         }
+
+        // `hipMalloc` allocates on the *current* device, so select `device_id`
+        // around the allocation (restoring the previously-current device after)
+        // to make the recorded `device_id` the genuine allocation target — correct
+        // on a multi-GPU host (design doc §7 seam) rather than just a label.
+        let prev = select_device(device_id)?;
+
         let mut ptr: *mut c_void = ptr::null_mut();
-        // SAFETY: `hip_malloc` writes a valid device pointer to `ptr` on
-        // success and leaves it null on failure. The pointer is freed once in
-        // `Drop`. The runtime validates `bytes`.
-        let code = unsafe { ffi::hip_malloc(&mut ptr, bytes) };
-        if code == 0 {
-            Ok(Self {
-                ptr,
-                len,
-                device_id,
-                _marker: PhantomData,
-            })
-        } else if code == HIP_ERROR_OUT_OF_MEMORY {
-            Err(HipError::OutOfMemory {
+        // SAFETY: `hip_malloc` writes a valid device pointer to `ptr` on success
+        // and leaves it null on failure. The pointer is freed once in `Drop`. The
+        // runtime validates `bytes`. The allocation lands on `device_id` (just
+        // selected above).
+        let alloc_code = unsafe { ffi::hip_malloc(&mut ptr, bytes) };
+
+        // Restore the previously-current device regardless of allocation outcome.
+        let restore_code = restore_device(prev);
+
+        if alloc_code == HIP_ERROR_OUT_OF_MEMORY {
+            return Err(HipError::OutOfMemory {
                 device_id,
                 bytes_requested: bytes,
-            })
-        } else {
-            Err(HipError::Hip {
-                code,
-                context: "hipMalloc",
-            })
+            });
         }
+        if alloc_code != 0 {
+            return Err(HipError::Hip {
+                code: alloc_code,
+                context: "hipMalloc",
+            });
+        }
+
+        // Allocation succeeded on `device_id`. Bind the buffer first so that if
+        // restoring the previous device failed, dropping `buf` on the error path
+        // frees the just-allocated memory (`hipFree` is device-agnostic) rather
+        // than leaking it; we surface the restore fault instead of silently
+        // leaving the wrong device current.
+        let buf = Self {
+            ptr,
+            len,
+            device_id,
+            _marker: PhantomData,
+        };
+        if restore_code != 0 {
+            return Err(HipError::Hip {
+                code: restore_code,
+                context: "hipSetDevice(restore)",
+            });
+        }
+        Ok(buf)
     }
 
     /// Allocates a device buffer, pre-flighting the request against the device's
     /// reported free memory so an over-large request fails fast as
     /// [`HipError::OutOfMemory`].
     ///
-    /// The pre-flight via [`device_mem_info`] catches requests that exceed the
-    /// device's *total* memory even when the driver might otherwise lazily
-    /// over-commit; the subsequent `hipMalloc` catches genuine pressure. Both
+    /// The pre-flight via [`device_mem_info_for`] (scoped to `device_id`) catches
+    /// requests that exceed the device's *total* memory even when the driver
+    /// might otherwise lazily over-commit; the subsequent `hipMalloc` (also
+    /// scoped to `device_id` by [`DeviceBuffer::new`]) catches genuine pressure. Both
     /// paths surface [`HipError::OutOfMemory`] so the executor can substitute a
     /// CPU fallback (design doc §8) — never a panic.
     ///
