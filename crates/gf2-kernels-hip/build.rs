@@ -57,7 +57,17 @@ fn main() {
     // `cargo:warning` and skipped — it does NOT fail the build.
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let kernels_root = manifest_dir.join("kernels");
-    compile_arch_blobs(&hipcc, &kernels_root);
+    let compiled = compile_arch_blobs(&hipcc, &kernels_root);
+
+    // Record which arches THIS build actually produced a usable blob for, so
+    // `GfxTarget::has_compiled_blob` consults a build-accurate manifest rather
+    // than scanning the gitignored `kernels/` output dir (where STALE residue
+    // from a prior build could wrongly report support). Comma-separated
+    // `as_str()` names; an empty string when none compiled.
+    println!(
+        "cargo:rustc-env=GF2_HIP_COMPILED_ARCHS={}",
+        compiled.join(",")
+    );
 
     // --- Link + rerun triggers ---------------------------------------------
     let lib_path = format!("{rocm_path}/lib");
@@ -88,7 +98,14 @@ fn main() {
 }
 
 /// Compiles the per-arch kernel blobs. gfx1030 is mandatory; others best-effort.
-fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) {
+///
+/// Returns the list of target names (`as_str()` form) for which at least one
+/// `.co` blob compiled successfully THIS build. gfx1030 is always present
+/// (mandatory; a failure panics); best-effort arches appear only when hipcc
+/// succeeded for every one of their sources. The caller emits this set as the
+/// `GF2_HIP_COMPILED_ARCHS` env manifest consulted by `has_compiled_blob`.
+fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) -> Vec<String> {
+    let mut compiled: Vec<String> = Vec::new();
     for (idx, target) in GFX_TARGETS.iter().enumerate() {
         let mandatory = idx == 0; // gfx1030 is the first entry
         let target_dir = kernels_root.join(target);
@@ -112,6 +129,7 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) {
             continue;
         }
 
+        let mut all_ok = true;
         for src in &sources {
             let stem = src.file_stem().and_then(|s| s.to_str()).unwrap_or("kernel");
             let out = target_dir.join(format!("{stem}.co"));
@@ -138,6 +156,7 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) {
                         panic!("{msg}");
                     }
                     println!("cargo:warning=skip {target}: {msg}");
+                    all_ok = false;
                     break; // skip remaining sources for this best-effort arch
                 }
                 Err(e) => {
@@ -146,11 +165,19 @@ fn compile_arch_blobs(hipcc: &str, kernels_root: &Path) {
                         panic!("{msg}");
                     }
                     println!("cargo:warning=skip {target}: {msg}");
+                    all_ok = false;
                     break;
                 }
             }
         }
+
+        // Record this target as supported only when EVERY source compiled.
+        // gfx1030 always reaches here (any failure above panicked).
+        if all_ok {
+            compiled.push((*target).to_string());
+        }
     }
+    compiled
 }
 
 /// Writes a minimal no-op probe source if the arch directory has no `*.cpp`
