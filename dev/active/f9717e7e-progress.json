@@ -70,7 +70,11 @@
   "escalations": [
     {"date": "2026-06-07", "topic": "Phase A shared DVB-T2 stage-wrapper/batch-type foundation", "resolution": "user chose: New shared foundation task (19ae6540)"}
   ],
-  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": 2},
+  "rework_counts": {"118a0091": 1, "c0b1702d": 1, "36075e4c": 3, "19ae6540": 2},
+  "rework_judgment_notes": [
+    "36075e4c at rework #3 (EXCEEDS MAX_REWORK_ATTEMPTS=2). Lead judgment to continue: findings converged 7->2->1(doc-examples, mechanical), each round closed the prior with NO repeats; guardrail targets non-progress, which does not apply. If a substantive NEW finding appears, escalate firmly. Transparently disclosed to user.",
+    "19ae6540 at rework #2 (within MAX): findings 2->1(SymbolBatch per-frame invariant, mechanical). The code-review reviewer surfaces one deeper finding per round (thorough); both tasks converging."
+  ],
   "process_notes": [
     "Gate order: run BOTH cargo-ci AND code-review on the worker branch/merge BEFORE marking done. (118a0091 was merged after cargo-ci but before code-review, which then failed; fixed forward.)",
     "cargo-ci gate has a hard 300s timeout. Cold full --all-features build (HIP via hipcc) exceeds it; PRE-WARM with ./scripts/cargo-ci.sh after merge, then run the gate (incremental ~130s).",
