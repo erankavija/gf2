@@ -23,6 +23,16 @@ use crate::{ffi, HipError, HIP_ERROR_OUT_OF_MEMORY};
 /// Thin safe wrapper over `hipMemGetInfo`, exposed so the allocator can
 /// pre-flight large requests and the dispatcher can report headroom.
 ///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_kernels_hip::host::alloc::device_mem_info;
+///
+/// // Requires a real HIP device, so this is `no_run`.
+/// let (free, total) = device_mem_info().expect("query device memory");
+/// assert!(free <= total);
+/// ```
+///
 /// # Errors
 ///
 /// Returns [`HipError::Hip`] if `hipMemGetInfo` fails.
@@ -67,6 +77,16 @@ impl<T> DeviceBuffer<T> {
     ///   empty buffer with a null device pointer (no `hipMalloc` is issued).
     /// * `device_id` - The HIP device to allocate on. Recorded so the OOM error
     ///   carries it; the caller is responsible for having selected the device.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let buf = DeviceBuffer::<f32>::new(256, 0).expect("allocate 256 f32 on device 0");
+    /// assert_eq!(buf.len(), 256);
+    /// ```
     ///
     /// # Errors
     ///
@@ -121,6 +141,26 @@ impl<T> DeviceBuffer<T> {
     /// paths surface [`HipError::OutOfMemory`] so the executor can substitute a
     /// CPU fallback (design doc §8) — never a panic.
     ///
+    /// # Arguments
+    ///
+    /// * `len` - Number of `T` elements to allocate.
+    /// * `device_id` - The HIP device to allocate on.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    /// use gf2_kernels_hip::HipError;
+    ///
+    /// // An absurd request fails fast as a recoverable OOM rather than panicking.
+    /// let huge = 256usize * 1024 * 1024 * 1024;
+    /// match DeviceBuffer::<u8>::new_with_fallback(huge, 0) {
+    ///     Err(HipError::OutOfMemory { .. }) => { /* executor substitutes CPU */ }
+    ///     Err(other) => panic!("expected OOM, got a different error: {other}"),
+    ///     Ok(_) => panic!("a 256 GiB allocation should not succeed"),
+    /// }
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`HipError::OutOfMemory`] if the request exceeds total device
@@ -145,36 +185,111 @@ impl<T> DeviceBuffer<T> {
     }
 
     /// Number of `T` elements the buffer holds.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<f32>::new(128, 0).expect("allocate");
+    /// assert_eq!(buf.len(), 128);
+    /// ```
     pub fn len(&self) -> usize {
         self.len
     }
 
     /// Returns `true` if the buffer has zero elements.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// // A zero-length buffer is a valid empty handle (no `hipMalloc` issued).
+    /// let buf = DeviceBuffer::<f32>::new(0, 0).expect("empty buffer");
+    /// assert!(buf.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
     /// Size of the allocation in bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<f32>::new(64, 0).expect("allocate");
+    /// assert_eq!(buf.size_bytes(), 64 * std::mem::size_of::<f32>());
+    /// ```
     pub fn size_bytes(&self) -> usize {
         self.len * std::mem::size_of::<T>()
     }
 
     /// The device this buffer was allocated on.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<f32>::new(16, 0).expect("allocate on device 0");
+    /// assert_eq!(buf.device_id(), 0);
+    /// ```
     pub fn device_id(&self) -> i32 {
         self.device_id
     }
 
     /// Raw const device pointer for kernel-launch FFI.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<f32>::new(16, 0).expect("allocate");
+    /// let ptr = buf.as_ptr(); // hand to a kernel-launch FFI argument
+    /// assert!(!ptr.is_null());
+    /// ```
     pub fn as_ptr(&self) -> *const c_void {
         self.ptr as *const c_void
     }
 
     /// Raw mut device pointer for kernel-launch FFI.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<f32>::new(16, 0).expect("allocate");
+    /// let ptr = buf.as_mut_ptr(); // hand to a kernel-launch output argument
+    /// assert!(!ptr.is_null());
+    /// ```
     pub fn as_mut_ptr(&self) -> *mut c_void {
         self.ptr
     }
 
     /// Copies `src` (host) into this device buffer (synchronous H2D).
+    ///
+    /// # Arguments
+    ///
+    /// * `src` - Host slice to upload; `src.len()` must be `<= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let buf = DeviceBuffer::<f32>::new(4, 0).expect("allocate");
+    /// buf.copy_from_host(&[1.0, 2.0, 3.0, 4.0]).expect("upload H2D");
+    ///
+    /// let mut out = [0.0f32; 4];
+    /// buf.copy_to_host(&mut out).expect("download D2H");
+    /// assert_eq!(out, [1.0, 2.0, 3.0, 4.0]);
+    /// ```
     ///
     /// # Panics
     ///
@@ -205,6 +320,23 @@ impl<T> DeviceBuffer<T> {
     }
 
     /// Copies this device buffer into `dst` (host, synchronous D2H).
+    ///
+    /// # Arguments
+    ///
+    /// * `dst` - Host slice to fill; `dst.len()` must be `<= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::DeviceBuffer;
+    ///
+    /// let buf = DeviceBuffer::<u32>::new(3, 0).expect("allocate");
+    /// buf.copy_from_host(&[10, 20, 30]).expect("upload H2D");
+    ///
+    /// let mut out = [0u32; 3];
+    /// buf.copy_to_host(&mut out).expect("download D2H");
+    /// assert_eq!(out, [10, 20, 30]);
+    /// ```
     ///
     /// # Panics
     ///
@@ -241,6 +373,26 @@ impl<T> DeviceBuffer<T> {
     /// until the stream is synchronized (`stream.synchronize()`). Staging
     /// through pinned host memory is what lets the transfer overlap with kernel
     /// work on other streams (design doc §6).
+    ///
+    /// # Arguments
+    ///
+    /// * `src` - Pinned host source; `src.len()` must be `<= self.len()`.
+    /// * `stream` - The stream the copy is ordered on.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let stream = HipStream::new().expect("create a stream");
+    /// let mut staging = PinnedHostBuffer::<f32>::new(4, 0).expect("pinned host");
+    /// staging.as_mut_slice().copy_from_slice(&[1.0, 2.0, 3.0, 4.0]);
+    ///
+    /// let dev = DeviceBuffer::<f32>::new(4, 0).expect("device buffer");
+    /// dev.copy_from_pinned_async(&staging, &stream).expect("enqueue H2D");
+    /// stream.synchronize().expect("wait for the transfer");
+    /// ```
     ///
     /// # Panics
     ///
@@ -280,6 +432,25 @@ impl<T> DeviceBuffer<T> {
     ///
     /// Asynchronous, ordered on `stream`. The destination data is valid only
     /// after `stream.synchronize()` returns.
+    ///
+    /// # Arguments
+    ///
+    /// * `dst` - Pinned host destination; `dst.len()` must be `<= self.len()`.
+    /// * `stream` - The stream the copy is ordered on.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
+    ///
+    /// let stream = HipStream::new().expect("create a stream");
+    /// let dev = DeviceBuffer::<f32>::new(4, 0).expect("device buffer");
+    /// let mut staging = PinnedHostBuffer::<f32>::new(4, 0).expect("pinned host");
+    ///
+    /// dev.copy_to_pinned_async(&mut staging, &stream).expect("enqueue D2H");
+    /// stream.synchronize().expect("wait for the transfer");
+    /// // `staging.as_slice()` is now valid to read.
+    /// ```
     ///
     /// # Panics
     ///
@@ -359,6 +530,24 @@ pub struct PinnedHostBuffer<T> {
 impl<T: Copy + Default> PinnedHostBuffer<T> {
     /// Allocates `len` pinned (page-locked) host elements, zero-initialized.
     ///
+    /// # Arguments
+    ///
+    /// * `len` - Number of `T` elements to page-lock. `len == 0` yields an empty
+    ///   buffer with a null pointer (no `hipHostMalloc` is issued).
+    /// * `device_id` - Recorded so an OOM error carries it.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// // Requires a real HIP device, so this is `no_run`.
+    /// let staging = PinnedHostBuffer::<f32>::new(256, 0).expect("pinned host alloc");
+    /// assert_eq!(staging.len(), 256);
+    /// // Freshly allocated pinned memory is zero-initialized.
+    /// assert!(staging.as_slice().iter().all(|&x| x == 0.0));
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`HipError::OutOfMemory`] on `hipErrorOutOfMemory`, otherwise
@@ -400,16 +589,43 @@ impl<T: Copy + Default> PinnedHostBuffer<T> {
     }
 
     /// Number of `T` elements.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let staging = PinnedHostBuffer::<f32>::new(64, 0).expect("pinned host alloc");
+    /// assert_eq!(staging.len(), 64);
+    /// ```
     pub fn len(&self) -> usize {
         self.len
     }
 
     /// Returns `true` if the buffer has zero elements.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let staging = PinnedHostBuffer::<f32>::new(0, 0).expect("empty pinned host");
+    /// assert!(staging.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
     /// Borrows the pinned region as a slice.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let staging = PinnedHostBuffer::<u8>::new(8, 0).expect("pinned host alloc");
+    /// assert_eq!(staging.as_slice().len(), 8);
+    /// ```
     pub fn as_slice(&self) -> &[T] {
         if self.ptr.is_null() {
             return &[];
@@ -420,6 +636,16 @@ impl<T: Copy + Default> PinnedHostBuffer<T> {
     }
 
     /// Mutably borrows the pinned region as a slice.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let mut staging = PinnedHostBuffer::<f32>::new(4, 0).expect("pinned host alloc");
+    /// staging.as_mut_slice().copy_from_slice(&[1.0, 2.0, 3.0, 4.0]);
+    /// assert_eq!(staging.as_slice(), &[1.0, 2.0, 3.0, 4.0]);
+    /// ```
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         if self.ptr.is_null() {
             return &mut [];
@@ -430,11 +656,31 @@ impl<T: Copy + Default> PinnedHostBuffer<T> {
     }
 
     /// Raw const pointer for `hipMemcpyAsync` FFI.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let staging = PinnedHostBuffer::<f32>::new(16, 0).expect("pinned host alloc");
+    /// let ptr = staging.as_ptr(); // hand to a `hipMemcpyAsync` source argument
+    /// assert!(!ptr.is_null());
+    /// ```
     pub fn as_ptr(&self) -> *const c_void {
         self.ptr as *const c_void
     }
 
     /// Raw mut pointer for `hipMemcpyAsync` FFI.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::PinnedHostBuffer;
+    ///
+    /// let mut staging = PinnedHostBuffer::<f32>::new(16, 0).expect("pinned host alloc");
+    /// let ptr = staging.as_mut_ptr(); // hand to a `hipMemcpyAsync` dest argument
+    /// assert!(!ptr.is_null());
+    /// ```
     pub fn as_mut_ptr(&mut self) -> *mut c_void {
         self.ptr as *mut c_void
     }

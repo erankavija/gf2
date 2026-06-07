@@ -60,6 +60,20 @@ impl LaunchDims {
     ///
     /// * `n_elements` - Total number of work items (e.g. batch size, or symbols).
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::{LaunchDims, MAX_BLOCK_THREADS};
+    ///
+    /// // 1000 work items, 256 threads/block → ceil(1000/256) = 4 blocks.
+    /// let dims = LaunchDims::for_batch(1000);
+    /// assert_eq!(dims.block_x, MAX_BLOCK_THREADS);
+    /// assert_eq!(dims.grid_x, 4);
+    ///
+    /// // Zero work items yields a no-op launch the caller should skip.
+    /// assert!(LaunchDims::for_batch(0).is_empty());
+    /// ```
+    ///
     /// # Complexity
     ///
     /// O(1).
@@ -87,6 +101,23 @@ impl LaunchDims {
     /// problem size for the determinism contract to hold; this constructor does
     /// not enforce that, it only records the choice.
     ///
+    /// # Arguments
+    ///
+    /// * `grid_x` - Number of blocks in the 1-D grid.
+    /// * `block_x` - Threads per block (must be non-zero).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::LaunchDims;
+    ///
+    /// // One block per batch element, 1024 threads/block (the BCJR mapping).
+    /// let dims = LaunchDims::explicit(64, 1024);
+    /// assert_eq!(dims.grid_x, 64);
+    /// assert_eq!(dims.block_x, 1024);
+    /// assert_eq!(dims.total_threads(), 64 * 1024);
+    /// ```
+    ///
     /// # Panics
     ///
     /// Panics if `block_x == 0` (a launch with no threads is always a bug).
@@ -97,12 +128,29 @@ impl LaunchDims {
 
     /// Returns `true` if this geometry launches no blocks (a no-op the caller
     /// should skip rather than dispatch).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::LaunchDims;
+    ///
+    /// assert!(LaunchDims::for_batch(0).is_empty());
+    /// assert!(!LaunchDims::for_batch(1).is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.grid_x == 0
     }
 
     /// Total number of threads the launch spans (`grid_x * block_x`),
     /// saturating on overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_kernels_hip::host::LaunchDims;
+    ///
+    /// assert_eq!(LaunchDims::explicit(8, 256).total_threads(), 2048);
+    /// ```
     pub fn total_threads(&self) -> u64 {
         (self.grid_x as u64).saturating_mul(self.block_x as u64)
     }
