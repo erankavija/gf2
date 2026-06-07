@@ -109,6 +109,57 @@ const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 /// let pipeline = chain.build().unwrap();
 /// assert_eq!(pipeline.stage_count(), 2);
 /// ```
+///
+/// ## A DVB-T2 BICM chain, constructed step by step
+///
+/// The same graph API expresses a full DVB-T2 BICM transmit+receive chain.
+/// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) hands back the
+/// forward stages (BCH+LDPC encode → bit-interleave → Gray-QAM map) and the
+/// inverse stages (Gray-QAM demap → bit-deinterleave → LDPC decode) already
+/// type-erased; we `add` each in order, then `connect` them consecutively. The
+/// forward→inverse hop is a noiseless `SymbolBatch` pass-through, type-checked
+/// like every other edge, and `build()` topologically orders the six stages.
+///
+/// ```
+/// use gf2_sim::graph::Chain;
+/// use gf2_sim::stages::dvb_t2_bicm_stages;
+/// use gf2_coding::CodeRate;
+/// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+/// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+/// use gf2_coding::modem::DemapMethod;
+///
+/// // The factory wires the codec, interleaver, and modem for one MODCOD into
+/// // erased forward + inverse stages.
+/// let factory = dvb_t2_bicm_stages(
+///     CodeRate::Rate1_2,
+///     DvbT2Modulation::Qam16,
+///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+///     DemapMethod::ExactLogMap,
+/// );
+///
+/// let mut chain = Chain::new();
+/// let mut ids = Vec::new();
+/// // Forward path: encode → interleave → map.
+/// for stage in factory.forward {
+///     ids.push(chain.add(stage));
+/// }
+/// // Inverse path: demap → deinterleave → decode.
+/// for stage in factory.inverse {
+///     ids.push(chain.add(stage));
+/// }
+///
+/// // Join consecutively: fwd0 → fwd1 → fwd2 → inv0 → inv1 → inv2. The
+/// // fwd2 → inv0 hop is the noiseless SymbolBatch → SymbolBatch gap.
+/// for pair in ids.windows(2) {
+///     chain
+///         .connect(pair[0], pair[1])
+///         .expect("each consecutive BICM hop is type-compatible");
+/// }
+///
+/// let pipeline = chain.build().expect("the full BICM chain is a valid DAG");
+/// assert_eq!(pipeline.stage_count(), 6, "six BICM stages");
+/// assert_eq!(pipeline.edges().len(), 5, "five consecutive edges");
+/// ```
 pub struct Chain {
     /// Type-erased stages indexed by their [`StageId`] (`StageId(i)` ⇒
     /// `stages[i]`).
