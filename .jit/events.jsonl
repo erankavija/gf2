@@ -5753,3 +5753,10 @@
 {"type":"issue_state_changed","id":"f0371e7c-e96c-4e2d-87ef-d117262ca534","issue_id":"81d05bab-4e68-4289-9e64-cb8a82187225","timestamp":"2026-06-06T23:26:46.228781838Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"b5d906cb-3379-4aa4-b421-7e59f462a476","issue_id":"c09d3e95-bb68-4e25-8f72-69aef1c042b5","timestamp":"2026-06-06T23:26:46.450434171Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"39c3957e-5d56-4a16-9272-600afe5158af","issue_id":"db9836e4-0115-4769-95ae-5ad414a80ed5","timestamp":"2026-06-06T23:26:46.487878932Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"12891f0c-53c0-4930-ba4d-0434cdd267d3","issue_id":"36075e4c-9813-48cd-bee6-5fc28de15818","timestamp":"2026-06-06T23:32:35.981702223Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"d29bf681-c5a6-4f9e-9cd0-b4ba4e40279e","issue_id":"36075e4c-9813-48cd-bee6-5fc28de15818","timestamp":"2026-06-06T23:32:35.981910033Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"295cbe40-6254-4285-9357-af14680d0afb","issue_id":"19ae6540-2bf4-4854-bbc7-fea79eb4a2b3","timestamp":"2026-06-07T05:55:35.013405775Z","title":"gf2-sim batch types + DVB-T2 BICM Stage wrappers","priority":"high"}
+{"type":"issue_created","id":"c5eeccca-9a6a-41c9-ba4f-7d01686057cc","issue_id":"fe3c89f9-e4a9-44e4-a6b6-fb2ecbd9fe01","timestamp":"2026-06-07T05:55:42.951279136Z","title":"x","priority":"normal"}
+{"type":"issue_state_changed","id":"a0c30231-696c-438f-a66d-3a3bc0945002","issue_id":"c09d3e95-bb68-4e25-8f72-69aef1c042b5","timestamp":"2026-06-07T05:56:08.159987158Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"6d0e6f15-6233-4611-a1c3-3914b1580c22","issue_id":"db9836e4-0115-4769-95ae-5ad414a80ed5","timestamp":"2026-06-07T05:56:08.185325465Z","from":"ready","to":"backlog"}
+{"type":"issue_state_changed","id":"b6432c45-e216-48bf-a6ff-8919100ecdc7","issue_id":"81d05bab-4e68-4289-9e64-cb8a82187225","timestamp":"2026-06-07T05:56:08.235689370Z","from":"ready","to":"backlog"}

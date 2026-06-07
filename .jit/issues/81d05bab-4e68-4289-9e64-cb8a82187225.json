@@ -2,11 +2,12 @@
   "id": "81d05bab-4e68-4289-9e64-cb8a82187225",
   "title": "DVB-T2 typestate builder preset for gf2-sim",
   "description": "## Goal\n\nImplement the typestate fluent builder for the DVB-T2 BICM AWGN\npreset, exposing the API surface designed in Phase 0 design doc §9\n(typestate builder example). The preset reuses\n`gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat` as the underlying\ncodec; the typestate machinery enforces stage-order correctness at\ncompile time.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §9 (layered API surfaces),\n§1 (module skeleton — owns `crates/gf2-sim/src/presets/`), §12\n(migration plan). Wave A.2 fan-out from `118a0091`; no inter-A.2 deps.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/presets/dvb_t2.rs` containing:\n   - Typestate marker types: `NeedsModcod`, `NeedsDecoder`,\n     `NeedsDemap`, `NeedsChannel`, `Ready`.\n   - `Pipeline::dvb_t2() -> Builder<NeedsModcod>` entry point.\n   - Builder methods that consume and return a new typestate-tagged\n     `Builder<NextState>`: `.modcod()`, `.decoder()`, `.demap()`,\n     `.channel()`, `.parallelism()`, `.seed()`, `.checkpoint_dir()`.\n   - `Builder<Ready>::build() -> Result<Pipeline, BuildError>`.\n   - Internally the builder constructs a graph (see `c09d3e95`)\n     wired with the standard DVB-T2 BICM stages:\n     `BchEncoder → LdpcEncoder → BitInterleaver → GrayQam → Channel\n     → GrayQamDemapper → BitDeinterleaver → LdpcDecoder → BchDecoder`.\n2. The preset wraps `gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat`\n   (the bit-exact end-to-end DVB-T2 codec already validated by\n   `4cdaf1c5`) for the BCH + LDPC + interleaver path. The Stage\n   wrappers around `DvbT2Concat` live in\n   `crates/gf2-sim/src/presets/dvb_t2/stages.rs`.\n3. Standard 6-MODCOD pre-wired Modcod enum:\n   `Modcod::Normal { rate: Rate, modulation: Mod }` with\n   `rate ∈ {R1_2, R2_3, R3_4}`, `modulation ∈ {Qam16, Qam64}`.\n4. Doc-comment example in the rustdoc of `Pipeline::dvb_t2()`\n   showing the full builder chain producing a working pipeline.\n\n## Success Criteria\n\n- [hard] DVB-T2 BICM chain expressible via the typestate builder\n  for all 6 in-scope MODCODs; example in rustdoc compiles and\n  runs (doctest passes under `cargo test --doc -p gf2-sim`).\n- [hard] Wrong stage ordering yields a compile-time error: a test\n  in `tests/compile_fail/` (e.g., `trybuild`-style) verifies that\n  `.decoder()` cannot be called before `.modcod()`.\n- [hard] Builder output is identical to a hand-wired graph API\n  chain (see `c09d3e95`) for the same `(rate, modulation, decoder,\n  demap, seed)` tuple — a round-trip test in `tests/preset_vs_graph.rs`\n  asserts byte-identity of the output `Pipeline` execution for a\n  fixed input batch.\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- No graph API implementation (owned by `c09d3e95`); this task\n  USES the graph API once `c09d3e95` lands but does not depend on\n  its completion — initial typestate stubs may emit a stub graph\n  that the `c09d3e95` deliverable later replaces.\n- No 5G NR preset (owned by `e478daa8`).\n- No GPU stage variants in the preset (`bbf6b6ee` rewires `--gpu`).",
-  "state": "ready",
+  "state": "backlog",
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "118a0091-2c7e-43d8-93b6-597ca913eaf5"
+    "c09d3e95-bb68-4e25-8f72-69aef1c042b5",
+    "db9836e4-0115-4769-95ae-5ad414a80ed5"
   ],
   "gates_required": [
     "cargo-ci",
@@ -21,5 +22,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:02:54.970972582+00:00",
-  "updated_at": "2026-06-06T23:26:46.228586528+00:00"
+  "updated_at": "2026-06-07T05:56:08.283581233+00:00"
 }

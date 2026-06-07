@@ -2,11 +2,11 @@
   "id": "c09d3e95-bb68-4e25-8f72-69aef1c042b5",
   "title": "Graph-based chain construction API for gf2-sim",
   "description": "## Goal\n\nImplement the lower-level graph API for novel-chain construction:\n`Chain::new().add(stage).connect(a, b)?.build()?`. Runtime\ntype-checking on connector compatibility; branching DAG topology\nsupport (fan-out / fan-in, no cycles). Designed in Phase 0 §9.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §9 (layered API), §1 (owns\n`crates/gf2-sim/src/graph/`). Wave A.2 fan-out from `118a0091`; no\ninter-A.2 deps. The typestate preset (`81d05bab`) is implemented on\ntop of the graph API.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/graph/mod.rs` containing:\n   - `pub struct Chain` with internal `Vec<Box<dyn AnyStage>>` and\n     `Vec<Edge>`.\n   - `Chain::new()`, `Chain::add(stage) -> StageId`,\n     `Chain::connect(from: StageId, to: StageId) -> Result<(),\n     BuildError>` with runtime connector type check.\n   - `Chain::build() -> Result<Pipeline, BuildError>` performing\n     topological sort, multi-input / multi-output dispatch order,\n     and cycle detection.\n   - `BuildError` variants per design-doc §9:\n     `Cyclic`, `TypeMismatch { from: TypeId, to: TypeId }`,\n     `Disconnected`, `NoFallback { gpu_stage: StageId }`.\n2. Branching DAG support: a stage with multiple outputs (e.g. a\n   demap stage feeding two parallel decoders for diversity) and\n   multiple inputs (e.g. a fusion stage). The topology executor\n   in Phase C (`de160fc5`) consumes the resulting Pipeline; this\n   task only needs to produce a correctly ordered Pipeline.\n3. Fallback registration: `Chain::register_fallback(gpu_stage:\n   StageId, cpu_stage: StageId)` for the OOM path (design-doc §8).\n4. Doc example in rustdoc of `Chain` showing a DVB-T2 BICM chain\n   constructed step-by-step.\n\n## Success Criteria\n\n- [hard] DVB-T2 BICM chain expressible via the graph API (full\n  forward + inverse chain) and `build()` produces a Pipeline that\n  matches the typestate-builder preset output for a fixed input.\n- [hard] Cycle detection: `tests/cyclic_chain.rs` builds a cyclic\n  chain and asserts `BuildError::Cyclic`.\n- [hard] Type-mismatch detection: `tests/type_mismatch.rs` connects\n  incompatible Stage<I,O> pairs and asserts `BuildError::TypeMismatch`.\n- [hard] Disconnected detection: chain with multiple roots /\n  multiple sinks yields `BuildError::Disconnected`.\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- No turbo / feedback-loop topology (epic non-goal).\n- No GPU-aware ordering (owned by Phase C `de160fc5`).\n- No async-stream concurrency (owned by `75c22fa8`).",
-  "state": "ready",
+  "state": "backlog",
   "priority": "high",
   "assignee": null,
   "dependencies": [
-    "118a0091-2c7e-43d8-93b6-597ca913eaf5"
+    "19ae6540-2bf4-4854-bbc7-fea79eb4a2b3"
   ],
   "gates_required": [
     "cargo-ci",
@@ -21,5 +21,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:02:59.486294524+00:00",
-  "updated_at": "2026-06-06T23:26:46.450236061+00:00"
+  "updated_at": "2026-06-07T05:56:08.159826908+00:00"
 }
