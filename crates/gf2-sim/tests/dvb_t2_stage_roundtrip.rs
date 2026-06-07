@@ -5,6 +5,19 @@
 //! bit-identical to a seeded pseudo-random input, for at least the two required
 //! MODCODs (Normal × 1/2 × 16-QAM and Normal × 1/2 × 64-QAM).
 //!
+//! Two test families are provided:
+//!
+//! 1. **Manual-chain tests** (`test_noiseless_roundtrip_*`): construct each
+//!    stage explicitly and drive them via the typed `Stage::process` API.
+//!
+//! 2. **Factory-driven tests** (`test_factory_roundtrip_*`): build the chain
+//!    via [`dvb_t2_bicm_stages`] and drive it through the erased
+//!    `AnyStage::process_any` path — the same path the executor and downstream
+//!    waves consume. This is the primary criterion test: the factory is the
+//!    documented single shared wiring source for downstream waves
+//!    (`3fcb7025`/`c09d3e95`/`81d05bab`) and must be exercised so regressions
+//!    in the factory's stage ordering or type threading surface immediately.
+//!
 //! Chain under test (per the stage inventory in `gf2_sim::stages`):
 //!
 //! ```text
@@ -15,7 +28,7 @@
 //!   --- noiseless: symbols pass straight through, no channel stage ---
 //!   → GrayQamDemap     (Symbol → Llr)
 //!   → BitDeinterleave  (Llr → Llr)
-//!   → DvbT2Decode      (Llr → BitPacked, recovered BBFRAME)
+//!   → DvbT2Decode      (Llr → HardDecision, recovered BBFRAME)
 //! ```
 //!
 //! These are full encode + LDPC-decode roundtrips on the Normal (n=64800)
@@ -39,9 +52,11 @@ use rand::{Rng, SeedableRng};
 // `Rng` is in scope for `random::<bool>()` (rand 0.9 API).
 use std::sync::Arc;
 
-use gf2_sim::batch::{BitPackedBatch, SymbolBatch};
+use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, SymbolBatch};
+use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
 use gf2_sim::stages::{
-    BitDeinterleave, BitInterleave, DvbT2Decode, DvbT2Encode, GrayQamDemap, GrayQamMap,
+    dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DvbT2Decode, DvbT2Encode, GrayQamDemap,
+    GrayQamMap,
 };
 use gf2_sim::Stage;
 
@@ -55,8 +70,57 @@ fn random_bbframe(k: usize, seed: u64) -> BitVec {
     bb
 }
 
+/// Drive a chain of erased stages sequentially via `process_any`.
+///
+/// Each stage uses `()` as its scratch (all DVB-T2 BICM stages have
+/// `Scratch = ()`). Returns the final type-erased output batch.
+fn run_erased_chain(
+    stages: &[Box<dyn AnyStage>],
+    initial: Box<dyn TypedBatch>,
+) -> Box<dyn TypedBatch> {
+    stages.iter().fold(initial, |batch, stage| {
+        let mut scratch: Box<dyn AnyScratch> = Box::new(());
+        stage
+            .process_any(batch.as_ref(), scratch.as_mut())
+            .expect("process_any must succeed in noiseless chain")
+    })
+}
+
+/// Run the noiseless forward + inverse BICM chain via `dvb_t2_bicm_stages`
+/// (the erased `process_any` path) and assert bit-exact BBFRAME recovery.
+fn assert_factory_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
+    let stages = dvb_t2_bicm_stages(
+        rate,
+        modulation,
+        DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+        DemapMethod::ExactLogMap,
+    );
+
+    let bbframe = random_bbframe(stages.codec.k_bch(), seed);
+    let input: Box<dyn TypedBatch> = Box::new(BitPackedBatch::new(vec![bbframe.clone()]));
+
+    // Forward chain: BitPackedBatch → BitPackedBatch → BitPackedBatch → SymbolBatch.
+    let after_forward = run_erased_chain(&stages.forward, input);
+
+    // Noiseless channel: the SymbolBatch feeds straight into the inverse chain.
+    // Inverse chain: SymbolBatch → LlrBatch → LlrBatch → HardDecisionBatch.
+    let after_inverse = run_erased_chain(&stages.inverse, after_forward);
+
+    // The terminal output is HardDecisionBatch; downcast and compare.
+    let recovered = after_inverse
+        .as_any()
+        .downcast_ref::<HardDecisionBatch>()
+        .expect("factory inverse chain must produce HardDecisionBatch");
+
+    assert_eq!(
+        recovered.frames[0], bbframe,
+        "factory noiseless roundtrip must reconstruct BBFRAME bit-exactly \
+         for {rate:?} / {modulation:?}"
+    );
+}
+
 /// Run the noiseless forward + inverse BICM chain on a single seeded BBFRAME
-/// and assert bit-exact recovery for the given MODCOD.
+/// and assert bit-exact recovery for the given MODCOD (manual-chain variant).
 fn assert_noiseless_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
     // Shared codec + interleaver (Normal frame, n=64800).
     let mut concat = DvbT2Concat::new(FrameSize::Normal, rate).expect("codec construction");
@@ -88,13 +152,31 @@ fn assert_noiseless_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed:
     // Noiseless channel: symbols feed straight into the demapper.
     let llrs = demap.process(&symbols, &mut ()).expect("demap");
     let deinterleaved = deinterleave.process(&llrs, &mut ()).expect("deinterleave");
-    let recovered = decode.process(&deinterleaved, &mut ()).expect("decode");
+    let recovered: HardDecisionBatch = decode.process(&deinterleaved, &mut ()).expect("decode");
 
     assert_eq!(
         recovered.frames[0], bbframe,
         "noiseless roundtrip must reconstruct BBFRAME bit-exactly for {rate:?} / {modulation:?}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Factory-driven roundtrip tests (primary criterion: exercises dvb_t2_bicm_stages)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_factory_roundtrip_r1_2_16qam() {
+    assert_factory_roundtrip(CodeRate::Rate1_2, DvbT2Modulation::Qam16, 0xC0DE_F00D);
+}
+
+#[test]
+fn test_factory_roundtrip_r1_2_64qam() {
+    assert_factory_roundtrip(CodeRate::Rate1_2, DvbT2Modulation::Qam64, 0x5EED_1234);
+}
+
+// ---------------------------------------------------------------------------
+// Manual-chain roundtrip tests (kept as a typed-API sanity check)
+// ---------------------------------------------------------------------------
 
 #[test]
 fn test_noiseless_roundtrip_r1_2_16qam() {
