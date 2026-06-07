@@ -1,122 +1,82 @@
 {
   "epic_id": "f9717e7e-3950-422c-a545-d940d119a440",
   "epic_short_id": "f9717e7e",
-  "current_wave": 1,
+  "current_wave": 2,
+  "schema_note": "Waves restructured 2026-06-07 after pre-dispatch coupling audit + user-approved foundation task 19ae6540. Phase A is more serial than the original plan because of real cross-task couplings (batch types, DVB-T2 stage wrappers, WorkerCtx). Phase B runs parallel to Phase A.",
   "waves": [
-    {
-      "wave_number": 1,
-      "label": "A.1 — scaffolding + baseline",
-      "issues": [
-        {"id": "118a0091", "short_id": "118a0091", "title": "gf2-sim crate scaffolding", "classification": "implementation", "status": "dispatched"},
-        {"id": "c0b1702d", "short_id": "c0b1702d", "title": "Single-thread baseline measurement", "classification": "implementation", "status": "dispatched"}
-      ]
-    },
-    {
-      "wave_number": 2,
-      "label": "A.2 + B.1 — CPU fan-out + HIP host infra",
-      "issues": [
-        {"id": "3fcb7025", "short_id": "3fcb7025", "title": "Within-SNR frame parallelism + deterministic aggregation", "classification": "implementation", "status": "pending"},
-        {"id": "81d05bab", "short_id": "81d05bab", "title": "DVB-T2 typestate builder preset", "classification": "implementation", "status": "pending"},
-        {"id": "c09d3e95", "short_id": "c09d3e95", "title": "Graph-based chain construction API", "classification": "implementation", "status": "pending"},
-        {"id": "db9836e4", "short_id": "db9836e4", "title": "CPU AWGN/Rayleigh/Rician channel stages", "classification": "implementation", "status": "pending"},
-        {"id": "36075e4c", "short_id": "36075e4c", "title": "HIP host infrastructure", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 3,
-      "label": "A.3 + B.2 — checkpoint v2 + GPU kernels",
-      "issues": [
-        {"id": "5f12e7ff", "short_id": "5f12e7ff", "title": "Heartbeat-checkpoint v2 integration", "classification": "implementation", "status": "pending"},
-        {"id": "f6004add", "short_id": "f6004add", "title": "GPU ChaCha20 + Box-Muller AWGN kernel", "classification": "implementation", "status": "pending"},
-        {"id": "a930be7f", "short_id": "a930be7f", "title": "GPU LDPC BP batch decode kernel", "classification": "implementation", "status": "pending"},
-        {"id": "d3f1616a", "short_id": "d3f1616a", "title": "GPU Gray-QAM soft demap integration", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 4,
-      "label": "A.4 + B.3 — determinism tests + GPU OOM handling",
-      "issues": [
-        {"id": "48a0db6c", "short_id": "48a0db6c", "title": "CPU parallelism determinism property test suite", "classification": "implementation", "status": "pending"},
-        {"id": "ed575f15", "short_id": "ed575f15", "title": "GPU OOM auto-fallback and kernel hard-fail", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 5,
-      "label": "B.4 — GPU-vs-CPU byte-identity harness (Phase A+B close)",
-      "issues": [
-        {"id": "14f59c2d", "short_id": "14f59c2d", "title": "GPU-vs-CPU byte-identity harness", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 6,
-      "label": "C.1 — pipeline scheduler",
-      "issues": [
-        {"id": "75c22fa8", "short_id": "75c22fa8", "title": "Pipeline scheduler (rayon workers + HIP streams)", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 7,
-      "label": "C.2 — executor topology + resume + failure wiring",
-      "issues": [
-        {"id": "de160fc5", "short_id": "de160fc5", "title": "DAG topology executor", "classification": "implementation", "status": "pending"},
-        {"id": "571c11c4", "short_id": "571c11c4", "title": "Resume and checkpoint across hybrid path", "classification": "implementation", "status": "pending"},
-        {"id": "42eac5cc", "short_id": "42eac5cc", "title": "Failure mode wiring", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 8,
-      "label": "D.1 — DVB-T2 preset + graph example",
-      "issues": [
-        {"id": "8c8302c8", "short_id": "8c8302c8", "title": "DVB-T2 preset and graph-API example", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 9,
-      "label": "D.2 — campaign binary migration (unblocks e4849f07)",
-      "issues": [
-        {"id": "bbf6b6ee", "short_id": "bbf6b6ee", "title": "Migrate dvb_t2_awgn_campaign binary to gf2-sim", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 10,
-      "label": "D.3 — CPU-vs-GPU byte-identity regression",
-      "issues": [
-        {"id": "0d9cb8e3", "short_id": "0d9cb8e3", "title": "CPU-vs-GPU byte-identity regression for DVB-T2", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 11,
-      "label": "E.1 — 5G NR base graphs + shift tables",
-      "issues": [
-        {"id": "acf9b11a", "short_id": "acf9b11a", "title": "5G NR LDPC base graphs and per-i_LS shift tables", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 12,
-      "label": "E.2 — 5G NR typestate preset",
-      "issues": [
-        {"id": "e478daa8", "short_id": "e478daa8", "title": "5G NR LDPC typestate builder preset", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 13,
-      "label": "E.3 — 5G NR GPU kernel tuning to real-time",
-      "issues": [
-        {"id": "23d3525f", "short_id": "23d3525f", "title": "5G NR LDPC GPU kernel tuning to real-time", "classification": "implementation", "status": "pending"}
-      ]
-    },
-    {
-      "wave_number": 14,
-      "label": "E.4 + E.5 — comparison harness + onboarding (epic close)",
-      "issues": [
-        {"id": "18e69a1a", "short_id": "18e69a1a", "title": "Comparison harness vs aff3ct and IT++", "classification": "implementation", "status": "pending"},
-        {"id": "110e45cc", "short_id": "110e45cc", "title": "Researcher onboarding examples and rustdoc", "classification": "documentation", "status": "pending"}
-      ]
-    }
+    {"wave": "A.1", "status": "done", "issues": [
+      {"short_id": "118a0091", "title": "gf2-sim crate scaffolding", "status": "done", "note": "1 rework cycle (AnyStage erasure etc.)"},
+      {"short_id": "c0b1702d", "title": "Single-thread baseline measurement", "status": "gating", "note": "1.6216 fps canonical (+0.29% vs 1.617 ref); cargo-ci passed, code-review running"}
+    ]},
+    {"wave": "A.2a", "status": "pending", "issues": [
+      {"short_id": "19ae6540", "title": "gf2-sim batch types + DVB-T2 BICM Stage wrappers (FOUNDATION)", "status": "ready", "note": "single writer (edits lib.rs); must land before A.2b. Supersedes 81d05bab deliverable 2."}
+    ]},
+    {"wave": "A.2b", "status": "pending", "issues": [
+      {"short_id": "3fcb7025", "title": "Within-SNR frame parallelism + deterministic aggregation", "status": "pending", "note": "needs 19ae6540 + c0b1702d; owns WorkerCtx/seek/strides; uses FND stages + inline AWGN for its DVB-T2 throughput/determinism evidence; carries parallelism-pays gate"},
+      {"short_id": "c09d3e95", "title": "Graph-based chain construction API", "status": "pending", "note": "needs 19ae6540; criterion-1 DVB-T2 chain uses FND stages (noiseless roundtrip)"}
+    ]},
+    {"wave": "A.2c", "status": "pending", "issues": [
+      {"short_id": "db9836e4", "title": "CPU AWGN/Rayleigh/Rician channel stages", "status": "pending", "note": "needs 3fcb7025 (WorkerCtx) + 19ae6540 (batch types)"}
+    ]},
+    {"wave": "A.2d", "status": "pending", "issues": [
+      {"short_id": "81d05bab", "title": "DVB-T2 typestate builder preset", "status": "pending", "note": "needs c09d3e95 (graph) + 19ae6540 (FND stages) + db9836e4 (channel); owns preset_vs_graph equality test"}
+    ]},
+    {"wave": "A.3", "status": "pending", "issues": [
+      {"short_id": "5f12e7ff", "title": "Heartbeat-checkpoint v2 integration", "status": "pending", "note": "needs 3fcb7025 + db9836e4"}
+    ]},
+    {"wave": "A.4", "status": "pending", "issues": [
+      {"short_id": "48a0db6c", "title": "CPU parallelism determinism property test suite (Phase A close)", "status": "pending", "note": "needs db9836e4 + 5f12e7ff; CLAUDE.md determinism-contract update"}
+    ]},
+    {"wave": "B.1", "status": "done", "issues": [
+      {"short_id": "36075e4c", "title": "HIP host infrastructure", "status": "gating", "note": "commit 2b25b443; pre-warm cargo-ci passed (132s); running gates"}
+    ]},
+    {"wave": "B.2", "status": "pending", "issues": [
+      {"short_id": "f6004add", "title": "GPU ChaCha20 + Box-Muller AWGN kernel", "status": "pending"},
+      {"short_id": "a930be7f", "title": "GPU LDPC BP batch decode kernel", "status": "pending", "note": "parallelism-pays + >=3x CPU-24 threshold"},
+      {"short_id": "d3f1616a", "title": "GPU Gray-QAM soft demap integration", "status": "pending"}
+    ]},
+    {"wave": "B.3", "status": "pending", "issues": [
+      {"short_id": "ed575f15", "title": "GPU OOM auto-fallback and kernel hard-fail", "status": "pending"}
+    ]},
+    {"wave": "B.4", "status": "pending", "issues": [
+      {"short_id": "14f59c2d", "title": "GPU-vs-CPU byte-identity harness (Phase B close)", "status": "pending"}
+    ]},
+    {"wave": "C.1", "status": "pending", "issues": [
+      {"short_id": "75c22fa8", "title": "Pipeline scheduler (rayon + HIP streams)", "status": "pending", "note": "needs story A (bcf7776d) + story B (1f588e2a) done"}
+    ]},
+    {"wave": "C.2", "status": "pending", "issues": [
+      {"short_id": "de160fc5", "title": "DAG topology executor", "status": "pending"},
+      {"short_id": "571c11c4", "title": "Resume/checkpoint across hybrid path", "status": "pending"},
+      {"short_id": "42eac5cc", "title": "Failure mode wiring", "status": "pending"}
+    ]},
+    {"wave": "D.1", "status": "pending", "issues": [{"short_id": "8c8302c8", "title": "DVB-T2 preset + graph example", "status": "pending"}]},
+    {"wave": "D.2", "status": "pending", "issues": [{"short_id": "bbf6b6ee", "title": "Migrate campaign binary (unblocks e4849f07)", "status": "pending"}]},
+    {"wave": "D.3", "status": "pending", "issues": [{"short_id": "0d9cb8e3", "title": "CPU-vs-GPU byte-identity regression", "status": "pending"}]},
+    {"wave": "E.1", "status": "pending", "issues": [{"short_id": "acf9b11a", "title": "5G NR base graphs + per-i_LS shift tables", "status": "pending", "note": "trap: feedback_ldpc_shift_tables"}]},
+    {"wave": "E.2", "status": "pending", "issues": [{"short_id": "e478daa8", "title": "5G NR typestate preset", "status": "pending"}]},
+    {"wave": "E.3", "status": "pending", "issues": [{"short_id": "23d3525f", "title": "5G NR GPU kernel tuning to real-time (>=200 Mbps)", "status": "pending"}]},
+    {"wave": "E.4-5", "status": "pending", "issues": [
+      {"short_id": "18e69a1a", "title": "Comparison harness vs aff3ct/IT++", "status": "pending"},
+      {"short_id": "110e45cc", "title": "Researcher onboarding + rustdoc (epic close)", "status": "pending"}
+    ]}
   ],
-  "created_during_execution": [],
-  "escalations": [],
+  "created_during_execution": [
+    {"short_id": "19ae6540", "title": "gf2-sim batch types + DVB-T2 BICM Stage wrappers", "reason": "user-approved escalation: shared Phase A foundation (batch types + stage wrappers) that 3fcb7025/c09d3e95/81d05bab all need; supersedes 81d05bab deliverable 2"}
+  ],
+  "dag_corrections": [
+    "36075e4c -> 118a0091 (gpu/mod.rs stub home)",
+    "19ae6540 -> 118a0091; {3fcb7025,c09d3e95,db9836e4,81d05bab} -> 19ae6540; db9836e4 -> 3fcb7025; 81d05bab -> {c09d3e95,db9836e4}"
+  ],
+  "escalations": [
+    {"date": "2026-06-07", "topic": "Phase A shared DVB-T2 stage-wrapper/batch-type foundation", "resolution": "user chose: New shared foundation task (19ae6540)"}
+  ],
   "rework_counts": {"118a0091": 1},
-  "started_at": "2026-06-07T00:00:00Z",
-  "notes": "DAG correction applied: added edge 36075e4c->118a0091 (gpu/mod.rs stub home). c0b1702d must use standalone dev/benchmarks/gf2-sim/baseline_runner/ (NOT crates/gf2-sim/benches) because it runs parallel to 118a0091 before gf2-sim exists."
+  "process_notes": [
+    "Gate order: run BOTH cargo-ci AND code-review on the worker branch/merge BEFORE marking done. (118a0091 was merged after cargo-ci but before code-review, which then failed; fixed forward.)",
+    "cargo-ci gate has a hard 300s timeout. Cold full --all-features build (HIP via hipcc) exceeds it; PRE-WARM with ./scripts/cargo-ci.sh after merge, then run the gate (incremental ~130s).",
+    "Pre-existing main breakage fixed: sim_checkpoint_helper.rs was fmt-dirty (commit d456b685), making cargo-ci fmt step red independent of this epic.",
+    "Disk at 93% (70GB main target/). Workers MUST use targeted -p builds, not --workspace --all-features, in worktrees.",
+    "Background worker wait-loops end their turn on each Monitor poll, causing notification churn; instruct a single PID-exit wait."
+  ],
+  "started_at": "2026-06-07T00:00:00Z"
 }
