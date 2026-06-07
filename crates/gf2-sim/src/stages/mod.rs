@@ -18,7 +18,7 @@
 //! | [`GrayQamMap`] | [`GrayQamMapper::map_bits`] | [`BitPackedBatch`] → [`SymbolBatch`] |
 //! | [`GrayQamDemap`] | [`FastGrayQamDemapper::demap_llrs`] | [`SymbolBatch`] → [`LlrBatch`] |
 //! | [`BitDeinterleave`] | [`DvbT2BitInterleaver::deinterleave_llrs`] | [`LlrBatch`] → [`LlrBatch`] |
-//! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft`] | [`LlrBatch`] → [`BitPackedBatch`] |
+//! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft`] | [`LlrBatch`] → [`HardDecisionBatch`] |
 //!
 //! Every stage is pure-CPU: `Scratch = ()`, `CpuFallback = Self`,
 //! `execution_class() == ExecutionClass::CpuOnly` (design-doc §1, §8).
@@ -45,7 +45,7 @@ use gf2_coding::modem::{
 use gf2_coding::{CodeRate, Llr};
 use gf2_core::BitVec;
 
-use crate::batch::{BitPackedBatch, LlrBatch, SymbolBatch};
+use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::error::StageError;
 use crate::stage::{erase, AnyStage, ExecutionClass, Stage};
 
@@ -463,7 +463,7 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
 /// ```no_run
 /// use std::sync::Arc;
 /// use gf2_sim::stages::DvbT2Decode;
-/// use gf2_sim::batch::LlrBatch;
+/// use gf2_sim::batch::{HardDecisionBatch, LlrBatch};
 /// use gf2_sim::Stage;
 /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
 /// use gf2_coding::ldpc::dvb_t2::FrameSize;
@@ -472,7 +472,7 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
 /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
 /// let stage = DvbT2Decode::new(codec.clone());
 /// let llrs = vec![Llr::new(10.0); codec.n_ldpc()];
-/// let out = stage.process(&LlrBatch::new(vec![llrs]), &mut ()).unwrap();
+/// let out: HardDecisionBatch = stage.process(&LlrBatch::new(vec![llrs]), &mut ()).unwrap();
 /// assert_eq!(out.frames[0].len(), codec.k_bch());
 /// ```
 pub struct DvbT2Decode {
@@ -490,11 +490,15 @@ impl DvbT2Decode {
     }
 }
 
-impl Stage<LlrBatch, BitPackedBatch> for DvbT2Decode {
+impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
     type Scratch = ();
     type CpuFallback = Self;
 
-    fn process(&self, input: &LlrBatch, _scratch: &mut ()) -> Result<BitPackedBatch, StageError> {
+    fn process(
+        &self,
+        input: &LlrBatch,
+        _scratch: &mut (),
+    ) -> Result<HardDecisionBatch, StageError> {
         let frames: Vec<BitVec> = input
             .frames
             .iter()
@@ -515,7 +519,7 @@ impl Stage<LlrBatch, BitPackedBatch> for DvbT2Decode {
                 )),
             })
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(BitPackedBatch::new(frames))
+        Ok(HardDecisionBatch::new(frames))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -537,7 +541,7 @@ impl Stage<LlrBatch, BitPackedBatch> for DvbT2Decode {
 /// * `forward` — `[DvbT2Encode, BitInterleave, GrayQamMap]`
 ///   (`BitPackedBatch` → `BitPackedBatch` → `BitPackedBatch` → `SymbolBatch`).
 /// * `inverse` — `[GrayQamDemap, BitDeinterleave, DvbT2Decode]`
-///   (`SymbolBatch` → `LlrBatch` → `LlrBatch` → `BitPackedBatch`).
+///   (`SymbolBatch` → `LlrBatch` → `LlrBatch` → `HardDecisionBatch`).
 ///
 /// A channel stage (owned by `db9836e4`) slots between `forward` and `inverse`
 /// (`SymbolBatch` → `SymbolBatch`); this factory deliberately emits no channel
@@ -669,10 +673,12 @@ mod tests {
             DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             DemapMethod::ExactLogMap,
         );
+        use crate::batch::HardDecisionBatch;
         use std::any::TypeId;
         let bitpacked = TypeId::of::<BitPackedBatch>();
         let symbol = TypeId::of::<SymbolBatch>();
         let llr = TypeId::of::<LlrBatch>();
+        let hard = TypeId::of::<HardDecisionBatch>();
 
         assert_eq!(s.forward[0].input_type(), bitpacked);
         assert_eq!(s.forward[0].output_type(), bitpacked); // encode
@@ -680,12 +686,12 @@ mod tests {
         assert_eq!(s.forward[2].input_type(), bitpacked);
         assert_eq!(s.forward[2].output_type(), symbol); // map
 
-        // Inverse chain: Symbol -> Llr -> Llr -> BitPacked.
+        // Inverse chain: Symbol -> Llr -> Llr -> HardDecision.
         assert_eq!(s.inverse[0].input_type(), symbol);
         assert_eq!(s.inverse[0].output_type(), llr); // demap
         assert_eq!(s.inverse[1].output_type(), llr); // deinterleave
         assert_eq!(s.inverse[2].input_type(), llr);
-        assert_eq!(s.inverse[2].output_type(), bitpacked); // decode
+        assert_eq!(s.inverse[2].output_type(), hard); // decode
     }
 
     #[test]
