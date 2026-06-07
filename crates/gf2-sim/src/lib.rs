@@ -12,6 +12,8 @@
 //! |--------|---------|
 //! | [`pipeline`] | [`Pipeline`] and its batch-submission API |
 //! | [`stage`] | [`Stage`], [`AnyStage`], [`ErasedStage`], [`erase`], [`TypedBatch`], [`AnyScratch`] |
+//! | [`batch`] | concrete batch types: [`BitPackedBatch`], [`SymbolBatch`], [`LlrBatch`], [`HardDecisionBatch`] |
+//! | [`stages`] | DVB-T2 codec+modem [`Stage`] wrappers + [`dvb_t2_bicm_stages`](stages::dvb_t2_bicm_stages) wiring factory |
 //! | [`connector`] | [`Connector`], [`Edge`], [`StageId`] |
 //! | [`error`] | [`StageError`], [`RecoverableError`], [`FatalError`], [`BuildError`] |
 //! | [`config`] | [`PipelineConfig`] (with `From<&SimulationConfig>`) |
@@ -33,6 +35,7 @@
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod batch;
 pub mod channels;
 pub mod checkpoint;
 pub mod config;
@@ -46,7 +49,10 @@ pub mod parallel;
 pub mod pipeline;
 pub mod presets;
 pub mod stage;
+pub mod stages;
 
+#[doc(inline)]
+pub use batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 #[doc(inline)]
 pub use config::PipelineConfig;
 #[doc(inline)]
