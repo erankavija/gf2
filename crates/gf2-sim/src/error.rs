@@ -217,6 +217,18 @@ pub enum BuildError {
         /// `"Qpsk"`).
         modulation: String,
     },
+    /// A channel parameter is invalid — e.g. a non-finite (`NaN`/`±inf`) Es/N0,
+    /// or one so large that the derived demapper noise variance underflows to a
+    /// non-positive value.
+    ///
+    /// Carries a human-readable, standard-agnostic explanation of what was
+    /// rejected. A preset's `build()` returns this instead of letting a
+    /// downstream stage constructor panic on the bad parameter, so invalid
+    /// public input always yields a typed error.
+    InvalidChannel {
+        /// A human-readable explanation of the rejected channel parameter.
+        reason: String,
+    },
     /// A loaded checkpoint's `config_hash` does not match the live config.
     ///
     /// See design doc §4: loaded checkpoints whose `config_hash` differs from
