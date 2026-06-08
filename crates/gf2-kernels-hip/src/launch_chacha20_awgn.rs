@@ -419,7 +419,8 @@ mod tests {
     /// The first ChaCha word the host RNG produces at position 0 is a pure
     /// function of the seed; record that the RNG is reproducible at a fixed
     /// seed (the device kernel is checked against this same RNG in the
-    /// gfx1030-gated integration test `tests/gpu_rng_byte_identity.rs`).
+    /// gfx1030-gated byte-identity + 1-ulp tests in `gf2-sim`'s `gpu::awgn`
+    /// module, which call the real `gf2_sim::parallel::worker_offset`).
     #[test]
     fn test_host_rng_reproducible_at_seed() {
         let mut a = ChaCha20Rng::seed_from_u64(123);

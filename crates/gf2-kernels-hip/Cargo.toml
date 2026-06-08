@@ -25,9 +25,11 @@ gf2-algebra = { path = "../gf2-algebra" }
 gf2-coding = { path = "../gf2-coding", features = ["hip"] }
 proptest = "1.0"
 criterion = "0.5"
-# Host-side oracle for the GPU ChaCha20 byte-identity test (matches the
-# `gf2-sim` parallel module's pin): rand_chacha 0.9 `set_word_pos` + rand 0.9
-# `f64` sampling reproduce the exact word stream the device kernel must match.
+# Used by the `launch_chacha20_awgn` unit tests to confirm the host key
+# derivation matches `rand_chacha 0.9`'s `ChaCha20Rng::seed_from_u64`. (The full
+# GPU byte-identity + 1-ulp regression lives in `gf2-sim`'s `gpu::awgn` tests,
+# where it can call the real `gf2_sim::parallel::worker_offset` rather than
+# duplicating the seek scheme — this crate is upstream of `gf2-sim`.)
 rand = "0.9"
 rand_chacha = "0.9"
 
