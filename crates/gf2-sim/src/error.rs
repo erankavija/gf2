@@ -187,6 +187,21 @@ pub enum BuildError {
         /// The CPU fallback stage that is not CPU-capable.
         cpu_stage: StageId,
     },
+    /// A CPU fallback target has an incident graph edge.
+    ///
+    /// A CPU fallback target is **not** a node in the pipeline DAG — it is a
+    /// substitution target reachable only on GPU OOM, and is excluded from the
+    /// built pipeline's stage list and topological order. Connecting it with
+    /// [`Chain::connect`](crate::graph::Chain::connect) (on either end) would
+    /// therefore silently lose that edge during materialisation, producing a
+    /// [`Pipeline`](crate::Pipeline) whose `edges()` do not faithfully reflect
+    /// the registered topology. Such an edge is rejected at build time instead.
+    FallbackTargetHasEdge {
+        /// The CPU fallback target that was (incorrectly) given an edge.
+        stage: StageId,
+        /// The other endpoint of the offending edge.
+        edge_peer: StageId,
+    },
     /// An invalid `(rate, modulation)` combination was requested.
     ///
     /// Carries human-readable, standard-agnostic descriptors of the *actual*
