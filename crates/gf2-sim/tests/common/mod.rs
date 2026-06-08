@@ -54,6 +54,13 @@ use gf2_sim::parallel::WorkerCounters;
 /// * `actual` — the counters from a non-baseline worker count.
 /// * `baseline` — the 1-worker reference counters.
 /// * `label` — a human-readable config/worker label for assertion messages.
+///
+/// # Panics
+///
+/// Panics (via `assert_eq!`) if any of the four byte-identity columns differ
+/// between `actual` and `baseline`: `frames`, `errors`, the `fer` bit pattern,
+/// or the `mean_iters` bit pattern (including its `total_iterations`
+/// numerator). The panic message names the offending column and both values.
 #[track_caller]
 pub fn assert_four_columns_byte_identical(
     actual: &WorkerCounters,

@@ -287,7 +287,7 @@ fn record_ber(c: &WorkerCounters, label: &str, workers: usize) {
 /// SSOT helper [`assert_four_columns_byte_identical`]. The worker counts are
 /// split across two tests per config ([`WORKER_GROUP_NARROW`] /
 /// [`WORKER_GROUP_WIDE`]) so each slow-tier test stays under the 120 s/test cap;
-/// together they cover all of [`WORKER_COUNTS`].
+/// together the two groups cover all of `{1, 2, 4, 8, 24}`.
 fn assert_workers_byte_identical(cfg: DetConfig, workers: &[usize]) {
     assert_eq!(
         workers[0], 1,
