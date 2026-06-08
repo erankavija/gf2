@@ -26,6 +26,7 @@ criterion = "0.5"
 proptest = "1.0"
 rand = "0.8"
 rayon = "1.10"
+trybuild = "1"
 
 [profile.release]
 lto = "thin"
