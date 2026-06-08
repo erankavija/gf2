@@ -1,0 +1,12 @@
+error[E0599]: no method named `decoder` found for struct `gf2_sim::presets::dvb_t2::Builder<NeedsModcod>` in the current scope
+  --> tests/compile_fail/wrong_order.rs:11:10
+   |
+10 |       let _ = Pipeline::dvb_t2()
+   |  _____________-
+11 | |         .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true));
+   | |         -^^^^^^^ method not found in `gf2_sim::presets::dvb_t2::Builder<NeedsModcod>`
+   | |_________|
+   |
+   |
+   = note: the method was found for
+           - `gf2_sim::presets::dvb_t2::Builder<NeedsDecoder>`

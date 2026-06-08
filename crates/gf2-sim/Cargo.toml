@@ -24,6 +24,7 @@ blake3 = "1" # for v2 checkpoint config_hash
 
 [dev-dependencies]
 proptest = { workspace = true }
+trybuild = { workspace = true }
 
 [features]
 default = []
