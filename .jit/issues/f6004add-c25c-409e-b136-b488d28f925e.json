@@ -2,9 +2,9 @@
   "id": "f6004add-c25c-409e-b136-b488d28f925e",
   "title": "GPU ChaCha20 and Box-Muller AWGN kernel",
   "description": "## Goal\n\nDevice-side ChaCha20 kernel + Box-Muller AWGN sampler producing\nbyte-identical noise stream to the host ChaCha20 partitioning scheme\nat the same seed and per-worker `set_word_pos` offset. Designed in\nPhase 0 §3.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §3 (per-worker seek scheme,\nsame formula CPU and device). Wave B.2 fan-out from `36075e4c`.\n\n## Deliverables\n\n1. `crates/gf2-kernels-hip/kernels/chacha20_awgn.hip` containing:\n   - Device ChaCha20 block function computed from `(seed, snr_idx,\n     worker_idx, frame_idx)` via the `worker_offset(...)` formula\n     from design-doc §3.\n   - Box-Muller pair generator producing two f32 standard normals\n     per ChaCha20 block (consuming 8 u32 words).\n   - `__global__ void chacha20_awgn_kernel(...)` writing N frames of\n     noise samples to a `Connector<SymbolComplexF32>` device buffer.\n2. `crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs`:\n   - Host-side wrapper `launch_chacha20_awgn(stream, ...)` invoking\n     the kernel with a fixed grid + block per design-doc launch\n     determinism.\n3. `crates/gf2-sim/src/gpu/awgn.rs` (under `--features hip`):\n   - `pub struct GpuAwgn { es_n0_db: f32, bits_per_symbol: usize }`\n     implementing `Stage<SymbolBatch, SymbolBatch>` with\n     `cpu_fallback()` returning the CPU `channels::Awgn` per\n     design-doc §8.\n4. Byte-identity smoke test in `tests/gpu_rng_byte_identity.rs`\n   (under `--features hip`):\n   - For N ∈ {1, 256, 1024} frames at a fixed seed + worker_idx,\n     the GPU ChaCha20 raw bytes and host\n     `ChaCha20Rng::set_word_pos(worker_offset(...))` raw bytes\n     match bit-for-bit.\n   - After Box-Muller transform, the noise samples match within\n     ≤ 1 ulp f32 tolerance (Box-Muller is not bit-exact across\n     hardware sin/cos implementations, but should agree to ulp).\n5. Parallelism-pays receipt: append an entry to\n   `dev/benchmarks/gf2-sim/parallelism-receipts.md` per project\n   plan §5 schema, comparing GPU AWGN throughput against the\n   single-thread CPU baseline from `c0b1702d` AND against the\n   24-thread CPU baseline from `3fcb7025`'s receipt (so reviewers\n   can spot a GPU receipt that's actually a regression vs CPU-24).\n\n## Success Criteria\n\n- [hard] GPU ChaCha20 raw bytes byte-identical to host stream at\n  the same `worker_offset(...)`.\n- [hard] AWGN samples agree with the CPU `channels::Awgn` to ≤ 1\n  ulp f32 for ≥ 1024 frames at fixed seed.\n- [hard] `parallelism-pays` gate: receipt records throughput\n  ≥ 10× single-thread CPU baseline (from `c0b1702d`) AND reports\n  the comparison vs CPU-24-thread baseline for diagnostic\n  comparability.\n- [hard] `cpu_fallback()` returns the CPU `channels::Awgn` stage\n  on the same input; integration verified by Phase B `ed575f15`'s\n  fault-injection tests.\n- [hard] `cargo-ci` (without `--features hip` on default CI;\n  separately with `--features hip` on the gfx1030 runner),\n  `code-review`, `parallelism-pays` gates green.\n\n## Non-goals\n\n- No GPU Rayleigh / Rician (epic scope is AWGN-on-GPU only).\n- No multi-device dispatch (epic non-goal).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "36075e4c-9813-48cd-bee6-5fc28de15818"
   ],
@@ -23,5 +23,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:33.640096006+00:00",
-  "updated_at": "2026-06-07T11:34:25.562033810+00:00"
+  "updated_at": "2026-06-08T14:12:46.034896877+00:00"
 }
