@@ -2,7 +2,7 @@
   "id": "5f12e7ff-01de-4ca7-b53c-bd7d79bf46dd",
   "title": "Heartbeat-checkpoint integration with parallel executor",
   "description": "## Goal\n\nIntegrate heartbeat-and-per-SNR-boundary checkpointing with the\nparallel executor: SIGINT mid-run flushes a checkpoint with the\nper-worker state from design-doc §4 schema v2; `--resume` from that\ncheckpoint produces byte-identical deterministic columns vs an\nuninterrupted reference run at the same seed.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §4 (heartbeat schema v2),\n§3 (per-worker seek scheme). Sequencing:\n- depends on `3fcb7025` (per-worker dispatch must exist)\n- depends on `db9836e4` (channels must exist so heartbeat tests\n  exercise the AWGN + Rayleigh paths — adds the edge per audit C5)\n\n## AMENDMENT 2026-06-08 (user-approved): CLEAN-CUT v2-only, NO migration, NO backward compat\n\nTwo amendments fold into this body:\n\n1. **v2-only schema** (earlier amendment): the new pipeline is\n   v2-only; `CheckpointReader` loads v2 only.\n2. **Clean-cut, no migration** (this amendment, user decision\n   2026-06-08): there are **no previous runs and no users**, so there\n   is **no v1 backward compatibility and no migration tool** at all.\n   The earlier `checkpoint_migrate` binary and every v1-migration\n   deliverable/criterion/test are **removed**. This supersedes design\n   doc §4's \"Migration tool\" subsection and the epic's Q5 row\n   (\"one-shot migration tool for v1\") — both updated to record the\n   clean-cut decision. The v2 checkpoint schema itself is unchanged.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/checkpoint/mod.rs` containing:\n   - `pub struct CheckpointWriter` that serialises per-SNR state to\n     `<dir>/snr_<NNNN>.json` per design-doc §4 schema v2\n     (`worker_states[]` required, `schema_version: 2`, `config_hash`\n     blake3 of the serialised `PipelineConfig` excluding the\n     path-dependent `checkpoint_dir` / `tracing_log_path` fields).\n   - `pub struct CheckpointReader` that loads **v2 only** and restores\n     per-worker `rng_word_pos`. A non-v2 `schema_version`, a\n     `config_hash` mismatch vs the live config, or an unparseable file\n     is a hard load error (`FatalError::BuildError(BuildError::\n     ConfigHashMismatch)`). There is no v1 path of any kind.\n   - Atomic write: write to `.tmp`, fsync the file, rename, fsync the\n     directory — all errors propagated (contractual durability).\n2. Integration with the parallel executor (`gf2-sim::parallel`):\n   - A serial SNR-sweep runner (`run_sweep_checkpointed`) looping\n     `config.esn0_db_points`, loading any existing v2 checkpoint via\n     `CheckpointReader` when `--resume`, delegating to the per-SNR\n     `run_snr_point_checkpointed` (SNR-boundary flush + heartbeat-\n     interval flush via `heartbeat_every_frames`).\n   - SIGINT handler installed via `ctrlc`; on signal: stop accepting\n     new batches, let in-flight workers settle on a frame boundary\n     (CPU drain), flush checkpoint, fsync. The **non-zero process\n     exit** lives in the `checkpoint_sweep` driver binary (never in\n     library code).\n3. Tests in `tests/checkpoint_compat.rs`:\n   - v2 round-trip resume: a v2 checkpoint loads and resumes on the\n     N-worker path, byte-identical `fer / frames / errors /\n     mean_iters` vs an uninterrupted N-worker reference run.\n   - Real subprocess 10-SNR SIGINT→`--resume` byte-identity, one\n     non-ignored fast-tier test per channel (AWGN, Rayleigh, Rician),\n     each guaranteeing the SIGINT lands mid-run.\n   - Atomic kill-during-fsync: a writer SIGKILLed while in `fsync`\n     leaves either a complete previous-state checkpoint or no new file\n     — never a partial JSON.\n\n## Success Criteria\n\n- [hard] SIGINT mid-run on a 10-SNR sweep flushes a v2 checkpoint\n  per the design-doc §4 schema; re-invoking with `--resume`\n  produces byte-identical `fer / frames / errors / mean_iters`\n  vs an uninterrupted reference run at the same seed across all\n  three channel types (AWGN, Rayleigh, Rician).\n- [hard] Atomic write: a test that kills the writer mid-flush (via\n  signal **after the tmp bytes are written and before the atomic\n  rename** — amended 2026-06-08 from \"during fsync\", which cannot be\n  instrumented from user space; the durability contract is the\n  no-torn-file invariant, not proof of being inside the syscall)\n  leaves either a complete previous-state checkpoint or no new file\n  at all; never a partial JSON.\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- GPU-pipeline drain semantics (owned by Phase C `571c11c4`).\n- Across-SNR parallelism checkpointing (epic non-goal — within-SNR\n  parallelism is the contract; cross-SNR parallel was the legacy\n  `run_coded_iterative_parallel` path that is not migrated).\n- **Any v1 backward compatibility or migration** (clean-cut v2-only;\n  no prior runs or users — user decision 2026-06-08). The reader is\n  v2-only; there is no `checkpoint_migrate` tool and no v1 test.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,14 +15,14 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
+      "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-08T17:39:08.850916478Z"
+      "updated_at": "2026-06-08T19:54:06.258619954Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-08T17:38:57.533932190Z"
+      "updated_at": "2026-06-08T19:53:54.319259419Z"
     }
   },
   "context": {},
@@ -33,5 +33,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:09.566020958+00:00",
-  "updated_at": "2026-06-08T19:14:46.168483677+00:00"
+  "updated_at": "2026-06-08T19:56:04.189139675+00:00"
 }
