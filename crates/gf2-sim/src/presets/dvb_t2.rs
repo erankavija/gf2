@@ -75,7 +75,7 @@ use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
 use crate::channels::Awgn;
-use crate::error::{BuildError, Modulation, NrRate};
+use crate::error::BuildError;
 use crate::graph::Chain;
 use crate::pipeline::Pipeline;
 use crate::stage::erase;
@@ -113,23 +113,31 @@ impl Modcod {
     ///
     /// # Errors
     ///
-    /// Returns [`BuildError::InvalidModcod`] (carrying the offending rate and
-    /// modulation) when the `(rate, modulation)` pair is outside that set — e.g.
-    /// a DVB-T2 rate such as `Rate3_5` that this preset does not wire, or the
-    /// QPSK modulation.
+    /// Returns [`BuildError::InvalidModcod`] when the `(rate, modulation)` pair
+    /// is outside that set — e.g. a DVB-T2 rate such as `Rate3_5` that this
+    /// preset does not wire, or the QPSK modulation. The error carries
+    /// human-readable strings of the **actual** offending rate and modulation
+    /// that were requested (e.g. `rate = "5/6"`, `modulation = "QPSK"`), so it
+    /// reports exactly what was rejected rather than a lossy fold onto the
+    /// in-scope set.
     ///
     /// # Examples
     ///
     /// ```
     /// use gf2_sim::presets::dvb_t2::Modcod;
+    /// use gf2_sim::error::BuildError;
     /// use gf2_coding::CodeRate;
     /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
     ///
     /// let ok = Modcod::Normal { rate: CodeRate::Rate2_3, modulation: DvbT2Modulation::Qam64 };
     /// assert!(ok.validate().is_ok());
     ///
-    /// let bad = Modcod::Normal { rate: CodeRate::Rate3_5, modulation: DvbT2Modulation::Qam16 };
-    /// assert!(bad.validate().is_err());
+    /// // The error reports the TRUE offending rate, not an in-scope substitute.
+    /// let bad = Modcod::Normal { rate: CodeRate::Rate5_6, modulation: DvbT2Modulation::Qam16 };
+    /// match bad.validate() {
+    ///     Err(BuildError::InvalidModcod { rate, .. }) => assert_eq!(rate, "5/6"),
+    ///     other => panic!("expected InvalidModcod, got {other:?}"),
+    /// }
     /// ```
     pub fn validate(self) -> Result<(), BuildError> {
         let (rate, modulation) = self.parts();
@@ -142,41 +150,36 @@ impl Modcod {
             Ok(())
         } else {
             Err(BuildError::InvalidModcod {
-                rate: map_rate(rate),
-                modulation: map_modulation(modulation),
+                rate: rate_label(rate).to_string(),
+                modulation: modulation_label(modulation).to_string(),
             })
         }
     }
 }
 
-/// Maps a `gf2-coding` [`CodeRate`] onto the [`NrRate`] selector carried by
-/// [`BuildError::InvalidModcod`].
+/// Human-readable label for a DVB-T2 [`CodeRate`] (e.g. `"1/2"`, `"5/6"`).
 ///
-/// The three in-scope rates map onto the matching [`NrRate`] variant; any other
-/// rate (which only ever reaches here on the invalid-MODCOD error path) is
-/// reported as the closest in-scope rate `R1_2` purely so the error carries a
-/// concrete value — the rate string is informational, and the modulation /
-/// rate pair as a whole is what was rejected.
-fn map_rate(rate: CodeRate) -> NrRate {
+/// Renders the rate as its `numerator/denominator` ratio so an out-of-scope
+/// rejected rate is reported losslessly in [`BuildError::InvalidModcod`].
+fn rate_label(rate: CodeRate) -> &'static str {
     match rate {
-        CodeRate::Rate1_2 => NrRate::R1_2,
-        CodeRate::Rate2_3 => NrRate::R2_3,
-        CodeRate::Rate3_4 => NrRate::R3_4,
-        _ => NrRate::R1_2,
+        CodeRate::Rate1_2 => "1/2",
+        CodeRate::Rate3_5 => "3/5",
+        CodeRate::Rate2_3 => "2/3",
+        CodeRate::Rate3_4 => "3/4",
+        CodeRate::Rate4_5 => "4/5",
+        CodeRate::Rate5_6 => "5/6",
     }
 }
 
-/// Maps a `gf2-coding` [`DvbT2Modulation`] onto the [`Modulation`] selector
-/// carried by [`BuildError::InvalidModcod`].
+/// Human-readable label for a [`DvbT2Modulation`] (e.g. `"16-QAM"`, `"QPSK"`).
 ///
-/// 16-QAM and 64-QAM map onto the matching variant; QPSK (the only other
-/// modulation, reachable solely on the invalid-MODCOD error path) is reported as
-/// `Qam16` so the error carries a concrete value.
-fn map_modulation(modulation: DvbT2Modulation) -> Modulation {
+/// Reports the modulation losslessly in [`BuildError::InvalidModcod`].
+fn modulation_label(modulation: DvbT2Modulation) -> &'static str {
     match modulation {
-        DvbT2Modulation::Qam16 => Modulation::Qam16,
-        DvbT2Modulation::Qam64 => Modulation::Qam64,
-        DvbT2Modulation::Qpsk => Modulation::Qam16,
+        DvbT2Modulation::Qpsk => "QPSK",
+        DvbT2Modulation::Qam16 => "16-QAM",
+        DvbT2Modulation::Qam64 => "64-QAM",
     }
 }
 
@@ -573,27 +576,40 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_rejects_out_of_scope_rate() {
+    fn test_validate_rejects_out_of_scope_rate_reports_true_rate() {
+        // Rate5_6 is out of scope; the error must report the ACTUAL rate, not a
+        // lossy fold onto an in-scope value.
         let bad = Modcod::Normal {
-            rate: CodeRate::Rate3_5,
+            rate: CodeRate::Rate5_6,
             modulation: DvbT2Modulation::Qam16,
         };
-        assert!(matches!(
-            bad.validate(),
-            Err(BuildError::InvalidModcod { .. })
-        ));
+        match bad.validate() {
+            Err(BuildError::InvalidModcod { rate, modulation }) => {
+                assert_eq!(rate, "5/6", "must report the true offending rate");
+                // The modulation was in-scope; it is still reported faithfully.
+                assert_eq!(modulation, "16-QAM");
+            }
+            other => panic!("expected InvalidModcod, got {other:?}"),
+        }
     }
 
     #[test]
-    fn test_validate_rejects_qpsk() {
+    fn test_validate_rejects_qpsk_reports_true_modulation() {
+        // QPSK is out of scope; the error must report "QPSK", not "16-QAM".
         let bad = Modcod::Normal {
             rate: CodeRate::Rate1_2,
             modulation: DvbT2Modulation::Qpsk,
         };
-        assert!(matches!(
-            bad.validate(),
-            Err(BuildError::InvalidModcod { .. })
-        ));
+        match bad.validate() {
+            Err(BuildError::InvalidModcod { rate, modulation }) => {
+                assert_eq!(rate, "1/2");
+                assert_eq!(
+                    modulation, "QPSK",
+                    "must report the true offending modulation"
+                );
+            }
+            other => panic!("expected InvalidModcod, got {other:?}"),
+        }
     }
 
     #[test]
