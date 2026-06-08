@@ -22,12 +22,12 @@
 //!
 //! # Test tier
 //!
-//! * Fast-tier `proptest!` (`cases: 16`): `{1, 4}` workers — runs in well under
-//!   5 s.
-//! * Slow-tier `#[ignore = "sim: byte-identity {1,4,24}"]` `proptest!`: the full
-//!   `{1, 4, 24}` set — `{1,4,24}` legitimately must be slow-tier (24-worker
-//!   strided runs over many frames exceed the 5 s nextest limit), mirroring
-//!   `tests/parallel_determinism.rs`.
+//! The full `{1, 4, 24}`-worker byte-identity `proptest!`
+//! (`prop_channels_byte_identical_full`, `cases: 8`, bounded frame/symbol
+//! ranges) runs **un-ignored in the fast tier** (`--profile ci`): measured at
+//! ~13-20 ms, comfortably under the 5 s nextest hard-kill, so it is an enforced
+//! CI gate for the criterion-3 [hard] determinism contract rather than a
+//! slow-tier regression.
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
