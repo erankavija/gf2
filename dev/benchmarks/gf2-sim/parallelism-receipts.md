@@ -104,9 +104,9 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 ## f6004add — GPU ChaCha20 + Box-Muller AWGN kernel
 
-- **Date:** 2026-06-08 (PROVISIONAL — measured on a host that was NOT fully
-  quiet, see Verdict; the project lead RE-MEASURES on a verified-quiet host
-  before attesting the parallelism-pays gate).
+- **Date:** 2026-06-08 (lead clean re-measurement on a verified-quiet host —
+  `cat /proc/loadavg` = 0.42, `rocm-smi` GPU use 0%, no foreign CPU hogs;
+  supersedes the worker's provisional under-load figures).
 - **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
   RX 6950 XT (gfx1030, RDNA2).
 - **Baseline configuration:** single-thread CPU AWGN-step (this is an AWGN-only
@@ -126,14 +126,14 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   against the **single-thread CPU AWGN step** (the apples-to-apples workload).
   For context, the GPU also emits the full-frame baseline ratio below, but that
   number is not the gate metric for an AWGN-only kernel.
-- **Observed throughput (AWGN noise step, 4000 frames, 7 repeats):**
-  - **GPU: 18182 fps ± 187** (very stable across repeats).
-  - **CPU single thread: 1156 fps ± 212** (high sigma — background load on a
-    non-quiet host; a 2000-frame/5-repeat run measured 1271 fps ± 4 when less
-    contended).
-- **Speedup factor:** **GPU / CPU-1-thread AWGN-step = 14.3×–15.7×** across the
-  two runs (≥ the **10×** threshold with margin). The GPU AWGN-step throughput
-  (18182 fps) is ~11000× the *full-frame* 1.6216 fps baseline — but that ratio
+- **Observed throughput (AWGN noise step, 4000 frames, 7 repeats; clean
+  quiet-host re-measure 2026-06-08 at loadavg 0.42):**
+  - **GPU: 18659.31 fps ± 227.77** (very stable across repeats).
+  - **CPU single thread: 1251.07 fps ± 3.30** (tight σ on the quiet host —
+    supersedes the worker's under-load 1156 ± 212).
+- **Speedup factor:** **GPU / CPU-1-thread AWGN-step = 14.91×** (18659.31 /
+  1251.07; ≥ the **10×** threshold with margin). The GPU AWGN-step throughput
+  (18659 fps) is ~11507× the *full-frame* 1.6216 fps baseline — but that ratio
   is not meaningful as a gate (different workload), and is recorded only for
   completeness.
 - **GPU-vs-CPU-24-thread diagnostic:** the canonical CPU-24-thread *full-frame*
@@ -145,16 +145,14 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   end-to-end full-frame fps above the CPU-24 number — it removes the AWGN cost
   from the critical path once the decode is also on-device.
 - **Required threshold (from task body):** ≥ 10× single-thread CPU baseline.
-- **Verdict:** PROVISIONAL PASS — GPU/CPU-1-thread AWGN-step speedup of
-  14.3×–15.7× clears the ≥10× gate with margin, and the GPU number is stable
-  (±187 over 7 repeats). **However the host was NOT verified-quiet:**
-  `cat /proc/loadavg` read **2.05** (and 3.93 / 5.41 on earlier reads — leftover
-  cargo build + background processes), which inflates CPU-1-thread variance
-  (±212) and could *understate* the CPU baseline (contention only slows the CPU
-  comparator, which would *raise* the measured speedup, so the gate is not at
-  risk from contention — but the absolute CPU number is not trustworthy). The
-  PROJECT LEAD must re-measure on a verified-quiet host (`loadavg ≈ 0`) before
-  attesting the gate. Methodology is reproducible via the bin below.
+- **Verdict:** PASS — clean lead re-measurement on a verified-quiet host
+  (`loadavg` = 0.42, `rocm-smi` GPU use 0%, only the throughput bin running).
+  GPU/CPU-1-thread AWGN-step speedup of **14.91×** clears the ≥10× gate with
+  margin; both figures are tight (GPU ±227 over 7 repeats, CPU ±3.30). This
+  supersedes the worker's provisional under-load figures (CPU 1156 ± 212 at
+  loadavg 2.05); contention only *understated* the CPU baseline (raising the
+  apparent speedup), so the gate was never at risk — the clean CPU number
+  (1251 ± 3.3) confirms 14.91×. Attested by `agent:project-lead`.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/gpu_awgn_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --features hip --bin gpu_awgn_throughput -- --frames 4000 --repeats 7 --es-n0 6.5`).
