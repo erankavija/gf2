@@ -1431,6 +1431,45 @@ mod tests {
     }
 
     #[test]
+    fn test_worker_states_rng_word_pos_uses_real_worker_idx() {
+        // Regression guard (design-doc §4 formula): `rng_word_pos` must be keyed
+        // on the PHYSICAL `worker_idx`, NOT hardcoded to 0. Worker 1's recorded
+        // position must equal `worker_offset(seed, snr, 1, frames_in_worker[1])`
+        // and must DIFFER from the `worker_idx = 0` projection — otherwise the
+        // prior bug (every worker collapsed onto the worker-0 axis) could
+        // silently reappear. The CPU within-SNR path itself resumes via the
+        // global `frames_completed`; this field is for the Phase C executor.
+        let cfg = test_config(2);
+        let h = config_hash(&cfg);
+        let snr = 3usize;
+        let per_worker = [8u64, 6u64];
+        let total = WorkerCounters {
+            frames: 14,
+            ..Default::default()
+        };
+        let ckpt = build_checkpoint(&cfg, snr, 6.25, &h, &total, &per_worker, false);
+        assert_eq!(ckpt.worker_states.len(), 2);
+        assert_eq!(ckpt.worker_states[0].worker_idx, 0);
+        assert_eq!(ckpt.worker_states[1].worker_idx, 1);
+        // Each position is the §4-formula offset keyed on the physical worker_idx.
+        assert_eq!(
+            ckpt.worker_states[0].rng_word_pos,
+            worker_offset(cfg.seed, snr, 0, 8)
+        );
+        assert_eq!(
+            ckpt.worker_states[1].rng_word_pos,
+            worker_offset(cfg.seed, snr, 1, 6),
+            "worker 1 must be keyed on worker_idx=1, not 0"
+        );
+        // The old worker_idx=0 bug would have made this hold; assert it does NOT.
+        assert_ne!(
+            ckpt.worker_states[1].rng_word_pos,
+            worker_offset(cfg.seed, snr, 0, 6),
+            "rng_word_pos must NOT collapse worker 1 onto the worker_idx=0 axis"
+        );
+    }
+
+    #[test]
     fn test_sigint_before_run_stops_immediately() {
         let cfg = test_config(2);
         let h = config_hash(&cfg);
