@@ -5,6 +5,17 @@ slow-timeout = { period = "10s", terminate-after = 1 }
 slow-timeout = { period = "5s", terminate-after = 1 }
 fail-fast = false
 
+# The gf2-sim typestate compile-fail guard (issue 81d05bab) uses `trybuild`,
+# which spawns a *fresh* `cargo` compile of the wrong-order example to assert it
+# fails to compile. That cargo invocation inherently exceeds the 5 s fast-tier
+# budget under the full `--all-features` workspace (it is fast in isolation but
+# not under load). It stays in the enforced fast (`ci`) profile — only its
+# timeout is raised to a realistic value for a compiler-spawning test; no other
+# test's budget changes.
+[[profile.ci.overrides]]
+filter = 'test(typestate_rejects_out_of_order_calls)'
+slow-timeout = { period = "90s", terminate-after = 1 }
+
 [profile.slow]
 slow-timeout = { period = "120s", terminate-after = 1 }
 fail-fast = false
