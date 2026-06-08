@@ -1121,8 +1121,8 @@ mod tests {
     /// Acquires [`INTERRUPT_FLAG_GUARD`] (recovering from poisoning so a single
     /// panicking test does not cascade) and clears any stale interrupt request.
     /// Hold the returned guard for the whole test so no other flag-touching test
-    /// runs concurrently.
-    #[must_use]
+    /// runs concurrently (`MutexGuard` is itself `#[must_use]`, so a dropped
+    /// return is caught by the compiler).
     fn interrupt_test_lock() -> std::sync::MutexGuard<'static, ()> {
         let guard = INTERRUPT_FLAG_GUARD
             .lock()
