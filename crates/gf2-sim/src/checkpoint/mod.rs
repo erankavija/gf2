@@ -330,7 +330,8 @@ impl CheckpointWriter {
     /// # Errors
     ///
     /// Returns a [`std::io::Error`] if serialisation or any filesystem step
-    /// fails.
+    /// fails — including the directory `fsync`, which is a hard part of the
+    /// durability contract (not best-effort).
     pub fn write(&self, ckpt: &CheckpointV2) -> std::io::Result<()> {
         let path = checkpoint_path(&self.dir, ckpt.snr_index);
         let json = serde_json::to_vec_pretty(ckpt).map_err(std::io::Error::other)?;
@@ -355,13 +356,12 @@ impl CheckpointWriter {
         std::fs::rename(&tmp, &path)?;
 
         // fsync the directory so the rename itself is durable across a crash.
-        // Best-effort: the rename is already atomic and durable-on-rename on
-        // common filesystems, so a failed dir-open or dir-fsync does not corrupt
-        // the just-renamed checkpoint — it only weakens the crash-durability of
-        // the rename's *directory entry*, which the next successful write
-        // re-establishes. Hence both errors are intentionally swallowed.
-        if let Ok(dir) = std::fs::File::open(&self.dir) {
-            let _ = dir.sync_all();
+        // This is part of the hard tmp+fsync+rename+dir-fsync contract (design
+        // doc §4 step 4): a dir-open or dir-fsync failure is propagated as a
+        // hard `io::Error` from `write`, exactly like the tmp-file fsync above.
+        {
+            let dir = std::fs::File::open(&self.dir)?;
+            dir.sync_all()?;
         }
         Ok(())
     }

@@ -23,9 +23,12 @@
 //!     --seed 42 --max-frames 8 --heartbeat 4 --resume
 //! ```
 //!
-//! The `--crash-loop` mode (used by the kill-during-fsync test) writes the
-//! SNR-0 checkpoint in a tight loop forever so a parent can SIGKILL it mid-write
-//! and verify the atomic-write contract.
+//! The `--crash-loop` mode writes the SNR-0 checkpoint in a tight loop forever
+//! so a parent can SIGKILL it at a random moment (randomised defense-in-depth).
+//! The `--crash-during-fsync` mode prints a `BEGIN_FSYNC` marker immediately
+//! before a LARGE checkpoint write whose tmp-file `sync_all` dominates, so a
+//! parent that SIGKILLs on the marker lands the kill *during the fsync* with
+//! high confidence — both used by the kill-during-fsync atomic-write test.
 
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
@@ -57,6 +60,7 @@ struct Args {
     max_frames: u64,
     heartbeat: u64,
     crash_loop: bool,
+    crash_during_fsync: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -68,7 +72,7 @@ enum Channel {
 
 const USAGE: &str = "checkpoint_sweep --checkpoint-dir <dir> [--resume] \
 [--channel awgn|rayleigh|rician] [--snr-points N] [--seed S] \
-[--max-frames N] [--heartbeat N] [--crash-loop]";
+[--max-frames N] [--heartbeat N] [--crash-loop] [--crash-during-fsync]";
 
 fn parse_args() -> Result<Args, String> {
     let mut checkpoint_dir: Option<PathBuf> = None;
@@ -79,6 +83,7 @@ fn parse_args() -> Result<Args, String> {
     let mut max_frames: u64 = 8;
     let mut heartbeat: u64 = 4;
     let mut crash_loop = false;
+    let mut crash_during_fsync = false;
 
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
@@ -90,6 +95,7 @@ fn parse_args() -> Result<Args, String> {
             }
             "--resume" => resume = true,
             "--crash-loop" => crash_loop = true,
+            "--crash-during-fsync" => crash_during_fsync = true,
             "--channel" => {
                 channel = match it.next().ok_or("--channel needs a value")?.as_str() {
                     "awgn" => Channel::Awgn,
@@ -140,6 +146,7 @@ fn parse_args() -> Result<Args, String> {
         max_frames,
         heartbeat,
         crash_loop,
+        crash_during_fsync,
     })
 }
 
@@ -239,6 +246,55 @@ fn run(
     Ok(sweep.interrupted)
 }
 
+/// Builds a SNR-0 checkpoint whose serialised size grows with `extra_workers`
+/// (each adds a `worker_states` entry, ~64 B of JSON). With a large
+/// `extra_workers` the tmp file is several MB so its `sync_all` takes
+/// measurable wall time — the lever the `--crash-during-fsync` mode uses to land
+/// a kill inside the fsync with high confidence.
+fn crash_checkpoint(
+    config: &PipelineConfig,
+    hash: &str,
+    frames: u64,
+    extra_workers: usize,
+) -> CheckpointV2 {
+    let mut worker_states = vec![
+        WorkerState {
+            worker_idx: 0,
+            frames_in_worker: frames.div_ceil(2),
+            rng_word_pos: frames as u128 * 4096,
+        },
+        WorkerState {
+            worker_idx: 1,
+            frames_in_worker: frames / 2,
+            rng_word_pos: frames as u128 * 4096,
+        },
+    ];
+    // Pad with synthetic workers to inflate the serialised payload.
+    worker_states.extend((2..2 + extra_workers).map(|w| WorkerState {
+        worker_idx: w,
+        frames_in_worker: w as u64,
+        rng_word_pos: (w as u128) * 4096,
+    }));
+    CheckpointV2 {
+        schema_version: SCHEMA_VERSION,
+        snr_index: 0,
+        esn0_db: config.esn0_db_points.first().copied().unwrap_or(3.0),
+        config_hash: hash.to_string(),
+        frames_target: config.max_frames,
+        errors_target: config.target_errors,
+        max_frames: config.max_frames,
+        frames_completed: frames,
+        errors_accumulated: frames / 2,
+        total_iterations: frames * 3,
+        total_queries: frames,
+        total_bits: frames * 64,
+        total_bit_errors: frames,
+        completed: false,
+        worker_states,
+        drain_committed_at_us_since_epoch: 0,
+    }
+}
+
 /// `--crash-loop` mode: writes the SNR-0 checkpoint in a tight infinite loop so
 /// a parent can SIGKILL mid-write and verify the atomic-write contract. Never
 /// returns normally (the parent kills it).
@@ -247,36 +303,43 @@ fn crash_loop(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     let mut frames = 0u64;
     loop {
         frames = frames.wrapping_add(1) % 1000 + 1;
-        let ckpt = CheckpointV2 {
-            schema_version: SCHEMA_VERSION,
-            snr_index: 0,
-            esn0_db: config.esn0_db_points.first().copied().unwrap_or(3.0),
-            config_hash: hash.clone(),
-            frames_target: config.max_frames,
-            errors_target: config.target_errors,
-            max_frames: config.max_frames,
-            frames_completed: frames,
-            errors_accumulated: frames / 2,
-            total_iterations: frames * 3,
-            total_queries: frames,
-            total_bits: frames * 64,
-            total_bit_errors: frames,
-            completed: false,
-            worker_states: vec![
-                WorkerState {
-                    worker_idx: 0,
-                    frames_in_worker: frames.div_ceil(2),
-                    rng_word_pos: frames as u128 * 4096,
-                },
-                WorkerState {
-                    worker_idx: 1,
-                    frames_in_worker: frames / 2,
-                    rng_word_pos: frames as u128 * 4096,
-                },
-            ],
-            drain_committed_at_us_since_epoch: 0,
-        };
+        let ckpt = crash_checkpoint(config, &hash, frames, 0);
         // Ignore write errors: the parent may SIGKILL us mid-syscall.
+        let _ = writer.write(&ckpt);
+    }
+}
+
+/// `--crash-during-fsync` mode: deterministically lands a parent SIGKILL inside
+/// the tmp-file `fsync` (criterion 3, "kill the writer mid-flush via signal
+/// during fsync"). It (1) writes one COMPLETE prior-state checkpoint, then in a
+/// loop (2) prints a `BEGIN_FSYNC` marker line to stdout and flushes it, and (3)
+/// immediately calls `CheckpointWriter::write` with a LARGE payload (~several
+/// MB) whose tmp-file `sync_all` dominates the call's wall time. The parent
+/// reads stdout and SIGKILLs on `BEGIN_FSYNC`, so the kill overwhelmingly lands
+/// during the fsync. The canonical `snr_0000.json` is only ever replaced by the
+/// atomic rename *after* a successful fsync, so it stays complete-or-absent.
+/// Never returns normally (the parent kills it).
+fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
+    use std::io::Write as _;
+    let hash = config_hash(config);
+
+    // (1) Establish one complete prior-state checkpoint so the "complete
+    //     previous state survives" arm is exercised.
+    let _ = writer.write(&crash_checkpoint(config, &hash, 7, 0));
+
+    // ~40k worker entries ≈ several MB of JSON ⇒ a long, catchable fsync.
+    let big = crash_checkpoint(config, &hash, 9, 40_000);
+    let mut frames = 9u64;
+    loop {
+        // (2) Marker IMMEDIATELY before the write whose fsync we want the kill to
+        //     land in; flush so the parent observes it without buffering delay.
+        println!("BEGIN_FSYNC");
+        let _ = std::io::stdout().flush();
+        // (3) Large write: the tmp-file sync_all dominates, so a kill shortly
+        //     after the marker lands during the fsync with high probability.
+        let mut ckpt = big.clone();
+        frames = frames.wrapping_add(1);
+        ckpt.frames_completed = frames; // vary so each write is distinct
         let _ = writer.write(&ckpt);
     }
 }
@@ -303,6 +366,9 @@ fn main() -> ExitCode {
         }
     };
 
+    if args.crash_during_fsync {
+        crash_during_fsync(&config, &writer);
+    }
     if args.crash_loop {
         crash_loop(&config, &writer);
     }
