@@ -540,10 +540,38 @@ pub fn is_interrupted() -> bool {
     interrupted_flag().load(Ordering::SeqCst)
 }
 
+/// Programmatically requests a graceful interrupt, identical in effect to a
+/// SIGINT/SIGTERM.
+///
+/// The next chunk boundary in [`run_snr_point_checkpointed`] (or
+/// [`run_sweep_checkpointed`]) observes the request via [`is_interrupted`],
+/// having already flushed the in-progress heartbeat checkpoint with
+/// `completed = false`, and returns with `interrupted = true`. This is the
+/// programmatic equivalent of the `ctrlc` signal handler: it lets an embedder
+/// (a watchdog, a wall-clock budget, a supervising harness) drive the same
+/// checkpoint-and-stop path without an OS signal, and lets tests exercise the
+/// SIGINT-flush path deterministically. Pair with [`clear_interrupt`] before a
+/// subsequent run so the request does not bleed across runs.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::checkpoint::{clear_interrupt, is_interrupted, request_interrupt};
+///
+/// clear_interrupt();
+/// assert!(!is_interrupted());
+/// request_interrupt();
+/// assert!(is_interrupted());
+/// clear_interrupt();
+/// ```
+pub fn request_interrupt() {
+    interrupted_flag().store(true, Ordering::SeqCst);
+}
+
 /// Test-only hook to set the interrupt flag without delivering a real signal.
 #[cfg(test)]
 pub(crate) fn set_interrupted_for_test() {
-    interrupted_flag().store(true, Ordering::SeqCst);
+    request_interrupt();
 }
 
 /// CPU "drain" seam for the checkpoint commit contract (design doc §4).
