@@ -2,9 +2,9 @@
   "id": "48a0db6c-c87d-48f2-9df6-d52bbca050ec",
   "title": "CPU parallelism determinism property test suite",
   "description": "## Goal\n\nProperty-test harness that asserts the byte-identity contract from\nPhase 0 design doc §11 across worker counts {1, 2, 4, 8, 24} for at\nleast three (rate, modulation) configurations. Also lands the\nCLAUDE.md amendments documenting the Phase A deliverables.\n\n## Context\n\nTask under story `bcf7776d` (CPU foundation) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc: `dev/active/ec530af9-pipeline-design.md`\n§11 (determinism contract). Wave A.4: depends on `db9836e4` (channels)\nand `5f12e7ff` (heartbeat — to test resume-vs-uninterrupted parity).\n\nThis is the Phase A closing task: lands the property-test suite +\nthe CLAUDE.md amendments that close Story `bcf7776d`'s `[hard]`\ndocumentation criterion. Per the project plan §7 and Q5 decision,\nCLAUDE.md updates fold into the closing task of each phase rather\nthan living as standalone tasks.\n\n## Deliverables\n\n1. `crates/gf2-sim/tests/determinism.rs` containing:\n   - For each of (r1/2 16-QAM, r2/3 64-QAM, r3/4 16-QAM), for each\n     worker count in {1, 2, 4, 8, 24}:\n     - Run a 200-frame batch at a fixed seed and a fixed Es/N0 near\n       the smoke-knee.\n     - Collect `(fer, frames, errors, mean_iters)`.\n     - Assert byte-identity against the 1-worker reference for the\n       four columns.\n     - Assert BER is **excluded** from byte-identity (the test\n       records but does not assert it).\n   - For each (rate, modulation): one heartbeat-resume parity case\n     where the SIGINT happens at frame 100; resume produces the\n     same final tuple as an uninterrupted 200-frame run.\n2. The tests use a `seeded_runner_factory()` helper that constructs\n   a `Pipeline` from the typestate preset (`81d05bab`) so the\n   property test exercises the production code path, not a stripped\n   helper.\n3. CLAUDE.md amendments (Phase A close):\n   - Add `gf2-sim` module map to the \"Architecture\" section per\n     project plan §7 line \"After Phase A\".\n   - Add the determinism contract paragraph (cite Phase 0\n     design-doc §11 verbatim; do not paraphrase per memory rule\n     `feedback_quote_ssot_formulas_verbatim`).\n   - Note `parallelism-pays` gate in the gates section.\n\n## Success Criteria\n\n- [hard] Property test passes byte-identity for `fer / frames /\n  errors / mean_iters` across worker counts {1, 2, 4, 8, 24} for\n  the three named (rate, modulation) configurations.\n- [hard] Heartbeat-resume parity case passes for each of the three\n  configurations.\n- [hard] BER is explicitly excluded from byte-identity in the\n  assert (a comment cites the status-quo amendment from issue\n  `152388f4` and design-doc §11).\n- [hard] CLAUDE.md updated with the three items above; the\n  determinism-contract paragraph is verbatim from design-doc §11.\n- [hard] `cargo-ci`, `code-review`, `tests` gates green.\n\n## Non-goals\n\n- GPU determinism tests (owned by Phase B `14f59c2d`).\n- Performance regression checks (handled in `parallelism-pays`\n  receipts, not this test suite).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "db9836e4-0115-4769-95ae-5ad414a80ed5",
     "5f12e7ff-01de-4ca7-b53c-bd7d79bf46dd"
@@ -23,5 +23,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:14.257835960+00:00",
-  "updated_at": "2026-06-08T19:56:04.372913947+00:00"
+  "updated_at": "2026-06-08T21:21:11.048491878+00:00"
 }
