@@ -464,6 +464,25 @@ In-flight batches at drain time MUST complete and increment their
 worker's `frames_in_worker` before the JSON is written. No partial
 batches are recorded mid-flight.
 
+> **Amendment 2026-06-08 (user-approved): CPU vs Phase C resume split.**
+> The per-worker `rng_word_pos =
+> worker_offset(seed, snr_idx, worker_idx, frames_in_worker)` recorded in
+> step 3/4 and the per-worker-stream restore in step 5 describe the
+> **Phase C fixed-partition executor** (`571c11c4`), where each worker
+> owns a contiguous partition and its own RNG stream. The **CPU
+> within-SNR path (Phase A, `5f12e7ff` / `3fcb7025`)** does **not** own
+> per-worker streams: it keys **every** frame on the *global* frame index
+> (§3, `worker_offset(seed, snr_idx, 0, g)`) — which is exactly what
+> guarantees byte-identity across worker counts {1,2,4,8,24}. The CPU
+> path therefore **resumes via the global `frames_completed`** (the sum
+> of `worker_states[].frames_in_worker`), not by seeking each worker to
+> its `rng_word_pos`. It still **records** `worker_states[]` with the
+> authoritative per-worker `frames_in_worker` and the §4-formula
+> `rng_word_pos` (real `worker_idx`) so the Phase C executor can consume
+> them; the CPU path itself does not read `rng_word_pos` back. Making the
+> CPU path per-worker-stream-restore would break `3fcb7025`'s
+> cross-worker-count byte-identity contract.
+
 ---
 
 ## §5 Crate-boundary diagram
