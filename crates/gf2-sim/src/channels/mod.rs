@@ -20,6 +20,11 @@
 //! GPU channel stages are out of scope for this task. GPU AWGN is Phase B
 //! (`f6004add`).
 
+use rand::Rng as _;
+use rand_chacha::ChaCha20Rng;
+
+use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
+
 pub mod awgn;
 pub mod rayleigh;
 pub mod rician;
@@ -27,6 +32,59 @@ pub mod rician;
 pub use awgn::Awgn;
 pub use rayleigh::Rayleigh;
 pub use rician::Rician;
+
+/// Draws one standard-normal `N(0, 1)` sample from a [`ChaCha20Rng`].
+///
+/// This is the single source of truth for the per-axis Gaussian draw shared by
+/// every channel stage. It draws two `f64` uniforms and feeds them to
+/// [`box_muller_cos`] (the SSOT Box-Muller sample in `gf2-coding`), so it
+/// consumes **exactly 4 ChaCha20 32-bit words** (one `f64` = 2 words). Routing
+/// every per-symbol draw through this helper keeps the per-symbol word-count
+/// contract identical across AWGN, Rayleigh, and Rician.
+///
+/// # Arguments
+///
+/// * `rng` — the per-worker noise RNG, positioned at the next draw.
+///
+/// # Returns
+///
+/// A single `N(0, 1)` sample.
+///
+/// # Complexity
+///
+/// O(1) — two uniform draws plus one Box-Muller evaluation.
+#[inline]
+pub(crate) fn draw_standard_normal(rng: &mut ChaCha20Rng) -> f32 {
+    let u1: f64 = rng.random();
+    let u2: f64 = rng.random();
+    box_muller_cos(u1, u2)
+}
+
+/// Draws one circularly-symmetric complex Gaussian `CN(0, 1)` sample.
+///
+/// Returns `(re, im)` where each component is `N(0, 0.5)` so the complex
+/// magnitude satisfies `E[|.|^2] = 0.5 + 0.5 = 1`. Implemented as two
+/// [`draw_standard_normal`] calls each scaled by `1/sqrt(2)`, consuming
+/// **exactly 8 ChaCha20 32-bit words** (two normals). Used for the unit-power
+/// fading coefficient in [`Rayleigh`] and the scatter component in [`Rician`].
+///
+/// # Arguments
+///
+/// * `rng` — the per-worker noise RNG, positioned at the next draw.
+///
+/// # Returns
+///
+/// A `(re, im)` pair drawn from `CN(0, 1)` (per-component variance `1/2`).
+///
+/// # Complexity
+///
+/// O(1) — two standard-normal draws.
+#[inline]
+pub(crate) fn draw_cn01(rng: &mut ChaCha20Rng) -> (f32, f32) {
+    let re = draw_standard_normal(rng) * std::f32::consts::FRAC_1_SQRT_2;
+    let im = draw_standard_normal(rng) * std::f32::consts::FRAC_1_SQRT_2;
+    (re, im)
+}
 
 /// Converts an Es/N0 (dB) to the per-axis AWGN noise standard deviation.
 ///
