@@ -31,6 +31,9 @@ use gf2_coding::CodeRate;
 use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 
+mod common;
+use common::assert_four_columns_byte_identical;
+
 /// Worker counts the byte-identity must hold across (the issue's exact set).
 const WORKER_COUNTS: [usize; 5] = [1, 2, 4, 8, 24];
 
@@ -66,38 +69,11 @@ fn run_all_worker_counts(
 
 fn assert_byte_identical(results: &[WorkerCounters], label: &str) {
     let baseline = results[0]; // 1-worker reference.
-    for (i, &c) in results.iter().enumerate() {
+    for (i, c) in results.iter().enumerate() {
         let w = WORKER_COUNTS[i];
-        assert_eq!(
-            c.frames, baseline.frames,
-            "{label}: frames differ at {w} workers ({} vs {})",
-            c.frames, baseline.frames
-        );
-        assert_eq!(
-            c.errors, baseline.errors,
-            "{label}: errors differ at {w} workers ({} vs {})",
-            c.errors, baseline.errors
-        );
-        // fer and mean_iters are derived integer ratios — byte-identical iff the
-        // integer counters are. Assert the bit patterns to be strict.
-        assert_eq!(
-            c.fer().to_bits(),
-            baseline.fer().to_bits(),
-            "{label}: fer bit pattern differs at {w} workers ({} vs {})",
-            c.fer(),
-            baseline.fer()
-        );
-        assert_eq!(
-            c.mean_iters().to_bits(),
-            baseline.mean_iters().to_bits(),
-            "{label}: mean_iters bit pattern differs at {w} workers ({} vs {})",
-            c.mean_iters(),
-            baseline.mean_iters()
-        );
-        assert_eq!(
-            c.total_iterations, baseline.total_iterations,
-            "{label}: total_iterations differ at {w} workers"
-        );
+        // The four byte-identity columns (fer/frames/errors/mean_iters) and the
+        // BER exclusion are pinned by the shared SSOT helper (design doc §11).
+        assert_four_columns_byte_identical(c, &baseline, &format!("{label} @ {w} workers"));
     }
 }
 
