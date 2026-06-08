@@ -56,6 +56,23 @@ fn tempdir(tag: &str) -> PathBuf {
     p
 }
 
+/// A tempdir under Cargo's `CARGO_TARGET_TMPDIR` (inside `target/`), which lives
+/// on the build's real backing filesystem — NOT a RAM-backed `tmpfs` like
+/// `/tmp` (where `fsync`/`sync_all` is a no-op). The kill-during-fsync test
+/// needs `sync_all` to do real, slow disk I/O so the SIGKILL can land inside it,
+/// so it uses this instead of [`tempdir`].
+#[cfg(unix)]
+fn tempdir_real_fs(tag: &str) -> PathBuf {
+    let mut p = PathBuf::from(env!("CARGO_TARGET_TMPDIR"));
+    p.push(format!(
+        "gf2sim-ckcompat-{tag}-{}-{}",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
+    std::fs::create_dir_all(&p).unwrap();
+    p
+}
+
 fn cfg(parallelism: usize, max_frames: u64, heartbeat: u64) -> PipelineConfig {
     PipelineConfig {
         seed: 0x5F12_E7FF,
@@ -531,21 +548,30 @@ fn assert_canonical_complete_or_absent(dir: &Path, ctx: &str) -> bool {
 fn test_kill_during_fsync_deterministic() {
     // Criterion 3 ([hard]): kill the writer mid-flush VIA SIGNAL DURING FSYNC.
     // The `--crash-during-fsync` child writes one COMPLETE prior-state
-    // checkpoint, then for a LARGE write fires `CheckpointWriter`'s pre-fsync
+    // checkpoint, then for a >=64 MiB write fires `CheckpointWriter`'s pre-fsync
     // hook AFTER the tmp bytes are written and immediately before `sync_all`: it
-    // prints `BEGIN_FSYNC` and parks the flush window briefly. This parent reads
-    // the child's stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`, so the
-    // kill lands DETERMINISTICALLY inside that flush window (before the atomic
-    // rename). The canonical snr_0000.json must therefore always be the prior
-    // complete v2 checkpoint or absent — never torn, and never the large write
-    // (whose rename never happened). Fast tier: 12 spawn+read+kill cycles.
+    // prints `BEGIN_FSYNC` and returns AT ONCE (no sleep). This parent reads the
+    // child's stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`; because the
+    // subsequent real `sync_all` on a >=64 MiB freshly-written file runs for
+    // hundreds of ms while the parent's read->kill is sub-ms, the SIGKILL lands
+    // INSIDE the real `sync_all` syscall (not in a sleep, not before fsync).
+    //
+    // The checkpoint dir is on a REAL filesystem (`CARGO_TARGET_TMPDIR` under
+    // `target/`), not RAM-backed `tmpfs` (`/tmp`) where `sync_all` is a no-op —
+    // otherwise the fsync window would be zero-width and uncatchable.
+    //
+    // The canonical snr_0000.json must always be the prior complete v2
+    // checkpoint or absent — never torn, and never the large write (whose rename
+    // happens only after a successful `sync_all`, which the kill interrupts).
+    // Few iterations: each does a 64 MiB write + a real (hundreds-of-ms)
+    // sync_all, so 3 keeps the test well under the 5 s fast-tier limit.
     use std::io::{BufRead, BufReader};
 
-    let iterations = 12;
+    let iterations = 3;
     let mut present = 0usize;
     let mut prior_state_survived = 0usize;
     for i in 0..iterations {
-        let dir = tempdir(&format!("fsynckill-{i}"));
+        let dir = tempdir_real_fs(&format!("fsynckill-{i}"));
         let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
             .args([
                 "--checkpoint-dir",
@@ -563,7 +589,7 @@ fn test_kill_during_fsync_deterministic() {
             .expect("checkpoint_sweep must spawn");
 
         // Read stdout until the BEGIN_FSYNC marker, then SIGKILL immediately so
-        // the kill lands inside the large write's fsync.
+        // the kill lands inside the large write's real `sync_all`.
         let stdout = child.stdout.take().expect("piped stdout");
         let mut reader = BufReader::new(stdout);
         let mut line = String::new();
@@ -584,14 +610,15 @@ fn test_kill_during_fsync_deterministic() {
 
         if assert_canonical_complete_or_absent(&dir, &format!("iter {i}")) {
             present += 1;
-            // The prior complete state (≤2 worker_states) must survive — the
-            // interrupted large write (40k+ worker_states) never renamed.
+            // The prior complete state (<=2 worker_states) must survive — the
+            // interrupted large write (700k worker_states) never renamed.
             let c: CheckpointV2 =
                 serde_json::from_slice(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
             if c.worker_states.len() <= 2 {
                 prior_state_survived += 1;
             }
         }
+        // Clean up the large tmp/canonical files so disk isn't bloated.
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -601,9 +628,9 @@ fn test_kill_during_fsync_deterministic() {
          {iterations} fsync-kill iterations"
     );
     // The whole point of "during fsync": the prior complete state survives
-    // because the large write's rename never happened. The child parks the flush
-    // window deterministically, so EVERY present iteration must show the prior
-    // state (never the large write's payload).
+    // because the large write's rename never happened (the kill interrupted its
+    // `sync_all`). Every present iteration must show the prior state (never the
+    // large write's payload).
     assert_eq!(
         prior_state_survived, present,
         "every during-fsync kill must leave the prior complete checkpoint \
