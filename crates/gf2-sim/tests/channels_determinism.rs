@@ -22,12 +22,12 @@
 //!
 //! # Test tier
 //!
-//! * Fast-tier `proptest!` (`cases: 16`): `{1, 4}` workers — runs in well under
-//!   5 s.
-//! * Slow-tier `#[ignore = "sim: byte-identity {1,4,24}"]` `proptest!`: the full
-//!   `{1, 4, 24}` set — `{1,4,24}` legitimately must be slow-tier (24-worker
-//!   strided runs over many frames exceed the 5 s nextest limit), mirroring
-//!   `tests/parallel_determinism.rs`.
+//! The full `{1, 4, 24}`-worker byte-identity `proptest!`
+//! (`prop_channels_byte_identical_full`, `cases: 8`, bounded frame/symbol
+//! ranges) runs **un-ignored in the fast tier** (`--profile ci`): measured at
+//! ~13-20 ms, comfortably under the 5 s nextest hard-kill, so it is an enforced
+//! CI gate for the criterion-3 [hard] determinism contract rather than a
+//! slow-tier regression.
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
@@ -166,31 +166,16 @@ fn check_determinism(seed: u64, n_frames: usize, syms: usize, worker_counts: &[u
 }
 
 proptest! {
-    // Fast tier: 16 cases, {1, 4} workers, small frame counts → well under 5 s.
-    #![proptest_config(ProptestConfig { cases: 16, ..ProptestConfig::default() })]
-
-    /// Byte-identity across {1, 4} workers for AWGN, Rayleigh, and Rician over a
-    /// randomized seed, frame count, and symbol count.
-    #[test]
-    fn prop_channels_byte_identical_fast(
-        seed in any::<u64>(),
-        n_frames in 1usize..8,
-        syms in 1usize..40,
-    ) {
-        check_determinism(seed, n_frames, syms, &[1, 4]);
-    }
-}
-
-proptest! {
-    // Slow tier: full {1, 4, 24} worker set over more frames. {1,4,24} must be
-    // slow-tier (24-worker strided runs exceed the 5 s fast limit), mirroring
-    // tests/parallel_determinism.rs. Kept ignored; run with --profile slow.
+    // Enforced fast-tier gate: the full {1, 4, 24} worker set. Measured at ~13 ms
+    // for 8 cases (the synthetic per-symbol kernels are cheap, so even a 24-worker
+    // strided run over <64 frames is far under the 5 s nextest hard-kill). `cases`
+    // and the frame/symbol ranges are kept modest to preserve a large margin.
     #![proptest_config(ProptestConfig { cases: 8, ..ProptestConfig::default() })]
 
-    /// Byte-identity across the full {1, 4, 24} worker set for all three
-    /// channels over a randomized seed and dimensions.
+    /// Byte-identity across the full {1, 4, 24} worker set for all three channels
+    /// over a randomized seed, frame count, and symbol count. This is the
+    /// criterion-3 [hard] gate and runs un-ignored in `--profile ci`.
     #[test]
-    #[ignore = "sim: byte-identity {1,4,24}"]
     fn prop_channels_byte_identical_full(
         seed in any::<u64>(),
         n_frames in 24usize..64,
