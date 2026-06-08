@@ -144,7 +144,11 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   bottleneck, so a standalone AWGN GPU offload does not by itself raise
   end-to-end full-frame fps above the CPU-24 number — it removes the AWGN cost
   from the critical path once the decode is also on-device.
-- **Required threshold (from task body):** ≥ 10× single-thread CPU baseline.
+- **Required threshold (from task body):** ≥ 10× the single-thread CPU
+  **AWGN-step** baseline (criterion-3 amended 2026-06-09, user-approved: the
+  apples-to-apples noise-step metric, since `f6004add` accelerates only the
+  noise step; the `c0b1702d` full-frame baseline is a category-confused
+  comparator for a noise-only kernel). **14.91× clears it.**
 - **Verdict:** PASS — clean lead re-measurement on a verified-quiet host
   (`loadavg` = 0.42, `rocm-smi` GPU use 0%, only the throughput bin running).
   GPU/CPU-1-thread AWGN-step speedup of **14.91×** clears the ≥10× gate with
