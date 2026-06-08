@@ -115,6 +115,15 @@ impl Pipeline {
     }
 
     /// Returns the edges connecting the stages.
+    ///
+    /// The `from` and `to` fields of each [`Edge`] are **positions in
+    /// [`stages()`](Pipeline::stages)**, not the original insertion-order
+    /// [`StageId`]s. `pipeline.stages()[edge.from.0]` is the producer stage
+    /// and `pipeline.stages()[edge.to.0]` is the consumer stage.
+    ///
+    /// [`Chain::build`](crate::graph::Chain::build) remaps all edge endpoints
+    /// to post-topo-sort positions before handing them here, so this contract
+    /// holds regardless of the stage insertion order.
     pub fn edges(&self) -> &[Edge] {
         &self.edges
     }
