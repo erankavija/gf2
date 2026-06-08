@@ -5808,3 +5808,9 @@
 {"type":"gate_failed","id":"7c480e2f-d7fe-4a2c-ba07-dcdcf2ee2ccd","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:04:24.656437830Z","gate_key":"parallelism-pays","updated_by":"agent:project-lead (benchmark invalid: host under heavy external load bg3 ~340% CPU; re-measure on quiet machine)"}
 {"type":"issue_state_changed","id":"1f261c9b-f410-4341-9602-4ce8a624c10b","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:06:43.877213542Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"1bd74556-8a1f-48f4-8686-5dcd80a7d27a","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-07T19:06:43.877423902Z","assignee":"agent:project-lead"}
+{"type":"gate_passed","id":"c5d4cdd3-6e99-4ae2-928c-a1a2a456bf38","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-08T04:46:18.656084563Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"bce73273-b535-414a-b7be-9d0c5fa92fa6","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-08T04:46:56.251585309Z","gate_key":"parallelism-pays","updated_by":null}
+{"type":"gate_passed","id":"4859b0c9-0dee-4f06-9091-4565d18c9dd2","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-08T04:48:44.612470531Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"8fd38626-26eb-439b-a7ab-f1c85a76e866","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-08T04:49:02.333930361Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"f1545b74-533a-4875-9714-95cb31942ba4","issue_id":"3fcb7025-7f12-4d47-930d-3c9116bac421","timestamp":"2026-06-08T04:49:02.333957611Z"}
+{"type":"issue_state_changed","id":"5cdc47e7-8d42-4484-95d9-e41c904a7670","issue_id":"db9836e4-0115-4769-95ae-5ad414a80ed5","timestamp":"2026-06-08T04:49:02.837760286Z","from":"backlog","to":"ready"}
