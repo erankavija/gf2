@@ -32,6 +32,14 @@ pub(crate) mod ffi;
 /// call lives behind a safe RAII wrapper or a `// SAFETY:`-annotated block.
 pub mod host;
 
+/// Safe host wrappers for the device ChaCha20 + Box-Muller AWGN kernel
+/// (`hip/chacha20_awgn.hip`, design doc §3 / §11): [`GpuChaChaAwgn`] and the
+/// seed → key derivation [`chacha20_key_from_seed`].
+pub mod launch_chacha20_awgn;
+
+#[doc(inline)]
+pub use launch_chacha20_awgn::{chacha20_key_from_seed, GpuChaChaAwgn};
+
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
 /// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.

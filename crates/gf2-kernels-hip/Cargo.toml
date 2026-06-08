@@ -25,6 +25,11 @@ gf2-algebra = { path = "../gf2-algebra" }
 gf2-coding = { path = "../gf2-coding", features = ["hip"] }
 proptest = "1.0"
 criterion = "0.5"
+# Host-side oracle for the GPU ChaCha20 byte-identity test (matches the
+# `gf2-sim` parallel module's pin): rand_chacha 0.9 `set_word_pos` + rand 0.9
+# `f64` sampling reproduce the exact word stream the device kernel must match.
+rand = "0.9"
+rand_chacha = "0.9"
 
 [[bench]]
 name = "gpu_vs_cpu_gray_qam"

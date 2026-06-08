@@ -15,6 +15,8 @@
 //!
 //! [`StageError`]: crate::error::StageError
 
+pub mod awgn;
+
 #[cfg(feature = "hip")]
 mod imp {
     use gf2_kernels_hip::host::{GfxTarget, HipStreamPool, PinnedHostBuffer};
