@@ -415,16 +415,30 @@ impl Chain {
 
     /// Topologically sorts the graph and compiles it into a [`Pipeline`].
     ///
-    /// Performs, in order: the GPU-fallback presence check, an edge type
+    /// Performs, in order: fallback registration validation, edge type
     /// re-validation, a Kahn topological sort (which also detects cycles), and a
     /// weak-connectivity check over the non-fallback stages. Branching DAGs
     /// (fan-out / fan-in) are supported; the resulting stage order is a valid
     /// linearisation of the DAG.
     ///
+    /// ## Edge `from`/`to` contract
+    ///
+    /// After the topo sort each [`Edge`]'s `from` and `to` fields are remapped
+    /// to **post-sort positions** in [`Pipeline::stages()`]. An edge `from = i`
+    /// means `pipeline.stages()[i]` is the producer; `to = j` means
+    /// `pipeline.stages()[j]` is the consumer. This is the only contract
+    /// [`Pipeline::edges()`] documents; the original insertion-order
+    /// [`StageId`]s are not preserved in the built pipeline.
+    ///
     /// # Errors
     ///
     /// * [`BuildError::NoFallback`] — a GPU-only stage has no registered CPU
     ///   fallback.
+    /// * [`BuildError::DuplicateFallback`] — the same GPU stage was registered
+    ///   with more than one CPU fallback.
+    /// * [`BuildError::FallbackTypeMismatch`] — a registered CPU fallback has
+    ///   incompatible input or output types compared to the GPU stage it
+    ///   substitutes.
     /// * [`BuildError::TypeMismatch`] — an edge joins incompatible types.
     /// * [`BuildError::Cyclic`] — the graph contains a cycle.
     /// * [`BuildError::Disconnected`] — the graph is not a single
@@ -474,11 +488,12 @@ impl Chain {
         // 0. Validate fallback registrations up front so malformed input fails
         //    via `Result` rather than panicking in the materialisation step
         //    below (which indexes `slots[cpu]` and `take()`s each target once).
-        //    `register_fallback` performs no validation, so both an out-of-range
-        //    id and a CPU target reused across multiple GPU stages are reachable
-        //    here. Each referenced stage id must be in range, and each CPU
-        //    fallback target must back exactly one GPU stage.
+        //    `register_fallback` performs no validation, so out-of-range ids,
+        //    CPU targets reused across multiple GPU stages, GPU stages
+        //    registered more than once, and type-incompatible pairs are all
+        //    detected here.
         let n_stages = self.stages.len() as u32;
+        let mut seen_gpu: HashSet<StageId> = HashSet::new();
         let mut seen_cpu: HashSet<StageId> = HashSet::new();
         for &(gpu, cpu) in &self.fallbacks {
             if gpu.0 >= n_stages {
@@ -487,10 +502,34 @@ impl Chain {
             if cpu.0 >= n_stages {
                 return Err(BuildError::Disconnected { stages: vec![cpu] });
             }
+            // (a) Each GPU stage may be registered at most once; a second
+            //     registration would silently overwrite the first in the
+            //     HashMap while still moving both CPU stages out of `slots`.
+            if !seen_gpu.insert(gpu) {
+                return Err(BuildError::DuplicateFallback { gpu_stage: gpu });
+            }
             if !seen_cpu.insert(cpu) {
                 // A CPU fallback backs exactly one GPU stage; otherwise the
                 // materialiser would move the same boxed stage out twice.
                 return Err(BuildError::Disconnected { stages: vec![cpu] });
+            }
+            // (b) The CPU fallback must have the same input and output element
+            //     types as the GPU stage it substitutes; otherwise the executor
+            //     would encounter a type-downcast failure at runtime when the
+            //     fallback is invoked.
+            let gpu_in = self.stages[gpu.0 as usize].input_type();
+            let gpu_out = self.stages[gpu.0 as usize].output_type();
+            let cpu_in = self.stages[cpu.0 as usize].input_type();
+            let cpu_out = self.stages[cpu.0 as usize].output_type();
+            if gpu_in != cpu_in || gpu_out != cpu_out {
+                return Err(BuildError::FallbackTypeMismatch {
+                    gpu_stage: gpu,
+                    cpu_stage: cpu,
+                    gpu_input_type: gpu_in,
+                    cpu_input_type: cpu_in,
+                    gpu_output_type: gpu_out,
+                    cpu_output_type: cpu_out,
+                });
             }
         }
 
@@ -559,7 +598,7 @@ impl Chain {
         }
 
         // Materialise the pipeline: move stages into topo order, split fallbacks
-        // into the keyed map, and keep edges among graph nodes.
+        // into the keyed map, and remap edges to post-sort positions.
         let config = self.config.take().unwrap_or_else(default_pipeline_config);
 
         // Move every stage out of `self.stages` into an indexable slot so we can
@@ -575,6 +614,20 @@ impl Chain {
             })
             .collect();
 
+        // Build an old-StageId → new-position map so edge endpoints can be
+        // remapped. After topo sort `order[new_pos]` is the old StageId, so
+        // `new_index_of[old_id] = new_pos`.
+        //
+        // This is the fix for Bug 1: without this remap, `Pipeline::edges()`
+        // would return edges whose `from`/`to` still carry insertion-order
+        // StageIds, which no longer index `Pipeline::stages()` correctly for
+        // any non-identity topo reorder.
+        let new_index_of: HashMap<StageId, StageId> = order
+            .iter()
+            .enumerate()
+            .map(|(new_pos, &old_id)| (old_id, StageId(new_pos as u32)))
+            .collect();
+
         let fallback_map: HashMap<StageId, Box<dyn AnyStage>> = self
             .fallbacks
             .iter()
@@ -582,7 +635,10 @@ impl Chain {
                 let stage = slots[cpu.0 as usize]
                     .take()
                     .expect("a fallback target is taken exactly once");
-                (gpu, stage)
+                // The fallback map is keyed by the GPU stage's new post-sort
+                // position so the executor can look up by index into stages().
+                let new_gpu = new_index_of[&gpu];
+                (new_gpu, stage)
             })
             .collect();
 
@@ -591,6 +647,15 @@ impl Chain {
             .edges
             .into_iter()
             .filter(|e| graph_node_set.contains(&e.from) && graph_node_set.contains(&e.to))
+            .map(|e| Edge {
+                // Remap from/to to post-sort positions so that
+                // `pipeline.stages()[edge.from.0]` is the actual producer and
+                // `pipeline.stages()[edge.to.0]` is the actual consumer.
+                from: new_index_of[&e.from],
+                to: new_index_of[&e.to],
+                element_type: e.element_type,
+                batch_size: e.batch_size,
+            })
             .collect();
 
         Ok(Pipeline::from_parts(
@@ -992,5 +1057,134 @@ mod tests {
             .process(&BitPackedBatch::new(vec![BitVec::zeros(8)]), &mut ())
             .unwrap();
         assert_eq!(out.frames[0].len(), 8);
+    }
+
+    // --- Bug 1 regression: edge StageIds are remapped to post-topo positions ---
+
+    /// Stages added in REVERSE topological order (consumer before producer).
+    ///
+    /// After `build()`, `Pipeline::edges()[0].from` must index the producer in
+    /// `Pipeline::stages()` and `.to` must index the consumer, regardless of
+    /// insertion order. Without the post-sort remap, the edge would still carry
+    /// the old insertion-order StageIds and would index the wrong stages.
+    #[test]
+    fn test_edge_positions_remapped_after_non_topo_insertion() {
+        // Insert in REVERSE order: consumer (C), middle (M), producer (P).
+        // Connections: P → M → C.
+        // Insertion: C = StageId(0), M = StageId(1), P = StageId(2).
+        // Topo order (ascending id, zero-in-degree first): [P, M, C]
+        //   i.e. order = [StageId(2), StageId(1), StageId(0)].
+        // Post-sort positions: P→0, M→1, C→2.
+        // Edge P→M should become from=0, to=1; edge M→C should become from=1, to=2.
+        let mut chain = Chain::new();
+        let c = chain.add(erase(SymToLlr)); // consumer: SymbolBatch → LlrBatch
+        let m = chain.add(erase(BitToSym)); // middle:   BitPackedBatch → SymbolBatch
+        let p = chain.add(erase(BitId)); //   producer: BitPackedBatch → BitPackedBatch
+        chain.connect(p, m).unwrap(); // P → M: BitPacked → BitPacked (M input)
+        chain.connect(m, c).unwrap(); // M → C: Symbol → Symbol (C input)
+        let pipeline = chain.build().expect("valid non-topo-inserted chain");
+
+        assert_eq!(pipeline.stage_count(), 3);
+        assert_eq!(pipeline.edges().len(), 2);
+
+        // Topo order puts P first (only zero-in-degree node), then M, then C.
+        // post-sort: position 0 = P (BitPacked→BitPacked), 1 = M (BitPacked→Symbol),
+        //            2 = C (Symbol→Llr).
+        use crate::batch::{BitPackedBatch, LlrBatch, SymbolBatch};
+        use std::any::TypeId;
+        let stages = pipeline.stages();
+        assert_eq!(stages[0].input_type(), TypeId::of::<BitPackedBatch>());
+        assert_eq!(stages[0].output_type(), TypeId::of::<BitPackedBatch>());
+        assert_eq!(stages[1].input_type(), TypeId::of::<BitPackedBatch>());
+        assert_eq!(stages[1].output_type(), TypeId::of::<SymbolBatch>());
+        assert_eq!(stages[2].input_type(), TypeId::of::<SymbolBatch>());
+        assert_eq!(stages[2].output_type(), TypeId::of::<LlrBatch>());
+
+        // The P→M edge must point to position 0 → 1.
+        // The M→C edge must point to position 1 → 2.
+        // Without the remap, they would still carry the old stale ids (2→1 and 1→0),
+        // which would index the WRONG stages (C and M, instead of P, M, C).
+        let edges = pipeline.edges();
+        // Sort edges by `from` for a deterministic check order.
+        let mut sorted_edges = edges.to_vec();
+        sorted_edges.sort_by_key(|e| e.from);
+
+        assert_eq!(
+            sorted_edges[0].from,
+            crate::connector::StageId(0),
+            "P→M edge from must be position 0 (P)"
+        );
+        assert_eq!(
+            sorted_edges[0].to,
+            crate::connector::StageId(1),
+            "P→M edge to must be position 1 (M)"
+        );
+        assert_eq!(
+            sorted_edges[1].from,
+            crate::connector::StageId(1),
+            "M→C edge from must be position 1 (M)"
+        );
+        assert_eq!(
+            sorted_edges[1].to,
+            crate::connector::StageId(2),
+            "M→C edge to must be position 2 (C)"
+        );
+    }
+
+    // --- Bug 2a regression: duplicate GPU stage in fallback registrations ---
+
+    /// Registering the same GPU stage with two different CPU fallbacks must
+    /// return `BuildError::DuplicateFallback`, not silently discard one entry.
+    ///
+    /// Without this check, `HashMap::collect` would silently keep only the
+    /// last mapping while still moving both CPU stages out of `slots`.
+    #[test]
+    fn test_build_rejects_duplicate_gpu_fallback_registration() {
+        let mut chain = Chain::new();
+        let g = chain.add(erase(GpuBitId));
+        let cpu1 = chain.add(erase(BitId));
+        let cpu2 = chain.add(erase(BitId));
+        chain.register_fallback(g, cpu1);
+        chain.register_fallback(g, cpu2); // same GPU stage registered again
+        match chain.build() {
+            Err(BuildError::DuplicateFallback { gpu_stage }) => {
+                assert_eq!(gpu_stage, g);
+            }
+            Err(other) => {
+                panic!("expected DuplicateFallback for duplicate GPU registration, got {other:?}")
+            }
+            Ok(_) => panic!("expected DuplicateFallback, got a built pipeline"),
+        }
+    }
+
+    // --- Bug 2b regression: type-incompatible fallback pair ---
+
+    /// A CPU fallback with a different input/output type than the GPU stage
+    /// must return `BuildError::FallbackTypeMismatch`.
+    ///
+    /// Without this check, the executor would encounter a runtime type-downcast
+    /// failure the first time GPU OOM triggers the substitution.
+    #[test]
+    fn test_build_rejects_type_incompatible_fallback() {
+        // GpuBitId: BitPackedBatch → BitPackedBatch (GpuOnly).
+        // SymToLlr: SymbolBatch → LlrBatch (CpuOnly) — types differ on both ends.
+        let mut chain = Chain::new();
+        let g = chain.add(erase(GpuBitId)); // BitPacked → BitPacked, GpuOnly
+        let wrong_cpu = chain.add(erase(SymToLlr)); // Symbol → Llr, CpuOnly
+        chain.register_fallback(g, wrong_cpu);
+        match chain.build() {
+            Err(BuildError::FallbackTypeMismatch {
+                gpu_stage,
+                cpu_stage,
+                ..
+            }) => {
+                assert_eq!(gpu_stage, g);
+                assert_eq!(cpu_stage, wrong_cpu);
+            }
+            Err(other) => {
+                panic!("expected FallbackTypeMismatch for incompatible fallback, got {other:?}")
+            }
+            Ok(_) => panic!("expected FallbackTypeMismatch, got a built pipeline"),
+        }
     }
 }

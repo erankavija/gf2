@@ -119,6 +119,38 @@ pub enum BuildError {
         /// The offending GPU stage.
         gpu_stage: StageId,
     },
+    /// The same GPU stage was registered with more than one CPU fallback.
+    ///
+    /// A GPU stage may have at most one CPU fallback. Registering a GPU stage
+    /// twice (possibly with different CPU stages) is a configuration error:
+    /// the second registration would silently discard one CPU fallback entry
+    /// during `HashMap` construction, violating the one-to-one substitution
+    /// contract.
+    DuplicateFallback {
+        /// The GPU stage that was registered more than once.
+        gpu_stage: StageId,
+    },
+    /// A registered CPU fallback has a different input or output batch type
+    /// than the GPU stage it substitutes.
+    ///
+    /// The executor swaps in the CPU fallback transparently on GPU OOM
+    /// (design doc §8), so both stages must have identical input and output
+    /// element types. A mismatch here would cause a runtime type-downcast
+    /// failure when the executor substitutes the fallback.
+    FallbackTypeMismatch {
+        /// The GPU stage whose type does not match its CPU fallback.
+        gpu_stage: StageId,
+        /// The CPU fallback stage.
+        cpu_stage: StageId,
+        /// The [`TypeId`](std::any::TypeId) of the GPU stage's input element type.
+        gpu_input_type: std::any::TypeId,
+        /// The [`TypeId`](std::any::TypeId) of the CPU fallback's input element type.
+        cpu_input_type: std::any::TypeId,
+        /// The [`TypeId`](std::any::TypeId) of the GPU stage's output element type.
+        gpu_output_type: std::any::TypeId,
+        /// The [`TypeId`](std::any::TypeId) of the CPU fallback's output element type.
+        cpu_output_type: std::any::TypeId,
+    },
     /// An invalid `(rate, modulation)` combination was requested.
     ///
     /// Carries human-readable, standard-agnostic descriptors of the *actual*
