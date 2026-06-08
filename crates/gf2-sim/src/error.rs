@@ -151,6 +151,42 @@ pub enum BuildError {
         /// The [`TypeId`](std::any::TypeId) of the CPU fallback's output element type.
         cpu_output_type: std::any::TypeId,
     },
+    /// A single stage was registered in two conflicting fallback roles.
+    ///
+    /// A stage may be either a GPU stage that has its own registered CPU
+    /// fallback (a `gpu` in some registration) or a CPU fallback target
+    /// (a `cpu` in some registration), but not both. A fallback target is
+    /// excluded from the pipeline's stage graph (it is a substitution target,
+    /// reachable only on OOM), so it cannot simultaneously be a GPU graph node
+    /// awaiting its own fallback.
+    FallbackRoleConflict {
+        /// The stage registered in both the GPU and the CPU-fallback role.
+        stage: StageId,
+    },
+    /// A CPU fallback was registered for a stage that cannot run on the GPU.
+    ///
+    /// A fallback is only meaningful for a stage that can OOM on the GPU, i.e.
+    /// an [`ExecutionClass::GpuOnly`](crate::stage::ExecutionClass::GpuOnly) or
+    /// [`ExecutionClass::Hybrid`](crate::stage::ExecutionClass::Hybrid) stage.
+    /// Registering a fallback for a
+    /// [`CpuOnly`](crate::stage::ExecutionClass::CpuOnly) stage is a
+    /// configuration error.
+    FallbackForCpuStage {
+        /// The stage that was given a fallback despite not running on the GPU.
+        gpu_stage: StageId,
+    },
+    /// A registered CPU fallback cannot run on the CPU.
+    ///
+    /// The fallback is invoked on the CPU when the GPU stage OOMs, so it must
+    /// be CPU-capable: an
+    /// [`ExecutionClass::CpuOnly`](crate::stage::ExecutionClass::CpuOnly) or
+    /// [`ExecutionClass::Hybrid`](crate::stage::ExecutionClass::Hybrid) stage.
+    /// A [`GpuOnly`](crate::stage::ExecutionClass::GpuOnly) stage cannot serve
+    /// as a CPU fallback.
+    FallbackNotCpuCapable {
+        /// The CPU fallback stage that is not CPU-capable.
+        cpu_stage: StageId,
+    },
     /// An invalid `(rate, modulation)` combination was requested.
     ///
     /// Carries human-readable, standard-agnostic descriptors of the *actual*
