@@ -231,13 +231,53 @@ impl Channel {
     /// [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma) helper — the
     /// exact same `sigma` the [`Awgn`] stage injects — so the demapper's `N0`
     /// equals the channel's true `N0` (matching the `2 * sigma_sq` derivation in
-    /// `frame_sim.rs`). `es_n0_db_to_sigma` is strictly positive and finite for
-    /// every finite `es_n0_db`, so the result is a valid demapper `noise_var`.
+    /// `frame_sim.rs`).
+    ///
+    /// May be non-finite or zero if `es_n0_db` is non-finite or so large that
+    /// `sigma^2` underflows; [`Channel::validate`] rejects those cases before
+    /// this value is fed to the demapper.
     fn demap_noise_var(self) -> f32 {
         match self {
             Channel::Awgn { es_n0_db } => {
                 let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
                 2.0 * sigma * sigma
+            }
+        }
+    }
+
+    /// Validates this channel's parameters, returning the demapper `N0` it
+    /// implies on success.
+    ///
+    /// Rejects a non-finite Es/N0 (`NaN`/`±inf`) and any parameter whose derived
+    /// demapper noise variance (`N0 = 2 sigma^2`) is not finite and strictly
+    /// positive — i.e. exactly the inputs that would otherwise panic
+    /// [`GrayQamDemap::with_noise_var`](crate::stages::GrayQamDemap::with_noise_var)
+    /// (and the [`Awgn`] stage assumes a finite `sigma`). On success the returned
+    /// `f32` is the validated demapper `N0`, ready to pass to the factory.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BuildError::InvalidChannel`] (with a human-readable reason) when
+    /// the Es/N0 is non-finite or the derived `N0` is non-finite or `<= 0`.
+    fn validate(self) -> Result<f32, BuildError> {
+        match self {
+            Channel::Awgn { es_n0_db } => {
+                if !es_n0_db.is_finite() {
+                    return Err(BuildError::InvalidChannel {
+                        reason: format!("AWGN Es/N0 must be a finite number of dB, got {es_n0_db}"),
+                    });
+                }
+                let n0 = self.demap_noise_var();
+                if !n0.is_finite() || n0 <= 0.0 {
+                    return Err(BuildError::InvalidChannel {
+                        reason: format!(
+                            "AWGN Es/N0 = {es_n0_db} dB yields a demapper noise variance \
+                             N0 = {n0} that is not finite and strictly positive \
+                             (Es/N0 too large, underflowing N0 to zero)"
+                        ),
+                    });
+                }
+                Ok(n0)
             }
         }
     }
@@ -438,18 +478,24 @@ impl Builder<Ready> {
     /// `parallelism`, and `checkpoint_dir`.
     ///
     /// The soft demapper's assumed noise variance is derived from the **same**
-    /// channel via [`Channel::demap_noise_var`], so the demapper's `N0` equals
-    /// the channel's true injected `N0` — the LLR scaling is physically
-    /// consistent with the channel rather than a fixed placeholder.
+    /// channel (`N0 = 2 sigma^2` via the SSOT Es/N0→sigma conversion), so the
+    /// demapper's `N0` equals the channel's true injected `N0` — the LLR scaling
+    /// is physically consistent with the channel rather than a fixed placeholder.
     ///
     /// # Errors
     ///
     /// * [`BuildError::InvalidModcod`] if the `(rate, modulation)` pair is not
     ///   one of the six in-scope DVB-T2 MODCODs (see [`Modcod::validate`]).
+    /// * [`BuildError::InvalidChannel`] if a channel parameter is invalid — a
+    ///   non-finite (`NaN`/`±inf`) AWGN Es/N0, or an Es/N0 so large that the
+    ///   derived demapper noise variance underflows to a non-positive value.
     ///
-    /// The chain wiring itself (a fixed seven-stage linear DAG with
-    /// type-compatible consecutive edges) is well-formed by construction, so
-    /// `build()` never surfaces a topology [`BuildError`] for this preset.
+    /// `build()` validates every input it receives and returns one of the above
+    /// typed errors on bad input; it **never panics** on any public input
+    /// combination (the typestate guarantees the required setters were called,
+    /// and the chain wiring — a fixed seven-stage linear DAG with type-compatible
+    /// consecutive edges — is well-formed by construction, so no topology
+    /// [`BuildError`] arises for this preset).
     ///
     /// # Complexity
     ///
@@ -483,20 +529,47 @@ impl Builder<Ready> {
     /// assert_eq!(pipeline.stage_count(), 7);
     /// ```
     pub fn build(self) -> Result<Pipeline, BuildError> {
+        // Panic-on-bad-input audit (this method must NEVER panic on any public
+        // input combination — it returns `Ok` or a typed `BuildError`):
+        //   .modcod(Modcod)      -> validated below -> InvalidModcod.
+        //   .channel(Channel)    -> validated below -> InvalidChannel (guards the
+        //                           only assert reachable from input, namely
+        //                           GrayQamDemap::with_noise_var).
+        //   .decoder(DecoderConfig) -> DecoderConfig::new validates its own alpha/
+        //                           beta at construction (before reaching the
+        //                           builder); set_decoder_config just stores it.
+        //   .demap(DemapMethod)  -> plain enum, no invalid value.
+        //   .parallelism(NonZeroUsize) -> the type forbids 0; copied verbatim.
+        //   .seed(u64) / .checkpoint_dir(Option<PathBuf>) -> any value valid;
+        //                           copied verbatim into the config.
+        //
+        // The required fields are all `Some` by typestate (each was set on the
+        // way to `Ready`); the `expect`s document that invariant and are
+        // unreachable from any public call sequence.
         let modcod = self.cfg_modcod.expect("modcod set before Ready");
+        // Validate the MODCOD up front (rejects out-of-scope rate/modulation
+        // before any stage is built) so `dvb_t2_bicm_stages`'s in-crate codec
+        // `expect` is never reached on a bad rate.
         modcod.validate()?;
         let (rate, modulation) = modcod.parts();
         let decoder = self.cfg_decoder.expect("decoder set before Ready");
         let demap = self.cfg_demap.expect("demap set before Ready");
         let channel = self.cfg_channel.expect("channel set before Ready");
 
-        // Derive the demapper's N0 from the SAME channel so the demapper assumes
-        // exactly the noise the channel injects (physically consistent LLRs). See
-        // `Channel::demap_noise_var`.
-        let demap_noise_var = channel.demap_noise_var();
+        // Validate the channel and derive the demapper's N0 from the SAME
+        // channel, so (a) invalid Es/N0 (NaN/inf/underflow) yields a typed
+        // `BuildError::InvalidChannel` rather than panicking
+        // `GrayQamDemap::with_noise_var`, and (b) the demapper assumes exactly
+        // the noise the channel injects (physically consistent LLRs). See
+        // `Channel::validate` / `Channel::demap_noise_var`.
+        let demap_noise_var = channel.validate()?;
 
         // SSOT BICM stage order: forward = [encode, interleave, map],
         // inverse = [demap, deinterleave, decode]. The channel slots between.
+        // `demap_noise_var` is validated finite & > 0 above, so
+        // `with_noise_var` inside the factory cannot panic; `rate`/`modulation`
+        // are in-scope by `Modcod::validate`, so the factory's codec/interleaver
+        // construction cannot panic either.
         let stages = dvb_t2_bicm_stages(rate, modulation, decoder, demap, demap_noise_var);
         let channel_stage = channel.into_stage(modulation.bits_per_cell());
 
@@ -701,5 +774,64 @@ mod tests {
             .channel(Channel::awgn(6.0))
             .build();
         assert!(matches!(result, Err(BuildError::InvalidModcod { .. })));
+    }
+
+    /// Builds a valid `Ready` builder differing only in the channel, so the
+    /// channel-validation tests vary exactly one input.
+    fn build_with_channel(channel: Channel) -> Result<Pipeline, BuildError> {
+        Pipeline::dvb_t2()
+            .modcod(Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(sp())
+            .demap(DemapMethod::ExactLogMap)
+            .channel(channel)
+            .build()
+    }
+
+    #[test]
+    fn test_build_rejects_nan_es_n0_without_panicking() {
+        // A NaN Es/N0 must yield a typed error, not panic GrayQamDemap.
+        let result = build_with_channel(Channel::awgn(f32::NAN));
+        assert!(matches!(result, Err(BuildError::InvalidChannel { .. })));
+    }
+
+    #[test]
+    fn test_build_rejects_infinite_es_n0_without_panicking() {
+        let pos = build_with_channel(Channel::awgn(f32::INFINITY));
+        assert!(matches!(pos, Err(BuildError::InvalidChannel { .. })));
+        let neg = build_with_channel(Channel::awgn(f32::NEG_INFINITY));
+        assert!(matches!(neg, Err(BuildError::InvalidChannel { .. })));
+    }
+
+    #[test]
+    fn test_build_rejects_underflowing_es_n0_without_panicking() {
+        // A very large Es/N0 drives sigma (hence N0 = 2*sigma^2) to underflow to
+        // exactly 0.0 in f32; 1000 dB does so (sigma = 1/sqrt(2*10^100) -> 0).
+        // build() must reject the non-positive N0 with a typed error rather than
+        // panic GrayQamDemap::with_noise_var.
+        assert_eq!(
+            Channel::awgn(1000.0).demap_noise_var(),
+            0.0,
+            "1000 dB must underflow N0 to 0 (test premise)"
+        );
+        let result = build_with_channel(Channel::awgn(1000.0));
+        assert!(matches!(result, Err(BuildError::InvalidChannel { .. })));
+    }
+
+    #[test]
+    fn test_build_accepts_normal_es_n0() {
+        // A normal finite Es/N0 still builds the seven-stage pipeline.
+        let pipeline = build_with_channel(Channel::awgn(6.0)).expect("normal Es/N0 builds");
+        assert_eq!(pipeline.stage_count(), 7);
+    }
+
+    #[test]
+    fn test_channel_validate_returns_n0_for_valid_es_n0() {
+        // validate() returns the demapper N0 = 2*sigma^2 for a valid channel.
+        let n0 = Channel::awgn(6.0).validate().expect("valid channel");
+        let sigma = crate::channels::es_n0_db_to_sigma(6.0);
+        assert!((n0 - 2.0 * sigma * sigma).abs() < 1e-9);
     }
 }
