@@ -40,18 +40,32 @@ use gf2_sim::channels::awgn::ChannelScratch;
 use gf2_sim::graph::Chain;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::stage::{AnyScratch, ExecutionClass, TypedBatch};
-use gf2_sim::stages::dvb_t2_bicm_stages;
+use gf2_sim::stages::{dvb_t2_bicm_stages, GrayQamDemap};
 use gf2_sim::{Pipeline, PipelineConfig};
 
-/// The fixed Es/N0 (dB) every config's AWGN channel runs at. High enough that
-/// the BP decoder early-terminates (keeping the test fast-tier) yet the channel
-/// genuinely injects noise (so the execution comparison exercises the channel
-/// scratch, not a no-op).
-const ES_N0_DB: f32 = 12.0;
+/// The fixed Es/N0 (dB) every config's AWGN channel runs at. Set comfortably
+/// above the waterfall of the hardest in-scope MODCOD (r3/4 64-QAM) so every
+/// config decodes the single frame error-free, while remaining high enough that
+/// the BP decoder early-terminates in one iteration (keeping the test
+/// fast-tier). The channel still injects real noise, so the execution
+/// comparison exercises the channel scratch rather than a no-op.
+const ES_N0_DB: f32 = 20.0;
 
 /// The shared `(decoder, demap)` configuration both pipelines use.
 fn decoder_config() -> DecoderConfig {
     DecoderConfig::new(DecoderAlgorithm::SumProduct, true)
+}
+
+/// The demapper's per-symbol total complex AWGN `N0 = 2 * sigma^2` for an AWGN
+/// channel at `es_n0_db`.
+///
+/// This is the documented closed form `N0 = 10^(-es_n0_db/10)` of the SSOT
+/// `gf2_sim::channels::es_n0_db_to_sigma` derivation (`sigma^2 = 1 / (2 * 10^(es_n0_db/10))`,
+/// so `2 * sigma^2 = 10^(-es_n0_db/10)`). The crate-internal helper is
+/// `pub(crate)`, so the test recomputes the same value via the public formula;
+/// `test_demap_n0_tracks_channel_es_n0` below pins them equal.
+fn expected_demap_n0(es_n0_db: f32) -> f32 {
+    10.0_f32.powf(-es_n0_db / 10.0)
 }
 
 /// One seeded pseudo-random BBFRAME of `k` bits.
@@ -81,7 +95,15 @@ fn build_preset(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipel
 /// `GrayQamDemap`. This mirrors exactly what the preset does internally, so the
 /// two builds must agree structurally and in execution.
 fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipeline {
-    let factory = dvb_t2_bicm_stages(rate, modulation, decoder_config(), DemapMethod::ExactLogMap);
+    // The channel IS present in this chain, so the demapper's N0 must equal the
+    // channel's true N0 — exactly what the preset wires internally.
+    let factory = dvb_t2_bicm_stages(
+        rate,
+        modulation,
+        decoder_config(),
+        DemapMethod::ExactLogMap,
+        expected_demap_n0(ES_N0_DB),
+    );
 
     let mut chain = Chain::new();
     let mut ids = Vec::with_capacity(7);
@@ -240,8 +262,15 @@ fn assert_preset_matches_graph(rate: CodeRate, modulation: DvbT2Modulation, seed
 
     // --- Execution equality (driven output is byte-identical) -----------
     let k_bch = {
-        // Recover k_bch from a fresh factory; both pipelines encode the same.
-        let f = dvb_t2_bicm_stages(rate, modulation, decoder_config(), DemapMethod::ExactLogMap);
+        // Recover k_bch from a fresh factory (the demap N0 is irrelevant to the
+        // codec dimension; pass the channel-consistent value for tidiness).
+        let f = dvb_t2_bicm_stages(
+            rate,
+            modulation,
+            decoder_config(),
+            DemapMethod::ExactLogMap,
+            expected_demap_n0(ES_N0_DB),
+        );
         f.codec.k_bch()
     };
     let bbframe = random_bbframe(k_bch, seed);
@@ -274,6 +303,10 @@ fn assert_preset_matches_graph(rate: CodeRate, modulation: DvbT2Modulation, seed
     );
 }
 
+// All six in-scope MODCODs (rate ∈ {1/2, 2/3, 3/4} × mod ∈ {16-QAM, 64-QAM}) as
+// separate fast-tier #[test] fns — each gets its own 5 s budget and directly
+// exercises criterion-1's "all 6 expressible" end to end.
+
 #[test]
 fn test_preset_matches_graph_r1_2_16qam() {
     assert_preset_matches_graph(CodeRate::Rate1_2, DvbT2Modulation::Qam16, 0xC0DE_F00D);
@@ -287,4 +320,131 @@ fn test_preset_matches_graph_r1_2_64qam() {
 #[test]
 fn test_preset_matches_graph_r2_3_16qam() {
     assert_preset_matches_graph(CodeRate::Rate2_3, DvbT2Modulation::Qam16, 0xABCD_0001);
+}
+
+#[test]
+fn test_preset_matches_graph_r2_3_64qam() {
+    assert_preset_matches_graph(CodeRate::Rate2_3, DvbT2Modulation::Qam64, 0xABCD_0002);
+}
+
+#[test]
+fn test_preset_matches_graph_r3_4_16qam() {
+    assert_preset_matches_graph(CodeRate::Rate3_4, DvbT2Modulation::Qam16, 0xABCD_0003);
+}
+
+#[test]
+fn test_preset_matches_graph_r3_4_64qam() {
+    assert_preset_matches_graph(CodeRate::Rate3_4, DvbT2Modulation::Qam64, 0xABCD_0004);
+}
+
+/// Regression for the channel→demapper N0 coupling (the PRIMARY bug this fix
+/// closes): `.channel(Channel::awgn(X))` must drive the soft demapper's assumed
+/// noise variance to the channel's true `N0 = 2 * sigma(X)^2`, NOT the fixed
+/// `DEFAULT_DEMAP_NOISE_VAR` placeholder.
+///
+/// `GrayQamDemap`'s `noise_var` cannot be read back through the erased
+/// `AnyStage` (no concrete-stage downcast), so this is a *behavioral* check: it
+/// drives one fixed `SymbolBatch` through the built pipeline's demapper stage
+/// and asserts the resulting LLRs equal those of a fresh `GrayQamDemap` built
+/// with the channel-derived N0 — and DIFFER from one built with the default N0.
+/// Equal-to-channel-N0 + different-from-default together prove the channel's
+/// Es/N0 reached the demapper.
+#[test]
+fn test_demap_n0_tracks_channel_es_n0() {
+    use gf2_sim::batch::{LlrBatch, SymbolBatch};
+    use gf2_sim::Stage;
+
+    let modulation = DvbT2Modulation::Qam16;
+    let es_n0_db = 7.0_f32; // distinct from ES_N0_DB so the value is unambiguous
+    let n0 = expected_demap_n0(es_n0_db);
+
+    // Pin the public formula to the SSOT sigma derivation: N0 == 2 * sigma^2.
+    // (sigma here is recomputed via the documented closed form; the crate's
+    // es_n0_db_to_sigma is pub(crate), so this mirrors it exactly.)
+    let sigma_sq = 1.0_f32 / (2.0 * 10.0_f32.powf(es_n0_db / 10.0));
+    assert!(
+        (n0 - 2.0 * sigma_sq).abs() < 1e-9,
+        "expected_demap_n0 must equal 2*sigma^2 (the channel's true N0)"
+    );
+
+    // Build the preset pipeline at this Es/N0 and locate its demapper stage: the
+    // first SymbolBatch->LlrBatch stage (the inverse half's GrayQamDemap).
+    let pipeline = Pipeline::dvb_t2()
+        .modcod(Modcod::Normal {
+            rate: CodeRate::Rate1_2,
+            modulation,
+        })
+        .decoder(decoder_config())
+        .demap(DemapMethod::ExactLogMap)
+        .channel(Channel::awgn(es_n0_db))
+        .build()
+        .expect("in-scope MODCOD builds");
+
+    let sym_in = std::any::TypeId::of::<SymbolBatch>();
+    let llr_out = std::any::TypeId::of::<LlrBatch>();
+    let demap_stage = pipeline
+        .stages()
+        .iter()
+        .find(|s| s.input_type() == sym_in && s.output_type() == llr_out)
+        .expect("the built pipeline has a SymbolBatch->LlrBatch demapper stage");
+
+    // A fixed off-constellation symbol batch (2 symbols) so the LLRs depend on
+    // the assumed N0.
+    let batch = SymbolBatch::new(vec![vec![0.6_f32, -0.2_f32]], vec![vec![0.3_f32, 0.9_f32]]);
+
+    // Drive it through the built (erased) demapper.
+    let mut scratch: Box<dyn AnyScratch> = Box::new(());
+    let built_out = demap_stage
+        .process_any(&batch, scratch.as_mut())
+        .expect("demap process_any succeeds");
+    let built_llrs = &built_out
+        .as_any()
+        .downcast_ref::<LlrBatch>()
+        .expect("demapper outputs LlrBatch")
+        .frames[0];
+
+    // Reference demappers built directly: one with the channel-derived N0, one
+    // with the default placeholder.
+    let ref_channel = GrayQamDemap::with_noise_var(modulation, DemapMethod::ExactLogMap, n0);
+    let ref_default = GrayQamDemap::new(modulation, DemapMethod::ExactLogMap);
+
+    let channel_llrs = ref_channel
+        .process(&batch, &mut ())
+        .expect("ref demap ok")
+        .frames[0]
+        .clone();
+    let default_llrs = ref_default
+        .process(&batch, &mut ())
+        .expect("ref demap ok")
+        .frames[0]
+        .clone();
+
+    // The built demapper must match the channel-N0 reference exactly.
+    assert_eq!(
+        built_llrs.len(),
+        channel_llrs.len(),
+        "LLR vector lengths must match"
+    );
+    for (i, (b, c)) in built_llrs.iter().zip(channel_llrs.iter()).enumerate() {
+        assert!(
+            (b.value() - c.value()).abs() < 1e-6,
+            "LLR {i}: built demapper ({}) must match channel-N0 demapper ({}) \
+             — proves channel Es/N0 drove the demapper N0",
+            b.value(),
+            c.value()
+        );
+    }
+
+    // And it must NOT match the default-N0 demapper (proves the placeholder is
+    // no longer used). N0(default)=0.1 vs N0(7 dB)=10^-0.7≈0.1995, so the LLRs
+    // differ materially.
+    let differs = built_llrs
+        .iter()
+        .zip(default_llrs.iter())
+        .any(|(b, d)| (b.value() - d.value()).abs() > 1e-4);
+    assert!(
+        differs,
+        "built demapper LLRs must differ from the default-N0 demapper — \
+         otherwise the channel Es/N0 was ignored"
+    );
 }
