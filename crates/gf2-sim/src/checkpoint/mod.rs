@@ -1,14 +1,13 @@
 //! v2 heartbeat-checkpoint schema, atomic writer, v2-only reader, and the
 //! checkpointed SNR-point runner (design doc §4).
 //!
-//! Owned by `5f12e7ff`. This module is the **v2-only** successor to the legacy
-//! `gf2_coding::simulation` checkpoint machinery. There is deliberately **no
-//! in-reader v1 back-compat**: a non-`2` `schema_version` or a `config_hash`
-//! mismatch is a hard load error ([`FatalError::BuildError`] wrapping
-//! [`BuildError::ConfigHashMismatch`]). Legacy v1 checkpoints written by
-//! `gf2_coding::simulation::SimulationRunner` are converted **offline** by the
-//! one-shot `checkpoint_migrate` binary
-//! (`crates/gf2-sim/src/bin/checkpoint_migrate.rs`), per design doc §4 (Q5).
+//! Owned by `5f12e7ff`. The checkpoint format is **v2-only**: there is a single
+//! schema and no backward-compatibility layer. A loaded file whose
+//! `schema_version` is not `2`, whose `config_hash` does not match the live
+//! config, or which does not parse as v2 JSON, is rejected as a hard load error
+//! ([`FatalError::BuildError`] wrapping [`BuildError::ConfigHashMismatch`]) —
+//! i.e. it is treated as not-a-valid-v2-checkpoint (corruption / wrong config),
+//! never silently accepted.
 //!
 //! # What this module provides
 //!
@@ -75,8 +74,7 @@ pub const SCHEMA_VERSION: u32 = 2;
 /// `worker_idx`-keyed offset when it lands.
 ///
 /// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
-/// not fit a JSON number above `2^53` (same convention as legacy
-/// `simulation.rs`).
+/// not fit a JSON number above `2^53`.
 ///
 /// # Examples
 ///
@@ -177,8 +175,7 @@ pub struct CheckpointV2 {
 /// `serde` adaptor (de)serialising a `u128` as a decimal string.
 ///
 /// A `u128` above `2^53` cannot round-trip through a JSON number, so
-/// [`WorkerState::rng_word_pos`] is stored as a string (matching the legacy
-/// `simulation.rs` `rng_word_pos` convention).
+/// [`WorkerState::rng_word_pos`] is stored as a string.
 mod u128_string {
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -333,6 +330,41 @@ impl CheckpointWriter {
     /// fails — including the directory `fsync`, which is a hard part of the
     /// durability contract (not best-effort).
     pub fn write(&self, ckpt: &CheckpointV2) -> std::io::Result<()> {
+        self.write_with_fsync_hook(ckpt, || {})
+    }
+
+    /// Atomic write with an instrumentation callback fired immediately before
+    /// the tmp-file `fsync` (the single source of truth for [`write`](Self::write)).
+    ///
+    /// This is identical to [`write`](Self::write) except that `on_pre_fsync` is
+    /// invoked **after the tmp file's bytes are fully written but before
+    /// `sync_all`** is called on it. It exists solely as an instrumentation
+    /// seam: it lets a test deterministically land an external signal (e.g.
+    /// SIGKILL) *during* the `fsync`, which is the precise window criterion 3
+    /// requires the atomic-write contract to survive ("kill the writer mid-flush
+    /// via signal during fsync"). [`write`](Self::write) is just this method with
+    /// an empty hook, so there is a single write path (no duplicated
+    /// tmp+fsync+rename+dir-fsync logic).
+    ///
+    /// It is `pub` (and `#[doc(hidden)]`) because the `checkpoint_sweep` binary
+    /// — a separate crate target — drives the deterministic kill-during-fsync
+    /// proof through it. Production code should call [`write`](Self::write).
+    ///
+    /// # Arguments
+    ///
+    /// * `ckpt` — the checkpoint to persist; its `snr_index` selects the file.
+    /// * `on_pre_fsync` — called once, immediately before the tmp `sync_all`.
+    ///
+    /// # Errors
+    ///
+    /// Same as [`write`](Self::write): any serialisation or filesystem step,
+    /// including the directory `fsync`.
+    #[doc(hidden)]
+    pub fn write_with_fsync_hook(
+        &self,
+        ckpt: &CheckpointV2,
+        on_pre_fsync: impl FnOnce(),
+    ) -> std::io::Result<()> {
         let path = checkpoint_path(&self.dir, ckpt.snr_index);
         let json = serde_json::to_vec_pretty(ckpt).map_err(std::io::Error::other)?;
 
@@ -344,11 +376,15 @@ impl CheckpointWriter {
             std::process::id()
         ));
 
-        // Write + fsync the tmp file before renaming.
+        // Write the tmp bytes, fire the pre-fsync hook, then fsync the tmp file
+        // before renaming. The hook runs *after* all bytes are on the page cache
+        // but *before* `sync_all`, so an external kill fired from the hook lands
+        // during the fsync.
         {
             use std::io::Write as _;
             let mut f = std::fs::File::create(&tmp)?;
             f.write_all(&json)?;
+            on_pre_fsync();
             f.sync_all()?;
         }
 
@@ -372,9 +408,10 @@ impl CheckpointWriter {
 /// [`load`](Self::load) deserialises `<dir>/snr_<NNNN>.json` and validates it:
 /// a `schema_version` other than [`SCHEMA_VERSION`] **or** a `config_hash` that
 /// differs from the live config is a hard error
-/// ([`FatalError::BuildError`]`(`[`BuildError::ConfigHashMismatch`]`)`). There
-/// is no silent v1 path — legacy checkpoints must be converted offline by
-/// `checkpoint_migrate`.
+/// ([`FatalError::BuildError`]`(`[`BuildError::ConfigHashMismatch`]`)`). The
+/// format is v2-only: any file that is not a valid v2 checkpoint (corrupt,
+/// truncated, or written under a different config) is rejected, never silently
+/// accepted.
 ///
 /// # Examples
 ///
@@ -422,8 +459,8 @@ impl CheckpointReader {
     ///   is reported as `"schema_version:<n>"` so the mismatch is legible), or
     ///   if its `config_hash` differs from the expected hash.
     /// * [`FatalError::BuildError`]`(`[`BuildError::ConfigHashMismatch`]`)` if
-    ///   the file exists but cannot be parsed as v2 JSON (a corrupt or legacy
-    ///   v1 file — the v2-only reader does not attempt a v1 parse).
+    ///   the file exists but cannot be parsed as v2 JSON (a corrupt or
+    ///   truncated file).
     pub fn load(&self, index: usize) -> Result<Option<CheckpointV2>, FatalError> {
         let path = checkpoint_path(&self.dir, index);
         let bytes = match std::fs::read(&path) {
@@ -441,11 +478,11 @@ impl CheckpointReader {
         };
 
         let ckpt: CheckpointV2 = serde_json::from_slice(&bytes).map_err(|_| {
-            // A parse failure on a present file means it is not a v2 checkpoint
-            // (e.g. a legacy v1 file or corruption). The v2-only reader rejects
-            // it rather than guessing a v1 layout.
+            // A parse failure on a present file means it is not a valid v2
+            // checkpoint (corruption / truncation). The v2-only reader rejects
+            // it rather than guessing any other layout.
             FatalError::BuildError(BuildError::ConfigHashMismatch {
-                loaded: "schema:unparseable-or-v1".to_string(),
+                loaded: "schema:not-valid-v2".to_string(),
                 expected: self.expected_hash.clone(),
             })
         })?;
@@ -469,8 +506,7 @@ impl CheckpointReader {
 }
 
 /// Process-wide SIGINT/SIGTERM interrupt flag, lazily installing the `ctrlc`
-/// handler on first access (mirrors the legacy `gf2_coding::simulation`
-/// pattern, the design-doc-mandated `ctrlc` crate).
+/// handler on first access (the design-doc-mandated `ctrlc` crate).
 static INTERRUPTED: OnceLock<Arc<AtomicBool>> = OnceLock::new();
 
 /// Returns the process-wide interrupt flag, installing the `ctrlc` handler on
@@ -587,8 +623,8 @@ pub struct CheckpointedRun {
 /// [`run_snr_point_range`]).
 ///
 /// Early stop: after each chunk the runner checks `target_errors` (stop once
-/// `errors_accumulated >= target_errors`, matching the legacy harness) and
-/// SIGINT. On either it flushes a final checkpoint and returns.
+/// `errors_accumulated >= target_errors`) and SIGINT. On either it flushes a
+/// final checkpoint and returns.
 ///
 /// # Arguments
 ///
@@ -794,6 +830,11 @@ pub struct SweepRun {
 ///   producing the point's per-worker state factory and per-frame closure. It
 ///   is called once per SNR point, so each point can bind channel parameters
 ///   derived from its Es/N0.
+/// * `on_point_complete` — callback `(snr_idx, esn0_db, &CheckpointedRun)` fired
+///   once per SNR point **after** its SNR-boundary checkpoint has been flushed
+///   and the point finished (it is not called for an interrupted point, whose
+///   run stops before completion). A CLI driver can use it to emit a
+///   progress marker; pass `|_, _, _| {}` if unused.
 ///
 /// # Returns
 ///
@@ -832,29 +873,34 @@ pub struct SweepRun {
 /// };
 /// let h = config_hash(&config);
 /// let writer = CheckpointWriter::new("/tmp/sweep").unwrap();
-/// let sweep = run_sweep_checkpointed(&config, &writer, &h, false, |_idx, _esn0| {
-///     (
-///         || (),
-///         |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
-///             let x: u64 = ctx.rng_mut().random();
-///             FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
-///         },
-///     )
-/// })
+/// let sweep = run_sweep_checkpointed(&config, &writer, &h, false,
+///     |_idx, _esn0| {
+///         (
+///             || (),
+///             |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
+///                 let x: u64 = ctx.rng_mut().random();
+///                 FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
+///             },
+///         )
+///     },
+///     |_idx, _esn0, _run| {}, // per-point completion callback (unused here)
+/// )
 /// .unwrap();
 /// assert_eq!(sweep.per_point.len(), 3);
 /// ```
-pub fn run_sweep_checkpointed<S, M, F, P>(
+pub fn run_sweep_checkpointed<S, M, F, P, C>(
     config: &PipelineConfig,
     writer: &CheckpointWriter,
     expected_hash: &str,
     resume: bool,
     make_point: P,
+    mut on_point_complete: C,
 ) -> Result<SweepRun, SweepError>
 where
     M: Fn() -> S + Sync,
     F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
     P: Fn(usize, f64) -> (M, F),
+    C: FnMut(usize, f64, &CheckpointedRun),
 {
     let reader = CheckpointReader::new(writer.dir().to_path_buf(), expected_hash.to_string());
     let mut per_point = Vec::with_capacity(config.esn0_db_points.len());
@@ -881,6 +927,11 @@ where
         .map_err(SweepError::Io)?;
 
         let was_interrupted = run.interrupted;
+        // Fire the completion callback only for a finished point (its
+        // SNR-boundary checkpoint is on disk); never for an interrupted point.
+        if !was_interrupted {
+            on_point_complete(idx, esn0_db, &run);
+        }
         per_point.push(run);
         if was_interrupted {
             interrupted = true;
@@ -1137,14 +1188,15 @@ mod tests {
     }
 
     #[test]
-    fn test_reader_rejects_unparseable_v1_file() {
+    fn test_reader_rejects_non_v2_shaped_file() {
         let dir = tempdir();
-        // A legacy-shaped v1 JSON (no worker_states, no schema_version) must be
-        // rejected, never parsed as v2.
-        let v1 = r#"{ "snr_index": 0, "eb_n0_db": 1.99, "frames_completed": 100,
+        // A present file whose JSON does not match the v2 schema (missing
+        // worker_states / schema_version) is not a valid v2 checkpoint and must
+        // be rejected, never silently accepted.
+        let not_v2 = r#"{ "snr_index": 0, "eb_n0_db": 1.99, "frames_completed": 100,
             "rng_word_pos": "13060800", "completed": true,
             "config_hash": "blake3:ef56" }"#;
-        std::fs::write(checkpoint_path(&dir, 0), v1).unwrap();
+        std::fs::write(checkpoint_path(&dir, 0), not_v2).unwrap();
         let reader = CheckpointReader::new(&dir, "blake3:ef56".to_string());
         assert!(matches!(
             reader.load(0),

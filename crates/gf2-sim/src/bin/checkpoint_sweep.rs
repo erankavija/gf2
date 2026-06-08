@@ -25,10 +25,11 @@
 //!
 //! The `--crash-loop` mode writes the SNR-0 checkpoint in a tight loop forever
 //! so a parent can SIGKILL it at a random moment (randomised defense-in-depth).
-//! The `--crash-during-fsync` mode prints a `BEGIN_FSYNC` marker immediately
-//! before a LARGE checkpoint write whose tmp-file `sync_all` dominates, so a
-//! parent that SIGKILLs on the marker lands the kill *during the fsync* with
-//! high confidence — both used by the kill-during-fsync atomic-write test.
+//! The `--crash-during-fsync` mode does a LARGE checkpoint write through
+//! `CheckpointWriter::write_with_fsync_hook`, whose hook prints `BEGIN_FSYNC`
+//! *immediately before* the tmp-file `sync_all`; a parent that SIGKILLs on the
+//! marker lands the kill DURING the fsync (not during the byte write) — both
+//! used by the kill-during-fsync atomic-write test.
 
 use std::num::NonZeroUsize;
 use std::path::PathBuf;
@@ -61,6 +62,11 @@ struct Args {
     heartbeat: u64,
     crash_loop: bool,
     crash_during_fsync: bool,
+    /// Milliseconds to pause after each completed SNR point. Widens the
+    /// mid-sweep SIGINT window so the interrupt deterministically lands before
+    /// the remaining points finish; `0` (the default) keeps reference/resume
+    /// runs fast.
+    point_delay_ms: u64,
 }
 
 #[derive(Clone, Copy)]
@@ -72,7 +78,8 @@ enum Channel {
 
 const USAGE: &str = "checkpoint_sweep --checkpoint-dir <dir> [--resume] \
 [--channel awgn|rayleigh|rician] [--snr-points N] [--seed S] \
-[--max-frames N] [--heartbeat N] [--crash-loop] [--crash-during-fsync]";
+[--max-frames N] [--heartbeat N] [--point-delay-ms N] [--crash-loop] \
+[--crash-during-fsync]";
 
 fn parse_args() -> Result<Args, String> {
     let mut checkpoint_dir: Option<PathBuf> = None;
@@ -84,6 +91,7 @@ fn parse_args() -> Result<Args, String> {
     let mut heartbeat: u64 = 4;
     let mut crash_loop = false;
     let mut crash_during_fsync = false;
+    let mut point_delay_ms: u64 = 0;
 
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
@@ -132,6 +140,13 @@ fn parse_args() -> Result<Args, String> {
                     .parse()
                     .map_err(|e| format!("--heartbeat: {e}"))?;
             }
+            "--point-delay-ms" => {
+                point_delay_ms = it
+                    .next()
+                    .ok_or("--point-delay-ms needs a value")?
+                    .parse()
+                    .map_err(|e| format!("--point-delay-ms: {e}"))?;
+            }
             "-h" | "--help" => return Err("help".to_string()),
             other => return Err(format!("unknown argument: {other}")),
         }
@@ -147,6 +162,7 @@ fn parse_args() -> Result<Args, String> {
         heartbeat,
         crash_loop,
         crash_during_fsync,
+        point_delay_ms,
     })
 }
 
@@ -193,12 +209,30 @@ fn verdict(batch: &SymbolBatch) -> FrameOutcome {
     }
 }
 
+/// Per-point completion callback: prints `SNR_<idx>_FLUSHED` (so a parent can
+/// detect that ≥1 SNR checkpoint is on disk and the sweep is still in progress),
+/// flushes stdout, then optionally pauses `point_delay_ms` to widen the
+/// mid-sweep SIGINT window.
+fn point_marker(
+    point_delay_ms: u64,
+) -> impl FnMut(usize, f64, &gf2_sim::checkpoint::CheckpointedRun) {
+    use std::io::Write as _;
+    move |idx, _esn0, _run| {
+        println!("SNR_{idx}_FLUSHED");
+        let _ = std::io::stdout().flush();
+        if point_delay_ms > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(point_delay_ms));
+        }
+    }
+}
+
 /// Runs the sweep for the selected channel and returns the aggregate
 /// `interrupted` flag (or a `SweepError`).
 ///
 /// Each channel arm monomorphises `run_sweep_checkpointed` with its own
 /// per-frame closure type; the `make_point` factory binds the point's Es/N0 to
-/// a freshly constructed channel.
+/// a freshly constructed channel. The per-point callback emits the
+/// `SNR_<idx>_FLUSHED` progress marker (and the optional inter-point delay).
 fn run(
     args: &Args,
     config: &PipelineConfig,
@@ -206,20 +240,32 @@ fn run(
 ) -> Result<bool, SweepError> {
     let hash = config_hash(config);
     let resume = args.resume;
+    let delay = args.point_delay_ms;
     let sweep = match args.channel {
-        Channel::Awgn => run_sweep_checkpointed(config, writer, &hash, resume, |_idx, esn0| {
-            let ch = Awgn::new(esn0 as f32, 2);
-            (
-                || (),
-                move |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
-                    let mut b = signal_batch(SYMS_PER_FRAME);
-                    ch.apply(&mut b, ctx.rng_mut());
-                    verdict(&b)
-                },
-            )
-        })?,
-        Channel::Rayleigh => {
-            run_sweep_checkpointed(config, writer, &hash, resume, |_idx, esn0| {
+        Channel::Awgn => run_sweep_checkpointed(
+            config,
+            writer,
+            &hash,
+            resume,
+            |_idx, esn0| {
+                let ch = Awgn::new(esn0 as f32, 2);
+                (
+                    || (),
+                    move |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
+                        let mut b = signal_batch(SYMS_PER_FRAME);
+                        ch.apply(&mut b, ctx.rng_mut());
+                        verdict(&b)
+                    },
+                )
+            },
+            point_marker(delay),
+        )?,
+        Channel::Rayleigh => run_sweep_checkpointed(
+            config,
+            writer,
+            &hash,
+            resume,
+            |_idx, esn0| {
                 let ch = Rayleigh::new(esn0 as f32, 2);
                 (
                     || (),
@@ -229,19 +275,27 @@ fn run(
                         verdict(&b)
                     },
                 )
-            })?
-        }
-        Channel::Rician => run_sweep_checkpointed(config, writer, &hash, resume, |_idx, esn0| {
-            let ch = Rician::new(esn0 as f32, 2, 4.0);
-            (
-                || (),
-                move |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
-                    let mut b = signal_batch(SYMS_PER_FRAME);
-                    ch.apply(&mut b, ctx.rng_mut());
-                    verdict(&b)
-                },
-            )
-        })?,
+            },
+            point_marker(delay),
+        )?,
+        Channel::Rician => run_sweep_checkpointed(
+            config,
+            writer,
+            &hash,
+            resume,
+            |_idx, esn0| {
+                let ch = Rician::new(esn0 as f32, 2, 4.0);
+                (
+                    || (),
+                    move |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
+                        let mut b = signal_batch(SYMS_PER_FRAME);
+                        ch.apply(&mut b, ctx.rng_mut());
+                        verdict(&b)
+                    },
+                )
+            },
+            point_marker(delay),
+        )?,
     };
     Ok(sweep.interrupted)
 }
@@ -309,16 +363,20 @@ fn crash_loop(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     }
 }
 
-/// `--crash-during-fsync` mode: deterministically lands a parent SIGKILL inside
-/// the tmp-file `fsync` (criterion 3, "kill the writer mid-flush via signal
-/// during fsync"). It (1) writes one COMPLETE prior-state checkpoint, then in a
-/// loop (2) prints a `BEGIN_FSYNC` marker line to stdout and flushes it, and (3)
-/// immediately calls `CheckpointWriter::write` with a LARGE payload (~several
-/// MB) whose tmp-file `sync_all` dominates the call's wall time. The parent
-/// reads stdout and SIGKILLs on `BEGIN_FSYNC`, so the kill overwhelmingly lands
-/// during the fsync. The canonical `snr_0000.json` is only ever replaced by the
-/// atomic rename *after* a successful fsync, so it stays complete-or-absent.
-/// Never returns normally (the parent kills it).
+/// `--crash-during-fsync` mode: deterministically lands a parent SIGKILL in the
+/// tmp-file flush window — after the tmp bytes are written, at the `sync_all`
+/// boundary, before the atomic rename (criterion 3, "kill the writer mid-flush
+/// via signal during fsync"). It (1) writes one COMPLETE prior-state checkpoint,
+/// then in a loop (2) calls `CheckpointWriter::write_with_fsync_hook` with a
+/// LARGE payload, passing a hook that fires **after the tmp bytes are written
+/// and immediately before `sync_all`**: it prints the `BEGIN_FSYNC` marker and
+/// then parks the process for a short bounded interval. The parent reads stdout
+/// and SIGKILLs the instant it sees `BEGIN_FSYNC`, landing the kill inside that
+/// flush window with certainty (a fixed park makes it reproducible even on a
+/// host whose real `sync_all` is sub-millisecond). Because the canonical
+/// `snr_0000.json` is only ever replaced by the atomic rename — which happens
+/// *after* a successful `sync_all` — the kill leaves the canonical as the prior
+/// complete state (or absent), never torn. Never returns normally.
 fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     use std::io::Write as _;
     let hash = config_hash(config);
@@ -327,20 +385,30 @@ fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     //     previous state survives" arm is exercised.
     let _ = writer.write(&crash_checkpoint(config, &hash, 7, 0));
 
-    // ~40k worker entries ≈ several MB of JSON ⇒ a long, catchable fsync.
+    // ~40k worker entries ≈ several MB of JSON so the tmp write is non-trivial.
     let big = crash_checkpoint(config, &hash, 9, 40_000);
     let mut frames = 9u64;
     loop {
-        // (2) Marker IMMEDIATELY before the write whose fsync we want the kill to
-        //     land in; flush so the parent observes it without buffering delay.
-        println!("BEGIN_FSYNC");
-        let _ = std::io::stdout().flush();
-        // (3) Large write: the tmp-file sync_all dominates, so a kill shortly
-        //     after the marker lands during the fsync with high probability.
         let mut ckpt = big.clone();
         frames = frames.wrapping_add(1);
         ckpt.frames_completed = frames; // vary so each write is distinct
-        let _ = writer.write(&ckpt);
+                                        // The hook fires AFTER the tmp bytes are fully written and BEFORE the
+                                        // tmp `sync_all` (and therefore before the atomic rename). It prints the
+                                        // marker, then parks the process in this exact "flushing, not yet
+                                        // renamed" window for a short, bounded interval. The parent SIGKILLs on
+                                        // the marker, so the kill DETERMINISTICALLY lands during the flush
+                                        // (at/within the fsync window) — before the rename can publish the new
+                                        // file. On a host whose real fsync is sub-millisecond, this bounded park
+                                        // is what makes the during-fsync kill reproducible. Ignore write errors:
+                                        // the parent may SIGKILL us mid-syscall.
+        let _ = writer.write_with_fsync_hook(&ckpt, || {
+            println!("BEGIN_FSYNC");
+            let _ = std::io::stdout().flush();
+            // Hold the flush window open long enough for the parent's SIGKILL to
+            // land here (well above signal-delivery latency, well below the
+            // test's per-iteration budget).
+            std::thread::sleep(std::time::Duration::from_millis(40));
+        });
     }
 }
 
