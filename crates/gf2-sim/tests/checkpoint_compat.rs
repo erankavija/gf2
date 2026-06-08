@@ -7,15 +7,22 @@
 //!   mid-point loads and resumes N-worker, with byte-identical
 //!   `fer`/`frames`/`errors`/`mean_iters` vs an uninterrupted N-worker
 //!   reference, on AWGN, Rayleigh, and Rician channels.
-//! * **Subprocess SNR-sweep SIGINT + `--resume`** (`test_sweep_sigint_*`): one
-//!   non-ignored fast-tier test PER CHANNEL (AWGN, Rayleigh, Rician) spawns the
-//!   `checkpoint_sweep` binary, sends a real SIGINT mid-sweep, asserts a
-//!   NON-ZERO child exit, then `--resume`s to completion and asserts the full
-//!   10-SNR sweep is byte-identical to an uninterrupted reference. All three are
-//!   in the cargo-ci gate (criterion 1 covers all three channels).
-//! * **Kill-during-fsync** (`test_kill_during_fsync_deterministic`): reads the
-//!   `--crash-during-fsync` child's `BEGIN_FSYNC` marker and SIGKILLs the
-//!   instant it appears, landing the kill DURING the (large) fsync; asserts the
+//! * **Subprocess SNR-sweep MID-POINT SIGINT + `--resume`**
+//!   (`test_sweep_sigint_*`): one non-ignored fast-tier test PER CHANNEL (AWGN,
+//!   Rayleigh, Rician) spawns the `checkpoint_sweep` binary and sends a real
+//!   SIGINT on the FIRST within-point `HEARTBEAT_<snr>_<frames>` marker (so the
+//!   signal lands while a point is still simulating, triggering a within-point
+//!   heartbeat flush + drain + per-worker-state latch — not a between-points
+//!   boundary flush). It asserts a NON-ZERO (130) child exit, that the
+//!   interrupted point's checkpoint is genuinely mid-point
+//!   (`0 < frames_completed < max_frames`, `!completed`, per-worker state
+//!   summing to `frames_completed`), then `--resume`s to completion and asserts
+//!   the full 10-SNR sweep is byte-identical to an uninterrupted reference. All
+//!   three are in the cargo-ci gate (criterion 1 covers all three channels).
+//! * **Kill-mid-flush** (`test_kill_during_fsync_deterministic`): reads the
+//!   `--crash-during-fsync` child's `BEGIN_FSYNC` marker and SIGKILLs it, so the
+//!   kill lands mid-flush (after the tmp bytes are written, before the atomic
+//!   rename — the amended criterion-3 durability contract); asserts the
 //!   canonical file is always a complete v2 checkpoint or absent — never torn,
 //!   and that the prior complete state survives. A randomised
 //!   `--crash-loop` variant adds defense in depth.
@@ -23,8 +30,8 @@
 //! The library-level resume tests use **small frame counts** so the fast tier
 //! (5 s/test) is honoured; resume byte-identity is independent of frame count
 //! (every frame's outcome is a pure function of its global index, design §3).
-//! The subprocess sweep uses a larger budget so a mid-sweep SIGINT window
-//! exists, but stays fast (~0.6 s/sweep for AWGN).
+//! The subprocess sweep uses several heartbeat chunks/point so a within-point
+//! SIGINT window exists, but stays fast (~1 s/test).
 
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
@@ -175,7 +182,8 @@ where
     let w_ref = CheckpointWriter::new(&dir_ref).unwrap();
     clear_interrupt();
     let reference =
-        run_snr_point_checkpointed(&full, 0, 6.25, &w_ref, &h, None, || (), &frame).unwrap();
+        run_snr_point_checkpointed(&full, 0, 6.25, &w_ref, &h, None, || (), &frame, |_, _| {})
+            .unwrap();
     assert!(reference.completed);
     assert_eq!(reference.counters.frames, 40);
 
@@ -187,18 +195,36 @@ where
         ..full.clone()
     };
     clear_interrupt();
-    let partial =
-        run_snr_point_checkpointed(&partial_cfg, 0, 6.25, &writer, &h, None, || (), &frame)
-            .unwrap();
+    let partial = run_snr_point_checkpointed(
+        &partial_cfg,
+        0,
+        6.25,
+        &writer,
+        &h,
+        None,
+        || (),
+        &frame,
+        |_, _| {},
+    )
+    .unwrap();
     assert_eq!(partial.counters.frames, 13);
 
     let reader = CheckpointReader::new(&dir, h.clone());
     let mut loaded = reader.load(0).unwrap().unwrap();
     // Re-open the point under the full budget for resume.
     loaded.completed = false;
-    let resumed =
-        run_snr_point_checkpointed(&full, 0, 6.25, &writer, &h, Some(loaded), || (), &frame)
-            .unwrap();
+    let resumed = run_snr_point_checkpointed(
+        &full,
+        0,
+        6.25,
+        &writer,
+        &h,
+        Some(loaded),
+        || (),
+        &frame,
+        |_, _| {},
+    )
+    .unwrap();
 
     assert_eq!(
         resumed.counters, reference.counters,
@@ -250,7 +276,8 @@ fn test_v2_resume_nonzero_errors_present() {
     let w = CheckpointWriter::new(&dir).unwrap();
     clear_interrupt();
     let run =
-        run_snr_point_checkpointed(&c, 0, 6.25, &w, &h, None, || (), awgn_frame(&ch)).unwrap();
+        run_snr_point_checkpointed(&c, 0, 6.25, &w, &h, None, || (), awgn_frame(&ch), |_, _| {})
+            .unwrap();
     assert_eq!(run.counters.frames, 20);
     assert!(
         run.counters.errors > 0,
@@ -296,7 +323,8 @@ fn spawn_sweep(args: &[&str]) -> std::process::Child {
 }
 
 /// Spawns the `checkpoint_sweep` binary with stdout piped (so the parent can
-/// read the per-SNR `SNR_<idx>_FLUSHED` progress markers).
+/// read the `HEARTBEAT_<snr>_<frames>` and `SNR_<idx>_FLUSHED` progress
+/// markers).
 fn spawn_sweep_piped(args: &[&str]) -> std::process::Child {
     std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
         .args(args)
@@ -334,23 +362,26 @@ fn completed_count(dir: &Path) -> usize {
         .count()
 }
 
-/// The interrupted-then-resumed half. GUARANTEES a mid-run interrupt:
+/// The interrupted-then-resumed half. GUARANTEES the SIGINT lands MID-POINT
+/// (while a point is still simulating), not between points:
 ///
-/// 1. Spawn the sweep with `--point-delay-ms` so points after the first take
-///    meaningfully longer than signal delivery (the sweep cannot all finish
-///    before the SIGINT is handled).
-/// 2. Read the child's stdout for the FIRST `SNR_<idx>_FLUSHED` marker
-///    (guaranteeing ≥1 SNR checkpoint is on disk and the sweep is still
-///    in progress), then SIGINT immediately.
-/// 3. HARD-FAIL (panic) if: the first marker never appears (child exited
-///    without flushing any point), OR the child exits successfully (status 0)
-///    instead of via the 130 interrupt path, OR all `snr_points` checkpoints
-///    were written (no genuine mid-run interrupt).
-/// 4. `--resume` (no delay) to completion; assert exit 0 and that all points
-///    are now complete.
+/// 1. Spawn the sweep with NO `--point-delay-ms` (so the signal cannot land in
+///    a between-point sleep), and a small `heartbeat_every_frames` so each SNR
+///    point performs SEVERAL within-point heartbeat flushes.
+/// 2. Read the child's stdout for the FIRST `HEARTBEAT_<snr>_<frames>` marker —
+///    emitted only on a WITHIN-point (non-final) checkpoint flush, so the point
+///    is provably mid-simulation — then SIGINT immediately.
+/// 3. HARD-FAIL (panic) if: no `HEARTBEAT_` marker appears before the child
+///    exits, OR the child exits successfully (status 0) instead of via the 130
+///    interrupt path, OR the interrupted point's checkpoint shows
+///    `frames_completed == 0` or `== max_frames` (not genuinely mid-point).
+/// 4. ASSERT the interrupted point's checkpoint has
+///    `0 < frames_completed < max_frames` (a mid-point heartbeat flush, with
+///    per-worker state, triggered by the SIGINT) and `completed == false`.
+/// 5. `--resume` to completion; assert exit 0 and that all points are complete.
 ///
-/// There is NO log-and-continue fallback: an undelivered interrupt fails the
-/// test.
+/// There is NO log-and-continue fallback: an undelivered or between-points
+/// interrupt fails the test.
 ///
 /// `#[cfg(unix)]`: sends a real `SIGINT` via `kill -INT <pid>`.
 fn interrupt_then_resume(
@@ -365,8 +396,13 @@ fn interrupt_then_resume(
     let mf = max_frames.to_string();
     let hb = heartbeat.to_string();
     let np = snr_points.to_string();
-    // 60 ms after each completed point ⇒ points 2..N take ≥ (N-1)*60 ms, far
-    // longer than SIGINT delivery; the interrupt always lands mid-sweep.
+    // No `--point-delay-ms`: the only wide window is the within-point
+    // simulation, so the SIGINT lands mid-point. `max_frames / heartbeat >= 2`
+    // guarantees at least one within-point (non-final) heartbeat flush.
+    assert!(
+        max_frames / heartbeat >= 2,
+        "[{channel}] need >=2 heartbeat chunks/point for a within-point flush"
+    );
     let base_args = [
         "--checkpoint-dir",
         dir.to_str().unwrap(),
@@ -380,8 +416,6 @@ fn interrupt_then_resume(
         &mf,
         "--heartbeat",
         &hb,
-        "--point-delay-ms",
-        "60",
     ];
 
     let mut child = spawn_sweep_piped(&base_args);
@@ -389,17 +423,24 @@ fn interrupt_then_resume(
     let stdout = child.stdout.take().expect("piped stdout");
     let mut reader = BufReader::new(stdout);
 
-    // Read until the FIRST `SNR_<idx>_FLUSHED` marker, then SIGINT immediately.
-    let mut saw_marker = false;
+    // Read until the FIRST `HEARTBEAT_<snr>_<frames>` marker (a within-point
+    // flush ⇒ provably mid-simulation), then SIGINT immediately. Capture the
+    // interrupted point's snr index.
+    let mut interrupted_snr: Option<usize> = None;
     let mut line = String::new();
     loop {
         line.clear();
         match reader.read_line(&mut line) {
             Ok(0) => break, // child closed stdout / exited
             Ok(_) => {
-                if line.contains("_FLUSHED") {
+                if let Some(rest) = line.trim().strip_prefix("HEARTBEAT_") {
+                    let snr: usize = rest
+                        .split('_')
+                        .next()
+                        .and_then(|s| s.parse().ok())
+                        .expect("HEARTBEAT_<snr>_<frames> marker");
                     send_sigint(pid);
-                    saw_marker = true;
+                    interrupted_snr = Some(snr);
                     break;
                 }
             }
@@ -407,20 +448,22 @@ fn interrupt_then_resume(
         }
     }
 
-    // HARD requirement: the first progress marker must have appeared. If not,
-    // the child exited before flushing any SNR point — not a mid-run interrupt.
-    assert!(
-        saw_marker,
-        "[{channel}] no SNR_<idx>_FLUSHED marker before the child exited; \
-         cannot guarantee a mid-run SIGINT"
-    );
+    // HARD requirement: a within-point heartbeat marker must have appeared. If
+    // not, the child never flushed mid-point — cannot guarantee a mid-point
+    // SIGINT.
+    let snr = interrupted_snr.unwrap_or_else(|| {
+        panic!(
+            "[{channel}] no HEARTBEAT_<snr>_<frames> marker before the child \
+             exited; cannot guarantee a mid-point SIGINT"
+        )
+    });
 
     let status = child.wait().expect("wait interrupted sweep");
     // HARD requirement: the child must have exited via the interrupt path
     // (non-zero / 130), never a clean success.
     assert!(
         !status.success(),
-        "[{channel}] interrupted sweep must exit NON-ZERO after a mid-run \
+        "[{channel}] interrupted sweep must exit NON-ZERO after a mid-point \
          SIGINT, got {status}"
     );
     #[cfg(unix)]
@@ -435,19 +478,38 @@ fn interrupt_then_resume(
             status.signal()
         );
     }
-    // HARD requirement: a genuine mid-run interrupt left at least one but NOT
-    // all SNR points complete.
-    let done = completed_count(dir);
+
+    // HARD requirement: the interrupted point's checkpoint is a genuine MID-POINT
+    // flush: 0 < frames_completed < max_frames, not completed, with per-worker
+    // state. This proves the SIGINT triggered a within-point heartbeat flush +
+    // drain + per-worker-state latching (criterion 1, design §4) — NOT just a
+    // between-points SNR-boundary flush.
+    let ck = load_all_normalized(dir)
+        .into_iter()
+        .find(|c| c.snr_index == snr)
+        .unwrap_or_else(|| panic!("[{channel}] interrupted point snr {snr} has no checkpoint"));
     assert!(
-        (1..snr_points).contains(&done),
-        "[{channel}] mid-run interrupt must leave 1..{snr_points} points \
-         complete, got {done}"
+        ck.frames_completed > 0 && ck.frames_completed < max_frames,
+        "[{channel}] interrupted point snr {snr} must be mid-point: \
+         0 < frames_completed ({}) < max_frames ({max_frames})",
+        ck.frames_completed
+    );
+    assert!(
+        !ck.completed,
+        "[{channel}] interrupted point snr {snr} must not be completed"
+    );
+    assert!(
+        !ck.worker_states.is_empty(),
+        "[{channel}] mid-point checkpoint must carry per-worker state"
+    );
+    let ws_sum: u64 = ck.worker_states.iter().map(|w| w.frames_in_worker).sum();
+    assert_eq!(
+        ws_sum, ck.frames_completed,
+        "[{channel}] per-worker frames_in_worker must sum to frames_completed"
     );
 
-    // Resume to completion (same config + dir + --resume, no delay); exit 0.
+    // Resume to completion (same config + dir + --resume); exit 0.
     let mut resume_args = base_args.to_vec();
-    // Drop the --point-delay-ms 60 (last two entries) so the resume is fast.
-    resume_args.truncate(resume_args.len() - 2);
     resume_args.push("--resume");
     let status = spawn_sweep(&resume_args).wait().expect("wait resume");
     assert!(status.success(), "resumed sweep must exit 0, got {status}");
@@ -471,16 +533,17 @@ fn send_sigint(_pid: u32) {
     // are `#[cfg(unix)]`, and the marker read still drives the flow.
 }
 
-/// Asserts a 10-SNR SIGINT-interrupted sweep resumes byte-identically (per
-/// `snr_NNNN.json`) to a fresh uninterrupted reference for `channel`.
+/// Asserts a 10-SNR MID-POINT-SIGINT-interrupted sweep resumes byte-identically
+/// (per `snr_NNNN.json`) to a fresh uninterrupted reference for `channel`.
 ///
-/// The mid-run SIGINT window comes from the child's `--point-delay-ms` (set
-/// inside [`interrupt_then_resume`]), NOT from the frame budget, so `max_frames`
-/// can be small and uniform — keeping all three sweeps (reference, interrupt,
-/// resume) fast. Measured per-test cycle: ~0.7-0.9 s.
+/// The SIGINT lands WITHIN a point's simulation: `heartbeat = max_frames / 4`
+/// gives 4 chunks/point, so each point performs within-point heartbeat flushes;
+/// [`interrupt_then_resume`] signals on the first one. `max_frames` is small and
+/// uniform, keeping all three sweeps (reference, interrupt, resume) fast.
+/// Measured per-test cycle: ~0.9-1.5 s.
 fn assert_sweep_resume_byte_identical(channel: &str, max_frames: u64) {
     let snr_points = 10;
-    let heartbeat = 500;
+    let heartbeat = max_frames / 4;
 
     let ref_dir = tempdir(&format!("sweep-ref-{channel}"));
     run_full_sweep(&ref_dir, channel, snr_points, max_frames, heartbeat);
@@ -546,23 +609,28 @@ fn assert_canonical_complete_or_absent(dir: &Path, ctx: &str) -> bool {
 #[test]
 #[cfg(unix)]
 fn test_kill_during_fsync_deterministic() {
-    // Criterion 3 ([hard]): kill the writer mid-flush VIA SIGNAL DURING FSYNC.
-    // The `--crash-during-fsync` child writes one COMPLETE prior-state
-    // checkpoint, then for a >=64 MiB write fires `CheckpointWriter`'s pre-fsync
-    // hook AFTER the tmp bytes are written and immediately before `sync_all`: it
-    // prints `BEGIN_FSYNC` and returns AT ONCE (no sleep). This parent reads the
-    // child's stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`; because the
-    // subsequent real `sync_all` on a >=64 MiB freshly-written file runs for
-    // hundreds of ms while the parent's read->kill is sub-ms, the SIGKILL lands
-    // INSIDE the real `sync_all` syscall (not in a sleep, not before fsync).
+    // Criterion 3 ([hard], amended 2026-06-08): the durability contract is "kill
+    // the writer MID-FLUSH — after the tmp bytes are written and BEFORE the
+    // atomic rename". The canonical checkpoint must then be either the complete
+    // prior-state checkpoint or absent — NEVER a torn/partial JSON.
     //
-    // The checkpoint dir is on a REAL filesystem (`CARGO_TARGET_TMPDIR` under
-    // `target/`), not RAM-backed `tmpfs` (`/tmp`) where `sync_all` is a no-op —
-    // otherwise the fsync window would be zero-width and uncatchable.
+    // This test demonstrates the strongest form of that window: the
+    // `--crash-during-fsync` child writes one COMPLETE prior-state checkpoint,
+    // then for a >=64 MiB write fires `CheckpointWriter`'s pre-fsync hook AFTER
+    // the tmp bytes are written and immediately before `sync_all`: it prints
+    // `BEGIN_FSYNC` and returns at once (no sleep). The parent reads the child's
+    // stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`. The checkpoint dir
+    // is on a REAL filesystem (`CARGO_TARGET_TMPDIR` under `target/`), not
+    // RAM-backed `tmpfs` (`/tmp`, where `sync_all` is a no-op), so the >=64 MiB
+    // `sync_all` does real, hundreds-of-ms disk I/O — the kill therefore lands
+    // within that real `sync_all`, which is squarely inside the amended window
+    // (after the tmp bytes, before the rename).
     //
-    // The canonical snr_0000.json must always be the prior complete v2
-    // checkpoint or absent — never torn, and never the large write (whose rename
-    // happens only after a successful `sync_all`, which the kill interrupts).
+    // The assertion is correct for ANY kill before the atomic rename: the
+    // canonical snr_0000.json is the prior complete v2 checkpoint or absent —
+    // never torn, and never the large write (whose rename happens only after a
+    // successful `sync_all`, which the kill interrupts). The large fsync simply
+    // pins the kill into the after-write/before-rename window robustly.
     // Few iterations: each does a 64 MiB write + a real (hundreds-of-ms)
     // sync_all, so 3 keeps the test well under the 5 s fast-tier limit.
     use std::io::{BufRead, BufReader};

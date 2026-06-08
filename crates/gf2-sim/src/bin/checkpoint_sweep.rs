@@ -210,9 +210,8 @@ fn verdict(batch: &SymbolBatch) -> FrameOutcome {
 }
 
 /// Per-point completion callback: prints `SNR_<idx>_FLUSHED` (so a parent can
-/// detect that ≥1 SNR checkpoint is on disk and the sweep is still in progress),
-/// flushes stdout, then optionally pauses `point_delay_ms` to widen the
-/// mid-sweep SIGINT window.
+/// detect that an SNR point COMPLETED), flushes stdout, then optionally pauses
+/// `point_delay_ms`.
 fn point_marker(
     point_delay_ms: u64,
 ) -> impl FnMut(usize, f64, &gf2_sim::checkpoint::CheckpointedRun) {
@@ -223,6 +222,18 @@ fn point_marker(
         if point_delay_ms > 0 {
             std::thread::sleep(std::time::Duration::from_millis(point_delay_ms));
         }
+    }
+}
+
+/// Per-heartbeat-flush callback: prints `HEARTBEAT_<snr>_<frames>` after each
+/// WITHIN-point (non-final) checkpoint write, so a parent can deliver a SIGINT
+/// while the point is still simulating (`0 < frames < point_max`). Flushes
+/// stdout so the parent observes it without buffering delay.
+fn heartbeat_marker() -> impl FnMut(usize, u64) {
+    use std::io::Write as _;
+    move |snr, frames| {
+        println!("HEARTBEAT_{snr}_{frames}");
+        let _ = std::io::stdout().flush();
     }
 }
 
@@ -259,6 +270,7 @@ fn run(
                 )
             },
             point_marker(delay),
+            heartbeat_marker(),
         )?,
         Channel::Rayleigh => run_sweep_checkpointed(
             config,
@@ -277,6 +289,7 @@ fn run(
                 )
             },
             point_marker(delay),
+            heartbeat_marker(),
         )?,
         Channel::Rician => run_sweep_checkpointed(
             config,
@@ -295,6 +308,7 @@ fn run(
                 )
             },
             point_marker(delay),
+            heartbeat_marker(),
         )?,
     };
     Ok(sweep.interrupted)
@@ -370,23 +384,24 @@ fn crash_loop(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
 /// sub-millisecond read→kill lands *inside* that `sync_all`.
 const FSYNC_CRASH_WORKERS: usize = 700_000;
 
-/// `--crash-during-fsync` mode: lands a parent SIGKILL **inside the real
-/// `sync_all` syscall** (criterion 3, "kill the writer mid-flush via signal
-/// during fsync"). It (1) writes one COMPLETE prior-state checkpoint, then in a
+/// `--crash-during-fsync` mode: lands a parent SIGKILL **mid-flush — after the
+/// tmp bytes are written and before the atomic rename** (criterion 3, amended
+/// 2026-06-08). It (1) writes one COMPLETE prior-state checkpoint, then in a
 /// loop (2) calls `CheckpointWriter::write_with_fsync_hook` with a ≥64 MiB
 /// payload, passing a hook that fires **after the tmp bytes are fully written
 /// and immediately before `sync_all`** and only prints the `BEGIN_FSYNC` marker
 /// (NO sleep/park). The parent SIGKILLs the instant it reads the marker; because
 /// the subsequent real `sync_all` on a ≥64 MiB freshly-written file runs for
 /// hundreds of milliseconds (on a real filesystem) while the parent's read→kill
-/// is sub-millisecond, the SIGKILL lands *during* `sync_all`.
+/// is sub-millisecond, the SIGKILL lands within that real `sync_all` — squarely
+/// inside the after-tmp-write / before-rename window.
 ///
 /// The canonical `snr_0000.json` is only ever replaced by the atomic rename,
-/// which happens *after* a successful `sync_all`. So for **any** kill before
-/// the rename — including one during `sync_all` — the canonical stays the prior
-/// complete state (or absent), never torn. The large fsync simply guarantees
-/// the kill lands during `sync_all` specifically, satisfying the criterion's
-/// "signal during fsync". Never returns normally (the parent kills it).
+/// which happens *after* a successful `sync_all`. So for **any** kill before the
+/// rename — including one during `sync_all` — the canonical stays the prior
+/// complete state (or absent), never torn, which is the durability contract.
+/// The large fsync simply pins the kill robustly into that window. Never returns
+/// normally (the parent kills it).
 fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     use std::io::Write as _;
     let hash = config_hash(config);
