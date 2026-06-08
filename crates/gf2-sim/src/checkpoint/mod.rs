@@ -58,20 +58,19 @@ pub const SCHEMA_VERSION: u32 = 2;
 
 /// Per-worker resume state recorded in a [`CheckpointV2`] (design doc §4).
 ///
-/// Indexed by `worker_idx`. `rng_word_pos` is the absolute ChaCha20 32-bit-word
-/// position the worker's RNG must be seeked to in order to resume — the start
-/// of the worker's next frame.
+/// Indexed by `worker_idx`. `rng_word_pos` is
+/// `worker_offset(seed, snr_index, worker_idx, frames_in_worker)` — the
+/// per-worker stream position per design-doc §4's drain contract.
 ///
-/// For the **CPU within-SNR path** (the path this task implements), every frame
-/// is keyed on the *global* frame index via the `worker_idx = 0` axis of
-/// [`worker_offset`](crate::parallel::worker_offset), so the recorded position
-/// is the global-stream projection
-/// `worker_offset(seed, snr_index, 0, frames_in_worker)` — **not**
-/// `worker_offset(seed, snr_index, worker_idx, frames_in_worker)`. The
-/// `worker_idx` axis of `worker_offset` is reserved for the Phase C
-/// fixed-partition executor (`571c11c4`), which owns the per-partition
-/// per-worker stream semantics and will populate `rng_word_pos` with the
-/// `worker_idx`-keyed offset when it lands.
+/// **Resume semantics differ by executor (design-doc §4, amended 2026-06-08):**
+/// the **CPU within-SNR path** (Phase A, the path this task implements) keys
+/// every frame on the *global* frame index (§3,
+/// [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_idx, 0, g)`) and
+/// resumes via the global `frames_completed` (§4 step 5) — it does **not** seek
+/// to the per-worker `rng_word_pos`. That per-worker-stream restore belongs to
+/// the **Phase C** fixed-partition executor (`571c11c4`), for which this
+/// `worker_idx`-keyed position is recorded. (The CPU path's global keying is
+/// what guarantees byte-identity across worker counts, per `3fcb7025`.)
 ///
 /// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
 /// not fit a JSON number above `2^53`.
@@ -1019,11 +1018,14 @@ fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
 /// dispatch (the per-chunk striding restarts at each chunk's `start`, so the
 /// real per-worker distribution differs from a single-dispatch distribution).
 ///
-/// Each worker's recorded `rng_word_pos` is the CPU within-SNR path's
-/// global-stream position projection (see [`WorkerState`] docs): the CPU path
-/// keys every frame on the global frame index via the `worker_idx = 0` axis of
-/// [`worker_offset`], so the position is
-/// `worker_offset(seed, snr_index, 0, frames_in_worker)`.
+/// Each worker's recorded `rng_word_pos` is `worker_offset(seed, snr_index,
+/// worker_idx, frames_in_worker)` — the per-worker stream position per design
+/// doc §4's drain contract. The **CPU** within-SNR path (Phase A) does not
+/// itself seek to this position on resume: it keys every frame on the *global*
+/// frame index (§3, `worker_offset(seed, snr_idx, 0, g)`) and resumes via the
+/// global `frames_completed` (§4 step 5, amended 2026-06-08). `rng_word_pos` is
+/// recorded in §4-formula form for the Phase C fixed-partition executor
+/// (`571c11c4`), which owns the per-worker-stream restore.
 fn build_checkpoint(
     config: &PipelineConfig,
     snr_index: usize,
@@ -1037,12 +1039,14 @@ fn build_checkpoint(
         .iter()
         .enumerate()
         .map(|(w, &frames_in_worker)| {
-            // The CPU within-SNR path keys the seek on the global frame index
-            // (logical worker 0); the recorded position is the worker's next
-            // frame start. We record it under the physical worker_idx for the
-            // Phase C executor's fixed-partition resume, using worker_idx=0 in
-            // the offset to match the CPU dispatcher's global-frame keying.
-            let rng_word_pos = worker_offset(config.seed, snr_index, 0, frames_in_worker as usize);
+            // Record the per-worker stream position per design-doc §4's drain
+            // contract: `worker_offset(seed, snr_idx, worker_idx, frames_in_worker)`
+            // with the *physical* `worker_idx = w`. The CPU within-SNR executor
+            // (Phase A) does not consume this on resume — it keys every frame on
+            // the global index (§3, `worker_offset(.., 0, g)`) and resumes via the
+            // global `frames_completed` (§4 step 5). This per-worker position is
+            // for the Phase C fixed-partition executor (`571c11c4`).
+            let rng_word_pos = worker_offset(config.seed, snr_index, w, frames_in_worker as usize);
             WorkerState {
                 worker_idx: w,
                 frames_in_worker,
