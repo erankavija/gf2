@@ -301,10 +301,10 @@ fn run(
 }
 
 /// Builds a SNR-0 checkpoint whose serialised size grows with `extra_workers`
-/// (each adds a `worker_states` entry, ~64 B of JSON). With a large
-/// `extra_workers` the tmp file is several MB so its `sync_all` takes
-/// measurable wall time — the lever the `--crash-during-fsync` mode uses to land
-/// a kill inside the fsync with high confidence.
+/// (each pretty-printed `worker_states` entry is ~110 B of JSON). With a large
+/// `extra_workers` (e.g. [`FSYNC_CRASH_WORKERS`] ⇒ ≥64 MiB) the tmp file is big
+/// enough that its `sync_all` does real, hundreds-of-ms disk I/O — the lever the
+/// `--crash-during-fsync` mode uses to land a kill inside the real fsync.
 fn crash_checkpoint(
     config: &PipelineConfig,
     hash: &str,
@@ -363,20 +363,30 @@ fn crash_loop(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     }
 }
 
-/// `--crash-during-fsync` mode: deterministically lands a parent SIGKILL in the
-/// tmp-file flush window — after the tmp bytes are written, at the `sync_all`
-/// boundary, before the atomic rename (criterion 3, "kill the writer mid-flush
-/// via signal during fsync"). It (1) writes one COMPLETE prior-state checkpoint,
-/// then in a loop (2) calls `CheckpointWriter::write_with_fsync_hook` with a
-/// LARGE payload, passing a hook that fires **after the tmp bytes are written
-/// and immediately before `sync_all`**: it prints the `BEGIN_FSYNC` marker and
-/// then parks the process for a short bounded interval. The parent reads stdout
-/// and SIGKILLs the instant it sees `BEGIN_FSYNC`, landing the kill inside that
-/// flush window with certainty (a fixed park makes it reproducible even on a
-/// host whose real `sync_all` is sub-millisecond). Because the canonical
-/// `snr_0000.json` is only ever replaced by the atomic rename — which happens
-/// *after* a successful `sync_all` — the kill leaves the canonical as the prior
-/// complete state (or absent), never torn. Never returns normally.
+/// Number of synthetic `worker_states` entries in the `--crash-during-fsync`
+/// payload. Each pretty-printed entry is ~110 B, so 700 000 entries serialise to
+/// a ≥64 MiB checkpoint — large enough that the tmp-file `sync_all` does real,
+/// measurable disk I/O (hundreds of ms on a real filesystem) and the parent's
+/// sub-millisecond read→kill lands *inside* that `sync_all`.
+const FSYNC_CRASH_WORKERS: usize = 700_000;
+
+/// `--crash-during-fsync` mode: lands a parent SIGKILL **inside the real
+/// `sync_all` syscall** (criterion 3, "kill the writer mid-flush via signal
+/// during fsync"). It (1) writes one COMPLETE prior-state checkpoint, then in a
+/// loop (2) calls `CheckpointWriter::write_with_fsync_hook` with a ≥64 MiB
+/// payload, passing a hook that fires **after the tmp bytes are fully written
+/// and immediately before `sync_all`** and only prints the `BEGIN_FSYNC` marker
+/// (NO sleep/park). The parent SIGKILLs the instant it reads the marker; because
+/// the subsequent real `sync_all` on a ≥64 MiB freshly-written file runs for
+/// hundreds of milliseconds (on a real filesystem) while the parent's read→kill
+/// is sub-millisecond, the SIGKILL lands *during* `sync_all`.
+///
+/// The canonical `snr_0000.json` is only ever replaced by the atomic rename,
+/// which happens *after* a successful `sync_all`. So for **any** kill before
+/// the rename — including one during `sync_all` — the canonical stays the prior
+/// complete state (or absent), never torn. The large fsync simply guarantees
+/// the kill lands during `sync_all` specifically, satisfying the criterion's
+/// "signal during fsync". Never returns normally (the parent kills it).
 fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     use std::io::Write as _;
     let hash = config_hash(config);
@@ -385,29 +395,22 @@ fn crash_during_fsync(config: &PipelineConfig, writer: &CheckpointWriter) -> ! {
     //     previous state survives" arm is exercised.
     let _ = writer.write(&crash_checkpoint(config, &hash, 7, 0));
 
-    // ~40k worker entries ≈ several MB of JSON so the tmp write is non-trivial.
-    let big = crash_checkpoint(config, &hash, 9, 40_000);
+    // (2) A ≥64 MiB payload so the tmp-file `sync_all` is a wide window.
+    let big = crash_checkpoint(config, &hash, 9, FSYNC_CRASH_WORKERS);
     let mut frames = 9u64;
     loop {
         let mut ckpt = big.clone();
         frames = frames.wrapping_add(1);
         ckpt.frames_completed = frames; // vary so each write is distinct
-                                        // The hook fires AFTER the tmp bytes are fully written and BEFORE the
-                                        // tmp `sync_all` (and therefore before the atomic rename). It prints the
-                                        // marker, then parks the process in this exact "flushing, not yet
-                                        // renamed" window for a short, bounded interval. The parent SIGKILLs on
-                                        // the marker, so the kill DETERMINISTICALLY lands during the flush
-                                        // (at/within the fsync window) — before the rename can publish the new
-                                        // file. On a host whose real fsync is sub-millisecond, this bounded park
-                                        // is what makes the during-fsync kill reproducible. Ignore write errors:
-                                        // the parent may SIGKILL us mid-syscall.
+                                        // The hook fires AFTER the tmp bytes are fully written and IMMEDIATELY
+                                        // BEFORE `sync_all`. It prints the marker and returns at once — NO sleep
+                                        // — so the kill the parent sends on the marker lands inside the real
+                                        // `sync_all` that runs next (the payload is ≥64 MiB, so that syscall is
+                                        // hundreds of ms wide). Ignore write errors: the parent may SIGKILL us
+                                        // mid-syscall.
         let _ = writer.write_with_fsync_hook(&ckpt, || {
             println!("BEGIN_FSYNC");
             let _ = std::io::stdout().flush();
-            // Hold the flush window open long enough for the parent's SIGKILL to
-            // land here (well above signal-delivery latency, well below the
-            // test's per-iteration budget).
-            std::thread::sleep(std::time::Duration::from_millis(40));
         });
     }
 }
