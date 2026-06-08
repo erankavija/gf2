@@ -17,19 +17,28 @@
 //! `gf2_coding::dvb_t2_bicm_harness`).
 //!
 //! Each Gaussian sample consumes **4 ChaCha20 32-bit words** (two `f64` uniform
-//! draws fed to [`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)).
-//! A debug assertion guards that the total draw for the batch does not exceed
-//! `FRAME_STRIDE - 256` words.
+//! draws fed to [`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)
+//! via [`draw_standard_normal`](crate::channels::draw_standard_normal)), so each
+//! symbol (one noise sample per axis) consumes **8 words**. A debug assertion
+//! guards that the total draw for the batch does not exceed `FRAME_STRIDE - 256`
+//! words.
+//!
+//! # Per-frame seek entry point (§3 contract)
+//!
+//! [`Awgn::apply_for_frame`] is the per-frame-seeked entry point: it calls
+//! [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
+//! (which internally performs `set_word_pos(worker_offset(...))`, the §3 seek)
+//! and then draws noise from that position. [`Stage::process`] is the
+//! executor-facing path that consumes the scratch RNG which the Phase C executor
+//! pre-seeks.
 
-use rand::Rng as _;
 use rand::SeedableRng as _;
 use rand_chacha::ChaCha20Rng;
 
-use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
-
 use crate::batch::SymbolBatch;
+use crate::channels::draw_standard_normal;
 use crate::error::StageError;
-use crate::parallel::FRAME_STRIDE;
+use crate::parallel::{WorkerCtx, FRAME_STRIDE};
 use crate::stage::{ExecutionClass, Stage};
 
 /// Per-stage scratch for the AWGN channel: holds an independent [`ChaCha20Rng`].
@@ -44,9 +53,9 @@ use crate::stage::{ExecutionClass, Stage};
 /// ```
 /// use gf2_sim::channels::awgn::ChannelScratch;
 ///
-/// let scratch = ChannelScratch::default();
-/// // Scratch is default-constructible and Send + Sync.
-/// let _: &dyn Send = &scratch;
+/// fn assert_send_sync<T: Send + Sync>() {}
+/// assert_send_sync::<ChannelScratch>();
+/// let _scratch = ChannelScratch::default();
 /// ```
 pub struct ChannelScratch {
     /// The worker's noise RNG.
@@ -145,11 +154,48 @@ impl Awgn {
         self.sigma
     }
 
+    /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies AWGN noise.
+    ///
+    /// This is the per-frame-seeked entry point implementing the §3 determinism
+    /// contract: it calls
+    /// [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
+    /// — which internally performs `set_word_pos(worker_offset(seed, snr_idx,
+    /// worker_idx, frame_idx_in_worker))` — and then draws noise from that
+    /// position via [`apply`](Self::apply). Because every frame's noise region is
+    /// keyed on the global frame index (`worker_offset(.., 0, g)`), the output is
+    /// a pure function of the frame index and therefore byte-identical across
+    /// worker counts.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch` — the IQ symbol batch to corrupt in-place.
+    /// * `ctx` — the per-worker context whose RNG is reseeked to the frame.
+    /// * `frame_idx_in_worker` — the frame index to seek to (the global frame
+    ///   index when the worker is logical worker 0, per design doc §3).
+    ///
+    /// # Complexity
+    ///
+    /// O(N) where N is the total number of symbols across all frames in the batch.
+    pub fn apply_for_frame(
+        &self,
+        batch: &mut SymbolBatch,
+        ctx: &mut WorkerCtx,
+        frame_idx_in_worker: usize,
+    ) {
+        ctx.reseek_to_frame(frame_idx_in_worker);
+        self.apply(batch, ctx.rng_mut());
+    }
+
     /// Applies AWGN noise to `batch` in-place, drawing noise from `rng`.
     ///
     /// Each symbol has its I and Q components independently corrupted by
-    /// `N(0, sigma^2)` noise. Each Gaussian sample consumes exactly 4 ChaCha20
-    /// 32-bit words (two `f64` uniform draws via Box-Muller).
+    /// `N(0, sigma^2)` noise via [`draw_standard_normal`]. Each Gaussian sample
+    /// consumes exactly 4 ChaCha20 32-bit words (two `f64` uniform draws via
+    /// Box-Muller), so each symbol consumes 8 words.
+    ///
+    /// This consumes the RNG from wherever it is currently positioned;
+    /// [`apply_for_frame`](Self::apply_for_frame) is the per-frame-seeked wrapper
+    /// that positions it at the §3 offset first.
     ///
     /// # Arguments
     ///
@@ -164,12 +210,8 @@ impl Awgn {
         let pos_before = rng.get_word_pos();
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
-                let u1: f64 = rng.random();
-                let u2: f64 = rng.random();
-                let n_i = box_muller_cos(u1, u2) * self.sigma;
-                let u3: f64 = rng.random();
-                let u4: f64 = rng.random();
-                let n_q = box_muller_cos(u3, u4) * self.sigma;
+                let n_i = draw_standard_normal(rng) * self.sigma;
+                let n_q = draw_standard_normal(rng) * self.sigma;
                 *xi += n_i;
                 *xq += n_q;
             }

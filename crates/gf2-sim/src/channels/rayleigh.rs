@@ -16,21 +16,32 @@
 //!
 //! `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` — the same per-axis variance as in
 //! the AWGN channel (`frame_sim.rs` SSOT). The fading and noise draws are
-//! interleaved from the **same** ChaCha20 stream, consuming exactly **8 ChaCha20
-//! 32-bit words per symbol** (4 draws for fading h, 4 draws for noise n).
+//! interleaved from the **same** ChaCha20 stream. Each symbol draws a complex
+//! fading coefficient `h ~ CN(0, 1)` (one [`draw_cn01`](crate::channels::draw_cn01)
+//! = 2 normals = 8 words) **plus** complex noise `n` (2 normals = 8 words),
+//! consuming **16 ChaCha20 32-bit words per symbol** — twice AWGN's 8
+//! words/symbol, because the fading channel adds the fading draw on top of the
+//! noise draw. The QPSK-Normal worst case (32400 symbols ×16 ≈ 518k words/frame)
+//! still fits `FRAME_STRIDE = 2^20` (≈1.05 M words) with ~2× margin.
 //!
 //! A debug assertion guards that the total draw does not exceed
 //! `FRAME_STRIDE - 256` words.
+//!
+//! # Per-frame seek entry point (§3 contract)
+//!
+//! [`Rayleigh::apply_for_frame`] is the per-frame-seeked entry point: it calls
+//! [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
+//! (which internally performs `set_word_pos(worker_offset(...))`, the §3 seek)
+//! and then draws from that position. [`Stage::process`] is the executor-facing
+//! path consuming the scratch RNG which the Phase C executor pre-seeks.
 
-use rand::Rng as _;
 use rand_chacha::ChaCha20Rng;
-
-use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
 
 use crate::batch::SymbolBatch;
 use crate::channels::awgn::ChannelScratch;
+use crate::channels::{draw_cn01, draw_standard_normal};
 use crate::error::StageError;
-use crate::parallel::FRAME_STRIDE;
+use crate::parallel::{WorkerCtx, FRAME_STRIDE};
 use crate::stage::{ExecutionClass, Stage};
 
 /// Rayleigh flat-fading channel stage.
@@ -112,12 +123,47 @@ impl Rayleigh {
         self.sigma
     }
 
+    /// Seeks `ctx`'s RNG to frame `frame_idx_in_worker` and applies the channel.
+    ///
+    /// This is the per-frame-seeked entry point implementing the §3 determinism
+    /// contract: it calls
+    /// [`WorkerCtx::reseek_to_frame`](crate::parallel::WorkerCtx::reseek_to_frame)
+    /// — which internally performs `set_word_pos(worker_offset(...))` — and then
+    /// draws from that position via [`apply`](Self::apply). The output is a pure
+    /// function of the frame index and therefore byte-identical across worker
+    /// counts.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch` — the IQ symbol batch to corrupt in-place.
+    /// * `ctx` — the per-worker context whose RNG is reseeked to the frame.
+    /// * `frame_idx_in_worker` — the frame index to seek to (the global frame
+    ///   index for logical worker 0, per design doc §3).
+    ///
+    /// # Complexity
+    ///
+    /// O(N) where N is the total number of symbols across all frames in the batch.
+    pub fn apply_for_frame(
+        &self,
+        batch: &mut SymbolBatch,
+        ctx: &mut WorkerCtx,
+        frame_idx_in_worker: usize,
+    ) {
+        ctx.reseek_to_frame(frame_idx_in_worker);
+        self.apply(batch, ctx.rng_mut());
+    }
+
     /// Applies Rayleigh fading and AWGN to `batch` in-place, drawing from `rng`.
     ///
-    /// For each symbol, draws `h ~ CN(0, 1)` and `n ~ CN(0, 2*sigma^2)` from
-    /// `rng`, then sets `r = h * x + n`. The fading and noise draws are
-    /// interleaved from the same stream, consuming **8 ChaCha20 32-bit words per
-    /// symbol** (4 for `h`, 4 for `n`).
+    /// For each symbol, draws `h ~ CN(0, 1)` via
+    /// [`draw_cn01`](crate::channels::draw_cn01) and complex noise `n` (two
+    /// [`draw_standard_normal`](crate::channels::draw_standard_normal) calls
+    /// scaled by `sigma`), then sets `r = h * x + n`. The fading and noise draws
+    /// are interleaved from the same stream, consuming **16 ChaCha20 32-bit words
+    /// per symbol** (8 for `h`, 8 for `n`).
+    ///
+    /// This consumes the RNG from wherever it is currently positioned;
+    /// [`apply_for_frame`](Self::apply_for_frame) is the per-frame-seeked wrapper.
     ///
     /// # Arguments
     ///
@@ -131,17 +177,9 @@ impl Rayleigh {
         let pos_before = rng.get_word_pos();
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
             for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
-                // Draw complex fading coefficient h ~ CN(0, 1):
-                //   h = (h_r + j*h_i) where h_r, h_i ~ N(0, 0.5)
-                //   so |h|^2 has mean 1 (Rayleigh envelope).
-                // Box-Muller produces N(0,1) samples; divide by sqrt(2) for
-                // per-component variance 1/2 so E[|h|^2] = 2*(1/2) = 1.
-                let u1h: f64 = rng.random();
-                let u2h: f64 = rng.random();
-                let h_r = box_muller_cos(u1h, u2h) * std::f32::consts::FRAC_1_SQRT_2;
-                let u3h: f64 = rng.random();
-                let u4h: f64 = rng.random();
-                let h_i = box_muller_cos(u3h, u4h) * std::f32::consts::FRAC_1_SQRT_2;
+                // Complex fading coefficient h ~ CN(0, 1) (per-component variance
+                // 1/2, so E[|h|^2] = 1 — the Rayleigh envelope).
+                let (h_r, h_i) = draw_cn01(rng);
 
                 // Apply fading: r_noiseless = h * x
                 let x_i = *xi;
@@ -149,14 +187,9 @@ impl Rayleigh {
                 let r_i = h_r * x_i - h_i * x_q;
                 let r_q = h_r * x_q + h_i * x_i;
 
-                // Draw AWGN noise n ~ CN(0, 2*sigma^2):
-                //   n_r, n_q ~ N(0, sigma^2)
-                let u1n: f64 = rng.random();
-                let u2n: f64 = rng.random();
-                let n_i = box_muller_cos(u1n, u2n) * self.sigma;
-                let u3n: f64 = rng.random();
-                let u4n: f64 = rng.random();
-                let n_q = box_muller_cos(u3n, u4n) * self.sigma;
+                // Complex AWGN noise n ~ CN(0, 2*sigma^2): n_r, n_q ~ N(0, sigma^2).
+                let n_i = draw_standard_normal(rng) * self.sigma;
+                let n_q = draw_standard_normal(rng) * self.sigma;
 
                 *xi = r_i + n_i;
                 *xq = r_q + n_q;

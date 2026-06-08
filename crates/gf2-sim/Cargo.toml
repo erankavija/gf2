@@ -22,6 +22,9 @@ serde = { version = "1", features = ["derive"] }
 ctrlc = "3" # for SIGINT handler in 5f12e7ff
 blake3 = "1" # for v2 checkpoint config_hash
 
+[dev-dependencies]
+proptest = { workspace = true }
+
 [features]
 default = []
 hip = ["dep:gf2-kernels-hip"]
