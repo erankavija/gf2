@@ -58,7 +58,8 @@ use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
 use gf2_sim::checkpoint::{
-    clear_interrupt, config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointWriter,
+    clear_interrupt, config_hash, request_interrupt, run_snr_point_checkpointed, CheckpointReader,
+    CheckpointWriter,
 };
 use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 use gf2_sim::parallel::{run_snr_point, WorkerCounters};
@@ -339,18 +340,30 @@ fn run_uninterrupted(cfg: DetConfig, parallelism: NonZeroUsize) -> WorkerCounter
     run.counters
 }
 
-/// Asserts heartbeat-resume parity for one config: an interrupted run stopped at
-/// [`INTERRUPT_AT_FRAME`] then resumed under the full [`FRAMES`] budget
-/// reproduces the same final four-column tuple as the uninterrupted run.
+/// Asserts heartbeat-resume parity for one config: a run interrupted by a
+/// SIGINT at frame [`INTERRUPT_AT_FRAME`], then resumed, reproduces the same
+/// final four-column tuple as the uninterrupted run.
 ///
-/// The interruption is modelled exactly as the checkpoint module's own resume
-/// smoke test does — by capping the first run's `max_frames` at the interrupt
-/// boundary (a frame-boundary stop equivalent to a SIGINT flushing a resumable
-/// checkpoint mid-run), then resuming from the flushed checkpoint under the full
-/// budget. Byte-identity holds because every frame's outcome is a pure function
-/// of its global index (design doc §3), so the chunked
-/// `0..INTERRUPT_AT_FRAME` + `INTERRUPT_AT_FRAME..FRAMES` aggregate equals the
-/// single `0..FRAMES` run.
+/// The interruption is the **real SIGINT-flush path**, not a reduced-`max_frames`
+/// chunking. A single [`FRAMES`]-frame config (one stable [`config_hash`]) drives
+/// the whole scenario:
+///
+/// 1. The run starts fresh under the full 200-frame budget with a heartbeat at
+///    frame 100. When the frame-100 heartbeat flushes its resumable
+///    (`completed = false`) checkpoint, the `on_heartbeat_flush` callback trips
+///    [`request_interrupt`] (the programmatic equivalent of a SIGINT). The next
+///    chunk boundary observes [`is_interrupted`] and stops with
+///    `interrupted = true`, `completed = false` — exactly the
+///    SIGINT-at-frame-100 state.
+/// 2. The interrupted checkpoint is loaded under the **same** config hash and
+///    resumed under the **same** full config (no hand-mutation of `completed`).
+///
+/// Byte-identity holds because every frame's outcome is a pure function of its
+/// global index (design doc §3), so the `0..100` + `100..200` aggregate equals
+/// the single `0..200` run. Because the config (and thus `max_frames`, which
+/// feeds `config_hash`) is identical across the interrupt and the resume, the
+/// flushed checkpoint loads under the live hash — the contract a real SIGINT
+/// resume must satisfy.
 fn assert_resume_parity(cfg: DetConfig) {
     let label = cfg.label();
     // Two workers exercises the multi-worker chunked striding on resume; the
@@ -364,51 +377,73 @@ fn assert_resume_parity(cfg: DetConfig) {
         "{label}: reference frame budget"
     );
 
-    // Interrupted run: stop at frame 100 (cap max_frames there), flushing a
-    // resumable checkpoint, then resume under the full 200-frame budget.
+    // Interrupted run: ONE full 200-frame config (stable config_hash), heartbeat
+    // at frame 100. The frame-100 flush trips the SIGINT flag, so the next chunk
+    // boundary stops with a resumable (completed = false) checkpoint on disk.
     let dir = tempdir();
     let (_pipeline, frame_sim) = seeded_runner_factory(cfg, parallelism, Some(dir.clone()));
     let writer = CheckpointWriter::new(&dir).expect("create checkpoint dir");
+    let config = checkpoint_config(parallelism, FRAMES, &dir, cfg.es_n0_db);
+    let hash = config_hash(&config);
 
-    // First leg: 0..INTERRUPT_AT_FRAME (the pre-SIGINT portion).
-    let partial_config = checkpoint_config(parallelism, INTERRUPT_AT_FRAME, &dir, cfg.es_n0_db);
-    let partial_hash = config_hash(&partial_config);
     clear_interrupt();
-    let partial = run_snr_point_checkpointed(
-        &partial_config,
+    let interrupted = run_snr_point_checkpointed(
+        &config,
         cfg.snr_idx,
         cfg.es_n0_db,
         &writer,
-        &partial_hash,
-        None,
+        &hash,
+        None, // fresh
         || frame_sim.clone(),
         |g, ctx, s| s.simulate_frame(g, ctx),
-        |_, _| {},
+        // SIGINT lands at the frame-100 heartbeat: the resumable checkpoint has
+        // just hit disk, so requesting the interrupt now makes the next chunk
+        // boundary stop with that checkpoint as the resume point.
+        |_snr, frames_completed| {
+            assert_eq!(
+                frames_completed, INTERRUPT_AT_FRAME as u64,
+                "{label}: heartbeat flush fires at the interrupt boundary"
+            );
+            request_interrupt();
+        },
     )
-    .expect("partial (pre-interrupt) checkpointed run");
+    .expect("interrupted checkpointed run");
+    assert!(
+        interrupted.interrupted,
+        "{label}: run observed the SIGINT and stopped early"
+    );
+    assert!(
+        !interrupted.completed,
+        "{label}: interrupted run did not complete the point"
+    );
     assert_eq!(
-        partial.counters.frames, INTERRUPT_AT_FRAME as u64,
-        "{label}: partial run stopped at the interrupt boundary",
+        interrupted.counters.frames, INTERRUPT_AT_FRAME as u64,
+        "{label}: interrupted at the frame-100 boundary",
     );
 
-    // Resume leg: load the flushed checkpoint and continue under the FULL budget.
-    let full_config = checkpoint_config(parallelism, FRAMES, &dir, cfg.es_n0_db);
-    let full_hash = config_hash(&full_config);
-    let reader = CheckpointReader::new(&dir, partial_hash.clone());
-    let mut loaded = reader
+    // Resume leg: same config + same hash. Clear the SIGINT first (else the
+    // resume's first chunk-boundary check would trip it again), load the flushed
+    // resumable checkpoint, and continue WITHOUT touching `completed`.
+    clear_interrupt();
+    let reader = CheckpointReader::new(&dir, hash.clone());
+    let loaded = reader
         .load(cfg.snr_idx)
-        .expect("load partial checkpoint")
-        .expect("partial checkpoint was flushed");
-    // The partial leg hit its (reduced) max_frames and marked the point complete;
-    // clear that so the resume continues the point under the full budget. The
-    // recorded `frames_completed` (100) is the byte-identical resume point.
-    loaded.completed = false;
+        .expect("load interrupted checkpoint")
+        .expect("interrupted checkpoint was flushed");
+    assert!(
+        !loaded.completed,
+        "{label}: the flushed checkpoint is resumable (completed = false)"
+    );
+    assert_eq!(
+        loaded.frames_completed, INTERRUPT_AT_FRAME as u64,
+        "{label}: checkpoint recorded the frame-100 resume point",
+    );
     let resumed = run_snr_point_checkpointed(
-        &full_config,
+        &config,
         cfg.snr_idx,
         cfg.es_n0_db,
         &writer,
-        &full_hash,
+        &hash,
         Some(loaded),
         || frame_sim.clone(),
         |g, ctx, s| s.simulate_frame(g, ctx),
