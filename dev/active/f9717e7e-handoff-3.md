@@ -4,13 +4,18 @@
 **Session number:** 3
 **Prior handoffs:** `f9717e7e-handoff.md` (s1), `f9717e7e-handoff-2.md` (s2). Progress file: `dev/active/f9717e7e-progress.json`. **All traps from s1 + s2 remain in force** — read them.
 
-## Current state
+## Current state (UPDATED end of session 3 — A.2 chain fully CLOSED)
 
-- Epic `f9717e7e` — `in_progress` (claimed `agent:project-lead`).
-- Phase A is nearly complete. **Closed THIS session:** `3fcb7025` (A.2b within-SNR parallelism), `db9836e4` (A.2c CPU channel stages). Already done before: ec530af9, 118a0091, c0b1702d, 19ae6540, 36075e4c (B.1).
-- **`81d05bab` (A.2d DVB-T2 typestate preset): CODE MERGED to main** (merge `3669ac65`; HEAD now `80fffd95`). cargo-ci GREEN. NOT formally closed — cannot go `in_progress` (DAG-blocked by c09d3e95) and its own code-review gate not yet run. Worktree `agent-81d05bab` still present (HEAD 607ee995, fully merged).
-- **`c09d3e95` (graph API): held since s1; crit-1 NOW SATISFIED** by `81d05bab`'s `tests/preset_vs_graph.rs` (the codex reviewer explicitly confirmed this 2026-06-08). BUT code-review FAILED on **two NEW graph bugs** (see What-to-do-next). cargo-ci GREEN. Worktree `agent-c09d3e95` present.
-- Machine: AMD Ryzen 9 5900X, single gfx1030 GPU. Was quiet this session.
+- Epic `f9717e7e` — `in_progress` (claimed `agent:project-lead`). HEAD `a02c855d`.
+- **Phase A.1/A.2 are COMPLETE.** Done this session: `3fcb7025` (A.2b), `db9836e4` (A.2c), **`81d05bab` (A.2d preset)**, **`c09d3e95` (graph API)**. Already done before: ec530af9, 118a0091, c0b1702d, 19ae6540, 36075e4c (B.1). All worktrees removed.
+- **Remaining Phase A:** `5f12e7ff` (A.3 heartbeat-checkpoint v2) is `ready` (deps db9836e4✓ + 3fcb7025✓); `48a0db6c` (A.4 CPU determinism property suite + **CLAUDE.md determinism-contract update**) is `backlog`, needs 5f12e7ff. These two close Phase A story `bcf7776d`.
+- **Phase B ready:** `f6004add` (GPU ChaCha20+Box-Muller AWGN) is `ready` (dep 36075e4c done; 3fcb7025 CPU-24 receipt now VALID at 13.22×). Then a930be7f / d3f1616a (B.2), ed575f15 (B.3), 14f59c2d (B.4). Single gfx1030 → never run two GPU suites concurrently; perf-gated tasks need a quiet machine; f6004add must match the §3 seek scheme (QPSK worst case — see s2 trap).
+- Machine: AMD Ryzen 9 5900X, single gfx1030 GPU.
+
+### How c09d3e95 + 81d05bab were closed (the closure chain that the older "What to do next" §1-3 described — NOW DONE)
+- c09d3e95 crit-1 satisfied by 81d05bab's `tests/preset_vs_graph.rs` (structural + driven byte-identity). c09d3e95 needed 3 graph-fix rounds (codex found deeper bugs each round, all genuine): R1 edge-StageId-remap-after-topo-sort + duplicate-gpu + type-compat; R2 role-overlap-panic + gpu/cpu capability (8 invariants); R3 incident-edge rejection + non-filtering remap + exhaustive 13-case audit. Closed.
+- 81d05bab needed 3 code-review rounds after merge: R1 found a GENUINE correctness bug (channel Es/N0 disconnected from demapper noise_var — demapper used DEFAULT 0.1; fixed by threading N0=2·σ² via `Channel::demap_noise_var`→`dvb_t2_bicm_stages(demap_noise_var)`→`GrayQamDemap::with_noise_var`, + all-6-MODCOD coverage); R2 found a panic path (`Channel::awgn` unvalidated → `with_noise_var` panic on NaN/inf/underflow; fixed by `Channel::validate()`→`BuildError::InvalidChannel` in build(), comprehensive panic-free input audit). Closed.
+- Lead-direct fix this session: `.config/nextest.toml` per-test `ci`-timeout override (90s) for the trybuild `typestate_rejects_out_of_order_calls` test (trybuild spawns cargo, exceeds 5s in full workspace) — keeps it enforced, not ignored.
 
 ## What just happened (session 3)
 
@@ -19,7 +24,18 @@
 - **81d05bab merged.** Opus worker. Typestate builder (`NeedsModcod→NeedsDecoder→NeedsDemap→NeedsChannel→Ready` via `with_state`+PhantomData), `Modcod::Normal{rate,mod}`+`validate` (6 in-scope), `Channel::awgn`, `Pipeline::dvb_t2()` entry, trybuild compile-fail (`tests/compile_fail/wrong_order.rs`+`.stderr`), and `tests/preset_vs_graph.rs` proving STRUCTURAL + driven-output BYTE-IDENTITY (channel scratch seeded identically, channel identified as the unique SymbolBatch→SymbolBatch stage). Lead pre-gate fix: `InvalidModcod` was misreporting out-of-scope rates via lossy NR placeholders → worker changed it to `{ rate: String, modulation: String }` reporting true values, deleted the `NrRate`/`Modulation` placeholder enums (error.rs doc had assigned them to 81d05bab).
 - **Lead-direct fix `80fffd95`:** the trybuild compile-fail test (`typestate_rejects_out_of_order_calls`) TIMED OUT at the 5s fast-tier nextest hard-kill in the full `--all-features` run (trybuild spawns a fresh cargo compile; ~14.5s). Added a per-test nextest `ci`-profile timeout override (90s) in `.config/nextest.toml` — keeps it ENFORCED in the fast gate, no other test's budget changed.
 
-## What to do next (the closure chain — DO IN ORDER)
+## What to do next (UPDATED — A.2 chain is closed; start at Phase A.3 / Phase B)
+
+**START HERE (session 4):** Phase A.1/A.2 + c09d3e95 are all DONE. Next:
+- **A.3 `5f12e7ff`** (heartbeat-checkpoint v2 integration; `ready`). Then **A.4 `48a0db6c`** (CPU determinism property suite + CLAUDE.md determinism-contract update) → closes Phase A story `bcf7776d`.
+- **Phase B (parallel track), `f6004add`** (GPU ChaCha20+Box-Muller AWGN; `ready`) → a930be7f / d3f1616a → ed575f15 (B.3) → 14f59c2d (B.4) closes story `1f588e2a`. GPU constraints: single gfx1030, perf-gated, must match §3 seek (QPSK worst case).
+- Then C (75c22fa8 → de160fc5/571c11c4/42eac5cc), D (8c8302c8/bbf6b6ee/0d9cb8e3), E (acf9b11a/e478daa8/23d3525f/18e69a1a/110e45cc).
+
+Dispatch pattern that worked this session: hand-roll a worktree (`git worktree add .claude/worktrees/agent-<id> -b worktree-agent-<id> <main-HEAD>`; verify SHA), claim+in_progress (skip claim only if DAG-blocked), dispatch Agent WITHOUT `isolation`, pre-warm `./scripts/cargo-ci.sh` after merge, gate cargo-ci then code-review FOREGROUND (read real verdict via `jit gate check-all`, NOT the wrapper exit), close, remove worktree.
+
+---
+
+### (ARCHIVED — the c09d3e95/81d05bab closure chain below is COMPLETE; kept for reference)
 
 1. **Fix the two c09d3e95 graph bugs** (in `crates/gf2-sim/src/graph/mod.rs`). Dispatch a worker (Sonnet ok; well-scoped) in a worktree:
    - **(a) `build()` leaves stale edge StageIds after topo reorder.** `ordered_stages` is built in topo `order` (graph/mod.rs:569-576) but `ordered_edges` keeps the ORIGINAL `Edge{from,to}` StageIds (:590-594) — NOT remapped. For out-of-topo-order insertion, `Pipeline::edges()` ids no longer index `Pipeline::stages()`. (DVB-T2 chains add in topo order so `order`==identity and tests pass — but the general graph API is broken.) FIX: remap each edge's `from`/`to` to the post-sort position via an `old_id → new_index` map derived from `order`, so `Pipeline::edges()` from/to are indices into `Pipeline::stages()`. Add a regression test that adds stages OUT of topo order, connects, builds, and asserts edges index the right stages.
