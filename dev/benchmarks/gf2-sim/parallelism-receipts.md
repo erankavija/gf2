@@ -160,9 +160,11 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/gpu_awgn_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --features hip --bin gpu_awgn_throughput -- --frames 4000 --repeats 7 --es-n0 6.5`).
-  - Byte-identity + 1-ulp regression (gfx1030-gated, skips with no GPU):
-    `crates/gf2-kernels-hip/tests/gpu_rng_byte_identity.rs`
-    (run: `cargo test -p gf2-kernels-hip --release --test gpu_rng_byte_identity`).
+  - Byte-identity (full-range, N∈{1,256,1024} frames) + ≥1024-frame 1-ulp
+    Box-Muller regressions (gfx1030-gated, skip with no GPU), in `gf2-sim` so
+    they call the real `gf2_sim::parallel::worker_offset`:
+    `gpu::awgn::imp::tests::{test_gpu_chacha_raw_words_full_range_byte_identical,test_gpu_box_muller_within_1_ulp_over_1024_frames}`
+    (run: `cargo nextest run -p gf2-sim --release --features hip -E 'test(test_gpu_chacha_raw_words_full_range_byte_identical) | test(test_gpu_box_muller_within_1_ulp_over_1024_frames)'`).
   - CPU-vs-GPU 1-ulp end-to-end stage test:
     `gf2-sim` `gpu::awgn::imp::tests::test_gpu_awgn_matches_cpu_within_1_ulp`
     (run: `cargo nextest run -p gf2-sim --release --features hip -E 'test(test_gpu_awgn_matches_cpu_within_1_ulp)'`).
