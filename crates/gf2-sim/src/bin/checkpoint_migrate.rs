@@ -18,13 +18,13 @@
 //! single-threaded, so worker 0 owns every frame and its recorded
 //! `rng_word_pos` is the legacy stream position verbatim.
 //!
-//! `--parallelism N` is accepted for forward-compatibility with the CLI in the
-//! design doc but does **not** re-partition a v1 stream: a single-threaded v1
-//! RNG position cannot be split into N independent per-worker positions without
-//! re-running. With `N > 1` the tool still emits a single populated worker
-//! (worker 0) carrying the full count and position, plus `N-1` empty workers,
-//! so a resume under N workers re-runs deterministically from the v1 position on
-//! worker 0. This is documented and intentional.
+//! The output always has **exactly one** `worker_states` entry (worker 0),
+//! per design doc §4. `--parallelism N` is accepted because the §4 CLI lists it,
+//! but it does **not** re-partition a v1 stream and never synthesises extra
+//! (empty) worker_states: a single-threaded v1 RNG position cannot be split into
+//! N independent per-worker positions without re-running. A subsequent resume
+//! under N workers continues deterministically from worker 0's recorded
+//! position (the resume executor re-partitions the remaining frame range).
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -101,11 +101,20 @@ fn parse_args() -> Result<Args, String> {
 
 const USAGE: &str = "checkpoint_migrate --input <v1-dir> --output <v2-dir> [--parallelism N]";
 
-/// Converts one v1 checkpoint into a single-(plus-empty)-worker v2 checkpoint.
+/// Converts one v1 checkpoint into a **single-worker** v2 checkpoint
+/// (design doc §4 "Migration tool").
+///
+/// The v2 output's `worker_states` contains **exactly one** entry — worker 0 —
+/// regardless of `_parallelism`: a single-threaded v1 run wrote one RNG stream,
+/// so worker 0 owns every frame (`frames_in_worker = frames_completed`,
+/// `rng_word_pos = rng_word_pos` verbatim). `_parallelism` is accepted by the
+/// CLI (§4 lists it) for the resume *context* the operator chooses, but it must
+/// never synthesise extra (empty) worker_states — a v1 position cannot be split
+/// into N independent per-worker positions without re-running.
 ///
 /// Returns an error string if the recorded `rng_word_pos` is not a valid
 /// `u128`.
-fn migrate_one(v1: &V1Checkpoint, parallelism: usize) -> Result<CheckpointV2, String> {
+fn migrate_one(v1: &V1Checkpoint, _parallelism: usize) -> Result<CheckpointV2, String> {
     let rng_word_pos = v1.rng_word_pos.parse::<u128>().map_err(|e| {
         format!(
             "snr_{:04}: bad rng_word_pos {:?}: {e}",
@@ -113,22 +122,14 @@ fn migrate_one(v1: &V1Checkpoint, parallelism: usize) -> Result<CheckpointV2, St
         )
     })?;
 
-    // Worker 0 carries the entire v1 stream; any extra workers are empty
-    // (a single-threaded v1 position cannot be split — see the module docs).
-    let mut worker_states = Vec::with_capacity(parallelism);
-    worker_states.push(WorkerState {
+    // Exactly one worker_state (worker 0): the v1 run was single-threaded, so
+    // worker 0 carries the entire stream verbatim. `_parallelism` does NOT add
+    // empty workers (design doc §4).
+    let worker_states = vec![WorkerState {
         worker_idx: 0,
         frames_in_worker: v1.frames_completed,
         rng_word_pos,
-    });
-    for w in 1..parallelism {
-        worker_states.push(WorkerState {
-            worker_idx: w,
-            frames_in_worker: 0,
-            // Worker w's fresh start position (frame 0 of its partition).
-            rng_word_pos: gf2_sim::worker_offset(0, v1.snr_index, w, 0),
-        });
-    }
+    }];
 
     Ok(CheckpointV2 {
         schema_version: SCHEMA_VERSION,

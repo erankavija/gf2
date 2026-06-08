@@ -26,6 +26,10 @@ blake3 = "1" # for v2 checkpoint config_hash
 [dev-dependencies]
 proptest = { workspace = true }
 trybuild = { workspace = true }
+# rand 0.8 (renamed) for the legacy-SimulationRunner migration test: gf2-coding's
+# `run_uncoded_ber_with_channel` takes a `rand 0.8` `Rng`, distinct from gf2-sim's
+# own `rand 0.9` runtime dep.
+rand08 = { package = "rand", version = "0.8" }
 
 [features]
 default = []
