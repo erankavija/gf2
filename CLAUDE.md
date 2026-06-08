@@ -182,6 +182,71 @@ Integration tests of note:
 Examples of note:
 - `examples/dvb_t2_bicm_chain.rs` — canonical DVB-T2 BICM chain demonstration (Normal × 1/2 × 16-QAM forward + inverse composition); slow to run (same LDPC encoder constraint).
 
+### gf2-sim module map
+
+(The prose `gf2-sim` architecture paragraph and the within-SNR parallelism contract above are the SSOT for *how* the parallel executor and HIP host dispatcher work; this table indexes the *landed Phase A modules* — design SSOT `dev/active/ec530af9-pipeline-design.md`.)
+
+| Module | Purpose |
+|--------|---------|
+| `pipeline` | `Pipeline` (built, runnable type-erased stage graph) + `BatchHandle`; obtained only through a validating builder |
+| `graph` | `Chain` — the add/connect/`build()` graph API that topo-sorts, type-re-validates, and emits a `Pipeline` |
+| `presets/dvb_t2` | `Pipeline::dvb_t2()` typestate fluent builder (`Modcod`/`Channel`, `NeedsModcod→…→Ready`); the production DVB-T2 BICM preset over the graph API |
+| `stage` | `Stage<I,O>` / `AnyStage` type-erasure (`erase`), `BatchSize`, `ExecutionClass`, `TypedBatch`, `FallbackKind` |
+| `stages` | DVB-T2 BICM stage wrappers (`DvbT2Encode`, `BitInterleave`/`BitDeinterleave`, `GrayQamMap`/`GrayQamDemap`, decode) + `dvb_t2_bicm_stages` factory |
+| `connector` | `Connector`, `Edge`, `StageId` — typed edge endpoints between stages |
+| `batch` | SoA batch buffer types (`BitPackedBatch`, `HardDecisionBatch`, `LlrBatch`, `SymbolBatch`) |
+| `channels` | Channel stages: `awgn` (`Awgn`, `es_n0_db_to_sigma`), `rayleigh`, `rician` — per-frame noise injection from the per-worker ChaCha20 stream |
+| `parallel` | Within-SNR frame parallelism: `worker_offset` (§3 ChaCha20 seek), `WorkerCtx`, `WorkerCounters`, `FrameOutcome`, `run_snr_point` / `run_snr_point_range` / `run_snr_point_stateless` |
+| `frame_sim` | `DvbT2BicmFrameSim` — the reusable deterministic single-frame BICM-AWGN kernel the within-SNR dispatch drives |
+| `checkpoint` | v2 heartbeat-checkpoint schema (`CheckpointV2`/`WorkerState`), `config_hash`, atomic `CheckpointWriter`, v2-only `CheckpointReader`, `run_snr_point_checkpointed` / `run_sweep_checkpointed`, SIGINT flush (`clear_interrupt`/`is_interrupted`); `bin/checkpoint_sweep` drives the kill-during-fsync proof |
+| `config` | `PipelineConfig` — the run configuration (seed, Es/N0 points, frame/error budgets, heartbeat cadence, checkpoint/tracing paths, parallelism, `strict_gpu`) |
+| `error` | `BuildError`, `StageError`, `RecoverableError`, `FatalError` — the typed error hierarchy and the `gf2-sim`↔HIP error mapping boundary |
+| `executor` | Hybrid CPU/GPU executor home (Phase C stub today: scheduler, OOM-catch / CPU-fallback substitution, GPU drain-for-checkpoint) |
+| `gpu` | HIP/ROCm host plumbing (`feature = "hip"`): `HipDispatcher` (owns the `HipStreamPool` + per-stage scratch), `map_hip_error`, `awgn` GPU stage |
+| `observability` | Tracing-subscriber install + JSON-lines campaign log plumbing |
+
+### Determinism contract (design doc §11)
+
+The byte-identity guarantees the parallel executor and checkpoint/resume rest on are pinned in design-doc §11 (`dev/active/ec530af9-pipeline-design.md`), quoted verbatim:
+
+> ### CPU-only / CPU-parallel contract (unchanged)
+>
+> The four columns `fer`, `frames`, `errors`, `mean_iters` are
+> **byte-identical** across worker counts {1, 2, 4, 8, 24} at fixed
+> seed. Resume-from-checkpoint produces byte-identical results vs
+> uninterrupted run at fixed seed.
+>
+> ### CPU-vs-GPU contract (relaxed)
+>
+> The **three** columns `fer`, `frames`, `errors` are byte-identical
+> across CPU-only vs CPU+GPU at fixed seed. **`mean_iters` is
+> EXCLUDED** from CPU-vs-GPU byte-identity.
+>
+> **Rationale**: RDNA2 hardware transcendentals (`v_sin_f32`,
+> `v_cos_f32`, hardware `tanh` via `v_exp_f32`) differ from CPU
+> `f32::sin`/`f32::cos`/`f32::tanh` polynomial reductions by 1–3
+> ULPs in some ranges. For LDPC BP near the convergence threshold,
+> ULP differences in LLR messages can change the iteration at which
+> the parity-check passes by ±1 — so `mean_iters` is not bit-exact
+> across paths. The frame's final verdict (does the codeword decode
+> correctly?) is robust to that drift; `fer`/`frames`/`errors`
+> remain byte-identical because BP convergence is determined by a
+> parity-check at each iteration boundary that has integer (not
+> floating-point) state.
+>
+> ### Always-excluded
+>
+> `ber` (non-associative f32 horizontal reduction; status-quo
+> amendment from `152388f4`).
+>
+> `wall_seconds` (run-duration-dependent).
+
+The CPU-only/parallel contract is regression-guarded by two complementary slow-tier integration suites: `tests/parallel_determinism.rs` (the direct `frame_sim` dispatch, issue `3fcb7025`) and `tests/determinism.rs` (the typestate preset production path via `Pipeline::dvb_t2()` + heartbeat-resume parity, issue `48a0db6c`); both share the four-column / BER-excluded comparison in `tests/common/mod.rs`. The CPU-vs-GPU relaxation (the `mean_iters` exclusion) is asserted in the Phase B GPU tasks' bodies.
+
+### `parallelism-pays` throughput gate (gf2-sim epic `f9717e7e`)
+
+Beyond the standard `cargo-ci` / `code-review` / `tests` gates, the `gf2-sim` epic carries an extra **`parallelism-pays`** quality gate on its perf-bearing tasks (the within-SNR parallel executor `3fcb7025`, the GPU stages, and the hybrid executor). It is an **attested throughput receipt**, not an automatic check: each gated task must record a speedup receipt in `dev/benchmarks/gf2-sim/parallelism-receipts.md` (schema in `dev/active/f9717e7e-project-plan.md` §5) reporting both the single-thread CPU baseline (from `c0b1702d`, ~1.6216 fps) **and** the CPU-24-thread baseline (from `3fcb7025`), and meeting the task's `[hard]` threshold (e.g. ≥12× single-thread for `3fcb7025`; GPU LDPC BP additionally ≥3× the 24-thread CPU baseline). **Throughput must be measured on a verified-quiet machine** (`cat /proc/loadavg` ≈ 0, no `bg3`/foreign `cargo`/`rustc`) — external CPU load understates throughput and invalidates the receipt (and would flake the 5 s-per-test fast tier). The gate is never removed to make a task pass; a failure that does not yield to standard optimisation escalates per `feedback_quality_gates`.
+
 ### Key design invariants
 
 1. **Tail masking** — Padding bits beyond `len_bits` in the last `u64` word of a `BitVec` must always be zero. Every mutating operation must call `mask_tail()`. This is the most critical correctness invariant.
