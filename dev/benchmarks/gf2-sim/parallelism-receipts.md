@@ -10,24 +10,14 @@ divisor for every speedup gate here. This file establishes the canonical CPU
 
 ## 3fcb7025 — Within-SNR frame parallelism + deterministic aggregation
 
-> **⚠ THROUGHPUT FIGURES BELOW ARE INVALID / PROVISIONAL (2026-06-07).** All
-> speedup numbers in this entry were measured while the host carried heavy
-> external CPU load (a `bg3` process at ~340% CPU; 5/15-min load ≈ 80), which
-> only *understates* throughput. The `parallelism-pays` gate has been set back
-> to FAILED pending a clean re-measurement on a verified-quiet machine
-> (`cat /proc/loadavg` ≈ 0, no foreign CPU hogs). The ≥12× threshold is very
-> likely still met (contention can only lower the measured value, and even the
-> contaminated runs read ~13×), but a credible receipt requires a clean
-> measurement before the gate is re-attested and 3fcb7025 is closed. Re-run:
-> `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`.
-
-- **Date:** 2026-06-07
+- **Date:** 2026-06-08 (clean re-measurement; supersedes the 2026-06-07
+  provisional figures that were taken under external CPU load)
 - **Hardware:** CPU=AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU=n/a (CPU-only task)
 - **Baseline configuration:** single-thread
 - **Test configuration:** DVB-T2 r1/2 16-QAM, FrameSize::Normal (n_ldpc = 64800),
   SumProduct LDPC decoder (early-termination on), ExactLogMap soft-demap,
   Es/N0 = 6.5 dB, batch = 1 frame per dispatch (per-frame kernel
-  `frame_sim::DvbT2BicmFrameSim`). **mean_iters = 25.167** — the *real* mean BP
+  `frame_sim::DvbT2BicmFrameSim`). **mean_iters = 25.243** (144-frame set) — the *real* mean BP
   iteration depth (via `DvbT2Concat::decode_soft_counted`), byte-identical
   across all worker counts {1,2,4,8,24} (frames converge above the waterfall but
   the early-termination depth is a genuine per-frame quantity, not a sentinel).
@@ -39,34 +29,23 @@ divisor for every speedup gate here. This file establishes the canonical CPU
   frames' noise streams never overlap (design-doc §3, amended 2026-06-07; guarded
   by `parallel::tests::test_worst_case_frame_draw_under_stride`, which enumerates
   all three modulations and asserts QPSK is the maximum).
-- **Observed throughput:** **21.79 fps ± 0.03** (24 threads, 144 frames, 3 repeats);
-  confirmation run **21.47 fps ± 0.26** (24 threads, 120 frames, 5 repeats).
-  New-pipeline single-thread reference: **2.06 fps ± 0.01**.
-- **Speedup factor:** **13.44x** (21.79 / 1.6216) — confirmation **13.24x**
-  (21.47 / 1.6216) — versus the 1.6216 fps single-thread headline baseline.
-  (Intrinsic parallel scaling vs the new pipeline's own 1-thread number is
-  ~10.5x at 24 threads; the new pipeline is also ~1.27x faster single-thread
-  than the legacy path, so the gate divisor is the more conservative legacy
-  baseline.)
+- **Observed throughput:** **21.44 fps ± 0.22** (24 threads, 144 frames, 3 repeats).
+  New-pipeline single-thread reference: **2.08 fps ± 0.01**.
+- **Speedup factor:** **13.22x** (21.44 / 1.6216) versus the 1.6216 fps
+  single-thread headline baseline. (Intrinsic parallel scaling vs the new
+  pipeline's own 1-thread number is ~10.3x at 24 threads; the new pipeline is
+  also ~1.29x faster single-thread than the legacy path, so the gate divisor is
+  the more conservative legacy baseline.)
 - **Required threshold (from task body):** >= 12x
-- **Verdict:** PASS — attested by `agent:3fcb7025` at commit `a2a0ec1409`
-  (the FRAME_STRIDE = 2^20 / QPSK-binding fix; earlier
-  impl/refactor/iter-count/2^19 work at `22e9c66d` / `691fe43152` /
-  `d4e7a67b26` / `5572374c75`). This receipt-SHA citation lands in the immediate
-  follow-up commit, since the hash of a commit cannot be embedded in its own
-  content. The `FRAME_STRIDE` 2^19→2^20 amendment changes only the absolute RNG
-  seek offsets, not the per-frame compute, and the companion
-  `BicmAwgnChannel` order-formula fix touches **only QPSK** (the benchmarked
-  config is 16-QAM). The benchmarked r1/2 16-QAM 6.5 dB path is therefore
-  byte-for-byte the same compute as the prior sweep — same frame/symbol/
-  noise-sample/BP-iteration counts — so throughput is unchanged. The last
-  quiet-machine measurement (commit `5572374c75`, FRAME_STRIDE=2^19, 120 frames,
-  3 repeats) stands: 24-thread **21.42 fps ± 0.04** → **13.21x** (≥ 12× gate).
-  A fresh re-measure at `a2a0ec1409` was not recorded because the host was under
-  sustained heavy external CPU load (1-min load > 100 from non-project `rustc`/
-  build processes) during this rework window; measuring under contention would
-  understate throughput, and the compute-identity argument above makes a
-  re-measure non-load-bearing.
+- **Verdict:** PASS — clean re-measurement on a quiet host (only
+  `parallel_throughput` running; `cat /proc/loadavg` ≈ 0 before the run, no
+  foreign CPU hogs) at HEAD commit `ec30b3e1` (the merged FRAME_STRIDE = 2^20 /
+  QPSK-binding state). 24-thread **21.44 fps ± 0.22 → 13.22x** clears the ≥ 12×
+  gate with margin. This supersedes the 2026-06-07 provisional figures, which
+  were measured under heavy external CPU load (a `bg3` process at ~340% CPU,
+  5/15-min load ≈ 80) and were therefore invalid (contention only *understates*
+  throughput). The earlier impl/refactor/iter-count/2^19/2^20 work landed at
+  `22e9c66d` / `691fe43152` / `d4e7a67b26` / `5572374c75` / `a2a0ec1409`.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/parallel_throughput.rs`
     (re-run: `cargo run -p gf2-sim --release --bin parallel_throughput -- --frames 144 --workers 1,2,4,8,24 --repeats 3 --es-n0 6.5`).
@@ -74,25 +53,27 @@ divisor for every speedup gate here. This file establishes the canonical CPU
     3 configs): `crates/gf2-sim/tests/parallel_determinism.rs` (slow tier,
     ignored; run with `cargo nextest run -p gf2-sim --release --profile slow --run-ignored ignored-only -E 'test(determinism_r)'`).
 
-### Scaling sweep (120 frames, 3 repeats, Es/N0 = 6.5 dB)
+### Scaling sweep (144 frames, 3 repeats, Es/N0 = 6.5 dB; clean re-measure 2026-06-08)
 
 `mean_iters` is the real BP iteration depth (`DvbT2Concat::decode_soft_counted`);
 it is constant across worker counts at a fixed seed — the byte-identity contract.
 
 | Workers | fps_mean | fps_sigma | speedup vs 1.6216 | mean_iters |
 |--------:|---------:|----------:|------------------:|-----------:|
-| 1       | 2.0969   | 0.0021    | 1.29x             | 25.167     |
-| 2       | 4.0274   | 0.0143    | 2.48x             | 25.167     |
-| 4       | 7.3790   | 0.0213    | 4.55x             | 25.167     |
-| 8       | 13.6453  | 0.0180    | 8.41x             | 25.167     |
-| 24      | 21.8136  | 0.1908    | **13.45x**        | 25.167     |
+| 1       | 2.0842   | 0.0072    | 1.29x             | 25.243     |
+| 2       | 4.0671   | 0.0068    | 2.51x             | 25.243     |
+| 4       | 7.3578   | 0.0243    | 4.54x             | 25.243     |
+| 8       | 13.7002  | 0.0192    | 8.45x             | 25.243     |
+| 24      | 21.4396  | 0.2176    | **13.22x**        | 25.243     |
 
-Near-linear scaling through 8 workers (8.41x on 8 threads); the 24-thread number
+Near-linear scaling through 8 workers (8.45x on 8 threads); the 24-thread number
 benefits from the 12 physical cores' SMT. The per-worker design (each rayon
 worker owns its own `DvbT2BicmFrameSim` clone, hence its own LDPC decoder) is
 what unlocks this — a single shared `DvbT2Concat` would serialise every decode on
-its internal decoder `Mutex`. (Prior sweeps at 144 frames measured 21.79 fps /
-13.44x — within run-to-run variance.)
+its internal decoder `Mutex`. (`mean_iters` is identical across all five worker
+counts at a fixed seed — the byte-identity contract — and differs from the prior
+120-frame sweep's 25.167 only because the 144-frame set is a different frame
+population.)
 
 ### Determinism evidence
 
