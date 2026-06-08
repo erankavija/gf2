@@ -60,9 +60,19 @@ pub const SCHEMA_VERSION: u32 = 2;
 /// Per-worker resume state recorded in a [`CheckpointV2`] (design doc §4).
 ///
 /// Indexed by `worker_idx`. `rng_word_pos` is the absolute ChaCha20 32-bit-word
-/// position the worker's RNG must be seeked to in order to resume, i.e. exactly
-/// [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_index,
-/// worker_idx, frames_in_worker)` — the start of the worker's next frame.
+/// position the worker's RNG must be seeked to in order to resume — the start
+/// of the worker's next frame.
+///
+/// For the **CPU within-SNR path** (the path this task implements), every frame
+/// is keyed on the *global* frame index via the `worker_idx = 0` axis of
+/// [`worker_offset`](crate::parallel::worker_offset), so the recorded position
+/// is the global-stream projection
+/// `worker_offset(seed, snr_index, 0, frames_in_worker)` — **not**
+/// `worker_offset(seed, snr_index, worker_idx, frames_in_worker)`. The
+/// `worker_idx` axis of `worker_offset` is reserved for the Phase C
+/// fixed-partition executor (`571c11c4`), which owns the per-partition
+/// per-worker stream semantics and will populate `rng_word_pos` with the
+/// `worker_idx`-keyed offset when it lands.
 ///
 /// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
 /// not fit a JSON number above `2^53` (same convention as legacy
@@ -345,6 +355,11 @@ impl CheckpointWriter {
         std::fs::rename(&tmp, &path)?;
 
         // fsync the directory so the rename itself is durable across a crash.
+        // Best-effort: the rename is already atomic and durable-on-rename on
+        // common filesystems, so a failed dir-open or dir-fsync does not corrupt
+        // the just-renamed checkpoint — it only weakens the crash-durability of
+        // the rename's *directory entry*, which the next successful write
+        // re-establishes. Hence both errors are intentionally swallowed.
         if let Ok(dir) = std::fs::File::open(&self.dir) {
             let _ = dir.sync_all();
         }
@@ -629,9 +644,15 @@ where
         config.heartbeat_every_frames as usize
     };
 
-    // Resume state: start frame and folded-in counters.
+    // Resume state: start frame, folded-in counters, and the authoritative
+    // per-worker cumulative frame counts (the SSOT for `worker_states[]`,
+    // design doc §4 step 3). `cumulative[w]` is the number of frames worker `w`
+    // has completed across all chunks so far; it is NOT the analytic
+    // `0..frames_completed` distribution, because the chunked dispatch restarts
+    // its striding at each chunk's `start` (see `run_snr_point_range`).
     let mut start = 0usize;
     let mut total = WorkerCounters::default();
+    let mut cumulative = vec![0u64; num_workers];
     if let Some(ref ck) = resume {
         if ck.completed || ck.frames_completed as usize >= max_frames {
             return Ok(CheckpointedRun {
@@ -642,6 +663,15 @@ where
         }
         start = ck.frames_completed as usize;
         total = loaded_counters(ck);
+        // Carry forward the pre-interruption per-worker counts so the resumed
+        // checkpoint's `worker_states[]` include them. A resumed run under a
+        // different worker count maps positionally by `worker_idx` (any extra
+        // workers start at 0; surplus loaded entries are ignored).
+        for ws in &ck.worker_states {
+            if ws.worker_idx < num_workers {
+                cumulative[ws.worker_idx] = ws.frames_in_worker;
+            }
+        }
     }
 
     let mut completed = false;
@@ -667,6 +697,10 @@ where
         drain_for_checkpoint();
 
         total = WorkerCounters::reduce_in_worker_order(&[total, out.counters]);
+        // Accumulate the authoritative per-worker counts this chunk reported.
+        for (w, &chunk_frames) in out.per_worker_frames.iter().enumerate() {
+            cumulative[w] += chunk_frames;
+        }
         start = end;
 
         let reached_target = target_errors > 0 && total.errors >= target_errors;
@@ -678,8 +712,7 @@ where
             esn0_db,
             expected_hash,
             &total,
-            num_workers,
-            start as u64,
+            &cumulative,
             completed,
         );
         writer.write(&ckpt)?;
@@ -708,35 +741,34 @@ fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
 }
 
 /// Builds a [`CheckpointV2`] from the running totals, latching per-worker
-/// `worker_states[]` from the strided frame assignment.
+/// `worker_states[]` from the **authoritative** per-worker frame counts.
 ///
-/// With `frames_completed` global frames done and a strided worker assignment
-/// (worker `w` owns global frames `w, w+num_workers, ...`), worker `w` has
-/// completed `ceil((frames_completed - w) / num_workers)` frames; its next
-/// frame's `rng_word_pos` is the §3 [`worker_offset`] for that count. This is
-/// the SSOT for resuming worker `w` (design doc §4 step 3).
-#[allow(clippy::too_many_arguments)]
+/// `per_worker_frames[w]` is worker `w`'s cumulative completed-frame count as
+/// reported by [`run_snr_point_range`] across every chunk so far — the
+/// executor's authoritative counter (design doc §4 "Drain commit contract",
+/// step 3). It is recorded verbatim and is **not** recomputed from an analytic
+/// `0..frames_completed` striding, which would be wrong under the chunked
+/// dispatch (the per-chunk striding restarts at each chunk's `start`, so the
+/// real per-worker distribution differs from a single-dispatch distribution).
+///
+/// Each worker's recorded `rng_word_pos` is the CPU within-SNR path's
+/// global-stream position projection (see [`WorkerState`] docs): the CPU path
+/// keys every frame on the global frame index via the `worker_idx = 0` axis of
+/// [`worker_offset`], so the position is
+/// `worker_offset(seed, snr_index, 0, frames_in_worker)`.
 fn build_checkpoint(
     config: &PipelineConfig,
     snr_index: usize,
     esn0_db: f64,
     expected_hash: &str,
     total: &WorkerCounters,
-    num_workers: usize,
-    frames_completed: u64,
+    per_worker_frames: &[u64],
     completed: bool,
 ) -> CheckpointV2 {
-    let worker_states: Vec<WorkerState> = (0..num_workers)
-        .map(|w| {
-            // Frames worker `w` has done out of `frames_completed` global frames
-            // under the strided assignment (worker `w` owns g ≡ w mod
-            // num_workers).
-            let fc = frames_completed as usize;
-            let frames_in_worker = if w < fc {
-                ((fc - w - 1) / num_workers + 1) as u64
-            } else {
-                0
-            };
+    let worker_states: Vec<WorkerState> = per_worker_frames
+        .iter()
+        .enumerate()
+        .map(|(w, &frames_in_worker)| {
             // The CPU within-SNR path keys the seek on the global frame index
             // (logical worker 0); the recorded position is the worker's next
             // frame start. We record it under the physical worker_idx for the
@@ -832,16 +864,32 @@ mod tests {
             total_bits: 448,
             total_bit_errors: 3,
         };
-        let ckpt = build_checkpoint(&cfg, 0, 6.25, "blake3:abc", &total, 2, 14, false);
+        // The authoritative per-worker counts (8/6 for a 2-worker, 2-chunk
+        // dispatch of 14 frames — NOT the analytic 7/7); see
+        // `test_worker_states_record_authoritative_chunked_distribution`.
+        let per_worker_frames = [8u64, 6u64];
+        let ckpt = build_checkpoint(
+            &cfg,
+            0,
+            6.25,
+            "blake3:abc",
+            &total,
+            &per_worker_frames,
+            false,
+        );
         let json = serde_json::to_string(&ckpt).unwrap();
         let back: CheckpointV2 = serde_json::from_str(&json).unwrap();
         assert_eq!(ckpt, back);
         // rng_word_pos serialised as a string.
         assert!(json.contains("\"rng_word_pos\":\""));
-        // worker_states required and per-worker frame counts split 7/7.
+        // worker_states required and recorded verbatim from the authoritative
+        // counts (8/6), not recomputed.
         assert_eq!(back.worker_states.len(), 2);
-        assert_eq!(back.worker_states[0].frames_in_worker, 7);
-        assert_eq!(back.worker_states[1].frames_in_worker, 7);
+        assert_eq!(back.worker_states[0].frames_in_worker, 8);
+        assert_eq!(back.worker_states[1].frames_in_worker, 6);
+        // Invariant: per-worker counts sum to frames_completed.
+        let sum: u64 = back.worker_states.iter().map(|w| w.frames_in_worker).sum();
+        assert_eq!(sum, back.frames_completed);
     }
 
     #[test]
@@ -849,7 +897,7 @@ mod tests {
         let dir = tempdir();
         let cfg = test_config(1);
         let h = config_hash(&cfg);
-        let mut ckpt = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), 1, 0, false);
+        let mut ckpt = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), &[0], false);
         ckpt.schema_version = 1;
         let writer = CheckpointWriter::new(&dir).unwrap();
         writer.write(&ckpt).unwrap();
@@ -873,8 +921,7 @@ mod tests {
             6.25,
             "blake3:STALE",
             &WorkerCounters::default(),
-            1,
-            0,
+            &[0],
             false,
         );
         writer.write(&ckpt).unwrap();
@@ -920,13 +967,13 @@ mod tests {
         let cfg = test_config(1);
         let h = config_hash(&cfg);
         let writer = CheckpointWriter::new(&dir).unwrap();
-        let c1 = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), 1, 0, false);
+        let c1 = build_checkpoint(&cfg, 0, 6.25, &h, &WorkerCounters::default(), &[0], false);
         writer.write(&c1).unwrap();
         let total = WorkerCounters {
             frames: 10,
             ..Default::default()
         };
-        let c2 = build_checkpoint(&cfg, 0, 6.25, &h, &total, 1, 10, true);
+        let c2 = build_checkpoint(&cfg, 0, 6.25, &h, &total, &[10], true);
         writer.write(&c2).unwrap();
         let reader = CheckpointReader::new(&dir, h);
         let loaded = reader.load(0).unwrap().unwrap();
@@ -954,14 +1001,17 @@ mod tests {
             frames: 7,
             ..Default::default()
         };
-        let c_prev = build_checkpoint(&cfg, 0, 6.25, &h, &prev, 1, 7, false);
+        let c_prev = build_checkpoint(&cfg, 0, 6.25, &h, &prev, &[7], false);
         writer.write(&c_prev).unwrap();
 
         // Simulate a crash mid-flush of the *next* checkpoint: a half-written
         // tmp sibling that was never renamed (truncated JSON).
         let tmp = dir.join(format!("snr_0000.{}.tmp", std::process::id()));
-        std::fs::write(&tmp, b"{ \"schema_version\": 2, \"snr_index\": 0, \"frames_comp")
-            .unwrap();
+        std::fs::write(
+            &tmp,
+            b"{ \"schema_version\": 2, \"snr_index\": 0, \"frames_comp",
+        )
+        .unwrap();
 
         // The canonical file is untouched and still loads as the previous state.
         let reader = CheckpointReader::new(&dir, h);
@@ -972,7 +1022,10 @@ mod tests {
         assert_eq!(loaded.frames_completed, 7);
         assert!(!loaded.completed);
         // The torn tmp never masquerades as the checkpoint.
-        assert!(tmp.exists(), "the half-written tmp is still on disk (orphaned)");
+        assert!(
+            tmp.exists(),
+            "the half-written tmp is still on disk (orphaned)"
+        );
     }
 
     #[test]
@@ -1035,6 +1088,52 @@ mod tests {
             "checkpoint resume must be byte-identical to the uninterrupted run"
         );
         assert!(resumed.completed);
+    }
+
+    #[test]
+    fn test_worker_states_record_authoritative_chunked_distribution() {
+        // The recorded worker_states[].frames_in_worker must be the AUTHORITATIVE
+        // per-worker counter (design doc §4 step 3), not an analytic recompute.
+        // For 14 frames as chunks 0..7 then 7..14 with 2 workers, the per-chunk
+        // striding restarts at each chunk's `start`:
+        //   chunk 0..7  : worker0 = {0,2,4,6}   = 4, worker1 = {1,3,5}    = 3
+        //   chunk 7..14 : worker0 = {7,9,11,13} = 4, worker1 = {8,10,12}  = 3
+        //   cumulative  : worker0 = 8,             worker1 = 6
+        // => 8/6, NOT the single-dispatch analytic 7/7.
+        let cfg = PipelineConfig {
+            max_frames: 14,
+            heartbeat_every_frames: 7,
+            target_errors: 0,
+            ..test_config(2)
+        };
+        let h = config_hash(&cfg);
+        let dir = tempdir();
+        let writer = CheckpointWriter::new(&dir).unwrap();
+        clear_interrupt();
+        let run = run_snr_point_checkpointed(&cfg, 0, 6.25, &writer, &h, None, || (), synth_frame)
+            .unwrap();
+        assert!(run.completed);
+        assert_eq!(run.counters.frames, 14);
+
+        let loaded = CheckpointReader::new(&dir, h).load(0).unwrap().unwrap();
+        assert_eq!(loaded.worker_states.len(), 2);
+        // Authoritative chunked distribution: 8/6, not the analytic 7/7.
+        assert_eq!(
+            loaded.worker_states[0].frames_in_worker, 8,
+            "worker 0 must record its real chunked count (8), not the analytic 7"
+        );
+        assert_eq!(
+            loaded.worker_states[1].frames_in_worker, 6,
+            "worker 1 must record its real chunked count (6), not the analytic 7"
+        );
+        // Invariant: per-worker counts sum to frames_completed.
+        let sum: u64 = loaded
+            .worker_states
+            .iter()
+            .map(|w| w.frames_in_worker)
+            .sum();
+        assert_eq!(sum, loaded.frames_completed);
+        assert_eq!(sum, 14);
     }
 
     #[test]
