@@ -72,6 +72,57 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
+    /// Launch the device ChaCha20 raw-word stream kernel.
+    ///
+    /// Writes `n_words` consecutive 32-bit ChaCha20 keystream words starting at
+    /// absolute stream position `base_word_pos` into `out`. The keystream is
+    /// the one a host `ChaCha20Rng::seed_from_u64(seed)` produces (the `key`
+    /// is the 8-word little-endian seed derived by rand_core's PCG32
+    /// expansion). One device thread per word.
+    ///
+    /// # Arguments
+    /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
+    /// - `base_word_pos`: absolute ChaCha 32-bit-word position to start at.
+    /// - `out`: device ptr (output), `[n_words]` u32.
+    /// - `n_words`: number of words to emit.
+    /// - `stream`: hipStream_t (null for default stream).
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_chacha20_words(
+        key: *const u32,
+        base_word_pos: u64,
+        out: *mut u32,
+        n_words: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Launch the device ChaCha20 + Box-Muller AWGN noise-sample kernel.
+    ///
+    /// Writes `n_samples` f32 standard-normal `N(0, 1)` samples into `out`,
+    /// one thread per sample. Sample `s` consumes the 4 ChaCha words at
+    /// `base_word_pos + 4*s` (u1 from words 0,1; u2 from words 2,3), matching
+    /// the CPU `draw_standard_normal` order. The samples agree with the CPU
+    /// Box-Muller transform to <= 1 ulp f32 (design doc §11).
+    ///
+    /// # Arguments
+    /// - `key`: device ptr, `[8]` u32 little-endian ChaCha key words.
+    /// - `base_word_pos`: frame's `worker_offset(...)` in ChaCha word units
+    ///   (a multiple of 16).
+    /// - `out`: device ptr (output), `[n_samples]` f32 `N(0, 1)` samples.
+    /// - `n_samples`: number of standard-normal samples to draw.
+    /// - `stream`: hipStream_t (null for default stream).
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_chacha20_awgn(
+        key: *const u32,
+        base_word_pos: u64,
+        out: *mut f32,
+        n_samples: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
     pub fn hip_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
     pub fn hip_free(ptr: *mut c_void) -> c_int;
     pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;

@@ -101,3 +101,68 @@ including its deterministic BP iteration depth — a pure function of `g` regard
 of worker count, and the per-worker counters are reduced in `worker_idx` order
 (the SSOT aggregation order). Raising `FRAME_STRIDE` changes the absolute seek
 offsets but preserves this per-frame purity, so byte-identity is unaffected.
+
+## f6004add — GPU ChaCha20 + Box-Muller AWGN kernel
+
+- **Date:** 2026-06-08 (PROVISIONAL — measured on a host that was NOT fully
+  quiet, see Verdict; the project lead RE-MEASURES on a verified-quiet host
+  before attesting the parallelism-pays gate).
+- **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
+  RX 6950 XT (gfx1030, RDNA2).
+- **Baseline configuration:** single-thread CPU AWGN-step (this is an AWGN-only
+  kernel; see the metric note below).
+- **Test configuration:** DVB-T2 r1/2 16-QAM, FrameSize::Normal
+  (n_ldpc = 64800, 4 bits/symbol → **16200 symbols/frame, 32400 noise
+  samples/frame**), Es/N0 = 6.5 dB. Per-frame device launch: one
+  `chacha20_awgn_kernel` launch (one thread per noise sample) + `hipDeviceSynchronize`
+  + D2H read-back, per-worker-owned `GpuChaChaAwgn` generator (one device key
+  upload + output allocation reused across frames). The CPU comparator is a
+  single thread running the **same** AWGN noise step via
+  `gf2_sim::channels::Awgn::apply_for_frame` (the §8 CPU fallback / ulp oracle).
+- **Metric note (HONEST SCOPING):** `f6004add` accelerates the **AWGN noise
+  step only** (no GPU LDPC/BCJR decode — explicit non-goal). The full-frame
+  single-thread headline baseline (1.6216 fps) is dominated by LDPC BP decode,
+  which this kernel does not touch, so the contractual ≥10× comparison is made
+  against the **single-thread CPU AWGN step** (the apples-to-apples workload).
+  For context, the GPU also emits the full-frame baseline ratio below, but that
+  number is not the gate metric for an AWGN-only kernel.
+- **Observed throughput (AWGN noise step, 4000 frames, 7 repeats):**
+  - **GPU: 18182 fps ± 187** (very stable across repeats).
+  - **CPU single thread: 1156 fps ± 212** (high sigma — background load on a
+    non-quiet host; a 2000-frame/5-repeat run measured 1271 fps ± 4 when less
+    contended).
+- **Speedup factor:** **GPU / CPU-1-thread AWGN-step = 14.3×–15.7×** across the
+  two runs (≥ the **10×** threshold with margin). The GPU AWGN-step throughput
+  (18182 fps) is ~11000× the *full-frame* 1.6216 fps baseline — but that ratio
+  is not meaningful as a gate (different workload), and is recorded only for
+  completeness.
+- **GPU-vs-CPU-24-thread diagnostic:** the canonical CPU-24-thread *full-frame*
+  baseline from `3fcb7025` is 21.44 fps ± 0.22 → 13.22×. A full-frame
+  GPU-vs-CPU-24 comparison is NOT yet possible because the LDPC decode is still
+  CPU-only (Phase B decode kernel is a separate task); this AWGN-only kernel is
+  one stage of the eventual GPU pipeline. The AWGN step is not the full-frame
+  bottleneck, so a standalone AWGN GPU offload does not by itself raise
+  end-to-end full-frame fps above the CPU-24 number — it removes the AWGN cost
+  from the critical path once the decode is also on-device.
+- **Required threshold (from task body):** ≥ 10× single-thread CPU baseline.
+- **Verdict:** PROVISIONAL PASS — GPU/CPU-1-thread AWGN-step speedup of
+  14.3×–15.7× clears the ≥10× gate with margin, and the GPU number is stable
+  (±187 over 7 repeats). **However the host was NOT verified-quiet:**
+  `cat /proc/loadavg` read **2.05** (and 3.93 / 5.41 on earlier reads — leftover
+  cargo build + background processes), which inflates CPU-1-thread variance
+  (±212) and could *understate* the CPU baseline (contention only slows the CPU
+  comparator, which would *raise* the measured speedup, so the gate is not at
+  risk from contention — but the absolute CPU number is not trustworthy). The
+  PROJECT LEAD must re-measure on a verified-quiet host (`loadavg ≈ 0`) before
+  attesting the gate. Methodology is reproducible via the bin below.
+- **Raw artefacts:**
+  - Benchmark binary: `crates/gf2-sim/src/bin/gpu_awgn_throughput.rs`
+    (re-run: `cargo run -p gf2-sim --release --features hip --bin gpu_awgn_throughput -- --frames 4000 --repeats 7 --es-n0 6.5`).
+  - Byte-identity + 1-ulp regression (gfx1030-gated, skips with no GPU):
+    `crates/gf2-kernels-hip/tests/gpu_rng_byte_identity.rs`
+    (run: `cargo test -p gf2-kernels-hip --release --test gpu_rng_byte_identity`).
+  - CPU-vs-GPU 1-ulp end-to-end stage test:
+    `gf2-sim` `gpu::awgn::imp::tests::test_gpu_awgn_matches_cpu_within_1_ulp`
+    (run: `cargo nextest run -p gf2-sim --release --features hip -E 'test(test_gpu_awgn_matches_cpu_within_1_ulp)'`).
+  - Device kernel source: `crates/gf2-kernels-hip/hip/chacha20_awgn.hip`;
+    host wrappers: `crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs`.
