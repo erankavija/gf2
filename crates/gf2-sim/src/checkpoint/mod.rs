@@ -1109,6 +1109,28 @@ mod tests {
     use rand::Rng as _;
     use std::num::NonZeroUsize;
 
+    /// Serializes unit tests that touch the process-wide interrupt flag (the
+    /// SIGINT path read inside [`run_snr_point_checkpointed`]). Bare `cargo test`
+    /// runs a crate's unit tests multi-threaded in **one process**, so without
+    /// this guard a test that trips the global flag can bleed it into a
+    /// concurrent run that expects to complete (observed as spurious
+    /// `assertion failed: run.completed`). `nextest` runs one process per test
+    /// and is immune, but the `tests` gate uses `cargo test`.
+    static INTERRUPT_FLAG_GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Acquires [`INTERRUPT_FLAG_GUARD`] (recovering from poisoning so a single
+    /// panicking test does not cascade) and clears any stale interrupt request.
+    /// Hold the returned guard for the whole test so no other flag-touching test
+    /// runs concurrently.
+    #[must_use]
+    fn interrupt_test_lock() -> std::sync::MutexGuard<'static, ()> {
+        let guard = INTERRUPT_FLAG_GUARD
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        clear_interrupt();
+        guard
+    }
+
     fn test_config(parallelism: usize) -> PipelineConfig {
         PipelineConfig {
             seed: 0xC0FFEE,
@@ -1331,6 +1353,7 @@ mod tests {
 
     #[test]
     fn test_checkpointed_resume_byte_identical_smoke() {
+        let _guard = interrupt_test_lock();
         // Uninterrupted reference vs checkpoint-at-chunk-boundary resume must be
         // byte-identical. Small frame counts keep the fast tier under 5 s.
         let cfg = test_config(2);
@@ -1404,6 +1427,7 @@ mod tests {
 
     #[test]
     fn test_worker_states_record_authoritative_chunked_distribution() {
+        let _guard = interrupt_test_lock();
         // The recorded worker_states[].frames_in_worker must be the AUTHORITATIVE
         // per-worker counter (design doc §4 step 3), not an analytic recompute.
         // For 14 frames as chunks 0..7 then 7..14 with 2 workers, the per-chunk
@@ -1499,6 +1523,7 @@ mod tests {
 
     #[test]
     fn test_sigint_before_run_stops_immediately() {
+        let _guard = interrupt_test_lock();
         let cfg = test_config(2);
         let h = config_hash(&cfg);
         let dir = tempdir();
@@ -1526,6 +1551,7 @@ mod tests {
 
     #[test]
     fn test_sigint_mid_run_flushes_resumable_checkpoint() {
+        let _guard = interrupt_test_lock();
         // A SIGINT *after* the first chunk completes must (1) stop the run and
         // (2) leave a flushed, resumable v2 checkpoint on disk carrying the
         // first chunk's committed frames. The interrupt is tripped from inside
