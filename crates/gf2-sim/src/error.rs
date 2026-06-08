@@ -120,11 +120,19 @@ pub enum BuildError {
         gpu_stage: StageId,
     },
     /// An invalid `(rate, modulation)` combination was requested.
+    ///
+    /// Carries human-readable, standard-agnostic descriptors of the *actual*
+    /// offending values so the error reports exactly what was requested. The
+    /// descriptors are plain strings (rather than a closed enum) so every preset
+    /// — the DVB-T2 preset today, the future 5G NR preset — can report any
+    /// rate / modulation it rejects without a lossy mapping onto a fixed set.
     InvalidModcod {
-        /// The requested code rate.
-        rate: NrRate,
-        /// The requested modulation.
-        modulation: Modulation,
+        /// A human-readable rendering of the requested code rate (e.g.
+        /// `"Rate5_6"`).
+        rate: String,
+        /// A human-readable rendering of the requested modulation (e.g.
+        /// `"Qpsk"`).
+        modulation: String,
     },
     /// A loaded checkpoint's `config_hash` does not match the live config.
     ///
@@ -136,34 +144,6 @@ pub enum BuildError {
         /// The hash of the live configuration.
         expected: String,
     },
-}
-
-/// Code-rate selector used by [`BuildError::InvalidModcod`].
-///
-/// A minimal placeholder so the scaffolding compiles standalone. The DVB-T2 /
-/// 5G NR preset waves (`81d05bab`) own the authoritative rate enumeration and
-/// may relocate or extend this.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NrRate {
-    /// Rate 1/2.
-    R1_2,
-    /// Rate 2/3.
-    R2_3,
-    /// Rate 3/4.
-    R3_4,
-}
-
-/// Modulation selector used by [`BuildError::InvalidModcod`].
-///
-/// A minimal placeholder so the scaffolding compiles standalone. The DVB-T2 /
-/// 5G NR preset waves (`81d05bab`) own the authoritative modulation
-/// enumeration and may relocate or extend this.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Modulation {
-    /// 16-QAM.
-    Qam16,
-    /// 64-QAM.
-    Qam64,
 }
 
 impl std::fmt::Display for StageError {
