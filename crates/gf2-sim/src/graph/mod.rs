@@ -122,19 +122,21 @@ const DEFAULT_EDGE_BATCH_SIZE: usize = 1;
 ///
 /// ```
 /// use gf2_sim::graph::Chain;
-/// use gf2_sim::stages::dvb_t2_bicm_stages;
+/// use gf2_sim::stages::{dvb_t2_bicm_stages, DEFAULT_DEMAP_NOISE_VAR};
 /// use gf2_coding::CodeRate;
 /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 /// use gf2_coding::modem::DemapMethod;
 ///
 /// // The factory wires the codec, interleaver, and modem for one MODCOD into
-/// // erased forward + inverse stages.
+/// // erased forward + inverse stages. This example connects map → demap with no
+/// // channel (a noiseless roundtrip), so the demapper uses the default N0.
 /// let factory = dvb_t2_bicm_stages(
 ///     CodeRate::Rate1_2,
 ///     DvbT2Modulation::Qam16,
 ///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
 ///     DemapMethod::ExactLogMap,
+///     DEFAULT_DEMAP_NOISE_VAR,
 /// );
 ///
 /// let mut chain = Chain::new();

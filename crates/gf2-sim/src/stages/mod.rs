@@ -404,6 +404,17 @@ impl GrayQamDemap {
             noise_var,
         }
     }
+
+    /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) this
+    /// demapper assumes when computing LLRs.
+    ///
+    /// Exposed so consumers (e.g. the DVB-T2 preset's regression test) can
+    /// verify the demapper's `N0` was wired to the channel's true `N0`.
+    #[inline]
+    #[must_use]
+    pub fn noise_var(&self) -> f32 {
+        self.noise_var
+    }
 }
 
 impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
@@ -573,6 +584,13 @@ pub struct DvbT2BicmStages {
 ///   shared codec.
 /// * `demap` — soft-demap method ([`DemapMethod::ExactLogMap`] or
 ///   [`DemapMethod::MaxLog`]).
+/// * `demap_noise_var` — the per-symbol total complex AWGN noise variance
+///   (`N0 = 2 sigma^2`) the soft demapper assumes. For a physically consistent
+///   chain this **must** equal the channel's true `N0`; the preset derives it
+///   from the channel's Es/N0 via
+///   [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma). Noiseless
+///   callers (those that connect [`GrayQamMap`] straight to [`GrayQamDemap`]
+///   with no channel) pass [`DEFAULT_DEMAP_NOISE_VAR`].
 ///
 /// # Returns
 ///
@@ -582,13 +600,15 @@ pub struct DvbT2BicmStages {
 /// # Panics
 ///
 /// Panics if the `(FrameSize::Normal, rate)` pair cannot construct a codec
-/// (every in-scope DVB-T2 rate constructs successfully) or if `rate` /
-/// `modulation` is out of the bit-interleaver's supported scope.
+/// (every in-scope DVB-T2 rate constructs successfully), if `rate` /
+/// `modulation` is out of the bit-interleaver's supported scope, or if
+/// `demap_noise_var` is not finite and strictly positive (per
+/// [`GrayQamDemap::with_noise_var`]).
 ///
 /// # Examples
 ///
 /// ```
-/// use gf2_sim::stages::dvb_t2_bicm_stages;
+/// use gf2_sim::stages::{dvb_t2_bicm_stages, DEFAULT_DEMAP_NOISE_VAR};
 /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 /// use gf2_coding::modem::DemapMethod;
@@ -599,6 +619,7 @@ pub struct DvbT2BicmStages {
 ///     DvbT2Modulation::Qam16,
 ///     DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
 ///     DemapMethod::ExactLogMap,
+///     DEFAULT_DEMAP_NOISE_VAR,
 /// );
 /// assert_eq!(stages.forward.len(), 3);
 /// assert_eq!(stages.inverse.len(), 3);
@@ -609,6 +630,7 @@ pub fn dvb_t2_bicm_stages(
     modulation: DvbT2Modulation,
     decoder: DecoderConfig,
     demap: DemapMethod,
+    demap_noise_var: f32,
 ) -> DvbT2BicmStages {
     let mut concat = DvbT2Concat::new(FrameSize::Normal, rate)
         .expect("DVB-T2 Normal-frame codec construction must succeed for in-scope rates");
@@ -624,7 +646,11 @@ pub fn dvb_t2_bicm_stages(
         erase(GrayQamMap::new(modulation)),
     ];
     let inverse: Vec<Box<dyn AnyStage>> = vec![
-        erase(GrayQamDemap::new(modulation, demap)),
+        erase(GrayQamDemap::with_noise_var(
+            modulation,
+            demap,
+            demap_noise_var,
+        )),
         erase(BitDeinterleave::new(interleaver.clone())),
         erase(DvbT2Decode::new(codec.clone())),
     ];
@@ -657,6 +683,7 @@ mod tests {
             DvbT2Modulation::Qam16,
             DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             DemapMethod::ExactLogMap,
+            DEFAULT_DEMAP_NOISE_VAR,
         );
         assert_eq!(s.forward.len(), 3);
         assert_eq!(s.inverse.len(), 3);
@@ -672,6 +699,7 @@ mod tests {
             DvbT2Modulation::Qam16,
             DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             DemapMethod::ExactLogMap,
+            DEFAULT_DEMAP_NOISE_VAR,
         );
         use crate::batch::HardDecisionBatch;
         use std::any::TypeId;

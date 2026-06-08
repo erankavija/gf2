@@ -223,6 +223,24 @@ impl Channel {
             Channel::Awgn { es_n0_db } => erase(Awgn::new(es_n0_db, bits_per_symbol)),
         }
     }
+
+    /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) the
+    /// soft demapper must assume to be physically consistent with this channel.
+    ///
+    /// Derived from the channel's Es/N0 via the SSOT
+    /// [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma) helper — the
+    /// exact same `sigma` the [`Awgn`] stage injects — so the demapper's `N0`
+    /// equals the channel's true `N0` (matching the `2 * sigma_sq` derivation in
+    /// `frame_sim.rs`). `es_n0_db_to_sigma` is strictly positive and finite for
+    /// every finite `es_n0_db`, so the result is a valid demapper `noise_var`.
+    fn demap_noise_var(self) -> f32 {
+        match self {
+            Channel::Awgn { es_n0_db } => {
+                let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
+                2.0 * sigma * sigma
+            }
+        }
+    }
 }
 
 // ===========================================================================
@@ -419,6 +437,11 @@ impl Builder<Ready> {
     /// pipeline carries a [`PipelineConfig`] holding the configured `seed`,
     /// `parallelism`, and `checkpoint_dir`.
     ///
+    /// The soft demapper's assumed noise variance is derived from the **same**
+    /// channel via [`Channel::demap_noise_var`], so the demapper's `N0` equals
+    /// the channel's true injected `N0` — the LLR scaling is physically
+    /// consistent with the channel rather than a fixed placeholder.
+    ///
     /// # Errors
     ///
     /// * [`BuildError::InvalidModcod`] if the `(rate, modulation)` pair is not
@@ -427,6 +450,15 @@ impl Builder<Ready> {
     /// The chain wiring itself (a fixed seven-stage linear DAG with
     /// type-compatible consecutive edges) is well-formed by construction, so
     /// `build()` never surfaces a topology [`BuildError`] for this preset.
+    ///
+    /// # Complexity
+    ///
+    /// O(1) in the number of stages (a fixed seven-node chain, topologically
+    /// sorted in constant time). The wall-clock cost is dominated by the one-off
+    /// construction of the [`DvbT2Concat`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat)
+    /// codec and the LDPC encoder cache inside
+    /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages), not by the
+    /// graph assembly itself.
     ///
     /// # Examples
     ///
@@ -458,9 +490,14 @@ impl Builder<Ready> {
         let demap = self.cfg_demap.expect("demap set before Ready");
         let channel = self.cfg_channel.expect("channel set before Ready");
 
+        // Derive the demapper's N0 from the SAME channel so the demapper assumes
+        // exactly the noise the channel injects (physically consistent LLRs). See
+        // `Channel::demap_noise_var`.
+        let demap_noise_var = channel.demap_noise_var();
+
         // SSOT BICM stage order: forward = [encode, interleave, map],
         // inverse = [demap, deinterleave, decode]. The channel slots between.
-        let stages = dvb_t2_bicm_stages(rate, modulation, decoder, demap);
+        let stages = dvb_t2_bicm_stages(rate, modulation, decoder, demap, demap_noise_var);
         let channel_stage = channel.into_stage(modulation.bits_per_cell());
 
         let mut chain = Chain::new();

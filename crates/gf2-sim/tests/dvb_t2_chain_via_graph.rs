@@ -42,7 +42,7 @@ use rand::{Rng, SeedableRng};
 use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch};
 use gf2_sim::graph::Chain;
 use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
-use gf2_sim::stages::dvb_t2_bicm_stages;
+use gf2_sim::stages::{dvb_t2_bicm_stages, DEFAULT_DEMAP_NOISE_VAR};
 
 /// Build one seeded pseudo-random BBFRAME of `k` bits.
 fn random_bbframe(k: usize, seed: u64) -> BitVec {
@@ -79,11 +79,15 @@ fn assert_graph_chain_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, see
     // (GrayQamMap → SymbolBatch) into the first inverse stage
     // (GrayQamDemap consumes SymbolBatch), so the SymbolBatch flows straight
     // through with no channel node.
+    // This chain is NOISELESS: the last forward stage (GrayQamMap) connects
+    // straight into the first inverse stage (GrayQamDemap) with no channel node,
+    // so the demapper uses the default placeholder N0.
     let factory = dvb_t2_bicm_stages(
         rate,
         modulation,
         DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
         DemapMethod::ExactLogMap,
+        DEFAULT_DEMAP_NOISE_VAR,
     );
     let k_bch = factory.codec.k_bch();
 
