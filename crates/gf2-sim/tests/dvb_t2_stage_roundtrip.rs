@@ -56,7 +56,7 @@ use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, SymbolBatch};
 use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
 use gf2_sim::stages::{
     dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DvbT2Decode, DvbT2Encode, GrayQamDemap,
-    GrayQamMap,
+    GrayQamMap, DEFAULT_DEMAP_NOISE_VAR,
 };
 use gf2_sim::Stage;
 
@@ -89,11 +89,14 @@ fn run_erased_chain(
 /// Run the noiseless forward + inverse BICM chain via `dvb_t2_bicm_stages`
 /// (the erased `process_any` path) and assert bit-exact BBFRAME recovery.
 fn assert_factory_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) {
+    // Noiseless chain: GrayQamMap connects straight to GrayQamDemap with no
+    // channel, so the demapper uses the default placeholder N0.
     let stages = dvb_t2_bicm_stages(
         rate,
         modulation,
         DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
         DemapMethod::ExactLogMap,
+        DEFAULT_DEMAP_NOISE_VAR,
     );
 
     let bbframe = random_bbframe(stages.codec.k_bch(), seed);
