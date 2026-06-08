@@ -639,6 +639,13 @@ pub struct CheckpointedRun {
 ///   returns immediately with the loaded counters.
 /// * `make_state` / `sim_frame` — the per-worker state factory and per-frame
 ///   closure (see [`run_snr_point_range`]).
+/// * `on_heartbeat_flush` — callback `(snr_index, frames_completed)` fired
+///   **after each WITHIN-point (non-final) heartbeat checkpoint write** — i.e.
+///   the flushes where the point has not yet completed. It is **not** fired for
+///   the final SNR-boundary flush (that is the point-complete event the sweep
+///   reports). A CLI driver can use it to emit a mid-point progress marker so a
+///   parent can deliver a SIGINT while the point is still simulating; pass
+///   `|_, _| {}` if unused.
 ///
 /// # Returns
 ///
@@ -653,7 +660,7 @@ pub struct CheckpointedRun {
 ///
 /// `O(frames_run)` frame closures across `config.parallelism` workers.
 #[allow(clippy::too_many_arguments)]
-pub fn run_snr_point_checkpointed<S, M, F>(
+pub fn run_snr_point_checkpointed<S, M, F, H>(
     config: &PipelineConfig,
     snr_index: usize,
     esn0_db: f64,
@@ -662,10 +669,12 @@ pub fn run_snr_point_checkpointed<S, M, F>(
     resume: Option<CheckpointV2>,
     make_state: M,
     sim_frame: F,
+    mut on_heartbeat_flush: H,
 ) -> std::io::Result<CheckpointedRun>
 where
     M: Fn() -> S + Sync,
     F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
+    H: FnMut(usize, u64),
 {
     let parallelism = config.parallelism;
     let num_workers = parallelism.get();
@@ -756,6 +765,10 @@ where
         if completed {
             break;
         }
+        // A within-point (non-final) heartbeat flush just hit disk with
+        // `0 < frames_completed < max_frames` and per-worker state. Notify the
+        // driver so it can emit a mid-point progress marker.
+        on_heartbeat_flush(snr_index, total.frames);
     }
 
     Ok(CheckpointedRun {
@@ -835,6 +848,11 @@ pub struct SweepRun {
 ///   and the point finished (it is not called for an interrupted point, whose
 ///   run stops before completion). A CLI driver can use it to emit a
 ///   progress marker; pass `|_, _, _| {}` if unused.
+/// * `on_heartbeat_flush` — callback `(snr_idx, frames_completed)` threaded into
+///   [`run_snr_point_checkpointed`]; fired after each within-point (non-final)
+///   heartbeat checkpoint write. A CLI driver can use it to emit a *mid-point*
+///   progress marker (so a parent can deliver a SIGINT while a point is still
+///   simulating); pass `|_, _| {}` if unused.
 ///
 /// # Returns
 ///
@@ -884,23 +902,26 @@ pub struct SweepRun {
 ///         )
 ///     },
 ///     |_idx, _esn0, _run| {}, // per-point completion callback (unused here)
+///     |_idx, _frames| {},     // per-heartbeat-flush callback (unused here)
 /// )
 /// .unwrap();
 /// assert_eq!(sweep.per_point.len(), 3);
 /// ```
-pub fn run_sweep_checkpointed<S, M, F, P, C>(
+pub fn run_sweep_checkpointed<S, M, F, P, C, H>(
     config: &PipelineConfig,
     writer: &CheckpointWriter,
     expected_hash: &str,
     resume: bool,
     make_point: P,
     mut on_point_complete: C,
+    mut on_heartbeat_flush: H,
 ) -> Result<SweepRun, SweepError>
 where
     M: Fn() -> S + Sync,
     F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
     P: Fn(usize, f64) -> (M, F),
     C: FnMut(usize, f64, &CheckpointedRun),
+    H: FnMut(usize, u64),
 {
     let reader = CheckpointReader::new(writer.dir().to_path_buf(), expected_hash.to_string());
     let mut per_point = Vec::with_capacity(config.esn0_db_points.len());
@@ -923,6 +944,7 @@ where
             loaded,
             make_state,
             sim_frame,
+            &mut on_heartbeat_flush,
         )
         .map_err(SweepError::Io)?;
 
@@ -1285,9 +1307,18 @@ mod tests {
         let dir_ref = tempdir();
         let w_ref = CheckpointWriter::new(&dir_ref).unwrap();
         clear_interrupt();
-        let reference =
-            run_snr_point_checkpointed(&cfg, 0, 6.25, &w_ref, &h, None, || (), synth_frame)
-                .unwrap();
+        let reference = run_snr_point_checkpointed(
+            &cfg,
+            0,
+            6.25,
+            &w_ref,
+            &h,
+            None,
+            || (),
+            synth_frame,
+            |_, _| {},
+        )
+        .unwrap();
         assert!(reference.completed);
 
         // Interrupted run: stop after the first heartbeat chunk, then resume
@@ -1308,6 +1339,7 @@ mod tests {
             None,
             || (),
             synth_frame,
+            |_, _| {},
         )
         .unwrap();
         assert!(partial.completed); // hit its (reduced) max_frames
@@ -1327,6 +1359,7 @@ mod tests {
             Some(loaded),
             || (),
             synth_frame,
+            |_, _| {},
         )
         .unwrap();
 
@@ -1357,8 +1390,18 @@ mod tests {
         let dir = tempdir();
         let writer = CheckpointWriter::new(&dir).unwrap();
         clear_interrupt();
-        let run = run_snr_point_checkpointed(&cfg, 0, 6.25, &writer, &h, None, || (), synth_frame)
-            .unwrap();
+        let run = run_snr_point_checkpointed(
+            &cfg,
+            0,
+            6.25,
+            &writer,
+            &h,
+            None,
+            || (),
+            synth_frame,
+            |_, _| {},
+        )
+        .unwrap();
         assert!(run.completed);
         assert_eq!(run.counters.frames, 14);
 
@@ -1392,8 +1435,18 @@ mod tests {
         // Trip the interrupt before the run: the first chunk check stops it with
         // no chunk run and no checkpoint file (start == 0, nothing committed).
         set_interrupted_for_test();
-        let run = run_snr_point_checkpointed(&cfg, 0, 6.25, &writer, &h, None, || (), synth_frame)
-            .unwrap();
+        let run = run_snr_point_checkpointed(
+            &cfg,
+            0,
+            6.25,
+            &writer,
+            &h,
+            None,
+            || (),
+            synth_frame,
+            |_, _| {},
+        )
+        .unwrap();
         assert!(run.interrupted);
         assert!(!run.completed);
         assert_eq!(run.counters.frames, 0);
@@ -1424,7 +1477,8 @@ mod tests {
         };
 
         let run =
-            run_snr_point_checkpointed(&cfg, 0, 6.25, &writer, &h, None, || (), frame).unwrap();
+            run_snr_point_checkpointed(&cfg, 0, 6.25, &writer, &h, None, || (), frame, |_, _| {})
+                .unwrap();
         clear_interrupt();
 
         assert!(run.interrupted, "the mid-run SIGINT must stop the run");
