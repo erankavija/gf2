@@ -380,10 +380,16 @@ that re-order are non-compliant.
 
 ## §4 Heartbeat-checkpoint schema (v2-only)
 
-`[fixed: B2, H3, C4]` Per Q5, v2 is a fresh schema; no v1
-back-compat in the new pipeline. A one-shot migration script
-(`crates/gf2-sim/src/bin/checkpoint_migrate.rs`) converts v1
-checkpoints from `gf2_coding::simulation` runs to v2.
+`[fixed: B2, H3, C4]` v2 is a fresh schema; no v1 back-compat in the
+new pipeline.
+
+> **Amendment 2026-06-08 (user-approved): clean-cut, no migration.**
+> Q5 originally added a one-shot migration script
+> (`checkpoint_migrate.rs`) to convert legacy v1 checkpoints to v2.
+> That is **removed**: there are no previous runs and no users, so
+> there is **no v1 backward compatibility and no migration tool** at
+> all. The "Migration tool" subsection below is retained struck-through
+> for revision history only. The v2 schema itself is unchanged.
 
 ### v2 schema
 
@@ -429,19 +435,14 @@ Notes:
   `frames_in_worker` from the executor's authoritative counter
   (see "Drain commit contract" below).
 
-### Migration tool
+### ~~Migration tool~~ — REMOVED 2026-06-08 (clean-cut, no migration)
 
-Binary at `crates/gf2-sim/src/bin/checkpoint_migrate.rs`:
-
-```
-checkpoint_migrate --input <v1-dir> --output <v2-dir> [--parallelism N]
-```
-
-Reads each `<v1-dir>/snr_NNNN.json`, synthesises a single-worker v2
-checkpoint (`worker_states[0].frames_in_worker = frames_completed`,
-`worker_states[0].rng_word_pos = rng_word_pos`), writes to
-`<v2-dir>/snr_NNNN.json`. Tested against the 2026-06-05 checkpoint
-dir at `dev/benchmarks/dvb_t2_awgn/curve_1_2_16qam/checkpoints/`.
+~~Binary at `crates/gf2-sim/src/bin/checkpoint_migrate.rs` converting
+legacy v1 checkpoint dirs to v2.~~ **Removed per the user clean-cut
+decision (no previous runs, no users ⇒ no v1 back-compat and no
+migration tool).** There is no `checkpoint_migrate` binary and no v1
+handling anywhere in the pipeline; the reader is v2-only and rejects
+any non-v2 file as a hard load error.
 
 ### Drain commit contract
 
@@ -892,8 +893,8 @@ section serving as a self-check, not a content section).
       WORKER_STRIDE=2^40, SNR_STRIDE=2^56; 32-bit-word units; legacy
       compat dropped; FRAME_STRIDE sized for the QPSK-Normal worst case
       per the 2026-06-07 amendment)
-- [x] §4 Heartbeat-checkpoint schema v2 (no v1 back-compat;
-      migration tool provided)
+- [x] §4 Heartbeat-checkpoint schema v2 (no v1 back-compat; clean-cut,
+      NO migration tool — removed 2026-06-08 per user decision)
 - [x] §5 Crate-boundary diagram + `rand_chacha = "0.9"`
 - [x] §6 Multi-arch HIP dispatch
 - [x] §7 Multi-GPU extension seams (future-tense)
