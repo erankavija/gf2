@@ -1,15 +1,8 @@
-//! v2 checkpoint compatibility + resume byte-identity integration tests
-//! (issue `5f12e7ff` deliverables 4 & 5, design doc §4).
+//! v2 checkpoint resume byte-identity integration tests
+//! (issue `5f12e7ff`, design doc §4).
 //!
-//! Coverage:
+//! The checkpoint format is v2-only (a single schema). Coverage:
 //!
-//! * **v1 → v2 migration** (`test_v1_migration_*`): a v1 checkpoint actually
-//!   produced by running the legacy `gf2_coding::simulation::SimulationRunner`
-//!   uncoded path is converted by the `checkpoint_migrate` binary, then the
-//!   resulting v2 checkpoint loads (exactly one `worker_states` entry) and
-//!   resumes single-worker byte-identically vs an uninterrupted single-thread
-//!   reference. A fast synthetic structural test of the tool's output shape is
-//!   also kept.
 //! * **v2 library-level resume** (`test_v2_resume_*`): a v2 checkpoint written
 //!   mid-point loads and resumes N-worker, with byte-identical
 //!   `fer`/`frames`/`errors`/`mean_iters` vs an uninterrupted N-worker
@@ -250,432 +243,6 @@ fn test_v2_resume_nonzero_errors_present() {
 }
 
 // ---------------------------------------------------------------------------
-// v1 → v2 migration (deliverable 3, 4a)
-// ---------------------------------------------------------------------------
-
-/// Writes a legacy v1 checkpoint (byte-for-byte the `gf2_coding::simulation`
-/// `SnrCheckpoint::to_json` layout) into `dir/snr_<NNNN>.json`.
-#[allow(clippy::too_many_arguments)]
-fn write_v1_fixture(
-    dir: &Path,
-    snr_index: usize,
-    eb_n0_db: f64,
-    frames_completed: u64,
-    errors_accumulated: u64,
-    total_iterations: u64,
-    total_bits: u64,
-    total_bit_errors: u64,
-    rng_word_pos: u128,
-    frames_target: u64,
-    errors_target: u64,
-    completed: bool,
-    config_hash: &str,
-) {
-    let json = format!(
-        concat!(
-            "{{\n",
-            "  \"snr_index\": {},\n",
-            "  \"eb_n0_db\": {},\n",
-            "  \"frames_completed\": {},\n",
-            "  \"errors_accumulated\": {},\n",
-            "  \"total_iterations\": {},\n",
-            "  \"total_queries\": {},\n",
-            "  \"total_bits\": {},\n",
-            "  \"total_bit_errors\": {},\n",
-            "  \"rng_word_pos\": \"{}\",\n",
-            "  \"frames_target\": {},\n",
-            "  \"errors_target\": {},\n",
-            "  \"completed\": {},\n",
-            "  \"config_hash\": \"{}\"\n",
-            "}}"
-        ),
-        snr_index,
-        eb_n0_db,
-        frames_completed,
-        errors_accumulated,
-        total_iterations,
-        frames_completed, // total_queries == frames in the v1 coded path
-        total_bits,
-        total_bit_errors,
-        rng_word_pos,
-        frames_target,
-        errors_target,
-        completed,
-        config_hash,
-    );
-    std::fs::write(dir.join(format!("snr_{snr_index:04}.json")), json).unwrap();
-}
-
-/// Runs the `checkpoint_migrate` binary against `input` → `output`.
-fn run_migrate(input: &Path, output: &Path, parallelism: usize) {
-    let bin = env!("CARGO_BIN_EXE_checkpoint_migrate");
-    let status = std::process::Command::new(bin)
-        .args([
-            "--input",
-            input.to_str().unwrap(),
-            "--output",
-            output.to_str().unwrap(),
-            "--parallelism",
-            &parallelism.to_string(),
-        ])
-        .status()
-        .expect("checkpoint_migrate must run");
-    assert!(status.success(), "checkpoint_migrate exited non-zero");
-}
-
-#[test]
-fn test_v1_migration_produces_valid_v2() {
-    let v1_dir = tempdir("v1src");
-    let v2_dir = tempdir("v2dst");
-    write_v1_fixture(
-        &v1_dir,
-        0,
-        1.989_700_043_360_188,
-        100,
-        100,
-        5000,
-        3_220_800,
-        427_025,
-        13_060_800,
-        10_000_000,
-        100,
-        true,
-        "blake3:ef56f88523777b04bf303f18c64de099a06ec322bb3f0124671cd39fad73f420",
-    );
-
-    run_migrate(&v1_dir, &v2_dir, 1);
-
-    // The v2 reader loads it (hash matches the v1-recorded hash).
-    let reader = CheckpointReader::new(
-        &v2_dir,
-        "blake3:ef56f88523777b04bf303f18c64de099a06ec322bb3f0124671cd39fad73f420".to_string(),
-    );
-    let v2 = reader.load(0).unwrap().expect("migrated v2 must exist");
-    assert_eq!(v2.schema_version, 2);
-    assert_eq!(v2.frames_completed, 100);
-    assert_eq!(v2.errors_accumulated, 100);
-    assert!(v2.completed);
-    // Single-worker mapping: worker 0 carries the full count + the v1 position.
-    assert_eq!(v2.worker_states.len(), 1);
-    assert_eq!(v2.worker_states[0].worker_idx, 0);
-    assert_eq!(v2.worker_states[0].frames_in_worker, 100);
-    assert_eq!(v2.worker_states[0].rng_word_pos, 13_060_800);
-}
-
-/// The subset of a genuine v1 `snr_*.json` (written by `SimulationRunner`) that
-/// the migration must carry through faithfully.
-#[derive(Debug, Clone, serde::Deserialize)]
-struct V1Source {
-    frames_completed: u64,
-    errors_accumulated: u64,
-    total_iterations: u64,
-    total_bits: u64,
-    total_bit_errors: u64,
-    /// Decimal string (`u128` does not fit a JSON number above `2^53`).
-    rng_word_pos: String,
-}
-
-/// Produces a GENUINE v1 checkpoint by running the legacy
-/// `gf2_coding::simulation::SimulationRunner` uncoded path with
-/// `checkpoint_dir = Some(dir)` (the fast per-SNR-boundary checkpoint path,
-/// `simulation.rs:1611`). Returns `(checkpoint_dir, config_hash, v1_source)`
-/// where `v1_source` is the parsed genuine `snr_0000.json` the runner wrote.
-///
-/// `SnrCheckpoint` is private in `gf2-coding`, so the only way to obtain a real
-/// v1 file is to run the runner — exactly what criterion 2 requires.
-fn produce_real_v1_checkpoints(tag: &str) -> (PathBuf, String, V1Source) {
-    use gf2_coding::simulation::{BpskAwgnChannel, SimulationConfig, SimulationRunner};
-    use rand08::SeedableRng as _;
-
-    let dir = tempdir(tag);
-    let mut config = SimulationConfig::quick_test();
-    // Tiny, fast, deterministic: 2 SNR points, few errors/frames, fixed seed
-    // (fixed seed is REQUIRED for the uncoded checkpoint path to engage).
-    config.eb_n0_range_db = vec![2.0, 4.0];
-    config.min_errors = 5;
-    config.max_frames = 200;
-    config.rng_seed = Some(0xA1B2_C3D4);
-    config.checkpoint_dir = Some(dir.clone());
-
-    let channel = BpskAwgnChannel;
-    let mut rng = rand08::rngs::StdRng::seed_from_u64(1);
-    let results = SimulationRunner::run_uncoded_ber_with_channel(&channel, &config, &mut rng);
-    assert_eq!(results.len(), 2, "two SNR points must run");
-
-    // The runner writes config_hash.txt alongside the snr_*.json files.
-    let hash = std::fs::read_to_string(dir.join("config_hash.txt"))
-        .expect("SimulationRunner must write config_hash.txt")
-        .trim()
-        .to_string();
-    // Parse the genuine v1 snr_0000.json the runner produced.
-    let v1_bytes = std::fs::read(dir.join("snr_0000.json"))
-        .expect("SimulationRunner must write snr_0000.json");
-    let v1_source: V1Source =
-        serde_json::from_slice(&v1_bytes).expect("v1 snr_0000.json must parse");
-    (dir, hash, v1_source)
-}
-
-#[test]
-fn test_v1_migration_from_real_simulation_runner_resume_faithful() {
-    // Criterion 2 (resume-faithfulness reading, user-approved 2026-06-08): a
-    // checkpoint PRODUCED BY the legacy SimulationRunner is migrated to v2, the
-    // migration is field-faithful, and RESUMING FROM THE MIGRATED CHECKPOINT
-    // loads and resumes byte-identically to resuming from a NATIVE v2 checkpoint
-    // with the same schema fields. The epic Non-goal forbids legacy
-    // byte-identity, so the reference is the native-v2 equivalent (NOT a legacy
-    // run).
-
-    // (1) Genuine v1 checkpoints from the real uncoded SimulationRunner.
-    let (v1_dir, v1_hash, v1) = produce_real_v1_checkpoints("realsim-v1");
-    let v1_rng_word_pos: u128 = v1.rng_word_pos.parse().unwrap();
-
-    // (2) Migrate v1 -> v2 via the real checkpoint_migrate binary
-    //     (--parallelism 2 also proves the single-worker invariant holds).
-    let v2_dir = tempdir("realsim-v2");
-    run_migrate(&v1_dir, &v2_dir, 2);
-    let migrated = CheckpointReader::new(&v2_dir, v1_hash.clone())
-        .load(0)
-        .unwrap()
-        .expect("migrated v2 for snr 0 must exist");
-
-    // (3) Field-faithfulness: every carried field equals the v1 source.
-    assert_eq!(migrated.schema_version, 2);
-    assert_eq!(migrated.frames_completed, v1.frames_completed);
-    assert_eq!(migrated.errors_accumulated, v1.errors_accumulated);
-    assert_eq!(migrated.total_iterations, v1.total_iterations);
-    assert_eq!(migrated.total_bits, v1.total_bits);
-    assert_eq!(migrated.total_bit_errors, v1.total_bit_errors);
-    assert_eq!(migrated.worker_states.len(), 1);
-    assert_eq!(migrated.worker_states[0].worker_idx, 0);
-    assert_eq!(
-        migrated.worker_states[0].frames_in_worker,
-        v1.frames_completed
-    );
-    assert_eq!(migrated.worker_states[0].rng_word_pos, v1_rng_word_pos);
-
-    // The migrated point's prefix is exactly its `frames_completed = M` (the
-    // genuine uncoded SimulationRunner records M = 0 for the uncoded path —
-    // `frames_completed`/`rng_word_pos` are bit-oriented there; the migration
-    // carries that through faithfully, asserted above). The resume budget adds
-    // `extra` frames beyond M. We use M (not a clamped value) consistently for
-    // both the resume `start` and the budget so the arithmetic is exact for any
-    // M, including M = 0.
-    let m = migrated.frames_completed;
-    let extra = 12u64;
-    let budget = m + extra;
-    let resume_cfg = PipelineConfig {
-        seed: 0x1234_5678,
-        esn0_db_points: vec![migrated.esn0_db],
-        target_errors: 0,
-        max_frames: budget,
-        heartbeat_every_frames: 0, // single chunk
-        checkpoint_dir: None,
-        tracing_log_path: None,
-        parallelism: NonZeroUsize::new(1).unwrap(),
-        strict_gpu: false,
-    };
-    let ch = Awgn::new(3.0, 2);
-
-    // (4) Resume FROM the migrated checkpoint itself (passed as the `resume`
-    //     arg). It must start at frame M (not re-run [0..M)) and fold the
-    //     migrated prefix counters into the result.
-    let mut from_mig = migrated.clone();
-    from_mig.completed = false; // re-open the point under the larger budget
-    let dir_mig = tempdir("realsim-resume-mig");
-    let w_mig = CheckpointWriter::new(&dir_mig).unwrap();
-    clear_interrupt();
-    let resumed_mig = run_snr_point_checkpointed(
-        &resume_cfg,
-        0,
-        migrated.esn0_db,
-        &w_mig,
-        &v1_hash,
-        Some(from_mig),
-        || (),
-        awgn_frame(&ch),
-    )
-    .unwrap();
-
-    // (4a) Started at M: exactly `extra` frames were added on top of the prefix
-    //      (i.e. only `[M..budget)` ran, never re-running `[0..M)`).
-    assert_eq!(
-        resumed_mig.counters.frames, budget,
-        "resume must end at the full budget"
-    );
-    assert_eq!(
-        resumed_mig.counters.frames - m,
-        extra,
-        "resume must run only the remaining frames `[M..budget)`, never re-run [0..M)"
-    );
-    // (4b) Final counters fold (contain) the migrated prefix counters.
-    assert!(resumed_mig.counters.errors >= migrated.errors_accumulated);
-    assert!(resumed_mig.counters.total_iterations >= migrated.total_iterations);
-    assert!(resumed_mig.counters.total_bits >= migrated.total_bits);
-    assert!(resumed_mig.counters.total_bit_errors >= migrated.total_bit_errors);
-
-    // (5) Byte-identity vs a NATIVE v2 checkpoint with identical schema fields.
-    //     Resuming from the migrated checkpoint must equal resuming from its
-    //     native-v2 twin — the honest reading of "migrated v2 loads and resumes
-    //     byte-identically" that respects the legacy-byte-identity Non-goal.
-    let native_twin = native_like(&migrated, &v1_hash);
-    let dir_nat = tempdir("realsim-resume-nat");
-    let w_nat = CheckpointWriter::new(&dir_nat).unwrap();
-    clear_interrupt();
-    let resumed_nat = run_snr_point_checkpointed(
-        &resume_cfg,
-        0,
-        migrated.esn0_db,
-        &w_nat,
-        &v1_hash,
-        Some(native_twin),
-        || (),
-        awgn_frame(&ch),
-    )
-    .unwrap();
-
-    assert_eq!(
-        resumed_mig.counters, resumed_nat.counters,
-        "resuming from the migrated v2 checkpoint must be byte-identical to \
-         resuming from its native-v2 equivalent"
-    );
-
-    // (6) Explicit non-zero-prefix resume math: prove "start at M, don't re-run
-    //     [0..M)" with a native v2 checkpoint at M' > 0. Combined with (5)
-    //     (migrated ≡ native), this establishes the migrated checkpoint would
-    //     resume faithfully at any prefix, not only the genuine uncoded M = 0.
-    assert_nonzero_prefix_resume_starts_at_m(&v1_hash, &ch);
-}
-
-/// Builds a native v2 checkpoint with the same schema fields as `migrated`
-/// (re-opened, drain timestamp zeroed) — the "native twin" used to prove the
-/// migrated checkpoint resumes identically to a natively-written one.
-fn native_like(migrated: &CheckpointV2, hash: &str) -> CheckpointV2 {
-    CheckpointV2 {
-        schema_version: 2,
-        config_hash: hash.to_string(),
-        completed: false,
-        drain_committed_at_us_since_epoch: 0,
-        worker_states: migrated.worker_states.clone(),
-        ..migrated.clone()
-    }
-}
-
-/// Resumes a single-worker gf2-sim run from a native v2 checkpoint with a
-/// **non-zero** prefix `M' = 10` and asserts the resume starts at `M'` (it adds
-/// exactly `budget - M'` frames and folds the prefix counters), proving the
-/// "don't re-run [0..M)" resume math directly.
-fn assert_nonzero_prefix_resume_starts_at_m(hash: &str, ch: &Awgn) {
-    // First, produce a genuine native gf2-sim prefix of M' = 10 frames so the
-    // checkpoint's counters are real (not fabricated).
-    let prefix = 10u64;
-    let extra = 7u64;
-    let budget = prefix + extra;
-    let mut prefix_cfg = PipelineConfig {
-        seed: 0x1234_5678,
-        esn0_db_points: vec![3.0],
-        target_errors: 0,
-        max_frames: prefix,
-        heartbeat_every_frames: 0,
-        checkpoint_dir: None,
-        tracing_log_path: None,
-        parallelism: NonZeroUsize::new(1).unwrap(),
-        strict_gpu: false,
-    };
-    let dir_pre = tempdir("nonzero-prefix");
-    let w_pre = CheckpointWriter::new(&dir_pre).unwrap();
-    clear_interrupt();
-    let _ = run_snr_point_checkpointed(
-        &prefix_cfg,
-        0,
-        3.0,
-        &w_pre,
-        hash,
-        None,
-        || (),
-        awgn_frame(ch),
-    )
-    .unwrap();
-    let mut prefix_ckpt = CheckpointReader::new(&dir_pre, hash.to_string())
-        .load(0)
-        .unwrap()
-        .unwrap();
-    assert_eq!(prefix_ckpt.frames_completed, prefix);
-    prefix_ckpt.completed = false;
-    let prefix_errors = prefix_ckpt.errors_accumulated;
-
-    // Resume from that M' = 10 prefix under a larger budget.
-    prefix_cfg.max_frames = budget;
-    let dir_res = tempdir("nonzero-resume");
-    let w_res = CheckpointWriter::new(&dir_res).unwrap();
-    clear_interrupt();
-    let resumed = run_snr_point_checkpointed(
-        &prefix_cfg,
-        0,
-        3.0,
-        &w_res,
-        hash,
-        Some(prefix_ckpt),
-        || (),
-        awgn_frame(ch),
-    )
-    .unwrap();
-    // Started at M' = 10: only `extra` frames ran on top of the prefix.
-    assert_eq!(resumed.counters.frames, budget);
-    assert_eq!(
-        resumed.counters.frames - prefix,
-        extra,
-        "non-zero-prefix resume must start at M' and not re-run [0..M')"
-    );
-    assert!(resumed.counters.errors >= prefix_errors);
-}
-
-/// Migrates the committed (gitignored, run-locally) `curve_1_2_16qam`
-/// checkpoint fixtures and asserts every migrated file is a valid v2 checkpoint
-/// loadable by the v2 reader with `worker_states[0]` carrying the v1 count and
-/// stream position verbatim (design doc §4 "tested against the 2026-06-05
-/// checkpoint dir").
-///
-/// `external` tier: the fixtures are gitignored campaign output (`curve_*/`),
-/// so they are absent in a fresh CI checkout — the test skips with a notice
-/// rather than failing when the directory is missing.
-#[test]
-#[ignore = "external: requires the gitignored curve_1_2_16qam/checkpoints fixtures"]
-fn test_v1_migration_against_real_fixtures() {
-    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../dev/benchmarks/dvb_t2_awgn/curve_1_2_16qam/checkpoints");
-    if !fixtures.is_dir() {
-        eprintln!(
-            "skipping: fixtures not present at {} (gitignored campaign output)",
-            fixtures.display()
-        );
-        return;
-    }
-    let expected_hash = std::fs::read_to_string(fixtures.join("config_hash.txt"))
-        .expect("config_hash.txt must exist beside the fixtures")
-        .trim()
-        .to_string();
-
-    let out = tempdir("realfix");
-    run_migrate(&fixtures, &out, 1);
-
-    let reader = CheckpointReader::new(&out, expected_hash);
-    let mut loaded = 0usize;
-    for idx in 0..16 {
-        if let Some(v2) = reader.load(idx).unwrap() {
-            assert_eq!(v2.schema_version, 2);
-            assert_eq!(v2.worker_states.len(), 1);
-            assert_eq!(v2.worker_states[0].worker_idx, 0);
-            assert_eq!(v2.worker_states[0].frames_in_worker, v2.frames_completed);
-            loaded += 1;
-        }
-    }
-    assert!(
-        loaded > 0,
-        "expected at least one migrated fixture checkpoint"
-    );
-}
-
-// ---------------------------------------------------------------------------
 // Subprocess SNR-sweep SIGINT + --resume byte-identity (criterion 1, deliv. 2)
 // ---------------------------------------------------------------------------
 
@@ -711,6 +278,16 @@ fn spawn_sweep(args: &[&str]) -> std::process::Child {
         .expect("checkpoint_sweep must spawn")
 }
 
+/// Spawns the `checkpoint_sweep` binary with stdout piped (so the parent can
+/// read the per-SNR `SNR_<idx>_FLUSHED` progress markers).
+fn spawn_sweep_piped(args: &[&str]) -> std::process::Child {
+    std::process::Command::new(env!("CARGO_BIN_EXE_checkpoint_sweep"))
+        .args(args)
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("checkpoint_sweep must spawn")
+}
+
 /// Runs a complete (uninterrupted) sweep to `dir`; asserts exit 0.
 fn run_full_sweep(dir: &Path, channel: &str, snr_points: usize, max_frames: u64, heartbeat: u64) {
     let status = spawn_sweep(&[
@@ -740,13 +317,25 @@ fn completed_count(dir: &Path) -> usize {
         .count()
 }
 
-/// The interrupted-then-resumed half: spawn a long-enough sweep, SIGINT it once
-/// it has completed ≥1 but <`snr_points` SNR points (self-synchronising poll, no
-/// fixed sleep), assert it exits NON-ZERO, then `--resume` to completion.
-/// Returns once the resume has finished successfully.
+/// The interrupted-then-resumed half. GUARANTEES a mid-run interrupt:
 ///
-/// `#[cfg(unix)]`: sends a real `SIGINT` via `kill -INT <pid>` (mirrors the
-/// legacy gf2-coding subprocess test). On non-unix it falls back to `kill()`.
+/// 1. Spawn the sweep with `--point-delay-ms` so points after the first take
+///    meaningfully longer than signal delivery (the sweep cannot all finish
+///    before the SIGINT is handled).
+/// 2. Read the child's stdout for the FIRST `SNR_<idx>_FLUSHED` marker
+///    (guaranteeing ≥1 SNR checkpoint is on disk and the sweep is still
+///    in progress), then SIGINT immediately.
+/// 3. HARD-FAIL (panic) if: the first marker never appears (child exited
+///    without flushing any point), OR the child exits successfully (status 0)
+///    instead of via the 130 interrupt path, OR all `snr_points` checkpoints
+///    were written (no genuine mid-run interrupt).
+/// 4. `--resume` (no delay) to completion; assert exit 0 and that all points
+///    are now complete.
+///
+/// There is NO log-and-continue fallback: an undelivered interrupt fails the
+/// test.
+///
+/// `#[cfg(unix)]`: sends a real `SIGINT` via `kill -INT <pid>`.
 fn interrupt_then_resume(
     dir: &Path,
     channel: &str,
@@ -754,9 +343,13 @@ fn interrupt_then_resume(
     max_frames: u64,
     heartbeat: u64,
 ) {
+    use std::io::{BufRead, BufReader};
+
     let mf = max_frames.to_string();
     let hb = heartbeat.to_string();
     let np = snr_points.to_string();
+    // 60 ms after each completed point ⇒ points 2..N take ≥ (N-1)*60 ms, far
+    // longer than SIGINT delivery; the interrupt always lands mid-sweep.
     let base_args = [
         "--checkpoint-dir",
         dir.to_str().unwrap(),
@@ -770,47 +363,74 @@ fn interrupt_then_resume(
         &mf,
         "--heartbeat",
         &hb,
+        "--point-delay-ms",
+        "60",
     ];
 
-    let mut child = spawn_sweep(&base_args);
+    let mut child = spawn_sweep_piped(&base_args);
     let pid = child.id();
+    let stdout = child.stdout.take().expect("piped stdout");
+    let mut reader = BufReader::new(stdout);
 
-    // Poll until partial progress (some but not all points completed), then
-    // SIGINT. Hard cap the poll loop so a too-fast child does not hang the test.
-    let mut signalled = false;
-    for _ in 0..2000 {
-        let done = completed_count(dir);
-        if done >= 1 && done < snr_points {
-            send_sigint(pid);
-            signalled = true;
-            break;
+    // Read until the FIRST `SNR_<idx>_FLUSHED` marker, then SIGINT immediately.
+    let mut saw_marker = false;
+    let mut line = String::new();
+    loop {
+        line.clear();
+        match reader.read_line(&mut line) {
+            Ok(0) => break, // child closed stdout / exited
+            Ok(_) => {
+                if line.contains("_FLUSHED") {
+                    send_sigint(pid);
+                    saw_marker = true;
+                    break;
+                }
+            }
+            Err(_) => break,
         }
-        // If the child already exited (finished too fast), stop polling.
-        if let Ok(Some(_)) = child.try_wait() {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(2));
     }
+
+    // HARD requirement: the first progress marker must have appeared. If not,
+    // the child exited before flushing any SNR point — not a mid-run interrupt.
+    assert!(
+        saw_marker,
+        "[{channel}] no SNR_<idx>_FLUSHED marker before the child exited; \
+         cannot guarantee a mid-run SIGINT"
+    );
 
     let status = child.wait().expect("wait interrupted sweep");
-    if signalled {
-        assert!(
-            !status.success(),
-            "interrupted sweep must exit NON-ZERO after SIGINT, got {status}"
+    // HARD requirement: the child must have exited via the interrupt path
+    // (non-zero / 130), never a clean success.
+    assert!(
+        !status.success(),
+        "[{channel}] interrupted sweep must exit NON-ZERO after a mid-run \
+         SIGINT, got {status}"
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::ExitStatusExt as _;
+        assert_eq!(
+            status.code(),
+            Some(130),
+            "[{channel}] interrupted sweep must exit 130 (SIGINT path); \
+             got code={:?} signal={:?}",
+            status.code(),
+            status.signal()
         );
-        assert!(
-            completed_count(dir) < snr_points,
-            "interrupt must land before all SNR points complete"
-        );
-    } else {
-        // The sweep finished before we could catch a partial state (very fast
-        // host). That is not an interrupt scenario; fall through to resume,
-        // which is then a no-op confirming completed points are skipped.
-        eprintln!("note: sweep completed before SIGINT could be delivered");
     }
+    // HARD requirement: a genuine mid-run interrupt left at least one but NOT
+    // all SNR points complete.
+    let done = completed_count(dir);
+    assert!(
+        (1..snr_points).contains(&done),
+        "[{channel}] mid-run interrupt must leave 1..{snr_points} points \
+         complete, got {done}"
+    );
 
-    // Resume to completion (same config + dir + --resume); must exit 0.
+    // Resume to completion (same config + dir + --resume, no delay); exit 0.
     let mut resume_args = base_args.to_vec();
+    // Drop the --point-delay-ms 60 (last two entries) so the resume is fast.
+    resume_args.truncate(resume_args.len() - 2);
     resume_args.push("--resume");
     let status = spawn_sweep(&resume_args).wait().expect("wait resume");
     assert!(status.success(), "resumed sweep must exit 0, got {status}");
@@ -830,18 +450,17 @@ fn send_sigint(pid: u32) {
 
 #[cfg(not(unix))]
 fn send_sigint(_pid: u32) {
-    // No SIGINT on non-unix; the poll loop's try_wait fallback handles it.
+    // No SIGINT on non-unix; the unix-only assertions in interrupt_then_resume
+    // are `#[cfg(unix)]`, and the marker read still drives the flow.
 }
 
 /// Asserts a 10-SNR SIGINT-interrupted sweep resumes byte-identically (per
 /// `snr_NNNN.json`) to a fresh uninterrupted reference for `channel`.
 ///
-/// `max_frames` is sized per channel so the full interrupt→resume→reference
-/// cycle (3 sweeps) stays comfortably under the 5 s fast-tier hard kill while
-/// keeping a wide mid-sweep SIGINT window: AWGN draws 8 words/symbol,
-/// Rayleigh/Rician 16, so the lighter channels get a larger frame budget for a
-/// comparable wall time. Measured cycle times: AWGN ~0.5 s, Rayleigh ~0.6 s,
-/// Rician ~0.5 s (see the rework receipts).
+/// The mid-run SIGINT window comes from the child's `--point-delay-ms` (set
+/// inside [`interrupt_then_resume`]), NOT from the frame budget, so `max_frames`
+/// can be small and uniform — keeping all three sweeps (reference, interrupt,
+/// resume) fast. Measured per-test cycle: ~0.7-0.9 s.
 fn assert_sweep_resume_byte_identical(channel: &str, max_frames: u64) {
     let snr_points = 10;
     let heartbeat = 500;
@@ -866,21 +485,21 @@ fn assert_sweep_resume_byte_identical(channel: &str, max_frames: u64) {
 // Each channel is its OWN non-ignored fast-tier subprocess test so criterion 1
 // (byte-identical SIGINT+resume across AWGN, Rayleigh, AND Rician) is fully in
 // the cargo-ci gate. nextest runs them as separate parallel processes; each
-// individually clears the 5 s hard kill with a wide margin (~0.5-0.6 s).
+// individually clears the 5 s hard kill with a wide margin (~0.7-0.9 s).
 
 #[test]
 fn test_sweep_sigint_resume_byte_identical_awgn_subprocess() {
-    assert_sweep_resume_byte_identical("awgn", 12_000);
+    assert_sweep_resume_byte_identical("awgn", 2_000);
 }
 
 #[test]
 fn test_sweep_sigint_resume_byte_identical_rayleigh_subprocess() {
-    assert_sweep_resume_byte_identical("rayleigh", 8_000);
+    assert_sweep_resume_byte_identical("rayleigh", 2_000);
 }
 
 #[test]
 fn test_sweep_sigint_resume_byte_identical_rician_subprocess() {
-    assert_sweep_resume_byte_identical("rician", 6_000);
+    assert_sweep_resume_byte_identical("rician", 2_000);
 }
 
 // ---------------------------------------------------------------------------
@@ -912,14 +531,14 @@ fn assert_canonical_complete_or_absent(dir: &Path, ctx: &str) -> bool {
 fn test_kill_during_fsync_deterministic() {
     // Criterion 3 ([hard]): kill the writer mid-flush VIA SIGNAL DURING FSYNC.
     // The `--crash-during-fsync` child writes one COMPLETE prior-state
-    // checkpoint, then prints `BEGIN_FSYNC` immediately before a LARGE write
-    // whose tmp-file `sync_all` dominates its wall time. This parent reads the
-    // child's stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`, so the kill
-    // lands during the fsync with high confidence (verified: the canonical file
-    // is then ALWAYS the prior complete state — the large write's rename never
-    // happened because its fsync was interrupted). The canonical snr_0000.json
-    // must always be a complete v2 checkpoint or absent — never torn. Fast tier:
-    // 12 spawn+read+kill cycles, ~1-2 ms each.
+    // checkpoint, then for a LARGE write fires `CheckpointWriter`'s pre-fsync
+    // hook AFTER the tmp bytes are written and immediately before `sync_all`: it
+    // prints `BEGIN_FSYNC` and parks the flush window briefly. This parent reads
+    // the child's stdout and SIGKILLs the instant it sees `BEGIN_FSYNC`, so the
+    // kill lands DETERMINISTICALLY inside that flush window (before the atomic
+    // rename). The canonical snr_0000.json must therefore always be the prior
+    // complete v2 checkpoint or absent — never torn, and never the large write
+    // (whose rename never happened). Fast tier: 12 spawn+read+kill cycles.
     use std::io::{BufRead, BufReader};
 
     let iterations = 12;
@@ -982,11 +601,14 @@ fn test_kill_during_fsync_deterministic() {
          {iterations} fsync-kill iterations"
     );
     // The whole point of "during fsync": the prior complete state survives
-    // because the large write's rename never happened.
-    assert!(
-        prior_state_survived > 0,
-        "expected the prior complete checkpoint to survive a during-fsync kill \
-         in at least one iteration (large write's rename must not have happened)"
+    // because the large write's rename never happened. The child parks the flush
+    // window deterministically, so EVERY present iteration must show the prior
+    // state (never the large write's payload).
+    assert_eq!(
+        prior_state_survived, present,
+        "every during-fsync kill must leave the prior complete checkpoint \
+         (the large write's rename must not have happened): \
+         prior_state_survived={prior_state_survived} present={present}"
     );
 }
 
