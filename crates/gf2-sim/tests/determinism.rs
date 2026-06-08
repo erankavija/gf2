@@ -103,6 +103,16 @@ const INTERRUPT_AT_FRAME: usize = 100;
 /// Fixed base seed for every run in this suite.
 const SEED: u64 = 0xC0DE_F00D;
 
+/// Serializes the resume-parity tests, which set/clear the process-wide
+/// checkpoint interrupt flag (via [`request_interrupt`] / [`clear_interrupt`]).
+/// `cargo test --test determinism -- --ignored` runs the ignored tests
+/// multi-threaded in **one process** (only `nextest`'s process-per-test model
+/// isolates them), so without this guard one test's interrupt request could stop
+/// another test's uninterrupted reference run early and spuriously fail
+/// `assert!(run.completed)`. Mirrors the unit-test `interrupt_test_lock()` in
+/// `checkpoint/mod.rs`.
+static RESUME_PARITY_GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// One DVB-T2 determinism config: a `(rate, modulation)` MODCOD plus the
 /// decoder / demap / Es/N0 the byte-identity is asserted at.
 #[derive(Clone, Copy)]
@@ -365,6 +375,14 @@ fn run_uninterrupted(cfg: DetConfig, parallelism: NonZeroUsize) -> WorkerCounter
 /// flushed checkpoint loads under the live hash — the contract a real SIGINT
 /// resume must satisfy.
 fn assert_resume_parity(cfg: DetConfig) {
+    // Serialize all resume-parity tests: they share the process-wide checkpoint
+    // interrupt flag. Hold the guard for the whole test (poison-recovering so one
+    // panicking test does not cascade) and clear any stale request first.
+    let _guard = RESUME_PARITY_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    clear_interrupt();
+
     let label = cfg.label();
     // Two workers exercises the multi-worker chunked striding on resume; the
     // contract is worker-count-independent.
