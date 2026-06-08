@@ -113,9 +113,7 @@ impl Rician {
             k_factor >= 0.0 && k_factor.is_finite(),
             "k_factor must be non-negative and finite, got {k_factor}"
         );
-        let es_n0_lin = 10.0_f64.powf(es_n0_db as f64 / 10.0);
-        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-        let sigma = (sigma_sq as f32).sqrt();
+        let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
         let los_mag = (k_factor / (k_factor + 1.0)).sqrt();
         let scatter = (1.0_f32 / (k_factor + 1.0)).sqrt();
         Self {

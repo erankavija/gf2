@@ -83,9 +83,7 @@ impl Rayleigh {
     /// ```
     #[must_use]
     pub fn new(es_n0_db: f32, bits_per_symbol: usize) -> Self {
-        let es_n0_lin = 10.0_f64.powf(es_n0_db as f64 / 10.0);
-        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-        let sigma = (sigma_sq as f32).sqrt();
+        let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
         Self {
             es_n0_db,
             bits_per_symbol,
@@ -182,8 +180,8 @@ impl Stage<SymbolBatch, SymbolBatch> for Rayleigh {
     ///
     /// # Errors
     ///
-    /// Returns `StageError::Internal` if the underlying draw overflows the
-    /// frame budget (debug build only; release builds skip the check).
+    /// This stage is infallible in release builds; the debug-budget assertion
+    /// panics only in debug builds if the draw exceeds `FRAME_STRIDE - 256`.
     fn process(
         &self,
         input: &SymbolBatch,

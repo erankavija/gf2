@@ -26,8 +26,6 @@
 //!     --run-ignored ignored-only -E 'test(channels_determinism)'
 //! ```
 
-use std::num::NonZeroUsize;
-
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
 use gf2_sim::parallel::{worker_offset, WorkerCtx, FRAME_STRIDE};
@@ -346,8 +344,3 @@ fn test_worker_offset_seek_matches_ctx() {
         "WorkerCtx seek for frame {g} must match worker_offset arithmetic"
     );
 }
-
-// Make `NonZeroUsize` used (suppress unused-import warning).
-const _: () = {
-    let _ = NonZeroUsize::new(1);
-};
