@@ -350,11 +350,27 @@ impl Chain {
     /// table keyed by `gpu_stage`; the CPU fallback is therefore **not** a node
     /// in the DAG (it is a substitution target, reachable only on OOM).
     ///
+    /// This method only records the pairing; all validation is deferred to
+    /// [`Chain::build`], which enforces every fallback invariant. In particular,
+    /// for the registration to build successfully:
+    ///
+    /// * `gpu_stage` must be GPU-capable (`GpuOnly` or `Hybrid`) — only such a
+    ///   stage can OOM on the GPU.
+    /// * `cpu_stage` must be CPU-capable (`CpuOnly` or `Hybrid`) — it runs on
+    ///   the CPU when the substitution fires.
+    /// * `cpu_stage` must have the same input and output element types as
+    ///   `gpu_stage`.
+    /// * each `gpu_stage` may be registered at most once, each `cpu_stage` may
+    ///   back at most one GPU stage, and no stage may appear in both roles.
+    ///
+    /// See [`Chain::build`]'s `# Errors` for the exact `BuildError` returned
+    /// when any of these is violated.
+    ///
     /// # Arguments
     ///
-    /// * `gpu_stage` — the GPU stage that may OOM.
-    /// * `cpu_stage` — the CPU stage to substitute (must already be added; it is
-    ///   not separately connected by edges).
+    /// * `gpu_stage` — the GPU-capable stage that may OOM.
+    /// * `cpu_stage` — the CPU-capable stage to substitute (must already be
+    ///   added; it is not separately connected by edges).
     ///
     /// # Examples
     ///
@@ -406,10 +422,11 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 1);
     /// ```
     pub fn register_fallback(&mut self, gpu_stage: StageId, cpu_stage: StageId) {
-        // Records the pairing only; validity (in-range ids, each CPU target used
-        // for exactly one GPU stage) is checked by [`Chain::build`], which
-        // returns [`BuildError::Disconnected`] for a malformed registration
-        // rather than panicking.
+        // Records the pairing only; every fallback invariant (in-range ids, no
+        // duplicate GPU registration, no reused CPU target, no role overlap,
+        // GPU-capability, CPU-capability, type compatibility) is enforced by
+        // [`Chain::build`], which returns a typed `BuildError` for a malformed
+        // registration rather than panicking.
         self.fallbacks.push((gpu_stage, cpu_stage));
     }
 
@@ -436,6 +453,13 @@ impl Chain {
     ///   fallback.
     /// * [`BuildError::DuplicateFallback`] — the same GPU stage was registered
     ///   with more than one CPU fallback.
+    /// * [`BuildError::FallbackRoleConflict`] — a single stage was registered
+    ///   in both roles (as a GPU stage with its own fallback and as another
+    ///   stage's CPU fallback target).
+    /// * [`BuildError::FallbackForCpuStage`] — a fallback was registered for a
+    ///   `CpuOnly` stage, which cannot OOM on the GPU.
+    /// * [`BuildError::FallbackNotCpuCapable`] — a registered CPU fallback is a
+    ///   `GpuOnly` stage and so cannot run on the CPU.
     /// * [`BuildError::FallbackTypeMismatch`] — a registered CPU fallback has
     ///   incompatible input or output types compared to the GPU stage it
     ///   substitutes.
@@ -485,16 +509,34 @@ impl Chain {
     /// assert_eq!(pipeline.stage_count(), 3);
     /// ```
     pub fn build(mut self) -> Result<Pipeline, BuildError> {
-        // 0. Validate fallback registrations up front so malformed input fails
+        // 0. Validate every fallback invariant up front so malformed input fails
         //    via `Result` rather than panicking in the materialisation step
-        //    below (which indexes `slots[cpu]` and `take()`s each target once).
-        //    `register_fallback` performs no validation, so out-of-range ids,
-        //    CPU targets reused across multiple GPU stages, GPU stages
-        //    registered more than once, and type-incompatible pairs are all
-        //    detected here.
+        //    below (which indexes `slots[cpu]`, `take()`s each target once, and
+        //    looks up `new_index_of[&gpu]`). `register_fallback` performs no
+        //    validation, so EVERY malformed registration must be rejected here.
+        //
+        //    The full set of fallback invariants, in evaluation order:
+        //      (1) gpu id in range        — else the gpu-key lookup panics.
+        //      (2) cpu id in range        — else `slots[cpu]` indexing panics.
+        //      (3) no duplicate gpu        — else the fallback HashMap silently
+        //          drops one entry while both CPU stages are moved out.
+        //      (4) no duplicate cpu target — else `slots[cpu].take()` runs twice.
+        //      (5) no role overlap         — a stage may not be BOTH a fallback
+        //          target (a `cpu`) AND a GPU stage that has its own fallback (a
+        //          `gpu`). A fallback target is excluded from `graph_nodes`, so
+        //          it never enters `new_index_of`; if it were also a `gpu` key
+        //          the materialiser's `new_index_of[&gpu]` would panic.
+        //      (6) gpu is GPU-capable      — only `GpuOnly`/`Hybrid` stages can
+        //          OOM on the GPU; registering a fallback for a `CpuOnly` stage
+        //          is meaningless.
+        //      (7) cpu is CPU-capable      — a `GpuOnly` stage cannot serve as a
+        //          CPU fallback (it cannot run on the CPU at all).
+        //      (8) type compatibility      — the CPU fallback must have the same
+        //          input and output element types as the GPU stage it
+        //          substitutes; else the executor hits a runtime downcast fault.
         let n_stages = self.stages.len() as u32;
-        let mut seen_gpu: HashSet<StageId> = HashSet::new();
-        let mut seen_cpu: HashSet<StageId> = HashSet::new();
+
+        // (1)+(2): bounds, checked first so all later indexing is safe.
         for &(gpu, cpu) in &self.fallbacks {
             if gpu.0 >= n_stages {
                 return Err(BuildError::Disconnected { stages: vec![gpu] });
@@ -502,18 +544,62 @@ impl Chain {
             if cpu.0 >= n_stages {
                 return Err(BuildError::Disconnected { stages: vec![cpu] });
             }
-            // (a) Each GPU stage may be registered at most once; a second
+        }
+
+        // The GPU keys and CPU targets across all registrations. Built up front
+        // so the role-overlap check (5) can see the complete picture before the
+        // per-pair pass; ids are already known in range from the loop above.
+        let registered_gpu: HashSet<StageId> = self.fallbacks.iter().map(|&(gpu, _)| gpu).collect();
+        let fallback_targets: HashSet<StageId> =
+            self.fallbacks.iter().map(|&(_, cpu)| cpu).collect();
+
+        // (5): a stage cannot play both roles. Report the lowest such id for a
+        //      deterministic error. This MUST be caught before materialisation:
+        //      a fallback target is removed from `graph_nodes`, so it never
+        //      enters `new_index_of`; if it were also a `gpu` key the
+        //      `new_index_of[&gpu]` lookup in materialisation would panic.
+        if let Some(&conflict) = {
+            let mut overlap: Vec<&StageId> =
+                registered_gpu.intersection(&fallback_targets).collect();
+            overlap.sort();
+            overlap.first().copied()
+        } {
+            return Err(BuildError::FallbackRoleConflict { stage: conflict });
+        }
+
+        // (3),(4),(6),(7),(8): the per-pair pass. Bounds (1)/(2) and overlap (5)
+        //    are already guaranteed, so all `self.stages[..]` indexing is safe.
+        let mut seen_gpu: HashSet<StageId> = HashSet::new();
+        let mut seen_cpu: HashSet<StageId> = HashSet::new();
+        for &(gpu, cpu) in &self.fallbacks {
+            // (3) Each GPU stage may be registered at most once; a second
             //     registration would silently overwrite the first in the
             //     HashMap while still moving both CPU stages out of `slots`.
             if !seen_gpu.insert(gpu) {
                 return Err(BuildError::DuplicateFallback { gpu_stage: gpu });
             }
+            // (4) A CPU fallback backs exactly one GPU stage; otherwise the
+            //     materialiser would move the same boxed stage out twice.
             if !seen_cpu.insert(cpu) {
-                // A CPU fallback backs exactly one GPU stage; otherwise the
-                // materialiser would move the same boxed stage out twice.
                 return Err(BuildError::Disconnected { stages: vec![cpu] });
             }
-            // (b) The CPU fallback must have the same input and output element
+            // (6) The GPU stage must be able to run on the GPU (and thus OOM);
+            //     registering a fallback for a `CpuOnly` stage is meaningless.
+            if matches!(
+                self.stages[gpu.0 as usize].execution_class(),
+                crate::stage::ExecutionClass::CpuOnly
+            ) {
+                return Err(BuildError::FallbackForCpuStage { gpu_stage: gpu });
+            }
+            // (7) The CPU fallback must be able to run on the CPU; a `GpuOnly`
+            //     stage cannot substitute for the GPU stage on OOM.
+            if matches!(
+                self.stages[cpu.0 as usize].execution_class(),
+                crate::stage::ExecutionClass::GpuOnly
+            ) {
+                return Err(BuildError::FallbackNotCpuCapable { cpu_stage: cpu });
+            }
+            // (8) The CPU fallback must have the same input and output element
             //     types as the GPU stage it substitutes; otherwise the executor
             //     would encounter a type-downcast failure at runtime when the
             //     fallback is invoked.
@@ -536,10 +622,6 @@ impl Chain {
         // 1. Fallback presence: every GPU-only stage needs a registered CPU
         //    fallback. The set of stages that ARE fallbacks is excluded from the
         //    graph (they are substitution targets, reachable only on OOM).
-        let fallback_targets: HashSet<StageId> =
-            self.fallbacks.iter().map(|&(_, cpu)| cpu).collect();
-        let registered_gpu: HashSet<StageId> = self.fallbacks.iter().map(|&(gpu, _)| gpu).collect();
-
         for (idx, stage) in self.stages.iter().enumerate() {
             let id = StageId(idx as u32);
             if fallback_targets.contains(&id) {
@@ -637,7 +719,12 @@ impl Chain {
                     .expect("a fallback target is taken exactly once");
                 // The fallback map is keyed by the GPU stage's new post-sort
                 // position so the executor can look up by index into stages().
-                let new_gpu = new_index_of[&gpu];
+                // The role-overlap check (invariant 5 above) guarantees every
+                // `gpu` key is a graph node and therefore present in
+                // `new_index_of`, so this lookup never panics on validated input.
+                let new_gpu = *new_index_of
+                    .get(&gpu)
+                    .expect("a GPU fallback key is a graph node (no role overlap)");
                 (new_gpu, stage)
             })
             .collect();
@@ -866,6 +953,20 @@ mod tests {
         }
         fn execution_class(&self) -> ExecutionClass {
             ExecutionClass::GpuOnly
+        }
+    }
+
+    /// A Hybrid identity over `BitPackedBatch` (CPU-capable AND GPU-capable, so
+    /// it is valid in either fallback role individually).
+    struct HybridBitId;
+    impl Stage<BitPackedBatch, BitPackedBatch> for HybridBitId {
+        type Scratch = ();
+        type CpuFallback = Self;
+        fn process(&self, i: &BitPackedBatch, _: &mut ()) -> Result<BitPackedBatch, StageError> {
+            Ok(i.clone())
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::Hybrid
         }
     }
 
@@ -1186,5 +1287,94 @@ mod tests {
             }
             Ok(_) => panic!("expected FallbackTypeMismatch, got a built pipeline"),
         }
+    }
+
+    // --- Gap 1 regression: role overlap (a stage is both gpu and cpu target) ---
+
+    /// A stage registered as BOTH a GPU stage with its own fallback AND another
+    /// GPU stage's CPU fallback target must return `BuildError::FallbackRoleConflict`,
+    /// and crucially must NOT panic.
+    ///
+    /// Without this check the overlapping stage is removed from `graph_nodes`
+    /// (as a fallback target) so it never enters `new_index_of`; the
+    /// materialiser's `new_index_of[&gpu]` lookup would then panic. We use a
+    /// Hybrid stage for the overlapping node so the role-overlap check (and not
+    /// the GPU-/CPU-capability checks) is the one that fires.
+    #[test]
+    fn test_build_rejects_fallback_role_overlap_without_panic() {
+        let mut chain = Chain::new();
+        let g = chain.add(erase(GpuBitId)); // pure GPU stage
+        let x = chain.add(erase(HybridBitId)); // plays both roles below
+        let c = chain.add(erase(BitId)); // pure CPU fallback for x
+                                         // x is a CPU fallback target for g ...
+        chain.register_fallback(g, x);
+        // ... and x is also a GPU stage with its own fallback c.
+        chain.register_fallback(x, c);
+        // `build()` must return an error, never panic.
+        match chain.build() {
+            Err(BuildError::FallbackRoleConflict { stage }) => assert_eq!(stage, x),
+            Err(other) => panic!("expected FallbackRoleConflict for role overlap, got {other:?}"),
+            Ok(_) => panic!("expected FallbackRoleConflict, got a built pipeline"),
+        }
+    }
+
+    // --- Gap 2 regression: CPU fallback is not CPU-capable ---
+
+    /// Registering a `GpuOnly` stage as a CPU fallback must return
+    /// `BuildError::FallbackNotCpuCapable` — a GpuOnly stage cannot run on the
+    /// CPU when the substitution fires.
+    #[test]
+    fn test_build_rejects_gpu_only_stage_as_cpu_fallback() {
+        let mut chain = Chain::new();
+        let g = chain.add(erase(GpuBitId)); // the GPU stage needing a fallback
+        let bad_cpu = chain.add(erase(GpuBitId)); // GpuOnly — not CPU-capable
+        chain.register_fallback(g, bad_cpu);
+        match chain.build() {
+            Err(BuildError::FallbackNotCpuCapable { cpu_stage }) => {
+                assert_eq!(cpu_stage, bad_cpu);
+            }
+            Err(other) => {
+                panic!("expected FallbackNotCpuCapable for GpuOnly fallback, got {other:?}")
+            }
+            Ok(_) => panic!("expected FallbackNotCpuCapable, got a built pipeline"),
+        }
+    }
+
+    // --- Invariant 6 regression: fallback registered for a CpuOnly stage ---
+
+    /// Registering a fallback for a `CpuOnly` stage (which cannot OOM on the
+    /// GPU) must return `BuildError::FallbackForCpuStage`.
+    #[test]
+    fn test_build_rejects_fallback_for_cpu_only_stage() {
+        let mut chain = Chain::new();
+        let cpu_gpu = chain.add(erase(BitId)); // CpuOnly — cannot OOM on GPU
+        let cpu_fb = chain.add(erase(BitId)); // a valid CPU fallback otherwise
+        chain.register_fallback(cpu_gpu, cpu_fb);
+        match chain.build() {
+            Err(BuildError::FallbackForCpuStage { gpu_stage }) => {
+                assert_eq!(gpu_stage, cpu_gpu);
+            }
+            Err(other) => panic!("expected FallbackForCpuStage for CpuOnly stage, got {other:?}"),
+            Ok(_) => panic!("expected FallbackForCpuStage, got a built pipeline"),
+        }
+    }
+
+    // --- Positive: Hybrid stages are valid in either fallback role ---
+
+    /// A `Hybrid` GPU stage with a `Hybrid` CPU fallback (distinct stages, no
+    /// role overlap) builds successfully: Hybrid is both GPU-capable and
+    /// CPU-capable, so it passes invariants 6 and 7.
+    #[test]
+    fn test_build_accepts_hybrid_stage_and_hybrid_fallback() {
+        let mut chain = Chain::new();
+        let gpu = chain.add(erase(HybridBitId)); // GPU-capable (Hybrid)
+        let cpu = chain.add(erase(HybridBitId)); // CPU-capable (Hybrid)
+        chain.register_fallback(gpu, cpu);
+        let pipeline = chain
+            .build()
+            .expect("hybrid gpu + hybrid fallback is valid");
+        // Only the GPU stage is a graph node; the fallback is a substitution target.
+        assert_eq!(pipeline.stage_count(), 1);
+        assert_eq!(pipeline.fallback_count(), 1);
     }
 }
