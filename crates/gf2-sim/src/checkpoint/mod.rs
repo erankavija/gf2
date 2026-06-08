@@ -729,6 +729,201 @@ where
     })
 }
 
+/// The outcome of a full checkpointed SNR sweep ([`run_sweep_checkpointed`]).
+///
+/// `per_point` holds one [`CheckpointedRun`] per SNR point actually run (a
+/// resumed sweep that skips already-completed leading points still records them
+/// from their loaded checkpoints). `interrupted` is `true` if a SIGINT/SIGTERM
+/// stopped the sweep before every point completed; in that case `per_point` is
+/// truncated at the interrupted point (whose checkpoint was already flushed).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::checkpoint::SweepRun;
+///
+/// let sweep = SweepRun { per_point: vec![], interrupted: false };
+/// assert!(!sweep.interrupted);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SweepRun {
+    /// One [`CheckpointedRun`] per SNR point that was run or loaded, in
+    /// SNR-point order.
+    pub per_point: Vec<CheckpointedRun>,
+    /// `true` if the sweep stopped early on SIGINT/SIGTERM.
+    pub interrupted: bool,
+}
+
+/// Runs a full **SNR sweep** with per-point checkpoint/resume and SIGINT-aware
+/// early stop (design doc §4; issue criterion 1, deliverable 2).
+///
+/// This is the sweep-level driver over [`run_snr_point_checkpointed`]. SNR
+/// points are processed **serially** (cross-SNR parallelism is deliberately not
+/// in the contract — the within-SNR frame parallelism, design doc §3, is the
+/// concurrency model). For each point `idx` with Es/N0 `config.esn0_db_points[idx]`:
+///
+/// 1. If `resume` is set, load `<checkpoint_dir>/snr_<idx>.json` via
+///    [`CheckpointReader`] (a missing file ⇒ fresh point; a non-v2 or
+///    hash-mismatched file ⇒ the load error propagates as
+///    [`FatalError`](crate::error::FatalError)).
+/// 2. Build the point's per-worker state factory and per-frame closure from
+///    `make_point(idx, esn0_db)`.
+/// 3. Run [`run_snr_point_checkpointed`], which flushes a v2 checkpoint at the
+///    heartbeat cadence, at the SNR boundary, and on SIGINT.
+///
+/// If a point returns `interrupted`, the sweep stops immediately (its
+/// checkpoint was already flushed by `run_snr_point_checkpointed`) and the
+/// returned [`SweepRun`] carries `interrupted: true`. Resuming the sweep
+/// (`resume = true` with the same `checkpoint_dir`) continues byte-identically:
+/// completed points are skipped via their loaded checkpoints, the interrupted
+/// point resumes from its recorded `frames_completed`, and the per-frame
+/// outcome is a pure function of the global frame index (design doc §3), so the
+/// aggregate matches an uninterrupted run at the same seed.
+///
+/// # Arguments
+///
+/// * `config` — the live pipeline config (supplies `esn0_db_points`, `seed`,
+///   `parallelism`, `heartbeat_every_frames`, `max_frames`, `target_errors`).
+/// * `writer` — the atomic checkpoint writer (its directory must match the
+///   reader directory for resume to find prior checkpoints).
+/// * `expected_hash` — the live [`config_hash`]; recorded in each checkpoint and
+///   required of any loaded checkpoint.
+/// * `resume` — `true` to load and continue from existing checkpoints in the
+///   writer's directory; `false` to start every point fresh.
+/// * `make_point` — factory `(snr_idx, esn0_db) -> (make_state, sim_frame)`
+///   producing the point's per-worker state factory and per-frame closure. It
+///   is called once per SNR point, so each point can bind channel parameters
+///   derived from its Es/N0.
+///
+/// # Returns
+///
+/// A [`SweepRun`] with the per-point runs and the aggregate `interrupted` flag.
+///
+/// # Errors
+///
+/// Propagates a [`FatalError`](crate::error::FatalError) from a checkpoint load
+/// (non-v2 schema or `config_hash` mismatch), or a [`std::io::Error`] from a
+/// checkpoint write, boxed as [`SweepError`].
+///
+/// # Complexity
+///
+/// `O(sum over points of frames_run)` frame closures, `config.parallelism`
+/// workers per point.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::PipelineConfig;
+/// use gf2_sim::checkpoint::{config_hash, run_sweep_checkpointed, CheckpointWriter};
+/// use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
+/// use rand::Rng as _;
+///
+/// let config = PipelineConfig {
+///     seed: 7,
+///     esn0_db_points: vec![3.0, 3.5, 4.0],
+///     target_errors: 0,
+///     max_frames: 8,
+///     heartbeat_every_frames: 4,
+///     checkpoint_dir: Some("/tmp/sweep".into()),
+///     tracing_log_path: None,
+///     parallelism: NonZeroUsize::new(2).unwrap(),
+///     strict_gpu: false,
+/// };
+/// let h = config_hash(&config);
+/// let writer = CheckpointWriter::new("/tmp/sweep").unwrap();
+/// let sweep = run_sweep_checkpointed(&config, &writer, &h, false, |_idx, _esn0| {
+///     (
+///         || (),
+///         |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
+///             let x: u64 = ctx.rng_mut().random();
+///             FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
+///         },
+///     )
+/// })
+/// .unwrap();
+/// assert_eq!(sweep.per_point.len(), 3);
+/// ```
+pub fn run_sweep_checkpointed<S, M, F, P>(
+    config: &PipelineConfig,
+    writer: &CheckpointWriter,
+    expected_hash: &str,
+    resume: bool,
+    make_point: P,
+) -> Result<SweepRun, SweepError>
+where
+    M: Fn() -> S + Sync,
+    F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
+    P: Fn(usize, f64) -> (M, F),
+{
+    let reader = CheckpointReader::new(writer.dir().to_path_buf(), expected_hash.to_string());
+    let mut per_point = Vec::with_capacity(config.esn0_db_points.len());
+    let mut interrupted = false;
+
+    for (idx, &esn0_db) in config.esn0_db_points.iter().enumerate() {
+        let loaded = if resume {
+            reader.load(idx).map_err(SweepError::Load)?
+        } else {
+            None
+        };
+
+        let (make_state, sim_frame) = make_point(idx, esn0_db);
+        let run = run_snr_point_checkpointed(
+            config,
+            idx,
+            esn0_db,
+            writer,
+            expected_hash,
+            loaded,
+            make_state,
+            sim_frame,
+        )
+        .map_err(SweepError::Io)?;
+
+        let was_interrupted = run.interrupted;
+        per_point.push(run);
+        if was_interrupted {
+            interrupted = true;
+            break;
+        }
+    }
+
+    Ok(SweepRun {
+        per_point,
+        interrupted,
+    })
+}
+
+/// Error from [`run_sweep_checkpointed`].
+///
+/// Either a fatal checkpoint-load error (non-v2 schema or `config_hash`
+/// mismatch) or an I/O error from a checkpoint write.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::checkpoint::SweepError;
+/// fn is_io(e: &SweepError) -> bool { matches!(e, SweepError::Io(_)) }
+/// ```
+#[derive(Debug)]
+pub enum SweepError {
+    /// A loaded checkpoint was invalid (see [`CheckpointReader::load`]).
+    Load(FatalError),
+    /// A checkpoint write failed.
+    Io(std::io::Error),
+}
+
+impl std::fmt::Display for SweepError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SweepError::Load(e) => write!(f, "checkpoint load failed: {e:?}"),
+            SweepError::Io(e) => write!(f, "checkpoint write failed: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for SweepError {}
+
 /// Reconstructs the running [`WorkerCounters`] from a loaded checkpoint.
 fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
     WorkerCounters {

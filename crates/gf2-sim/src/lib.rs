@@ -57,8 +57,8 @@ pub mod stages;
 pub use batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 #[doc(inline)]
 pub use checkpoint::{
-    config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2, CheckpointWriter,
-    CheckpointedRun, WorkerState,
+    config_hash, run_snr_point_checkpointed, run_sweep_checkpointed, CheckpointReader,
+    CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun, WorkerState,
 };
 #[doc(inline)]
 pub use config::PipelineConfig;
