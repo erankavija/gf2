@@ -56,6 +56,11 @@ pub mod stages;
 #[doc(inline)]
 pub use batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 #[doc(inline)]
+pub use checkpoint::{
+    config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2, CheckpointWriter,
+    CheckpointedRun, WorkerState,
+};
+#[doc(inline)]
 pub use config::PipelineConfig;
 #[doc(inline)]
 pub use connector::{Connector, Edge, StageId};
@@ -67,8 +72,8 @@ pub use frame_sim::DvbT2BicmFrameSim;
 pub use graph::Chain;
 #[doc(inline)]
 pub use parallel::{
-    run_snr_point, run_snr_point_stateless, worker_offset, FrameOutcome, WorkerCounters, WorkerCtx,
-    FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
+    run_snr_point, run_snr_point_range, run_snr_point_stateless, worker_offset, FrameOutcome,
+    SnrPointRangeOutcome, WorkerCounters, WorkerCtx, FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
 };
 #[doc(inline)]
 pub use pipeline::Pipeline;
