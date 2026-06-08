@@ -497,10 +497,139 @@ mod imp {
             assert_send::<GpuAwgnScratch>();
         }
 
-        /// End-to-end on the gfx1030 host: GPU noise must match the CPU
-        /// `channels::Awgn` applied to the same input, frame-seeked to the same
-        /// `worker_offset`, to <= 1 ulp f32 per sample (criterion 2). Skips
-        /// cleanly if no usable GPU is present.
+        /// **Criterion 1 / deliverable 4 (full-range raw byte-identity).** For
+        /// N ∈ {1, 256, 1024} frames the device ChaCha20 raw 32-bit word stream
+        /// at **every** frame's `worker_offset(...)` must be bit-for-bit
+        /// identical to a host `ChaCha20Rng::seed_from_u64(seed)` repositioned
+        /// with `set_word_pos(worker_offset(...))` and read via `next_u32`. This
+        /// checks the **entire** word range of **every** frame (not first/mid/
+        /// last spot-checks), so a seek-arithmetic bug inside a range cannot
+        /// hide.
+        ///
+        /// Uses the **real** [`gf2_sim::parallel::worker_offset`](crate::parallel::worker_offset)
+        /// — no duplicated seek scheme (this test lives in `gf2-sim`, which
+        /// depends on both the seek SSOT and the GPU launch wrappers). Skips
+        /// cleanly with no GPU.
+        ///
+        /// Timing: 1 + 256 + 1024 = 1281 small launches (32 words each ≈ two
+        /// ChaCha blocks), well under the 5 s fast-tier limit (measured ~0.1 s).
+        #[test]
+        fn test_gpu_chacha_raw_words_full_range_byte_identical() {
+            use crate::parallel::worker_offset;
+            use gf2_kernels_hip::host::device_mem_info;
+            use gf2_kernels_hip::GpuChaChaAwgn;
+            use rand::RngCore as _;
+            use rand::SeedableRng as _;
+            use rand_chacha::ChaCha20Rng;
+
+            if device_mem_info().is_err() {
+                eprintln!(
+                    "skipping test_gpu_chacha_raw_words_full_range_byte_identical: no usable GPU"
+                );
+                return;
+            }
+
+            let seed = 0xDEAD_BEEF_u64;
+            let snr_idx = 2usize;
+            let worker_idx = 0usize;
+            // 32 words/frame spans two ChaCha blocks (16 words/block), exercising
+            // the device block cache across a block boundary every frame.
+            let words_per_frame = 32usize;
+
+            let gen = GpuChaChaAwgn::new(seed, 0, words_per_frame).expect("build generator");
+            let mut host = ChaCha20Rng::seed_from_u64(seed);
+
+            for &n_frames in &[1usize, 256, 1024] {
+                // EVERY frame in 0..n_frames, EVERY word in the frame.
+                for frame_idx in 0..n_frames {
+                    let base = worker_offset(seed, snr_idx, worker_idx, frame_idx);
+                    let gpu_words = gen.raw_words(base, words_per_frame).expect("gpu raw words");
+
+                    host.set_word_pos(base);
+                    for (w, &gpu_w) in gpu_words.iter().enumerate() {
+                        let host_w = host.next_u32();
+                        assert_eq!(
+                            gpu_w, host_w,
+                            "raw word mismatch at N={n_frames} frame={frame_idx} word={w}: \
+                             gpu={gpu_w:#010x} host={host_w:#010x}"
+                        );
+                    }
+                }
+            }
+        }
+
+        /// **Criterion 2 (≤ 1 ulp over ≥ 1024 frames).** For **every** frame in
+        /// `0..1024`, every device Box-Muller standard-normal sample must agree
+        /// with the host `box_muller_cos` (the `gf2-coding` SSOT, fed the same
+        /// two `f64` uniforms in the same `draw_standard_normal` order) to
+        /// **≤ 1 ulp f32**. This genuinely covers ≥ 1024 frames of samples (a
+        /// dense per-frame set), not a handful of spot frames.
+        ///
+        /// Uses the **real** [`gf2_sim::parallel::worker_offset`](crate::parallel::worker_offset).
+        /// Skips cleanly with no GPU.
+        ///
+        /// Timing: 1024 small launches (64 samples = 256 words each), well under
+        /// the 5 s fast-tier limit (measured ~0.1 s).
+        #[test]
+        fn test_gpu_box_muller_within_1_ulp_over_1024_frames() {
+            use crate::parallel::worker_offset;
+            use gf2_coding::dvb_t2_bicm_harness::box_muller_cos;
+            use gf2_kernels_hip::host::device_mem_info;
+            use gf2_kernels_hip::GpuChaChaAwgn;
+            use rand::Rng as _;
+            use rand::SeedableRng as _;
+            use rand_chacha::ChaCha20Rng;
+
+            if device_mem_info().is_err() {
+                eprintln!(
+                    "skipping test_gpu_box_muller_within_1_ulp_over_1024_frames: no usable GPU"
+                );
+                return;
+            }
+
+            let seed = 0x0102_0304_0506_0708_u64;
+            let snr_idx = 0usize;
+            let worker_idx = 0usize;
+            // 64 standard-normal samples/frame (256 words, well under FRAME_STRIDE);
+            // a dense representative set per frame.
+            let samples_per_frame = 64usize;
+            let n_frames = 1024usize;
+
+            let gen = GpuChaChaAwgn::new(seed, 0, samples_per_frame).expect("build generator");
+            let mut host = ChaCha20Rng::seed_from_u64(seed);
+
+            for frame_idx in 0..n_frames {
+                let base = worker_offset(seed, snr_idx, worker_idx, frame_idx);
+                let gpu = gen
+                    .noise_samples(base, samples_per_frame)
+                    .expect("gpu noise");
+
+                host.set_word_pos(base);
+                for (s, &gpu_n) in gpu.iter().enumerate() {
+                    // Host: two f64 uniforms then box_muller_cos (the SSOT), the
+                    // exact order `gf2_sim::channels::draw_standard_normal` uses.
+                    let u1: f64 = host.random();
+                    let u2: f64 = host.random();
+                    let host_n = box_muller_cos(u1, u2);
+                    assert!(
+                        ulps_within_one(gpu_n, host_n),
+                        "Box-Muller sample frame={frame_idx} s={s} differs > 1 ulp: \
+                         gpu={gpu_n} host={host_n}"
+                    );
+                }
+            }
+        }
+
+        /// End-to-end on the gfx1030 host: the `GpuAwgn` stage noise must match
+        /// the CPU `channels::Awgn` applied to the same input, frame-seeked to
+        /// the same `worker_offset`, to ≤ 1 ulp f32 per sample (criterion 2),
+        /// across a **multi-frame span** (every frame in `0..256`). This is the
+        /// stage-level end-to-end check; the dense ≥ 1024-frame raw-stream and
+        /// Box-Muller regressions are the dedicated tests above. Skips cleanly
+        /// if no usable GPU is present.
+        ///
+        /// Timing: 256 CPU+GPU frame pairs of 512 symbols, well under the 5 s
+        /// fast-tier limit.
         #[test]
         fn test_gpu_awgn_matches_cpu_within_1_ulp() {
             use crate::parallel::WorkerCtx;
@@ -513,49 +642,46 @@ mod imp {
 
             let seed = 0xC0FFEE_u64;
             let snr_idx = 1usize;
-            let frame_idx = 3usize;
             let num_symbols = 512usize;
+            let n_frames = 256usize;
 
-            // CPU reference: build the same input, seek a WorkerCtx to the frame,
-            // and apply the CPU Awgn.
             let i0: Vec<f32> = (0..num_symbols).map(|k| (k as f32) * 0.01 - 2.0).collect();
             let q0: Vec<f32> = (0..num_symbols).map(|k| 1.0 - (k as f32) * 0.005).collect();
 
             let cpu = Awgn::new(6.5, 4);
-            let mut cpu_i = i0.clone();
-            let mut cpu_q = q0.clone();
-            let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
-            ctx.reseek_to_frame(frame_idx);
-            {
-                let mut batch = SymbolBatch::new(vec![cpu_i.clone()], vec![cpu_q.clone()]);
-                cpu.apply(&mut batch, ctx.rng_mut());
-                cpu_i = batch.i.remove(0);
-                cpu_q = batch.q.remove(0);
-            }
-
-            // GPU path: same seek parameters, apply to a copy via a per-worker
-            // device generator.
+            // GPU path: one per-worker generator reused across frames.
             let gpu = GpuAwgn::new(6.5, 4).with_seek(seed, snr_idx, 0);
-            let mut gpu_i = i0.clone();
-            let mut gpu_q = q0.clone();
             let gen = gpu.build_generator(num_symbols).expect("build generator");
-            gpu.apply_for_frame(&mut gpu_i, &mut gpu_q, frame_idx, &gen)
-                .expect("gpu awgn frame");
 
-            // <= 1 ulp f32 per sample.
-            for k in 0..num_symbols {
-                assert!(
-                    ulps_within_one(cpu_i[k], gpu_i[k]),
-                    "I[{k}] CPU={} GPU={} differ by > 1 ulp",
-                    cpu_i[k],
-                    gpu_i[k]
-                );
-                assert!(
-                    ulps_within_one(cpu_q[k], gpu_q[k]),
-                    "Q[{k}] CPU={} GPU={} differ by > 1 ulp",
-                    cpu_q[k],
-                    gpu_q[k]
-                );
+            for frame_idx in 0..n_frames {
+                // CPU reference: seek a WorkerCtx to this frame and apply CPU Awgn.
+                let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
+                ctx.reseek_to_frame(frame_idx);
+                let mut cpu_batch = SymbolBatch::new(vec![i0.clone()], vec![q0.clone()]);
+                cpu.apply(&mut cpu_batch, ctx.rng_mut());
+                let cpu_i = &cpu_batch.i[0];
+                let cpu_q = &cpu_batch.q[0];
+
+                // GPU: same seek parameters, apply to a copy.
+                let mut gpu_i = i0.clone();
+                let mut gpu_q = q0.clone();
+                gpu.apply_for_frame(&mut gpu_i, &mut gpu_q, frame_idx, &gen)
+                    .expect("gpu awgn frame");
+
+                for k in 0..num_symbols {
+                    assert!(
+                        ulps_within_one(cpu_i[k], gpu_i[k]),
+                        "frame={frame_idx} I[{k}] CPU={} GPU={} differ by > 1 ulp",
+                        cpu_i[k],
+                        gpu_i[k]
+                    );
+                    assert!(
+                        ulps_within_one(cpu_q[k], gpu_q[k]),
+                        "frame={frame_idx} Q[{k}] CPU={} GPU={} differ by > 1 ulp",
+                        cpu_q[k],
+                        gpu_q[k]
+                    );
+                }
             }
         }
 
