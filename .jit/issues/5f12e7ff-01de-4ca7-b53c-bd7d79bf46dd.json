@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-08T15:06:26.714398261Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-08T15:10:52.303379086Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +33,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:09.566020958+00:00",
-  "updated_at": "2026-06-08T14:17:13.545870383+00:00"
+  "updated_at": "2026-06-08T15:12:03.827340939+00:00"
 }
