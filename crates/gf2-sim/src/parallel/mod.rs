@@ -551,11 +551,130 @@ where
     M: Fn() -> S + Sync,
     F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
 {
-    let num_workers = parallelism.get();
+    run_snr_point_range(
+        seed,
+        snr_idx,
+        0..max_frames,
+        parallelism,
+        make_state,
+        sim_frame,
+    )
+    .counters
+}
 
-    // Per-worker counters, indexed by worker_idx. Each worker writes only its
-    // own slot, so the fan-out is data-race free without locking.
-    let per_worker: Vec<WorkerCounters> = (0..num_workers)
+/// Per-worker breakdown of a [`run_snr_point_range`] dispatch.
+///
+/// Returned by the range runner so a checkpoint writer can record each
+/// worker's final `frames_in_worker` count (the SSOT for that worker's next
+/// [`worker_offset`] seek, design doc §4 "Drain commit contract") alongside the
+/// aggregate [`WorkerCounters`]. Indexed by `worker_idx`: element `i` is worker
+/// `i`'s state.
+///
+/// # Examples
+///
+/// ```
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::parallel::{run_snr_point_range, FrameOutcome};
+/// use rand::Rng;
+///
+/// let out = run_snr_point_range(
+///     7, 0, 0..10, NonZeroUsize::new(2).unwrap(),
+///     || (),
+///     |_g, ctx, ()| {
+///         let x: u64 = ctx.rng_mut().random();
+///         FrameOutcome { errored: false, iterations: 1, info_bits: 1, bit_errors: x & 1 }
+///     },
+/// );
+/// // Two workers split 10 frames 5/5.
+/// assert_eq!(out.counters.frames, 10);
+/// assert_eq!(out.per_worker_frames, vec![5, 5]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SnrPointRangeOutcome {
+    /// The `worker_idx`-ordered aggregate counters over the dispatched range.
+    pub counters: WorkerCounters,
+    /// Per-worker frame counts, indexed by `worker_idx`. Element `i` is the
+    /// number of frames worker `i` simulated **in this dispatch** (the range
+    /// `frames` argument's slice that fell to worker `i`).
+    pub per_worker_frames: Vec<u64>,
+}
+
+/// Runs a **sub-range** of an SNR point's global frames across `parallelism`
+/// rayon workers (design doc §3, §4).
+///
+/// This is the resumable core of [`run_snr_point`] (which delegates to it with
+/// `frames = 0..max_frames`). It exists so the checkpoint executor
+/// (`5f12e7ff`) can dispatch a heartbeat-sized chunk of frames at a time,
+/// settle the rayon workers on a frame boundary (the CPU "drain"), latch the
+/// per-worker counts, and resume the next chunk from where it left off.
+///
+/// # Byte-identity across worker counts and chunkings
+///
+/// Each global frame `g` reseeks its RNG to [`worker_offset`]`(seed, snr_idx,
+/// 0, g)` before the closure runs, so its [`FrameOutcome`] is a pure function
+/// of `g` — independent of which worker ran it, how many workers there are,
+/// **and how the global range was split into chunks**. The aggregate over a
+/// fixed frame set is therefore identical whether it ran as one `0..N`
+/// dispatch or as `0..M` then `M..N`. This is exactly what makes
+/// checkpoint/resume byte-identical to an uninterrupted run.
+///
+/// # Arguments
+///
+/// * `seed` — base RNG seed.
+/// * `snr_idx` — zero-based SNR-point index.
+/// * `frames` — the half-open global-frame range `start..end` to simulate.
+/// * `parallelism` — number of rayon workers to fan out across.
+/// * `make_state` — per-worker state factory (see [`run_snr_point`]).
+/// * `sim_frame` — per-frame closure (see [`run_snr_point`]).
+///
+/// # Returns
+///
+/// A [`SnrPointRangeOutcome`] with the aggregate counters and the per-worker
+/// frame counts for this dispatch.
+///
+/// # Complexity
+///
+/// `O(frames.len())` frame closures fanned out across `parallelism` workers.
+///
+/// # Examples
+///
+/// ```
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::parallel::{run_snr_point_range, FrameOutcome};
+/// use rand::Rng;
+///
+/// let sim = |_g: usize, ctx: &mut gf2_sim::parallel::WorkerCtx, _s: &mut ()| {
+///     let x: u64 = ctx.rng_mut().random();
+///     FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
+/// };
+/// // Whole range in one dispatch.
+/// let whole = run_snr_point_range(5, 0, 0..40, NonZeroUsize::new(4).unwrap(), || (), sim);
+/// // Same range split into two chunks, summed.
+/// let a = run_snr_point_range(5, 0, 0..17, NonZeroUsize::new(4).unwrap(), || (), sim);
+/// let b = run_snr_point_range(5, 0, 17..40, NonZeroUsize::new(4).unwrap(), || (), sim);
+/// let mut summed = a.counters;
+/// summed = gf2_sim::parallel::WorkerCounters::reduce_in_worker_order(&[summed, b.counters]);
+/// assert_eq!(whole.counters, summed);
+/// ```
+pub fn run_snr_point_range<S, M, F>(
+    seed: u64,
+    snr_idx: usize,
+    frames: std::ops::Range<usize>,
+    parallelism: NonZeroUsize,
+    make_state: M,
+    sim_frame: F,
+) -> SnrPointRangeOutcome
+where
+    M: Fn() -> S + Sync,
+    F: Fn(usize, &mut WorkerCtx, &mut S) -> FrameOutcome + Sync,
+{
+    let num_workers = parallelism.get();
+    let start = frames.start;
+    let end = frames.end;
+
+    // Per-worker (counters, frames_simulated), indexed by worker_idx. Each
+    // worker writes only its own slot, so the fan-out is data-race free.
+    let per_worker: Vec<(WorkerCounters, u64)> = (0..num_workers)
         .into_par_iter()
         .map(|worker_idx| {
             // Logical worker 0: the CPU within-SNR path keys the per-frame seek
@@ -566,13 +685,15 @@ where
             // One fresh state per worker — never shared by `&` across threads.
             let mut state = make_state();
 
-            // Contiguous strided assignment: worker `w` processes global frames
-            // w, w + num_workers, w + 2*num_workers, ... < max_frames. The
-            // assignment partitions 0..max_frames exactly once across workers
-            // for any worker count; the RNG seek (keyed on g) makes the outcome
-            // independent of the partitioning.
-            let mut g = worker_idx;
-            while g < max_frames {
+            // Contiguous strided assignment over the *sub-range*: worker `w`
+            // processes global frames start+w, start+w+num_workers, ... < end.
+            // This partitions `start..end` exactly once across workers for any
+            // worker count; the RNG seek (keyed on g) makes the per-frame
+            // outcome independent of the partitioning and of where the range
+            // boundaries fall.
+            let mut frames_done: u64 = 0;
+            let mut g = start + worker_idx;
+            while g < end {
                 ctx.reseek_to_frame(g);
                 let outcome = sim_frame(g, &mut ctx, &mut state);
                 ctx.debug_assert_frame_budget(g);
@@ -582,13 +703,19 @@ where
                     outcome.info_bits,
                     outcome.bit_errors,
                 );
+                frames_done += 1;
                 g += num_workers;
             }
-            ctx.counters()
+            (ctx.counters(), frames_done)
         })
         .collect();
 
-    WorkerCounters::reduce_in_worker_order(&per_worker)
+    let counters_only: Vec<WorkerCounters> = per_worker.iter().map(|(c, _)| *c).collect();
+    let per_worker_frames: Vec<u64> = per_worker.iter().map(|(_, f)| *f).collect();
+    SnrPointRangeOutcome {
+        counters: WorkerCounters::reduce_in_worker_order(&counters_only),
+        per_worker_frames,
+    }
 }
 
 /// Stateless convenience wrapper over [`run_snr_point`] for per-frame kernels
