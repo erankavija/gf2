@@ -11,6 +11,8 @@ use std::collections::HashMap;
 
 use crate::config::PipelineConfig;
 use crate::connector::{Edge, StageId};
+use crate::error::StageError;
+use crate::executor::{RunPlan, Scheduler, SimulationResults};
 use crate::stage::AnyStage;
 
 /// A built, runnable pipeline.
@@ -31,6 +33,10 @@ pub struct Pipeline {
     fallbacks: HashMap<StageId, Box<dyn AnyStage>>,
     /// The run configuration.
     config: PipelineConfig,
+    /// How to run this pipeline (set by a preset builder). `None` for a chain
+    /// built directly via the graph API with no run plan attached — such a
+    /// pipeline is inspectable (`stages()` / `edges()`) but not [`run`](Pipeline::run)nable.
+    run_plan: Option<RunPlan>,
 }
 
 impl Pipeline {
@@ -60,7 +66,25 @@ impl Pipeline {
             edges,
             fallbacks,
             config,
+            run_plan: None,
         }
+    }
+
+    /// Attaches a [`RunPlan`] so this pipeline becomes [`run`](Pipeline::run)nable.
+    ///
+    /// Crate-private: only a preset builder (e.g. [`Pipeline::dvb_t2`](crate::Pipeline::dvb_t2))
+    /// knows the validated run parameters, so it sets the plan after
+    /// [`Chain::build`](crate::graph::Chain::build) returns the inspectable
+    /// pipeline.
+    pub(crate) fn set_run_plan(&mut self, plan: RunPlan) {
+        self.run_plan = Some(plan);
+    }
+
+    /// The pipeline's [`RunPlan`], if a preset attached one.
+    ///
+    /// Consumed by the [`Scheduler`] to reconstruct the per-SNR frame kernel.
+    pub(crate) fn run_plan(&self) -> Option<RunPlan> {
+        self.run_plan
     }
 
     /// Returns the number of stages in this pipeline.
@@ -137,6 +161,88 @@ impl Pipeline {
     pub fn fallback_count(&self) -> usize {
         self.fallbacks.len()
     }
+
+    /// Runs the pipeline over its configured SNR sweep, returning the aggregate
+    /// [`SimulationResults`] (design doc §12 migration target).
+    ///
+    /// This is the convenience entry point downstream campaign code (`bbf6b6ee`,
+    /// the calibration receipt `0d9cb8e3`) calls. It constructs a [`Scheduler`]
+    /// from this pipeline's [`PipelineConfig`](crate::PipelineConfig) and drives
+    /// it: when `gpu_enabled` is set (and the `hip` feature is built in with a
+    /// usable device), the hybrid CPU+GPU overlap path runs; otherwise the
+    /// CPU-only within-SNR frame-parallel path runs. The two paths agree on the
+    /// three contractual columns `fer` / `frames` / `errors` (design doc §11);
+    /// `mean_iters` is run-to-run deterministic on a fixed path.
+    ///
+    /// The sweep parameters (`esn0_db_points`, `max_frames`, `seed`,
+    /// `parallelism`, `gpu_enabled`) come from the config; set them on the
+    /// builder / config before calling.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`StageError`] if the pipeline carries no [`RunPlan`] (built via
+    /// the graph API without a preset) or a GPU stage faults fatally.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use std::num::NonZeroUsize;
+    /// use gf2_sim::Pipeline;
+    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
+    /// use gf2_coding::CodeRate;
+    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    /// use gf2_coding::modem::DemapMethod;
+    ///
+    /// let mut pipeline = Pipeline::dvb_t2()
+    ///     .modcod(Modcod::Normal { rate: CodeRate::Rate1_2, modulation: DvbT2Modulation::Qam16 })
+    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+    ///     .demap(DemapMethod::MaxLog)
+    ///     .channel(Channel::awgn(6.0))
+    ///     .parallelism(NonZeroUsize::new(24).unwrap())
+    ///     .build()
+    ///     .unwrap();
+    /// // Configure the sweep, then run (heavy: a full n=64800 decode per frame).
+    /// pipeline.config_mut().esn0_db_points = vec![6.0];
+    /// pipeline.config_mut().max_frames = 200;
+    /// let results = pipeline.run().unwrap();
+    /// assert_eq!(results.per_point.len(), 1);
+    /// ```
+    pub fn run(&self) -> Result<SimulationResults, StageError> {
+        let scheduler = Scheduler::from_pipeline(self);
+        let handle = BatchHandle::new(0, 0);
+        scheduler.run(self, handle)
+    }
+
+    /// Alias for [`run`](Pipeline::run) matching the §12 migration table name
+    /// (`SimulationRunner::run_with_decoder` → `Pipeline::run_with_decoder`).
+    ///
+    /// # Errors
+    ///
+    /// See [`run`](Pipeline::run).
+    pub fn run_with_decoder(&self) -> Result<SimulationResults, StageError> {
+        self.run()
+    }
+
+    /// Alias for [`run`](Pipeline::run) matching the §12 migration table name
+    /// (`SimulationRunner::run_coded_iterative_parallel` →
+    /// `Pipeline::run_parallel`). The worker count is taken from the config's
+    /// `parallelism` (set it on the builder); this alias exists for the
+    /// migration call-site naming.
+    ///
+    /// # Errors
+    ///
+    /// See [`run`](Pipeline::run).
+    pub fn run_parallel(&self) -> Result<SimulationResults, StageError> {
+        self.run()
+    }
+
+    /// Mutable access to the run configuration, so a caller can set the sweep
+    /// (`esn0_db_points`, `max_frames`, …) on a pipeline the preset built with
+    /// empty sweep defaults before [`run`](Pipeline::run).
+    pub fn config_mut(&mut self) -> &mut PipelineConfig {
+        &mut self.config
+    }
 }
 
 /// An opaque handle returned by `Pipeline::submit` and consumed by
@@ -157,15 +263,14 @@ pub struct BatchHandle {
 impl BatchHandle {
     /// Constructs a handle for the given batch and SNR-point index.
     ///
-    /// Crate-private: handles are minted only by `Pipeline::submit` (landing
-    /// with the graph wave `c09d3e95`); callers obtain them opaquely and feed
-    /// them back to `Pipeline::collect`. The design doc (§1) specifies private
-    /// fields so the buffer-reference machinery can be added later without a
-    /// breaking change.
-    // Scaffolding: the only caller (`Pipeline::submit`) lands with the graph
-    // wave `c09d3e95`; exercised now by the unit test below.
-    #[allow(dead_code)]
-    pub(crate) fn new(batch_id: u64, snr_idx: u32) -> Self {
+    /// Public so a caller driving the [`Scheduler`](crate::Scheduler) engine
+    /// directly (`Scheduler::run(&pipeline, handle)`) can mint the starting
+    /// batch handle; the high-level [`Pipeline::run`](crate::Pipeline::run)
+    /// convenience entry point mints one internally. The fields stay private so
+    /// the buffer-reference machinery (design doc §1) can be added later without
+    /// a breaking change.
+    #[must_use]
+    pub fn new(batch_id: u64, snr_idx: u32) -> Self {
         Self { batch_id, snr_idx }
     }
 

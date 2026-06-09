@@ -355,6 +355,39 @@ impl DvbT2Concat {
         self.n_ldpc
     }
 
+    /// The inner LDPC code (a clone of the configured DVB-T2 LDPC code).
+    ///
+    /// Exposed so a caller running the LDPC inner decode on a different backend
+    /// (e.g. a GPU BP kernel) can build a decoder for the *same* code this codec
+    /// encodes with, then finish the concatenated decode via
+    /// [`decode_bch_from_ldpc_codeword`](Self::decode_bch_from_ldpc_codeword).
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance.
+    ///
+    /// # Returns
+    ///
+    /// A clone of the inner [`LdpcCode`].
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz) for the parity-check-matrix clone.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// assert_eq!(codec.ldpc_code().n(), codec.n_ldpc());
+    /// ```
+    #[must_use]
+    pub fn ldpc_code(&self) -> LdpcCode {
+        self.ldpc_code.clone()
+    }
+
     /// Set maximum belief-propagation iterations (default 50).
     ///
     /// # Arguments
@@ -614,6 +647,75 @@ impl DvbT2Concat {
         let converged = ldpc_result.converged;
         let iterations = ldpc_result.iterations;
 
+        // Steps 2-3: extract the systematic BCH codeword from the LDPC
+        // hard-decision codeword and BCH-decode it to the BBFRAME (the SSOT
+        // outer-decode path, shared with [`decode_bch_from_ldpc_codeword`]).
+        let bbframe = self.decode_bch_from_ldpc_codeword(&full_codeword);
+
+        if converged {
+            Ok((bbframe, iterations))
+        } else {
+            Err(ConcatError::LdpcDecodeFailed {
+                bbframe,
+                iterations,
+            })
+        }
+    }
+
+    /// BCH-decode a BBFRAME from an already-LDPC-decoded FECFRAME hard codeword.
+    ///
+    /// This is the **outer-decode tail** of [`decode_soft_counted`](Self::decode_soft_counted),
+    /// factored out so a caller that runs the LDPC inner decode elsewhere (e.g.
+    /// a GPU LDPC BP kernel that returns the full `n_ldpc`-bit hard codeword)
+    /// can finish the concatenated decode on the CPU without reimplementing the
+    /// systematic-extraction + BCH steps. It is the single source of truth for
+    /// "FECFRAME hard codeword → BBFRAME": [`decode_soft_counted`] calls it after
+    /// its own BP step.
+    ///
+    /// The first `k_ldpc` bits of the codeword are the BCH codeword (DVB-T2 LDPC
+    /// is systematic with information bits in positions `0..k_ldpc`); BCH
+    /// hard-decision decoding extracts and corrects the `k_bch`-bit BBFRAME.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` — The codec instance (shared reference).
+    /// * `full_codeword` — The LDPC hard-decision codeword (`n_ldpc` bits).
+    ///
+    /// # Returns
+    ///
+    /// The BCH-corrected BBFRAME (`k_bch` bits).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `full_codeword.len() != n_ldpc()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(`k_ldpc`) for the systematic extraction plus the BCH decode.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
+    /// use gf2_coding::CodeRate;
+    /// use gf2_core::BitVec;
+    ///
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// // The all-zeros FECFRAME is a valid codeword; it BCH-decodes to the
+    /// // all-zeros BBFRAME.
+    /// let zero_codeword = BitVec::zeros(codec.n_ldpc());
+    /// let bbframe = codec.decode_bch_from_ldpc_codeword(&zero_codeword);
+    /// assert_eq!(bbframe.len(), codec.k_bch());
+    /// ```
+    pub fn decode_bch_from_ldpc_codeword(&self, full_codeword: &BitVec) -> BitVec {
+        assert_eq!(
+            full_codeword.len(),
+            self.n_ldpc,
+            "FECFRAME codeword length {} must equal n_ldpc = {}",
+            full_codeword.len(),
+            self.n_ldpc
+        );
+
         // Step 2: Extract BCH codeword from systematic positions 0..k_ldpc-1.
         // DVB-T2 LDPC uses the natural systematic convention: information bits
         // occupy codeword positions [0, k_ldpc), parity in [k_ldpc, n_ldpc).
@@ -625,15 +727,7 @@ impl DvbT2Concat {
         // Step 3: BCH outer decode — k_ldpc → k_bch bits.
         let bbframe = self.bch_decoder.decode(&bch_codeword);
         debug_assert_eq!(bbframe.len(), self.k_bch);
-
-        if converged {
-            Ok((bbframe, iterations))
-        } else {
-            Err(ConcatError::LdpcDecodeFailed {
-                bbframe,
-                iterations,
-            })
-        }
+        bbframe
     }
 }
 

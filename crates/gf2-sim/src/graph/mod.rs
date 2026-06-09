@@ -227,6 +227,7 @@ impl Chain {
     ///     checkpoint_dir: None,
     ///     tracing_log_path: None,
     ///     parallelism: NonZeroUsize::new(1).unwrap(),
+    ///     gpu_enabled: false,
     ///     strict_gpu: false,
     /// };
     /// let chain = Chain::new().with_config(cfg);
@@ -960,6 +961,7 @@ fn default_pipeline_config() -> PipelineConfig {
         checkpoint_dir: None,
         tracing_log_path: None,
         parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
+        gpu_enabled: false,
         strict_gpu: false,
     }
 }
