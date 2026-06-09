@@ -173,12 +173,11 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 ## a930be7f — GPU LDPC belief-propagation batch decode kernel
 
-- **Status:** PROVISIONAL (worker measurement under host load; the lead
-  re-measures on a verified-quiet host before attesting the gate).
-- **Date:** 2026-06-09 (worker measurement; numbers below are the rework-round-1
-  re-measure after the per-frame early-termination FREEZE landed — frozen frames
-  skip all subsequent kernel work, so the GPU is faster than the pre-freeze
-  531.93 fps figure).
+- **Status:** ATTESTED by `agent:project-lead` (clean quiet-host re-measure at
+  merged HEAD `f3f0aaa5`; supersedes the worker's provisional under-load figures).
+- **Date:** 2026-06-09 (lead quiet-host re-measure after the rework-round-1
+  per-frame early-termination FREEZE landed — frozen frames skip all subsequent
+  kernel work, so the GPU is faster than the pre-freeze 531.93 fps figure).
 - **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
   RX 6950 XT (gfx1030, RDNA2).
 - **Baseline configuration (apples-to-apples, per the user-approved 2026-06-09
@@ -197,32 +196,35 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   decode the same 200 frames serially (1 thread) and across the rayon pool
   (24 threads, per-frame independent `LdpcDecoder`s — the per-frame outcome is a
   deterministic pure function of the frame's LLRs regardless of thread).
-- **Observed throughput (200 frames, 5 repeats; rework-round-1 re-measure at
-  `loadavg` ≈ 11.5, GPU 0% before the run):**
-  - **GPU decode-stage: 620.82 fps ± 10.08** (up from the pre-freeze 531.93 fps
-    — the per-frame freeze skips work on already-converged frames).
-  - **CPU decode-stage 1-thread: 2.5072 fps ± 0.0021.**
-  - **CPU decode-stage 24-thread: 21.98 fps ± 0.15.**
-  - (A quiet-host spot check at 96 frames earlier read CPU 1T 2.52 / 24T 21.70,
-    consistent — the runs above were taken under host load, which only
-    *understates* the CPU baselines, so the gate is not at risk.)
+- **Observed throughput (200 frames, 5 repeats; lead quiet-host re-measure at
+  merged HEAD `f3f0aaa5`, `rocm-smi` GPU 0% and no foreign build/GPU procs before
+  the run):**
+  - **GPU decode-stage: 639.10 fps ± 1.53** (up from the pre-freeze 531.93 fps
+    — the per-frame freeze skips work on already-converged frames; tight σ on the
+    quiet host).
+  - **CPU decode-stage 1-thread: 2.5210 fps ± 0.0038.**
+  - **CPU decode-stage 24-thread: 22.06 fps ± 0.15.**
+  - (Consistent with the worker's under-load provisional run — GPU 620.82, CPU-1T
+    2.5072, CPU-24T 21.98 at loadavg ≈ 11.5 — load only *understated* the CPU
+    baselines, so the gate was never at risk; the clean numbers confirm it.)
 - **Speedup factors (decode-vs-decode):**
-  - **GPU / CPU-1-thread = 247.61×** (620.82 / 2.5072; gate **≥ 10×** — clears
+  - **GPU / CPU-1-thread = 253.51×** (639.10 / 2.5210; gate **≥ 10×** — clears
     with large margin).
-  - **GPU / CPU-24-thread = 28.25×** (620.82 / 21.98; gate **≥ 3×** — clears with
+  - **GPU / CPU-24-thread = 28.98×** (639.10 / 22.06; gate **≥ 3×** — clears with
     large margin).
 - **Context only (full-frame baselines, NOT the gate metric for a decode-only
-  kernel):** GPU decode-stage fps is ~382.8× the full-frame single-thread
-  baseline (1.6216 fps) and ~29.0× the full-frame 24-thread baseline (21.44 fps).
+  kernel):** GPU decode-stage fps is ~394.1× the full-frame single-thread
+  baseline (1.6216 fps) and ~29.8× the full-frame 24-thread baseline (21.44 fps).
   These are recorded for completeness per the amendment; the gate is
   decode-vs-decode.
 - **Required thresholds (from task body, all [hard]):** GPU decode ≥ 10×
   single-thread CPU decode-stage AND ≥ 3× CPU-24-thread decode-stage.
-  **Both clear (247.61× and 28.25×).**
-- **Verdict:** PROVISIONAL PASS — both thresholds clear with large margin even
-  under the (CPU-understating) host load this measurement was taken at. The lead
-  re-measures on a verified-quiet host (`cat /proc/loadavg` ≈ 0, `rocm-smi` GPU
-  0%) before attesting.
+  **Both clear (253.51× and 28.98×).**
+- **Verdict:** PASS (ATTESTED) — clean lead re-measurement on a verified-quiet
+  host (`rocm-smi` GPU 0%, no foreign build/GPU procs, tight σ: GPU ±1.53 over 5
+  repeats, CPU-1T ±0.0038). GPU/CPU-1-thread = 253.51× and GPU/CPU-24-thread =
+  28.98× clear the ≥10× / ≥3× decode-vs-decode gates with large margin. Attested
+  by `agent:project-lead` at merged HEAD `f3f0aaa5`.
 - **Correctness (criterion 1):** the GPU hard-decision codeword is **byte-identical**
   to the CPU `LdpcDecoder::decode_to_codeword` output for **all** 200 frames × 3
   SNRs × {MinSum, NormalizedMinSum(0.75), SumProduct} (1800 frames). Including
