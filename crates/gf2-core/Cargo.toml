@@ -30,10 +30,11 @@ criterion = { workspace = true }
 gf2-core = { path = ".", features = ["test-support"] }
 proptest = { workspace = true }
 rand = { workspace = true }
-# Test-only: serialises #[test] functions that read process-wide atomic
-# counters in `field::expr`. Required for correctness under `cargo test`
-# (in-process parallel); `cargo nextest` runs each test in a subprocess
-# and does not strictly need this, but tagging keeps both runners honest.
+# Test-only: applies `#[serial]` to the `field::{inverse,triangular,ple}`
+# allocation-counter tests. Those tests read the thread-local
+# `field::matrix::fieldmatrix_new_count`, so the serialisation is defensive
+# belt-and-suspenders rather than strictly required. (`field::expr`'s
+# kernel-trace counters are likewise thread-local and use no serialisation.)
 serial_test = "3"
 
 [features]

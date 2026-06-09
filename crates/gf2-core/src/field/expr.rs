@@ -55,13 +55,14 @@
 //!
 //! # Trace counters (design §7)
 //!
-//! Every call to a kernel primitive in this module increments an atomic
+//! Every call to a kernel primitive in this module increments a thread-local
 //! counter. Tests may inspect these counters via [`kernel_counts`] to verify
-//! that a fused expression collapses to exactly one kernel call. The
-//! counters are compiled unconditionally so that `cargo nextest run
-//! --release` (the CI default) can still query them; the atomic cost
-//! happens at the kernel-entry boundary, not in inner loops, so there is no
-//! measurable performance effect.
+//! that a fused expression collapses to exactly one kernel call; because the
+//! counters are thread-local, a measuring test sees only its own thread's
+//! calls and needs no cross-test serialisation. The counters are compiled
+//! unconditionally so that `cargo nextest run --release` (the CI default) can
+//! still query them; the increment happens at the kernel-entry boundary, not in
+//! inner loops, so there is no measurable performance effect.
 //!
 //! # Why `FieldMatrix<F>` does not implement `Evaluate<F>`
 //!
@@ -91,8 +92,8 @@
 //! `dev/plans/expression_templates_design.md` §6.5 (amended at
 //! `d48a3cfd/T2`).
 
+use std::cell::Cell;
 use std::ops::{Add, Mul, Neg, Sub};
-use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::field::matrix::{FieldMatrix, Transposed, GEMM_COL_TILE, GEMM_ROW_TILE};
 use crate::field::vec::dot_product_slices;
@@ -126,32 +127,42 @@ pub struct KernelCounts {
     pub copy_into: u64,
 }
 
-static KC_GEMM: AtomicU64 = AtomicU64::new(0);
-static KC_GEMM_BETA: AtomicU64 = AtomicU64::new(0);
-static KC_GEMM_TA: AtomicU64 = AtomicU64::new(0);
-static KC_GEMM_TA_BETA: AtomicU64 = AtomicU64::new(0);
-static KC_AXPY: AtomicU64 = AtomicU64::new(0);
-static KC_SCALE: AtomicU64 = AtomicU64::new(0);
-static KC_NEG: AtomicU64 = AtomicU64::new(0);
-static KC_COPY: AtomicU64 = AtomicU64::new(0);
+// The counters are **thread-local** so a measuring test sees only the kernel
+// calls it issued on its own thread, never a bump from a test running
+// concurrently on another thread. `bump()` always fires on the *calling* thread
+// at the kernel dispatch entry (before any internal gemm parallelism), so a
+// test's `reset -> op -> kernel_counts` sequence on one thread is exact. This is
+// what makes the counters safe under a bare multi-threaded `cargo test` without
+// any `#[serial]` coordination.
+thread_local! {
+    static KC_GEMM: Cell<u64> = const { Cell::new(0) };
+    static KC_GEMM_BETA: Cell<u64> = const { Cell::new(0) };
+    static KC_GEMM_TA: Cell<u64> = const { Cell::new(0) };
+    static KC_GEMM_TA_BETA: Cell<u64> = const { Cell::new(0) };
+    static KC_AXPY: Cell<u64> = const { Cell::new(0) };
+    static KC_SCALE: Cell<u64> = const { Cell::new(0) };
+    static KC_NEG: Cell<u64> = const { Cell::new(0) };
+    static KC_COPY: Cell<u64> = const { Cell::new(0) };
+}
 
 #[inline(always)]
-fn bump(c: &AtomicU64) {
-    c.fetch_add(1, Ordering::Relaxed);
+fn bump(key: &'static std::thread::LocalKey<Cell<u64>>) {
+    key.with(|c| c.set(c.get() + 1));
 }
 
 /// Returns a snapshot of the cumulative kernel-call counters.
 ///
-/// Counters are process-wide and are not reset automatically between test
-/// runs; see [`reset_kernel_counts`] for the single-threaded reset.
+/// Counters are **thread-local**: this returns only the kernel calls issued on
+/// the *current* thread since the last [`reset_kernel_counts`] on that thread.
 ///
-/// **Concurrency caveat.** Any test that asserts on the before/after delta
-/// *must* be serialised against every other test that bumps these counters
-/// — the counters are global, so a concurrent test's kernel call is
-/// indistinguishable from a bump the test under observation caused
-/// itself. The in-crate trace tests use `#[serial_test::serial]` on every
-/// `test_fusion_*` cluster to enforce this; new counter-based tests must
-/// do the same (see `expr.rs` test module).
+/// **Concurrency.** Because every `bump` fires on the calling thread at the
+/// kernel dispatch entry (before any internal gemm parallelism), a
+/// `reset_kernel_counts -> op -> kernel_counts` sequence run on a single thread
+/// is exact even when other tests run concurrently on other threads — their
+/// bumps land in their own thread's counters. No `#[serial]` coordination is
+/// required (this is what keeps the trace tests correct under a bare
+/// multi-threaded `cargo test`, which nextest's process-per-test model would
+/// otherwise be needed to provide).
 ///
 /// # Examples
 ///
@@ -175,29 +186,29 @@ fn bump(c: &AtomicU64) {
 ///
 /// # Panics
 ///
-/// Never panics; only reads atomics.
+/// Never panics; only reads the thread-local counters.
 ///
 /// # Complexity
 ///
 /// O(1).
 pub fn kernel_counts() -> KernelCounts {
     KernelCounts {
-        gemm: KC_GEMM.load(Ordering::Relaxed),
-        gemm_with_beta: KC_GEMM_BETA.load(Ordering::Relaxed),
-        gemm_trans_a: KC_GEMM_TA.load(Ordering::Relaxed),
-        gemm_trans_a_with_beta: KC_GEMM_TA_BETA.load(Ordering::Relaxed),
-        axpy_linear: KC_AXPY.load(Ordering::Relaxed),
-        scale_into: KC_SCALE.load(Ordering::Relaxed),
-        neg_into: KC_NEG.load(Ordering::Relaxed),
-        copy_into: KC_COPY.load(Ordering::Relaxed),
+        gemm: KC_GEMM.with(Cell::get),
+        gemm_with_beta: KC_GEMM_BETA.with(Cell::get),
+        gemm_trans_a: KC_GEMM_TA.with(Cell::get),
+        gemm_trans_a_with_beta: KC_GEMM_TA_BETA.with(Cell::get),
+        axpy_linear: KC_AXPY.with(Cell::get),
+        scale_into: KC_SCALE.with(Cell::get),
+        neg_into: KC_NEG.with(Cell::get),
+        copy_into: KC_COPY.with(Cell::get),
     }
 }
 
-/// Resets every kernel-call counter to zero.
+/// Resets the **current thread's** kernel-call counters to zero.
 ///
-/// Intended for single-threaded tests that want to anchor their assertions
-/// at zero; in multi-threaded environments prefer the delta pattern with
-/// two [`kernel_counts`] snapshots.
+/// Because the counters are thread-local, this affects only the calling thread,
+/// so a test can anchor its assertions at zero without coordinating with tests
+/// running concurrently on other threads.
 ///
 /// # Panics
 ///
@@ -207,14 +218,14 @@ pub fn kernel_counts() -> KernelCounts {
 ///
 /// O(1).
 pub fn reset_kernel_counts() {
-    KC_GEMM.store(0, Ordering::Relaxed);
-    KC_GEMM_BETA.store(0, Ordering::Relaxed);
-    KC_GEMM_TA.store(0, Ordering::Relaxed);
-    KC_GEMM_TA_BETA.store(0, Ordering::Relaxed);
-    KC_AXPY.store(0, Ordering::Relaxed);
-    KC_SCALE.store(0, Ordering::Relaxed);
-    KC_NEG.store(0, Ordering::Relaxed);
-    KC_COPY.store(0, Ordering::Relaxed);
+    KC_GEMM.with(|c| c.set(0));
+    KC_GEMM_BETA.with(|c| c.set(0));
+    KC_GEMM_TA.with(|c| c.set(0));
+    KC_GEMM_TA_BETA.with(|c| c.set(0));
+    KC_AXPY.with(|c| c.set(0));
+    KC_SCALE.with(|c| c.set(0));
+    KC_NEG.with(|c| c.set(0));
+    KC_COPY.with(|c| c.set(0));
 }
 
 // ─── Evaluate<F> trait (design §6) ──────────────────────────────────────────
@@ -2329,12 +2340,10 @@ mod tests {
     use crate::gfp::Fp;
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
-    // `#[serial]` keeps global KernelCounts deltas correct when `cargo test`
-    // (in-process parallel runner) is used instead of `cargo nextest` (per
-    // R1 finding F1). `cargo nextest` already isolates tests in subprocesses,
-    // so the annotation is defensive — the goal is correctness under every
-    // runner Cargo ships with.
-    use serial_test::serial;
+    // The kernel-call trace counters (`kernel_counts` / `reset_kernel_counts`)
+    // are thread-local, so a measuring test sees only its own thread's bumps and
+    // needs no `#[serial]` coordination — the before/after deltas stay correct
+    // under both `cargo test` (in-process parallel runner) and `cargo nextest`.
 
     const MERSENNE_31: u64 = 2_147_483_647;
     type M31 = Fp<MERSENNE_31>;
@@ -2372,14 +2381,14 @@ mod tests {
 
     // ─── Fusion trace-counter assertions (success criterion 2) ─────────
     //
-    // Every test in this cluster reads process-wide `KernelCounts` atomics.
-    // `#[serial]` serialises the cluster against itself so before/after
-    // deltas are stable under `cargo test` (in-process parallel runner).
-    // `cargo nextest` runs each test in a fresh subprocess and does not
-    // strictly need this; the annotation is defensive (per R1 finding F1).
+    // Every test in this cluster reads the thread-local `KernelCounts` via a
+    // `reset_kernel_counts -> op -> kernel_counts` sequence on its own thread.
+    // Because the counters are thread-local, the before/after deltas are stable
+    // under both `cargo test` (in-process parallel runner) and `cargo nextest`
+    // with no `#[serial]` coordination — a concurrent test's kernel calls land
+    // in that test's own thread's counters.
 
     #[test]
-    #[serial]
     fn test_fusion_product_plus_one_gemm_with_beta_call() {
         // (&a * &b + &c).into() must dispatch exactly one `gemm_with_beta`
         // call and zero plain `gemm` / `axpy_linear` calls.
@@ -2396,7 +2405,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_product_plus_scaled_one_gemm_with_beta_call() {
         // (&a * &b + beta * &c).into() must dispatch one `gemm_with_beta`
         // (general β).
@@ -2414,7 +2422,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_product_plus_scaled_right_one_gemm_with_beta_call() {
         // The commuted form `&a * &b + &c * beta` must also fuse.
         let a = rand_m31(5, 4, 0x301);
@@ -2430,7 +2437,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_linear_one_axpy_call() {
         // (alpha * &a + beta * &b).into() must dispatch one `axpy_linear`.
         let a = rand_m31(6, 9, 0x401);
@@ -2447,7 +2453,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_transposed_product_one_gemm_trans_a_call() {
         // (a.t() * &b).into() must dispatch one `gemm_trans_a`.
         let a = rand_m31(6, 5, 0x501); // k=6, m=5 → Aᵀ is 5×6
@@ -2461,7 +2466,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_alpha_transposed_product_plus_beta_c_one_call() {
         // `(alpha * a.t()) * &b + beta * &c` must dispatch exactly one
         // `gemm_trans_a_with_beta` call and zero other kernels. This is the
@@ -2484,7 +2488,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_fusion_alpha_transposed_product_plus_beta_c_commuted_one_call() {
         // Commuted form `beta * &c + (alpha * a.t()) * &b` must also fuse.
         let a = rand_m31(6, 5, 0x611);
@@ -2505,7 +2508,7 @@ mod tests {
     fn test_alpha_transposed_product_plus_beta_c_bit_exact() {
         // Bit-exact cross-check: the fused `αAᵀ·B + βC` must match a
         // materialised eager pipeline that computes each subexpression
-        // separately. Counter-independent so no `#[serial]` needed.
+        // separately. This test does not assert on kernel counts.
         let a = rand_m31(6, 5, 0x621);
         let b = rand_m31(6, 7, 0x622);
         let c = rand_m31(5, 7, 0x623);
@@ -2758,7 +2761,6 @@ mod tests {
     // timing + allocation characterisation.
 
     #[test]
-    #[serial]
     fn test_fused_path_allocates_fewer_matrices_than_eager() {
         let a = rand_m31(16, 16, 0x1101);
         let b = rand_m31(16, 16, 0x1102);
