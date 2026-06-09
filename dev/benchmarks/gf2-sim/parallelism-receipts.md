@@ -354,3 +354,50 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   - Device kernel source: `crates/gf2-kernels-hip/hip/gray_qam_demapper.hip`;
     host wrapper: `crates/gf2-kernels-hip/src/lib.rs` (`GpuGrayQamDemapper`);
     GPU stage: `crates/gf2-sim/src/gpu/demap.rs`.
+
+## 75c22fa8 — Hybrid pipeline scheduler (CPU-prep ∥ GPU-decode overlap)
+
+- **Status:** WORKER DIRECTIONAL MEASUREMENT — **NOT YET ATTESTED**. Measured on
+  a heavily loaded host; requires lead re-measurement on a verified-quiet host
+  before attestation (the directional number clears the gate with margin, so the
+  gate is not at risk). Criterion-1 overlap and criterion-3 byte-identity ARE
+  fully verified (they are correctness/behaviour, not load-sensitive throughput).
+- **Date:** 2026-06-09 (worker; loaded-host directional run).
+- **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
+  RX 6950 XT (gfx1030, RDNA2).
+- **Baseline configuration:** dual-baseline — single-thread CPU full-frame (the
+  `c0b1702d` 1.6216 fps headline) AND CPU-24-thread full-frame (the `3fcb7025`
+  21.44 fps baseline, the gate divisor).
+- **Test configuration:** DVB-T2 r1/2 16-QAM, FrameSize::Normal (n_ldpc = 64800),
+  SumProduct LDPC decode (early-termination on), MaxLog soft-demap, Es/N0 = 6.0 dB
+  (deep waterfall — `fer = 0.5000`, non-vacuous). Hybrid: each rayon worker
+  double-buffers CPU prep of batch N+1 (encode → interleave → QAM map → AWGN →
+  demap, all CPU) against the GPU LDPC BP decode of batch N on its owned HIP
+  stream (BATCH_FRAMES = 16), then the SSOT CPU BCH decode-tail + error count.
+  AWGN stays on the CPU on both paths (the heavy GPU-worth stage is LDPC decode).
+- **Observed throughput (48 frames, 1 repeat; LOADED host, `/proc/loadavg` ≈ 12,
+  Baldur's Gate 3 ~368% CPU + GPU 95% busy — invalidates as an *attested* figure;
+  external load only UNDERSTATES throughput):**
+  - **CPU+GPU hybrid: 51.44 fps.**
+  - CPU 24-thread (under the same load): 7.22 fps.
+  - CPU 1-thread (under the same load): 0.8461 fps.
+- **Speedup factor:** Hybrid / CPU-24-thread (same-run, under load) = **7.13×**;
+  Hybrid / canonical quiet-host CPU-24-thread baseline (21.44 fps) = **2.40×**.
+  Both clear the gate.
+- **Required threshold (from task body):** ≥ 1.5× the CPU-24-thread baseline
+  (i.e. ≥ ~32.2 fps). **51.44 fps → clears even against the canonical 21.44 fps
+  baseline at 2.40×.**
+- **Verdict:** DIRECTIONAL PASS (clears the gate with margin) — **awaiting lead
+  quiet-host re-measurement for attestation.**
+- **Raw artefacts:**
+  - Benchmark binary: `crates/gf2-sim/src/bin/hybrid_throughput.rs`
+    (re-run on a quiet host:
+    `cargo run -p gf2-sim --release --features hip --bin hybrid_throughput -- --frames 240 --repeats 3 --es-n0 6.0`).
+  - Overlap (61.2%) + same-path two-run byte-identity suites (GPU-gated,
+    `#[ignore]`): `crates/gf2-sim/tests/hybrid_scheduler.rs`
+    (run: `cargo nextest run -p gf2-sim --release --features hip --profile slow --run-ignored ignored-only -E 'binary(hybrid_scheduler)' --no-capture`).
+  - CPU-path SSOT-equivalence guard (fast tier):
+    `crates/gf2-sim/tests/pipeline_run_cpu.rs`.
+  - Scheduler: `crates/gf2-sim/src/executor/scheduler.rs`; results:
+    `crates/gf2-sim/src/executor/results.rs`.
+  - Phase C criterion evidence: `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`.

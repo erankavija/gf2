@@ -243,6 +243,63 @@ impl DvbT2BicmFrameSim {
         self.k
     }
 
+    /// The FECFRAME codeword length `n_ldpc` (the LLR count per frame).
+    #[inline]
+    #[must_use]
+    pub fn n_ldpc(&self) -> usize {
+        self.codec.n_ldpc()
+    }
+
+    /// The DVB-T2 LDPC code this simulator decodes (for building a GPU LDPC
+    /// decoder paired with this frame kernel's encoder).
+    #[inline]
+    #[must_use]
+    pub fn ldpc_code(&self) -> gf2_coding::ldpc::LdpcCode {
+        self.codec.ldpc_code()
+    }
+
+    /// The LDPC belief-propagation decoder configuration.
+    #[inline]
+    #[must_use]
+    pub fn decoder_config(&self) -> DecoderConfig {
+        self.decoder
+    }
+
+    /// The LDPC code rate.
+    #[inline]
+    #[must_use]
+    pub fn rate(&self) -> CodeRate {
+        self.rate
+    }
+
+    /// The DVB-T2 modulation order.
+    #[inline]
+    #[must_use]
+    pub fn modulation(&self) -> DvbT2Modulation {
+        self.modulation
+    }
+
+    /// The soft-demap method.
+    #[inline]
+    #[must_use]
+    pub fn demap(&self) -> DemapMethod {
+        self.demap
+    }
+
+    /// The per-axis AWGN noise standard deviation `sigma`.
+    #[inline]
+    #[must_use]
+    pub fn sigma(&self) -> f32 {
+        self.sigma
+    }
+
+    /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`).
+    #[inline]
+    #[must_use]
+    pub fn noise_var(&self) -> f32 {
+        self.noise_var
+    }
+
     /// The Es/N0 (dB) this simulator runs at.
     #[inline]
     #[must_use]
@@ -336,6 +393,111 @@ impl DvbT2BicmFrameSim {
             bit_errors,
         }
     }
+
+    /// CPU **batch-prep** half of one frame: draws the random BBFRAME and the
+    /// AWGN realisation and returns the transmitted message together with the
+    /// channel LLRs (steps 1-5 of [`simulate_frame`](Self::simulate_frame)).
+    ///
+    /// This is the half the hybrid scheduler runs on the CPU while the previous
+    /// batch's LDPC decode runs on the GPU (the design-doc §6 / task overlap
+    /// protocol): the heavy LDPC belief-propagation decode (step 6) is *not*
+    /// done here — it is the GPU's job — so the returned [`FramePrep`] carries
+    /// exactly the LLRs the device decoder consumes plus the transmitted message
+    /// the error count is measured against.
+    ///
+    /// All randomness is drawn from `ctx`'s RNG, which the dispatcher has already
+    /// reseeked to the frame's global-frame-indexed offset, so the prep is a pure
+    /// function of the global frame index (the determinism basis).
+    ///
+    /// # Arguments
+    ///
+    /// * `_global_frame_idx` — the frame's global index (unused directly; `ctx`
+    ///   is already positioned at this frame's region).
+    /// * `ctx` — the worker context whose RNG supplies all randomness.
+    ///
+    /// # Returns
+    ///
+    /// A [`FramePrep`] with the transmitted `message` (`k` bits) and the channel
+    /// `llrs` (`n_ldpc` values).
+    ///
+    /// # Complexity
+    ///
+    /// O(`n_ldpc`) encode + interleave + map + demap (no BP decode).
+    pub fn prepare_frame(&self, _global_frame_idx: usize, ctx: &mut WorkerCtx) -> FramePrep {
+        let rng = ctx.rng_mut();
+        let message = random_bitvec(self.k, rng);
+        let codeword = self.codec.encode(&message);
+        let llrs = self.channel.transmit_and_demodulate_with_noise(
+            &codeword,
+            self.sigma,
+            self.noise_var,
+            || {
+                let u1 = rng.random::<f64>();
+                let u2 = rng.random::<f64>();
+                box_muller_cos(u1, u2)
+            },
+        );
+        FramePrep { message, llrs }
+    }
+
+    /// CPU **decode-tail** for the hybrid path: finishes one frame from the GPU
+    /// LDPC hard-decision codeword and the transmitted message.
+    ///
+    /// The GPU LDPC BP stage returns the full `n_ldpc`-bit hard codeword and the
+    /// BP iteration count per frame; this method runs the SSOT BCH outer decode
+    /// ([`DvbT2Concat::decode_bch_from_ldpc_codeword`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat::decode_bch_from_ldpc_codeword))
+    /// to recover the BBFRAME and counts information-bit errors against
+    /// `message` — exactly steps 6 (BCH only) + 7 of
+    /// [`simulate_frame`](Self::simulate_frame).
+    ///
+    /// # Arguments
+    ///
+    /// * `message` — the transmitted BBFRAME (`k` bits) from [`prepare_frame`](Self::prepare_frame).
+    /// * `ldpc_codeword` — the GPU LDPC hard-decision codeword (`n_ldpc` bits).
+    /// * `iterations` — the GPU BP iteration count for the frame.
+    ///
+    /// # Returns
+    ///
+    /// The [`FrameOutcome`] for this frame.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `ldpc_codeword.len() != n_ldpc()`.
+    ///
+    /// # Complexity
+    ///
+    /// O(`k_ldpc`) BCH decode.
+    #[must_use]
+    pub fn decode_codeword_to_outcome(
+        &self,
+        message: &BitVec,
+        ldpc_codeword: &BitVec,
+        iterations: u64,
+    ) -> FrameOutcome {
+        let decoded = self.codec.decode_bch_from_ldpc_codeword(ldpc_codeword);
+        let bit_errors = count_bit_errors(message, &decoded) as u64;
+        FrameOutcome {
+            errored: bit_errors > 0,
+            iterations,
+            info_bits: self.k as u64,
+            bit_errors,
+        }
+    }
+}
+
+/// The CPU batch-prep output for one frame: the transmitted message and the
+/// channel LLRs the device LDPC decoder consumes.
+///
+/// Produced by [`DvbT2BicmFrameSim::prepare_frame`] and consumed by the hybrid
+/// scheduler, which batches the `llrs` for a GPU LDPC decode launch and keeps
+/// the `message` to measure information-bit errors against once the device
+/// codeword comes back.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FramePrep {
+    /// The transmitted BBFRAME (`k` information bits).
+    pub message: BitVec,
+    /// The channel LLRs (`n_ldpc` values), one per FECFRAME bit.
+    pub llrs: Vec<gf2_coding::Llr>,
 }
 
 /// Builds a `len_bits`-bit [`BitVec`] filled from a `rand_chacha 0.9` RNG.

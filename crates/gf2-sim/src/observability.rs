@@ -59,6 +59,7 @@ impl Drop for CampaignSubscriberGuard {
 ///     checkpoint_dir: None,
 ///     tracing_log_path: None,
 ///     parallelism: NonZeroUsize::new(1).unwrap(),
+///     gpu_enabled: false,
 ///     strict_gpu: false,
 /// };
 /// let _guard = install_campaign_subscriber(&cfg);

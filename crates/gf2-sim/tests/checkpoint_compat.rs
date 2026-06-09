@@ -90,6 +90,7 @@ fn cfg(parallelism: usize, max_frames: u64, heartbeat: u64) -> PipelineConfig {
         checkpoint_dir: None,
         tracing_log_path: None,
         parallelism: NonZeroUsize::new(parallelism).unwrap(),
+        gpu_enabled: false,
         strict_gpu: false,
     }
 }

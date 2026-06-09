@@ -222,6 +222,7 @@ mod u128_string {
 ///     checkpoint_dir: None,
 ///     tracing_log_path: None,
 ///     parallelism: NonZeroUsize::new(4).unwrap(),
+///     gpu_enabled: false,
 ///     strict_gpu: false,
 /// };
 /// let h = config_hash(&cfg);
@@ -705,6 +706,7 @@ pub struct CheckpointedRun {
 ///     checkpoint_dir: Some("/tmp/snr".into()),
 ///     tracing_log_path: None,
 ///     parallelism: NonZeroUsize::new(2).unwrap(),
+///     gpu_enabled: false,
 ///     strict_gpu: false,
 /// };
 /// let h = config_hash(&config);
@@ -949,6 +951,7 @@ pub struct SweepRun {
 ///     checkpoint_dir: Some("/tmp/sweep".into()),
 ///     tracing_log_path: None,
 ///     parallelism: NonZeroUsize::new(2).unwrap(),
+///     gpu_enabled: false,
 ///     strict_gpu: false,
 /// };
 /// let h = config_hash(&config);
@@ -1176,6 +1179,7 @@ mod tests {
             checkpoint_dir: None,
             tracing_log_path: None,
             parallelism: NonZeroUsize::new(parallelism).unwrap(),
+            gpu_enabled: false,
             strict_gpu: false,
         }
     }

@@ -188,6 +188,7 @@ fn build_config(args: &Args) -> PipelineConfig {
         checkpoint_dir: Some(args.checkpoint_dir.clone()),
         tracing_log_path: None,
         parallelism: NonZeroUsize::new(2).expect("2 is non-zero"),
+        gpu_enabled: false,
         strict_gpu: false,
     }
 }
