@@ -52,7 +52,9 @@
 //! The two paths differ **only** in which device computes the GPU-eligible
 //! stages (demap + LDPC BP); every other stage is shared, and crucially the
 //! **same transmitted message, same codeword, and SAME noisy received symbols**
-//! feed both demappers.
+//! feed both demappers. (The *runnable-`Pipeline`*-driven CPU-vs-GPU regression
+//! — once the Phase C executor lands — is a separate deliverable owned by D.3
+//! `0d9cb8e3`; this hand-composed suite is the Phase B closer.)
 //!
 //! # Stage coverage of each path
 //!
@@ -95,11 +97,12 @@
 //!
 //! - **Asserted byte-identical**: `frames`, `errors` (FRAME errors), `fer` (the
 //!   three columns of the CPU-vs-GPU relaxed contract).
-//! - **Logged, NOT asserted**: `mean_iters` (§11 CPU-vs-GPU exclusion — RDNA2
-//!   transcendental ULP drift can shift BP early-termination by ±1; the GPU
-//!   batch decode API [`GpuLdpcBp::decode_batch`] does not surface per-frame
-//!   iteration counts, so the GPU `mean_iters` is reported as not-surfaced) and
-//!   the bit-error sum (the BER numerator).
+//! - **Logged, NOT asserted**: `mean_iters` for BOTH paths and the diff (§11
+//!   CPU-vs-GPU exclusion — RDNA2 transcendental ULP drift can shift BP
+//!   early-termination by ±1). The GPU per-frame iteration counts come from
+//!   [`GpuLdpcBp::decode_batch_with_iters`] (the CPU-aligned-convention additive
+//!   API), so the logged CPU-vs-GPU `mean_iters` diff is the genuine ±1
+//!   near-threshold drift. Also logged: the bit-error sum (the BER numerator).
 //! - **Excluded entirely**: `ber` (non-associative f32 reduction; `152388f4`).
 //!
 //! # The hard escalation boundary
@@ -184,9 +187,10 @@ struct Counters {
     /// Sum of mismatched info bits across frames (the BER numerator). LOGGED
     /// ONLY — `ber` is excluded from byte-identity (`152388f4`).
     bit_error_sum: u64,
-    /// Sum of BP iterations across frames, where the path surfaces it (CPU
-    /// only). LOGGED ONLY (`mean_iters` excluded for CPU-vs-GPU). `None` = the
-    /// path does not surface per-frame iteration counts (GPU batch decode).
+    /// Sum of BP iterations across frames (CPU from `decode_soft_counted`, GPU
+    /// from `decode_batch_with_iters`; both CPU-aligned-convention). LOGGED ONLY
+    /// (`mean_iters` excluded for CPU-vs-GPU). `None` only when a path does not
+    /// supply iteration counts (not used on either arm here).
     iter_sum: Option<u64>,
 }
 
@@ -446,11 +450,15 @@ fn run_config(cfg: &Config) -> (Counters, Counters) {
         .iter()
         .map(|interleaved| interleaver.deinterleave_llrs(interleaved))
         .collect();
-    // ONE batched GPU LDPC BP decode over all frames → n-bit codewords.
-    let gpu_hard = gpu_ldpc_stage
-        .decode_batch(&LlrBatch::new(gpu_llr_frames), &gpu_ldpc_decoder)
+    // ONE batched GPU LDPC BP decode over all frames → n-bit codewords + the
+    // per-frame BP iteration counts (CPU-aligned convention) for the logged-only
+    // GPU mean_iters.
+    let (gpu_hard, gpu_iters) = gpu_ldpc_stage
+        .decode_batch_with_iters(&LlrBatch::new(gpu_llr_frames), &gpu_ldpc_decoder)
         .expect("gpu ldpc decode batch");
     assert_eq!(gpu_hard.frames.len(), FRAMES_PER_CONFIG);
+    assert_eq!(gpu_iters.len(), FRAMES_PER_CONFIG);
+    let gpu_iter_sum: u64 = gpu_iters.iter().map(|&i| u64::from(i)).sum();
 
     // BCH outer decode (CPU) per frame, across rayon. Uses the SAME
     // `BchCode::dvb_t2` SSOT `DvbT2Concat::new` constructs internally (Normal
@@ -483,7 +491,10 @@ fn run_config(cfg: &Config) -> (Counters, Counters) {
         ..Counters::default()
     };
     let mut gpu = Counters {
-        iter_sum: None, // GPU batch decode does not surface per-frame iters.
+        // GPU per-frame iters now surfaced via `decode_batch_with_iters`
+        // (CPU-aligned convention). LOGGED only — §11 excludes mean_iters from
+        // CPU-vs-GPU byte-identity.
+        iter_sum: Some(gpu_iter_sum),
         ..Counters::default()
     };
 
@@ -564,22 +575,17 @@ fn assert_config_byte_identical(cfg: &Config) {
         gpu.fer()
     );
 
-    // mean_iters: LOGGED, NOT asserted (design §11 CPU-vs-GPU exclusion). The GPU
-    // batch decode API does not surface per-frame iteration counts.
-    match (cpu.mean_iters(), gpu.mean_iters()) {
-        (Some(c), Some(g)) => println!(
+    // mean_iters for BOTH paths + the diff: LOGGED, NOT asserted (design §11
+    // CPU-vs-GPU exclusion). The GPU per-frame iteration counts come from
+    // `decode_batch_with_iters` (CPU-aligned convention); the small diff is
+    // exactly the ±1 near-threshold drift §11 describes.
+    if let (Some(c), Some(g)) = (cpu.mean_iters(), gpu.mean_iters()) {
+        println!(
             "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
              CPU {c:.4}, GPU {g:.4}, diff {:+.4}",
             cfg.label,
             g - c,
-        ),
-        (Some(c), None) => println!(
-            "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
-             CPU {c:.4}, GPU n/a (batch GPU decode does not surface per-frame \
-             iteration counts), diff n/a",
-            cfg.label,
-        ),
-        _ => {}
+        );
     }
 
     // bit-error sum (BER numerator): LOGGED, NOT asserted (`ber` excluded,
