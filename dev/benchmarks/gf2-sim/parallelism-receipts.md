@@ -248,10 +248,14 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 ## d3f1616a — GPU Gray-QAM max-log soft-demap stage
 
-- **Status:** PROVISIONAL (worker measurement; lead to re-measure on a
-  verified-quiet host before attesting). Measured on the worktree branch
-  `agent-d3f1616a` at HEAD `ce86a03c`.
-- **Date:** 2026-06-09.
+- **Status:** ATTESTED by `agent:project-lead`. Lead clean re-measure on a
+  verified-quiet host (`rocm-smi` GPU 0%, no foreign build/GPU procs) confirmed
+  the gate: **16-QAM GPU/CPU-1T = 12.59×, 64-QAM = 16.09×** (both ≥ 5×), matching
+  the worker's provisional 12.66× / 15.96×. The GPU σ is warmup-dominated, but
+  the CPU-1T divisor is rock-stable and even the GPU −1σ figure clears ≥ 5× for
+  both modulations, so the gate is not at warmup risk. The worker's figures below
+  stand.
+- **Date:** 2026-06-09 (worker measurement + lead quiet-host confirmation).
 - **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
   RX 6950 XT (gfx1030, RDNA2).
 - **Method scoping (HONEST):** the GPU `demap_batch` kernel computes **max-log
@@ -327,14 +331,15 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
     OR value-ulp ≤ 2 (MAX_LOG_ULP_TOLERANCE)`. `MAX_LOG_ABS_TOLERANCE = 2.0e-6`
     is the **measured** worst case (`MEASURED_WORST_ABS_DIFF = 1.9073486e-6`),
     statically asserted to cover it; the test PASSES both modulations on the
-    combined tolerance and prints the literal value-ulp diagnostic. **This is a
-    `[hard]`-criterion deviation flagged for lead arbitration** (per
-    `feedback_measurements_not_guesses` / `feedback_no_autonomous_amendments`): I
-    did not silently amend the issue. The §11 *intent* (small softmath residual)
-    holds at ≤ 2e-6 absolute; the literal "2 *value*-ulp on the LLR" wording is
-    falsified by data for a max-log LLR straddling zero and should be amended to
-    the combined/absolute form (or to "≤ 2 ulp at unit LLR scale" — which is
-    still 3, so the absolute form is the correct fix).
+    combined tolerance and prints the literal value-ulp diagnostic. **This
+    implements the user-approved amendment 2026-06-09b** (recorded in the
+    `d3f1616a` JIT issue description): the worker did not silently amend — the
+    deviation was escalated, and the user approved replacing the pure value-ulp
+    bound with the combined `≤ 2 ulp OR ≤ 2.0e-6 absolute` form because the literal
+    "2 *value*-ulp on the LLR" is falsified by data for a max-log LLR straddling
+    zero (GPU-f32 vs CPU-f64; near-zero value-ulp is unbounded for a sign-crossing
+    quantity regardless of precision). The §11 softmath intent (small residual)
+    holds at ≤ 2e-6 absolute.
 - **`cpu_fallback()` returns the CPU demapper:** `CpuGrayQamDemapper` (the
   in-crate `Stage<SymbolBatch, LlrBatch>` wrapper delegating to
   `FastGrayQamDemapper`, orphan-rule-required like `CpuLdpcBp`); verified by
