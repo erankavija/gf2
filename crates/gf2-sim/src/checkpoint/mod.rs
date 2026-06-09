@@ -686,6 +686,41 @@ pub struct CheckpointedRun {
 /// # Complexity
 ///
 /// `O(frames_run)` frame closures across `config.parallelism` workers.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::num::NonZeroUsize;
+/// use gf2_sim::PipelineConfig;
+/// use gf2_sim::checkpoint::{config_hash, run_snr_point_checkpointed, CheckpointWriter};
+/// use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
+/// use rand::Rng as _;
+///
+/// let config = PipelineConfig {
+///     seed: 7,
+///     esn0_db_points: vec![3.0],
+///     target_errors: 0,
+///     max_frames: 8,
+///     heartbeat_every_frames: 4,
+///     checkpoint_dir: Some("/tmp/snr".into()),
+///     tracing_log_path: None,
+///     parallelism: NonZeroUsize::new(2).unwrap(),
+///     strict_gpu: false,
+/// };
+/// let h = config_hash(&config);
+/// let writer = CheckpointWriter::new("/tmp/snr").unwrap();
+/// let run = run_snr_point_checkpointed(
+///     &config, 0, 3.0, &writer, &h, None,
+///     || (),
+///     |_g: usize, ctx: &mut WorkerCtx, _s: &mut ()| {
+///         let x: u64 = ctx.rng_mut().random();
+///         FrameOutcome { errored: x & 1 == 1, iterations: 1, info_bits: 8, bit_errors: x & 1 }
+///     },
+///     |_snr, _frames| {}, // per-heartbeat-flush callback (unused here)
+/// )
+/// .unwrap();
+/// assert!(run.completed);
+/// ```
 #[allow(clippy::too_many_arguments)]
 pub fn run_snr_point_checkpointed<S, M, F, H>(
     config: &PipelineConfig,

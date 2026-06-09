@@ -198,7 +198,7 @@ Examples of note:
 | `channels` | Channel stages: `awgn` (`Awgn`, `es_n0_db_to_sigma`), `rayleigh`, `rician` — per-frame noise injection from the per-worker ChaCha20 stream |
 | `parallel` | Within-SNR frame parallelism: `worker_offset` (§3 ChaCha20 seek), `WorkerCtx`, `WorkerCounters`, `FrameOutcome`, `run_snr_point` / `run_snr_point_range` / `run_snr_point_stateless` |
 | `frame_sim` | `DvbT2BicmFrameSim` — the reusable deterministic single-frame BICM-AWGN kernel the within-SNR dispatch drives |
-| `checkpoint` | v2 heartbeat-checkpoint schema (`CheckpointV2`/`WorkerState`), `config_hash`, atomic `CheckpointWriter`, v2-only `CheckpointReader`, `run_snr_point_checkpointed` / `run_sweep_checkpointed`, SIGINT flush (`clear_interrupt`/`is_interrupted`); `bin/checkpoint_sweep` drives the kill-during-fsync proof |
+| `checkpoint` | v2 heartbeat-checkpoint schema (`CheckpointV2`/`WorkerState`), `config_hash`, atomic `CheckpointWriter`, v2-only `CheckpointReader`, `run_snr_point_checkpointed` / `run_sweep_checkpointed`, SIGINT flush (`clear_interrupt`/`is_interrupted`/`request_interrupt`); `bin/checkpoint_sweep` drives the kill-during-fsync proof |
 | `config` | `PipelineConfig` — the run configuration (seed, Es/N0 points, frame/error budgets, heartbeat cadence, checkpoint/tracing paths, parallelism, `strict_gpu`) |
 | `error` | `BuildError`, `StageError`, `RecoverableError`, `FatalError` — the typed error hierarchy and the `gf2-sim`↔HIP error mapping boundary |
 | `executor` | Hybrid CPU/GPU executor home (Phase C stub today: scheduler, OOM-catch / CPU-fallback substitution, GPU drain-for-checkpoint) |
