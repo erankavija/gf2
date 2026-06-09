@@ -175,6 +175,9 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 - **Status:** ATTESTED by `agent:project-lead` (clean quiet-host re-measure at
   merged HEAD `f3f0aaa5`; supersedes the worker's provisional under-load figures).
+  Still valid after rework-r2 (which removed an unused in-kernel shift FFI
+  parameter only — no runtime change; the 1800-frame byte-identity was
+  re-verified at the r2 HEAD).
 - **Date:** 2026-06-09 (lead quiet-host re-measure after the rework-round-1
   per-frame early-termination FREEZE landed — frozen frames skip all subsequent
   kernel work, so the GPU is faster than the pre-freeze 531.93 fps figure).
