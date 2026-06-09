@@ -170,3 +170,73 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
     (run: `cargo nextest run -p gf2-sim --release --features hip -E 'test(test_gpu_awgn_matches_cpu_within_1_ulp)'`).
   - Device kernel source: `crates/gf2-kernels-hip/hip/chacha20_awgn.hip`;
     host wrappers: `crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs`.
+
+## a930be7f — GPU LDPC belief-propagation batch decode kernel
+
+- **Status:** PROVISIONAL (worker measurement under host load; the lead
+  re-measures on a verified-quiet host before attesting the gate).
+- **Date:** 2026-06-09 (worker measurement; numbers below are the rework-round-1
+  re-measure after the per-frame early-termination FREEZE landed — frozen frames
+  skip all subsequent kernel work, so the GPU is faster than the pre-freeze
+  531.93 fps figure).
+- **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
+  RX 6950 XT (gfx1030, RDNA2).
+- **Baseline configuration (apples-to-apples, per the user-approved 2026-06-09
+  amendment):** the gate compares **decode-stage throughput vs decode-stage
+  throughput**, NOT GPU-decode vs CPU-full-frame. The divisor is the CPU
+  `LdpcDecoder` decode stage measured in isolation (`decode_to_codeword`,
+  SumProduct, early-termination on) at single-thread and 24-thread.
+- **Test configuration:** DVB-T2 r1/2 LDPC code (`LdpcCode::dvb_t2_normal`,
+  n = 64800, m = 32400), SumProduct, early-termination on, max_iters = 50, at a
+  **waterfall operating point** (all-zero-codeword BPSK, sigma = 0.80) where the
+  mean BP depth is **~25.7 iterations** with successful decode — chosen to match
+  the `3fcb7025` full-chain mean_iters ≈ 25.24 so the decode-vs-decode comparison
+  exercises a realistic iteration count (not the trivial 1-iteration clean
+  channel). The GPU path decodes all 200 frames in one batched call (one set of
+  per-iteration kernel launches over the whole batch + H2D/D2H); the CPU paths
+  decode the same 200 frames serially (1 thread) and across the rayon pool
+  (24 threads, per-frame independent `LdpcDecoder`s — the per-frame outcome is a
+  deterministic pure function of the frame's LLRs regardless of thread).
+- **Observed throughput (200 frames, 5 repeats; rework-round-1 re-measure at
+  `loadavg` ≈ 11.5, GPU 0% before the run):**
+  - **GPU decode-stage: 620.82 fps ± 10.08** (up from the pre-freeze 531.93 fps
+    — the per-frame freeze skips work on already-converged frames).
+  - **CPU decode-stage 1-thread: 2.5072 fps ± 0.0021.**
+  - **CPU decode-stage 24-thread: 21.98 fps ± 0.15.**
+  - (A quiet-host spot check at 96 frames earlier read CPU 1T 2.52 / 24T 21.70,
+    consistent — the runs above were taken under host load, which only
+    *understates* the CPU baselines, so the gate is not at risk.)
+- **Speedup factors (decode-vs-decode):**
+  - **GPU / CPU-1-thread = 247.61×** (620.82 / 2.5072; gate **≥ 10×** — clears
+    with large margin).
+  - **GPU / CPU-24-thread = 28.25×** (620.82 / 21.98; gate **≥ 3×** — clears with
+    large margin).
+- **Context only (full-frame baselines, NOT the gate metric for a decode-only
+  kernel):** GPU decode-stage fps is ~382.8× the full-frame single-thread
+  baseline (1.6216 fps) and ~29.0× the full-frame 24-thread baseline (21.44 fps).
+  These are recorded for completeness per the amendment; the gate is
+  decode-vs-decode.
+- **Required thresholds (from task body, all [hard]):** GPU decode ≥ 10×
+  single-thread CPU decode-stage AND ≥ 3× CPU-24-thread decode-stage.
+  **Both clear (247.61× and 28.25×).**
+- **Verdict:** PROVISIONAL PASS — both thresholds clear with large margin even
+  under the (CPU-understating) host load this measurement was taken at. The lead
+  re-measures on a verified-quiet host (`cat /proc/loadavg` ≈ 0, `rocm-smi` GPU
+  0%) before attesting.
+- **Correctness (criterion 1):** the GPU hard-decision codeword is **byte-identical**
+  to the CPU `LdpcDecoder::decode_to_codeword` output for **all** 200 frames × 3
+  SNRs × {MinSum, NormalizedMinSum(0.75), SumProduct} (1800 frames). Including
+  SumProduct's `tanh`/`atanh` box-plus — the hard-decision verdict is robust to
+  the 1-3 ULP RDNA2 transcendental drift (design §11). No decision-boundary
+  flips were observed.
+- **Raw artefacts:**
+  - Benchmark binary: `crates/gf2-sim/src/bin/gpu_ldpc_throughput.rs`
+    (re-run: `cargo run -p gf2-sim --release --features hip --bin gpu_ldpc_throughput -- --frames 200 --repeats 5 --max-iters 50`).
+  - Byte-identity test (200 frames × 3 SNRs × 3 algorithms, gfx1030-gated, skips
+    with no GPU; slow tier, ignored):
+    `crates/gf2-sim/tests/gpu_ldpc_byte_identity.rs::gpu_ldpc_hard_decision_byte_identical_to_cpu`
+    (run: `cargo nextest run -p gf2-sim --release --features hip --profile slow --run-ignored ignored-only -E 'test(gpu_ldpc_hard_decision_byte_identical_to_cpu)'`).
+    Measured ~90 s wall (under the 120 s slow-tier cap; elevated by host load).
+  - Device kernel source: `crates/gf2-kernels-hip/hip/ldpc_bp.hip`; host
+    wrappers: `crates/gf2-kernels-hip/src/launch_ldpc_bp.rs`; GPU stage:
+    `crates/gf2-sim/src/gpu/ldpc_bp.rs`.

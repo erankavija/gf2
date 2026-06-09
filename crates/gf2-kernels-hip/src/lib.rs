@@ -40,6 +40,15 @@ pub mod launch_chacha20_awgn;
 #[doc(inline)]
 pub use launch_chacha20_awgn::{chacha20_key_from_seed, GpuChaChaAwgn};
 
+/// Safe host wrappers for the device LDPC belief-propagation batch decoder
+/// (`hip/ldpc_bp.hip`, design doc §6 / §10 / §11): [`GpuLdpcBp`], the
+/// [`LdpcGraphLayout`] CSR/CSC graph encoding, and the [`GpuBpAlgorithm`]
+/// box-plus selector.
+pub mod launch_ldpc_bp;
+
+#[doc(inline)]
+pub use launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout};
+
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
 /// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.

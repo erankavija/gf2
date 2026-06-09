@@ -16,6 +16,7 @@
 //! [`StageError`]: crate::error::StageError
 
 pub mod awgn;
+pub mod ldpc_bp;
 
 #[cfg(feature = "hip")]
 mod imp {
