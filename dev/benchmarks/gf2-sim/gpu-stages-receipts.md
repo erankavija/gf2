@@ -39,89 +39,109 @@ chain harness below can share ONE noise realisation between paths.
 - **Date:** 2026-06-09.
 - **Hardware:** CPU = AMD Ryzen 9 5900X (12C/24T), GPU = AMD Radeon RX 6950 XT
   (gfx1030, RDNA2). Single GPU — the suite assumes no concurrent GPU work.
-- **Test:** `crates/gf2-sim/tests/gpu_byte_identity.rs`, function
-  `gpu_chain_verdict_byte_identical_to_cpu` (`#[ignore = "sim: ..."]`, gated on
-  `gf2_kernels_hip::host::device_mem_info().is_ok()`).
+- **Test:** `crates/gf2-sim/tests/gpu_byte_identity.rs`, THREE per-config
+  functions `gpu_chain_verdict_byte_identical_{r12_16qam,r23_64qam,r34_16qam}`
+  (each `#[ignore = "sim: ..."]`, each gated on
+  `gf2_kernels_hip::host::device_mem_info().is_ok()`). Split one-per-config so
+  each stays under the 120 s slow-tier cap (`.config/nextest.toml`
+  `[profile.slow] slow-timeout = 120s`).
 - **Run command:**
   ```bash
   cargo test -p gf2-sim --features hip --release \
-      --test gpu_byte_identity -- --ignored --nocapture
+      --test gpu_byte_identity -- --ignored --nocapture --test-threads=1
   ```
-- **What is compared (the §11 CPU-vs-GPU relaxed contract):** for each frame,
-  a CPU-only path and a CPU+GPU path are hand-composed (the Phase C hybrid
-  executor `75c22fa8`/`de160fc5` does not exist yet), differing **only** in
-  which device runs the GPU-eligible stages:
+  (`--test-threads=1`: single gfx1030 — the three GPU tests must not run
+  concurrently.)
+- **The three §11 columns are FRAME-level (per `WorkerCounters`):** the
+  determinism SSOT `gf2_sim::parallel::WorkerCounters` defines
+  `errors += u64::from(errored)` — one count per **errored frame**. The three
+  byte-identical columns are `frames`, `errors` (= errored-frame count), and
+  `fer` (= errors / frames). The per-frame **bit**-error count (the BER
+  numerator) is NOT one of the three: `ber` is **excluded** from byte-identity
+  (non-associative f32 reduction; `152388f4`; design §11 "Always-excluded:
+  ber"). This suite asserts the FRAME-error columns and only LOGS the bit-error
+  sum (like `mean_iters`).
+- **What is compared (the §11 CPU-vs-GPU relaxed contract):** a CPU-only path and
+  a CPU+GPU path are hand-composed (the Phase C hybrid executor
+  `75c22fa8`/`de160fc5` does not exist yet), differing **only** in which device
+  runs the GPU-eligible stages:
   - **Shared per frame** (computed once, fed identically to both): random k_bch
     BBFRAME → BCH+LDPC encode → bit-interleave → Gray-QAM map → **ONE** AWGN
     noise realisation → noisy rx I/Q symbols. GPU AWGN is NOT re-exercised here
     (its bit-identity to CPU noise is proven by `f6004add`); sharing one noise
     realisation isolates the comparison to the demap→decode verdict.
-  - **CPU-only path:** CPU `FastGrayQamDemapper` max-log → deinterleave → CPU
+  - **CPU-only path** (run across the rayon pool, per-frame outcome
+    thread-independent): CPU `FastGrayQamDemapper` max-log → deinterleave → CPU
     LDPC BP + BCH via `DvbT2Concat::decode_soft_counted`.
-  - **CPU+GPU path:** GPU `GpuGrayQamDemapper` max-log → deinterleave → GPU
-    `GpuLdpcBp` BP → extract k_ldpc systematic bits → CPU `BchDecoder` outer
-    decode (the same `BchCode::dvb_t2` SSOT `DvbT2Concat::new` builds; BCH has
-    no GPU kernel, so it stays on CPU on both arms).
+  - **CPU+GPU path** (single batched GPU launches): GPU `GpuGrayQamDemapper`
+    max-log over the whole sweep → deinterleave → ONE batched `GpuLdpcBp`
+    `decode_batch` → extract k_ldpc systematic bits → CPU `BchDecoder` outer
+    decode across rayon (the same `BchCode::dvb_t2` SSOT `DvbT2Concat::new`
+    builds; BCH has no GPU kernel, so it stays on CPU on both arms).
   - **MAX-LOG on both sides:** `GpuGrayQamDemapper` is max-log only, so BOTH
     paths use `DemapMethod::MaxLog` (apples-to-apples; never GPU max-log vs CPU
     exact-log-MAP).
 - **Decoder config:** `NormalizedMinSum(0.75)` with early termination, BP cap 50
   (the DVB-T2 default).
-- **Operating point — the contract's convergence regime:** each Es/N0 is set
-  **above** the config's TS 102 831 Table 44 QEF C/N threshold so the LDPC BP
-  converges on essentially every frame. A *converged* frame decodes to the
-  *correct* codeword on both paths, so the three columns are byte-identical (the
-  parity-check verdict is integer-state, robust to the 1–3 ULP transcendental /
-  max-log drift, per §11). **Below** threshold the BP does not converge and both
-  paths emit garbage codewords whose raw bit-error counts legitimately drift by
-  the ULP residual — a non-converged artefact outside the contract's scope (see
-  the escalation note below).
+- **Operating point — the §11 waterfall regime (non-vacuous):** each Es/N0 sits
+  in the **waterfall** (steep part of the FER curve), calibrated empirically at
+  the per-config seed so the 200-frame sweep yields `0 < errored_frames < frames`
+  — a non-trivial mix of clean decodes and errored frames. The test **asserts**
+  non-vacuity (`errored_frames > 0 && < frames`). This is the regime §11 names
+  verbatim — "For LDPC BP **near** the convergence threshold ... the frame's
+  final verdict ... is robust to that drift; `fer`/`frames`/`errors` remain
+  byte-identical." It is at this verdict boundary (not above threshold, where
+  every frame trivially decodes and the asserts would be 0 == 0) that
+  GPU-demap+GPU-BP drift could flip a borderline frame's verdict; the §11 claim
+  is that it does NOT. The waterfall is sharp for NMS(0.75) max-log: e.g. r1/2
+  16-QAM goes 6.2 dB → 200/200 errored, 6.4 → 105/200, 6.6 → 3/200.
 
-### Result — three columns byte-identical (CPU == GPU)
+### Result — three FRAME columns byte-identical (CPU == GPU), non-vacuous
 
-| Config | Es/N0 (dB) | QEF threshold | frames | errors | fer | CPU == GPU |
-|--------|-----------:|--------------:|-------:|-------:|----:|:----------:|
-| r1/2 16-QAM | 7.5 | 6.0 | 200 | 0 | 0.000000 | yes |
-| r2/3 64-QAM | 15.0 | 13.5 | 200 | 0 | 0.000000 | yes |
-| r3/4 16-QAM | 11.5 | 10.0 | 200 | 0 | 0.000000 | yes |
+| Config | Es/N0 (dB) | frames | errored_frames (= `errors`) | fer | CPU == GPU |
+|--------|-----------:|-------:|----------------------------:|----:|:----------:|
+| r1/2 16-QAM | 6.4 | 200 | 105 | 0.525000 | yes |
+| r2/3 64-QAM | 14.3 | 200 | 33 | 0.165000 | yes |
+| r3/4 16-QAM | 10.2 | 200 | 70 | 0.350000 | yes |
 
-All three configs: `fer`, `frames`, `errors` byte-identical between the CPU-only
-and CPU+GPU paths at the fixed per-config seed. At a converging operating point
-every frame's verdict matches, so the aggregate three columns are identical.
+All three configs: `frames`, `errors` (errored-frame count), `fer` byte-identical
+between the CPU-only and CPU+GPU paths at the fixed per-config seed. The sweeps
+are non-vacuous (105 / 33 / 70 errored frames of 200), so the verdict boundary is
+genuinely exercised — not one of those frames flipped verdict between CPU and
+GPU. Per-test wall time ≈ 31–40 s (r1/2 measured 30.76 s standalone; all three
+together 104 s), each well under the 120 s slow-tier cap.
 
-### mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion)
+### mean_iters + bit-error sum (LOGGED, NOT asserted)
 
-`mean_iters` is excluded from CPU-vs-GPU byte-identity (RDNA2 transcendental ULP
-drift can shift the BP early-termination iteration by ±1 without changing the
-integer-state parity-check verdict). It is logged for the record only:
+`mean_iters` is excluded from CPU-vs-GPU byte-identity (§11: RDNA2 transcendental
+ULP drift can shift the BP early-termination iteration by ±1 without changing the
+integer-state parity-check verdict). The GPU batch decode API
+(`GpuLdpcBp::decode_batch`) returns the hard-decision codeword only and does not
+surface per-frame iteration counts, so the GPU value is not-surfaced. The
+bit-error sum (the BER numerator) is also logged only (`ber` excluded):
 
-| Config | CPU mean_iters | GPU mean_iters | diff |
-|--------|---------------:|:--------------:|:----:|
-| r1/2 16-QAM | 36.5950 | n/a | n/a |
-| r2/3 64-QAM | 21.7800 | n/a | n/a |
-| r3/4 16-QAM | 8.6250 | n/a | n/a |
+| Config | CPU mean_iters | GPU mean_iters | bit-error sum CPU | bit-error sum GPU |
+|--------|---------------:|:--------------:|------------------:|------------------:|
+| r1/2 16-QAM | 50.0000 | n/a | 2085 | 2085 |
+| r2/3 64-QAM | 49.4750 | n/a | 1163 | 1163 |
+| r3/4 16-QAM | 46.4050 | n/a | 11600 | 11600 |
 
-The GPU batch decode API (`GpuLdpcBp::decode_batch`) returns the hard-decision
-codeword only and does not surface per-frame iteration counts, so the GPU
-`mean_iters` is reported as not-surfaced. The CPU `mean_iters` (well below the
-50-iteration cap on all three configs) confirms genuine BP convergence at these
-operating points — i.e. the byte-identity is exercised in the converged regime,
-not a vacuous all-failed regime.
+(CPU `mean_iters` is high here because at the waterfall most errored frames run
+to the 50-iteration cap — exactly the near-threshold regime §11 describes. The
+bit-error sums happened to match CPU == GPU at these seeds, a bonus; they are
+NOT asserted and may differ on an errored frame without violating the contract.)
 
-### Escalation note — below-threshold divergence is out of scope (informational)
+### Escalation contract (how a real §11 violation surfaces)
 
-During bring-up, an earlier draft ran each config **below** its QEF threshold
-(r2/3 64-QAM at 11.5 dB, ≈2 dB below threshold). There the BP did not converge:
-both paths produced garbage codewords with ≈4 300 info-bit errors per frame, and
-the raw `errors` count differed by **1 bit** on the first frame (CPU 4311 vs GPU
-4310). That is the expected ULP-residual drift between two *non-converged*
-garbage outputs — the demap/BP softmath differs by 1–3 ULP (per `d3f1616a` /
-`a930be7f`), which can flip a borderline bit in a codeword that is failing to
-decode anyway. It is **not** a verdict (the frame is in error on both paths, so
-`fer`/`frames` still agree) and is outside the §11 contract, which is about the
-*converged* verdict's robustness. The suite therefore runs above threshold,
-where the contract's premise (BP convergence) holds; this is a regime choice,
-not a weakening of the criterion (the three columns are still asserted
-byte-identical). No silent relaxation was applied: the test PANICS with the
-exact (config, frame, column, first differing bit) on any divergence, per the
-issue's HARD ESCALATION TRIGGER.
+The §11 contract is on the FRAME verdict. The test compares each frame's
+`errored` flag CPU-vs-GPU; if a frame errors on one path but not the other (the
+`errors`/`fer` columns would diverge), the test **PANICS** with the exact
+(config, frame index, CPU vs GPU verdict and bit-error counts) and does NOT relax
+the criterion or move the operating point. That escalation is a real result to
+report to the lead — a §11-scope user decision, not a test edit. On this run no
+config diverged: all three frame-verdict columns are byte-identical at the
+waterfall.
+
+(History: an earlier draft incorrectly asserted the **bit**-error sum and was
+forced above threshold to make it zero — a vacuous regime. That was corrected to
+assert the FRAME columns at the waterfall, per the lead review.)

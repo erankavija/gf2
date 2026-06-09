@@ -6,10 +6,43 @@
 //! `a930be7f`; `gpu_demap_byte_identity.rs` for the max-log demap, issue
 //! `d3f1616a`). It composes the validated building blocks — encode, interleave,
 //! Gray-QAM map, AWGN, demap, deinterleave, LDPC BP decode, BCH outer decode —
-//! into one frame's worth of work and asserts the **design-doc §11 CPU-vs-GPU
-//! relaxed contract** end-to-end: the three columns `fer / frames / errors` are
-//! byte-identical across the CPU-only path and the CPU+GPU path at a fixed seed,
-//! for the three named (rate, modulation) configurations on gfx1030.
+//! and asserts the **design-doc §11 CPU-vs-GPU relaxed contract** end-to-end:
+//! the three columns `fer / frames / errors` are byte-identical across the
+//! CPU-only path and the CPU+GPU path at a fixed seed, for the three named
+//! (rate, modulation) configurations on gfx1030.
+//!
+//! # The three §11 columns are FRAME-level (not bit-level)
+//!
+//! The determinism SSOT is [`WorkerCounters`](gf2_sim::parallel::WorkerCounters)
+//! (`errors += u64::from(errored)` — one count per *errored frame*) and the
+//! comparison helper `tests/common/mod.rs`. The three byte-identical columns are
+//! therefore:
+//!   - `frames` — number of frames simulated (`u64`),
+//!   - `errors` — number of **errored frames** (a frame is errored iff any
+//!     information bit differs from the TX message),
+//!   - `fer` — `errors / frames` (the frame-error ratio).
+//!
+//! The **bit-error count** (sum of mismatched info bits) is NOT one of the three
+//! columns: `ber = total_bit_errors / total_bits` is **excluded** from
+//! byte-identity (non-associative f32 reduction; design §11 "Always-excluded:
+//! ber"; status-quo amendment `152388f4`). This suite therefore asserts the
+//! FRAME-error columns and only LOGS the bit-error sum (like `mean_iters`),
+//! never asserting it.
+//!
+//! # Waterfall operating point — the regime §11 is about (non-vacuous)
+//!
+//! Each config runs at a **waterfall** Es/N0 (the steep part of the FER curve,
+//! ~0.5-1.5 dB below the TS 102 831 QEF C/N threshold), chosen so the 200-frame
+//! sweep yields a non-trivial mix `0 < errored_frames < frames`: some frames
+//! decode cleanly, some error. This is exactly the regime §11 names verbatim —
+//! "For LDPC BP **near** the convergence threshold, ULP differences ... can
+//! change the iteration ... The frame's final verdict ... is robust to that
+//! drift; `fer`/`frames`/`errors` remain byte-identical." The suite asserts the
+//! sweep is non-vacuous (total errored frames across the suite > 0) so the
+//! verdict boundary is genuinely exercised, then asserts the three columns
+//! byte-identical there. (Running above threshold, where every frame decodes,
+//! would make the asserts 0==0 and exercise no verdict — that is not the
+//! contract's regime.)
 //!
 //! # Why hand-composed (Phase C executor does not exist yet)
 //!
@@ -34,22 +67,22 @@
 //! about. Feeding the identical `SymbolBatch` to both demappers keeps the
 //! comparison valid without re-proving GPU AWGN here.
 //!
-//! CPU-only path (steps 4–7 on CPU):
+//! CPU-only path (steps 4–7 on CPU, run across the rayon pool):
 //!   4. CPU [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper)
 //!      **max-log** demap;
 //!   5. bit-deinterleave LLRs → FECFRAME order;
 //!   6. CPU LDPC BP decode + BCH outer decode via
 //!      [`DvbT2Concat::decode_soft_counted`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat);
-//!   7. count info-bit errors vs the TX message.
+//!   7. frame-error verdict (any info-bit mismatch) vs the TX message.
 //!
-//! CPU+GPU path (demap + LDPC BP on GPU, BCH on CPU — BCH has no GPU kernel):
+//! CPU+GPU path (demap + LDPC BP on GPU in single batched launches; BCH on CPU):
 //!   4. GPU [`GpuGrayQamDemapper`](gf2_sim::gpu::demap::GpuGrayQamDemapper)
 //!      **max-log** demap;
 //!   5. bit-deinterleave LLRs → FECFRAME order;
 //!   6. GPU [`GpuLdpcBp`](gf2_sim::gpu::ldpc_bp::GpuLdpcBp) BP decode → n-bit
 //!      codeword → extract first k_ldpc bits → CPU [`BchDecoder`] outer decode
 //!      (the same `BchCode::dvb_t2` SSOT `DvbT2Concat::new` builds internally);
-//!   7. count info-bit errors vs the TX message.
+//!   7. frame-error verdict vs the TX message.
 //!
 //! # MAX-LOG on BOTH sides (apples-to-apples)
 //!
@@ -58,35 +91,32 @@
 //! `ExactLogMap` would be invalid; the comparison here is GPU-max-log vs
 //! CPU-max-log throughout.
 //!
-//! # What is asserted, and what is NOT (design §11, user-approved Q3 2026-06-07)
+//! # What is asserted, and what is NOT
 //!
-//! - **Asserted byte-identical**: `fer`, `frames`, `errors` (the three columns of
-//!   the CPU-vs-GPU relaxed contract).
-//! - **Logged, NOT asserted**: `mean_iters`. Per §11 it is EXCLUDED from
-//!   CPU-vs-GPU byte-identity (RDNA2 transcendental ULP drift can shift the BP
-//!   early-termination iteration by ±1 without changing the integer-state
-//!   parity-check verdict). The GPU batch decode API
-//!   ([`GpuLdpcBp::decode_batch`]) does not surface per-frame iteration counts,
-//!   so the GPU `mean_iters` is reported as not-surfaced; the CPU `mean_iters`
-//!   is logged for the record. The diff is logged, never asserted.
-//! - **Excluded entirely**: `ber` (non-associative f32 horizontal reduction;
-//!   status-quo amendment from `152388f4`) — it is neither computed nor compared
-//!   here.
+//! - **Asserted byte-identical**: `frames`, `errors` (FRAME errors), `fer` (the
+//!   three columns of the CPU-vs-GPU relaxed contract).
+//! - **Logged, NOT asserted**: `mean_iters` (§11 CPU-vs-GPU exclusion — RDNA2
+//!   transcendental ULP drift can shift BP early-termination by ±1; the GPU
+//!   batch decode API [`GpuLdpcBp::decode_batch`] does not surface per-frame
+//!   iteration counts, so the GPU `mean_iters` is reported as not-surfaced) and
+//!   the bit-error sum (the BER numerator).
+//! - **Excluded entirely**: `ber` (non-associative f32 reduction; `152388f4`).
 //!
 //! # The hard escalation boundary
 //!
-//! The §11 rationale is written specifically about the LDPC BP verdict's
-//! robustness to transcendental drift; it does NOT claim GPU max-log demap drift
-//! is verdict-robust. If GPU-demap-then-GPU-decode flips a borderline bit vs
-//! CPU-demap-then-CPU-decode, the three-column byte-identity breaks. On any
-//! divergence this test PANICS with the exact (config, frame, column, first
-//! differing value) — it does NOT relax the criterion. Resolution is a §11-scope
-//! user decision (see the issue's HARD ESCALATION TRIGGER), not a test edit.
+//! At the waterfall, GPU-demap+GPU-BP drift *could* flip a borderline frame's
+//! verdict vs CPU-demap+CPU-BP; §11 claims it will NOT. If a frame errors on one
+//! path but not the other (the FRAME-error / `fer` columns diverge), that is a
+//! genuine §11 violation: this test PANICS with the exact (config, frame, CPU vs
+//! GPU verdict) — it does NOT relax the criterion and does NOT move the operating
+//! point to dodge it. Resolution is a §11-scope user decision (see the issue's
+//! HARD ESCALATION TRIGGER), not a test edit.
 //!
 //! Gated on GPU presence (skips cleanly when `device_mem_info().is_err()`, like
-//! the other `gf2-sim` GPU tests) and carries `#[ignore]` per the CLAUDE.md
-//! test-tier rules (200-frame n=64800 sweep over three configs far exceeds the
-//! 5 s fast tier). Single gfx1030 → never assumes concurrent GPU suites.
+//! the other `gf2-sim` GPU tests). Split into THREE `#[ignore]` tests (one per
+//! config) so each stays under the 120 s slow-tier cap; the CPU path runs across
+//! rayon and the GPU demap+decode run as single batched launches. Single gfx1030
+//! → never assumes concurrent GPU suites.
 
 #![cfg(feature = "hip")]
 
@@ -111,6 +141,7 @@ use gf2_sim::batch::SymbolBatch;
 use gf2_sim::gpu::demap::GpuGrayQamDemapper;
 use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
 use gf2_sim::LlrBatch;
+use rayon::prelude::*;
 
 /// BP iteration cap (the DVB-T2 default; matches `DvbT2Concat`'s 50).
 const MAX_LDPC_ITERATIONS: usize = 50;
@@ -121,20 +152,17 @@ const FRAMES_PER_CONFIG: usize = 200;
 
 /// One (rate, modulation, Es/N0) config plus its per-config seed.
 ///
-/// # Es/N0 selection — the contract's convergence regime
+/// # Es/N0 selection — the §11 waterfall regime (non-vacuous, NOT above-threshold)
 ///
-/// Each Es/N0 is set **above** the config's TS 102 831 Table 44 QEF C/N
-/// threshold (r1/2 16-QAM 6.0 dB, r2/3 64-QAM 13.5 dB, r3/4 16-QAM 10.0 dB),
-/// with margin, so the LDPC BP **converges** on essentially every frame. This
-/// is the regime the §11 CPU-vs-GPU contract is about: a *converged* frame
-/// decodes to the *correct* codeword on both paths, so `fer / frames / errors`
-/// are byte-identical (the parity-check verdict is integer-state, robust to the
-/// 1-3 ULP transcendental/max-log drift). **Below** threshold the BP does NOT
-/// converge and both paths emit *garbage* codewords whose raw bit-error counts
-/// legitimately drift by the demap/BP ULP residual — that is a non-converged
-/// artefact, not a verdict, and is outside the contract's scope. Running here at
-/// a converging operating point validates the contract honestly without masking
-/// any real divergence (see the receipt's escalation note).
+/// Each Es/N0 sits in the **waterfall** (steep part of the FER curve), ~0.5-1.5
+/// dB **below** the config's TS 102 831 Table 44 QEF C/N threshold (r1/2 16-QAM
+/// 6.0 dB, r2/3 64-QAM 13.5 dB, r3/4 16-QAM 10.0 dB), calibrated empirically so
+/// the 200-frame sweep yields `0 < errored_frames < frames` — a non-trivial mix
+/// of clean decodes and errored frames. This is the regime §11 names verbatim:
+/// "near the convergence threshold ... the frame's final verdict ... is robust
+/// to that drift; `fer`/`frames`/`errors` remain byte-identical." The suite
+/// asserts the sweep is non-vacuous, so the verdict boundary — where GPU drift
+/// could flip a frame's verdict — is actually exercised.
 struct Config {
     rate: CodeRate,
     modulation: DvbT2Modulation,
@@ -143,22 +171,27 @@ struct Config {
     label: &'static str,
 }
 
-/// Aggregated three-column verdict over one config's frame sweep, plus the
-/// (logged-only) mean BP iteration accumulator from the path that surfaces it.
+/// Aggregated FRAME-level verdict over one config's sweep, plus logged-only
+/// diagnostics (bit-error sum, BP-iteration sum). The three asserted columns are
+/// `frames`, `errored_frames` (the §11 `errors`), and `fer`.
 #[derive(Debug, Default, Clone, Copy)]
 struct Counters {
+    /// Number of frames simulated (the §11 `frames` column).
     frames: u64,
-    errors: u64,
-    /// Frame-error count (a frame is in error iff any info bit differs).
+    /// Number of **errored frames** (the §11 `errors` column; one per frame
+    /// whose decoded BBFRAME differs from the TX message in any info bit).
     errored_frames: u64,
+    /// Sum of mismatched info bits across frames (the BER numerator). LOGGED
+    /// ONLY — `ber` is excluded from byte-identity (`152388f4`).
+    bit_error_sum: u64,
     /// Sum of BP iterations across frames, where the path surfaces it (CPU
-    /// only — see module docs). `None` means the path does not surface it.
+    /// only). LOGGED ONLY (`mean_iters` excluded for CPU-vs-GPU). `None` = the
+    /// path does not surface per-frame iteration counts (GPU batch decode).
     iter_sum: Option<u64>,
 }
 
 impl Counters {
-    /// Frame error rate `errored_frames / frames` (the `fer` column). Compared
-    /// bit-for-bit as an `f64`, like the CPU-only/parallel contract's `fer`.
+    /// Frame error rate `errored_frames / frames` (the `fer` column).
     fn fer(&self) -> f64 {
         if self.frames == 0 {
             0.0
@@ -235,7 +268,8 @@ fn awgn_params(es_n0_db: f64) -> (f32, f32) {
 /// info-bit message and the ONE noisy received-symbol realisation.
 struct SharedFrame {
     message: BitVec,
-    rx: SymbolBatch,
+    rx_i: Vec<f32>,
+    rx_q: Vec<f32>,
 }
 
 /// Encodes a random message and produces the single noisy received-symbol
@@ -265,18 +299,18 @@ fn make_shared_frame(
     // 2. Bit-interleave → Gray-QAM map → tx I/Q symbols.
     let interleaved = interleaver.interleave(&codeword);
     let interleaved_bits: Vec<bool> = (0..interleaved.len()).map(|i| interleaved.get(i)).collect();
-    let mut tx_i = vec![0.0_f32; num_symbols];
-    let mut tx_q = vec![0.0_f32; num_symbols];
-    mapper.map_bits(&interleaved_bits, &mut tx_i, &mut tx_q);
+    let mut rx_i = vec![0.0_f32; num_symbols];
+    let mut rx_q = vec![0.0_f32; num_symbols];
+    mapper.map_bits(&interleaved_bits, &mut rx_i, &mut rx_q);
 
     // 3. ONE shared AWGN realisation: I axis (all symbols) then Q axis (all
     //    symbols), matching the `BicmAwgnChannel` draw contract.
-    for s in tx_i.iter_mut() {
+    for s in rx_i.iter_mut() {
         let u1 = rng.next_uniform();
         let u2 = rng.next_uniform();
         *s += sigma * box_muller_cos(u1, u2);
     }
-    for s in tx_q.iter_mut() {
+    for s in rx_q.iter_mut() {
         let u1 = rng.next_uniform();
         let u2 = rng.next_uniform();
         *s += sigma * box_muller_cos(u1, u2);
@@ -284,18 +318,26 @@ fn make_shared_frame(
 
     SharedFrame {
         message,
-        rx: SymbolBatch::new(vec![tx_i], vec![tx_q]),
+        rx_i,
+        rx_q,
     }
 }
 
-/// Runs the full CPU-only and CPU+GPU paths over one config's frame sweep and
-/// returns `(cpu_counters, gpu_counters)`. Panics with the precise divergence
-/// detail on the FIRST per-frame verdict mismatch (the escalation contract).
+/// Per-frame verdict: `(errored, bit_errors)`. `errored` is the §11 frame-error
+/// flag (any info-bit mismatch); `bit_errors` is the logged-only bit count.
+#[derive(Clone, Copy)]
+struct Verdict {
+    errored: bool,
+    bit_errors: u64,
+}
+
+/// Runs both paths over one config's frame sweep and returns
+/// `(cpu_counters, gpu_counters)`. Panics with the precise divergence detail on
+/// the FIRST per-frame FRAME-verdict mismatch (the escalation contract).
 fn run_config(cfg: &Config) -> (Counters, Counters) {
     let (sigma, noise_var) = awgn_params(cfg.es_n0_db);
 
-    // Shared / CPU back-end: the production DVB-T2 codec. `decode_soft_counted`
-    // is the CPU-only LDPC+BCH path (and the encoder for both paths).
+    // Shared / CPU back-end: the production DVB-T2 codec.
     let mut codec = DvbT2Concat::new(FrameSize::Normal, cfg.rate)
         .expect("DVB-T2 Normal codec for in-scope rate");
     let decoder_config = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
@@ -307,256 +349,324 @@ fn run_config(cfg: &Config) -> (Counters, Counters) {
     let modcod = DvbT2Modcod::new(FrameSize::Normal, cfg.rate, cfg.modulation);
     let interleaver = DvbT2BitInterleaver::new(modcod);
 
-    // Mapper + CPU demapper from the SAME `gray_square_qam(order)` SSOT the
-    // production chain (`BicmAwgnChannel`) builds.
+    // Mapper from the SAME `gray_square_qam(order)` SSOT the production chain
+    // (`BicmAwgnChannel`) builds.
     let order = 1usize << bits_per_symbol;
     let spec = ModemSpec::<f32>::gray_square_qam(order);
     let mapper = spec.preferred_mapper();
-    let cpu_demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
 
-    // GPU stages: max-log demap + LDPC BP, same code + config + noise_var.
+    // ---- Generate all shared frames up front (encode + map + shared noise) ----
+    let mut rng = SplitMix64::new(cfg.seed);
+    let frames: Vec<SharedFrame> = (0..FRAMES_PER_CONFIG)
+        .map(|_| {
+            make_shared_frame(
+                &codec,
+                &interleaver,
+                mapper.as_ref(),
+                bits_per_symbol,
+                sigma,
+                k_bch,
+                &mut rng,
+            )
+        })
+        .collect();
+
     let ldpc_code = LdpcCode::dvb_t2_normal(cfg.rate);
     let n_ldpc = ldpc_code.n();
-    // The GPU demapper's `max_batch` is sized in *symbols* (one frame's worth):
-    // n_ldpc bits / bits_per_symbol symbols. The LDPC decoder's is in *frames*.
-    let symbols_per_frame = n_ldpc / bits_per_symbol;
+
+    // ---- CPU-only path: demap + deinterleave + LDPC+BCH per frame, across the
+    // rayon pool. Each frame's outcome is a pure function of its shared inputs
+    // (own one-shot codec per frame), so the result is thread-independent. ----
+    let cpu_results: Vec<(Verdict, u64)> = frames
+        .par_iter()
+        .map(|frame| {
+            let num_symbols = frame.rx_i.len();
+            let cpu_demapper = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
+            let nv = vec![noise_var; num_symbols];
+            let mut interleaved_llrs = vec![Llr::zero(); n_ldpc];
+            cpu_demapper.demap_llrs(
+                DemapInput {
+                    rx_i: &frame.rx_i,
+                    rx_q: &frame.rx_q,
+                    gain_i: None,
+                    gain_q: None,
+                    noise_var: &nv,
+                    method: DemapMethod::MaxLog,
+                },
+                &mut interleaved_llrs,
+            );
+            let llrs = interleaver.deinterleave_llrs(&interleaved_llrs);
+            // Fresh per-frame codec so the rayon map is data-race-free and the
+            // outcome is thread-independent.
+            let mut frame_codec = DvbT2Concat::new(FrameSize::Normal, cfg.rate)
+                .expect("DVB-T2 Normal codec for in-scope rate");
+            frame_codec.set_decoder_config(decoder_config);
+            let (bbframe, iters) = match frame_codec.decode_soft_counted(&llrs) {
+                Ok((bb, it)) => (bb, it as u64),
+                Err(ConcatError::LdpcDecodeFailed {
+                    bbframe,
+                    iterations,
+                }) => (bbframe, iterations as u64),
+                Err(_) => (BitVec::with_capacity(k_bch), MAX_LDPC_ITERATIONS as u64),
+            };
+            let bit_errors = count_bit_errors(&frame.message, &bbframe) as u64;
+            (
+                Verdict {
+                    errored: bit_errors > 0,
+                    bit_errors,
+                },
+                iters,
+            )
+        })
+        .collect();
+
+    // ---- CPU+GPU path: ONE batched GPU demap + ONE batched GPU LDPC decode over
+    // the whole sweep, then CPU BCH per frame (across rayon). ----
     let gpu_demap_stage = GpuGrayQamDemapper::new(cfg.modulation, DemapMethod::MaxLog, noise_var);
+    // demapper `max_batch` is in *symbols* (one frame's worth).
+    let symbols_per_frame = n_ldpc / bits_per_symbol;
     let gpu_demapper = gpu_demap_stage
         .build_demapper(symbols_per_frame)
         .expect("build GPU demapper on gfx1030");
     let gpu_ldpc_stage = GpuLdpcBp::new(ldpc_code, decoder_config, MAX_LDPC_ITERATIONS);
+    // decoder `max_batch` is in *frames*.
     let gpu_ldpc_decoder = gpu_ldpc_stage
-        .build_decoder(1)
+        .build_decoder(FRAMES_PER_CONFIG)
         .expect("build GPU LDPC decoder on gfx1030");
 
-    // GPU back-end BCH: the SAME `BchCode::dvb_t2` SSOT `DvbT2Concat::new`
-    // constructs internally (Normal frame, same rate). Not a reimplementation —
-    // the identical public building block, used to finish the GPU path's outer
-    // decode (BCH has no GPU kernel).
-    let bch_decoder = BchDecoder::new(BchCode::dvb_t2(BchFrameSize::Normal, cfg.rate));
+    // Batched GPU max-log demap over all frames (one launch per frame inside).
+    let rx_i_all: Vec<Vec<f32>> = frames.iter().map(|f| f.rx_i.clone()).collect();
+    let rx_q_all: Vec<Vec<f32>> = frames.iter().map(|f| f.rx_q.clone()).collect();
+    let demap_out = gpu_demap_stage
+        .demap_batch(&SymbolBatch::new(rx_i_all, rx_q_all), &gpu_demapper)
+        .expect("gpu demap batch");
+    // Deinterleave each frame's interleaved LLRs → FECFRAME order.
+    let gpu_llr_frames: Vec<Vec<Llr>> = demap_out
+        .frames
+        .iter()
+        .map(|interleaved| interleaver.deinterleave_llrs(interleaved))
+        .collect();
+    // ONE batched GPU LDPC BP decode over all frames → n-bit codewords.
+    let gpu_hard = gpu_ldpc_stage
+        .decode_batch(&LlrBatch::new(gpu_llr_frames), &gpu_ldpc_decoder)
+        .expect("gpu ldpc decode batch");
+    assert_eq!(gpu_hard.frames.len(), FRAMES_PER_CONFIG);
 
-    let mut cpu = Counters::default();
-    let mut gpu = Counters::default();
-    cpu.iter_sum = Some(0); // CPU path surfaces BP iterations.
-    gpu.iter_sum = None; // GPU batch decode does not surface per-frame iters.
+    // BCH outer decode (CPU) per frame, across rayon. Uses the SAME
+    // `BchCode::dvb_t2` SSOT `DvbT2Concat::new` constructs internally (Normal
+    // frame, same rate) — the identical public building block, not a
+    // reimplementation; BCH has no GPU kernel so it is CPU on both arms.
+    let gpu_results: Vec<Verdict> = gpu_hard
+        .frames
+        .par_iter()
+        .zip(frames.par_iter())
+        .map(|(gpu_codeword, frame)| {
+            let bch_decoder = BchDecoder::new(BchCode::dvb_t2(BchFrameSize::Normal, cfg.rate));
+            // Extract systematic BCH codeword (positions 0..k_ldpc), same
+            // convention as `DvbT2Concat::decode_soft_counted`.
+            let mut bch_codeword = BitVec::with_capacity(k_ldpc);
+            for i in 0..k_ldpc {
+                bch_codeword.push_bit(gpu_codeword.get(i));
+            }
+            let bbframe = bch_decoder.decode(&bch_codeword);
+            let bit_errors = count_bit_errors(&frame.message, &bbframe) as u64;
+            Verdict {
+                errored: bit_errors > 0,
+                bit_errors,
+            }
+        })
+        .collect();
 
-    let mut rng = SplitMix64::new(cfg.seed);
+    // ---- Per-frame FRAME-verdict comparison + aggregation ----
+    let mut cpu = Counters {
+        iter_sum: Some(0),
+        ..Counters::default()
+    };
+    let mut gpu = Counters {
+        iter_sum: None, // GPU batch decode does not surface per-frame iters.
+        ..Counters::default()
+    };
 
-    for frame_idx in 0..FRAMES_PER_CONFIG {
-        let frame = make_shared_frame(
-            &codec,
-            &interleaver,
-            mapper.as_ref(),
-            bits_per_symbol,
-            sigma,
-            k_bch,
-            &mut rng,
-        );
-        let num_symbols = frame.rx.i[0].len();
-
-        // -------------------- CPU-only path --------------------
-        // 4. CPU max-log demap (interleaved LLR order).
-        let nv = vec![noise_var; num_symbols];
-        let mut cpu_interleaved_llrs = vec![Llr::zero(); n_ldpc];
-        cpu_demapper.demap_llrs(
-            DemapInput {
-                rx_i: &frame.rx.i[0],
-                rx_q: &frame.rx.q[0],
-                gain_i: None,
-                gain_q: None,
-                noise_var: &nv,
-                method: DemapMethod::MaxLog,
-            },
-            &mut cpu_interleaved_llrs,
-        );
-        // 5. Deinterleave → FECFRAME order.
-        let cpu_llrs = interleaver.deinterleave_llrs(&cpu_interleaved_llrs);
-        // 6. CPU LDPC BP + BCH outer decode (production path).
-        let (cpu_bbframe, cpu_iters) = match codec.decode_soft_counted(&cpu_llrs) {
-            Ok((bb, it)) => (bb, it as u64),
-            Err(ConcatError::LdpcDecodeFailed {
-                bbframe,
-                iterations,
-            }) => (bbframe, iterations as u64),
-            Err(_) => (BitVec::with_capacity(k_bch), MAX_LDPC_ITERATIONS as u64),
-        };
-        // 7. Info-bit errors.
-        let cpu_bit_errors = count_bit_errors(&frame.message, &cpu_bbframe) as u64;
-
-        // -------------------- CPU+GPU path --------------------
-        // 4. GPU max-log demap (interleaved LLR order), same noisy symbols.
-        let gpu_demap_out = gpu_demap_stage
-            .demap_batch(&frame.rx, &gpu_demapper)
-            .expect("gpu demap");
-        // 5. Deinterleave → FECFRAME order.
-        let gpu_llrs = interleaver.deinterleave_llrs(&gpu_demap_out.frames[0]);
-        // 6. GPU LDPC BP → n-bit codeword.
-        let gpu_hard = gpu_ldpc_stage
-            .decode_batch(&LlrBatch::new(vec![gpu_llrs]), &gpu_ldpc_decoder)
-            .expect("gpu ldpc decode");
-        let gpu_codeword = &gpu_hard.frames[0];
-        // Extract systematic BCH codeword (positions 0..k_ldpc), same convention
-        // as `DvbT2Concat::decode_soft_counted`.
-        let mut bch_codeword = BitVec::with_capacity(k_ldpc);
-        for i in 0..k_ldpc {
-            bch_codeword.push_bit(gpu_codeword.get(i));
-        }
-        // BCH outer decode (CPU) → BBFRAME estimate.
-        let gpu_bbframe = bch_decoder.decode(&bch_codeword);
-        // 7. Info-bit errors.
-        let gpu_bit_errors = count_bit_errors(&frame.message, &gpu_bbframe) as u64;
-
-        // -------------------- Per-frame verdict comparison --------------------
-        // The §11 three-column contract is an aggregate equality, but a per-frame
-        // mismatch is the earliest signal and yields the precise escalation
-        // detail. errors (info-bit count) and the frame-error flag must match
-        // frame-by-frame; any mismatch is a contract violation -> PANIC (never
-        // relax). BER is intentionally NOT computed or compared (excluded per
-        // `152388f4`).
-        if cpu_bit_errors != gpu_bit_errors {
-            let first = (0..k_bch).find(|&b| cpu_bbframe.get(b) != gpu_bbframe.get(b));
+    for (frame_idx, ((cpu_v, cpu_iters), gpu_v)) in
+        cpu_results.iter().zip(gpu_results.iter()).enumerate()
+    {
+        // The §11 contract is on the FRAME verdict. A per-frame verdict mismatch
+        // (frame errors on one path but not the other) is a genuine §11
+        // violation -> PANIC (never relax, never move the operating point). The
+        // bit-error count is NOT compared (excluded BER numerator).
+        if cpu_v.errored != gpu_v.errored {
             panic!(
-                "BYTE-IDENTITY VIOLATION [{}] frame={frame_idx}: column=errors \
-                 (CPU info-bit errors={cpu_bit_errors}, GPU={gpu_bit_errors}); \
-                 first differing info bit {first:?} (cpu={:?}, gpu={:?}). \
-                 ESCALATE per the §11 HARD trigger — do NOT relax the criterion.",
-                cfg.label,
-                first.map(|b| cpu_bbframe.get(b)),
-                first.map(|b| gpu_bbframe.get(b)),
-            );
-        }
-        let cpu_errored = cpu_bit_errors > 0;
-        let gpu_errored = gpu_bit_errors > 0;
-        if cpu_errored != gpu_errored {
-            panic!(
-                "BYTE-IDENTITY VIOLATION [{}] frame={frame_idx}: column=fer/frames \
-                 (CPU errored={cpu_errored}, GPU errored={gpu_errored}). \
-                 ESCALATE per the §11 HARD trigger — do NOT relax the criterion.",
-                cfg.label,
+                "BYTE-IDENTITY VIOLATION [{}] frame={frame_idx}: FRAME verdict diverged \
+                 (CPU errored={}, GPU errored={}; CPU bit_errors={}, GPU bit_errors={}). \
+                 ESCALATE per the §11 HARD trigger — do NOT relax the criterion, do NOT \
+                 move the operating point.",
+                cfg.label, cpu_v.errored, gpu_v.errored, cpu_v.bit_errors, gpu_v.bit_errors,
             );
         }
 
-        // Aggregate.
         cpu.frames += 1;
-        cpu.errors += cpu_bit_errors;
-        cpu.errored_frames += u64::from(cpu_errored);
+        cpu.errored_frames += u64::from(cpu_v.errored);
+        cpu.bit_error_sum += cpu_v.bit_errors;
         cpu.iter_sum = cpu.iter_sum.map(|s| s + cpu_iters);
 
         gpu.frames += 1;
-        gpu.errors += gpu_bit_errors;
-        gpu.errored_frames += u64::from(gpu_errored);
+        gpu.errored_frames += u64::from(gpu_v.errored);
+        gpu.bit_error_sum += gpu_v.bit_errors;
     }
 
     (cpu, gpu)
 }
 
-/// The three named (rate, modulation) configurations from the issue.
-fn configs() -> [Config; 3] {
-    [
-        Config {
-            // QEF threshold 6.0 dB; +1.5 dB margin for reliable convergence.
-            rate: CodeRate::Rate1_2,
-            modulation: DvbT2Modulation::Qam16,
-            es_n0_db: 7.5,
-            seed: 0x14F5_9C2D_0012_0010,
-            label: "r1/2 16-QAM",
-        },
-        Config {
-            // QEF threshold 13.5 dB; +1.5 dB margin for reliable convergence.
-            rate: CodeRate::Rate2_3,
-            modulation: DvbT2Modulation::Qam64,
-            es_n0_db: 15.0,
-            seed: 0x14F5_9C2D_0023_0040,
-            label: "r2/3 64-QAM",
-        },
-        Config {
-            // QEF threshold 10.0 dB; +1.5 dB margin for reliable convergence.
-            rate: CodeRate::Rate3_4,
-            modulation: DvbT2Modulation::Qam16,
-            es_n0_db: 11.5,
-            seed: 0x14F5_9C2D_0034_0010,
-            label: "r3/4 16-QAM",
-        },
-    ]
-}
-
-/// Phase B close (issue `14f59c2d`): the full DVB-T2 BICM chain verdict is
-/// byte-identical (`fer / frames / errors`) across CPU-only and CPU+GPU at a
-/// fixed seed for the three named configs. `mean_iters` is logged (not
-/// asserted); `ber` is excluded. Skips cleanly with no GPU.
-#[test]
-#[ignore = "sim: 200-frame n=64800 CPU-vs-GPU DVB-T2 BICM chain byte-identity over 3 configs (gfx1030-gated)"]
-fn gpu_chain_verdict_byte_identical_to_cpu() {
+/// Asserts the three §11 columns (`frames`, `errors`=errored frames, `fer`)
+/// byte-identical CPU-vs-GPU, asserts the sweep is non-vacuous, and logs the
+/// excluded quantities (`mean_iters`, bit-error sum). Shared by the three
+/// per-config tests.
+fn assert_config_byte_identical(cfg: &Config) {
     if device_mem_info().is_err() {
         eprintln!(
-            "skipping gpu_chain_verdict_byte_identical_to_cpu: no usable GPU \
-             (device_mem_info failed)"
+            "skipping {} byte-identity: no usable GPU (device_mem_info failed)",
+            cfg.label
         );
         return;
     }
 
-    for cfg in &configs() {
-        let (cpu, gpu) = run_config(cfg);
+    let (cpu, gpu) = run_config(cfg);
 
-        // The three-column §11 CPU-vs-GPU contract: fer / frames / errors must be
-        // byte-identical. (Per-frame mismatches already panic in `run_config`;
-        // these aggregate asserts are the contract statement and a backstop.)
-        assert_eq!(
-            cpu.frames, gpu.frames,
-            "[{}] column `frames` diverged: CPU {} vs GPU {}",
-            cfg.label, cpu.frames, gpu.frames
-        );
-        assert_eq!(
-            cpu.errors, gpu.errors,
-            "[{}] column `errors` diverged: CPU {} vs GPU {}",
-            cfg.label, cpu.errors, gpu.errors
-        );
-        // `fer` is the errored-frame ratio; both sides share the same `frames`,
-        // and `errored_frames` is compared bit-for-bit, so `fer` is byte-equal.
-        assert_eq!(
-            cpu.errored_frames, gpu.errored_frames,
-            "[{}] column `fer` diverged (errored frames): CPU {} vs GPU {}",
-            cfg.label, cpu.errored_frames, gpu.errored_frames
-        );
-        assert_eq!(
-            cpu.fer().to_bits(),
-            gpu.fer().to_bits(),
-            "[{}] column `fer` diverged: CPU {} vs GPU {}",
+    // Non-vacuity: the waterfall sweep MUST exercise the verdict boundary —
+    // some frames error, some decode cleanly. (0 errored = above threshold /
+    // vacuous; all errored = below the waterfall / also uninformative.)
+    assert!(
+        cpu.errored_frames > 0 && cpu.errored_frames < cpu.frames,
+        "[{}] VACUOUS sweep: errored_frames={} of {} (need 0 < errored < frames; \
+         recalibrate the waterfall Es/N0)",
+        cfg.label,
+        cpu.errored_frames,
+        cpu.frames,
+    );
+
+    // The three §11 CPU-vs-GPU columns, byte-identical.
+    assert_eq!(
+        cpu.frames, gpu.frames,
+        "[{}] column `frames` diverged: CPU {} vs GPU {}",
+        cfg.label, cpu.frames, gpu.frames
+    );
+    assert_eq!(
+        cpu.errored_frames, gpu.errored_frames,
+        "[{}] column `errors` (errored frames) diverged: CPU {} vs GPU {}",
+        cfg.label, cpu.errored_frames, gpu.errored_frames
+    );
+    assert_eq!(
+        cpu.fer().to_bits(),
+        gpu.fer().to_bits(),
+        "[{}] column `fer` diverged: CPU {} vs GPU {}",
+        cfg.label,
+        cpu.fer(),
+        gpu.fer()
+    );
+
+    // mean_iters: LOGGED, NOT asserted (design §11 CPU-vs-GPU exclusion). The GPU
+    // batch decode API does not surface per-frame iteration counts.
+    match (cpu.mean_iters(), gpu.mean_iters()) {
+        (Some(c), Some(g)) => println!(
+            "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
+             CPU {c:.4}, GPU {g:.4}, diff {:+.4}",
             cfg.label,
-            cpu.fer(),
-            gpu.fer()
-        );
-
-        // `mean_iters`: LOGGED, NOT asserted (design §11 CPU-vs-GPU exclusion).
-        // The GPU batch decode API does not surface per-frame iteration counts,
-        // so the GPU value is reported as not-surfaced; the diff is informational.
-        let cpu_mean = cpu.mean_iters();
-        match (cpu_mean, gpu.mean_iters()) {
-            (Some(c), Some(g)) => {
-                println!(
-                    "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
-                     CPU {c:.4}, GPU {g:.4}, diff {:+.4}",
-                    cfg.label,
-                    g - c,
-                );
-            }
-            (Some(c), None) => {
-                println!(
-                    "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
-                     CPU {c:.4}, GPU n/a (batch GPU decode does not surface per-frame \
-                     iteration counts), diff n/a",
-                    cfg.label,
-                );
-            }
-            _ => {}
-        }
-
-        println!(
-            "[{}] PASS: fer={:.6} frames={} errors={} (CPU == GPU, three columns byte-identical)",
+            g - c,
+        ),
+        (Some(c), None) => println!(
+            "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
+             CPU {c:.4}, GPU n/a (batch GPU decode does not surface per-frame \
+             iteration counts), diff n/a",
             cfg.label,
-            cpu.fer(),
-            cpu.frames,
-            cpu.errors,
-        );
+        ),
+        _ => {}
     }
+
+    // bit-error sum (BER numerator): LOGGED, NOT asserted (`ber` excluded,
+    // `152388f4`). It legitimately differs CPU-vs-GPU on errored frames (demap
+    // ULP drift changes garbage bits within a failed frame); only the FRAME
+    // verdict is contractual.
+    println!(
+        "[{}] bit-error sum (LOGGED, NOT asserted — `ber` excluded): CPU {}, GPU {}, \
+         diff {}",
+        cfg.label,
+        cpu.bit_error_sum,
+        gpu.bit_error_sum,
+        gpu.bit_error_sum as i64 - cpu.bit_error_sum as i64,
+    );
+
+    println!(
+        "[{}] PASS @ Es/N0={} dB: frames={} errored_frames={} fer={:.6} \
+         (CPU == GPU; three columns frames/errors/fer byte-identical; non-vacuous)",
+        cfg.label,
+        cfg.es_n0_db,
+        cpu.frames,
+        cpu.errored_frames,
+        cpu.fer(),
+    );
+}
+
+fn config_r12_16qam() -> Config {
+    Config {
+        // Waterfall midpoint for NMS(0.75) max-log at this seed: 6.4 dB →
+        // ≈105/200 errored frames (calibrated empirically; the FER curve is
+        // steep — 6.2 → 200/200, 6.6 → 3/200).
+        rate: CodeRate::Rate1_2,
+        modulation: DvbT2Modulation::Qam16,
+        es_n0_db: 6.4,
+        seed: 0x14F5_9C2D_0012_0010,
+        label: "r1/2 16-QAM",
+    }
+}
+
+fn config_r23_64qam() -> Config {
+    Config {
+        // Waterfall point for NMS(0.75) max-log at this seed: 14.3 dB →
+        // ≈33/200 errored frames (14.0 → 200/200, 14.5 → 0/200).
+        rate: CodeRate::Rate2_3,
+        modulation: DvbT2Modulation::Qam64,
+        es_n0_db: 14.3,
+        seed: 0x14F5_9C2D_0023_0040,
+        label: "r2/3 64-QAM",
+    }
+}
+
+fn config_r34_16qam() -> Config {
+    Config {
+        // Waterfall point for NMS(0.75) max-log at this seed: 10.2 dB →
+        // ≈70/200 errored frames (10.1 → 185/200, 10.3 → 3/200).
+        rate: CodeRate::Rate3_4,
+        modulation: DvbT2Modulation::Qam16,
+        es_n0_db: 10.2,
+        seed: 0x14F5_9C2D_0034_0010,
+        label: "r3/4 16-QAM",
+    }
+}
+
+// One #[ignore] test per config so each stays under the 120 s slow-tier cap.
+
+/// Phase B close (issue `14f59c2d`), r1/2 16-QAM: the three §11 columns
+/// `frames / errors / fer` are byte-identical CPU-vs-GPU at a waterfall Es/N0
+/// with a non-vacuous frame-error mix. `mean_iters` + bit-error sum logged
+/// (not asserted); `ber` excluded. Skips cleanly with no GPU.
+#[test]
+#[ignore = "sim: 200-frame n=64800 CPU-vs-GPU DVB-T2 BICM chain byte-identity, r1/2 16-QAM waterfall (gfx1030-gated)"]
+fn gpu_chain_verdict_byte_identical_r12_16qam() {
+    assert_config_byte_identical(&config_r12_16qam());
+}
+
+/// Phase B close (issue `14f59c2d`), r2/3 64-QAM: see
+/// [`gpu_chain_verdict_byte_identical_r12_16qam`].
+#[test]
+#[ignore = "sim: 200-frame n=64800 CPU-vs-GPU DVB-T2 BICM chain byte-identity, r2/3 64-QAM waterfall (gfx1030-gated)"]
+fn gpu_chain_verdict_byte_identical_r23_64qam() {
+    assert_config_byte_identical(&config_r23_64qam());
+}
+
+/// Phase B close (issue `14f59c2d`), r3/4 16-QAM: see
+/// [`gpu_chain_verdict_byte_identical_r12_16qam`].
+#[test]
+#[ignore = "sim: 200-frame n=64800 CPU-vs-GPU DVB-T2 BICM chain byte-identity, r3/4 16-QAM waterfall (gfx1030-gated)"]
+fn gpu_chain_verdict_byte_identical_r34_16qam() {
+    assert_config_byte_identical(&config_r34_16qam());
 }
