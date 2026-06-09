@@ -18,10 +18,28 @@
 //! the underlying `total_iterations` whose ratio `mean_iters` is). **BER is
 //! deliberately excluded** — see the function docs and the cited issue
 //! `152388f4` / design-doc §11 "Always-excluded".
+//!
+//! # GPU fault-injection helpers (issue `ed575f15`, design doc §8)
+//!
+//! [`OomInjector`] and [`KernelErrorInjector`] are reusable `Stage` wrappers
+//! that force a typed [`StageError`](gf2_sim::error::StageError) on the Nth
+//! `process` invocation, plus the trivial [`Identity`] stage and [`TinyBatch`]
+//! batch they wrap. They are the **single source of truth** for the fault
+//! injectors: `tests/gpu_fault_injection.rs` (issue `ed575f15`, deliverable 3)
+//! verifies they produce the expected error variants, and the Phase C executor
+//! substitution test (issue `42eac5cc`) reuses them by the same `mod common;`
+//! include — no copy-paste. They reference only the un-gated `gf2_sim::error`
+//! / `gf2_sim::stage` items (no `feature = "hip"` types), so they compile into
+//! the non-hip determinism test binaries that also include this module.
 
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+
+use gf2_sim::error::{FatalError, RecoverableError, StageError};
 use gf2_sim::parallel::WorkerCounters;
+use gf2_sim::stage::{BatchSize, ExecutionClass, Stage};
 
 /// Asserts the four byte-identity columns of `actual` match `baseline`
 /// (design doc §11 CPU-only / CPU-parallel contract).
@@ -105,4 +123,259 @@ pub fn assert_four_columns_byte_identical(
     // BER (total_bit_errors / total_bits) is intentionally NOT asserted — it is
     // always excluded from byte-identity (issue `152388f4`; design-doc §11
     // "Always-excluded"). No comparison is offered for it on purpose.
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// GPU fault-injection helpers (issue `ed575f15`, deliverable 3; design doc §8)
+//
+// SSOT for the fault injectors: defined here so the verification tests
+// (`gpu_fault_injection.rs`) and the Phase C executor substitution test
+// (`42eac5cc`) reuse the SAME definitions via `mod common;` — no copy-paste.
+// All items reference only the un-gated `gf2_sim::error` / `gf2_sim::stage`
+// surface, so this module compiles cleanly into the non-hip test binaries
+// (`determinism.rs`, `parallel_determinism.rs`) that also include it.
+// ────────────────────────────────────────────────────────────────────────────
+
+/// A trivial one-element batch used to exercise the injectors without depending
+/// on the full DVB-T2 pipeline batch types.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TinyBatch(pub u32);
+
+impl BatchSize for TinyBatch {
+    fn batch_size(&self) -> usize {
+        1
+    }
+}
+
+/// A trivial identity stage used as the wrapped inner stage for injector tests
+/// (and by `42eac5cc` as a no-op stage to wrap); passes input through unchanged.
+/// `Send + Sync` as the [`Stage`] bound requires.
+#[derive(Clone)]
+pub struct Identity;
+
+impl Stage<TinyBatch, TinyBatch> for Identity {
+    type Scratch = ();
+    type CpuFallback = Self;
+
+    fn process(&self, input: &TinyBatch, _scratch: &mut ()) -> Result<TinyBatch, StageError> {
+        Ok(input.clone())
+    }
+
+    fn execution_class(&self) -> ExecutionClass {
+        ExecutionClass::CpuOnly
+    }
+
+    fn cpu_fallback(&self) -> Option<&Self> {
+        Some(self)
+    }
+}
+
+/// Wraps any `Stage<I, O>` and forces
+/// `StageError::Recoverable(RecoverableError::OutOfMemory)` on the `trigger_on`th
+/// invocation of `process` (1-indexed).
+///
+/// Invocations before and after `trigger_on` pass through to the inner stage.
+/// The call count is shared behind an `Arc<AtomicU64>` so the injector can be
+/// cloned for multi-worker tests while sharing the same trigger counter.
+///
+/// # Examples (conceptual)
+///
+/// ```rust,ignore
+/// use gf2_sim::error::{RecoverableError, StageError};
+/// // Inject OOM on the 2nd call.
+/// let inj = OomInjector::new(identity_stage, 2);
+/// assert!(inj.process(&input, &mut ()).is_ok()); // 1st call passes through
+/// let err = inj.process(&input, &mut ()).unwrap_err(); // 2nd call: OOM
+/// matches!(err, StageError::Recoverable(RecoverableError::OutOfMemory { .. }));
+/// ```
+///
+/// # For 42eac5cc
+///
+/// `42eac5cc` should construct this injector with any `Stage<I, O>` of the
+/// same input/output batch types as the real GPU stage it substitutes. The
+/// `device_id` and `bytes_requested` in the injected error are configurable
+/// via [`OomInjector::with_oom_params`]; the default is device 0, 1 GiB.
+pub struct OomInjector<I, O, S: Stage<I, O>> {
+    inner: S,
+    call_count: Arc<AtomicU64>,
+    trigger_on: u64,
+    device_id: i32,
+    bytes_requested: usize,
+    _marker: std::marker::PhantomData<fn(I) -> O>,
+}
+
+impl<I, O, S: Stage<I, O> + Clone> OomInjector<I, O, S> {
+    /// Constructs an injector that forces OOM on the `trigger_on`th call
+    /// (1-indexed). Calls before and after pass through.
+    ///
+    /// # Arguments
+    ///
+    /// * `inner` — the wrapped stage.
+    /// * `trigger_on` — 1-indexed call number at which to inject OOM; must be
+    ///   `>= 1`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `trigger_on == 0`.
+    pub fn new(inner: S, trigger_on: u64) -> Self {
+        assert!(trigger_on >= 1, "OomInjector: trigger_on must be >= 1");
+        Self {
+            inner,
+            call_count: Arc::new(AtomicU64::new(0)),
+            trigger_on,
+            device_id: 0,
+            bytes_requested: 1024 * 1024 * 1024, // 1 GiB default
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Overrides the device_id and bytes_requested carried by the injected
+    /// `RecoverableError::OutOfMemory`.
+    pub fn with_oom_params(mut self, device_id: i32, bytes_requested: usize) -> Self {
+        self.device_id = device_id;
+        self.bytes_requested = bytes_requested;
+        self
+    }
+
+    /// Shared call counter — lets the caller inspect how many calls were made.
+    pub fn call_count(&self) -> u64 {
+        self.call_count.load(Ordering::SeqCst)
+    }
+}
+
+impl<I, O, S> Stage<I, O> for OomInjector<I, O, S>
+where
+    I: Send + Sync + std::any::Any,
+    O: Send + Sync + std::any::Any,
+    S: Stage<I, O> + Clone,
+{
+    type Scratch = S::Scratch;
+    type CpuFallback = S::CpuFallback;
+
+    fn process(&self, input: &I, scratch: &mut S::Scratch) -> Result<O, StageError> {
+        let n = self.call_count.fetch_add(1, Ordering::SeqCst) + 1;
+        if n == self.trigger_on {
+            return Err(StageError::Recoverable(RecoverableError::OutOfMemory {
+                device_id: self.device_id,
+                bytes_requested: self.bytes_requested,
+            }));
+        }
+        self.inner.process(input, scratch)
+    }
+
+    fn execution_class(&self) -> ExecutionClass {
+        self.inner.execution_class()
+    }
+
+    fn cpu_fallback(&self) -> Option<&S::CpuFallback> {
+        self.inner.cpu_fallback()
+    }
+}
+
+/// Wraps any `Stage<I, O>` and forces
+/// `StageError::Fatal(FatalError::KernelLaunch)` on the `trigger_on`th
+/// invocation of `process` (1-indexed).
+///
+/// Invocations before `trigger_on` pass through; invocations on and after
+/// `trigger_on` all return a fatal `KernelLaunch` error (since the executor
+/// must abort on the first fatal, later calls are academic but consistent).
+///
+/// # Examples (conceptual)
+///
+/// ```rust,ignore
+/// use gf2_sim::error::{FatalError, StageError};
+/// // Inject a kernel launch failure on the 1st call.
+/// let inj = KernelErrorInjector::new(identity_stage, 1);
+/// let err = inj.process(&input, &mut ()).unwrap_err();
+/// matches!(err, StageError::Fatal(FatalError::KernelLaunch { .. }));
+/// ```
+///
+/// # For 42eac5cc
+///
+/// Use this to verify the executor aborts and propagates the fatal error
+/// rather than substituting a CPU fallback (fatal errors are not recoverable).
+/// The injected `hip_code`, `kernel`, and `args` are configurable via
+/// [`KernelErrorInjector::with_launch_params`]; the default is code 7
+/// (`hipErrorLaunchFailure`), kernel `"injected"`, args `"fault-injection"`.
+pub struct KernelErrorInjector<I, O, S: Stage<I, O>> {
+    inner: S,
+    call_count: Arc<AtomicU64>,
+    trigger_on: u64,
+    hip_code: i32,
+    kernel: &'static str,
+    args: String,
+    _marker: std::marker::PhantomData<fn(I) -> O>,
+}
+
+impl<I, O, S: Stage<I, O> + Clone> KernelErrorInjector<I, O, S> {
+    /// Constructs an injector that forces a `KernelLaunch` fatal error on the
+    /// `trigger_on`th call (1-indexed).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `trigger_on == 0`.
+    pub fn new(inner: S, trigger_on: u64) -> Self {
+        assert!(
+            trigger_on >= 1,
+            "KernelErrorInjector: trigger_on must be >= 1"
+        );
+        Self {
+            inner,
+            call_count: Arc::new(AtomicU64::new(0)),
+            trigger_on,
+            hip_code: 7, // hipErrorLaunchFailure
+            kernel: "injected",
+            args: "fault-injection".to_string(),
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Overrides the hip_code, kernel name, and args carried by the injected
+    /// `FatalError::KernelLaunch`.
+    pub fn with_launch_params(
+        mut self,
+        hip_code: i32,
+        kernel: &'static str,
+        args: impl Into<String>,
+    ) -> Self {
+        self.hip_code = hip_code;
+        self.kernel = kernel;
+        self.args = args.into();
+        self
+    }
+
+    /// Shared call counter.
+    pub fn call_count(&self) -> u64 {
+        self.call_count.load(Ordering::SeqCst)
+    }
+}
+
+impl<I, O, S> Stage<I, O> for KernelErrorInjector<I, O, S>
+where
+    I: Send + Sync + std::any::Any,
+    O: Send + Sync + std::any::Any,
+    S: Stage<I, O> + Clone,
+{
+    type Scratch = S::Scratch;
+    type CpuFallback = S::CpuFallback;
+
+    fn process(&self, input: &I, scratch: &mut S::Scratch) -> Result<O, StageError> {
+        let n = self.call_count.fetch_add(1, Ordering::SeqCst) + 1;
+        if n >= self.trigger_on {
+            return Err(StageError::Fatal(FatalError::KernelLaunch {
+                hip_code: self.hip_code,
+                kernel: self.kernel,
+                args: self.args.clone(),
+            }));
+        }
+        self.inner.process(input, scratch)
+    }
+
+    fn execution_class(&self) -> ExecutionClass {
+        self.inner.execution_class()
+    }
+
+    fn cpu_fallback(&self) -> Option<&S::CpuFallback> {
+        self.inner.cpu_fallback()
+    }
 }
