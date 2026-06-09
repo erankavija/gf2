@@ -2,7 +2,7 @@
   "id": "ed575f15-e185-409f-9cc2-f76e3a998425",
   "title": "GPU OOM auto-fallback and kernel hard-fail handling",
   "description": "## Goal\n\nGPU stages **signal** OOM and kernel/driver errors via the typed\n`StageError` enum and declare a compile-bound `Stage::CpuFallback`\nassociated type per Phase 0 §1 and §8. They do NOT implement the\nCPU-fallback dispatch — that's the executor's job (`42eac5cc`).\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §1 (associated-type fallback\nshape, Q6) and §8 (failure-mode policy + seam decision). Wave B.3:\ndepends on `f6004add`, `a930be7f`, `d3f1616a`.\n\nThis is the \"GPU error-SIGNALLING discipline\" task: (1) audit hip call\nsites, (2) verify `Stage::CpuFallback` declarations + presence test,\n(3) build the reusable fault-injection test infrastructure, (4) ensure\nthe `strict_gpu` config field is present and honored at the error-\nmapping boundary.\n\n**AMENDMENT 2026-06-09 (user-approved scope correction — NO rigor change,\nobligations MOVED to their owning nodes).** The audit found two\nforward-referencing clauses that this B.3 task cannot complete because\nthey are delivered by downstream tasks; they are MOVED (not dropped) so\nthe end-to-end rigor is preserved:\n- The fault injectors' **consumption** (driving the executor's\n  OOM/kernel-error substitution test) is delivered by C.2 `42eac5cc`\n  (whose deliverable-3 already injects via these injectors). This task\n  delivers the injectors as the reusable SSOT and self-verifies they\n  produce the correct error variants.\n- The **`--strict-gpu` CLI flag** is delivered by the gf2-sim campaign\n  binary in D.2 `bbf6b6ee`; the **executor's strict-gpu promotion**\n  (OOM→`FatalError::OutOfMemory`) is delivered by C.2 `42eac5cc`. This\n  task delivers the `PipelineConfig::strict_gpu` field and confirms it\n  is honored at the error-mapping boundary (`map_hip_error`/§8 doc).\n\n## Deliverables\n\n1. Audit + corrections across `gf2-kernels-hip/src/host/{alloc,launch,\n   streams}.rs` and every Phase B GPU-stage wrapper\n   (`gf2-sim/src/gpu/{awgn,ldpc_bp,demap,mod}.rs`):\n   - Every `hipMalloc` failure path returns a typed `OutOfMemory`\n     error; every post-launch kernel-error a typed `KernelLaunch`/\n     `HipError::Hip`; **no `unwrap()`/`panic!` on a HIP error path.**\n2. Verify every Phase B GPU stage declares a `Stage::CpuFallback`\n   associated type and `cpu_fallback()` returns `Some(&self.fallback)`,\n   for the REAL orphan-rule fallback types — `GpuAwgn`→`channels::Awgn`,\n   `GpuLdpcBp`→`CpuLdpcBp`, `GpuGrayQamDemapper`→`CpuGrayQamDemapper`;\n   verified by `tests/gpu_cpu_fallback_present.rs`.\n3. Reusable fault-injection test infrastructure as the SSOT in\n   `crates/gf2-sim/tests/common/mod.rs`:\n   - `OomInjector` wraps a `Stage` and forces\n     `RecoverableError::OutOfMemory` on the Nth invocation;\n     `KernelErrorInjector` forces `FatalError::KernelLaunch`.\n   - Test-only; placed in `tests/common/mod.rs` so `42eac5cc` reuses\n     them via `mod common;` (no copy-paste). This task's own tests\n     verify the injectors produce the expected error variants.\n4. Confirm `PipelineConfig::strict_gpu` exists and is honored at the\n   gf2-sim↔HIP error-mapping boundary (§8). NOTE (per the 2026-06-09\n   amendment): the `--strict-gpu` CLI flag is delivered by D.2\n   `bbf6b6ee` and the executor's strict-gpu OOM-promotion by C.2\n   `42eac5cc`; this task only ensures the config field + boundary doc.\n\n## Success Criteria\n\n- [hard] Code audit: zero `unwrap()`/`panic!` on production HIP error\n  paths in `gf2-kernels-hip/src/host/` or `gf2-sim/src/gpu/`.\n- [hard] Every Phase B GPU stage's `Stage::CpuFallback` is declared and\n  `cpu_fallback()` returns `Some(&self.fallback)` (real wrapper types);\n  verified by `tests/gpu_cpu_fallback_present.rs`.\n- [hard] The reusable fault-injection infrastructure\n  (`OomInjector`/`KernelErrorInjector`) lives in `tests/common/mod.rs`\n  as the SSOT, compiles in both hip and no-hip configs, and this task's\n  own tests verify the injectors produce the expected\n  `RecoverableError::OutOfMemory` / `FatalError::KernelLaunch` variants.\n  (Their CONSUMPTION by the executor substitution test is a `[hard]`\n  criterion on C.2 `42eac5cc` — moved there, not dropped.)\n- [hard] `PipelineConfig::strict_gpu` is present and honored at the\n  error-mapping boundary. (The `--strict-gpu` CLI flag is a `[hard]`\n  criterion on D.2 `bbf6b6ee`; the executor strict-gpu promotion is a\n  `[hard]` criterion on C.2 `42eac5cc` — both moved there, not dropped.)\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- This task does NOT implement the CPU-fallback DISPATCH — that lives\n  in `42eac5cc`. Phase 0 design doc §8 owns the seam decision.\n- No diagnostic-dump format (also `42eac5cc`).\n- No new GPU stages (`f6004add`, `a930be7f`, `d3f1616a` cover Phase B).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -15,15 +15,15 @@
     "code-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-09T17:44:51.998509765Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-09T15:45:15.381036808Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-09T15:45:25.346470320Z"
     }
   },
   "context": {},
@@ -35,5 +35,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:50.883134999+00:00",
-  "updated_at": "2026-06-09T17:43:04.617660343+00:00"
+  "updated_at": "2026-06-09T17:47:01.420827303+00:00"
 }
