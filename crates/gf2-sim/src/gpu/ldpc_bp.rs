@@ -427,6 +427,50 @@ mod imp {
             input: &LlrBatch,
             decoder: &KernelGpuLdpcBp,
         ) -> Result<HardDecisionBatch, StageError> {
+            // Delegate to the iteration-counting variant and drop the counts; the
+            // hard-decision output is byte-for-byte identical.
+            let (hard, _iters) = self.decode_batch_with_iters(input, decoder)?;
+            Ok(hard)
+        }
+
+        /// Like [`decode_batch`](Self::decode_batch), but also returns the
+        /// per-frame BP iteration count (`iters[f]` for frame `f`).
+        ///
+        /// The [`HardDecisionBatch`] is **byte-for-byte identical** to
+        /// [`decode_batch`](Self::decode_batch) (that method delegates here and
+        /// discards the counts); this is a purely additive observability API.
+        /// The counts follow the CPU `decode_to_codeword` convention (the
+        /// 1-indexed pass at which the frame's syndrome first passes, or
+        /// `max_iterations` if it never converges) — see
+        /// [`KernelGpuLdpcBp::decode_batch_with_iters`](gf2_kernels_hip::GpuLdpcBp::decode_batch_with_iters).
+        ///
+        /// Per design-doc §11 `mean_iters` is EXCLUDED from CPU-vs-GPU
+        /// byte-identity, so callers may LOG the per-frame counts but must not
+        /// ASSERT the CPU-vs-GPU diff.
+        ///
+        /// # Arguments
+        ///
+        /// * `input` — the channel-LLR batch (each frame has `n` LLRs).
+        /// * `decoder` — the per-worker device decoder.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on a device fault (recoverable for OOM /
+        /// unsupported arch so the executor substitutes
+        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        ///
+        /// # Panics
+        ///
+        /// Panics if any frame's LLR length != `n`.
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`decode_batch`](Self::decode_batch).
+        pub fn decode_batch_with_iters(
+            &self,
+            input: &LlrBatch,
+            decoder: &KernelGpuLdpcBp,
+        ) -> Result<(HardDecisionBatch, Vec<u32>), StageError> {
             let n = self.code.n();
             let llr_blocks: Vec<Vec<f32>> = input
                 .frames
@@ -445,9 +489,9 @@ mod imp {
 
             let algorithm = map_algorithm(self.config.algorithm());
             let early = self.config.early_termination();
-            let hard = decoder
-                .decode_batch(&llr_blocks, algorithm, self.max_iterations, early)
-                .map_err(|e| map_hip_error(e, "GpuLdpcBp::decode_batch"))?;
+            let (hard, iters) = decoder
+                .decode_batch_with_iters(&llr_blocks, algorithm, self.max_iterations, early)
+                .map_err(|e| map_hip_error(e, "GpuLdpcBp::decode_batch_with_iters"))?;
 
             let frames: Vec<BitVec> = hard
                 .into_iter()
@@ -459,7 +503,7 @@ mod imp {
                     bv
                 })
                 .collect();
-            Ok(HardDecisionBatch::new(frames))
+            Ok((HardDecisionBatch::new(frames), iters))
         }
 
         /// The CPU reference codeword for one frame's LLRs, via

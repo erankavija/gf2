@@ -410,6 +410,70 @@ impl GpuLdpcBp {
         max_iterations: usize,
         early_termination: bool,
     ) -> Result<Vec<Vec<bool>>, HipError> {
+        // Delegate to the iteration-counting variant and drop the counts; the
+        // hard-decision output is byte-for-byte identical to the standalone loop.
+        let (hard, _iters) =
+            self.decode_batch_with_iters(llr_blocks, algorithm, max_iterations, early_termination)?;
+        Ok(hard)
+    }
+
+    /// Like [`decode_batch`](Self::decode_batch), but also returns the per-frame
+    /// BP iteration count.
+    ///
+    /// The hard-decision codewords are **byte-for-byte identical** to
+    /// [`decode_batch`](Self::decode_batch) (that method delegates here and
+    /// discards the counts); this is a purely additive observability API.
+    ///
+    /// # Iteration-count convention (aligned to the CPU `decode_to_codeword`)
+    ///
+    /// Each host-loop pass runs one check-node + variable-node update, then
+    /// (when `early_termination` is set) tests the syndrome — exactly the CPU
+    /// `decode_to_codeword` shape, whose reported count is `iter + 1` at the
+    /// pass that first passes the syndrome. So:
+    ///
+    /// * A frame that freezes (syndrome passes) at 0-indexed loop pass `i`
+    ///   reports `i + 1` — identical to the CPU count for the same convergence
+    ///   pass.
+    /// * A frame that never converges (or `early_termination == false`) reports
+    ///   `max_iterations`, matching the CPU loop that runs the full cap.
+    ///
+    /// The counts are diagnostic only: per design-doc §11 `mean_iters` is
+    /// EXCLUDED from CPU-vs-GPU byte-identity (RDNA2 transcendental ULP drift can
+    /// shift the convergence pass by ±1), so a caller may LOG but must not ASSERT
+    /// the CPU-vs-GPU iteration diff.
+    ///
+    /// # Arguments
+    ///
+    /// Same as [`decode_batch`](Self::decode_batch).
+    ///
+    /// # Returns
+    ///
+    /// `(hard, iters)` where `hard` is one `Vec<bool>` of length `n` per frame
+    /// (the hard-decision codeword) and `iters[f]` is frame `f`'s BP iteration
+    /// count (`1..=max_iterations`).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`] on device memcpy, kernel launch, or synchronization
+    /// failure.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `llr_blocks.len() > max_batch`, any block length != `n`, or
+    /// `max_iterations == 0`.
+    ///
+    /// # Complexity
+    ///
+    /// Identical to [`decode_batch`](Self::decode_batch); the per-frame count is
+    /// derived from the freeze bookkeeping the early-termination path already
+    /// maintains (no extra device work).
+    pub fn decode_batch_with_iters(
+        &self,
+        llr_blocks: &[Vec<f32>],
+        algorithm: GpuBpAlgorithm,
+        max_iterations: usize,
+        early_termination: bool,
+    ) -> Result<(Vec<Vec<bool>>, Vec<u32>), HipError> {
         let batch = llr_blocks.len();
         assert!(
             batch <= self.max_batch,
@@ -418,7 +482,7 @@ impl GpuLdpcBp {
         );
         assert!(max_iterations >= 1, "max_iterations must be >= 1");
         if batch == 0 {
-            return Ok(Vec::new());
+            return Ok((Vec::new(), Vec::new()));
         }
         for (i, blk) in llr_blocks.iter().enumerate() {
             assert_eq!(
@@ -477,6 +541,12 @@ impl GpuLdpcBp {
         let alg = algorithm.code();
         let alpha = algorithm.alpha();
         let beta = algorithm.beta();
+
+        // Per-frame BP iteration count, CPU-aligned. A frame that never freezes
+        // (or with early termination off) reports the full `max_iterations`; a
+        // frame that freezes at 0-indexed pass `i` is overwritten to `i + 1`
+        // below (matching the CPU `iterations = iter + 1`).
+        let mut iters = vec![max_iterations as u32; batch];
 
         for _iter in 0..max_iterations {
             // Check-node update. Frozen frames (when early-term on) are skipped
@@ -569,6 +639,9 @@ impl GpuLdpcBp {
                 for f in 0..batch {
                     if frame_done_host[f] == 0 && flags[f] == 0 {
                         frame_done_host[f] = 1; // converged this iteration: freeze
+                                                // CPU convention: `iterations = iter + 1` at the pass
+                                                // that first passes the syndrome.
+                        iters[f] = _iter as u32 + 1;
                     }
                     if frame_done_host[f] == 0 {
                         all_done = false;
@@ -597,7 +670,7 @@ impl GpuLdpcBp {
             let row = &hard[f * self.n..(f + 1) * self.n];
             out.push(row.iter().map(|&x| x != 0).collect());
         }
-        Ok(out)
+        Ok((out, iters))
     }
 
     /// Zeroes the leading `batch` per-frame unsatisfied flags before a syndrome
