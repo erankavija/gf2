@@ -111,25 +111,33 @@ genuinely exercised — not one of those frames flipped verdict between CPU and
 GPU. Per-test wall time ≈ 31–40 s (r1/2 measured 30.76 s standalone; all three
 together 104 s), each well under the 120 s slow-tier cap.
 
-### mean_iters + bit-error sum (LOGGED, NOT asserted)
+### mean_iters (BOTH paths + diff) + bit-error sum (LOGGED, NOT asserted)
 
 `mean_iters` is excluded from CPU-vs-GPU byte-identity (§11: RDNA2 transcendental
 ULP drift can shift the BP early-termination iteration by ±1 without changing the
-integer-state parity-check verdict). The GPU batch decode API
-(`GpuLdpcBp::decode_batch`) returns the hard-decision codeword only and does not
-surface per-frame iteration counts, so the GPU value is not-surfaced. The
-bit-error sum (the BER numerator) is also logged only (`ber` excluded):
+integer-state parity-check verdict). It is logged for **both** paths and the
+diff: the GPU per-frame iteration counts come from
+`GpuLdpcBp::decode_batch_with_iters` (the additive observability API added by
+`14f59c2d`; the existing `decode_batch` delegates to it and is byte-for-byte
+unchanged). The count convention is **aligned to the CPU `decode_to_codeword`**
+(the 1-indexed pass at which the syndrome first passes, or `max_iterations` if it
+never converges), so the CPU-vs-GPU diff below is the genuine near-threshold
+drift §11 describes. The bit-error sum (the BER numerator) is also logged only
+(`ber` excluded):
 
-| Config | CPU mean_iters | GPU mean_iters | bit-error sum CPU | bit-error sum GPU |
-|--------|---------------:|:--------------:|------------------:|------------------:|
-| r1/2 16-QAM | 50.0000 | n/a | 2085 | 2085 |
-| r2/3 64-QAM | 49.4750 | n/a | 1163 | 1163 |
-| r3/4 16-QAM | 46.4050 | n/a | 11600 | 11600 |
+| Config | CPU mean_iters | GPU mean_iters | diff | bit-error sum CPU | bit-error sum GPU |
+|--------|---------------:|---------------:|-----:|------------------:|------------------:|
+| r1/2 16-QAM | 50.0000 | 50.0000 | +0.0000 | 2085 | 2085 |
+| r2/3 64-QAM | 49.4750 | 49.4750 | +0.0000 | 1163 | 1163 |
+| r3/4 16-QAM | 46.4050 | 46.4050 | +0.0000 | 11600 | 11600 |
 
 (CPU `mean_iters` is high here because at the waterfall most errored frames run
 to the 50-iteration cap — exactly the near-threshold regime §11 describes. The
-bit-error sums happened to match CPU == GPU at these seeds, a bonus; they are
-NOT asserted and may differ on an errored frame without violating the contract.)
+CPU-vs-GPU `mean_iters` diff is `+0.0000` at these seeds — the convergence passes
+align frame-for-frame, validating the CPU-aligned count convention; §11 permits a
+non-zero ±1-scale diff here, which is logged not asserted. The bit-error sums
+likewise matched CPU == GPU at these seeds, a bonus; they are NOT asserted and
+may differ on an errored frame without violating the contract.)
 
 ### Escalation contract (how a real §11 violation surfaces)
 

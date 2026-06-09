@@ -107,20 +107,46 @@ This is a Cargo workspace with five production crates:
 
 #### Multi-arch HIP targets (design doc §6)
 
-The compile-time gfx target list. gfx1030 is the CI target compiled and exercised today; the rest are documented seams whose kernel blobs are best-effort-compiled by `build.rs` and whose runtime detection is wired but unexercised until matching hardware is available.
+The compile-time gfx target list (quoted from design-doc §6, `dev/active/ec530af9-pipeline-design.md`). gfx1030 is the CI target compiled and exercised today; the rest are documented seams whose kernel blobs are best-effort-compiled by `build.rs` and whose runtime detection is wired but unexercised until matching hardware is available.
 
-| Target | Arch family | Status |
-|--------|-------------|--------|
-| gfx1030 | RDNA2 (RX 6800/6900/6950 XT) | CI target today |
+| Target | Arch family | CI today |
+|---|---|---|
+| gfx1030 | RDNA2 (RX 6800/6900/6950 XT) | yes |
 | gfx1100 | RDNA3 (RX 7900 XT/XTX) | seam only |
 | gfx1200 | RDNA4 | seam only |
 | gfx90a | CDNA2 (MI200) | seam only |
 | gfx940 | CDNA3 (MI300 gfx940 stepping) | seam only |
 | gfx942 | CDNA3 (MI300 gfx942 stepping) | seam only |
 
-Runtime detection (`GfxTarget::detect` in `host/arch.rs`) reads the device's `gcnArchName` and maps the name string to a `GfxTarget`. Detection is **name-based, not compute-capability-based**: gfx940 and gfx942 share a compute capability but load different kernel blobs, so only the name string distinguishes them. Any `gcnArchName` feature suffix (e.g. `:sramecc+:xnack-`) is stripped before matching.
+Runtime detection (`GfxTarget::detect` / `detect_device` in `crates/gf2-kernels-hip/src/host/arch.rs`): the dispatcher reads the device's **GCN arch name string** via `hipGetDeviceProperties`' `gcnArchName` (`query_arch_name`), strips any feature suffix (e.g. `"gfx942:sramecc+:xnack-"` → `"gfx942"` by splitting on the first `':'`), and maps the canonical `gfxNNNN` head to a `GfxTarget` (`from_arch_name`). Detection is **name-based, not compute-capability-based** — gfx940 and gfx942 share the *same* compute capability (9.4) but load *different* kernel blobs, so only the name string distinguishes them; compute-capability matching could not. The matched target selects a precompiled kernel blob under `crates/gf2-kernels-hip/kernels/<gfx-target>/`. If the arch name matches no blob this build compiled, `detect` emits a `tracing::warn!` event carrying the raw `gcnArchName` and returns `HipError::UnsupportedArch`, which the `gf2-sim` boundary maps to a recoverable transient fault so the executor falls back to the CPU equivalent stage (consistent with the OOM policy in §8). The set of arches actually compiled is recorded in a build-time manifest that `detect` consults (`has_compiled_blob`): an arch recognized by name but with no compiled blob in this build is treated as `UnsupportedArch` (warn + CPU fallback), rather than reporting a target whose blob would fail to load at launch time.
 
-#### HIP host dispatcher model (design doc §6, §8)
+#### HIP host dispatcher model (design doc §5, §6, §8)
+
+The crate-boundary layering the dispatcher sits in (quoted from design-doc §5, `dev/active/ec530af9-pipeline-design.md`): `gf2-sim` is the new crate atop `gf2-coding`/`gf2-core`, with the `gf2-kernels-hip` GPU FFI an *optional* (`feature = "hip"`) leaf dependency.
+
+```
+            ┌────────────────────────────────┐
+            │ gf2-core                       │
+            │   primitives: BitVec, fields   │
+            └───────────────┬────────────────┘
+                            │
+            ┌───────────────▼────────────────┐
+            │ gf2-coding                     │
+            │   codes: BCH, LDPC, QAM, etc.  │
+            └───────────────┬────────────────┘
+                            │
+            ┌───────────────▼────────────────┐
+            │ gf2-sim                  ← new │
+            │   Pipeline, Stage, executor    │
+            │   presets/, graph/, channels/  │
+            └─────────────┬──────────────────┘
+                          │ feature = "hip"
+                          ▼ (optional)
+            ┌──────────────────────────────┐
+            │ gf2-kernels-hip              │
+            │   HIP FFI + kernels (gfx*)   │
+            └──────────────────────────────┘
+```
 
 The `gf2-sim` GPU pipeline (`feature = "hip"`) is built on host plumbing in `gf2-kernels-hip::host`:
 
