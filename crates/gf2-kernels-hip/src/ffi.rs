@@ -123,6 +123,88 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
+    /// Initialise the var-to-check messages with the channel LLRs.
+    ///
+    /// Sets `v2c[b*edges + f] = channel_llrs[b*n + v]` for every var-edge `f`
+    /// of variable `v`, matching the CPU decoder's per-frame init. One device
+    /// thread per `(frame, variable)`.
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_ldpc_init(
+        channel_llrs: *const f32,
+        v2c: *mut f32,
+        var_col_ptr: *const c_int,
+        n: c_int,
+        edges: c_int,
+        batch_size: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Check-node update for one BP half-iteration.
+    ///
+    /// For each check `c` and each of its edges `e` (CSR row order) writes
+    /// `c2v[b*edges + e]` from the box-plus of all OTHER edges' var-to-check
+    /// messages, gathered via `check_edge_to_var_edge`. `algorithm` selects the
+    /// rule (0=MinSum, 1=NormalizedMinSum(alpha), 2=OffsetMinSum(beta),
+    /// 3=SumProduct). One device thread per `(frame, check)`.
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_ldpc_check_update(
+        v2c: *const f32,
+        c2v: *mut f32,
+        check_row_ptr: *const c_int,
+        check_edge_to_var_edge: *const c_int,
+        m: c_int,
+        edges: c_int,
+        batch_size: c_int,
+        algorithm: c_int,
+        alpha: f32,
+        beta: f32,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Variable-node update for one BP half-iteration.
+    ///
+    /// Computes `belief = channel + sum(incoming c2v)` (CSC column order) per
+    /// variable, writes `v2c[f] = belief - incoming[f]`, and the hard decision
+    /// `hard_bits[b*n + v] = (belief < 0)`. One device thread per
+    /// `(frame, variable)`.
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_ldpc_var_update(
+        channel_llrs: *const f32,
+        v2c: *mut f32,
+        c2v: *const f32,
+        var_col_ptr: *const c_int,
+        var_edge_to_check_edge: *const c_int,
+        hard_bits: *mut u8,
+        n: c_int,
+        edges: c_int,
+        batch_size: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Per-frame syndrome check.
+    ///
+    /// Sets `frame_unsatisfied[b] = 1` if any check `c` is violated by the
+    /// current `hard_bits` of frame `b`. One device thread per `(frame, check)`.
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_ldpc_syndrome(
+        hard_bits: *const u8,
+        check_row_ptr: *const c_int,
+        check_edge_var: *const c_int,
+        frame_unsatisfied: *mut u8,
+        m: c_int,
+        n: c_int,
+        batch_size: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
     pub fn hip_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
     pub fn hip_free(ptr: *mut c_void) -> c_int;
     pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
