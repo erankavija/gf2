@@ -2,7 +2,7 @@
   "id": "d3f1616a-7fc8-4aa8-89e4-aedd9f35874b",
   "title": "GPU Gray-QAM soft demap integration",
   "description": "## Goal\n\nWrap the existing `gf2-kernels-hip::demap_batch` Gray-QAM soft-demap\nkernel as a `Stage` in the gf2-sim pipeline.\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §8 (OOM signalled, not\ndispatched). The kernel + host wrapper at\n`crates/gf2-kernels-hip/src/lib.rs::demap_batch` already exists.\nWave B.2 fan-out from `36075e4c`.\n\n**AMENDMENT 2026-06-09a (user-approved, apples-to-apples perf baseline).**\nThe `parallelism-pays` gate compares **demap-stage throughput vs\ndemap-stage throughput**, NOT GPU-demap vs CPU-full-frame. The\n`c0b1702d` 1.6216 fps full-frame baseline is category-confused for a\ndemap-only kernel. The gate divisor is the **single-thread CPU\n`FastGrayQamDemapper` demap step measured in isolation** at the\nmatching modulation/method. Record full-frame + CPU-24-thread for\ncontext.\n\n**AMENDMENT 2026-06-09b (user-approved, byte-identity tolerance is a\ncombined abs/ulp bound).** Criterion-1's \"≤ 2 ulp\" cannot be a pure\nvalue-ulp bound: the CPU `FastGrayQamDemapper` computes the max-log\ndistance reduction in **f64** then rounds to f32, while the GPU\ncomputes it entirely in **f32** (design §10 f32 messages), so the two\ndiffer by a small f32-vs-f64 residual (measured worst |diff| =\n1.907e-6). The max-log LLR is a **sign-crossing** quantity, so the\nvalue-ulp explodes near zero (where the ulp spacing collapses) even\nthough the absolute difference stays ≤ 1.9e-6 — and no precision\nchoice can bound value-ulp near a zero crossing. The byte-identity is\ntherefore the standard near-zero-safe **combined** bound: GPU and CPU\nLLRs agree iff within **2 ulp OR within an absolute floor 2.0e-6 f32**\n(the measured f32-vs-f64 distance-scale residual; worst observed\n1.907e-6, recorded as a regression constant in the test). At O(1) LLR\nmagnitude this is exactly the 2-ulp intent; near zero the absolute\nfloor governs. This is the §11 SIMT-f32-vs-CPU-f64 softmath floor, not\na bug.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/gpu/demap.rs` (under `--features hip`):\n   - `pub struct GpuGrayQamDemapper { method: DemapMethod, m: u8 }`\n     implementing `Stage<SymbolBatch, LlrBatch>`. The GPU kernel is\n     max-log; the stage serves `MaxLog` on device and routes\n     `ExactLogMap` to the CPU fallback (no fabricated GPU exact path).\n   - `cpu_fallback()` returns the CPU\n     `gf2_coding::modem::FastGrayQamDemapper` (via an in-crate\n     `Stage` wrapper, orphan-rule, same shape as `CpuLdpcBp`).\n2. Byte-identity test (under `--features hip`) in\n   `tests/gpu_demap_byte_identity.rs`:\n   - For 16-QAM and 64-QAM at fixed channel realisation: GPU LLR\n     output matches CPU `FastGrayQamDemapper` (MaxLog) within the\n     combined bound of amendment 2026-06-09b (2 ulp OR ≤ 2.0e-6\n     absolute), with the measured worst-case absolute residual\n     recorded as a named constant in the test source.\n3. Parallelism-pays receipt entry per project plan §5 schema\n   (apples-to-apples, demap-vs-demap per amendment 2026-06-09a):\n   - GPU demap throughput vs **single-thread CPU\n     `FastGrayQamDemapper` demap-step** baseline (≥ 5×).\n   - GPU demap throughput vs CPU-24-thread demap-step baseline (for\n     diagnostic comparability).\n   - Record the full-frame `c0b1702d` number for context only.\n\n## Success Criteria\n\n- [hard] GPU demap LLRs (MaxLog) match CPU `FastGrayQamDemapper`\n  within the **combined bound** of amendment 2026-06-09b — within\n  2 ulp OR within 2.0e-6 f32 absolute — for 16-QAM and 64-QAM at a\n  fixed channel realisation; the measured worst-case absolute residual\n  is recorded in the test source as a named constant. (The pure\n  value-ulp form is unachievable for a sign-crossing quantity computed\n  GPU-f32 vs CPU-f64; the combined bound is the honest, measurement-\n  backed equivalent of the 2-ulp intent.)\n- [hard] `parallelism-pays` gate (apples-to-apples, demap-vs-demap\n  per amendment 2026-06-09a): receipt records GPU demap throughput\n  ≥ 5× the single-thread CPU `FastGrayQamDemapper` demap-step\n  baseline (measured in isolation) AND reports the CPU-24-thread\n  demap-step comparison for diagnostic value. The full-frame\n  `c0b1702d` baseline is context only.\n- [hard] `cpu_fallback()` returns the CPU demapper; integration\n  verified by Phase B `ed575f15`.\n- [hard] `cargo-ci`, `code-review`, `parallelism-pays` gates green.\n\n## Non-goals\n\n- No new modulation orders (epic scope is 16-QAM + 64-QAM via the\n  existing kernel).\n- No multi-device dispatch (epic non-goal).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,7 +13,23 @@
     "code-review",
     "parallelism-pays"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-09T15:24:33.059810438Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-09T15:21:31.796996928Z"
+    },
+    "parallelism-pays": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-09T15:24:29.110452118Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +39,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:45.349813276+00:00",
-  "updated_at": "2026-06-09T15:16:27.630513455+00:00"
+  "updated_at": "2026-06-09T15:26:21.887611644+00:00"
 }
