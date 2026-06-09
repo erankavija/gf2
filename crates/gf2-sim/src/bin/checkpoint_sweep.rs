@@ -38,8 +38,8 @@ use std::process::ExitCode;
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
 use gf2_sim::checkpoint::{
-    config_hash, run_sweep_checkpointed, CheckpointV2, CheckpointWriter, SweepError, WorkerState,
-    SCHEMA_VERSION,
+    config_hash, is_interrupted, run_sweep_checkpointed, CheckpointV2, CheckpointWriter,
+    SweepError, WorkerState, SCHEMA_VERSION,
 };
 use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
 use gf2_sim::PipelineConfig;
@@ -67,6 +67,13 @@ struct Args {
     /// the remaining points finish; `0` (the default) keeps reference/resume
     /// runs fast.
     point_delay_ms: u64,
+    /// Test-only: when set, the per-heartbeat callback **blocks** at the FIRST
+    /// within-point heartbeat flush until the interrupt flag is set, so a parent
+    /// can deliver a real SIGINT that deterministically lands mid-point (snr 0,
+    /// `0 < frames < max_frames`) regardless of host speed. This removes the
+    /// parent-reads-buffered-stdout-vs-child-runs race that otherwise lets a
+    /// fast/idle host finish the point before the SIGINT arrives.
+    block_at_first_heartbeat: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -78,8 +85,8 @@ enum Channel {
 
 const USAGE: &str = "checkpoint_sweep --checkpoint-dir <dir> [--resume] \
 [--channel awgn|rayleigh|rician] [--snr-points N] [--seed S] \
-[--max-frames N] [--heartbeat N] [--point-delay-ms N] [--crash-loop] \
-[--crash-during-fsync]";
+[--max-frames N] [--heartbeat N] [--point-delay-ms N] \
+[--block-at-first-heartbeat] [--crash-loop] [--crash-during-fsync]";
 
 fn parse_args() -> Result<Args, String> {
     let mut checkpoint_dir: Option<PathBuf> = None;
@@ -92,6 +99,7 @@ fn parse_args() -> Result<Args, String> {
     let mut crash_loop = false;
     let mut crash_during_fsync = false;
     let mut point_delay_ms: u64 = 0;
+    let mut block_at_first_heartbeat = false;
 
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
@@ -147,6 +155,7 @@ fn parse_args() -> Result<Args, String> {
                     .parse()
                     .map_err(|e| format!("--point-delay-ms: {e}"))?;
             }
+            "--block-at-first-heartbeat" => block_at_first_heartbeat = true,
             "-h" | "--help" => return Err("help".to_string()),
             other => return Err(format!("unknown argument: {other}")),
         }
@@ -163,6 +172,7 @@ fn parse_args() -> Result<Args, String> {
         crash_loop,
         crash_during_fsync,
         point_delay_ms,
+        block_at_first_heartbeat,
     })
 }
 
@@ -229,11 +239,25 @@ fn point_marker(
 /// WITHIN-point (non-final) checkpoint write, so a parent can deliver a SIGINT
 /// while the point is still simulating (`0 < frames < point_max`). Flushes
 /// stdout so the parent observes it without buffering delay.
-fn heartbeat_marker() -> impl FnMut(usize, u64) {
+fn heartbeat_marker(block_at_first: bool) -> impl FnMut(usize, u64) {
     use std::io::Write as _;
+    let mut first = true;
     move |snr, frames| {
         println!("HEARTBEAT_{snr}_{frames}");
         let _ = std::io::stdout().flush();
+        // Deterministic mid-point SIGINT (test-only): park at the FIRST
+        // within-point flush until the interrupt flag is set by the parent's
+        // real SIGINT. The checkpoint at `frames` is already on disk, so once
+        // the signal lands the next chunk-boundary check stops the run here,
+        // mid-point — independent of host speed. Without this, a fast/idle host
+        // finishes the point before the parent (reading buffered stdout) can
+        // deliver the signal.
+        if block_at_first && first {
+            first = false;
+            while !is_interrupted() {
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+        }
     }
 }
 
@@ -270,7 +294,7 @@ fn run(
                 )
             },
             point_marker(delay),
-            heartbeat_marker(),
+            heartbeat_marker(args.block_at_first_heartbeat),
         )?,
         Channel::Rayleigh => run_sweep_checkpointed(
             config,
@@ -289,7 +313,7 @@ fn run(
                 )
             },
             point_marker(delay),
-            heartbeat_marker(),
+            heartbeat_marker(args.block_at_first_heartbeat),
         )?,
         Channel::Rician => run_sweep_checkpointed(
             config,
@@ -308,7 +332,7 @@ fn run(
                 )
             },
             point_marker(delay),
-            heartbeat_marker(),
+            heartbeat_marker(args.block_at_first_heartbeat),
         )?,
     };
     Ok(sweep.interrupted)

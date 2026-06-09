@@ -418,7 +418,16 @@ fn interrupt_then_resume(
         &hb,
     ];
 
-    let mut child = spawn_sweep_piped(&base_args);
+    // The interrupted child ALSO gets `--block-at-first-heartbeat`: it parks at
+    // its first within-point heartbeat flush (snr 0) until the signal lands, so a
+    // fast/idle host cannot finish the point before the parent delivers the
+    // SIGINT (without it the parent reads buffered stdout while the child races
+    // ahead, making the interrupted point nondeterministic). The flag is NOT in
+    // `base_args` because the `--resume` child below must run to completion, not
+    // block.
+    let mut interrupt_args = base_args.to_vec();
+    interrupt_args.push("--block-at-first-heartbeat");
+    let mut child = spawn_sweep_piped(&interrupt_args);
     let pid = child.id();
     let stdout = child.stdout.take().expect("piped stdout");
     let mut reader = BufReader::new(stdout);
