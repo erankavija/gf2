@@ -474,9 +474,9 @@ impl Builder<Ready> {
     /// When `true`, [`Pipeline::run`](crate::Pipeline::run) drives the hybrid
     /// CPU+GPU scheduler (Phase C `75c22fa8`): each rayon worker prepares the
     /// next batch on the CPU while its owned HIP stream decodes the current batch
-    /// on the device, with the GPU stages' CPU fallbacks registered for the
-    /// out-of-memory substitution path. When `false` (the default), every stage
-    /// runs on the CPU via the within-SNR frame-parallel path.
+    /// on the device. When `false` (the default), every stage runs on the CPU
+    /// via the within-SNR frame-parallel path. (The OOM CPU-fallback
+    /// substitution policy is wired by the executor in `42eac5cc`, not here.)
     ///
     /// # Feature gating
     ///
