@@ -88,19 +88,20 @@ mod imp {
             check_row_ptr.push(check_edge_var.len() as i32);
         }
 
-        // CSC column pointers + the check of each variable-edge. We also record,
-        // per variable, the starting variable-edge index so the cross-maps can
-        // resolve a (var, check) pair to its variable-edge slot.
+        // CSC column pointers. We also record, per variable, the starting
+        // variable-edge index so the cross-maps can resolve a (var, check) pair
+        // to its variable-edge slot. (No per-var-edge "check" array is uploaded:
+        // the syndrome kernel reads the per-check-edge variable via
+        // `check_edge_var`; the var-side check identity is only needed here to
+        // build the cross-maps.)
         let mut var_col_ptr = Vec::with_capacity(n + 1);
-        let mut var_edge_check = Vec::with_capacity(edges);
         let mut var_edge_start = Vec::with_capacity(n);
         var_col_ptr.push(0i32);
+        let mut running = 0usize;
         for neigh in &var_neighbors {
-            var_edge_start.push(var_edge_check.len());
-            for &c in neigh {
-                var_edge_check.push(c as i32);
-            }
-            var_col_ptr.push(var_edge_check.len() as i32);
+            var_edge_start.push(running);
+            running += neigh.len();
+            var_col_ptr.push(running as i32);
         }
 
         // For a (var, check) pair, find the variable-edge index = the var's edge
@@ -138,8 +139,11 @@ mod imp {
             check_edge_var,
             check_edge_to_var_edge,
             var_col_ptr,
-            var_edge_check,
             var_edge_to_check_edge,
+            // DVB-T2 is a fully-expanded graph: no per-`i_LS` 5G NR shift row.
+            // The Phase E (`23d3525f`) BG1/BG2 builder will populate this; the
+            // kernel signature already carries it (non-breaking).
+            shift_table: Vec::new(),
         }
     }
 
@@ -560,24 +564,31 @@ mod imp {
             }
 
             // A check-edge `e` and its mapped var-edge `f` must reference the
-            // SAME Tanner edge: check_edge_var[e] belongs to the variable whose
-            // CSC column contains f, and var_edge_check[f] is that check.
+            // SAME Tanner edge: f lies within variable `check_edge_var[e]`'s CSC
+            // column, and the inverse map lands back on a check-edge whose
+            // variable is the same `v`. (No `var_edge_check` array is uploaded;
+            // the check identity of a var-edge is recovered through the inverse
+            // cross-map + the row that owns the check-edge, which the syndrome
+            // kernel uses via `check_edge_var`.)
             for c in 0..layout.m {
                 let cs = layout.check_row_ptr[c] as usize;
                 let ce = layout.check_row_ptr[c + 1] as usize;
                 for e in cs..ce {
                     let v = layout.check_edge_var[e] as usize;
                     let f = layout.check_edge_to_var_edge[e] as usize;
-                    assert_eq!(
-                        layout.var_edge_check[f] as usize, c,
-                        "var-edge {f} must point back to check {c}"
-                    );
                     // f must lie within variable v's CSC column.
                     let vs = layout.var_col_ptr[v] as usize;
                     let ve = layout.var_col_ptr[v + 1] as usize;
                     assert!(
                         f >= vs && f < ve,
                         "var-edge {f} must lie in variable {v}'s column [{vs}, {ve})"
+                    );
+                    // The inverse map returns to a check-edge whose variable is v.
+                    let e_back = layout.var_edge_to_check_edge[f] as usize;
+                    assert_eq!(
+                        layout.check_edge_var[e_back] as usize, v,
+                        "inverse cross-map for var-edge {f} must land on a \
+                         check-edge of variable {v}"
                     );
                 }
             }

@@ -175,7 +175,10 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 - **Status:** PROVISIONAL (worker measurement under host load; the lead
   re-measures on a verified-quiet host before attesting the gate).
-- **Date:** 2026-06-09 (worker measurement).
+- **Date:** 2026-06-09 (worker measurement; numbers below are the rework-round-1
+  re-measure after the per-frame early-termination FREEZE landed — frozen frames
+  skip all subsequent kernel work, so the GPU is faster than the pre-freeze
+  531.93 fps figure).
 - **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
   RX 6950 XT (gfx1030, RDNA2).
 - **Baseline configuration (apples-to-apples, per the user-approved 2026-06-09
@@ -194,26 +197,28 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   decode the same 200 frames serially (1 thread) and across the rayon pool
   (24 threads, per-frame independent `LdpcDecoder`s — the per-frame outcome is a
   deterministic pure function of the frame's LLRs regardless of thread).
-- **Observed throughput (200 frames, 5 repeats):**
-  - **GPU decode-stage: 531.93 fps ± 7.20.**
-  - **CPU decode-stage 1-thread: 2.5153 fps ± 0.0040.**
-  - **CPU decode-stage 24-thread: 21.90 fps ± 0.06.**
+- **Observed throughput (200 frames, 5 repeats; rework-round-1 re-measure at
+  `loadavg` ≈ 11.5, GPU 0% before the run):**
+  - **GPU decode-stage: 620.82 fps ± 10.08** (up from the pre-freeze 531.93 fps
+    — the per-frame freeze skips work on already-converged frames).
+  - **CPU decode-stage 1-thread: 2.5072 fps ± 0.0021.**
+  - **CPU decode-stage 24-thread: 21.98 fps ± 0.15.**
   - (A quiet-host spot check at 96 frames earlier read CPU 1T 2.52 / 24T 21.70,
-    consistent — the 200-frame run above was taken at `loadavg` ≈ 14.8, which
-    only *understates* the CPU baselines, so the gate is not at risk.)
+    consistent — the runs above were taken under host load, which only
+    *understates* the CPU baselines, so the gate is not at risk.)
 - **Speedup factors (decode-vs-decode):**
-  - **GPU / CPU-1-thread = 211.48×** (531.93 / 2.5153; gate **≥ 10×** — clears
+  - **GPU / CPU-1-thread = 247.61×** (620.82 / 2.5072; gate **≥ 10×** — clears
     with large margin).
-  - **GPU / CPU-24-thread = 24.29×** (531.93 / 21.90; gate **≥ 3×** — clears with
+  - **GPU / CPU-24-thread = 28.25×** (620.82 / 21.98; gate **≥ 3×** — clears with
     large margin).
 - **Context only (full-frame baselines, NOT the gate metric for a decode-only
-  kernel):** GPU decode-stage fps is ~328× the full-frame single-thread
-  baseline (1.6216 fps) and ~24.8× the full-frame 24-thread baseline (21.44 fps).
+  kernel):** GPU decode-stage fps is ~382.8× the full-frame single-thread
+  baseline (1.6216 fps) and ~29.0× the full-frame 24-thread baseline (21.44 fps).
   These are recorded for completeness per the amendment; the gate is
   decode-vs-decode.
 - **Required thresholds (from task body, all [hard]):** GPU decode ≥ 10×
   single-thread CPU decode-stage AND ≥ 3× CPU-24-thread decode-stage.
-  **Both clear (211.48× and 24.29×).**
+  **Both clear (247.61× and 28.25×).**
 - **Verdict:** PROVISIONAL PASS — both thresholds clear with large margin even
   under the (CPU-understating) host load this measurement was taken at. The lead
   re-measures on a verified-quiet host (`cat /proc/loadavg` ≈ 0, `rocm-smi` GPU
