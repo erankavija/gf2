@@ -559,29 +559,50 @@ off by default).
 
 ## §6 Multi-arch HIP dispatch
 
-(Unchanged from initial draft; reviewer flagged no issues.)
+`[fixed: 14f59c2d]` Runtime-detection mechanism corrected to match the
+landed `host/arch.rs` (Phase B `36075e4c`): detection is **name-based
+(`gcnArchName`), not compute-capability-based**. Arch table expanded
+to the 6-row form the code's `GfxTarget` enum uses.
 
 Compile-time gfx target list (Phase B `36075e4c`):
 
 | Target | Arch family | CI today |
 |---|---|---|
-| gfx1030 | RDNA2 (RX 6800/6900 XT) | yes |
+| gfx1030 | RDNA2 (RX 6800/6900/6950 XT) | yes |
 | gfx1100 | RDNA3 (RX 7900 XT/XTX) | seam only |
 | gfx1200 | RDNA4 | seam only |
-| gfx90a, gfx940, gfx942 | CDNA2 / MI200 / MI300 | seam only |
+| gfx90a | CDNA2 (MI200) | seam only |
+| gfx940 | CDNA3 (MI300 gfx940 stepping) | seam only |
+| gfx942 | CDNA3 (MI300 gfx942 stepping) | seam only |
 
-Runtime detection: `hipDeviceGetAttribute(major, minor)` returns the
-compute capability; the dispatcher maps to a precompiled kernel blob
-under `crates/gf2-kernels-hip/kernels/<gfx-target>/`. If no blob
-matches, the dispatcher emits a `tracing::warn!` event with the
-device ID and falls back to the CPU equivalent stage (consistent
-with the OOM policy in §8).
+Runtime detection (`GfxTarget::detect` / `detect_device` in
+`crates/gf2-kernels-hip/src/host/arch.rs`): the dispatcher reads the
+device's **GCN arch name string** via `hipGetDeviceProperties`'
+`gcnArchName` (`query_arch_name`), strips any feature suffix (e.g.
+`"gfx942:sramecc+:xnack-"` → `"gfx942"` by splitting on the first
+`':'`), and maps the canonical `gfxNNNN` head to a `GfxTarget`
+(`from_arch_name`). Detection is **name-based, not
+compute-capability-based** — gfx940 and gfx942 share the *same*
+compute capability (9.4) but load *different* kernel blobs, so only
+the name string distinguishes them; compute-capability matching could
+not. The matched target selects a precompiled kernel blob under
+`crates/gf2-kernels-hip/kernels/<gfx-target>/`. If the arch name
+matches no blob this build compiled, `detect` emits a
+`tracing::warn!` event carrying the raw `gcnArchName` and returns
+`HipError::UnsupportedArch`, which the `gf2-sim` boundary maps to a
+recoverable transient fault so the executor falls back to the CPU
+equivalent stage (consistent with the OOM policy in §8).
 
 Kernel blob format: one `.co` file per (kernel, gfx-target) compiled
 ahead of time by the `gf2-kernels-hip` build script (`build.rs`)
 invoking `hipcc --offload-arch=<target>`. The build script
 gracefully skips any arch whose toolchain is missing — gfx1030 must
-always be compiled successfully; the others are best-effort.
+always be compiled successfully; the others are best-effort. The set
+of arches actually compiled is recorded in a build-time manifest that
+`detect` consults (`has_compiled_blob`): an arch recognized by name
+but with no compiled blob in this build is treated as
+`UnsupportedArch` (warn + CPU fallback), rather than reporting a
+target whose blob would fail to load at launch time.
 
 ---
 
