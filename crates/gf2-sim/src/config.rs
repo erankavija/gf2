@@ -33,6 +33,7 @@ use gf2_coding::simulation::SimulationConfig;
 ///     checkpoint_dir: None,
 ///     tracing_log_path: None,
 ///     parallelism: NonZeroUsize::new(1).unwrap(),
+///     gpu_enabled: false,
 ///     strict_gpu: false,
 /// };
 /// assert_eq!(cfg.esn0_db_points.len(), 3);
@@ -58,6 +59,16 @@ pub struct PipelineConfig {
     pub tracing_log_path: Option<PathBuf>,
     /// Number of parallel workers.
     pub parallelism: NonZeroUsize,
+    /// When set, the hybrid executor offloads the heavy GPU-bound stages (LDPC
+    /// belief-propagation decode, and max-log demap) to the HIP device,
+    /// overlapping device execution of one batch with CPU preparation of the
+    /// next (Phase C scheduler `75c22fa8`). When unset (the default), every
+    /// stage runs on the CPU.
+    ///
+    /// Without the `hip` Cargo feature this flag has no effect: a pipeline built
+    /// with it set degrades gracefully to the CPU path after a `tracing::warn!`
+    /// (there is no device backend to dispatch to).
+    pub gpu_enabled: bool,
     /// When set, GPU out-of-memory is promoted to a fatal error instead of
     /// falling back to the CPU stage (design doc §8).
     pub strict_gpu: bool,
@@ -75,8 +86,8 @@ impl From<&SimulationConfig> for PipelineConfig {
     /// * `min_errors` / `max_frames` widen `usize` → `u64`.
     /// * `heartbeat_every_frames: Option<usize>` → `u64` (`None` ⇒ `0`).
     /// * `checkpoint_dir` / `tracing_log_path` move verbatim.
-    /// * `parallelism` defaults to `1`; `strict_gpu` defaults to `false`
-    ///   (neither has a legacy source field).
+    /// * `parallelism` defaults to `1`; `gpu_enabled` and `strict_gpu` default
+    ///   to `false` (none has a legacy source field).
     fn from(c: &SimulationConfig) -> Self {
         Self {
             seed: c.rng_seed.unwrap_or(0),
@@ -87,6 +98,7 @@ impl From<&SimulationConfig> for PipelineConfig {
             checkpoint_dir: c.checkpoint_dir.clone(),
             tracing_log_path: c.tracing_log_path.clone(),
             parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
+            gpu_enabled: false,
             strict_gpu: false,
         }
     }

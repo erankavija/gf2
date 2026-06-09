@@ -504,6 +504,7 @@ fn checkpoint_config(
         checkpoint_dir: Some(dir.to_path_buf()),
         tracing_log_path: None,
         parallelism,
+        gpu_enabled: false,
         strict_gpu: false,
     }
 }

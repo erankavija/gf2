@@ -24,7 +24,7 @@
 //! | [`graph`] | graph API + `build()` (owned by `c09d3e95`) |
 //! | [`channels`] | channel stages (owned by `db9836e4`) |
 //! | [`checkpoint`] | v2 checkpoint schema (owned by `5f12e7ff`) |
-//! | [`executor`] | hybrid executor (Phase C stub) |
+//! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (Phase C `75c22fa8`) |
 //! | [`gpu`] | HIP host dispatch (Phase B; `feature = "hip"`) |
 //!
 //! # Design reference
@@ -67,6 +67,11 @@ pub use connector::{Connector, Edge, StageId};
 #[doc(inline)]
 pub use error::{BuildError, FatalError, RecoverableError, StageError};
 #[doc(inline)]
+pub use executor::{
+    ActivityInterval, ActivityKind, OverlapTimeline, RunPlan, Scheduler, SimulationResults,
+    SnrPointResult,
+};
+#[doc(inline)]
 pub use frame_sim::DvbT2BicmFrameSim;
 #[doc(inline)]
 pub use graph::Chain;
@@ -76,7 +81,7 @@ pub use parallel::{
     SnrPointRangeOutcome, WorkerCounters, WorkerCtx, FRAME_STRIDE, SNR_STRIDE, WORKER_STRIDE,
 };
 #[doc(inline)]
-pub use pipeline::Pipeline;
+pub use pipeline::{BatchHandle, Pipeline};
 #[doc(inline)]
 pub use stage::{
     erase, AnyScratch, AnyStage, BatchSize, ErasedStage, ExecutionClass, FallbackKind, Stage,

@@ -348,6 +348,7 @@ pub struct Builder<State> {
     cfg_parallelism: NonZeroUsize,
     cfg_seed: u64,
     cfg_checkpoint_dir: Option<PathBuf>,
+    cfg_gpu_enabled: bool,
     _state: PhantomData<fn() -> State>,
 }
 
@@ -366,6 +367,7 @@ impl Builder<NeedsModcod> {
             cfg_parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
             cfg_seed: 0,
             cfg_checkpoint_dir: None,
+            cfg_gpu_enabled: false,
             _state: PhantomData,
         }
     }
@@ -463,6 +465,57 @@ impl Builder<Ready> {
     #[must_use]
     pub fn checkpoint_dir(mut self, checkpoint_dir: Option<PathBuf>) -> Self {
         self.cfg_checkpoint_dir = checkpoint_dir;
+        self
+    }
+
+    /// Enables (or disables) GPU offload of the heavy device-bound stages on the
+    /// built pipeline's [`PipelineConfig`]. Non-state-advancing.
+    ///
+    /// When `true`, [`Pipeline::run`](crate::Pipeline::run) drives the hybrid
+    /// CPU+GPU scheduler (Phase C `75c22fa8`): each rayon worker prepares the
+    /// next batch on the CPU while its owned HIP stream decodes the current batch
+    /// on the device. When `false` (the default), every stage runs on the CPU
+    /// via the within-SNR frame-parallel path. (The OOM CPU-fallback
+    /// substitution policy is wired by the executor in `42eac5cc`, not here.)
+    ///
+    /// # Feature gating
+    ///
+    /// GPU offload requires the `hip` Cargo feature. Built **without** `hip`,
+    /// setting `with_gpu(true)` is accepted but degrades gracefully: the run
+    /// emits a one-shot `tracing::warn!` and falls back to the CPU path (there is
+    /// no device backend to dispatch to). The flag is still recorded on the
+    /// config so a hip-enabled build of the same pipeline honours it.
+    ///
+    /// # Arguments
+    ///
+    /// * `enabled` — whether to offload the GPU-bound stages to the HIP device.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_sim::Pipeline;
+    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
+    /// use gf2_coding::CodeRate;
+    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    /// use gf2_coding::modem::DemapMethod;
+    ///
+    /// let pipeline = Pipeline::dvb_t2()
+    ///     .modcod(Modcod::Normal {
+    ///         rate: CodeRate::Rate1_2,
+    ///         modulation: DvbT2Modulation::Qam16,
+    ///     })
+    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+    ///     .demap(DemapMethod::MaxLog)
+    ///     .channel(Channel::awgn(6.0))
+    ///     .with_gpu(true)
+    ///     .build()
+    ///     .unwrap();
+    /// assert!(pipeline.config().gpu_enabled);
+    /// ```
+    #[must_use]
+    pub fn with_gpu(mut self, enabled: bool) -> Self {
+        self.cfg_gpu_enabled = enabled;
         self
     }
 
@@ -598,10 +651,20 @@ impl Builder<Ready> {
             checkpoint_dir: self.cfg_checkpoint_dir,
             tracing_log_path: None,
             parallelism: self.cfg_parallelism,
+            gpu_enabled: self.cfg_gpu_enabled,
             strict_gpu: false,
         };
 
-        chain.with_config(config).build()
+        let mut pipeline = chain.with_config(config).build()?;
+        // Attach the run plan so `Pipeline::run` can rebuild the validated
+        // DVB-T2 BICM frame kernel per SNR point (the scheduler engine).
+        pipeline.set_run_plan(crate::executor::RunPlan::Dvbt2 {
+            rate,
+            modulation,
+            decoder,
+            demap,
+        });
+        Ok(pipeline)
     }
 }
 
@@ -621,6 +684,7 @@ impl<State> Builder<State> {
             cfg_parallelism: self.cfg_parallelism,
             cfg_seed: self.cfg_seed,
             cfg_checkpoint_dir: self.cfg_checkpoint_dir,
+            cfg_gpu_enabled: self.cfg_gpu_enabled,
             _state: PhantomData,
         }
     }
