@@ -2,9 +2,9 @@
   "id": "bcf7776d-a8f0-4a18-9361-ef257b847e48",
   "title": "CPU foundation for gf2-sim pipeline",
   "description": "## Goal\n\nLand the CPU side of the `gf2-sim` pipeline: crate scaffolding,\ndeterministic-aggregation primitives (per-worker ChaCha20 seek,\norder-independent reductions), layered builder + graph APIs, CPU\nchannel stages, heartbeat-checkpoint integration, and the\ndeterminism property-test harness.\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Runs in parallel with\nthe GPU stages story (lockstep handoff via the Phase 0 design\ndoc `ec530af9`). Containment for all CPU-side foundation tasks.\n\n## Deliverables (themes)\n\n- New crate `gf2-sim` with `Pipeline` / `Stage<I,O>` / `Connector`\n  primitives and batch types.\n- Within-SNR frame parallelism + deterministic aggregation (the\n  amended issue `3fcb7025` is the core).\n- Layered API: typestate builder for the DVB-T2 preset; graph\n  API for novel chains.\n- CPU AWGN + Rayleigh / Rician channel stages.\n- Heartbeat-checkpoint integration with the parallel executor.\n- Property-test harness asserting byte-identity across\n  {1, 2, 4, 8, 24} workers.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] Determinism property test passes for at least 3\n  (rate, modulation) configurations.\n- [hard] Receipt artefact under\n  `dev/benchmarks/gf2-sim/cpu-foundation-receipts.md` records\n  the per-worker speedup and the byte-identity attestation.\n- [hard] CLAUDE.md updated with the `gf2-sim` module map and the\n  determinism contract.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals; GPU work is in the GPU stages\nstory.",
-  "state": "backlog",
+  "state": "done",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "81d05bab-4e68-4289-9e64-cb8a82187225",
     "48a0db6c-c87d-48f2-9df6-d52bbca050ec",
@@ -21,5 +21,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:01:13.027874246+00:00",
-  "updated_at": "2026-06-06T21:26:41.828601163+00:00"
+  "updated_at": "2026-06-09T05:38:59.928975691+00:00"
 }
