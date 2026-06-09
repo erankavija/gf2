@@ -8,14 +8,35 @@
 // robust to the 1-3 ULP RDNA2 transcendental drift, so `fer`/`frames`/`errors`
 // are byte-identical CPU-vs-GPU even though `mean_iters` may differ).
 //
+// # Early-termination = per-frame freeze (matches the CPU loop structurally)
+//
+// `LdpcDecoder::decode_to_codeword(.., early_termination=true)` freezes a
+// frame's hard decision at the FIRST iteration its syndrome passes (it `break`s
+// out of the iteration loop the moment `is_valid_codeword` holds), so the final
+// hard decision is the codeword at first convergence — NOT whatever later
+// flooding-BP iterations would produce. To reproduce that bit-for-bit across a
+// batch (where different frames converge at different iterations), every kernel
+// here takes a per-frame `frame_done` flag array (length `batch`):
+//
+//   * The syndrome kernel SETS `frame_done[b]` the iteration frame `b`'s
+//     syndrome first passes (early-termination only).
+//   * The check-node, variable-node, and syndrome kernels SKIP any frame whose
+//     `frame_done[b]` is already set — so its `hard_bits`, `v2c`, and `c2v`
+//     are frozen at the first-convergence state (also a perf win: converged
+//     frames stop doing work). When `frame_done` is `nullptr` (early-term off)
+//     no frame is ever frozen and all `max_iters` run, matching the CPU
+//     `early_termination == false` path.
+//
+// The host loop stops when every frame is done (all `frame_done[b] == 1`) or
+// `max_iters` is reached.
+//
 // # Determinism (design doc §11)
 //
 // All message ordering matches the CPU exactly:
 //   * Check-node gather order is the parity-check matrix CSR row order
 //     (`SpBitMatrixDual::row_iter`); the SumProduct `tanh` product is
 //     accumulated left-to-right in that order so the order-dependent f32
-//     product is reproduced bit-for-bit (MinSum / NormalizedMinSum use only
-//     sign / min / scalar-multiply, which are order-independent and exact).
+//     product is reproduced bit-for-bit.
 //   * Variable-node belief sum is accumulated left-to-right in the CSC column
 //     order (`SpBitMatrixDual::col_iter`), matching the CPU's
 //     `variable_node_update` accumulation order.
@@ -25,6 +46,18 @@
 // stored in a per-edge scratch and consumed by an ordered gather (the §-Algorithm
 // "per-edge ordered accumulation into a per-edge scratch followed by an ordered
 // reduction" contract).
+//
+// The min-sum-family sign is taken from the value's SIGN BIT
+// (`signbit(lv) ? -1 : +1`) so that `-0.0` counts as NEGATIVE, matching the CPU
+// default build's AVX2 vectorized min-sum lanes (`gf2-kernels-simd/src/llr.rs`),
+// whose dominant vectorized path keys the sign on the sign bit (the SIMD scalar
+// remainder uses `< 0.0`, but the vectorized lanes dominate for n=64800, and
+// the byte-identity test compares against the CPU with `simd` on). A `-0.0` v2c
+// message is rare (needs `belief == incoming`); aligning on the sign bit removes
+// that latent bit-flip. The min magnitude is `min(|lv|)` and the sign is a
+// product of `±1`, both exactly representable in f32 and order-independent, so
+// the min-sum family is reproduced exactly regardless of gather order; only the
+// SumProduct `tanh`/`atanh` path is order-sensitive (handled above).
 //
 // # Graph layout (uploaded once by the host wrapper)
 //
@@ -36,7 +69,6 @@
 //   check_edge_to_var_edge[e]                    : the matching var-edge index f
 //
 //   var_col_ptr[v]     .. var_col_ptr[v+1]       : edges of variable v (CSC col)
-//   var_edge_check[f]                            : the check of var-edge f
 //   var_edge_to_check_edge[f]                    : the matching check-edge index e
 //
 // Per-edge message arrays (length = number of edges E, one per Tanner edge),
@@ -48,12 +80,19 @@
 // Because check-edge e and var-edge f index the SAME Tanner edge through the two
 // cross-maps, the two arrays describe the same E messages from the two views.
 //
-// The shift table (`shift_table` / `shift_len`) is accepted at launch time but
-// unused by the DVB-T2 path (the graph is already fully expanded into the CSR
-// above). It is the per-`i_LS` 5G-NR parameterisation seam (Phase E `23d3525f`):
-// a future BG1/BG2 launch can pass the lifting-set shift row so the same kernel
-// expands a quasi-cyclic base graph on the fly. Passing it now keeps the FFI
-// signature stable across both standards.
+// # Per-`i_LS` shift table (the 5G NR seam, design doc §6, Phase E `23d3525f`)
+//
+// `ldpc_check_update_kernel` and its launcher take a `shift_table`
+// (`const int*`) + `shift_len` (`int`) parameter pair, threaded all the way
+// through the Rust host wrapper and `LdpcGraphLayout`, so a Phase E BG1/BG2
+// caller can supply the lifting-set cyclic-shift row without ANY breaking FFI
+// signature change. For the fully-expanded DVB-T2 graph the host passes
+// `shift_table == nullptr` and `shift_len == 0`, and the kernel ignores it (the
+// DVB-T2 graph is already expanded into the CSR above, so message routing needs
+// no per-block shift). When `shift_len > 0` a future lifted-graph variant reads
+// the per-block shift here to re-route messages across the Z-circulant; that
+// expansion is out of scope for this task (DVB-T2 only) but the parameter is
+// wired now so the seam is real, not cosmetic.
 
 #include <hip/hip_runtime.h>
 #include <stdint.h>
@@ -69,19 +108,32 @@ __device__ __forceinline__ float max_tanh_product() {
     return 1.0f - 1.1920929e-7f; // 1.0f - FLT_EPSILON
 }
 
+// True if frame `b` is frozen (converged) under early termination. When
+// `frame_done == nullptr` (early termination off) no frame is ever frozen.
+__device__ __forceinline__ bool frame_frozen(const uint8_t* frame_done, int b) {
+    return frame_done != nullptr && frame_done[b] != 0u;
+}
+
 // ---------------------------------------------------------------------------
 // Check-node update: one thread per (batch frame, check) pair.
 //
 // For each edge e of check c (in CSR order), gathers the var-to-check messages
 // of all OTHER edges of c (also CSR order) and writes the check-to-var message
 // c2v[e] using the configured box-plus rule. The gathered v2c values come from
-// the matching var-edge `check_edge_to_var_edge[e']`.
+// the matching var-edge `check_edge_to_var_edge[e']`. Frozen frames are skipped
+// so their c2v stays at the first-convergence state.
+//
+// `shift_table` / `shift_len`: the per-`i_LS` 5G NR lifting-set shift row (the
+// Phase E seam). Ignored when `shift_len == 0` (the DVB-T2 fully-expanded path).
 // ---------------------------------------------------------------------------
 extern "C" __global__ void ldpc_check_update_kernel(
     const float* __restrict__ v2c,          // [batch * E] var-to-check (CSC view)
     float* __restrict__ c2v,                 // [batch * E] check-to-var (CSR view) (out)
     const int* __restrict__ check_row_ptr,   // [m+1]
     const int* __restrict__ check_edge_to_var_edge, // [E]
+    const uint8_t* __restrict__ frame_done,  // [batch] or nullptr
+    const int* __restrict__ shift_table,     // [shift_len] or nullptr (5G NR seam)
+    int shift_len,
     int m,
     int edges,
     int batch_size,
@@ -93,6 +145,14 @@ extern "C" __global__ void ldpc_check_update_kernel(
     if (gid >= total) return;
     int b = (int)(gid / (long long)m);
     int c = (int)(gid % (long long)m);
+    if (frame_frozen(frame_done, b)) return; // frozen: keep first-convergence c2v
+
+    // The per-`i_LS` shift table is reserved for the Phase E lifted-graph
+    // (BG1/BG2) variant; the DVB-T2 graph is fully expanded, so `shift_len == 0`
+    // and no per-block shift is applied. Touch the params so they are part of
+    // the live signature (not dead-stripped) without changing DVB-T2 behaviour.
+    (void)shift_table;
+    (void)shift_len;
 
     int start = check_row_ptr[c];
     int end = check_row_ptr[c + 1];
@@ -123,8 +183,11 @@ extern "C" __global__ void ldpc_check_update_kernel(
             }
             c2v[base + (long long)e] = msg;
         } else {
-            // Min-sum family: sign product * min magnitude (order-independent
-            // and exactly representable), then the per-algorithm correction.
+            // Min-sum family: sign product * min magnitude. The sign is keyed on
+            // the SIGN BIT (so -0.0 is negative), matching the CPU default
+            // build's AVX2 vectorized min-sum lanes; both the sign product
+            // (±1) and the min magnitude are exactly representable and
+            // order-independent.
             float sign = 1.0f;
             float minmag = INFINITY;
             bool any = false;
@@ -132,9 +195,7 @@ extern "C" __global__ void ldpc_check_update_kernel(
                 if (o == e) continue;
                 int f = check_edge_to_var_edge[o];
                 float lv = v2c[base + (long long)f];
-                // CPU: sign = +1 when value >= 0 else -1 (`boxplus_minsum_n_scalar`
-                // and the SIMD path agree on this convention).
-                sign *= (lv >= 0.0f) ? 1.0f : -1.0f;
+                sign *= signbit(lv) ? -1.0f : 1.0f;
                 float mag = fabsf(lv);
                 if (mag < minmag) minmag = mag;
                 any = true;
@@ -163,7 +224,8 @@ extern "C" __global__ void ldpc_check_update_kernel(
 // belief = channel_llr + sum over CSC-ordered incoming c2v messages, then
 // v2c[f] = belief - incoming[f]. The accumulation order is the CSC column order,
 // matching the CPU `variable_node_update`. Also writes the hard decision
-// (belief < 0 -> bit 1).
+// (belief < 0 -> bit 1). Frozen frames are skipped so their v2c and hard_bits
+// stay at the first-convergence state.
 // ---------------------------------------------------------------------------
 extern "C" __global__ void ldpc_var_update_kernel(
     const float* __restrict__ channel_llrs,  // [batch * n]
@@ -172,6 +234,7 @@ extern "C" __global__ void ldpc_var_update_kernel(
     const int* __restrict__ var_col_ptr,      // [n+1]
     const int* __restrict__ var_edge_to_check_edge, // [E]
     uint8_t* __restrict__ hard_bits,          // [batch * n] (out): 1 if bit 1
+    const uint8_t* __restrict__ frame_done,   // [batch] or nullptr
     int n,
     int edges,
     int batch_size) {
@@ -180,6 +243,7 @@ extern "C" __global__ void ldpc_var_update_kernel(
     if (gid >= total) return;
     int b = (int)(gid / (long long)n);
     int v = (int)(gid % (long long)n);
+    if (frame_frozen(frame_done, b)) return; // frozen: keep first-convergence state
 
     int start = var_col_ptr[v];
     int end = var_col_ptr[v + 1];
@@ -206,7 +270,8 @@ extern "C" __global__ void ldpc_var_update_kernel(
 // ---------------------------------------------------------------------------
 // Initialise the var-to-check messages with the channel LLRs (every edge of
 // variable v gets channel_llrs[v]), matching the CPU init loop.
-// One thread per (batch frame, variable).
+// One thread per (batch frame, variable). Runs once before iteration, so no
+// freeze check is needed (no frame is converged yet).
 // ---------------------------------------------------------------------------
 extern "C" __global__ void ldpc_init_kernel(
     const float* __restrict__ channel_llrs,  // [batch * n]
@@ -230,17 +295,26 @@ extern "C" __global__ void ldpc_init_kernel(
 }
 
 // ---------------------------------------------------------------------------
-// Per-frame syndrome check: one thread per (batch frame, check). Sets
-// frame_unsatisfied[b] = 1 if check c is violated by the current hard_bits.
-// (A frame converges when none of its checks are violated.) Determinism: a
-// boolean OR via a plain store of 1 — no f32 reduction, no read-modify-write
-// dependence on order.
+// Per-frame syndrome check: one thread per (batch frame, check).
+//
+// Computes per-check parity. A frame converges when none of its checks are
+// violated. To detect that without a cross-thread reduction we use a small
+// per-frame `unsatisfied` flag: it is cleared by the host before each launch,
+// and any violated check stores 1 (an idempotent OR; no atomic needed). The
+// host reads it back and, when a frame has NO violated check (`unsatisfied == 0`),
+// sets `frame_done[b]` (host-side) to freeze the frame from the next iteration.
+//
+// Frozen frames (`frame_done[b] != 0`) are skipped: they neither read stale
+// `hard_bits` nor (re)mark `unsatisfied`, so a frozen-and-satisfied frame stays
+// satisfied across the remaining iterations regardless of other frames' state.
+// `frame_done` is `nullptr` when early termination is off (no freezing).
 // ---------------------------------------------------------------------------
 extern "C" __global__ void ldpc_syndrome_kernel(
     const uint8_t* __restrict__ hard_bits,    // [batch * n]
     const int* __restrict__ check_row_ptr,    // [m+1]
     const int* __restrict__ check_edge_var,   // [E]
     uint8_t* __restrict__ frame_unsatisfied,  // [batch] (out)
+    const uint8_t* __restrict__ frame_done,   // [batch] or nullptr
     int m,
     int n,
     int batch_size) {
@@ -249,6 +323,7 @@ extern "C" __global__ void ldpc_syndrome_kernel(
     if (gid >= total) return;
     int b = (int)(gid / (long long)m);
     int c = (int)(gid % (long long)m);
+    if (frame_frozen(frame_done, b)) return; // already converged: stays satisfied
 
     int start = check_row_ptr[c];
     int end = check_row_ptr[c + 1];
@@ -301,6 +376,9 @@ extern "C" int launch_ldpc_check_update(
     float* c2v,
     const int* check_row_ptr,
     const int* check_edge_to_var_edge,
+    const uint8_t* frame_done,   // nullptr when early termination is off
+    const int* shift_table,      // nullptr for DVB-T2 (5G NR seam)
+    int shift_len,               // 0 for DVB-T2
     int m,
     int edges,
     int batch_size,
@@ -314,8 +392,8 @@ extern "C" int launch_ldpc_check_update(
         ldpc_check_update_kernel,
         grid_for(work), dim3(BLOCK_THREADS), 0,
         reinterpret_cast<hipStream_t>(stream),
-        v2c, c2v, check_row_ptr, check_edge_to_var_edge,
-        m, edges, batch_size, algorithm, alpha, beta);
+        v2c, c2v, check_row_ptr, check_edge_to_var_edge, frame_done,
+        shift_table, shift_len, m, edges, batch_size, algorithm, alpha, beta);
     return static_cast<int>(hipGetLastError());
 }
 
@@ -326,6 +404,7 @@ extern "C" int launch_ldpc_var_update(
     const int* var_col_ptr,
     const int* var_edge_to_check_edge,
     uint8_t* hard_bits,
+    const uint8_t* frame_done,   // nullptr when early termination is off
     int n,
     int edges,
     int batch_size,
@@ -337,7 +416,7 @@ extern "C" int launch_ldpc_var_update(
         grid_for(work), dim3(BLOCK_THREADS), 0,
         reinterpret_cast<hipStream_t>(stream),
         channel_llrs, v2c, c2v, var_col_ptr, var_edge_to_check_edge,
-        hard_bits, n, edges, batch_size);
+        hard_bits, frame_done, n, edges, batch_size);
     return static_cast<int>(hipGetLastError());
 }
 
@@ -346,6 +425,7 @@ extern "C" int launch_ldpc_syndrome(
     const int* check_row_ptr,
     const int* check_edge_var,
     uint8_t* frame_unsatisfied,
+    const uint8_t* frame_done,   // nullptr when early termination is off
     int m,
     int n,
     int batch_size,
@@ -357,6 +437,6 @@ extern "C" int launch_ldpc_syndrome(
         grid_for(work), dim3(BLOCK_THREADS), 0,
         reinterpret_cast<hipStream_t>(stream),
         hard_bits, check_row_ptr, check_edge_var, frame_unsatisfied,
-        m, n, batch_size);
+        frame_done, m, n, batch_size);
     return static_cast<int>(hipGetLastError());
 }

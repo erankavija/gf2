@@ -11,6 +11,18 @@
 //! byte-identical to the CPU decoder's hard decision (design doc §11: the
 //! hard-decision verdict is robust to the 1-3 ULP RDNA2 transcendental drift).
 //!
+//! # Early-termination = per-frame freeze (matches the CPU loop)
+//!
+//! `LdpcDecoder::decode_to_codeword(.., early_termination=true)` freezes a
+//! frame's hard decision at the FIRST iteration its syndrome passes. To
+//! reproduce that bit-for-bit across a batch (where frames converge at different
+//! iterations), the host maintains a per-frame `frame_done` flag: the moment a
+//! frame's syndrome passes it is marked done, and every subsequent kernel skips
+//! it, freezing its `hard_bits` / `v2c` / `c2v` at the first-convergence state
+//! (also a perf win). The loop stops when all frames are done or `max_iters` is
+//! reached. With early termination off no frame is frozen and all `max_iters`
+//! run (matching the CPU `early_termination == false` path).
+//!
 //! # Why the graph layout is built by the caller
 //!
 //! `gf2-kernels-hip` owns all device FFI and the SAFETY-annotated launch path,
@@ -96,9 +108,9 @@ impl GpuBpAlgorithm {
 ///
 /// This is the double-CSR encoding the kernel consumes (see `hip/ldpc_bp.hip`):
 /// the check-major CSR (`check_row_ptr`, `check_edge_var`), the variable-major
-/// CSC (`var_col_ptr`, `var_edge_check`), and the two cross-maps
-/// (`check_edge_to_var_edge`, `var_edge_to_check_edge`) that identify the SAME
-/// Tanner edge from the two views.
+/// CSC (`var_col_ptr`), and the two cross-maps (`check_edge_to_var_edge`,
+/// `var_edge_to_check_edge`) that identify the SAME Tanner edge from the two
+/// views.
 ///
 /// The caller (the `gf2-sim` stage, which owns the `LdpcCode`) builds this from
 /// the parity-check matrix so that the kernel's check-node gather order is
@@ -120,8 +132,8 @@ impl GpuBpAlgorithm {
 ///     check_edge_var: vec![0, 1, 2],
 ///     check_edge_to_var_edge: vec![0, 1, 2],
 ///     var_col_ptr: vec![0, 1, 2, 3],
-///     var_edge_check: vec![0, 0, 0],
 ///     var_edge_to_check_edge: vec![0, 1, 2],
+///     shift_table: Vec::new(), // DVB-T2: fully expanded, no per-i_LS shift
 /// };
 /// assert_eq!(layout.edges(), 3);
 /// ```
@@ -134,17 +146,24 @@ pub struct LdpcGraphLayout {
     /// CSR row offsets, length `m + 1`. `check_row_ptr[c]..check_row_ptr[c+1]`
     /// are the check-edge indices of check `c`, in `row_iter` order.
     pub check_row_ptr: Vec<i32>,
-    /// Variable index of each check-edge, length `edges`.
+    /// Variable index of each check-edge, length `edges`. Consumed by the
+    /// syndrome kernel (per-check parity over its variables).
     pub check_edge_var: Vec<i32>,
     /// For each check-edge, the matching variable-edge index, length `edges`.
     pub check_edge_to_var_edge: Vec<i32>,
     /// CSC column offsets, length `n + 1`. `var_col_ptr[v]..var_col_ptr[v+1]`
     /// are the variable-edge indices of variable `v`, in `col_iter` order.
     pub var_col_ptr: Vec<i32>,
-    /// Check index of each variable-edge, length `edges`.
-    pub var_edge_check: Vec<i32>,
     /// For each variable-edge, the matching check-edge index, length `edges`.
     pub var_edge_to_check_edge: Vec<i32>,
+    /// The per-`i_LS` 5G NR lifting-set cyclic-shift row (Phase E `23d3525f`
+    /// seam). **Empty for the fully-expanded DVB-T2 graph** (the graph is
+    /// already expanded into the CSR above, so no per-block shift applies). When
+    /// non-empty, it is uploaded and passed to the check-node kernel at launch
+    /// time so a Phase E BG1/BG2 caller can route messages across the
+    /// Z-circulant without any breaking FFI change. The DVB-T2 path leaves this
+    /// empty and the kernel ignores it (`shift_len == 0`).
+    pub shift_table: Vec<i32>,
 }
 
 impl LdpcGraphLayout {
@@ -161,8 +180,8 @@ impl LdpcGraphLayout {
     ///     check_edge_var: vec![0, 1],
     ///     check_edge_to_var_edge: vec![0, 1],
     ///     var_col_ptr: vec![0, 1, 2],
-    ///     var_edge_check: vec![0, 0],
     ///     var_edge_to_check_edge: vec![0, 1],
+    ///     shift_table: Vec::new(),
     /// };
     /// assert_eq!(layout.edges(), 2);
     /// ```
@@ -192,8 +211,8 @@ impl LdpcGraphLayout {
 ///     check_edge_var: vec![0, 1, 2],
 ///     check_edge_to_var_edge: vec![0, 1, 2],
 ///     var_col_ptr: vec![0, 1, 2, 3],
-///     var_edge_check: vec![0, 0, 0],
 ///     var_edge_to_check_edge: vec![0, 1, 2],
+///     shift_table: Vec::new(),
 /// };
 /// let dec = GpuLdpcBp::new(&layout, 8, 0).expect("build decoder");
 /// let llrs = vec![vec![2.0f32, 2.0, 2.0]];
@@ -209,12 +228,18 @@ pub struct GpuLdpcBp {
     d_check_edge_to_var_edge: DeviceBuffer<i32>,
     d_var_col_ptr: DeviceBuffer<i32>,
     d_var_edge_to_check_edge: DeviceBuffer<i32>,
+    /// The per-`i_LS` 5G NR shift table (Phase E seam). Empty for DVB-T2, in
+    /// which case `shift_len == 0` and the device pointer passed is null.
+    d_shift_table: DeviceBuffer<i32>,
+    shift_len: usize,
     // Per-batch reusable buffers.
     d_channel: DeviceBuffer<f32>,
     d_v2c: DeviceBuffer<f32>,
     d_c2v: DeviceBuffer<f32>,
     d_hard: DeviceBuffer<u8>,
     d_unsatisfied: DeviceBuffer<u8>,
+    /// Per-frame freeze flags for early termination (1 = converged & frozen).
+    d_frame_done: DeviceBuffer<u8>,
     n: usize,
     m: usize,
     edges: usize,
@@ -278,11 +303,6 @@ impl GpuLdpcBp {
             "check_edge_to_var_edge length must equal edges"
         );
         assert_eq!(
-            layout.var_edge_check.len(),
-            edges,
-            "var_edge_check length must equal edges"
-        );
-        assert_eq!(
             layout.var_edge_to_check_edge.len(),
             edges,
             "var_edge_to_check_edge length must equal edges"
@@ -299,11 +319,21 @@ impl GpuLdpcBp {
         let d_var_edge_to_check_edge = DeviceBuffer::<i32>::new(edges.max(1), device_id)?;
         d_var_edge_to_check_edge.copy_from_host(&layout.var_edge_to_check_edge)?;
 
+        // Per-`i_LS` shift table (Phase E seam): uploaded only when non-empty.
+        // For DVB-T2 it is empty, so `shift_len == 0` and a null device pointer
+        // is passed to the kernel (which ignores it).
+        let shift_len = layout.shift_table.len();
+        let d_shift_table = DeviceBuffer::<i32>::new(shift_len.max(1), device_id)?;
+        if shift_len > 0 {
+            d_shift_table.copy_from_host(&layout.shift_table)?;
+        }
+
         let d_channel = DeviceBuffer::<f32>::new(max_batch * n, device_id)?;
         let d_v2c = DeviceBuffer::<f32>::new(max_batch * edges.max(1), device_id)?;
         let d_c2v = DeviceBuffer::<f32>::new(max_batch * edges.max(1), device_id)?;
         let d_hard = DeviceBuffer::<u8>::new(max_batch * n, device_id)?;
         let d_unsatisfied = DeviceBuffer::<u8>::new(max_batch.max(1), device_id)?;
+        let d_frame_done = DeviceBuffer::<u8>::new(max_batch.max(1), device_id)?;
 
         Ok(Self {
             d_check_row_ptr,
@@ -311,11 +341,14 @@ impl GpuLdpcBp {
             d_check_edge_to_var_edge,
             d_var_col_ptr,
             d_var_edge_to_check_edge,
+            d_shift_table,
+            shift_len,
             d_channel,
             d_v2c,
             d_c2v,
             d_hard,
             d_unsatisfied,
+            d_frame_done,
             n,
             m,
             edges,
@@ -348,23 +381,41 @@ impl GpuLdpcBp {
         self.device_id
     }
 
+    /// The length of the per-`i_LS` shift table (`0` for DVB-T2; the Phase E
+    /// 5G-NR seam supplies a non-zero row).
+    #[must_use]
+    pub fn shift_len(&self) -> usize {
+        self.shift_len
+    }
+
+    /// The device shift-table pointer to pass to the check-node kernel, or null
+    /// when the table is empty (DVB-T2). Keeping the null choice in one place
+    /// keeps the launch sites honest about the `shift_len == 0` contract.
+    fn shift_table_ptr(&self) -> *const i32 {
+        if self.shift_len == 0 {
+            ptr::null()
+        } else {
+            self.d_shift_table.as_ptr() as *const i32
+        }
+    }
+
     /// Decodes a batch of channel-LLR frames to their hard-decision codewords.
     ///
     /// Runs the flooding BP schedule (init → alternating check / variable
-    /// updates) for up to `max_iterations`, with per-iteration syndrome
-    /// early-termination when `early_termination` is set: each frame stops
-    /// contributing once all its checks are satisfied, but the launch geometry
-    /// still covers the whole batch every iteration (only the host loop's exit
-    /// test reads back the per-frame satisfied flags). The returned bits are the
-    /// full `n`-bit hard-decision codeword per frame (`true` = bit 1).
+    /// updates) for up to `max_iterations`. When `early_termination` is set each
+    /// frame is **frozen** at the first iteration its syndrome passes (its
+    /// `hard_bits` / messages are not touched again), exactly matching the CPU
+    /// `decode_to_codeword` first-convergence break; the host loop stops once
+    /// every frame is frozen. The returned bits are the full `n`-bit
+    /// hard-decision codeword per frame (`true` = bit 1).
     ///
     /// # Arguments
     ///
     /// * `llr_blocks` — one channel-LLR vector of length `n` per frame.
     /// * `algorithm` — the box-plus rule (with its correction parameter).
     /// * `max_iterations` — BP iteration cap.
-    /// * `early_termination` — stop the host loop once every frame's syndrome
-    ///   is satisfied.
+    /// * `early_termination` — freeze each frame at first convergence and stop
+    ///   the loop once all frames are frozen.
     ///
     /// # Returns
     ///
@@ -382,9 +433,10 @@ impl GpuLdpcBp {
     ///
     /// # Complexity
     ///
-    /// O(`max_iterations * batch * edges`) device work; host-side cost is the
-    /// per-call H2D of `batch * n` f32s and the D2H of `batch * n` bytes, plus
-    /// one `batch`-byte read-back per iteration when `early_termination` is set.
+    /// O(`max_iterations * batch * edges`) device work (less under early
+    /// termination as frozen frames are skipped); host-side cost is the per-call
+    /// H2D of `batch * n` f32s and the D2H of `batch * n` bytes, plus one
+    /// `batch`-byte read-back per iteration when `early_termination` is set.
     pub fn decode_batch(
         &self,
         llr_blocks: &[Vec<f32>],
@@ -423,6 +475,20 @@ impl GpuLdpcBp {
         let m = self.m as i32;
         let edges = self.edges as i32;
         let b = batch as i32;
+        let shift_len = self.shift_len as i32;
+        let shift_ptr = self.shift_table_ptr();
+
+        // The per-frame freeze flags pointer is null when early termination is
+        // off (no frame is ever frozen — all `max_iters` run, matching CPU).
+        // Otherwise the flags start cleared (all frames active) and are flipped
+        // to 1 as frames converge.
+        let mut frame_done_host = vec![0u8; batch];
+        let frame_done_ptr: *const u8 = if early_termination {
+            self.d_frame_done.copy_from_host(&frame_done_host)?;
+            self.d_frame_done.as_ptr() as *const u8
+        } else {
+            ptr::null()
+        };
 
         // Init v2c = channel LLRs.
         // SAFETY: all device pointers were allocated in `new` sized for
@@ -449,9 +515,12 @@ impl GpuLdpcBp {
         let beta = algorithm.beta();
 
         for _iter in 0..max_iterations {
-            // Check-node update.
+            // Check-node update. Frozen frames (when early-term on) are skipped
+            // device-side via `frame_done_ptr`.
             // SAFETY: device pointers from `new`; kernel reads `v2c`, writes
-            // `c2v`, both sized `>= batch * edges`.
+            // `c2v`, both sized `>= batch * edges`. `frame_done_ptr` is either
+            // null (early-term off) or the live `[batch]` flag buffer.
+            // `shift_ptr` is null (DVB-T2) or the uploaded `[shift_len]` table.
             check_hip(
                 unsafe {
                     ffi::launch_ldpc_check_update(
@@ -459,6 +528,9 @@ impl GpuLdpcBp {
                         self.d_c2v.as_mut_ptr() as *mut f32,
                         self.d_check_row_ptr.as_ptr() as *const i32,
                         self.d_check_edge_to_var_edge.as_ptr() as *const i32,
+                        frame_done_ptr,
+                        shift_ptr,
+                        shift_len,
                         m,
                         edges,
                         b,
@@ -471,7 +543,8 @@ impl GpuLdpcBp {
                 "launch_ldpc_check_update",
             )?;
 
-            // Variable-node update (also writes the hard decision).
+            // Variable-node update (also writes the hard decision). Frozen
+            // frames keep their first-convergence `hard_bits` / `v2c`.
             // SAFETY: device pointers from `new`; kernel reads `channel`/`c2v`,
             // writes `v2c` and `hard_bits` (sized `>= batch * n`).
             check_hip(
@@ -483,6 +556,7 @@ impl GpuLdpcBp {
                         self.d_var_col_ptr.as_ptr() as *const i32,
                         self.d_var_edge_to_check_edge.as_ptr() as *const i32,
                         self.d_hard.as_mut_ptr() as *mut u8,
+                        frame_done_ptr,
                         n,
                         edges,
                         b,
@@ -493,12 +567,15 @@ impl GpuLdpcBp {
             )?;
 
             if early_termination {
-                // Clear the per-frame unsatisfied flags, run the syndrome check,
-                // and read them back. If every frame is satisfied, stop early —
-                // matching the CPU `is_valid_codeword` per-iteration test.
+                // Clear the per-frame unsatisfied flags, run the syndrome check
+                // (frozen frames skipped — they stay satisfied), and read it
+                // back. A frame whose syndrome passes THIS iteration is frozen
+                // from the next one, so its hard decision is the first-convergence
+                // codeword — matching the CPU `is_valid_codeword` break.
                 self.clear_unsatisfied(batch)?;
                 // SAFETY: device pointers from `new`; kernel reads `hard_bits`,
-                // writes the leading `batch` `frame_unsatisfied` bytes.
+                // writes the leading `batch` `frame_unsatisfied` bytes; skips
+                // frames flagged in `frame_done_ptr`.
                 check_hip(
                     unsafe {
                         ffi::launch_ldpc_syndrome(
@@ -506,6 +583,7 @@ impl GpuLdpcBp {
                             self.d_check_row_ptr.as_ptr() as *const i32,
                             self.d_check_edge_var.as_ptr() as *const i32,
                             self.d_unsatisfied.as_mut_ptr() as *mut u8,
+                            frame_done_ptr,
                             m,
                             n,
                             b,
@@ -522,9 +600,24 @@ impl GpuLdpcBp {
                 )?;
                 let mut flags = vec![0u8; batch];
                 self.d_unsatisfied.copy_to_host(&mut flags)?;
-                if flags.iter().all(|&u| u == 0) {
+
+                // Freeze every frame whose syndrome passed this iteration (an
+                // active frame with no unsatisfied check). `frame_done` only ever
+                // transitions 0 -> 1, so a frozen frame stays frozen.
+                let mut all_done = true;
+                for f in 0..batch {
+                    if frame_done_host[f] == 0 && flags[f] == 0 {
+                        frame_done_host[f] = 1; // converged this iteration: freeze
+                    }
+                    if frame_done_host[f] == 0 {
+                        all_done = false;
+                    }
+                }
+                if all_done {
                     break;
                 }
+                // Upload the updated freeze flags for the next iteration's kernels.
+                self.d_frame_done.copy_from_host(&frame_done_host)?;
             }
         }
 
@@ -589,9 +682,11 @@ mod tests {
             check_edge_var: vec![0, 1, 2],
             check_edge_to_var_edge: vec![0, 1, 2],
             var_col_ptr: vec![0, 1, 2, 3],
-            var_edge_check: vec![0, 0, 0],
             var_edge_to_check_edge: vec![0, 1, 2],
+            shift_table: Vec::new(),
         };
         assert_eq!(layout.edges(), 3);
+        // DVB-T2 leaves the 5G NR shift table empty.
+        assert!(layout.shift_table.is_empty());
     }
 }

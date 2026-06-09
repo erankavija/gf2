@@ -149,6 +149,15 @@ extern "C" {
     /// rule (0=MinSum, 1=NormalizedMinSum(alpha), 2=OffsetMinSum(beta),
     /// 3=SumProduct). One device thread per `(frame, check)`.
     ///
+    /// `frame_done`: per-frame freeze flags (`[batch]`), or null when early
+    /// termination is off. A frame with `frame_done[b] != 0` is skipped so its
+    /// `c2v` stays at the first-convergence state (design §11 byte-identity).
+    ///
+    /// `shift_table` / `shift_len`: the per-`i_LS` 5G NR lifting-set cyclic-shift
+    /// row (Phase E `23d3525f` seam), or null / 0 for the fully-expanded DVB-T2
+    /// graph (ignored when `shift_len == 0`). Wired through now so BG1/BG2 reuse
+    /// is a non-breaking change.
+    ///
     /// # Returns
     /// 0 on success (hipSuccess), nonzero on error.
     pub fn launch_ldpc_check_update(
@@ -156,6 +165,9 @@ extern "C" {
         c2v: *mut f32,
         check_row_ptr: *const c_int,
         check_edge_to_var_edge: *const c_int,
+        frame_done: *const u8,
+        shift_table: *const c_int,
+        shift_len: c_int,
         m: c_int,
         edges: c_int,
         batch_size: c_int,
@@ -172,6 +184,10 @@ extern "C" {
     /// `hard_bits[b*n + v] = (belief < 0)`. One device thread per
     /// `(frame, variable)`.
     ///
+    /// `frame_done`: per-frame freeze flags (`[batch]`), or null when early
+    /// termination is off. A frame with `frame_done[b] != 0` is skipped so its
+    /// `v2c` and `hard_bits` stay at the first-convergence state.
+    ///
     /// # Returns
     /// 0 on success (hipSuccess), nonzero on error.
     pub fn launch_ldpc_var_update(
@@ -181,6 +197,7 @@ extern "C" {
         var_col_ptr: *const c_int,
         var_edge_to_check_edge: *const c_int,
         hard_bits: *mut u8,
+        frame_done: *const u8,
         n: c_int,
         edges: c_int,
         batch_size: c_int,
@@ -192,6 +209,10 @@ extern "C" {
     /// Sets `frame_unsatisfied[b] = 1` if any check `c` is violated by the
     /// current `hard_bits` of frame `b`. One device thread per `(frame, check)`.
     ///
+    /// `frame_done`: per-frame freeze flags (`[batch]`), or null when early
+    /// termination is off. A frame with `frame_done[b] != 0` is skipped (already
+    /// converged: it stays satisfied and never re-marks `frame_unsatisfied`).
+    ///
     /// # Returns
     /// 0 on success (hipSuccess), nonzero on error.
     pub fn launch_ldpc_syndrome(
@@ -199,6 +220,7 @@ extern "C" {
         check_row_ptr: *const c_int,
         check_edge_var: *const c_int,
         frame_unsatisfied: *mut u8,
+        frame_done: *const u8,
         m: c_int,
         n: c_int,
         batch_size: c_int,
