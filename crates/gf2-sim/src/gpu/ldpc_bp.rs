@@ -33,10 +33,14 @@
 //!
 //! # 5G NR seam (design doc §6, Phase E `23d3525f`)
 //!
-//! The device kernel accepts a per-`i_LS` shift table at launch time (currently
-//! unused by the fully-expanded DVB-T2 graph); the same kernel parameterises
-//! both standards. This stage builds the DVB-T2 layout today; a Phase E
-//! constructor will build the BG1/BG2 layout from the lifting-set shift row.
+//! The standard seam is the flat [`LdpcGraphLayout`](gf2_kernels_hip::launch_ldpc_bp::LdpcGraphLayout),
+//! NOT a kernel parameter: the device kernel is standard-agnostic and decodes
+//! whatever expanded Tanner-graph layout the host hands it, so the same binary
+//! is reused unchanged across DVB-T2 and 5G NR (design §6 shared binary). This
+//! stage builds the DVB-T2 layout today by flattening the parity-check matrix; a
+//! Phase E constructor will host-expand a 5G NR base graph + per-`i_LS`
+//! lifting-set shift table into the same flat layout (the per-`i_LS` shift is
+//! consumed host-side during expansion, never by the kernel).
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
 //! are gated on `feature = "hip"` so the crate builds cleanly with the feature
@@ -132,6 +136,11 @@ mod imp {
             }
         }
 
+        // DVB-T2 flattens an already-expanded parity-check matrix straight into
+        // the flat, standard-agnostic layout the kernel decodes. The Phase E
+        // (`23d3525f`) 5G NR constructor will host-expand a base graph +
+        // per-`i_LS` shift table into this same layout; the per-`i_LS` shift is
+        // consumed during that host-side expansion, never by the kernel.
         LdpcGraphLayout {
             n,
             m,
@@ -140,10 +149,6 @@ mod imp {
             check_edge_to_var_edge,
             var_col_ptr,
             var_edge_to_check_edge,
-            // DVB-T2 is a fully-expanded graph: no per-`i_LS` 5G NR shift row.
-            // The Phase E (`23d3525f`) BG1/BG2 builder will populate this; the
-            // kernel signature already carries it (non-breaking).
-            shift_table: Vec::new(),
         }
     }
 

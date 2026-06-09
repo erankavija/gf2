@@ -59,9 +59,11 @@
 // the min-sum family is reproduced exactly regardless of gather order; only the
 // SumProduct `tanh`/`atanh` path is order-sensitive (handled above).
 //
-// # Graph layout (uploaded once by the host wrapper)
+// # Flat, standard-agnostic graph layout (uploaded once by the host wrapper)
 //
-// The Tanner graph is stored as a double CSR (check-major and variable-major),
+// This kernel is FLAT and STANDARD-AGNOSTIC: it decodes whatever expanded
+// Tanner-graph layout the host hands it, with no knowledge of DVB-T2 vs 5G NR.
+// The graph is stored as a double CSR (check-major and variable-major),
 // matching the CPU decoder's `check_neighbors` / `var_neighbors`:
 //
 //   check_row_ptr[c]   .. check_row_ptr[c+1]    : edges of check c (CSR row)
@@ -80,19 +82,15 @@
 // Because check-edge e and var-edge f index the SAME Tanner edge through the two
 // cross-maps, the two arrays describe the same E messages from the two views.
 //
-// # Per-`i_LS` shift table (the 5G NR seam, design doc §6, Phase E `23d3525f`)
+// # Standard reuse via host-side expansion (design doc §6 shared binary)
 //
-// `ldpc_check_update_kernel` and its launcher take a `shift_table`
-// (`const int*`) + `shift_len` (`int`) parameter pair, threaded all the way
-// through the Rust host wrapper and `LdpcGraphLayout`, so a Phase E BG1/BG2
-// caller can supply the lifting-set cyclic-shift row without ANY breaking FFI
-// signature change. For the fully-expanded DVB-T2 graph the host passes
-// `shift_table == nullptr` and `shift_len == 0`, and the kernel ignores it (the
-// DVB-T2 graph is already expanded into the CSR above, so message routing needs
-// no per-block shift). When `shift_len > 0` a future lifted-graph variant reads
-// the per-block shift here to re-route messages across the Z-circulant; that
-// expansion is out of scope for this task (DVB-T2 only) but the parameter is
-// wired now so the seam is real, not cosmetic.
+// There is NO in-kernel shift parameter. The per-`i_LS` lifting-set shift table
+// is consumed entirely HOST-SIDE: the host expands a base graph + per-`i_LS`
+// shift table into the flat CSR layout above before launch, and this one kernel
+// binary decodes the result unchanged for either standard. DVB-T2 hands over an
+// already-fully-expanded graph today; 5G NR BG1/BG2 reuse this exact kernel via
+// a host-side base-graph + per-`i_LS`-shift → flat-layout expansion added in
+// Phase E (`23d3525f`). The kernel never sees a circulant shift.
 
 #include <hip/hip_runtime.h>
 #include <stdint.h>
@@ -121,10 +119,9 @@ __device__ __forceinline__ bool frame_frozen(const uint8_t* frame_done, int b) {
 // of all OTHER edges of c (also CSR order) and writes the check-to-var message
 // c2v[e] using the configured box-plus rule. The gathered v2c values come from
 // the matching var-edge `check_edge_to_var_edge[e']`. Frozen frames are skipped
-// so their c2v stays at the first-convergence state.
-//
-// `shift_table` / `shift_len`: the per-`i_LS` 5G NR lifting-set shift row (the
-// Phase E seam). Ignored when `shift_len == 0` (the DVB-T2 fully-expanded path).
+// so their c2v stays at the first-convergence state. The kernel is
+// standard-agnostic: any per-`i_LS` cyclic shift was already folded into the
+// flat CSR layout host-side (design doc §6), so there is no shift parameter.
 // ---------------------------------------------------------------------------
 extern "C" __global__ void ldpc_check_update_kernel(
     const float* __restrict__ v2c,          // [batch * E] var-to-check (CSC view)
@@ -132,8 +129,6 @@ extern "C" __global__ void ldpc_check_update_kernel(
     const int* __restrict__ check_row_ptr,   // [m+1]
     const int* __restrict__ check_edge_to_var_edge, // [E]
     const uint8_t* __restrict__ frame_done,  // [batch] or nullptr
-    const int* __restrict__ shift_table,     // [shift_len] or nullptr (5G NR seam)
-    int shift_len,
     int m,
     int edges,
     int batch_size,
@@ -146,13 +141,6 @@ extern "C" __global__ void ldpc_check_update_kernel(
     int b = (int)(gid / (long long)m);
     int c = (int)(gid % (long long)m);
     if (frame_frozen(frame_done, b)) return; // frozen: keep first-convergence c2v
-
-    // The per-`i_LS` shift table is reserved for the Phase E lifted-graph
-    // (BG1/BG2) variant; the DVB-T2 graph is fully expanded, so `shift_len == 0`
-    // and no per-block shift is applied. Touch the params so they are part of
-    // the live signature (not dead-stripped) without changing DVB-T2 behaviour.
-    (void)shift_table;
-    (void)shift_len;
 
     int start = check_row_ptr[c];
     int end = check_row_ptr[c + 1];
@@ -300,9 +288,11 @@ extern "C" __global__ void ldpc_init_kernel(
 // Computes per-check parity. A frame converges when none of its checks are
 // violated. To detect that without a cross-thread reduction we use a small
 // per-frame `unsatisfied` flag: it is cleared by the host before each launch,
-// and any violated check stores 1 (an idempotent OR; no atomic needed). The
-// host reads it back and, when a frame has NO violated check (`unsatisfied == 0`),
-// sets `frame_done[b]` (host-side) to freeze the frame from the next iteration.
+// and any violated check stores the byte `1` into it — an idempotent same-value
+// store (every racing writer stores the identical `1`), so it is race-free
+// without an atomic. The host reads it back and, when a frame has NO violated
+// check (`unsatisfied == 0`), sets `frame_done[b]` (host-side) to freeze the
+// frame from the next iteration.
 //
 // Frozen frames (`frame_done[b] != 0`) are skipped: they neither read stale
 // `hard_bits` nor (re)mark `unsatisfied`, so a frozen-and-satisfied frame stays
@@ -334,9 +324,10 @@ extern "C" __global__ void ldpc_syndrome_kernel(
         parity ^= (uint32_t)hard_bits[nbase + (long long)v];
     }
     if (parity & 1u) {
-        // At least one violated check in this frame: mark unsatisfied. Multiple
-        // checks racing to write 1 is benign (idempotent store of the same
-        // value), no atomic needed.
+        // At least one violated check in this frame: mark unsatisfied. This is
+        // race-free WITHOUT an atomic because every writing thread stores the
+        // IDENTICAL byte value `1` to the same location (an idempotent same-value
+        // store), so any interleaving of the racing writes yields `1`.
         frame_unsatisfied[b] = 1u;
     }
 }
@@ -377,8 +368,6 @@ extern "C" int launch_ldpc_check_update(
     const int* check_row_ptr,
     const int* check_edge_to_var_edge,
     const uint8_t* frame_done,   // nullptr when early termination is off
-    const int* shift_table,      // nullptr for DVB-T2 (5G NR seam)
-    int shift_len,               // 0 for DVB-T2
     int m,
     int edges,
     int batch_size,
@@ -393,7 +382,7 @@ extern "C" int launch_ldpc_check_update(
         grid_for(work), dim3(BLOCK_THREADS), 0,
         reinterpret_cast<hipStream_t>(stream),
         v2c, c2v, check_row_ptr, check_edge_to_var_edge, frame_done,
-        shift_table, shift_len, m, edges, batch_size, algorithm, alpha, beta);
+        m, edges, batch_size, algorithm, alpha, beta);
     return static_cast<int>(hipGetLastError());
 }
 
