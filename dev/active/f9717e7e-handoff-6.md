@@ -1,0 +1,56 @@
+# Handoff — Research-grade CPU+GPU FEC simulation pipeline (gf2-sim) (f9717e7e) — session 6
+
+**Date:** 2026-06-09
+**Session number:** 6
+**Prior handoffs:** `f9717e7e-handoff.md` (s1) … `f9717e7e-handoff-5.md` (s5). Progress: `dev/active/f9717e7e-progress.json`. **All traps from s1–s5 remain in force** — read them (esp. s4/s5: bg3/quiet-host gating, apples-to-apples perf comparators, `tests`-gate thread-local state, subprocess-timing flakes-fail-when-idle, gate-on-settled-loadavg, pre-warm-then-gate, gate BARE, restore lead-owned files after worker merge, worktree-dispatch scripts are missing → hand-roll).
+
+## Current state
+
+- Epic `f9717e7e` — `in_progress` (claimed `agent:project-lead`). HEAD ~`70aed4af` + progress/handoff commits.
+- **PHASE A COMPLETE** (story `bcf7776d`). **PHASE B COMPLETE this session** (story `1f588e2a` done).
+- **DONE this session:** `14f59c2d` (B.4, the Phase B closer) → closed story `1f588e2a`.
+- **DISPATCHED this session (running in background):** `75c22fa8` (C.1, hybrid pipeline scheduler) — Opus bg worker `a1983a66f103480d3`, worktree `agent-75c22fa8` on main `70aed4af`.
+- **Host:** quiet most of the session (loadavg ~0.5–2). `bg3` was largely absent; re-check before any perf measurement.
+- Open escalations: none awaiting input (two answered this session — see below).
+
+## What happened (session 6)
+
+### B.4 `14f59c2d` closed after 2 rework rounds + 1 user escalation (2 amendments approved)
+Hand-composed CPU-only vs CPU+GPU DVB-T2 chain byte-identity harness (the runnable hybrid `Pipeline` doesn't exist until Phase C, so it composes the Phase-A frame-level building blocks: shared TX+noise, GPU max-log demap + LDPC BP vs CPU, BCH on CPU both arms, max-log both sides).
+- **Round 1 (lead pre-gate review FAIL):** the worker's first cut asserted `errors` = **bit** errors (the EXCLUDED BER numerator) instead of the §11 `errors` = **frame** errors (per `WorkerCounters` SSOT), which forced it **above threshold** → a **vacuous** test (fer=0/errors=0/frames=200 on both). Also busted the 120 s slow-tier cap (265 s) and the CLAUDE.md §11 edit baked in the misframing. → Reworked to FRAME-error columns at a **non-vacuous waterfall** (105/33/70 of 200 errored, `0<errored<frames` asserted), 3 split `#[ignore]` tests + rayon CPU path, bit-errors/mean_iters logged-not-asserted. **No verdict divergence at the waterfall → the §11 CPU-vs-GPU contract HOLDS end-to-end** (a real, non-vacuous confirmation, not a dodge).
+- **Round 2 (formal codex code-review FAIL):** 3 conformance findings (harness correctness confirmed sound): (F1) GPU `mean_iters` logged "n/a"; (F2) CLAUDE.md not verbatim §5 (diagram missing) / §6 (design §6 was STALE — said compute-capability `hipDeviceGetAttribute`, but landed code `36075e4c` uses name-based `gcnArchName`); (F3) deliverable said "via `Pipeline`" but the runnable Pipeline is Phase C. → **Escalated F2/F3 to user; both approved:** F3 = amend B.4 to hand-composed, Pipeline-driven CPU-vs-GPU regression owned by **D.3 `0d9cb8e3`** (which already carries mode-C `with_gpu(true)`); F2 = correct stale design §6 to name-based detection (+6-row table), then CLAUDE.md verbatim. F1 = fixed in code (surface per-frame GPU freeze iteration via additive `decode_batch_with_iters` on the launcher + `GpuLdpcBp`; `decode_batch` unchanged so `a930be7f` preserved). Lead did a final char-exact verbatim trim of CLAUDE.md §6. All 3 gates green; closed.
+
+### Phase B story `1f588e2a` closed
+All 6 children done + gates green; the 4 story criteria are satisfied by the children (esp. `14f59c2d`'s byte-identity test, `gpu-stages-receipts.md`, and the CLAUDE.md HIP/multi-arch/§11 updates). No story-level gates.
+
+### C.1 `75c22fa8` dispatched with a lead API reconciliation
+The dispatch BAKED IN the public-API surface Phase D consumes but that does not yet exist (the exact trap that cost B.4 a round): `Pipeline` is a scaffold (no run method; today's run paths are `parallel::run_snr_point*` / `checkpoint::run_sweep_checkpointed`); the typestate `Builder<Ready>` has `.parallelism()/.seed()/.build()` but NO `.with_gpu()`; `PipelineConfig` has no gpu-enable flag. C.1 was told to ALSO deliver `SimulationResults` (reusing `WorkerCounters` column SSOT), a runnable `Pipeline::run`/`Scheduler::run`, and `Builder::with_gpu(bool)` + config flag + `build()` GPU-stage wiring with CPU fallbacks — so D.3 (`0d9cb8e3` `.with_gpu(true).build()`+run) and D.2 (`bbf6b6ee` `Pipeline::run_with_decoder`) consume real APIs.
+
+## What to do next
+
+- [ ] **Review C.1 `75c22fa8` when the bg worker returns.** It's a LARGE task (scheduler + async overlap + new public API + perf gate). Review tiers 1.5/2/2.5/2.75/3, then the mandated adversarial pre-review, then gates (cargo-ci, code-review, **parallelism-pays**). The perf gate (≥1.5× combined CPU+GPU vs CPU-24 21.44 fps → ≥~32.2 fps on r1/2 16-QAM deep waterfall) is `[hard]`, measure on a VERIFIED-QUIET host; if the worker missed it, do NOT weaken — lead re-measures, escalate if genuinely unreachable. Verify it did NOT break `3fcb7025` cross-worker-count byte-identity.
+- [ ] **Then C.2 (parallel-ish wave): `de160fc5` (DAG executor), `571c11c4` (hybrid resume), `42eac5cc` (failure-mode wiring)** — all depend only on `75c22fa8`. They touch DISTINCT files (`executor/topology.rs`, `executor/drain.rs`, `executor/failure.rs`) but all add to `executor/mod.rs` + share `tests/common` → moderate conflict; worktree-isolate or serialize. `42eac5cc` CONSUMES `ed575f15`'s injectors (`OomInjector`/`KernelErrorInjector` in `tests/common/mod.rs`) and honors `PipelineConfig::strict_gpu` (per the 2026-06-09 criteria-audit moves).
+- [ ] **Then Phase D** (`8c8302c8` preset+graph example → `bbf6b6ee` campaign migration [unblocks cross-epic `e4849f07`; owns `--strict-gpu` CLI [hard]] → `0d9cb8e3` CPU-vs-GPU regression [Pipeline-driven, owns the moved B.4 obligation; REFERENCES B.4's §11 CLAUDE.md block, does not re-author]).
+- [ ] **Then Phase E** (`acf9b11a` 5G NR base graphs + per-i_LS shift tables [trap `feedback_ldpc_shift_tables`; bit-exact-vs-3GPP-reference [hard]] → `e478daa8` 5G NR preset [must CREATE NR Stage wrappers, not reuse DVB-T2; i_LS=8 label derive via lifting_set_index(Z)] → `23d3525f` GPU tuning to ≥200 Mbps [hard, measured] → `18e69a1a` aff3ct/IT++ comparison [hard ±0.2dB; uninstallable-tool = escalate-blocker not relaxation] → `110e45cc` epic-close rustdoc [dep on 18e69a1a]).
+- See `criteria_audit_2026_06_09` in the progress file for the per-task `[hard]`-criterion reconciliations still PENDING at dispatch for C.2/D/E.
+
+## Traps — do not repeat these (NEW this session; s1–s5 traps still apply)
+
+- **The §11 determinism columns are FRAME-level, per `gf2_sim::parallel::WorkerCounters` (SSOT).** `errors` = `self.errors += u64::from(errored)` (one per ERRORED FRAME); `total_bit_errors` is SEPARATE and BER (`total_bit_errors/total_bits`) is ALWAYS-EXCLUDED (`152388f4`, §11). Any byte-identity test that asserts BIT errors is asserting an EXCLUDED column — and bit-errors legitimately drift CPU-vs-GPU on a non-converged frame. A new GPU/CPU comparison harness MUST compare FRAME-error counts (`errors`/`fer`), not bit errors. This cost B.4 a full rework round.
+- **A CPU-vs-GPU byte-identity test MUST run at a non-vacuous WATERFALL operating point** (`0 < errored_frames < frames`), NOT above threshold. Above threshold every column is trivially 0/200 — the verdict boundary §11 is about is never exercised. §11 explicitly claims robustness *near* the convergence threshold; test there. (Waterfalls are SHARP for NMS(0.75) max-log: r1/2 16-QAM 6.2→200/200, 6.4→105/200, 6.6→3/200; calibrate empirically per seed.) Assert non-vacuity.
+- **Design-doc §6 was STALE and is now corrected.** It said compute-capability `hipDeviceGetAttribute(major,minor)` detection; the LANDED code (`host/arch.rs`, `36075e4c`) uses name-based `gcnArchName` detection (gfx940/gfx942 share compute capability 9.4 → only the name distinguishes the blob). §6 is now corrected (`[fixed: 14f59c2d]`) + 6-row arch table; CLAUDE.md §6 is a char-exact verbatim subset. Do NOT regress either. CLAUDE.md edits ARE authorized for this epic (criterion-4 mandates them) despite the harness's "self-modification" security-warning heuristic — it's a false positive here.
+- **"Verbatim §X" in a criterion is satisfied by a faithful char-exact QUOTE (or subset) of the corrected SSOT** — not by paraphrase. When a criterion says "quote design §X verbatim" and §X is stale vs landed code, fix §X FIRST (stale-doc sweep, code is SSOT), then quote. The formal codex gate IS strict about this (it failed B.4 on §6 verbatim). The lead trimmed CLAUDE.md's §6 to a char-exact subset to be airtight.
+- **The runnable `Pipeline` / `.with_gpu()` / `Pipeline::run_with_decoder` APIs do NOT exist until Phase C (`75c22fa8`).** Any task whose deliverable NAMES them must either be downstream of C.1, or hand-compose (B.4 did). C.1's dispatch was reconciled to BUILD these so D.1/D.2/D.3 consume real APIs — verify at C.1 review that they landed as named, then verify D's deliverable wording matches before dispatching D.
+- **GPU `decode_batch_with_iters` is now the way to get per-frame GPU BP iteration counts** (additive; `decode_batch` delegates+discards, unchanged). Convention: CPU-aligned (`iter+1` at freeze, else `max_iterations`). Use it (logged, NOT asserted — §11 mean_iters exclusion) for any GPU mean_iters diagnostics.
+- Carry-forward (still in force): pre-warm `cargo-ci.sh` after every merge before gating; gate BARE (never `| tail`); gate only on SETTLED loadavg (pre-warm tail flakes 5s nextest); a backgrounded `jit gate pass` reports wrapper exit 0 even on FAIL → read `jit gate check-all`; the mandated adversarial pre-reviewer is NOT an oracle (it PASSED B.4 r1 then the formal gate found 3 findings — but it correctly judged the r2 §6 verbatim risk); restore lead-owned `.jit`/progress.json after a worker merge; `#[ignore]` GPU/slow tests; single gfx1030 → no concurrent GPU suites; `gf2-kernels-hip` is UPSTREAM of `gf2-sim`.
+
+## Open questions needing user input
+
+None.
+
+## Reference artefacts
+
+- Epic: `jit issue show f9717e7e`. Design doc: `dev/active/ec530af9-pipeline-design.md` (§3 seek; §4 v2 schema; §5 crate boundary; §6 multi-arch [corrected]; §8 fallback/OOM; §11 determinism). Project plan: `dev/active/f9717e7e-project-plan.md` (§5 receipt schema, §7 CLAUDE.md touchpoints).
+- Receipts: `gpu-stages-receipts.md` (Phase B closer — 3-col byte-identity + per-kernel links), `parallelism-receipts.md` (3fcb7025 CPU-24 21.44 fps/13.22×; f6004add GPU AWGN 14.91×; a930be7f GPU LDPC 253.51×/28.98×; d3f1616a GPU demap 12.59×/16.09×), `cpu-foundation-receipts.md`, `baseline-single-thread.md` (1.6216 fps). C.1 will add `hybrid-executor-receipts.md`.
+- B.4 surfaces: `crates/gf2-sim/tests/gpu_byte_identity.rs`, `src/gpu/ldpc_bp.rs` (`decode_batch_with_iters`), `crates/gf2-kernels-hip/src/launch_ldpc_bp.rs` (`decode_batch_with_iters`).
+- C.1 in flight: `crates/gf2-sim/src/executor/` (scheduler home), `src/presets/dvb_t2.rs` (typestate builder), `src/pipeline.rs`, `src/config.rs`.
