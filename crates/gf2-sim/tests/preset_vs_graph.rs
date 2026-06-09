@@ -136,6 +136,7 @@ fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipeli
         checkpoint_dir: None,
         tracing_log_path: None,
         parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
+        gpu_enabled: false,
         strict_gpu: false,
     };
 
