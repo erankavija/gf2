@@ -104,7 +104,8 @@ impl GpuBpAlgorithm {
     }
 }
 
-/// Host-side flattened Tanner-graph layout for the GPU LDPC BP decoder.
+/// Host-side flat, standard-agnostic Tanner-graph representation the GPU LDPC BP
+/// kernel decodes.
 ///
 /// This is the double-CSR encoding the kernel consumes (see `hip/ldpc_bp.hip`):
 /// the check-major CSR (`check_row_ptr`, `check_edge_var`), the variable-major
@@ -118,6 +119,15 @@ impl GpuBpAlgorithm {
 /// the variable-node belief sum order is exactly the `var_neighbors` (CSC
 /// `col_iter`) order — the basis of the CPU↔GPU byte-identity of the hard
 /// decision.
+///
+/// # Standard-agnostic by construction (design doc §6 shared binary)
+///
+/// This layout is the standard seam: the kernel decodes whatever flat Tanner
+/// graph is encoded here, with no notion of DVB-T2 vs 5G NR and no in-kernel
+/// shift parameter. DVB-T2 builds this from a fully-expanded parity-check matrix
+/// today. 5G NR support is a Phase E (`23d3525f`) **constructor** that expands a
+/// base graph + per-`i_LS` lifting-set shift table into this same flat layout
+/// host-side; the kernel binary is reused unchanged.
 ///
 /// # Examples
 ///
@@ -133,7 +143,6 @@ impl GpuBpAlgorithm {
 ///     check_edge_to_var_edge: vec![0, 1, 2],
 ///     var_col_ptr: vec![0, 1, 2, 3],
 ///     var_edge_to_check_edge: vec![0, 1, 2],
-///     shift_table: Vec::new(), // DVB-T2: fully expanded, no per-i_LS shift
 /// };
 /// assert_eq!(layout.edges(), 3);
 /// ```
@@ -156,14 +165,6 @@ pub struct LdpcGraphLayout {
     pub var_col_ptr: Vec<i32>,
     /// For each variable-edge, the matching check-edge index, length `edges`.
     pub var_edge_to_check_edge: Vec<i32>,
-    /// The per-`i_LS` 5G NR lifting-set cyclic-shift row (Phase E `23d3525f`
-    /// seam). **Empty for the fully-expanded DVB-T2 graph** (the graph is
-    /// already expanded into the CSR above, so no per-block shift applies). When
-    /// non-empty, it is uploaded and passed to the check-node kernel at launch
-    /// time so a Phase E BG1/BG2 caller can route messages across the
-    /// Z-circulant without any breaking FFI change. The DVB-T2 path leaves this
-    /// empty and the kernel ignores it (`shift_len == 0`).
-    pub shift_table: Vec<i32>,
 }
 
 impl LdpcGraphLayout {
@@ -181,7 +182,6 @@ impl LdpcGraphLayout {
     ///     check_edge_to_var_edge: vec![0, 1],
     ///     var_col_ptr: vec![0, 1, 2],
     ///     var_edge_to_check_edge: vec![0, 1],
-    ///     shift_table: Vec::new(),
     /// };
     /// assert_eq!(layout.edges(), 2);
     /// ```
@@ -212,7 +212,6 @@ impl LdpcGraphLayout {
 ///     check_edge_to_var_edge: vec![0, 1, 2],
 ///     var_col_ptr: vec![0, 1, 2, 3],
 ///     var_edge_to_check_edge: vec![0, 1, 2],
-///     shift_table: Vec::new(),
 /// };
 /// let dec = GpuLdpcBp::new(&layout, 8, 0).expect("build decoder");
 /// let llrs = vec![vec![2.0f32, 2.0, 2.0]];
@@ -228,10 +227,6 @@ pub struct GpuLdpcBp {
     d_check_edge_to_var_edge: DeviceBuffer<i32>,
     d_var_col_ptr: DeviceBuffer<i32>,
     d_var_edge_to_check_edge: DeviceBuffer<i32>,
-    /// The per-`i_LS` 5G NR shift table (Phase E seam). Empty for DVB-T2, in
-    /// which case `shift_len == 0` and the device pointer passed is null.
-    d_shift_table: DeviceBuffer<i32>,
-    shift_len: usize,
     // Per-batch reusable buffers.
     d_channel: DeviceBuffer<f32>,
     d_v2c: DeviceBuffer<f32>,
@@ -319,15 +314,6 @@ impl GpuLdpcBp {
         let d_var_edge_to_check_edge = DeviceBuffer::<i32>::new(edges.max(1), device_id)?;
         d_var_edge_to_check_edge.copy_from_host(&layout.var_edge_to_check_edge)?;
 
-        // Per-`i_LS` shift table (Phase E seam): uploaded only when non-empty.
-        // For DVB-T2 it is empty, so `shift_len == 0` and a null device pointer
-        // is passed to the kernel (which ignores it).
-        let shift_len = layout.shift_table.len();
-        let d_shift_table = DeviceBuffer::<i32>::new(shift_len.max(1), device_id)?;
-        if shift_len > 0 {
-            d_shift_table.copy_from_host(&layout.shift_table)?;
-        }
-
         let d_channel = DeviceBuffer::<f32>::new(max_batch * n, device_id)?;
         let d_v2c = DeviceBuffer::<f32>::new(max_batch * edges.max(1), device_id)?;
         let d_c2v = DeviceBuffer::<f32>::new(max_batch * edges.max(1), device_id)?;
@@ -341,8 +327,6 @@ impl GpuLdpcBp {
             d_check_edge_to_var_edge,
             d_var_col_ptr,
             d_var_edge_to_check_edge,
-            d_shift_table,
-            shift_len,
             d_channel,
             d_v2c,
             d_c2v,
@@ -379,24 +363,6 @@ impl GpuLdpcBp {
     #[must_use]
     pub fn device_id(&self) -> i32 {
         self.device_id
-    }
-
-    /// The length of the per-`i_LS` shift table (`0` for DVB-T2; the Phase E
-    /// 5G-NR seam supplies a non-zero row).
-    #[must_use]
-    pub fn shift_len(&self) -> usize {
-        self.shift_len
-    }
-
-    /// The device shift-table pointer to pass to the check-node kernel, or null
-    /// when the table is empty (DVB-T2). Keeping the null choice in one place
-    /// keeps the launch sites honest about the `shift_len == 0` contract.
-    fn shift_table_ptr(&self) -> *const i32 {
-        if self.shift_len == 0 {
-            ptr::null()
-        } else {
-            self.d_shift_table.as_ptr() as *const i32
-        }
     }
 
     /// Decodes a batch of channel-LLR frames to their hard-decision codewords.
@@ -475,8 +441,6 @@ impl GpuLdpcBp {
         let m = self.m as i32;
         let edges = self.edges as i32;
         let b = batch as i32;
-        let shift_len = self.shift_len as i32;
-        let shift_ptr = self.shift_table_ptr();
 
         // The per-frame freeze flags pointer is null when early termination is
         // off (no frame is ever frozen — all `max_iters` run, matching CPU).
@@ -520,7 +484,6 @@ impl GpuLdpcBp {
             // SAFETY: device pointers from `new`; kernel reads `v2c`, writes
             // `c2v`, both sized `>= batch * edges`. `frame_done_ptr` is either
             // null (early-term off) or the live `[batch]` flag buffer.
-            // `shift_ptr` is null (DVB-T2) or the uploaded `[shift_len]` table.
             check_hip(
                 unsafe {
                     ffi::launch_ldpc_check_update(
@@ -529,8 +492,6 @@ impl GpuLdpcBp {
                         self.d_check_row_ptr.as_ptr() as *const i32,
                         self.d_check_edge_to_var_edge.as_ptr() as *const i32,
                         frame_done_ptr,
-                        shift_ptr,
-                        shift_len,
                         m,
                         edges,
                         b,
@@ -683,10 +644,7 @@ mod tests {
             check_edge_to_var_edge: vec![0, 1, 2],
             var_col_ptr: vec![0, 1, 2, 3],
             var_edge_to_check_edge: vec![0, 1, 2],
-            shift_table: Vec::new(),
         };
         assert_eq!(layout.edges(), 3);
-        // DVB-T2 leaves the 5G NR shift table empty.
-        assert!(layout.shift_table.is_empty());
     }
 }
