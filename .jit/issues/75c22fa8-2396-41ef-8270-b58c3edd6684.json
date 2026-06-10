@@ -14,7 +14,23 @@
     "code-review",
     "parallelism-pays"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-10T13:38:25.060915750Z"
+    },
+    "parallelism-pays": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-06-10T13:38:19.103300176Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-10T07:25:31.155445666Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -23,5 +39,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:04:06.996587089+00:00",
-  "updated_at": "2026-06-09T20:07:54.871549274+00:00"
+  "updated_at": "2026-06-10T13:40:21.796398869+00:00"
 }
