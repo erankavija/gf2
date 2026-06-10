@@ -404,7 +404,12 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   divisor. PASS.**
 - **Verdict:** **PASS (attested).** The review rework (real per-worker
   streams, pinned async staging) is throughput-neutral vs the pre-rework
-  default-stream code (123.03 vs 123.25 fps). Historical: the 2026-06-09
+  default-stream code (123.03 vs 123.25 fps). The post-attestation round-2 F1
+  fix (worker-stream selection via deterministic `pool.get(i % n)` instead of
+  the racy call-order `acquire()`) changes only WHICH equivalent stream a
+  worker binds to — same stream count, same work distribution, perf-neutral;
+  the attestation stands (same precedent as the `a930be7f` R2 cosmetic-ABI
+  rework). Historical: the 2026-06-09
   worker directional run under heavy external load (Baldur's Gate 3 ~368%
   CPU + GPU 95%, loadavg ≈ 12) measured hybrid 51.44 fps → 2.40× the
   canonical divisor — directionally consistent (load only understates

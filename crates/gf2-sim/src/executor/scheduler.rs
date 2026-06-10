@@ -526,15 +526,17 @@ mod hybrid {
                         .into_par_iter()
                         .map(|worker_idx| {
                             let stream_id = worker_idx % n_streams;
-                            // Deliverable 2: worker i owns one stream — the pool
-                            // holds exactly `parallelism` streams and each worker
-                            // acquires once, so the round-robin cursor hands every
-                            // worker a distinct stream. ALL of this worker's GPU
-                            // work (launches + pinned transfers) is enqueued on
-                            // this stream, and completion is awaited per-stream
+                            // Deliverable 1: worker i OWNS stream i % n_streams,
+                            // selected by deterministic index — `pool.acquire()`
+                            // would hand out streams in racy call order under
+                            // `into_par_iter`, desynchronising the recorded
+                            // `stream_id` from the stream actually used. ALL of
+                            // this worker's GPU work (launches + pinned
+                            // transfers) is enqueued on this stream, and
+                            // completion is awaited per-stream
                             // (`hipStreamSynchronize` inside the decode call),
                             // never via device-wide sync.
-                            let stream = pool.acquire();
+                            let stream = pool.get(stream_id);
                             self.worker_partition_hybrid(
                                 template, gpu_stage, stream, worker_idx, stream_id, snr_idx,
                                 max_frames, seed, timeline, run_start,
