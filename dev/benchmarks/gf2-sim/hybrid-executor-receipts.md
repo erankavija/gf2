@@ -56,22 +56,18 @@ See the canonical §5 receipt entry in
 
 - **Gate:** combined CPU+GPU ≥ 1.5× the CPU-24-thread baseline (21.44 fps from
   `3fcb7025`) on DVB-T2 r1/2 16-QAM at deep waterfall — i.e. ≥ ~32.2 fps.
-- **WORKER DIRECTIONAL MEASUREMENT (NOT a quiet-host attestation):** on a host
-  with heavy external load (Baldur's Gate 3 at ~368% CPU + GPU 95% busy,
-  `/proc/loadavg` ≈ 12), `hybrid_throughput --frames 48 --repeats 1 --es-n0 6.0`
-  measured **CPU+GPU hybrid = 51.44 fps** vs CPU-24-thread (under the same load)
-  7.22 fps → **7.13×**, and vs the canonical quiet-host 24-thread baseline
-  (21.44 fps) → **2.40×**. Both clear the ≥ 1.5× gate with margin even under
-  load (external CPU contention only *understates* throughput, and the hybrid
-  path is robust because the heavy LDPC decode is off the contended CPU).
-  `fer = 0.5000` across all three arms confirms a genuine waterfall (non-vacuous
-  decode-success/failure mix) and CPU-vs-GPU agreement on the `fer`/`frames`/
-  `errors` columns.
-- **REQUIRES LEAD RE-MEASUREMENT ON A VERIFIED-QUIET HOST** before attestation
-  (`cat /proc/loadavg` ≈ 0, no `bg3`/foreign cargo/rustc, `rocm-smi --showuse`
-  GPU idle), per the `parallelism-pays` gate rules in CLAUDE.md. The directional
-  number stands well clear of the gate, so the gate is not at risk, but the
-  attested figure must come from a quiet host.
+- **ATTESTED (lead quiet-host re-measurement, 2026-06-10):** on a verified-quiet
+  host (`/proc/loadavg` 1-min = 0.38, GPU 0% busy pre-run, no foreign
+  processes), `hybrid_throughput --frames 240 --repeats 3 --es-n0 6.0` measured
+  **CPU+GPU hybrid = 123.25 ± 2.59 fps** → **5.75×** the canonical 21.44 fps
+  CPU-24-thread divisor (and **10.41×** the same-run-same-config CPU-24 arm,
+  11.84 ± 0.04 fps). **PASS (≥ 1.5×).** `fer = 0.4417` identical across all
+  three arms confirms a genuine waterfall (non-vacuous decode-success/failure
+  mix) and CPU-vs-GPU agreement on the `fer`/`frames`/`errors` columns.
+- Historical: the 2026-06-09 worker directional run under heavy external load
+  (Baldur's Gate 3 ~368% CPU + GPU 95%, loadavg ≈ 12, 48 frames × 1 repeat)
+  measured hybrid 51.44 fps → 2.40× the canonical divisor — directionally
+  consistent (external CPU contention only *understates* throughput).
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/hybrid_throughput.rs`
     (re-run on a quiet host:

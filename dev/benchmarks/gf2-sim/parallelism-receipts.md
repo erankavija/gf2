@@ -357,12 +357,12 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 
 ## 75c22fa8 — Hybrid pipeline scheduler (CPU-prep ∥ GPU-decode overlap)
 
-- **Status:** WORKER DIRECTIONAL MEASUREMENT — **NOT YET ATTESTED**. Measured on
-  a heavily loaded host; requires lead re-measurement on a verified-quiet host
-  before attestation (the directional number clears the gate with margin, so the
-  gate is not at risk). Criterion-1 overlap and criterion-3 byte-identity ARE
-  fully verified (they are correctness/behaviour, not load-sensitive throughput).
-- **Date:** 2026-06-09 (worker; loaded-host directional run).
+- **Status:** **ATTESTED** — lead re-measurement on a verified-quiet host
+  (`/proc/loadavg` 1-min = 0.38, GPU 0% busy pre-run, no foreign processes) on
+  2026-06-10. Criterion-1 overlap and criterion-3 byte-identity were verified at
+  merge (correctness/behaviour, not load-sensitive throughput).
+- **Date:** 2026-06-10 (lead; quiet-host attestation run). Worker directional
+  loaded-host run 2026-06-09 retained below for history.
 - **Hardware:** CPU = AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU = AMD Radeon
   RX 6950 XT (gfx1030, RDNA2).
 - **Baseline configuration:** dual-baseline — single-thread CPU full-frame (the
@@ -375,20 +375,27 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   demap, all CPU) against the GPU LDPC BP decode of batch N on its owned HIP
   stream (BATCH_FRAMES = 16), then the SSOT CPU BCH decode-tail + error count.
   AWGN stays on the CPU on both paths (the heavy GPU-worth stage is LDPC decode).
-- **Observed throughput (48 frames, 1 repeat; LOADED host, `/proc/loadavg` ≈ 12,
-  Baldur's Gate 3 ~368% CPU + GPU 95% busy — invalidates as an *attested* figure;
-  external load only UNDERSTATES throughput):**
-  - **CPU+GPU hybrid: 51.44 fps.**
-  - CPU 24-thread (under the same load): 7.22 fps.
-  - CPU 1-thread (under the same load): 0.8461 fps.
-- **Speedup factor:** Hybrid / CPU-24-thread (same-run, under load) = **7.13×**;
-  Hybrid / canonical quiet-host CPU-24-thread baseline (21.44 fps) = **2.40×**.
-  Both clear the gate.
+- **Observed throughput (ATTESTED: 240 frames, 3 repeats; quiet host,
+  `/proc/loadavg` 1-min = 0.38, GPU 0% pre-run; 2026-06-10):**
+  - **CPU+GPU hybrid: 123.25 ± 2.59 fps.**
+  - CPU 24-thread (same run, same config): 11.84 ± 0.04 fps.
+  - CPU 1-thread (same run, same config): 1.1668 ± 0.0019 fps.
+  - `fer = 0.4417` identical on all three arms (non-vacuous waterfall +
+    CPU-vs-GPU column agreement).
+  - Raw log: lead attestation run, `hybrid_throughput --frames 240 --repeats 3
+    --es-n0 6.0` at HEAD `b826e08e`.
+- **Speedup factor:** Hybrid / canonical quiet-host CPU-24-thread baseline
+  (21.44 fps, the gate divisor from `3fcb7025`) = **5.75×**; Hybrid /
+  same-run-same-config CPU-24-thread (11.84 fps, SumProduct at the deep
+  waterfall — more BP iterations per frame than the canonical baseline's
+  operating point) = **10.41×**. Both clear the gate.
 - **Required threshold (from task body):** ≥ 1.5× the CPU-24-thread baseline
-  (i.e. ≥ ~32.2 fps). **51.44 fps → clears even against the canonical 21.44 fps
-  baseline at 2.40×.**
-- **Verdict:** DIRECTIONAL PASS (clears the gate with margin) — **awaiting lead
-  quiet-host re-measurement for attestation.**
+  (i.e. ≥ ~32.2 fps). **123.25 fps → 5.75× against the canonical 21.44 fps
+  divisor. PASS.**
+- **Verdict:** **PASS (attested).** Historical: the 2026-06-09 worker
+  directional run under heavy external load (Baldur's Gate 3 ~368% CPU + GPU
+  95%, loadavg ≈ 12) measured hybrid 51.44 fps → 2.40× the canonical divisor —
+  directionally consistent (load only understates throughput).
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/hybrid_throughput.rs`
     (re-run on a quiet host:
