@@ -9,21 +9,32 @@
 //!    frames (worker `w` of `W` takes frames `w, w+W, w+2W, …`); within its
 //!    partition it processes frames in **batches**;
 //! 2. for each batch `N` the worker (a) holds the CPU-prepared LLRs of batch
-//!    `N`, (b) enqueues the GPU LDPC belief-propagation decode of batch `N` on
-//!    its owned stream, and (c) prepares batch `N+1` on the CPU **while** batch
-//!    `N` decodes on the GPU — the two run concurrently via [`rayon::join`];
+//!    `N`, (b) enqueues the GPU LDPC belief-propagation decode of batch `N` —
+//!    every kernel launch **and** every pinned-staged H2D/D2H transfer — on
+//!    its owned stream, and (c) prepares batch `N+1` on the CPU **while**
+//!    batch `N` decodes on the GPU; completion is awaited **per-stream**
+//!    (`hipStreamSynchronize` inside the decode call), never via device-wide
+//!    sync, so two workers' batches on different streams genuinely overlap;
 //! 3. once batch `N`'s device codewords come back, the worker runs the SSOT BCH
 //!    decode-tail + information-bit error count on the CPU and records the
 //!    per-worker counters.
 //!
 //! # Stage routing by execution class (deliverable 3)
 //!
-//! The heavy [`ExecutionClass::GpuOnly`](crate::ExecutionClass) stage — LDPC BP
-//! decode — runs on the worker's owned HIP stream; every
-//! [`CpuOnly`](crate::ExecutionClass) stage (encode, interleave, QAM map, AWGN,
-//! demap, BCH decode-tail, error count) runs on the rayon worker. The DVB-T2
-//! BICM chain has no `Hybrid`-class stage today; the routing match arms for it
-//! are present so a future hybrid stage slots in without reopening the loop.
+//! [`run`](Scheduler::run) derives its dispatch from the **pipeline's stage
+//! list**: it walks [`Pipeline::stages`](crate::Pipeline::stages) matching each
+//! stage's [`execution_class()`](crate::stage::AnyStage::execution_class).
+//! A discovered [`GpuOnly`](crate::ExecutionClass) stage (the LDPC BP decode
+//! the DVB-T2 preset places under `with_gpu(true)`) is downcast to its
+//! concrete type and enqueued on the worker's owned HIP stream; every
+//! [`CpuOnly`](crate::ExecutionClass) stage (encode, interleave, QAM map,
+//! AWGN, demap, BCH decode-tail, error count) runs on the rayon worker — an
+//! all-`CpuOnly` pipeline therefore routes to the pinned SSOT CPU dispatch
+//! ([`run_snr_point`]), the byte-identity-pinned CpuOnly routing outcome. The
+//! DVB-T2 BICM chain has no [`Hybrid`](crate::ExecutionClass)-class stage
+//! today (a hybrid stage would split each batch between CPU and GPU); the
+//! routing match arm for it is present so a future hybrid stage slots in
+//! without reopening the loop.
 //!
 //! # Determinism (design doc §3 / §11; this task's criterion 3)
 //!
@@ -179,7 +190,9 @@ impl OverlapTimeline {
 ///
 /// Attached to the [`Pipeline`] by the preset builder ([`Pipeline::dvb_t2`]) so
 /// [`Pipeline::run`] can reconstruct the validated [`DvbT2BicmFrameSim`] kernel
-/// per SNR point without re-walking the type-erased stage graph.
+/// per SNR point. (Stage **routing** is separate: the scheduler walks the
+/// type-erased stage list by execution class — deliverable 3 — while the
+/// per-frame CPU work runs through this plan's frame kernel.)
 ///
 /// [`Pipeline::dvb_t2`]: crate::Pipeline::dvb_t2
 /// [`Pipeline::run`]: crate::Pipeline::run
@@ -358,8 +371,9 @@ impl Scheduler {
 
         let mut per_point = Vec::with_capacity(cfg.esn0_db_points.len());
         for (snr_idx, &es_n0_db) in cfg.esn0_db_points.iter().enumerate() {
-            let counters =
-                self.run_one_point(plan, snr_idx, es_n0_db, max_frames, &timeline, run_start)?;
+            let counters = self.run_one_point(
+                pipeline, plan, snr_idx, es_n0_db, max_frames, &timeline, run_start,
+            )?;
             per_point.push(SnrPointResult::from_counters(es_n0_db, counters));
         }
 
@@ -368,8 +382,15 @@ impl Scheduler {
     }
 
     /// Runs one SNR point, returning its aggregate [`WorkerCounters`].
+    ///
+    /// Dispatch is derived from `pipeline`'s stage list by execution class
+    /// (deliverable 3, see the [module docs](self)): a discovered `GpuOnly`
+    /// stage routes the point to the hybrid CPU∥GPU driver; an all-`CpuOnly`
+    /// stage list routes to the pinned SSOT CPU dispatch below.
+    #[allow(clippy::too_many_arguments)]
     fn run_one_point(
         &self,
+        pipeline: &Pipeline,
         plan: RunPlan,
         snr_idx: usize,
         es_n0_db: f64,
@@ -385,16 +406,28 @@ impl Scheduler {
         } = plan;
         let template = DvbT2BicmFrameSim::new(rate, modulation, es_n0_db, decoder, demap);
 
+        #[cfg(feature = "hip")]
         if self.gpu_active() {
-            #[cfg(feature = "hip")]
-            {
-                return self.run_point_hybrid(&template, snr_idx, max_frames, timeline, run_start);
+            // Deliverable 3: route by the stage list's execution classes. The
+            // hybrid loop's GPU stage comes FROM the pipeline (the preset
+            // placed it there with its fallback registered), never from a
+            // template reconstruction.
+            if let Some(gpu_stage) = hybrid::find_gpu_ldpc_stage(pipeline) {
+                return self.run_point_hybrid(
+                    &template, gpu_stage, snr_idx, max_frames, timeline, run_start,
+                );
             }
+            // gpu_enabled but the stage list carries no GpuOnly stage (e.g. a
+            // graph-API chain without the preset's GPU placement): every stage
+            // is CpuOnly, so the SSOT CPU dispatch below IS the routing outcome.
         }
+        #[cfg(not(feature = "hip"))]
+        let _ = pipeline; // no device backend: every stage routes CpuOnly
 
-        // CPU-only path: the within-SNR frame-parallel dispatch (SSOT
+        // CpuOnly routing outcome: the within-SNR frame-parallel dispatch (SSOT
         // `3fcb7025`), running inside this scheduler's rayon pool so the worker
-        // count is honoured. Byte-identical to the `run_snr_point` contract.
+        // count is honoured. Byte-identical to the `run_snr_point` contract
+        // (pinned by `tests/pipeline_run_cpu.rs`).
         let _ = (timeline, run_start); // unused on the CPU path
         let counters = self.rayon_pool.install(|| {
             run_snr_point(
@@ -414,6 +447,8 @@ impl Scheduler {
 mod hybrid {
     use super::*;
     use crate::parallel::WorkerCtx;
+    use crate::stage::ExecutionClass;
+    use gf2_kernels_hip::host::HipStream;
     use rayon::prelude::*;
 
     /// Frames per GPU decode batch (the double-buffer unit). Sized so the device
@@ -425,13 +460,53 @@ mod hybrid {
     /// iteration counts (or a [`StageError`] on a device fault).
     type GpuBatchResult = Result<(Vec<gf2_core::BitVec>, Vec<u32>), StageError>;
 
+    /// Routes `pipeline`'s stage list by [`ExecutionClass`] (deliverable 3) and
+    /// returns the discovered `GpuOnly` LDPC BP decode stage, if any.
+    ///
+    /// The three routing arms:
+    ///
+    /// * [`CpuOnly`](ExecutionClass::CpuOnly) — runs on the rayon worker (the
+    ///   SSOT frame kernel covers the whole CPU BICM chain), so it contributes
+    ///   no GPU dispatch here.
+    /// * [`GpuOnly`](ExecutionClass::GpuOnly) — enqueued on the worker's owned
+    ///   HIP stream. The only `GpuOnly` stage the DVB-T2 preset places is the
+    ///   LDPC BP decode, downcast back to its concrete type via
+    ///   [`stage_as_any`](crate::stage::AnyStage::stage_as_any).
+    /// * [`Hybrid`](ExecutionClass::Hybrid) — would split each batch between
+    ///   CPU and GPU. No `Hybrid`-class stage exists in the DVB-T2 BICM chain
+    ///   today; the arm is present so a future hybrid stage slots into the
+    ///   routing without reopening this loop.
+    pub(super) fn find_gpu_ldpc_stage(
+        pipeline: &Pipeline,
+    ) -> Option<&crate::gpu::ldpc_bp::GpuLdpcBp> {
+        pipeline
+            .stages()
+            .iter()
+            .find_map(|stage| match stage.execution_class() {
+                ExecutionClass::CpuOnly => None,
+                ExecutionClass::GpuOnly => stage
+                    .stage_as_any()
+                    .and_then(|s| s.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>()),
+                // No Hybrid-class stage exists today (see the routing doc
+                // above); a future hybrid stage adds its per-batch CPU/GPU
+                // split here.
+                ExecutionClass::Hybrid => None,
+            })
+    }
+
     impl Scheduler {
         /// The hybrid CPU+GPU per-SNR-point driver (design doc §6 overlap
         /// protocol). Each worker owns one HIP stream and double-buffers CPU prep
         /// of batch `N+1` against the GPU LDPC decode of batch `N`.
+        ///
+        /// `gpu_stage` is the pipeline-discovered `GpuOnly` LDPC decode stage
+        /// (from [`find_gpu_ldpc_stage`]); each worker builds its own device
+        /// decoder + pinned staging from it (device buffers are per-worker,
+        /// never shared).
         pub(super) fn run_point_hybrid(
             &self,
             template: &DvbT2BicmFrameSim,
+            gpu_stage: &crate::gpu::ldpc_bp::GpuLdpcBp,
             snr_idx: usize,
             max_frames: usize,
             timeline: &Mutex<OverlapTimeline>,
@@ -445,29 +520,24 @@ mod hybrid {
             let num_workers = self.parallelism.get();
             let seed = self.seed;
 
-            // Build a GPU LDPC stage template (shared, immutable) from the
-            // codec's code + decoder config so each worker can build its own
-            // device decoder (the device buffers are per-worker, never shared).
-            let gpu_stage = crate::gpu::ldpc_bp::GpuLdpcBp::new(
-                template.ldpc_code(),
-                template.decoder_config(),
-                ldpc_max_iters(template),
-            );
-
             let per_worker: Vec<Result<WorkerCounters, StageError>> =
                 self.rayon_pool.install(|| {
                     (0..num_workers)
                         .into_par_iter()
                         .map(|worker_idx| {
                             let stream_id = worker_idx % n_streams;
-                            // Deliverable 1: worker i owns stream i % n_streams.
-                            // Acquiring it here establishes the per-worker association
-                            // (the kernel uses the default stream today; the owned
-                            // stream is reserved for the multi-stream async seam).
-                            let _stream = pool.acquire();
+                            // Deliverable 2: worker i owns one stream — the pool
+                            // holds exactly `parallelism` streams and each worker
+                            // acquires once, so the round-robin cursor hands every
+                            // worker a distinct stream. ALL of this worker's GPU
+                            // work (launches + pinned transfers) is enqueued on
+                            // this stream, and completion is awaited per-stream
+                            // (`hipStreamSynchronize` inside the decode call),
+                            // never via device-wide sync.
+                            let stream = pool.acquire();
                             self.worker_partition_hybrid(
-                                template, &gpu_stage, worker_idx, stream_id, snr_idx, max_frames,
-                                seed, timeline, run_start,
+                                template, gpu_stage, stream, worker_idx, stream_id, snr_idx,
+                                max_frames, seed, timeline, run_start,
                             )
                         })
                         .collect()
@@ -482,11 +552,18 @@ mod hybrid {
         }
 
         /// One worker's strided frame partition, double-buffered CPU/GPU.
+        ///
+        /// `stream` is the worker's owned HIP stream: the GPU decode of every
+        /// batch is enqueued on it (launches + pinned transfers) and awaited
+        /// per-stream inside
+        /// [`decode_batch_with_iters_on_stream`](crate::gpu::ldpc_bp::GpuLdpcBp::decode_batch_with_iters_on_stream)
+        /// (deliverables 2b / 2d).
         #[allow(clippy::too_many_arguments)]
         fn worker_partition_hybrid(
             &self,
             template: &DvbT2BicmFrameSim,
             gpu_stage: &crate::gpu::ldpc_bp::GpuLdpcBp,
+            stream: &HipStream,
             worker_idx: usize,
             stream_id: usize,
             snr_idx: usize,
@@ -502,37 +579,44 @@ mod hybrid {
                 return Ok(WorkerCounters::default());
             }
 
-            // Per-worker simulator clone (own decoder for the CPU BCH tail) and a
-            // per-worker device LDPC decoder sized for one batch.
+            // Per-worker simulator clone (own decoder for the CPU BCH tail), a
+            // per-worker device LDPC decoder sized for one batch, and the
+            // per-worker pinned staging the stream-ordered transfers use.
             let sim = template.clone();
             let device = gpu_stage.build_decoder(BATCH_FRAMES)?;
+            let mut scratch = gpu_stage.build_stream_scratch(&device)?;
             // The per-worker RNG context (logical worker 0: per-frame seek keyed
             // on the GLOBAL frame index, the §3 byte-identity rule).
             let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
 
             let mut counters = WorkerCounters::default();
 
-            // CPU-prep one batch of frames into (messages, llrs).
-            let prep_batch =
-                |frames: &[usize], ctx: &mut WorkerCtx| -> Vec<crate::frame_sim::FramePrep> {
-                    let t0 = elapsed_us(run_start);
-                    let preps: Vec<_> = frames
-                        .iter()
-                        .map(|&g| {
-                            ctx.reseek_to_frame(g);
-                            sim.prepare_frame(g, ctx)
-                        })
-                        .collect();
-                    record(
-                        timeline,
-                        worker_idx,
-                        stream_id,
-                        ActivityKind::CpuPrep,
-                        t0,
-                        run_start,
-                    );
-                    preps
-                };
+            // CPU-prep one batch of frames into (messages, llrs), inside the
+            // stage's tracing span + timeline interval (deliverable 4).
+            let prep_batch = |batch_id: usize,
+                              frames: &[usize],
+                              ctx: &mut WorkerCtx|
+             -> Vec<crate::frame_sim::FramePrep> {
+                traced_interval(
+                    timeline,
+                    worker_idx,
+                    snr_idx,
+                    batch_id,
+                    stream_id,
+                    "CpuPrep",
+                    ActivityKind::CpuPrep,
+                    run_start,
+                    || {
+                        frames
+                            .iter()
+                            .map(|&g| {
+                                ctx.reseek_to_frame(g);
+                                sim.prepare_frame(g, ctx)
+                            })
+                            .collect()
+                    },
+                )
+            };
 
             // Double-buffer: prep batch 0, then for each batch overlap its GPU
             // decode with the CPU prep of the next batch.
@@ -546,7 +630,7 @@ mod hybrid {
             // thread blocks on the GPU decode of batch N. (`std::thread::scope`
             // keeps the borrows safe with no `'static` requirement.)
             let batches: Vec<&[usize]> = my_frames.chunks(BATCH_FRAMES).collect();
-            let mut prepared = prep_batch(batches[0], &mut ctx);
+            let mut prepared = prep_batch(0, batches[0], &mut ctx);
 
             for bi in 0..batches.len() {
                 let cur_preps = std::mem::take(&mut prepared);
@@ -561,39 +645,39 @@ mod hybrid {
                                 // index (§3), not on ctx history, so a throwaway ctx
                                 // seeked per frame preserves byte-identity.
                                 let mut next_ctx = WorkerCtx::new(seed, snr_idx, 0);
-                                prep_batch(batches[next_idx], &mut next_ctx)
+                                prep_batch(next_idx, batches[next_idx], &mut next_ctx)
                             } else {
                                 Vec::new()
                             }
                         });
 
-                        // GPU decode of batch N on THIS (worker) thread.
-                        let gpu_res = (|| -> GpuBatchResult {
-                            let t0 = elapsed_us(run_start);
-                            let llr_batch = crate::batch::LlrBatch::new(
-                                cur_preps.iter().map(|p| p.llrs.clone()).collect(),
-                            );
-                            let span = tracing::info_span!(
-                                "gpu_ldpc_decode",
-                                worker_idx,
-                                snr_idx,
-                                batch_id = bi,
-                                stream_id,
-                                stage_name = "GpuLdpcBp"
-                            );
-                            let _e = span.enter();
-                            let (hard, iters) =
-                                gpu_stage.decode_batch_with_iters(&llr_batch, &device)?;
-                            record(
-                                timeline,
-                                worker_idx,
-                                stream_id,
-                                ActivityKind::GpuDecode,
-                                t0,
-                                run_start,
-                            );
-                            Ok((hard.frames, iters))
-                        })();
+                        // GPU decode of batch N on THIS (worker) thread: every
+                        // launch and transfer is stream-ordered on the worker's
+                        // owned stream; completion is the per-stream synchronize
+                        // inside the decode call (deliverable 2d — no
+                        // device-wide sync in the steady-state loop).
+                        let gpu_res = traced_interval(
+                            timeline,
+                            worker_idx,
+                            snr_idx,
+                            bi,
+                            stream_id,
+                            "GpuLdpcBp",
+                            ActivityKind::GpuDecode,
+                            run_start,
+                            || -> GpuBatchResult {
+                                let llr_batch = crate::batch::LlrBatch::new(
+                                    cur_preps.iter().map(|p| p.llrs.clone()).collect(),
+                                );
+                                let (hard, iters) = gpu_stage.decode_batch_with_iters_on_stream(
+                                    &llr_batch,
+                                    &device,
+                                    stream,
+                                    &mut scratch,
+                                )?;
+                                Ok((hard.frames, iters))
+                            },
+                        );
 
                         let next_preps = cpu_handle.join().expect("CPU prep helper thread");
                         (gpu_res, next_preps)
@@ -603,27 +687,30 @@ mod hybrid {
                 prepared = next_preps;
 
                 // CPU BCH decode-tail + error count for the just-decoded batch.
-                let t0 = elapsed_us(run_start);
-                for (i, prep) in cur_preps.iter().enumerate() {
-                    let outcome = sim.decode_codeword_to_outcome(
-                        &prep.message,
-                        &codewords[i],
-                        iters[i] as u64,
-                    );
-                    counters.record_frame(
-                        outcome.errored,
-                        outcome.iterations,
-                        outcome.info_bits,
-                        outcome.bit_errors,
-                    );
-                }
-                record(
+                traced_interval(
                     timeline,
                     worker_idx,
+                    snr_idx,
+                    bi,
                     stream_id,
+                    "CpuDecodeTail",
                     ActivityKind::CpuPrep,
-                    t0,
                     run_start,
+                    || {
+                        for (i, prep) in cur_preps.iter().enumerate() {
+                            let outcome = sim.decode_codeword_to_outcome(
+                                &prep.message,
+                                &codewords[i],
+                                iters[i] as u64,
+                            );
+                            counters.record_frame(
+                                outcome.errored,
+                                outcome.iterations,
+                                outcome.info_bits,
+                                outcome.bit_errors,
+                            );
+                        }
+                    },
                 );
             }
 
@@ -631,30 +718,45 @@ mod hybrid {
         }
     }
 
-    /// The LDPC max BP iteration count the frame sim's decoder uses (the codec
-    /// default, 50, unless the config overrides it). The CPU `frame_sim` path
-    /// drives `DvbT2Concat` whose default is 50; we match it so the GPU and CPU
-    /// arms run the same iteration cap.
-    fn ldpc_max_iters(_sim: &DvbT2BicmFrameSim) -> usize {
-        // `DvbT2Concat`'s default max BP iterations is 50 (the DVB-T2 default);
-        // the frame sim does not override it, so the GPU cap matches the CPU
-        // path's cap.
-        50
-    }
-
     fn elapsed_us(run_start: Instant) -> u128 {
         run_start.elapsed().as_micros()
     }
 
-    fn record(
+    /// Runs `f` as one instrumented stage interval (deliverable 4): a
+    /// `tracing` span named `pipeline_stage` carrying
+    /// `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)` —
+    /// entered for the duration of `f`, with the measured `wall_us` recorded
+    /// on the span just before close — plus the matching
+    /// [`ActivityInterval`] appended to the [`OverlapTimeline`] (criterion 1's
+    /// overlap-attestation surface; the span and the interval mark the same
+    /// boundaries).
+    #[allow(clippy::too_many_arguments)]
+    fn traced_interval<T>(
         timeline: &Mutex<OverlapTimeline>,
         worker_idx: usize,
+        snr_idx: usize,
+        batch_id: usize,
         stream_id: usize,
+        stage_name: &'static str,
         kind: ActivityKind,
-        start_us: u128,
         run_start: Instant,
-    ) {
-        let end_us = run_start.elapsed().as_micros();
+        f: impl FnOnce() -> T,
+    ) -> T {
+        let span = tracing::info_span!(
+            "pipeline_stage",
+            worker_idx,
+            snr_idx,
+            batch_id,
+            stream_id,
+            stage_name,
+            wall_us = tracing::field::Empty
+        );
+        let entered = span.enter();
+        let start_us = elapsed_us(run_start);
+        let out = f();
+        let end_us = elapsed_us(run_start);
+        span.record("wall_us", (end_us - start_us) as u64);
+        drop(entered);
         timeline
             .lock()
             .expect("overlap timeline mutex")
@@ -666,6 +768,7 @@ mod hybrid {
                 start_us,
                 end_us,
             });
+        out
     }
 }
 

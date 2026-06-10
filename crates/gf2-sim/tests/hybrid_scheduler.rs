@@ -1,18 +1,21 @@
 //! Hybrid CPU+GPU scheduler integration tests (Phase C `75c22fa8`).
 //!
-//! Two `#[cfg(feature = "hip")]`, GPU-gated, slow-tier suites:
+//! Two `#[cfg(feature = "hip")]`, GPU-gated suites:
 //!
-//! * `hybrid_gpu_cpu_overlap_exceeds_50pct` — runs the hybrid scheduler over a
-//!   small frame count and asserts the recorded [`OverlapTimeline`] shows GPU
+//! * `hybrid_gpu_cpu_overlap_exceeds_50pct` — slow tier (`#[ignore]`): runs the
+//!   hybrid scheduler over a frame count large enough for the double-buffer
+//!   steady state and asserts the recorded [`OverlapTimeline`] shows GPU
 //!   stream activity overlapping CPU stage activity for > 50% of GPU-active
 //!   wall-time (criterion 1 / deliverable 4).
-//! * `hybrid_two_run_byte_identical` — runs the SAME hybrid path twice at a
-//!   fixed seed and asserts byte-identical `fer` / `frames` / `errors` /
-//!   `mean_iters` (criterion 3, the same-path determinism guarantee; since this
-//!   is the same device path twice, `mean_iters` IS deterministic run-to-run).
+//! * `hybrid_two_run_byte_identical` — fast tier (NOT ignored: criterion 3
+//!   names the literal command `cargo test -p gf2-sim --features hip`, so this
+//!   test must run under it): runs the SAME hybrid path twice at a fixed seed
+//!   and asserts byte-identical `fer` / `frames` / `errors` / `mean_iters`
+//!   (the same-path determinism guarantee; since this is the same device path
+//!   twice, `mean_iters` IS deterministic run-to-run). Sized (8 workers x 32
+//!   frames per run) to fit the 5 s fast-tier cap on the gfx1030 host.
 //!
-//! Both skip when no GPU is present (`device_mem_info().is_err()`) and carry
-//! `#[ignore]` per the test-tier rules (each is a heavy n=64800 decode sweep).
+//! Both skip when no GPU is present (`device_mem_info().is_err()`).
 
 #![cfg(feature = "hip")]
 
@@ -60,9 +63,13 @@ fn hybrid_gpu_cpu_overlap_exceeds_50pct() {
         eprintln!("skipping hybrid_gpu_cpu_overlap_exceeds_50pct: no usable GPU");
         return;
     }
-    // 8 workers, 128 frames at the r1/2 16-QAM waterfall — enough batches per
-    // worker that the double-buffer steady state dominates startup.
-    let pipeline = hybrid_pipeline(8, 128, 6.0);
+    // 8 workers, 384 frames at the r1/2 16-QAM waterfall: 48 frames per worker
+    // = 3 batches of BATCH_FRAMES=16, so each worker genuinely double-buffers
+    // (prep of batch N+1 overlapping the stream-ordered GPU decode of batch N).
+    // With REAL per-worker stream semantics this intra-worker overlap is what
+    // the criterion measures — a single-batch-per-worker config would leave no
+    // batch N+1 to prep during the decode and trivially under-report.
+    let pipeline = hybrid_pipeline(8, 384, 6.0);
     let scheduler = Scheduler::from_pipeline(&pipeline);
     assert!(
         scheduler.gpu_active(),
@@ -74,7 +81,7 @@ fn hybrid_gpu_cpu_overlap_exceeds_50pct() {
         .expect("hybrid run");
 
     assert_eq!(results.per_point.len(), 1);
-    assert_eq!(results.per_point[0].frames, 128);
+    assert_eq!(results.per_point[0].frames, 384);
 
     // GPU and CPU intervals must both have been recorded.
     let has_gpu = timeline
@@ -104,19 +111,35 @@ fn hybrid_gpu_cpu_overlap_exceeds_50pct() {
     );
 }
 
+/// Criterion 3: `cargo test -p gf2-sim --features hip` run twice produces
+/// byte-identical `fer` / `frames` / `errors` / `mean_iters` at a fixed seed.
+/// NOT `#[ignore]`d — the criterion names that literal command, so this test
+/// must execute under it. GPU-gated (skips without a device); sized to fit the
+/// 5 s fast-tier per-test cap on the gfx1030 host (8 workers, 32 frames per
+/// run at the r1/2 16-QAM waterfall — non-vacuous: a mixed
+/// decode-success/failure verdict is asserted below).
 #[test]
-#[ignore = "sim: hybrid two-run byte-identity (GPU-gated, n=64800 decode sweep)"]
 fn hybrid_two_run_byte_identical() {
     if !gpu_present() {
         eprintln!("skipping hybrid_two_run_byte_identical: no usable GPU");
         return;
     }
-    let run = || {
-        let pipeline = hybrid_pipeline(4, 64, 6.0);
-        pipeline.run().expect("hybrid run").per_point[0]
-    };
+    // One build, two runs: `Pipeline::run` takes `&self` and reseeds from the
+    // config, so each run IS the same hybrid device path end-to-end.
+    let pipeline = hybrid_pipeline(8, 32, 6.0);
+    let run = || pipeline.run().expect("hybrid run").per_point[0];
     let a = run();
     let b = run();
+
+    // Non-vacuous at the waterfall: some — not all — frames must error, so the
+    // determinism assertion exercises a genuine mixed-verdict sweep.
+    assert!(
+        a.errors > 0 && a.errors < a.frames,
+        "expected a mixed decode-success/failure sweep at the waterfall, got \
+         {}/{} errored frames",
+        a.errors,
+        a.frames
+    );
 
     // The four contractual columns must be byte-identical run-to-run (same
     // device path twice; mean_iters IS deterministic here per §11).

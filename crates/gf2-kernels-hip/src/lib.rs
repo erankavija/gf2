@@ -47,7 +47,7 @@ pub use launch_chacha20_awgn::{chacha20_key_from_seed, GpuChaChaAwgn};
 pub mod launch_ldpc_bp;
 
 #[doc(inline)]
-pub use launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout};
+pub use launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout, LdpcStreamScratch};
 
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
