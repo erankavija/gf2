@@ -2,9 +2,11 @@
 //!
 //! A [`HipStream`] owns one `hipStream_t` and destroys it on drop. A
 //! [`HipStreamPool`] owns `n` streams bound to a device and hands them out by
-//! round-robin (cheap, allocation-free) or oldest-idle (probes
-//! `hipStreamQuery`) acquisition. The pool is the per-`HipDispatcher` resource
-//! the design doc §7 multi-GPU seam later replicates per device.
+//! fixed index (deterministic per-worker ownership, the Phase C scheduler
+//! model), round-robin (cheap, allocation-free, call-order cursor), or
+//! oldest-idle (probes `hipStreamQuery`) acquisition. The pool is the
+//! per-`HipDispatcher` resource the design doc §7 multi-GPU seam later
+//! replicates per device.
 
 use std::ffi::c_void;
 use std::ptr;
@@ -169,10 +171,12 @@ unsafe impl Sync for HipStream {}
 
 /// A fixed-size pool of [`HipStream`]s bound to a single device.
 ///
-/// The pool owns `n` streams and hands them out round-robin via
-/// [`acquire`](HipStreamPool::acquire) (the default, allocation-free path) or
+/// The pool owns `n` streams and hands them out three ways: by fixed index
+/// via [`get`](HipStreamPool::get) (deterministic ownership — the Phase C
+/// scheduler model), round-robin via [`acquire`](HipStreamPool::acquire)
+/// (call-order cursor, for serial or order-insensitive callers), or
 /// oldest-idle via [`acquire_idle`](HipStreamPool::acquire_idle) (probes
-/// `hipStreamQuery` to prefer a drained stream). Both return a borrow whose
+/// `hipStreamQuery` to prefer a drained stream). All return a borrow whose
 /// lifetime is tied to the pool — the executor keeps the pool alive for the
 /// duration of a campaign.
 ///
@@ -181,16 +185,19 @@ unsafe impl Sync for HipStream {}
 /// `HipStreamPool` is both [`Send`] and [`Sync`] (the latter is
 /// auto-derived: its fields are an `i32`, an `AtomicUsize`, and a
 /// `Vec<HipStream>` over the `Sync` [`HipStream`]). This is what makes the
-/// design's Phase C scheduler model sound: a *single* pool is shared by
-/// reference (`&HipStreamPool`) across the rayon worker pool, and each worker
-/// calls [`acquire`](HipStreamPool::acquire) /
-/// [`acquire_idle`](HipStreamPool::acquire_idle) to obtain a stream. The atomic
-/// round-robin cursor advances once per acquisition, so concurrent workers
-/// receive *distinct* streams as long as in-flight acquisitions number `<= n`;
-/// with more than `n` simultaneous workers the cursor wraps and two workers may
-/// legitimately share a `&HipStream`, which is sound precisely because
-/// [`HipStream`] is `Sync` (its `&self` methods are read-only or thread-safe
-/// HIP calls). No worker ever drives a stream through a mutable alias.
+/// Phase C scheduler model (`75c22fa8`) sound: a *single* pool is shared by
+/// reference (`&HipStreamPool`) across the rayon worker pool, and worker `i`
+/// calls [`get(i % len)`](HipStreamPool::get) so it deterministically OWNS
+/// that stream regardless of how the thread pool interleaves the workers.
+/// The scheduler does **not** use [`acquire`](HipStreamPool::acquire) for
+/// worker-stream binding: the atomic cursor advances in *call* order, which
+/// under a parallel iterator is scheduler-dependent, so worker `i` would not
+/// be guaranteed stream `i % n` and a recorded `stream_id` could describe a
+/// different stream than the one used. Two callers may legitimately share a
+/// `&HipStream` (e.g. more workers than streams), which is sound precisely
+/// because [`HipStream`] is `Sync` (its `&self` methods are read-only or
+/// thread-safe HIP calls). No caller ever drives a stream through a mutable
+/// alias.
 ///
 /// A [compile-time assertion](self) in the test module enforces the `Send +
 /// Sync` bound so the documented concurrency contract cannot silently regress.
@@ -301,9 +308,12 @@ impl HipStreamPool {
     /// Acquires the next stream by round-robin.
     ///
     /// Allocation-free and lock-free: advances an atomic cursor modulo the pool
-    /// size. This is the deterministic default — successive calls visit streams
-    /// in a fixed, reproducible order, which keeps multi-stream dispatch
-    /// consistent with the determinism contract (design doc §11).
+    /// size, so successive calls visit streams in a fixed order **per call
+    /// sequence**. Note the cursor orders *calls*, not *callers*: under
+    /// concurrent callers (e.g. a parallel iterator) the call interleaving is
+    /// scheduler-dependent, so a given caller is not guaranteed any particular
+    /// stream. For deterministic per-worker stream ownership use
+    /// [`get`](Self::get) instead (the Phase C scheduler model).
     ///
     /// # Examples
     ///
