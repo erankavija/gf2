@@ -87,14 +87,19 @@ See the canonical §5 receipt entry in
 
 - **Gate:** combined CPU+GPU ≥ 1.5× the CPU-24-thread baseline (21.44 fps from
   `3fcb7025`) on DVB-T2 r1/2 16-QAM at deep waterfall — i.e. ≥ ~32.2 fps.
-- **ATTESTED (lead quiet-host re-measurement, 2026-06-10):** on a verified-quiet
-  host (`/proc/loadavg` 1-min = 0.38, GPU 0% busy pre-run, no foreign
-  processes), `hybrid_throughput --frames 240 --repeats 3 --es-n0 6.0` measured
-  **CPU+GPU hybrid = 123.25 ± 2.59 fps** → **5.75×** the canonical 21.44 fps
-  CPU-24-thread divisor (and **10.41×** the same-run-same-config CPU-24 arm,
-  11.84 ± 0.04 fps). **PASS (≥ 1.5×).** `fer = 0.4417` identical across all
-  three arms confirms a genuine waterfall (non-vacuous decode-success/failure
-  mix) and CPU-vs-GPU agreement on the `fer`/`frames`/`errors` columns.
+- **ATTESTED (lead quiet-host re-measurement at the shipped post-rework HEAD
+  `cba9e8d9`, 2026-06-10):** in a sustained-quiet window (`/proc/loadavg`
+  1-min = 0.16 at open, GPU 0%), `hybrid_throughput --frames 240 --repeats 3
+  --es-n0 6.0` measured **CPU+GPU hybrid = 123.03 ± 9.16 fps** → **5.74×** the
+  canonical 21.44 fps CPU-24-thread divisor (and **10.39×** the
+  same-run-same-config CPU-24 arm, 11.84 ± 0.02 fps). **PASS (≥ 1.5×).**
+  `fer = 0.4417` identical across all three arms confirms a genuine waterfall
+  (non-vacuous decode-success/failure mix) and CPU-vs-GPU agreement on the
+  `fer`/`frames`/`errors` columns. An external bursty job returned near the
+  run's end (disclosed in the canonical entry), inflating only the
+  last-executed hybrid arm's spread; the mean agrees with the fully-quiet
+  pre-rework run (123.25 ± 2.59 at `ab408148`) — the stream rework is
+  throughput-neutral.
 - Historical: the 2026-06-09 worker directional run under heavy external load
   (Baldur's Gate 3 ~368% CPU + GPU 95%, loadavg ≈ 12, 48 frames × 1 repeat)
   measured hybrid 51.44 fps → 2.40× the canonical divisor — directionally

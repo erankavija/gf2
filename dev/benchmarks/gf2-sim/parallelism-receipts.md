@@ -375,27 +375,40 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   demap, all CPU) against the GPU LDPC BP decode of batch N on its owned HIP
   stream (BATCH_FRAMES = 16), then the SSOT CPU BCH decode-tail + error count.
   AWGN stays on the CPU on both paths (the heavy GPU-worth stage is LDPC decode).
-- **Observed throughput (ATTESTED: 240 frames, 3 repeats; quiet host,
-  `/proc/loadavg` 1-min = 0.38, GPU 0% pre-run; 2026-06-10):**
-  - **CPU+GPU hybrid: 123.25 ± 2.59 fps.**
-  - CPU 24-thread (same run, same config): 11.84 ± 0.04 fps.
-  - CPU 1-thread (same run, same config): 1.1668 ± 0.0019 fps.
+- **Observed throughput (ATTESTED at the shipped post-rework HEAD `cba9e8d9`
+  — stream-ordered per-worker launches + `ExecutionClass` routing; 240 frames,
+  3 repeats; quiet window opened at `/proc/loadavg` 1-min = 0.16, GPU 0%;
+  2026-06-10):**
+  - **CPU+GPU hybrid: 123.03 ± 9.16 fps.**
+  - CPU 24-thread (same run, same config): 11.84 ± 0.02 fps.
+  - CPU 1-thread (same run, same config): 1.1646 ± 0.0007 fps.
   - `fer = 0.4417` identical on all three arms (non-vacuous waterfall +
-    CPU-vs-GPU column agreement).
+    CPU-vs-GPU column agreement; unchanged from the pre-rework run, pinning
+    the stream path's numerics).
+  - Window caveat, disclosed: an external bursty job returned near the END of
+    the run (loadavg-after 15.26), inflating the hybrid arm's spread (it runs
+    last). The CPU arms — executed first, fully inside the window — are
+    pristine (±0.0007 / ±0.02) and byte-match the fully-quiet pre-rework run,
+    and the hybrid mean agrees with that run (123.25 ± 2.59 at loadavg 0.38,
+    HEAD `ab408148`, pre-stream-rework): two independent quiet runs, same
+    mean. External load only understates throughput.
   - Raw log: lead attestation run, `hybrid_throughput --frames 240 --repeats 3
-    --es-n0 6.0` at HEAD `b826e08e`.
+    --es-n0 6.0` (chained sustained-quiet-window harness).
 - **Speedup factor:** Hybrid / canonical quiet-host CPU-24-thread baseline
-  (21.44 fps, the gate divisor from `3fcb7025`) = **5.75×**; Hybrid /
+  (21.44 fps, the gate divisor from `3fcb7025`) = **5.74×**; Hybrid /
   same-run-same-config CPU-24-thread (11.84 fps, SumProduct at the deep
   waterfall — more BP iterations per frame than the canonical baseline's
-  operating point) = **10.41×**. Both clear the gate.
+  operating point) = **10.39×**. Both clear the gate.
 - **Required threshold (from task body):** ≥ 1.5× the CPU-24-thread baseline
-  (i.e. ≥ ~32.2 fps). **123.25 fps → 5.75× against the canonical 21.44 fps
+  (i.e. ≥ ~32.2 fps). **123.03 fps → 5.74× against the canonical 21.44 fps
   divisor. PASS.**
-- **Verdict:** **PASS (attested).** Historical: the 2026-06-09 worker
-  directional run under heavy external load (Baldur's Gate 3 ~368% CPU + GPU
-  95%, loadavg ≈ 12) measured hybrid 51.44 fps → 2.40× the canonical divisor —
-  directionally consistent (load only understates throughput).
+- **Verdict:** **PASS (attested).** The review rework (real per-worker
+  streams, pinned async staging) is throughput-neutral vs the pre-rework
+  default-stream code (123.03 vs 123.25 fps). Historical: the 2026-06-09
+  worker directional run under heavy external load (Baldur's Gate 3 ~368%
+  CPU + GPU 95%, loadavg ≈ 12) measured hybrid 51.44 fps → 2.40× the
+  canonical divisor — directionally consistent (load only understates
+  throughput).
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/hybrid_throughput.rs`
     (re-run on a quiet host:
