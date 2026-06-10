@@ -23,6 +23,23 @@
 //! guards that the total draw for the batch does not exceed `FRAME_STRIDE - 256`
 //! words.
 //!
+//! # Draw order: the SSOT planar contract (all I, then all Q)
+//!
+//! Within each frame the samples are assigned **planar**: the I-axis noise of
+//! every symbol is drawn first (`num_symbols` samples), then the Q-axis noise
+//! of every symbol (`num_symbols` more). This is the verbatim draw contract of
+//! the canonical DVB-T2 BICM chain
+//! ([`BicmAwgnChannel::transmit_and_demodulate_with_noise`](gf2_coding::dvb_t2_bicm_harness::BicmAwgnChannel::transmit_and_demodulate_with_noise):
+//! "it is called `num_symbols` times for the I axis first, then `num_symbols`
+//! times for the Q axis") — the same order the SSOT frame kernel
+//! ([`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim)) consumes. The
+//! stage-driven executor (`de160fc5`) relies on this alignment for the
+//! stage-chain-vs-SSOT byte-identity contract: with the scratch RNG positioned
+//! at the same stream offset, this stage reproduces the frame kernel's noise
+//! realisation bit-for-bit. (The pre-`de160fc5` stage interleaved I/Q per
+//! symbol, which drew the same word count but assigned different words to each
+//! axis — a realisation the SSOT path could never produce.)
+//!
 //! # Per-frame seek entry point (§3 contract)
 //!
 //! [`Awgn::apply_for_frame`] is the per-frame-seeked entry point: it calls
@@ -191,7 +208,10 @@ impl Awgn {
     /// Each symbol has its I and Q components independently corrupted by
     /// `N(0, sigma^2)` noise via [`draw_standard_normal`]. Each Gaussian sample
     /// consumes exactly 4 ChaCha20 32-bit words (two `f64` uniform draws via
-    /// Box-Muller), so each symbol consumes 8 words.
+    /// Box-Muller), so each symbol consumes 8 words. Within each frame the
+    /// samples are assigned **planar** — every I-axis sample first, then every
+    /// Q-axis sample — the SSOT draw contract of the canonical BICM chain (see
+    /// the [module docs](self)).
     ///
     /// This consumes the RNG from wherever it is currently positioned;
     /// [`apply_for_frame`](Self::apply_for_frame) is the per-frame-seeked wrapper
@@ -209,11 +229,13 @@ impl Awgn {
     pub fn apply(&self, batch: &mut SymbolBatch, rng: &mut ChaCha20Rng) {
         let pos_before = rng.get_word_pos();
         for (i_frame, q_frame) in batch.i.iter_mut().zip(batch.q.iter_mut()) {
-            for (xi, xq) in i_frame.iter_mut().zip(q_frame.iter_mut()) {
-                let n_i = draw_standard_normal(rng) * self.sigma;
-                let n_q = draw_standard_normal(rng) * self.sigma;
-                *xi += n_i;
-                *xq += n_q;
+            // Planar order (the SSOT draw contract): all I-axis samples for the
+            // frame, then all Q-axis samples.
+            for xi in i_frame.iter_mut() {
+                *xi += draw_standard_normal(rng) * self.sigma;
+            }
+            for xq in q_frame.iter_mut() {
+                *xq += draw_standard_normal(rng) * self.sigma;
             }
         }
         let noise_words_drawn = rng.get_word_pos().saturating_sub(pos_before);

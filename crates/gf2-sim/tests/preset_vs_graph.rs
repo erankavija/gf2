@@ -59,13 +59,16 @@ fn decoder_config() -> DecoderConfig {
 /// The demapper's per-symbol total complex AWGN `N0 = 2 * sigma^2` for an AWGN
 /// channel at `es_n0_db`.
 ///
-/// This is the documented closed form `N0 = 10^(-es_n0_db/10)` of the SSOT
-/// `gf2_sim::channels::es_n0_db_to_sigma` derivation (`sigma^2 = 1 / (2 * 10^(es_n0_db/10))`,
-/// so `2 * sigma^2 = 10^(-es_n0_db/10)`). The crate-internal helper is
-/// `pub(crate)`, so the test recomputes the same value via the public formula;
-/// `test_demap_n0_tracks_channel_es_n0` below pins them equal.
+/// This recomputes the preset's `Channel::demap_noise_var` derivation
+/// verbatim: `sigma_sq = 1 / (2 * 10^(es_n0_db / 10))` in `f64`, then
+/// `N0 = (2 * sigma_sq) as f32` (rounded once) — bit-identical to the SSOT
+/// frame kernel's `noise_var` (`frame_sim.rs`) for `f32`-representable Es/N0
+/// values. `test_demap_n0_tracks_channel_es_n0` below pins the built
+/// pipeline's demapper to this value.
 fn expected_demap_n0(es_n0_db: f32) -> f32 {
-    10.0_f32.powf(-es_n0_db / 10.0)
+    let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
+    let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+    (2.0 * sigma_sq) as f32
 }
 
 /// One seeded pseudo-random BBFRAME of `k` bits.
@@ -167,7 +170,9 @@ fn scratches_for(pipeline: &Pipeline, seed: u64) -> Vec<Box<dyn AnyScratch>> {
                     rng: ChaCha20Rng::seed_from_u64(seed),
                 })
             } else {
-                Box::new(())
+                // Every other stage allocates its own concrete scratch type
+                // (the decode stage's is `DecodeScratch`, the rest `()`).
+                stage.default_scratch()
             }
         })
         .collect()
@@ -359,12 +364,19 @@ fn test_demap_n0_tracks_channel_es_n0() {
     let es_n0_db = 7.0_f32; // distinct from ES_N0_DB so the value is unambiguous
     let n0 = expected_demap_n0(es_n0_db);
 
-    // Pin the public formula to the SSOT sigma derivation: N0 == 2 * sigma^2.
-    // (sigma here is recomputed via the documented closed form; the crate's
-    // es_n0_db_to_sigma is pub(crate), so this mirrors it exactly.)
+    // Pin the helper to the SSOT N0 derivation: the f64-computed, once-rounded
+    // 2*sigma^2 (the same arithmetic `frame_sim.rs` and the preset's
+    // `Channel::demap_noise_var` perform). An f32-route recomputation stays
+    // within an ULP of it (the physical-consistency sanity bound).
+    let sigma_sq_f64 = 1.0_f64 / (2.0 * 10.0_f64.powf(f64::from(es_n0_db) / 10.0));
+    assert_eq!(
+        n0.to_bits(),
+        ((2.0 * sigma_sq_f64) as f32).to_bits(),
+        "expected_demap_n0 must equal the once-rounded f64 2*sigma^2"
+    );
     let sigma_sq = 1.0_f32 / (2.0 * 10.0_f32.powf(es_n0_db / 10.0));
     assert!(
-        (n0 - 2.0 * sigma_sq).abs() < 1e-9,
+        (n0 - 2.0 * sigma_sq).abs() < 1e-6,
         "expected_demap_n0 must equal 2*sigma^2 (the channel's true N0)"
     );
 

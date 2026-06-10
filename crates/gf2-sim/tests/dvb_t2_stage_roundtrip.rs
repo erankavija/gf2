@@ -55,7 +55,8 @@ use std::sync::Arc;
 use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, SymbolBatch};
 use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
 use gf2_sim::stages::{
-    dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DvbT2Decode, DvbT2Encode, GrayQamDemap,
+    dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DecodeScratch, DvbT2Decode, DvbT2Encode,
+    GrayQamDemap,
     GrayQamMap, DEFAULT_DEMAP_NOISE_VAR,
 };
 use gf2_sim::Stage;
@@ -72,14 +73,16 @@ fn random_bbframe(k: usize, seed: u64) -> BitVec {
 
 /// Drive a chain of erased stages sequentially via `process_any`.
 ///
-/// Each stage uses `()` as its scratch (all DVB-T2 BICM stages have
-/// `Scratch = ()`). Returns the final type-erased output batch.
+/// Each stage's scratch is allocated through its own
+/// [`AnyStage::default_scratch`] hook (the decode stage carries a
+/// `DecodeScratch`; the rest use `()`). Returns the final type-erased output
+/// batch.
 fn run_erased_chain(
     stages: &[Box<dyn AnyStage>],
     initial: Box<dyn TypedBatch>,
 ) -> Box<dyn TypedBatch> {
     stages.iter().fold(initial, |batch, stage| {
-        let mut scratch: Box<dyn AnyScratch> = Box::new(());
+        let mut scratch: Box<dyn AnyScratch> = stage.default_scratch();
         stage
             .process_any(batch.as_ref(), scratch.as_mut())
             .expect("process_any must succeed in noiseless chain")
@@ -155,11 +158,21 @@ fn assert_noiseless_roundtrip(rate: CodeRate, modulation: DvbT2Modulation, seed:
     // Noiseless channel: symbols feed straight into the demapper.
     let llrs = demap.process(&symbols, &mut ()).expect("demap");
     let deinterleaved = deinterleave.process(&llrs, &mut ()).expect("deinterleave");
-    let recovered: HardDecisionBatch = decode.process(&deinterleaved, &mut ()).expect("decode");
+    let mut decode_scratch = DecodeScratch::default();
+    let recovered: HardDecisionBatch = decode
+        .process(&deinterleaved, &mut decode_scratch)
+        .expect("decode");
 
     assert_eq!(
         recovered.frames[0], bbframe,
         "noiseless roundtrip must reconstruct BBFRAME bit-exactly for {rate:?} / {modulation:?}"
+    );
+    // The decode stage records the genuine BP iteration count per frame; a
+    // noiseless decode converges on the first BP pass.
+    assert_eq!(
+        decode_scratch.iterations,
+        vec![1],
+        "noiseless decode converges in one BP iteration"
     );
 }
 
