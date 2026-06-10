@@ -468,23 +468,33 @@ impl Builder<Ready> {
         self
     }
 
-    /// Enables (or disables) GPU offload of the heavy device-bound stages on the
-    /// built pipeline's [`PipelineConfig`]. Non-state-advancing.
+    /// Enables (or disables) GPU offload of the heavy device-bound stages.
+    /// Non-state-advancing.
     ///
-    /// When `true`, [`Pipeline::run`](crate::Pipeline::run) drives the hybrid
-    /// CPU+GPU scheduler (Phase C `75c22fa8`): each rayon worker prepares the
-    /// next batch on the CPU while its owned HIP stream decodes the current batch
-    /// on the device. When `false` (the default), every stage runs on the CPU
-    /// via the within-SNR frame-parallel path. (The OOM CPU-fallback
-    /// substitution policy is wired by the executor in `42eac5cc`, not here.)
+    /// When `true` (with the `hip` feature compiled in), [`build`](Builder::build)
+    /// replaces the combined CPU decode stage with the
+    /// [`ExecutionClass::GpuOnly`](crate::ExecutionClass) LDPC BP decode stage
+    /// (`gpu::ldpc_bp::GpuLdpcBp`, its `CpuLdpcBp` fallback registered on the
+    /// pipeline for §8 OOM substitution) followed by the CPU BCH outer-decode
+    /// tail ([`DvbT2BchTail`](crate::stages::DvbT2BchTail)) — an eight-stage
+    /// chain — and records `gpu_enabled` on the [`PipelineConfig`].
+    /// [`Pipeline::run`](crate::Pipeline::run) then routes by execution class
+    /// and drives the hybrid CPU+GPU scheduler (Phase C `75c22fa8`): each rayon
+    /// worker prepares the next batch on the CPU while its owned HIP stream
+    /// decodes the current batch on the device. When `false` (the default),
+    /// every stage runs on the CPU via the within-SNR frame-parallel path.
+    /// (The OOM CPU-fallback substitution policy is wired by the executor in
+    /// `42eac5cc`, not here — the fallback is registered and discoverable, but
+    /// an OOM still surfaces as the mapped recoverable error.)
     ///
     /// # Feature gating
     ///
     /// GPU offload requires the `hip` Cargo feature. Built **without** `hip`,
-    /// setting `with_gpu(true)` is accepted but degrades gracefully: the run
-    /// emits a one-shot `tracing::warn!` and falls back to the CPU path (there is
-    /// no device backend to dispatch to). The flag is still recorded on the
-    /// config so a hip-enabled build of the same pipeline honours it.
+    /// setting `with_gpu(true)` is accepted but degrades gracefully: the chain
+    /// stays all-CPU (seven stages), the run emits a one-shot `tracing::warn!`,
+    /// and the CPU path executes (there is no device backend to dispatch to).
+    /// The flag is still recorded on the config so a hip-enabled build of the
+    /// same pipeline honours it.
     ///
     /// # Arguments
     ///
@@ -526,9 +536,12 @@ impl Builder<Ready> {
     /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) with the channel
     /// stage spliced between them — into a [`Chain`](crate::graph::Chain),
     /// connects them consecutively, and returns
-    /// [`Chain::build`](crate::graph::Chain::build)'s [`Pipeline`]. The built
-    /// pipeline carries a [`PipelineConfig`] holding the configured `seed`,
-    /// `parallelism`, and `checkpoint_dir`.
+    /// [`Chain::build`](crate::graph::Chain::build)'s [`Pipeline`]. With
+    /// [`with_gpu(true)`](Builder::with_gpu) under the `hip` feature the chain
+    /// is instead eight stages: the combined CPU decode is replaced by the
+    /// `GpuOnly` LDPC BP decode stage (CPU fallback registered) plus the BCH
+    /// outer-decode tail. The built pipeline carries a [`PipelineConfig`]
+    /// holding the configured `seed`, `parallelism`, and `checkpoint_dir`.
     ///
     /// The soft demapper's assumed noise variance is derived from the **same**
     /// channel (`N0 = 2 sigma^2` via the SSOT Es/N0→sigma conversion), so the
@@ -546,14 +559,15 @@ impl Builder<Ready> {
     /// `build()` validates every input it receives and returns one of the above
     /// typed errors on bad input; it **never panics** on any public input
     /// combination (the typestate guarantees the required setters were called,
-    /// and the chain wiring — a fixed seven-stage linear DAG with type-compatible
-    /// consecutive edges — is well-formed by construction, so no topology
-    /// [`BuildError`] arises for this preset).
+    /// and the chain wiring — a fixed seven- or eight-stage linear DAG with
+    /// type-compatible consecutive edges, plus at most one registered fallback —
+    /// is well-formed by construction, so no topology [`BuildError`] arises for
+    /// this preset).
     ///
     /// # Complexity
     ///
-    /// O(1) in the number of stages (a fixed seven-node chain, topologically
-    /// sorted in constant time). The wall-clock cost is dominated by the one-off
+    /// O(1) in the number of stages (a fixed seven- or eight-node chain,
+    /// topologically sorted in constant time). The wall-clock cost is dominated by the one-off
     /// construction of the [`DvbT2Concat`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat)
     /// codec and the LDPC encoder cache inside
     /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages), not by the
@@ -626,14 +640,57 @@ impl Builder<Ready> {
         let stages = dvb_t2_bicm_stages(rate, modulation, decoder, demap, demap_noise_var);
         let channel_stage = channel.into_stage(modulation.bits_per_cell());
 
+        // GPU offload placement (Phase C `75c22fa8`, deliverable 3): with
+        // `with_gpu(true)` and the `hip` feature compiled in, the combined CPU
+        // decode stage is replaced by the `ExecutionClass::GpuOnly` LDPC BP
+        // decode stage — its `CpuLdpcBp` fallback registered on the chain for
+        // §8 OOM substitution — followed by the CPU BCH outer-decode tail
+        // ([`DvbT2BchTail`](crate::stages::DvbT2BchTail)). The scheduler then
+        // DISCOVERS the GPU stage from the pipeline's stage list by execution
+        // class instead of reconstructing it. Without `hip` the flag degrades
+        // gracefully: the chain stays all-CPU and the scheduler warns at run
+        // time (the flag is still recorded on the config).
+        #[cfg(feature = "hip")]
+        let gpu_decode = self.cfg_gpu_enabled;
+        #[cfg(not(feature = "hip"))]
+        let gpu_decode = false;
+
+        let mut inverse = stages.inverse;
+        if gpu_decode {
+            // Drop the combined CPU `DvbT2Decode` (the last inverse stage);
+            // the GPU LDPC decode + BCH tail below replace it.
+            inverse.pop();
+        }
+
         let mut chain = Chain::new();
-        let mut ids = Vec::with_capacity(7);
+        let mut ids = Vec::with_capacity(8);
         for stage in stages.forward {
             ids.push(chain.add(stage));
         }
         ids.push(chain.add(channel_stage));
-        for stage in stages.inverse {
+        for stage in inverse {
             ids.push(chain.add(stage));
+        }
+        #[cfg(feature = "hip")]
+        if gpu_decode {
+            // The GPU stage runs the same iteration cap as the codec's own
+            // soft decode, so its hard decisions match the CPU chain's.
+            let max_iters = stages.codec.max_ldpc_iterations();
+            let gpu_id = chain.add(erase(crate::gpu::ldpc_bp::GpuLdpcBp::new(
+                stages.codec.ldpc_code(),
+                decoder,
+                max_iters,
+            )));
+            let fb_id = chain.add(erase(crate::gpu::ldpc_bp::CpuLdpcBp::new(
+                stages.codec.ldpc_code(),
+                decoder,
+                max_iters,
+            )));
+            chain.register_fallback(gpu_id, fb_id);
+            ids.push(gpu_id);
+            ids.push(chain.add(erase(crate::stages::DvbT2BchTail::new(
+                stages.codec.clone(),
+            ))));
         }
 
         for pair in ids.windows(2) {
@@ -897,5 +954,87 @@ mod tests {
         let n0 = Channel::awgn(6.0).validate().expect("valid channel");
         let sigma = crate::channels::es_n0_db_to_sigma(6.0);
         assert!((n0 - 2.0 * sigma * sigma).abs() < 1e-9);
+    }
+
+    /// `with_gpu(true)` under `hip` must place the `GpuOnly` LDPC decode stage
+    /// into the pipeline's stage list (discoverable by execution class and
+    /// downcastable to the concrete `GpuLdpcBp`), register its CPU fallback,
+    /// and append the BCH outer-decode tail — eight stages total (75c22fa8
+    /// deliverable 3 wiring). Construction touches no device, so this runs on
+    /// any host.
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_with_gpu_places_discoverable_gpu_stage() {
+        use crate::stage::ExecutionClass;
+
+        let pipeline = Pipeline::dvb_t2()
+            .modcod(Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(sp())
+            .demap(DemapMethod::MaxLog)
+            .channel(Channel::awgn(6.0))
+            .with_gpu(true)
+            .build()
+            .expect("in-scope MODCOD builds with GPU offload");
+
+        assert_eq!(pipeline.stage_count(), 8, "GPU chain: 7 stages + BCH tail");
+        assert_eq!(pipeline.edges().len(), 7);
+        assert_eq!(
+            pipeline.fallback_count(),
+            1,
+            "the GPU LDPC stage's CpuLdpcBp fallback must be registered"
+        );
+
+        let gpu_stages: Vec<_> = pipeline
+            .stages()
+            .iter()
+            .filter(|s| s.execution_class() == ExecutionClass::GpuOnly)
+            .collect();
+        assert_eq!(gpu_stages.len(), 1, "exactly one GpuOnly stage");
+        let concrete = gpu_stages[0]
+            .stage_as_any()
+            .expect("erased stage exposes its concrete stage")
+            .downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>();
+        assert!(
+            concrete.is_some(),
+            "the GpuOnly stage must downcast to gpu::ldpc_bp::GpuLdpcBp"
+        );
+        assert_eq!(
+            concrete.unwrap().max_iterations(),
+            50,
+            "the GPU stage must run the codec's own BP iteration cap"
+        );
+    }
+
+    /// Without `with_gpu(true)` the chain stays all-CPU even on a hip build:
+    /// seven stages, no `GpuOnly` stage, no registered fallback.
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_without_gpu_chain_stays_all_cpu() {
+        use crate::stage::ExecutionClass;
+
+        let pipeline = Pipeline::dvb_t2()
+            .modcod(Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(sp())
+            .demap(DemapMethod::MaxLog)
+            .channel(Channel::awgn(6.0))
+            .with_gpu(false)
+            .build()
+            .expect("in-scope MODCOD builds");
+
+        assert_eq!(pipeline.stage_count(), 7);
+        assert_eq!(pipeline.fallback_count(), 0);
+        assert!(
+            pipeline
+                .stages()
+                .iter()
+                .all(|s| s.execution_class() == ExecutionClass::CpuOnly),
+            "every stage in the CPU chain is CpuOnly"
+        );
     }
 }

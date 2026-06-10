@@ -225,6 +225,22 @@ pub trait AnyStage: Send + Sync {
         input: &dyn TypedBatch,
         scratch: &mut dyn AnyScratch,
     ) -> Result<Box<dyn TypedBatch>, StageError>;
+
+    /// Returns an [`Any`](std::any::Any) view of the **concrete** stage behind
+    /// this erased handle, or `None` if the implementor does not expose one.
+    ///
+    /// The hybrid executor routes a pipeline's stages by
+    /// [`execution_class`](AnyStage::execution_class) and must downcast the
+    /// discovered `GpuOnly` stage back to its concrete type to drive its
+    /// device-specific batch API (`Scheduler`, deliverable 3 of `75c22fa8`);
+    /// this hook is how the type-erased stage list supports that without
+    /// reopening the erasure layer per stage. The provided default returns
+    /// `None` so existing `AnyStage` implementors keep compiling;
+    /// [`ErasedStage`] — and therefore everything built via [`erase`] —
+    /// overrides it to expose the wrapped stage.
+    fn stage_as_any(&self) -> Option<&dyn std::any::Any> {
+        None
+    }
 }
 
 /// Type-erasing adapter wrapping a concrete [`Stage<I, O>`] as an [`AnyStage`].
@@ -259,7 +275,7 @@ where
 
 impl<I, O, S> AnyStage for ErasedStage<I, O, S>
 where
-    S: Stage<I, O>,
+    S: Stage<I, O> + 'static,
     I: TypedBatch,
     O: TypedBatch,
 {
@@ -311,6 +327,10 @@ where
             })?;
         let out = self.stage.process(input, scratch)?;
         Ok(Box::new(out))
+    }
+
+    fn stage_as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(&self.stage)
     }
 }
 
@@ -434,6 +454,25 @@ mod tests {
             .downcast_mut::<u32>()
             .expect("scratch downcasts to u32");
         assert_eq!(*used, 1);
+    }
+
+    #[test]
+    fn test_stage_as_any_downcasts_to_concrete_stage() {
+        // The erased handle must expose the wrapped concrete stage so the
+        // hybrid executor can downcast a class-routed stage (75c22fa8
+        // deliverable 3).
+        let erased: Box<dyn AnyStage> = erase(Doubler);
+        let any = erased
+            .stage_as_any()
+            .expect("ErasedStage exposes its concrete stage");
+        assert!(
+            any.downcast_ref::<Doubler>().is_some(),
+            "the exposed Any must downcast to the wrapped stage type"
+        );
+        assert!(
+            any.downcast_ref::<u32>().is_none(),
+            "a wrong-type downcast must fail cleanly"
+        );
     }
 
     #[test]
