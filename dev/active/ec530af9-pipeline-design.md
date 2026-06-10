@@ -483,6 +483,22 @@ batches are recorded mid-flight.
 > CPU path per-worker-stream-restore would break `3fcb7025`'s
 > cross-worker-count byte-identity contract.
 
+> **Amendment 2026-06-10 (user-approved): the landed Phase C scheduler
+> keys frames globally — `rng_word_pos` is recorded, never read back.**
+> The landed C.1 hybrid scheduler (`75c22fa8`) did **not** adopt the
+> fixed-partition / per-worker-RNG-stream model the 2026-06-08 amendment
+> anticipated: it distributes work in **strided** partitions (worker `w`
+> of `W` takes global frames `w, w+W, …`) and keys **every** frame on the
+> global frame index (§3 logical-worker-0 convention,
+> `worker_offset(seed, snr_idx, 0, g)`), preserving the cross-worker-count
+> byte-identity contract on the hybrid path too. Hybrid resume
+> (`571c11c4`) therefore restores per-worker **progress** from
+> `frames_in_worker` (the strided-partition position) and folds the saved
+> counters; per-frame RNG positions are re-derived from the global index.
+> `rng_word_pos` stays **recorded** per the v2 schema (schema fidelity),
+> but **no executor reads it back** — the per-worker-stream restore in
+> step 5 above is retired.
+
 ---
 
 ## §5 Crate-boundary diagram

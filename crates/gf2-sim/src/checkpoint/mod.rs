@@ -62,15 +62,17 @@ pub const SCHEMA_VERSION: u32 = 2;
 /// `worker_offset(seed, snr_index, worker_idx, frames_in_worker)` — the
 /// per-worker stream position per design-doc §4's drain contract.
 ///
-/// **Resume semantics differ by executor (design-doc §4, amended 2026-06-08):**
-/// the **CPU within-SNR path** (Phase A, the path this task implements) keys
-/// every frame on the *global* frame index (§3,
-/// [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_idx, 0, g)`) and
-/// resumes via the global `frames_completed` (§4 step 5) — it does **not** seek
-/// to the per-worker `rng_word_pos`. That per-worker-stream restore belongs to
-/// the **Phase C** fixed-partition executor (`571c11c4`), for which this
-/// `worker_idx`-keyed position is recorded. (The CPU path's global keying is
-/// what guarantees byte-identity across worker counts, per `3fcb7025`.)
+/// **Resume semantics (design-doc §4, amended 2026-06-08 and 2026-06-10):**
+/// every executor keys every frame on the *global* frame index (§3,
+/// [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_idx, 0, g)`) —
+/// the **CPU within-SNR path** (Phase A, `5f12e7ff`/`3fcb7025`) resumes via the
+/// global `frames_completed`, and the **Phase C hybrid executor** (`75c22fa8`,
+/// strided partitions; resume `571c11c4`) restores per-worker *progress* from
+/// `frames_in_worker` and re-derives per-frame RNG positions from the global
+/// index. **No executor reads `rng_word_pos` back**; it is recorded for v2
+/// schema fidelity only (the per-worker-stream restore §4 originally
+/// anticipated was retired by the 2026-06-10 amendment). The global keying is
+/// what guarantees byte-identity across worker counts, per `3fcb7025`.
 ///
 /// `rng_word_pos` is serialised as a **decimal string** because a `u128` does
 /// not fit a JSON number above `2^53`.
