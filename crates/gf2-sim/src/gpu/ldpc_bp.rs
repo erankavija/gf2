@@ -51,7 +51,8 @@ mod imp {
     use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
     use gf2_coding::Llr;
     use gf2_core::BitVec;
-    use gf2_kernels_hip::launch_ldpc_bp::{GpuBpAlgorithm, LdpcGraphLayout};
+    use gf2_kernels_hip::host::HipStream;
+    use gf2_kernels_hip::launch_ldpc_bp::{GpuBpAlgorithm, LdpcGraphLayout, LdpcStreamScratch};
     use gf2_kernels_hip::GpuLdpcBp as KernelGpuLdpcBp;
 
     use crate::batch::{HardDecisionBatch, LlrBatch};
@@ -395,6 +396,32 @@ mod imp {
                 .map_err(|e| map_hip_error(e, "GpuLdpcBp::new"))
         }
 
+        /// Allocates the pinned host staging the stream-ordered decode variants
+        /// ([`decode_batch_on_stream`](Self::decode_batch_on_stream) /
+        /// [`decode_batch_with_iters_on_stream`](Self::decode_batch_with_iters_on_stream))
+        /// require, sized for `decoder` (a per-worker decoder from
+        /// [`build_decoder`](Self::build_decoder)).
+        ///
+        /// One scratch per worker, like the decoder itself (both are
+        /// `Send`-only, owned per worker, never shared by `&`).
+        ///
+        /// # Arguments
+        ///
+        /// * `decoder` — the per-worker device decoder the scratch pairs with.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] (via [`map_hip_error`](crate::gpu::map_hip_error))
+        /// if a pinned allocation fails (an OOM is recoverable).
+        pub fn build_stream_scratch(
+            &self,
+            decoder: &KernelGpuLdpcBp,
+        ) -> Result<LdpcStreamScratch, StageError> {
+            decoder
+                .new_stream_scratch()
+                .map_err(|e| map_hip_error(e, "GpuLdpcBp::new_stream_scratch"))
+        }
+
         /// Decodes an [`LlrBatch`] to a [`HardDecisionBatch`] using the
         /// caller-owned device decoder `decoder`.
         ///
@@ -471,8 +498,109 @@ mod imp {
             input: &LlrBatch,
             decoder: &KernelGpuLdpcBp,
         ) -> Result<(HardDecisionBatch, Vec<u32>), StageError> {
+            let llr_blocks = self.flatten_llrs(input);
+            let algorithm = map_algorithm(self.config.algorithm());
+            let early = self.config.early_termination();
+            let (hard, iters) = decoder
+                .decode_batch_with_iters(&llr_blocks, algorithm, self.max_iterations, early)
+                .map_err(|e| map_hip_error(e, "GpuLdpcBp::decode_batch_with_iters"))?;
+            Ok((self.to_hard_batch(hard), iters))
+        }
+
+        /// Like [`decode_batch`](Self::decode_batch), but with every kernel
+        /// launch **and** every H2D / D2H transfer enqueued on the caller-owned
+        /// `stream`, awaiting completion per-stream
+        /// ([`HipStream::synchronize`]) — never device-wide sync. This is the
+        /// hybrid scheduler's path (design doc §6): each worker owns one stream
+        /// plus one [`LdpcStreamScratch`], so workers' decode batches on
+        /// different streams genuinely overlap. The output is byte-identical
+        /// to [`decode_batch`](Self::decode_batch).
+        ///
+        /// # Arguments
+        ///
+        /// * `input` — the channel-LLR batch (each frame has `n` LLRs).
+        /// * `decoder` — the per-worker device decoder.
+        /// * `stream` — the worker's owned HIP stream.
+        /// * `scratch` — the worker's pinned staging (from
+        ///   [`build_stream_scratch`](Self::build_stream_scratch)).
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on a device fault (recoverable for OOM /
+        /// unsupported arch so the executor substitutes
+        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        ///
+        /// # Panics
+        ///
+        /// Panics if any frame's LLR length != `n`, or if `scratch` was sized
+        /// for a different decoder.
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`decode_batch`](Self::decode_batch).
+        pub fn decode_batch_on_stream(
+            &self,
+            input: &LlrBatch,
+            decoder: &KernelGpuLdpcBp,
+            stream: &HipStream,
+            scratch: &mut LdpcStreamScratch,
+        ) -> Result<HardDecisionBatch, StageError> {
+            let (hard, _iters) =
+                self.decode_batch_with_iters_on_stream(input, decoder, stream, scratch)?;
+            Ok(hard)
+        }
+
+        /// Like [`decode_batch_with_iters`](Self::decode_batch_with_iters), but
+        /// stream-ordered — see
+        /// [`decode_batch_on_stream`](Self::decode_batch_on_stream) for the
+        /// stream semantics. The hard decisions and per-frame iteration counts
+        /// are byte-identical to the default-stream variant.
+        ///
+        /// # Arguments
+        ///
+        /// Same as [`decode_batch_on_stream`](Self::decode_batch_on_stream).
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on a device fault (recoverable for OOM /
+        /// unsupported arch so the executor substitutes
+        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        ///
+        /// # Panics
+        ///
+        /// Same as [`decode_batch_on_stream`](Self::decode_batch_on_stream).
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`decode_batch`](Self::decode_batch).
+        pub fn decode_batch_with_iters_on_stream(
+            &self,
+            input: &LlrBatch,
+            decoder: &KernelGpuLdpcBp,
+            stream: &HipStream,
+            scratch: &mut LdpcStreamScratch,
+        ) -> Result<(HardDecisionBatch, Vec<u32>), StageError> {
+            let llr_blocks = self.flatten_llrs(input);
+            let algorithm = map_algorithm(self.config.algorithm());
+            let early = self.config.early_termination();
+            let (hard, iters) = decoder
+                .decode_batch_with_iters_on_stream(
+                    &llr_blocks,
+                    algorithm,
+                    self.max_iterations,
+                    early,
+                    stream,
+                    scratch,
+                )
+                .map_err(|e| map_hip_error(e, "GpuLdpcBp::decode_batch_with_iters_on_stream"))?;
+            Ok((self.to_hard_batch(hard), iters))
+        }
+
+        /// Flattens an [`LlrBatch`] into the per-frame `f32` blocks the kernel
+        /// decoder consumes, asserting every frame has length `n`.
+        fn flatten_llrs(&self, input: &LlrBatch) -> Vec<Vec<f32>> {
             let n = self.code.n();
-            let llr_blocks: Vec<Vec<f32>> = input
+            input
                 .frames
                 .iter()
                 .map(|frame| {
@@ -485,14 +613,13 @@ mod imp {
                     );
                     frame.iter().map(|l| l.value()).collect()
                 })
-                .collect();
+                .collect()
+        }
 
-            let algorithm = map_algorithm(self.config.algorithm());
-            let early = self.config.early_termination();
-            let (hard, iters) = decoder
-                .decode_batch_with_iters(&llr_blocks, algorithm, self.max_iterations, early)
-                .map_err(|e| map_hip_error(e, "GpuLdpcBp::decode_batch_with_iters"))?;
-
+        /// Packs the kernel's per-frame `Vec<bool>` hard decisions into a
+        /// [`HardDecisionBatch`] of [`BitVec`]s.
+        fn to_hard_batch(&self, hard: Vec<Vec<bool>>) -> HardDecisionBatch {
+            let n = self.code.n();
             let frames: Vec<BitVec> = hard
                 .into_iter()
                 .map(|bits| {
@@ -503,7 +630,7 @@ mod imp {
                     bv
                 })
                 .collect();
-            Ok((HardDecisionBatch::new(frames), iters))
+            HardDecisionBatch::new(frames)
         }
 
         /// The CPU reference codeword for one frame's LLRs, via

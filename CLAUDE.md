@@ -218,7 +218,7 @@ Examples of note:
 | `graph` | `Chain` — the add/connect/`build()` graph API that topo-sorts, type-re-validates, and emits a `Pipeline` |
 | `presets/dvb_t2` | `Pipeline::dvb_t2()` typestate fluent builder (`Modcod`/`Channel`, `NeedsModcod→…→Ready`); the production DVB-T2 BICM preset over the graph API |
 | `stage` | `Stage<I,O>` / `AnyStage` type-erasure (`erase`), `BatchSize`, `ExecutionClass`, `TypedBatch`, `FallbackKind` |
-| `stages` | DVB-T2 BICM stage wrappers (`DvbT2Encode`, `BitInterleave`/`BitDeinterleave`, `GrayQamMap`/`GrayQamDemap`, decode) + `dvb_t2_bicm_stages` factory |
+| `stages` | DVB-T2 BICM stage wrappers (`DvbT2Encode`, `BitInterleave`/`BitDeinterleave`, `GrayQamMap`/`GrayQamDemap`, decode, `DvbT2BchTail` — the BCH outer-decode tail paired with the GPU LDPC stage under `with_gpu(true)`) + `dvb_t2_bicm_stages` factory |
 | `connector` | `Connector`, `Edge`, `StageId` — typed edge endpoints between stages |
 | `batch` | SoA batch buffer types (`BitPackedBatch`, `HardDecisionBatch`, `LlrBatch`, `SymbolBatch`) |
 | `channels` | Channel stages: `awgn` (`Awgn`, `es_n0_db_to_sigma`), `rayleigh`, `rician` — per-frame noise injection from the per-worker ChaCha20 stream |
