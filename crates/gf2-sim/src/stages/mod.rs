@@ -19,9 +19,13 @@
 //! | [`GrayQamDemap`] | [`FastGrayQamDemapper::demap_llrs`] | [`SymbolBatch`] → [`LlrBatch`] |
 //! | [`BitDeinterleave`] | [`DvbT2BitInterleaver::deinterleave_llrs`] | [`LlrBatch`] → [`LlrBatch`] |
 //! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft`] | [`LlrBatch`] → [`HardDecisionBatch`] |
+//! | [`DvbT2BchTail`] | [`DvbT2Concat::decode_bch_from_ldpc_codeword`] | [`HardDecisionBatch`] → [`HardDecisionBatch`] |
 //!
 //! Every stage is pure-CPU: `Scratch = ()`, `CpuFallback = Self`,
 //! `execution_class() == ExecutionClass::CpuOnly` (design-doc §1, §8).
+//! [`DvbT2BchTail`] is the outer-decode tail the GPU-offload preset pairs with
+//! the `GpuOnly` LDPC decode stage; the all-CPU chain uses the combined
+//! [`DvbT2Decode`] instead.
 //!
 //! # BICM order
 //!
@@ -530,6 +534,79 @@ impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
                 )),
             })
             .collect::<Result<Vec<_>, _>>()?;
+        Ok(HardDecisionBatch::new(frames))
+    }
+
+    fn execution_class(&self) -> ExecutionClass {
+        ExecutionClass::CpuOnly
+    }
+}
+
+// ===========================================================================
+// DvbT2BchTail
+// ===========================================================================
+
+/// BCH outer-decode tail stage: LDPC hard-decision FECFRAME codewords →
+/// recovered BBFRAME bits.
+///
+/// Wraps [`DvbT2Concat::decode_bch_from_ldpc_codeword`] — the factored-out
+/// outer-decode tail of [`DvbT2Concat::decode_soft`] — so a pipeline whose
+/// inner LDPC decode runs elsewhere (the `ExecutionClass::GpuOnly`
+/// `gpu::ldpc_bp::GpuLdpcBp` stage under `feature = "hip"`, or its registered
+/// `CpuLdpcBp` fallback) can finish the concatenated decode on the CPU. Each
+/// input frame is the full `n_ldpc`-bit hard-decision codeword; each output
+/// frame is the `k_bch`-bit BBFRAME. The DVB-T2 preset places this stage after
+/// the GPU LDPC decode when GPU offload is enabled; the all-CPU chain keeps
+/// the combined [`DvbT2Decode`] instead.
+///
+/// # Examples
+///
+/// ```
+/// use std::sync::Arc;
+/// use gf2_sim::stages::DvbT2BchTail;
+/// use gf2_sim::batch::HardDecisionBatch;
+/// use gf2_sim::Stage;
+/// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
+/// use gf2_coding::ldpc::dvb_t2::FrameSize;
+/// use gf2_coding::CodeRate;
+/// use gf2_core::BitVec;
+///
+/// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
+/// let stage = DvbT2BchTail::new(codec.clone());
+/// // The all-zeros FECFRAME is a valid codeword: it BCH-decodes to zeros.
+/// let codeword = BitVec::zeros(codec.n_ldpc());
+/// let out = stage.process(&HardDecisionBatch::new(vec![codeword]), &mut ()).unwrap();
+/// assert_eq!(out.frames[0].len(), codec.k_bch());
+/// ```
+pub struct DvbT2BchTail {
+    codec: Arc<DvbT2Concat>,
+}
+
+impl DvbT2BchTail {
+    /// Builds a BCH outer-decode tail stage over a shared [`DvbT2Concat`] codec.
+    ///
+    /// # Arguments
+    ///
+    /// * `codec` — the concatenated BCH+LDPC codec whose BCH outer decode to run.
+    pub fn new(codec: Arc<DvbT2Concat>) -> Self {
+        Self { codec }
+    }
+}
+
+impl Stage<HardDecisionBatch, HardDecisionBatch> for DvbT2BchTail {
+    type Scratch = ();
+    type CpuFallback = Self;
+
+    fn process(
+        &self,
+        input: &HardDecisionBatch,
+        _scratch: &mut (),
+    ) -> Result<HardDecisionBatch, StageError> {
+        let frames: Vec<BitVec> = input
+            .frames
+            .iter()
+            .map(|codeword| self.codec.decode_bch_from_ldpc_codeword(codeword))
+            .collect();
         Ok(HardDecisionBatch::new(frames))
     }
 

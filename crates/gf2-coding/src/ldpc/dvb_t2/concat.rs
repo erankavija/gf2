@@ -419,6 +419,31 @@ impl DvbT2Concat {
         self.max_ldpc_iterations = max_iterations;
     }
 
+    /// Maximum belief-propagation iterations per [`decode_soft`](Self::decode_soft)
+    /// call (default 50; see [`set_max_ldpc_iterations`](Self::set_max_ldpc_iterations)).
+    ///
+    /// Exposed so an external inner-LDPC decoder (e.g. a GPU LDPC BP stage
+    /// paired with [`decode_bch_from_ldpc_codeword`](Self::decode_bch_from_ldpc_codeword))
+    /// can run the **same** iteration cap as this codec's own soft decode.
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::dvb_t2::{concat::DvbT2Concat, FrameSize};
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let codec = DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap();
+    /// assert_eq!(codec.max_ldpc_iterations(), 50);
+    /// ```
+    #[must_use]
+    pub fn max_ldpc_iterations(&self) -> usize {
+        self.max_ldpc_iterations
+    }
+
     /// Override the LDPC belief-propagation decoder configuration.
     ///
     /// Rebuilds the internal decoder with the supplied [`DecoderConfig`]
