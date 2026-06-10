@@ -327,6 +327,43 @@ impl HipStreamPool {
         &self.streams[idx]
     }
 
+    /// Returns the stream at a fixed index — deterministic worker-to-stream
+    /// ownership.
+    ///
+    /// Unlike [`acquire`](Self::acquire), which advances a shared atomic
+    /// cursor in *call* order (scheduler-dependent under concurrent callers),
+    /// `get` binds the caller to one specific stream: worker `i` calling
+    /// `pool.get(i % pool.len())` owns that stream regardless of how the
+    /// thread pool interleaves the calls. The `gf2-sim` hybrid scheduler
+    /// (`75c22fa8`) uses this so the `stream_id` it records in tracing spans
+    /// is always the stream actually used.
+    ///
+    /// # Arguments
+    ///
+    /// * `idx` — the stream index, `0 <= idx < self.len()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx >= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use gf2_kernels_hip::host::HipStreamPool;
+    ///
+    /// let pool = HipStreamPool::new(0, 2).expect("create a 2-stream pool");
+    /// // Indexed access is stable: the same index is the same stream.
+    /// assert_eq!(pool.get(1).as_raw(), pool.get(1).as_raw());
+    /// assert_ne!(pool.get(0).as_raw(), pool.get(1).as_raw());
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1).
+    pub fn get(&self, idx: usize) -> &HipStream {
+        &self.streams[idx]
+    }
+
     /// Acquires the oldest idle stream, falling back to round-robin.
     ///
     /// Probes streams in round-robin order and returns the first that reports
