@@ -238,16 +238,16 @@ struct Probe {
     frames_out: Vec<BitVec>,
 }
 
+/// The observer handles `Probe::new` returns alongside the stage: its run
+/// tick, the input batch size it saw, and a clone of its input.
+type ProbeHandles = (
+    Arc<AtomicU64>,
+    Arc<AtomicUsize>,
+    Arc<Mutex<Option<BitPackedBatch>>>,
+);
+
 impl Probe {
-    fn new(
-        clock: &Arc<AtomicU64>,
-        frames_out: Vec<BitVec>,
-    ) -> (
-        Self,
-        Arc<AtomicU64>,
-        Arc<AtomicUsize>,
-        Arc<Mutex<Option<BitPackedBatch>>>,
-    ) {
+    fn new(clock: &Arc<AtomicU64>, frames_out: Vec<BitVec>) -> (Self, ProbeHandles) {
         let tick = Arc::new(AtomicU64::new(0));
         let seen_size = Arc::new(AtomicUsize::new(usize::MAX));
         let seen_input = Arc::new(Mutex::new(None));
@@ -259,9 +259,7 @@ impl Probe {
                 seen_input: seen_input.clone(),
                 frames_out,
             },
-            tick,
-            seen_size,
-            seen_input,
+            (tick, seen_size, seen_input),
         )
     }
 }
@@ -288,10 +286,10 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
     // a → {b, c} → d. The fan-in consumer d must wait on BOTH producers and
     // receive their outputs concatenated in in-edge order.
     let clock = Arc::new(AtomicU64::new(0));
-    let (a, a_tick, _, _) = Probe::new(&clock, vec![BitVec::zeros(4)]);
-    let (b, b_tick, b_size, _) = Probe::new(&clock, vec![BitVec::ones(8)]);
-    let (c, c_tick, c_size, _) = Probe::new(&clock, vec![BitVec::zeros(8)]);
-    let (d, d_tick, d_size, d_input) = Probe::new(&clock, vec![BitVec::zeros(2)]);
+    let (a, (a_tick, _, _)) = Probe::new(&clock, vec![BitVec::zeros(4)]);
+    let (b, (b_tick, b_size, _)) = Probe::new(&clock, vec![BitVec::ones(8)]);
+    let (c, (c_tick, c_size, _)) = Probe::new(&clock, vec![BitVec::zeros(8)]);
+    let (d, (d_tick, d_size, d_input)) = Probe::new(&clock, vec![BitVec::zeros(2)]);
 
     let mut chain = Chain::new();
     let ia = chain.add(erase(a));

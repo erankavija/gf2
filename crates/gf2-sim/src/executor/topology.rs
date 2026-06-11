@@ -109,6 +109,15 @@ fn exec_err(reason: impl Into<String>) -> StageError {
     }))
 }
 
+/// The result of one routed stage execution: the output batch plus the
+/// per-frame BP iteration counts when the GPU LDPC arm produced them
+/// (`None` otherwise).
+type StageOutcome = Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError>;
+
+/// One completed wave member: `(stage position, output batch, returned
+/// scratch)`.
+type WaveResult = (usize, Box<dyn TypedBatch>, Box<dyn AnyScratch>);
+
 /// The outputs of a [`TopologyExecutor::run`]: one type-erased batch per
 /// **sink** stage (out-degree 0), in ascending stage-position order.
 ///
@@ -252,7 +261,7 @@ fn execute_stage(
     snr_idx: usize,
     batch_id: u64,
     route: &mut WorkerRoute<'_>,
-) -> Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> {
+) -> StageOutcome {
     let stream_id = stream_id_for(scheduler, worker_idx, route);
     let span = tracing::info_span!(
         "pipeline_stage",
@@ -291,7 +300,7 @@ fn execute_gpu_stage(
     scheduler: &Scheduler,
     worker_idx: usize,
     route: &mut WorkerRoute<'_>,
-) -> Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> {
+) -> StageOutcome {
     if let Some(gpu_bp) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
@@ -360,7 +369,7 @@ fn execute_gpu_stage(
     _scheduler: &Scheduler,
     _worker_idx: usize,
     _route: &mut WorkerRoute<'_>,
-) -> Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> {
+) -> StageOutcome {
     tracing::warn!(
         stage = stage.name(),
         "GpuOnly stage on a build without the `hip` feature; running via process_any on the CPU"
@@ -376,7 +385,7 @@ fn execute_hybrid_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
     scratch: &mut dyn AnyScratch,
-) -> Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> {
+) -> StageOutcome {
     if let Some((lo, hi)) = split_half(input) {
         tracing::debug!(
             stage = stage.name(),
@@ -732,10 +741,7 @@ impl TopologyExecutor {
 
             // Run the wave in parallel on the scheduler's pool: independent
             // branches (fan-out) genuinely execute concurrently.
-            let wave_results: Result<
-                Vec<(usize, Box<dyn TypedBatch>, Box<dyn AnyScratch>)>,
-                StageError,
-            > = {
+            let wave_results: Result<Vec<WaveResult>, StageError> = {
                 let outputs_ref = &outputs;
                 let input_ref = batch.as_ref();
                 scheduler.rayon_pool().install(|| {
