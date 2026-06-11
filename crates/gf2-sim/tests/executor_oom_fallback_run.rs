@@ -324,7 +324,9 @@ fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &
         cfg.max_frames = frames as u64;
     }
 
-    let results = pipeline.run().expect("scheduler OOM-fallback run must succeed");
+    let results = pipeline
+        .run()
+        .expect("scheduler OOM-fallback run must succeed");
     assert_eq!(results.per_point.len(), 1, "{label}: one SNR point");
     let pt = &results.per_point[0];
 
@@ -409,7 +411,11 @@ fn test_scheduler_oom_injection_waterfall_matches_cpu_only() {
         );
         return;
     }
-    run_and_assert_scheduler_oom_fallback(32, 4, "scheduler OOM-fallback waterfall @6dB (modulus=2)");
+    run_and_assert_scheduler_oom_fallback(
+        32,
+        4,
+        "scheduler OOM-fallback waterfall @6dB (modulus=2)",
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -542,12 +548,7 @@ fn test_strict_gpu_config_promotes_oom_to_fatal_via_topology() {
     let entries: Vec<_> = std::fs::read_dir(&dump_dir)
         .expect("dump dir must exist after strict OOM promotion")
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .map(|x| x == "json")
-                .unwrap_or(false)
-        })
+        .filter(|e| e.path().extension().map(|x| x == "json").unwrap_or(false))
         .collect();
     assert!(
         !entries.is_empty(),

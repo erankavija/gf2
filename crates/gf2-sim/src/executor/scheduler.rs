@@ -425,8 +425,16 @@ impl Scheduler {
         let mut per_point = Vec::with_capacity(cfg.esn0_db_points.len());
         for (snr_idx, &es_n0_db) in cfg.esn0_db_points.iter().enumerate() {
             let counters = self.run_one_point(
-                pipeline, plan, snr_idx, es_n0_db, max_frames, &timeline, run_start, strict_gpu,
-                &dump_dir, inject_oom_modulus,
+                pipeline,
+                plan,
+                snr_idx,
+                es_n0_db,
+                max_frames,
+                &timeline,
+                run_start,
+                strict_gpu,
+                &dump_dir,
+                inject_oom_modulus,
             )?;
             per_point.push(SnrPointResult::from_counters(es_n0_db, counters));
         }
@@ -471,8 +479,15 @@ impl Scheduler {
             // template reconstruction.
             if let Some(gpu_stage) = hybrid::find_gpu_ldpc_stage(pipeline) {
                 return self.run_point_hybrid(
-                    &template, gpu_stage, snr_idx, max_frames, timeline, run_start, strict_gpu,
-                    dump_dir, inject_oom_modulus,
+                    &template,
+                    gpu_stage,
+                    snr_idx,
+                    max_frames,
+                    timeline,
+                    run_start,
+                    strict_gpu,
+                    dump_dir,
+                    inject_oom_modulus,
                 );
             }
             // gpu_enabled but the stage list carries no GpuOnly stage (e.g. a
@@ -603,8 +618,18 @@ mod hybrid {
                             // never via device-wide sync.
                             let stream = pool.get(stream_id);
                             self.worker_partition_hybrid(
-                                template, gpu_stage, stream, worker_idx, stream_id, snr_idx,
-                                max_frames, seed, timeline, run_start, strict_gpu, dump_dir,
+                                template,
+                                gpu_stage,
+                                stream,
+                                worker_idx,
+                                stream_id,
+                                snr_idx,
+                                max_frames,
+                                seed,
+                                timeline,
+                                run_start,
+                                strict_gpu,
+                                dump_dir,
                                 inject_oom_modulus,
                             )
                         })
@@ -755,7 +780,7 @@ mod hybrid {
                             run_start,
                             || -> GpuBatchResult {
                                 use crate::executor::failure::{
-                                    dispatch_with_fallback, FaultContext, FailurePolicy,
+                                    dispatch_with_fallback, FailurePolicy, FaultContext,
                                 };
                                 use crate::stage::Stage as _;
                                 let ctx = FaultContext {
@@ -774,23 +799,24 @@ mod hybrid {
                                 // batch's first global frame index, driving the
                                 // production `dispatch_with_fallback` path as a
                                 // genuine device OOM would.
-                                let raw: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
-                                    Err(StageError::Recoverable(
-                                        crate::error::RecoverableError::OutOfMemory {
-                                            device_id: 0,
-                                            bytes_requested: 1024 * 1024 * 1024,
-                                        },
-                                    ))
-                                } else {
-                                    gpu_stage
-                                        .decode_batch_with_iters_on_stream(
-                                            &llr_batch_for_fallback,
-                                            &device,
-                                            stream,
-                                            &mut scratch,
-                                        )
-                                        .map(|(hard, iters)| (hard.frames, iters))
-                                };
+                                let raw: GpuBatchResult =
+                                    if policy.injects_oom_at(first_global_frame) {
+                                        Err(StageError::Recoverable(
+                                            crate::error::RecoverableError::OutOfMemory {
+                                                device_id: 0,
+                                                bytes_requested: 1024 * 1024 * 1024,
+                                            },
+                                        ))
+                                    } else {
+                                        gpu_stage
+                                            .decode_batch_with_iters_on_stream(
+                                                &llr_batch_for_fallback,
+                                                &device,
+                                                stream,
+                                                &mut scratch,
+                                            )
+                                            .map(|(hard, iters)| (hard.frames, iters))
+                                    };
                                 dispatch_with_fallback(
                                     raw,
                                     || {
