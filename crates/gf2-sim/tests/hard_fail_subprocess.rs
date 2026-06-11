@@ -87,15 +87,20 @@ fn test_hard_fail_subprocess_nonzero_exit_dump_and_error_event() {
     );
     let dump_path = entries[0].path();
     let content = std::fs::read_to_string(&dump_path).expect("dump file must be readable");
-    let dump: serde_json::Value =
-        serde_json::from_str(&content).expect("dump must be valid JSON");
+    let dump: serde_json::Value = serde_json::from_str(&content).expect("dump must be valid JSON");
 
-    assert_eq!(dump["event"], "hard_fail", "event field must be 'hard_fail'");
+    assert_eq!(
+        dump["event"], "hard_fail",
+        "event field must be 'hard_fail'"
+    );
     assert_eq!(
         dump["hip_code"], 301_i64,
         "HIP error code must be carried in the dump"
     );
-    assert_eq!(dump["device_id"], 0_i64, "device id context must be present");
+    assert_eq!(
+        dump["device_id"], 0_i64,
+        "device id context must be present"
+    );
     assert_eq!(dump["snr_idx"], 3_i64, "SNR index context must be present");
     assert_eq!(dump["batch_id"], 42_i64, "batch id context must be present");
     assert_eq!(
