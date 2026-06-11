@@ -6020,3 +6020,4 @@
 {"type":"gate_failed","id":"4d450702-5803-414d-9bac-a20eb03d270e","issue_id":"bbf6b6ee-8ddd-420a-9e56-0319297aac55","timestamp":"2026-06-11T20:08:26.175298532Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"60fe5050-df4c-4ea7-8cb0-9b4844bac3c7","issue_id":"bbf6b6ee-8ddd-420a-9e56-0319297aac55","timestamp":"2026-06-11T20:11:52.540356744Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"1d62ac0d-cd68-4f54-8ed8-70c76a0f4bdb","issue_id":"bbf6b6ee-8ddd-420a-9e56-0319297aac55","timestamp":"2026-06-11T20:13:37.781153013Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"ddbd0af8-3786-49d8-a8f7-6e6298e21350","issue_id":"9d34359c-1c7f-4459-9a48-2002680b8138","timestamp":"2026-06-11T20:51:39.839638365Z","from":"backlog","to":"rejected"}
