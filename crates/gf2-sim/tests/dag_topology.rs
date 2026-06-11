@@ -667,6 +667,26 @@ impl Stage<PlainBatch, PlainBatch> for CountObserver {
     }
 }
 
+/// Fan-out consumer: records the marker's strong count *while consuming* the
+/// tracked batch (the shared buffer is alive during its own run), then emits a
+/// plain batch.
+struct ObserveTracked {
+    marker: Arc<()>,
+    observed: Arc<AtomicUsize>,
+}
+impl Stage<TrackedBatch, PlainBatch> for ObserveTracked {
+    type Scratch = ();
+    type CpuFallback = Self;
+    fn process(&self, _: &TrackedBatch, _: &mut ()) -> Result<PlainBatch, StageError> {
+        self.observed
+            .store(Arc::strong_count(&self.marker), Ordering::SeqCst);
+        Ok(PlainBatch(1))
+    }
+    fn execution_class(&self) -> ExecutionClass {
+        ExecutionClass::CpuOnly
+    }
+}
+
 #[test]
 fn test_intermediate_buffer_dropped_after_last_consumer() {
     // A → B → C, where A's output carries a marker. The executor's refcount
@@ -698,6 +718,60 @@ fn test_intermediate_buffer_dropped_after_last_consumer() {
         observed.load(Ordering::SeqCst),
         3,
         "A's intermediate output must be dropped (refcount 0) before C runs"
+    );
+}
+
+#[test]
+fn test_fan_out_buffer_alive_for_all_consumers_then_dropped() {
+    // A → {B, C} (fan-out: refcount 2 on A's output); B → D. The shared
+    // intermediate buffer must stay alive while EACH consumer runs — B and C
+    // both observe it — and be dropped once its LAST consumer has run: D,
+    // executing in the wave after {B, C}, observes the count without it.
+    let marker = Arc::new(());
+    let observed_b = Arc::new(AtomicUsize::new(0));
+    let observed_c = Arc::new(AtomicUsize::new(0));
+    let observed_d = Arc::new(AtomicUsize::new(0));
+
+    let mut chain = Chain::new();
+    let a = chain.add(erase(MakeTracked {
+        marker: marker.clone(),
+    }));
+    let b = chain.add(erase(ObserveTracked {
+        marker: marker.clone(),
+        observed: observed_b.clone(),
+    }));
+    let c = chain.add(erase(ObserveTracked {
+        marker: marker.clone(),
+        observed: observed_c.clone(),
+    }));
+    let d = chain.add(erase(CountObserver {
+        marker: marker.clone(),
+        observed: observed_d.clone(),
+    }));
+    chain.connect(a, b).unwrap();
+    chain.connect(a, c).unwrap();
+    chain.connect(b, d).unwrap();
+    let pipeline = chain.build().expect("fan-out DAG builds");
+    let sched = scheduler(2);
+
+    TopologyExecutor::run(&pipeline, &sched, Box::new(PlainBatch(0))).expect("runs");
+
+    // Constant holders: the test's `marker` + the A, B, C, D stages' own
+    // clones = 5; +1 while A's output buffer is alive.
+    assert_eq!(
+        observed_b.load(Ordering::SeqCst),
+        6,
+        "the shared buffer is alive while consumer B runs"
+    );
+    assert_eq!(
+        observed_c.load(Ordering::SeqCst),
+        6,
+        "the shared buffer is alive while consumer C runs"
+    );
+    assert_eq!(
+        observed_d.load(Ordering::SeqCst),
+        5,
+        "the shared buffer is dropped after its LAST consumer, before D's wave"
     );
 }
 
