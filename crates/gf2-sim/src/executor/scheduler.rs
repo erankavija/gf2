@@ -481,6 +481,12 @@ impl Scheduler {
     }
 }
 
+/// The hybrid module's batch unit and GPU-stage discovery, re-exported for the
+/// checkpointed hybrid runner (`executor::drain`, `571c11c4`) so the drain path
+/// shares the exact same batching and routing as this uncheckpointed scheduler.
+#[cfg(feature = "hip")]
+pub(crate) use hybrid::{find_gpu_ldpc_stage, BATCH_FRAMES};
+
 #[cfg(feature = "hip")]
 mod hybrid {
     use super::*;
@@ -491,8 +497,11 @@ mod hybrid {
 
     /// Frames per GPU decode batch (the double-buffer unit). Sized so the device
     /// LDPC kernel amortises its per-launch overhead while keeping two batches'
-    /// worth of host LLR scratch modest.
-    const BATCH_FRAMES: usize = 16;
+    /// worth of host LLR scratch modest. `pub(crate)`: the checkpointed hybrid
+    /// runner (`executor::drain`, `571c11c4`) uses the SAME unit so its batch
+    /// composition — and therefore the per-frame GPU decode results — matches
+    /// this scheduler's exactly.
+    pub(crate) const BATCH_FRAMES: usize = 16;
 
     /// One GPU decode batch's result: the per-frame hard codewords and BP
     /// iteration counts (or a [`StageError`] on a device fault).
@@ -514,7 +523,7 @@ mod hybrid {
     ///   CPU and GPU. No `Hybrid`-class stage exists in the DVB-T2 BICM chain
     ///   today; the arm is present so a future hybrid stage slots into the
     ///   routing without reopening this loop.
-    pub(super) fn find_gpu_ldpc_stage(
+    pub(crate) fn find_gpu_ldpc_stage(
         pipeline: &Pipeline,
     ) -> Option<&crate::gpu::ldpc_bp::GpuLdpcBp> {
         pipeline

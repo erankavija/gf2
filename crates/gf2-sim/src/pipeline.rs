@@ -9,10 +9,11 @@
 
 use std::collections::HashMap;
 
+use crate::checkpoint::SweepError;
 use crate::config::PipelineConfig;
 use crate::connector::{Edge, StageId};
 use crate::error::StageError;
-use crate::executor::{RunPlan, Scheduler, SimulationResults};
+use crate::executor::{CheckpointedSweep, RunPlan, Scheduler, SimulationResults};
 use crate::stage::AnyStage;
 
 /// A built, runnable pipeline.
@@ -235,6 +236,67 @@ impl Pipeline {
     /// See [`run`](Pipeline::run).
     pub fn run_parallel(&self) -> Result<SimulationResults, StageError> {
         self.run()
+    }
+
+    /// Runs the pipeline's SNR sweep with heartbeat + SNR-boundary + SIGINT
+    /// checkpointing and `--resume` support (design doc §4; task `571c11c4`).
+    ///
+    /// Like [`run`](Pipeline::run), but every SNR point checkpoints to
+    /// `config.checkpoint_dir` at the heartbeat cadence
+    /// (`heartbeat_every_frames`), at the SNR boundary, and on
+    /// SIGINT/SIGTERM. On the hybrid CPU+GPU path the in-flight GPU batches
+    /// are drained per-stream
+    /// ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint))
+    /// before every flush; with `resume`, prior checkpoints are loaded —
+    /// completed points fold their saved counters, and a partial point
+    /// continues byte-identically (the hybrid path restores each worker's
+    /// strided-partition progress from `worker_states[].frames_in_worker`;
+    /// the CPU path resumes via the global `frames_completed`, `5f12e7ff`).
+    ///
+    /// # Arguments
+    ///
+    /// * `resume` — `true` to load and continue from existing checkpoints in
+    ///   `config.checkpoint_dir`; `false` to start every point fresh.
+    ///
+    /// # Errors
+    ///
+    /// A [`SweepError`]: `Load` for an invalid/mismatched checkpoint, `Io` for
+    /// a failed checkpoint write, `Stage` for a GPU fault, a failed drain, a
+    /// missing `checkpoint_dir`, or a missing [`RunPlan`].
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use std::num::NonZeroUsize;
+    /// use gf2_sim::Pipeline;
+    /// use gf2_sim::presets::dvb_t2::{Channel, Modcod};
+    /// use gf2_coding::CodeRate;
+    /// use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+    /// use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+    /// use gf2_coding::modem::DemapMethod;
+    ///
+    /// let mut pipeline = Pipeline::dvb_t2()
+    ///     .modcod(Modcod::Normal { rate: CodeRate::Rate1_2, modulation: DvbT2Modulation::Qam16 })
+    ///     .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+    ///     .demap(DemapMethod::MaxLog)
+    ///     .channel(Channel::awgn(6.0))
+    ///     .parallelism(NonZeroUsize::new(8).unwrap())
+    ///     .checkpoint_dir(Some("/tmp/ck".into()))
+    ///     .with_gpu(true)
+    ///     .build()
+    ///     .unwrap();
+    /// pipeline.config_mut().esn0_db_points = vec![6.0, 6.5];
+    /// pipeline.config_mut().max_frames = 200;
+    /// pipeline.config_mut().heartbeat_every_frames = 64;
+    /// let sweep = pipeline.run_checkpointed(false).unwrap();
+    /// if sweep.interrupted {
+    ///     // SIGINT flushed a resumable checkpoint; continue later with:
+    ///     // pipeline.run_checkpointed(true)
+    /// }
+    /// ```
+    pub fn run_checkpointed(&self, resume: bool) -> Result<CheckpointedSweep, SweepError> {
+        let scheduler = Scheduler::from_pipeline(self);
+        scheduler.run_sweep_checkpointed(self, resume, &|_, _| {})
     }
 
     /// Mutable access to the run configuration, so a caller can set the sweep
