@@ -767,6 +767,11 @@ Runtime errors at `connect()` and `build()`:
 - `BuildError::NoFallback { gpu_stage }` (only when a GPU stage is
   used without a registered CPU fallback and `--strict-gpu` is off)
 - `BuildError::InvalidModcod { rate, modulation }`
+- `BuildError::ExecutionValidation { reason }` (defensive
+  execution-start lineage re-validation in the topology executor,
+  `de160fc5`: panic-free typed error on an inconsistent stage
+  order — unreachable through `build()`-produced pipelines,
+  defense-in-depth only)
 
 The DVB-T2 typestate preset is implemented as a thin wrapper over
 the graph API; the two share the underlying machinery. The example
