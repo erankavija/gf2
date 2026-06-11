@@ -426,3 +426,59 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   - Scheduler: `crates/gf2-sim/src/executor/scheduler.rs`; results:
     `crates/gf2-sim/src/executor/results.rs`.
   - Phase C criterion evidence: `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`.
+
+## bbf6b6ee — Campaign binary migrated to the gf2-sim pipeline (worker-measured)
+
+- **Date:** 2026-06-11 (worker-measured; **lead re-attests on a verified-quiet
+  host** before the `parallelism-pays` gate is passed).
+- **Hardware:** CPU=AMD Ryzen 9 5900X / 24 threads (12C/24T), GPU=n/a (CPU path).
+- **Baseline configuration:** single-thread (legacy
+  `SimulationRunner::run_with_decoder`, the 1.6216 fps headline divisor from
+  `c0b1702d` / commit `9e983ae26e`).
+- **Test configuration:** the canonical config from the task body — DVB-T2
+  r1/2 16-QAM, FrameSize::Normal (n_ldpc = 64800), **`--decoder sumproduct
+  --demap exactlogmap --seed 42`**, 200 frames at **Es/N0 = 6.25 dB**, run via
+  the **migrated campaign binary end-to-end** (`crates/gf2-sim/src/bin/
+  dvb_t2_awgn_campaign.rs`), i.e. the full process wall-clock: arg parse →
+  `Pipeline::dvb_t2()` build (DvbT2Concat + LDPC encoder-cache construction) →
+  `Pipeline::run_checkpointed(false)` 24-thread sweep → per-SNR checkpoint
+  write → CSV write. `mean_iters = 32.66`, `frames = 200`, `errors = 0`
+  (6.25 dB is above this config's waterfall knee — the perf metric does not
+  require a non-vacuous mix; the byte-identity test separately exercises the
+  6.0 dB knee). Byte-identical `fer`/`frames`/`errors`/`mean_iters` across all
+  three perf repeats.
+- **Measurement method:** 3 repeats of the binary; per-run wall measured with
+  `date +%s.%N` around the process; `fps = 200 / wall`. Quiescence verified
+  before the run: `cat /proc/loadavg` 1-min ≈ 1.4 (decaying from this worker's
+  own prior compiles, not external load), **no `rustc` / `cargo` / `bg3` /
+  Baldur's Gate process running** (`pgrep` empty), top non-kernel process at
+  2.2% CPU.
+- **Observed throughput:** **16.85 fps ± 0.04** (24 threads, 200 frames,
+  3 repeats: 16.8239 / 16.8204 / 16.9000 fps). This is the **end-to-end**
+  campaign fps; it is lower than `3fcb7025`'s pure-kernel 21.44 fps because the
+  end-to-end number includes the one-off codec/encoder-cache construction and
+  the per-SNR checkpoint + CSV I/O amortised over only 200 frames — the
+  task-specified metric is the binary's end-to-end fps, so that is what is
+  reported.
+- **Speedup factor:** **10.39×** (16.8481 / 1.6216) versus the 1.6216 fps
+  legacy single-thread headline baseline.
+- **Required threshold (from task body):** ≥ 8× the legacy single-thread
+  baseline.
+- **Verdict:** **PASS (worker-measured).** 16.85 fps → 10.39× clears the ≥ 8×
+  gate with margin. Marked worker-measured pending the lead's re-measurement on
+  a verified-quiet host per the task body ("MEASURE on the quiet machine and
+  record honestly — mark it 'worker-measured, lead re-attests on quiet host'").
+  Measured at worktree HEAD `57c81c8f`.
+- **Raw artefacts:**
+  - Migrated binary: `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`.
+    Re-run on a quiet host:
+    `for r in 1 2 3; do /usr/bin/time -p target/release/dvb_t2_awgn_campaign --rate 1/2 --modulation 16qam --esn0-range 6.25:6.25:0.5 --max-frames 200 --target-errors 100000000 --decoder sumproduct --demap exactlogmap --output-dir /tmp/dvb_perf_$r --seed 42; done`
+    (fps = 200 / wall).
+  - Within-pipeline two-run byte-identity (fast smoke + ignored 6.0 dB
+    waterfall leg): `crates/gf2-sim/tests/campaign_byte_identity.rs`.
+  - CLI flag subprocess contracts (`--gpu` default-build error, `--strict-gpu`,
+    parser rejections, end-to-end CSV schema):
+    `crates/gf2-sim/tests/campaign_cli_flags.rs`.
+  - CLI→config wiring (`--strict-gpu` → `PipelineConfig::strict_gpu` + the other
+    run-control knobs): the `strict_gpu_flag_wires_to_config` /
+    `run_control_knobs_wire_to_config` unit tests in the binary.
