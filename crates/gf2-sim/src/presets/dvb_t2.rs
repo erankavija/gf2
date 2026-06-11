@@ -227,11 +227,18 @@ impl Channel {
     /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`) the
     /// soft demapper must assume to be physically consistent with this channel.
     ///
-    /// Derived from the channel's Es/N0 via the SSOT
-    /// [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma) helper — the
-    /// exact same `sigma` the [`Awgn`] stage injects — so the demapper's `N0`
-    /// equals the channel's true `N0` (matching the `2 * sigma_sq` derivation in
-    /// `frame_sim.rs`).
+    /// Computed in `f64` and rounded once — `N0 = (2 * sigma_sq) as f32` with
+    /// `sigma_sq = 1 / (2 * 10^(Es/N0 / 10))` — which is **bit-identical** to
+    /// the SSOT frame kernel's derivation
+    /// ([`DvbT2BicmFrameSim::noise_var`](crate::frame_sim::DvbT2BicmFrameSim::noise_var))
+    /// for any `f32`-representable Es/N0. The stage-driven executor's
+    /// chain-vs-SSOT byte-identity (`de160fc5`, design doc §11) requires this:
+    /// the earlier `2.0 * sigma * sigma` form (squaring the already-rounded
+    /// `f32` sigma the [`Awgn`] stage injects) rounds twice and can differ from
+    /// the frame kernel's `N0` by an ULP, which perturbs every demapped LLR.
+    /// The injected noise is unchanged — `sigma` itself is the same SSOT
+    /// [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma) value either
+    /// way.
     ///
     /// May be non-finite or zero if `es_n0_db` is non-finite or so large that
     /// `sigma^2` underflows; [`Channel::validate`] rejects those cases before
@@ -239,8 +246,9 @@ impl Channel {
     fn demap_noise_var(self) -> f32 {
         match self {
             Channel::Awgn { es_n0_db } => {
-                let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db);
-                2.0 * sigma * sigma
+                let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
+                let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+                (2.0 * sigma_sq) as f32
             }
         }
     }
@@ -950,10 +958,21 @@ mod tests {
 
     #[test]
     fn test_channel_validate_returns_n0_for_valid_es_n0() {
-        // validate() returns the demapper N0 = 2*sigma^2 for a valid channel.
+        // validate() returns the demapper N0 = 2*sigma^2 for a valid channel,
+        // derived in f64 and rounded once — bit-identical to the SSOT frame
+        // kernel's `noise_var` derivation (see `Channel::demap_noise_var`).
         let n0 = Channel::awgn(6.0).validate().expect("valid channel");
+        let es_n0_lin = 10.0_f64.powf(6.0 / 10.0);
+        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+        assert_eq!(
+            n0.to_bits(),
+            ((2.0 * sigma_sq) as f32).to_bits(),
+            "demapper N0 must be the single-rounded f64 derivation"
+        );
+        // And it stays within an ULP of the doubly-rounded 2*sigma^2 form (the
+        // physical-consistency sanity check).
         let sigma = crate::channels::es_n0_db_to_sigma(6.0);
-        assert!((n0 - 2.0 * sigma * sigma).abs() < 1e-9);
+        assert!((n0 - 2.0 * sigma * sigma).abs() < 1e-6);
     }
 
     /// `with_gpu(true)` under `hip` must place the `GpuOnly` LDPC decode stage

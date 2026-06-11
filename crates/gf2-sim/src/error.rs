@@ -229,6 +229,26 @@ pub enum BuildError {
         /// A human-readable explanation of the rejected channel parameter.
         reason: String,
     },
+    /// The executor's defensive execution-start validation rejected the
+    /// pipeline (design doc §9; `de160fc5` deliverable 2).
+    ///
+    /// Cycles and disconnected graphs cannot reach execution — they are
+    /// rejected at [`Chain::build`](crate::graph::Chain::build) ([`Cyclic`](BuildError::Cyclic)
+    /// / [`Disconnected`](BuildError::Disconnected)), and `build()` is the only
+    /// public constructor of a runnable [`Pipeline`](crate::Pipeline). This
+    /// variant is the defense-in-depth net the topology executor raises when
+    /// the *built* pipeline's stage order or connector lineage is found
+    /// inconsistent at execution start (e.g. an edge that does not go forward
+    /// in the stage list, an out-of-range edge endpoint), or when a
+    /// stage-driven run entry point is given a pipeline whose shape it does
+    /// not support. Carries a human-readable reason naming exactly what was
+    /// violated (mirroring the [`InvalidChannel`](BuildError::InvalidChannel)
+    /// precedent). Raised panic-free as
+    /// `StageError::Fatal(FatalError::BuildError(..))`.
+    ExecutionValidation {
+        /// A human-readable explanation of the inconsistency found.
+        reason: String,
+    },
     /// A loaded checkpoint's `config_hash` does not match the live config.
     ///
     /// See design doc §4: loaded checkpoints whose `config_hash` differs from

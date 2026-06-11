@@ -315,6 +315,44 @@ impl Scheduler {
         }
     }
 
+    /// The scheduler's rayon worker pool (crate-internal: the topology
+    /// executor `de160fc5` dispatches its waves and sweep workers inside it).
+    pub(crate) fn rayon_pool(&self) -> &rayon::ThreadPool {
+        &self.rayon_pool
+    }
+
+    /// The configured worker count (crate-internal, for the topology executor).
+    pub(crate) fn parallelism(&self) -> NonZeroUsize {
+        self.parallelism
+    }
+
+    /// The base ChaCha20 seed (crate-internal, for the topology executor).
+    pub(crate) fn seed(&self) -> u64 {
+        self.seed
+    }
+
+    /// The HIP stream worker `worker_idx` deterministically owns, with its id
+    /// (`worker_idx % n_streams`), or `None` when no GPU pool is active.
+    ///
+    /// Crate-internal: the topology executor (`de160fc5`) routes a `GpuOnly`
+    /// stage's launches onto this stream. Selection is by fixed index
+    /// (`HipStreamPool::get`), never `acquire()` — the pool's round-robin
+    /// cursor advances in call order, which is scheduler-dependent under a
+    /// parallel iterator and would desynchronise the recorded `stream_id` from
+    /// the stream actually used.
+    #[cfg(feature = "hip")]
+    pub(crate) fn worker_stream(
+        &self,
+        worker_idx: usize,
+    ) -> Option<(usize, &gf2_kernels_hip::host::HipStream)> {
+        if !self.gpu_enabled {
+            return None;
+        }
+        let pool = self.hip_pool.as_ref()?;
+        let stream_id = worker_idx % pool.len();
+        Some((stream_id, pool.get(stream_id)))
+    }
+
     /// Runs `pipeline` over its configured SNR sweep, driving the stages through
     /// the worker pool with double-buffered async CPU/GPU overlap.
     ///

@@ -507,8 +507,13 @@ pub struct FramePrep {
 /// storage directly and zero the padding bits beyond `len_bits` to uphold the
 /// tail-masking invariant (`gf2-core` design invariant 1). Each word is drawn
 /// as one `u64` so the draw count per frame is deterministic.
+///
+/// `pub(crate)`: the stage-driven topology executor (`de160fc5`) mints its
+/// per-frame BBFRAME with this exact helper so the message draw — and the
+/// stream position the channel noise continues from — is byte-identical to
+/// [`DvbT2BicmFrameSim::simulate_frame`]'s.
 #[inline]
-fn random_bitvec<R: rand::Rng>(len_bits: usize, rng: &mut R) -> BitVec {
+pub(crate) fn random_bitvec<R: rand::Rng>(len_bits: usize, rng: &mut R) -> BitVec {
     if len_bits == 0 {
         return BitVec::new();
     }

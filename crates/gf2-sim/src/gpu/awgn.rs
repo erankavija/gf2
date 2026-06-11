@@ -15,10 +15,13 @@
 //! Each frame `f` in the batch draws its noise from the device kernel seeded to
 //! the §3 word offset `worker_offset(seed, snr_idx, worker_idx, f)`, computed by
 //! the same [`worker_offset`](crate::parallel::worker_offset) used CPU-side. The
-//! kernel emits `2 * num_symbols` standard-normal samples per frame (I then Q
-//! per symbol), in the exact ChaCha-word order the CPU `draw_standard_normal`
-//! consumes (4 words per sample), so the noise is a pure function of the frame
-//! index — byte-identical across worker counts.
+//! kernel emits `2 * num_symbols` standard-normal samples per frame as a flat
+//! array, in the exact ChaCha-word order the CPU `draw_standard_normal`
+//! consumes (4 words per sample); the host assigns them **planar** — sample `k`
+//! is symbol `k`'s I-axis noise, sample `num_symbols + k` is symbol `k`'s
+//! Q-axis noise — matching the CPU [`Awgn`](crate::channels::Awgn) stage's SSOT
+//! draw order (all I, then all Q; see the CPU stage's module docs). The noise
+//! is a pure function of the frame index — byte-identical across worker counts.
 //!
 //! # CPU fallback (§8)
 //!
@@ -240,9 +243,11 @@ mod imp {
         /// caller-owned device generator `gen`, seeking it to frame `frame_idx`'s
         /// §3 `worker_offset` region.
         ///
-        /// Draws `2 * num_symbols` standard-normal samples on the device (I then
-        /// Q per symbol, matching the CPU `draw_standard_normal` word order),
-        /// scales each by [`sigma`](Self::sigma), and adds them to the I/Q lanes.
+        /// Draws `2 * num_symbols` standard-normal samples on the device (in the
+        /// CPU `draw_standard_normal` word order), scales each by
+        /// [`sigma`](Self::sigma), and adds them to the I/Q lanes planar-wise
+        /// (sample `k` → I of symbol `k`, sample `num_symbols + k` → Q of
+        /// symbol `k`), matching the CPU stage's SSOT draw order.
         /// The `gen` must have been built for the **same** `seed` this stage was
         /// configured with ([`with_seek`](Self::with_seek)); it is owned by the
         /// caller (one per worker) so the non-`Sync` device buffers stay out of
@@ -298,10 +303,12 @@ mod imp {
                 .noise_samples(base, n_samples)
                 .map_err(|e| map_hip_error(e, "GpuChaChaAwgn::noise_samples"))?;
 
-            // Sample 2*k is symbol k's I-axis noise; 2*k+1 is its Q-axis noise.
+            // Planar assignment (the CPU stage's SSOT draw order): sample k is
+            // symbol k's I-axis noise; sample num_symbols + k is its Q-axis
+            // noise.
             for (k, (xi, xq)) in i_lane.iter_mut().zip(q_lane.iter_mut()).enumerate() {
-                *xi += noise[2 * k] * sigma;
-                *xq += noise[2 * k + 1] * sigma;
+                *xi += noise[k] * sigma;
+                *xq += noise[num_symbols + k] * sigma;
             }
             Ok(())
         }
@@ -396,9 +403,10 @@ mod imp {
             gen.noise_samples_into(base, &mut host_buf[..n_samples])
                 .map_err(|e| map_hip_error(e, "GpuChaChaAwgn::noise_samples_into"))?;
             let sigma = self.sigma;
+            // Planar assignment, matching `apply_for_frame`.
             for (k, (xi, xq)) in i_lane.iter_mut().zip(q_lane.iter_mut()).enumerate() {
-                *xi += host_buf[2 * k] * sigma;
-                *xq += host_buf[2 * k + 1] * sigma;
+                *xi += host_buf[k] * sigma;
+                *xq += host_buf[num_symbols + k] * sigma;
             }
             Ok(())
         }
