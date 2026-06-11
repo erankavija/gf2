@@ -104,6 +104,7 @@ use rayon::prelude::*;
 use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::channels::awgn::ChannelScratch;
 use crate::error::{BuildError, FatalError, StageError};
+use crate::executor::failure::FailurePolicy;
 use crate::executor::Scheduler;
 use crate::parallel::{WorkerCounters, WorkerCtx};
 use crate::pipeline::{BatchHandle, Pipeline};
@@ -114,26 +115,6 @@ use crate::stages::{DecodeScratch, DvbT2Encode};
 /// stream (no `hip` feature, GPU disabled, or no usable device).
 pub const NO_STREAM: usize = usize::MAX;
 
-/// Failure-mode parameters threaded through stage dispatch (`42eac5cc`).
-///
-/// Carries the `strict_gpu` flag and the diagnostic dump directory so they do
-/// not need to be threaded as separate function arguments.
-///
-/// The fields are only read inside the `#[cfg(feature = "hip")]` variant of
-/// `execute_gpu_stage`; the `dead_code` lint fires on no-hip builds where that
-/// variant is elided.
-#[allow(dead_code)]
-struct FailurePolicy<'p> {
-    strict_gpu: bool,
-    dump_dir: &'p std::path::Path,
-    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
-    /// `Some(m)`, the GPU LDPC arm forces a recoverable OOM on every frame whose
-    /// global frame index `g` satisfies `g % m == 0`, driving the production
-    /// `dispatch_with_fallback` path. Mirrors
-    /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus).
-    inject_gpu_oom_modulus: Option<u64>,
-}
-
 /// Wraps a defensive-validation finding in the typed error chain
 /// (`StageError::Fatal(FatalError::BuildError(ExecutionValidation))`).
 fn exec_err(reason: impl Into<String>) -> StageError {
@@ -142,10 +123,31 @@ fn exec_err(reason: impl Into<String>) -> StageError {
     }))
 }
 
+/// Provenance of a routed stage execution's BP iteration counts.
+///
+/// The DVB-T2 sweep's iteration accounting must distinguish a **genuine
+/// CPU-fallback substitution** (which legitimately surfaces no per-frame
+/// count — `mean_iters` is §11-excluded on GPU-bearing chains) from a
+/// degrade/no-source execution (which must remain the hard error it always
+/// was, never silently defaulted) — the MEDIUM-3 provenance split.
+#[cfg_attr(not(feature = "hip"), allow(dead_code))] // Gpu/CpuFallback are
+// constructed only by the hip GpuOnly dispatch arms.
+enum StageIters {
+    /// The GPU LDPC arm produced per-frame BP iteration counts.
+    Gpu(Vec<u32>),
+    /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+    /// substituted the stage's registered CPU fallback after a recoverable GPU
+    /// error; no per-frame counts cross the erased fallback boundary.
+    CpuFallback,
+    /// The stage is not an iteration source: CPU/Hybrid stages, the GPU AWGN
+    /// and demap arms, and the no-stream `process_any` degrades (where no
+    /// substitution took place).
+    NotASource,
+}
+
 /// The result of one routed stage execution: the output batch plus the
-/// per-frame BP iteration counts when the GPU LDPC arm produced them
-/// (`None` otherwise).
-type StageOutcome = Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError>;
+/// iteration-count provenance ([`StageIters`]).
+type StageOutcome = Result<(Box<dyn TypedBatch>, StageIters), StageError>;
 
 /// One completed wave member: `(stage position, output batch, returned
 /// scratch)`.
@@ -278,29 +280,43 @@ fn stream_id_for(scheduler: &Scheduler, worker_idx: usize, route: &WorkerRoute<'
     NO_STREAM
 }
 
-/// The GPU LDPC stage position to use when defaulting a frame's iteration
-/// count after a CPU fallback. Identity under `hip`; always `None` without it
-/// (no GPU LDPC stage can exist), so [`gpu_ldpc_max_iters`] is never invoked on
-/// the non-hip build.
-#[inline]
-fn gpu_iter_fallback_pos(gpu_bp_pos: Option<usize>) -> Option<usize> {
-    #[cfg(feature = "hip")]
-    {
-        gpu_bp_pos
-    }
-    #[cfg(not(feature = "hip"))]
-    {
-        let _ = gpu_bp_pos;
-        None
-    }
+/// The shared CPU-fallback arm body (the L2 SSOT — every `dispatch_with_fallback`
+/// call in [`execute_gpu_stage`] passes `|| run_registered_cpu_fallback(...)`
+/// as its fallback closure): runs the stage's registered fallback via the
+/// erased [`cpu_fallback_process_any`](AnyStage::cpu_fallback_process_any)
+/// hook, mapping a missing registration to the typed validation error.
+///
+/// Returns [`StageIters::CpuFallback`] provenance — no per-frame iteration
+/// counts cross the erased fallback boundary, and `mean_iters` is §11-excluded
+/// on GPU-bearing chains. A stateful-scratch fallback (the GpuAwgn shape) is
+/// refused inside the erased hook itself with a typed error (the HIGH-1 §11
+/// guard in `stage.rs`), which `dispatch_with_fallback` then escalates to
+/// `CpuFallbackAlsoFailed`.
+#[cfg(feature = "hip")]
+fn run_registered_cpu_fallback(
+    stage: &dyn AnyStage,
+    input: &dyn TypedBatch,
+    scratch: &mut dyn AnyScratch,
+) -> StageOutcome {
+    stage
+        .cpu_fallback_process_any(input, scratch)
+        .unwrap_or_else(|| {
+            Err(exec_err(format!(
+                "GpuOnly stage `{}` has no CPU fallback registered",
+                stage.name()
+            )))
+        })
+        .map(|o| (o, StageIters::CpuFallback))
 }
 
 /// The `max_iterations` cap of the GPU LDPC BP stage at `pos`, used as the
-/// recorded iteration count for a frame whose GPU dispatch fell back to the CPU
-/// LDPC stage (the `42eac5cc` OOM substitution leaves no per-frame count, and
-/// `mean_iters` is §11-excluded from the CPU-vs-GPU contract). The caller only
-/// reaches it when a `GpuLdpcBp` stage exists in the chain (hip builds only;
-/// [`gpu_iter_fallback_pos`] returns `None` otherwise).
+/// recorded iteration count for a frame whose GPU dispatch was **substituted**
+/// by the registered CPU LDPC fallback (the `42eac5cc` OOM substitution leaves
+/// no per-frame count, and `mean_iters` is §11-excluded from the CPU-vs-GPU
+/// contract). This is the documented fallback-iters convention, shared with
+/// the C.1 scheduler hybrid loop's fallback arm (L1). The caller only reaches
+/// it on [`StageIters::CpuFallback`] provenance from the GPU LDPC stage, which
+/// only the hip dispatch arms produce.
 fn gpu_ldpc_max_iters(stages: &[Box<dyn AnyStage>], pos: usize) -> Result<u64, StageError> {
     #[cfg(feature = "hip")]
     {
@@ -323,8 +339,10 @@ fn gpu_ldpc_max_iters(stages: &[Box<dyn AnyStage>], pos: usize) -> Result<u64, S
 /// [`execution_class()`](AnyStage::execution_class), inside the six-field
 /// `pipeline_stage` tracing span.
 ///
-/// Returns the output batch plus the per-frame BP iteration counts when the
-/// GPU LDPC arm produced them (`None` otherwise).
+/// Returns the output batch plus the iteration-count provenance
+/// ([`StageIters`]): per-frame counts when the GPU LDPC arm produced them,
+/// [`StageIters::CpuFallback`] when a registered fallback was substituted,
+/// [`StageIters::NotASource`] otherwise.
 #[allow(clippy::too_many_arguments)]
 fn execute_stage(
     stage: &dyn AnyStage,
@@ -350,7 +368,9 @@ fn execute_stage(
     let entered = span.enter();
     let t0 = std::time::Instant::now();
     let result = match stage.execution_class() {
-        ExecutionClass::CpuOnly => stage.process_any(input, scratch).map(|o| (o, None)),
+        ExecutionClass::CpuOnly => stage
+            .process_any(input, scratch)
+            .map(|o| (o, StageIters::NotASource)),
         ExecutionClass::GpuOnly => execute_gpu_stage(
             stage, input, scratch, scheduler, worker_idx, route, failure, snr_idx, batch_id,
         ),
@@ -377,11 +397,12 @@ fn execute_stage(
 /// typed [`BuildError::ExecutionValidation`] — never a silent default-stream
 /// `process_any` (see the [module docs](self)). With no active stream pool
 /// (GPU disabled or unavailable) every arm degrades to `process_any` after a
-/// `tracing::warn!` (fallback SUBSTITUTION is `42eac5cc`'s scope).
+/// `tracing::warn!`.
 ///
-/// Each GPU dispatch is wrapped with [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
-/// (`42eac5cc`): OOM → CPU fallback (or hard-fail when `strict_gpu`); fatal
-/// errors → diagnostic dump + propagate.
+/// Every GPU-stage call — including the no-stream degrades — is wrapped with
+/// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+/// (`42eac5cc`): OOM → registered CPU fallback substitution (or hard-fail when
+/// `strict_gpu`); fatal errors → diagnostic dump + propagate.
 #[cfg(feature = "hip")]
 #[allow(clippy::too_many_arguments)]
 fn execute_gpu_stage(
@@ -420,7 +441,7 @@ fn execute_gpu_stage(
         if llrs.frames.is_empty() {
             return Ok((
                 Box::new(HardDecisionBatch::new(Vec::new())),
-                Some(Vec::new()),
+                StageIters::Gpu(Vec::new()),
             ));
         }
         // Test-only GPU-OOM fault injection (issue `42eac5cc` SC1). When the
@@ -428,33 +449,14 @@ fn execute_gpu_stage(
         // it flows through the production `dispatch_with_fallback` path below
         // exactly as a genuine device OOM would (CPU fallback when `!strict_gpu`,
         // hard-fail when `strict_gpu`). `None` in production: the kernel runs.
-        let injected_oom: Option<StageError> = failure.inject_gpu_oom_modulus.and_then(|m| {
-            (m >= 1 && batch_id.is_multiple_of(m)).then(|| {
-                StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
-                    device_id: ctx.device_id,
-                    bytes_requested: 1024 * 1024 * 1024,
-                })
+        // Each topology dispatch is one frame, keyed on its global frame index
+        // (`batch_id == g`).
+        let injected_oom: Option<StageError> = failure.injects_oom_at(batch_id).then(|| {
+            StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
+                device_id: ctx.device_id,
+                bytes_requested: 1024 * 1024 * 1024,
             })
         });
-        // Closure that runs the CPU fallback for the LDPC BP stage via the
-        // type-erased `cpu_fallback_process_any` hook added by `42eac5cc`.
-        // `mean_iters` is excluded from the CPU-vs-GPU byte-identity contract
-        // (§11), so we return `None` for iters on the fallback path.
-        let fallback = || {
-            stage
-                .cpu_fallback_process_any(input, scratch)
-                .unwrap_or_else(|| {
-                    Err(StageError::Fatal(FatalError::BuildError(
-                        BuildError::ExecutionValidation {
-                            reason: format!(
-                                "GpuOnly stage `{}` has no CPU fallback registered",
-                                stage.name()
-                            ),
-                        },
-                    )))
-                })
-                .map(|o| (o, None::<Vec<u32>>))
-        };
         if let Some(g) = route.gpu.as_mut() {
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
@@ -463,11 +465,13 @@ fn execute_gpu_stage(
                 Some(oom) => Err(oom),
                 None => gpu_bp
                     .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
-                    .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters))),
+                    .map(|(hard, iters)| {
+                        (Box::new(hard) as Box<dyn TypedBatch>, StageIters::Gpu(iters))
+                    }),
             };
             return dispatch_with_fallback(
                 raw,
-                fallback,
+                || run_registered_cpu_fallback(stage, input, scratch),
                 ctx,
                 failure.strict_gpu,
                 failure.dump_dir,
@@ -487,12 +491,12 @@ fn execute_gpu_stage(
                         stream,
                         &mut stream_scratch,
                     )?;
-                    Ok((Box::new(hard) as Box<dyn TypedBatch>, Some(iters)))
+                    Ok((Box::new(hard) as Box<dyn TypedBatch>, StageIters::Gpu(iters)))
                 })(),
             };
             return dispatch_with_fallback(
                 raw,
-                fallback,
+                || run_registered_cpu_fallback(stage, input, scratch),
                 ctx,
                 failure.strict_gpu,
                 failure.dump_dir,
@@ -500,12 +504,26 @@ fn execute_gpu_stage(
         }
         // No active stream pool (GPU disabled or unavailable): degrade to the
         // erased path, which surfaces the mapped device fault if there is
-        // genuinely no device (fallback SUBSTITUTION is `42eac5cc`'s scope).
+        // genuinely no device. The degrade is wrapped like every other GPU-stage
+        // call (MEDIUM-4): a recoverable error substitutes the registered CPU
+        // fallback; a fatal error writes the diagnostic dump and propagates.
+        // A SUCCESSFUL degrade reports `StageIters::NotASource` — not
+        // `CpuFallback` — so the sweep's iteration accounting cannot mistake a
+        // degrade for a substitution (MEDIUM-3 provenance).
         tracing::warn!(
             stage = stage.name(),
             "GpuOnly LDPC stage with no active HIP stream pool; degrading to process_any"
         );
-        return stage.process_any(input, scratch).map(|o| (o, None));
+        let raw: StageOutcome = stage
+            .process_any(input, scratch)
+            .map(|o| (o, StageIters::NotASource));
+        return dispatch_with_fallback(
+            raw,
+            || run_registered_cpu_fallback(stage, input, scratch),
+            ctx,
+            failure.strict_gpu,
+            failure.dump_dir,
+        );
     }
     if let Some(gpu_awgn) = stage
         .stage_as_any()
@@ -514,23 +532,18 @@ fn execute_gpu_stage(
         // Run the GPU call FIRST (consuming the `scratch` borrow for the GPU
         // path); the fallback closure only captures `scratch` when it is
         // actually called by `dispatch_with_fallback` on a recoverable error.
+        // NOTE: GpuAwgn's registered fallback (`Awgn`) has STATEFUL scratch, so
+        // the erased hook refuses the substitution with a typed §11 error
+        // (HIGH-1) — the wrapper then escalates to `CpuFallbackAlsoFailed`
+        // rather than ever drawing default-seeded noise.
         let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
-        let stage_name = stage.name();
-        let fallback = || {
-            stage
-                .cpu_fallback_process_any(input, scratch)
-                .unwrap_or_else(|| {
-                    Err(StageError::Fatal(FatalError::BuildError(
-                        BuildError::ExecutionValidation {
-                            reason: format!(
-                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
-                            ),
-                        },
-                    )))
-                })
-                .map(|o| (o, None::<Vec<u32>>))
-        };
-        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
+        return dispatch_with_fallback(
+            raw,
+            || run_registered_cpu_fallback(stage, input, scratch),
+            ctx,
+            failure.strict_gpu,
+            failure.dump_dir,
+        );
     }
     if let Some(gpu_demap) = stage
         .stage_as_any()
@@ -538,22 +551,13 @@ fn execute_gpu_stage(
     {
         // Run the GPU call FIRST for the same reason as the AWGN arm above.
         let raw = execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
-        let stage_name = stage.name();
-        let fallback = || {
-            stage
-                .cpu_fallback_process_any(input, scratch)
-                .unwrap_or_else(|| {
-                    Err(StageError::Fatal(FatalError::BuildError(
-                        BuildError::ExecutionValidation {
-                            reason: format!(
-                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
-                            ),
-                        },
-                    )))
-                })
-                .map(|o| (o, None::<Vec<u32>>))
-        };
-        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
+        return dispatch_with_fallback(
+            raw,
+            || run_registered_cpu_fallback(stage, input, scratch),
+            ctx,
+            failure.strict_gpu,
+            failure.dump_dir,
+        );
     }
     // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing
     // is mandatory: silently falling through to `process_any` would dispatch
@@ -571,12 +575,22 @@ fn execute_gpu_stage(
         )));
     }
     // No active stream pool: the documented graceful degrade (matching the
-    // known-stage arms above).
+    // known-stage arms above), wrapped like every other GPU-stage call
+    // (MEDIUM-4) so a fatal device fault still produces a diagnostic dump.
     tracing::warn!(
         stage = stage.name(),
         "GpuOnly stage with no active HIP stream pool; degrading to process_any"
     );
-    stage.process_any(input, scratch).map(|o| (o, None))
+    let raw: StageOutcome = stage
+        .process_any(input, scratch)
+        .map(|o| (o, StageIters::NotASource));
+    dispatch_with_fallback(
+        raw,
+        || run_registered_cpu_fallback(stage, input, scratch),
+        ctx,
+        failure.strict_gpu,
+        failure.dump_dir,
+    )
 }
 
 /// The [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) stream route: corrupt the
@@ -599,7 +613,9 @@ fn execute_gpu_awgn(
             stage = stage.name(),
             "GpuOnly AWGN stage with no active HIP stream pool; degrading to process_any"
         );
-        return stage.process_any(input, scratch).map(|o| (o, None));
+        return stage
+            .process_any(input, scratch)
+            .map(|o| (o, StageIters::NotASource));
     };
     let symbols = input
         .as_any()
@@ -611,12 +627,12 @@ fn execute_gpu_awgn(
     let max_symbols = symbols.i.iter().map(Vec::len).max().unwrap_or(0);
     let mut out = symbols.clone();
     if max_symbols == 0 {
-        return Ok((Box::new(out), None));
+        return Ok((Box::new(out), StageIters::NotASource));
     }
     let gen = gpu_awgn.build_generator(max_symbols)?;
     let mut stream_scratch = gpu_awgn.build_stream_scratch(&gen)?;
     gpu_awgn.apply_on_stream(&mut out, &gen, stream, &mut stream_scratch)?;
-    Ok((Box::new(out), None))
+    Ok((Box::new(out), StageIters::NotASource))
 }
 
 /// The [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper) stream
@@ -639,7 +655,9 @@ fn execute_gpu_demap(
             stage = stage.name(),
             "GpuOnly demap stage with no active HIP stream pool; degrading to process_any"
         );
-        return stage.process_any(input, scratch).map(|o| (o, None));
+        return stage
+            .process_any(input, scratch)
+            .map(|o| (o, StageIters::NotASource));
     };
     let symbols = input
         .as_any()
@@ -652,13 +670,13 @@ fn execute_gpu_demap(
     if max_symbols == 0 {
         return Ok((
             Box::new(LlrBatch::new(vec![Vec::new(); symbols.i.len()])),
-            None,
+            StageIters::NotASource,
         ));
     }
     let demapper = gpu_demap.build_demapper(max_symbols)?;
     let mut stream_scratch = gpu_demap.build_stream_scratch(&demapper)?;
     let out = gpu_demap.demap_batch_on_stream(symbols, &demapper, stream, &mut stream_scratch)?;
-    Ok((Box::new(out), None))
+    Ok((Box::new(out), StageIters::NotASource))
 }
 
 /// The `GpuOnly` routing arm without the `hip` feature: there is no device
@@ -683,7 +701,9 @@ fn execute_gpu_stage(
         stage = stage.name(),
         "GpuOnly stage on a build without the `hip` feature; running via process_any on the CPU"
     );
-    stage.process_any(input, scratch).map(|o| (o, None))
+    stage
+        .process_any(input, scratch)
+        .map(|o| (o, StageIters::NotASource))
 }
 
 /// The `Hybrid` routing arm: split the batch per-batch into two frame halves
@@ -710,9 +730,11 @@ fn execute_hybrid_stage(
                 stage.name()
             ))
         })?;
-        Ok((merged, None))
+        Ok((merged, StageIters::NotASource))
     } else {
-        stage.process_any(input, scratch).map(|o| (o, None))
+        stage
+        .process_any(input, scratch)
+        .map(|o| (o, StageIters::NotASource))
     }
 }
 
@@ -1392,10 +1414,15 @@ impl TopologyExecutor {
                                 })?
                                 .rng = chan_rng;
 
-                            // 3. Per-stage-driven chain execution.
+                            // 3. Per-stage-driven chain execution. Iteration
+                            //    provenance is tracked at the GPU LDPC stage
+                            //    position ONLY (MEDIUM-3): an AWGN/demap
+                            //    fallback substitution must not masquerade as
+                            //    a BP-iteration source.
                             let mut cur: Box<dyn TypedBatch> =
                                 Box::new(BitPackedBatch::new(vec![message.clone()]));
                             let mut gpu_iters: Option<u64> = None;
+                            let mut bp_fellback = false;
                             for (pos, stage) in stages.iter().enumerate() {
                                 let (out, iters) = execute_stage(
                                     stage.as_ref(),
@@ -1408,8 +1435,14 @@ impl TopologyExecutor {
                                     &mut route,
                                     &failure,
                                 )?;
-                                if let Some(iters) = iters {
-                                    gpu_iters = iters.first().map(|&i| u64::from(i));
+                                if Some(pos) == gpu_bp_pos {
+                                    match iters {
+                                        StageIters::Gpu(v) => {
+                                            gpu_iters = v.first().map(|&i| u64::from(i));
+                                        }
+                                        StageIters::CpuFallback => bp_fellback = true,
+                                        StageIters::NotASource => {}
+                                    }
                                 }
                                 cur = out;
                             }
@@ -1441,23 +1474,37 @@ impl TopologyExecutor {
                                                      iteration count for the frame",
                                                 )
                                             })?
-                                    } else if let Some(pos) = gpu_iter_fallback_pos(gpu_bp_pos) {
-                                        // The chain's BP-iteration source is the
-                                        // GPU LDPC stage, but it surfaced no
-                                        // per-frame count: this frame's GPU
-                                        // dispatch fell back to the CPU LDPC
-                                        // stage (an OOM substitution, `42eac5cc`),
-                                        // whose `Scratch = ()` carries no iteration
-                                        // count. `mean_iters` is §11-EXCLUDED from
-                                        // the CPU-vs-GPU contract, so record the
-                                        // stage's `max_iterations` cap — the
-                                        // verdict columns (`fer`/`frames`/`errors`)
-                                        // are unaffected.
+                                    } else if bp_fellback {
+                                        // ATTESTED substitution provenance
+                                        // (MEDIUM-3): this frame's GPU LDPC
+                                        // dispatch was replaced by the
+                                        // registered CPU fallback
+                                        // (OOM/transient, `42eac5cc`), whose
+                                        // erased boundary surfaces no per-frame
+                                        // count. `mean_iters` is §11-EXCLUDED
+                                        // from the CPU-vs-GPU contract, so
+                                        // record the stage's `max_iterations`
+                                        // cap (the shared fallback-iters
+                                        // convention, L1) — the verdict columns
+                                        // (`fer`/`frames`/`errors`) are
+                                        // unaffected.
+                                        let pos = gpu_bp_pos.ok_or_else(|| {
+                                            exec_err(
+                                                "internal: CpuFallback iteration \
+                                                 provenance without a GPU LDPC stage",
+                                            )
+                                        })?;
                                         gpu_ldpc_max_iters(stages, pos)?
                                     } else {
+                                        // No iteration source ran — e.g. the
+                                        // GPU LDPC stage degraded to
+                                        // `process_any` (no stream) without a
+                                        // substitution. The prior hard error,
+                                        // never a silent default (MEDIUM-3).
                                         return Err(exec_err(
                                             "no BP-iteration source ran for this frame \
-                                             (no DvbT2Decode stage and no GPU LDPC counts)",
+                                             (no DvbT2Decode stage, no GPU LDPC counts, \
+                                             and no fallback substitution)",
                                         ));
                                     }
                                 }
