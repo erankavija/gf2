@@ -6,8 +6,12 @@
 //! [`SimulationResults`] surface [`Pipeline::run`](crate::Pipeline::run)
 //! returns. `de160fc5` adds the [`TopologyExecutor`]: per-stage-driven DAG
 //! execution (topo order, fan-in/fan-out, execution-class routing, per-stage
-//! spans, defensive execution-start validation). Resume (`571c11c4`) and OOM
-//! auto-fallback dispatch (`42eac5cc`) build on these.
+//! spans, defensive execution-start validation). `571c11c4` adds the GPU
+//! drain-for-checkpoint and the checkpointed hybrid sweep with `--resume`
+//! ([`drain`] module: [`Scheduler::drain_for_checkpoint`],
+//! [`Scheduler::run_sweep_checkpointed`],
+//! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)). OOM
+//! auto-fallback dispatch (`42eac5cc`) builds on these.
 //!
 //! # Module map
 //!
@@ -18,11 +22,14 @@
 //! | [`RunPlan`] | how a built [`Pipeline`](crate::Pipeline) is run (DVB-T2 BICM preset) |
 //! | [`SimulationResults`] / [`SnrPointResult`] | the per-SNR-point aggregate columns (SSOT [`WorkerCounters`](crate::WorkerCounters) projection) |
 //! | [`OverlapTimeline`] / [`ActivityInterval`] / [`ActivityKind`] | CPU↔GPU overlap attestation (criterion 1) |
+//! | [`StreamInFlight`] / [`CheckpointedSweep`] | per-stream drain tally + checkpointed hybrid sweep outcome (`571c11c4`) |
 
+mod drain;
 mod results;
 mod scheduler;
 mod topology;
 
+pub use drain::{CheckpointedSweep, StreamInFlight};
 pub use results::{SimulationResults, SnrPointResult};
 pub use scheduler::{ActivityInterval, ActivityKind, OverlapTimeline, RunPlan, Scheduler};
 pub use topology::{DagOutputs, TopologyExecutor, NO_STREAM};

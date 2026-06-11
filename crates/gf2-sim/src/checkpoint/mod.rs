@@ -28,16 +28,18 @@
 //!
 //! # The CPU drain (design doc §4 "Drain commit contract")
 //!
-//! This task is CPU-only (Phase A). The GPU-stream drain
-//! (`Scheduler::drain_for_checkpoint` / `hipStreamSynchronize`) is owned by
-//! Phase C (`571c11c4`) and is an explicit non-goal here. For the CPU path,
-//! "drain" means: dispatch a bounded chunk of frames via
-//! [`run_snr_point_range`] (whose rayon `join` is the natural settle point —
-//! every in-flight frame completes and increments its worker's count before the
-//! call returns), then latch the per-worker counts as the SSOT for each
-//! worker's next [`worker_offset`](crate::parallel::worker_offset) seek. No
-//! partial frames are ever recorded mid-chunk. The GPU drain seam is documented
-//! at [`drain_for_checkpoint`].
+//! This module is the CPU half (Phase A). For the CPU path, "drain" means:
+//! dispatch a bounded chunk of frames via [`run_snr_point_range`] (whose rayon
+//! `join` is the natural settle point — every in-flight frame completes and
+//! increments its worker's count before the call returns), then latch the
+//! per-worker counts as the SSOT for each worker's next
+//! [`worker_offset`](crate::parallel::worker_offset) seek. No partial frames
+//! are ever recorded mid-chunk. The GPU-stream drain
+//! ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint),
+//! per-stream `hipStreamSynchronize`) and the checkpointed **hybrid** CPU+GPU
+//! sweep ([`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed))
+//! landed with Phase C task `571c11c4` in `executor::drain`; see
+//! [`drain_for_checkpoint`] for how the two halves correspond.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -47,7 +49,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 use crate::config::PipelineConfig;
-use crate::error::{BuildError, FatalError};
+use crate::error::{BuildError, FatalError, StageError};
 use crate::parallel::{
     run_snr_point_range, worker_offset, FrameOutcome, WorkerCounters, WorkerCtx,
 };
@@ -194,11 +196,18 @@ mod u128_string {
 ///
 /// The hash is `"blake3:<64 lowercase hex chars>"` over a canonical encoding of
 /// every field that affects simulation results: `seed`, the Es/N0 points,
-/// `target_errors`, `max_frames`, `heartbeat_every_frames`, `parallelism`, and
-/// `strict_gpu`. The path-dependent fields `checkpoint_dir` and
-/// `tracing_log_path` are **excluded** — they control where output lands, not
-/// the simulation itself, so changing them must not invalidate a checkpoint
+/// `target_errors`, `max_frames`, `heartbeat_every_frames`, `parallelism`,
+/// `gpu_enabled`, and `strict_gpu`. The path-dependent fields `checkpoint_dir`
+/// and `tracing_log_path` are **excluded** — they control where output lands,
+/// not the simulation itself, so changing them must not invalidate a checkpoint
 /// directory (design doc §4).
+///
+/// `gpu_enabled` **is** hashed (added by `571c11c4`): the CPU within-SNR
+/// executor and the hybrid strided-partition executor record *differently
+/// shaped* `worker_states[]` (chunk-restart striding vs fixed strided-partition
+/// prefixes) and accumulate path-specific `total_iterations` (design doc §11
+/// excludes `mean_iters` from CPU-vs-GPU byte-identity), so a checkpoint
+/// written by one path must not silently resume on the other.
 ///
 /// # Arguments
 ///
@@ -245,6 +254,7 @@ pub fn config_hash(config: &PipelineConfig) -> String {
     hasher.update(&config.max_frames.to_le_bytes());
     hasher.update(&config.heartbeat_every_frames.to_le_bytes());
     hasher.update(&(config.parallelism.get() as u64).to_le_bytes());
+    hasher.update(&[u8::from(config.gpu_enabled)]);
     hasher.update(&[u8::from(config.strict_gpu)]);
     format!("blake3:{}", hasher.finalize().to_hex())
 }
@@ -583,16 +593,17 @@ pub(crate) fn set_interrupted_for_test() {
 /// bounded chunk of frames and its rayon `join` is the settle point — every
 /// in-flight frame completes and increments its worker's count before the call
 /// returns, so there is nothing further to synchronise. This function therefore
-/// returns immediately; it exists as the **named seam** the Phase C GPU
-/// executor (`571c11c4`) will override to iterate each worker's owned HIP
-/// stream and call `hipStreamSynchronize()` (not `hipDeviceSynchronize()`)
-/// before the counters are latched. It is intentionally a no-op here, not a
-/// fake GPU implementation.
+/// returns immediately; it is the **named CPU counterpart** of the GPU drain
+/// [`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint)
+/// (Phase C `571c11c4`, `executor::drain`), which iterates each worker's owned
+/// HIP stream and calls the per-stream `hipStreamSynchronize()` (not
+/// `hipDeviceSynchronize()`) before the counters are latched. It is
+/// intentionally a no-op here, not a fake GPU implementation.
 #[inline]
 pub fn drain_for_checkpoint() {
     // CPU path: the rayon join in `run_snr_point_range` already settled all
-    // in-flight frames on a frame boundary. GPU stream-sync is Phase C
-    // (`571c11c4`).
+    // in-flight frames on a frame boundary. The GPU per-stream sync lives in
+    // `Scheduler::drain_for_checkpoint` (`571c11c4`).
 }
 
 /// Microseconds-since-epoch for the `drain_committed_at_us_since_epoch` stamp.
@@ -1051,6 +1062,11 @@ pub enum SweepError {
     Load(FatalError),
     /// A checkpoint write failed.
     Io(std::io::Error),
+    /// A pipeline stage faulted during a checkpointed run (the hybrid CPU+GPU
+    /// sweep, [`Scheduler::run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed),
+    /// `571c11c4`): a GPU decode fault, a failed per-stream drain, or a config
+    /// validation error (e.g. a missing `checkpoint_dir`).
+    Stage(StageError),
 }
 
 impl std::fmt::Display for SweepError {
@@ -1058,6 +1074,7 @@ impl std::fmt::Display for SweepError {
         match self {
             SweepError::Load(e) => write!(f, "checkpoint load failed: {e:?}"),
             SweepError::Io(e) => write!(f, "checkpoint write failed: {e}"),
+            SweepError::Stage(e) => write!(f, "checkpointed run stage fault: {e}"),
         }
     }
 }
@@ -1065,7 +1082,10 @@ impl std::fmt::Display for SweepError {
 impl std::error::Error for SweepError {}
 
 /// Reconstructs the running [`WorkerCounters`] from a loaded checkpoint.
-fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
+///
+/// `pub(crate)`: the hybrid checkpointed runner (`executor::drain`, `571c11c4`)
+/// folds loaded counters with this same helper so the projection stays SSOT.
+pub(crate) fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
     WorkerCounters {
         frames: ck.frames_completed,
         errors: ck.errors_accumulated,
@@ -1078,11 +1098,13 @@ fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
 /// Builds a [`CheckpointV2`] from the running totals, latching per-worker
 /// `worker_states[]` from the **authoritative** per-worker frame counts.
 ///
-/// `per_worker_frames[w]` is worker `w`'s cumulative completed-frame count as
-/// reported by [`run_snr_point_range`] across every chunk so far — the
-/// executor's authoritative counter (design doc §4 "Drain commit contract",
-/// step 3). It is recorded verbatim and is **not** recomputed from an analytic
-/// `0..frames_completed` striding, which would be wrong under the chunked
+/// `per_worker_frames[w]` is worker `w`'s cumulative completed-frame count —
+/// the executor's authoritative counter (design doc §4 "Drain commit contract",
+/// step 3): on the CPU path, as reported by [`run_snr_point_range`] across
+/// every chunk so far; on the hybrid path (`executor::drain`, `571c11c4`), the
+/// worker's strided-partition progress latched after the GPU drain. It is
+/// recorded verbatim and is **not** recomputed from an analytic
+/// `0..frames_completed` striding, which would be wrong under the CPU chunked
 /// dispatch (the per-chunk striding restarts at each chunk's `start`, so the
 /// real per-worker distribution differs from a single-dispatch distribution).
 ///
@@ -1092,9 +1114,15 @@ fn loaded_counters(ck: &CheckpointV2) -> WorkerCounters {
 /// itself seek to this position on resume: it keys every frame on the *global*
 /// frame index (§3, `worker_offset(seed, snr_idx, 0, g)`) and resumes via the
 /// global `frames_completed` (§4 step 5, amended 2026-06-08). `rng_word_pos` is
-/// recorded in §4-formula form for the Phase C fixed-partition executor
-/// (`571c11c4`), which owns the per-worker-stream restore.
-fn build_checkpoint(
+/// recorded per the v2 schema; per the 2026-06-10 §4 amendment **no executor
+/// reads it back** — the hybrid executor (`571c11c4`) restores per-worker
+/// *progress* from `frames_in_worker` and re-derives per-frame RNG positions
+/// from the global frame index.
+///
+/// `pub(crate)`: the hybrid checkpointed runner (`executor::drain`, `571c11c4`)
+/// latches its post-drain `worker_states[]` through this same constructor so
+/// the v2 schema projection stays SSOT.
+pub(crate) fn build_checkpoint(
     config: &PipelineConfig,
     snr_index: usize,
     esn0_db: f64,
@@ -1109,11 +1137,12 @@ fn build_checkpoint(
         .map(|(w, &frames_in_worker)| {
             // Record the per-worker stream position per design-doc §4's drain
             // contract: `worker_offset(seed, snr_idx, worker_idx, frames_in_worker)`
-            // with the *physical* `worker_idx = w`. The CPU within-SNR executor
-            // (Phase A) does not consume this on resume — it keys every frame on
-            // the global index (§3, `worker_offset(.., 0, g)`) and resumes via the
-            // global `frames_completed` (§4 step 5). This per-worker position is
-            // for the Phase C fixed-partition executor (`571c11c4`).
+            // with the *physical* `worker_idx = w`. NO executor reads it back
+            // (§4 amendment 2026-06-10): every executor keys every frame on the
+            // global index (§3, `worker_offset(.., 0, g)`) — the CPU path resumes
+            // via the global `frames_completed`, the hybrid executor (`571c11c4`)
+            // via the per-worker `frames_in_worker` progress. The position is
+            // recorded for v2 schema fidelity only.
             let rng_word_pos = worker_offset(config.seed, snr_index, w, frames_in_worker as usize);
             WorkerState {
                 worker_idx: w,
@@ -1215,6 +1244,24 @@ mod tests {
             ..cfg.clone()
         };
         assert_ne!(config_hash(&cfg), config_hash(&diff_seed));
+    }
+
+    #[test]
+    fn test_config_hash_includes_gpu_enabled() {
+        // `gpu_enabled` IS result-affecting (`571c11c4`): the CPU and hybrid
+        // executors record differently shaped `worker_states[]` and
+        // path-specific `total_iterations`, so a checkpoint written by one path
+        // must not resume on the other. Flipping the flag must flip the hash.
+        let cfg = test_config(4);
+        let gpu = PipelineConfig {
+            gpu_enabled: true,
+            ..cfg.clone()
+        };
+        assert_ne!(
+            config_hash(&cfg),
+            config_hash(&gpu),
+            "gpu_enabled must be part of the config hash"
+        );
     }
 
     #[test]
