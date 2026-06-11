@@ -15,7 +15,10 @@
 //!   │       cpu_fallback().process(input) →
 //!   │           Ok(output) → warn + return output
 //!   │           Err(_)     → FatalError::CpuFallbackAlsoFailed
-//!   ├── Err(Recoverable(other)) → cpu_fallback().process(input) (same branching)
+//!   ├── Err(Recoverable(Transient)) → cpu_fallback().process(input)
+//!   │       (same branching — Transient is NEVER promoted, even under
+//!   │        strict_gpu: the §8 strict row covers OOM only, and §6 pins
+//!   │        UnsupportedArch→Transient as a CPU-fallback path, not fatal)
 //!   └── Err(Fatal(_)) → write diagnostic dump + propagate
 //! ```
 //!
@@ -27,12 +30,16 @@
 //! atomically: the payload is written to a sibling `.tmp` file then renamed.
 //! Default directory: `dev/benchmarks/gf2-sim/diagnostic-dumps/`.
 //!
-//! # `strict_gpu` promotion
+//! # `strict_gpu` promotion (OOM only)
 //!
-//! When `PipelineConfig::strict_gpu` is set, any
+//! When `PipelineConfig::strict_gpu` is set, a
 //! [`RecoverableError::OutOfMemory`] from a GPU stage is promoted to
 //! [`FatalError::OutOfMemory`] (no CPU fallback attempted). The diagnostic
-//! dump is written in that case too.
+//! dump is written in that case too. The promotion is **OOM-specific**:
+//! [`RecoverableError::Transient`] (e.g. the §6 `UnsupportedArch` mapping)
+//! takes the CPU fallback even under `strict_gpu` — the design §8 strict row
+//! names OOM only, and §6 pins the unsupported-arch path as "CPU fallback,
+//! not fatal" with no strict-mode carve-out.
 //!
 //! [`PipelineConfig`]: crate::PipelineConfig
 
@@ -47,9 +54,60 @@ use crate::error::{FatalError, RecoverableError, StageError};
 // Diagnostic dump schema
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Context passed to [`dispatch_with_fallback`] for tracing and diagnostic
-/// diagnostics. Carries the per-batch identifiers that appear in the
-/// `tracing::warn!` / `tracing::error!` events and in the JSON dump.
+/// Failure-mode parameters threaded through GPU stage dispatch (`42eac5cc`).
+///
+/// Bundles the `strict_gpu` flag, the diagnostic dump directory, and the
+/// test-only OOM-injection modulus so they travel as one argument. Consumed by
+/// **both** wrapped GPU surfaces: the topology executor's `GpuOnly` arm
+/// (`executor/topology.rs::execute_gpu_stage`) and the C.1 scheduler hybrid
+/// loop (`executor/scheduler.rs::worker_partition_hybrid`). Both construct it
+/// from the same [`PipelineConfig`](crate::PipelineConfig) fields, so the
+/// config wiring is identical on the two surfaces.
+///
+/// The fields are only read inside `#[cfg(feature = "hip")]` dispatch arms;
+/// the `dead_code` lint would fire on no-hip builds where those arms are
+/// elided.
+#[allow(dead_code)]
+pub(crate) struct FailurePolicy<'p> {
+    /// Promote GPU OOM (and only OOM) to fatal instead of CPU-falling-back.
+    pub(crate) strict_gpu: bool,
+    /// Directory for JSON hard-fail diagnostic dumps.
+    pub(crate) dump_dir: &'p std::path::Path,
+    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
+    /// `Some(m)`, the GPU LDPC dispatch forces a recoverable OOM on every
+    /// dispatch whose keying global frame index `g` satisfies `g % m == 0`
+    /// (the topology executor keys each one-frame dispatch on its global
+    /// frame index; the scheduler hybrid loop keys each batch on the batch's
+    /// FIRST global frame index), driving the production
+    /// [`dispatch_with_fallback`] path. Mirrors
+    /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus).
+    pub(crate) inject_gpu_oom_modulus: Option<u64>,
+}
+
+impl FailurePolicy<'_> {
+    /// Whether the test-only OOM injection fires for the GPU dispatch keyed on
+    /// global frame index `g` (see
+    /// [`inject_gpu_oom_modulus`](Self::inject_gpu_oom_modulus)).
+    #[allow(dead_code)] // read only inside `feature = "hip"` dispatch arms.
+    pub(crate) fn injects_oom_at(&self, g: u64) -> bool {
+        self.inject_gpu_oom_modulus
+            .is_some_and(|m| m >= 1 && g.is_multiple_of(m))
+    }
+}
+
+/// Context passed to [`dispatch_with_fallback`] for tracing and diagnostics.
+/// Carries the per-batch identifiers that appear in the `tracing::warn!` /
+/// `tracing::error!` events and in the JSON dump.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::executor::failure::FaultContext;
+///
+/// let ctx = FaultContext { batch_id: 7, snr_idx: 2, device_id: 0, worker_idx: 3 };
+/// assert_eq!(ctx.batch_id, 7);
+/// assert_eq!(ctx.snr_idx, 2);
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct FaultContext {
     /// The batch identifier (global frame index or batch sequence number).
@@ -188,7 +246,24 @@ fn write_diagnostic_dump(fatal: &FatalError, ctx: FaultContext, dump_dir: &std::
     }
 }
 
-/// The default diagnostic dump directory (relative to the workspace root).
+/// The default diagnostic dump directory.
+///
+/// The returned path is **relative, resolved against the process's current
+/// working directory** at dump time (for `cargo run` from the repo root that
+/// is the workspace root; from anywhere else it is wherever the process was
+/// started). Campaigns that need a stable location should set
+/// [`PipelineConfig::diagnostic_dump_dir`](crate::PipelineConfig::diagnostic_dump_dir)
+/// to an absolute path.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::executor::failure::default_dump_dir;
+///
+/// let dir = default_dump_dir();
+/// assert!(dir.is_relative());
+/// assert!(dir.to_str().unwrap().contains("diagnostic-dumps"));
+/// ```
 pub fn default_dump_dir() -> PathBuf {
     PathBuf::from("dev/benchmarks/gf2-sim/diagnostic-dumps")
 }
@@ -217,7 +292,10 @@ pub fn default_dump_dir() -> PathBuf {
 ///   │       fallback.process(input) →
 ///   │           Ok(o)  → return Ok(o)
 ///   │           Err(e) → return Err(Fatal::CpuFallbackAlsoFailed { original })
-///   ├── Err(Recoverable(Transient)) → same as OOM (CPU fallback path, non-strict)
+///   ├── Err(Recoverable(Transient)) → CPU fallback path (same branching),
+///   │       REGARDLESS of strict_gpu — the §8 strict promotion covers OOM
+///   │       only; §6 pins UnsupportedArch→Transient as CPU-fallback-not-fatal
+///   │       with no strict-mode carve-out
 ///   └── Err(Fatal(_)) → write dump, emit tracing::error! → return Err(Fatal(_))
 /// ```
 ///
@@ -227,7 +305,8 @@ pub fn default_dump_dir() -> PathBuf {
 /// * `run_fallback` — closure that runs the CPU fallback stage on the same
 ///   input. Called only on a recoverable error with `!strict_gpu`.
 /// * `ctx` — per-batch context for tracing events and the diagnostic dump.
-/// * `strict_gpu` — whether OOM is promoted to fatal (no CPU fallback).
+/// * `strict_gpu` — whether **OOM** is promoted to fatal (no CPU fallback).
+///   Transient errors are never promoted (see the decision tree above).
 /// * `dump_dir` — directory for JSON diagnostic dumps on hard-fail.
 ///
 /// # Errors
@@ -285,34 +364,33 @@ where
                 RecoverableError::Transient(_) => ctx.device_id,
             };
 
+            // Strict mode promotes OOM — and ONLY OOM — to fatal (design §8's
+            // strict row; §6's UnsupportedArch→Transient mapping is a
+            // CPU-fallback path with no strict-mode carve-out, so Transient
+            // falls through to the fallback below even under strict_gpu).
             if strict_gpu {
-                // Strict mode: OOM is fatal, no fallback.
-                let fatal = match recoverable {
-                    RecoverableError::OutOfMemory {
-                        device_id,
-                        bytes_requested,
-                    } => FatalError::OutOfMemory {
-                        device_id,
-                        bytes_requested,
-                    },
-                    RecoverableError::Transient(cause) => FatalError::KernelLaunch {
-                        hip_code: -1,
-                        kernel: "transient",
-                        args: format!("strict_gpu transient: {cause}"),
-                    },
-                };
-                write_diagnostic_dump(&fatal, ctx, dump_dir);
-                tracing::error!(
-                    batch_id = ctx.batch_id,
-                    snr_idx = ctx.snr_idx,
+                if let RecoverableError::OutOfMemory {
                     device_id,
-                    worker_idx = ctx.worker_idx,
-                    "GPU stage OOM with strict_gpu: promoting to fatal"
-                );
-                return Err(StageError::Fatal(fatal));
+                    bytes_requested,
+                } = &recoverable
+                {
+                    let fatal = FatalError::OutOfMemory {
+                        device_id: *device_id,
+                        bytes_requested: *bytes_requested,
+                    };
+                    write_diagnostic_dump(&fatal, ctx, dump_dir);
+                    tracing::error!(
+                        batch_id = ctx.batch_id,
+                        snr_idx = ctx.snr_idx,
+                        device_id = *device_id,
+                        worker_idx = ctx.worker_idx,
+                        "GPU stage OOM with strict_gpu: promoting to fatal"
+                    );
+                    return Err(StageError::Fatal(fatal));
+                }
             }
 
-            // Non-strict: attempt the CPU fallback.
+            // Non-strict OOM, or Transient (any mode): attempt the CPU fallback.
             tracing::warn!(
                 batch_id = ctx.batch_id,
                 snr_idx = ctx.snr_idx,
@@ -432,6 +510,42 @@ mod tests {
         assert!(!entries.is_empty(), "at least one dump file must exist");
         // Cleanup.
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// `strict_gpu` promotes OOM ONLY: a `Transient` recoverable error takes
+    /// the CPU fallback even under `strict_gpu` (design §8 strict row is
+    /// OOM-specific; §6 pins UnsupportedArch→Transient as CPU-fallback,
+    /// not fatal). No dump is written when the fallback succeeds.
+    #[test]
+    fn test_transient_under_strict_gpu_still_falls_back() {
+        let dir = dump_dir();
+        let result: Result<u32, StageError> = Err(StageError::Recoverable(
+            RecoverableError::Transient("unsupported arch gfx9999".into()),
+        ));
+        let fallback_called = std::cell::Cell::new(false);
+        let out = dispatch_with_fallback(
+            result,
+            || {
+                fallback_called.set(true);
+                Ok(7_u32)
+            },
+            ctx(),
+            true, // strict_gpu — must NOT promote Transient
+            &dir,
+        );
+        assert_eq!(
+            out.unwrap(),
+            7,
+            "Transient under strict_gpu must take the CPU fallback"
+        );
+        assert!(
+            fallback_called.get(),
+            "the fallback must actually run for Transient under strict_gpu"
+        );
+        assert!(
+            !dir.exists(),
+            "no dump for a Transient that fell back successfully"
+        );
     }
 
     #[test]
