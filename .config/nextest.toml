@@ -19,23 +19,3 @@ slow-timeout = { period = "90s", terminate-after = 1 }
 [profile.slow]
 slow-timeout = { period = "120s", terminate-after = 1 }
 fail-fast = false
-
-# The 8c8302c8 preset-vs-graph byte-identity suite runs the DVB-T2 BICM chain
-# at per-MODCOD WATERFALL operating points (non-vacuous: 0 < errors < frames,
-# asserted), where LDPC BP runs near its 50-iteration cap on most frames and
-# the stage chain's shared DvbT2Concat codec serialises decodes on its
-# internal Mutex (see the "Throughput caveat" in
-# crates/gf2-sim/src/executor/topology.rs) — measured ~1.1-1.5 s per frame
-# regardless of the configured parallelism. Each leg runs its two arms
-# (preset-built vs graph-built pipeline) concurrently; a 200-frame slow leg
-# still needs ~220-320 s, and the un-ignored 4-frame fast smoke ~7-10 s.
-# The 200-frame sweep size is contractual (issue deliverable) and is not
-# reduced to fit the default caps; only these tests' timeouts are raised,
-# mirroring the trybuild-override precedent above.
-[[profile.ci.overrides]]
-filter = 'test(test_preset_vs_graph_smoke_r12_16qam)'
-slow-timeout = { period = "60s", terminate-after = 1 }
-
-[[profile.slow.overrides]]
-filter = 'test(test_preset_vs_graph_200f_)'
-slow-timeout = { period = "600s", terminate-after = 1 }

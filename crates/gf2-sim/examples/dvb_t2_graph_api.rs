@@ -21,8 +21,9 @@
 //! one built through the typestate preset (see `examples/dvb_t2_typestate.rs`).
 //! The structural + single-frame execution equivalence is formally proved by
 //! `tests/preset_vs_graph.rs`; `tests/preset_vs_graph_byte_identity.rs` proves
-//! the 200-frame four-column (`fer`/`frames`/`errors`/`mean_iters`)
-//! byte-identity across all six in-scope MODCODs.
+//! the run-level four-column (`fer`/`frames`/`errors`/`mean_iters`)
+//! byte-identity across all six in-scope MODCODs (50 waterfall frames per
+//! MODCOD, per the AMENDMENT 2026-06-11 on issue 8c8302c8).
 //!
 //! Like the typestate example, this runs at the r1/2 16-QAM **waterfall**
 //! Es/N0 (6.0 dB) and the same seed, so it prints the same meaningful mixed
