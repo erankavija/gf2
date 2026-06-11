@@ -429,7 +429,7 @@ fn execute_gpu_stage(
         // exactly as a genuine device OOM would (CPU fallback when `!strict_gpu`,
         // hard-fail when `strict_gpu`). `None` in production: the kernel runs.
         let injected_oom: Option<StageError> = failure.inject_gpu_oom_modulus.and_then(|m| {
-            (m >= 1 && batch_id % m == 0).then(|| {
+            (m >= 1 && batch_id.is_multiple_of(m)).then(|| {
                 StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
                     device_id: ctx.device_id,
                     bytes_requested: 1024 * 1024 * 1024,

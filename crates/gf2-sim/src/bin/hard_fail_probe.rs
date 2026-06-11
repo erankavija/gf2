@@ -53,7 +53,8 @@ struct StderrErrorJson;
 struct FieldVisitor(BTreeMap<String, String>);
 impl tracing::field::Visit for FieldVisitor {
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-        self.0.insert(field.name().to_string(), format!("{value:?}"));
+        self.0
+            .insert(field.name().to_string(), format!("{value:?}"));
     }
 }
 
@@ -76,12 +77,11 @@ impl tracing::Subscriber for StderrErrorJson {
         let mut v = FieldVisitor(BTreeMap::new());
         event.record(&mut v);
         // Render the BTreeMap as a stable JSON-lines object.
-        let body = v
-            .0
-            .iter()
-            .map(|(k, val)| format!("{}:{}", json_str(k), json_str(val)))
-            .collect::<Vec<_>>()
-            .join(",");
+        let body =
+            v.0.iter()
+                .map(|(k, val)| format!("{}:{}", json_str(k), json_str(val)))
+                .collect::<Vec<_>>()
+                .join(",");
         let _guard = STDERR_LOCK.lock().unwrap();
         let mut err = std::io::stderr();
         let _ = writeln!(err, "{{\"level\":\"ERROR\",{body}}}");
