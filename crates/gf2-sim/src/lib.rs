@@ -24,7 +24,7 @@
 //! | [`graph`] | graph API + `build()` (owned by `c09d3e95`) |
 //! | [`channels`] | channel stages (owned by `db9836e4`) |
 //! | [`checkpoint`] | v2 checkpoint schema (owned by `5f12e7ff`) |
-//! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (Phase C `75c22fa8`) + DAG [`TopologyExecutor`] (`de160fc5`) |
+//! | [`executor`] | hybrid CPU/GPU [`Scheduler`] + [`SimulationResults`] (Phase C `75c22fa8`) + DAG [`TopologyExecutor`] (`de160fc5`) + GPU drain-for-checkpoint / checkpointed hybrid sweep (`571c11c4`) |
 //! | [`gpu`] | HIP host dispatch (Phase B; `feature = "hip"`) |
 //!
 //! # Design reference
@@ -68,8 +68,8 @@ pub use connector::{Connector, Edge, StageId};
 pub use error::{BuildError, FatalError, RecoverableError, StageError};
 #[doc(inline)]
 pub use executor::{
-    ActivityInterval, ActivityKind, DagOutputs, OverlapTimeline, RunPlan, Scheduler,
-    SimulationResults, SnrPointResult, TopologyExecutor,
+    ActivityInterval, ActivityKind, CheckpointedSweep, DagOutputs, OverlapTimeline, RunPlan,
+    Scheduler, SimulationResults, SnrPointResult, StreamInFlight, TopologyExecutor,
 };
 #[doc(inline)]
 pub use frame_sim::DvbT2BicmFrameSim;
