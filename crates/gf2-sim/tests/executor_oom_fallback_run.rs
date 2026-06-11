@@ -58,7 +58,7 @@
 
 use std::collections::HashMap;
 use std::num::NonZeroUsize;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
@@ -144,6 +144,39 @@ impl tracing::Subscriber for WarnCapture {
     fn exit(&self, _: &tracing::span::Id) {}
 }
 
+/// The process-wide WARN-capture sink. `tracing::subscriber::set_global_default`
+/// installs at most ONE subscriber per process, so every test in this binary
+/// must share the same sink: the first caller installs it, later callers reuse
+/// it. Under nextest (process-per-test) each test is alone anyway; under bare
+/// `cargo test` all tests of this binary share the process, and a per-test
+/// `Arc` + ignored `set_global_default` would leave later tests asserting
+/// against an empty buffer while events flow to the first test's sink (the
+/// process-global test-isolation class).
+static CAPTURED_WARNS: OnceLock<Arc<Mutex<Vec<CapturedEvent>>>> = OnceLock::new();
+
+/// Serializes every test in this binary that runs the pipeline while the
+/// shared sink is asserted on, so one test's events cannot leak into another's
+/// assertion window under multi-threaded bare `cargo test`.
+static CAPTURE_GUARD: Mutex<()> = Mutex::new(());
+
+/// Installs (first call) and returns the shared WARN-capture sink, cleared of
+/// any events from earlier tests in this process. Callers must hold
+/// [`struct@CAPTURE_GUARD`] for the duration of their run + assertion.
+fn shared_warn_capture() -> Arc<Mutex<Vec<CapturedEvent>>> {
+    let events = CAPTURED_WARNS
+        .get_or_init(|| {
+            let events = Arc::new(Mutex::new(Vec::new()));
+            tracing::subscriber::set_global_default(WarnCapture {
+                events: events.clone(),
+            })
+            .expect("the shared sink is the first and only global subscriber");
+            events
+        })
+        .clone();
+    events.lock().unwrap().clear();
+    events
+}
+
 /// Builds the preset DVB-T2 r1/2 16-QAM GPU chain at `es_n0_db` with the
 /// `42eac5cc` OOM injection modulus and a temp diagnostic-dump dir set.
 fn build_gpu_pipeline_with_oom_injection(
@@ -191,17 +224,12 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
     ));
 
     // Capture WARN events globally (the fallback warn fires on rayon worker
-    // threads, so a thread-local subscriber would miss it). nextest runs each
-    // test in its own process, so at most ONE global default is set per
-    // process; the `.ok()` means a second test accidentally sharing a process
-    // gets a no-op rather than a panic.
-    let events = Arc::new(Mutex::new(Vec::<CapturedEvent>::new()));
-    let _ = tracing::subscriber::set_global_default(WarnCapture {
-        events: events.clone(),
-    });
-    // Clear any events captured by an earlier subscriber in this process
-    // (shared-process edge case under non-nextest runners).
-    events.lock().unwrap().clear();
+    // threads, so a thread-local subscriber would miss it). The sink is shared
+    // process-wide; the guard serializes the capture-asserting tests.
+    let _capture_serial = CAPTURE_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let events = shared_warn_capture();
 
     // Inject OOM on the even global frames → a genuine CPU+GPU mix.
     let pipeline = build_gpu_pipeline_with_oom_injection(es_n0, workers, 2, &dump_dir);
@@ -294,12 +322,12 @@ fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &
             .unwrap_or(0)
     ));
 
-    // Capture WARN events for the fallback warn from the hybrid loop.
-    let events = Arc::new(Mutex::new(Vec::<CapturedEvent>::new()));
-    let _ = tracing::subscriber::set_global_default(WarnCapture {
-        events: events.clone(),
-    });
-    events.lock().unwrap().clear();
+    // Capture WARN events for the fallback warn from the hybrid loop. Shared
+    // process-wide sink; the guard serializes the capture-asserting tests.
+    let _capture_serial = CAPTURE_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let events = shared_warn_capture();
 
     let mut pipeline = Pipeline::dvb_t2()
         .modcod(Modcod::Normal {
@@ -487,6 +515,13 @@ fn test_strict_gpu_config_promotes_oom_to_fatal_via_topology() {
     }
 
     use gf2_sim::error::{FatalError, StageError};
+
+    // This test asserts no captured events, but it RUNS the pipeline (which
+    // emits dispatch events) — hold the guard so its events cannot leak into
+    // a concurrently-asserting sibling test under bare `cargo test`.
+    let _capture_serial = CAPTURE_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     let dump_dir = std::env::temp_dir().join(format!(
         "gf2sim-sc4-strict-{}-{}",
