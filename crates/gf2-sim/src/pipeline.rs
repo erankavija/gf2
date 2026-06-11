@@ -252,6 +252,9 @@ impl Pipeline {
     /// continues byte-identically (the hybrid path restores each worker's
     /// strided-partition progress from `worker_states[].frames_in_worker`;
     /// the CPU path resumes via the global `frames_completed`, `5f12e7ff`).
+    /// Unlike [`run`](Pipeline::run), a recoverable GPU fault aborts the
+    /// checkpointed sweep (resumably) instead of substituting the CPU
+    /// fallback, for checkpoint byte-identity determinism.
     ///
     /// # Arguments
     ///

@@ -126,6 +126,38 @@ pub fn assert_four_columns_byte_identical(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// Shared tempdir helper
+//
+// Each test binary that uses this module gets its own independent directory
+// namespace because `mod common` is textually included (not a separate crate),
+// so `TMPDIR_COUNTER` is a per-binary static. The counter starts at 0 in each
+// binary; the `pid` component prevents collisions across concurrent test
+// binaries.
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Creates a unique, empty temporary directory for use by a single test.
+///
+/// The directory name is `gf2sim-<prefix>-<pid>-<counter>` under the system
+/// temp dir. No `tempfile` dev-dependency required.
+///
+/// # Panics
+///
+/// Panics if the directory cannot be created.
+pub fn tempdir(prefix: &str) -> std::path::PathBuf {
+    static TMPDIR_COUNTER: AtomicU64 = AtomicU64::new(0);
+    let mut p = std::env::temp_dir();
+    let unique = format!(
+        "gf2sim-{}-{}-{}",
+        prefix,
+        std::process::id(),
+        TMPDIR_COUNTER.fetch_add(1, Ordering::Relaxed)
+    );
+    p.push(unique);
+    std::fs::create_dir_all(&p).expect("create unique tempdir");
+    p
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // GPU fault-injection helpers (issue `ed575f15`, deliverable 3; design doc §8)
 //
 // SSOT for the fault injectors: defined here so the verification tests
