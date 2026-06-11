@@ -254,7 +254,11 @@ impl Pipeline {
     /// the CPU path resumes via the global `frames_completed`, `5f12e7ff`).
     /// Unlike [`run`](Pipeline::run), a recoverable GPU fault aborts the
     /// checkpointed sweep (resumably) instead of substituting the CPU
-    /// fallback, for checkpoint byte-identity determinism.
+    /// fallback, for checkpoint byte-identity determinism — the explicit
+    /// failure-semantics decision of epic task `bb11c2e6` (both paths share one
+    /// double-buffer core but supply opposite per-batch decode hooks:
+    /// substitute on [`run`](Pipeline::run), propagate here). The last
+    /// committed heartbeat checkpoint survives the abort.
     ///
     /// # Arguments
     ///

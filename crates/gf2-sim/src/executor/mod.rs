@@ -13,6 +13,12 @@
 //! [`Scheduler::drain_for_checkpoint`],
 //! [`Scheduler::run_sweep_checkpointed`],
 //! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)).
+//! `bb11c2e6` factors the uncheckpointed scheduler loop and the checkpointed
+//! drain loop onto ONE shared double-buffer core (`hybrid_core`, `feature =
+//! "hip"`), parameterized by per-batch hooks — the only genuine divergence is
+//! the failure-semantics hook (the scheduler substitutes the CPU fallback; the
+//! checkpointed sweep propagates the fault, aborting resumably). It also gives
+//! the checkpointed loop `pipeline_stage` span parity for free.
 //!
 //! # Module map
 //!

@@ -223,24 +223,18 @@ where
     // `&observe_frame` (both `Sync`), never the `&mut` decode state — so the
     // helper thread's prep never aliases the worker thread's decode.
     let prep_batch = |batch_idx: usize, frames: &[usize]| -> Vec<FramePrep> {
-        traced_interval(
-            run_ctx,
-            batch_idx,
-            "CpuPrep",
-            ActivityKind::CpuPrep,
-            || {
-                let mut ctx = WorkerCtx::new(run_ctx.seed, run_ctx.snr_idx, 0);
-                frames
-                    .iter()
-                    .map(|&g| {
-                        ctx.reseek_to_frame(g);
-                        let prep = sim.prepare_frame(g, &mut ctx);
-                        observe_frame(g);
-                        prep
-                    })
-                    .collect()
-            },
-        )
+        traced_interval(run_ctx, batch_idx, "CpuPrep", ActivityKind::CpuPrep, || {
+            let mut ctx = WorkerCtx::new(run_ctx.seed, run_ctx.snr_idx, 0);
+            frames
+                .iter()
+                .map(|&g| {
+                    ctx.reseek_to_frame(g);
+                    let prep = sim.prepare_frame(g, &mut ctx);
+                    observe_frame(g);
+                    prep
+                })
+                .collect()
+        })
     };
 
     let mut prepared = prep_batch(0, batches[0]);
@@ -254,33 +248,29 @@ where
         // GPU-blocking call stays on THIS worker thread while a scoped helper
         // preps batch N+1 (capturing only `Sync` state). `std::thread::scope`
         // keeps the borrows safe with no `'static` requirement.
-        let (gpu_res, next_preps): (GpuBatchResult, Vec<FramePrep>) =
-            std::thread::scope(|scope| {
-                let prep_batch_ref = &prep_batch;
-                let batches_ref = &batches;
-                let cpu_handle = scope.spawn(move || {
-                    if next_idx < batches_ref.len() {
-                        prep_batch_ref(next_idx, batches_ref[next_idx])
-                    } else {
-                        Vec::new()
-                    }
+        let (gpu_res, next_preps): (GpuBatchResult, Vec<FramePrep>) = std::thread::scope(|scope| {
+            let prep_batch_ref = &prep_batch;
+            let batches_ref = &batches;
+            let cpu_handle = scope.spawn(move || {
+                if next_idx < batches_ref.len() {
+                    prep_batch_ref(next_idx, batches_ref[next_idx])
+                } else {
+                    Vec::new()
+                }
+            });
+
+            // GPU decode of batch N on THIS worker thread, inside the
+            // GpuDecode span + interval. The caller's hook owns the failure
+            // semantics (fallback vs propagate) and any tally bracketing —
+            // the core only times and routes it.
+            let gpu_res =
+                traced_interval(run_ctx, bi, "GpuLdpcBp", ActivityKind::GpuDecode, || {
+                    hooks.decode_batch(device, stream, bi, first_global_frame, &cur_preps)
                 });
 
-                // GPU decode of batch N on THIS worker thread, inside the
-                // GpuDecode span + interval. The caller's hook owns the failure
-                // semantics (fallback vs propagate) and any tally bracketing —
-                // the core only times and routes it.
-                let gpu_res = traced_interval(
-                    run_ctx,
-                    bi,
-                    "GpuLdpcBp",
-                    ActivityKind::GpuDecode,
-                    || hooks.decode_batch(device, stream, bi, first_global_frame, &cur_preps),
-                );
-
-                let next_preps = cpu_handle.join().expect("CPU prep helper thread");
-                (gpu_res, next_preps)
-            });
+            let next_preps = cpu_handle.join().expect("CPU prep helper thread");
+            (gpu_res, next_preps)
+        });
 
         let (codewords, iters) = gpu_res?;
         prepared = next_preps;
@@ -288,11 +278,8 @@ where
         // CPU BCH decode-tail + error count for the just-decoded batch.
         traced_interval(run_ctx, bi, "CpuDecodeTail", ActivityKind::CpuPrep, || {
             for (i, prep) in cur_preps.iter().enumerate() {
-                let outcome = sim.decode_codeword_to_outcome(
-                    &prep.message,
-                    &codewords[i],
-                    iters[i] as u64,
-                );
+                let outcome =
+                    sim.decode_codeword_to_outcome(&prep.message, &codewords[i], iters[i] as u64);
                 counters.record_frame(
                     outcome.errored,
                     outcome.iterations,

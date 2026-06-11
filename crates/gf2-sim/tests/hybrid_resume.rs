@@ -55,7 +55,10 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::checkpoint::{clear_interrupt, config_hash, request_interrupt, CheckpointReader};
+use gf2_sim::checkpoint::{
+    clear_interrupt, config_hash, request_interrupt, CheckpointReader, SweepError,
+};
+use gf2_sim::error::{RecoverableError, StageError};
 use gf2_sim::executor::SnrPointResult;
 use gf2_sim::parallel::WorkerCounters;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
@@ -584,6 +587,164 @@ fn hybrid_partial_point_restore() {
         "partial-restore resume-parity point 0",
     );
     record_ber(resumed, "partial-restore point 0");
+}
+
+// ===========================================================================
+// Fast-tier failure-semantics leg (NOT ignored; GPU-gated). Proves the
+// explicit OPTION (a) decision of epic task bb11c2e6: a recoverable GPU fault
+// during a CHECKPOINTED sweep aborts RESUMABLY — the drain loop propagates the
+// fault (rather than substituting the CPU fallback like the uncheckpointed
+// scheduler), the last committed heartbeat checkpoint survives, and a
+// subsequent resume completes byte-identically vs an uninterrupted reference.
+// ===========================================================================
+
+/// **bb11c2e6 failure-semantics leg (fast tier, GPU-gated, NOT ignored).**
+///
+/// The checkpointed sweep's recoverable-GPU-fault behaviour is OPTION (a) —
+/// abort resumably, not deterministic-fallback-in-sweep. This drives it as a
+/// run:
+///
+/// 1. **Commit a checkpoint.** A 2-worker × 34-frame, heartbeat-32 sweep is
+///    interrupted in round 1's first-batch prep (trip at `g=4`). The round-1
+///    heartbeat flush commits `done=[16,16]` = 32 frames — the "last committed
+///    round" requirement 2 names. No injection here (clean baseline).
+/// 2. **Fault on resume.** The point is resumed with
+///    `inject_gpu_oom_modulus = Some(32)` — excluded from
+///    [`config_hash`](gf2_sim::checkpoint::config_hash), so the same checkpoint
+///    loads. Round 2 = `[32, 34)`; worker 0's round-2 batch starts at global
+///    frame 32 (`32 % 32 == 0`), so the drain hook injects a recoverable OOM
+///    and **propagates** it. The sweep returns
+///    `Err(SweepError::Stage(StageError::Recoverable(OutOfMemory)))`
+///    (requirement 1), and because the fault aborts the round *before* its
+///    drain/flush, the 32-frame checkpoint from step 1 is still on disk
+///    (requirement 2, re-asserted).
+/// 3. **Resume to completion, byte-identically.** Injection removed, the point
+///    is resumed once more; it folds the 32-frame checkpoint, runs round 2
+///    clean (the 2-frame `[32,34)` tail), and is asserted 4-column
+///    byte-identical to the uninterrupted hybrid `Pipeline::run()` reference
+///    (requirement 3).
+///
+/// `g=0` is a multiple of every modulus, so a modulus-keyed injection always
+/// faults the very first batch — hence the baseline checkpoint must be built
+/// WITHOUT injection (step 1) and injection enabled only on the resume
+/// (step 2), where round 2's first batch (`g=32`) is the earliest injected one.
+///
+/// Timing: ~32 (step 1) + 1 (faulted) + 2 (step-3 tail) + 34 (reference) GPU
+/// LDPC decodes, well inside the 5 s fast-tier cap. Skips with no GPU.
+#[test]
+fn hybrid_checkpointed_recoverable_fault_aborts_resumably() {
+    if !gpu_present() {
+        eprintln!("skipping hybrid_checkpointed_recoverable_fault_aborts_resumably: no usable GPU");
+        return;
+    }
+    let _guard = RESUME_PARITY_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    clear_interrupt();
+
+    // 2 workers × 34 frames, heartbeat=32 ⟹ round_frames=32: rounds [0,32),
+    // [32,34). Worker 0's round-2 batch first global frame is 32.
+    let cfg = ResumeConfig {
+        rate: CodeRate::Rate1_2,
+        modulation: DvbT2Modulation::Qam16,
+        algo: DecoderAlgorithm::SumProduct,
+        demap: DemapMethod::MaxLog,
+        workers: 2,
+        max_frames: 34,
+        heartbeat: 32,
+        esn0_start: 6.0,
+        snr_points: 1,
+        interrupt_at: (0, 4), // prep-time trip → deterministic round-1 stop at 32
+    };
+    let dir = tempdir();
+
+    // Step 1: clean interrupted run commits a 32-frame round-1 checkpoint.
+    let pipeline = cfg.build_pipeline(Some(dir.clone()));
+    let scheduler = Scheduler::from_pipeline(&pipeline);
+    assert!(
+        scheduler.gpu_active(),
+        "failure-semantics leg requires an active GPU stream pool"
+    );
+    let (trip_snr, trip_frame) = cfg.interrupt_at;
+    let interrupted = scheduler
+        .run_sweep_checkpointed(&pipeline, false, &|snr_idx, g| {
+            if snr_idx == trip_snr && g == trip_frame {
+                request_interrupt();
+            }
+        })
+        .expect("step 1 interrupted sweep");
+    assert!(interrupted.interrupted, "the SIGINT must stop the sweep");
+
+    let hash = config_hash(pipeline.config());
+    let ck = CheckpointReader::new(&dir, hash.clone())
+        .load(0)
+        .expect("step-1 checkpoint loads")
+        .expect("step-1 checkpoint was flushed");
+    assert!(!ck.completed, "the round-1 checkpoint is resumable");
+    assert_eq!(
+        ck.frames_completed, 32,
+        "deterministic round-1 stop at 32 of 34 frames"
+    );
+
+    // Step 2: resume WITH OOM injection (modulus 32, not in config_hash). The
+    // round-2 batch at g=32 injects a recoverable OOM, which the drain loop
+    // PROPAGATES — the sweep aborts (requirement 1) without committing a new
+    // checkpoint, so the 32-frame checkpoint survives (requirement 2).
+    clear_interrupt();
+    let mut faulting = cfg.build_pipeline(Some(dir.clone()));
+    faulting.config_mut().inject_gpu_oom_modulus = Some(32);
+    let faulting_sched = Scheduler::from_pipeline(&faulting);
+    let err = faulting_sched
+        .run_sweep_checkpointed(&faulting, true, &|_, _| {})
+        .expect_err("the injected recoverable OOM must abort the checkpointed sweep");
+    match err {
+        SweepError::Stage(StageError::Recoverable(RecoverableError::OutOfMemory { .. })) => {
+            // Requirement 1: the recoverable fault is PROPAGATED, not
+            // substituted by the CPU fallback (the OPTION (a) decision).
+        }
+        other => panic!(
+            "expected SweepError::Stage(Recoverable(OutOfMemory)) from the propagated \
+             injected fault, got {other:?}"
+        ),
+    }
+
+    // Requirement 2 (re-assert): the last committed checkpoint is intact and
+    // still resumable — the faulted round committed nothing.
+    let ck_after = CheckpointReader::new(&dir, hash.clone())
+        .load(0)
+        .expect("checkpoint still loads after the faulted resume")
+        .expect("the committed checkpoint survives the abort");
+    assert!(
+        !ck_after.completed,
+        "the surviving checkpoint is still resumable"
+    );
+    assert_eq!(
+        ck_after.frames_completed, 32,
+        "the faulted round committed nothing; the 32-frame checkpoint is intact"
+    );
+
+    // Step 3: resume WITHOUT injection → completes byte-identically vs the
+    // uninterrupted hybrid reference (requirement 3).
+    clear_interrupt();
+    let resumed = pipeline
+        .run_checkpointed(true)
+        .expect("step-3 resumed sweep");
+    assert!(!resumed.interrupted, "the resumed sweep runs to completion");
+    assert_eq!(resumed.results.per_point.len(), 1, "one SNR point");
+    let resumed_pt = &resumed.results.per_point[0];
+    assert_eq!(
+        resumed_pt.frames, 34,
+        "the resumed run accumulates the full frame budget"
+    );
+
+    let reference = pipeline.run().expect("uninterrupted hybrid reference run");
+    assert_eq!(reference.per_point.len(), 1);
+    assert_four_columns_byte_identical(
+        &to_counters(resumed_pt),
+        &to_counters(&reference.per_point[0]),
+        "bb11c2e6 fault-then-resume parity point 0",
+    );
+    record_ber(resumed_pt, "bb11c2e6 fault-then-resume point 0");
 }
 
 // ===========================================================================
