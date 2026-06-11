@@ -239,7 +239,15 @@ struct Probe {
 }
 
 impl Probe {
-    fn new(clock: &Arc<AtomicU64>, frames_out: Vec<BitVec>) -> (Self, Arc<AtomicU64>, Arc<AtomicUsize>, Arc<Mutex<Option<BitPackedBatch>>>) {
+    fn new(
+        clock: &Arc<AtomicU64>,
+        frames_out: Vec<BitVec>,
+    ) -> (
+        Self,
+        Arc<AtomicU64>,
+        Arc<AtomicUsize>,
+        Arc<Mutex<Option<BitPackedBatch>>>,
+    ) {
         let tick = Arc::new(AtomicU64::new(0));
         let seen_size = Arc::new(AtomicUsize::new(usize::MAX));
         let seen_input = Arc::new(Mutex::new(None));
@@ -262,8 +270,10 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Probe {
     type Scratch = ();
     type CpuFallback = Self;
     fn process(&self, i: &BitPackedBatch, _: &mut ()) -> Result<BitPackedBatch, StageError> {
-        self.tick
-            .store(self.clock.fetch_add(1, Ordering::SeqCst) + 1, Ordering::SeqCst);
+        self.tick.store(
+            self.clock.fetch_add(1, Ordering::SeqCst) + 1,
+            Ordering::SeqCst,
+        );
         self.seen_size.store(i.frames.len(), Ordering::SeqCst);
         *self.seen_input.lock().unwrap() = Some(i.clone());
         Ok(BitPackedBatch::new(self.frames_out.clone()))
@@ -326,8 +336,16 @@ fn test_diamond_fan_out_fan_in_topological_order_and_merge() {
 
     // The fan-in merge: d saw 2 frames, b's output first (in-edge order).
     assert_eq!(d_size.load(Ordering::SeqCst), 2, "fan-in concatenates");
-    let seen = d_input.lock().unwrap().take().expect("d recorded its input");
-    assert_eq!(seen.frames[0], BitVec::ones(8), "b's frame first (edge order)");
+    let seen = d_input
+        .lock()
+        .unwrap()
+        .take()
+        .expect("d recorded its input");
+    assert_eq!(
+        seen.frames[0],
+        BitVec::ones(8),
+        "b's frame first (edge order)"
+    );
     assert_eq!(seen.frames[1], BitVec::zeros(8), "c's frame second");
 }
 
@@ -481,8 +499,14 @@ fn test_fan_in_two_demap_branches_feed_one_decoder() {
         2,
         "the decoder consumed BOTH branches' frames in one merged batch"
     );
-    assert_eq!(hard.frames[0], bbframe, "branch A frame decodes to the BBFRAME");
-    assert_eq!(hard.frames[1], bbframe, "branch B frame decodes to the BBFRAME");
+    assert_eq!(
+        hard.frames[0], bbframe,
+        "branch A frame decodes to the BBFRAME"
+    );
+    assert_eq!(
+        hard.frames[1], bbframe,
+        "branch B frame decodes to the BBFRAME"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -704,7 +728,8 @@ mod span_capture {
     struct Visitor<'a>(&'a mut HashMap<String, String>);
     impl tracing::field::Visit for Visitor<'_> {
         fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
-            self.0.insert(field.name().to_string(), format!("{value:?}"));
+            self.0
+                .insert(field.name().to_string(), format!("{value:?}"));
         }
     }
 
@@ -776,7 +801,10 @@ fn test_per_stage_spans_carry_six_fields() {
     .expect("runs");
 
     let spans = spans.lock().unwrap();
-    let stage_spans: Vec<_> = spans.iter().filter(|s| s.name == "pipeline_stage").collect();
+    let stage_spans: Vec<_> = spans
+        .iter()
+        .filter(|s| s.name == "pipeline_stage")
+        .collect();
     assert_eq!(
         stage_spans.len(),
         3,
@@ -798,7 +826,10 @@ fn test_per_stage_spans_carry_six_fields() {
             );
         }
         assert_eq!(span.fields["snr_idx"], "3", "snr_idx from the BatchHandle");
-        assert_eq!(span.fields["batch_id"], "7", "batch_id from the BatchHandle");
+        assert_eq!(
+            span.fields["batch_id"], "7",
+            "batch_id from the BatchHandle"
+        );
         assert_eq!(
             span.fields["stream_id"],
             format!("{}", usize::MAX),
@@ -813,5 +844,9 @@ fn test_per_stage_spans_carry_six_fields() {
         "stage_name carries the concrete stage type name"
     );
     // The split still happened inside the span-wrapped Hybrid execution.
-    assert_eq!(*calls.lock().unwrap(), vec![1, 1], "2-frame batch split 1+1");
+    assert_eq!(
+        *calls.lock().unwrap(),
+        vec![1, 1],
+        "2-frame batch split 1+1"
+    );
 }
