@@ -190,12 +190,14 @@ impl DvbT2BicmFrameSim {
         // supplies only the per-axis noise draws.
         let channel = BicmAwgnChannel::new(interleaver, bits_per_symbol, demap);
 
-        // AWGN parameters (same formula the channel's eb_n0 path computes):
-        //   sigma_sq = 1 / (2 * 10^(Es/N0 / 10)),  N0 = 2 * sigma_sq.
-        let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
-        let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-        let sigma = (sigma_sq as f32).sqrt();
-        let noise_var = (2.0 * sigma_sq) as f32;
+        // AWGN parameters — delegate to the SSOT once-rounded helpers so the
+        // arithmetic is defined in one place (channels::mod.rs) and every
+        // consumer (preset, frame kernel, tests, examples) is byte-identical.
+        //
+        // `es_n0_db_to_n0_f64` takes an f64 input so the frame kernel avoids a
+        // spurious f64→f32→f64 round-trip when es_n0_db is already f64 here.
+        let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db as f32);
+        let noise_var = crate::channels::es_n0_db_to_n0_f64(es_n0_db);
 
         let k = codec.k_bch();
 
