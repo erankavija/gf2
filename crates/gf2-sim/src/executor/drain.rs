@@ -1,24 +1,36 @@
 //! GPU drain-for-checkpoint and the checkpointed hybrid CPU+GPU sweep
-//! (Phase C task `571c11c4`, design doc §4 "Drain commit contract").
+//! (Phase C task `571c11c4`, design doc §4 "Drain commit contract"; shared core
+//! + failure-semantics integration landed in epic task `bb11c2e6`).
 //!
-//! # Intentional divergence from the C.1 double-buffer scheduler
+//! # Shared double-buffer core, ONE remaining failure-semantics divergence
 //!
-//! [`worker_round_hybrid`](Scheduler::worker_round_hybrid) re-implements the
-//! C.1 double-buffer protocol from `scheduler.rs` (issue `75c22fa8`) and
-//! intentionally omits two behaviours from that file:
+//! The checkpointed `worker_round_hybrid` no longer transcribes the C.1
+//! double-buffer protocol: it drives the SAME shared core as the uncheckpointed
+//! scheduler — [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer)
+//! (epic task `bb11c2e6`) — supplying only the per-batch hooks that genuinely
+//! differ. The two earlier `571c11c4` divergences are now resolved:
 //!
-//! * **No `dispatch_with_fallback` / `strict_gpu` handling** — landing
-//!   fallback semantics (issue `42eac5cc`) here would make a CPU-substituted
-//!   frame record different counters than the GPU path, breaking the byte-
-//!   identity contract that resume depends on. A recoverable GPU fault
-//!   therefore aborts the checkpointed sweep (resumably, via `SweepError`)
-//!   instead of silently substituting the CPU fallback.
-//! * **No `traced_interval` spans** — the checkpointed path does not emit the
-//!   `OverlapTimeline` `CpuPrep`/`GpuDecode` tracing spans. Adding them is
-//!   mechanical but was out of scope for `571c11c4`.
-//!
-//! Factoring these divergences into a shared implementation and integrating
-//! the fallback semantics is tracked as epic task `bb11c2e6`.
+//! * **`traced_interval` spans** — the instrumentation moved INTO the shared
+//!   core, so the checkpointed path now emits the same `pipeline_stage` spans +
+//!   `OverlapTimeline` intervals as the scheduler (the timeline sink is owned
+//!   per point and discarded — the spans are the observable parity).
+//! * **Failure semantics** — now an EXPLICIT per-caller hook
+//!   ([`DrainBatchHooks::decode_batch`]), not an omission. The OPTION (a)
+//!   decision (epic task `bb11c2e6`): a recoverable GPU fault during a
+//!   checkpointed sweep is **propagated**, aborting the sweep *resumably* (via
+//!   [`SweepError::Stage`](crate::checkpoint::SweepError::Stage)), instead of
+//!   substituting the CPU fallback like the uncheckpointed scheduler does.
+//!   Substituting would record a different `mean_iters`/decode for the faulted
+//!   frames, breaking the §11 four-column (`mean_iters` INCLUDED) same-path
+//!   resume byte-identity contract. The fault leaves the last committed
+//!   heartbeat checkpoint intact, and a subsequent resume continues from it
+//!   byte-identically. (OPTION (b) — deterministic fallback-in-checkpointed-
+//!   sweep — is deliberately not implemented: the result-affecting
+//!   `inject_gpu_oom_modulus` is excluded from
+//!   [`config_hash`](crate::checkpoint::config_hash), so a CPU-substituted
+//!   resume would need a checkpoint-schema change, deferred to a lead/user
+//!   decision.) This behaviour is regression-guarded by
+//!   `tests/hybrid_resume.rs::hybrid_checkpointed_recoverable_fault_aborts_resumably`.
 //!
 //! This module adds checkpoint/resume to the hybrid scheduler (`75c22fa8`):
 //!
@@ -334,7 +346,13 @@ impl Scheduler {
     /// Unlike [`Pipeline::run`](crate::Pipeline::run), a recoverable GPU fault
     /// aborts the checkpointed sweep (resumably, returning a
     /// [`SweepError::Stage`]) instead of substituting the CPU fallback, for
-    /// checkpoint byte-identity determinism.
+    /// checkpoint byte-identity determinism. This is the **explicit** OPTION (a)
+    /// failure-semantics decision of epic task `bb11c2e6`, realised in the
+    /// checkpointed caller's per-batch decode hook (`DrainBatchHooks` —
+    /// propagate, not substitute); the uncheckpointed scheduler shares the same
+    /// double-buffer core but supplies the substitute-the-fallback hook. The
+    /// last committed heartbeat checkpoint survives the abort, so a subsequent
+    /// resume continues byte-identically.
     ///
     /// Per SNR point: when this scheduler is GPU-active and the pipeline
     /// carries a `GpuOnly` LDPC stage, the point runs on the **checkpointed
@@ -677,8 +695,7 @@ mod hybrid_checkpoint {
                 ))
             } else {
                 (|| {
-                    let llr_batch =
-                        LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
+                    let llr_batch = LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
                     let (hard, iters) = self.gpu_stage.decode_batch_with_iters_on_stream(
                         &llr_batch,
                         device.device,
