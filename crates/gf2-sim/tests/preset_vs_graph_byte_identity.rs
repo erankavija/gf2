@@ -23,26 +23,55 @@
 //! (non-associative f32 horizontal reduction; see design-doc §11
 //! "Always-excluded").
 //!
+//! # Operating points — the §11 waterfall regime (non-vacuous)
+//!
+//! Every leg (smoke included) runs at a per-MODCOD **waterfall** Es/N0 (the
+//! steep part of the FER curve), calibrated empirically at seed `0xDE16_0FC5`
+//! with SumProduct + ExactLogMap so the sweep yields `0 < errors < frames` —
+//! a genuine mix of clean and errored frames, **asserted** in every leg. This
+//! is the regime where the historical bug class this suite guards (the
+//! `81d05bab` preset demapper `noise_var` disconnected from the channel)
+//! actually manifests: above threshold, the `errors`/`fer` columns are
+//! informationless (0 == 0). Note these points sit below the NMS(0.75)/max-log
+//! points in `tests/gpu_byte_identity.rs` — SumProduct + exact log-MAP
+//! converges at lower Es/N0, so each point was recalibrated for this
+//! decoder/demap pair (32-frame probes, then 200-frame verification).
+//!
 //! # Graph-construction SSOT
 //!
 //! The hand-wired chain construction below mirrors the SSOT in
 //! `tests/preset_vs_graph.rs` (`build_graph`). That file proves structural +
-//! single-frame execution equivalence; this file proves the **run-level** four-
-//! column byte-identity over 200 frames. The chain construction is shared by
-//! copying the exact same wiring pattern to avoid an SSOT violation — a
-//! `mod common` import that brings in `build_graph` would require a public
-//! API surface that is intentionally kept crate-internal.
+//! single-frame execution equivalence; this file proves the **run-level**
+//! four-column byte-identity over 200 frames. The chain construction is
+//! reproduced verbatim here rather than shared via `mod common` because the
+//! SSOT helper is private to `preset_vs_graph.rs` and exposing it would
+//! require additional public surface.
+//!
+//! # Wall time — why these legs carry raised nextest timeouts
+//!
+//! At the waterfall, BP runs near its 50-iteration cap on most frames
+//! (`mean_iters` ≈ 44–50) and the stage chain's shared [`DvbT2Concat`] codec
+//! serialises decodes on its internal `Mutex` (see the "Throughput caveat" in
+//! `gf2-sim/src/executor/topology.rs`) — measured ~1.1–1.5 s per frame
+//! regardless of the configured `parallelism`. Each leg therefore runs its
+//! two arms **concurrently** (each pipeline owns an independent codec, so the
+//! two mutexes do not contend) and a 200-frame leg still needs roughly
+//! 220–320 s; the per-leg nextest timeout is raised in `.config/nextest.toml`
+//! (documented there, mirroring the trybuild-override precedent). The
+//! frames=200 sweep size is contractual (issue deliverable) and is NOT
+//! reduced to fit the default cap.
 //!
 //! # Tiers
 //!
-//! * **Fast** (`test_preset_vs_graph_smoke_r12_16qam`): 2 frames of r1/2
-//!   16-QAM well above threshold (20.0 dB), asserting four-column
-//!   byte-identity. Completes in < 1 s; un-ignored so the CI gate genuinely
-//!   runs the byte-identity criterion.
+//! * **Fast** (`test_preset_vs_graph_smoke_r12_16qam`): 4 frames of r1/2
+//!   16-QAM at the 6.0 dB waterfall (the `de160fc5` operating point; 1/4
+//!   errored — non-vacuous, asserted). ~7–10 s with concurrent arms; carries
+//!   a raised ci-profile timeout so the un-ignored smoke genuinely runs the
+//!   `[hard]` byte-identity criterion on every green gate.
 //! * **Slow** (one `#[ignore = "sim: ..."]` per MODCOD): 200 frames per
-//!   MODCOD at 20.0 dB; BP early-terminates after 1–3 iterations so every
-//!   leg finishes in < 90 s (the heaviest, r3/4 64-QAM, measured ~85 s on the
-//!   development machine — well within the 120 s cap).
+//!   MODCOD at its calibrated waterfall point.
+//!
+//! [`DvbT2Concat`]: gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat
 
 mod common;
 
@@ -65,25 +94,36 @@ use gf2_sim::{Pipeline, PipelineConfig, Scheduler, TopologyExecutor};
 // Constants
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Base seed for the byte-identity tests.
+/// Base seed for the byte-identity tests (the `de160fc5` waterfall seed; the
+/// per-MODCOD Es/N0 points below are calibrated at THIS seed).
 const SEED: u64 = 0xDE16_0FC5;
 
-/// Frames for the fast-tier smoke (must complete in < 5 s on any hardware).
-/// Two frames; each full n=64800 LDPC decode costs ~0.25 s at 20 dB (1–2
-/// BP iterations before early-exit); the combined preset-build + graph-build +
-/// 2×2 runs stays well under the 5 s fast-tier cap (measured ~0.5 s).
-const SMOKE_FRAMES: usize = 2;
+/// Frames for the fast-tier smoke: the `de160fc5` 4-frame waterfall operating
+/// point (1/4 errored at 6.0 dB r1/2 16-QAM, verified empirically).
+const SMOKE_FRAMES: usize = 4;
 
-/// Frames for the slow-tier legs.
+/// Frames for the slow-tier legs (contractual: the issue deliverable pins 200).
 const SLOW_FRAMES: usize = 200;
 
-/// Es/N0 used for all legs: 20.0 dB is well above the waterfall of every
-/// in-scope MODCOD (the hardest in-scope MODCOD, r3/4 64-QAM, requires ~15.5
-/// dB for QEF), ensuring BP early-terminates after very few iterations on
-/// every frame so 200-frame slow legs finish quickly. Byte-identity is a
-/// pure algebraic property of the deterministic pipeline — it holds regardless
-/// of the error mix — so no waterfall calibration per-MODCOD is needed here.
-const ES_N0_DB: f32 = 20.0;
+/// Workers on both arms' configs. Identical parallelism + seed on both arms is
+/// required; cross-worker-count byte-identity is separately guaranteed by the
+/// global-frame keying (§3; `tests/determinism.rs`), so the worker count does
+/// not weaken the assertion.
+const PARALLELISM: usize = 24;
+
+/// One MODCOD leg: the `(rate, modulation)` pair and its calibrated waterfall
+/// Es/N0 (see the module docs; 32-frame probe + 200-frame verification at
+/// [`SEED`], SumProduct + ExactLogMap).
+struct ModcodPoint {
+    rate: CodeRate,
+    modulation: DvbT2Modulation,
+    /// Waterfall Es/N0 in dB. Observed 200-frame error mixes at [`SEED`]:
+    /// r1/2 16-QAM @6.0 → 58/200; r1/2 64-QAM @10.3 → 72/200;
+    /// r2/3 16-QAM @8.8 → 100/200; r2/3 64-QAM @13.8 → 130/200;
+    /// r3/4 16-QAM @10.0 → 124/200; r3/4 64-QAM @15.4 → 62/200.
+    es_n0_db: f32,
+    label: &'static str,
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Shared decoder config
@@ -98,20 +138,20 @@ fn decoder_config() -> DecoderConfig {
 // ──────────────────────────────────────────────────────────────────────────────
 
 /// Builds the preset DVB-T2 pipeline via the typestate builder.
-fn build_preset(rate: CodeRate, modulation: DvbT2Modulation) -> Pipeline {
+fn build_preset(rate: CodeRate, modulation: DvbT2Modulation, es_n0_db: f32) -> Pipeline {
     Pipeline::dvb_t2()
         .modcod(Modcod::Normal { rate, modulation })
         .decoder(decoder_config())
         .demap(DemapMethod::ExactLogMap)
-        .channel(Channel::awgn(ES_N0_DB))
+        .channel(Channel::awgn(es_n0_db))
         .seed(SEED)
-        .parallelism(NonZeroUsize::new(1).expect("1 is non-zero"))
+        .parallelism(NonZeroUsize::new(PARALLELISM).expect("24 is non-zero"))
         .build()
         .expect("in-scope MODCOD builds via the preset")
 }
 
-/// Derives the soft demapper's `N0 = 2*sigma^2` from `ES_N0_DB`, using the
-/// same f64-computed, once-rounded arithmetic as the preset's
+/// Derives the soft demapper's `N0 = 2*sigma^2` from the channel Es/N0, using
+/// the same f64-computed, once-rounded arithmetic as the preset's
 /// `Channel::demap_noise_var` (the SSOT formula from `frame_sim.rs`).
 fn demap_n0(es_n0_db: f32) -> f32 {
     let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
@@ -122,18 +162,14 @@ fn demap_n0(es_n0_db: f32) -> f32 {
 /// Builds the same DVB-T2 BICM chain by hand through the graph [`Chain`] API.
 ///
 /// This mirrors the `build_graph` helper in `tests/preset_vs_graph.rs` (the
-/// SSOT for graph-chain structural + single-frame equivalence). The wiring is
-/// reproduced verbatim here rather than shared via `mod common` because the
-/// SSOT helper is private to `preset_vs_graph.rs` and exposing it would
-/// require additional public surface.
-fn build_graph(rate: CodeRate, modulation: DvbT2Modulation) -> Pipeline {
-    let n0 = demap_n0(ES_N0_DB);
+/// SSOT for graph-chain structural + single-frame equivalence).
+fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, es_n0_db: f32) -> Pipeline {
     let factory = dvb_t2_bicm_stages(
         rate,
         modulation,
         decoder_config(),
         DemapMethod::ExactLogMap,
-        n0,
+        demap_n0(es_n0_db),
     );
 
     let mut chain = Chain::new();
@@ -143,7 +179,7 @@ fn build_graph(rate: CodeRate, modulation: DvbT2Modulation) -> Pipeline {
     }
     // Channel stage: SymbolBatch → SymbolBatch between the forward and inverse
     // halves.
-    ids.push(chain.add(erase(Awgn::new(ES_N0_DB, modulation.bits_per_cell()))));
+    ids.push(chain.add(erase(Awgn::new(es_n0_db, modulation.bits_per_cell()))));
     for stage in factory.inverse {
         ids.push(chain.add(stage));
     }
@@ -162,7 +198,7 @@ fn build_graph(rate: CodeRate, modulation: DvbT2Modulation) -> Pipeline {
         heartbeat_every_frames: 0,
         checkpoint_dir: None,
         tracing_log_path: None,
-        parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
+        parallelism: NonZeroUsize::new(PARALLELISM).expect("24 is non-zero"),
         gpu_enabled: false,
         strict_gpu: false,
         diagnostic_dump_dir: None,
@@ -179,31 +215,47 @@ fn build_graph(rate: CodeRate, modulation: DvbT2Modulation) -> Pipeline {
 // Core assertion helper
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Runs `max_frames` frames of both the preset and graph pipelines for
-/// `(rate, modulation)`, then asserts the four byte-identity columns via
+/// Runs `max_frames` frames of both the preset and graph pipelines at the
+/// MODCOD's waterfall point, asserts the sweep is **non-vacuous**
+/// (`0 < errors < frames`), then asserts the four byte-identity columns via
 /// [`common::assert_four_columns_byte_identical`].
 ///
 /// Both arms are driven through
 /// [`TopologyExecutor::run_dvb_t2_snr_point`](gf2_sim::TopologyExecutor::run_dvb_t2_snr_point)
 /// at `snr_idx = 0`, so the comparison isolates the API-form difference (the
-/// preset's `Pipeline::run()` vs the graph arm is separately guarded by
-/// `tests/stage_driven_byte_identity.rs` and is NOT re-proved here).
-fn assert_byte_identical(
-    rate: CodeRate,
-    modulation: DvbT2Modulation,
-    max_frames: usize,
-    label: &str,
-) -> (WorkerCounters, WorkerCounters) {
-    let preset = build_preset(rate, modulation);
-    let graph = build_graph(rate, modulation);
+/// preset's `Pipeline::run()`-vs-stage-driven identity is separately guarded
+/// by `tests/stage_driven_byte_identity.rs` and is NOT re-proved here).
+///
+/// The two arms run **concurrently** (one thread each): each pipeline owns an
+/// independent `DvbT2Concat` codec, so their decode mutexes do not contend
+/// and the leg wall time halves versus sequential arms. Concurrency cannot
+/// affect the outcome — each arm is internally deterministic by the
+/// global-frame keying (§3) and shares no state with the other arm.
+fn assert_byte_identical(point: &ModcodPoint, max_frames: usize) {
+    let ModcodPoint {
+        rate,
+        modulation,
+        es_n0_db,
+        label,
+    } = *point;
 
-    let sched_preset = Scheduler::from_pipeline(&preset);
-    let sched_graph = Scheduler::from_pipeline(&graph);
-
-    let preset_c = TopologyExecutor::run_dvb_t2_snr_point(&preset, &sched_preset, 0, max_frames)
-        .expect("stage-driven preset sweep runs");
-    let graph_c = TopologyExecutor::run_dvb_t2_snr_point(&graph, &sched_graph, 0, max_frames)
-        .expect("stage-driven graph sweep runs");
+    let (preset_c, graph_c) = std::thread::scope(|s| {
+        let preset_arm = s.spawn(move || {
+            let pipeline = build_preset(rate, modulation, es_n0_db);
+            let scheduler = Scheduler::from_pipeline(&pipeline);
+            TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, max_frames)
+                .expect("stage-driven preset sweep runs")
+        });
+        let graph_arm = s.spawn(move || {
+            let pipeline = build_graph(rate, modulation, es_n0_db);
+            let scheduler = Scheduler::from_pipeline(&pipeline);
+            TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, max_frames)
+                .expect("stage-driven graph sweep runs")
+        });
+        let preset_c: WorkerCounters = preset_arm.join().expect("preset arm thread");
+        let graph_c: WorkerCounters = graph_arm.join().expect("graph arm thread");
+        (preset_c, graph_c)
+    });
 
     assert_eq!(
         preset_c.frames, max_frames as u64,
@@ -216,117 +268,145 @@ fn assert_byte_identical(
         graph_c.frames
     );
 
+    // Non-vacuous mixed verdict at the waterfall (the §11 regime): without
+    // this the `errors`/`fer` columns are informationless (0 == 0).
+    assert!(
+        preset_c.errors > 0 && preset_c.errors < preset_c.frames,
+        "{label}: expected a mixed decode-success/failure sweep at the waterfall, got \
+         {}/{} errored frames (re-pin Es/N0 if the chain changes)",
+        preset_c.errors,
+        preset_c.frames
+    );
+
     common::assert_four_columns_byte_identical(&preset_c, &graph_c, label);
 
     eprintln!(
-        "{label}: frames={} errors={} fer={:.6} mean_iters={:.6} (preset==graph)",
+        "{label}: frames={} errors={} fer={:.6} mean_iters={:.6} (preset==graph, non-vacuous)",
         preset_c.frames,
         preset_c.errors,
         preset_c.fer(),
         preset_c.mean_iters(),
     );
-
-    (preset_c, graph_c)
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Fast-tier smoke (always runs, gates the criterion)
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Fast-tier smoke: 2 frames of r1/2 16-QAM at 20.0 dB (well above threshold).
+/// Fast-tier smoke: 4 frames of r1/2 16-QAM at the 6.0 dB waterfall (the
+/// `de160fc5` operating point — 1/4 errored at [`SEED`], non-vacuous,
+/// asserted).
 ///
 /// Asserts all four byte-identity columns (`frames`, `errors`, `fer`,
 /// `mean_iters`) between the typestate-preset form and the hand-wired graph
-/// form. Both arms run through
-/// [`TopologyExecutor::run_dvb_t2_snr_point`] at `snr_idx = 0`, `seed =
-/// 0xDE16_0FC5`. This un-ignored test is the `[hard]` byte-identity gate
-/// criterion's CI-facing guard — the slow 200-frame legs below are
-/// supplementary evidence.
+/// form. Un-ignored so the green `--profile ci` gate genuinely runs the
+/// `[hard]` byte-identity criterion at a non-vacuous operating point; carries
+/// a raised ci-profile timeout in `.config/nextest.toml` (waterfall frames
+/// decode near the 50-iteration BP cap on a mutex-serialised codec — see the
+/// module docs).
 #[test]
 fn test_preset_vs_graph_smoke_r12_16qam() {
     assert_byte_identical(
-        CodeRate::Rate1_2,
-        DvbT2Modulation::Qam16,
+        &ModcodPoint {
+            rate: CodeRate::Rate1_2,
+            modulation: DvbT2Modulation::Qam16,
+            es_n0_db: 6.0,
+            label: "smoke r1/2 16-QAM @6.0dB",
+        },
         SMOKE_FRAMES,
-        "smoke r1/2 16-QAM @20dB",
     );
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Slow-tier 200-frame legs (one per MODCOD, each under the 120 s cap)
+// Slow-tier 200-frame legs (one per MODCOD; raised timeout, see module docs)
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Slow: 200 frames, r1/2 16-QAM at 20.0 dB.
+/// Slow: 200 frames, r1/2 16-QAM at the 6.0 dB waterfall (58/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 16-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 16-QAM waterfall"]
 fn test_preset_vs_graph_200f_r12_16qam() {
     assert_byte_identical(
-        CodeRate::Rate1_2,
-        DvbT2Modulation::Qam16,
+        &ModcodPoint {
+            rate: CodeRate::Rate1_2,
+            modulation: DvbT2Modulation::Qam16,
+            es_n0_db: 6.0,
+            label: "200f r1/2 16-QAM @6.0dB",
+        },
         SLOW_FRAMES,
-        "200f r1/2 16-QAM @20dB",
     );
 }
 
-/// Slow: 200 frames, r1/2 64-QAM at 20.0 dB.
+/// Slow: 200 frames, r1/2 64-QAM at the 10.3 dB waterfall (72/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 64-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 64-QAM waterfall"]
 fn test_preset_vs_graph_200f_r12_64qam() {
     assert_byte_identical(
-        CodeRate::Rate1_2,
-        DvbT2Modulation::Qam64,
+        &ModcodPoint {
+            rate: CodeRate::Rate1_2,
+            modulation: DvbT2Modulation::Qam64,
+            es_n0_db: 10.3,
+            label: "200f r1/2 64-QAM @10.3dB",
+        },
         SLOW_FRAMES,
-        "200f r1/2 64-QAM @20dB",
     );
 }
 
-/// Slow: 200 frames, r2/3 16-QAM at 20.0 dB.
+/// Slow: 200 frames, r2/3 16-QAM at the 8.8 dB waterfall (100/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 16-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 16-QAM waterfall"]
 fn test_preset_vs_graph_200f_r23_16qam() {
     assert_byte_identical(
-        CodeRate::Rate2_3,
-        DvbT2Modulation::Qam16,
+        &ModcodPoint {
+            rate: CodeRate::Rate2_3,
+            modulation: DvbT2Modulation::Qam16,
+            es_n0_db: 8.8,
+            label: "200f r2/3 16-QAM @8.8dB",
+        },
         SLOW_FRAMES,
-        "200f r2/3 16-QAM @20dB",
     );
 }
 
-/// Slow: 200 frames, r2/3 64-QAM at 20.0 dB.
+/// Slow: 200 frames, r2/3 64-QAM at the 13.8 dB waterfall (130/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 64-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 64-QAM waterfall"]
 fn test_preset_vs_graph_200f_r23_64qam() {
     assert_byte_identical(
-        CodeRate::Rate2_3,
-        DvbT2Modulation::Qam64,
+        &ModcodPoint {
+            rate: CodeRate::Rate2_3,
+            modulation: DvbT2Modulation::Qam64,
+            es_n0_db: 13.8,
+            label: "200f r2/3 64-QAM @13.8dB",
+        },
         SLOW_FRAMES,
-        "200f r2/3 64-QAM @20dB",
     );
 }
 
-/// Slow: 200 frames, r3/4 16-QAM at 20.0 dB.
+/// Slow: 200 frames, r3/4 16-QAM at the 10.0 dB waterfall (124/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 16-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 16-QAM waterfall"]
 fn test_preset_vs_graph_200f_r34_16qam() {
     assert_byte_identical(
-        CodeRate::Rate3_4,
-        DvbT2Modulation::Qam16,
+        &ModcodPoint {
+            rate: CodeRate::Rate3_4,
+            modulation: DvbT2Modulation::Qam16,
+            es_n0_db: 10.0,
+            label: "200f r3/4 16-QAM @10.0dB",
+        },
         SLOW_FRAMES,
-        "200f r3/4 16-QAM @20dB",
     );
 }
 
-/// Slow: 200 frames, r3/4 64-QAM at 20.0 dB.
-///
-/// This is the slowest config (highest code rate + 64-QAM LDPC decode);
-/// measured ~85 s on the development machine, well within the 120 s cap.
+/// Slow: 200 frames, r3/4 64-QAM at the 15.4 dB waterfall (62/200 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 64-QAM"]
+#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 64-QAM waterfall"]
 fn test_preset_vs_graph_200f_r34_64qam() {
     assert_byte_identical(
-        CodeRate::Rate3_4,
-        DvbT2Modulation::Qam64,
+        &ModcodPoint {
+            rate: CodeRate::Rate3_4,
+            modulation: DvbT2Modulation::Qam64,
+            es_n0_db: 15.4,
+            label: "200f r3/4 64-QAM @15.4dB",
+        },
         SLOW_FRAMES,
-        "200f r3/4 64-QAM @20dB",
     );
 }

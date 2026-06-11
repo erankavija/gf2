@@ -24,6 +24,10 @@
 //! the 200-frame four-column (`fer`/`frames`/`errors`/`mean_iters`)
 //! byte-identity across all six in-scope MODCODs.
 //!
+//! Like the typestate example, this runs at the r1/2 16-QAM **waterfall**
+//! Es/N0 (6.0 dB) and the same seed, so it prints the same meaningful mixed
+//! verdict (3/8 errored frames) — byte-identical to the typestate output.
+//!
 //! Run with:
 //!
 //! ```bash
@@ -61,8 +65,10 @@ fn demap_noise_var(es_n0_db: f32) -> f32 {
 
 fn main() {
     const FRAMES: usize = 8;
-    const SEED: u64 = 0xC0DE_F00D;
-    const ES_N0_DB: f32 = 6.5;
+    // Same waterfall operating point + seed as examples/dvb_t2_typestate.rs:
+    // 6.0 dB r1/2 16-QAM at the de160fc5 seed gives a mixed 3/8 verdict.
+    const SEED: u64 = 0xDE16_0FC5;
+    const ES_N0_DB: f32 = 6.0;
 
     let rate = CodeRate::Rate1_2;
     let modulation = DvbT2Modulation::Qam16;
@@ -106,7 +112,7 @@ fn main() {
         heartbeat_every_frames: 0,
         checkpoint_dir: None,
         tracing_log_path: None,
-        parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
+        parallelism: NonZeroUsize::new(4).expect("4 is non-zero"),
         gpu_enabled: false,
         strict_gpu: false,
         diagnostic_dump_dir: None,
@@ -119,7 +125,7 @@ fn main() {
         .expect("the full BICM chain is a valid DAG");
 
     println!(
-        "DVB-T2 r1/2 16-QAM Normal (graph API): {} stages, seed {:#010x}",
+        "DVB-T2 r1/2 16-QAM Normal @ {ES_N0_DB} dB (waterfall, graph API): {} stages, seed {:#010x}",
         pipeline.stage_count(),
         pipeline.config().seed,
     );
