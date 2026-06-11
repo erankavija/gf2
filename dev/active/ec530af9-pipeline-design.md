@@ -774,10 +774,11 @@ Runtime errors at `connect()` and `build()`:
   defense-in-depth only)
 
 The DVB-T2 typestate preset is implemented as a thin wrapper over
-the graph API; the two share the underlying machinery. The example
-`examples/dvb_t2_two_apis.rs` (landed by `8c8302c8`) shows the two
-forms side-by-side producing byte-identical output for the same
-input batch.
+the graph API; the two share the underlying machinery. The examples
+`examples/dvb_t2_typestate.rs` and `examples/dvb_t2_graph_api.rs`
+(landed by `8c8302c8`) show the two forms side-by-side, with
+`tests/preset_vs_graph_byte_identity.rs` proving run-level
+four-column byte-identity across all six in-scope MODCODs.
 
 **Adapter constructor responsibility**: `81d05bab` (DVB-T2 preset)
 introduces every `adapters::*` constructor used above. `c09d3e95`

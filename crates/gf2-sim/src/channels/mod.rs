@@ -113,3 +113,67 @@ pub(crate) fn es_n0_db_to_sigma(es_n0_db: f32) -> f32 {
     let sigma_sq = 1.0 / (2.0 * es_n0_lin);
     (sigma_sq as f32).sqrt()
 }
+
+/// Converts an Es/N0 (dB) to the total complex AWGN noise variance `N0`.
+///
+/// Returns `N0 = 2 * sigma^2` with `sigma^2 = 1 / (2 * 10^(Es/N0 / 10))` —
+/// the per-symbol total complex noise variance a soft demapper must assume to
+/// be physically consistent with an AWGN channel at `es_n0_db` (the sibling
+/// of [`es_n0_db_to_sigma`], which returns the per-axis standard deviation
+/// the channel injects).
+///
+/// # The once-rounded contract
+///
+/// The computation is performed entirely in `f64` and rounded to `f32`
+/// **exactly once**, at the end. This is the single source of truth for the
+/// Es/N0 → N0 conversion: the `81d05bab` preset originally squared the
+/// already-rounded `f32` sigma (`2.0 * sigma * sigma`), which rounds *twice*
+/// and can differ from this value by an ULP — perturbing every demapped LLR
+/// and breaking the chain-vs-SSOT byte-identity (`de160fc5`, design doc
+/// §11). Every consumer (the preset's channel→demapper N0 coupling, the
+/// [`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim) frame kernel
+/// via [`es_n0_db_to_n0_f64`], tests, and examples) must derive N0 through
+/// this helper rather than re-deriving the formula inline.
+///
+/// # Arguments
+///
+/// * `es_n0_db` — channel Es/N0 in dB.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::channels::es_n0_db_to_n0;
+///
+/// // 0 dB: Es/N0 = 1, so N0 = 2 * (1/2) = 1.
+/// assert_eq!(es_n0_db_to_n0(0.0), 1.0);
+///
+/// // The once-rounded f64 derivation, bit-for-bit.
+/// let es_n0_db = 6.0_f32;
+/// let sigma_sq = 1.0_f64 / (2.0 * 10.0_f64.powf(f64::from(es_n0_db) / 10.0));
+/// assert_eq!(es_n0_db_to_n0(es_n0_db).to_bits(), ((2.0 * sigma_sq) as f32).to_bits());
+/// ```
+///
+/// # Complexity
+///
+/// O(1).
+#[inline]
+#[must_use]
+pub fn es_n0_db_to_n0(es_n0_db: f32) -> f32 {
+    es_n0_db_to_n0_f64(f64::from(es_n0_db))
+}
+
+/// The `f64`-input core of [`es_n0_db_to_n0`] — the SSOT arithmetic.
+///
+/// [`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim)'s Es/N0 surface
+/// is `f64` (its `from_eb_n0` constructor derives a generally
+/// non-`f32`-representable Es/N0), so the frame kernel delegates here
+/// directly; narrowing through the public `f32` helper would change its
+/// `noise_var` on that path. For any `f32`-representable input the two
+/// functions agree bit-for-bit (the public helper is a widening wrapper).
+#[inline]
+#[must_use]
+pub(crate) fn es_n0_db_to_n0_f64(es_n0_db: f64) -> f32 {
+    let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
+    let sigma_sq = 1.0 / (2.0 * es_n0_lin);
+    (2.0 * sigma_sq) as f32
+}
