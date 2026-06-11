@@ -23,6 +23,17 @@
 //! draw order (all I, then all Q; see the CPU stage's module docs). The noise
 //! is a pure function of the frame index — byte-identical across worker counts.
 //!
+//! # Default-stream vs stream-ordered application (design doc §6)
+//!
+//! The erased [`Stage::process`](crate::Stage) path and
+//! [`apply`](GpuAwgn::apply) run on the **default stream**; the additive
+//! [`apply_for_frame_on_stream`](GpuAwgn::apply_for_frame_on_stream) /
+//! [`apply_on_stream`](GpuAwgn::apply_on_stream) variants order the launch and
+//! read-back on a caller-owned HIP stream (pinned staging, per-stream
+//! synchronize only) — the route the DAG topology executor (`de160fc5`) takes
+//! for this stage's `GpuOnly` dispatch on the worker's owned stream. Both
+//! paths add byte-identical noise.
+//!
 //! # CPU fallback (§8)
 //!
 //! The [`Stage::CpuFallback`](crate::Stage) is the CPU
@@ -40,7 +51,8 @@
 
 #[cfg(feature = "hip")]
 mod imp {
-    use gf2_kernels_hip::GpuChaChaAwgn;
+    use gf2_kernels_hip::host::HipStream;
+    use gf2_kernels_hip::{AwgnStreamScratch, GpuChaChaAwgn};
 
     use crate::batch::SymbolBatch;
     use crate::channels::Awgn;
@@ -359,6 +371,133 @@ mod imp {
         ) -> Result<(), StageError> {
             for (f, (i_frame, q_frame)) in batch.i.iter_mut().zip(batch.q.iter_mut()).enumerate() {
                 self.apply_for_frame(i_frame, q_frame, f, gen)?;
+            }
+            Ok(())
+        }
+
+        /// Allocates the pinned host staging the stream-ordered noise variants
+        /// ([`apply_for_frame_on_stream`](Self::apply_for_frame_on_stream) /
+        /// [`apply_on_stream`](Self::apply_on_stream)) require, sized for
+        /// `gen` (a per-worker generator from
+        /// [`build_generator`](Self::build_generator)).
+        ///
+        /// One scratch per worker, like the generator itself (both are
+        /// `Send`-only, owned per worker, never shared by `&`).
+        ///
+        /// # Arguments
+        ///
+        /// * `gen` — the per-worker device noise generator the scratch pairs
+        ///   with.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] (via [`map_hip_error`](crate::gpu::map_hip_error))
+        /// if the pinned allocation fails (an OOM is recoverable).
+        pub fn build_stream_scratch(
+            &self,
+            gen: &GpuChaChaAwgn,
+        ) -> Result<AwgnStreamScratch, StageError> {
+            gen.new_stream_scratch()
+                .map_err(|e| map_hip_error(e, "GpuChaChaAwgn::new_stream_scratch"))
+        }
+
+        /// Like [`apply_for_frame`](Self::apply_for_frame), but with the noise
+        /// launch and read-back ordered on the caller-owned `stream`, awaiting
+        /// completion per-stream (never device-wide sync). The DAG topology
+        /// executor (`de160fc5`) routes this stage's `GpuOnly` dispatch here on
+        /// the worker's deterministically owned HIP stream; the added noise is
+        /// **byte-identical** to [`apply_for_frame`](Self::apply_for_frame)
+        /// (same kernel, same `worker_offset` — only the queue and transfer
+        /// staging differ).
+        ///
+        /// # Arguments
+        ///
+        /// Same as [`apply_for_frame`](Self::apply_for_frame), plus:
+        ///
+        /// * `stream` — the worker's owned HIP stream.
+        /// * `scratch` — the worker's pinned staging (from
+        ///   [`build_stream_scratch`](Self::build_stream_scratch)).
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on a device fault (recoverable for OOM /
+        /// unsupported arch so the executor substitutes the CPU fallback; fatal
+        /// otherwise).
+        ///
+        /// # Panics
+        ///
+        /// Panics if `i_lane.len() != q_lane.len()`, if `gen`'s capacity is
+        /// less than `2 * i_lane.len()`, or if `scratch` was sized for a
+        /// different generator.
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`apply_for_frame`](Self::apply_for_frame).
+        pub fn apply_for_frame_on_stream(
+            &self,
+            i_lane: &mut [f32],
+            q_lane: &mut [f32],
+            frame_idx: usize,
+            gen: &GpuChaChaAwgn,
+            stream: &HipStream,
+            scratch: &mut AwgnStreamScratch,
+        ) -> Result<(), StageError> {
+            assert_eq!(
+                i_lane.len(),
+                q_lane.len(),
+                "GpuAwgn::apply_for_frame_on_stream: I lane length ({}) != Q lane length ({})",
+                i_lane.len(),
+                q_lane.len()
+            );
+            let num_symbols = i_lane.len();
+            if num_symbols == 0 {
+                return Ok(());
+            }
+            let n_samples = 2 * num_symbols;
+            let base = worker_offset(self.seed, self.snr_idx, self.worker_idx, frame_idx);
+
+            let mut noise = vec![0.0f32; n_samples];
+            gen.noise_samples_into_on_stream(base, &mut noise, stream, scratch)
+                .map_err(|e| map_hip_error(e, "GpuChaChaAwgn::noise_samples_into_on_stream"))?;
+
+            let sigma = self.sigma;
+            // Planar assignment, matching `apply_for_frame`.
+            for (k, (xi, xq)) in i_lane.iter_mut().zip(q_lane.iter_mut()).enumerate() {
+                *xi += noise[k] * sigma;
+                *xq += noise[num_symbols + k] * sigma;
+            }
+            Ok(())
+        }
+
+        /// Like [`apply`](Self::apply), but stream-ordered: every frame's noise
+        /// launch and read-back run on the caller-owned `stream` (see
+        /// [`apply_for_frame_on_stream`](Self::apply_for_frame_on_stream)).
+        /// The corrupted batch is byte-identical to [`apply`](Self::apply).
+        ///
+        /// # Arguments
+        ///
+        /// * `batch` — the IQ symbol batch to corrupt in-place.
+        /// * `gen` — the per-worker device noise generator.
+        /// * `stream` — the worker's owned HIP stream.
+        /// * `scratch` — the worker's pinned staging.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on any per-frame device fault (see
+        /// [`apply_for_frame_on_stream`](Self::apply_for_frame_on_stream)).
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`apply`](Self::apply).
+        pub fn apply_on_stream(
+            &self,
+            batch: &mut SymbolBatch,
+            gen: &GpuChaChaAwgn,
+            stream: &HipStream,
+            scratch: &mut AwgnStreamScratch,
+        ) -> Result<(), StageError> {
+            for (f, (i_frame, q_frame)) in batch.i.iter_mut().zip(batch.q.iter_mut()).enumerate() {
+                self.apply_for_frame_on_stream(i_frame, q_frame, f, gen, stream, scratch)?;
             }
             Ok(())
         }
@@ -737,6 +876,63 @@ mod imp {
             assert_eq!(via_process.i[1], ref_i1, "frame 1 I lane mismatch");
             assert_eq!(via_process.q[1], ref_q1, "frame 1 Q lane mismatch");
             assert!(scratch.host_buf().len() >= 2 * num_symbols);
+        }
+
+        /// The stream-ordered stage path (`apply_on_stream`, the topology
+        /// executor's `GpuOnly` route) must corrupt a batch **byte-identically**
+        /// to the default-stream `apply` path: same kernel, same per-frame
+        /// `worker_offset`, only the queue and transfer staging differ. Skips
+        /// with no GPU; fast tier.
+        #[test]
+        fn test_apply_on_stream_matches_default_stream() {
+            use gf2_kernels_hip::host::{device_mem_info, HipStream};
+
+            if device_mem_info().is_err() {
+                eprintln!("skipping test_apply_on_stream_matches_default_stream: no usable GPU");
+                return;
+            }
+
+            let seed = 0xDE16_0FC5_u64;
+            let num_symbols = 300usize;
+            let i0: Vec<f32> = (0..num_symbols).map(|k| (k as f32) * 0.01 - 1.5).collect();
+            let q0: Vec<f32> = (0..num_symbols)
+                .map(|k| 0.75 - (k as f32) * 0.004)
+                .collect();
+            // Two frames so the loops index frame 0 and 1 distinctly.
+            let input =
+                SymbolBatch::new(vec![i0.clone(), i0.clone()], vec![q0.clone(), q0.clone()]);
+
+            let gpu = GpuAwgn::new(6.0, 4).with_seek(seed, 1, 0);
+            let gen = gpu.build_generator(num_symbols).expect("generator");
+
+            let mut default = input.clone();
+            gpu.apply(&mut default, &gen).expect("default-stream apply");
+
+            let stream = HipStream::new().expect("create stream");
+            let mut scratch = gpu.build_stream_scratch(&gen).expect("pinned staging");
+            let mut streamed = input.clone();
+            gpu.apply_on_stream(&mut streamed, &gen, &stream, &mut scratch)
+                .expect("stream-ordered apply");
+
+            // Bit-level comparison (f32 `==` would conflate -0.0 with 0.0).
+            for f in 0..2 {
+                for k in 0..num_symbols {
+                    assert_eq!(
+                        default.i[f][k].to_bits(),
+                        streamed.i[f][k].to_bits(),
+                        "frame={f} I[{k}] differs: default={} stream={}",
+                        default.i[f][k],
+                        streamed.i[f][k]
+                    );
+                    assert_eq!(
+                        default.q[f][k].to_bits(),
+                        streamed.q[f][k].to_bits(),
+                        "frame={f} Q[{k}] differs: default={} stream={}",
+                        default.q[f][k],
+                        streamed.q[f][k]
+                    );
+                }
+            }
         }
 
         /// True if `a` and `b` are within one f32 ulp.

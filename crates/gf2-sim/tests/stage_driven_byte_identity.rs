@@ -33,7 +33,12 @@
 //!
 //! # Tiers
 //!
-//! * Fast: a 2-frame above-threshold smoke (both arms cheap).
+//! * Fast: a 2-frame above-threshold CPU smoke (both arms cheap), plus —
+//!   under `hip`, GPU-presence-gated, NOT ignored — a 4-frame **waterfall**
+//!   GPU smoke asserting the non-vacuous 3-column contract on every green
+//!   `--profile ci` run (so the gate genuinely exercises the stage-driven
+//!   GPU byte-identity criterion rather than deferring it to the ignored
+//!   slow leg).
 //! * Slow (`#[ignore = "sim: …"]`): a 32-frame **waterfall** sweep (6.0 dB
 //!   r1/2 16-QAM) asserting a non-vacuous mixed verdict — the regime §11 is
 //!   about — for the CPU 4-column and (GPU-gated, `hip`) the GPU 3-column
@@ -67,8 +72,8 @@ fn decoder_config() -> DecoderConfig {
 
 /// Builds the preset DVB-T2 r1/2 16-QAM chain at `es_n0_db` (which must be
 /// `f32`-representable so the preset and the frame kernel derive bit-identical
-/// sigma / N0).
-fn build_pipeline(es_n0_db: f32, workers: usize, gpu: bool) -> Pipeline {
+/// sigma / N0) at an explicit `seed`.
+fn build_pipeline_seeded(es_n0_db: f32, workers: usize, gpu: bool, seed: u64) -> Pipeline {
     Pipeline::dvb_t2()
         .modcod(Modcod::Normal {
             rate: CodeRate::Rate1_2,
@@ -78,15 +83,21 @@ fn build_pipeline(es_n0_db: f32, workers: usize, gpu: bool) -> Pipeline {
         .demap(DemapMethod::ExactLogMap)
         .channel(Channel::awgn(es_n0_db))
         .parallelism(NonZeroUsize::new(workers).unwrap())
-        .seed(SEED)
+        .seed(seed)
         .with_gpu(gpu)
         .build()
         .expect("in-scope MODCOD builds")
 }
 
+/// [`build_pipeline_seeded`] at the suite's shared [`SEED`].
+fn build_pipeline(es_n0_db: f32, workers: usize, gpu: bool) -> Pipeline {
+    build_pipeline_seeded(es_n0_db, workers, gpu, SEED)
+}
+
 /// The SSOT arm: `run_snr_point` over the `DvbT2BicmFrameSim` kernel (the
-/// byte-identity baseline every other path is pinned to).
-fn ssot_counters(es_n0_db: f64, frames: usize, workers: usize) -> WorkerCounters {
+/// byte-identity baseline every other path is pinned to), at an explicit
+/// `seed`.
+fn ssot_counters_seeded(es_n0_db: f64, frames: usize, workers: usize, seed: u64) -> WorkerCounters {
     let template = DvbT2BicmFrameSim::new(
         CodeRate::Rate1_2,
         DvbT2Modulation::Qam16,
@@ -95,13 +106,18 @@ fn ssot_counters(es_n0_db: f64, frames: usize, workers: usize) -> WorkerCounters
         DemapMethod::ExactLogMap,
     );
     run_snr_point(
-        SEED,
+        seed,
         0,
         frames,
         NonZeroUsize::new(workers).unwrap(),
         || template.clone(),
         |g, ctx, sim| sim.simulate_frame(g, ctx),
     )
+}
+
+/// [`ssot_counters_seeded`] at the suite's shared [`SEED`].
+fn ssot_counters(es_n0_db: f64, frames: usize, workers: usize) -> WorkerCounters {
+    ssot_counters_seeded(es_n0_db, frames, workers, SEED)
 }
 
 /// Fast-tier smoke: 2 frames above threshold (9 dB). Every column — including
@@ -167,6 +183,79 @@ mod gpu {
 
     fn gpu_present() -> bool {
         gf2_kernels_hip::host::device_mem_info().is_ok()
+    }
+
+    /// The fast-tier stage-driven GPU smoke (round-1 finding 2): a NOT-ignored,
+    /// GPU-presence-gated miniature of the 32-frame waterfall leg below, so the
+    /// green `cargo nextest --profile ci` gate genuinely RUNS the stage-driven
+    /// GPU byte-identity criterion on the gfx1030 host instead of skipping it.
+    ///
+    /// 4 frames at the same 6.0 dB r1/2 16-QAM waterfall, at a PINNED seed
+    /// chosen so the frame-verdict mix is non-vacuous (`0 < errors < frames`,
+    /// asserted). The three §11 relaxed-contract columns
+    /// (`fer`/`frames`/`errors`) must be byte-identical stage-driven-vs-SSOT;
+    /// `mean_iters` is logged, never asserted (§11 CPU-vs-GPU exclusion).
+    ///
+    /// Timing: measured ~3 s on the gfx1030 host under the ci profile
+    /// (pipeline build + 4 staged GPU frames + 4 SSOT CPU frames across 4
+    /// workers), inside the 5 s fast-tier cap. Skips cleanly with no GPU.
+    #[test]
+    fn test_stage_driven_gpu_smoke_matches_ssot_3_columns() {
+        if !gpu_present() {
+            eprintln!("skipping test_stage_driven_gpu_smoke_matches_ssot_3_columns: no usable GPU");
+            return;
+        }
+        // Pinned smoke seed: at 6.0 dB this seed's first 4 global frames decode
+        // to a mixed verdict (some errored, some clean) — verified empirically
+        // and asserted non-vacuous below.
+        const SMOKE_SEED: u64 = 0xDE16_0FC5;
+        let es_n0 = 6.0_f32;
+        let frames = 4usize;
+        let pipeline = build_pipeline_seeded(es_n0, 4, true, SMOKE_SEED);
+        assert_eq!(
+            pipeline.stage_count(),
+            8,
+            "the GPU chain replaces the combined decode with GpuLdpcBp + BCH tail"
+        );
+        let scheduler = Scheduler::from_pipeline(&pipeline);
+        assert!(
+            scheduler.gpu_active(),
+            "GPU host must build an active stream pool"
+        );
+
+        let staged = TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, frames)
+            .expect("stage-driven GPU smoke runs");
+        let ssot = ssot_counters_seeded(f64::from(es_n0), frames, 4, SMOKE_SEED);
+
+        // Non-vacuous mixed verdict at the waterfall (the §11 regime).
+        assert!(
+            staged.errors > 0 && staged.errors < staged.frames,
+            "expected a mixed decode-success/failure smoke at the waterfall, got \
+             {}/{} errored frames (re-pin SMOKE_SEED if the chain changes)",
+            staged.errors,
+            staged.frames
+        );
+
+        // The three §11 CPU-vs-GPU columns, byte-identical.
+        assert_eq!(staged.frames, ssot.frames, "frames");
+        assert_eq!(staged.errors, ssot.errors, "errors (frame errors)");
+        assert_eq!(
+            staged.fer().to_bits(),
+            ssot.fer().to_bits(),
+            "fer bit pattern"
+        );
+
+        // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion).
+        eprintln!(
+            "stage-driven GPU smoke @6dB: frames={} errors={} fer={:.6} | \
+             mean_iters staged(GPU)={:.6} ssot(CPU)={:.6} diff={:+.6} (logged only, §11)",
+            staged.frames,
+            staged.errors,
+            staged.fer(),
+            staged.mean_iters(),
+            ssot.mean_iters(),
+            staged.mean_iters() - ssot.mean_iters()
+        );
     }
 
     #[test]
