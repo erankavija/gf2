@@ -932,7 +932,12 @@ pipeline uses the cleaner `worker_offset` from §3.
 5. `bbf6b6ee` migrates `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
    to call the new pipeline. Existing call sites of `SimulationRunner`
    in `gf2-coding` are left alone — the migration is per-binary, not
-   a hard cut.
+   a hard cut. *[landed: per the user-approved amendment 2026-06-11b
+   the migrated binary lives at
+   `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` (a `gf2-coding`
+   binary cannot depend on `gf2-sim` — dependency cycle) and the
+   legacy `gf2-coding` binary FILE was deleted; the
+   `SimulationRunner` LIBRARY path is retained as stated.]*
 6. A future epic (out of `gf2-sim` scope) deprecates `simulation.rs`
    paths after all callers migrate.
 

@@ -126,7 +126,7 @@ once `e4849f07`'s artefacts land.
 - Epic: `jit issue show 2928ccce`
 - Campaign artefacts: `dev/benchmarks/dvb_t2_awgn/{PLAN.md,README.md,smoke/,plot.py}`
 - Reference TOML: `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`
-- Binary: `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
+- Binary: `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` *[moved from `crates/gf2-coding/src/bin/` and the legacy binary file deleted, per the user-approved `bbf6b6ee` amendment 2026-06-11b]*
 - ETSI vectors: `/data/specs/dvb/t2/streams/`; TS 102 831:
   `/data/specs/etsi/deliver/etsi_ts/102800_102899/102831/01.02.01_60/ts_102831v010201p.txt`
 - Progress file: `dev/active/2928ccce-progress.json`
