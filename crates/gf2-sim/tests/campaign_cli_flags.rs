@@ -164,7 +164,14 @@ fn cli_minimal_valid_run_writes_curve_csv() {
     let _ = std::fs::remove_dir_all(out_dir);
     let out = Command::new(binary_path())
         .args(base_args(out_dir))
-        .args(["--max-frames", "4", "--target-errors", "1000", "--seed", "7"])
+        .args([
+            "--max-frames",
+            "4",
+            "--target-errors",
+            "1000",
+            "--seed",
+            "7",
+        ])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .output()
@@ -180,5 +187,9 @@ fn cli_minimal_valid_run_writes_curve_csv() {
     );
     let row = csv.lines().nth(1).expect("CSV has one data row");
     assert_eq!(row.split(',').count(), 7, "data row has 7 columns");
-    assert_eq!(row.split(',').nth(3), Some("4"), "frames column = max_frames");
+    assert_eq!(
+        row.split(',').nth(3),
+        Some("4"),
+        "frames column = max_frames"
+    );
 }
