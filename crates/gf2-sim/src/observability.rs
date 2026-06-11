@@ -1,13 +1,19 @@
 //! Tracing / observability setup for campaign runs.
 //!
 //! [`install_campaign_subscriber`] is the public entry point the DVB-T2 AWGN
-//! campaign binary calls (once `bbf6b6ee` migrates it) to install a
-//! JSON-lines tracing subscriber. Its effect mirrors the private
-//! `setup_tracing_guard` in `gf2_coding::simulation` (design doc §12).
+//! campaign binary calls to install a JSON-lines tracing subscriber whose
+//! events land in the file named by [`PipelineConfig::tracing_log_path`].
+//! Its effect mirrors `setup_tracing_guard` in `gf2_coding::simulation`
+//! (design doc §12).
 //!
-//! This is the Phase A stub: it returns an RAII guard whose `Drop` uninstalls
-//! the subscriber. The concrete subscriber wiring (JSON layer over the
-//! configured `tracing_log_path`) is filled in by `bbf6b6ee`.
+//! The returned [`CampaignSubscriberGuard`] is an RAII wrapper that drops
+//! the `tracing::subscriber::DefaultGuard`, restoring the previous subscriber
+//! when the campaign binary exits or an early return unwinds the frame.
+//!
+//! When `tracing_log_path` is `None` the function is a no-op and the returned
+//! guard holds nothing.
+
+use std::sync::Mutex;
 
 use crate::config::PipelineConfig;
 
@@ -18,25 +24,28 @@ use crate::config::PipelineConfig;
 #[derive(Debug)]
 #[must_use = "dropping the guard immediately uninstalls the campaign subscriber"]
 pub struct CampaignSubscriberGuard {
-    // Phase A stub: holds no installed subscriber yet. `bbf6b6ee` replaces
-    // this with the `tracing::subscriber::DefaultGuard` once the JSON layer
-    // is wired to `config.tracing_log_path`.
-    _private: (),
+    _guard: Option<tracing::subscriber::DefaultGuard>,
 }
 
 impl Drop for CampaignSubscriberGuard {
     fn drop(&mut self) {
-        // Phase A stub: no installed subscriber to uninstall yet. `bbf6b6ee`
-        // replaces this guard with the held `DefaultGuard`, whose own `Drop`
-        // restores the previous subscriber.
+        // `_guard` drops here, restoring the previous subscriber (or the
+        // `NoSubscriber` default).  Explicit `drop` is not needed; the field
+        // drop is sufficient and is the canonical `DefaultGuard` contract.
     }
 }
 
 /// Installs the campaign tracing subscriber and returns an RAII guard.
 ///
-/// While the returned guard is alive, campaign tracing events (`campaign_start`,
-/// `snr_completed`, `heartbeat`) are routed to the JSON-lines sink configured
-/// by [`PipelineConfig::tracing_log_path`]. Dropping the guard uninstalls it.
+/// While the returned guard is alive, campaign tracing events
+/// (`campaign_start`, `snr_completed`, `heartbeat`) are routed to the
+/// JSON-lines sink named by [`PipelineConfig::tracing_log_path`].  Each
+/// emitted tracing event is written as one self-contained JSON object
+/// followed by a newline (`\n`).  Dropping the guard uninstalls the
+/// subscriber and restores the previous one (or the no-op default).
+///
+/// When `config.tracing_log_path` is `None` the function is a no-op: nothing
+/// is installed and the returned guard holds nothing.
 ///
 /// # Arguments
 ///
@@ -73,11 +82,36 @@ impl Drop for CampaignSubscriberGuard {
 /// Returns the concrete [`CampaignSubscriberGuard`] (rather than `impl Drop`)
 /// so the type's `#[must_use]` propagates to call sites: dropping the guard
 /// immediately — `install_campaign_subscriber(&cfg);` — uninstalls the
-/// subscriber and is almost certainly a bug. Bind it to a live `let`.
+/// subscriber and is almost certainly a bug.  Bind it to a live `let`.
 pub fn install_campaign_subscriber(config: &PipelineConfig) -> CampaignSubscriberGuard {
-    // Phase A stub. The full implementation (owned by `bbf6b6ee`) opens
-    // `config.tracing_log_path` in append mode and installs a JSON
-    // `tracing_subscriber::fmt` layer, returning its `DefaultGuard`.
-    let _ = config;
-    CampaignSubscriberGuard { _private: () }
+    use tracing_subscriber::{fmt, prelude::*, registry};
+
+    let Some(path) = config.tracing_log_path.as_ref() else {
+        return CampaignSubscriberGuard { _guard: None };
+    };
+
+    let file = match std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+    {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!(
+                "Warning: cannot open tracing log {} — tracing disabled: {e}",
+                path.display()
+            );
+            return CampaignSubscriberGuard { _guard: None };
+        }
+    };
+
+    let layer = fmt::layer()
+        .json()
+        .with_writer(Mutex::new(file))
+        .with_span_list(false)
+        .with_current_span(true);
+    let subscriber = registry().with(layer);
+    CampaignSubscriberGuard {
+        _guard: Some(subscriber.set_default()),
+    }
 }

@@ -18,6 +18,7 @@ rayon = "1"
 rand_chacha = "0.9" # Q1 decision: future-aligned
 rand = "0.9"
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0" # v2 checkpoint (de)serialisation
 ctrlc = "3" # for SIGINT handler in 5f12e7ff
@@ -27,6 +28,7 @@ blake3 = "1" # for v2 checkpoint config_hash
 proptest = { workspace = true }
 trybuild = { workspace = true }
 rayon = "1"
+serde_json = "1.0" # for tracing.jsonl JSON validation in campaign_cli_flags tests
 
 [features]
 default = []
