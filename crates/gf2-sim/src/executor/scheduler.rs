@@ -519,31 +519,25 @@ impl Scheduler {
     }
 }
 
-/// The hybrid module's batch unit and GPU-stage discovery, re-exported for the
-/// checkpointed hybrid runner (`executor::drain`, `571c11c4`) so the drain path
-/// shares the exact same batching and routing as this uncheckpointed scheduler.
+/// The hybrid module's GPU-stage discovery, re-exported for the checkpointed
+/// hybrid runner (`executor::drain`, `571c11c4`) so the drain path shares the
+/// exact same routing as this uncheckpointed scheduler. The shared batch unit
+/// `BATCH_FRAMES` and the double-buffer core live in
+/// [`hybrid_core`](crate::executor::hybrid_core) (epic task `bb11c2e6`), the
+/// single SSOT both callers import directly.
 #[cfg(feature = "hip")]
-pub(crate) use hybrid::{find_gpu_ldpc_stage, BATCH_FRAMES};
+pub(crate) use hybrid::find_gpu_ldpc_stage;
 
 #[cfg(feature = "hip")]
 mod hybrid {
     use super::*;
-    use crate::parallel::WorkerCtx;
+    use crate::executor::hybrid_core::{
+        run_hybrid_double_buffer, BatchHooks, GpuBatchResult, HybridRunCtx, WorkerDevice,
+        BATCH_FRAMES,
+    };
     use crate::stage::ExecutionClass;
     use gf2_kernels_hip::host::HipStream;
     use rayon::prelude::*;
-
-    /// Frames per GPU decode batch (the double-buffer unit). Sized so the device
-    /// LDPC kernel amortises its per-launch overhead while keeping two batches'
-    /// worth of host LLR scratch modest. `pub(crate)`: the checkpointed hybrid
-    /// runner (`executor::drain`, `571c11c4`) uses the SAME unit so its batch
-    /// composition — and therefore the per-frame GPU decode results — matches
-    /// this scheduler's exactly.
-    pub(crate) const BATCH_FRAMES: usize = 16;
-
-    /// One GPU decode batch's result: the per-frame hard codewords and BP
-    /// iteration counts (or a [`StageError`] on a device fault).
-    type GpuBatchResult = Result<(Vec<gf2_core::BitVec>, Vec<u32>), StageError>;
 
     /// Routes `pipeline`'s stage list by [`ExecutionClass`] (deliverable 3) and
     /// returns the discovered `GpuOnly` LDPC BP decode stage, if any.
@@ -655,6 +649,18 @@ mod hybrid {
 
         /// One worker's strided frame partition, double-buffered CPU/GPU.
         ///
+        /// A thin wrapper over the shared
+        /// [`run_hybrid_double_buffer`](crate::executor::hybrid_core::run_hybrid_double_buffer)
+        /// core (epic task `bb11c2e6`): it computes the worker's strided
+        /// partition, builds the per-worker device decoder + pinned staging,
+        /// and supplies the **uncheckpointed failure semantics** via
+        /// [`SchedulerBatchHooks`] — every GPU decode wrapped in
+        /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+        /// (OOM → CPU fallback unless `strict_gpu`) plus the test-only OOM
+        /// injection (`42eac5cc`). The double-buffer overlap, per-frame RNG
+        /// seek, BCH decode-tail, and `pipeline_stage` instrumentation all live
+        /// in the shared core.
+        ///
         /// `stream` is the worker's owned HIP stream: the GPU decode of every
         /// batch is enqueued on it (launches + pinned transfers) and awaited
         /// per-stream inside
@@ -688,272 +694,149 @@ mod hybrid {
             // per-worker device LDPC decoder sized for one batch, and the
             // per-worker pinned staging the stream-ordered transfers use.
             let sim = template.clone();
-            let device = gpu_stage.build_decoder(BATCH_FRAMES)?;
-            let mut scratch = gpu_stage.build_stream_scratch(&device)?;
-            // The per-worker RNG context (logical worker 0: per-frame seek keyed
-            // on the GLOBAL frame index, the §3 byte-identity rule).
-            let mut ctx = WorkerCtx::new(seed, snr_idx, 0);
-
-            let mut counters = WorkerCounters::default();
-
-            // CPU-prep one batch of frames into (messages, llrs), inside the
-            // stage's tracing span + timeline interval (deliverable 4).
-            let prep_batch = |batch_id: usize,
-                              frames: &[usize],
-                              ctx: &mut WorkerCtx|
-             -> Vec<crate::frame_sim::FramePrep> {
-                traced_interval(
-                    timeline,
-                    worker_idx,
-                    snr_idx,
-                    batch_id,
-                    stream_id,
-                    "CpuPrep",
-                    ActivityKind::CpuPrep,
-                    run_start,
-                    || {
-                        frames
-                            .iter()
-                            .map(|&g| {
-                                ctx.reseek_to_frame(g);
-                                sim.prepare_frame(g, ctx)
-                            })
-                            .collect()
-                    },
-                )
+            let decoder = gpu_stage.build_decoder(BATCH_FRAMES)?;
+            let mut scratch = gpu_stage.build_stream_scratch(&decoder)?;
+            let mut device = WorkerDevice {
+                device: &decoder,
+                scratch: &mut scratch,
             };
 
-            // Double-buffer: prep batch 0, then for each batch overlap its GPU
-            // decode with the CPU prep of the next batch.
-            //
-            // The owned device decoder is `!Sync` (it owns device buffers), so
-            // it must stay on THIS worker thread. We therefore keep the
-            // GPU-blocking call on the worker thread and spawn the CPU prep of
-            // the next batch on a scoped helper thread (which captures only
-            // `Sync` state — `&sim` is `Sync` via its decoder `Mutex`). The two
-            // run concurrently: the helper preps batch N+1 on the CPU while this
-            // thread blocks on the GPU decode of batch N. (`std::thread::scope`
-            // keeps the borrows safe with no `'static` requirement.)
-            let batches: Vec<&[usize]> = my_frames.chunks(BATCH_FRAMES).collect();
-            let mut prepared = prep_batch(0, batches[0], &mut ctx);
+            let run_ctx = HybridRunCtx {
+                worker_idx,
+                stream_id,
+                snr_idx,
+                seed,
+                timeline,
+                run_start,
+            };
+            let mut hooks = SchedulerBatchHooks {
+                gpu_stage,
+                strict_gpu,
+                dump_dir,
+                inject_oom_modulus,
+                worker_idx,
+                snr_idx,
+            };
 
-            for bi in 0..batches.len() {
-                let cur_preps = std::mem::take(&mut prepared);
-                let next_idx = bi + 1;
-
-                let (gpu_res, next_preps): (GpuBatchResult, Vec<crate::frame_sim::FramePrep>) =
-                    std::thread::scope(|scope| {
-                        // CPU prep of batch N+1 on a helper thread (Send-only capture).
-                        let cpu_handle = scope.spawn(|| {
-                            if next_idx < batches.len() {
-                                // The per-frame outcome is keyed on the GLOBAL frame
-                                // index (§3), not on ctx history, so a throwaway ctx
-                                // seeked per frame preserves byte-identity.
-                                let mut next_ctx = WorkerCtx::new(seed, snr_idx, 0);
-                                prep_batch(next_idx, batches[next_idx], &mut next_ctx)
-                            } else {
-                                Vec::new()
-                            }
-                        });
-
-                        // GPU decode of batch N on THIS (worker) thread: every
-                        // launch and transfer is stream-ordered on the worker's
-                        // owned stream; completion is the per-stream synchronize
-                        // inside the decode call (deliverable 2d — no
-                        // device-wide sync in the steady-state loop).
-                        //
-                        // The result is wrapped by `dispatch_with_fallback`
-                        // (issue `42eac5cc`): a recoverable OOM triggers a
-                        // `tracing::warn!` and re-runs the batch on the CPU
-                        // LDPC fallback; a fatal error writes a JSON diagnostic
-                        // dump and propagates.
-                        let llr_batch_for_fallback = crate::batch::LlrBatch::new(
-                            cur_preps.iter().map(|p| p.llrs.clone()).collect(),
-                        );
-                        // The batch's first global frame index: used to key the
-                        // test-only OOM injection (`42eac5cc`) so the modulus
-                        // semantics mirror the topology executor's per-frame
-                        // keying — only the batch's first frame index is
-                        // checked; the whole batch is injected (or not) as one
-                        // unit. This is the documented two-surface keying for
-                        // `PipelineConfig::inject_gpu_oom_modulus`.
-                        let first_global_frame = batches[bi].first().copied().unwrap_or(0) as u64;
-                        let gpu_res = traced_interval(
-                            timeline,
-                            worker_idx,
-                            snr_idx,
-                            bi,
-                            stream_id,
-                            "GpuLdpcBp",
-                            ActivityKind::GpuDecode,
-                            run_start,
-                            || -> GpuBatchResult {
-                                use crate::executor::failure::{
-                                    dispatch_with_fallback, FailurePolicy, FaultContext,
-                                };
-                                use crate::stage::Stage as _;
-                                let ctx = FaultContext {
-                                    batch_id: first_global_frame,
-                                    snr_idx,
-                                    device_id: 0,
-                                    worker_idx,
-                                };
-                                let policy = FailurePolicy {
-                                    strict_gpu,
-                                    dump_dir,
-                                    inject_gpu_oom_modulus: inject_oom_modulus,
-                                };
-                                // Test-only OOM injection (`42eac5cc`): force a
-                                // recoverable OOM when the modulus fires on this
-                                // batch's first global frame index, driving the
-                                // production `dispatch_with_fallback` path as a
-                                // genuine device OOM would.
-                                let raw: GpuBatchResult =
-                                    if policy.injects_oom_at(first_global_frame) {
-                                        Err(StageError::Recoverable(
-                                            crate::error::RecoverableError::OutOfMemory {
-                                                device_id: 0,
-                                                bytes_requested: 1024 * 1024 * 1024,
-                                            },
-                                        ))
-                                    } else {
-                                        gpu_stage
-                                            .decode_batch_with_iters_on_stream(
-                                                &llr_batch_for_fallback,
-                                                &device,
-                                                stream,
-                                                &mut scratch,
-                                            )
-                                            .map(|(hard, iters)| (hard.frames, iters))
-                                    };
-                                dispatch_with_fallback(
-                                    raw,
-                                    || {
-                                        // CPU fallback: run the registered CpuLdpcBp
-                                        // on the same LLR batch. The per-frame
-                                        // iteration count is recorded as
-                                        // `max_iterations` (the stage's cap), the
-                                        // shared fallback-iters convention (L1)
-                                        // documented at the topology executor's
-                                        // `gpu_ldpc_max_iters` helper: since
-                                        // `mean_iters` is §11-excluded from the
-                                        // CPU-vs-GPU contract on a mixed-path run,
-                                        // any consistent value is acceptable; the
-                                        // cap is the documented convention so the
-                                        // two surfaces agree.
-                                        let max_iters = gpu_stage.max_iterations() as u32;
-                                        let fb = gpu_stage.cpu_fallback().ok_or_else(|| {
-                                            StageError::Fatal(
-                                                crate::error::FatalError::CpuFallbackAlsoFailed {
-                                                    original: Box::new(
-                                                        crate::error::RecoverableError::Transient(
-                                                            "no CPU fallback on GpuLdpcBp".into(),
-                                                        ),
-                                                    ),
-                                                },
-                                            )
-                                        })?;
-                                        let hard = fb.process(&llr_batch_for_fallback, &mut ())?;
-                                        let n = hard.frames.len();
-                                        Ok((hard.frames, vec![max_iters; n]))
-                                    },
-                                    ctx,
-                                    strict_gpu,
-                                    dump_dir,
-                                )
-                            },
-                        );
-
-                        let next_preps = cpu_handle.join().expect("CPU prep helper thread");
-                        (gpu_res, next_preps)
-                    });
-
-                let (codewords, iters) = gpu_res?;
-                prepared = next_preps;
-
-                // CPU BCH decode-tail + error count for the just-decoded batch.
-                traced_interval(
-                    timeline,
-                    worker_idx,
-                    snr_idx,
-                    bi,
-                    stream_id,
-                    "CpuDecodeTail",
-                    ActivityKind::CpuPrep,
-                    run_start,
-                    || {
-                        for (i, prep) in cur_preps.iter().enumerate() {
-                            let outcome = sim.decode_codeword_to_outcome(
-                                &prep.message,
-                                &codewords[i],
-                                iters[i] as u64,
-                            );
-                            counters.record_frame(
-                                outcome.errored,
-                                outcome.iterations,
-                                outcome.info_bits,
-                                outcome.bit_errors,
-                            );
-                        }
-                    },
-                );
-            }
-
+            // The uncheckpointed scheduler runs every batch (no SIGINT stop) and
+            // does not observe per-frame (the checkpointed runner does both).
+            let (counters, _frames_done) = run_hybrid_double_buffer(
+                &sim,
+                &mut device,
+                stream,
+                &run_ctx,
+                &my_frames,
+                &mut hooks,
+                &|_g| {},
+            )?;
             Ok(counters)
         }
     }
 
-    fn elapsed_us(run_start: Instant) -> u128 {
-        run_start.elapsed().as_micros()
-    }
-
-    /// Runs `f` as one instrumented stage interval (deliverable 4): a
-    /// `tracing` span named `pipeline_stage` carrying
-    /// `(worker_idx, snr_idx, batch_id, stream_id, stage_name, wall_us)` —
-    /// entered for the duration of `f`, with the measured `wall_us` recorded
-    /// on the span just before close — plus the matching
-    /// [`ActivityInterval`] appended to the [`OverlapTimeline`] (criterion 1's
-    /// overlap-attestation surface; the span and the interval mark the same
-    /// boundaries).
-    #[allow(clippy::too_many_arguments)]
-    fn traced_interval<T>(
-        timeline: &Mutex<OverlapTimeline>,
+    /// The uncheckpointed scheduler's per-batch decode dispatch (`bb11c2e6`
+    /// deliverable 1): every GPU decode wrapped in
+    /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+    /// (substitute the CPU LDPC fallback on a recoverable fault unless
+    /// `strict_gpu`), plus the `42eac5cc` test-only OOM injection. This is the
+    /// failure-semantics half of the shared-core hook — the **substitute**
+    /// policy, contrasted with the checkpointed drain loop's **propagate**
+    /// policy (see `executor/drain.rs`).
+    struct SchedulerBatchHooks<'a> {
+        gpu_stage: &'a crate::gpu::ldpc_bp::GpuLdpcBp,
+        strict_gpu: bool,
+        dump_dir: &'a std::path::Path,
+        inject_oom_modulus: Option<u64>,
         worker_idx: usize,
         snr_idx: usize,
-        batch_id: usize,
-        stream_id: usize,
-        stage_name: &'static str,
-        kind: ActivityKind,
-        run_start: Instant,
-        f: impl FnOnce() -> T,
-    ) -> T {
-        let span = tracing::info_span!(
-            "pipeline_stage",
-            worker_idx,
-            snr_idx,
-            batch_id,
-            stream_id,
-            stage_name,
-            wall_us = tracing::field::Empty
-        );
-        let entered = span.enter();
-        let start_us = elapsed_us(run_start);
-        let out = f();
-        let end_us = elapsed_us(run_start);
-        span.record("wall_us", (end_us - start_us) as u64);
-        drop(entered);
-        timeline
-            .lock()
-            .expect("overlap timeline mutex")
-            .intervals
-            .push(ActivityInterval {
-                worker_idx,
-                stream_id,
-                kind,
-                start_us,
-                end_us,
-            });
-        out
+    }
+
+    impl BatchHooks for SchedulerBatchHooks<'_> {
+        fn decode_batch(
+            &mut self,
+            device: &mut WorkerDevice<'_>,
+            stream: &HipStream,
+            _batch_idx: usize,
+            first_global_frame: u64,
+            preps: &[crate::frame_sim::FramePrep],
+        ) -> GpuBatchResult {
+            use crate::executor::failure::{dispatch_with_fallback, FailurePolicy, FaultContext};
+            use crate::stage::Stage as _;
+
+            // The result is wrapped by `dispatch_with_fallback` (issue
+            // `42eac5cc`): a recoverable OOM triggers a `tracing::warn!` and
+            // re-runs the batch on the CPU LDPC fallback; a fatal error writes a
+            // JSON diagnostic dump and propagates.
+            let llr_batch_for_fallback =
+                crate::batch::LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
+            let fault_ctx = FaultContext {
+                batch_id: first_global_frame,
+                snr_idx: self.snr_idx,
+                device_id: 0,
+                worker_idx: self.worker_idx,
+            };
+            let policy = FailurePolicy {
+                strict_gpu: self.strict_gpu,
+                dump_dir: self.dump_dir,
+                inject_gpu_oom_modulus: self.inject_oom_modulus,
+            };
+            // Test-only OOM injection (`42eac5cc`): force a recoverable OOM when
+            // the modulus fires on this batch's first global frame index,
+            // driving the production `dispatch_with_fallback` path as a genuine
+            // device OOM would. The batch's first global frame index keys the
+            // modulus — only the batch's first frame index is checked; the whole
+            // batch is injected (or not) as one unit. This is the documented
+            // two-surface keying for `PipelineConfig::inject_gpu_oom_modulus`.
+            let raw: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
+                Err(StageError::Recoverable(
+                    crate::error::RecoverableError::OutOfMemory {
+                        device_id: 0,
+                        bytes_requested: 1024 * 1024 * 1024,
+                    },
+                ))
+            } else {
+                self.gpu_stage
+                    .decode_batch_with_iters_on_stream(
+                        &llr_batch_for_fallback,
+                        device.device,
+                        stream,
+                        device.scratch,
+                    )
+                    .map(|(hard, iters)| (hard.frames, iters))
+            };
+            dispatch_with_fallback(
+                raw,
+                || {
+                    // CPU fallback: run the registered CpuLdpcBp on the same LLR
+                    // batch. The per-frame iteration count is recorded as
+                    // `max_iterations` (the stage's cap), the shared
+                    // fallback-iters convention (L1) documented at the topology
+                    // executor's `gpu_ldpc_max_iters` helper: since `mean_iters`
+                    // is §11-excluded from the CPU-vs-GPU contract on a
+                    // mixed-path run, any consistent value is acceptable; the cap
+                    // is the documented convention so the two surfaces agree.
+                    let max_iters = self.gpu_stage.max_iterations() as u32;
+                    let fb = self.gpu_stage.cpu_fallback().ok_or_else(|| {
+                        StageError::Fatal(crate::error::FatalError::CpuFallbackAlsoFailed {
+                            original: Box::new(crate::error::RecoverableError::Transient(
+                                "no CPU fallback on GpuLdpcBp".into(),
+                            )),
+                        })
+                    })?;
+                    let hard = fb.process(&llr_batch_for_fallback, &mut ())?;
+                    let n = hard.frames.len();
+                    Ok((hard.frames, vec![max_iters; n]))
+                },
+                fault_ctx,
+                self.strict_gpu,
+                self.dump_dir,
+            )
+        }
+
+        fn stop_after_batch(&self, _batch_idx: usize) -> bool {
+            // The uncheckpointed scheduler has no SIGINT stop: it runs every
+            // batch of the worker's partition to completion.
+            false
+        }
     }
 }
 
