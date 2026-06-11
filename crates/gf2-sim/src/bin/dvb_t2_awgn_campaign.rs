@@ -16,9 +16,10 @@
 //! the original binary at `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
 //! uses. The legacy binary is retained verbatim (it is **not** deleted) so
 //! other `gf2-coding` callers continue on the legacy API; this binary is the
-//! v2 successor. Both share the same name (`dvb_t2_awgn_campaign`); the one
-//! that runs depends on which crate's binary cargo resolves (`-p gf2-sim`
-//! selects this one).
+//! v2 successor. Both share the same name (`dvb_t2_awgn_campaign`); invoking
+//! either from the workspace root with just `--bin dvb_t2_awgn_campaign`
+//! causes a cargo ambiguity error — `-p gf2-sim` is mandatory to select this
+//! binary.
 //!
 //! The new pipeline parallelises every SNR point across rayon workers (and,
 //! with `--gpu` on a `--features hip` build, offloads the heavy LDPC BP +
@@ -115,6 +116,16 @@
 //!   `errors`, and `mean_iters` are deterministic and asserted byte-identical
 //!   across two runs at the same seed by the within-pipeline byte-identity
 //!   integration test (`tests/campaign_byte_identity.rs`).
+//!
+//!   **`mean_iters` legacy-compatibility note**: the legacy binary recorded
+//!   `iterations: 1` for converged frames (a quirk of its `DecoderResult`
+//!   sentinel). This pipeline records the real BP iteration depth. Old-vs-new
+//!   `mean_iters` curves are therefore **not comparable**; use only
+//!   `fer`/`ber`/`frames`/`errors` for cross-binary comparison.
+//! - `tracing.jsonl` — structured JSON-lines tracing log (one JSON object per
+//!   line). Written unconditionally (both production and calibration runs) by
+//!   the [`gf2_sim::observability::install_campaign_subscriber`] machinery.
+//!   The cross-epic e4849f07 multi-day sweep monitor watches this file.
 //! - `README.md` — invocation, seed, host info, total wall-clock.
 //! - `checkpoints/` — per-SNR JSON files (v2 schema with BLAKE3-verified
 //!   config hash), written by the pipeline's checkpoint subsystem.
@@ -149,6 +160,7 @@ use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
 use gf2_sim::executor::{SimulationResults, SnrPointResult};
+use gf2_sim::observability::install_campaign_subscriber;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
 
@@ -697,9 +709,11 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
 /// All CLI run-control knobs are wired onto the built pipeline's
 /// [`PipelineConfig`](gf2_sim::PipelineConfig) here: `esn0_db_points`,
 /// `target_errors`, `max_frames`, `seed`, **`strict_gpu`** (from
-/// `args.strict_gpu`), `checkpoint_dir`, and the heartbeat cadence. This is the
-/// single CLI→config wiring point, exercised directly by the
-/// `strict_gpu_flag_wires_to_config` unit test.
+/// `args.strict_gpu`), **`gpu_enabled`** (from `args.gpu`),
+/// `tracing_log_path`, `checkpoint_dir`, and the heartbeat cadence. This is
+/// the single CLI→config wiring point, exercised directly by the
+/// `strict_gpu_flag_wires_to_config` and `gpu_enabled_flag_wires_to_config`
+/// unit tests.
 ///
 /// # Arguments
 ///
@@ -709,6 +723,7 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
 /// * `max_frames` — the per-SNR maximum frame budget.
 /// * `checkpoint_dir` — the per-SNR checkpoint directory, or `None`.
 /// * `heartbeat_every_frames` — the within-SNR checkpoint cadence (`0` off).
+/// * `tracing_log_path` — JSON-lines sink for tracing events, or `None`.
 fn build_configured_pipeline(
     args: &Args,
     esn0_points: &[f64],
@@ -716,6 +731,7 @@ fn build_configured_pipeline(
     max_frames: usize,
     checkpoint_dir: Option<PathBuf>,
     heartbeat_every_frames: u64,
+    tracing_log_path: Option<PathBuf>,
 ) -> Result<Pipeline, String> {
     let channel_es_n0 = esn0_points.first().copied().unwrap_or(6.0);
     let modcod = Modcod::Normal {
@@ -742,9 +758,11 @@ fn build_configured_pipeline(
     cfg.target_errors = target_errors as u64;
     cfg.max_frames = max_frames as u64;
     cfg.seed = args.seed;
+    cfg.gpu_enabled = args.gpu;
     cfg.strict_gpu = args.strict_gpu;
     cfg.checkpoint_dir = checkpoint_dir;
     cfg.heartbeat_every_frames = heartbeat_every_frames;
+    cfg.tracing_log_path = tracing_log_path;
     Ok(pipeline)
 }
 
@@ -838,6 +856,11 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         }
     }
 
+    // JSON-lines tracing log: unconditional (matches legacy binary parity),
+    // written by install_campaign_subscriber below.  Both production and
+    // calibration runs produce the file; the cross-epic monitor watches it.
+    let tracing_path = args.output_dir.join("tracing.jsonl");
+
     eprintln!(
         "Campaign (gf2-sim pipeline): {} {} | decoder={:?} demap={:?} | gpu={} strict_gpu={}",
         rate_display(args.rate),
@@ -863,7 +886,14 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         max_frames_per_snr,
         checkpoint_dir.clone(),
         if is_calib { 0 } else { 1000 },
+        Some(tracing_path.clone()),
     )?;
+
+    // Install the JSON-lines tracing subscriber.  Must be called AFTER the
+    // pipeline is built (so `tracing_log_path` is set on the config) and BEFORE
+    // the run starts.  The guard must remain live for the full duration of the
+    // run; dropping it early uninstalls the subscriber mid-campaign.
+    let _tracing_guard = install_campaign_subscriber(pipeline.config());
 
     eprintln!(
         "Running via {} (parallelism={}, checkpoint={})",
@@ -931,6 +961,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     eprintln!("Campaign complete. Output: {}", args.output_dir.display());
     eprintln!("  CSV: {}", csv_path.display());
+    eprintln!("  Log: {}", tracing_path.display());
     if let Some(ref ckpt_dir) = checkpoint_dir {
         eprintln!("  Checkpoints: {}", ckpt_dir.display());
     }
@@ -1107,8 +1138,8 @@ mod tests {
         let mut args = base_args();
 
         // Default (flag absent): strict_gpu false on the config.
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds");
         assert!(
             !pipeline.config().strict_gpu,
             "strict_gpu must default to false when --strict-gpu is absent"
@@ -1116,24 +1147,60 @@ mod tests {
 
         // Flag present: strict_gpu true on the config.
         args.strict_gpu = true;
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds");
         assert!(
             pipeline.config().strict_gpu,
             "--strict-gpu must set PipelineConfig::strict_gpu = true"
         );
     }
 
+    /// CLI→config: the `--gpu` flag (here `args.gpu`) wires through
+    /// `build_configured_pipeline` onto `PipelineConfig::gpu_enabled`.
+    /// This is the hard-criterion wire verified by a CLI→config parse test.
+    #[test]
+    fn gpu_enabled_flag_wires_to_config() {
+        let mut args = base_args();
+
+        // Default (--gpu absent): gpu_enabled false on the config.
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds without gpu");
+        assert!(
+            !pipeline.config().gpu_enabled,
+            "gpu_enabled must default to false when --gpu is absent"
+        );
+
+        // --gpu present: gpu_enabled true on the config.  Note: `with_gpu(true)`
+        // on a non-hip build degrades gracefully at build() time (no error) and
+        // only errors at run time when the GPU executor is actually invoked.
+        args.gpu = true;
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds with gpu flag");
+        assert!(
+            pipeline.config().gpu_enabled,
+            "--gpu must set PipelineConfig::gpu_enabled = true"
+        );
+    }
+
     /// CLI→config: the remaining run-control knobs (`seed`, `target_errors`,
-    /// `max_frames`, `esn0_db_points`, `checkpoint_dir`, `heartbeat`) also wire
-    /// through the single `build_configured_pipeline` site.
+    /// `max_frames`, `esn0_db_points`, `checkpoint_dir`, `heartbeat`,
+    /// `tracing_log_path`) also wire through the single
+    /// `build_configured_pipeline` site.
     #[test]
     fn run_control_knobs_wire_to_config() {
         let args = base_args();
         let ck = PathBuf::from("/tmp/ck_unused");
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0, 6.5], 100, 8, Some(ck.clone()), 1000)
-                .expect("pipeline builds");
+        let tl = PathBuf::from("/tmp/tl_unused.jsonl");
+        let pipeline = build_configured_pipeline(
+            &args,
+            &[6.0, 6.5],
+            100,
+            8,
+            Some(ck.clone()),
+            1000,
+            Some(tl.clone()),
+        )
+        .expect("pipeline builds");
         let cfg = pipeline.config();
         assert_eq!(cfg.seed, 42);
         assert_eq!(cfg.target_errors, 100);
@@ -1141,6 +1208,7 @@ mod tests {
         assert_eq!(cfg.esn0_db_points, vec![6.0, 6.5]);
         assert_eq!(cfg.checkpoint_dir.as_deref(), Some(ck.as_path()));
         assert_eq!(cfg.heartbeat_every_frames, 1000);
+        assert_eq!(cfg.tracing_log_path.as_deref(), Some(tl.as_path()));
     }
 
     #[test]
