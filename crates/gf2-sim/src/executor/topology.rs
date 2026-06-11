@@ -278,6 +278,47 @@ fn stream_id_for(scheduler: &Scheduler, worker_idx: usize, route: &WorkerRoute<'
     NO_STREAM
 }
 
+/// The GPU LDPC stage position to use when defaulting a frame's iteration
+/// count after a CPU fallback. Identity under `hip`; always `None` without it
+/// (no GPU LDPC stage can exist), so [`gpu_ldpc_max_iters`] is never invoked on
+/// the non-hip build.
+#[inline]
+fn gpu_iter_fallback_pos(gpu_bp_pos: Option<usize>) -> Option<usize> {
+    #[cfg(feature = "hip")]
+    {
+        gpu_bp_pos
+    }
+    #[cfg(not(feature = "hip"))]
+    {
+        let _ = gpu_bp_pos;
+        None
+    }
+}
+
+/// The `max_iterations` cap of the GPU LDPC BP stage at `pos`, used as the
+/// recorded iteration count for a frame whose GPU dispatch fell back to the CPU
+/// LDPC stage (the `42eac5cc` OOM substitution leaves no per-frame count, and
+/// `mean_iters` is §11-excluded from the CPU-vs-GPU contract). The caller only
+/// reaches it when a `GpuLdpcBp` stage exists in the chain (hip builds only;
+/// [`gpu_iter_fallback_pos`] returns `None` otherwise).
+fn gpu_ldpc_max_iters(stages: &[Box<dyn AnyStage>], pos: usize) -> Result<u64, StageError> {
+    #[cfg(feature = "hip")]
+    {
+        stages[pos]
+            .stage_as_any()
+            .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
+            .map(|bp| bp.max_iterations() as u64)
+            .ok_or_else(|| exec_err("internal: GPU LDPC position lost while defaulting iter count"))
+    }
+    #[cfg(not(feature = "hip"))]
+    {
+        let _ = (stages, pos);
+        Err(exec_err(
+            "internal: GPU LDPC iteration fallback is unreachable without the hip feature",
+        ))
+    }
+}
+
 /// Executes one stage via its [`AnyStage`] object, routed by
 /// [`execution_class()`](AnyStage::execution_class), inside the six-field
 /// `pipeline_stage` tracing span.
@@ -1387,24 +1428,38 @@ impl TopologyExecutor {
                             let iterations = match gpu_iters {
                                 Some(i) => i,
                                 None => {
-                                    let pos = cpu_decode_pos.ok_or_else(|| {
-                                        exec_err(
+                                    if let Some(pos) = cpu_decode_pos {
+                                        // Deref the box (see the channel scratch
+                                        // note above).
+                                        (*scratches[pos])
+                                            .as_any_mut()
+                                            .downcast_mut::<DecodeScratch>()
+                                            .and_then(|s| s.iterations.first().copied())
+                                            .ok_or_else(|| {
+                                                exec_err(
+                                                    "internal: DvbT2Decode scratch carries no \
+                                                     iteration count for the frame",
+                                                )
+                                            })?
+                                    } else if let Some(pos) = gpu_iter_fallback_pos(gpu_bp_pos) {
+                                        // The chain's BP-iteration source is the
+                                        // GPU LDPC stage, but it surfaced no
+                                        // per-frame count: this frame's GPU
+                                        // dispatch fell back to the CPU LDPC
+                                        // stage (an OOM substitution, `42eac5cc`),
+                                        // whose `Scratch = ()` carries no iteration
+                                        // count. `mean_iters` is §11-EXCLUDED from
+                                        // the CPU-vs-GPU contract, so record the
+                                        // stage's `max_iterations` cap — the
+                                        // verdict columns (`fer`/`frames`/`errors`)
+                                        // are unaffected.
+                                        gpu_ldpc_max_iters(stages, pos)?
+                                    } else {
+                                        return Err(exec_err(
                                             "no BP-iteration source ran for this frame \
                                              (no DvbT2Decode stage and no GPU LDPC counts)",
-                                        )
-                                    })?;
-                                    // Deref the box (see the channel scratch
-                                    // note above).
-                                    (*scratches[pos])
-                                        .as_any_mut()
-                                        .downcast_mut::<DecodeScratch>()
-                                        .and_then(|s| s.iterations.first().copied())
-                                        .ok_or_else(|| {
-                                            exec_err(
-                                                "internal: DvbT2Decode scratch carries no \
-                                                 iteration count for the frame",
-                                            )
-                                        })?
+                                        ));
+                                    }
                                 }
                             };
                             let bit_errors =
