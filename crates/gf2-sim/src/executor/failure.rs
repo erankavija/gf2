@@ -54,6 +54,47 @@ use crate::error::{FatalError, RecoverableError, StageError};
 // Diagnostic dump schema
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Failure-mode parameters threaded through GPU stage dispatch (`42eac5cc`).
+///
+/// Bundles the `strict_gpu` flag, the diagnostic dump directory, and the
+/// test-only OOM-injection modulus so they travel as one argument. Consumed by
+/// **both** wrapped GPU surfaces: the topology executor's `GpuOnly` arm
+/// (`executor/topology.rs::execute_gpu_stage`) and the C.1 scheduler hybrid
+/// loop (`executor/scheduler.rs::worker_partition_hybrid`). Both construct it
+/// from the same [`PipelineConfig`](crate::PipelineConfig) fields, so the
+/// config wiring is identical on the two surfaces.
+///
+/// The fields are only read inside `#[cfg(feature = "hip")]` dispatch arms;
+/// the `dead_code` lint would fire on no-hip builds where those arms are
+/// elided.
+#[allow(dead_code)]
+pub(crate) struct FailurePolicy<'p> {
+    /// Promote GPU OOM (and only OOM) to fatal instead of CPU-falling-back.
+    pub(crate) strict_gpu: bool,
+    /// Directory for JSON hard-fail diagnostic dumps.
+    pub(crate) dump_dir: &'p std::path::Path,
+    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
+    /// `Some(m)`, the GPU LDPC dispatch forces a recoverable OOM on every
+    /// dispatch whose keying global frame index `g` satisfies `g % m == 0`
+    /// (the topology executor keys each one-frame dispatch on its global
+    /// frame index; the scheduler hybrid loop keys each batch on the batch's
+    /// FIRST global frame index), driving the production
+    /// [`dispatch_with_fallback`] path. Mirrors
+    /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus).
+    pub(crate) inject_gpu_oom_modulus: Option<u64>,
+}
+
+impl FailurePolicy<'_> {
+    /// Whether the test-only OOM injection fires for the GPU dispatch keyed on
+    /// global frame index `g` (see
+    /// [`inject_gpu_oom_modulus`](Self::inject_gpu_oom_modulus)).
+    #[allow(dead_code)] // read only inside `feature = "hip"` dispatch arms.
+    pub(crate) fn injects_oom_at(&self, g: u64) -> bool {
+        self.inject_gpu_oom_modulus
+            .is_some_and(|m| m >= 1 && g.is_multiple_of(m))
+    }
+}
+
 /// Context passed to [`dispatch_with_fallback`] for tracing and diagnostics.
 /// Carries the per-batch identifiers that appear in the `tracing::warn!` /
 /// `tracing::error!` events and in the JSON dump.
