@@ -970,8 +970,9 @@ impl GpuLdpcBp {
         // Final wait (the early-term path already synced inside the loop, but a
         // run that never early-terminates needs this) and hard-decision D2H.
         // Stream path: stream-ordered D2H + per-stream synchronize only.
+        // Final use of `staging`: consume it directly (no re-deref needed).
         let mut hard = vec![0u8; batch * self.n];
-        match (stream, staging.as_deref_mut()) {
+        match (stream, staging) {
             (Some(stream), Some(scratch)) => {
                 self.d_hard
                     .copy_to_pinned_async(&mut scratch.hard, stream)?;

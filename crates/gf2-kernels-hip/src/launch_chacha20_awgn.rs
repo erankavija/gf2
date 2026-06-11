@@ -16,10 +16,28 @@
 //! `GpuAwgn` stage (the §8 fallback-bearing consumer) calls
 //! [`GpuChaChaAwgn`] without touching FFI, preserving `gf2-sim`'s
 //! `#![deny(unsafe_code)]`.
+//!
+//! # Default-stream vs stream-ordered generation (design doc §6)
+//!
+//! [`GpuChaChaAwgn::noise_samples`] / [`noise_samples_into`] run on the
+//! **default stream** with synchronous transfers and `hipDeviceSynchronize`
+//! completion — the simple single-consumer path. The additive
+//! [`noise_samples_into_on_stream`] variant enqueues the kernel launch **and**
+//! the D2H read-back on a caller-owned [`HipStream`] (the read-back staged
+//! through the pinned [`AwgnStreamScratch`], since a synchronous `hipMemcpy`
+//! executes on the legacy NULL stream and would serialize against every other
+//! blocking stream on the device) and awaits completion with per-stream
+//! [`HipStream::synchronize`] — never device-wide sync. Both paths run the
+//! identical kernel on identical inputs, so their samples are byte-identical
+//! (guarded by `test_noise_on_stream_matches_default_stream`).
+//!
+//! [`noise_samples_into`]: GpuChaChaAwgn::noise_samples_into
+//! [`noise_samples_into_on_stream`]: GpuChaChaAwgn::noise_samples_into_on_stream
+//! [`HipStream::synchronize`]: crate::host::HipStream::synchronize
 
 use std::ffi::c_void;
 
-use crate::host::{DeviceBuffer, HipStream};
+use crate::host::{DeviceBuffer, HipStream, PinnedHostBuffer};
 use crate::{check_hip, ffi, HipError};
 
 /// Derives the 32-byte ChaCha20 key `rand_chacha 0.9` builds from a `u64` seed.
@@ -78,6 +96,49 @@ pub fn chacha20_key_from_seed(seed: u64) -> [u32; 8] {
         *slot = xorshifted.rotate_right(rot);
     }
     key
+}
+
+/// Pinned host staging for the stream-ordered noise path
+/// ([`GpuChaChaAwgn::noise_samples_into_on_stream`]).
+///
+/// The stream path must not issue synchronous (`hipMemcpy`) transfers: a
+/// synchronous copy executes on the legacy NULL stream, which serializes
+/// against every other blocking stream on the device and would destroy the
+/// cross-worker overlap the per-worker streams exist to provide (design doc
+/// §6). The D2H read-back on that path is therefore staged through this
+/// page-locked buffer with a stream-ordered `hipMemcpyAsync`.
+///
+/// One scratch pairs with one [`GpuChaChaAwgn`] (it is sized at construction
+/// for that generator's `capacity` — build it via
+/// [`GpuChaChaAwgn::new_stream_scratch`]) and belongs to exactly one worker
+/// thread: like [`PinnedHostBuffer`] it is `Send`-only, owned per worker,
+/// never shared by `&` across threads.
+///
+/// # Examples
+///
+/// ```no_run
+/// use gf2_kernels_hip::GpuChaChaAwgn;
+///
+/// // Requires a real HIP device, so this is `no_run`.
+/// let gen = GpuChaChaAwgn::new(42, 0, 4096).expect("build generator");
+/// let scratch = gen.new_stream_scratch().expect("pinned staging");
+/// assert_eq!(scratch.capacity(), 4096);
+/// ```
+pub struct AwgnStreamScratch {
+    /// D2H staging for the raw 4-byte output lanes (`capacity` of them). The
+    /// device buffer stores raw lanes; the host reinterprets them per call
+    /// (`f32::from_bits` for noise samples — exact, bit-preserving).
+    out: PinnedHostBuffer<u32>,
+    capacity: usize,
+}
+
+impl AwgnStreamScratch {
+    /// The `capacity` (4-byte lanes) of the [`GpuChaChaAwgn`] this scratch was
+    /// sized for.
+    #[must_use]
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
 }
 
 /// A reusable device-side ChaCha20 + Box-Muller AWGN noise generator.
@@ -335,12 +396,106 @@ impl GpuChaChaAwgn {
         )
     }
 
+    /// Allocates the pinned host staging the stream-ordered noise variant
+    /// ([`noise_samples_into_on_stream`](Self::noise_samples_into_on_stream))
+    /// requires, sized for this generator's `capacity` on its device.
+    ///
+    /// Build one scratch per worker (it is `Send`-only, owned per worker) and
+    /// reuse it across frames; the default-stream
+    /// [`noise_samples`](Self::noise_samples) path needs none.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`] if the pinned allocation fails (an OOM is the
+    /// distinguished [`HipError::OutOfMemory`]).
+    ///
+    /// # Examples
+    ///
+    /// See [`AwgnStreamScratch`].
+    ///
+    /// # Complexity
+    ///
+    /// O(`capacity`) pinned host memory.
+    pub fn new_stream_scratch(&self) -> Result<AwgnStreamScratch, HipError> {
+        Ok(AwgnStreamScratch {
+            out: PinnedHostBuffer::new(self.capacity, self.device_id)?,
+            capacity: self.capacity,
+        })
+    }
+
+    /// Like [`noise_samples_into`](Self::noise_samples_into), but with the
+    /// kernel launch **and** the D2H read-back enqueued on the caller-owned
+    /// `stream`, and completion awaited with per-stream
+    /// [`HipStream::synchronize`] (never device-wide sync).
+    ///
+    /// This is the multi-worker overlap path (design doc §6): each worker owns
+    /// one stream plus one [`AwgnStreamScratch`], so two workers' noise
+    /// generation on different streams genuinely overlaps on the device. The
+    /// samples are **byte-identical** to
+    /// [`noise_samples_into`](Self::noise_samples_into) (same kernel, same
+    /// inputs — only the queue and transfer staging differ).
+    ///
+    /// # Arguments
+    ///
+    /// * `base_word_pos` — the frame's `worker_offset(...)` (a multiple of 16).
+    /// * `out` — destination for the samples; `out.len()` must be `<= capacity`.
+    /// * `stream` — the stream the launch and read-back are ordered on.
+    /// * `scratch` — this generator's pinned staging (from
+    ///   [`new_stream_scratch`](Self::new_stream_scratch)).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`] on kernel launch, stream synchronization, or D2H
+    /// failure.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `out.len() > capacity`, or if `scratch` was sized for a
+    /// different generator (`capacity` mismatch).
+    ///
+    /// # Complexity
+    ///
+    /// Identical to [`noise_samples_into`](Self::noise_samples_into).
+    pub fn noise_samples_into_on_stream(
+        &self,
+        base_word_pos: u128,
+        out: &mut [f32],
+        stream: &HipStream,
+        scratch: &mut AwgnStreamScratch,
+    ) -> Result<(), HipError> {
+        assert_eq!(
+            scratch.capacity, self.capacity,
+            "AwgnStreamScratch capacity {} does not match generator capacity {}",
+            scratch.capacity, self.capacity
+        );
+        let n_samples = out.len();
+        if n_samples == 0 {
+            return Ok(());
+        }
+        // `enqueue_noise_samples` asserts `n_samples <= capacity` and orders
+        // the launch on `stream` without synchronizing.
+        self.enqueue_noise_samples(base_word_pos, n_samples, stream)?;
+        // Stream-ordered D2H into the pinned staging, then per-stream sync
+        // ONLY (a device-wide sync would stall other workers' streams).
+        self.d_out.copy_to_pinned_async(&mut scratch.out, stream)?;
+        stream.synchronize()?;
+        // The device lanes are IEEE-754 f32 bit patterns stored in raw 4-byte
+        // lanes; `from_bits` is the exact, bit-preserving reinterpretation.
+        for (dst, &bits) in out.iter_mut().zip(scratch.out.as_slice()) {
+            *dst = f32::from_bits(bits);
+        }
+        Ok(())
+    }
+
     /// Emits `n_samples` noise samples ordered on `stream` instead of the
     /// default stream, leaving the result on the device buffer.
     ///
     /// This is the stream-aware launch the Phase C executor uses to overlap
     /// generation with other GPU work; the caller synchronizes `stream` and
-    /// reads back via its own staging. Unlike [`noise_samples`](Self::noise_samples)
+    /// reads back via its own staging (or uses the staged
+    /// [`noise_samples_into_on_stream`](Self::noise_samples_into_on_stream),
+    /// which wraps this launch with a pinned read-back). Unlike
+    /// [`noise_samples`](Self::noise_samples)
     /// this does **not** synchronize or copy back — it only enqueues the launch.
     ///
     /// # Arguments
@@ -414,6 +569,37 @@ mod tests {
     fn test_key_derivation_is_deterministic_and_seed_sensitive() {
         assert_eq!(chacha20_key_from_seed(7), chacha20_key_from_seed(7));
         assert_ne!(chacha20_key_from_seed(7), chacha20_key_from_seed(8));
+    }
+
+    /// The stream-ordered noise path must be byte-identical to the
+    /// default-stream path (same kernel, same inputs — only the queue and
+    /// transfer staging differ). Gated to the gfx1030 host; a few small
+    /// launches keep this well inside the fast tier. Mirrors the LDPC
+    /// precedent `launch_ldpc_bp::tests::test_decode_on_stream_matches_default_stream`.
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_noise_on_stream_matches_default_stream() {
+        let capacity = 256usize;
+        let gen = GpuChaChaAwgn::new(42, 0, capacity).expect("build generator");
+        let stream = HipStream::new().expect("create stream");
+        let mut scratch = gen.new_stream_scratch().expect("pinned staging");
+        assert_eq!(scratch.capacity(), capacity);
+
+        // Several base positions, including a block-unaligned-frame-style
+        // offset, and a partial-capacity request.
+        for &(base, n) in &[(0u128, capacity), (16, capacity), (1 << 20, 100)] {
+            let default = gen.noise_samples(base, n).expect("default-stream noise");
+            let mut streamed = vec![0.0f32; n];
+            gen.noise_samples_into_on_stream(base, &mut streamed, &stream, &mut scratch)
+                .expect("stream-ordered noise");
+            for (s, (d, st)) in default.iter().zip(streamed.iter()).enumerate() {
+                assert_eq!(
+                    d.to_bits(),
+                    st.to_bits(),
+                    "sample {s} at base {base} differs: default={d} stream={st}"
+                );
+            }
+        }
     }
 
     /// The first ChaCha word the host RNG produces at position 0 is a pure
