@@ -895,6 +895,18 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     // run; dropping it early uninstalls the subscriber mid-campaign.
     let _tracing_guard = install_campaign_subscriber(pipeline.config());
 
+    // Emit a campaign_start event so tracing.jsonl has at least one record.
+    // This matches the legacy binary's event name/shape used by external monitors
+    // (cross-epic e4849f07).
+    tracing::info!(
+        name: "campaign_start",
+        event_type = "campaign_start",
+        rate = %rate_display(args.rate),
+        modulation = %mod_str(args.modulation),
+        seed = args.seed,
+        gpu_enabled = args.gpu,
+    );
+
     eprintln!(
         "Running via {} (parallelism={}, checkpoint={})",
         if checkpoint_dir.is_some() {
