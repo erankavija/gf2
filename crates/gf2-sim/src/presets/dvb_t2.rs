@@ -245,11 +245,7 @@ impl Channel {
     /// this value is fed to the demapper.
     fn demap_noise_var(self) -> f32 {
         match self {
-            Channel::Awgn { es_n0_db } => {
-                let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
-                let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-                (2.0 * sigma_sq) as f32
-            }
+            Channel::Awgn { es_n0_db } => crate::channels::es_n0_db_to_n0(es_n0_db),
         }
     }
 

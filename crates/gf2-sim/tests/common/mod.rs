@@ -126,6 +126,98 @@ pub fn assert_four_columns_byte_identical(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// Shared DVB-T2 graph-chain builder (BLOCKING-2, issue `8c8302c8`)
+//
+// Both `preset_vs_graph.rs` (structural + single-frame) and
+// `preset_vs_graph_byte_identity.rs` (run-level 50-frame byte-identity) wire
+// the same seven-stage DVB-T2 BICM chain by hand via the `Chain` graph API.
+// This helper is the single source of truth for that wiring.
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Builds a hand-wired DVB-T2 BICM chain via the graph [`gf2_sim::graph::Chain`]
+/// API and returns a [`gf2_sim::pipeline::Pipeline`].
+///
+/// The chain is identical to what the typestate preset produces:
+///
+/// ```text
+/// DvbT2Encode → BitInterleave → GrayQamMap → Awgn → GrayQamDemap → BitDeinterleave → DvbT2Decode
+/// ```
+///
+/// `demap_n0` must be the caller-derived `N0 = 2*sigma^2` for the chosen
+/// Es/N0 — use [`gf2_sim::channels::es_n0_db_to_n0`] to compute it
+/// (the once-rounded SSOT).
+///
+/// # Arguments
+///
+/// * `rate` — DVB-T2 code rate.
+/// * `modulation` — DVB-T2 modulation order.
+/// * `decoder` — BP decoder configuration (algorithm + early termination).
+/// * `demap` — soft demapper method.
+/// * `es_n0_db` — channel Es/N0 in dB (used for the `Awgn` stage sigma).
+/// * `demap_n0` — demapper noise variance `N0`; must equal
+///   `es_n0_db_to_n0(es_n0_db)`.
+/// * `seed` — simulation seed stored in the `PipelineConfig`.
+/// * `parallelism` — worker count stored in the `PipelineConfig`.
+///
+/// # Panics
+///
+/// Panics if the chain cannot be built (invalid type connections) or if
+/// `parallelism` is zero.
+#[allow(clippy::too_many_arguments)]
+pub fn build_dvb_t2_graph_chain(
+    rate: gf2_coding::CodeRate,
+    modulation: gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation,
+    decoder: gf2_coding::ldpc::DecoderConfig,
+    demap: gf2_coding::modem::DemapMethod,
+    es_n0_db: f32,
+    demap_n0: f32,
+    seed: u64,
+    parallelism: std::num::NonZeroUsize,
+) -> gf2_sim::pipeline::Pipeline {
+    let factory = gf2_sim::stages::dvb_t2_bicm_stages(rate, modulation, decoder, demap, demap_n0);
+
+    let mut chain = gf2_sim::graph::Chain::new();
+    let mut ids = Vec::with_capacity(7);
+    for stage in factory.forward {
+        ids.push(chain.add(stage));
+    }
+    ids.push(
+        chain.add(gf2_sim::stage::erase(gf2_sim::channels::Awgn::new(
+            es_n0_db,
+            modulation.bits_per_cell(),
+        ))),
+    );
+    for stage in factory.inverse {
+        ids.push(chain.add(stage));
+    }
+    for pair in ids.windows(2) {
+        chain
+            .connect(pair[0], pair[1])
+            .expect("each consecutive BICM hop is type-compatible");
+    }
+
+    let config = gf2_sim::PipelineConfig {
+        seed,
+        esn0_db_points: Vec::new(),
+        target_errors: 0,
+        max_frames: 0,
+        heartbeat_every_frames: 0,
+        checkpoint_dir: None,
+        tracing_log_path: None,
+        parallelism,
+        gpu_enabled: false,
+        strict_gpu: false,
+        diagnostic_dump_dir: None,
+        inject_gpu_oom_modulus: None,
+    };
+
+    chain
+        .with_config(config)
+        .build()
+        .expect("the full BICM chain is a valid DAG")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // Shared tempdir helper
 //
 // Each test binary that uses this module gets its own independent directory

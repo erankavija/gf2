@@ -26,6 +26,8 @@
 //! keeping each roundtrip well under the 5 s fast-tier budget (the equivalent
 //! noiseless graph roundtrip measures ~0.07 s); no `#[ignore]` is needed.
 
+mod common;
+
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
 use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
@@ -37,11 +39,11 @@ use rand_chacha::ChaCha20Rng;
 
 use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch};
 use gf2_sim::channels::awgn::ChannelScratch;
-use gf2_sim::graph::Chain;
+use gf2_sim::channels::es_n0_db_to_n0;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::stage::{AnyScratch, ExecutionClass, TypedBatch};
 use gf2_sim::stages::{dvb_t2_bicm_stages, GrayQamDemap};
-use gf2_sim::{Pipeline, PipelineConfig};
+use gf2_sim::Pipeline;
 
 /// The fixed Es/N0 (dB) every config's AWGN channel runs at. Set comfortably
 /// above the waterfall of the hardest in-scope MODCOD (r3/4 64-QAM) so every
@@ -59,16 +61,12 @@ fn decoder_config() -> DecoderConfig {
 /// The demapper's per-symbol total complex AWGN `N0 = 2 * sigma^2` for an AWGN
 /// channel at `es_n0_db`.
 ///
-/// This recomputes the preset's `Channel::demap_noise_var` derivation
-/// verbatim: `sigma_sq = 1 / (2 * 10^(es_n0_db / 10))` in `f64`, then
-/// `N0 = (2 * sigma_sq) as f32` (rounded once) — bit-identical to the SSOT
-/// frame kernel's `noise_var` (`frame_sim.rs`) for `f32`-representable Es/N0
-/// values. `test_demap_n0_tracks_channel_es_n0` below pins the built
-/// pipeline's demapper to this value.
+/// Delegates to [`gf2_sim::channels::es_n0_db_to_n0`] — the SSOT once-rounded
+/// helper (f64-computed, rounded once, the `81d05bab` double-rounding guard).
+/// `test_demap_n0_tracks_channel_es_n0` below pins the built pipeline's
+/// demapper to this value.
 fn expected_demap_n0(es_n0_db: f32) -> f32 {
-    let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
-    let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-    (2.0 * sigma_sq) as f32
+    es_n0_db_to_n0(es_n0_db)
 }
 
 /// One seeded pseudo-random BBFRAME of `k` bits.
@@ -93,62 +91,22 @@ fn build_preset(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipel
         .expect("in-scope MODCOD builds via the preset")
 }
 
-/// Builds the same DVB-T2 BICM chain by hand through the graph [`Chain`] API,
-/// including the AWGN channel between the forward `GrayQamMap` and the inverse
-/// `GrayQamDemap`. This mirrors exactly what the preset does internally, so the
-/// two builds must agree structurally and in execution.
+/// Builds the same DVB-T2 BICM chain by hand through the graph `Chain` API.
+///
+/// Delegates to [`common::build_dvb_t2_graph_chain`] — the shared SSOT for
+/// the hand-wired chain (also used by `tests/preset_vs_graph_byte_identity.rs`
+/// for the run-level 50-frame byte-identity proof).
 fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipeline {
-    // The channel IS present in this chain, so the demapper's N0 must equal the
-    // channel's true N0 — exactly what the preset wires internally.
-    let factory = dvb_t2_bicm_stages(
+    common::build_dvb_t2_graph_chain(
         rate,
         modulation,
         decoder_config(),
         DemapMethod::ExactLogMap,
+        ES_N0_DB,
         expected_demap_n0(ES_N0_DB),
-    );
-
-    let mut chain = Chain::new();
-    let mut ids = Vec::with_capacity(7);
-    for stage in factory.forward {
-        ids.push(chain.add(stage));
-    }
-    // The channel stage is the SymbolBatch -> SymbolBatch hop between halves.
-    ids.push(
-        chain.add(gf2_sim::stage::erase(gf2_sim::channels::Awgn::new(
-            ES_N0_DB,
-            modulation.bits_per_cell(),
-        ))),
-    );
-    for stage in factory.inverse {
-        ids.push(chain.add(stage));
-    }
-    for pair in ids.windows(2) {
-        chain
-            .connect(pair[0], pair[1])
-            .expect("each consecutive BICM hop is type-compatible");
-    }
-
-    // Mirror the preset's config so the structural config comparison is exact.
-    let config = PipelineConfig {
         seed,
-        esn0_db_points: Vec::new(),
-        target_errors: 0,
-        max_frames: 0,
-        heartbeat_every_frames: 0,
-        checkpoint_dir: None,
-        tracing_log_path: None,
-        parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
-        gpu_enabled: false,
-        strict_gpu: false,
-        diagnostic_dump_dir: None,
-        inject_gpu_oom_modulus: None,
-    };
-
-    chain
-        .with_config(config)
-        .build()
-        .expect("the full BICM chain is a valid DAG")
+        std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
+    )
 }
 
 /// Builds a per-stage scratch vector matching the pipeline's stage order: `()`
