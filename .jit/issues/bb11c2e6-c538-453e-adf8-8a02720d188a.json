@@ -2,7 +2,7 @@
   "id": "bb11c2e6-c538-453e-adf8-8a02720d188a",
   "title": "Factor shared hybrid double-buffer core; integrate fallback semantics into checkpointed sweep",
   "description": "## Goal\n\nEliminate the sanctioned-at-review duplication between the two hybrid\ndouble-buffer worker loops, and make the checkpointed sweep's\nfailure-mode semantics an explicit, tested design decision rather than\nan omission.\n\n## Context\n\nCreated 2026-06-11 during the C.2 lead review (571c11c4 adversarial\npre-review HIGH-2; recorded elimination plan). Task under epic\n`gf2-sim` (`f9717e7e`); intentionally NOT a child of story `9e853c62`\n(the story's deliverables are complete; this is quality debt across\nthe landed C surfaces, scheduled post-C).\n\n`executor/drain.rs::worker_round_hybrid` re-implements the C.1\ndouble-buffer worker protocol (`executor/scheduler.rs::worker_partition_hybrid`:\nprep closure, `thread::scope` overlap, decode, BCH decode-tail/record\nloop). The copies have already diverged intentionally:\n\n- The checkpointed path has NO `dispatch_with_fallback`/`strict_gpu`\n  handling — sanctioned at the time (failure wiring was `42eac5cc`'s\n  concurrent scope) and determinism-motivated: a CPU-fallback frame\n  folded into a checkpoint would break resume byte-identity unless the\n  fallback decision itself is deterministic and resume-stable.\n- The checkpointed path has no `traced_interval` span instrumentation.\n\nThe interim contract (documented on `Pipeline::run_checkpointed` /\n`run_sweep_checkpointed` by the 571c11c4 fix round): a recoverable GPU\nfault ABORTS the checkpointed sweep (resumably) instead of\nsubstituting the CPU fallback.\n\n## Deliverables\n\n1. One shared double-buffer core (parameterized by per-batch hooks:\n   decode dispatch, instrumentation, drain brackets) used by BOTH\n   `worker_partition_hybrid` and `worker_round_hybrid`; behavior of\n   each caller byte-identical to before the refactor.\n2. An explicit, documented decision on checkpointed-sweep fallback\n   semantics: either (a) keep abort-resumably (then make\n   `dispatch_with_fallback`'s OOM arm configuration-aware so the\n   checkpointed path's behavior is one policy, not a missing call), or\n   (b) implement deterministic fallback-in-checkpointed-sweep (the\n   fallback decision must be a pure function of recorded state so\n   resume byte-identity holds; note `inject_gpu_oom_modulus` is\n   result-affecting on the fallback path yet excluded from\n   `config_hash` — moot only while the checkpointed runner never\n   injects; resolve if (b)).\n3. `traced_interval` spans on the checkpointed loop (parity with the\n   uncheckpointed scheduler).\n4. The drain.rs module-doc divergence note and the\n   `run_checkpointed`/`run_sweep_checkpointed` doc sentences updated to\n   the post-refactor truth.\n\n## Success Criteria\n\n- [hard] No duplicated double-buffer protocol: one shared core, both\n  callers; `tests/determinism.rs`, `tests/hybrid_resume.rs`,\n  `tests/hybrid_scheduler.rs` (incl. the overlap smoke) and the\n  stage-driven byte-identity suites all pass unchanged (byte-identical\n  columns at the pinned seeds).\n- [hard] Checkpointed-sweep failure semantics are decided, implemented,\n  documented, and tested (whichever of (a)/(b) is chosen, the test\n  proves the documented behavior; if (b), resume byte-identity with a\n  forced fallback is proven).\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- New failure-mode policy surface (§8 policy itself is fixed).\n- Campaign-binary integration (D.2 `bbf6b6ee`).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-11T12:10:03.605831263Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-11T12:10:49.859744437Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +33,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-11T09:58:49.694382770+00:00",
-  "updated_at": "2026-06-11T10:37:30.345334993+00:00"
+  "updated_at": "2026-06-11T12:13:27.644984059+00:00"
 }
