@@ -428,18 +428,20 @@ where
         // corrupting byte-identity — so it is REFUSED with a typed error
         // instead (see the trait-method docs).
         if TypeId::of::<<S::CpuFallback as Stage<I, O>>::Scratch>() != TypeId::of::<()>() {
-            return Some(Err(StageError::Fatal(crate::error::FatalError::BuildError(
-                crate::error::BuildError::ExecutionValidation {
-                    reason: format!(
-                        "stage `{}` has a CPU fallback with stateful scratch `{}`: a \
+            return Some(Err(StageError::Fatal(
+                crate::error::FatalError::BuildError(
+                    crate::error::BuildError::ExecutionValidation {
+                        reason: format!(
+                            "stage `{}` has a CPU fallback with stateful scratch `{}`: a \
                          default-initialised scratch is not reproducible across the \
                          erased fallback boundary (design §11 byte-identity), so the \
                          fallback is refused rather than silently default-seeded",
-                        std::any::type_name::<S>(),
-                        std::any::type_name::<<S::CpuFallback as Stage<I, O>>::Scratch>(),
-                    ),
-                },
-            ))));
+                            std::any::type_name::<S>(),
+                            std::any::type_name::<<S::CpuFallback as Stage<I, O>>::Scratch>(),
+                        ),
+                    },
+                ),
+            )));
         }
         let input = match input.as_any().downcast_ref::<I>() {
             Some(i) => i,

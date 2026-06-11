@@ -131,7 +131,7 @@ fn exec_err(reason: impl Into<String>) -> StageError {
 /// degrade/no-source execution (which must remain the hard error it always
 /// was, never silently defaulted) — the MEDIUM-3 provenance split.
 #[cfg_attr(not(feature = "hip"), allow(dead_code))] // Gpu/CpuFallback are
-// constructed only by the hip GpuOnly dispatch arms.
+                                                    // constructed only by the hip GpuOnly dispatch arms.
 enum StageIters {
     /// The GPU LDPC arm produced per-frame BP iteration counts.
     Gpu(Vec<u32>),
@@ -466,7 +466,10 @@ fn execute_gpu_stage(
                 None => gpu_bp
                     .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
                     .map(|(hard, iters)| {
-                        (Box::new(hard) as Box<dyn TypedBatch>, StageIters::Gpu(iters))
+                        (
+                            Box::new(hard) as Box<dyn TypedBatch>,
+                            StageIters::Gpu(iters),
+                        )
                     }),
             };
             return dispatch_with_fallback(
@@ -491,7 +494,10 @@ fn execute_gpu_stage(
                         stream,
                         &mut stream_scratch,
                     )?;
-                    Ok((Box::new(hard) as Box<dyn TypedBatch>, StageIters::Gpu(iters)))
+                    Ok((
+                        Box::new(hard) as Box<dyn TypedBatch>,
+                        StageIters::Gpu(iters),
+                    ))
                 })(),
             };
             return dispatch_with_fallback(
@@ -733,8 +739,8 @@ fn execute_hybrid_stage(
         Ok((merged, StageIters::NotASource))
     } else {
         stage
-        .process_any(input, scratch)
-        .map(|o| (o, StageIters::NotASource))
+            .process_any(input, scratch)
+            .map(|o| (o, StageIters::NotASource))
     }
 }
 
