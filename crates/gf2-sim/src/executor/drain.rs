@@ -11,9 +11,10 @@
 //! differ. The two earlier `571c11c4` divergences are now resolved:
 //!
 //! * **`traced_interval` spans** — the instrumentation moved INTO the shared
-//!   core, so the checkpointed path now emits the same `pipeline_stage` spans +
-//!   `OverlapTimeline` intervals as the scheduler (the timeline sink is owned
-//!   per point and discarded — the spans are the observable parity).
+//!   core, so the checkpointed path now emits the same `pipeline_stage` spans
+//!   as the scheduler (the `OverlapTimeline` interval sink is `None` here:
+//!   this path never reads intervals, and a dead sink would accumulate
+//!   unboundedly over a long campaign point — the spans are the parity).
 //! * **Failure semantics** — now an EXPLICIT per-caller hook
 //!   ([`DrainBatchHooks::decode_batch`]), not an omission. The OPTION (a)
 //!   decision (epic task `bb11c2e6`): a recoverable GPU fault during a
@@ -548,7 +549,6 @@ impl Scheduler {
 
 #[cfg(feature = "hip")]
 mod hybrid_checkpoint {
-    use std::sync::Mutex;
     use std::time::Instant;
 
     use super::*;
@@ -558,7 +558,6 @@ mod hybrid_checkpoint {
         run_hybrid_double_buffer, BatchHooks, GpuBatchResult, HybridRunCtx, WorkerDevice,
         BATCH_FRAMES,
     };
-    use crate::executor::scheduler::OverlapTimeline;
     use crate::frame_sim::FramePrep;
     use crate::parallel::WorkerCounters;
     use gf2_kernels_hip::launch_ldpc_bp::LdpcStreamScratch;
@@ -669,7 +668,7 @@ mod hybrid_checkpoint {
             first_global_frame: u64,
             preps: &[FramePrep],
         ) -> GpuBatchResult {
-            use crate::executor::failure::FailurePolicy;
+            use crate::executor::failure::injects_oom_at;
 
             // Deliverable 1: the tally brackets the stream-ordered decode.
             // `enqueued` before the launch; `completed` once the per-stream
@@ -677,34 +676,33 @@ mod hybrid_checkpoint {
             // the device). On a device fault the slot stays non-zero, so a later
             // drain refuses to commit a checkpoint.
             self.tally.enqueued(self.stream_id);
-            let policy = FailurePolicy {
-                strict_gpu: false,
-                dump_dir: std::path::Path::new(""),
-                inject_gpu_oom_modulus: self.inject_oom_modulus,
-            };
-            let gpu_res: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
-                // Test-only OOM injection: force the recoverable OOM a genuine
-                // device OOM would raise so the checkpointed propagate-path is
-                // exercised. Keyed on the batch's first global frame index (the
-                // same two-surface keying the scheduler uses).
-                Err(StageError::Recoverable(
-                    crate::error::RecoverableError::OutOfMemory {
-                        device_id: 0,
-                        bytes_requested: 1024 * 1024 * 1024,
-                    },
-                ))
-            } else {
-                (|| {
-                    let llr_batch = LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
-                    let (hard, iters) = self.gpu_stage.decode_batch_with_iters_on_stream(
-                        &llr_batch,
-                        device.device,
-                        stream,
-                        device.scratch,
-                    )?;
-                    Ok((hard.frames, iters))
-                })()
-            };
+            let gpu_res: GpuBatchResult =
+                if injects_oom_at(self.inject_oom_modulus, first_global_frame) {
+                    // Test-only OOM injection: force the recoverable OOM a genuine
+                    // device OOM would raise so the checkpointed propagate-path is
+                    // exercised. Keyed on the batch's FIRST global frame index
+                    // (matching the scheduler hybrid loop's batch keying) — but
+                    // unlike the other two surfaces the fault is PROPAGATED here,
+                    // not dispatched to a fallback (OPTION (a)).
+                    Err(StageError::Recoverable(
+                        crate::error::RecoverableError::OutOfMemory {
+                            device_id: 0,
+                            bytes_requested: 1024 * 1024 * 1024,
+                        },
+                    ))
+                } else {
+                    (|| {
+                        let llr_batch =
+                            LlrBatch::new(preps.iter().map(|p| p.llrs.clone()).collect());
+                        let (hard, iters) = self.gpu_stage.decode_batch_with_iters_on_stream(
+                            &llr_batch,
+                            device.device,
+                            stream,
+                            device.scratch,
+                        )?;
+                        Ok((hard.frames, iters))
+                    })()
+                };
             if gpu_res.is_ok() {
                 self.tally.completed(self.stream_id);
             }
@@ -825,12 +823,10 @@ mod hybrid_checkpoint {
             let tally = StreamInFlight::new(num_workers);
 
             // The shared double-buffer core (`bb11c2e6`) emits the same
-            // `pipeline_stage` spans + `OverlapTimeline` intervals on every
-            // hybrid path (deliverable 3). The checkpointed sweep does not
-            // surface the timeline (it returns a `CheckpointedRun`, not an
-            // `OverlapTimeline`), but it owns the interval sink so the spans
-            // fire with parity to the uncheckpointed scheduler.
-            let timeline = Mutex::new(OverlapTimeline::default());
+            // `pipeline_stage` spans on every hybrid path (deliverable 3).
+            // The checkpointed sweep never reads `OverlapTimeline` intervals,
+            // so it passes NO interval sink (`timeline: None` below) — a dead
+            // sink would accumulate unboundedly over a long campaign point.
             let run_start = Instant::now();
 
             let mut completed = false;
@@ -871,7 +867,6 @@ mod hybrid_checkpoint {
                                     round_end,
                                     seed,
                                     config.inject_gpu_oom_modulus,
-                                    &timeline,
                                     run_start,
                                     frame_observer,
                                 )
@@ -966,7 +961,6 @@ mod hybrid_checkpoint {
             round_end: usize,
             seed: u64,
             inject_oom_modulus: Option<u64>,
-            timeline: &Mutex<OverlapTimeline>,
             run_start: Instant,
             frame_observer: &(dyn Fn(usize, usize) + Sync),
         ) -> Result<(WorkerCounters, u64), StageError> {
@@ -1017,7 +1011,7 @@ mod hybrid_checkpoint {
                 stream_id,
                 snr_idx,
                 seed,
-                timeline,
+                timeline: None,
                 run_start,
             };
             let mut hooks = DrainBatchHooks {
