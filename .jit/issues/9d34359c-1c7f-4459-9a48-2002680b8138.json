@@ -1,0 +1,24 @@
+{
+  "id": "9d34359c-1c7f-4459-9a48-2002680b8138",
+  "title": "Hoist shared campaign helpers into dvb_t2_bicm_harness (legacy-deprecation prep)",
+  "description": "## Goal\n\nEliminate the ~500 lines duplicated verbatim between the frozen legacy\ncampaign binary (`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`)\nand the migrated gf2-sim binary\n(`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`).\n\n## Context\n\nCreated 2026-06-11 from the bbf6b6ee adversarial-review finding M4\n(recorded debt). The duplication was accepted at bbf6b6ee under the\nissue's deliverable-3 / non-goals (legacy binary retained untouched; a\nfollow-up epic deprecates the legacy path). This task is the tracked\nform of that prose plan, scoped to the shared-helper hoist only —\nlegacy deletion stays with the future deprecation epic.\n\nDuplicated pure helpers (both binaries):\n`parse_code_rate`/`parse_modulation`/`parse_esn0_range`/`parse_bracket`/\n`parse_decoder`/`parse_demap`, `build_snr_range`, `CAMPAIGN_CSV_HEADER`\n+ `write_campaign_csv`, `write_readme`, `host_info`,\n`default_calibration_bracket`, output-naming helpers, and the\nduplicated parse-test module. Natural SSOT home:\n`gf2_coding::dvb_t2_bicm_harness` (both binaries already import from\nit; gf2-sim depends on gf2-coding, so the edge is acyclic).\n\n## Deliverables\n\n1. Hoist the duplicated pure helpers into\n   `gf2_coding::dvb_t2_bicm_harness` (or a sibling module), with doc\n   comments per project standards; both binaries delegate.\n2. The duplicated parse-test module lives once, next to the hoisted\n   helpers.\n3. Behavior-preserving: both binaries' CLI semantics and output\n   schemas byte-identical to before the hoist (the campaign CSV\n   schema is consumed by dev/benchmarks/dvb_t2_awgn/plot.py and the\n   e4849f07 production sweep).\n\n## Success Criteria\n\n- [hard] No verbatim helper duplication remains between the two\n  campaign binaries; one SSOT module hosts the shared helpers.\n- [hard] Behavior-preserving: existing campaign CLI/subprocess tests\n  pass unchanged; the migrated binary's two-run byte-identity legs\n  pass unchanged.\n- [hard] cargo-ci, code-review gates green.\n\n## Non-goals\n\n- Deleting or deprecating the legacy SimulationRunner path (future\n  deprecation epic).\n- Any CLI semantic change.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "bbf6b6ee-8ddd-420a-9e56-0319297aac55"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-06-11T19:30:26.820637254+00:00",
+  "updated_at": "2026-06-11T19:30:35.668880615+00:00"
+}
