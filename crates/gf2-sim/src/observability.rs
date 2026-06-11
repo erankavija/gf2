@@ -1,47 +1,65 @@
 //! Tracing / observability setup for campaign runs.
 //!
 //! [`install_campaign_subscriber`] is the public entry point the DVB-T2 AWGN
-//! campaign binary calls (once `bbf6b6ee` migrates it) to install a
-//! JSON-lines tracing subscriber. Its effect mirrors the private
-//! `setup_tracing_guard` in `gf2_coding::simulation` (design doc §12).
+//! campaign binary calls to install a JSON-lines tracing subscriber whose
+//! events land in the file named by [`PipelineConfig::tracing_log_path`].
+//! Its role mirrors `setup_tracing_guard` in `gf2_coding::simulation`
+//! (design doc §12), with one deliberate difference:
 //!
-//! This is the Phase A stub: it returns an RAII guard whose `Drop` uninstalls
-//! the subscriber. The concrete subscriber wiring (JSON layer over the
-//! configured `tracing_log_path`) is filled in by `bbf6b6ee`.
+//! **The subscriber is installed as the PROCESS-GLOBAL default**
+//! (`tracing::subscriber::set_global_default`), not a thread-local one.
+//! The `gf2-sim` sweep runs its frame loops inside rayon-pool workers and
+//! `thread::scope` helper threads (see `executor/drain.rs` /
+//! `executor/hybrid_core.rs`); a thread-local default (`set_default`) would
+//! cover only the installing thread, silently dropping every event emitted
+//! from a worker — including the per-frame `campaign_heartbeat` events that
+//! are the whole point of the monitoring channel. A binary owns its process,
+//! so one global subscriber is the correct shape.
+//!
+//! Global-default semantics: it can be set **once** per process. A second
+//! call (with a `tracing_log_path` set) returns the
+//! [`SetGlobalDefaultError`] from `tracing`, which the caller must surface
+//! as a clear error. There is no uninstall; the subscriber lives for the
+//! remainder of the process.
+
+use std::sync::Mutex;
+
+pub use tracing::subscriber::SetGlobalDefaultError;
 
 use crate::config::PipelineConfig;
 
-/// RAII guard returned by [`install_campaign_subscriber`].
+/// Installs the campaign tracing subscriber as the process-global default.
 ///
-/// Dropping the guard uninstalls whatever subscriber was installed, matching
-/// the `DefaultGuard` semantics of the legacy `setup_tracing_guard`.
-#[derive(Debug)]
-#[must_use = "dropping the guard immediately uninstalls the campaign subscriber"]
-pub struct CampaignSubscriberGuard {
-    // Phase A stub: holds no installed subscriber yet. `bbf6b6ee` replaces
-    // this with the `tracing::subscriber::DefaultGuard` once the JSON layer
-    // is wired to `config.tracing_log_path`.
-    _private: (),
-}
-
-impl Drop for CampaignSubscriberGuard {
-    fn drop(&mut self) {
-        // Phase A stub: no installed subscriber to uninstall yet. `bbf6b6ee`
-        // replaces this guard with the held `DefaultGuard`, whose own `Drop`
-        // restores the previous subscriber.
-    }
-}
-
-/// Installs the campaign tracing subscriber and returns an RAII guard.
+/// While the process lives, campaign tracing events (`campaign_start`,
+/// `campaign_heartbeat`, `snr_point_completed`, plus any `tracing::warn!`
+/// the library emits) are routed to the JSON-lines sink named by
+/// [`PipelineConfig::tracing_log_path`]. Each emitted tracing event is
+/// written as one self-contained JSON object followed by a newline (`\n`).
 ///
-/// While the returned guard is alive, campaign tracing events (`campaign_start`,
-/// `snr_completed`, `heartbeat`) are routed to the JSON-lines sink configured
-/// by [`PipelineConfig::tracing_log_path`]. Dropping the guard uninstalls it.
+/// The subscriber is installed via
+/// [`tracing::subscriber::set_global_default`], so it covers **all
+/// threads** — in particular the rayon-pool workers and double-buffer
+/// helper threads the sweep executor runs frames on. It can be installed
+/// only once per process and is never uninstalled.
+///
+/// When `config.tracing_log_path` is `None` the function is a no-op and
+/// returns `Ok(())`: nothing is installed.
+///
+/// When the file cannot be opened, a warning is printed to stderr and the
+/// function returns `Ok(())` with tracing disabled (matching the legacy
+/// `setup_tracing_guard` behaviour: a broken log sink degrades the run's
+/// observability, it does not abort the campaign).
 ///
 /// # Arguments
 ///
 /// * `config` — the live pipeline configuration; its `tracing_log_path`
 ///   selects the sink.
+///
+/// # Errors
+///
+/// Returns the [`SetGlobalDefaultError`] from `tracing` if a global default
+/// subscriber has already been set in this process (the global default can
+/// only be set once).
 ///
 /// # Examples
 ///
@@ -64,20 +82,36 @@ impl Drop for CampaignSubscriberGuard {
 ///     diagnostic_dump_dir: None,
 ///     inject_gpu_oom_modulus: None,
 /// };
-/// let _guard = install_campaign_subscriber(&cfg);
-/// // tracing events are routed until `_guard` is dropped.
+/// // `tracing_log_path: None` → no-op, Ok(()).
+/// install_campaign_subscriber(&cfg).unwrap();
 /// ```
-///
-/// # Must use
-///
-/// Returns the concrete [`CampaignSubscriberGuard`] (rather than `impl Drop`)
-/// so the type's `#[must_use]` propagates to call sites: dropping the guard
-/// immediately — `install_campaign_subscriber(&cfg);` — uninstalls the
-/// subscriber and is almost certainly a bug. Bind it to a live `let`.
-pub fn install_campaign_subscriber(config: &PipelineConfig) -> CampaignSubscriberGuard {
-    // Phase A stub. The full implementation (owned by `bbf6b6ee`) opens
-    // `config.tracing_log_path` in append mode and installs a JSON
-    // `tracing_subscriber::fmt` layer, returning its `DefaultGuard`.
-    let _ = config;
-    CampaignSubscriberGuard { _private: () }
+pub fn install_campaign_subscriber(config: &PipelineConfig) -> Result<(), SetGlobalDefaultError> {
+    use tracing_subscriber::{fmt, prelude::*, registry};
+
+    let Some(path) = config.tracing_log_path.as_ref() else {
+        return Ok(());
+    };
+
+    let file = match std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+    {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!(
+                "Warning: cannot open tracing log {} — tracing disabled: {e}",
+                path.display()
+            );
+            return Ok(());
+        }
+    };
+
+    let layer = fmt::layer()
+        .json()
+        .with_writer(Mutex::new(file))
+        .with_span_list(false)
+        .with_current_span(true);
+    let subscriber = registry().with(layer);
+    tracing::subscriber::set_global_default(subscriber)
 }

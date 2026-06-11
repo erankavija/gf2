@@ -11,14 +11,19 @@
 //!
 //! This is the **migrated** campaign binary. It drives the simulation through
 //! the [`gf2_sim`] hybrid pipeline ([`Pipeline::dvb_t2`] typestate preset +
-//! [`Pipeline::run`] / [`Pipeline::run_checkpointed`]), replacing the legacy
+//! `Scheduler::run_sweep_checkpointed` for production sweeps — called directly
+//! rather than through the `Pipeline::run_checkpointed` thin wrapper so the
+//! per-frame `frame_observer` can emit live `campaign_heartbeat` tracing
+//! events — and `Pipeline::run_with_decoder` for calibration), replacing the
+//! legacy
 //! `gf2_coding::simulation::SimulationRunner::run_with_decoder` call site that
 //! the original binary at `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
 //! uses. The legacy binary is retained verbatim (it is **not** deleted) so
 //! other `gf2-coding` callers continue on the legacy API; this binary is the
-//! v2 successor. Both share the same name (`dvb_t2_awgn_campaign`); the one
-//! that runs depends on which crate's binary cargo resolves (`-p gf2-sim`
-//! selects this one).
+//! v2 successor. Both share the same name (`dvb_t2_awgn_campaign`); invoking
+//! either from the workspace root with just `--bin dvb_t2_awgn_campaign`
+//! causes a cargo ambiguity error — `-p gf2-sim` is mandatory to select this
+//! binary.
 //!
 //! The new pipeline parallelises every SNR point across rayon workers (and,
 //! with `--gpu` on a `--features hip` build, offloads the heavy LDPC BP +
@@ -115,6 +120,28 @@
 //!   `errors`, and `mean_iters` are deterministic and asserted byte-identical
 //!   across two runs at the same seed by the within-pipeline byte-identity
 //!   integration test (`tests/campaign_byte_identity.rs`).
+//!
+//!   **`mean_iters` legacy-compatibility note**: the legacy binary recorded
+//!   `iterations: 1` for converged frames (a quirk of its `DecoderResult`
+//!   sentinel). This pipeline records the real BP iteration depth. Old-vs-new
+//!   `mean_iters` curves are therefore **not comparable**; use only
+//!   `fer`/`ber`/`frames`/`errors` for cross-binary comparison.
+//! - `tracing.jsonl` — structured JSON-lines tracing log (one JSON object per
+//!   line). Written unconditionally (both production and calibration runs) by
+//!   the [`gf2_sim::observability::install_campaign_subscriber`] machinery
+//!   (a **process-global** subscriber, so events from the executor's rayon /
+//!   helper threads land too). The cross-epic e4849f07 multi-day sweep monitor
+//!   watches this file. Events (each carries a matching `event_type` field):
+//!   - `campaign_start` — once, at sweep start.
+//!   - `campaign_heartbeat` — **live**, from the executor's per-frame
+//!     `frame_observer`, every `--heartbeat-frames` observed frames per SNR
+//!     point (production runs only; calibration has no checkpointed path).
+//!     Approximate progress, not exact accounting: on the hybrid GPU path,
+//!     frames in a batch discarded at an interrupt are observed-but-unrecorded
+//!     and re-observed on resume, and the counter restarts each invocation.
+//!   - `snr_point_completed` — one per point with `es_n0_db`/`fer`/`frames`/
+//!     `errors`/`mean_iters`/`wall_seconds`, emitted **post-sweep** (after the
+//!     run returns, when per-point results exist), not live at each boundary.
 //! - `README.md` — invocation, seed, host info, total wall-clock.
 //! - `checkpoints/` — per-SNR JSON files (v2 schema with BLAKE3-verified
 //!   config hash), written by the pipeline's checkpoint subsystem.
@@ -140,6 +167,7 @@
 use std::io::Write;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
 use gf2_coding::dvb_t2_bicm_harness::{mod_str, rate_display, rate_underscore};
@@ -148,7 +176,8 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::executor::{SimulationResults, SnrPointResult};
+use gf2_sim::executor::{Scheduler, SimulationResults, SnrPointResult};
+use gf2_sim::observability::install_campaign_subscriber;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
 
@@ -177,6 +206,10 @@ struct Args {
     decoder: DecoderConfig,
     /// QAM soft-demapping method.
     demap: DemapMethod,
+    /// Within-SNR heartbeat cadence in frames: drives both the heartbeat
+    /// checkpoint flush AND the `campaign_heartbeat` tracing event. Ignored
+    /// (forced to 0) for calibration runs.
+    heartbeat_frames: u64,
 }
 
 fn print_usage() {
@@ -199,6 +232,7 @@ fn print_usage() {
            --calibrate-bracket <a:b:c>      Custom 3-point Es/N0 bracket for calibration\n\
            --decoder <spec>                 LDPC decoder: minsum | nms:<alpha> | oms:<beta> | sumproduct [default: minsum]\n\
            --demap <method>                 QAM demap: maxlog | exactlogmap [default: maxlog]\n\
+           --heartbeat-frames <N>           Within-SNR heartbeat cadence: checkpoint flush + campaign_heartbeat tracing event every N frames [default: 1000]\n\
          "
     );
 }
@@ -334,6 +368,7 @@ fn parse_args() -> Result<Args, String> {
     let mut calibrate_bracket: Option<[f64; 3]> = None;
     let mut decoder = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
     let mut demap = DemapMethod::MaxLog;
+    let mut heartbeat_frames: u64 = 1000;
 
     let mut i = 0;
     while i < argv.len() {
@@ -441,6 +476,18 @@ fn parse_args() -> Result<Args, String> {
                     .ok_or_else(|| "--demap requires a value".to_string())?;
                 demap = parse_demap(s)?;
             }
+            "--heartbeat-frames" => {
+                i += 1;
+                let s = argv
+                    .get(i)
+                    .ok_or_else(|| "--heartbeat-frames requires a value".to_string())?;
+                heartbeat_frames = s
+                    .parse()
+                    .map_err(|_| format!("Cannot parse '--heartbeat-frames {}' as u64", s))?;
+                if heartbeat_frames == 0 {
+                    return Err("--heartbeat-frames must be >= 1".to_string());
+                }
+            }
             "--help" | "-h" => {
                 print_usage();
                 std::process::exit(0);
@@ -479,6 +526,7 @@ fn parse_args() -> Result<Args, String> {
         calibrate_bracket,
         decoder,
         demap,
+        heartbeat_frames,
     })
 }
 
@@ -697,9 +745,11 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
 /// All CLI run-control knobs are wired onto the built pipeline's
 /// [`PipelineConfig`](gf2_sim::PipelineConfig) here: `esn0_db_points`,
 /// `target_errors`, `max_frames`, `seed`, **`strict_gpu`** (from
-/// `args.strict_gpu`), `checkpoint_dir`, and the heartbeat cadence. This is the
-/// single CLI→config wiring point, exercised directly by the
-/// `strict_gpu_flag_wires_to_config` unit test.
+/// `args.strict_gpu`), **`gpu_enabled`** (from `args.gpu`),
+/// `tracing_log_path`, `checkpoint_dir`, and the heartbeat cadence. This is
+/// the single CLI→config wiring point, exercised directly by the
+/// `strict_gpu_flag_wires_to_config` and `gpu_enabled_flag_wires_to_config`
+/// unit tests.
 ///
 /// # Arguments
 ///
@@ -709,6 +759,7 @@ fn write_readme(path: &Path, args: &Args, snr_points: &[f64], total_wall_seconds
 /// * `max_frames` — the per-SNR maximum frame budget.
 /// * `checkpoint_dir` — the per-SNR checkpoint directory, or `None`.
 /// * `heartbeat_every_frames` — the within-SNR checkpoint cadence (`0` off).
+/// * `tracing_log_path` — JSON-lines sink for tracing events, or `None`.
 fn build_configured_pipeline(
     args: &Args,
     esn0_points: &[f64],
@@ -716,6 +767,7 @@ fn build_configured_pipeline(
     max_frames: usize,
     checkpoint_dir: Option<PathBuf>,
     heartbeat_every_frames: u64,
+    tracing_log_path: Option<PathBuf>,
 ) -> Result<Pipeline, String> {
     let channel_es_n0 = esn0_points.first().copied().unwrap_or(6.0);
     let modcod = Modcod::Normal {
@@ -742,9 +794,11 @@ fn build_configured_pipeline(
     cfg.target_errors = target_errors as u64;
     cfg.max_frames = max_frames as u64;
     cfg.seed = args.seed;
+    cfg.gpu_enabled = args.gpu;
     cfg.strict_gpu = args.strict_gpu;
     cfg.checkpoint_dir = checkpoint_dir;
     cfg.heartbeat_every_frames = heartbeat_every_frames;
+    cfg.tracing_log_path = tracing_log_path;
     Ok(pipeline)
 }
 
@@ -838,6 +892,11 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         }
     }
 
+    // JSON-lines tracing log: unconditional (matches legacy binary parity),
+    // written by install_campaign_subscriber below.  Both production and
+    // calibration runs produce the file; the cross-epic monitor watches it.
+    let tracing_path = args.output_dir.join("tracing.jsonl");
+
     eprintln!(
         "Campaign (gf2-sim pipeline): {} {} | decoder={:?} demap={:?} | gpu={} strict_gpu={}",
         rate_display(args.rate),
@@ -862,13 +921,35 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         target_errors,
         max_frames_per_snr,
         checkpoint_dir.clone(),
-        if is_calib { 0 } else { 1000 },
+        if is_calib { 0 } else { args.heartbeat_frames },
+        Some(tracing_path.clone()),
     )?;
+
+    // Install the JSON-lines tracing subscriber as the PROCESS-GLOBAL default.
+    // Must be called AFTER the pipeline is built (so `tracing_log_path` is set
+    // on the config) and BEFORE the run starts. Global (not thread-local)
+    // because the sweep's frame loops run on rayon-pool workers and helper
+    // threads — a thread-local default would silently drop every event they
+    // emit (the campaign_heartbeat events below).
+    install_campaign_subscriber(pipeline.config())
+        .map_err(|e| format!("Cannot install tracing subscriber: {e}"))?;
+
+    // Emit a campaign_start event so tracing.jsonl has at least one record.
+    // This matches the legacy binary's event name/shape used by external monitors
+    // (cross-epic e4849f07).
+    tracing::info!(
+        name: "campaign_start",
+        event_type = "campaign_start",
+        rate = %rate_display(args.rate),
+        modulation = %mod_str(args.modulation),
+        seed = args.seed,
+        gpu_enabled = args.gpu,
+    );
 
     eprintln!(
         "Running via {} (parallelism={}, checkpoint={})",
         if checkpoint_dir.is_some() {
-            "Pipeline::run_checkpointed"
+            "Scheduler::run_sweep_checkpointed"
         } else {
             "Pipeline::run"
         },
@@ -887,9 +968,42 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     // otherwise (calibration — fixed frame budget, no checkpoints). The plain
     // `Pipeline::run` path has no `target_errors` early-exit, which matches
     // calibration's "run exactly N frames" semantics.
+    //
+    // The production arm calls `Scheduler::run_sweep_checkpointed` directly
+    // (rather than the `Pipeline::run_checkpointed` thin wrapper, which passes
+    // a no-op observer) so the per-frame `frame_observer` can emit live
+    // `campaign_heartbeat` tracing events — the monitoring channel the
+    // cross-epic e4849f07 multi-day sweep watches.
     let results: SimulationResults = if checkpoint_dir.is_some() {
-        let sweep = pipeline
-            .run_checkpointed(args.resume)
+        let scheduler = Scheduler::from_pipeline(&pipeline);
+        let heartbeat_every = pipeline.config().heartbeat_every_frames;
+
+        // Per-SNR-point counters of frames observed by this invocation.
+        // `campaign_heartbeat` is emitted every `heartbeat_every` observed
+        // frames. NOTE (frame_observer caveat, executor/drain.rs): on the
+        // hybrid path, frames prepped into a batch that is discarded at an
+        // interrupt are observed-but-unrecorded and re-observed on resume, and
+        // after a resume the count restarts at 0 (it counts THIS invocation's
+        // observations, not global progress) — heartbeat events are
+        // approximate liveness/progress, not exact frame accounting. The
+        // exact deterministic record is the checkpoint files + final CSV.
+        let frames_seen: Vec<AtomicU64> = esn0_points.iter().map(|_| AtomicU64::new(0)).collect();
+        let esn0_for_observer = esn0_points.clone();
+        let observer = move |snr_idx: usize, _global_frame: usize| {
+            let observed = frames_seen[snr_idx].fetch_add(1, Ordering::Relaxed) + 1;
+            if heartbeat_every > 0 && observed.is_multiple_of(heartbeat_every) {
+                tracing::info!(
+                    name: "campaign_heartbeat",
+                    event_type = "campaign_heartbeat",
+                    snr_idx,
+                    es_n0_db = esn0_for_observer[snr_idx],
+                    frames_observed = observed,
+                );
+            }
+        };
+
+        let sweep = scheduler
+            .run_sweep_checkpointed(&pipeline, args.resume, &observer)
             .map_err(|e| format!("Checkpointed sweep failed: {e}"))?;
         if sweep.interrupted {
             eprintln!(
@@ -920,6 +1034,26 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         .map(|(&es_n0_db, p)| point_to_csv_row(es_n0_db, p, wall_per_point))
         .collect();
 
+    // Emit one snr_point_completed event per completed point. NOTE: these are
+    // emitted POST-SWEEP (after run_sweep_checkpointed / run_with_decoder
+    // returns), not live at each SNR boundary — the executor's frame_observer
+    // carries no per-point result data, so a live boundary event could not
+    // include fer/errors/mean_iters. Live progress during the sweep is the
+    // campaign_heartbeat channel above.
+    for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in &csv_rows {
+        tracing::info!(
+            name: "snr_point_completed",
+            event_type = "snr_point_completed",
+            es_n0_db,
+            fer,
+            ber,
+            frames,
+            errors,
+            mean_iters,
+            wall_seconds,
+        );
+    }
+
     write_campaign_csv(&csv_path, &csv_rows)
         .map_err(|e| format!("Cannot write campaign CSV: {e}"))?;
 
@@ -931,6 +1065,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
 
     eprintln!("Campaign complete. Output: {}", args.output_dir.display());
     eprintln!("  CSV: {}", csv_path.display());
+    eprintln!("  Log: {}", tracing_path.display());
     if let Some(ref ckpt_dir) = checkpoint_dir {
         eprintln!("  Checkpoints: {}", ckpt_dir.display());
     }
@@ -1096,6 +1231,7 @@ mod tests {
             calibrate_bracket: None,
             decoder: DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             demap: DemapMethod::ExactLogMap,
+            heartbeat_frames: 1000,
         }
     }
 
@@ -1107,8 +1243,8 @@ mod tests {
         let mut args = base_args();
 
         // Default (flag absent): strict_gpu false on the config.
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds");
         assert!(
             !pipeline.config().strict_gpu,
             "strict_gpu must default to false when --strict-gpu is absent"
@@ -1116,24 +1252,60 @@ mod tests {
 
         // Flag present: strict_gpu true on the config.
         args.strict_gpu = true;
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds");
         assert!(
             pipeline.config().strict_gpu,
             "--strict-gpu must set PipelineConfig::strict_gpu = true"
         );
     }
 
+    /// CLI→config: the `--gpu` flag (here `args.gpu`) wires through
+    /// `build_configured_pipeline` onto `PipelineConfig::gpu_enabled`.
+    /// This is the hard-criterion wire verified by a CLI→config parse test.
+    #[test]
+    fn gpu_enabled_flag_wires_to_config() {
+        let mut args = base_args();
+
+        // Default (--gpu absent): gpu_enabled false on the config.
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds without gpu");
+        assert!(
+            !pipeline.config().gpu_enabled,
+            "gpu_enabled must default to false when --gpu is absent"
+        );
+
+        // --gpu present: gpu_enabled true on the config.  Note: `with_gpu(true)`
+        // on a non-hip build degrades gracefully at build() time (no error) and
+        // only errors at run time when the GPU executor is actually invoked.
+        args.gpu = true;
+        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0, None)
+            .expect("pipeline builds with gpu flag");
+        assert!(
+            pipeline.config().gpu_enabled,
+            "--gpu must set PipelineConfig::gpu_enabled = true"
+        );
+    }
+
     /// CLI→config: the remaining run-control knobs (`seed`, `target_errors`,
-    /// `max_frames`, `esn0_db_points`, `checkpoint_dir`, `heartbeat`) also wire
-    /// through the single `build_configured_pipeline` site.
+    /// `max_frames`, `esn0_db_points`, `checkpoint_dir`, `heartbeat`,
+    /// `tracing_log_path`) also wire through the single
+    /// `build_configured_pipeline` site.
     #[test]
     fn run_control_knobs_wire_to_config() {
         let args = base_args();
         let ck = PathBuf::from("/tmp/ck_unused");
-        let pipeline =
-            build_configured_pipeline(&args, &[6.0, 6.5], 100, 8, Some(ck.clone()), 1000)
-                .expect("pipeline builds");
+        let tl = PathBuf::from("/tmp/tl_unused.jsonl");
+        let pipeline = build_configured_pipeline(
+            &args,
+            &[6.0, 6.5],
+            100,
+            8,
+            Some(ck.clone()),
+            1000,
+            Some(tl.clone()),
+        )
+        .expect("pipeline builds");
         let cfg = pipeline.config();
         assert_eq!(cfg.seed, 42);
         assert_eq!(cfg.target_errors, 100);
@@ -1141,6 +1313,7 @@ mod tests {
         assert_eq!(cfg.esn0_db_points, vec![6.0, 6.5]);
         assert_eq!(cfg.checkpoint_dir.as_deref(), Some(ck.as_path()));
         assert_eq!(cfg.heartbeat_every_frames, 1000);
+        assert_eq!(cfg.tracing_log_path.as_deref(), Some(tl.as_path()));
     }
 
     #[test]
