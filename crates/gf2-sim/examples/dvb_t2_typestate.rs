@@ -19,6 +19,11 @@
 //! `.modcod()` is a compile-time error (the method only exists on the
 //! `NeedsDecoder` state, not on `NeedsModcod`).
 //!
+//! The example runs at the r1/2 16-QAM **waterfall** Es/N0 (6.0 dB), the
+//! steep part of the FER curve, so the printed summary shows a meaningful
+//! mixed verdict (some frames decode cleanly, some error) rather than the
+//! trivial all-zeros table of an above-threshold operating point.
+//!
 //! For a side-by-side comparison via the lower-level graph API see
 //! `examples/dvb_t2_graph_api.rs`.
 //!
@@ -39,11 +44,17 @@ use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{Pipeline, Scheduler, TopologyExecutor};
 
 fn main() {
-    // Use a small frame count so the example completes in a few seconds even
-    // on a single core.  n = 64800 LDPC decode is heavy; 8 frames is
-    // representative without being slow.
+    // A small frame count so the example completes in seconds — n = 64800
+    // LDPC decode is heavy, and at the waterfall BP runs near its
+    // 50-iteration cap on most frames.
     const FRAMES: usize = 8;
-    const SEED: u64 = 0xC0DE_F00D;
+    // The de160fc5 waterfall seed: at 6.0 dB the 8-frame sweep yields a
+    // MIXED verdict (3/8 errored frames at this seed) — a meaningful
+    // operating point on the steep part of the FER curve, not the
+    // informationless all-zeros regime above threshold.
+    const SEED: u64 = 0xDE16_0FC5;
+    // r1/2 16-QAM waterfall Es/N0 (TS 102 831 Table 44 QEF anchor ≈ 6.0 dB).
+    const ES_N0_DB: f32 = 6.0;
 
     // Build the seven-stage CPU DVB-T2 BICM chain via the typestate builder.
     // The builder enforces the required call order at compile time.
@@ -54,14 +65,14 @@ fn main() {
         })
         .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
         .demap(DemapMethod::ExactLogMap)
-        .channel(Channel::awgn(6.5))
+        .channel(Channel::awgn(ES_N0_DB))
         .seed(SEED)
-        .parallelism(NonZeroUsize::new(1).unwrap())
+        .parallelism(NonZeroUsize::new(4).unwrap())
         .build()
         .expect("r1/2 16-QAM Normal is an in-scope MODCOD");
 
     println!(
-        "DVB-T2 r1/2 16-QAM Normal: {} stages, seed {:#010x}",
+        "DVB-T2 r1/2 16-QAM Normal @ {ES_N0_DB} dB (waterfall): {} stages, seed {:#010x}",
         pipeline.stage_count(),
         pipeline.config().seed,
     );
