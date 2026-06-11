@@ -39,6 +39,17 @@
 //! `max`/reduction-order ULP drift inherent to max-log (design doc §11), which
 //! the byte-identity test bounds to a small ulp tolerance.
 //!
+//! # Default-stream vs stream-ordered demap (design doc §6)
+//!
+//! The erased [`Stage::process`](crate::Stage) path and
+//! [`demap_batch`](GpuGrayQamDemapper::demap_batch) run on the **default
+//! stream**; the additive
+//! [`demap_batch_on_stream`](GpuGrayQamDemapper::demap_batch_on_stream)
+//! variant orders the launch and every transfer on a caller-owned HIP stream
+//! (pinned staging, per-stream synchronize only) — the route the DAG topology
+//! executor (`de160fc5`) takes for this stage's `GpuOnly` dispatch on the
+//! worker's owned stream. Both paths emit byte-identical LLRs.
+//!
 //! # CPU fallback (§8)
 //!
 //! The [`Stage::CpuFallback`](crate::Stage) is the in-crate
@@ -61,7 +72,8 @@ mod imp {
         BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec,
     };
     use gf2_coding::Llr;
-    use gf2_kernels_hip::GpuGrayQamDemapper as KernelGpuDemapper;
+    use gf2_kernels_hip::host::HipStream;
+    use gf2_kernels_hip::{DemapStreamScratch, GpuGrayQamDemapper as KernelGpuDemapper};
 
     use crate::batch::{LlrBatch, SymbolBatch};
     use crate::error::StageError;
@@ -429,6 +441,85 @@ mod imp {
             }
             Ok(LlrBatch::new(frames))
         }
+
+        /// Allocates the pinned host staging the stream-ordered demap variant
+        /// ([`demap_batch_on_stream`](Self::demap_batch_on_stream)) requires,
+        /// sized for `demapper` (a per-worker demapper from
+        /// [`build_demapper`](Self::build_demapper)).
+        ///
+        /// One scratch per worker, like the demapper itself (both are
+        /// `Send`-only, owned per worker, never shared by `&`).
+        ///
+        /// # Arguments
+        ///
+        /// * `demapper` — the per-worker device demapper the scratch pairs
+        ///   with.
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] (via [`map_hip_error`](crate::gpu::map_hip_error))
+        /// if a pinned allocation fails (an OOM is recoverable).
+        pub fn build_stream_scratch(
+            &self,
+            demapper: &KernelGpuDemapper,
+        ) -> Result<DemapStreamScratch, StageError> {
+            demapper
+                .new_stream_scratch()
+                .map_err(|e| map_hip_error(e, "GpuGrayQamDemapper::new_stream_scratch"))
+        }
+
+        /// Like [`demap_batch`](Self::demap_batch), but with every kernel
+        /// launch and H2D / D2H transfer ordered on the caller-owned `stream`,
+        /// awaiting completion per-stream (never device-wide sync). The DAG
+        /// topology executor (`de160fc5`) routes this stage's `GpuOnly`
+        /// dispatch here on the worker's deterministically owned HIP stream;
+        /// the LLRs are **byte-identical** to
+        /// [`demap_batch`](Self::demap_batch) (same kernel, same inputs — only
+        /// the queue and transfer staging differ).
+        ///
+        /// # Arguments
+        ///
+        /// Same as [`demap_batch`](Self::demap_batch), plus:
+        ///
+        /// * `stream` — the worker's owned HIP stream.
+        /// * `scratch` — the worker's pinned staging (from
+        ///   [`build_stream_scratch`](Self::build_stream_scratch)).
+        ///
+        /// # Errors
+        ///
+        /// Returns a [`StageError`] on a device fault (recoverable for OOM /
+        /// unsupported arch so the executor substitutes
+        /// [`cpu_fallback`](Self::cpu_fallback); fatal otherwise).
+        ///
+        /// # Panics
+        ///
+        /// Panics if a frame's symbol count exceeds the demapper's `max_batch`,
+        /// or if `scratch` was sized for a different demapper.
+        ///
+        /// # Complexity
+        ///
+        /// Identical to [`demap_batch`](Self::demap_batch).
+        pub fn demap_batch_on_stream(
+            &self,
+            input: &SymbolBatch,
+            demapper: &KernelGpuDemapper,
+            stream: &HipStream,
+            scratch: &mut DemapStreamScratch,
+        ) -> Result<LlrBatch, StageError> {
+            let m = self.m as usize;
+            let mut frames = Vec::with_capacity(input.i.len());
+            for (rx_i, rx_q) in input.i.iter().zip(input.q.iter()) {
+                let num_symbols = rx_i.len();
+                let noise_var = vec![self.noise_var; num_symbols];
+                let raw = demapper
+                    .demap_batch_on_stream(rx_i, rx_q, None, None, &noise_var, stream, scratch)
+                    .map_err(|e| map_hip_error(e, "GpuGrayQamDemapper::demap_batch_on_stream"))?;
+                debug_assert_eq!(raw.len(), num_symbols * m);
+                let llrs = raw.into_iter().map(Llr::new).collect();
+                frames.push(llrs);
+            }
+            Ok(LlrBatch::new(frames))
+        }
     }
 
     impl Stage<SymbolBatch, LlrBatch> for GpuGrayQamDemapper {
@@ -560,6 +651,60 @@ mod imp {
             fn assert_send<T: Send>() {}
             assert_send::<GpuGrayQamDemapper>();
             assert_send::<CpuGrayQamDemapper>();
+        }
+
+        /// The stream-ordered stage path (`demap_batch_on_stream`, the topology
+        /// executor's `GpuOnly` route) must emit LLRs **byte-identical** to the
+        /// default-stream `demap_batch` path: same kernel, same inputs, only
+        /// the queue and transfer staging differ. Skips with no GPU; fast tier.
+        #[test]
+        fn test_demap_on_stream_matches_default_stream() {
+            use gf2_kernels_hip::host::{device_mem_info, HipStream};
+
+            if device_mem_info().is_err() {
+                eprintln!("skipping test_demap_on_stream_matches_default_stream: no usable GPU");
+                return;
+            }
+
+            let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25);
+            let n = 48usize;
+            let i: Vec<f32> = (0..n).map(|k| 0.09 * k as f32 - 2.0).collect();
+            let q: Vec<f32> = (0..n).map(|k| 1.7 - 0.06 * k as f32).collect();
+            // Two frames so the per-frame loop indexes 0 and 1 distinctly.
+            let input = SymbolBatch::new(vec![i.clone(), i], vec![q.clone(), q]);
+
+            let demapper = stage.build_demapper(n).expect("device demapper");
+            let default = stage
+                .demap_batch(&input, &demapper)
+                .expect("default-stream demap");
+
+            let stream = HipStream::new().expect("create stream");
+            let mut scratch = stage
+                .build_stream_scratch(&demapper)
+                .expect("pinned staging");
+            let streamed = stage
+                .demap_batch_on_stream(&input, &demapper, &stream, &mut scratch)
+                .expect("stream-ordered demap");
+
+            assert_eq!(default.frames.len(), streamed.frames.len());
+            for (f, (df, sf)) in default
+                .frames
+                .iter()
+                .zip(streamed.frames.iter())
+                .enumerate()
+            {
+                assert_eq!(df.len(), sf.len(), "frame {f} LLR count");
+                for (b, (d, s)) in df.iter().zip(sf.iter()).enumerate() {
+                    // Bit-level comparison (f32 `==` would conflate -0.0 / 0.0).
+                    assert_eq!(
+                        d.value().to_bits(),
+                        s.value().to_bits(),
+                        "frame={f} LLR[{b}] differs: default={} stream={}",
+                        d.value(),
+                        s.value()
+                    );
+                }
+            }
         }
     }
 }
