@@ -417,6 +417,7 @@ impl Scheduler {
             .diagnostic_dump_dir
             .clone()
             .unwrap_or_else(crate::executor::failure::default_dump_dir);
+        let inject_oom_modulus = cfg.inject_gpu_oom_modulus;
 
         let timeline = Mutex::new(OverlapTimeline::default());
         let run_start = Instant::now();
@@ -425,7 +426,7 @@ impl Scheduler {
         for (snr_idx, &es_n0_db) in cfg.esn0_db_points.iter().enumerate() {
             let counters = self.run_one_point(
                 pipeline, plan, snr_idx, es_n0_db, max_frames, &timeline, run_start, strict_gpu,
-                &dump_dir,
+                &dump_dir, inject_oom_modulus,
             )?;
             per_point.push(SnrPointResult::from_counters(es_n0_db, counters));
         }
@@ -452,6 +453,7 @@ impl Scheduler {
         run_start: Instant,
         strict_gpu: bool,
         dump_dir: &std::path::Path,
+        inject_oom_modulus: Option<u64>,
     ) -> Result<WorkerCounters, StageError> {
         let RunPlan::Dvbt2 {
             rate,
@@ -470,7 +472,7 @@ impl Scheduler {
             if let Some(gpu_stage) = hybrid::find_gpu_ldpc_stage(pipeline) {
                 return self.run_point_hybrid(
                     &template, gpu_stage, snr_idx, max_frames, timeline, run_start, strict_gpu,
-                    dump_dir,
+                    dump_dir, inject_oom_modulus,
                 );
             }
             // gpu_enabled but the stage list carries no GpuOnly stage (e.g. a
@@ -479,8 +481,9 @@ impl Scheduler {
         }
         #[cfg(not(feature = "hip"))]
         let _ = pipeline; // no device backend: every stage routes CpuOnly
-                          // strict_gpu and dump_dir only apply on the GPU path.
-        let _ = (strict_gpu, dump_dir);
+                          // strict_gpu, dump_dir, and inject_oom_modulus only
+                          // apply on the GPU path.
+        let _ = (strict_gpu, dump_dir, inject_oom_modulus);
 
         // CpuOnly routing outcome: the within-SNR frame-parallel dispatch (SSOT
         // `3fcb7025`), running inside this scheduler's rayon pool so the worker
@@ -572,6 +575,7 @@ mod hybrid {
             run_start: Instant,
             strict_gpu: bool,
             dump_dir: &std::path::Path,
+            inject_oom_modulus: Option<u64>,
         ) -> Result<WorkerCounters, StageError> {
             let pool = self
                 .hip_pool
@@ -601,6 +605,7 @@ mod hybrid {
                             self.worker_partition_hybrid(
                                 template, gpu_stage, stream, worker_idx, stream_id, snr_idx,
                                 max_frames, seed, timeline, run_start, strict_gpu, dump_dir,
+                                inject_oom_modulus,
                             )
                         })
                         .collect()
@@ -636,6 +641,7 @@ mod hybrid {
             run_start: Instant,
             strict_gpu: bool,
             dump_dir: &std::path::Path,
+            inject_oom_modulus: Option<u64>,
         ) -> Result<WorkerCounters, StageError> {
             let num_workers = self.parallelism.get();
             // The worker's global frames: worker_idx, +num_workers, … < max_frames.
@@ -730,6 +736,14 @@ mod hybrid {
                         let llr_batch_for_fallback = crate::batch::LlrBatch::new(
                             cur_preps.iter().map(|p| p.llrs.clone()).collect(),
                         );
+                        // The batch's first global frame index: used to key the
+                        // test-only OOM injection (`42eac5cc`) so the modulus
+                        // semantics mirror the topology executor's per-frame
+                        // keying — only the batch's first frame index is
+                        // checked; the whole batch is injected (or not) as one
+                        // unit. This is the documented two-surface keying for
+                        // `PipelineConfig::inject_gpu_oom_modulus`.
+                        let first_global_frame = batches[bi].first().copied().unwrap_or(0) as u64;
                         let gpu_res = traced_interval(
                             timeline,
                             worker_idx,
@@ -740,33 +754,59 @@ mod hybrid {
                             ActivityKind::GpuDecode,
                             run_start,
                             || -> GpuBatchResult {
-                                // Map the HIP decode result to GpuBatchResult
-                                // (Vec<BitVec>, Vec<u32>) before dispatching.
-                                let raw: GpuBatchResult = gpu_stage
-                                    .decode_batch_with_iters_on_stream(
-                                        &llr_batch_for_fallback,
-                                        &device,
-                                        stream,
-                                        &mut scratch,
-                                    )
-                                    .map(|(hard, iters)| (hard.frames, iters));
                                 use crate::executor::failure::{
-                                    dispatch_with_fallback, FaultContext,
+                                    dispatch_with_fallback, FaultContext, FailurePolicy,
                                 };
                                 use crate::stage::Stage as _;
                                 let ctx = FaultContext {
-                                    batch_id: bi as u64,
+                                    batch_id: first_global_frame,
                                     snr_idx,
                                     device_id: 0,
                                     worker_idx,
+                                };
+                                let policy = FailurePolicy {
+                                    strict_gpu,
+                                    dump_dir,
+                                    inject_gpu_oom_modulus: inject_oom_modulus,
+                                };
+                                // Test-only OOM injection (`42eac5cc`): force a
+                                // recoverable OOM when the modulus fires on this
+                                // batch's first global frame index, driving the
+                                // production `dispatch_with_fallback` path as a
+                                // genuine device OOM would.
+                                let raw: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
+                                    Err(StageError::Recoverable(
+                                        crate::error::RecoverableError::OutOfMemory {
+                                            device_id: 0,
+                                            bytes_requested: 1024 * 1024 * 1024,
+                                        },
+                                    ))
+                                } else {
+                                    gpu_stage
+                                        .decode_batch_with_iters_on_stream(
+                                            &llr_batch_for_fallback,
+                                            &device,
+                                            stream,
+                                            &mut scratch,
+                                        )
+                                        .map(|(hard, iters)| (hard.frames, iters))
                                 };
                                 dispatch_with_fallback(
                                     raw,
                                     || {
                                         // CPU fallback: run the registered CpuLdpcBp
-                                        // on the same LLR batch; iters are 0
-                                        // (fallback path, counts excluded per §11
-                                        // mixed-path contract).
+                                        // on the same LLR batch. The per-frame
+                                        // iteration count is recorded as
+                                        // `max_iterations` (the stage's cap), the
+                                        // shared fallback-iters convention (L1)
+                                        // documented at the topology executor's
+                                        // `gpu_ldpc_max_iters` helper: since
+                                        // `mean_iters` is §11-excluded from the
+                                        // CPU-vs-GPU contract on a mixed-path run,
+                                        // any consistent value is acceptable; the
+                                        // cap is the documented convention so the
+                                        // two surfaces agree.
+                                        let max_iters = gpu_stage.max_iterations() as u32;
                                         let fb = gpu_stage.cpu_fallback().ok_or_else(|| {
                                             StageError::Fatal(
                                                 crate::error::FatalError::CpuFallbackAlsoFailed {
@@ -780,7 +820,7 @@ mod hybrid {
                                         })?;
                                         let hard = fb.process(&llr_batch_for_fallback, &mut ())?;
                                         let n = hard.frames.len();
-                                        Ok((hard.frames, vec![0u32; n]))
+                                        Ok((hard.frames, vec![max_iters; n]))
                                     },
                                     ctx,
                                     strict_gpu,
