@@ -482,3 +482,31 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   - CLI→config wiring (`--strict-gpu` → `PipelineConfig::strict_gpu` + the other
     run-control knobs): the `strict_gpu_flag_wires_to_config` /
     `run_control_knobs_wire_to_config` unit tests in the binary.
+
+### Lead re-attestation (2026-06-11, quiet host)
+
+- Host verified quiet before the runs (loadavg 0.96, no foreign
+  cargo/rustc; the loadavg during a run is the measurement's own 24
+  workers). Migrated binary at merge `c59f8800`.
+- 3 repeats (fps = 200 / CSV `wall_seconds`): 16.8342 / 16.8356 /
+  16.6892 -> **16.79 +/- 0.07 fps** = **10.35x** the canonical legacy
+  single-thread baseline (`c0b1702d`, 1.6216 fps). Threshold >= 8x:
+  **PASS** (matches the worker-measured 16.85 within noise).
+- `parallelism-pays` ATTESTED by the lead on this measurement.
+
+### Slow-leg byte-identity attestation (2026-06-11; gate-visibility per the B.4/de160fc5 receipts precedent)
+
+The within-pipeline two-run byte-identity legs are `#[ignore = "sim:"]`
+(two full-codec subprocess spawns cannot fit the 5 s fast cap), so the
+green gate does not run them; this attestation records the lead-reviewed
+worker runs at branch HEAD `caaaced0`:
+
+- `byte_identical_two_runs_waterfall` (200 frames, seed 42, Es/N0
+  6.0 dB — the measured non-vacuous knee for SumProduct/ExactLogMap;
+  6.25 dB converges everything for this config): both runs
+  `fer=0.26, frames=200, errors=52, mean_iters=48.12`, byte-identical
+  on all four columns; non-vacuity `0 < 52 < 200` asserted;
+  `wall_seconds` excluded. 38 s (< 120 s slow cap).
+- `byte_identical_two_runs_smoke` (8 frames): byte-identical, 6.5 s.
+- Un-ignored fast-tier coverage: the CLI parser-rejection subprocess
+  tests + the in-binary CLI->config wiring units (0.006 s).
