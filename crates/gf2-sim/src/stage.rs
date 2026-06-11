@@ -280,6 +280,31 @@ pub trait AnyStage: Send + Sync {
     /// returns `None`). The provided default returns `None` so pre-existing
     /// `AnyStage` implementors keep compiling; [`ErasedStage`] overrides it.
     ///
+    /// # The `_scratch` parameter
+    ///
+    /// `_scratch` is the **faulting GPU stage's own** pooled scratch (the one
+    /// the executor holds for this stage position) — NOT the fallback's. The
+    /// fallback stage's scratch is a different concrete type, so the erased
+    /// impl cannot downcast `_scratch` for it; the parameter exists so a
+    /// future stage-specific override can thread positioned state across, and
+    /// is unused by the generic [`ErasedStage`] impl.
+    ///
+    /// # Scratch contract: `()`-scratch fallbacks only (§11)
+    ///
+    /// The generic erased impl runs the fallback with a **fresh
+    /// default-initialised scratch**. That is sound only when the fallback's
+    /// [`Stage::Scratch`] is `()` (true for the GPU LDPC BP and demap
+    /// fallbacks). A **stateful** fallback scratch — e.g. the hip-gated
+    /// `GpuAwgn`'s fallback
+    /// [`Awgn`](crate::channels::Awgn), whose
+    /// [`ChannelScratch`](crate::channels::awgn::ChannelScratch) default is a
+    /// seed-0 RNG — would make the fallback output depend on a
+    /// default-initialised RNG position instead of the §3 per-frame keying,
+    /// **silently violating the §11 byte-identity contract**. The erased impl
+    /// therefore REFUSES such fallbacks with a typed
+    /// [`BuildError::ExecutionValidation`](crate::error::BuildError::ExecutionValidation)
+    /// error naming the stage, rather than silently default-seeding.
+    ///
     /// [`process_any`]: AnyStage::process_any
     /// [`cpu_fallback()`]: Stage::cpu_fallback
     fn cpu_fallback_process_any(
@@ -395,6 +420,27 @@ where
         _scratch: &mut dyn AnyScratch,
     ) -> Option<Result<Box<dyn TypedBatch>, StageError>> {
         let fb = self.stage.cpu_fallback()?;
+        // §11 guard: the fallback runs with a FRESH default scratch below, which
+        // is reproducible only for a stateless `()` scratch (the GPU LDPC BP and
+        // demap fallbacks). A stateful fallback scratch (e.g. GpuAwgn's `Awgn`
+        // fallback with its `ChannelScratch` seed-0-RNG default) would silently
+        // replace the §3 per-frame RNG keying with a default-seeded stream,
+        // corrupting byte-identity — so it is REFUSED with a typed error
+        // instead (see the trait-method docs).
+        if TypeId::of::<<S::CpuFallback as Stage<I, O>>::Scratch>() != TypeId::of::<()>() {
+            return Some(Err(StageError::Fatal(crate::error::FatalError::BuildError(
+                crate::error::BuildError::ExecutionValidation {
+                    reason: format!(
+                        "stage `{}` has a CPU fallback with stateful scratch `{}`: a \
+                         default-initialised scratch is not reproducible across the \
+                         erased fallback boundary (design §11 byte-identity), so the \
+                         fallback is refused rather than silently default-seeded",
+                        std::any::type_name::<S>(),
+                        std::any::type_name::<<S::CpuFallback as Stage<I, O>>::Scratch>(),
+                    ),
+                },
+            ))));
+        }
         let input = match input.as_any().downcast_ref::<I>() {
             Some(i) => i,
             None => {
@@ -404,10 +450,8 @@ where
                 }))
             }
         };
-        // CPU fallback stages always have `Scratch = ()` (they are CpuOnly stages
-        // by design; the executor uses a fresh `()` scratch for the fallback call
-        // rather than attempting to downcast the GPU stage's scratch which has a
-        // different type).
+        // Reaching here, the fallback's scratch is `()`: a fresh default IS the
+        // (only) correct scratch for the call.
         let mut fb_scratch = <<S::CpuFallback as Stage<I, O>>::Scratch as Default>::default();
         Some(
             fb.process(input, &mut fb_scratch)
@@ -600,5 +644,144 @@ mod tests {
             Err(other) => panic!("expected TypeMismatch, got {other:?}"),
             Ok(_) => panic!("mismatched input type must fail"),
         }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // HIGH-1 (42eac5cc r2 review): the erased fallback hook must REFUSE a
+    // fallback whose scratch is stateful, never silently default-seed it.
+    // ────────────────────────────────────────────────────────────────────
+
+    /// A GpuAwgn-shaped fallback: stateful scratch whose `Default` is a
+    /// sentinel "seed-0" position. If the erased hook ever ran this fallback
+    /// with a default scratch, the output would betray it (it returns the
+    /// scratch state, mirroring how `Awgn`'s seed-0 `ChannelScratch` default
+    /// would draw seed-0 noise).
+    struct StatefulScratch(u64);
+    impl Default for StatefulScratch {
+        fn default() -> Self {
+            // The "seed 0" default a silent fallback would observe.
+            StatefulScratch(0)
+        }
+    }
+
+    struct StatefulFallback;
+    impl Stage<InBatch, OutBatch> for StatefulFallback {
+        type Scratch = StatefulScratch;
+        type CpuFallback = Self;
+        fn process(
+            &self,
+            _input: &InBatch,
+            scratch: &mut StatefulScratch,
+        ) -> Result<OutBatch, StageError> {
+            // Output depends on the scratch position — the §11 hazard.
+            Ok(OutBatch(scratch.0))
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::CpuOnly
+        }
+    }
+
+    /// A GpuAwgn-shaped GPU stage registering `StatefulFallback` as its CPU
+    /// fallback (mirroring `GpuAwgn::CpuFallback = Awgn` with `ChannelScratch`).
+    struct GpuLikeWithStatefulFallback {
+        fallback: StatefulFallback,
+    }
+    impl Stage<InBatch, OutBatch> for GpuLikeWithStatefulFallback {
+        type Scratch = ();
+        type CpuFallback = StatefulFallback;
+        fn process(&self, _input: &InBatch, _scratch: &mut ()) -> Result<OutBatch, StageError> {
+            unreachable!("the GPU path is not under test")
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::GpuOnly
+        }
+        fn cpu_fallback(&self) -> Option<&StatefulFallback> {
+            Some(&self.fallback)
+        }
+    }
+
+    /// HIGH-1: a stateful-scratch fallback is refused with the typed
+    /// `BuildError::ExecutionValidation` — NOT silently run on a
+    /// default-initialised ("seed-0") scratch.
+    #[test]
+    fn test_stateful_scratch_fallback_is_refused_not_default_seeded() {
+        let erased: Box<dyn AnyStage> = erase(GpuLikeWithStatefulFallback {
+            fallback: StatefulFallback,
+        });
+        let input: Box<dyn TypedBatch> = Box::new(InBatch(5));
+        let mut scratch = erased.default_scratch();
+
+        let result = erased
+            .cpu_fallback_process_any(input.as_ref(), scratch.as_mut())
+            .expect("a fallback IS registered, so the hook must engage");
+        match result {
+            Err(StageError::Fatal(crate::error::FatalError::BuildError(
+                crate::error::BuildError::ExecutionValidation { reason },
+            ))) => {
+                assert!(
+                    reason.contains("stateful scratch"),
+                    "refusal must name the stateful-scratch cause, got: {reason}"
+                );
+                assert!(
+                    reason.contains("StatefulScratch"),
+                    "refusal must name the offending scratch type, got: {reason}"
+                );
+            }
+            Err(other) => panic!("expected ExecutionValidation refusal, got {other:?}"),
+            Ok(out) => panic!(
+                "stateful-scratch fallback must be REFUSED, but it ran and \
+                 produced {:?} (a silently default-seeded output)",
+                out.as_any().downcast_ref::<OutBatch>()
+            ),
+        }
+    }
+
+    /// The `()`-scratch fallback contract is unchanged: stateless fallbacks
+    /// (the GPU LDPC BP / demap shape) still run through the erased hook.
+    #[test]
+    fn test_unit_scratch_fallback_still_runs() {
+        /// `()`-scratch fallback that maps the input through.
+        struct UnitFallback;
+        impl Stage<InBatch, OutBatch> for UnitFallback {
+            type Scratch = ();
+            type CpuFallback = Self;
+            fn process(&self, input: &InBatch, _scratch: &mut ()) -> Result<OutBatch, StageError> {
+                Ok(OutBatch(input.0 + 100))
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::CpuOnly
+            }
+        }
+        struct GpuLikeWithUnitFallback {
+            fallback: UnitFallback,
+        }
+        impl Stage<InBatch, OutBatch> for GpuLikeWithUnitFallback {
+            type Scratch = ();
+            type CpuFallback = UnitFallback;
+            fn process(&self, _i: &InBatch, _s: &mut ()) -> Result<OutBatch, StageError> {
+                unreachable!("the GPU path is not under test")
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::GpuOnly
+            }
+            fn cpu_fallback(&self) -> Option<&UnitFallback> {
+                Some(&self.fallback)
+            }
+        }
+
+        let erased: Box<dyn AnyStage> = erase(GpuLikeWithUnitFallback {
+            fallback: UnitFallback,
+        });
+        let input: Box<dyn TypedBatch> = Box::new(InBatch(5));
+        let mut scratch = erased.default_scratch();
+        let out = erased
+            .cpu_fallback_process_any(input.as_ref(), scratch.as_mut())
+            .expect("fallback registered")
+            .expect("`()`-scratch fallback must run");
+        assert_eq!(
+            out.as_any().downcast_ref::<OutBatch>(),
+            Some(&OutBatch(105)),
+            "the stateless fallback must process the input"
+        );
     }
 }
