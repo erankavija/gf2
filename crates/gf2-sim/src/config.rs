@@ -85,20 +85,29 @@ pub struct PipelineConfig {
     pub diagnostic_dump_dir: Option<PathBuf>,
     /// **Test-only** GPU out-of-memory fault-injection hook (issue `42eac5cc`).
     ///
-    /// When `Some(m)` (with `m >= 1`), the hybrid executor's GPU LDPC
-    /// belief-propagation arm forces a
+    /// When `Some(m)` (with `m >= 1`), BOTH GPU LDPC dispatch surfaces force a
     /// [`RecoverableError::OutOfMemory`](crate::error::RecoverableError::OutOfMemory)
-    /// instead of launching the real kernel on every frame whose global frame
-    /// index `g` satisfies `g % m == 0`. The forced OOM then flows through the
-    /// **production** `dispatch_with_fallback` path (CPU fallback when
-    /// `!strict_gpu`, or a hard-fail promotion when `strict_gpu`), exactly as a
-    /// genuine device OOM would. This drives the run-level OOM-auto-fallback
-    /// criterion (`42eac5cc` SC1) against the real scheduler/executor without
-    /// needing to exhaust real device memory.
+    /// instead of launching the real kernel:
     ///
-    /// `m == 1` injects on every frame (full CPU fallback); `m == 2` injects on
-    /// the even frames only (a genuine mixed GPU + CPU-fallback run). `None` (the
-    /// default) disables injection — production runs never set this.
+    /// * **Topology executor** (`TopologyExecutor::run_dvb_t2_snr_point`):
+    ///   injects on each **frame** whose global frame index `g` satisfies
+    ///   `g % m == 0` (each topology dispatch is one frame, keyed on its global
+    ///   frame index `batch_id == g`).
+    /// * **Scheduler hybrid loop** (`worker_partition_hybrid`): injects on each
+    ///   **batch** whose **first** global frame index satisfies `first_g % m ==
+    ///   0`; the whole batch is treated as one unit (the batch's first frame
+    ///   index keys the modulus check).
+    ///
+    /// The forced OOM then flows through the **production** `dispatch_with_fallback`
+    /// path (CPU fallback when `!strict_gpu`, or a hard-fail promotion when
+    /// `strict_gpu`), exactly as a genuine device OOM would. This drives the
+    /// run-level OOM-auto-fallback criterion (`42eac5cc` SC1/SC4) against the
+    /// real scheduler/executor without needing to exhaust real device memory.
+    ///
+    /// `m == 1` injects on every frame/batch (full CPU fallback); `m == 2`
+    /// injects on the even frames/batches only (a genuine mixed GPU +
+    /// CPU-fallback run). `None` (the default) disables injection — production
+    /// runs never set this.
     pub inject_gpu_oom_modulus: Option<u64>,
 }
 
