@@ -89,3 +89,6 @@ benchmarks/expected/sparse_smoke_n16.bin
 # GF(2^32) matmul path.
 benchmarks/expected/gf2pow32_smoke_n16.bin
 .claude/scheduled_tasks.lock
+
+# GPU hard-fail diagnostic dumps (gf2-sim `42eac5cc`; runtime-generated per fatal GPU event)
+dev/benchmarks/gf2-sim/diagnostic-dumps/
