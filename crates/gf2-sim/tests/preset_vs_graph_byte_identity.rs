@@ -43,9 +43,8 @@
 //! `tests/preset_vs_graph.rs` (`build_graph`). That file proves structural +
 //! single-frame execution equivalence; this file proves the **run-level**
 //! four-column byte-identity over the 50-frame legs. The chain construction
-//! is reproduced verbatim here rather than shared via `mod common` because
-//! the SSOT helper is private to `preset_vs_graph.rs` and exposing it would
-//! require additional public surface.
+//! is shared via the `common::build_dvb_t2_graph_chain` helper (defined in
+//! `tests/common/mod.rs`, included by both test binaries via `mod common`).
 //!
 //! # Frame count — AMENDMENT 2026-06-11
 //!
@@ -85,13 +84,10 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::channels::Awgn;
-use gf2_sim::graph::Chain;
+use gf2_sim::channels::es_n0_db_to_n0;
 use gf2_sim::parallel::WorkerCounters;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
-use gf2_sim::stage::erase;
-use gf2_sim::stages::dvb_t2_bicm_stages;
-use gf2_sim::{Pipeline, PipelineConfig, Scheduler, TopologyExecutor};
+use gf2_sim::{Pipeline, Scheduler, TopologyExecutor};
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -160,65 +156,22 @@ fn build_preset(rate: CodeRate, modulation: DvbT2Modulation, es_n0_db: f32) -> P
         .expect("in-scope MODCOD builds via the preset")
 }
 
-/// Derives the soft demapper's `N0 = 2*sigma^2` from the channel Es/N0, using
-/// the same f64-computed, once-rounded arithmetic as the preset's
-/// `Channel::demap_noise_var` (the SSOT formula from `frame_sim.rs`).
-fn demap_n0(es_n0_db: f32) -> f32 {
-    let es_n0_lin = 10.0_f64.powf(f64::from(es_n0_db) / 10.0);
-    let sigma_sq = 1.0 / (2.0 * es_n0_lin);
-    (2.0 * sigma_sq) as f32
-}
-
-/// Builds the same DVB-T2 BICM chain by hand through the graph [`Chain`] API.
+/// Builds the same DVB-T2 BICM chain by hand through the graph `Chain` API.
 ///
-/// This mirrors the `build_graph` helper in `tests/preset_vs_graph.rs` (the
-/// SSOT for graph-chain structural + single-frame equivalence).
+/// Delegates to [`common::build_dvb_t2_graph_chain`] — the shared SSOT for
+/// the hand-wired chain (also used by `tests/preset_vs_graph.rs` for the
+/// structural + single-frame equivalence proof).
 fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, es_n0_db: f32) -> Pipeline {
-    let factory = dvb_t2_bicm_stages(
+    common::build_dvb_t2_graph_chain(
         rate,
         modulation,
         decoder_config(),
         DemapMethod::ExactLogMap,
-        demap_n0(es_n0_db),
-    );
-
-    let mut chain = Chain::new();
-    let mut ids = Vec::with_capacity(7);
-    for stage in factory.forward {
-        ids.push(chain.add(stage));
-    }
-    // Channel stage: SymbolBatch → SymbolBatch between the forward and inverse
-    // halves.
-    ids.push(chain.add(erase(Awgn::new(es_n0_db, modulation.bits_per_cell()))));
-    for stage in factory.inverse {
-        ids.push(chain.add(stage));
-    }
-    for pair in ids.windows(2) {
-        chain
-            .connect(pair[0], pair[1])
-            .expect("each consecutive BICM hop is type-compatible");
-    }
-
-    // Mirror the preset's config so the config comparison is exact.
-    let config = PipelineConfig {
-        seed: SEED,
-        esn0_db_points: Vec::new(),
-        target_errors: 0,
-        max_frames: 0,
-        heartbeat_every_frames: 0,
-        checkpoint_dir: None,
-        tracing_log_path: None,
-        parallelism: NonZeroUsize::new(PARALLELISM).expect("24 is non-zero"),
-        gpu_enabled: false,
-        strict_gpu: false,
-        diagnostic_dump_dir: None,
-        inject_gpu_oom_modulus: None,
-    };
-
-    chain
-        .with_config(config)
-        .build()
-        .expect("the full BICM chain is a valid DAG")
+        es_n0_db,
+        es_n0_db_to_n0(es_n0_db),
+        SEED,
+        NonZeroUsize::new(PARALLELISM).expect("24 is non-zero"),
+    )
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -288,7 +241,11 @@ fn assert_byte_identical(point: &ModcodPoint, max_frames: usize) {
         preset_c.frames
     );
 
-    common::assert_four_columns_byte_identical(&preset_c, &graph_c, label);
+    common::assert_four_columns_byte_identical(
+        &preset_c,
+        &graph_c,
+        &format!("(actual=preset, baseline=graph) {label}"),
+    );
 
     eprintln!(
         "{label}: frames={} errors={} fer={:.6} mean_iters={:.6} (preset==graph, non-vacuous)",
