@@ -399,7 +399,7 @@ fn execute_gpu_stage(
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
             // matches this stage's code by construction).
-            let raw: Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> = gpu_bp
+            let raw: StageOutcome = gpu_bp
                 .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
                 .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters)));
             return dispatch_with_fallback(
@@ -413,7 +413,7 @@ fn execute_gpu_stage(
         if let Some((_, stream)) = scheduler.worker_stream(worker_idx) {
             // Transient: build a one-shot decoder sized for this batch, still
             // stream-ordered on the worker's owned stream.
-            let raw: Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> = (|| {
+            let raw: StageOutcome = (|| {
                 let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
                 let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
                 let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
@@ -445,6 +445,11 @@ fn execute_gpu_stage(
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::awgn::GpuAwgn>())
     {
+        // Run the GPU call FIRST (consuming the `scratch` borrow for the GPU
+        // path); the fallback closure only captures `scratch` when it is
+        // actually called by `dispatch_with_fallback` on a recoverable error.
+        let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+        let stage_name = stage.name();
         let fallback = || {
             stage
                 .cpu_fallback_process_any(input, scratch)
@@ -452,21 +457,22 @@ fn execute_gpu_stage(
                     Err(StageError::Fatal(FatalError::BuildError(
                         BuildError::ExecutionValidation {
                             reason: format!(
-                                "GpuOnly stage `{}` has no CPU fallback registered",
-                                stage.name()
+                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
                             ),
                         },
                     )))
                 })
                 .map(|o| (o, None::<Vec<u32>>))
         };
-        let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
         return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     if let Some(gpu_demap) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::demap::GpuGrayQamDemapper>())
     {
+        // Run the GPU call FIRST for the same reason as the AWGN arm above.
+        let raw = execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+        let stage_name = stage.name();
         let fallback = || {
             stage
                 .cpu_fallback_process_any(input, scratch)
@@ -474,15 +480,13 @@ fn execute_gpu_stage(
                     Err(StageError::Fatal(FatalError::BuildError(
                         BuildError::ExecutionValidation {
                             reason: format!(
-                                "GpuOnly stage `{}` has no CPU fallback registered",
-                                stage.name()
+                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
                             ),
                         },
                     )))
                 })
                 .map(|o| (o, None::<Vec<u32>>))
         };
-        let raw = execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
         return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing

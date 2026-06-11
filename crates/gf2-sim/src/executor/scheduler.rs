@@ -561,6 +561,7 @@ mod hybrid {
         /// (from [`find_gpu_ldpc_stage`]); each worker builds its own device
         /// decoder + pinned staging from it (device buffers are per-worker,
         /// never shared).
+        #[allow(clippy::too_many_arguments)]
         pub(super) fn run_point_hybrid(
             &self,
             template: &DvbT2BicmFrameSim,
@@ -739,15 +740,20 @@ mod hybrid {
                             ActivityKind::GpuDecode,
                             run_start,
                             || -> GpuBatchResult {
-                                let raw = gpu_stage.decode_batch_with_iters_on_stream(
-                                    &llr_batch_for_fallback,
-                                    &device,
-                                    stream,
-                                    &mut scratch,
-                                );
+                                // Map the HIP decode result to GpuBatchResult
+                                // (Vec<BitVec>, Vec<u32>) before dispatching.
+                                let raw: GpuBatchResult = gpu_stage
+                                    .decode_batch_with_iters_on_stream(
+                                        &llr_batch_for_fallback,
+                                        &device,
+                                        stream,
+                                        &mut scratch,
+                                    )
+                                    .map(|(hard, iters)| (hard.frames, iters));
                                 use crate::executor::failure::{
                                     dispatch_with_fallback, FaultContext,
                                 };
+                                use crate::stage::Stage as _;
                                 let ctx = FaultContext {
                                     batch_id: bi as u64,
                                     snr_idx,
@@ -772,11 +778,7 @@ mod hybrid {
                                                 },
                                             )
                                         })?;
-                                        let hard = crate::stage::Stage::process(
-                                            fb,
-                                            &llr_batch_for_fallback,
-                                            &mut (),
-                                        )?;
+                                        let hard = fb.process(&llr_batch_for_fallback, &mut ())?;
                                         let n = hard.frames.len();
                                         Ok((hard.frames, vec![0u32; n]))
                                     },
@@ -784,7 +786,6 @@ mod hybrid {
                                     strict_gpu,
                                     dump_dir,
                                 )
-                                .map(|(hard, iters)| (hard, iters))
                             },
                         );
 
