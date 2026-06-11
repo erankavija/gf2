@@ -182,9 +182,10 @@ pub fn build_dvb_t2_graph_chain(
         ids.push(chain.add(stage));
     }
     ids.push(
-        chain.add(gf2_sim::stage::erase(
-            gf2_sim::channels::Awgn::new(es_n0_db, modulation.bits_per_cell()),
-        )),
+        chain.add(gf2_sim::stage::erase(gf2_sim::channels::Awgn::new(
+            es_n0_db,
+            modulation.bits_per_cell(),
+        ))),
     );
     for stage in factory.inverse {
         ids.push(chain.add(stage));
