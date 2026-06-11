@@ -515,3 +515,19 @@ worker runs at branch HEAD `caaaced0`:
 - `byte_identical_two_runs_smoke` (8 frames): byte-identical, 6.5 s.
 - Un-ignored fast-tier coverage: the CLI parser-rejection subprocess
   tests + the in-binary CLI->config wiring units (0.006 s).
+
+### Final-HEAD confirmation (2026-06-11 evening, merge e575cab3)
+
+The fix round (global tracing subscriber + live heartbeat/snr events +
+calibrate/resume smokes) landed after the lead attestation above. A
+3-repeat confirmation at the final HEAD measured 14.7448 / 15.0247 /
+14.8635 -> 14.86 +/- 0.14 fps = **9.16x** (>= 8x: PASS) — run with an
+active browser (~20-25% of one core, bursty) on the desktop, unlike the
+verified-idle attestation run. Diagnostics rule out a code cost: the
+200-frame run emits exactly 2 tracing events (campaign_start +
+snr_point_completed; default heartbeat cadence 1000 > 200 frames), and
+there are ZERO tracing callsites in the per-frame hot path (frame_sim,
+parallel, checkpoint, LDPC/BCH decoders) for the global subscriber to
+activate — the observer adds one atomic fetch_add per frame. The
+attested figure remains the verified-quiet 16.79 fps; the cross-epic
+production sweep (e4849f07) re-baselines on its own host anyway.
