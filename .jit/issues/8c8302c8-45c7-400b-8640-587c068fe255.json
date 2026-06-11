@@ -2,9 +2,9 @@
   "id": "8c8302c8-45c7-400b-8640-587c068fe255",
   "title": "DVB-T2 preset and graph-API example for gf2-sim",
   "description": "## Goal\n\nExpress the full DVB-T2 BICM chain via both the typestate-builder\npreset (from Phase A `81d05bab`) and a worked-example graph API\nchain (from Phase A `c09d3e95`), demonstrating that the two API\nlayers produce byte-identical output for the same input.\n\n## Context\n\nTask under story `5d0a3fad` (DVB-T2 BICM application) within epic\n`gf2-sim` (`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §9 (both API forms),\n§12 (migration plan). Wave D.1: depends on Story C (`9e853c62`).\n\nThis task is the integration smoke for Phase A and Phase B working\ntogether as a DVB-T2 application. It exercises the typestate\nbuilder, the graph API, the channels, the GPU stages (when\n`--features hip` is set), and the hybrid executor — end-to-end on\none canonical chain.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/presets/dvb_t2.rs` enrichment:\n   - The preset's internal graph construction (the `build()` impl\n     established by `81d05bab`) is wired to the canonical DVB-T2\n     BICM chain with all production stages (BCH + LDPC +\n     interleaver + Gray-QAM + AWGN + soft demap + inverse +\n     LDPC dec + BCH dec).\n   - `Pipeline::dvb_t2()...build()` produces a working pipeline\n     that runs to completion on a 200-frame batch at any (rate,\n     modulation) ∈ the 6 in-scope MODCODs.\n2. `crates/gf2-sim/examples/dvb_t2_typestate.rs`:\n   - 30–50 line example showing the typestate builder for r1/2\n     16-QAM. Runs end-to-end; prints summary table.\n3. `crates/gf2-sim/examples/dvb_t2_graph_api.rs`:\n   - Side-by-side hand-wired chain via `Chain::new()...build()`.\n   - Comment in the file points at the typestate example for\n     comparison.\n4. `crates/gf2-sim/tests/preset_vs_graph_byte_identity.rs`:\n   - For each of the 6 in-scope MODCODs:\n     - Build pipeline via typestate preset.\n     - Build same pipeline via graph API.\n     - Run 200 frames at a fixed seed, fixed Es/N0.\n     - Assert byte-identity of `fer / frames / errors / mean_iters`\n       between the two forms.\n     - BER excluded per status quo.\n\n## Success Criteria\n\n- [hard] DVB-T2 BICM chain runs end-to-end via both API forms for\n  all 6 in-scope MODCODs.\n- [hard] Byte-identity of the four deterministic columns between\n  typestate and graph forms at fixed seed across all 6 MODCODs.\n- [hard] Both `examples/` compile and run via\n  `cargo run -p gf2-sim --example <name> --release`.\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- GPU-vs-CPU byte-identity (owned by Phase B `14f59c2d` for the\n  cross-cutting view; Phase D `0d9cb8e3` for the full DVB-T2\n  regression).\n- 5G NR preset (owned by Phase E `e478daa8`).",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "high",
-  "assignee": null,
+  "assignee": "agent:claude",
   "dependencies": [
     "9e853c62-6e5a-4307-ac63-44217d753662"
   ],
@@ -21,5 +21,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:04:32.017545848+00:00",
-  "updated_at": "2026-06-11T10:35:39.164101184+00:00"
+  "updated_at": "2026-06-11T10:37:30.317606965+00:00"
 }
