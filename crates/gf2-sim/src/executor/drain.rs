@@ -1,6 +1,25 @@
 //! GPU drain-for-checkpoint and the checkpointed hybrid CPU+GPU sweep
 //! (Phase C task `571c11c4`, design doc §4 "Drain commit contract").
 //!
+//! # Intentional divergence from the C.1 double-buffer scheduler
+//!
+//! [`worker_round_hybrid`](Scheduler::worker_round_hybrid) re-implements the
+//! C.1 double-buffer protocol from `scheduler.rs` (issue `75c22fa8`) and
+//! intentionally omits two behaviours from that file:
+//!
+//! * **No `dispatch_with_fallback` / `strict_gpu` handling** — landing
+//!   fallback semantics (issue `42eac5cc`) here would make a CPU-substituted
+//!   frame record different counters than the GPU path, breaking the byte-
+//!   identity contract that resume depends on. A recoverable GPU fault
+//!   therefore aborts the checkpointed sweep (resumably, via `SweepError`)
+//!   instead of silently substituting the CPU fallback.
+//! * **No `traced_interval` spans** — the checkpointed path does not emit the
+//!   `OverlapTimeline` `CpuPrep`/`GpuDecode` tracing spans. Adding them is
+//!   mechanical but was out of scope for `571c11c4`.
+//!
+//! Factoring these divergences into a shared implementation and integrating
+//! the fallback semantics is tracked as epic task `bb11c2e6`.
+//!
 //! This module adds checkpoint/resume to the hybrid scheduler (`75c22fa8`):
 //!
 //! * [`StreamInFlight`] — the per-stream "in-flight batches" tally, so the
@@ -66,9 +85,13 @@
 //! record differently shaped `worker_states[]` and path-specific
 //! `total_iterations`. The residual gap — a `gpu_enabled` config that degraded
 //! to the CPU path (no device) and is later resumed where a device exists — is
-//! guarded by the worker-state sum validation in the hybrid runner, which
-//! cannot distinguish every such state; same-host resume, the asserted scope,
-//! never hits it.
+//! guarded by the per-worker **batch-alignment check** in the hybrid runner
+//! (`run_point_hybrid_checkpointed`): a CPU-written checkpoint records each
+//! worker's `frames_in_worker` from the CPU chunk dispatch (not necessarily
+//! `BATCH_FRAMES`-aligned), whereas a genuine hybrid checkpoint always stops on
+//! a batch boundary. A misaligned `done[w]` would cause a silent byte-identity
+//! break, so the alignment check rejects it with a typed `ExecutionValidation`
+//! error. Same-host resume, the asserted scope, never hits it.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -184,8 +207,14 @@ impl StreamInFlight {
 /// `results.per_point` holds one [`SnrPointResult`] per SNR point reached, in
 /// sweep order; when `interrupted` is `true` the sweep stopped early on
 /// SIGINT/SIGTERM and the **last** entry is the interrupted point's partial
-/// aggregate (its resumable checkpoint was already flushed — resume with
-/// [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)`(true)`).
+/// aggregate. **Whether a resumable checkpoint was flushed depends on timing:**
+/// if the point completed at least one heartbeat round before the interrupt,
+/// its latest heartbeat checkpoint is on disk and resume continues from it; if
+/// the interrupt landed before the first round committed (0 frames recorded on
+/// that point), no checkpoint was written and resume restarts the point fresh
+/// (the `run_point_hybrid_checkpointed` loop exits with `completed = false` and
+/// `interrupted = true` before any flush). In either case, resume with
+/// [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)`(true)`.
 ///
 /// # Examples
 ///
@@ -302,6 +331,11 @@ impl Scheduler {
     /// Runs `pipeline`'s configured SNR sweep with heartbeat + SNR-boundary +
     /// SIGINT checkpointing and `--resume` support (deliverables 2–3).
     ///
+    /// Unlike [`Pipeline::run`](crate::Pipeline::run), a recoverable GPU fault
+    /// aborts the checkpointed sweep (resumably, returning a
+    /// [`SweepError::Stage`]) instead of substituting the CPU fallback, for
+    /// checkpoint byte-identity determinism.
+    ///
     /// Per SNR point: when this scheduler is GPU-active and the pipeline
     /// carries a `GpuOnly` LDPC stage, the point runs on the **checkpointed
     /// hybrid executor** (strided partitions, double-buffered CPU prep ∥ GPU
@@ -332,10 +366,16 @@ impl Scheduler {
     /// * `resume` — `true` to load and continue from existing checkpoints.
     /// * `frame_observer` — called once per frame as `(snr_idx, global_frame)`
     ///   while the point is simulating (hybrid path: after the frame's CPU
-    ///   prep; CPU path: after the frame completes). Campaigns can emit
+    ///   prep, from either the main worker thread or the double-buffer helper
+    ///   thread; CPU path: after the frame completes). Campaigns can emit
     ///   progress from it; tests use it to land a deterministic
     ///   [`request_interrupt`](crate::checkpoint::request_interrupt)
     ///   mid-flight. Pass `&|_, _| {}` if unused.
+    ///   **Caveat (hybrid path):** frames prepped into the discarded next batch
+    ///   at an interrupt point are *observed* by this callback but are not
+    ///   recorded; they are re-observed (and recorded) on the subsequent resume
+    ///   run. The observer may therefore fire for the same `global_frame` twice
+    ///   across an interrupted + resumed run pair.
     ///
     /// # Returns
     ///
@@ -500,6 +540,52 @@ mod hybrid_checkpoint {
     use gf2_kernels_hip::GpuLdpcBp as KernelGpuLdpcBp;
     use rayon::prelude::*;
 
+    /// Validates that every worker's `done[w]` from a resumed checkpoint is
+    /// `BATCH_FRAMES`-aligned or at the complete partition end.
+    ///
+    /// Called immediately after the sum check in the resume-restore block of
+    /// [`Scheduler::run_point_hybrid_checkpointed`]. A misaligned count means
+    /// the checkpoint was written by the CPU executor (which records per-chunk
+    /// progress, not batch-aligned progress) — resuming it on the hybrid path
+    /// would start `worker_round_hybrid` mid-batch, making the batch composition
+    /// diverge from the C.1 scheduler and silently breaking `mean_iters`
+    /// byte-identity. This check catches that gap.
+    ///
+    /// Returns the first violation found, naming the worker, its `done` value,
+    /// and the expected alignment.
+    pub(super) fn validate_batch_alignment(
+        done: &[u64],
+        num_workers: usize,
+        max_frames: usize,
+    ) -> Result<(), SweepError> {
+        for (w, &d) in done.iter().enumerate().take(num_workers) {
+            if d == 0 {
+                continue; // not started yet — always valid
+            }
+            let partition_end = if max_frames > w {
+                (max_frames - w).div_ceil(num_workers)
+            } else {
+                0
+            } as u64;
+            let batch_aligned = d.is_multiple_of(BATCH_FRAMES as u64);
+            let partition_complete = d == partition_end;
+            if !batch_aligned && !partition_complete {
+                return Err(SweepError::Load(FatalError::BuildError(
+                    BuildError::ExecutionValidation {
+                        reason: format!(
+                            "hybrid resume: worker {w} done={d} is not \
+                             BATCH_FRAMES({BATCH_FRAMES})-aligned and is not the \
+                             partition end ({partition_end}); the checkpoint was \
+                             written by a non-hybrid executor (degraded-then-GPU \
+                             or corrupted)"
+                        ),
+                    },
+                )));
+            }
+        }
+        Ok(())
+    }
+
     /// One GPU decode batch's result: the per-frame hard codewords and BP
     /// iteration counts (or a [`StageError`] on a device fault). Mirrors the
     /// uncheckpointed scheduler's alias.
@@ -590,9 +676,6 @@ mod hybrid_checkpoint {
                 }
                 // Hybrid worker_states are strided-partition prefixes, so the
                 // per-worker counts must sum to the global frames_completed.
-                // (config_hash includes gpu_enabled, so a CPU-path checkpoint
-                // cannot reach here; this guards residual corruption and the
-                // degraded-then-GPU edge documented in the module docs.)
                 let sum: u64 = done.iter().sum();
                 if sum != ck.frames_completed {
                     return Err(SweepError::Load(FatalError::BuildError(
@@ -606,6 +689,9 @@ mod hybrid_checkpoint {
                         },
                     )));
                 }
+                // Every worker's progress must be BATCH_FRAMES-aligned (or at the
+                // complete partition end). See `validate_batch_alignment` for why.
+                validate_batch_alignment(&done, num_workers, max_frames)?;
             }
 
             // Per-worker device state, built lazily on each worker's first
@@ -926,6 +1012,75 @@ mod tests {
                 assert!(
                     reason.contains("stream 1") && reason.contains("in-flight"),
                     "reason must name the offending stream: {reason}"
+                );
+            }
+            other => panic!("expected ExecutionValidation, got {other:?}"),
+        }
+    }
+
+    /// Unit test for `validate_batch_alignment` (MEDIUM-3): verifies that a
+    /// misaligned `done[w]` (from a CPU-written checkpoint) is rejected with a
+    /// typed `ExecutionValidation` error naming the offending worker, and that
+    /// batch-aligned and partition-complete values are accepted.
+    #[cfg(feature = "hip")]
+    #[test]
+    fn test_validate_batch_alignment_rejects_misaligned_worker() {
+        use super::hybrid_checkpoint::validate_batch_alignment;
+        use crate::executor::scheduler::BATCH_FRAMES;
+
+        // BATCH_FRAMES = 16. A 2-worker, 34-frame run has:
+        //   worker 0 partition: frames {0, 2, 4, …, 32} = 17 frames (indices 0..=16)
+        //   worker 1 partition: frames {1, 3, 5, …, 33} = 17 frames (indices 0..=16)
+        // Valid states: done=0 (not started), done=16 (one batch), done=17 (partition end).
+        // Invalid: done=5 (neither 0, nor BATCH_FRAMES-aligned, nor partition-complete).
+
+        // All-zero: always valid (no worker has started).
+        assert!(
+            validate_batch_alignment(&[0, 0], 2, 34).is_ok(),
+            "all-zero is valid"
+        );
+
+        // Batch-aligned: valid.
+        assert!(
+            validate_batch_alignment(&[BATCH_FRAMES as u64, BATCH_FRAMES as u64], 2, 34).is_ok(),
+            "batch-aligned is valid"
+        );
+
+        // Partition-complete tail: valid.
+        assert!(
+            validate_batch_alignment(&[17, 17], 2, 34).is_ok(),
+            "partition-complete tail is valid"
+        );
+
+        // Worker 0 misaligned: CPU wrote 5 frames (not a valid hybrid stop).
+        let err = validate_batch_alignment(&[5, 0], 2, 34)
+            .expect_err("misaligned done[0]=5 must be rejected");
+        match err {
+            crate::checkpoint::SweepError::Load(FatalError::BuildError(
+                BuildError::ExecutionValidation { reason },
+            )) => {
+                assert!(
+                    reason.contains("worker 0") && reason.contains("done=5"),
+                    "reason must name offending worker and value: {reason}"
+                );
+                assert!(
+                    reason.contains(&BATCH_FRAMES.to_string()),
+                    "reason must mention BATCH_FRAMES: {reason}"
+                );
+            }
+            other => panic!("expected ExecutionValidation, got {other:?}"),
+        }
+
+        // Worker 1 misaligned, worker 0 fine.
+        let err = validate_batch_alignment(&[BATCH_FRAMES as u64, 7], 2, 34)
+            .expect_err("misaligned done[1]=7 must be rejected");
+        match err {
+            crate::checkpoint::SweepError::Load(FatalError::BuildError(
+                BuildError::ExecutionValidation { reason },
+            )) => {
+                assert!(
+                    reason.contains("worker 1"),
+                    "reason must name offending worker: {reason}"
                 );
             }
             other => panic!("expected ExecutionValidation, got {other:?}"),
