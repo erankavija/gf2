@@ -16,6 +16,27 @@ fail-fast = false
 filter = 'test(typestate_rejects_out_of_order_calls)'
 slow-timeout = { period = "90s", terminate-after = 1 }
 
+# GPU-gated tests share ONE physical gfx1030. nextest runs test binaries in
+# parallel, so two GPU tests scheduled concurrently contend the device and
+# each runs ~2x slower — un-ignored GPU smokes sized with headroom against the
+# 5 s cap in isolation (3.3-3.8 s) then TIMEOUT when the workspace battery
+# reaches them together (observed: hybrid_partial_point_restore +
+# hybrid_checkpointed_recoverable_fault_aborts_resumably, both at 5.04 s).
+# This group serializes the GPU-exercising gf2-sim test binaries so at most
+# one GPU job runs at a time. Scheduling only — no per-test timeout changes.
+[test-groups]
+gpu-serial = { max-threads = 1 }
+
+[[profile.ci.overrides]]
+filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity))'
+test-group = 'gpu-serial'
+
 [profile.slow]
 slow-timeout = { period = "120s", terminate-after = 1 }
 fail-fast = false
+
+# The slow tier's GPU legs contend the same single device; two concurrent
+# 60-90 s GPU legs would bust the 120 s cap the same way. Same group.
+[[profile.slow.overrides]]
+filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity))'
+test-group = 'gpu-serial'
