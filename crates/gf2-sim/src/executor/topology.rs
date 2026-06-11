@@ -16,7 +16,20 @@
 //!   [`process_any`](AnyStage::process_any); [`GpuOnly`](ExecutionClass::GpuOnly)
 //!   is enqueued on the worker's deterministically owned HIP stream
 //!   (`worker_idx % n_streams`, selected by fixed index — never the pool's
-//!   call-order cursor); [`Hybrid`](ExecutionClass::Hybrid) is split per-batch
+//!   call-order cursor) via the stage's stream-aware entry point — the three
+//!   known GpuOnly stage types are dispatched by downcast
+//!   ([`GpuLdpcBp`](crate::gpu::ldpc_bp::GpuLdpcBp) →
+//!   `decode_batch_with_iters_on_stream`,
+//!   [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) → `apply_on_stream`,
+//!   [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper) →
+//!   `demap_batch_on_stream`), and an **unknown** GpuOnly stage type while a
+//!   stream pool is active is a typed [`BuildError::ExecutionValidation`]
+//!   (wrapped in [`StageError::Fatal`]) rather than a silent default-stream
+//!   `process_any`, so the stream-routing contract cannot rot when a new
+//!   GpuOnly stage lands without executor wiring (with **no** active stream
+//!   pool — GPU disabled or unavailable — every GpuOnly arm degrades to
+//!   `process_any` after a `tracing::warn!`);
+//!   [`Hybrid`](ExecutionClass::Hybrid) is split per-batch
 //!   (see [`Hybrid split`](#hybrid-split-per-batch) below);
 //! * **per-stage tracing spans** — every stage start/end emits a
 //!   `pipeline_stage` span carrying
@@ -286,12 +299,23 @@ fn execute_stage(
     result
 }
 
-/// The `GpuOnly` routing arm under `hip`: the production GPU LDPC BP stage is
-/// downcast from its erased handle and enqueued on the worker's owned HIP
-/// stream (persistent per-worker decoder when the route carries one, else a
-/// one-shot decoder for this batch). Other `GpuOnly` stages (e.g. the GPU AWGN
-/// stage, or synthetic test stages) run via `process_any`, which owns their
-/// device dispatch.
+/// The `GpuOnly` routing arm under `hip`: every **known** GpuOnly stage type
+/// is downcast from its erased handle and enqueued on the worker's owned HIP
+/// stream via its stream-aware entry point:
+///
+/// * [`GpuLdpcBp`](crate::gpu::ldpc_bp::GpuLdpcBp) →
+///   `decode_batch_with_iters_on_stream` (persistent per-worker decoder when
+///   the route carries one, else a one-shot decoder for this batch);
+/// * [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) → `apply_on_stream` (one-shot
+///   per-batch generator + pinned staging);
+/// * [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper) →
+///   `demap_batch_on_stream` (one-shot per-batch demapper + pinned staging).
+///
+/// An **unknown** `GpuOnly` stage type while the worker owns a stream is a
+/// typed [`BuildError::ExecutionValidation`] — never a silent default-stream
+/// `process_any` (see the [module docs](self)). With no active stream pool
+/// (GPU disabled or unavailable) every arm degrades to `process_any` after a
+/// `tracing::warn!` (fallback SUBSTITUTION is `42eac5cc`'s scope).
 #[cfg(feature = "hip")]
 fn execute_gpu_stage(
     stage: &dyn AnyStage,
@@ -353,9 +377,122 @@ fn execute_gpu_stage(
         );
         return stage.process_any(input, scratch).map(|o| (o, None));
     }
-    // A GpuOnly stage other than the LDPC BP decode: its process_any owns its
-    // device dispatch (e.g. GpuAwgn builds its own generator per call).
+    if let Some(gpu_awgn) = stage
+        .stage_as_any()
+        .and_then(|a| a.downcast_ref::<crate::gpu::awgn::GpuAwgn>())
+    {
+        return execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+    }
+    if let Some(gpu_demap) = stage
+        .stage_as_any()
+        .and_then(|a| a.downcast_ref::<crate::gpu::demap::GpuGrayQamDemapper>())
+    {
+        return execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+    }
+    // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing
+    // is mandatory: silently falling through to `process_any` would dispatch
+    // device work on the DEFAULT stream, rotting the "GpuOnly → the worker's
+    // owned HIP stream" contract without any test failing. A future GpuOnly
+    // stage type must be wired into this dispatch (with a stream-aware entry
+    // point) before the topology executor will run it.
+    if scheduler.worker_stream(worker_idx).is_some() {
+        return Err(exec_err(format!(
+            "GpuOnly stage `{}` has no stream-aware dispatch in the topology executor: \
+             known GpuOnly stage types are GpuLdpcBp, GpuAwgn, and GpuGrayQamDemapper; \
+             wire the new stage type into execute_gpu_stage (with an *_on_stream entry \
+             point) rather than letting it run on the default stream",
+            stage.name()
+        )));
+    }
+    // No active stream pool: the documented graceful degrade (matching the
+    // known-stage arms above).
+    tracing::warn!(
+        stage = stage.name(),
+        "GpuOnly stage with no active HIP stream pool; degrading to process_any"
+    );
     stage.process_any(input, scratch).map(|o| (o, None))
+}
+
+/// The [`GpuAwgn`](crate::gpu::awgn::GpuAwgn) stream route: corrupt the
+/// [`SymbolBatch`] via `apply_on_stream` on the worker's owned HIP stream
+/// (one-shot per-batch generator + pinned staging, mirroring the transient
+/// LDPC route). Frame `f` of the batch seeks to the stage's
+/// `worker_offset(.., f)` region — the same per-frame keying as the stage's
+/// erased `process` path, so the noise is byte-identical to it.
+#[cfg(feature = "hip")]
+fn execute_gpu_awgn(
+    gpu_awgn: &crate::gpu::awgn::GpuAwgn,
+    stage: &dyn AnyStage,
+    input: &dyn TypedBatch,
+    scratch: &mut dyn AnyScratch,
+    scheduler: &Scheduler,
+    worker_idx: usize,
+) -> StageOutcome {
+    let Some((_, stream)) = scheduler.worker_stream(worker_idx) else {
+        tracing::warn!(
+            stage = stage.name(),
+            "GpuOnly AWGN stage with no active HIP stream pool; degrading to process_any"
+        );
+        return stage.process_any(input, scratch).map(|o| (o, None));
+    };
+    let symbols = input
+        .as_any()
+        .downcast_ref::<SymbolBatch>()
+        .ok_or_else(|| StageError::TypeMismatch {
+            expected: std::any::TypeId::of::<SymbolBatch>(),
+            actual: input.as_any().type_id(),
+        })?;
+    let max_symbols = symbols.i.iter().map(Vec::len).max().unwrap_or(0);
+    let mut out = symbols.clone();
+    if max_symbols == 0 {
+        return Ok((Box::new(out), None));
+    }
+    let gen = gpu_awgn.build_generator(max_symbols)?;
+    let mut stream_scratch = gpu_awgn.build_stream_scratch(&gen)?;
+    gpu_awgn.apply_on_stream(&mut out, &gen, stream, &mut stream_scratch)?;
+    Ok((Box::new(out), None))
+}
+
+/// The [`GpuGrayQamDemapper`](crate::gpu::demap::GpuGrayQamDemapper) stream
+/// route: demap the [`SymbolBatch`] via `demap_batch_on_stream` on the
+/// worker's owned HIP stream (one-shot per-batch demapper + pinned staging,
+/// mirroring the transient LDPC route). Only reachable for
+/// `DemapMethod::MaxLog` — an `ExactLogMap` stage reports
+/// `ExecutionClass::CpuOnly` and never enters the GpuOnly arm.
+#[cfg(feature = "hip")]
+fn execute_gpu_demap(
+    gpu_demap: &crate::gpu::demap::GpuGrayQamDemapper,
+    stage: &dyn AnyStage,
+    input: &dyn TypedBatch,
+    scratch: &mut dyn AnyScratch,
+    scheduler: &Scheduler,
+    worker_idx: usize,
+) -> StageOutcome {
+    let Some((_, stream)) = scheduler.worker_stream(worker_idx) else {
+        tracing::warn!(
+            stage = stage.name(),
+            "GpuOnly demap stage with no active HIP stream pool; degrading to process_any"
+        );
+        return stage.process_any(input, scratch).map(|o| (o, None));
+    };
+    let symbols = input
+        .as_any()
+        .downcast_ref::<SymbolBatch>()
+        .ok_or_else(|| StageError::TypeMismatch {
+            expected: std::any::TypeId::of::<SymbolBatch>(),
+            actual: input.as_any().type_id(),
+        })?;
+    let max_symbols = symbols.i.iter().map(Vec::len).max().unwrap_or(0);
+    if max_symbols == 0 {
+        return Ok((
+            Box::new(LlrBatch::new(vec![Vec::new(); symbols.i.len()])),
+            None,
+        ));
+    }
+    let demapper = gpu_demap.build_demapper(max_symbols)?;
+    let mut stream_scratch = gpu_demap.build_stream_scratch(&demapper)?;
+    let out = gpu_demap.demap_batch_on_stream(symbols, &demapper, stream, &mut stream_scratch)?;
+    Ok((Box::new(out), None))
 }
 
 /// The `GpuOnly` routing arm without the `hip` feature: there is no device
