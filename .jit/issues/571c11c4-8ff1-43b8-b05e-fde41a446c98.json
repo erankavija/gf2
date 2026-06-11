@@ -2,7 +2,7 @@
   "id": "571c11c4-8ff1-43b8-b05e-fde41a446c98",
   "title": "Resume and checkpoint across hybrid CPU+GPU path",
   "description": "## Goal\n\nDrain semantics for in-flight GPU batches at SIGINT or\nheartbeat-checkpoint boundary; resume from checkpoint produces\nbyte-identical deterministic columns vs an uninterrupted reference\nrun. Builds on `5f12e7ff` (CPU-only heartbeat) by adding the GPU\ndrain protocol from design doc §4.\n\n## Context\n\nTask under story `9e853c62` (Hybrid CPU+GPU executor) within epic\n`gf2-sim` (`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §4 (heartbeat schema v2 +\ndrain protocol). Wave C.2 fan-out from `75c22fa8`.\n\n**AMENDMENT 2026-06-10 (user-approved; alignment to the landed C.1\nscheduler — no rigor change).** The original deliverable-3 said the\nscheduler \"restores each worker's ChaCha20Rng to the recorded\n`rng_word_pos`\", anticipating design §4's per-worker-RNG-stream\nfixed-partition executor. The landed, reviewed C.1 scheduler\n(`75c22fa8`) instead keys EVERY frame's randomness on the global\nframe index (`worker_offset(seed, snr_idx, 0, g)`, the §3\nlogical-worker-0 convention) and distributes work in strided\npartitions — exactly what preserves `3fcb7025`'s cross-worker-count\nbyte-identity. Resume therefore restores per-worker PROGRESS\n(`frames_in_worker`) and folds the saved counters; per-frame RNG\npositions are re-derived from the global frame index, and\n`rng_word_pos` stays RECORDED per the v2 schema but is not read\nback. Design §4 was corrected in the same amendment. Criterion-2 was\ntightened to name the HYBRID-executor reference path and the\nsame-host test scope (single gfx1030 in CI; cross-host portability\nis documented, not asserted). The 4-column byte-identity assertion\nis unchanged and stays [hard].\n\n## Deliverables\n\n1. `crates/gf2-sim/src/executor/drain.rs`:\n   - `Scheduler::drain_for_checkpoint()` invoking\n     `hipStreamSynchronize()` on each owned stream (NOT\n     `hipDeviceSynchronize()`, per design-doc §4 note: avoid\n     blocking other contexts).\n   - Per-stream \"in-flight batches\" tally so the drain knows when\n     every stream is idle.\n2. Integration with `gf2-sim::checkpoint::CheckpointWriter`\n   (`5f12e7ff`):\n   - At heartbeat boundary, scheduler calls `drain_for_checkpoint`\n     before the writer serialises.\n   - Per-worker `frames_in_worker` (and the §4-formula\n     `rng_word_pos`, recorded for schema fidelity) captured AFTER\n     the drain (so the resume offset is correct).\n3. Resume protocol (amended 2026-06-10, see AMENDMENT above):\n   - On `--resume`, the scheduler reads `worker_states[]` from the\n     v2 checkpoint and restores each worker's strided-partition\n     PROGRESS from `frames_in_worker`, folding the saved counters.\n   - Per-frame RNG positions are re-derived from the global frame\n     index exactly as in an uninterrupted run (§3 logical-worker-0\n     keying); `rng_word_pos` is recorded but not read back.\n   - First batch after resume processes the same global frame\n     indices, with the same per-frame RNG offsets, that the\n     uninterrupted run would have processed next.\n4. Hybrid resume parity test in\n   `crates/gf2-sim/tests/hybrid_resume.rs` (under `--features hip`):\n   - SIGINT during a 10-SNR sweep with GPU stages active at frame\n     N.\n   - Resume produces byte-identical\n     `fer / frames / errors / mean_iters` vs an uninterrupted\n     HYBRID-executor reference at the same seed and worker count\n     for 3 (rate, modulation) configurations.\n\n## Success Criteria\n\n- [hard] SIGINT during hybrid execution drains in-flight GPU batches\n  before flushing the v2 checkpoint per design-doc §4.\n- [hard] Resume from that checkpoint on the same host (single-gfx1030\n  CI; cross-host portability is documented, not asserted) produces\n  byte-identical `fer / frames / errors / mean_iters` vs an\n  uninterrupted HYBRID-executor reference run at the same seed and\n  worker count for the 3 named DVB-T2 configurations. (`mean_iters`\n  is INCLUDED: resume-vs-uninterrupted is a same-path comparison, so\n  the §11 CPU-vs-GPU exclusion does not apply.)\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- CPU-only heartbeat (owned by `5f12e7ff`).\n- Failure-mode wiring (owned by `42eac5cc`).\n- Cross-host resume verification (no second host in CI; the v2\n  checkpoint format itself is host-independent JSON).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -12,7 +12,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-11T10:31:58.987699211Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-11T10:32:20.213721564Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -21,5 +32,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:04:17.134241850+00:00",
-  "updated_at": "2026-06-11T01:33:51.620834914+00:00"
+  "updated_at": "2026-06-11T10:34:27.223833722+00:00"
 }

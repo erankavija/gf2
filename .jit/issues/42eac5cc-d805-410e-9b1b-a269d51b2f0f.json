@@ -2,7 +2,7 @@
   "id": "42eac5cc-d805-410e-9b1b-a269d51b2f0f",
   "title": "Failure mode wiring (OOM auto-fallback, kernel hard-fail)",
   "description": "## Goal\n\nWire the executor-level failure-mode policy per Phase 0 §8: catch\n`RecoverableError::OutOfMemory` from GPU stages and substitute the\n`cpu_fallback()` stage for the offending batch; treat\n`FatalError::KernelLaunch` (and other Fatal variants) as hard-fail\nwith full diagnostic dump.\n\n## Context\n\nTask under story `9e853c62` (Hybrid CPU+GPU executor) within epic\n`gf2-sim` (`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §8 (seam decision: GPU\nstages SIGNAL only; the executor DISPATCHES the fallback). Wave C.2\nfan-out from `75c22fa8`.\n\nThis task is the **executor-side** of the OOM/hard-fail policy.\nPhase B `ed575f15` already audited the GPU stages to ensure they\nsignal correctly, return real `cpu_fallback()` accessors, and built\nthe reusable fault injectors (`OomInjector`/`KernelErrorInjector` in\n`tests/common/mod.rs`). This task makes the executor act on those\nsignals and **consumes those injectors** to drive the substitution\ntest.\n\n**AMENDMENT 2026-06-09 (user-approved scope corrections — NO rigor\nchange; one §11 alignment).**\n- This task is the OWNER of the moved-here obligations from `ed575f15`:\n  it CONSUMES the shared injectors (deliverable-3 below) and HONORS\n  `PipelineConfig::strict_gpu` (deliverable-2 below).\n- `mean_iters` §11 ALIGNMENT: the OOM-fallback run is a **mixed\n  CPU+GPU** run (the OOM'd batch runs on CPU, the rest on GPU), so it\n  falls under the design §11 CPU-vs-GPU contract, which is byte-identical\n  on `fer/frames/errors` and EXCLUDES `mean_iters` (RDNA2 transcendental\n  ULP drift changes the BP iteration count ±1 across a device boundary —\n  4-column `mean_iters` byte-identity vs a CPU-only reference is\n  physically unsatisfiable, not a rigor target). The decode-correctness\n  rigor (`fer/frames/errors` byte-identical) is fully retained; this is\n  the SAME contract every other CPU-vs-GPU comparison in the epic uses.\n- The `--strict-gpu` **CLI flag** surface is delivered by D.2\n  `bbf6b6ee` (the gf2-sim campaign binary); this task delivers the\n  executor's **honoring** of `PipelineConfig::strict_gpu`.\n\n## Deliverables\n\n1. `crates/gf2-sim/src/executor/failure.rs`:\n   - `Scheduler::dispatch_with_fallback(stage, input, scratch)`\n     wrapping every GPU-stage call:\n     - On `Ok(o)`: return.\n     - On `Err(StageError::Recoverable(RecoverableError::OutOfMemory{...}))`:\n       call `stage.cpu_fallback().expect(\"ed575f15 guarantees present\")`\n       on the same input; if that also fails, return\n       `FatalError::CpuFallbackAlsoFailed{ original }`.\n     - On `Err(StageError::Fatal(_))`: serialize the diagnostic dump\n       (HIP error code, last kernel launch args, device id, SNR + batch\n       context) and propagate.\n   - The diagnostic dump format is JSON in\n     `dev/benchmarks/gf2-sim/diagnostic-dumps/<timestamp>.json` (one\n     file per hard-fail event).\n2. Executor honoring of `PipelineConfig::strict_gpu` (the field exists\n   from `ed575f15`):\n   - When set, OOM is **promoted** to `FatalError::OutOfMemory` (no\n     fallback) and the executor hard-fails. (The `--strict-gpu` CLI\n     surface that sets this field is D.2 `bbf6b6ee`'s; this task wires\n     the executor's response to the field.)\n3. Fault-injection tests in `tests/executor_failure_modes.rs`,\n   CONSUMING `ed575f15`'s injectors via `mod common;`:\n   - Inject OOM via `common::OomInjector`; assert the pipeline completes\n     with a `tracing::warn!{batch_id, snr_idx, device_id}` event and\n     byte-identical **`fer / frames / errors`** vs a CPU-only reference\n     (the fallback ran on CPU for the affected batch). `mean_iters` is\n     LOGGED, not asserted (§11 CPU-vs-GPU exclusion — the run is mixed\n     CPU+GPU).\n   - Inject kernel error via `common::KernelErrorInjector`; assert\n     non-zero exit, a JSON diagnostic dump under the configured\n     directory, and a `tracing::error!` event.\n   - With `strict_gpu` set, the OOM injection now hard-fails; assertion:\n     deterministic non-zero exit on the same seed.\n\n## Success Criteria\n\n- [hard] OOM auto-fallback works: a forced OOM during a hybrid run\n  yields the same **`fer / frames / errors`** (the design §11\n  CPU-vs-GPU three-column contract; `mean_iters` logged not asserted,\n  since the OOM-fallback run is mixed CPU+GPU) as a CPU-only reference\n  run at the same seed.\n- [hard] The executor CONSUMES `ed575f15`'s shared injectors\n  (`OomInjector`/`KernelErrorInjector` via `mod common;`) to drive this\n  substitution test (the consumption obligation moved here from\n  `ed575f15`).\n- [hard] Hard-fail path: a forced kernel error yields a non-zero exit,\n  a JSON diagnostic dump in the configured directory, and a\n  `tracing::error!` event with all the relevant context.\n- [hard] The executor honors `PipelineConfig::strict_gpu`: when set, it\n  promotes OOM to `FatalError::OutOfMemory` (hard-fail), verified by the\n  test suite (config-driven). (The `--strict-gpu` CLI flag itself is a\n  `[hard]` criterion on D.2 `bbf6b6ee`.)\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- GPU stage error signalling (owned by Phase B `ed575f15`).\n- The `--strict-gpu` CLI flag surface (owned by D.2 `bbf6b6ee`).\n- Diagnostic-dump tooling beyond JSON serialisation (defer).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
@@ -13,10 +13,15 @@
     "code-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-11T10:20:28.506127203Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-11T05:57:10.746271489Z"
+      "updated_at": "2026-06-11T10:31:48.144869149Z"
     }
   },
   "context": {},
@@ -27,5 +32,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:04:21.666730116+00:00",
-  "updated_at": "2026-06-11T05:57:20.865974084+00:00"
+  "updated_at": "2026-06-11T10:34:26.732543801+00:00"
 }
