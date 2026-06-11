@@ -8,7 +8,11 @@
 //! execution (topo order, fan-in/fan-out, execution-class routing, per-stage
 //! spans, defensive execution-start validation). `42eac5cc` adds OOM
 //! auto-fallback dispatch and hard-fail diagnostic dumps ([`failure`]).
-//! Resume (`571c11c4`) builds on these.
+//! `571c11c4` adds the GPU drain-for-checkpoint and the checkpointed hybrid
+//! sweep with `--resume` ([`drain`] module:
+//! [`Scheduler::drain_for_checkpoint`],
+//! [`Scheduler::run_sweep_checkpointed`],
+//! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)).
 //!
 //! # Module map
 //!
@@ -20,12 +24,15 @@
 //! | [`SimulationResults`] / [`SnrPointResult`] | the per-SNR-point aggregate columns (SSOT [`WorkerCounters`](crate::WorkerCounters) projection) |
 //! | [`OverlapTimeline`] / [`ActivityInterval`] / [`ActivityKind`] | CPU↔GPU overlap attestation (criterion 1) |
 //! | [`failure`] | [`dispatch_with_fallback`](failure::dispatch_with_fallback): OOM auto-fallback + hard-fail diagnostic dump (`42eac5cc`) |
+//! | [`StreamInFlight`] / [`CheckpointedSweep`] | per-stream drain tally + checkpointed hybrid sweep outcome (`571c11c4`) |
 
+mod drain;
 pub mod failure;
 mod results;
 mod scheduler;
 mod topology;
 
+pub use drain::{CheckpointedSweep, StreamInFlight};
 pub use failure::{default_dump_dir, dispatch_with_fallback, FaultContext};
 pub use results::{SimulationResults, SnrPointResult};
 pub use scheduler::{ActivityInterval, ActivityKind, OverlapTimeline, RunPlan, Scheduler};
