@@ -147,11 +147,7 @@ fn test_stage_driven_cpu_waterfall_matches_ssot_4_columns() {
         staged.errors,
         staged.frames
     );
-    common::assert_four_columns_byte_identical(
-        &staged,
-        &ssot,
-        "stage-driven CPU waterfall @6dB",
-    );
+    common::assert_four_columns_byte_identical(&staged, &ssot, "stage-driven CPU waterfall @6dB");
     eprintln!(
         "stage-driven CPU waterfall: frames={} errors={} fer={:.6} mean_iters={:.6} \
          (byte-identical to SSOT)",

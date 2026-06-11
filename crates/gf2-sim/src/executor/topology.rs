@@ -267,7 +267,9 @@ fn execute_stage(
     let t0 = std::time::Instant::now();
     let result = match stage.execution_class() {
         ExecutionClass::CpuOnly => stage.process_any(input, scratch).map(|o| (o, None)),
-        ExecutionClass::GpuOnly => execute_gpu_stage(stage, input, scratch, scheduler, worker_idx, route),
+        ExecutionClass::GpuOnly => {
+            execute_gpu_stage(stage, input, scratch, scheduler, worker_idx, route)
+        }
         ExecutionClass::Hybrid => execute_hybrid_stage(stage, input, scratch),
     };
     span.record("wall_us", t0.elapsed().as_micros() as u64);
@@ -294,22 +296,30 @@ fn execute_gpu_stage(
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
     {
-        let llrs = input
-            .as_any()
-            .downcast_ref::<LlrBatch>()
-            .ok_or_else(|| StageError::TypeMismatch {
-                expected: std::any::TypeId::of::<LlrBatch>(),
-                actual: input.as_any().type_id(),
-            })?;
+        let llrs =
+            input
+                .as_any()
+                .downcast_ref::<LlrBatch>()
+                .ok_or_else(|| StageError::TypeMismatch {
+                    expected: std::any::TypeId::of::<LlrBatch>(),
+                    actual: input.as_any().type_id(),
+                })?;
         if llrs.frames.is_empty() {
-            return Ok((Box::new(HardDecisionBatch::new(Vec::new())), Some(Vec::new())));
+            return Ok((
+                Box::new(HardDecisionBatch::new(Vec::new())),
+                Some(Vec::new()),
+            ));
         }
         if let Some(g) = route.gpu.as_mut() {
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
             // matches this stage's code by construction).
-            let (hard, iters) =
-                gpu_bp.decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)?;
+            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
+                llrs,
+                &g.decoder,
+                g.stream,
+                &mut g.scratch,
+            )?;
             return Ok((Box::new(hard), Some(iters)));
         }
         if let Some((_, stream)) = scheduler.worker_stream(worker_idx) {
@@ -317,8 +327,12 @@ fn execute_gpu_stage(
             // stream-ordered on the worker's owned stream.
             let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
             let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
-            let (hard, iters) =
-                gpu_bp.decode_batch_with_iters_on_stream(llrs, &decoder, stream, &mut stream_scratch)?;
+            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
+                llrs,
+                &decoder,
+                stream,
+                &mut stream_scratch,
+            )?;
             return Ok((Box::new(hard), Some(iters)));
         }
         // No active stream pool (GPU disabled or unavailable): degrade to the
@@ -718,7 +732,10 @@ impl TopologyExecutor {
 
             // Run the wave in parallel on the scheduler's pool: independent
             // branches (fan-out) genuinely execute concurrently.
-            let wave_results: Result<Vec<(usize, Box<dyn TypedBatch>, Box<dyn AnyScratch>)>, StageError> = {
+            let wave_results: Result<
+                Vec<(usize, Box<dyn TypedBatch>, Box<dyn AnyScratch>)>,
+                StageError,
+            > = {
                 let outputs_ref = &outputs;
                 let input_ref = batch.as_ref();
                 scheduler.rayon_pool().install(|| {
@@ -727,13 +744,13 @@ impl TopologyExecutor {
                         .map(|(s, wave_input, mut scratch)| {
                             let inp: &dyn TypedBatch = match &wave_input {
                                 WaveInput::Root => input_ref,
-                                WaveInput::Single(p) => outputs_ref[*p].as_deref().ok_or_else(
-                                    || {
+                                WaveInput::Single(p) => {
+                                    outputs_ref[*p].as_deref().ok_or_else(|| {
                                         exec_err(format!(
                                             "internal: producer {p} output missing for consumer {s}"
                                         ))
-                                    },
-                                )?,
+                                    })?
+                                }
                                 WaveInput::Merged(b) => b.as_ref(),
                             };
                             let worker_idx = rayon::current_thread_index().unwrap_or(0);
@@ -1011,8 +1028,7 @@ impl TopologyExecutor {
                         while g < max_frames {
                             // 1. Per-frame seek + the SSOT message draw.
                             ctx.reseek_to_frame(g);
-                            let message =
-                                crate::frame_sim::random_bitvec(k, ctx.rng_mut());
+                            let message = crate::frame_sim::random_bitvec(k, ctx.rng_mut());
 
                             // 2. Channel scratch positioned at the post-message
                             //    stream offset (the SSOT noise continues from
@@ -1087,14 +1103,8 @@ impl TopologyExecutor {
                                 }
                             };
                             let bit_errors =
-                                gf2_coding::simulation::count_bit_errors(&message, decoded)
-                                    as u64;
-                            counters.record_frame(
-                                bit_errors > 0,
-                                iterations,
-                                k as u64,
-                                bit_errors,
-                            );
+                                gf2_coding::simulation::count_bit_errors(&message, decoded) as u64;
+                            counters.record_frame(bit_errors > 0, iterations, k as u64, bit_errors);
                             g += num_workers;
                         }
                         Ok(counters)
@@ -1182,9 +1192,9 @@ mod tests {
         // linearisation — the defensive net must catch it panic-free.
         let p = raw_pipeline(vec![erase(BitId), erase(BitId)], vec![bit_edge(1, 0)]);
         match TopologyExecutor::validate(&p) {
-            Err(StageError::Fatal(FatalError::BuildError(
-                BuildError::ExecutionValidation { reason },
-            ))) => {
+            Err(StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
+                reason,
+            }))) => {
                 assert!(
                     reason.contains("topological linearisation"),
                     "reason must name the order violation, got: {reason}"
@@ -1209,9 +1219,9 @@ mod tests {
     fn test_validate_rejects_out_of_range_edge() {
         let p = raw_pipeline(vec![erase(BitId)], vec![bit_edge(0, 7)]);
         match TopologyExecutor::validate(&p) {
-            Err(StageError::Fatal(FatalError::BuildError(
-                BuildError::ExecutionValidation { reason },
-            ))) => assert!(reason.contains("outside"), "got: {reason}"),
+            Err(StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
+                reason,
+            }))) => assert!(reason.contains("outside"), "got: {reason}"),
             other => panic!("expected ExecutionValidation, got {other:?}"),
         }
     }
@@ -1273,7 +1283,11 @@ mod tests {
             .downcast_ref::<BitPackedBatch>()
             .expect("stays BitPackedBatch");
         assert_eq!(merged.frames.len(), 3);
-        assert_eq!(merged.frames[0], BitVec::zeros(4), "in-edge order preserved");
+        assert_eq!(
+            merged.frames[0],
+            BitVec::zeros(4),
+            "in-edge order preserved"
+        );
         assert_eq!(merged.frames[1], BitVec::ones(4));
     }
 
@@ -1291,21 +1305,36 @@ mod tests {
     fn test_concat_batches_rejects_mixed_and_unknown_types() {
         let a = BitPackedBatch::new(vec![BitVec::zeros(4)]);
         let b = LlrBatch::new(vec![Vec::new()]);
-        assert!(concat_batches(&[&a, &b]).is_none(), "mixed types do not merge");
-        assert!(concat_batches(&[]).is_none(), "empty part list does not merge");
+        assert!(
+            concat_batches(&[&a, &b]).is_none(),
+            "mixed types do not merge"
+        );
+        assert!(
+            concat_batches(&[]).is_none(),
+            "empty part list does not merge"
+        );
     }
 
     #[test]
     fn test_split_half_sizes_and_order() {
         let frames: Vec<BitVec> = (0..5)
-            .map(|i| if i < 3 { BitVec::ones(2) } else { BitVec::zeros(2) })
+            .map(|i| {
+                if i < 3 {
+                    BitVec::ones(2)
+                } else {
+                    BitVec::zeros(2)
+                }
+            })
             .collect();
         let batch = BitPackedBatch::new(frames);
         let (lo, hi) = split_half(&batch).expect("5 frames split");
         assert_eq!(lo.batch_size(), 3, "lo half takes ceil(n/2)");
         assert_eq!(hi.batch_size(), 2);
         let lo = lo.as_any().downcast_ref::<BitPackedBatch>().unwrap();
-        assert!(lo.frames.iter().all(|f| f == &BitVec::ones(2)), "order kept");
+        assert!(
+            lo.frames.iter().all(|f| f == &BitVec::ones(2)),
+            "order kept"
+        );
     }
 
     #[test]

@@ -56,8 +56,7 @@ use gf2_sim::batch::{BitPackedBatch, HardDecisionBatch, SymbolBatch};
 use gf2_sim::stage::{AnyScratch, AnyStage, TypedBatch};
 use gf2_sim::stages::{
     dvb_t2_bicm_stages, BitDeinterleave, BitInterleave, DecodeScratch, DvbT2Decode, DvbT2Encode,
-    GrayQamDemap,
-    GrayQamMap, DEFAULT_DEMAP_NOISE_VAR,
+    GrayQamDemap, GrayQamMap, DEFAULT_DEMAP_NOISE_VAR,
 };
 use gf2_sim::Stage;
 
