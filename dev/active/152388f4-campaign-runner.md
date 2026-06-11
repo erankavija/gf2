@@ -6,6 +6,10 @@ sweeps for epic 2928ccce.
 ## Goal
 
 A CLI binary at `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
+*[since moved: the binary now lives at
+`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` on the `gf2-sim`
+pipeline, and the legacy `gf2-coding` binary file was deleted per the
+user-approved `bbf6b6ee` amendment 2026-06-11b]*
 that runs the full AWGN simulation for one `(rate, modulation)`
 configuration and produces a CSV curve, a JSON tracing log, and a
 calibration smoke sweep. Six invocations (3 rates × 2 modulations)

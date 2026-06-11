@@ -26,8 +26,13 @@ against the path being migrated, not against the new pipeline on one thread.
 
 The harness (`dev/benchmarks/gf2-sim/baseline_runner/`) is a standalone,
 non-workspace binary crate that depends on `gf2-coding` by relative path. It
-drives the exact legacy path the campaign binary uses
-(`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`):
+drives the exact legacy path the campaign binary used at measurement
+time (`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`; that legacy
+binary file was since deleted per the user-approved `bbf6b6ee`
+amendment 2026-06-11b — the campaign binary now lives at
+`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` on the `gf2-sim`
+pipeline; the legacy `SimulationRunner` LIBRARY path this baseline
+measures is retained in `gf2-coding`):
 
 ```text
 BBFRAME -> BCH+LDPC encode -> bit interleave -> Gray-QAM map -> AWGN
