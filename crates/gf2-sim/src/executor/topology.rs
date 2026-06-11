@@ -114,6 +114,26 @@ use crate::stages::{DecodeScratch, DvbT2Encode};
 /// stream (no `hip` feature, GPU disabled, or no usable device).
 pub const NO_STREAM: usize = usize::MAX;
 
+/// Failure-mode parameters threaded through stage dispatch (`42eac5cc`).
+///
+/// Carries the `strict_gpu` flag and the diagnostic dump directory so they do
+/// not need to be threaded as separate function arguments.
+///
+/// The fields are only read inside the `#[cfg(feature = "hip")]` variant of
+/// `execute_gpu_stage`; the `dead_code` lint fires on no-hip builds where that
+/// variant is elided.
+#[allow(dead_code)]
+struct FailurePolicy<'p> {
+    strict_gpu: bool,
+    dump_dir: &'p std::path::Path,
+    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
+    /// `Some(m)`, the GPU LDPC arm forces a recoverable OOM on every frame whose
+    /// global frame index `g` satisfies `g % m == 0`, driving the production
+    /// `dispatch_with_fallback` path. Mirrors
+    /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus).
+    inject_gpu_oom_modulus: Option<u64>,
+}
+
 /// Wraps a defensive-validation finding in the typed error chain
 /// (`StageError::Fatal(FatalError::BuildError(ExecutionValidation))`).
 fn exec_err(reason: impl Into<String>) -> StageError {
@@ -258,6 +278,47 @@ fn stream_id_for(scheduler: &Scheduler, worker_idx: usize, route: &WorkerRoute<'
     NO_STREAM
 }
 
+/// The GPU LDPC stage position to use when defaulting a frame's iteration
+/// count after a CPU fallback. Identity under `hip`; always `None` without it
+/// (no GPU LDPC stage can exist), so [`gpu_ldpc_max_iters`] is never invoked on
+/// the non-hip build.
+#[inline]
+fn gpu_iter_fallback_pos(gpu_bp_pos: Option<usize>) -> Option<usize> {
+    #[cfg(feature = "hip")]
+    {
+        gpu_bp_pos
+    }
+    #[cfg(not(feature = "hip"))]
+    {
+        let _ = gpu_bp_pos;
+        None
+    }
+}
+
+/// The `max_iterations` cap of the GPU LDPC BP stage at `pos`, used as the
+/// recorded iteration count for a frame whose GPU dispatch fell back to the CPU
+/// LDPC stage (the `42eac5cc` OOM substitution leaves no per-frame count, and
+/// `mean_iters` is §11-excluded from the CPU-vs-GPU contract). The caller only
+/// reaches it when a `GpuLdpcBp` stage exists in the chain (hip builds only;
+/// [`gpu_iter_fallback_pos`] returns `None` otherwise).
+fn gpu_ldpc_max_iters(stages: &[Box<dyn AnyStage>], pos: usize) -> Result<u64, StageError> {
+    #[cfg(feature = "hip")]
+    {
+        stages[pos]
+            .stage_as_any()
+            .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
+            .map(|bp| bp.max_iterations() as u64)
+            .ok_or_else(|| exec_err("internal: GPU LDPC position lost while defaulting iter count"))
+    }
+    #[cfg(not(feature = "hip"))]
+    {
+        let _ = (stages, pos);
+        Err(exec_err(
+            "internal: GPU LDPC iteration fallback is unreachable without the hip feature",
+        ))
+    }
+}
+
 /// Executes one stage via its [`AnyStage`] object, routed by
 /// [`execution_class()`](AnyStage::execution_class), inside the six-field
 /// `pipeline_stage` tracing span.
@@ -274,6 +335,7 @@ fn execute_stage(
     snr_idx: usize,
     batch_id: u64,
     route: &mut WorkerRoute<'_>,
+    failure: &FailurePolicy<'_>,
 ) -> StageOutcome {
     let stream_id = stream_id_for(scheduler, worker_idx, route);
     let span = tracing::info_span!(
@@ -289,9 +351,9 @@ fn execute_stage(
     let t0 = std::time::Instant::now();
     let result = match stage.execution_class() {
         ExecutionClass::CpuOnly => stage.process_any(input, scratch).map(|o| (o, None)),
-        ExecutionClass::GpuOnly => {
-            execute_gpu_stage(stage, input, scratch, scheduler, worker_idx, route)
-        }
+        ExecutionClass::GpuOnly => execute_gpu_stage(
+            stage, input, scratch, scheduler, worker_idx, route, failure, snr_idx, batch_id,
+        ),
         ExecutionClass::Hybrid => execute_hybrid_stage(stage, input, scratch),
     };
     span.record("wall_us", t0.elapsed().as_micros() as u64);
@@ -316,7 +378,12 @@ fn execute_stage(
 /// `process_any` (see the [module docs](self)). With no active stream pool
 /// (GPU disabled or unavailable) every arm degrades to `process_any` after a
 /// `tracing::warn!` (fallback SUBSTITUTION is `42eac5cc`'s scope).
+///
+/// Each GPU dispatch is wrapped with [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+/// (`42eac5cc`): OOM → CPU fallback (or hard-fail when `strict_gpu`); fatal
+/// errors → diagnostic dump + propagate.
 #[cfg(feature = "hip")]
+#[allow(clippy::too_many_arguments)]
 fn execute_gpu_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
@@ -324,7 +391,20 @@ fn execute_gpu_stage(
     scheduler: &Scheduler,
     worker_idx: usize,
     route: &mut WorkerRoute<'_>,
+    failure: &FailurePolicy<'_>,
+    snr_idx: usize,
+    batch_id: u64,
 ) -> StageOutcome {
+    use crate::executor::failure::{dispatch_with_fallback, FaultContext};
+
+    // Build a context for diagnostic reporting (shared across all three arms).
+    let ctx = FaultContext {
+        batch_id,
+        snr_idx,
+        device_id: 0,
+        worker_idx,
+    };
+
     if let Some(gpu_bp) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
@@ -343,30 +423,80 @@ fn execute_gpu_stage(
                 Some(Vec::new()),
             ));
         }
+        // Test-only GPU-OOM fault injection (issue `42eac5cc` SC1). When the
+        // config requests it, force a recoverable OOM on the selected frames so
+        // it flows through the production `dispatch_with_fallback` path below
+        // exactly as a genuine device OOM would (CPU fallback when `!strict_gpu`,
+        // hard-fail when `strict_gpu`). `None` in production: the kernel runs.
+        let injected_oom: Option<StageError> = failure.inject_gpu_oom_modulus.and_then(|m| {
+            (m >= 1 && batch_id.is_multiple_of(m)).then(|| {
+                StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
+                    device_id: ctx.device_id,
+                    bytes_requested: 1024 * 1024 * 1024,
+                })
+            })
+        });
+        // Closure that runs the CPU fallback for the LDPC BP stage via the
+        // type-erased `cpu_fallback_process_any` hook added by `42eac5cc`.
+        // `mean_iters` is excluded from the CPU-vs-GPU byte-identity contract
+        // (§11), so we return `None` for iters on the fallback path.
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{}` has no CPU fallback registered",
+                                stage.name()
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
         if let Some(g) = route.gpu.as_mut() {
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
             // matches this stage's code by construction).
-            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
-                llrs,
-                &g.decoder,
-                g.stream,
-                &mut g.scratch,
-            )?;
-            return Ok((Box::new(hard), Some(iters)));
+            let raw: StageOutcome = match injected_oom {
+                Some(oom) => Err(oom),
+                None => gpu_bp
+                    .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
+                    .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters))),
+            };
+            return dispatch_with_fallback(
+                raw,
+                fallback,
+                ctx,
+                failure.strict_gpu,
+                failure.dump_dir,
+            );
         }
         if let Some((_, stream)) = scheduler.worker_stream(worker_idx) {
             // Transient: build a one-shot decoder sized for this batch, still
             // stream-ordered on the worker's owned stream.
-            let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
-            let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
-            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
-                llrs,
-                &decoder,
-                stream,
-                &mut stream_scratch,
-            )?;
-            return Ok((Box::new(hard), Some(iters)));
+            let raw: StageOutcome = match injected_oom {
+                Some(oom) => Err(oom),
+                None => (|| {
+                    let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
+                    let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
+                    let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
+                        llrs,
+                        &decoder,
+                        stream,
+                        &mut stream_scratch,
+                    )?;
+                    Ok((Box::new(hard) as Box<dyn TypedBatch>, Some(iters)))
+                })(),
+            };
+            return dispatch_with_fallback(
+                raw,
+                fallback,
+                ctx,
+                failure.strict_gpu,
+                failure.dump_dir,
+            );
         }
         // No active stream pool (GPU disabled or unavailable): degrade to the
         // erased path, which surfaces the mapped device fault if there is
@@ -381,13 +511,49 @@ fn execute_gpu_stage(
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::awgn::GpuAwgn>())
     {
-        return execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+        // Run the GPU call FIRST (consuming the `scratch` borrow for the GPU
+        // path); the fallback closure only captures `scratch` when it is
+        // actually called by `dispatch_with_fallback` on a recoverable error.
+        let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+        let stage_name = stage.name();
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
+        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     if let Some(gpu_demap) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::demap::GpuGrayQamDemapper>())
     {
-        return execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+        // Run the GPU call FIRST for the same reason as the AWGN arm above.
+        let raw = execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+        let stage_name = stage.name();
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{stage_name}` has no CPU fallback registered"
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
+        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing
     // is mandatory: silently falling through to `process_any` would dispatch
@@ -498,7 +664,10 @@ fn execute_gpu_demap(
 /// The `GpuOnly` routing arm without the `hip` feature: there is no device
 /// backend, so the stage degrades to `process_any` on the CPU after a
 /// `tracing::warn!` (the documented graceful degrade, matching the scheduler).
+/// The `failure`, `snr_idx`, and `batch_id` parameters are accepted for
+/// signature parity with the `hip` variant but are unused.
 #[cfg(not(feature = "hip"))]
+#[allow(clippy::too_many_arguments)]
 fn execute_gpu_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
@@ -506,6 +675,9 @@ fn execute_gpu_stage(
     _scheduler: &Scheduler,
     _worker_idx: usize,
     _route: &mut WorkerRoute<'_>,
+    _failure: &FailurePolicy<'_>,
+    _snr_idx: usize,
+    _batch_id: u64,
 ) -> StageOutcome {
     tracing::warn!(
         stage = stage.name(),
@@ -878,9 +1050,26 @@ impl TopologyExecutor {
 
             // Run the wave in parallel on the scheduler's pool: independent
             // branches (fan-out) genuinely execute concurrently.
+            // Build the failure policy once per wave, outside the parallel
+            // region (the config reference is cheap to copy).
+            let dump_dir_buf;
+            let failure = {
+                let cfg = pipeline.config();
+                dump_dir_buf = cfg
+                    .diagnostic_dump_dir
+                    .clone()
+                    .unwrap_or_else(crate::executor::failure::default_dump_dir);
+                FailurePolicy {
+                    strict_gpu: cfg.strict_gpu,
+                    dump_dir: &dump_dir_buf,
+                    inject_gpu_oom_modulus: cfg.inject_gpu_oom_modulus,
+                }
+            };
+
             let wave_results: Result<Vec<WaveResult>, StageError> = {
                 let outputs_ref = &outputs;
                 let input_ref = batch.as_ref();
+                let failure_ref = &failure;
                 scheduler.rayon_pool().install(|| {
                     items
                         .into_par_iter()
@@ -907,6 +1096,7 @@ impl TopologyExecutor {
                                 snr_idx,
                                 batch_id,
                                 &mut route,
+                                failure_ref,
                             )?;
                             Ok((s, out, scratch))
                         })
@@ -1122,6 +1312,18 @@ impl TopologyExecutor {
         let seed = scheduler.seed();
         let num_workers = scheduler.parallelism().get();
 
+        // Build the failure policy for `dispatch_with_fallback` wiring (`42eac5cc`).
+        let dump_dir_buf_dvb = pipeline
+            .config()
+            .diagnostic_dump_dir
+            .clone()
+            .unwrap_or_else(crate::executor::failure::default_dump_dir);
+        let failure = FailurePolicy {
+            strict_gpu: pipeline.config().strict_gpu,
+            dump_dir: &dump_dir_buf_dvb,
+            inject_gpu_oom_modulus: pipeline.config().inject_gpu_oom_modulus,
+        };
+
         let per_worker: Vec<Result<WorkerCounters, StageError>> =
             scheduler.rayon_pool().install(|| {
                 (0..num_workers)
@@ -1204,6 +1406,7 @@ impl TopologyExecutor {
                                     snr_idx,
                                     g as u64,
                                     &mut route,
+                                    &failure,
                                 )?;
                                 if let Some(iters) = iters {
                                     gpu_iters = iters.first().map(|&i| u64::from(i));
@@ -1225,24 +1428,38 @@ impl TopologyExecutor {
                             let iterations = match gpu_iters {
                                 Some(i) => i,
                                 None => {
-                                    let pos = cpu_decode_pos.ok_or_else(|| {
-                                        exec_err(
+                                    if let Some(pos) = cpu_decode_pos {
+                                        // Deref the box (see the channel scratch
+                                        // note above).
+                                        (*scratches[pos])
+                                            .as_any_mut()
+                                            .downcast_mut::<DecodeScratch>()
+                                            .and_then(|s| s.iterations.first().copied())
+                                            .ok_or_else(|| {
+                                                exec_err(
+                                                    "internal: DvbT2Decode scratch carries no \
+                                                     iteration count for the frame",
+                                                )
+                                            })?
+                                    } else if let Some(pos) = gpu_iter_fallback_pos(gpu_bp_pos) {
+                                        // The chain's BP-iteration source is the
+                                        // GPU LDPC stage, but it surfaced no
+                                        // per-frame count: this frame's GPU
+                                        // dispatch fell back to the CPU LDPC
+                                        // stage (an OOM substitution, `42eac5cc`),
+                                        // whose `Scratch = ()` carries no iteration
+                                        // count. `mean_iters` is §11-EXCLUDED from
+                                        // the CPU-vs-GPU contract, so record the
+                                        // stage's `max_iterations` cap — the
+                                        // verdict columns (`fer`/`frames`/`errors`)
+                                        // are unaffected.
+                                        gpu_ldpc_max_iters(stages, pos)?
+                                    } else {
+                                        return Err(exec_err(
                                             "no BP-iteration source ran for this frame \
                                              (no DvbT2Decode stage and no GPU LDPC counts)",
-                                        )
-                                    })?;
-                                    // Deref the box (see the channel scratch
-                                    // note above).
-                                    (*scratches[pos])
-                                        .as_any_mut()
-                                        .downcast_mut::<DecodeScratch>()
-                                        .and_then(|s| s.iterations.first().copied())
-                                        .ok_or_else(|| {
-                                            exec_err(
-                                                "internal: DvbT2Decode scratch carries no \
-                                                 iteration count for the frame",
-                                            )
-                                        })?
+                                        ));
+                                    }
                                 }
                             };
                             let bit_errors =
@@ -1311,6 +1528,8 @@ mod tests {
             parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
             gpu_enabled: false,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         }
     }
 

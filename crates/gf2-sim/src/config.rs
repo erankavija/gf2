@@ -15,8 +15,9 @@ use gf2_coding::simulation::SimulationConfig;
 ///
 /// Mirrors the run-control fields of
 /// [`gf2_coding::simulation::SimulationConfig`] and adds the Phase 0 pipeline
-/// knobs (`parallelism`, `strict_gpu`). A [`From<&SimulationConfig>`] impl is
-/// provided so existing campaign configs convert directly.
+/// knobs (`parallelism`, `strict_gpu`, `diagnostic_dump_dir`). A
+/// [`From<&SimulationConfig>`] impl is provided so existing campaign configs
+/// convert directly.
 ///
 /// # Examples
 ///
@@ -35,6 +36,8 @@ use gf2_coding::simulation::SimulationConfig;
 ///     parallelism: NonZeroUsize::new(1).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// assert_eq!(cfg.esn0_db_points.len(), 3);
 /// ```
@@ -72,6 +75,31 @@ pub struct PipelineConfig {
     /// When set, GPU out-of-memory is promoted to a fatal error instead of
     /// falling back to the CPU stage (design doc §8).
     pub strict_gpu: bool,
+    /// Directory for JSON hard-fail diagnostic dumps (one file per fatal GPU
+    /// stage event, written atomically via a `.tmp` sibling + rename).
+    ///
+    /// Defaults to `None`; when `None` the executor uses
+    /// `dev/benchmarks/gf2-sim/diagnostic-dumps/` (from
+    /// [`default_dump_dir`](crate::executor::failure::default_dump_dir)).
+    /// Tests should set this to a temp dir to avoid polluting the repo.
+    pub diagnostic_dump_dir: Option<PathBuf>,
+    /// **Test-only** GPU out-of-memory fault-injection hook (issue `42eac5cc`).
+    ///
+    /// When `Some(m)` (with `m >= 1`), the hybrid executor's GPU LDPC
+    /// belief-propagation arm forces a
+    /// [`RecoverableError::OutOfMemory`](crate::error::RecoverableError::OutOfMemory)
+    /// instead of launching the real kernel on every frame whose global frame
+    /// index `g` satisfies `g % m == 0`. The forced OOM then flows through the
+    /// **production** `dispatch_with_fallback` path (CPU fallback when
+    /// `!strict_gpu`, or a hard-fail promotion when `strict_gpu`), exactly as a
+    /// genuine device OOM would. This drives the run-level OOM-auto-fallback
+    /// criterion (`42eac5cc` SC1) against the real scheduler/executor without
+    /// needing to exhaust real device memory.
+    ///
+    /// `m == 1` injects on every frame (full CPU fallback); `m == 2` injects on
+    /// the even frames only (a genuine mixed GPU + CPU-fallback run). `None` (the
+    /// default) disables injection — production runs never set this.
+    pub inject_gpu_oom_modulus: Option<u64>,
 }
 
 impl From<&SimulationConfig> for PipelineConfig {
@@ -100,6 +128,8 @@ impl From<&SimulationConfig> for PipelineConfig {
             parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
             gpu_enabled: false,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         }
     }
 }

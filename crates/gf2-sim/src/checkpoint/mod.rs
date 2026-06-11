@@ -226,6 +226,8 @@ mod u128_string {
 ///     parallelism: NonZeroUsize::new(4).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&cfg);
 /// assert!(h.starts_with("blake3:"));
@@ -710,6 +712,8 @@ pub struct CheckpointedRun {
 ///     parallelism: NonZeroUsize::new(2).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&config);
 /// let writer = CheckpointWriter::new("/tmp/snr").unwrap();
@@ -955,6 +959,8 @@ pub struct SweepRun {
 ///     parallelism: NonZeroUsize::new(2).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&config);
 /// let writer = CheckpointWriter::new("/tmp/sweep").unwrap();
@@ -1183,6 +1189,8 @@ mod tests {
             parallelism: NonZeroUsize::new(parallelism).unwrap(),
             gpu_enabled: false,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         }
     }
 

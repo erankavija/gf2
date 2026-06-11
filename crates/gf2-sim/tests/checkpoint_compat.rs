@@ -92,6 +92,8 @@ fn cfg(parallelism: usize, max_frames: u64, heartbeat: u64) -> PipelineConfig {
         parallelism: NonZeroUsize::new(parallelism).unwrap(),
         gpu_enabled: false,
         strict_gpu: false,
+        diagnostic_dump_dir: None,
+        inject_gpu_oom_modulus: None,
     }
 }
 
