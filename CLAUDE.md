@@ -49,7 +49,7 @@ cargo run -p gf2-coding --example ldpc_awgn --release
 cargo run -p gf2-algebra --example permanent_demo --release
 
 # DVB-T2 BICM AWGN campaign runner (one invocation per rate×modulation pair)
-# Binary:  crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs
+# Binary:  crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs (migrated to the gf2-sim pipeline, jit:bbf6b6ee)
 # Plotter: dev/benchmarks/dvb_t2_awgn/plot.py
 # Reference TOML: crates/gf2-coding/data/dvb_t2_tr102831_reference.toml
 cargo run --release --bin dvb_t2_awgn_campaign -- \
