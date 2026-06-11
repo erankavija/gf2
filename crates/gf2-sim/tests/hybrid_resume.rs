@@ -450,6 +450,143 @@ fn hybrid_drain_resume_smoke() {
 }
 
 // ===========================================================================
+// Fast-tier restore-branch leg (NOT ignored; GPU-gated). Exercises the
+// `frames_in_worker` restore + worker-state validation path that the
+// `hybrid_drain_resume_smoke` test does NOT reach (it takes the
+// `ck.completed` early-return at point 0). This test writes a real partial
+// v2 checkpoint via the production machinery (interrupted at a genuine
+// batch boundary with `done=[16,16]` of 64 frames), then resumes and
+// asserts that (a) the restore engaged (the resumed run processed exactly
+// 32 remaining frames), (b) 4-column byte-identity holds vs the
+// uninterrupted hybrid reference, and (c) the batch-alignment validation
+// accepts the checkpoint.
+// ===========================================================================
+
+/// Restore-branch leg: a 1-point hybrid sweep (2 workers × 33 frames,
+/// r1/2 16-QAM at the waterfall, heartbeat=1) interrupted at global frame
+/// 4 (prep-time trip, stops at the deterministic round-1 boundary with
+/// `done=[16,16]`, 32 frames committed). Resume processes the remaining
+/// 1 frame (worker 0's partition tail) and is asserted 4-column
+/// byte-identical to the uninterrupted hybrid reference.
+///
+/// Config sizing: 2 workers × 33 frames. Worker 0 owns {0,2,…,32} = 17
+/// frames; worker 1 owns {1,3,…,31} = 16 frames. Heartbeat = 1 ⟹
+/// `round_frames = ceil(1 / (16×2)).max(1) × 16 × 2 = 32`. Round
+/// boundaries are at 32. Trip at (snr=0, g=4) lands in round-1's first
+/// batch prep: the round-1 flush commits done=[16,16] = 32 frames, and the
+/// remaining 1 frame (worker 0 at index j=16, global g=32) runs on resume.
+///
+/// This is the HIGH-1(a) test: the fast tier exercises the
+/// `frames_in_worker` restore code path, the batch-alignment validation,
+/// and the remaining-frames assertion. Sized to stay well inside the 5 s
+/// fast-tier cap (~33 × 3 = ~99 GPU LDPC decodes).
+#[test]
+fn hybrid_partial_point_restore() {
+    if !gpu_present() {
+        eprintln!("skipping hybrid_partial_point_restore: no usable GPU");
+        return;
+    }
+    let _guard = RESUME_PARITY_GUARD
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    clear_interrupt();
+
+    // 2 workers × 33 frames, heartbeat=1 ⟹ round_frames=32.
+    // Trip at (snr=0, g=4) stops at the round-1 boundary: done=[16,16]=32.
+    let restore_cfg = ResumeConfig {
+        rate: CodeRate::Rate1_2,
+        modulation: DvbT2Modulation::Qam16,
+        algo: DecoderAlgorithm::SumProduct,
+        demap: DemapMethod::MaxLog,
+        workers: 2,
+        max_frames: 33,
+        heartbeat: 1,
+        esn0_start: 6.0,
+        snr_points: 1,
+        interrupt_at: (0, 4),
+    };
+    let dir = tempdir();
+    let pipeline = restore_cfg.build_pipeline(Some(dir.clone()));
+    let scheduler = Scheduler::from_pipeline(&pipeline);
+    assert!(
+        scheduler.gpu_active(),
+        "partial restore test requires an active GPU stream pool"
+    );
+
+    // Interrupted leg: trip at (snr=0, g=4) stops at the round-1 boundary.
+    let (trip_snr, trip_frame) = restore_cfg.interrupt_at;
+    let interrupted = scheduler
+        .run_sweep_checkpointed(&pipeline, false, &|snr_idx, g| {
+            if snr_idx == trip_snr && g == trip_frame {
+                request_interrupt();
+            }
+        })
+        .expect("interrupted hybrid sweep");
+    assert!(interrupted.interrupted, "SIGINT must stop the sweep");
+
+    // Verify the partial checkpoint: not complete, done=[16,16], sum=32.
+    let hash = config_hash(pipeline.config());
+    let ck = CheckpointReader::new(&dir, hash)
+        .load(0)
+        .expect("checkpoint loads")
+        .expect("checkpoint was flushed");
+    assert!(
+        !ck.completed,
+        "partial-point checkpoint must not be complete"
+    );
+    assert_eq!(
+        ck.frames_completed, 32,
+        "deterministic round-1 heartbeat flush stopped at 32 of 33 frames"
+    );
+    assert_eq!(ck.worker_states.len(), 2, "2 workers");
+    for ws in &ck.worker_states {
+        assert_eq!(
+            ws.frames_in_worker, 16,
+            "worker {} stopped on a whole BATCH_FRAMES batch",
+            ws.worker_idx
+        );
+    }
+
+    // Resume: processes only the remaining 1 frame (RESTORE branch).
+    clear_interrupt();
+    let frames_seen = std::sync::atomic::AtomicU64::new(0);
+    let resumed_sweep = scheduler
+        .run_sweep_checkpointed(&pipeline, true, &|_snr, _g| {
+            frames_seen.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            // Relaxed store: value read after the closure returns at the barrier.
+        })
+        .expect("resumed hybrid sweep");
+    assert!(
+        !resumed_sweep.interrupted,
+        "resumed sweep runs to completion"
+    );
+    assert_eq!(resumed_sweep.results.per_point.len(), 1, "one SNR point");
+    let resumed = &resumed_sweep.results.per_point[0];
+    assert_eq!(
+        resumed.frames, 33,
+        "resumed run must accumulate the full 33 frames"
+    );
+    // The observer fires only for the 1 remaining frame in the resumed run
+    // (the first 32 are loaded from the checkpoint, not re-processed).
+    let seen = frames_seen.load(std::sync::atomic::Ordering::Relaxed);
+    assert_eq!(
+        seen, 1,
+        "restore branch must process exactly the 1 remaining frame; saw {seen}"
+    );
+
+    // 4-column byte-identity vs the uninterrupted hybrid reference.
+    let reference = pipeline.run().expect("uninterrupted hybrid reference run");
+    assert_eq!(reference.per_point.len(), 1);
+    let refp = &reference.per_point[0];
+    assert_four_columns_byte_identical(
+        &to_counters(resumed),
+        &to_counters(refp),
+        "partial-restore resume-parity point 0",
+    );
+    record_ber(resumed, "partial-restore point 0");
+}
+
+// ===========================================================================
 // Slow-tier criterion-2 parity, one #[ignore]d test per named config
 // (10-SNR hybrid sweep x interrupted + resumed + reference legs).
 // ===========================================================================
@@ -484,17 +621,12 @@ fn hybrid_resume_parity_r3_4_16qam() {
     assert_hybrid_resume_parity(CONFIGS[2]);
 }
 
-/// Minimal unique tempdir helper (no `tempfile` dev-dependency), mirroring the
-/// determinism suite's helper.
+/// Creates a unique tempdir for this test file via the shared `common::tempdir`
+/// helper (L8: eliminates the duplicated helper from this file).
+///
+/// The `determinism.rs` copy is NOT pointed here: its prefix (`gf2sim-det-`)
+/// and `COUNTER` are local to that binary; a mechanical swap would silently
+/// rename every logged path in that suite. Leave it in place per the L8 rule.
 fn tempdir() -> PathBuf {
-    let mut p = std::env::temp_dir();
-    let unique = format!(
-        "gf2sim-hybres-{}-{}",
-        std::process::id(),
-        COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-    );
-    p.push(unique);
-    std::fs::create_dir_all(&p).expect("create unique tempdir");
-    p
+    common::tempdir("hybres")
 }
-static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
