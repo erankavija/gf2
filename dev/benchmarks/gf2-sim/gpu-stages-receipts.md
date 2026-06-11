@@ -8,7 +8,10 @@ determinism contract).
 The per-kernel throughput receipts (the `parallelism-pays` gate evidence for
 each GPU stage) live in the shared parallelism receipts file; this file records
 the **Phase B closer**: the end-to-end CPU-vs-GPU byte-identity attestation that
-ties the per-kernel stages into the full DVB-T2 BICM chain verdict.
+ties the per-kernel stages into the full DVB-T2 BICM chain verdict. It also
+records the Phase C **stage-driven** GPU byte-identity attestation
+([`de160fc5`](#de160fc5--stage-driven-gpu-chain-byte-identity-fast-smoke--slow-leg)),
+which reuses this file's precedent for evidencing `#[ignore]`d GPU suites.
 
 ## Per-kernel GPU-stage receipts (links)
 
@@ -153,3 +156,79 @@ waterfall.
 (History: an earlier draft incorrectly asserted the **bit**-error sum and was
 forced above threshold to make it zero — a vacuous regime. That was corrected to
 assert the FRAME columns at the waterfall, per the lead review.)
+
+## de160fc5 — stage-driven GPU chain byte-identity (fast smoke + slow leg)
+
+- **Status:** ATTESTED. The stage-driven DVB-T2 chain
+  (`TopologyExecutor::run_dvb_t2_snr_point`, every stage executed via its
+  type-erased `AnyStage` object with the `ExecutionClass::GpuOnly` LDPC BP
+  stage on the worker's owned HIP stream) matches the SSOT `run_snr_point`
+  CPU path on the three §11 relaxed-contract columns
+  (`fer`/`frames`/`errors`; `mean_iters` logged, never asserted) at the
+  6.0 dB r1/2 16-QAM waterfall, on **both** legs below.
+- **Date:** 2026-06-11 (round-1 rework; both legs re-run at the post-rework
+  HEAD carrying the finding-1 stream-routing changes — every `GpuOnly` stage
+  now dispatches via its `*_on_stream` entry point on
+  `scheduler.worker_stream(worker_idx)`).
+- **Hardware:** CPU = AMD Ryzen 9 5900X (12C/24T), GPU = AMD Radeon RX 6950 XT
+  (gfx1030, RDNA2). Single GPU — GPU tests serialized.
+- **Test file:** `crates/gf2-sim/tests/stage_driven_byte_identity.rs`
+  (config: r1/2 16-QAM Normal, SumProduct + early termination, ExactLogMap
+  demap on the CPU stages, seed `0xDE16_0FC5`).
+
+### Leg 1 — fast-tier smoke (NOT ignored: runs on every green ci-profile gate)
+
+`gpu::test_stage_driven_gpu_smoke_matches_ssot_3_columns` — GPU-presence-gated
+but **not** `#[ignore]`d, so the standard fast-tier gate
+genuinely executes the stage-driven GPU byte-identity criterion on the gfx1030
+host (round-1 finding 2: the previously ignored slow leg was never run by a
+passing gate).
+
+```bash
+cargo nextest run -p gf2-sim --all-features --release --profile ci \
+    -E 'test(test_stage_driven_gpu_smoke_matches_ssot_3_columns)'
+```
+
+- **Runtime:** 3.18 s test body / 3.24 s nextest-reported (ci profile,
+  quiet gfx1030 host) — inside the 5 s fast-tier per-test cap.
+- **Shape:** 4 frames, 4 workers, pinned smoke seed `0xDE16_0FC5`, 6.0 dB
+  waterfall; non-vacuity asserted (`0 < errors < frames`).
+- **Columns (staged GPU == SSOT CPU, asserted byte-identical):**
+  `frames=4`, `errors=1`, `fer=0.250000`.
+- **mean_iters (logged only, §11 exclusion):** staged(GPU) 49.000000 vs
+  ssot(CPU) 49.000000, diff +0.000000.
+
+### Leg 2 — slow-tier 32-frame waterfall sweep (re-run at the rework HEAD)
+
+`gpu::test_stage_driven_gpu_chain_matches_ssot_3_columns`
+(`#[ignore = "sim: …"]`, GPU-gated):
+
+```bash
+cargo nextest run -p gf2-sim --all-features --release --profile slow \
+    --run-ignored ignored-only \
+    -E 'test(test_stage_driven_gpu_chain_matches_ssot_3_columns)'
+```
+
+- **Runtime:** 23.51 s test body / 23.57 s nextest-reported (slow profile,
+  quiet gfx1030 host) — well under the 120 s slow-tier cap.
+- **Columns (staged GPU == SSOT CPU, asserted byte-identical):**
+  `frames=32`, `errors=9`, `fer=0.281250` — unchanged from the pre-rework
+  attestation, confirming the finding-1 stream-routing changes did not alter
+  numerics.
+- **mean_iters (logged only, §11 exclusion):** staged(GPU) 48.656250 vs
+  ssot(CPU) 48.656250, diff +0.000000.
+
+### Companion legs (same HEAD)
+
+- CPU 4-column slow leg
+  `test_stage_driven_cpu_waterfall_matches_ssot_4_columns` (same command
+  shape, slow profile): 34.54 s; `frames=32`, `errors=9`, `fer=0.281250`,
+  `mean_iters=48.656250` — all four columns byte-identical to the SSOT.
+- The stream-vs-default byte-identity of each `*_on_stream` kernel path the
+  executor routes onto is guarded fast-tier by
+  `gf2-kernels-hip::launch_ldpc_bp::tests::test_decode_on_stream_matches_default_stream`,
+  `gf2-kernels-hip::launch_chacha20_awgn::tests::test_noise_on_stream_matches_default_stream`,
+  and `gf2-kernels-hip::tests::test_demap_on_stream_matches_default_stream`
+  (run via the crate's own manifest with `--features hip`), plus the
+  `gf2-sim`-side stage/executor guards in `gpu::awgn` / `gpu::demap` unit
+  tests and `tests/dag_topology.rs::gpu`.
