@@ -491,9 +491,11 @@ impl Builder<Ready> {
     /// worker prepares the next batch on the CPU while its owned HIP stream
     /// decodes the current batch on the device. When `false` (the default),
     /// every stage runs on the CPU via the within-SNR frame-parallel path.
-    /// (The OOM CPU-fallback substitution policy is wired by the executor in
-    /// `42eac5cc`, not here — the fallback is registered and discoverable, but
-    /// an OOM still surfaces as the mapped recoverable error.)
+    /// The OOM CPU-fallback substitution policy is active: the executor's
+    /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+    /// (issue `42eac5cc`) intercepts every GPU stage error — an OOM with
+    /// `strict_gpu` unset triggers a `tracing::warn!` and substitutes the
+    /// registered `CpuLdpcBp` fallback on the same input.
     ///
     /// # Feature gating
     ///
@@ -718,6 +720,7 @@ impl Builder<Ready> {
             parallelism: self.cfg_parallelism,
             gpu_enabled: self.cfg_gpu_enabled,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
         };
 
         let mut pipeline = chain.with_config(config).build()?;

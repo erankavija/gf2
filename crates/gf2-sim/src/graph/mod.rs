@@ -229,6 +229,7 @@ impl Chain {
     ///     parallelism: NonZeroUsize::new(1).unwrap(),
     ///     gpu_enabled: false,
     ///     strict_gpu: false,
+    ///     diagnostic_dump_dir: None,
     /// };
     /// let chain = Chain::new().with_config(cfg);
     /// let pipeline = chain.build().unwrap();
@@ -963,6 +964,7 @@ fn default_pipeline_config() -> PipelineConfig {
         parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
         gpu_enabled: false,
         strict_gpu: false,
+        diagnostic_dump_dir: None,
     }
 }
 
