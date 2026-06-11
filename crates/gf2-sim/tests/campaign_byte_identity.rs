@@ -13,10 +13,20 @@
 //! `simulation.rs` path is **not** a byte-identity comparison target; only the
 //! new pipeline vs itself.
 //!
-//! Two legs:
-//! - `byte_identical_two_runs_smoke` — fast tier (8 frames × 1 SNR point), proves
-//!   the two-run determinism plumbing without the 5 s budget risk.
-//! - `byte_identical_two_runs_waterfall` — `#[ignore = "sim: ..."]` slow tier
+//! Two legs, **both `#[ignore]`** because each spawns the migrated binary as a
+//! subprocess that builds a full DVB-T2 codec (`DvbT2Concat` + LDPC encoder
+//! cache) and runs at least one n = 64800 frame — far over the 5 s fast-tier
+//! budget once the full workspace battery runs it 24-wide (the per-test wall is
+//! ~1–2 s in isolation but exceeds 5 s under contention, the same heavy
+//! live-simulation class as the sibling `executor_oom_fallback_run` /
+//! `hybrid_resume` / `preset_vs_graph_byte_identity` suites). They run on the
+//! slow tier; the fast-tier coverage of the binary's run-path plumbing is the
+//! in-binary `point_to_csv_row` / `*_wires_to_config` unit tests plus the
+//! parse-only CLI rejection tests in `campaign_cli_flags.rs`.
+//!
+//! - `byte_identical_two_runs_smoke` — `#[ignore = "sim: ..."]` (8 frames ×
+//!   1 SNR point), proves the two-run determinism plumbing.
+//! - `byte_identical_two_runs_waterfall` — `#[ignore = "sim: ..."]`
 //!   (200 frames at the r1/2 16-QAM waterfall Es/N0 = 6.0 dB), where the run is
 //!   **non-vacuous**: `0 < errored_frames < frames` is asserted, so the verdict
 //!   boundary the determinism contract is about is genuinely exercised. (6.0 dB
@@ -110,10 +120,12 @@ fn run_campaign(
     parse_det_rows(&csv)
 }
 
-/// Fast smoke: two runs at the same seed produce byte-identical
-/// `fer`/`frames`/`errors`/`mean_iters`. 8 frames × 1 SNR point keeps this well
-/// under the 5 s fast-tier budget.
+/// Smoke: two runs at the same seed produce byte-identical
+/// `fer`/`frames`/`errors`/`mean_iters`. 8 frames × 1 SNR point. `#[ignore]`
+/// because each run spawns a full-codec subprocess (heavy live-simulation
+/// class; >5 s under the contended fast-tier battery).
 #[test]
+#[ignore = "sim: two full-codec subprocess runs for binary two-run byte-identity"]
 fn byte_identical_two_runs_smoke() {
     let a = run_campaign("/tmp/dvb_d2_byteid_smoke_a", "6.25:6.25:0.5", "8", "1000");
     let b = run_campaign("/tmp/dvb_d2_byteid_smoke_b", "6.25:6.25:0.5", "8", "1000");
