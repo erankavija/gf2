@@ -28,6 +28,8 @@
 
 mod drain;
 pub mod failure;
+#[cfg(feature = "hip")]
+mod hybrid_core;
 mod results;
 mod scheduler;
 mod topology;
