@@ -241,6 +241,33 @@ pub trait AnyStage: Send + Sync {
     fn stage_as_any(&self) -> Option<&dyn std::any::Any> {
         None
     }
+
+    /// Allocates a fresh, default-initialised scratch of the concrete
+    /// [`Stage::Scratch`] type behind this erased handle.
+    ///
+    /// The DAG topology executor (`de160fc5`) — and any other consumer driving
+    /// erased stages via [`process_any`](AnyStage::process_any) — cannot name
+    /// the concrete scratch type, so this hook is the only way to obtain a
+    /// scratch that the stage's `process_any` downcast will accept.
+    ///
+    /// The provided default returns a unit `()` scratch so pre-existing
+    /// `AnyStage` implementors keep compiling; [`ErasedStage`] — and therefore
+    /// everything built via [`erase`] — overrides it to return
+    /// `S::Scratch::default()`.
+    fn default_scratch(&self) -> Box<dyn AnyScratch> {
+        Box::new(())
+    }
+
+    /// A human-readable name for this stage, used as the `stage_name` field of
+    /// the executor's per-stage `pipeline_stage` tracing spans (`de160fc5`).
+    ///
+    /// The provided default returns `"unnamed-stage"` so pre-existing
+    /// `AnyStage` implementors keep compiling; [`ErasedStage`] — and therefore
+    /// everything built via [`erase`] — overrides it with
+    /// [`std::any::type_name`] of the wrapped concrete stage type.
+    fn name(&self) -> &'static str {
+        "unnamed-stage"
+    }
 }
 
 /// Type-erasing adapter wrapping a concrete [`Stage<I, O>`] as an [`AnyStage`].
@@ -331,6 +358,14 @@ where
 
     fn stage_as_any(&self) -> Option<&dyn std::any::Any> {
         Some(&self.stage)
+    }
+
+    fn default_scratch(&self) -> Box<dyn AnyScratch> {
+        Box::new(S::Scratch::default())
+    }
+
+    fn name(&self) -> &'static str {
+        std::any::type_name::<S>()
     }
 }
 
@@ -472,6 +507,34 @@ mod tests {
         assert!(
             any.downcast_ref::<u32>().is_none(),
             "a wrong-type downcast must fail cleanly"
+        );
+    }
+
+    #[test]
+    fn test_default_scratch_matches_concrete_scratch_type() {
+        // The erased handle must hand back a scratch of the concrete
+        // `Stage::Scratch` type (here `u32`) that `process_any` accepts.
+        let erased: Box<dyn AnyStage> = erase(Doubler);
+        let mut scratch = erased.default_scratch();
+        // Deref the box so `as_any_mut` dispatches to the inner scratch (the
+        // blanket impl also exists on `Box<dyn AnyScratch>` itself).
+        assert!(
+            (*scratch).as_any_mut().downcast_mut::<u32>().is_some(),
+            "default_scratch must allocate the concrete Scratch type"
+        );
+        let input: Box<dyn TypedBatch> = Box::new(InBatch(1));
+        erased
+            .process_any(input.as_ref(), scratch.as_mut())
+            .expect("process_any accepts the default scratch");
+    }
+
+    #[test]
+    fn test_name_reports_concrete_stage_type() {
+        let erased: Box<dyn AnyStage> = erase(Doubler);
+        assert!(
+            erased.name().ends_with("Doubler"),
+            "erased stage name must be the concrete type name, got {}",
+            erased.name()
         );
     }
 

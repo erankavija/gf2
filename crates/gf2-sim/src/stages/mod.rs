@@ -18,11 +18,14 @@
 //! | [`GrayQamMap`] | [`GrayQamMapper::map_bits`] | [`BitPackedBatch`] → [`SymbolBatch`] |
 //! | [`GrayQamDemap`] | [`FastGrayQamDemapper::demap_llrs`] | [`SymbolBatch`] → [`LlrBatch`] |
 //! | [`BitDeinterleave`] | [`DvbT2BitInterleaver::deinterleave_llrs`] | [`LlrBatch`] → [`LlrBatch`] |
-//! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft`] | [`LlrBatch`] → [`HardDecisionBatch`] |
+//! | [`DvbT2Decode`] | [`DvbT2Concat::decode_soft_counted`] | [`LlrBatch`] → [`HardDecisionBatch`] |
 //! | [`DvbT2BchTail`] | [`DvbT2Concat::decode_bch_from_ldpc_codeword`] | [`HardDecisionBatch`] → [`HardDecisionBatch`] |
 //!
-//! Every stage is pure-CPU: `Scratch = ()`, `CpuFallback = Self`,
-//! `execution_class() == ExecutionClass::CpuOnly` (design-doc §1, §8).
+//! Every stage is pure-CPU: `CpuFallback = Self`,
+//! `execution_class() == ExecutionClass::CpuOnly` (design-doc §1, §8), and
+//! `Scratch = ()` — except [`DvbT2Decode`], whose scratch is [`DecodeScratch`]
+//! so the per-frame LDPC BP iteration counts are observable by the stage-driven
+//! executor (`de160fc5`; the `mean_iters` byte-identity column needs them).
 //! [`DvbT2BchTail`] is the outer-decode tail the GPU-offload preset pairs with
 //! the `GpuOnly` LDPC decode stage; the all-CPU chain uses the combined
 //! [`DvbT2Decode`] instead.
@@ -116,6 +119,32 @@ impl DvbT2Encode {
     /// * `codec` — the concatenated BCH+LDPC codec to encode with.
     pub fn new(codec: Arc<DvbT2Concat>) -> Self {
         Self { codec }
+    }
+
+    /// The BBFRAME information-bit count `k_bch` this stage encodes.
+    ///
+    /// Exposed so the stage-driven executor (`de160fc5`) can mint the
+    /// per-frame random BBFRAME input of the correct width after downcasting
+    /// the chain's source stage via
+    /// [`AnyStage::stage_as_any`](crate::stage::AnyStage::stage_as_any).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use gf2_sim::stages::DvbT2Encode;
+    /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
+    /// use gf2_coding::ldpc::dvb_t2::FrameSize;
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
+    /// let stage = DvbT2Encode::new(codec.clone());
+    /// assert_eq!(stage.k_bch(), codec.k_bch());
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn k_bch(&self) -> usize {
+        self.codec.k_bch()
     }
 }
 
@@ -460,24 +489,52 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
 // DvbT2Decode
 // ===========================================================================
 
+/// Per-stage scratch for [`DvbT2Decode`]: the per-frame LDPC BP iteration
+/// counts of the most recent `process` call.
+///
+/// [`DvbT2Decode::process`] clears [`iterations`](Self::iterations) and pushes
+/// one entry per input frame (in frame order): the genuine BP depth reported by
+/// [`DvbT2Concat::decode_soft_counted`] on both the converged and
+/// non-converged arms. The stage-driven executor (`de160fc5`) reads the counts
+/// back after each frame so the aggregated `mean_iters` column is byte-identical
+/// to the SSOT frame kernel's (design doc §11) — the erased
+/// [`process_any`](crate::stage::AnyStage::process_any) signature cannot carry
+/// them, and scratch is the sanctioned per-stage side channel.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::stages::DecodeScratch;
+///
+/// let scratch = DecodeScratch::default();
+/// assert!(scratch.iterations.is_empty());
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct DecodeScratch {
+    /// Per-frame LDPC BP iteration counts of the most recent
+    /// [`DvbT2Decode::process`] call, in input-frame order.
+    pub iterations: Vec<u64>,
+}
+
 /// FEC-decode stage: FECFRAME-order soft LLRs → recovered BBFRAME bits.
 ///
-/// Wraps [`DvbT2Concat::decode_soft`] (LDPC belief-propagation + BCH
+/// Wraps [`DvbT2Concat::decode_soft_counted`] (LDPC belief-propagation + BCH
 /// hard-decision). Each input frame is `n_ldpc` LLRs; each output frame is
-/// `k_bch` recovered BBFRAME bits.
+/// `k_bch` recovered BBFRAME bits. The per-frame BP iteration counts are
+/// recorded into the [`DecodeScratch`] (see its docs).
 ///
 /// A frame whose LDPC belief propagation does not converge is still passed
 /// through using its best-effort (BCH-corrected) BBFRAME estimate, matching the
 /// `Err(LdpcDecodeFailed { bbframe, .. })` payload of
-/// [`DvbT2Concat::decode_soft`]; the simulation's frame-error accounting
-/// (owned by downstream waves) compares the recovered bits against the
-/// transmitted BBFRAME rather than relying on a hard decode error here.
+/// [`DvbT2Concat::decode_soft_counted`]; the simulation's frame-error
+/// accounting compares the recovered bits against the transmitted BBFRAME
+/// rather than relying on a hard decode error here.
 ///
 /// # Examples
 ///
 /// ```no_run
 /// use std::sync::Arc;
-/// use gf2_sim::stages::DvbT2Decode;
+/// use gf2_sim::stages::{DecodeScratch, DvbT2Decode};
 /// use gf2_sim::batch::{HardDecisionBatch, LlrBatch};
 /// use gf2_sim::Stage;
 /// use gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat;
@@ -487,8 +544,10 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
 /// let codec = Arc::new(DvbT2Concat::new(FrameSize::Normal, CodeRate::Rate1_2).unwrap());
 /// let stage = DvbT2Decode::new(codec.clone());
 /// let llrs = vec![Llr::new(10.0); codec.n_ldpc()];
-/// let out: HardDecisionBatch = stage.process(&LlrBatch::new(vec![llrs]), &mut ()).unwrap();
+/// let mut scratch = DecodeScratch::default();
+/// let out: HardDecisionBatch = stage.process(&LlrBatch::new(vec![llrs]), &mut scratch).unwrap();
 /// assert_eq!(out.frames[0].len(), codec.k_bch());
+/// assert_eq!(scratch.iterations.len(), 1, "one BP count per frame");
 /// ```
 pub struct DvbT2Decode {
     codec: Arc<DvbT2Concat>,
@@ -506,34 +565,42 @@ impl DvbT2Decode {
 }
 
 impl Stage<LlrBatch, HardDecisionBatch> for DvbT2Decode {
-    type Scratch = ();
+    type Scratch = DecodeScratch;
     type CpuFallback = Self;
 
     fn process(
         &self,
         input: &LlrBatch,
-        _scratch: &mut (),
+        scratch: &mut DecodeScratch,
     ) -> Result<HardDecisionBatch, StageError> {
-        let frames: Vec<BitVec> = input
-            .frames
-            .iter()
-            .map(|llrs| match self.codec.decode_soft(llrs) {
-                Ok(bbframe) => Ok(bbframe),
+        scratch.iterations.clear();
+        let mut frames: Vec<BitVec> = Vec::with_capacity(input.frames.len());
+        for llrs in &input.frames {
+            // `decode_soft_counted` is the SSOT decode call the frame kernel
+            // (`frame_sim`) makes, so the recorded iteration counts (and the
+            // best-effort BBFRAME on the non-converged arm) are identical to
+            // the SSOT path's.
+            let (bbframe, iterations) = match self.codec.decode_soft_counted(llrs) {
+                Ok((bbframe, iterations)) => (bbframe, iterations as u64),
                 // Non-convergence is not a stage error: keep the best-effort
                 // BBFRAME estimate so frame-error accounting can compare it
                 // against the transmitted bits (see stage doc).
                 Err(gf2_coding::ldpc::dvb_t2::concat::ConcatError::LdpcDecodeFailed {
                     bbframe,
-                    ..
-                }) => Ok(bbframe),
-                // `decode_soft` only ever returns `LdpcDecodeFailed`; any other
-                // variant (currently unreachable) is surfaced as a transient
-                // error so the executor can decide policy.
-                Err(other) => Err(StageError::Recoverable(
-                    crate::error::RecoverableError::Transient(Box::new(other)),
-                )),
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+                    iterations,
+                }) => (bbframe, iterations as u64),
+                // `decode_soft_counted` only ever returns `LdpcDecodeFailed`;
+                // any other variant (currently unreachable) is surfaced as a
+                // transient error so the executor can decide policy.
+                Err(other) => {
+                    return Err(StageError::Recoverable(
+                        crate::error::RecoverableError::Transient(Box::new(other)),
+                    ))
+                }
+            };
+            scratch.iterations.push(iterations);
+            frames.push(bbframe);
+        }
         Ok(HardDecisionBatch::new(frames))
     }
 

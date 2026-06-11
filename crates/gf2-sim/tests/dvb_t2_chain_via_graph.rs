@@ -61,7 +61,9 @@ fn run_pipeline_stages(
     initial: Box<dyn TypedBatch>,
 ) -> Box<dyn TypedBatch> {
     stages.iter().fold(initial, |batch, stage| {
-        let mut scratch: Box<dyn AnyScratch> = Box::new(());
+        // Each stage allocates its own concrete scratch type (the decode
+        // stage's is `DecodeScratch`, the rest `()`).
+        let mut scratch: Box<dyn AnyScratch> = stage.default_scratch();
         stage
             .process_any(batch.as_ref(), scratch.as_mut())
             .expect("process_any must succeed in the noiseless graph chain")
