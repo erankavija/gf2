@@ -192,12 +192,16 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
 
     // Capture WARN events globally (the fallback warn fires on rayon worker
     // threads, so a thread-local subscriber would miss it). nextest runs each
-    // test in its own process, so a global default is safe here.
-    let events = Arc::new(Mutex::new(Vec::new()));
-    tracing::subscriber::set_global_default(WarnCapture {
+    // test in its own process, so at most ONE global default is set per
+    // process; the `.ok()` means a second test accidentally sharing a process
+    // gets a no-op rather than a panic.
+    let events = Arc::new(Mutex::new(Vec::<CapturedEvent>::new()));
+    let _ = tracing::subscriber::set_global_default(WarnCapture {
         events: events.clone(),
-    })
-    .expect("first and only global subscriber in this process");
+    });
+    // Clear any events captured by an earlier subscriber in this process
+    // (shared-process edge case under non-nextest runners).
+    events.lock().unwrap().clear();
 
     // Inject OOM on the even global frames → a genuine CPU+GPU mix.
     let pipeline = build_gpu_pipeline_with_oom_injection(es_n0, workers, 2, &dump_dir);
@@ -269,6 +273,149 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
     let _ = std::fs::remove_dir_all(&dump_dir);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIUM-2: scheduler hybrid loop OOM injection (Pipeline::run path)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Drives `Pipeline::run()` (the scheduler hybrid loop path) with modulus-2 OOM
+/// injection and asserts the three §11 columns byte-identical to a CPU-only
+/// reference, plus the `dispatch_with_fallback` WARN event with
+/// `batch_id`/`snr_idx`/`device_id`. Shared by the fast smoke and slow waterfall
+/// leg below.
+fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &str) {
+    let es_n0 = 6.0_f32;
+
+    let dump_dir = std::env::temp_dir().join(format!(
+        "gf2sim-sched-oom-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    ));
+
+    // Capture WARN events for the fallback warn from the hybrid loop.
+    let events = Arc::new(Mutex::new(Vec::<CapturedEvent>::new()));
+    let _ = tracing::subscriber::set_global_default(WarnCapture {
+        events: events.clone(),
+    });
+    events.lock().unwrap().clear();
+
+    let mut pipeline = Pipeline::dvb_t2()
+        .modcod(Modcod::Normal {
+            rate: CodeRate::Rate1_2,
+            modulation: DvbT2Modulation::Qam16,
+        })
+        .decoder(decoder_config())
+        .demap(DemapMethod::ExactLogMap)
+        .channel(Channel::awgn(es_n0))
+        .parallelism(NonZeroUsize::new(workers).unwrap())
+        .seed(SEED)
+        .with_gpu(true)
+        .build()
+        .expect("in-scope MODCOD builds");
+    {
+        let cfg = pipeline.config_mut();
+        // modulus=2: worker 0's batches (first frame 0, 2, ...) inject OOM →
+        // CPU fallback; worker 1's batches (first frame 1, 3, ...) run GPU.
+        cfg.inject_gpu_oom_modulus = Some(2);
+        cfg.diagnostic_dump_dir = Some(dump_dir.clone());
+        cfg.esn0_db_points = vec![f64::from(es_n0)];
+        cfg.max_frames = frames as u64;
+    }
+
+    let results = pipeline.run().expect("scheduler OOM-fallback run must succeed");
+    assert_eq!(results.per_point.len(), 1, "{label}: one SNR point");
+    let pt = &results.per_point[0];
+
+    let cpu_only = ssot_counters(f64::from(es_n0), frames, workers);
+
+    // The three §11 CPU-vs-GPU columns, byte-identical scheduler-vs-CPU-only.
+    assert_eq!(pt.frames, cpu_only.frames, "{label}: frames");
+    assert_eq!(
+        pt.errors, cpu_only.errors,
+        "{label}: errors (frame errors) must match the CPU-only reference"
+    );
+    assert_eq!(
+        pt.fer.to_bits(),
+        cpu_only.fer().to_bits(),
+        "{label}: fer bit pattern must match the CPU-only reference"
+    );
+
+    // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion).
+    eprintln!(
+        "{label}: frames={} errors={} fer={:.6} | \
+         mean_iters sched(mix)={:.6} cpu_only={:.6} diff={:+.6} (logged only, §11)",
+        pt.frames,
+        pt.errors,
+        pt.fer,
+        pt.mean_iters,
+        cpu_only.mean_iters(),
+        pt.mean_iters - cpu_only.mean_iters(),
+    );
+
+    // tracing::warn! attestation: the hybrid loop's dispatch_with_fallback must
+    // have fired the recoverable-error WARN with batch_id/snr_idx/device_id.
+    let captured = events.lock().unwrap();
+    let fallback_warn = captured.iter().find(|e| {
+        e.fields.contains_key("batch_id")
+            && e.fields.contains_key("snr_idx")
+            && e.fields.contains_key("device_id")
+    });
+    assert!(
+        fallback_warn.is_some(),
+        "{label}: expected a dispatch_with_fallback WARN event with \
+         batch_id/snr_idx/device_id from the scheduler hybrid loop; \
+         captured {} WARN event(s): {:?}",
+        captured.len(),
+        captured.iter().map(|e| &e.fields).collect::<Vec<_>>()
+    );
+
+    let _ = std::fs::remove_dir_all(&dump_dir);
+}
+
+/// **MEDIUM-2 fast smoke: scheduler hybrid loop OOM injection (fast tier,
+/// GPU-gated, NOT ignored).**
+///
+/// Drives `Pipeline::run()` (the C.1 scheduler hybrid loop,
+/// `worker_partition_hybrid`) with `inject_gpu_oom_modulus = Some(2)` wired via
+/// `PipelineConfig` — NOT a literal arg to `dispatch_with_fallback`. Worker 0's
+/// batch (first global frame 0, `0 % 2 == 0`) injects OOM → CPU fallback; worker
+/// 1's batch (first frame 1, `1 % 2 != 0`) runs on the GPU. The three §11
+/// columns must be byte-identical to the CPU-only reference.
+///
+/// Timing: 2 total frames across 2 workers (1 per-worker batch of ≤BATCH_FRAMES),
+/// measured well under 5 s on the gfx1030 host. Skips cleanly with no GPU.
+#[test]
+fn test_scheduler_oom_injection_matches_cpu_only_3_columns() {
+    if !gpu_present() {
+        eprintln!(
+            "skipping test_scheduler_oom_injection_matches_cpu_only_3_columns: no usable GPU"
+        );
+        return;
+    }
+    run_and_assert_scheduler_oom_fallback(2, 2, "scheduler OOM-fallback smoke @6dB (modulus=2)");
+}
+
+/// **MEDIUM-2 slow leg: scheduler hybrid loop OOM injection (slow tier,
+/// GPU-gated).** The 32-frame counterpart of the fast smoke above.
+/// `#[ignore]`d (32 GPU/CPU-mix frames via the scheduler path exceed the 5 s cap).
+#[test]
+#[ignore = "sim: GPU-gated 32-frame scheduler OOM-fallback waterfall sweep"]
+fn test_scheduler_oom_injection_waterfall_matches_cpu_only() {
+    if !gpu_present() {
+        eprintln!(
+            "skipping test_scheduler_oom_injection_waterfall_matches_cpu_only: no usable GPU"
+        );
+        return;
+    }
+    run_and_assert_scheduler_oom_fallback(32, 4, "scheduler OOM-fallback waterfall @6dB (modulus=2)");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SC1: topology executor OOM auto-fallback byte-identity
+// ─────────────────────────────────────────────────────────────────────────────
+
 /// **SC1 run-level proof (fast tier, GPU-gated, NOT ignored).**
 ///
 /// A forced OOM during the production hybrid run yields the same three §11
@@ -303,4 +450,108 @@ fn test_oom_fallback_run_waterfall_matches_cpu_only() {
         return;
     }
     run_and_assert_oom_fallback(32, 4, "OOM-fallback waterfall @6dB (modulus=2)");
+}
+
+/// **SC4: config-driven `strict_gpu` promotion (fast tier, GPU-gated, NOT
+/// ignored).**
+///
+/// Sets `PipelineConfig::strict_gpu = true` AND
+/// `PipelineConfig::inject_gpu_oom_modulus = Some(1)` (OOM on every frame) and
+/// drives `TopologyExecutor::run_dvb_t2_snr_point` — the **config wiring**
+/// path, not a literal function-argument invocation.  The first injected frame's
+/// recoverable OOM must be promoted to `FatalError::OutOfMemory` (no CPU
+/// fallback attempted) and the run must return that error; a JSON diagnostic
+/// dump must have been written to the configured directory.
+///
+/// This closes the BLOCKING-1 finding: pre-snapshot SC4 tests passed `strict_gpu`
+/// as a literal arg to `dispatch_with_fallback`, bypassing the config-to-policy
+/// wiring that both the topology executor (`run_dvb_t2_snr_point`) and the
+/// scheduler hybrid loop consume.
+///
+/// Timing: fails on the FIRST injected frame (modulus=1), so the run is as
+/// short as a single GPU dispatch — measured well under 5 s on the gfx1030
+/// host. Skips cleanly with no GPU.
+#[test]
+fn test_strict_gpu_config_promotes_oom_to_fatal_via_topology() {
+    if !gpu_present() {
+        eprintln!(
+            "skipping test_strict_gpu_config_promotes_oom_to_fatal_via_topology: no usable GPU"
+        );
+        return;
+    }
+
+    use gf2_sim::error::{FatalError, StageError};
+
+    let dump_dir = std::env::temp_dir().join(format!(
+        "gf2sim-sc4-strict-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    ));
+
+    // Build the GPU preset and wire BOTH strict_gpu and inject_gpu_oom_modulus
+    // through the PipelineConfig — this is the config-driven path under test.
+    let mut pipeline = Pipeline::dvb_t2()
+        .modcod(Modcod::Normal {
+            rate: CodeRate::Rate1_2,
+            modulation: DvbT2Modulation::Qam16,
+        })
+        .decoder(decoder_config())
+        .demap(DemapMethod::ExactLogMap)
+        .channel(Channel::awgn(6.0_f32))
+        .parallelism(NonZeroUsize::new(1).unwrap())
+        .seed(SEED)
+        .with_gpu(true)
+        .build()
+        .expect("in-scope MODCOD builds");
+    {
+        let cfg = pipeline.config_mut();
+        cfg.strict_gpu = true;
+        cfg.inject_gpu_oom_modulus = Some(1); // inject on every frame
+        cfg.diagnostic_dump_dir = Some(dump_dir.clone());
+    }
+
+    let scheduler = Scheduler::from_pipeline(&pipeline);
+    assert!(
+        scheduler.gpu_active(),
+        "GPU host must build an active stream pool for SC4 test"
+    );
+
+    // The first frame injects OOM; strict_gpu promotes it to fatal. The run
+    // must return Err(Fatal(OutOfMemory)).
+    let result = TopologyExecutor::run_dvb_t2_snr_point(&pipeline, &scheduler, 0, 4);
+    match result {
+        Err(StageError::Fatal(FatalError::OutOfMemory { .. })) => {
+            // Correct: strict_gpu promoted the config-injected OOM to fatal.
+        }
+        Ok(c) => panic!(
+            "SC4: expected Fatal::OutOfMemory from config-driven strict_gpu + modulus=1, \
+             got Ok (frames={} errors={})",
+            c.frames, c.errors
+        ),
+        Err(other) => panic!(
+            "SC4: expected Fatal::OutOfMemory from config-driven strict_gpu + modulus=1, \
+             got {other:?}"
+        ),
+    }
+
+    // A JSON diagnostic dump must have been written (strict OOM triggers the
+    // dump in dispatch_with_fallback before promoting the error).
+    let entries: Vec<_> = std::fs::read_dir(&dump_dir)
+        .expect("dump dir must exist after strict OOM promotion")
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.path()
+                .extension()
+                .map(|x| x == "json")
+                .unwrap_or(false)
+        })
+        .collect();
+    assert!(
+        !entries.is_empty(),
+        "SC4: at least one JSON dump file must be written on strict_gpu OOM promotion"
+    );
+    let _ = std::fs::remove_dir_all(&dump_dir);
 }
