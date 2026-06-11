@@ -142,6 +142,7 @@ fn build_graph(rate: CodeRate, modulation: DvbT2Modulation, seed: u64) -> Pipeli
         gpu_enabled: false,
         strict_gpu: false,
         diagnostic_dump_dir: None,
+        inject_gpu_oom_modulus: None,
     };
 
     chain

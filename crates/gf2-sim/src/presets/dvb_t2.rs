@@ -721,6 +721,7 @@ impl Builder<Ready> {
             gpu_enabled: self.cfg_gpu_enabled,
             strict_gpu: false,
             diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         };
 
         let mut pipeline = chain.with_config(config).build()?;

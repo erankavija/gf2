@@ -227,6 +227,7 @@ mod u128_string {
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
 ///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&cfg);
 /// assert!(h.starts_with("blake3:"));
@@ -712,6 +713,7 @@ pub struct CheckpointedRun {
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
 ///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&config);
 /// let writer = CheckpointWriter::new("/tmp/snr").unwrap();
@@ -958,6 +960,7 @@ pub struct SweepRun {
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
 ///     diagnostic_dump_dir: None,
+///     inject_gpu_oom_modulus: None,
 /// };
 /// let h = config_hash(&config);
 /// let writer = CheckpointWriter::new("/tmp/sweep").unwrap();
@@ -1187,6 +1190,7 @@ mod tests {
             gpu_enabled: false,
             strict_gpu: false,
             diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         }
     }
 

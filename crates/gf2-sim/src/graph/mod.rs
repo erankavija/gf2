@@ -230,6 +230,7 @@ impl Chain {
     ///     gpu_enabled: false,
     ///     strict_gpu: false,
     ///     diagnostic_dump_dir: None,
+    ///     inject_gpu_oom_modulus: None,
     /// };
     /// let chain = Chain::new().with_config(cfg);
     /// let pipeline = chain.build().unwrap();
@@ -965,6 +966,7 @@ fn default_pipeline_config() -> PipelineConfig {
         gpu_enabled: false,
         strict_gpu: false,
         diagnostic_dump_dir: None,
+        inject_gpu_oom_modulus: None,
     }
 }
 

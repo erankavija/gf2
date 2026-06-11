@@ -507,6 +507,7 @@ fn checkpoint_config(
         gpu_enabled: false,
         strict_gpu: false,
         diagnostic_dump_dir: None,
+        inject_gpu_oom_modulus: None,
     }
 }
 

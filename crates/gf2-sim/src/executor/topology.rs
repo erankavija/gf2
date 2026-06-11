@@ -126,6 +126,12 @@ pub const NO_STREAM: usize = usize::MAX;
 struct FailurePolicy<'p> {
     strict_gpu: bool,
     dump_dir: &'p std::path::Path,
+    /// **Test-only** GPU-OOM injection modulus (issue `42eac5cc` SC1). When
+    /// `Some(m)`, the GPU LDPC arm forces a recoverable OOM on every frame whose
+    /// global frame index `g` satisfies `g % m == 0`, driving the production
+    /// `dispatch_with_fallback` path. Mirrors
+    /// [`PipelineConfig::inject_gpu_oom_modulus`](crate::PipelineConfig::inject_gpu_oom_modulus).
+    inject_gpu_oom_modulus: Option<u64>,
 }
 
 /// Wraps a defensive-validation finding in the typed error chain
@@ -376,6 +382,19 @@ fn execute_gpu_stage(
                 Some(Vec::new()),
             ));
         }
+        // Test-only GPU-OOM fault injection (issue `42eac5cc` SC1). When the
+        // config requests it, force a recoverable OOM on the selected frames so
+        // it flows through the production `dispatch_with_fallback` path below
+        // exactly as a genuine device OOM would (CPU fallback when `!strict_gpu`,
+        // hard-fail when `strict_gpu`). `None` in production: the kernel runs.
+        let injected_oom: Option<StageError> = failure.inject_gpu_oom_modulus.and_then(|m| {
+            (m >= 1 && batch_id % m == 0).then(|| {
+                StageError::Recoverable(crate::error::RecoverableError::OutOfMemory {
+                    device_id: ctx.device_id,
+                    bytes_requested: 1024 * 1024 * 1024,
+                })
+            })
+        });
         // Closure that runs the CPU fallback for the LDPC BP stage via the
         // type-erased `cpu_fallback_process_any` hook added by `42eac5cc`.
         // `mean_iters` is excluded from the CPU-vs-GPU byte-identity contract
@@ -399,9 +418,12 @@ fn execute_gpu_stage(
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
             // matches this stage's code by construction).
-            let raw: StageOutcome = gpu_bp
-                .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
-                .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters)));
+            let raw: StageOutcome = match injected_oom {
+                Some(oom) => Err(oom),
+                None => gpu_bp
+                    .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
+                    .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters))),
+            };
             return dispatch_with_fallback(
                 raw,
                 fallback,
@@ -413,17 +435,20 @@ fn execute_gpu_stage(
         if let Some((_, stream)) = scheduler.worker_stream(worker_idx) {
             // Transient: build a one-shot decoder sized for this batch, still
             // stream-ordered on the worker's owned stream.
-            let raw: StageOutcome = (|| {
-                let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
-                let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
-                let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
-                    llrs,
-                    &decoder,
-                    stream,
-                    &mut stream_scratch,
-                )?;
-                Ok((Box::new(hard) as Box<dyn TypedBatch>, Some(iters)))
-            })();
+            let raw: StageOutcome = match injected_oom {
+                Some(oom) => Err(oom),
+                None => (|| {
+                    let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
+                    let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
+                    let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
+                        llrs,
+                        &decoder,
+                        stream,
+                        &mut stream_scratch,
+                    )?;
+                    Ok((Box::new(hard) as Box<dyn TypedBatch>, Some(iters)))
+                })(),
+            };
             return dispatch_with_fallback(
                 raw,
                 fallback,
@@ -996,6 +1021,7 @@ impl TopologyExecutor {
                 FailurePolicy {
                     strict_gpu: cfg.strict_gpu,
                     dump_dir: &dump_dir_buf,
+                    inject_gpu_oom_modulus: cfg.inject_gpu_oom_modulus,
                 }
             };
 
@@ -1254,6 +1280,7 @@ impl TopologyExecutor {
         let failure = FailurePolicy {
             strict_gpu: pipeline.config().strict_gpu,
             dump_dir: &dump_dir_buf_dvb,
+            inject_gpu_oom_modulus: pipeline.config().inject_gpu_oom_modulus,
         };
 
         let per_worker: Vec<Result<WorkerCounters, StageError>> =
@@ -1447,6 +1474,7 @@ mod tests {
             gpu_enabled: false,
             strict_gpu: false,
             diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
         }
     }
 
