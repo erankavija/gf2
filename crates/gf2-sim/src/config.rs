@@ -85,29 +85,40 @@ pub struct PipelineConfig {
     pub diagnostic_dump_dir: Option<PathBuf>,
     /// **Test-only** GPU out-of-memory fault-injection hook (issue `42eac5cc`).
     ///
-    /// When `Some(m)` (with `m >= 1`), BOTH GPU LDPC dispatch surfaces force a
+    /// When `Some(m)` (with `m >= 1`), all THREE GPU LDPC dispatch surfaces
+    /// force a
     /// [`RecoverableError::OutOfMemory`](crate::error::RecoverableError::OutOfMemory)
     /// instead of launching the real kernel:
     ///
     /// * **Topology executor** (`TopologyExecutor::run_dvb_t2_snr_point`):
     ///   injects on each **frame** whose global frame index `g` satisfies
     ///   `g % m == 0` (each topology dispatch is one frame, keyed on its global
-    ///   frame index `batch_id == g`).
+    ///   frame index `batch_id == g`). The forced OOM flows through the
+    ///   production `dispatch_with_fallback` path (CPU fallback when
+    ///   `!strict_gpu`, hard-fail promotion when `strict_gpu`).
     /// * **Scheduler hybrid loop** (`worker_partition_hybrid`): injects on each
-    ///   **batch** whose **first** global frame index satisfies `first_g % m ==
-    ///   0`; the whole batch is treated as one unit (the batch's first frame
-    ///   index keys the modulus check).
+    ///   **batch** whose **first** global frame index satisfies
+    ///   `first_g % m == 0`; the whole batch is one unit. Same
+    ///   `dispatch_with_fallback` semantics as the topology surface.
+    /// * **Checkpointed drain loop** (`worker_round_hybrid`, `bb11c2e6`): same
+    ///   batch-first-frame keying, but the forced OOM is **propagated**, NOT
+    ///   dispatched to a fallback — the checkpointed sweep aborts *resumably*
+    ///   (the OPTION (a) failure semantics; see
+    ///   [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)).
+    ///   This field is deliberately **excluded from `config_hash`** (it is
+    ///   test-only and an injected fault propagates before any flush, so a
+    ///   committed checkpoint can never contain injection-tainted counters) —
+    ///   which lets tests resume a checkpoint with a different modulus.
     ///
-    /// The forced OOM then flows through the **production** `dispatch_with_fallback`
-    /// path (CPU fallback when `!strict_gpu`, or a hard-fail promotion when
-    /// `strict_gpu`), exactly as a genuine device OOM would. This drives the
-    /// run-level OOM-auto-fallback criterion (`42eac5cc` SC1/SC4) against the
-    /// real scheduler/executor without needing to exhaust real device memory.
+    /// On the two fallback-dispatching surfaces this drives the run-level
+    /// OOM-auto-fallback criterion (`42eac5cc` SC1/SC4); on the checkpointed
+    /// surface it drives the abort-resumably proof (`bb11c2e6`) — all against
+    /// real executor paths without exhausting device memory.
     ///
-    /// `m == 1` injects on every frame/batch (full CPU fallback); `m == 2`
-    /// injects on the even frames/batches only (a genuine mixed GPU +
-    /// CPU-fallback run). `None` (the default) disables injection — production
-    /// runs never set this.
+    /// `m == 1` injects on every frame/batch; `m == 2` injects on the even
+    /// frames/batches only (a genuine mixed GPU + CPU-fallback run on the
+    /// dispatching surfaces). `None` (the default) disables injection —
+    /// production runs never set this.
     pub inject_gpu_oom_modulus: Option<u64>,
 }
 

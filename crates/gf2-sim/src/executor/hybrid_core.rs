@@ -51,8 +51,9 @@
 //! [`run_sweep_checkpointed`](crate::Scheduler::run_sweep_checkpointed) /
 //! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed) for the
 //! public contract.
-
-#![cfg(feature = "hip")]
+//!
+//! (Compiled only under `feature = "hip"` — the `mod` declaration in
+//! `executor/mod.rs` carries the `#[cfg]`.)
 
 use std::time::Instant;
 
@@ -99,9 +100,13 @@ pub(crate) struct HybridRunCtx<'a> {
     pub(crate) snr_idx: usize,
     /// The base ChaCha20 seed (design doc §3).
     pub(crate) seed: u64,
-    /// The overlap-attestation timeline; every CPU-prep / GPU-decode / tail
-    /// interval is appended here (and marked by a matching `tracing` span).
-    pub(crate) timeline: &'a std::sync::Mutex<OverlapTimeline>,
+    /// The overlap-attestation timeline sink. `Some` on the uncheckpointed
+    /// scheduler (its overlap criterion reads the intervals); `None` on the
+    /// checkpointed drain path, which never reads intervals — the
+    /// `pipeline_stage` spans (always emitted) are its observable parity.
+    /// A `None` sink avoids unbounded dead interval accumulation + lock
+    /// traffic over a long checkpointed campaign point.
+    pub(crate) timeline: Option<&'a std::sync::Mutex<OverlapTimeline>>,
     /// The run-start instant the interval microsecond stamps are relative to.
     pub(crate) run_start: Instant,
 }
@@ -319,11 +324,14 @@ fn elapsed_us(run_start: Instant) -> u128 {
 /// for the duration of `f`, with the measured `wall_us` recorded on the span
 /// just before close — plus the matching
 /// [`ActivityInterval`](crate::executor::ActivityInterval) appended to the
-/// [`OverlapTimeline`](crate::executor::OverlapTimeline) (the span and the
-/// interval mark the same boundaries).
+/// [`OverlapTimeline`](crate::executor::OverlapTimeline) when the run context
+/// carries a sink (the span and the interval mark the same boundaries; the
+/// checkpointed path passes `None` and gets spans only).
 ///
-/// Shared by both hybrid callers, so the checkpointed drain loop emits the same
-/// spans + intervals as the uncheckpointed scheduler.
+/// Shared by both hybrid callers. Note: the `GpuLdpcBp` interval brackets the
+/// caller's whole `decode_batch` hook, which on the scheduler path includes
+/// the host-side staging of the fallback LLR clone — the GPU-active time in
+/// the overlap attestation is therefore a slight over-count of device time.
 fn traced_interval<T>(
     run_ctx: &HybridRunCtx<'_>,
     batch_id: usize,
@@ -349,17 +357,18 @@ fn traced_interval<T>(
     let end_us = elapsed_us(run_ctx.run_start);
     span.record("wall_us", (end_us - start_us) as u64);
     drop(entered);
-    run_ctx
-        .timeline
-        .lock()
-        .expect("overlap timeline mutex")
-        .intervals
-        .push(crate::executor::ActivityInterval {
-            worker_idx,
-            stream_id,
-            kind,
-            start_us,
-            end_us,
-        });
+    if let Some(timeline) = run_ctx.timeline {
+        timeline
+            .lock()
+            .expect("overlap timeline mutex")
+            .intervals
+            .push(crate::executor::ActivityInterval {
+                worker_idx,
+                stream_id,
+                kind,
+                start_us,
+                end_us,
+            });
+    }
     out
 }

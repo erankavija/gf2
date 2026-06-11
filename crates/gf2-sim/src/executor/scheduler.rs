@@ -706,7 +706,7 @@ mod hybrid {
                 stream_id,
                 snr_idx,
                 seed,
-                timeline,
+                timeline: Some(timeline),
                 run_start,
             };
             let mut hooks = SchedulerBatchHooks {
@@ -785,7 +785,8 @@ mod hybrid {
             // device OOM would. The batch's first global frame index keys the
             // modulus — only the batch's first frame index is checked; the whole
             // batch is injected (or not) as one unit. This is the documented
-            // two-surface keying for `PipelineConfig::inject_gpu_oom_modulus`.
+            // batch-first-frame keying for `PipelineConfig::inject_gpu_oom_modulus`
+            // (the checkpointed drain hook keys identically but PROPAGATES).
             let raw: GpuBatchResult = if policy.injects_oom_at(first_global_frame) {
                 Err(StageError::Recoverable(
                     crate::error::RecoverableError::OutOfMemory {

@@ -90,9 +90,17 @@ impl FailurePolicy<'_> {
     /// [`inject_gpu_oom_modulus`](Self::inject_gpu_oom_modulus)).
     #[allow(dead_code)] // read only inside `feature = "hip"` dispatch arms.
     pub(crate) fn injects_oom_at(&self, g: u64) -> bool {
-        self.inject_gpu_oom_modulus
-            .is_some_and(|m| m >= 1 && g.is_multiple_of(m))
+        injects_oom_at(self.inject_gpu_oom_modulus, g)
     }
+}
+
+/// Whether the test-only OOM injection modulus fires for the dispatch keyed on
+/// global frame index `g` — the free-function form for callers that have no
+/// [`FailurePolicy`] (the checkpointed drain hook propagates faults instead of
+/// dispatching a fallback, so it carries only the modulus).
+#[allow(dead_code)] // read only inside `feature = "hip"` dispatch arms.
+pub(crate) fn injects_oom_at(modulus: Option<u64>, g: u64) -> bool {
+    modulus.is_some_and(|m| m >= 1 && g.is_multiple_of(m))
 }
 
 /// Context passed to [`dispatch_with_fallback`] for tracing and diagnostics.
