@@ -359,7 +359,15 @@ impl Scheduler {
     /// `batch` selects the first SNR point's [`BatchHandle::snr_idx`] as the
     /// sweep's starting point context; the full sweep is taken from the
     /// pipeline's [`PipelineConfig`](crate::PipelineConfig) (`esn0_db_points`,
-    /// `max_frames`, `seed`, `parallelism`, `gpu_enabled`).
+    /// `max_frames`, `seed`, `parallelism`, `gpu_enabled`, `strict_gpu`).
+    ///
+    /// GPU stage errors are handled via
+    /// [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback):
+    /// a recoverable OOM substitutes the registered `CpuLdpcBp` fallback
+    /// (with a `tracing::warn!`), unless `strict_gpu` is set (promotion to
+    /// [`FatalError::OutOfMemory`](crate::FatalError::OutOfMemory)). Fatal
+    /// errors write a JSON diagnostic dump to the configured
+    /// `diagnostic_dump_dir` and propagate.
     ///
     /// # Arguments
     ///
@@ -404,13 +412,20 @@ impl Scheduler {
         let cfg = pipeline.config();
         let max_frames = cfg.max_frames as usize;
 
+        let strict_gpu = cfg.strict_gpu;
+        let dump_dir = cfg
+            .diagnostic_dump_dir
+            .clone()
+            .unwrap_or_else(crate::executor::failure::default_dump_dir);
+
         let timeline = Mutex::new(OverlapTimeline::default());
         let run_start = Instant::now();
 
         let mut per_point = Vec::with_capacity(cfg.esn0_db_points.len());
         for (snr_idx, &es_n0_db) in cfg.esn0_db_points.iter().enumerate() {
             let counters = self.run_one_point(
-                pipeline, plan, snr_idx, es_n0_db, max_frames, &timeline, run_start,
+                pipeline, plan, snr_idx, es_n0_db, max_frames, &timeline, run_start, strict_gpu,
+                &dump_dir,
             )?;
             per_point.push(SnrPointResult::from_counters(es_n0_db, counters));
         }
@@ -435,6 +450,8 @@ impl Scheduler {
         max_frames: usize,
         timeline: &Mutex<OverlapTimeline>,
         run_start: Instant,
+        strict_gpu: bool,
+        dump_dir: &std::path::Path,
     ) -> Result<WorkerCounters, StageError> {
         let RunPlan::Dvbt2 {
             rate,
@@ -452,7 +469,8 @@ impl Scheduler {
             // template reconstruction.
             if let Some(gpu_stage) = hybrid::find_gpu_ldpc_stage(pipeline) {
                 return self.run_point_hybrid(
-                    &template, gpu_stage, snr_idx, max_frames, timeline, run_start,
+                    &template, gpu_stage, snr_idx, max_frames, timeline, run_start, strict_gpu,
+                    dump_dir,
                 );
             }
             // gpu_enabled but the stage list carries no GpuOnly stage (e.g. a
@@ -461,6 +479,8 @@ impl Scheduler {
         }
         #[cfg(not(feature = "hip"))]
         let _ = pipeline; // no device backend: every stage routes CpuOnly
+                          // strict_gpu and dump_dir only apply on the GPU path.
+        let _ = (strict_gpu, dump_dir);
 
         // CpuOnly routing outcome: the within-SNR frame-parallel dispatch (SSOT
         // `3fcb7025`), running inside this scheduler's rayon pool so the worker
@@ -549,6 +569,8 @@ mod hybrid {
             max_frames: usize,
             timeline: &Mutex<OverlapTimeline>,
             run_start: Instant,
+            strict_gpu: bool,
+            dump_dir: &std::path::Path,
         ) -> Result<WorkerCounters, StageError> {
             let pool = self
                 .hip_pool
@@ -577,7 +599,7 @@ mod hybrid {
                             let stream = pool.get(stream_id);
                             self.worker_partition_hybrid(
                                 template, gpu_stage, stream, worker_idx, stream_id, snr_idx,
-                                max_frames, seed, timeline, run_start,
+                                max_frames, seed, timeline, run_start, strict_gpu, dump_dir,
                             )
                         })
                         .collect()
@@ -611,6 +633,8 @@ mod hybrid {
             seed: u64,
             timeline: &Mutex<OverlapTimeline>,
             run_start: Instant,
+            strict_gpu: bool,
+            dump_dir: &std::path::Path,
         ) -> Result<WorkerCounters, StageError> {
             let num_workers = self.parallelism.get();
             // The worker's global frames: worker_idx, +num_workers, … < max_frames.
@@ -696,6 +720,15 @@ mod hybrid {
                         // owned stream; completion is the per-stream synchronize
                         // inside the decode call (deliverable 2d — no
                         // device-wide sync in the steady-state loop).
+                        //
+                        // The result is wrapped by `dispatch_with_fallback`
+                        // (issue `42eac5cc`): a recoverable OOM triggers a
+                        // `tracing::warn!` and re-runs the batch on the CPU
+                        // LDPC fallback; a fatal error writes a JSON diagnostic
+                        // dump and propagates.
+                        let llr_batch_for_fallback = crate::batch::LlrBatch::new(
+                            cur_preps.iter().map(|p| p.llrs.clone()).collect(),
+                        );
                         let gpu_res = traced_interval(
                             timeline,
                             worker_idx,
@@ -706,16 +739,52 @@ mod hybrid {
                             ActivityKind::GpuDecode,
                             run_start,
                             || -> GpuBatchResult {
-                                let llr_batch = crate::batch::LlrBatch::new(
-                                    cur_preps.iter().map(|p| p.llrs.clone()).collect(),
-                                );
-                                let (hard, iters) = gpu_stage.decode_batch_with_iters_on_stream(
-                                    &llr_batch,
+                                let raw = gpu_stage.decode_batch_with_iters_on_stream(
+                                    &llr_batch_for_fallback,
                                     &device,
                                     stream,
                                     &mut scratch,
-                                )?;
-                                Ok((hard.frames, iters))
+                                );
+                                use crate::executor::failure::{
+                                    dispatch_with_fallback, FaultContext,
+                                };
+                                let ctx = FaultContext {
+                                    batch_id: bi as u64,
+                                    snr_idx,
+                                    device_id: 0,
+                                    worker_idx,
+                                };
+                                dispatch_with_fallback(
+                                    raw,
+                                    || {
+                                        // CPU fallback: run the registered CpuLdpcBp
+                                        // on the same LLR batch; iters are 0
+                                        // (fallback path, counts excluded per §11
+                                        // mixed-path contract).
+                                        let fb = gpu_stage.cpu_fallback().ok_or_else(|| {
+                                            StageError::Fatal(
+                                                crate::error::FatalError::CpuFallbackAlsoFailed {
+                                                    original: Box::new(
+                                                        crate::error::RecoverableError::Transient(
+                                                            "no CPU fallback on GpuLdpcBp".into(),
+                                                        ),
+                                                    ),
+                                                },
+                                            )
+                                        })?;
+                                        let hard = crate::stage::Stage::process(
+                                            fb,
+                                            &llr_batch_for_fallback,
+                                            &mut (),
+                                        )?;
+                                        let n = hard.frames.len();
+                                        Ok((hard.frames, vec![0u32; n]))
+                                    },
+                                    ctx,
+                                    strict_gpu,
+                                    dump_dir,
+                                )
+                                .map(|(hard, iters)| (hard, iters))
                             },
                         );
 

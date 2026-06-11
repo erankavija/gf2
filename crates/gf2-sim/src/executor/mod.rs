@@ -6,8 +6,9 @@
 //! [`SimulationResults`] surface [`Pipeline::run`](crate::Pipeline::run)
 //! returns. `de160fc5` adds the [`TopologyExecutor`]: per-stage-driven DAG
 //! execution (topo order, fan-in/fan-out, execution-class routing, per-stage
-//! spans, defensive execution-start validation). Resume (`571c11c4`) and OOM
-//! auto-fallback dispatch (`42eac5cc`) build on these.
+//! spans, defensive execution-start validation). `42eac5cc` adds OOM
+//! auto-fallback dispatch and hard-fail diagnostic dumps ([`failure`]).
+//! Resume (`571c11c4`) builds on these.
 //!
 //! # Module map
 //!
@@ -18,11 +19,14 @@
 //! | [`RunPlan`] | how a built [`Pipeline`](crate::Pipeline) is run (DVB-T2 BICM preset) |
 //! | [`SimulationResults`] / [`SnrPointResult`] | the per-SNR-point aggregate columns (SSOT [`WorkerCounters`](crate::WorkerCounters) projection) |
 //! | [`OverlapTimeline`] / [`ActivityInterval`] / [`ActivityKind`] | CPU↔GPU overlap attestation (criterion 1) |
+//! | [`failure`] | [`dispatch_with_fallback`](failure::dispatch_with_fallback): OOM auto-fallback + hard-fail diagnostic dump (`42eac5cc`) |
 
+pub mod failure;
 mod results;
 mod scheduler;
 mod topology;
 
+pub use failure::{default_dump_dir, dispatch_with_fallback, FaultContext};
 pub use results::{SimulationResults, SnrPointResult};
 pub use scheduler::{ActivityInterval, ActivityKind, OverlapTimeline, RunPlan, Scheduler};
 pub use topology::{DagOutputs, TopologyExecutor, NO_STREAM};

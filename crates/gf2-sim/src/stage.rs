@@ -268,6 +268,27 @@ pub trait AnyStage: Send + Sync {
     fn name(&self) -> &'static str {
         "unnamed-stage"
     }
+
+    /// Runs the stage's registered CPU fallback on a type-erased batch.
+    ///
+    /// The OOM auto-fallback executor (`42eac5cc`) calls this when a GPU stage
+    /// returns a recoverable error: instead of calling [`process_any`] (which
+    /// would retry the same GPU path), it calls this method to invoke the
+    /// concrete [`Stage::CpuFallback`] registered on the stage.
+    ///
+    /// Returns `None` when the stage has no CPU fallback ([`cpu_fallback()`]
+    /// returns `None`). The provided default returns `None` so pre-existing
+    /// `AnyStage` implementors keep compiling; [`ErasedStage`] overrides it.
+    ///
+    /// [`process_any`]: AnyStage::process_any
+    /// [`cpu_fallback()`]: Stage::cpu_fallback
+    fn cpu_fallback_process_any(
+        &self,
+        _input: &dyn TypedBatch,
+        _scratch: &mut dyn AnyScratch,
+    ) -> Option<Result<Box<dyn TypedBatch>, StageError>> {
+        None
+    }
 }
 
 /// Type-erasing adapter wrapping a concrete [`Stage<I, O>`] as an [`AnyStage`].
@@ -366,6 +387,32 @@ where
 
     fn name(&self) -> &'static str {
         std::any::type_name::<S>()
+    }
+
+    fn cpu_fallback_process_any(
+        &self,
+        input: &dyn TypedBatch,
+        _scratch: &mut dyn AnyScratch,
+    ) -> Option<Result<Box<dyn TypedBatch>, StageError>> {
+        let fb = self.stage.cpu_fallback()?;
+        let input = match input.as_any().downcast_ref::<I>() {
+            Some(i) => i,
+            None => {
+                return Some(Err(StageError::TypeMismatch {
+                    expected: TypeId::of::<I>(),
+                    actual: input.as_any().type_id(),
+                }))
+            }
+        };
+        // CPU fallback stages always have `Scratch = ()` (they are CpuOnly stages
+        // by design; the executor uses a fresh `()` scratch for the fallback call
+        // rather than attempting to downcast the GPU stage's scratch which has a
+        // different type).
+        let mut fb_scratch = <<S::CpuFallback as Stage<I, O>>::Scratch as Default>::default();
+        Some(
+            fb.process(input, &mut fb_scratch)
+                .map(|o| -> Box<dyn TypedBatch> { Box::new(o) }),
+        )
     }
 }
 

@@ -190,6 +190,7 @@ fn build_config(args: &Args) -> PipelineConfig {
         parallelism: NonZeroUsize::new(2).expect("2 is non-zero"),
         gpu_enabled: false,
         strict_gpu: false,
+        diagnostic_dump_dir: None,
     }
 }
 

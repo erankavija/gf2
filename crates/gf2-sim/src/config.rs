@@ -15,8 +15,9 @@ use gf2_coding::simulation::SimulationConfig;
 ///
 /// Mirrors the run-control fields of
 /// [`gf2_coding::simulation::SimulationConfig`] and adds the Phase 0 pipeline
-/// knobs (`parallelism`, `strict_gpu`). A [`From<&SimulationConfig>`] impl is
-/// provided so existing campaign configs convert directly.
+/// knobs (`parallelism`, `strict_gpu`, `diagnostic_dump_dir`). A
+/// [`From<&SimulationConfig>`] impl is provided so existing campaign configs
+/// convert directly.
 ///
 /// # Examples
 ///
@@ -35,6 +36,7 @@ use gf2_coding::simulation::SimulationConfig;
 ///     parallelism: NonZeroUsize::new(1).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
 /// };
 /// assert_eq!(cfg.esn0_db_points.len(), 3);
 /// ```
@@ -72,6 +74,14 @@ pub struct PipelineConfig {
     /// When set, GPU out-of-memory is promoted to a fatal error instead of
     /// falling back to the CPU stage (design doc §8).
     pub strict_gpu: bool,
+    /// Directory for JSON hard-fail diagnostic dumps (one file per fatal GPU
+    /// stage event, written atomically via a `.tmp` sibling + rename).
+    ///
+    /// Defaults to `None`; when `None` the executor uses
+    /// `dev/benchmarks/gf2-sim/diagnostic-dumps/` (from
+    /// [`default_dump_dir`](crate::executor::failure::default_dump_dir)).
+    /// Tests should set this to a temp dir to avoid polluting the repo.
+    pub diagnostic_dump_dir: Option<PathBuf>,
 }
 
 impl From<&SimulationConfig> for PipelineConfig {
@@ -100,6 +110,7 @@ impl From<&SimulationConfig> for PipelineConfig {
             parallelism: NonZeroUsize::new(1).expect("1 is non-zero"),
             gpu_enabled: false,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
         }
     }
 }

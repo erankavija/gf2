@@ -61,6 +61,7 @@ impl Drop for CampaignSubscriberGuard {
 ///     parallelism: NonZeroUsize::new(1).unwrap(),
 ///     gpu_enabled: false,
 ///     strict_gpu: false,
+///     diagnostic_dump_dir: None,
 /// };
 /// let _guard = install_campaign_subscriber(&cfg);
 /// // tracing events are routed until `_guard` is dropped.

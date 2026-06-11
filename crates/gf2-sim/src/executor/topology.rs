@@ -114,6 +114,20 @@ use crate::stages::{DecodeScratch, DvbT2Encode};
 /// stream (no `hip` feature, GPU disabled, or no usable device).
 pub const NO_STREAM: usize = usize::MAX;
 
+/// Failure-mode parameters threaded through stage dispatch (`42eac5cc`).
+///
+/// Carries the `strict_gpu` flag and the diagnostic dump directory so they do
+/// not need to be threaded as separate function arguments.
+///
+/// The fields are only read inside the `#[cfg(feature = "hip")]` variant of
+/// `execute_gpu_stage`; the `dead_code` lint fires on no-hip builds where that
+/// variant is elided.
+#[allow(dead_code)]
+struct FailurePolicy<'p> {
+    strict_gpu: bool,
+    dump_dir: &'p std::path::Path,
+}
+
 /// Wraps a defensive-validation finding in the typed error chain
 /// (`StageError::Fatal(FatalError::BuildError(ExecutionValidation))`).
 fn exec_err(reason: impl Into<String>) -> StageError {
@@ -274,6 +288,7 @@ fn execute_stage(
     snr_idx: usize,
     batch_id: u64,
     route: &mut WorkerRoute<'_>,
+    failure: &FailurePolicy<'_>,
 ) -> StageOutcome {
     let stream_id = stream_id_for(scheduler, worker_idx, route);
     let span = tracing::info_span!(
@@ -289,9 +304,9 @@ fn execute_stage(
     let t0 = std::time::Instant::now();
     let result = match stage.execution_class() {
         ExecutionClass::CpuOnly => stage.process_any(input, scratch).map(|o| (o, None)),
-        ExecutionClass::GpuOnly => {
-            execute_gpu_stage(stage, input, scratch, scheduler, worker_idx, route)
-        }
+        ExecutionClass::GpuOnly => execute_gpu_stage(
+            stage, input, scratch, scheduler, worker_idx, route, failure, snr_idx, batch_id,
+        ),
         ExecutionClass::Hybrid => execute_hybrid_stage(stage, input, scratch),
     };
     span.record("wall_us", t0.elapsed().as_micros() as u64);
@@ -316,7 +331,12 @@ fn execute_stage(
 /// `process_any` (see the [module docs](self)). With no active stream pool
 /// (GPU disabled or unavailable) every arm degrades to `process_any` after a
 /// `tracing::warn!` (fallback SUBSTITUTION is `42eac5cc`'s scope).
+///
+/// Each GPU dispatch is wrapped with [`dispatch_with_fallback`](crate::executor::failure::dispatch_with_fallback)
+/// (`42eac5cc`): OOM → CPU fallback (or hard-fail when `strict_gpu`); fatal
+/// errors → diagnostic dump + propagate.
 #[cfg(feature = "hip")]
+#[allow(clippy::too_many_arguments)]
 fn execute_gpu_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
@@ -324,7 +344,20 @@ fn execute_gpu_stage(
     scheduler: &Scheduler,
     worker_idx: usize,
     route: &mut WorkerRoute<'_>,
+    failure: &FailurePolicy<'_>,
+    snr_idx: usize,
+    batch_id: u64,
 ) -> StageOutcome {
+    use crate::executor::failure::{dispatch_with_fallback, FaultContext};
+
+    // Build a context for diagnostic reporting (shared across all three arms).
+    let ctx = FaultContext {
+        batch_id,
+        snr_idx,
+        device_id: 0,
+        worker_idx,
+    };
+
     if let Some(gpu_bp) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::ldpc_bp::GpuLdpcBp>())
@@ -343,30 +376,61 @@ fn execute_gpu_stage(
                 Some(Vec::new()),
             ));
         }
+        // Closure that runs the CPU fallback for the LDPC BP stage via the
+        // type-erased `cpu_fallback_process_any` hook added by `42eac5cc`.
+        // `mean_iters` is excluded from the CPU-vs-GPU byte-identity contract
+        // (§11), so we return `None` for iters on the fallback path.
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{}` has no CPU fallback registered",
+                                stage.name()
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
         if let Some(g) = route.gpu.as_mut() {
             // The sweep's persistent per-worker decoder on the worker's owned
             // stream (one GPU LDPC stage per supported chain, so the decoder
             // matches this stage's code by construction).
-            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
-                llrs,
-                &g.decoder,
-                g.stream,
-                &mut g.scratch,
-            )?;
-            return Ok((Box::new(hard), Some(iters)));
+            let raw: Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> = gpu_bp
+                .decode_batch_with_iters_on_stream(llrs, &g.decoder, g.stream, &mut g.scratch)
+                .map(|(hard, iters)| (Box::new(hard) as Box<dyn TypedBatch>, Some(iters)));
+            return dispatch_with_fallback(
+                raw,
+                fallback,
+                ctx,
+                failure.strict_gpu,
+                failure.dump_dir,
+            );
         }
         if let Some((_, stream)) = scheduler.worker_stream(worker_idx) {
             // Transient: build a one-shot decoder sized for this batch, still
             // stream-ordered on the worker's owned stream.
-            let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
-            let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
-            let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
-                llrs,
-                &decoder,
-                stream,
-                &mut stream_scratch,
-            )?;
-            return Ok((Box::new(hard), Some(iters)));
+            let raw: Result<(Box<dyn TypedBatch>, Option<Vec<u32>>), StageError> = (|| {
+                let decoder = gpu_bp.build_decoder(llrs.frames.len())?;
+                let mut stream_scratch = gpu_bp.build_stream_scratch(&decoder)?;
+                let (hard, iters) = gpu_bp.decode_batch_with_iters_on_stream(
+                    llrs,
+                    &decoder,
+                    stream,
+                    &mut stream_scratch,
+                )?;
+                Ok((Box::new(hard) as Box<dyn TypedBatch>, Some(iters)))
+            })();
+            return dispatch_with_fallback(
+                raw,
+                fallback,
+                ctx,
+                failure.strict_gpu,
+                failure.dump_dir,
+            );
         }
         // No active stream pool (GPU disabled or unavailable): degrade to the
         // erased path, which surfaces the mapped device fault if there is
@@ -381,13 +445,45 @@ fn execute_gpu_stage(
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::awgn::GpuAwgn>())
     {
-        return execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{}` has no CPU fallback registered",
+                                stage.name()
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
+        let raw = execute_gpu_awgn(gpu_awgn, stage, input, scratch, scheduler, worker_idx);
+        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     if let Some(gpu_demap) = stage
         .stage_as_any()
         .and_then(|a| a.downcast_ref::<crate::gpu::demap::GpuGrayQamDemapper>())
     {
-        return execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+        let fallback = || {
+            stage
+                .cpu_fallback_process_any(input, scratch)
+                .unwrap_or_else(|| {
+                    Err(StageError::Fatal(FatalError::BuildError(
+                        BuildError::ExecutionValidation {
+                            reason: format!(
+                                "GpuOnly stage `{}` has no CPU fallback registered",
+                                stage.name()
+                            ),
+                        },
+                    )))
+                })
+                .map(|o| (o, None::<Vec<u32>>))
+        };
+        let raw = execute_gpu_demap(gpu_demap, stage, input, scratch, scheduler, worker_idx);
+        return dispatch_with_fallback(raw, fallback, ctx, failure.strict_gpu, failure.dump_dir);
     }
     // An UNKNOWN GpuOnly stage type. With an owned stream available, refusing
     // is mandatory: silently falling through to `process_any` would dispatch
@@ -498,7 +594,10 @@ fn execute_gpu_demap(
 /// The `GpuOnly` routing arm without the `hip` feature: there is no device
 /// backend, so the stage degrades to `process_any` on the CPU after a
 /// `tracing::warn!` (the documented graceful degrade, matching the scheduler).
+/// The `failure`, `snr_idx`, and `batch_id` parameters are accepted for
+/// signature parity with the `hip` variant but are unused.
 #[cfg(not(feature = "hip"))]
+#[allow(clippy::too_many_arguments)]
 fn execute_gpu_stage(
     stage: &dyn AnyStage,
     input: &dyn TypedBatch,
@@ -506,6 +605,9 @@ fn execute_gpu_stage(
     _scheduler: &Scheduler,
     _worker_idx: usize,
     _route: &mut WorkerRoute<'_>,
+    _failure: &FailurePolicy<'_>,
+    _snr_idx: usize,
+    _batch_id: u64,
 ) -> StageOutcome {
     tracing::warn!(
         stage = stage.name(),
@@ -878,9 +980,25 @@ impl TopologyExecutor {
 
             // Run the wave in parallel on the scheduler's pool: independent
             // branches (fan-out) genuinely execute concurrently.
+            // Build the failure policy once per wave, outside the parallel
+            // region (the config reference is cheap to copy).
+            let dump_dir_buf;
+            let failure = {
+                let cfg = pipeline.config();
+                dump_dir_buf = cfg
+                    .diagnostic_dump_dir
+                    .clone()
+                    .unwrap_or_else(crate::executor::failure::default_dump_dir);
+                FailurePolicy {
+                    strict_gpu: cfg.strict_gpu,
+                    dump_dir: &dump_dir_buf,
+                }
+            };
+
             let wave_results: Result<Vec<WaveResult>, StageError> = {
                 let outputs_ref = &outputs;
                 let input_ref = batch.as_ref();
+                let failure_ref = &failure;
                 scheduler.rayon_pool().install(|| {
                     items
                         .into_par_iter()
@@ -907,6 +1025,7 @@ impl TopologyExecutor {
                                 snr_idx,
                                 batch_id,
                                 &mut route,
+                                failure_ref,
                             )?;
                             Ok((s, out, scratch))
                         })
@@ -1122,6 +1241,17 @@ impl TopologyExecutor {
         let seed = scheduler.seed();
         let num_workers = scheduler.parallelism().get();
 
+        // Build the failure policy for `dispatch_with_fallback` wiring (`42eac5cc`).
+        let dump_dir_buf_dvb = pipeline
+            .config()
+            .diagnostic_dump_dir
+            .clone()
+            .unwrap_or_else(crate::executor::failure::default_dump_dir);
+        let failure = FailurePolicy {
+            strict_gpu: pipeline.config().strict_gpu,
+            dump_dir: &dump_dir_buf_dvb,
+        };
+
         let per_worker: Vec<Result<WorkerCounters, StageError>> =
             scheduler.rayon_pool().install(|| {
                 (0..num_workers)
@@ -1204,6 +1334,7 @@ impl TopologyExecutor {
                                     snr_idx,
                                     g as u64,
                                     &mut route,
+                                    &failure,
                                 )?;
                                 if let Some(iters) = iters {
                                     gpu_iters = iters.first().map(|&i| u64::from(i));
@@ -1311,6 +1442,7 @@ mod tests {
             parallelism: std::num::NonZeroUsize::new(1).expect("1 is non-zero"),
             gpu_enabled: false,
             strict_gpu: false,
+            diagnostic_dump_dir: None,
         }
     }
 
