@@ -194,9 +194,12 @@ impl DvbT2BicmFrameSim {
         // arithmetic is defined in one place (channels::mod.rs) and every
         // consumer (preset, frame kernel, tests, examples) is byte-identical.
         //
-        // `es_n0_db_to_n0_f64` takes an f64 input so the frame kernel avoids a
-        // spurious f64→f32→f64 round-trip when es_n0_db is already f64 here.
-        let sigma = crate::channels::es_n0_db_to_sigma(es_n0_db as f32);
+        // BOTH take the full-precision f64 input (the PAIRED `_f64` cores):
+        // `es_n0_db` here is generally non-f32-representable (`from_eb_n0`),
+        // and sigma/N0 must correspond to the SAME rounded SNR — narrowing
+        // either path independently would break the "demap with the true
+        // channel N0" contract below.
+        let sigma = crate::channels::es_n0_db_to_sigma_f64(es_n0_db);
         let noise_var = crate::channels::es_n0_db_to_n0_f64(es_n0_db);
 
         let k = codec.k_bch();
