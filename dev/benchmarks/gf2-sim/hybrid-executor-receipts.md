@@ -192,3 +192,25 @@ All resumed==uninterrupted (parity assertion passed).
 | 7  | 11.20 | 34 |  0 | 11.6765 |
 | 8  | 11.40 | 34 |  0 |  9.7647 |
 | 9  | 11.60 | 34 |  0 |  7.7353 |
+
+## bb11c2e6 — shared double-buffer core: post-factoring throughput re-measure (2026-06-11)
+
+The C.1 hybrid throughput receipt above (123.03 fps at `75c22fa8`'s
+shipped HEAD) predates the `bb11c2e6` factoring of both hybrid loops
+onto the shared `executor/hybrid_core.rs` `BatchHooks` core (and the
+`42eac5cc` `dispatch_with_fallback` wrap on the scheduler hook). Lead
+re-measure at the factored HEAD so the receipt reflects shipped code:
+
+- Host: gfx1030, verified quiet (loadavg 0.23, no foreign cargo/rustc).
+- Command: `cargo run -p gf2-sim --release --features hip --bin
+  hybrid_throughput -- --frames 240 --repeats 3 --es-n0 6.0`
+- CPU 1-thread full-frame: 1.1571 +/- 0.0006 fps (fer 0.4417)
+- CPU 24-thread full-frame: 11.87 +/- 0.03 fps (fer 0.4417)
+- CPU+GPU hybrid full-frame: **126.44 +/- 3.85 fps** (fer 0.4417)
+- Hybrid / same-run CPU-24: 10.65x; hybrid / canonical 24-thread
+  baseline (3fcb7025, 21.44 fps): **5.90x** (gate >= 1.5x).
+
+No regression vs the pre-factoring 123.03 fps (slightly above, within
+run-to-run noise): the monomorphized `BatchHooks` core preserves the
+prep(N+1) || decode(N) overlap structure with no `dyn` in the per-batch
+path.
