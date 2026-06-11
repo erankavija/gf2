@@ -922,3 +922,209 @@ fn test_per_stage_spans_carry_six_fields() {
         "2-frame batch split 1+1"
     );
 }
+
+// ---------------------------------------------------------------------------
+// GpuOnly routing (hip): known stages → the worker's owned stream; unknown
+// GpuOnly stages → a typed error (never a silent default-stream process_any)
+// ---------------------------------------------------------------------------
+
+/// GPU-gated routing tests for the `GpuOnly` arm (round-1 finding 1): every
+/// known GpuOnly stage type routes onto `scheduler.worker_stream(worker_idx)`
+/// via its stream-aware entry point, and an unknown GpuOnly stage with an
+/// active stream pool is a typed [`gf2_sim::BuildError::ExecutionValidation`].
+#[cfg(feature = "hip")]
+mod gpu {
+    use super::*;
+    use gf2_sim::batch::SymbolBatch;
+    use gf2_sim::gpu::awgn::{GpuAwgn, GpuAwgnScratch};
+    use gf2_sim::gpu::demap::GpuGrayQamDemapper;
+    use gf2_sim::{BuildError, FatalError};
+
+    fn gpu_present() -> bool {
+        gf2_kernels_hip::host::device_mem_info().is_ok()
+    }
+
+    /// A scheduler with `gpu_enabled = true`: on the gfx1030 host this builds
+    /// an active HIP stream pool, so `worker_stream` hands out owned streams.
+    fn gpu_scheduler(workers: usize) -> Scheduler {
+        Scheduler::new(NonZeroUsize::new(workers).unwrap(), true, SEED)
+    }
+
+    /// A synthetic GpuOnly identity stage the executor has NO stream-aware
+    /// dispatch for (it is none of GpuLdpcBp / GpuAwgn / GpuGrayQamDemapper).
+    struct UnknownGpuProbe;
+    impl Stage<SymbolBatch, SymbolBatch> for UnknownGpuProbe {
+        type Scratch = ();
+        type CpuFallback = Self;
+        fn process(&self, i: &SymbolBatch, _: &mut ()) -> Result<SymbolBatch, StageError> {
+            Ok(i.clone())
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::GpuOnly
+        }
+    }
+
+    /// The CPU identity twin `Chain::build` requires as the registered §8
+    /// fallback target for a GpuOnly stage (a substitution target only — not a
+    /// DAG node, and not part of what these tests exercise).
+    struct CpuIdentityProbe;
+    impl Stage<SymbolBatch, SymbolBatch> for CpuIdentityProbe {
+        type Scratch = ();
+        type CpuFallback = Self;
+        fn process(&self, i: &SymbolBatch, _: &mut ()) -> Result<SymbolBatch, StageError> {
+            Ok(i.clone())
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::CpuOnly
+        }
+    }
+
+    /// An unknown GpuOnly stage type while the worker owns a stream must be a
+    /// typed `ExecutionValidation` error naming the stage — never a silent
+    /// fall-through to a default-stream `process_any` (the contract-rot guard).
+    #[test]
+    fn test_unknown_gpu_only_stage_with_active_pool_is_typed_error() {
+        if !gpu_present() {
+            eprintln!(
+                "skipping test_unknown_gpu_only_stage_with_active_pool_is_typed_error: \
+                 no usable GPU"
+            );
+            return;
+        }
+        let mut chain = Chain::new();
+        let gpu = chain.add(erase(UnknownGpuProbe));
+        let cpu = chain.add(erase(CpuIdentityProbe));
+        chain.register_fallback(gpu, cpu);
+        let pipeline = chain.build().expect("single-stage chain builds");
+        let sched = gpu_scheduler(1);
+        assert!(sched.gpu_active(), "GPU host must build an active pool");
+
+        let input = SymbolBatch::new(vec![vec![0.5_f32; 8]], vec![vec![-0.5_f32; 8]]);
+        match TopologyExecutor::run(&pipeline, &sched, Box::new(input)) {
+            Err(StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
+                reason,
+            }))) => {
+                assert!(
+                    reason.contains("UnknownGpuProbe") && reason.contains("stream-aware"),
+                    "reason must name the offending stage and the missing dispatch, got: {reason}"
+                );
+            }
+            Err(other) => panic!("expected typed ExecutionValidation, got {other:?}"),
+            Ok(_) => panic!("expected typed ExecutionValidation, got a successful run"),
+        }
+    }
+
+    /// The `GpuAwgn` stage routed through the topology executor (worker-owned
+    /// stream, `apply_on_stream`) must corrupt the batch **byte-identically**
+    /// to the stage's own default-stream `process` path.
+    #[test]
+    fn test_gpu_awgn_routes_on_worker_stream_byte_identical() {
+        if !gpu_present() {
+            eprintln!(
+                "skipping test_gpu_awgn_routes_on_worker_stream_byte_identical: no usable GPU"
+            );
+            return;
+        }
+        let stage = GpuAwgn::new(6.0, 4).with_seek(SEED, 1, 0);
+        let input = SymbolBatch::new(
+            vec![vec![0.25_f32; 64], vec![-0.75_f32; 64]],
+            vec![vec![1.0_f32; 64], vec![0.5_f32; 64]],
+        );
+
+        // Reference: the stage's own (default-stream) erased process path.
+        let mut scratch = GpuAwgnScratch::default();
+        let reference = stage.process(&input, &mut scratch).expect("process");
+
+        // Executor: single-stage chain on a gpu-enabled scheduler (the §8
+        // fallback registration is a build() requirement for GpuOnly stages).
+        let mut chain = Chain::new();
+        let gpu = chain.add(erase(stage));
+        let cpu = chain.add(erase(gf2_sim::channels::Awgn::new(6.0, 4)));
+        chain.register_fallback(gpu, cpu);
+        let pipeline = chain.build().expect("chain builds");
+        let sched = gpu_scheduler(1);
+        assert!(sched.gpu_active());
+        let out = TopologyExecutor::run(&pipeline, &sched, Box::new(input))
+            .expect("executor runs the GpuOnly stage on the worker stream")
+            .into_single()
+            .expect("single sink");
+        let routed = out
+            .as_any()
+            .downcast_ref::<SymbolBatch>()
+            .expect("stays SymbolBatch");
+
+        for f in 0..2 {
+            for k in 0..64 {
+                assert_eq!(
+                    reference.i[f][k].to_bits(),
+                    routed.i[f][k].to_bits(),
+                    "frame={f} I[{k}]"
+                );
+                assert_eq!(
+                    reference.q[f][k].to_bits(),
+                    routed.q[f][k].to_bits(),
+                    "frame={f} Q[{k}]"
+                );
+            }
+        }
+    }
+
+    /// The GPU max-log demap stage routed through the topology executor
+    /// (worker-owned stream, `demap_batch_on_stream`) must emit LLRs
+    /// **byte-identical** to the stage's own default-stream `process` path.
+    #[test]
+    fn test_gpu_demap_routes_on_worker_stream_byte_identical() {
+        if !gpu_present() {
+            eprintln!(
+                "skipping test_gpu_demap_routes_on_worker_stream_byte_identical: no usable GPU"
+            );
+            return;
+        }
+        let stage = GpuGrayQamDemapper::new(DvbT2Modulation::Qam16, DemapMethod::MaxLog, 0.25);
+        let i: Vec<f32> = (0..40).map(|k| 0.09 * k as f32 - 1.8).collect();
+        let q: Vec<f32> = (0..40).map(|k| 1.6 - 0.08 * k as f32).collect();
+        let input = SymbolBatch::new(vec![i.clone(), i], vec![q.clone(), q]);
+
+        // Reference: the stage's own (default-stream) erased process path.
+        let reference = stage.process(&input, &mut ()).expect("process");
+
+        let mut chain = Chain::new();
+        let gpu = chain.add(erase(stage));
+        let cpu = chain.add(erase(gf2_sim::gpu::demap::CpuGrayQamDemapper::new(
+            DvbT2Modulation::Qam16,
+            DemapMethod::MaxLog,
+            0.25,
+        )));
+        chain.register_fallback(gpu, cpu);
+        let pipeline = chain.build().expect("chain builds");
+        let sched = gpu_scheduler(1);
+        assert!(sched.gpu_active());
+        let out = TopologyExecutor::run(&pipeline, &sched, Box::new(input))
+            .expect("executor runs the GpuOnly demap on the worker stream")
+            .into_single()
+            .expect("single sink");
+        let routed = out
+            .as_any()
+            .downcast_ref::<LlrBatch>()
+            .expect("demap emits an LlrBatch");
+
+        assert_eq!(reference.frames.len(), routed.frames.len());
+        for (f, (rf, of)) in reference
+            .frames
+            .iter()
+            .zip(routed.frames.iter())
+            .enumerate()
+        {
+            assert_eq!(rf.len(), of.len(), "frame {f} LLR count");
+            for (b, (r, o)) in rf.iter().zip(of.iter()).enumerate() {
+                assert_eq!(
+                    r.value().to_bits(),
+                    o.value().to_bits(),
+                    "frame={f} LLR[{b}] differs: reference={} routed={}",
+                    r.value(),
+                    o.value()
+                );
+            }
+        }
+    }
+}
