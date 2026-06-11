@@ -95,9 +95,9 @@ pub(crate) fn draw_cn01(rng: &mut ChaCha20Rng) -> (f32, f32) {
 ///
 /// This is the single source of truth for the Es/N0 → sigma conversion shared
 /// by the [`Awgn`], [`Rayleigh`], and [`Rician`] channel constructors.
-///
-/// (See also `frame_sim.rs`, which has an equivalent inline computation as part
-/// of the separate, already-merged per-frame DVB-T2 kernel abstraction.)
+/// (The [`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim) frame
+/// kernel delegates to the `f64`-input core [`es_n0_db_to_sigma_f64`] — its
+/// Es/N0 surface is `f64`.)
 ///
 /// # Arguments
 ///
@@ -109,7 +109,23 @@ pub(crate) fn draw_cn01(rng: &mut ChaCha20Rng) -> (f32, f32) {
 #[inline]
 #[must_use]
 pub(crate) fn es_n0_db_to_sigma(es_n0_db: f32) -> f32 {
-    let es_n0_lin = 10.0_f64.powf(es_n0_db as f64 / 10.0);
+    es_n0_db_to_sigma_f64(f64::from(es_n0_db))
+}
+
+/// The `f64`-input core of [`es_n0_db_to_sigma`] — the SSOT arithmetic.
+///
+/// Paired with [`es_n0_db_to_n0_f64`]: BOTH derive from the same full-precision
+/// `f64` `es_n0_db`, so a frame kernel built `from_eb_n0` (a generally
+/// non-`f32`-representable Es/N0) injects channel noise and demaps with the
+/// SAME rounded SNR — deriving sigma through the narrowing `f32` helper while
+/// N0 takes the `f64` path would make the two correspond to *different*
+/// rounded SNRs, violating the "demap with the true channel N0" contract. For
+/// any `f32`-representable input the `f32` wrapper agrees bit-for-bit
+/// (widening is exact).
+#[inline]
+#[must_use]
+pub(crate) fn es_n0_db_to_sigma_f64(es_n0_db: f64) -> f32 {
+    let es_n0_lin = 10.0_f64.powf(es_n0_db / 10.0);
     let sigma_sq = 1.0 / (2.0 * es_n0_lin);
     (sigma_sq as f32).sqrt()
 }
