@@ -115,3 +115,80 @@ See the canonical §5 receipt entry in
     `cargo test -p gf2-sim --features hip`, per criterion 3).
   - CPU-path SSOT-equivalence guard (fast tier):
     `crates/gf2-sim/tests/pipeline_run_cpu.rs`.
+
+## 571c11c4 — Hybrid resume parity attestation (2026-06-11)
+
+Phase C task `571c11c4` GPU drain-for-checkpoint + checkpointed hybrid sweep.
+Host: gfx1030 (RDNA2, RX 6800/6900/6950 XT). Measured at branch commit
+`aed65b11`, date 2026-06-11.
+
+**Note on `mean_iters`:** resume-vs-uninterrupted is a same-path comparison on
+the same device; the §11 CPU-vs-GPU `mean_iters` exclusion does NOT apply.
+`mean_iters` is included in the parity assertion (and all values below) and
+matched exactly in all three configs. BER is recorded, never asserted (§11
+"Always-excluded").
+
+**`gpu_enabled` in `config_hash`:** the `config_hash` includes `gpu_enabled`,
+so a checkpoint written on the CPU path cannot be resumed on the hybrid path
+(and vice versa). This is a clean-cut invalidation: loading a mismatched
+checkpoint surfaces as a `SweepError::Load` with a hash-mismatch message at
+resume time, which is a loud failure, not a silent one.
+
+### r1/2 16-QAM — SumProduct / ExactLogMap (prep-time trip at frame 32/34, 28.15 s)
+
+2 workers × 34 frames, heartbeat=32, interrupt at (snr=1, g=4).
+Stop: round-1 heartbeat flush at frames_completed=32 (done=[16,16]).
+All resumed==uninterrupted (parity assertion passed).
+
+| SNR pt | Es/N0 (dB) | frames | errors | mean_iters |
+|--------|-----------|--------|--------|-----------|
+| 0  | 5.80 | 34 | 34 | 50.0000 |
+| 1  | 6.00 | 34 | 10 | 48.0000 |
+| 2  | 6.20 | 34 |  0 | 34.9706 |
+| 3  | 6.40 | 34 |  0 | 28.3824 |
+| 4  | 6.60 | 34 |  0 | 23.3824 |
+| 5  | 6.80 | 34 |  0 | 20.3824 |
+| 6  | 7.00 | 34 |  0 | 18.0882 |
+| 7  | 7.20 | 34 |  0 | 16.0588 |
+| 8  | 7.40 | 34 |  0 | 14.6765 |
+| 9  | 7.60 | 34 |  0 | 13.0000 |
+
+### r2/3 64-QAM — NMS(0.75) / ExactLogMap (genuinely-in-flight trip, 32.14 s)
+
+2 workers × 34 frames, heartbeat=0 (one round), interrupt at (snr=1, g=33).
+Stop: overlap-time SIGINT (helper thread fires while batch 0 decodes on GPU).
+Whether a racing worker squeezes in one more batch is scheduler-dependent;
+the resume parity assertion holds regardless. Stop frame in [32, 34].
+All resumed==uninterrupted (parity assertion passed).
+
+| SNR pt | Es/N0 (dB) | frames | errors | mean_iters |
+|--------|-----------|--------|--------|-----------|
+| 0  | 13.20 | 34 | 34 | 50.0000 |
+| 1  | 13.40 | 34 | 34 | 50.0000 |
+| 2  | 13.60 | 34 | 34 | 50.0000 |
+| 3  | 13.80 | 34 | 34 | 50.0000 |
+| 4  | 14.00 | 34 | 34 | 50.0000 |
+| 5  | 14.20 | 34 | 27 | 50.0000 |
+| 6  | 14.40 | 34 |  2 | 46.6471 |
+| 7  | 14.60 | 34 |  0 | 37.8824 |
+| 8  | 14.80 | 34 |  0 | 29.4118 |
+| 9  | 15.00 | 34 |  0 | 20.6471 |
+
+### r3/4 16-QAM — MinSum / MaxLog (prep-time trip at frame 32/34, 40.52 s)
+
+2 workers × 34 frames, heartbeat=32, interrupt at (snr=1, g=4).
+Stop: round-1 heartbeat flush at frames_completed=32 (done=[16,16]).
+All resumed==uninterrupted (parity assertion passed).
+
+| SNR pt | Es/N0 (dB) | frames | errors | mean_iters |
+|--------|-----------|--------|--------|-----------|
+| 0  | 9.80  | 34 | 34 | 50.0000 |
+| 1  | 10.00 | 34 | 34 | 50.0000 |
+| 2  | 10.20 | 34 | 31 | 49.8529 |
+| 3  | 10.40 | 34 |  0 | 28.7059 |
+| 4  | 10.60 | 34 |  0 | 20.4706 |
+| 5  | 10.80 | 34 |  0 | 16.4412 |
+| 6  | 11.00 | 34 |  0 | 13.9412 |
+| 7  | 11.20 | 34 |  0 | 11.6765 |
+| 8  | 11.40 | 34 |  0 |  9.7647 |
+| 9  | 11.60 | 34 |  0 |  7.7353 |
