@@ -133,15 +133,11 @@ impl ResumeConfig {
             .build()
             .expect("in-scope MODCOD builds through the production preset");
         let cfg = pipeline.config_mut();
-        cfg.esn0_db_points = self.esno_points_cache();
+        cfg.esn0_db_points = self.esn0_points();
         cfg.max_frames = self.max_frames;
         cfg.heartbeat_every_frames = self.heartbeat;
         cfg.target_errors = 0; // full frame budget at every point (byte-identity)
         pipeline
-    }
-
-    fn esno_points_cache(&self) -> Vec<f64> {
-        self.esn0_points()
     }
 }
 
