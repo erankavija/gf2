@@ -66,7 +66,9 @@ chain harness below can share ONE noise realisation between paths.
   sum (like `mean_iters`).
 - **What is compared (the §11 CPU-vs-GPU relaxed contract):** a CPU-only path and
   a CPU+GPU path are hand-composed (the Phase C hybrid executor
-  `75c22fa8`/`de160fc5` does not exist yet), differing **only** in which device
+  `75c22fa8`/`de160fc5` did not exist at attestation time, 2026-06-09; the
+  suite remains intentionally hand-composed — the Pipeline-driven CPU-vs-GPU
+  regression is owned by D.3 `0d9cb8e3`), differing **only** in which device
   runs the GPU-eligible stages:
   - **Shared per frame** (computed once, fed identically to both): random k_bch
     BBFRAME → BCH+LDPC encode → bit-interleave → Gray-QAM map → **ONE** AWGN
