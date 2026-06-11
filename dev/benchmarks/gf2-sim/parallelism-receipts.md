@@ -2,7 +2,7 @@
 
 Throughput receipts for the `gf2-sim` epic (`f9717e7e`) parallel-pipeline tasks.
 Each entry follows the project-plan §5 schema. The **single-thread headline
-baseline is 1.6216 fps** for DVB-T2 r1/2 16-QAM at Es/N0 = 6.5 dB (canonical
+baseline is 1.6216 fps** for DVB-T2 r1/2 16-QAM at Es/N0 = 6.25 dB (canonical
 config), measured on the legacy `SimulationRunner::run_with_decoder` path at
 commit `9e983ae26e` and recorded in `baseline-single-thread.md`; it is the
 divisor for every speedup gate here. This file establishes the canonical CPU
@@ -16,7 +16,7 @@ divisor for every speedup gate here. This file establishes the canonical CPU
 - **Baseline configuration:** single-thread
 - **Test configuration:** DVB-T2 r1/2 16-QAM, FrameSize::Normal (n_ldpc = 64800),
   SumProduct LDPC decoder (early-termination on), ExactLogMap soft-demap,
-  Es/N0 = 6.5 dB, batch = 1 frame per dispatch (per-frame kernel
+  Es/N0 = 6.25 dB, batch = 1 frame per dispatch (per-frame kernel
   `frame_sim::DvbT2BicmFrameSim`). **mean_iters = 25.243** (144-frame set) — the *real* mean BP
   iteration depth (via `DvbT2Concat::decode_soft_counted`), byte-identical
   across all worker counts {1,2,4,8,24} (frames converge above the waterfall but
@@ -474,8 +474,9 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
     Re-run on a quiet host:
     `for r in 1 2 3; do /usr/bin/time -p target/release/dvb_t2_awgn_campaign --rate 1/2 --modulation 16qam --esn0-range 6.25:6.25:0.5 --max-frames 200 --target-errors 100000000 --decoder sumproduct --demap exactlogmap --output-dir /tmp/dvb_perf_$r --seed 42; done`
     (fps = 200 / wall).
-  - Within-pipeline two-run byte-identity (fast smoke + ignored 6.0 dB
-    waterfall leg): `crates/gf2-sim/tests/campaign_byte_identity.rs`.
+  - Within-pipeline two-run byte-identity (BOTH legs `#[ignore = "sim:"]`
+    — full-codec subprocess spawns exceed the 5 s fast cap; see the
+    lead attestation below): `crates/gf2-sim/tests/campaign_byte_identity.rs`.
   - CLI flag subprocess contracts (`--gpu` default-build error, `--strict-gpu`,
     parser rejections, end-to-end CSV schema):
     `crates/gf2-sim/tests/campaign_cli_flags.rs`.
@@ -488,8 +489,12 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
 - Host verified quiet before the runs (loadavg 0.96, no foreign
   cargo/rustc; the loadavg during a run is the measurement's own 24
   workers). Migrated binary at merge `c59f8800`.
-- 3 repeats (fps = 200 / CSV `wall_seconds`): 16.8342 / 16.8356 /
-  16.6892 -> **16.79 +/- 0.07 fps** = **10.35x** the canonical legacy
+- 3 repeats (fps = 200 / CSV `wall_seconds`; NOTE `wall_seconds` is the
+  per-point sweep wall — it excludes preset/codec construction and the
+  CSV write, i.e. slightly FAVOURABLE vs the worker's full-process-wall
+  methodology above; both clear 8x with ~30% headroom):
+  16.8342 / 16.8356 / 16.6892 -> **16.79 +/- 0.07 fps** = **10.35x** the
+  canonical legacy
   single-thread baseline (`c0b1702d`, 1.6216 fps). Threshold >= 8x:
   **PASS** (matches the worker-measured 16.85 within noise).
 - `parallelism-pays` ATTESTED by the lead on this measurement.
