@@ -657,6 +657,9 @@ mod tests {
     /// scratch state, mirroring how `Awgn`'s seed-0 `ChannelScratch` default
     /// would draw seed-0 noise).
     struct StatefulScratch(u64);
+    // `derive(Default)` would emit `StatefulScratch(Default::default())` = 0 —
+    // the same "seed 0" position. Explicit impl kept so the intent is clear.
+    #[allow(clippy::derivable_impls)]
     impl Default for StatefulScratch {
         fn default() -> Self {
             // The "seed 0" default a silent fallback would observe.
