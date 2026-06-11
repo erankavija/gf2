@@ -42,33 +42,36 @@
 //! The hand-wired chain construction below mirrors the SSOT in
 //! `tests/preset_vs_graph.rs` (`build_graph`). That file proves structural +
 //! single-frame execution equivalence; this file proves the **run-level**
-//! four-column byte-identity over 200 frames. The chain construction is
-//! reproduced verbatim here rather than shared via `mod common` because the
-//! SSOT helper is private to `preset_vs_graph.rs` and exposing it would
+//! four-column byte-identity over the 50-frame legs. The chain construction
+//! is reproduced verbatim here rather than shared via `mod common` because
+//! the SSOT helper is private to `preset_vs_graph.rs` and exposing it would
 //! require additional public surface.
 //!
-//! # Wall time — why these legs carry raised nextest timeouts
+//! # Frame count — AMENDMENT 2026-06-11
 //!
-//! At the waterfall, BP runs near its 50-iteration cap on most frames
-//! (`mean_iters` ≈ 44–50) and the stage chain's shared [`DvbT2Concat`] codec
-//! serialises decodes on its internal `Mutex` (see the "Throughput caveat" in
+//! The slow legs run **50 frames per MODCOD** per the user-approved
+//! AMENDMENT 2026-06-11 on issue `8c8302c8`. The original 200-frame
+//! deliverable cannot fit the 120 s slow-tier cap at the waterfall: BP runs
+//! near its 50-iteration cap on most frames (`mean_iters` ≈ 44–50) and the
+//! stage chain's shared [`DvbT2Concat`] codec serialises decodes on its
+//! internal `Mutex` (see the "Throughput caveat" in
 //! `gf2-sim/src/executor/topology.rs`) — measured ~1.1–1.5 s per frame
-//! regardless of the configured `parallelism`. Each leg therefore runs its
-//! two arms **concurrently** (each pipeline owns an independent codec, so the
-//! two mutexes do not contend) and a 200-frame leg still needs roughly
-//! 220–320 s; the per-leg nextest timeout is raised in `.config/nextest.toml`
-//! (documented there, mirroring the trybuild-override precedent). The
-//! frames=200 sweep size is contractual (issue deliverable) and is NOT
-//! reduced to fit the default cap.
+//! regardless of the configured `parallelism`, i.e. 200-frame legs need
+//! 171–301 s even with concurrent arms. The one-time 200-frame completion
+//! evidence (all six MODCODs byte-identical and non-vacuous at 200 frames)
+//! is recorded in the issue. Each leg runs its two arms **concurrently**
+//! (each pipeline owns an independent codec, so the two mutexes do not
+//! contend); a 50-frame leg fits the unmodified 120 s slow-tier cap and the
+//! 2-frame smoke the unmodified 5 s fast-tier cap.
 //!
 //! # Tiers
 //!
-//! * **Fast** (`test_preset_vs_graph_smoke_r12_16qam`): 4 frames of r1/2
-//!   16-QAM at the 6.0 dB waterfall (the `de160fc5` operating point; 1/4
-//!   errored — non-vacuous, asserted). ~7–10 s with concurrent arms; carries
-//!   a raised ci-profile timeout so the un-ignored smoke genuinely runs the
-//!   `[hard]` byte-identity criterion on every green gate.
-//! * **Slow** (one `#[ignore = "sim: ..."]` per MODCOD): 200 frames per
+//! * **Fast** (`test_preset_vs_graph_smoke_r12_16qam`): 2 frames of r1/2
+//!   16-QAM at the 6.0 dB waterfall (the `42eac5cc` smoke precedent point;
+//!   1/2 errored — non-vacuous, asserted). ~2–3 s with concurrent arms,
+//!   under the unmodified 5 s cap, so the un-ignored smoke genuinely runs
+//!   the `[hard]` byte-identity criterion on every green gate.
+//! * **Slow** (one `#[ignore = "sim: ..."]` per MODCOD): 50 frames per
 //!   MODCOD at its calibrated waterfall point.
 //!
 //! [`DvbT2Concat`]: gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat
@@ -98,12 +101,16 @@ use gf2_sim::{Pipeline, PipelineConfig, Scheduler, TopologyExecutor};
 /// per-MODCOD Es/N0 points below are calibrated at THIS seed).
 const SEED: u64 = 0xDE16_0FC5;
 
-/// Frames for the fast-tier smoke: the `de160fc5` 4-frame waterfall operating
-/// point (1/4 errored at 6.0 dB r1/2 16-QAM, verified empirically).
-const SMOKE_FRAMES: usize = 4;
+/// Frames for the fast-tier smoke: 2 frames at the 6.0 dB r1/2 16-QAM
+/// waterfall — the `42eac5cc` smoke precedent point (frames=2, errors=1 at
+/// this exact seed and Es/N0), non-vacuous and within the unmodified 5 s
+/// fast-tier cap.
+const SMOKE_FRAMES: usize = 2;
 
-/// Frames for the slow-tier legs (contractual: the issue deliverable pins 200).
-const SLOW_FRAMES: usize = 200;
+/// Frames for the slow-tier legs: 50 per the user-approved AMENDMENT
+/// 2026-06-11 on issue `8c8302c8` (the one-time 200-frame completion
+/// evidence is recorded in the issue; see the module docs).
+const SLOW_FRAMES: usize = 50;
 
 /// Workers on both arms' configs. Identical parallelism + seed on both arms is
 /// required; cross-worker-count byte-identity is separately guaranteed by the
@@ -117,10 +124,13 @@ const PARALLELISM: usize = 24;
 struct ModcodPoint {
     rate: CodeRate,
     modulation: DvbT2Modulation,
-    /// Waterfall Es/N0 in dB. Observed 200-frame error mixes at [`SEED`]:
-    /// r1/2 16-QAM @6.0 → 58/200; r1/2 64-QAM @10.3 → 72/200;
-    /// r2/3 16-QAM @8.8 → 100/200; r2/3 64-QAM @13.8 → 130/200;
-    /// r3/4 16-QAM @10.0 → 124/200; r3/4 64-QAM @15.4 → 62/200.
+    /// Waterfall Es/N0 in dB. Calibration evidence — the one-time 200-frame
+    /// verification mixes at [`SEED`], recorded in the issue per the
+    /// AMENDMENT 2026-06-11: r1/2 16-QAM @6.0 → 58/200; r1/2 64-QAM @10.3 →
+    /// 72/200; r2/3 16-QAM @8.8 → 100/200; r2/3 64-QAM @13.8 → 130/200;
+    /// r3/4 16-QAM @10.0 → 124/200; r3/4 64-QAM @15.4 → 62/200. The 50-frame
+    /// legs observe the prefix of the same global-frame sequence (per-leg
+    /// mixes on each test fn below).
     es_n0_db: f32,
     label: &'static str,
 }
@@ -293,17 +303,16 @@ fn assert_byte_identical(point: &ModcodPoint, max_frames: usize) {
 // Fast-tier smoke (always runs, gates the criterion)
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Fast-tier smoke: 4 frames of r1/2 16-QAM at the 6.0 dB waterfall (the
-/// `de160fc5` operating point — 1/4 errored at [`SEED`], non-vacuous,
-/// asserted).
+/// Fast-tier smoke: 2 frames of r1/2 16-QAM at the 6.0 dB waterfall (the
+/// `42eac5cc` smoke precedent point — frames=2, errors=1 at [`SEED`],
+/// non-vacuous, asserted).
 ///
 /// Asserts all four byte-identity columns (`frames`, `errors`, `fer`,
 /// `mean_iters`) between the typestate-preset form and the hand-wired graph
 /// form. Un-ignored so the green `--profile ci` gate genuinely runs the
-/// `[hard]` byte-identity criterion at a non-vacuous operating point; carries
-/// a raised ci-profile timeout in `.config/nextest.toml` (waterfall frames
-/// decode near the 50-iteration BP cap on a mutex-serialised codec — see the
-/// module docs).
+/// `[hard]` byte-identity criterion at a non-vacuous operating point, within
+/// the unmodified 5 s fast-tier cap (the two arms run their 2 waterfall
+/// frames concurrently — measured ~3 s).
 #[test]
 fn test_preset_vs_graph_smoke_r12_16qam() {
     assert_byte_identical(
@@ -318,94 +327,94 @@ fn test_preset_vs_graph_smoke_r12_16qam() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Slow-tier 200-frame legs (one per MODCOD; raised timeout, see module docs)
+// Slow-tier 50-frame legs (one per MODCOD; AMENDMENT 2026-06-11, module docs)
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Slow: 200 frames, r1/2 16-QAM at the 6.0 dB waterfall (58/200 errored).
+/// Slow: 50 frames, r1/2 16-QAM at the 6.0 dB waterfall (12/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 16-QAM waterfall"]
-fn test_preset_vs_graph_200f_r12_16qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r1/2 16-QAM waterfall"]
+fn test_preset_vs_graph_50f_r12_16qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate1_2,
             modulation: DvbT2Modulation::Qam16,
             es_n0_db: 6.0,
-            label: "200f r1/2 16-QAM @6.0dB",
+            label: "50f r1/2 16-QAM @6.0dB",
         },
         SLOW_FRAMES,
     );
 }
 
-/// Slow: 200 frames, r1/2 64-QAM at the 10.3 dB waterfall (72/200 errored).
+/// Slow: 50 frames, r1/2 64-QAM at the 10.3 dB waterfall (21/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r1/2 64-QAM waterfall"]
-fn test_preset_vs_graph_200f_r12_64qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r1/2 64-QAM waterfall"]
+fn test_preset_vs_graph_50f_r12_64qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate1_2,
             modulation: DvbT2Modulation::Qam64,
             es_n0_db: 10.3,
-            label: "200f r1/2 64-QAM @10.3dB",
+            label: "50f r1/2 64-QAM @10.3dB",
         },
         SLOW_FRAMES,
     );
 }
 
-/// Slow: 200 frames, r2/3 16-QAM at the 8.8 dB waterfall (100/200 errored).
+/// Slow: 50 frames, r2/3 16-QAM at the 8.8 dB waterfall (27/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 16-QAM waterfall"]
-fn test_preset_vs_graph_200f_r23_16qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r2/3 16-QAM waterfall"]
+fn test_preset_vs_graph_50f_r23_16qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam16,
             es_n0_db: 8.8,
-            label: "200f r2/3 16-QAM @8.8dB",
+            label: "50f r2/3 16-QAM @8.8dB",
         },
         SLOW_FRAMES,
     );
 }
 
-/// Slow: 200 frames, r2/3 64-QAM at the 13.8 dB waterfall (130/200 errored).
+/// Slow: 50 frames, r2/3 64-QAM at the 13.8 dB waterfall (32/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r2/3 64-QAM waterfall"]
-fn test_preset_vs_graph_200f_r23_64qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r2/3 64-QAM waterfall"]
+fn test_preset_vs_graph_50f_r23_64qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate2_3,
             modulation: DvbT2Modulation::Qam64,
             es_n0_db: 13.8,
-            label: "200f r2/3 64-QAM @13.8dB",
+            label: "50f r2/3 64-QAM @13.8dB",
         },
         SLOW_FRAMES,
     );
 }
 
-/// Slow: 200 frames, r3/4 16-QAM at the 10.0 dB waterfall (124/200 errored).
+/// Slow: 50 frames, r3/4 16-QAM at the 10.0 dB waterfall (31/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 16-QAM waterfall"]
-fn test_preset_vs_graph_200f_r34_16qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r3/4 16-QAM waterfall"]
+fn test_preset_vs_graph_50f_r34_16qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam16,
             es_n0_db: 10.0,
-            label: "200f r3/4 16-QAM @10.0dB",
+            label: "50f r3/4 16-QAM @10.0dB",
         },
         SLOW_FRAMES,
     );
 }
 
-/// Slow: 200 frames, r3/4 64-QAM at the 15.4 dB waterfall (62/200 errored).
+/// Slow: 50 frames, r3/4 64-QAM at the 15.4 dB waterfall (17/50 errored).
 #[test]
-#[ignore = "sim: 200-frame preset-vs-graph byte-identity, r3/4 64-QAM waterfall"]
-fn test_preset_vs_graph_200f_r34_64qam() {
+#[ignore = "sim: 50-frame preset-vs-graph byte-identity, r3/4 64-QAM waterfall"]
+fn test_preset_vs_graph_50f_r34_64qam() {
     assert_byte_identical(
         &ModcodPoint {
             rate: CodeRate::Rate3_4,
             modulation: DvbT2Modulation::Qam64,
             es_n0_db: 15.4,
-            label: "200f r3/4 64-QAM @15.4dB",
+            label: "50f r3/4 64-QAM @15.4dB",
         },
         SLOW_FRAMES,
     );
