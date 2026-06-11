@@ -17,9 +17,12 @@
 //! - `byte_identical_two_runs_smoke` — fast tier (8 frames × 1 SNR point), proves
 //!   the two-run determinism plumbing without the 5 s budget risk.
 //! - `byte_identical_two_runs_waterfall` — `#[ignore = "sim: ..."]` slow tier
-//!   (200 frames at the r1/2 16-QAM waterfall Es/N0 = 6.25 dB), where the run is
+//!   (200 frames at the r1/2 16-QAM waterfall Es/N0 = 6.0 dB), where the run is
 //!   **non-vacuous**: `0 < errored_frames < frames` is asserted, so the verdict
-//!   boundary the determinism contract is about is genuinely exercised.
+//!   boundary the determinism contract is about is genuinely exercised. (6.0 dB
+//!   is the measured knee for this exact 200-frame SumProduct/ExactLogMap/seed-42
+//!   setup — ~52/200 frame errors; 6.25 dB converges everything and would be
+//!   vacuous, while ≤ 5.75 dB errors every frame.)
 
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -51,7 +54,11 @@ fn parse_det_rows(csv: &str) -> Vec<DetRow> {
         .filter(|l| !l.trim().is_empty())
         .map(|l| {
             let c: Vec<&str> = l.split(',').collect();
-            assert_eq!(c.len(), 7, "campaign CSV must have 7 columns, got line: {l}");
+            assert_eq!(
+                c.len(),
+                7,
+                "campaign CSV must have 7 columns, got line: {l}"
+            );
             DetRow {
                 es_n0_db: c[0].to_string(),
                 fer: c[1].to_string(),
@@ -64,7 +71,12 @@ fn parse_det_rows(csv: &str) -> Vec<DetRow> {
 }
 
 /// Runs the migrated campaign once, returning the parsed curve CSV rows.
-fn run_campaign(out_dir: &str, esn0_range: &str, max_frames: &str, target_errors: &str) -> Vec<DetRow> {
+fn run_campaign(
+    out_dir: &str,
+    esn0_range: &str,
+    max_frames: &str,
+    target_errors: &str,
+) -> Vec<DetRow> {
     let _ = std::fs::remove_dir_all(out_dir);
     let bin = binary_path();
     let status = Command::new(&bin)
@@ -103,18 +115,8 @@ fn run_campaign(out_dir: &str, esn0_range: &str, max_frames: &str, target_errors
 /// under the 5 s fast-tier budget.
 #[test]
 fn byte_identical_two_runs_smoke() {
-    let a = run_campaign(
-        "/tmp/dvb_d2_byteid_smoke_a",
-        "6.25:6.25:0.5",
-        "8",
-        "1000",
-    );
-    let b = run_campaign(
-        "/tmp/dvb_d2_byteid_smoke_b",
-        "6.25:6.25:0.5",
-        "8",
-        "1000",
-    );
+    let a = run_campaign("/tmp/dvb_d2_byteid_smoke_a", "6.25:6.25:0.5", "8", "1000");
+    let b = run_campaign("/tmp/dvb_d2_byteid_smoke_b", "6.25:6.25:0.5", "8", "1000");
     assert_eq!(a.len(), 1, "one SNR point");
     assert_eq!(
         a, b,
@@ -124,7 +126,7 @@ fn byte_identical_two_runs_smoke() {
 }
 
 /// Slow-tier non-vacuous waterfall leg: 200 frames at the r1/2 16-QAM waterfall
-/// Es/N0 = 6.25 dB. Asserts `0 < errors < frames` (a genuine mix of
+/// Es/N0 = 6.0 dB. Asserts `0 < errors < frames` (a genuine mix of
 /// decode-success and decode-fail frames), then two-run byte-identity on the
 /// four deterministic columns — so the §11 verdict boundary is exercised.
 #[test]
@@ -132,16 +134,11 @@ fn byte_identical_two_runs_smoke() {
 fn byte_identical_two_runs_waterfall() {
     let a = run_campaign(
         "/tmp/dvb_d2_byteid_wf_a",
-        "6.25:6.25:0.5",
+        "6.0:6.0:0.5",
         "200",
         "100000", // never reached; runs the full 200 frames
     );
-    let b = run_campaign(
-        "/tmp/dvb_d2_byteid_wf_b",
-        "6.25:6.25:0.5",
-        "200",
-        "100000",
-    );
+    let b = run_campaign("/tmp/dvb_d2_byteid_wf_b", "6.0:6.0:0.5", "200", "100000");
     assert_eq!(a.len(), 1);
 
     // Non-vacuity: a genuine waterfall mix of errored and clean frames.
@@ -150,7 +147,7 @@ fn byte_identical_two_runs_waterfall() {
     assert_eq!(frames, 200, "the full frame budget ran");
     assert!(
         0 < errors && errors < frames,
-        "6.25 dB r1/2 16-QAM must be a non-vacuous waterfall: 0 < errors ({errors}) < frames ({frames})"
+        "6.0 dB r1/2 16-QAM must be a non-vacuous waterfall: 0 < errors ({errors}) < frames ({frames})"
     );
 
     assert_eq!(

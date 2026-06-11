@@ -1067,8 +1067,7 @@ mod tests {
         c.record_frame(true, 10, 100, 5);
         c.record_frame(false, 2, 100, 0);
         let p = SnrPointResult::from_counters(6.25, c);
-        let (es, fer, ber, frames, errors, mean_iters, wall) =
-            point_to_csv_row(6.25, &p, 1.5);
+        let (es, fer, ber, frames, errors, mean_iters, wall) = point_to_csv_row(6.25, &p, 1.5);
         assert_eq!(es, 6.25);
         assert_eq!(frames, 2);
         assert_eq!(errors, 1);
@@ -1108,8 +1107,8 @@ mod tests {
         let mut args = base_args();
 
         // Default (flag absent): strict_gpu false on the config.
-        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0)
-            .expect("pipeline builds");
+        let pipeline =
+            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
         assert!(
             !pipeline.config().strict_gpu,
             "strict_gpu must default to false when --strict-gpu is absent"
@@ -1117,8 +1116,8 @@ mod tests {
 
         // Flag present: strict_gpu true on the config.
         args.strict_gpu = true;
-        let pipeline = build_configured_pipeline(&args, &[6.0], 100, 8, None, 0)
-            .expect("pipeline builds");
+        let pipeline =
+            build_configured_pipeline(&args, &[6.0], 100, 8, None, 0).expect("pipeline builds");
         assert!(
             pipeline.config().strict_gpu,
             "--strict-gpu must set PipelineConfig::strict_gpu = true"
