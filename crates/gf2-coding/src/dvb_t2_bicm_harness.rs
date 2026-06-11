@@ -2,7 +2,8 @@
 //!
 //! This module is the **single source of truth** for the DVB-T2 BICM-AWGN
 //! channel building blocks used by both the campaign binary
-//! (`crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`) and the standalone
+//! (`crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`, migrated to the
+//! gf2-sim pipeline by `bbf6b6ee`) and the standalone
 //! baseline measurement harness
 //! (`dev/benchmarks/gf2-sim/baseline_runner/src/main.rs`).
 //!

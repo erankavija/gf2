@@ -16,14 +16,15 @@
 //! per-frame `frame_observer` can emit live `campaign_heartbeat` tracing
 //! events — and `Pipeline::run_with_decoder` for calibration), replacing the
 //! legacy
-//! `gf2_coding::simulation::SimulationRunner::run_with_decoder` call site that
-//! the original binary at `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
-//! uses. The legacy binary is retained verbatim (it is **not** deleted) so
-//! other `gf2-coding` callers continue on the legacy API; this binary is the
-//! v2 successor. Both share the same name (`dvb_t2_awgn_campaign`); invoking
-//! either from the workspace root with just `--bin dvb_t2_awgn_campaign`
-//! causes a cargo ambiguity error — `-p gf2-sim` is mandatory to select this
-//! binary.
+//! `gf2_coding::simulation::SimulationRunner::run_with_decoder` call site of
+//! the original binary, which lived at
+//! `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs` until the
+//! user-approved bbf6b6ee amendment DELETED that binary file (this one is THE
+//! campaign binary; `cargo run --release --bin dvb_t2_awgn_campaign` resolves
+//! unambiguously from the workspace root). The legacy
+//! `gf2_coding::simulation::SimulationRunner` LIBRARY path is retained — only
+//! the binary moved; a binary inside `gf2-coding` cannot call `gf2-sim`
+//! (dependency cycle: `gf2-sim` depends on `gf2-coding`).
 //!
 //! The new pipeline parallelises every SNR point across rayon workers (and,
 //! with `--gpu` on a `--features hip` build, offloads the heavy LDPC BP +
