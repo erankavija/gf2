@@ -15,8 +15,11 @@
 //! * a minimal valid argv runs end-to-end and writes the curve CSV.
 //!
 //! All rejection tests fail fast at the parse/validation stage (no codec /
-//! encoder / simulation work), so they stay well within the fast-tier budget.
-//! The single end-to-end acceptance test runs 4 frames at one SNR point.
+//! encoder / simulation work), so they stay well within the fast-tier budget
+//! and run un-ignored. The single end-to-end acceptance test
+//! (`cli_minimal_valid_run_writes_curve_csv`) spawns a full-codec subprocess
+//! that runs a real n = 64800 frame, so it carries `#[ignore = "sim: ..."]`
+//! (heavy live-simulation class; >5 s under the contended fast-tier battery).
 
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -157,8 +160,12 @@ fn cli_rejects_mutually_exclusive_calibrate_and_range() {
 
 /// End-to-end acceptance: a minimal valid argv runs the migrated pipeline and
 /// writes the curve CSV with the canonical 7-column schema (so `plot.py` keeps
-/// working). 4 frames × 1 SNR point keeps this in the fast tier.
+/// working). 4 frames × 1 SNR point. `#[ignore]` because this spawns a
+/// full-codec subprocess that runs a real n = 64800 frame (heavy
+/// live-simulation class; >5 s under the contended fast-tier battery). The
+/// fast-tier CLI coverage is the parse-only rejection tests above.
 #[test]
+#[ignore = "sim: full-codec subprocess run for end-to-end CSV-schema acceptance"]
 fn cli_minimal_valid_run_writes_curve_csv() {
     let out_dir = "/tmp/dvb_d2_cli_minimal_run";
     let _ = std::fs::remove_dir_all(out_dir);
