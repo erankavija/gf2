@@ -158,10 +158,32 @@ fn cli_rejects_mutually_exclusive_calibrate_and_range() {
     );
 }
 
+/// Parses `tracing.jsonl`, asserting every non-empty line is valid JSON, and
+/// returns the count of events whose `fields.event_type` equals `event_type`.
+fn count_events(jsonl: &str, event_type: &str) -> usize {
+    let mut n = 0;
+    for (i, line) in jsonl.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let v: serde_json::Value = serde_json::from_str(line).unwrap_or_else(|e| {
+            panic!("tracing.jsonl line {i} is not valid JSON: {e}\nline: {line}")
+        });
+        if v["fields"]["event_type"] == event_type {
+            n += 1;
+        }
+    }
+    n
+}
+
 /// End-to-end acceptance: a minimal valid argv runs the migrated pipeline and
 /// writes the curve CSV with the canonical 7-column schema (so `plot.py` keeps
-/// working) **and** writes `tracing.jsonl` with at least one valid JSON line.
-/// 4 frames × 1 SNR point.
+/// working) **and** writes a non-vacuous `tracing.jsonl`: every line valid
+/// JSON, at least one **live worker-thread** `campaign_heartbeat` event
+/// (`--heartbeat-frames 2` with 4 frames guarantees two), and at least one
+/// post-sweep `snr_point_completed` event. The heartbeat assertion proves
+/// events emitted from the executor's rayon workers reach the file through
+/// the process-GLOBAL subscriber (a thread-local default would drop them).
 ///
 /// `#[ignore]` because this spawns a full-codec subprocess that runs a real
 /// n = 64800 frame (heavy live-simulation class; >5 s under the contended
@@ -181,6 +203,8 @@ fn cli_minimal_valid_run_writes_curve_csv() {
             "1000",
             "--seed",
             "7",
+            "--heartbeat-frames",
+            "2",
         ])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -203,9 +227,10 @@ fn cli_minimal_valid_run_writes_curve_csv() {
         "frames column = max_frames"
     );
 
-    // HIGH-1: tracing.jsonl must exist, be non-empty, and every non-empty line
-    // must parse as JSON.  We do not assert specific event names (no legacy
-    // byte-compat per Q2 decision).
+    // HIGH-1: tracing.jsonl must exist, be non-empty, every line valid JSON,
+    // AND contain the live monitoring events (not just campaign_start). We do
+    // not assert legacy byte-compat of event shapes (Q2 decision) — only that
+    // the monitoring channel exists.
     let jsonl_path = format!("{out_dir}/tracing.jsonl");
     let jsonl = std::fs::read_to_string(&jsonl_path)
         .unwrap_or_else(|e| panic!("tracing.jsonl must be written at {jsonl_path}: {e}"));
@@ -213,14 +238,19 @@ fn cli_minimal_valid_run_writes_curve_csv() {
         !jsonl.trim().is_empty(),
         "tracing.jsonl must be non-empty after a production run"
     );
-    for (i, line) in jsonl.lines().enumerate() {
-        if line.trim().is_empty() {
-            continue;
-        }
-        serde_json::from_str::<serde_json::Value>(line).unwrap_or_else(|e| {
-            panic!("tracing.jsonl line {i} is not valid JSON: {e}\nline: {line}")
-        });
-    }
+    let heartbeats = count_events(&jsonl, "campaign_heartbeat");
+    assert!(
+        heartbeats >= 1,
+        "tracing.jsonl must contain at least one campaign_heartbeat event \
+         (4 frames at --heartbeat-frames 2 ⇒ 2 expected); this is the proof \
+         that worker-thread events reach the GLOBAL subscriber; got {heartbeats}"
+    );
+    let completed = count_events(&jsonl, "snr_point_completed");
+    assert_eq!(
+        completed, 1,
+        "tracing.jsonl must contain exactly one snr_point_completed event \
+         for the single-point sweep; got {completed}"
+    );
 }
 
 /// MEDIUM-5 (calibration smoke): `--calibrate` runs end-to-end and writes
@@ -288,6 +318,9 @@ fn cli_calibrate_writes_calibration_csv() {
     }
 
     // HIGH-1: tracing.jsonl must be written unconditionally (calibration too).
+    // Calibration runs the plain (non-checkpointed) path, so there are no
+    // campaign_heartbeat events; the post-sweep snr_point_completed events
+    // (one per bracket point) must still be present.
     let jsonl_path = format!("{out_dir}/tracing.jsonl");
     let jsonl = std::fs::read_to_string(&jsonl_path)
         .unwrap_or_else(|e| panic!("tracing.jsonl must be written at {jsonl_path}: {e}"));
@@ -295,14 +328,11 @@ fn cli_calibrate_writes_calibration_csv() {
         !jsonl.trim().is_empty(),
         "tracing.jsonl must be non-empty after a calibration run"
     );
-    for (i, line) in jsonl.lines().enumerate() {
-        if line.trim().is_empty() {
-            continue;
-        }
-        serde_json::from_str::<serde_json::Value>(line).unwrap_or_else(|e| {
-            panic!("tracing.jsonl line {i} is not valid JSON: {e}\nline: {line}")
-        });
-    }
+    let completed = count_events(&jsonl, "snr_point_completed");
+    assert_eq!(
+        completed, 3,
+        "calibration must emit one snr_point_completed per bracket point; got {completed}"
+    );
 }
 
 /// MEDIUM-5 (resume smoke): runs the migrated pipeline with a tiny frame

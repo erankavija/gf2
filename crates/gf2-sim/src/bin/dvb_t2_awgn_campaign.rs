@@ -11,7 +11,11 @@
 //!
 //! This is the **migrated** campaign binary. It drives the simulation through
 //! the [`gf2_sim`] hybrid pipeline ([`Pipeline::dvb_t2`] typestate preset +
-//! [`Pipeline::run`] / [`Pipeline::run_checkpointed`]), replacing the legacy
+//! `Scheduler::run_sweep_checkpointed` for production sweeps — called directly
+//! rather than through the `Pipeline::run_checkpointed` thin wrapper so the
+//! per-frame `frame_observer` can emit live `campaign_heartbeat` tracing
+//! events — and `Pipeline::run_with_decoder` for calibration), replacing the
+//! legacy
 //! `gf2_coding::simulation::SimulationRunner::run_with_decoder` call site that
 //! the original binary at `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`
 //! uses. The legacy binary is retained verbatim (it is **not** deleted) so
@@ -124,8 +128,20 @@
 //!   `fer`/`ber`/`frames`/`errors` for cross-binary comparison.
 //! - `tracing.jsonl` — structured JSON-lines tracing log (one JSON object per
 //!   line). Written unconditionally (both production and calibration runs) by
-//!   the [`gf2_sim::observability::install_campaign_subscriber`] machinery.
-//!   The cross-epic e4849f07 multi-day sweep monitor watches this file.
+//!   the [`gf2_sim::observability::install_campaign_subscriber`] machinery
+//!   (a **process-global** subscriber, so events from the executor's rayon /
+//!   helper threads land too). The cross-epic e4849f07 multi-day sweep monitor
+//!   watches this file. Events (each carries a matching `event_type` field):
+//!   - `campaign_start` — once, at sweep start.
+//!   - `campaign_heartbeat` — **live**, from the executor's per-frame
+//!     `frame_observer`, every `--heartbeat-frames` observed frames per SNR
+//!     point (production runs only; calibration has no checkpointed path).
+//!     Approximate progress, not exact accounting: on the hybrid GPU path,
+//!     frames in a batch discarded at an interrupt are observed-but-unrecorded
+//!     and re-observed on resume, and the counter restarts each invocation.
+//!   - `snr_point_completed` — one per point with `es_n0_db`/`fer`/`frames`/
+//!     `errors`/`mean_iters`/`wall_seconds`, emitted **post-sweep** (after the
+//!     run returns, when per-point results exist), not live at each boundary.
 //! - `README.md` — invocation, seed, host info, total wall-clock.
 //! - `checkpoints/` — per-SNR JSON files (v2 schema with BLAKE3-verified
 //!   config hash), written by the pipeline's checkpoint subsystem.
@@ -151,6 +167,7 @@
 use std::io::Write;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
 use gf2_coding::dvb_t2_bicm_harness::{mod_str, rate_display, rate_underscore};
@@ -159,7 +176,7 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::executor::{SimulationResults, SnrPointResult};
+use gf2_sim::executor::{Scheduler, SimulationResults, SnrPointResult};
 use gf2_sim::observability::install_campaign_subscriber;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
@@ -189,6 +206,10 @@ struct Args {
     decoder: DecoderConfig,
     /// QAM soft-demapping method.
     demap: DemapMethod,
+    /// Within-SNR heartbeat cadence in frames: drives both the heartbeat
+    /// checkpoint flush AND the `campaign_heartbeat` tracing event. Ignored
+    /// (forced to 0) for calibration runs.
+    heartbeat_frames: u64,
 }
 
 fn print_usage() {
@@ -211,6 +232,7 @@ fn print_usage() {
            --calibrate-bracket <a:b:c>      Custom 3-point Es/N0 bracket for calibration\n\
            --decoder <spec>                 LDPC decoder: minsum | nms:<alpha> | oms:<beta> | sumproduct [default: minsum]\n\
            --demap <method>                 QAM demap: maxlog | exactlogmap [default: maxlog]\n\
+           --heartbeat-frames <N>           Within-SNR heartbeat cadence: checkpoint flush + campaign_heartbeat tracing event every N frames [default: 1000]\n\
          "
     );
 }
@@ -346,6 +368,7 @@ fn parse_args() -> Result<Args, String> {
     let mut calibrate_bracket: Option<[f64; 3]> = None;
     let mut decoder = DecoderConfig::new(DecoderAlgorithm::MinSum, true);
     let mut demap = DemapMethod::MaxLog;
+    let mut heartbeat_frames: u64 = 1000;
 
     let mut i = 0;
     while i < argv.len() {
@@ -453,6 +476,18 @@ fn parse_args() -> Result<Args, String> {
                     .ok_or_else(|| "--demap requires a value".to_string())?;
                 demap = parse_demap(s)?;
             }
+            "--heartbeat-frames" => {
+                i += 1;
+                let s = argv
+                    .get(i)
+                    .ok_or_else(|| "--heartbeat-frames requires a value".to_string())?;
+                heartbeat_frames = s
+                    .parse()
+                    .map_err(|_| format!("Cannot parse '--heartbeat-frames {}' as u64", s))?;
+                if heartbeat_frames == 0 {
+                    return Err("--heartbeat-frames must be >= 1".to_string());
+                }
+            }
             "--help" | "-h" => {
                 print_usage();
                 std::process::exit(0);
@@ -491,6 +526,7 @@ fn parse_args() -> Result<Args, String> {
         calibrate_bracket,
         decoder,
         demap,
+        heartbeat_frames,
     })
 }
 
@@ -885,15 +921,18 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         target_errors,
         max_frames_per_snr,
         checkpoint_dir.clone(),
-        if is_calib { 0 } else { 1000 },
+        if is_calib { 0 } else { args.heartbeat_frames },
         Some(tracing_path.clone()),
     )?;
 
-    // Install the JSON-lines tracing subscriber.  Must be called AFTER the
-    // pipeline is built (so `tracing_log_path` is set on the config) and BEFORE
-    // the run starts.  The guard must remain live for the full duration of the
-    // run; dropping it early uninstalls the subscriber mid-campaign.
-    let _tracing_guard = install_campaign_subscriber(pipeline.config());
+    // Install the JSON-lines tracing subscriber as the PROCESS-GLOBAL default.
+    // Must be called AFTER the pipeline is built (so `tracing_log_path` is set
+    // on the config) and BEFORE the run starts. Global (not thread-local)
+    // because the sweep's frame loops run on rayon-pool workers and helper
+    // threads — a thread-local default would silently drop every event they
+    // emit (the campaign_heartbeat events below).
+    install_campaign_subscriber(pipeline.config())
+        .map_err(|e| format!("Cannot install tracing subscriber: {e}"))?;
 
     // Emit a campaign_start event so tracing.jsonl has at least one record.
     // This matches the legacy binary's event name/shape used by external monitors
@@ -910,7 +949,7 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     eprintln!(
         "Running via {} (parallelism={}, checkpoint={})",
         if checkpoint_dir.is_some() {
-            "Pipeline::run_checkpointed"
+            "Scheduler::run_sweep_checkpointed"
         } else {
             "Pipeline::run"
         },
@@ -929,9 +968,42 @@ fn run_campaign(args: &Args) -> Result<(), String> {
     // otherwise (calibration — fixed frame budget, no checkpoints). The plain
     // `Pipeline::run` path has no `target_errors` early-exit, which matches
     // calibration's "run exactly N frames" semantics.
+    //
+    // The production arm calls `Scheduler::run_sweep_checkpointed` directly
+    // (rather than the `Pipeline::run_checkpointed` thin wrapper, which passes
+    // a no-op observer) so the per-frame `frame_observer` can emit live
+    // `campaign_heartbeat` tracing events — the monitoring channel the
+    // cross-epic e4849f07 multi-day sweep watches.
     let results: SimulationResults = if checkpoint_dir.is_some() {
-        let sweep = pipeline
-            .run_checkpointed(args.resume)
+        let scheduler = Scheduler::from_pipeline(&pipeline);
+        let heartbeat_every = pipeline.config().heartbeat_every_frames;
+
+        // Per-SNR-point counters of frames observed by this invocation.
+        // `campaign_heartbeat` is emitted every `heartbeat_every` observed
+        // frames. NOTE (frame_observer caveat, executor/drain.rs): on the
+        // hybrid path, frames prepped into a batch that is discarded at an
+        // interrupt are observed-but-unrecorded and re-observed on resume, and
+        // after a resume the count restarts at 0 (it counts THIS invocation's
+        // observations, not global progress) — heartbeat events are
+        // approximate liveness/progress, not exact frame accounting. The
+        // exact deterministic record is the checkpoint files + final CSV.
+        let frames_seen: Vec<AtomicU64> = esn0_points.iter().map(|_| AtomicU64::new(0)).collect();
+        let esn0_for_observer = esn0_points.clone();
+        let observer = move |snr_idx: usize, _global_frame: usize| {
+            let observed = frames_seen[snr_idx].fetch_add(1, Ordering::Relaxed) + 1;
+            if heartbeat_every > 0 && observed.is_multiple_of(heartbeat_every) {
+                tracing::info!(
+                    name: "campaign_heartbeat",
+                    event_type = "campaign_heartbeat",
+                    snr_idx,
+                    es_n0_db = esn0_for_observer[snr_idx],
+                    frames_observed = observed,
+                );
+            }
+        };
+
+        let sweep = scheduler
+            .run_sweep_checkpointed(&pipeline, args.resume, &observer)
             .map_err(|e| format!("Checkpointed sweep failed: {e}"))?;
         if sweep.interrupted {
             eprintln!(
@@ -961,6 +1033,26 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         .zip(results.per_point.iter())
         .map(|(&es_n0_db, p)| point_to_csv_row(es_n0_db, p, wall_per_point))
         .collect();
+
+    // Emit one snr_point_completed event per completed point. NOTE: these are
+    // emitted POST-SWEEP (after run_sweep_checkpointed / run_with_decoder
+    // returns), not live at each SNR boundary — the executor's frame_observer
+    // carries no per-point result data, so a live boundary event could not
+    // include fer/errors/mean_iters. Live progress during the sweep is the
+    // campaign_heartbeat channel above.
+    for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in &csv_rows {
+        tracing::info!(
+            name: "snr_point_completed",
+            event_type = "snr_point_completed",
+            es_n0_db,
+            fer,
+            ber,
+            frames,
+            errors,
+            mean_iters,
+            wall_seconds,
+        );
+    }
 
     write_campaign_csv(&csv_path, &csv_rows)
         .map_err(|e| format!("Cannot write campaign CSV: {e}"))?;
@@ -1139,6 +1231,7 @@ mod tests {
             calibrate_bracket: None,
             decoder: DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
             demap: DemapMethod::ExactLogMap,
+            heartbeat_frames: 1000,
         }
     }
 
