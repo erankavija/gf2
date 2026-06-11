@@ -2,21 +2,27 @@
 //!
 //! Covers all four success criteria:
 //!
-//! 1. **OOM auto-fallback** (SC1): forced OOM → fallback produces the same
-//!    output as the CPU-only path, satisfying the §11 3-column contract. Verified
-//!    at the `dispatch_with_fallback` boundary using the shared injectors.
+//! 1. **OOM auto-fallback** (SC1), function-level: forced OOM → fallback
+//!    produces the same output as the CPU-only path, satisfying the §11 3-column
+//!    contract at the `dispatch_with_fallback` boundary using the shared
+//!    injectors. The **run-level** SC1 proof (a forced OOM during a real hybrid
+//!    run yielding the same `fer`/`frames`/`errors` columns as a CPU-only run)
+//!    lives in [`tests/executor_oom_fallback_run.rs`](../executor_oom_fallback_run.rs).
 //! 2. **Shared injectors** (SC2): `OomInjector` / `KernelErrorInjector` are
 //!    consumed via `mod common;` — no copy-paste.
-//! 3. **Hard-fail path** (SC3): fatal kernel error → `dispatch_with_fallback`
-//!    returns `Err`, a JSON dump is written to `diagnostic_dump_dir`, and a
-//!    `tracing::error!` event is emitted.
+//! 3. **Hard-fail path** (SC3), function-level: fatal kernel error →
+//!    `dispatch_with_fallback` returns `Err` and writes a JSON dump to
+//!    `diagnostic_dump_dir`. The **process-exit** half of SC3 (non-zero process
+//!    exit + the `tracing::error!` event) is proven by a real subprocess in
+//!    [`tests/hard_fail_subprocess.rs`](../hard_fail_subprocess.rs) — an
+//!    in-process `Err` return does not prove a non-zero process exit.
 //! 4. **`strict_gpu` honored** (SC4): OOM with `strict_gpu=true` is promoted to
 //!    `FatalError::OutOfMemory` (no fallback), and a dump is written.
 //!
 //! # No GPU required
 //!
-//! All tests use `dispatch_with_fallback` directly and the host-only injectors
-//! from `tests/common/mod.rs`. No real HIP device is needed.
+//! All tests in this binary use `dispatch_with_fallback` directly and the
+//! host-only injectors from `tests/common/mod.rs`. No real HIP device is needed.
 
 mod common;
 
@@ -180,15 +186,18 @@ fn test_oom_fallback_also_fails_produces_dump_and_cpu_fallback_also_failed() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Fatal `KernelLaunch` error → `dispatch_with_fallback` returns the original
-/// `Err(Fatal)` unchanged, writes a JSON dump file, and (not tested here —
-/// exercising `tracing::error!` is a build-level + subscriber concern) emits the
-/// event. The dump file's JSON is valid and contains the expected fields.
+/// `Err(Fatal)` unchanged and writes a valid JSON dump file with the expected
+/// fields.
 ///
-/// This is the SC3 "non-zero exit, JSON diagnostic dump present" criterion:
-/// the Err return from `dispatch_with_fallback` is what the executor propagates
-/// as its return value, causing the run to abort (the caller of
-/// `worker_partition_hybrid` or `execute_gpu_stage` gets an Err and returns it
-/// up the stack to `Pipeline::run`, which is how the process exits non-zero).
+/// This is the **function-level** half of the SC3 hard-fail criterion: it
+/// proves the dump-write + error-propagation mechanics at the
+/// `dispatch_with_fallback` boundary. The **process-exit** half of SC3 (a forced
+/// kernel error yields a *non-zero process exit* plus the `tracing::error!`
+/// event) is proven by a real subprocess in
+/// [`tests/hard_fail_subprocess.rs`](../hard_fail_subprocess.rs) — an in-process
+/// `Err` return does NOT prove the process exits non-zero (a reasoning rejected
+/// by formal review on this project), so the exit status is asserted there by
+/// actually spawning a process and reading its status.
 #[test]
 fn test_fatal_kernel_error_writes_dump_and_propagates() {
     let dir = test_dump_dir("fatal-kernel");
