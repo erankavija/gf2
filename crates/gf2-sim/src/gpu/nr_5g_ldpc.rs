@@ -246,9 +246,7 @@ mod imp {
                 .map(|frame| self.prepare_llrs(frame))
                 .collect();
             // Decode the full mother codewords on the device (existing kernel).
-            let mother = self
-                .gpu
-                .decode_batch(&LlrBatch::new(prepared), decoder)?;
+            let mother = self.gpu.decode_batch(&LlrBatch::new(prepared), decoder)?;
             // Extract target_k message bits per frame in natural column order.
             let frames: Vec<BitVec> = mother
                 .frames
