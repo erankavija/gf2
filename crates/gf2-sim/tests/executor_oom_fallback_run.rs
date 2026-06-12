@@ -70,6 +70,9 @@ use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{Pipeline, Scheduler, TopologyExecutor};
 
+mod common;
+use common::{assert_three_columns_byte_identical_log_mean_iters, snr_point_to_counters};
+
 /// The de160fc5 GPU-smoke pinned seed (shared with
 /// `stage_driven_byte_identity.rs`).
 const SEED: u64 = 0xDE16_0FC5;
@@ -257,29 +260,13 @@ fn run_and_assert_oom_fallback(frames: usize, workers: usize, label: &str) {
         hybrid.frames
     );
 
-    // The three §11 CPU-vs-GPU columns, byte-identical hybrid-vs-CPU-only.
-    assert_eq!(hybrid.frames, cpu_only.frames, "{label}: frames");
-    assert_eq!(
-        hybrid.errors, cpu_only.errors,
-        "{label}: errors (frame errors) must match the CPU-only reference"
-    );
-    assert_eq!(
-        hybrid.fer().to_bits(),
-        cpu_only.fer().to_bits(),
-        "{label}: fer bit pattern must match the CPU-only reference"
-    );
-
-    // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion; the
-    // OOM-fallback run is a CPU+GPU mix).
-    eprintln!(
-        "{label}: frames={} errors={} fer={:.6} | \
-         mean_iters hybrid(mix)={:.6} cpu_only={:.6} diff={:+.6} (logged only, §11)",
-        hybrid.frames,
-        hybrid.errors,
-        hybrid.fer(),
-        hybrid.mean_iters(),
-        cpu_only.mean_iters(),
-        hybrid.mean_iters() - cpu_only.mean_iters()
+    // The three §11 CPU-vs-GPU columns, byte-identical hybrid-vs-CPU-only,
+    // via the shared SSOT comparator (mean_iters logged there, never
+    // asserted — the OOM-fallback run is a CPU+GPU mix).
+    assert_three_columns_byte_identical_log_mean_iters(
+        &hybrid,
+        &cpu_only,
+        &format!("{label} hybrid(mix)-vs-cpu_only"),
     );
 
     // tracing::warn! attestation: at least one recoverable-fallback WARN event
@@ -360,28 +347,12 @@ fn run_and_assert_scheduler_oom_fallback(frames: usize, workers: usize, label: &
 
     let cpu_only = ssot_counters(f64::from(es_n0), frames, workers);
 
-    // The three §11 CPU-vs-GPU columns, byte-identical scheduler-vs-CPU-only.
-    assert_eq!(pt.frames, cpu_only.frames, "{label}: frames");
-    assert_eq!(
-        pt.errors, cpu_only.errors,
-        "{label}: errors (frame errors) must match the CPU-only reference"
-    );
-    assert_eq!(
-        pt.fer.to_bits(),
-        cpu_only.fer().to_bits(),
-        "{label}: fer bit pattern must match the CPU-only reference"
-    );
-
-    // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion).
-    eprintln!(
-        "{label}: frames={} errors={} fer={:.6} | \
-         mean_iters sched(mix)={:.6} cpu_only={:.6} diff={:+.6} (logged only, §11)",
-        pt.frames,
-        pt.errors,
-        pt.fer,
-        pt.mean_iters,
-        cpu_only.mean_iters(),
-        pt.mean_iters - cpu_only.mean_iters(),
+    // The three §11 CPU-vs-GPU columns, byte-identical scheduler-vs-CPU-only,
+    // via the shared SSOT comparator (mean_iters logged there, never asserted).
+    assert_three_columns_byte_identical_log_mean_iters(
+        &snr_point_to_counters(pt),
+        &cpu_only,
+        &format!("{label} sched(mix)-vs-cpu_only"),
     );
 
     // tracing::warn! attestation: the hybrid loop's dispatch_with_fallback must

@@ -143,8 +143,12 @@ use gf2_kernels_hip::host::device_mem_info;
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::gpu::demap::GpuGrayQamDemapper;
 use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
+use gf2_sim::parallel::WorkerCounters;
 use gf2_sim::LlrBatch;
 use rayon::prelude::*;
+
+mod common;
+use common::assert_three_columns_byte_identical_log_mean_iters;
 
 /// BP iteration cap (the DVB-T2 default; matches `DvbT2Concat`'s 50).
 const MAX_LDPC_ITERATIONS: usize = 50;
@@ -204,11 +208,22 @@ impl Counters {
         }
     }
 
-    /// Mean BP iterations where surfaced (logged only, never asserted).
-    fn mean_iters(&self) -> Option<f64> {
-        match self.iter_sum {
-            Some(s) if self.frames > 0 => Some(s as f64 / self.frames as f64),
-            _ => None,
+    /// Adapts this suite-local accumulator to the SSOT
+    /// [`WorkerCounters`] so the shared three-column comparator in
+    /// `tests/common` stays the single implementation of the §11 relaxed
+    /// contract (including the logged-only `mean_iters`, computed there as
+    /// `total_iterations / frames`). `total_bits` is not tracked by this
+    /// harness (BER is excluded entirely, `152388f4`); it maps to 0 and the
+    /// comparator never reads it. `iter_sum` is `Some` on both arms here
+    /// (see field docs); `unwrap_or(0)` only guards a hypothetical
+    /// iteration-less path.
+    fn to_worker_counters(self) -> WorkerCounters {
+        WorkerCounters {
+            frames: self.frames,
+            errors: self.errored_frames,
+            total_iterations: self.iter_sum.unwrap_or(0),
+            total_bits: 0,
+            total_bit_errors: self.bit_error_sum,
         }
     }
 }
@@ -555,38 +570,16 @@ fn assert_config_byte_identical(cfg: &Config) {
         cpu.frames,
     );
 
-    // The three §11 CPU-vs-GPU columns, byte-identical.
-    assert_eq!(
-        cpu.frames, gpu.frames,
-        "[{}] column `frames` diverged: CPU {} vs GPU {}",
-        cfg.label, cpu.frames, gpu.frames
-    );
-    assert_eq!(
-        cpu.errored_frames, gpu.errored_frames,
-        "[{}] column `errors` (errored frames) diverged: CPU {} vs GPU {}",
-        cfg.label, cpu.errored_frames, gpu.errored_frames
-    );
-    assert_eq!(
-        cpu.fer().to_bits(),
-        gpu.fer().to_bits(),
-        "[{}] column `fer` diverged: CPU {} vs GPU {}",
+    // The three §11 CPU-vs-GPU columns, byte-identical, via the shared SSOT
+    // comparator. mean_iters for BOTH paths + the diff is LOGGED there, NOT
+    // asserted (design §11 CPU-vs-GPU exclusion); the GPU per-frame iteration
+    // counts come from `decode_batch_with_iters` (CPU-aligned convention), so
+    // the logged diff is the genuine ±1 near-threshold drift §11 describes.
+    assert_three_columns_byte_identical_log_mean_iters(
+        &gpu.to_worker_counters(),
+        &cpu.to_worker_counters(),
         cfg.label,
-        cpu.fer(),
-        gpu.fer()
     );
-
-    // mean_iters for BOTH paths + the diff: LOGGED, NOT asserted (design §11
-    // CPU-vs-GPU exclusion). The GPU per-frame iteration counts come from
-    // `decode_batch_with_iters` (CPU-aligned convention); the small diff is
-    // exactly the ±1 near-threshold drift §11 describes.
-    if let (Some(c), Some(g)) = (cpu.mean_iters(), gpu.mean_iters()) {
-        println!(
-            "[{}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
-             CPU {c:.4}, GPU {g:.4}, diff {:+.4}",
-            cfg.label,
-            g - c,
-        );
-    }
 
     // bit-error sum (BER numerator): LOGGED, NOT asserted (`ber` excluded,
     // `152388f4`). It legitimately differs CPU-vs-GPU on errored frames (demap

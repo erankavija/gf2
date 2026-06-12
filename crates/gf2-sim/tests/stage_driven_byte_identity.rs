@@ -64,6 +64,9 @@ use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{Pipeline, Scheduler, TopologyExecutor};
 
+#[cfg(feature = "hip")]
+use common::assert_three_columns_byte_identical_log_mean_iters;
+
 const SEED: u64 = 0xDE16_0FC5;
 
 fn decoder_config() -> DecoderConfig {
@@ -236,25 +239,12 @@ mod gpu {
             staged.frames
         );
 
-        // The three §11 CPU-vs-GPU columns, byte-identical.
-        assert_eq!(staged.frames, ssot.frames, "frames");
-        assert_eq!(staged.errors, ssot.errors, "errors (frame errors)");
-        assert_eq!(
-            staged.fer().to_bits(),
-            ssot.fer().to_bits(),
-            "fer bit pattern"
-        );
-
-        // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion).
-        eprintln!(
-            "stage-driven GPU smoke @6dB: frames={} errors={} fer={:.6} | \
-             mean_iters staged(GPU)={:.6} ssot(CPU)={:.6} diff={:+.6} (logged only, §11)",
-            staged.frames,
-            staged.errors,
-            staged.fer(),
-            staged.mean_iters(),
-            ssot.mean_iters(),
-            staged.mean_iters() - ssot.mean_iters()
+        // The three §11 CPU-vs-GPU columns, byte-identical, via the shared
+        // SSOT comparator (mean_iters logged there, never asserted).
+        assert_three_columns_byte_identical_log_mean_iters(
+            &staged,
+            &ssot,
+            "stage-driven GPU smoke @6dB staged(GPU)-vs-ssot(CPU)",
         );
     }
 
@@ -292,25 +282,12 @@ mod gpu {
             staged.frames
         );
 
-        // The three §11 CPU-vs-GPU columns, byte-identical.
-        assert_eq!(staged.frames, ssot.frames, "frames");
-        assert_eq!(staged.errors, ssot.errors, "errors (frame errors)");
-        assert_eq!(
-            staged.fer().to_bits(),
-            ssot.fer().to_bits(),
-            "fer bit pattern"
-        );
-
-        // mean_iters: LOGGED, never asserted (§11 CPU-vs-GPU exclusion).
-        eprintln!(
-            "stage-driven GPU chain @6dB: frames={} errors={} fer={:.6} | \
-             mean_iters staged(GPU)={:.6} ssot(CPU)={:.6} diff={:+.6} (logged only, §11)",
-            staged.frames,
-            staged.errors,
-            staged.fer(),
-            staged.mean_iters(),
-            ssot.mean_iters(),
-            staged.mean_iters() - ssot.mean_iters()
+        // The three §11 CPU-vs-GPU columns, byte-identical, via the shared
+        // SSOT comparator (mean_iters logged there, never asserted).
+        assert_three_columns_byte_identical_log_mean_iters(
+            &staged,
+            &ssot,
+            "stage-driven GPU chain @6dB staged(GPU)-vs-ssot(CPU)",
         );
     }
 }

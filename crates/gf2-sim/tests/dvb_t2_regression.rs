@@ -310,8 +310,8 @@ fn run_regression(point: &ModcodPoint, frames: u64) {
             );
 
             common::assert_three_columns_byte_identical_log_mean_iters(
-                &c,
-                &a,
+                &common::snr_point_to_counters(&c),
+                &common::snr_point_to_counters(&a),
                 &format!("(A-vs-C) {label}"),
             );
 
@@ -422,8 +422,8 @@ fn test_dvb_t2_regression_smoke_gpu_r12_16qam() {
     );
 
     common::assert_three_columns_byte_identical_log_mean_iters(
-        &c,
-        &a,
+        &common::snr_point_to_counters(&c),
+        &common::snr_point_to_counters(&a),
         "smoke GPU r1/2 16-QAM @9.0dB",
     );
 }

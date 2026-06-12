@@ -145,9 +145,17 @@ pub fn snr_point_to_counters(p: &SnrPointResult) -> WorkerCounters {
 }
 
 /// Asserts the **three** byte-identity columns of the §11 CPU-vs-GPU
-/// *relaxed* contract — `frames`, `errors`, `fer` — between a GPU-arm
-/// [`SnrPointResult`] (`actual`) and its CPU-arm baseline, and **logs**
-/// `mean_iters` (with the diff) WITHOUT asserting it.
+/// *relaxed* contract — `frames`, `errors`, `fer` — between a GPU-bearing
+/// arm's [`WorkerCounters`] (`actual`) and its CPU-only baseline, and
+/// **logs** `mean_iters` (with the diff) WITHOUT asserting it.
+///
+/// Like [`assert_four_columns_byte_identical`], this is the **single source
+/// of truth** for the relaxed column set: every CPU-vs-GPU (or
+/// hybrid-vs-CPU) comparison delegates here. Callers holding
+/// [`SnrPointResult`]s adapt via [`snr_point_to_counters`]; suites with
+/// their own counter types (e.g. `tests/gpu_byte_identity.rs`) adapt with a
+/// suite-local conversion — the comparison logic itself must not be
+/// re-implemented.
 ///
 /// `mean_iters` is EXCLUDED from CPU-vs-GPU byte-identity (design-doc §11,
 /// user-approved Q3 2026-06-07): RDNA2 hardware transcendental ULP drift can
@@ -162,8 +170,8 @@ pub fn snr_point_to_counters(p: &SnrPointResult) -> WorkerCounters {
 ///
 /// # Arguments
 ///
-/// * `actual` — the CPU+GPU (`with_gpu(true)`) arm's point result.
-/// * `baseline` — the CPU-only arm's point result.
+/// * `actual` — the CPU+GPU (or hybrid/fallback-mix) arm's counters.
+/// * `baseline` — the CPU-only arm's counters.
 /// * `label` — a human-readable config label for assertion messages.
 ///
 /// # Panics
@@ -172,8 +180,8 @@ pub fn snr_point_to_counters(p: &SnrPointResult) -> WorkerCounters {
 /// differ between `actual` and `baseline`. Never panics on `mean_iters`.
 #[track_caller]
 pub fn assert_three_columns_byte_identical_log_mean_iters(
-    actual: &SnrPointResult,
-    baseline: &SnrPointResult,
+    actual: &WorkerCounters,
+    baseline: &WorkerCounters,
     label: &str,
 ) {
     assert_eq!(
@@ -189,21 +197,21 @@ pub fn assert_three_columns_byte_identical_log_mean_iters(
         baseline.errors, actual.errors
     );
     assert_eq!(
-        baseline.fer.to_bits(),
-        actual.fer.to_bits(),
+        baseline.fer().to_bits(),
+        actual.fer().to_bits(),
         "[{label}] BYTE-IDENTITY VIOLATION: column `fer` bit pattern diverged \
          (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
-        baseline.fer,
-        actual.fer
+        baseline.fer(),
+        actual.fer()
     );
 
     // mean_iters: LOGGED, NOT asserted (§11 CPU-vs-GPU exclusion).
     eprintln!(
         "[{label}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
          CPU {:.4}, GPU {:.4}, diff {:+.4}",
-        baseline.mean_iters,
-        actual.mean_iters,
-        actual.mean_iters - baseline.mean_iters,
+        baseline.mean_iters(),
+        actual.mean_iters(),
+        actual.mean_iters() - baseline.mean_iters(),
     );
 }
 
