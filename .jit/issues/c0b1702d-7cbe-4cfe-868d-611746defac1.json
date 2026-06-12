@@ -25,12 +25,37 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/gf2-sim/parallelism-receipts.md",
+      "commit": null,
+      "label": "parallelism-pays throughput receipts",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "./5g-nr-realtime.md",
+          "resolved_path": "dev/benchmarks/gf2-sim/5g-nr-realtime.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "e7f91ba1060e714044696847145c8fcce0ade4f40beb452a78ba7c29b50208ad",
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "dev/benchmarks/gf2-sim/baseline-single-thread.md",
+      "commit": null,
+      "label": "Single-thread CPU baseline receipt",
+      "doc_type": "benchmark",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-06T21:26:33.468073581+00:00",
-  "updated_at": "2026-06-07T06:32:35.155651762+00:00"
+  "updated_at": "2026-06-12T15:13:34.190414777+00:00"
 }

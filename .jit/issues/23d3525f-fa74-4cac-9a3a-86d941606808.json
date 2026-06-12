@@ -15,24 +15,49 @@
     "parallelism-pays"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-12T12:02:39.896707998Z"
+      "updated_at": "2026-06-12T12:03:45.761508483Z"
     },
     "parallelism-pays": {
       "status": "passed",
       "updated_by": null,
       "updated_at": "2026-06-12T11:03:48.537827309Z"
     },
-    "code-review": {
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-12T12:03:45.761508483Z"
+      "updated_at": "2026-06-12T12:02:39.896707998Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/gf2-sim/parallelism-receipts.md",
+      "commit": null,
+      "label": "parallelism-pays throughput receipts",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "./5g-nr-realtime.md",
+          "resolved_path": "dev/benchmarks/gf2-sim/5g-nr-realtime.md",
+          "asset_type": "local",
+          "mime_type": "text/markdown",
+          "content_hash": "e7f91ba1060e714044696847145c8fcce0ade4f40beb452a78ba7c29b50208ad",
+          "is_shared": false
+        }
+      ]
+    },
+    {
+      "path": "dev/benchmarks/gf2-sim/5g-nr-realtime.md",
+      "commit": null,
+      "label": "5G NR realtime decode receipts + lead attestation",
+      "doc_type": "benchmark",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-coding",
@@ -40,5 +65,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:05:07.853331510+00:00",
-  "updated_at": "2026-06-12T12:05:17.489619936+00:00"
+  "updated_at": "2026-06-12T15:13:34.262055008+00:00"
 }

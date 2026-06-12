@@ -32,12 +32,20 @@
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/benchmarks/gf2-sim/cpu-foundation-receipts.md",
+      "commit": null,
+      "label": "CPU foundation receipts (determinism suite)",
+      "doc_type": "benchmark",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:14.257835960+00:00",
-  "updated_at": "2026-06-09T05:37:17.139713873+00:00"
+  "updated_at": "2026-06-12T15:13:34.204090971+00:00"
 }
