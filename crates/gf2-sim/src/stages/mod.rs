@@ -76,9 +76,161 @@ fn bits_per_symbol(modulation: DvbT2Modulation) -> usize {
     modulation.bits_per_cell()
 }
 
-/// QAM constellation order (`2^m`) for a [`DvbT2Modulation`].
-fn qam_order(modulation: DvbT2Modulation) -> usize {
-    1usize << bits_per_symbol(modulation)
+// ===========================================================================
+// Shared Gray-QAM map / demap kernels
+// ===========================================================================
+
+/// Shared Gray-QAM **map** kernel: the single per-frame symbol loop turning a
+/// [`BitPackedBatch`] into a [`SymbolBatch`] via [`GrayQamMapper::map_bits`].
+///
+/// The DVB-T2 [`GrayQamMap`] stage and the 5G NR
+/// [`NrGrayQamMap`](nr_5g::NrGrayQamMap) stage are thin standard-specific
+/// constructors over this core, so the frame loop exists exactly once.
+pub(crate) struct GrayQamMapCore {
+    mapper: GrayQamMapper<f32>,
+    bits_per_symbol: usize,
+}
+
+impl GrayQamMapCore {
+    /// Builds the map core for a Gray square-QAM constellation of
+    /// `2^bits_per_symbol` points.
+    pub(crate) fn new(bits_per_symbol: usize) -> Self {
+        Self {
+            mapper: GrayQamMapper::from_preset_order(1usize << bits_per_symbol),
+            bits_per_symbol,
+        }
+    }
+
+    /// Maps every frame's bits to I/Q symbol lanes (the shared frame loop).
+    ///
+    /// Each input frame's bit count must be a multiple of `bits_per_symbol`;
+    /// each output frame has `bits / bits_per_symbol` symbols.
+    pub(crate) fn map_batch(&self, input: &BitPackedBatch) -> SymbolBatch {
+        let mut i_lanes = Vec::with_capacity(input.frames.len());
+        let mut q_lanes = Vec::with_capacity(input.frames.len());
+        for frame in &input.frames {
+            let num_symbols = frame.len() / self.bits_per_symbol;
+            let bits: Vec<bool> = (0..frame.len()).map(|b| frame.get(b)).collect();
+            let mut out_i = vec![0.0_f32; num_symbols];
+            let mut out_q = vec![0.0_f32; num_symbols];
+            self.mapper.map_bits(&bits, &mut out_i, &mut out_q);
+            i_lanes.push(out_i);
+            q_lanes.push(out_q);
+        }
+        SymbolBatch::new(i_lanes, q_lanes)
+    }
+}
+
+/// Shared Gray-QAM **soft-demap** kernel: the single per-frame loop turning a
+/// [`SymbolBatch`] into an [`LlrBatch`] via [`FastGrayQamDemapper::demap_llrs`]
+/// under AWGN with a constant per-symbol noise variance (`N0 = 2 sigma^2`).
+///
+/// The DVB-T2 [`GrayQamDemap`] stage, the 5G NR
+/// [`NrGrayQamDemap`](nr_5g::NrGrayQamDemap) stage, and the hip-gated
+/// `gpu::demap::CpuGrayQamDemapper` GPU fallback are thin standard-specific
+/// constructors over this core, so the frame loop exists exactly once.
+pub(crate) struct GrayQamDemapCore {
+    demapper: FastGrayQamDemapper<f32>,
+    method: DemapMethod,
+    bits_per_symbol: usize,
+    noise_var: f32,
+}
+
+impl GrayQamDemapCore {
+    /// Builds the demap core for a Gray square-QAM constellation of
+    /// `2^bits_per_symbol` points.
+    ///
+    /// `stage_name` labels the panic diagnostic so each wrapping stage keeps
+    /// its historical message prefix.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `noise_var` is not strictly positive and finite.
+    pub(crate) fn new(
+        bits_per_symbol: usize,
+        method: DemapMethod,
+        noise_var: f32,
+        stage_name: &'static str,
+    ) -> Self {
+        assert!(
+            noise_var.is_finite() && noise_var > 0.0,
+            "{stage_name}: noise_var must be finite and > 0, got {noise_var}"
+        );
+        let spec = ModemSpec::<f32>::gray_square_qam(1usize << bits_per_symbol);
+        Self {
+            demapper: FastGrayQamDemapper::new(spec),
+            method,
+            bits_per_symbol,
+            noise_var,
+        }
+    }
+
+    /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`).
+    #[inline]
+    pub(crate) fn noise_var(&self) -> f32 {
+        self.noise_var
+    }
+
+    /// The demap method (exact log-MAP or max-log).
+    ///
+    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
+    /// wrapper, hence the feature gate (dead otherwise).
+    #[cfg(feature = "hip")]
+    #[inline]
+    pub(crate) fn method(&self) -> DemapMethod {
+        self.method
+    }
+
+    /// The bits-per-symbol (`m`) this core demaps.
+    ///
+    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
+    /// wrapper, hence the feature gate (dead otherwise).
+    #[cfg(feature = "hip")]
+    #[inline]
+    pub(crate) fn bits_per_symbol(&self) -> usize {
+        self.bits_per_symbol
+    }
+
+    /// The underlying [`FastGrayQamDemapper`] this core delegates to.
+    ///
+    /// Consumed only by the hip-gated `gpu::demap::CpuGrayQamDemapper`
+    /// wrapper (the GPU stage shares its Gray-PAM level table), hence the
+    /// feature gate (dead otherwise).
+    #[cfg(feature = "hip")]
+    #[inline]
+    pub(crate) fn demapper(&self) -> &FastGrayQamDemapper<f32> {
+        &self.demapper
+    }
+
+    /// Demaps one frame's I/Q symbols into `rx_i.len() * m` LLRs.
+    pub(crate) fn demap_frame(&self, rx_i: &[f32], rx_q: &[f32]) -> Vec<Llr> {
+        let num_symbols = rx_i.len();
+        let noise_var = vec![self.noise_var; num_symbols];
+        let mut out = vec![Llr::zero(); num_symbols * self.bits_per_symbol];
+        self.demapper.demap_llrs(
+            DemapInput {
+                rx_i,
+                rx_q,
+                gain_i: None,
+                gain_q: None,
+                noise_var: &noise_var,
+                method: self.method,
+            },
+            &mut out,
+        );
+        out
+    }
+
+    /// Demaps every frame in the batch (the shared frame loop).
+    pub(crate) fn demap_batch(&self, input: &SymbolBatch) -> LlrBatch {
+        let frames = input
+            .i
+            .iter()
+            .zip(input.q.iter())
+            .map(|(rx_i, rx_q)| self.demap_frame(rx_i, rx_q))
+            .collect();
+        LlrBatch::new(frames)
+    }
 }
 
 // ===========================================================================
@@ -318,8 +470,7 @@ impl Stage<LlrBatch, LlrBatch> for BitDeinterleave {
 /// assert_eq!(out.i[0].len(), 2);
 /// ```
 pub struct GrayQamMap {
-    mapper: GrayQamMapper<f32>,
-    bits_per_symbol: usize,
+    core: GrayQamMapCore,
 }
 
 impl GrayQamMap {
@@ -330,8 +481,7 @@ impl GrayQamMap {
     /// * `modulation` — DVB-T2 modulation order (QPSK / 16-QAM / 64-QAM).
     pub fn new(modulation: DvbT2Modulation) -> Self {
         Self {
-            mapper: GrayQamMapper::from_preset_order(qam_order(modulation)),
-            bits_per_symbol: bits_per_symbol(modulation),
+            core: GrayQamMapCore::new(bits_per_symbol(modulation)),
         }
     }
 }
@@ -345,18 +495,7 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
         input: &BitPackedBatch,
         _scratch: &mut (),
     ) -> Result<SymbolBatch, StageError> {
-        let mut i_lanes = Vec::with_capacity(input.frames.len());
-        let mut q_lanes = Vec::with_capacity(input.frames.len());
-        for frame in &input.frames {
-            let num_symbols = frame.len() / self.bits_per_symbol;
-            let bits: Vec<bool> = (0..frame.len()).map(|b| frame.get(b)).collect();
-            let mut out_i = vec![0.0_f32; num_symbols];
-            let mut out_q = vec![0.0_f32; num_symbols];
-            self.mapper.map_bits(&bits, &mut out_i, &mut out_q);
-            i_lanes.push(out_i);
-            q_lanes.push(out_q);
-        }
-        Ok(SymbolBatch::new(i_lanes, q_lanes))
+        Ok(self.core.map_batch(input))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -393,10 +532,7 @@ impl Stage<BitPackedBatch, SymbolBatch> for GrayQamMap {
 /// assert_eq!(llrs.frames[0].len(), 8);
 /// ```
 pub struct GrayQamDemap {
-    demapper: FastGrayQamDemapper<f32>,
-    method: DemapMethod,
-    bits_per_symbol: usize,
-    noise_var: f32,
+    core: GrayQamDemapCore,
 }
 
 impl GrayQamDemap {
@@ -427,16 +563,13 @@ impl GrayQamDemap {
         method: DemapMethod,
         noise_var: f32,
     ) -> Self {
-        assert!(
-            noise_var.is_finite() && noise_var > 0.0,
-            "GrayQamDemap: noise_var must be finite and > 0, got {noise_var}"
-        );
-        let spec = ModemSpec::<f32>::gray_square_qam(qam_order(modulation));
         Self {
-            demapper: FastGrayQamDemapper::new(spec),
-            method,
-            bits_per_symbol: bits_per_symbol(modulation),
-            noise_var,
+            core: GrayQamDemapCore::new(
+                bits_per_symbol(modulation),
+                method,
+                noise_var,
+                "GrayQamDemap",
+            ),
         }
     }
 
@@ -448,7 +581,7 @@ impl GrayQamDemap {
     #[inline]
     #[must_use]
     pub fn noise_var(&self) -> f32 {
-        self.noise_var
+        self.core.noise_var()
     }
 }
 
@@ -457,29 +590,7 @@ impl Stage<SymbolBatch, LlrBatch> for GrayQamDemap {
     type CpuFallback = Self;
 
     fn process(&self, input: &SymbolBatch, _scratch: &mut ()) -> Result<LlrBatch, StageError> {
-        let frames = input
-            .i
-            .iter()
-            .zip(input.q.iter())
-            .map(|(rx_i, rx_q)| {
-                let num_symbols = rx_i.len();
-                let noise_var = vec![self.noise_var; num_symbols];
-                let mut out = vec![Llr::zero(); num_symbols * self.bits_per_symbol];
-                self.demapper.demap_llrs(
-                    DemapInput {
-                        rx_i,
-                        rx_q,
-                        gain_i: None,
-                        gain_q: None,
-                        noise_var: &noise_var,
-                        method: self.method,
-                    },
-                    &mut out,
-                );
-                out
-            })
-            .collect();
-        Ok(LlrBatch::new(frames))
+        Ok(self.core.demap_batch(input))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -815,11 +926,10 @@ mod tests {
     use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 
     #[test]
-    fn test_bits_per_symbol_and_order() {
+    fn test_bits_per_symbol() {
+        assert_eq!(bits_per_symbol(DvbT2Modulation::Qpsk), 2);
         assert_eq!(bits_per_symbol(DvbT2Modulation::Qam16), 4);
         assert_eq!(bits_per_symbol(DvbT2Modulation::Qam64), 6);
-        assert_eq!(qam_order(DvbT2Modulation::Qam16), 16);
-        assert_eq!(qam_order(DvbT2Modulation::Qam64), 64);
     }
 
     #[test]
