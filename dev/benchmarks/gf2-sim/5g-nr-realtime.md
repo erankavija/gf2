@@ -237,3 +237,16 @@ real 5G NR lifted code **byte-identically** to the CPU
 Both in `crates/gf2-sim/tests/gpu_nr_5g_byte_identity.rs`. This proves the
 "same kernel parameterises both standards" contract (design §6) end-to-end on a
 real 5G NR lifted code.
+
+## Lead attestation (2026-06-12b, amended criterion)
+
+Independent lead re-measure at merged HEAD on a verified-quiet host
+(loadavg 0.69 at start, no foreign cargo/GPU load), command:
+`NR5G_BLER_BLOCKS=1000 cargo bench -p gf2-sim --features hip --bench nr_5g_realtime`.
+Same selected cell (batch=128, max_iters=20, BLER 1.0e-3 at 1000
+blocks): **17.50 ± 0.08 Mbps** over 5 reps — reproduces the worker's
+attested 17.45 ± 0.03 Mbps within noise. The `parallelism-pays` gate
+is attested PASS against the AMENDED criterion (2026-06-12b, user
+option B): the attested flat-kernel measurement is the bar; the
+original ≥ 200 Mbps is recorded above as unreachable on gfx1030
+(study `43fb19e2`).
