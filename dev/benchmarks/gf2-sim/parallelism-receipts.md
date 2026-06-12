@@ -236,7 +236,11 @@ offsets but preserves this per-frame purity, so byte-identity is unaffected.
   flips were observed.
 - **Raw artefacts:**
   - Benchmark binary: `crates/gf2-sim/src/bin/gpu_ldpc_throughput.rs`
-    (re-run: `cargo run -p gf2-sim --release --features hip --bin gpu_ldpc_throughput -- --frames 200 --repeats 5 --max-iters 50`).
+    (re-run: `cargo run -p gf2-sim --release --features hip,test-support --bin gpu_ldpc_throughput -- --frames 200 --repeats 5 --max-iters 50`;
+    `test-support` added 2026-06-12 when the bin's deterministic AWGN LLR
+    source was folded into the shared `gf2_sim::testutil::AwgnLlrSource`
+    (review F3, jit:23d3525f) — bit-identical stream, the attested numbers
+    are unchanged).
   - Byte-identity test (200 frames × 3 SNRs × 3 algorithms, gfx1030-gated, skips
     with no GPU; slow tier, ignored):
     `crates/gf2-sim/tests/gpu_ldpc_byte_identity.rs::gpu_ldpc_hard_decision_byte_identical_to_cpu`

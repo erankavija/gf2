@@ -57,6 +57,10 @@ mod imp {
     const FULL_FRAME_1T_BASELINE_FPS: f64 = 1.6216;
 
     /// Deterministic signed-unit f32 stream (SplitMix64 → [-1.5, 1.5)).
+    ///
+    /// NOT a copy of `gf2_sim::testutil::AwgnLlrSource` (review F3): a uniform
+    /// IQ symbol filler (no Box-Muller, no LLR) — a different generator
+    /// contract.
     fn fill_iq(state: &mut u64, n: usize) -> (Vec<f32>, Vec<f32>) {
         let mut next = || {
             *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);

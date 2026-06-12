@@ -73,6 +73,10 @@ mod hip_bench {
     use gf2_core::BitVec;
     use gf2_kernels_hip::host::device_mem_info;
     use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+    // The deterministic SplitMix64 + Box-Muller AWGN LLR source is the shared
+    // `testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) — the same
+    // generator the byte-identity tests draw from.
+    use gf2_sim::testutil::AwgnLlrSource;
     use gf2_sim::LlrBatch;
 
     /// The headline message length `k = 22 * 384` (BG1, Z = 384).
@@ -82,53 +86,6 @@ mod hip_bench {
 
     const BATCH_SIZES: [usize; 5] = [64, 128, 256, 512, 1024];
     const MAX_ITERS: [usize; 4] = [10, 15, 20, 25];
-
-    /// Deterministic SplitMix64 + Box-Muller AWGN LLR source over a transmitted
-    /// codeword (identical math to the byte-identity test's source).
-    struct LlrSource {
-        state: u64,
-    }
-
-    impl LlrSource {
-        fn new(seed: u64) -> Self {
-            Self { state: seed }
-        }
-
-        fn next_u64(&mut self) -> u64 {
-            self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-            let mut z = self.state;
-            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-            z ^ (z >> 31)
-        }
-
-        fn next_uniform(&mut self) -> f64 {
-            (self.next_u64() >> 11) as f64 * (1.0 / 9007199254740992.0)
-        }
-
-        fn next_normal(&mut self) -> f64 {
-            let mut u1 = self.next_uniform();
-            let u2 = self.next_uniform();
-            if u1 < 1e-15 {
-                u1 = 1e-15;
-            }
-            let r = (-2.0 * u1.ln()).sqrt();
-            r * (std::f64::consts::TAU * u2).cos()
-        }
-
-        /// One frame of channel LLRs over codeword `cw` at noise std `sigma`.
-        fn frame(&mut self, cw: &BitVec, sigma: f64) -> Vec<Llr> {
-            let n0 = 2.0 * sigma * sigma;
-            (0..cw.len())
-                .map(|i| {
-                    let s = if cw.get(i) { -1.0 } else { 1.0 };
-                    let noise = self.next_normal() * sigma;
-                    let r = s + noise;
-                    Llr::new((2.0 * r / n0) as f32)
-                })
-                .collect()
-        }
-    }
 
     /// Per-bit BPSK Es/N0 (dB) → noise std sigma: `sigma = 1/sqrt(2*10^(dB/10))`.
     fn sigma_for_es_n0_db(es_n0_db: f64) -> f64 {
@@ -305,12 +262,14 @@ mod hip_bench {
         batch: usize,
         blocks: usize,
     ) -> f64 {
-        let mut src = LlrSource::new(0x23D3_525F_B1E2_0000 ^ (batch as u64));
+        let mut src = AwgnLlrSource::new(0x23D3_525F_B1E2_0000 ^ (batch as u64));
         let mut errors = 0usize;
         let mut seen = 0usize;
         while seen < blocks {
             let this = batch.min(blocks - seen);
-            let frames: Vec<Vec<Llr>> = (0..this).map(|_| src.frame(cw, sigma)).collect();
+            let frames: Vec<Vec<Llr>> = (0..this)
+                .map(|_| src.frame_for_codeword(cw, sigma))
+                .collect();
             let out = dec
                 .decode_batch(&LlrBatch::new(frames), decoder)
                 .expect("gpu nr decode batch (bler)");
@@ -345,7 +304,7 @@ mod hip_bench {
         batch: usize,
         blocks: usize,
     ) -> f64 {
-        let mut src = LlrSource::new(0x23D3_525F_7373_0000 ^ (batch as u64));
+        let mut src = AwgnLlrSource::new(0x23D3_525F_7373_0000 ^ (batch as u64));
         // Pre-generate AND rate-match-map every batch to the full mother-code
         // LLR length, OUTSIDE the timed region: the device decode is what the
         // decode-rate target measures.
@@ -355,7 +314,7 @@ mod hip_bench {
             let this = batch.min(blocks - seen);
             let full: Vec<Vec<Llr>> = (0..this)
                 .map(|_| {
-                    let channel = src.frame(cw, sigma);
+                    let channel = src.frame_for_codeword(cw, sigma);
                     dec.prepare_llrs(&channel)
                 })
                 .collect();
