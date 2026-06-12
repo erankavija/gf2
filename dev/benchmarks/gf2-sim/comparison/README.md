@@ -133,7 +133,10 @@ bash dev/benchmarks/gf2-sim/comparison/run.sh --quick
 ```
 
 The first invocation hermetically builds aff3ct v4.4.0 (~10–20 min, once);
-subsequent runs reuse `.aff3ct-build/build/bin/aff3ct`.
+subsequent runs reuse `.aff3ct-build/build/bin/aff3ct`. The **full** run writes
+the committed deliverables (CSVs + PNGs) directly into this directory; the
+**`--quick`** smoke run writes its low-resolution outputs under
+`scratch/quick/` and never touches the committed full-resolution files.
 
 ## Statistics
 

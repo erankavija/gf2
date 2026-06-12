@@ -51,8 +51,11 @@ if [[ "${1:-}" == "--quick" ]]; then QUICK=1; fi
 
 if [[ "$QUICK" == "1" ]]; then
   # Smoke: tiny budgets, 3 points per config (CI-friendly, seconds).
+  # Quick mode writes its (low-resolution) outputs under scratch/quick so it
+  # NEVER clobbers the committed full-resolution deliverables in $HERE.
   DVB_RANGE="-1.5:-1.0:0.25"; DVB_FRAMES=300;  DVB_ERR=30
   NR_RANGE="-4.5:-4.3:0.1";   NR_FRAMES=300;   NR_ERR=30
+  OUTDIR="$SCRATCH/quick"; mkdir -p "$OUTDIR"
 else
   # Full sweep: spans FER ~1e-1 -> ~1e-3 across the steep part of each
   # waterfall with enough frames for a stable 1e-2 estimate (>= ~200 frame
@@ -61,6 +64,8 @@ else
   #   NR BG1 Z=384 mother (rate 0.32) waterfall ~ -4.3 dB Es/N0 (very steep).
   DVB_RANGE="-1.8:-0.8:0.2";  DVB_FRAMES=12000; DVB_ERR=200
   NR_RANGE="-4.6:-4.0:0.1";   NR_FRAMES=12000;  NR_ERR=200
+  # Full mode writes the COMMITTED deliverables directly into the comparison dir.
+  OUTDIR="$HERE"
 fi
 
 mkdir -p "$SCRATCH"
@@ -208,21 +213,25 @@ export_alists
 echo ">> === DVB-T2 r1/2 (N=64800, K=32400) ==="
 run_gf2 dvb-t2-r12 "$DVB_RANGE" "$DVB_FRAMES" "$DVB_ERR" "$SCRATCH/gf2_dvb.csv"
 run_aff3ct "$SCRATCH/dvb_t2_r12.alist" 64800 32400 "$DVB_RANGE" "$DVB_ERR" "$SCRATCH/aff_dvb.csv"
-merge_csv "$SCRATCH/gf2_dvb.csv" "$SCRATCH/aff_dvb.csv" "$HERE/dvb-t2-r12-16qam-vs-aff3ct.csv"
+merge_csv "$SCRATCH/gf2_dvb.csv" "$SCRATCH/aff_dvb.csv" "$OUTDIR/dvb-t2-r12-16qam-vs-aff3ct.csv"
 
 echo ">> === 5G NR BG1 Z=384 (mother code N=26112, K=8448) ==="
 run_gf2 nr-bg1-r12 "$NR_RANGE" "$NR_FRAMES" "$NR_ERR" "$SCRATCH/gf2_nr.csv"
 run_aff3ct "$SCRATCH/nr_bg1_r12.alist" 26112 8448 "$NR_RANGE" "$NR_ERR" "$SCRATCH/aff_nr.csv"
-merge_csv "$SCRATCH/gf2_nr.csv" "$SCRATCH/aff_nr.csv" "$HERE/nr-5g-bg1-r12-vs-aff3ct.csv"
+merge_csv "$SCRATCH/gf2_nr.csv" "$SCRATCH/aff_nr.csv" "$OUTDIR/nr-5g-bg1-r12-vs-aff3ct.csv"
 
 echo ">> === Plots ==="
-python3 "$HERE/plot.py" --csv "$HERE/dvb-t2-r12-16qam-vs-aff3ct.csv" \
+python3 "$HERE/plot.py" --csv "$OUTDIR/dvb-t2-r12-16qam-vs-aff3ct.csv" \
   --title "DVB-T2 r1/2 LDPC (N=64800) vs aff3ct $AFF_TAG" \
-  --output "$HERE/dvb-t2-r12-vs-aff3ct.png"
-python3 "$HERE/plot.py" --csv "$HERE/nr-5g-bg1-r12-vs-aff3ct.csv" \
+  --output "$OUTDIR/dvb-t2-r12-vs-aff3ct.png"
+python3 "$HERE/plot.py" --csv "$OUTDIR/nr-5g-bg1-r12-vs-aff3ct.csv" \
   --title "5G NR BG1 Z=384 LDPC (N=26112) vs aff3ct $AFF_TAG" \
-  --output "$HERE/nr-5g-bg1-r12-vs-aff3ct.png"
+  --output "$OUTDIR/nr-5g-bg1-r12-vs-aff3ct.png"
 
-echo ">> Done. Committed deliverables:"
-echo "   $HERE/dvb-t2-r12-16qam-vs-aff3ct.csv  + .png"
-echo "   $HERE/nr-5g-bg1-r12-vs-aff3ct.csv     + .png"
+echo ">> Done. Outputs written under: $OUTDIR"
+echo "   dvb-t2-r12-16qam-vs-aff3ct.csv  + .png"
+echo "   nr-5g-bg1-r12-vs-aff3ct.csv     + .png"
+if [[ "$QUICK" == "1" ]]; then
+  echo ">> (--quick: low-resolution smoke outputs in scratch/quick; the committed"
+  echo ">>  full-resolution deliverables in the comparison dir were NOT touched.)"
+fi
