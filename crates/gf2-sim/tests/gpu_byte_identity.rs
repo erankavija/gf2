@@ -232,6 +232,11 @@ impl Counters {
 /// config's sweep. Both paths consume the identical message bits and identical
 /// noise samples from this stream, so the ONLY difference between paths is which
 /// device runs the demap + LDPC BP.
+///
+/// NOT a copy of `gf2_sim::testutil::AwgnLlrSource` (review F3): this is a raw
+/// u64 word stream feeding the production `dvb_t2_bicm_harness::box_muller_cos`
+/// shared-noise-realisation harness with its own §5-pinned draw order — a
+/// different generator contract, deliberately not folded.
 struct SplitMix64 {
     state: u64,
 }

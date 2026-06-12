@@ -29,61 +29,13 @@ use gf2_coding::{CodeRate, Llr};
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
 use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
+// The deterministic SplitMix64 + Box-Muller AWGN LLR source is the shared
+// `testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) — bit-identical
+// draw sequence to the original in-file copy, so the pinned per-seed LLR
+// frames (and thus the byte-identity outcomes) are unchanged.
+use gf2_sim::testutil::AwgnLlrSource;
 use gf2_sim::LlrBatch;
 use rayon::prelude::*;
-
-/// A self-contained deterministic AWGN LLR source (no external rand call needed
-/// at the sample level): a SplitMix64 stream feeds a Box-Muller cosine transform
-/// to produce N(0, 1) noise, added to an all-zero-codeword BPSK signal
-/// (bit 0 → +1). The channel LLR is `2 * r / sigma^2` (the standard AWGN-BPSK
-/// LLR). Only used to manufacture varied, reproducible LLR inputs; the exact
-/// distribution is irrelevant to the byte-identity comparison (both paths see
-/// the identical LLRs).
-struct LlrSource {
-    state: u64,
-}
-
-impl LlrSource {
-    fn new(seed: u64) -> Self {
-        Self { state: seed }
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        // SplitMix64.
-        self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.state;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    fn next_uniform(&mut self) -> f64 {
-        // Top 53 bits / 2^53 ∈ [0, 1).
-        (self.next_u64() >> 11) as f64 * (1.0 / 9007199254740992.0)
-    }
-
-    fn next_normal(&mut self) -> f64 {
-        let mut u1 = self.next_uniform();
-        let u2 = self.next_uniform();
-        if u1 < 1e-15 {
-            u1 = 1e-15;
-        }
-        let r = (-2.0 * u1.ln()).sqrt();
-        r * (std::f64::consts::TAU * u2).cos()
-    }
-
-    /// One frame of channel LLRs for the all-zero codeword at noise std `sigma`.
-    fn frame(&mut self, n: usize, sigma: f64) -> Vec<Llr> {
-        let n0 = 2.0 * sigma * sigma; // N0 = 2 sigma^2
-        (0..n)
-            .map(|_| {
-                let noise = self.next_normal() * sigma;
-                let r = 1.0 + noise; // BPSK: bit 0 -> +1, plus noise
-                Llr::new((2.0 * r / n0) as f32)
-            })
-            .collect()
-    }
-}
 
 /// A stable small tag per algorithm for seeding (so each algorithm's frame
 /// population is distinct and reproducible).
@@ -138,8 +90,10 @@ fn gpu_ldpc_hard_decision_byte_identical_to_cpu() {
             let seed = 0xA930_BE7F_0000_0000
                 ^ ((algorithm_tag(algorithm) as u64) << 32)
                 ^ (snr_idx as u64);
-            let mut src = LlrSource::new(seed);
-            let frames: Vec<Vec<Llr>> = (0..frames_per_snr).map(|_| src.frame(n, sigma)).collect();
+            let mut src = AwgnLlrSource::new(seed);
+            let frames: Vec<Vec<Llr>> = (0..frames_per_snr)
+                .map(|_| src.frame_all_zero(n, sigma))
+                .collect();
 
             // CPU reference: full n-bit hard-decision codeword per frame, run
             // across the rayon pool (each frame's outcome is a deterministic pure

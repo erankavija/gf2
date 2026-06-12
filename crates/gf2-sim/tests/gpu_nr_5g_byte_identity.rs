@@ -35,61 +35,15 @@ use gf2_coding::Llr;
 use gf2_core::BitVec;
 use gf2_kernels_hip::host::device_mem_info;
 use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+// The deterministic SplitMix64 + Box-Muller AWGN LLR source over the
+// transmitted codeword is the shared `testutil::AwgnLlrSource` (SSOT; review
+// F3, jit:23d3525f) — bit-identical draw sequence to the original in-file
+// copy, so the pinned per-seed LLR frames are unchanged. Both decode arms see
+// the identical LLRs, so the exact distribution is irrelevant to the
+// byte-identity comparison — only that the inputs are varied and reproducible.
+use gf2_sim::testutil::AwgnLlrSource;
 use gf2_sim::LlrBatch;
 use std::sync::Arc;
-
-/// A self-contained deterministic AWGN LLR source over the **transmitted**
-/// 5G NR codeword (cribbed from `gpu_ldpc_byte_identity.rs`'s `LlrSource`): a
-/// SplitMix64 stream drives a Box-Muller cosine transform for N(0, 1) noise,
-/// added to a BPSK-mapped codeword (bit b -> 1 - 2b). The channel LLR is
-/// `2 * r / N0`. Both paths see the **identical** LLRs, so the exact
-/// distribution is irrelevant to the byte-identity comparison — only that the
-/// inputs are varied and reproducible.
-struct LlrSource {
-    state: u64,
-}
-
-impl LlrSource {
-    fn new(seed: u64) -> Self {
-        Self { state: seed }
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.state;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    fn next_uniform(&mut self) -> f64 {
-        (self.next_u64() >> 11) as f64 * (1.0 / 9007199254740992.0)
-    }
-
-    fn next_normal(&mut self) -> f64 {
-        let mut u1 = self.next_uniform();
-        let u2 = self.next_uniform();
-        if u1 < 1e-15 {
-            u1 = 1e-15;
-        }
-        let r = (-2.0 * u1.ln()).sqrt();
-        r * (std::f64::consts::TAU * u2).cos()
-    }
-
-    /// One frame of channel LLRs over a transmitted codeword `cw` at noise std
-    /// `sigma`. BPSK: bit b -> 1 - 2b (+1 for 0, -1 for 1).
-    fn frame(&mut self, cw: &BitVec, sigma: f64) -> Vec<Llr> {
-        let n0 = 2.0 * sigma * sigma;
-        (0..cw.len())
-            .map(|i| {
-                let s = if cw.get(i) { -1.0 } else { 1.0 };
-                let noise = self.next_normal() * sigma;
-                let r = s + noise;
-                Llr::new((2.0 * r / n0) as f32)
-            })
-            .collect()
-    }
-}
 
 /// Compares the GPU and CPU recovered messages for a batch of channel-LLR
 /// frames, panicking on the first differing bit (a decision-boundary flip — the
@@ -156,9 +110,9 @@ fn gpu_nr_5g_smoke_byte_identical_to_cpu() {
     }
     let cw = code.encode(&msg);
 
-    let mut src = LlrSource::new(0x23D3_525F_0050_0E5E);
+    let mut src = AwgnLlrSource::new(0x23D3_525F_0050_0E5E);
     let frames: Vec<Vec<Llr>> = (0..frames_per_batch)
-        .map(|_| src.frame(&cw, 0.70))
+        .map(|_| src.frame_for_codeword(&cw, 0.70))
         .collect();
 
     assert_batch_byte_identical(&dec, &decoder, &frames, "BG2 n=256 k=121 NMS");
@@ -214,8 +168,10 @@ fn gpu_nr_5g_bg1_z384_r12_byte_identical_to_cpu() {
     let sigmas = [0.88_f64, 0.78, 0.68];
     for (snr_idx, &sigma) in sigmas.iter().enumerate() {
         let seed = 0x23D3_525F_0000_0000 ^ (snr_idx as u64);
-        let mut src = LlrSource::new(seed);
-        let frames: Vec<Vec<Llr>> = (0..frames_per_snr).map(|_| src.frame(&cw, sigma)).collect();
+        let mut src = AwgnLlrSource::new(seed);
+        let frames: Vec<Vec<Llr>> = (0..frames_per_snr)
+            .map(|_| src.frame_for_codeword(&cw, sigma))
+            .collect();
         assert_batch_byte_identical(
             &dec,
             &decoder,

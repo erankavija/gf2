@@ -53,6 +53,14 @@ pub mod presets;
 pub mod stage;
 pub mod stages;
 
+/// Test/bench-only deterministic generators (the shared AWGN channel-LLR
+/// source) exposed for integration tests and benches via the `test-support`
+/// feature. Also compiled under `cfg(test)` for internal unit tests; the dual
+/// gate mirrors the `gf2-algebra::testutil` / `gf2-core::test-support`
+/// workspace pattern.
+#[cfg(any(test, feature = "test-support"))]
+pub mod testutil;
+
 #[doc(inline)]
 pub use batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 #[doc(inline)]
