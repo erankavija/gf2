@@ -531,3 +531,40 @@ parallel, checkpoint, LDPC/BCH decoders) for the global subscriber to
 activate — the observer adds one atomic fetch_add per frame. The
 attested figure remains the verified-quiet 16.79 fps; the cross-epic
 production sweep (e4849f07) re-baselines on its own host anyway.
+
+## 23d3525f — 5G NR LDPC GPU real-time decode-rate tuning
+
+- **Task:** tune the flat GPU LDPC BP kernel (reused **unchanged** from
+  `a930be7f`, parameterised for 5G NR by the host-side `GpuNr5gDecoder`)
+  to a decoded transport-block throughput target on gfx1030.
+- **Concrete target (user-approved):** BG1, `i_LS` = 1 (Z = 384), rate
+  1/2, BLER ≤ 1e-2, **≥ 200 Mbps** decoded TB throughput.
+- **Full sweep, operating point, hardware, and 5-rep mean ± σ:**
+  [`./5g-nr-realtime.md`](./5g-nr-realtime.md).
+- **Sweep:** `batch ∈ {64,128,256,512,1024}` × `max_iters ∈
+  {10,15,20,25}`, calibrated to Es/N0 = −1.4 dB (BLER ≤ 1e-2 waterfall),
+  NormalizedMinSum(0.75) + early termination.
+- **Selected cell** (highest throughput at BLER ≤ 1e-2): batch = 128,
+  max_iters = 20, BLER = 0.00067, **throughput = 17.45 ± 0.03 Mbps**
+  (5 reps; σ = 0.03 Mbps, host load 0.63).
+- **`parallelism-pays` verdict: BELOW TARGET (escalation).** 17.45 Mbps
+  is ~11.5× below the 200 Mbps concrete target. After genuine tuning of
+  every exposed lever (batch, iters, algorithm NMS/MinSum, early
+  termination on/off — kernel source unchanged per the task), the
+  measured ceiling is ~17–20 Mbps: the NR rate-matched decoder runs BP
+  on the FULL mother code (full_n = 26112, m = 17664), and the flat
+  kernel is iteration-compute/bandwidth-bound and already saturated at
+  batch ≈ 128 (larger batch is flat-to-slower). Consistent with the
+  `a930be7f` anchor (639.10 fps at n=64800/50-iter scales to ~2–4k fps
+  here; observed ~2066 fps). Closing the gap needs a **kernel** change
+  (layered BP, fp16/packed LLRs, QC-aware coalesced layout) — out of
+  scope. The gate is **not weakened**; the lead escalates per
+  `feedback_quality_gates` (approve a follow-up kernel-opt issue, or
+  amend the target to the achievable rate). Numbers recorded verbatim.
+- **Correctness (byte-identity) — PASS, independent of throughput:** the
+  host-side base+per-`i_LS`-shift → flat-`LdpcGraphLayout` builder
+  (deferred from `a930be7f`) reuses the existing `GpuLdpcBp` flattener
+  (no second expansion) and the existing flat kernel decodes the
+  canonical BG1 i_LS=1 Z=384 r1/2 lifted code **bit-for-bit** vs the CPU
+  `Nr5gRateMatchedDecoder` — `gpu_nr_5g_byte_identity.rs` (smoke 0.08 s
+  + 600-frame slow leg 56.7 s).
