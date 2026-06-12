@@ -18,17 +18,17 @@
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-06-12T11:03:48.545726601Z"
+      "updated_at": "2026-06-12T11:51:38.301291355Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T11:52:11.259503124Z"
     },
     "parallelism-pays": {
       "status": "passed",
       "updated_by": null,
       "updated_at": "2026-06-12T11:03:48.537827309Z"
-    },
-    "code-review": {
-      "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-12T11:04:21.987337619Z"
     }
   },
   "context": {},
@@ -40,5 +40,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:05:07.853331510+00:00",
-  "updated_at": "2026-06-12T11:15:30.703029150+00:00"
+  "updated_at": "2026-06-12T11:53:47.422273006+00:00"
 }
