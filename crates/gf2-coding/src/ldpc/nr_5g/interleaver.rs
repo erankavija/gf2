@@ -85,7 +85,7 @@ use gf2_core::BitVec;
 pub fn output_interleaver(e_len: usize, q_m: usize) -> Vec<usize> {
     assert!(q_m != 0, "modulation order Q_m must be non-zero");
     assert!(
-        e_len % q_m == 0,
+        e_len.is_multiple_of(q_m),
         "rate-matched length E = {e_len} must be a multiple of Q_m = {q_m}"
     );
     let cols = e_len / q_m;

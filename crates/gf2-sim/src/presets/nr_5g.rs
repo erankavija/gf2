@@ -817,7 +817,7 @@ impl Builder<Ready> {
         //     (the same philosophy as Chain::build re-checking edges connect()
         //     already validated), and a future change to the E derivation must
         //     not be able to hand the interleaver a non-rectangular length.
-        if target_n % q_m != 0 {
+        if !target_n.is_multiple_of(q_m) {
             return Err(BuildError::InvalidNr5gParams {
                 reason: format!(
                     "codeword length E = {target_n} (BG{} Z = {z} rate {}) is not \
