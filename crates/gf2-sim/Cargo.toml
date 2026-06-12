@@ -29,11 +29,33 @@ proptest = { workspace = true }
 trybuild = { workspace = true }
 rayon = "1"
 serde_json = "1.0" # for tracing.jsonl JSON validation in campaign_cli_flags tests
+# Self-dev-dependency exposing the `test-support` feature so integration
+# tests and benches can use `gf2_sim::testutil::AwgnLlrSource` — the SSOT
+# for the deterministic SplitMix64 + Box-Muller AWGN channel-LLR source
+# (review F3, jit:23d3525f). Mirrors the `gf2-algebra` pattern (see
+# `crates/gf2-algebra/Cargo.toml`).
+gf2-sim = { path = ".", features = ["test-support"] }
 
 [features]
 default = []
 hip = ["dep:gf2-kernels-hip"]
 llr-f64 = ["gf2-coding/llr-f64"]
+
+# Exposes the canonical test/bench-only deterministic AWGN channel-LLR source
+# (`testutil::AwgnLlrSource`) to integration tests, benches, and the GPU
+# throughput bins. Off by default; auto-enabled for this crate's own tests and
+# benches via the self-dev-dependency above. Mirrors `gf2-algebra`'s
+# `test-support`.
+test-support = []
+
+# GPU LDPC decode-stage throughput bin (issue a930be7f receipt). A normal
+# (non-dev) target, so the self-dev-dependency does NOT auto-enable
+# `test-support` for it — it must be requested explicitly:
+#   cargo run -p gf2-sim --release --features hip,test-support \
+#       --bin gpu_ldpc_throughput -- ...
+[[bin]]
+name = "gpu_ldpc_throughput"
+required-features = ["test-support"]
 
 # 5G NR LDPC GPU real-time decode-rate tuning sweep (issue 23d3525f). Custom
 # main (harness = false): a BLER + decoded-throughput cell sweep, not a
