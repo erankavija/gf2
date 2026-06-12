@@ -180,6 +180,158 @@ pub(crate) fn reduce_shifts(table: &[impl AsRef<[i16]>], z: usize) -> Vec<Vec<i3
         .collect()
 }
 
+/// Returns the `K_b` value used for lifting-size selection per 3GPP TS 38.212
+/// Section 5.2.2.
+///
+/// For BG1, `K_b = 22` always. For BG2, `K_b` depends on the input block size
+/// `B` (= `target_k` here): `10` for `B > 640`, `9` for `560 < B <= 640`,
+/// `8` for `192 < B <= 560`, and `6` for `B <= 192`. The standard selects a
+/// larger lifting size (and thus a larger mother code) for small information
+/// blocks. This is the single source of truth consumed by both
+/// [`QuasiCyclicLdpc::nr_5g_rate_matched`]'s Z-selection and
+/// [`max_payload_for_lifting`].
+///
+/// # Arguments
+///
+/// * `base_graph` - Base graph number: 1 or 2
+/// * `target_k` - Information block size `B`
+///
+/// # Panics
+///
+/// Panics if `base_graph` is not 1 or 2.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::nr_5g::kb_for_z_selection;
+///
+/// assert_eq!(kb_for_z_selection(1, 100), 22); // BG1: constant
+/// assert_eq!(kb_for_z_selection(2, 700), 10);
+/// assert_eq!(kb_for_z_selection(2, 600), 9);
+/// assert_eq!(kb_for_z_selection(2, 300), 8);
+/// assert_eq!(kb_for_z_selection(2, 100), 6);
+/// ```
+///
+/// # Complexity
+///
+/// O(1).
+pub fn kb_for_z_selection(base_graph: u8, target_k: usize) -> usize {
+    assert!(
+        base_graph == 1 || base_graph == 2,
+        "base_graph must be 1 or 2, got {base_graph}"
+    );
+    match base_graph {
+        1 => bg1::BG1_KB,
+        2 => {
+            if target_k > 640 {
+                10
+            } else if target_k > 560 {
+                9
+            } else if target_k > 192 {
+                8
+            } else {
+                6
+            }
+        }
+        _ => unreachable!(),
+    }
+}
+
+/// Returns the largest message length `target_k` for which
+/// [`QuasiCyclicLdpc::nr_5g_rate_matched`] selects **exactly** the lifting
+/// size `z`.
+///
+/// The TS 38.212 §5.2.2 Z-selection picks the smallest valid `Z` with
+/// `K_b' * Z >= target_k`, where `K_b' = `[`kb_for_z_selection`]`(bg, target_k)`
+/// depends on `target_k` itself for BG2. Consequently the naive full payload
+/// `K_b * Z` does **not** always select `Z` back (e.g. BG2 with `Z = 52`:
+/// `target_k = 520 <= 640` gives `K_b' = 9`, whose smallest satisfying lifting
+/// size is 72, not 52). This function resolves that fixed point: it returns
+/// `K_b' * z` for the largest `K_b'` candidate that is self-consistent — i.e.
+/// `kb_for_z_selection(bg, K_b' * z) == K_b'` — so a rate-matched code built
+/// with this payload uses exactly the requested `z`. A self-consistent
+/// candidate exists for every valid lifting size of both base graphs (BG1 is
+/// trivially `22 * z`; BG2 resolves to one of `{10, 9, 8, 6} * z`).
+///
+/// Consumers (e.g. the `gf2-sim` 5G NR pipeline preset) use this to express a
+/// code in `(base graph, lifting size, rate)` form: `target_k` from this
+/// function, `target_n` from the rate.
+///
+/// The exact-`z` guarantee additionally requires `target_n` to satisfy the
+/// Z-selection's transmission-budget criterion
+/// `target_k + (N_b - K_b - 2) * z >= target_n` (else a larger lifting size is
+/// selected). Every code rate `>= 1/3` satisfies it for both base graphs, so
+/// the guarantee holds throughout the TS 38.212 operating region.
+///
+/// # Arguments
+///
+/// * `base_graph` - Base graph number: 1 or 2
+/// * `z` - The lifting size the rate-matched code must use. Must be a valid
+///   5G NR lifting size per TS 38.212 Table 5.3.2-1.
+///
+/// # Returns
+///
+/// The largest `target_k` realising exactly `z`.
+///
+/// # Panics
+///
+/// Panics if `base_graph` is not 1 or 2, or if `z` is not a valid 5G NR
+/// lifting size.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::nr_5g::max_payload_for_lifting;
+/// use gf2_coding::ldpc::QuasiCyclicLdpc;
+///
+/// // BG1: always the full 22 * Z systematic payload.
+/// assert_eq!(max_payload_for_lifting(1, 384), 22 * 384);
+///
+/// // BG2, Z = 52: the full 10 * 52 = 520 payload would select Z = 72
+/// // (kb_for_z = 9 for 520 <= 640); the largest self-consistent payload
+/// // is 8 * 52 = 416.
+/// assert_eq!(max_payload_for_lifting(2, 52), 416);
+/// let rm = QuasiCyclicLdpc::nr_5g_rate_matched(2, 832, 416);
+/// assert_eq!(rm.params().lifting_factor, 52);
+/// ```
+///
+/// # Complexity
+///
+/// O(1) (at most four candidate checks).
+pub fn max_payload_for_lifting(base_graph: u8, z: usize) -> usize {
+    assert!(
+        base_graph == 1 || base_graph == 2,
+        "base_graph must be 1 or 2, got {base_graph}"
+    );
+    assert!(
+        is_valid_lifting_size(z as u16),
+        "Z={z} is not a valid 5G NR lifting size"
+    );
+    // Candidate K_b' values in descending order: BG1 has the constant 22; BG2
+    // has the §5.2.2 bands {10, 9, 8, 6}. The first self-consistent candidate
+    // yields the largest payload (payload is monotone in K_b').
+    let candidates: &[usize] = match base_graph {
+        1 => &[bg1::BG1_KB],
+        2 => &[10, 9, 8, 6],
+        _ => unreachable!(),
+    };
+    candidates
+        .iter()
+        .copied()
+        // Self-consistency: the §5.2.2 band the payload `kb * z` lands in must
+        // be the very K_b' that produced it. Then the Z-selection's constraint
+        // `K_b' * Z >= target_k` is tight at Z = z (and fails for every smaller
+        // valid lifting size), so the selection lands on exactly z.
+        .find(|&kb| kb_for_z_selection(base_graph, kb * z) == kb)
+        .map(|kb| kb * z)
+        .unwrap_or_else(|| {
+            // Unreachable for any valid lifting size: the BG2 bands cover
+            // every Z in Table 5.3.2-1 (kb=10 for Z >= 72, kb=9 for Z = 64,
+            // kb=8 for 26 <= Z <= 60, kb=6 for Z <= 24); BG1 is constant.
+            panic!("no self-consistent K_b for BG{base_graph} Z={z}")
+        })
+}
+
 use super::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder, QuasiCyclicLdpc};
 use crate::llr::Llr;
 use crate::traits::{DecoderResult, IterativeSoftDecoder, SoftDecoder};
@@ -332,21 +484,7 @@ impl QuasiCyclicLdpc {
         // (the input block size) for BG2. This selects a larger Z (and thus
         // a larger mother code) for small information blocks, matching the
         // standard's intended code structure.
-        let kb_for_z = match base_graph {
-            1 => bg1::BG1_KB,
-            2 => {
-                if target_k > 640 {
-                    10
-                } else if target_k > 560 {
-                    9
-                } else if target_k > 192 {
-                    8
-                } else {
-                    6
-                }
-            }
-            _ => unreachable!(),
-        };
+        let kb_for_z = kb_for_z_selection(base_graph, target_k);
 
         // Step 1: Find the smallest valid Z such that:
         //   (a) kb_for_z * Z >= target_k  (3GPP Z selection criterion)
@@ -1718,6 +1856,97 @@ mod tests {
         assert_eq!(params.num_punctured_systematic, 320); // 2 * 160
         assert_eq!(params.active_systematic_bits(), 2929); // 3520 - 271 - 320
         assert_eq!(params.transmitted_parity_bits(), 1167);
+    }
+
+    // ========================================================================
+    // max_payload_for_lifting: exact-Z realization
+    // ========================================================================
+
+    #[test]
+    fn test_kb_for_z_selection_bands() {
+        // BG1: constant 22 regardless of block size.
+        for k in [1usize, 192, 193, 560, 561, 640, 641, 8448] {
+            assert_eq!(kb_for_z_selection(1, k), 22, "BG1 K_b' at k={k}");
+        }
+        // BG2: the §5.2.2 bands with exact boundary semantics (>, not >=).
+        assert_eq!(kb_for_z_selection(2, 641), 10);
+        assert_eq!(kb_for_z_selection(2, 640), 9);
+        assert_eq!(kb_for_z_selection(2, 561), 9);
+        assert_eq!(kb_for_z_selection(2, 560), 8);
+        assert_eq!(kb_for_z_selection(2, 193), 8);
+        assert_eq!(kb_for_z_selection(2, 192), 6);
+        assert_eq!(kb_for_z_selection(2, 1), 6);
+    }
+
+    #[test]
+    fn test_max_payload_self_consistent_for_all_z_both_bgs() {
+        // For every valid lifting size and both base graphs, the returned
+        // payload's own K_b' band must reproduce the K_b' that built it (the
+        // fixed point that makes the Z-selection land on exactly z).
+        for bg in [1u8, 2] {
+            for z in all_lifting_sizes() {
+                let z = z as usize;
+                let payload = max_payload_for_lifting(bg, z);
+                let kb = payload / z;
+                assert_eq!(payload % z, 0, "BG{bg} Z={z}: payload {payload} not kb*z");
+                assert_eq!(
+                    kb_for_z_selection(bg, payload),
+                    kb,
+                    "BG{bg} Z={z}: payload {payload} is not self-consistent"
+                );
+            }
+        }
+    }
+
+    /// Constructs rate-1/2 rate-matched codes at representative lifting sizes
+    /// spanning every BG2 K_b' band (6 / 8 / 9 / 10) plus BG1, and asserts the
+    /// realized lifting factor is exactly the requested one. Small Z keeps
+    /// construction fast-tier; the all-Z sweep is the slow-tier test below.
+    #[test]
+    fn test_max_payload_realizes_exact_z_representatives() {
+        let cases: &[(u8, usize)] = &[
+            (1, 2),
+            (1, 16),
+            (1, 52),
+            (2, 2),
+            (2, 15),
+            (2, 24),  // kb=6 upper boundary
+            (2, 26),  // kb=8 lower boundary
+            (2, 52),  // the band-mismatch example from the docs
+            (2, 60),  // kb=8 upper boundary
+            (2, 64),  // the sole kb=9 size
+            (2, 72),  // kb=10 lower boundary
+            (2, 104), // kb=10 interior
+        ];
+        for &(bg, z) in cases {
+            let k = max_payload_for_lifting(bg, z);
+            let rm = QuasiCyclicLdpc::nr_5g_rate_matched(bg, 2 * k, k);
+            assert_eq!(
+                rm.params().lifting_factor,
+                z,
+                "BG{bg} Z={z}: rate-1/2 code with payload {k} must realize exactly Z"
+            );
+        }
+    }
+
+    /// All-Z exact-realization sweep (both BGs, rate 1/2). Construction of the
+    /// large-Z mother codes (RREF on up to 26112 columns) takes seconds, so
+    /// this is slow-tier; the representative subset above runs in the fast tier.
+    #[test]
+    #[ignore = "slow: constructs rate-matched codes for all 51 lifting sizes x both BGs"]
+    fn test_max_payload_realizes_exact_z_all() {
+        for bg in [1u8, 2] {
+            for z in all_lifting_sizes() {
+                let z = z as usize;
+                let k = max_payload_for_lifting(bg, z);
+                let rm = QuasiCyclicLdpc::nr_5g_rate_matched(bg, 2 * k, k);
+                assert_eq!(
+                    rm.params().lifting_factor,
+                    z,
+                    "BG{bg} Z={z}: payload {k} must realize exactly Z"
+                );
+            }
+        }
     }
 
     // ========================================================================
