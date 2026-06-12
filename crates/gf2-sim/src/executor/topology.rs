@@ -826,7 +826,7 @@ enum WaveInput {
     Merged(Box<dyn TypedBatch>),
 }
 
-/// The DAG topology executor (see the [module docs](self)).
+/// The DAG topology executor (see the [executor module docs](crate::executor)).
 ///
 /// A unit type whose associated functions consume a built [`Pipeline`] plus
 /// the [`Scheduler`] that owns the rayon worker pool (and, under `hip`, the
@@ -974,7 +974,7 @@ impl TopologyExecutor {
     /// once its last consumer has run (reference counting on the intermediate
     /// buffer). Every stage executes via its [`AnyStage`] object, routed by
     /// [`execution_class()`](AnyStage::execution_class) (see the
-    /// [module docs](self)).
+    /// [executor module docs](crate::executor)).
     ///
     /// # Arguments
     ///
@@ -1231,7 +1231,7 @@ impl TopologyExecutor {
     ///
     /// `O(max_frames)` frame chains across the workers. NOTE the chain's
     /// shared codec serialises LDPC decodes on its internal lock (see the
-    /// [module docs](self)); this is the correctness surface, not the
+    /// [executor module docs](crate::executor)); this is the correctness surface, not the
     /// campaign throughput path.
     ///
     /// # Examples

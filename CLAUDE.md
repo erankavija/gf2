@@ -278,6 +278,39 @@ The CPU-only/parallel contract is regression-guarded by two complementary slow-t
 
 Beyond the standard `cargo-ci` / `code-review` / `tests` gates, the `gf2-sim` epic carries an extra **`parallelism-pays`** quality gate on its perf-bearing tasks (the within-SNR parallel executor `3fcb7025`, the GPU stages, and the hybrid executor). It is an **attested throughput receipt**, not an automatic check: each gated task must record a speedup receipt in `dev/benchmarks/gf2-sim/parallelism-receipts.md` (schema in `dev/active/f9717e7e-project-plan.md` §5) reporting both the single-thread CPU baseline (from `c0b1702d`, ~1.6216 fps) **and** the CPU-24-thread baseline (from `3fcb7025`), and meeting the task's `[hard]` threshold (e.g. ≥12× single-thread for `3fcb7025`; GPU LDPC BP additionally ≥3× the 24-thread CPU baseline). **Throughput must be measured on a verified-quiet machine** (`cat /proc/loadavg` ≈ 0, no `bg3`/foreign `cargo`/`rustc`) — external CPU load understates throughput and invalidates the receipt (and would flake the 5 s-per-test fast tier). The gate is never removed to make a task pass; a failure that does not yield to standard optimisation escalates per `feedback_quality_gates`.
 
+### 5G NR LDPC preset (`Pipeline::nr_5g`)
+
+The 5G NR LDPC BICM preset (`crates/gf2-sim/src/presets/nr_5g.rs`, `Pipeline::nr_5g()`) is a typestate fluent builder over the graph API, the 3GPP TS 38.212 sibling of the DVB-T2 preset. Required call order: `base_graph → lifting_size → rate → decoder → demap → channel` (with an optional `lifting_set` refinement available alongside `lifting_size`); out-of-order calls are compile errors. Unlike DVB-T2's BCH+LDPC concatenation, 5G NR has **no outer code** at the LDPC layer — the chain is a single inner code over seven stages (rate-matched LDPC encode, the §5.4.2.2 bit interleaver, Gray-QAM map, AWGN, soft demap, §5.4.2.2 LLR deinterleave, rate-matched BP decode).
+
+**In-scope parameter tuples** (enforced at `build()`, returning a typed `BuildError::InvalidNr5gParams` on a violation; rate scope amended per-BG on 2026-06-12, issue `acf9b11a`):
+
+- **Base graph**: BG1 (46×68, K_b = 22) or BG2 (42×52, K_b = 10).
+- **Rate** (per the §7.2.2 operating region): **BG1 × {1/3, 1/2, 2/3, 5/6}; BG2 × {1/3, 1/2, 2/3}** — BG2 is capped at R ≤ 0.67, so BG2 + 5/6 is rejected.
+- **Lifting size** `Z`: any of the 51 values of Table 5.3.2-1; the optional `lifting_set` index (`i_LS` ∈ 0..=7) is cross-checked against `Z` at build time.
+- **Modulation**: QPSK / 16-QAM / 64-QAM / 256-QAM (`Q_m` ∈ {2, 4, 6, 8}).
+
+The message length is the largest payload realising exactly the requested `Z` (`max_payload_for_lifting`: `22·Z` for BG1, the largest self-consistent §5.2.2 band payload for BG2). The codeword length `E` is the §5.4.2.1 floor form `E = ⌊k·den/(num·Q_m)⌋·Q_m`, a `Q_m`-multiple by construction (so the §5.4.2.2 interleaver's `E mod Q_m == 0` precondition is guaranteed, never rejected). The built pipeline is driven **per-batch** by `TopologyExecutor::run` — there is no NR sweep-level `Pipeline::run` (the worked example is the `Pipeline::nr_5g` rustdoc doctest and `examples/nr_5g_quickstart.rs`).
+
+### External-library comparison harness (`dev/benchmarks/gf2-sim/comparison/`)
+
+The competitive-positioning evidence lives in `dev/benchmarks/gf2-sim/comparison/` (issue `18e69a1a`): an LDPC-only AWGN-BPSK BLER comparison of `gf2-sim` against **aff3ct v4.4.0** on the **bit-identical** parity-check matrix `H`. The `gf2-sim` sweep is the `ldpc_bler_sweep` bin; `export_alist` dumps each `H` to MacKay AList (SHA-256-checksummed in the README) which aff3ct reads via `--dec-h-path`, so both decoders operate on the same `H` over the same channel (NMS 0.75, flooding, max_iter 50, seed 42). Both bins require `--features test-support` (they share the `testutil::ComparisonCode` SSOT code selection). **Headline result**: the BLER curves agree within ±0.2 dB at FER 10⁻² — the measured gaps are **0.016 dB (DVB-T2 r1/2 Normal, N=64800)** and **0.003 dB (5G NR BG1 Z=384 mother, N=26112)**, ~10–60× inside the criterion. Driver `comparison/run.sh` (`--quick` for a CI smoke run) builds aff3ct once, exports the AList, runs both sweeps, merges the CSVs, and renders the PNG overlays via `comparison/plot.py`; full provenance and the AList checksums are in `comparison/README.md`.
+
+### Researcher onboarding (`crates/gf2-sim/examples/`)
+
+The entry point for new users is the crate landing page (`cargo doc --no-deps -p gf2-sim`, expanded in `crates/gf2-sim/src/lib.rs` with a runnable quickstart, the two-ways-to-build-a-pipeline contrast, and the worked-example index) plus the seven examples in `crates/gf2-sim/examples/` (run with `cargo run -p gf2-sim --example <name> --release`):
+
+| Example | Shows |
+|---------|-------|
+| `dvb_t2_quickstart.rs` | build a DVB-T2 pipeline via the preset, run a short sweep, print the summary |
+| `nr_5g_quickstart.rs` | the same shape for BG1 / `Z`=384 / r1/2, driven per-batch via `TopologyExecutor::run` |
+| `dvb_t2_typestate.rs` | the compile-time-checked typestate builder order (issue `8c8302c8`) |
+| `dvb_t2_graph_api.rs` | the same DVB-T2 chain hand-wired through the `Chain` graph API (issue `8c8302c8`) |
+| `novel_chain_via_graph.rs` | a non-standard chain with a **custom** `Stage` (a periodic puncturer) spliced into the graph |
+| `parallel_byte_identity.rs` | the §11 CPU byte-identity contract: same config at parallelism {1, 24}, all four columns identical |
+| `gpu_hybrid.rs` (`--features hip`) | the same chain on CPU+GPU vs CPU-only, asserting the §11 CPU-vs-GPU three-column byte-identity; skips gracefully with no device |
+
+The `gpu_hybrid` example carries `required-features = ["hip"]` in `Cargo.toml` so non-hip builds skip it cleanly; it guards on `gf2_kernels_hip::host::device_mem_info().is_err()` for graceful skip when no GPU is present.
+
 ### Key design invariants
 
 1. **Tail masking** — Padding bits beyond `len_bits` in the last `u64` word of a `BitVec` must always be zero. Every mutating operation must call `mask_tail()`. This is the most critical correctness invariant.

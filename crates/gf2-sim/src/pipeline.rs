@@ -168,7 +168,7 @@ impl Pipeline {
     ///
     /// This is the convenience entry point downstream campaign code (`bbf6b6ee`,
     /// the calibration receipt `0d9cb8e3`) calls. It constructs a [`Scheduler`]
-    /// from this pipeline's [`PipelineConfig`](crate::PipelineConfig) and drives
+    /// from this pipeline's [`PipelineConfig`] and drives
     /// it: when `gpu_enabled` is set (and the `hip` feature is built in with a
     /// usable device), the hybrid CPU+GPU overlap path runs; otherwise the
     /// CPU-only within-SNR frame-parallel path runs. The two paths agree on the
@@ -332,7 +332,7 @@ pub struct BatchHandle {
 impl BatchHandle {
     /// Constructs a handle for the given batch and SNR-point index.
     ///
-    /// Public so a caller driving the [`Scheduler`](crate::Scheduler) engine
+    /// Public so a caller driving the [`Scheduler`] engine
     /// directly (`Scheduler::run(&pipeline, handle)`) can mint the starting
     /// batch handle; the high-level [`Pipeline::run`](crate::Pipeline::run)
     /// convenience entry point mints one internally. The fields stay private so

@@ -2,11 +2,11 @@
 //!
 //! Owned by `81d05bab` (design doc §9, "Typestate builder (presets)"). This
 //! module is a **thin wrapper** over the already-landed graph
-//! [`Chain`](crate::graph::Chain): it reuses the canonical BICM stage order from
-//! [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages), inserts the AWGN
-//! [`Awgn`](crate::channels::Awgn) channel between the forward and inverse
+//! [`Chain`]: it reuses the canonical BICM stage order from
+//! [`dvb_t2_bicm_stages`], inserts the AWGN
+//! [`Awgn`] channel between the forward and inverse
 //! halves, connects the seven stages consecutively, and calls
-//! [`Chain::build`](crate::graph::Chain::build). None of the BCH / LDPC / QAM /
+//! [`Chain::build`]. None of the BCH / LDPC / QAM /
 //! interleaver math, the channel noise model, or the chain-wiring logic is
 //! re-implemented here.
 //!
@@ -539,8 +539,8 @@ impl Builder<Ready> {
     ///
     /// Assembles the seven-stage DVB-T2 BICM chain — the three forward stages
     /// and three inverse stages from
-    /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages) with the channel
-    /// stage spliced between them — into a [`Chain`](crate::graph::Chain),
+    /// [`dvb_t2_bicm_stages`] with the channel
+    /// stage spliced between them — into a [`Chain`],
     /// connects them consecutively, and returns
     /// [`Chain::build`](crate::graph::Chain::build)'s [`Pipeline`]. With
     /// [`with_gpu(true)`](Builder::with_gpu) under the `hip` feature the chain
@@ -576,7 +576,7 @@ impl Builder<Ready> {
     /// topologically sorted in constant time). The wall-clock cost is dominated by the one-off
     /// construction of the [`DvbT2Concat`](gf2_coding::ldpc::dvb_t2::concat::DvbT2Concat)
     /// codec and the LDPC encoder cache inside
-    /// [`dvb_t2_bicm_stages`](crate::stages::dvb_t2_bicm_stages), not by the
+    /// [`dvb_t2_bicm_stages`], not by the
     /// graph assembly itself.
     ///
     /// # Examples

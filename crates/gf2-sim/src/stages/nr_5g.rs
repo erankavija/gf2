@@ -13,10 +13,10 @@
 //! | Stage | Wraps | Direction |
 //! |-------|-------|-----------|
 //! | [`Nr5gEncode`] | [`Nr5gRateMatchedCode::encode`] | [`BitPackedBatch`] → [`BitPackedBatch`] |
-//! | [`Nr5gBitInterleave`] | [`interleave_bits`](gf2_coding::ldpc::nr_5g::interleaver::interleave_bits) (§5.4.2.2) | [`BitPackedBatch`] → [`BitPackedBatch`] |
-//! | [`NrGrayQamMap`] | [`GrayQamMapper::map_bits`] | [`BitPackedBatch`] → [`SymbolBatch`] |
-//! | [`NrGrayQamDemap`] | [`FastGrayQamDemapper::demap_llrs`] | [`SymbolBatch`] → [`LlrBatch`] |
-//! | [`Nr5gLlrDeinterleave`] | [`deinterleave_llrs`](gf2_coding::ldpc::nr_5g::interleaver::deinterleave_llrs) (§5.4.2.2 inverse) | [`LlrBatch`] → [`LlrBatch`] |
+//! | [`Nr5gBitInterleave`] | [`interleave_bits`] (§5.4.2.2) | [`BitPackedBatch`] → [`BitPackedBatch`] |
+//! | [`NrGrayQamMap`] | [`GrayQamMapper`](gf2_coding::modem::GrayQamMapper)`::map_bits` | [`BitPackedBatch`] → [`SymbolBatch`] |
+//! | [`NrGrayQamDemap`] | [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper)`::demap_llrs` | [`SymbolBatch`] → [`LlrBatch`] |
+//! | [`Nr5gLlrDeinterleave`] | [`deinterleave_llrs`] (§5.4.2.2 inverse) | [`LlrBatch`] → [`LlrBatch`] |
 //! | [`Nr5gDecode`] | [`Nr5gRateMatchedDecoder::decode_iterative`] | [`LlrBatch`] → [`HardDecisionBatch`] |
 //!
 //! The bit interleaver and its LLR-domain inverse are the **5G-NR-specific**
@@ -156,7 +156,7 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gEncode {
 
 /// 5G NR §5.4.2.2 bit-interleave stage: rate-matched bits → interleaved bits.
 ///
-/// Wraps [`interleave_bits`](gf2_coding::ldpc::nr_5g::interleaver::interleave_bits),
+/// Wraps [`interleave_bits`],
 /// the TS 38.212 clause 5.4.2.2 block interleaver parameterised by the
 /// modulation order `q_m`. Each frame length must be a multiple of `q_m`.
 ///
@@ -212,7 +212,7 @@ impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gBitInterleave {
 
 /// 5G NR §5.4.2.2 LLR-deinterleave stage: interleaved LLRs → rate-matched LLRs.
 ///
-/// Wraps [`deinterleave_llrs`](gf2_coding::ldpc::nr_5g::interleaver::deinterleave_llrs),
+/// Wraps [`deinterleave_llrs`],
 /// the receive-path inverse of [`Nr5gBitInterleave`] operating in the LLR
 /// domain. Each frame length must be a multiple of `q_m`.
 ///
@@ -268,7 +268,8 @@ impl Stage<LlrBatch, LlrBatch> for Nr5gLlrDeinterleave {
 
 /// Gray-QAM map stage for 5G NR: interleaved coded bits → IQ symbols.
 ///
-/// Wraps [`GrayQamMapper::map_bits`] at constellation order `2^q_m`. Unlike the
+/// Wraps [`GrayQamMapper`](gf2_coding::modem::GrayQamMapper)`::map_bits` at
+/// constellation order `2^q_m`. Unlike the
 /// DVB-T2 [`GrayQamMap`](crate::stages::GrayQamMap) (which keys off
 /// `DvbT2Modulation` and tops out at 64-QAM), this stage is parameterised by the
 /// raw NR modulation order `q_m ∈ {2, 4, 6, 8}` (QPSK / 16-QAM / 64-QAM /
@@ -327,10 +328,10 @@ impl Stage<BitPackedBatch, SymbolBatch> for NrGrayQamMap {
 
 /// Gray-QAM soft-demap stage for 5G NR: IQ symbols → soft LLRs.
 ///
-/// Wraps [`FastGrayQamDemapper::demap_llrs`] under AWGN-shaped log-MAP at
-/// constellation order `2^q_m`. Each input frame of `s` symbols produces
-/// `s * q_m` LLRs. The per-symbol total noise variance (`N0`) defaults to
-/// [`DEFAULT_DEMAP_NOISE_VAR`](crate::stages::DEFAULT_DEMAP_NOISE_VAR); set the
+/// Wraps [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper)`::demap_llrs`
+/// under AWGN-shaped log-MAP at constellation order `2^q_m`. Each input frame of
+/// `s` symbols produces `s * q_m` LLRs. The per-symbol total noise variance
+/// (`N0`) defaults to [`DEFAULT_DEMAP_NOISE_VAR`]; set the
 /// true channel `N0` via [`NrGrayQamDemap::with_noise_var`].
 ///
 /// # Examples
