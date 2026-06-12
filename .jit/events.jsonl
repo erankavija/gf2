@@ -6074,3 +6074,6 @@
 {"type":"gate_passed","id":"dbfae1e1-389b-4d40-a528-558acc2a728d","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:55:51.570120657Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"issue_state_changed","id":"2cfd2f82-d48e-4820-b666-ab0e4b6d00f9","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:56:00.879108651Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"fd65a90b-4a74-4691-8bbb-a51d220df2d8","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:56:00.879129361Z"}
+{"type":"gate_passed","id":"683f3daf-6777-4cf5-8622-38792d5cfc6a","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T11:03:48.538058359Z","gate_key":"parallelism-pays","updated_by":null}
+{"type":"gate_passed","id":"4446afc5-37d3-4fae-ab7a-bd6604991bde","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T11:04:16.398341200Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"68b98edb-bba5-460a-aa21-b8dd0e2d274b","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T11:06:15.591200171Z","gate_key":"code-review","updated_by":"auto:executor"}
