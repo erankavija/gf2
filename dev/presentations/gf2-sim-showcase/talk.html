@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>gf2-sim — research-grade CPU+GPU FEC simulation pipeline</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- reveal.js core only (no reveal theme — base.css + the theme token file own all appearance) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<!-- KaTeX (synchronous math; deterministic heights for the fit-checker) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<!-- Theme system: structure is theme-agnostic; swap the #theme link to retheme -->
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 TITLE -->
+<section class="title">
+  <h1>gf2-sim</h1>
+  <p class="tagline">A research-grade CPU+GPU FEC simulation pipeline</p>
+  <p>Epic <code>f9717e7e</code> showcase &nbsp;&middot;&nbsp; 2026-06-12</p>
+  <p class="caption">5 phases &middot; 12 sessions &middot; deterministic to the byte</p>
+</section>
+
+<!-- 2 AGENDA -->
+<section>
+  <span class="seclabel">Outline <span class="num">&middot; 2 / 18</span></span>
+  <h2>Agenda</h2>
+  <ol>
+    <li>Why a new simulation pipeline</li>
+    <li>Architecture and the two build APIs</li>
+    <li>Determinism contract (the headline guarantee)</li>
+    <li>Throughput: CPU parallelism, GPU stages, hybrid executor</li>
+    <li>Applications: DVB-T2 and 5G NR</li>
+    <li>External validation vs aff3ct</li>
+    <li>Onboarding, numbers, and what is next</li>
+  </ol>
+</section>
+
+<!-- 3 WHY -->
+<section>
+  <span class="seclabel">Motivation <span class="num">&middot; 3 / 18</span></span>
+  <h2>Why a new simulation pipeline</h2>
+  <ul>
+    <li>v1 (<code>gf2_coding::simulation</code>) is a monolithic runner: no stage graph,
+        no GPU path, per-SNR-only parallelism</li>
+    <li>Research-grade goals: <strong>reproducibility</strong> (byte-identical results
+        across worker counts and across CPU/GPU), <strong>composability</strong>
+        (novel chains without forking the harness), <strong>throughput</strong></li>
+    <li>Standards as foundation: DVB-T2 (ETSI EN 302 755) and 5G NR LDPC
+        (3GPP TS 38.212) as the two production presets</li>
+  </ul>
+  <div class="note">Design SSOT: <code>dev/active/ec530af9-pipeline-design.md</code> &mdash;
+    15 locked architecture decisions, reviewed before any code.</div>
+</section>
+
+<!-- 4 ARCHITECTURE -->
+<section>
+  <span class="seclabel">Architecture <span class="num">&middot; 4 / 18</span></span>
+  <h2>Crate layering</h2>
+<pre><code class="language-text" data-trim>gf2-core      primitives: BitVec, fields, sparse matrices
+   |
+gf2-coding    codes: BCH, LDPC, QAM, channels
+   |
+gf2-sim       Pipeline, Stage, executor, presets/, graph/
+   |  feature = "hip" (optional leaf)
+gf2-kernels-hip   HIP FFI + kernels (gfx1030 ... gfx942)</code></pre>
+  <ul>
+    <li>All <code>unsafe</code> confined to the two kernel crates;
+        <code>gf2-sim</code> is <code>#![deny(unsafe_code)]</code></li>
+    <li>Multi-arch GPU seams: name-based <code>gcnArchName</code> detection,
+        per-arch kernel blobs (gfx1030 exercised in CI)</li>
+  </ul>
+</section>
+
+<!-- 5 TWO APIS -->
+<section>
+  <span class="seclabel">Architecture <span class="num">&middot; 5 / 18</span></span>
+  <h2>Two ways to build a pipeline</h2>
+  <ul>
+    <li><strong>Typestate presets</strong> &mdash; compile-time-checked builder order;
+        wrong order is a compile error (trybuild-verified)</li>
+    <li><strong>Graph API</strong> (<code>Chain</code>) &mdash; add / connect / build with
+        topo-sort and edge type re-validation, for novel research chains</li>
+  </ul>
+<pre><code class="language-rust" data-trim>let pipeline = Pipeline::dvb_t2()
+    .modcod(Modcod::normal(CodeRate::Rate1_2, Modulation::Qam16))
+    .decoder(DecoderConfig::new(SumProduct, true))
+    .demap(DemapMethod::ExactLogMap)
+    .channel(Channel::awgn(es_n0_db))
+    .build()?;            // preset-vs-graph byte-identity proven</code></pre>
+</section>
+
+<!-- 6 DETERMINISM -->
+<section>
+  <span class="seclabel">Determinism <span class="num">&middot; 6 / 18</span></span>
+  <h2>The determinism contract (design doc &sect;11)</h2>
+  <table>
+    <thead><tr><th>Contract</th><th>Columns byte-identical</th><th>Guarded by</th></tr></thead>
+    <tbody>
+      <tr><td>CPU, workers {1,2,4,8,24}</td><td>fer &middot; frames &middot; errors &middot; mean_iters</td>
+          <td>2 slow-tier suites</td></tr>
+      <tr><td>CPU-only vs CPU+GPU</td><td>fer &middot; frames &middot; errors</td>
+          <td>3 GPU suites + Phase D closer</td></tr>
+      <tr><td>Resume vs uninterrupted</td><td>all four</td><td>resume-parity legs</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><code>mean_iters</code> is excluded CPU-vs-GPU: RDNA2 hardware
+    transcendentals drift 1&ndash;3 ULPs, shifting BP convergence by &plusmn;1 iteration.
+    The frame verdict is robust; parity checks have integer state.</div>
+</section>
+
+<!-- 7 PARALLELISM MECHANICS -->
+<section>
+  <span class="seclabel">Determinism <span class="num">&middot; 7 / 18</span></span>
+  <h2>How byte-identity survives parallelism</h2>
+  <ul>
+    <li>One ChaCha20 stream; position selected by word-offset strides:
+        SNR <code>1&lt;&lt;56</code>, worker <code>1&lt;&lt;40</code>, frame <code>1&lt;&lt;20</code></li>
+    <li>Every frame keyed on its <strong>global</strong> index &mdash; the outcome is a pure
+        function of the frame number, not of which worker ran it</li>
+    <li>Counters reduced in worker order (SSOT order, mandatory)</li>
+    <li>Stride headroom regression-guarded: worst measured frame draw is
+        260,208 words (r1/2 QPSK binds &mdash; most symbols, most noise), ~4x margin</li>
+  </ul>
+  <div class="example">Worst case found empirically, then pinned by a fast-tier test
+    that enumerates every supported modulation.</div>
+</section>
+
+<!-- 8 CPU THROUGHPUT -->
+<section>
+  <span class="seclabel">Throughput <span class="num">&middot; 8 / 18</span></span>
+  <h2>CPU parallelism pays</h2>
+  <table>
+    <thead><tr><th>Configuration</th><th>fps (r1/2 16-QAM Normal)</th><th>speedup</th></tr></thead>
+    <tbody>
+      <tr><td>1 thread (baseline)</td><td>1.6216</td><td>1.0x</td></tr>
+      <tr><td>24 threads (within-SNR)</td><td>21.44 &plusmn; 0.22</td>
+          <td><span class="badge green">13.22x</span></td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>Every perf task carries the <strong>parallelism-pays</strong> gate: an attested
+        receipt measured on a verified-quiet host, never removed to pass</li>
+    <li>Byte-identity held at every worker count while scaling</li>
+  </ul>
+</section>
+
+<!-- 9 GPU STAGES -->
+<section>
+  <span class="seclabel">Throughput <span class="num">&middot; 9 / 18</span></span>
+  <h2>GPU stages (gfx1030, RX 6950 XT)</h2>
+  <table>
+    <thead><tr><th>Kernel</th><th>Apples-to-apples baseline</th><th>Speedup</th></tr></thead>
+    <tbody>
+      <tr><td>ChaCha20 + Box-Muller AWGN</td><td>CPU-1T AWGN step</td>
+          <td><span class="badge green">14.91x</span></td></tr>
+      <tr><td>Gray-QAM max-log soft demap</td><td>CPU-1T demap step</td>
+          <td><span class="badge green">12.6x</span></td></tr>
+      <tr><td>LDPC BP batch decode (639 fps)</td><td>CPU-1T / CPU-24T decode</td>
+          <td><span class="badge green">253x / 29x</span></td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>GPU RNG reproduces the CPU stream bit-for-bit (same seek, same draws)</li>
+    <li>LDPC bit-for-bit across MinSum / NMS(0.75) / SumProduct, 1800 frames</li>
+    <li>Every GPU stage declares a genuine CPU fallback stage</li>
+  </ul>
+</section>
+
+<!-- 10 HYBRID EXECUTOR -->
+<section>
+  <span class="seclabel">Throughput <span class="num">&middot; 10 / 18</span></span>
+  <h2>Hybrid executor</h2>
+  <ul>
+    <li>Rayon workers prepare batch N+1 on CPU while HIP streams decode batch N
+        &mdash; double-buffered, per-worker stream ownership (<code>pool.get(i)</code>)</li>
+    <li><strong>123.03 fps</strong> hybrid vs 21.44 CPU-24 &mdash; 5.74x; overlap
+        attestation: 100% of eligible intervals genuinely overlapped</li>
+    <li>DAG topology executor: Kahn waves, fan-in/out refcounting, per-stage spans</li>
+    <li>Failure policy: GPU OOM &rarr; CPU fallback (strict mode promotes to fatal);
+        stateful-scratch fallbacks <em>refused</em>, never silently re-seeded</li>
+    <li>Checkpointed sweeps abort resumably on GPU faults &mdash; determinism over
+        availability</li>
+  </ul>
+</section>
+
+<!-- 11 CHECKPOINTING -->
+<section>
+  <span class="seclabel">Robustness <span class="num">&middot; 11 / 18</span></span>
+  <h2>Checkpoint / resume</h2>
+  <ul>
+    <li>Heartbeat checkpoints <em>within</em> an SNR point: per-worker RNG word
+        positions + cumulative counters, atomic write + fsync</li>
+    <li>Kill-during-fsync proven by a real subprocess kill test</li>
+    <li>SIGINT flushes, exits non-zero; <code>--resume</code> continues
+        <strong>byte-identically</strong> vs an uninterrupted run</li>
+    <li>Hybrid path: GPU drain-for-checkpoint stops at batch-aligned points</li>
+  </ul>
+  <div class="note">One shared double-buffer core (<code>hybrid_core.rs</code>) drives both the
+    scheduler and the checkpointed sweep &mdash; the only divergences are failure
+    semantics and stop-after-batch, expressed as monomorphized hooks.</div>
+</section>
+
+<!-- 12 DVB-T2 -->
+<section>
+  <span class="seclabel">Applications <span class="num">&middot; 12 / 18</span></span>
+  <h2>DVB-T2 application (Phase D)</h2>
+  <ul>
+    <li>Full BICM chain: BCH outer + LDPC inner + column-row interleaver +
+        Gray-QAM, Normal frames, 6 MODCODs (rates 1/2, 2/3, 3/4 &times; 16/64-QAM)</li>
+    <li>Campaign binary migrated from the v1 runner to <code>Pipeline::run</code></li>
+    <li>Production regression at waterfall Es/N0: CPU-1 vs CPU-24 (4 columns)
+        and CPU vs CPU+GPU (3 columns) &mdash; <strong>A = B = C</strong> across all six,
+        <code>mean_iters</code> drift 0.0000 on gfx1030</li>
+    <li>Unblocked the cross-epic production sweep (<code>e4849f07</code>)</li>
+  </ul>
+</section>
+
+<!-- 13 5G NR -->
+<section>
+  <span class="seclabel">Applications <span class="num">&middot; 13 / 18</span></span>
+  <h2>5G NR LDPC (Phase E)</h2>
+  <ul>
+    <li>BG1 (46&times;68) + BG2 (42&times;52), per-<code>i_LS</code> shift tables for all 8
+        lifting sets &mdash; validated <strong>bit-exact vs Sionna</strong> reference CSVs</li>
+    <li>3GPP rate matching via LLR initialization; &sect;5.4.2.2 interleaver
+        validated against the spec text + Sionna codegen</li>
+    <li>Typestate preset: BG1 &times; {1/3, 1/2, 2/3, 5/6}; BG2 &times; {1/3, 1/2, 2/3}
+        (BG2 capped at R &le; 0.67); all 51 lifting sizes</li>
+    <li>Driven per-batch by <code>TopologyExecutor::run</code></li>
+  </ul>
+  <div class="note">The per-<code>i_LS</code> table trap (a single table costs ~2 dB BLER)
+    was a known failure mode &mdash; designed out from day one.</div>
+</section>
+
+<!-- 14 NR REALTIME / STUDY -->
+<section>
+  <span class="seclabel">Applications <span class="num">&middot; 14 / 18</span></span>
+  <h2>NR decode rate: measure, study, decide</h2>
+  <ul>
+    <li>Flat-kernel ceiling attested: <strong>17.45 &plusmn; 0.03 Mbps</strong> decoded TB
+        (BG1, Z=384, r1/2, BLER &le; 1e-2); original 200 Mbps target
+        <em>proven unreachable</em> on gfx1030</li>
+    <li>Feasibility study: kernel is bandwidth-bound at 44% of peak VRAM,
+        arithmetic intensity 0.40 vs ridge 41.3</li>
+  </ul>
+  <table>
+    <thead><tr><th>Lever</th><th>Gain</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Layered BP</td><td>1.756x (measured)</td><td><span class="badge blue">future epic</span></td></tr>
+      <tr><td>fp16 messages</td><td>~1.95x</td><td><span class="badge orange">breaks byte-identity</span></td></tr>
+      <tr><td>QC layout + reduced graph</td><td>1.16x &middot; 1.07x</td><td><span class="badge blue">future epic</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 15 AFF3CT -->
+<section>
+  <span class="seclabel">Validation <span class="num">&middot; 15 / 18</span></span>
+  <h2>External validation vs aff3ct</h2>
+  <ul>
+    <li>Same H by construction: our parity-check matrices exported to AList
+        (SHA-256-pinned), decoded by hermetically built aff3ct v4.4.0</li>
+    <li>Encoder-neutral: all-zero codeword, AWGN-BPSK, NMS 0.75 both sides</li>
+  </ul>
+  <table>
+    <thead><tr><th>Config</th><th>gf2-sim @ FER 1e-2</th><th>aff3ct</th><th>gap</th></tr></thead>
+    <tbody>
+      <tr><td>DVB-T2 r1/2 (N=64800)</td><td>&minus;1.009 dB</td><td>&minus;1.025 dB</td>
+          <td><span class="badge green">0.016 dB</span></td></tr>
+      <tr><td>NR BG1 Z=384 (N=26112)</td><td>&minus;4.276 dB</td><td>&minus;4.273 dB</td>
+          <td><span class="badge green">0.003 dB</span></td></tr>
+    </tbody>
+  </table>
+  <p>Criterion was &plusmn;0.2 dB &mdash; the decoders sit 10&ndash;60x inside it,
+     on top of each other across the whole waterfall.</p>
+</section>
+
+<!-- 16 ONBOARDING -->
+<section>
+  <span class="seclabel">Onboarding <span class="num">&middot; 16 / 18</span></span>
+  <h2>Researcher onboarding</h2>
+  <div class="tool-list">
+    <span class="tool-name">dvb_t2_quickstart</span><span class="tool-desc">preset pipeline, short sweep, summary</span>
+    <span class="tool-name">nr_5g_quickstart</span><span class="tool-desc">BG1/Z=384/r1/2 via TopologyExecutor</span>
+    <span class="tool-name">novel_chain_via_graph</span><span class="tool-desc">custom puncturing Stage spliced into the DAG</span>
+    <span class="tool-name">parallel_byte_identity</span><span class="tool-desc">4-column identity at {1, 24} workers</span>
+    <span class="tool-name">gpu_hybrid</span><span class="tool-desc">CPU vs CPU+GPU 3-column identity (hip)</span>
+  </div>
+  <ul>
+    <li>Crate landing page: runnable quickstart, preset-vs-graph contrast,
+        worked-example index; <code>cargo doc</code> warning-free</li>
+    <li>Full doc contract on every public item (doc-review gated)</li>
+  </ul>
+</section>
+
+<!-- 17 NUMBERS / NEXT -->
+<section>
+  <span class="seclabel">Wrap-up <span class="num">&middot; 17 / 18</span></span>
+  <h2>The epic by the numbers &mdash; and what is next</h2>
+  <div class="two-col">
+    <div>
+      <h3>Delivered</h3>
+      <ul>
+        <li>7/7 strategic children, ~29 tasks</li>
+        <li>12 sessions, ~40 review rounds</li>
+        <li>~16 user decisions, all recorded</li>
+        <li>4,400+ tests green, fast tier &lt; 30 s</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Next</h3>
+      <ul>
+        <li>CPU LDPC decoder profiling vs aff3ct (task <code>3be770d5</code>)</li>
+        <li>GPU kernel epic from the feasibility study (layered BP first)</li>
+        <li>Production DVB-T2 sweep (<code>e4849f07</code>, cross-epic)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 18 CLOSING -->
+<section class="title">
+  <h1>Deterministic to the byte</h1>
+  <p class="tagline">gf2-sim: reproducible FEC research at GPU speed</p>
+  <p>Receipts: <code>dev/benchmarks/gf2-sim/</code> &nbsp;&middot;&nbsp; Design: <code>ec530af9</code></p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
