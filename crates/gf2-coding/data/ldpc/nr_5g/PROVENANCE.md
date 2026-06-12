@@ -47,3 +47,32 @@ Row index;Column index;Set index ;;;;;;;
   are `-1` (no connection / zero circulant block).
 
 The actual circulant shift applied for a lifting size `Z` is `V mod Z`.
+
+## §5.4.2.2 bit-interleaver external validation
+
+The TS 38.212 clause 5.4.2.2 rate-matching bit interleaver implemented in
+`crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs` (`output_interleaver`) was
+validated against:
+
+1. The spec text of clause 5.4.2.2 (TS 38.212 V16.4.0, 2020-12), which defines
+   the mapping verbatim as
+
+   ```text
+   for j = 0 to E/Qm - 1
+       for i = 0 to Qm - 1
+           f_{i + j*Qm} = e_{i*(E/Qm) + j}
+   ```
+
+2. NVIDIA Sionna's `LDPC5GEncoder.generate_out_int`
+   (`src/sionna/phy/fec/ldpc/encoding.py`, default branch `main` as of
+   2026-06-12; Apache-2.0, the same project as the BG1/BG2 tables above), which
+   builds the identical gather permutation
+   `perm_seq[i + j*num_bits_per_symbol] = i*(n/num_bits_per_symbol) + j` and the
+   inverse via `np.argsort(perm_seq)`.
+
+   <https://github.com/NVlabs/sionna/blob/main/src/sionna/phy/fec/ldpc/encoding.py>
+
+The worked-example unit tests in `interleaver.rs`
+(`test_worked_example_qm2_e6` → `perm = [0,3,1,4,2,5]`, plus `Q_m ∈ {4,6}`
+cases) are derived directly from the spec loop and reproduce
+`generate_out_int(E, Q_m)` for those parameters.

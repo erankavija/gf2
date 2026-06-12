@@ -217,6 +217,27 @@ pub enum BuildError {
         /// `"Qpsk"`).
         modulation: String,
     },
+    /// An invalid 5G NR LDPC builder parameter combination was requested
+    /// (3GPP TS 38.212).
+    ///
+    /// Covers every parameter-validation failure of the
+    /// [`Pipeline::nr_5g`](crate::Pipeline::nr_5g) preset's `build()` that is
+    /// not a channel fault: an invalid base graph; a lifting size `Z` outside
+    /// TS 38.212 Table 5.3.2-1; an `(i_LS, Z)` mismatch (a `lifting_set` index
+    /// inconsistent with the chosen `Z` per Table 5.3.2-1); a code rate not in
+    /// the operating region of the chosen base graph (e.g. BG2 with rate 5/6,
+    /// which TS 38.212 §7.2.2 caps at R ≤ 0.67); a modulation order whose
+    /// bits-per-symbol does not divide the rate-matched length `E` (the §5.4.2.2
+    /// interleaver requires `E mod Q_m == 0`); or a `(BG, Z, rate)` tuple the
+    /// rate-matched code surface cannot realise at exactly the requested `Z`.
+    /// Carries a human-readable, standard-agnostic explanation naming exactly
+    /// what was rejected (mirroring the [`InvalidChannel`](BuildError::InvalidChannel)
+    /// precedent), so `build()` always returns a typed error rather than letting
+    /// a downstream constructor panic.
+    InvalidNr5gParams {
+        /// A human-readable explanation of the rejected parameter combination.
+        reason: String,
+    },
     /// A channel parameter is invalid — e.g. a non-finite (`NaN`/`±inf`) Es/N0,
     /// or one so large that the derived demapper noise variance underflows to a
     /// non-positive value.
