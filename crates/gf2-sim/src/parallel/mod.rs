@@ -77,8 +77,8 @@ pub const WORKER_STRIDE: u128 = 1 << 40;
 /// case is **r1/2 QPSK Normal** — QPSK packs the *fewest* bits/symbol (2), so it
 /// has the *most* symbols (n=64800 → 32400 symbols × 2 axes = 64800 noise
 /// samples → 259 200 words), plus the random BBFRAME fill (~1008 words) ≈
-/// **260 208 words/frame** (verified by
-/// [`tests::test_worst_case_frame_draw_under_stride`]; 16-QAM measures 130 608,
+/// **260 208 words/frame** (verified by the fast-tier unit test
+/// `tests::test_worst_case_frame_draw_under_stride`; 16-QAM measures 130 608,
 /// 64-QAM 87 408 — fewer bits/symbol ⇒ more symbols ⇒ more draws, so the
 /// lowest-order modulation binds). `2^20` gives ~4× headroom. Earlier values
 /// undercounted: `2^16` assumed ~1 word/sample f32 noise; `2^19` correctly

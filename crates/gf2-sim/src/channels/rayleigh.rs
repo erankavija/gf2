@@ -1,6 +1,6 @@
 //! Rayleigh flat-fading channel stage.
 //!
-//! This module provides the [`Rayleigh`] [`Stage`](crate::Stage) impl, which
+//! This module provides the [`Rayleigh`] [`Stage`] impl, which
 //! models frequency-flat Rayleigh fading. Each symbol is multiplied by an
 //! independent complex fading coefficient `h ~ CN(0, 1)` and then corrupted by
 //! complex AWGN:
@@ -17,7 +17,7 @@
 //! `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` — the same per-axis variance as in
 //! the AWGN channel (`frame_sim.rs` SSOT). The fading and noise draws are
 //! interleaved from the **same** ChaCha20 stream. Each symbol draws a complex
-//! fading coefficient `h ~ CN(0, 1)` (one [`draw_cn01`](crate::channels::draw_cn01)
+//! fading coefficient `h ~ CN(0, 1)` (one `draw_cn01` complex-normal draw
 //! = 2 normals = 8 words) **plus** complex noise `n` (2 normals = 8 words),
 //! consuming **16 ChaCha20 32-bit words per symbol** — twice AWGN's 8
 //! words/symbol, because the fading channel adds the fading draw on top of the
@@ -155,9 +155,8 @@ impl Rayleigh {
 
     /// Applies Rayleigh fading and AWGN to `batch` in-place, drawing from `rng`.
     ///
-    /// For each symbol, draws `h ~ CN(0, 1)` via
-    /// [`draw_cn01`](crate::channels::draw_cn01) and complex noise `n` (two
-    /// [`draw_standard_normal`](crate::channels::draw_standard_normal) calls
+    /// For each symbol, draws `h ~ CN(0, 1)` via the crate-private `draw_cn01`
+    /// helper and complex noise `n` (two `draw_standard_normal` calls
     /// scaled by `sigma`), then sets `r = h * x + n`. The fading and noise draws
     /// are interleaved from the same stream, consuming **16 ChaCha20 32-bit words
     /// per symbol** (8 for `h`, 8 for `n`).

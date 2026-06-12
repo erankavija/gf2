@@ -1,8 +1,8 @@
 //! AWGN channel stage — additive white Gaussian noise on IQ symbol batches.
 //!
-//! This module provides the [`Awgn`] [`Stage`](crate::Stage) impl, which adds
+//! This module provides the [`Awgn`] [`Stage`] impl, which adds
 //! independent circularly-symmetric complex Gaussian noise to every I/Q symbol
-//! in a [`SymbolBatch`](crate::SymbolBatch). Noise samples are drawn from the
+//! in a [`SymbolBatch`]. Noise samples are drawn from the
 //! per-stage [`ChannelScratch`] RNG, which the Phase C executor seeks per frame
 //! via the §3 word-position scheme (design doc §3).
 //!
@@ -18,7 +18,7 @@
 //!
 //! Each Gaussian sample consumes **4 ChaCha20 32-bit words** (two `f64` uniform
 //! draws fed to [`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos)
-//! via [`draw_standard_normal`](crate::channels::draw_standard_normal)), so each
+//! via the crate-private `draw_standard_normal` helper), so each
 //! symbol (one noise sample per axis) consumes **8 words**. A debug assertion
 //! guards that the total draw for the batch does not exceed `FRAME_STRIDE - 256`
 //! words.
@@ -94,8 +94,9 @@ impl Default for ChannelScratch {
 ///
 /// The noise variance is `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` per axis, where
 /// `Es/N0_dB` is supplied at construction. Each sample draws two `f64` uniforms
-/// from the scratch RNG and passes them to [`box_muller_cos`], consuming exactly
-/// 4 ChaCha20 32-bit words per noise sample.
+/// from the scratch RNG and passes them to
+/// [`box_muller_cos`](gf2_coding::dvb_t2_bicm_harness::box_muller_cos),
+/// consuming exactly 4 ChaCha20 32-bit words per noise sample.
 ///
 /// # Arguments (constructor)
 ///
@@ -206,7 +207,8 @@ impl Awgn {
     /// Applies AWGN noise to `batch` in-place, drawing noise from `rng`.
     ///
     /// Each symbol has its I and Q components independently corrupted by
-    /// `N(0, sigma^2)` noise via [`draw_standard_normal`]. Each Gaussian sample
+    /// `N(0, sigma^2)` noise via the crate-private `draw_standard_normal`
+    /// helper. Each Gaussian sample
     /// consumes exactly 4 ChaCha20 32-bit words (two `f64` uniform draws via
     /// Box-Muller), so each symbol consumes 8 words. Within each frame the
     /// samples are assigned **planar** — every I-axis sample first, then every

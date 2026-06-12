@@ -233,15 +233,13 @@ pub struct Scheduler {
 impl Scheduler {
     /// Builds a scheduler for `parallelism` workers.
     ///
-    /// Under the `hip` feature with `gpu_enabled`, a [`HipStreamPool`] of
-    /// `parallelism` streams on device 0 is created so worker `i` owns stream
-    /// `i % parallelism`. If the pool cannot be built (no device / unsupported
-    /// arch), the error is mapped and the scheduler degrades to the CPU path
-    /// after a `tracing::warn!` (the OOM/unsupported-arch policy is the
-    /// executor's, design doc §8; here we simply fall back so a run never aborts
-    /// for lack of a GPU).
-    ///
-    /// [`HipStreamPool`]: gf2_kernels_hip::host::HipStreamPool
+    /// Under the `hip` feature with `gpu_enabled`, a `HipStreamPool` (from
+    /// `gf2-kernels-hip`) of `parallelism` streams on device 0 is created so
+    /// worker `i` owns stream `i % parallelism`. If the pool cannot be built (no
+    /// device / unsupported arch), the error is mapped and the scheduler
+    /// degrades to the CPU path after a `tracing::warn!` (the
+    /// OOM/unsupported-arch policy is the executor's, design doc §8; here we
+    /// simply fall back so a run never aborts for lack of a GPU).
     ///
     /// # Arguments
     ///
