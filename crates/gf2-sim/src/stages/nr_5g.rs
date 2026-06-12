@@ -599,6 +599,7 @@ impl Stage<LlrBatch, HardDecisionBatch> for Nr5gDecode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gf2_coding::ldpc::QuasiCyclicLdpc;
 
     #[test]
     fn test_qam_order() {
@@ -666,6 +667,4 @@ mod tests {
             assert_eq!(bit, frame.get(i), "position {i} must round-trip");
         }
     }
-
-    use gf2_coding::ldpc::QuasiCyclicLdpc;
 }
