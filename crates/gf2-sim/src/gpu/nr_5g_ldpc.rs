@@ -3,7 +3,8 @@
 //!
 //! This module discharges the per-`i_LS` shift-table consumption deferred from
 //! Phase B `a930be7f`: it host-expands a 5G NR base graph + per-`i_LS` lifting
-//! shift table into the **flat** [`LdpcGraphLayout`] the existing kernel
+//! shift table into the **flat** `LdpcGraphLayout` (the `gf2-kernels-hip`
+//! kernel layout type) the existing kernel
 //! decodes, then reuses the kernel binary **unchanged**. The same device
 //! kernel that decodes DVB-T2 also decodes 5G NR — only the host-built layout
 //! differs (design §6 "same kernel parameterises both standards").
@@ -15,9 +16,9 @@
 //! [`QuasiCyclicLdpc::nr_5g`](gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g) /
 //! [`nr_5g_rate_matched`](gf2_coding::ldpc::QuasiCyclicLdpc::nr_5g_rate_matched):
 //! it expands the base matrix with `V mod Z` circulants into a concrete
-//! [`LdpcCode`] (the **mother code**). The flat → device
-//! [`LdpcGraphLayout`] step is the **one** CSR/CSC flattener already used by
-//! the DVB-T2 path inside [`GpuLdpcBp`]. This builder composes those two
+//! [`LdpcCode`](gf2_coding::ldpc::LdpcCode) (the **mother code**). The flat →
+//! device `LdpcGraphLayout` step is the **one** CSR/CSC flattener already used
+//! by the DVB-T2 path inside `GpuLdpcBp`. This builder composes those two
 //! existing steps; it introduces **no** new base+shift→layout expansion. The
 //! per-`i_LS` shift is consumed host-side during the `gf2-coding` mother-code
 //! construction, never by the kernel.
@@ -28,18 +29,20 @@
 //! code, not by removing columns from `H` (see the
 //! [`gf2-coding` 5G NR docs](gf2_coding::ldpc::nr_5g)). So the GPU path is:
 //! map the `target_n` channel LLRs to the `full_n` mother-code LLR vector
-//! ([`Nr5gRateMatchedCode::prepare_llrs`] — punctured = 0, filler = strong
-//! prior), batch-decode the full mother codeword on the device (the existing
-//! flat kernel), then extract the `target_k` message bits in natural column
-//! order. Both the LLR prepare and the message extract are deterministic
-//! host-side maps; the **device** does exactly the same flooding BP it does for
-//! DVB-T2, so the GPU hard decision matches the CPU
+//! ([`Nr5gRateMatchedCode::prepare_llrs`](gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode::prepare_llrs)
+//! — punctured = 0, filler = strong prior), batch-decode the full mother
+//! codeword on the device (the existing flat kernel), then extract the
+//! `target_k` message bits in natural column order. Both the LLR prepare and
+//! the message extract are deterministic host-side maps; the **device** does
+//! exactly the same flooding BP it does for DVB-T2, so the GPU hard decision
+//! matches the CPU
 //! [`Nr5gRateMatchedDecoder`](gf2_coding::ldpc::nr_5g::Nr5gRateMatchedDecoder)
-//! bit-for-bit at a fixed seed (the [hard] byte-identity criterion).
+//! bit-for-bit at a fixed seed (the `[hard]` byte-identity criterion).
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the
 //! items are gated on `feature = "hip"` so the crate builds cleanly with the
-//! feature off.
+//! feature off. The `LdpcGraphLayout` and `GpuLdpcBp` code spans above resolve
+//! to live intra-doc links only on the `--features hip` documentation build.
 
 #[cfg(feature = "hip")]
 mod imp {

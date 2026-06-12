@@ -279,8 +279,7 @@ impl DvbT2Encode {
     ///
     /// Exposed so the stage-driven executor (`de160fc5`) can mint the
     /// per-frame random BBFRAME input of the correct width after downcasting
-    /// the chain's source stage via
-    /// [`AnyStage::stage_as_any`](crate::stage::AnyStage::stage_as_any).
+    /// the chain's source stage via [`AnyStage::stage_as_any`].
     ///
     /// # Examples
     ///
@@ -844,8 +843,8 @@ pub struct DvbT2BicmStages {
 /// * `demap_noise_var` — the per-symbol total complex AWGN noise variance
 ///   (`N0 = 2 sigma^2`) the soft demapper assumes. For a physically consistent
 ///   chain this **must** equal the channel's true `N0`; the preset derives it
-///   from the channel's Es/N0 via
-///   [`es_n0_db_to_sigma`](crate::channels::es_n0_db_to_sigma). Noiseless
+///   from the channel's Es/N0 via the crate-private `es_n0_db_to_sigma` helper.
+///   Noiseless
 ///   callers (those that connect [`GrayQamMap`] straight to [`GrayQamDemap`]
 ///   with no channel) pass [`DEFAULT_DEMAP_NOISE_VAR`].
 ///

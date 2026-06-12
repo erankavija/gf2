@@ -261,9 +261,9 @@ impl Scheduler {
     /// deliverable 1): synchronizes each **owned** HIP stream per-stream and
     /// verifies the [`StreamInFlight`] tally shows every stream idle.
     ///
-    /// Stream synchronization is **per-stream**
-    /// ([`HipStream::synchronize`](gf2_kernels_hip::host::HipStream::synchronize),
-    /// i.e. `hipStreamSynchronize()`) — never `hipDeviceSynchronize()`, which
+    /// Stream synchronization is **per-stream** (the `gf2-kernels-hip`
+    /// `HipStream::synchronize`, i.e. `hipStreamSynchronize()`) — never
+    /// `hipDeviceSynchronize()`, which
     /// would block unrelated contexts (§4). The owned streams are the ones the
     /// hybrid workers select by fixed index (`worker_idx % n_streams` via
     /// `HipStreamPool::get`, never `acquire()`); each is synchronized exactly
@@ -284,7 +284,7 @@ impl Scheduler {
     /// # Errors
     ///
     /// * A mapped [`StageError`] if a per-stream synchronize faults
-    ///   (via [`map_hip_error`](crate::gpu::map_hip_error)).
+    ///   (via the crate's `gpu::map_hip_error`).
     /// * [`FatalError::BuildError`]`(`[`BuildError::ExecutionValidation`]`)` if
     ///   any stream still shows in-flight batches — the checkpoint must not be
     ///   written in that state.

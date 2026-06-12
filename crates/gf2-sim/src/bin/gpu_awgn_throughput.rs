@@ -5,7 +5,7 @@
 //! config (n_ldpc = 64800, 16-QAM = 4 bits/symbol → 16200 symbols/frame, 32400
 //! noise samples/frame) at Es/N0 = 6.5 dB, comparing:
 //!
-//! * the GPU [`GpuAwgn`](gf2_sim::gpu::awgn::GpuAwgn) noise step (one device
+//! * the GPU `GpuAwgn` (`gf2_sim::gpu::awgn`, `feature = "hip"`) noise step (one device
 //!   launch + read-back per frame, per-worker-owned generator), against
 //! * a single CPU thread doing the **same** AWGN noise step via
 //!   [`channels::Awgn`](gf2_sim::channels::Awgn).

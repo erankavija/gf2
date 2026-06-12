@@ -33,7 +33,7 @@
 //! `join` is the natural settle point — every in-flight frame completes and
 //! increments its worker's count before the call returns), then latch the
 //! per-worker counts as the SSOT for each worker's next
-//! [`worker_offset`](crate::parallel::worker_offset) seek. No partial frames
+//! [`worker_offset`] seek. No partial frames
 //! are ever recorded mid-chunk. The GPU-stream drain
 //! ([`Scheduler::drain_for_checkpoint`](crate::Scheduler::drain_for_checkpoint),
 //! per-stream `hipStreamSynchronize`) and the checkpointed **hybrid** CPU+GPU
@@ -66,7 +66,7 @@ pub const SCHEMA_VERSION: u32 = 2;
 ///
 /// **Resume semantics (design-doc §4, amended 2026-06-08 and 2026-06-10):**
 /// every executor keys every frame on the *global* frame index (§3,
-/// [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_idx, 0, g)`) —
+/// [`worker_offset`]`(seed, snr_idx, 0, g)`) —
 /// the **CPU within-SNR path** (Phase A, `5f12e7ff`/`3fcb7025`) resumes via the
 /// global `frames_completed`, and the **Phase C hybrid executor** (`75c22fa8`,
 /// strided partitions; resume `571c11c4`) restores per-worker *progress* from
@@ -655,7 +655,7 @@ pub struct CheckpointedRun {
 /// 1. accumulates the chunk's counters into the running total,
 /// 2. latches per-worker `worker_states[]` from the authoritative per-worker
 ///    frame counts (each worker's `rng_word_pos =`
-///    [`worker_offset`](crate::parallel::worker_offset)`(seed, snr_index,
+///    [`worker_offset`]`(seed, snr_index,
 ///    worker_idx, frames_in_worker)`),
 /// 3. writes a [`CheckpointV2`] atomically.
 ///
@@ -895,7 +895,7 @@ pub struct SweepRun {
 /// 1. If `resume` is set, load `<checkpoint_dir>/snr_<idx>.json` via
 ///    [`CheckpointReader`] (a missing file ⇒ fresh point; a non-v2 or
 ///    hash-mismatched file ⇒ the load error propagates as
-///    [`FatalError`](crate::error::FatalError)).
+///    [`FatalError`]).
 /// 2. Build the point's per-worker state factory and per-frame closure from
 ///    `make_point(idx, esn0_db)`.
 /// 3. Run [`run_snr_point_checkpointed`], which flushes a v2 checkpoint at the
@@ -941,7 +941,7 @@ pub struct SweepRun {
 ///
 /// # Errors
 ///
-/// Propagates a [`FatalError`](crate::error::FatalError) from a checkpoint load
+/// Propagates a [`FatalError`] from a checkpoint load
 /// (non-v2 schema or `config_hash` mismatch), or a [`std::io::Error`] from a
 /// checkpoint write, boxed as [`SweepError`].
 ///

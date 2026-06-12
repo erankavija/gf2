@@ -1,6 +1,6 @@
 //! Rician flat-fading channel stage.
 //!
-//! This module provides the [`Rician`] [`Stage`](crate::Stage) impl, which
+//! This module provides the [`Rician`] [`Stage`] impl, which
 //! models frequency-flat Rician fading. The K-factor parametrises the ratio of
 //! the direct-path (line-of-sight) power to the scattered-path power. The
 //! fading coefficient is:
@@ -23,7 +23,7 @@
 //! `sigma^2 = 1 / (2 * 10^(Es/N0_dB / 10))` — same formula as AWGN/Rayleigh
 //! (SSOT in `frame_sim.rs`). Fading and noise draws are interleaved from the
 //! **same** ChaCha20 stream. Each symbol draws a `CN(0, 1)` scatter component
-//! (one [`draw_cn01`](crate::channels::draw_cn01) = 2 normals = 8 words) **plus**
+//! (one `draw_cn01` complex-normal draw = 2 normals = 8 words) **plus**
 //! complex noise `n` (2 normals = 8 words), consuming **16 ChaCha20 32-bit words
 //! per symbol** — twice AWGN's 8 words/symbol, because the fading channel adds
 //! the scatter draw on top of the noise draw. The QPSK-Normal worst case
@@ -198,10 +198,9 @@ impl Rician {
 
     /// Applies Rician fading and AWGN to `batch` in-place, drawing from `rng`.
     ///
-    /// For each symbol, draws scatter `v ~ CN(0, 1)` via
-    /// [`draw_cn01`](crate::channels::draw_cn01) and complex noise `n` (two
-    /// [`draw_standard_normal`](crate::channels::draw_standard_normal) calls
-    /// scaled by `sigma`), then computes `h = los_mag + scatter * v` and
+    /// For each symbol, draws scatter `v ~ CN(0, 1)` via the crate-private
+    /// `draw_cn01` helper and complex noise `n` (two `draw_standard_normal`
+    /// calls scaled by `sigma`), then computes `h = los_mag + scatter * v` and
     /// `r = h * x + n`. The fading and noise draws are interleaved from the same
     /// stream, consuming **16 ChaCha20 32-bit words per symbol** (8 for `v`, 8
     /// for `n`).

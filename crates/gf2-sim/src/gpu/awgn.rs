@@ -1,12 +1,11 @@
 //! GPU AWGN channel stage (design doc §3 / §8 / §11, `feature = "hip"`).
 //!
-//! [`GpuAwgn`] is the device-accelerated counterpart of the CPU
+//! `GpuAwgn` is the device-accelerated counterpart of the CPU
 //! [`channels::Awgn`](crate::channels::Awgn) stage. It adds circularly-symmetric
 //! complex Gaussian noise to every I/Q symbol in a
 //! [`SymbolBatch`](crate::SymbolBatch), drawing the noise from the device
-//! ChaCha20 + Box-Muller kernel (`gf2-kernels-hip`'s
-//! [`GpuChaChaAwgn`](gf2_kernels_hip::GpuChaChaAwgn)) so the raw ChaCha word
-//! stream is byte-identical to the CPU path at the same per-frame
+//! ChaCha20 + Box-Muller kernel (`gf2-kernels-hip`'s `GpuChaChaAwgn`) so the raw
+//! ChaCha word stream is byte-identical to the CPU path at the same per-frame
 //! `worker_offset(...)` (criterion 1) and the resulting noise samples agree
 //! with the CPU to <= 1 ulp f32 (criterion 2, design doc §11 GPU softmath).
 //!
@@ -25,29 +24,27 @@
 //!
 //! # Default-stream vs stream-ordered application (design doc §6)
 //!
-//! The erased [`Stage::process`](crate::Stage) path and
-//! [`apply`](GpuAwgn::apply) run on the **default stream**; the additive
-//! [`apply_for_frame_on_stream`](GpuAwgn::apply_for_frame_on_stream) /
-//! [`apply_on_stream`](GpuAwgn::apply_on_stream) variants order the launch and
-//! read-back on a caller-owned HIP stream (pinned staging, per-stream
-//! synchronize only) — the route the DAG topology executor (`de160fc5`) takes
-//! for this stage's `GpuOnly` dispatch on the worker's owned stream. Both
-//! paths add byte-identical noise.
+//! The erased [`Stage::process`](crate::Stage) path and `GpuAwgn::apply` run on
+//! the **default stream**; the additive `apply_for_frame_on_stream` /
+//! `apply_on_stream` variants order the launch and read-back on a caller-owned
+//! HIP stream (pinned staging, per-stream synchronize only) — the route the DAG
+//! topology executor (`de160fc5`) takes for this stage's `GpuOnly` dispatch on
+//! the worker's owned stream. Both paths add byte-identical noise.
 //!
 //! # CPU fallback (§8)
 //!
 //! The [`Stage::CpuFallback`](crate::Stage) is the CPU
-//! [`Awgn`](crate::channels::Awgn): [`cpu_fallback`](GpuAwgn::cpu_fallback)
-//! returns a CPU stage with the *same* `es_n0_db` / `bits_per_symbol`, so the
-//! Phase C executor can substitute it on a GPU out-of-memory or unsupported-arch
-//! fault. The CPU fallback draws from the same `worker_offset`-seeked
-//! `ChaCha20Rng` stream, so a fallback frame is byte-identical (raw words) to
-//! what the GPU would have drawn — only the post-Box-Muller sample value differs
-//! by <= 1 ulp f32.
+//! [`Awgn`](crate::channels::Awgn): `GpuAwgn::cpu_fallback` returns a CPU stage
+//! with the *same* `es_n0_db` / `bits_per_symbol`, so the Phase C executor can
+//! substitute it on a GPU out-of-memory or unsupported-arch fault. The CPU
+//! fallback draws from the same `worker_offset`-seeked `ChaCha20Rng` stream, so
+//! a fallback frame is byte-identical (raw words) to what the GPU would have
+//! drawn — only the post-Box-Muller sample value differs by <= 1 ulp f32.
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
 //! are gated on `feature = "hip"` so the crate builds cleanly with the feature
-//! off.
+//! off. The `GpuAwgn`-prefixed code spans above resolve to live intra-doc links
+//! only on the `--features hip` documentation build.
 
 #[cfg(feature = "hip")]
 mod imp {

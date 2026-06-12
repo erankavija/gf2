@@ -28,7 +28,7 @@
 //!
 //! [`DvbT2BicmFrameSim::simulate_frame`] draws **all** randomness (the random
 //! transmitted BBFRAME and the AWGN noise) from the supplied
-//! [`WorkerCtx`](crate::parallel::WorkerCtx)'s RNG, which the dispatcher has
+//! [`WorkerCtx`]'s RNG, which the dispatcher has
 //! already reseeked to the frame's global-frame-indexed offset. The frame
 //! outcome is thus a pure function of the global frame index — the property
 //! that makes the aggregate byte-identical across worker counts (design doc §3,

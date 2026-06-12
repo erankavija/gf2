@@ -21,7 +21,7 @@
 //!    produces — `StageError::Fatal(FatalError::KernelLaunch { .. })` — carrying
 //!    a representative `hip_code`, kernel name, and launch-args context string.
 //! 3. Drives the **production** hard-fail boundary
-//!    [`dispatch_with_fallback`](gf2_sim::executor::failure::dispatch_with_fallback):
+//!    [`gf2_sim::executor::failure::dispatch_with_fallback`]:
 //!    the fatal arm writes the JSON diagnostic dump into the configured directory
 //!    (atomic `.tmp` + rename) and emits the `tracing::error!` events, then
 //!    returns the error unchanged.

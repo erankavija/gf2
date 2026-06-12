@@ -44,7 +44,8 @@
 //! per-worker ChaCha20 stream, and the within-SNR frame-parallel executor
 //! (or the hybrid CPU+GPU scheduler under `--gpu`) drives the frames. The
 //! binary itself is a thin CLI front-end: parse args → build the pipeline via
-//! the typestate preset → set the sweep on its [`PipelineConfig`] → run →
+//! the typestate preset → set the sweep on its
+//! [`PipelineConfig`](gf2_sim::PipelineConfig) → run →
 //! post-process the [`SimulationResults`] into the campaign CSV.
 //!
 //! # Es/N0 vs Eb/N0

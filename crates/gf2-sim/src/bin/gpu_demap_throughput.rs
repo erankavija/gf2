@@ -4,7 +4,7 @@
 //! Measures **demap-stage** symbols/second (and frames/second) for DVB-T2
 //! 16-QAM / 64-QAM max-log soft demapping, demap-vs-demap (the user-approved
 //! 2026-06-09 apples-to-apples amendment): the GPU
-//! [`GpuGrayQamDemapper`](gf2_sim::gpu::demap::GpuGrayQamDemapper) `demap_batch`
+//! `GpuGrayQamDemapper` (`gf2_sim::gpu::demap`, `feature = "hip"`) `demap_batch`
 //! kernel (H2D + kernel + D2H, per-worker-owned device demapper) against the
 //! CPU [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper)
 //! demap-step measured in isolation, at 1 thread and 24 threads. MaxLog only

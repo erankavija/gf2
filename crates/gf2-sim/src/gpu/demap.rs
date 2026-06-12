@@ -1,25 +1,24 @@
 //! GPU Gray-QAM soft-demap stage (design doc §8 / §11, `feature = "hip"`).
 //!
-//! [`GpuGrayQamDemapper`] is the device-accelerated counterpart of the CPU
+//! `GpuGrayQamDemapper` is the device-accelerated counterpart of the CPU
 //! [`FastGrayQamDemapper`](gf2_coding::modem::FastGrayQamDemapper) demap stage.
-//! It wraps the existing `gf2-kernels-hip`
-//! [`GpuGrayQamDemapper`](gf2_kernels_hip::GpuGrayQamDemapper) `demap_batch`
+//! It wraps the existing `gf2-kernels-hip` `GpuGrayQamDemapper` `demap_batch`
 //! kernel as a [`Stage<SymbolBatch, LlrBatch>`](crate::Stage), turning a batch
 //! of received I/Q symbol frames into soft channel LLRs.
 //!
 //! # Demap method scoping — GPU is MAX-LOG only
 //!
 //! The device kernel implements the **max-log** LLR approximation only (its
-//! doc: "max-log LLRs", symbol-major, MSB-first). [`DemapMethod`] has two
-//! variants, [`MaxLog`](DemapMethod::MaxLog) and
-//! [`ExactLogMap`](DemapMethod::ExactLogMap):
+//! doc: "max-log LLRs", symbol-major, MSB-first).
+//! [`DemapMethod`](gf2_coding::modem::DemapMethod) has two variants, `MaxLog`
+//! and `ExactLogMap`:
 //!
-//! - [`MaxLog`](DemapMethod::MaxLog) is served by the GPU kernel.
-//! - [`ExactLogMap`](DemapMethod::ExactLogMap) has **no** GPU exact-log-map
-//!   path. There is no fabricated exact-log-map GPU kernel: the erased
-//!   [`Stage::process`] path runs MaxLog on the GPU, and a stage constructed
-//!   for `ExactLogMap` reports [`ExecutionClass::CpuOnly`] and routes through
-//!   the CPU [`cpu_fallback`](GpuGrayQamDemapper::cpu_fallback) (the CPU
+//! - `MaxLog` is served by the GPU kernel.
+//! - `ExactLogMap` has **no** GPU exact-log-map path. There is no fabricated
+//!   exact-log-map GPU kernel: the erased [`Stage::process`](crate::Stage) path
+//!   runs MaxLog on the GPU, and a stage constructed for `ExactLogMap` reports
+//!   [`ExecutionClass::CpuOnly`](crate::stage::ExecutionClass) and routes
+//!   through the CPU `GpuGrayQamDemapper::cpu_fallback` (the CPU
 //!   `FastGrayQamDemapper` computes the exact log-MAP correctly). This keeps
 //!   the contract honest — the GPU never claims an exact-log-map it does not
 //!   compute.
@@ -41,29 +40,29 @@
 //!
 //! # Default-stream vs stream-ordered demap (design doc §6)
 //!
-//! The erased [`Stage::process`](crate::Stage) path and
-//! [`demap_batch`](GpuGrayQamDemapper::demap_batch) run on the **default
-//! stream**; the additive
-//! [`demap_batch_on_stream`](GpuGrayQamDemapper::demap_batch_on_stream)
-//! variant orders the launch and every transfer on a caller-owned HIP stream
-//! (pinned staging, per-stream synchronize only) — the route the DAG topology
-//! executor (`de160fc5`) takes for this stage's `GpuOnly` dispatch on the
-//! worker's owned stream. Both paths emit byte-identical LLRs.
+//! The erased [`Stage::process`](crate::Stage) path and the device demapper's
+//! `demap_batch` run on the **default stream**; the additive
+//! `demap_batch_on_stream` variant orders the launch and every transfer on a
+//! caller-owned HIP stream (pinned staging, per-stream synchronize only) — the
+//! route the DAG topology executor (`de160fc5`) takes for this stage's
+//! `GpuOnly` dispatch on the worker's owned stream. Both paths emit
+//! byte-identical LLRs.
 //!
 //! # CPU fallback (§8)
 //!
-//! The [`Stage::CpuFallback`](crate::Stage) is the in-crate
-//! [`CpuGrayQamDemapper`] wrapper (the orphan rule forbids implementing the
-//! `gf2-sim` [`Stage`] trait on the foreign `gf2-coding`
-//! `FastGrayQamDemapper`): [`cpu_fallback`](GpuGrayQamDemapper::cpu_fallback)
-//! returns it. The wrapper delegates to an owned `FastGrayQamDemapper` built
-//! from the same modulation + method + `noise_var`, so the Phase C executor can
-//! substitute it on a GPU out-of-memory or unsupported-arch fault, and so the
-//! `ExactLogMap` path has a correct CPU home.
+//! The [`Stage::CpuFallback`](crate::Stage) is the in-crate `CpuGrayQamDemapper`
+//! wrapper (the orphan rule forbids implementing the `gf2-sim`
+//! [`Stage`](crate::Stage) trait on the foreign `gf2-coding`
+//! `FastGrayQamDemapper`): `GpuGrayQamDemapper::cpu_fallback` returns it. The
+//! wrapper delegates to an owned `FastGrayQamDemapper` built from the same
+//! modulation + method + `noise_var`, so the Phase C executor can substitute it
+//! on a GPU out-of-memory or unsupported-arch fault, and so the `ExactLogMap`
+//! path has a correct CPU home.
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
 //! are gated on `feature = "hip"` so the crate builds cleanly with the feature
-//! off.
+//! off. The `GpuGrayQamDemapper`-prefixed code spans above resolve to live
+//! intra-doc links only on the `--features hip` documentation build.
 
 #[cfg(feature = "hip")]
 mod imp {

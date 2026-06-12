@@ -76,6 +76,15 @@ required-features = ["test-support"]
 name = "export_alist"
 required-features = ["test-support"]
 
+# Researcher-onboarding GPU hybrid example (issue 110e45cc): the same DVB-T2
+# chain on the CPU+GPU path vs CPU-only, asserting the design-doc §11
+# CPU-vs-GPU three-column byte-identity. Requires a gfx1030 device; skips
+# gracefully when none is present. Compiled only under `--features hip`:
+#   cargo run -p gf2-sim --example gpu_hybrid --features hip --release
+[[example]]
+name = "gpu_hybrid"
+required-features = ["hip"]
+
 # 5G NR LDPC GPU real-time decode-rate tuning sweep (issue 23d3525f). Custom
 # main (harness = false): a BLER + decoded-throughput cell sweep, not a
 # Criterion micro-benchmark. Builds on non-ROCm hosts (no-hip is a no-op main);
