@@ -113,6 +113,24 @@ mod imp {
         ///
         /// Panics if `max_iterations == 0` (via [`GpuLdpcBp::new`]).
         ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// assert_eq!(dec.target_k(), 8448);
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(`edges`) over the full mother code — the one-time host CSR/CSC
+        /// flattening inside [`GpuLdpcBp::new`]; no device work.
+        ///
         /// [`LdpcGraphLayout`]: gf2_kernels_hip::launch_ldpc_bp::LdpcGraphLayout
         #[must_use]
         pub fn new(
@@ -130,6 +148,23 @@ mod imp {
         }
 
         /// The recovered message length `target_k`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// assert_eq!(dec.target_k(), 8448);
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn target_k(&self) -> usize {
@@ -137,6 +172,23 @@ mod imp {
         }
 
         /// The transmitted codeword length `target_n` (the rate-matched `E`).
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// assert_eq!(dec.target_n(), 16896);
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn target_n(&self) -> usize {
@@ -144,6 +196,23 @@ mod imp {
         }
 
         /// The full mother-code length `full_n = N_b * Z`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// assert_eq!(dec.full_n(), 26112);
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn full_n(&self) -> usize {
@@ -151,6 +220,23 @@ mod imp {
         }
 
         /// The BP iteration cap.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// assert_eq!(dec.max_iterations(), 20);
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn max_iterations(&self) -> usize {
@@ -158,6 +244,23 @@ mod imp {
         }
 
         /// The decoder configuration (algorithm + early termination).
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// let _cfg = dec.config();
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn config(&self) -> DecoderConfig {
@@ -165,6 +268,23 @@ mod imp {
         }
 
         /// Borrows the underlying mother-code [`GpuLdpcBp`] stage.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// let _inner = dec.gpu();
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(1).
         #[inline]
         #[must_use]
         pub fn gpu(&self) -> &GpuLdpcBp {
@@ -182,6 +302,25 @@ mod imp {
         ///
         /// Returns a [`StageError`] if the device allocation or graph upload
         /// fails.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// let device = dec.build_decoder(128)?;
+        /// # Ok::<(), gf2_sim::error::StageError>(())
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(`edges + max_batch * full_n`) device allocations + the one-time
+        /// graph upload; no per-frame work.
         pub fn build_decoder(&self, max_batch: usize) -> Result<KernelGpuLdpcBp, StageError> {
             self.gpu.build_decoder(max_batch)
         }
@@ -250,6 +389,25 @@ mod imp {
         /// # Panics
         ///
         /// Panics if any frame's LLR length != `target_n`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// # use gf2_coding::llr::Llr;
+        /// # use gf2_sim::LlrBatch;
+        /// let device = dec.build_decoder(128)?;
+        /// let batch = LlrBatch::new(vec![vec![Llr::new(4.0); 16896]; 8]);
+        /// let recovered = dec.decode_batch(&batch, &device)?;
+        /// assert_eq!(recovered.frames.len(), 8);
+        /// # Ok::<(), gf2_sim::error::StageError>(())
+        /// ```
         ///
         /// # Complexity
         ///
