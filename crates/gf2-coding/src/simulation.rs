@@ -371,6 +371,30 @@ fn setup_tracing_guard(config: &SimulationConfig) -> Option<tracing::subscriber:
     use tracing_subscriber::{fmt, prelude::*, registry};
 
     let path = config.tracing_log_path.as_ref()?;
+
+    // Keep one extra dispatcher registered for the lifetime of the process.
+    //
+    // tracing-core (0.1.36) optimises the case of at most ONE registered
+    // dispatcher (`Rebuilder::JustOne`): the *first-ever* hit of an event
+    // callsite then computes that callsite's cached `Interest` from the
+    // HITTING thread's current dispatch instead of the registered-dispatcher
+    // list. Under multi-threaded `cargo test`, a concurrent test WITHOUT a
+    // subscriber can therefore be the first to execute a shared
+    // `tracing::info!` line and permanently cache `Interest::never` for it —
+    // silently swallowing that event for every other thread (including one
+    // with a live thread-local JSON subscriber) until the next subscriber
+    // registration rebuilds the cache. Observed as intermittently lost
+    // `snr_completed` events in this module's observability tests; nextest's
+    // process-per-test isolation masks the race, the bare-`cargo test` tier
+    // exposed it.
+    //
+    // Registering a second (no-op) dispatcher forces interest computation to
+    // always fold over the registered list — `never.and(always) ==
+    // sometimes` — so a foreign first hit can no longer poison a callsite.
+    static ANTI_JUSTONE_DISPATCH: std::sync::OnceLock<tracing::Dispatch> =
+        std::sync::OnceLock::new();
+    ANTI_JUSTONE_DISPATCH
+        .get_or_init(|| tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default()));
     let file = match std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -3627,9 +3651,12 @@ impl SimulationRunner {
 
             // sim-observability: install the campaign subscriber on this rayon
             // worker thread for the duration of the closure.  `set_default`
-            // is thread-local; the guard restores the previous dispatch on drop.
+            // is thread-local; the guard restores the previous dispatch on
+            // drop. Skipped when no JSON subscriber is configured —
+            // installing a `Dispatch::none()` would be a behavioural no-op.
             #[cfg(feature = "sim-observability")]
-            let _dispatch_guard = tracing::dispatcher::set_default(&worker_dispatch);
+            let _dispatch_guard = (!worker_dispatch.is::<tracing::subscriber::NoSubscriber>())
+                .then(|| tracing::dispatcher::set_default(&worker_dispatch));
 
             // sim-observability: open a per-SNR span on this worker thread.
             #[cfg(feature = "sim-observability")]
@@ -5314,6 +5341,24 @@ mod tests {
     mod observability_tests {
         use super::*;
 
+        /// Serializes the four subscriber-creating tests in this module
+        /// (`test_heartbeat_cadence`, `test_tracing_log_valid_jsonl`,
+        /// `test_uncoded_tracing_events`, `test_parallel_tracing_events`).
+        ///
+        /// Defense-in-depth for the process-global tracing state shared by
+        /// every test in this binary under multi-threaded bare `cargo test`:
+        /// each of these tests registers (and on completion drops) a real
+        /// JSON subscriber, and every registration rebuilds tracing-core's
+        /// global callsite-interest cache and max-level hint. The PRIMARY
+        /// fix for the cross-test event-loss race lives in
+        /// `setup_tracing_guard` (the persistent `ANTI_JUSTONE_DISPATCH`
+        /// registration — see the comment there); this guard additionally
+        /// keeps those rebuild windows from interleaving with another
+        /// subscriber-bearing test's emit window.
+        ///
+        /// Lock poisoning is tolerated: a panicking test must not cascade.
+        static TRACING_SUBSCRIBER_GUARD: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
         /// SC-INT-1: Multi-point AWGN campaign completes, then re-run with same
         /// config skips all checkpointed points near-instantly.
         #[test]
@@ -5464,6 +5509,9 @@ mod tests {
         /// `elapsed_seconds`, `snr_index`, `eb_n0_db`) are asserted present.
         #[test]
         fn test_heartbeat_cadence() {
+            let _serial = TRACING_SUBSCRIBER_GUARD
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let tmpdir = tempfile::tempdir().unwrap();
             let tlog = tmpdir.path().join("trace.jsonl");
             let ckpt_dir = tmpdir.path().join("ckpts");
@@ -5547,6 +5595,9 @@ mod tests {
         /// `tracing-subscriber` emits for each record.
         #[test]
         fn test_tracing_log_valid_jsonl() {
+            let _serial = TRACING_SUBSCRIBER_GUARD
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let tmpdir = tempfile::tempdir().unwrap();
             let tlog = tmpdir.path().join("trace.jsonl");
 
@@ -5861,6 +5912,9 @@ mod tests {
         ///   `eb_n0_db`, `ber`, `fer`, and `elapsed_seconds`.
         #[test]
         fn test_uncoded_tracing_events() {
+            let _serial = TRACING_SUBSCRIBER_GUARD
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let tmpdir = tempfile::tempdir().unwrap();
             let tlog = tmpdir.path().join("uncoded_trace.jsonl");
 
@@ -6000,6 +6054,9 @@ mod tests {
         ///   `fer`, `ber`, and `elapsed_seconds`.
         #[test]
         fn test_parallel_tracing_events() {
+            let _serial = TRACING_SUBSCRIBER_GUARD
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let tmpdir = tempfile::tempdir().unwrap();
             let tlog = tmpdir.path().join("parallel_trace.jsonl");
 
