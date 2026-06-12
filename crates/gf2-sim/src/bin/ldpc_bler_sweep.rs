@@ -71,47 +71,17 @@ use std::time::Instant;
 
 use rayon::prelude::*;
 
-use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcDecoder, QuasiCyclicLdpc};
+use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcDecoder};
 use gf2_coding::traits::IterativeSoftDecoder;
-use gf2_coding::{CodeRate, LdpcCode};
-use gf2_sim::testutil::AwgnLlrSource;
+use gf2_coding::LdpcCode;
+use gf2_sim::testutil::{AwgnLlrSource, ComparisonCode};
 
 /// Default NMS scale (5G NR standard; also a common DVB-T2 choice).
 const NMS_SCALE: f32 = 0.75;
 
-/// Which committed comparison code to sweep (matches `export_alist`).
-#[derive(Clone, Copy)]
-enum Code {
-    DvbT2R12,
-    NrBg1R12,
-}
-
-impl Code {
-    fn parse(s: &str) -> Result<Self, String> {
-        match s {
-            "dvb-t2-r12" => Ok(Self::DvbT2R12),
-            "nr-bg1-r12" => Ok(Self::NrBg1R12),
-            other => Err(format!(
-                "unknown --code '{other}' (expected 'dvb-t2-r12' or 'nr-bg1-r12')"
-            )),
-        }
-    }
-
-    /// Builds the `LdpcCode` whose `H` matches the exported AList.
-    fn build(self) -> LdpcCode {
-        match self {
-            Self::DvbT2R12 => LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
-            Self::NrBg1R12 => {
-                let rm = QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448);
-                rm.mother_code().clone()
-            }
-        }
-    }
-}
-
 /// Parsed CLI configuration.
 struct Cfg {
-    code: Code,
+    code: ComparisonCode,
     esn0: Vec<f64>,
     max_frames: u64,
     target_errors: u64,
@@ -141,7 +111,7 @@ fn parse_range(s: &str) -> Result<Vec<f64>, String> {
 }
 
 fn parse_args() -> Cfg {
-    let mut code: Option<Code> = None;
+    let mut code: Option<ComparisonCode> = None;
     let mut esn0: Option<Vec<f64>> = None;
     let mut max_frames: u64 = 20000;
     let mut target_errors: u64 = 200;
@@ -157,7 +127,7 @@ fn parse_args() -> Cfg {
         };
         match a.as_str() {
             "--code" => {
-                code = Some(Code::parse(&next()).unwrap_or_else(|e| die(&e)));
+                code = Some(ComparisonCode::parse(&next()).unwrap_or_else(|e| die(&e)));
             }
             "--esn0-range" => {
                 esn0 = Some(parse_range(&next()).unwrap_or_else(|e| die(&e)));

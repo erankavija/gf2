@@ -1,10 +1,14 @@
-//! Test/bench-only deterministic generators shared across the crate's GPU
-//! suites (feature = `test-support`).
+//! Test/bench-only deterministic generators and shared harness configuration
+//! across the crate's GPU suites and benchmark bins (feature = `test-support`).
 //!
 //! Centralises the **deterministic AWGN channel-LLR source**
 //! ([`AwgnLlrSource`]) used by the GPU byte-identity tests and throughput
 //! benches, so the SplitMix64 + Box-Muller + BPSK-LLR math exists exactly
-//! once (review SSOT rule, issue `23d3525f` finding F3). The module mirrors
+//! once (review SSOT rule, issue `23d3525f` finding F3), and the
+//! **external-comparison code selection** ([`ComparisonCode`]) shared by the
+//! `export_alist` and `ldpc_bler_sweep` bins, so both sides of the aff3ct
+//! comparison build the identical `H` from one construction site (same SSOT
+//! rule, issue `18e69a1a`). The module mirrors
 //! the `gf2-algebra::testutil` / `gf2-core::test-support` workspace pattern:
 //! gated on `cfg(any(test, feature = "test-support"))`, auto-enabled for this
 //! crate's own tests and benches via the self-dev-dependency in `Cargo.toml`.
@@ -29,8 +33,101 @@
 //!   `src/bin/gpu_demap_throughput.rs` — uniform IQ symbol streams (no
 //!   Box-Muller, no LLR), a different contract.
 
-use gf2_coding::Llr;
+use gf2_coding::ldpc::QuasiCyclicLdpc;
+use gf2_coding::{CodeRate, LdpcCode, Llr};
 use gf2_core::BitVec;
+
+/// The two LDPC code configurations of the external-library comparison
+/// harness (`dev/benchmarks/gf2-sim/comparison/`, issue `18e69a1a`).
+///
+/// This is the **single construction site** for the comparison codes: the
+/// `export_alist` bin derives the AList `H` fed to aff3ct from
+/// [`build`](Self::build), and the `ldpc_bler_sweep` bin decodes the code
+/// returned by the same [`build`](Self::build) — so the "bit-identical `H`
+/// on both sides" property of the comparison cannot drift between the two
+/// bins (review SSOT rule).
+///
+/// # Examples
+///
+/// ```
+/// use gf2_sim::testutil::ComparisonCode;
+///
+/// let code = ComparisonCode::parse("nr-bg1-r12").unwrap();
+/// let ldpc = code.build();
+/// // BG1 Z=384 mother code: N = 68*384, K = 22*384.
+/// assert_eq!((ldpc.n(), ldpc.k()), (26112, 8448));
+///
+/// assert!(ComparisonCode::parse("bogus").is_err());
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ComparisonCode {
+    /// DVB-T2 r1/2 Normal LDPC (ETSI EN 302 755): N = 64800, K = 32400.
+    DvbT2R12,
+    /// 5G NR BG1 mother code (Z = 384): N = 68·384 = 26112, K = 22·384 =
+    /// 8448, rate ≈ 0.323. The mother code of
+    /// `nr_5g_rate_matched(1, 16896, 8448)` — the comparison decodes it
+    /// directly (no puncturing/shortening) so the exported AList and the
+    /// decoded code are one and the same `H`.
+    NrBg1R12,
+}
+
+impl ComparisonCode {
+    /// Parses the harness CLI name (`dvb-t2-r12` / `nr-bg1-r12`).
+    ///
+    /// # Arguments
+    ///
+    /// * `s` — the `--code` CLI value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_sim::testutil::ComparisonCode;
+    ///
+    /// assert_eq!(
+    ///     ComparisonCode::parse("dvb-t2-r12").unwrap(),
+    ///     ComparisonCode::DvbT2R12,
+    /// );
+    /// assert!(ComparisonCode::parse("dvb-t2").is_err());
+    /// ```
+    pub fn parse(s: &str) -> Result<Self, String> {
+        match s {
+            "dvb-t2-r12" => Ok(Self::DvbT2R12),
+            "nr-bg1-r12" => Ok(Self::NrBg1R12),
+            other => Err(format!(
+                "unknown --code '{other}' (expected 'dvb-t2-r12' or 'nr-bg1-r12')"
+            )),
+        }
+    }
+
+    /// Builds the `LdpcCode` for this configuration — the one whose
+    /// parity-check matrix both comparison bins share.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_sim::testutil::ComparisonCode;
+    ///
+    /// let ldpc = ComparisonCode::NrBg1R12.build();
+    /// assert_eq!((ldpc.n(), ldpc.k()), (26112, 8448));
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(nnz(`H`)) — table-driven sparse `H` construction (no encoder cache
+    /// is built).
+    #[must_use]
+    pub fn build(self) -> LdpcCode {
+        match self {
+            Self::DvbT2R12 => LdpcCode::dvb_t2_normal(CodeRate::Rate1_2),
+            Self::NrBg1R12 => {
+                // nr_5g_rate_matched(1, 16896, 8448) selects Z = 384 for BG1;
+                // the comparison uses its full (un-rate-matched) mother code.
+                let rm = QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448);
+                rm.mother_code().clone()
+            }
+        }
+    }
+}
 
 /// A self-contained deterministic AWGN channel-LLR source: a SplitMix64
 /// stream feeds a Box-Muller cosine transform to produce N(0, 1) noise,

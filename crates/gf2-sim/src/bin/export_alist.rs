@@ -40,57 +40,23 @@
 //! # Usage
 //!
 //! ```bash
-//! cargo run -p gf2-sim --release --bin export_alist -- \
+//! cargo run -p gf2-sim --release --features test-support --bin export_alist -- \
 //!     --code dvb-t2-r12 --output dvb_t2_r12.alist
-//! cargo run -p gf2-sim --release --bin export_alist -- \
+//! cargo run -p gf2-sim --release --features test-support --bin export_alist -- \
 //!     --code nr-bg1-r12 --output nr_bg1_r12.alist
 //! ```
 //!
 //! The harness driver (`run.sh`) invokes this once per code before sweeping.
+//! The code selection ([`ComparisonCode`]: name parsing + `H` construction)
+//! is shared with the `ldpc_bler_sweep` bin via `gf2_sim::testutil` (the
+//! `test-support` feature), so the exported AList and the swept code are the
+//! same `H` by construction.
 
 use std::io::Write;
 use std::path::PathBuf;
 
-use gf2_coding::ldpc::QuasiCyclicLdpc;
-use gf2_coding::{CodeRate, LdpcCode};
 use gf2_core::sparse::SpBitMatrixDual;
-
-/// Which committed comparison code to export.
-#[derive(Clone, Copy)]
-enum Code {
-    /// DVB-T2 r1/2 Normal LDPC (ETSI EN 302 755): N = 64800, K = 32400.
-    DvbT2R12,
-    /// 5G NR BG1 r1/2 mother code (Z = 384): N = 68·384, K = 22·384.
-    NrBg1R12,
-}
-
-impl Code {
-    fn parse(s: &str) -> Result<Self, String> {
-        match s {
-            "dvb-t2-r12" => Ok(Self::DvbT2R12),
-            "nr-bg1-r12" => Ok(Self::NrBg1R12),
-            other => Err(format!(
-                "unknown --code '{other}' (expected 'dvb-t2-r12' or 'nr-bg1-r12')"
-            )),
-        }
-    }
-
-    /// Builds the parity-check matrix `H` (dual sparse) for this code.
-    fn parity_check(self) -> SpBitMatrixDual {
-        match self {
-            Self::DvbT2R12 => {
-                let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
-                code.parity_check_matrix().clone()
-            }
-            Self::NrBg1R12 => {
-                // The mother code: nr_5g_rate_matched(1, 16896, 8448) selects
-                // Z = 384 for BG1; we export its full (un-rate-matched) H.
-                let rm = QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448);
-                rm.mother_code().parity_check_matrix().clone()
-            }
-        }
-    }
-}
+use gf2_sim::testutil::ComparisonCode;
 
 /// Writes `h` to `path` in MacKay AList format.
 fn write_alist(h: &SpBitMatrixDual, path: &PathBuf) -> std::io::Result<()> {
@@ -141,7 +107,7 @@ fn write_padded<W: Write>(f: &mut W, indices: &[usize], width: usize) -> std::io
 }
 
 fn main() {
-    let mut code: Option<Code> = None;
+    let mut code: Option<ComparisonCode> = None;
     let mut output: Option<PathBuf> = None;
 
     let mut args = std::env::args().skip(1);
@@ -149,7 +115,7 @@ fn main() {
         match a.as_str() {
             "--code" => {
                 let v = args.next().expect("--code requires a value");
-                code = Some(Code::parse(&v).unwrap_or_else(|e| {
+                code = Some(ComparisonCode::parse(&v).unwrap_or_else(|e| {
                     eprintln!("error: {e}");
                     std::process::exit(2);
                 }));
@@ -182,7 +148,7 @@ fn main() {
         std::process::exit(2);
     });
 
-    let h = code.parity_check();
+    let h: SpBitMatrixDual = code.build().parity_check_matrix().clone();
     let (m, n, nnz) = (h.rows(), h.cols(), h.nnz());
     write_alist(&h, &output).unwrap_or_else(|e| {
         eprintln!("error: failed to write {}: {e}", output.display());
