@@ -34,3 +34,11 @@ serde_json = "1.0" # for tracing.jsonl JSON validation in campaign_cli_flags tes
 default = []
 hip = ["dep:gf2-kernels-hip"]
 llr-f64 = ["gf2-coding/llr-f64"]
+
+# 5G NR LDPC GPU real-time decode-rate tuning sweep (issue 23d3525f). Custom
+# main (harness = false): a BLER + decoded-throughput cell sweep, not a
+# Criterion micro-benchmark. Builds on non-ROCm hosts (no-hip is a no-op main);
+# the GPU sweep requires `--features hip` and a gfx1030 device.
+[[bench]]
+name = "nr_5g_realtime"
+harness = false

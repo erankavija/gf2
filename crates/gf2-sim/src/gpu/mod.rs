@@ -18,6 +18,7 @@
 pub mod awgn;
 pub mod demap;
 pub mod ldpc_bp;
+pub mod nr_5g_ldpc;
 
 #[cfg(feature = "hip")]
 mod imp {
