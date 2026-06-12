@@ -6083,3 +6083,10 @@
 {"type":"gate_failed","id":"4d3b44a9-7a44-4404-925b-62059d44d774","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T11:56:08.656114004Z","gate_key":"code-review","updated_by":"auto:executor"}
 {"type":"gate_passed","id":"2d068493-8300-4bb4-bd2b-890f1501229f","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T11:59:14.610054476Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
 {"type":"gate_failed","id":"8f42cd84-ec52-45e3-a93c-e0a4a6738f15","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T12:00:14.484789576Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"e94e9725-ce6f-4b02-b33d-319d453094da","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T12:03:45.682584230Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"d3526ad5-1552-4d00-8aa0-e00edad4aaaf","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T12:05:06.511586895Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"8351c083-b318-492d-aac2-00b0c387328c","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T12:05:17.489803356Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"0b9c44ee-a693-428e-a7f6-c7b4d476f7c8","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T12:05:17.489829606Z"}
+{"type":"issue_state_changed","id":"c7f55007-26e8-4c08-a77d-74598639cc5f","issue_id":"18e69a1a-c86f-49dc-b381-88f62cd20aa0","timestamp":"2026-06-12T12:05:17.539342560Z","from":"backlog","to":"ready"}
+{"type":"issue_state_changed","id":"ffe407f7-ea12-4622-ba69-6f0a7f17c866","issue_id":"18e69a1a-c86f-49dc-b381-88f62cd20aa0","timestamp":"2026-06-12T12:05:17.927741792Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"d971046d-061c-4cda-9b3f-7f6135f29c1f","issue_id":"18e69a1a-c86f-49dc-b381-88f62cd20aa0","timestamp":"2026-06-12T12:05:17.927913942Z","assignee":"agent:claude"}
