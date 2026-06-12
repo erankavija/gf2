@@ -200,6 +200,27 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `channel_llrs.len() != target_n`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_coding::llr::Llr;
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// let channel = vec![Llr::new(4.0); 16896];
+        /// let full = dec.prepare_llrs(&channel);
+        /// assert_eq!(full.len(), dec.full_n());
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(`full_n`) — one pass building the mother-code LLR vector.
         #[must_use]
         pub fn prepare_llrs(&self, channel_llrs: &[Llr]) -> Vec<Llr> {
             self.code.prepare_llrs(channel_llrs)
@@ -273,6 +294,28 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `mother_codeword.len() < target_k`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_coding::llr::Llr;
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// # use gf2_core::BitVec;
+        /// let mother = BitVec::zeros(dec.full_n());
+        /// let msg = dec.extract_message(&mother);
+        /// assert_eq!(msg.len(), dec.target_k());
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(`target_k`) — a prefix copy of the message bits.
         #[must_use]
         pub fn extract_message(&self, mother_codeword: &BitVec) -> BitVec {
             let target_k = self.code.params().target_k;
@@ -299,6 +342,28 @@ mod imp {
         /// # Panics
         ///
         /// Panics if `channel_llrs.len() != target_n`.
+        ///
+        /// # Examples
+        ///
+        /// ```no_run
+        /// use std::sync::Arc;
+        /// use gf2_coding::ldpc::nr_5g::Nr5gRateMatchedCode;
+        /// use gf2_coding::ldpc::{DecoderConfig, DecoderAlgorithm, QuasiCyclicLdpc};
+        /// use gf2_coding::llr::Llr;
+        /// use gf2_sim::gpu::nr_5g_ldpc::GpuNr5gDecoder;
+        ///
+        /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(1, 16896, 8448));
+        /// let cfg = DecoderConfig::new(DecoderAlgorithm::NormalizedMinSum(0.75), true);
+        /// let dec = GpuNr5gDecoder::new(code, cfg, 20);
+        /// let channel = vec![Llr::new(4.0); 16896];
+        /// let oracle = dec.cpu_reference_message(&channel);
+        /// assert_eq!(oracle.len(), dec.target_k());
+        /// ```
+        ///
+        /// # Complexity
+        ///
+        /// O(`max_iterations * edges`) CPU BP work over the full mother code
+        /// per call (a fresh CPU decoder per invocation; test-oracle use only).
         #[must_use]
         pub fn cpu_reference_message(&self, channel_llrs: &[Llr]) -> BitVec {
             let full_llrs = self.prepare_llrs(channel_llrs);
