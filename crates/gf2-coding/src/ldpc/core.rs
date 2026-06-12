@@ -650,6 +650,28 @@ impl QuasiCyclicLdpc {
         self.expansion_factor
     }
 
+    /// Returns the base matrix of shift values.
+    ///
+    /// Each entry is either `-1` (zero block) or a circulant shift in
+    /// `0..expansion_factor()`. One inner `Vec` per base row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    ///
+    /// let qc = QuasiCyclicLdpc::new(vec![vec![0, 1, -1], vec![2, -1, 0]], 4);
+    /// assert_eq!(qc.base_matrix()[0], vec![0, 1, -1]);
+    /// assert_eq!(qc.base_matrix()[1], vec![2, -1, 0]);
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// O(1) — returns a borrowed slice.
+    pub fn base_matrix(&self) -> &[Vec<i32>] {
+        &self.base_matrix
+    }
+
     /// Returns the number of rows in the expanded matrix.
     pub fn expanded_rows(&self) -> usize {
         self.base_rows() * self.expansion_factor
