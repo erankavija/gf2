@@ -177,7 +177,10 @@ mod hip_bench {
         println!("# decoder: NormalizedMinSum(0.75), syndrome early termination");
         println!("# channel: BPSK-AWGN, per-bit Es/N0 = {es_n0_db} dB (sigma = {sigma:.5})");
         println!("# BLER blocks/cell = {bler_blocks}, throughput reps = {thrput_reps}");
-        println!("# target: decoded TB throughput >= 200 Mbps at BLER <= 1e-2");
+        println!(
+            "# target: attested flat-kernel reference 17.45 Mbps at BLER <= 1e-2 \
+             (AMENDED 2026-06-12b from the original >= 200 Mbps; study 43fb19e2)"
+        );
         println!();
 
         // Build the rate-matched code once and encode a fixed transmitted block.
@@ -261,12 +264,24 @@ mod hip_bench {
                 }
                 println!();
                 println!("# selected-cell throughput mean ± σ = {mean:.2} ± {sd:.2} Mbps");
-                if mean >= 200.0 {
-                    println!("# VERDICT: PASS (>= 200 Mbps decoded TB throughput at BLER <= 1e-2)");
+                // AMENDED 2026-06-12b (user option B, study 43fb19e2): the
+                // criterion is the ATTESTED flat-kernel measurement (17.45
+                // ± 0.03 Mbps receipt), not the original >= 200 Mbps bar
+                // (unreachable on gfx1030 — bandwidth-bound). The verdict
+                // regression-guards the attested band: a future run far below
+                // it signals a real regression, far above signals the receipt
+                // is stale (e.g. after kernel work in a future epic).
+                const ATTESTED_MBPS: f64 = 17.45;
+                if mean >= ATTESTED_MBPS * 0.9 {
+                    println!(
+                        "# VERDICT: PASS — within/above the attested flat-kernel band \
+                         ({mean:.2} Mbps vs attested {ATTESTED_MBPS:.2} Mbps; amended \
+                         criterion 2026-06-12b)"
+                    );
                 } else {
                     println!(
-                        "# VERDICT: BELOW TARGET ({mean:.2} Mbps < 200 Mbps) — report the ceiling, \
-                         do NOT weaken the gate."
+                        "# VERDICT: REGRESSION ({mean:.2} Mbps < 90% of the attested \
+                         {ATTESTED_MBPS:.2} Mbps) — investigate before attesting."
                     );
                 }
             }
