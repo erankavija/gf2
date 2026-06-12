@@ -28,6 +28,9 @@ use gf2_coding::CodeRate;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{BatchHandle, Pipeline, Scheduler};
 
+mod common;
+use common::{assert_four_columns_byte_identical, snr_point_to_counters};
+
 /// True if a usable HIP device is present.
 fn gpu_present() -> bool {
     gf2_kernels_hip::host::device_mem_info().is_ok()
@@ -142,13 +145,11 @@ fn hybrid_two_run_byte_identical() {
     );
 
     // The four contractual columns must be byte-identical run-to-run (same
-    // device path twice; mean_iters IS deterministic here per §11).
-    assert_eq!(a.frames, b.frames, "frames");
-    assert_eq!(a.errors, b.errors, "errors (frame errors)");
-    assert_eq!(a.fer.to_bits(), b.fer.to_bits(), "fer bit-pattern");
-    assert_eq!(
-        a.mean_iters.to_bits(),
-        b.mean_iters.to_bits(),
-        "mean_iters bit-pattern (same device path twice)"
+    // device path twice; mean_iters IS deterministic here per §11), via the
+    // shared SSOT comparator over the adapted counters.
+    assert_four_columns_byte_identical(
+        &snr_point_to_counters(&b),
+        &snr_point_to_counters(&a),
+        "hybrid run-to-run (same device path twice)",
     );
 }

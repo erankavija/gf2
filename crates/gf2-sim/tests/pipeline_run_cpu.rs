@@ -20,6 +20,9 @@ use gf2_sim::parallel::run_snr_point;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::Pipeline;
 
+mod common;
+use common::{assert_four_columns_byte_identical, snr_point_to_counters};
+
 const SEED: u64 = 0x75C2_2FA8;
 const ES_N0: f64 = 9.0; // well above the r1/2 16-QAM waterfall
 
@@ -79,16 +82,11 @@ fn pipeline_run_cpu_matches_run_snr_point_ssot() {
         |g, ctx, sim| sim.simulate_frame(g, ctx),
     );
 
-    assert_eq!(via_pipeline.frames, direct.frames);
-    assert_eq!(via_pipeline.errors, direct.errors);
-    assert_eq!(
-        via_pipeline.fer.to_bits(),
-        direct.fer().to_bits(),
-        "fer must match the run_snr_point SSOT bit-for-bit"
-    );
-    assert_eq!(
-        via_pipeline.mean_iters.to_bits(),
-        direct.mean_iters().to_bits(),
-        "mean_iters must match the run_snr_point SSOT bit-for-bit"
+    // All four contractual columns must match the run_snr_point SSOT
+    // bit-for-bit, via the shared SSOT comparator over the adapted point.
+    assert_four_columns_byte_identical(
+        &snr_point_to_counters(&via_pipeline),
+        &direct,
+        "Pipeline::run vs run_snr_point SSOT",
     );
 }
