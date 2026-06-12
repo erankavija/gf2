@@ -198,7 +198,7 @@ Unsafe code lives exclusively in these two kernel crates; everything else uses `
 |--------|---------|
 | `linear` | `LinearBlockCode`, `SyndromeTableDecoder` — Hamming codes |
 | `bch/` | BCH codes with Berlekamp-Massey + Chien search; `dvb_t2/` sub-module contains all 12 DVB-T2 configurations |
-| `ldpc/` | Belief-propagation decoder; `dvb_t2/` has tables from ETSI EN 302 755; `encoding/` uses Richardson-Urbanke with cache; `dvb_t2/concat.rs` = `DvbT2Concat` (BCH+LDPC concatenated codec); `dvb_t2/bit_interleaver.rs` = `DvbT2BitInterleaver` (column-row bit interleaver) |
+| `ldpc/` | Belief-propagation decoder; `dvb_t2/` has tables from ETSI EN 302 755; `encoding/` uses Richardson-Urbanke with cache; `dvb_t2/concat.rs` = `DvbT2Concat` (BCH+LDPC concatenated codec); `dvb_t2/bit_interleaver.rs` = `DvbT2BitInterleaver` (column-row bit interleaver); `nr_5g/` = 5G NR LDPC per 3GPP TS 38.212 (BG1 46x68 + BG2 42x52 with per-`i_LS` shift tables for all 8 lifting sets, `QuasiCyclicLdpc::nr_5g` mother-code constructor, `nr_5g_rate_matched` 3GPP rate matching via LLR initialization, `shift_table` raw-table accessor) — tables validated bit-exact against the external Sionna reference CSVs committed in `data/ldpc/nr_5g/` (`tests/nr5g_external_vectors.rs`, provenance in `data/ldpc/nr_5g/PROVENANCE.md`) |
 | `modem/` | Gray-QAM mapper (`GrayQamMapper`), fast demapper (`FastGrayQamDemapper`), `ModemSpec` preset workflow; see `examples/dvb_t2_bicm_chain.rs` for the canonical BICM chain composition |
 | `convolutional` | Viterbi decoder skeleton |
 | `traits` | `BlockEncoder`, `HardDecisionDecoder`, `GeneratorMatrixAccess` — unified interfaces |
