@@ -58,6 +58,18 @@ pub fn bg2_base_matrix(z: usize) -> Vec<Vec<i32>> {
     super::reduce_shifts(&BG2_SHIFTS[i_ls], z)
 }
 
+/// Returns the raw (un-reduced) BG2 shift table for lifting set `i_ls`.
+///
+/// Entries are the verbatim `V` values from 3GPP TS 38.212 Table 5.3.2-3
+/// (`-1` = no connection); no `mod Z` reduction is applied.
+///
+/// # Panics
+///
+/// Panics if `i_ls >= 8` (slice indexing).
+pub(crate) fn bg2_raw_shift_table(i_ls: usize) -> &'static [[i16; BG2_COLS]; BG2_ROWS] {
+    &BG2_SHIFTS[i_ls]
+}
+
 // BG2 shift tables from 3GPP TS 38.212 Table 5.3.2-3.
 //
 // Indexed by [i_LS][row][col] where i_LS is the lifting set index (0..7).

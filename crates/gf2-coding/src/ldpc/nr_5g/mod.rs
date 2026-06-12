@@ -89,6 +89,67 @@ pub mod lifting;
 
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
 
+/// Returns the raw per-`i_LS` shift table for a base graph.
+///
+/// Entries are the verbatim `V` values from 3GPP TS 38.212 Table 5.3.2-2
+/// (BG1) or Table 5.3.2-3 (BG2) for the given lifting set index `i_ls`:
+/// `-1` means "no connection" (zero circulant block); non-negative values
+/// are the base shifts **before** the `V mod Z` reduction that
+/// [`QuasiCyclicLdpc::nr_5g`] applies for a concrete lifting size.
+///
+/// This is the table-level single source of truth behind the constructor
+/// surface; it exists so external reference data (e.g. the committed
+/// Sionna CSV tables under `data/ldpc/nr_5g/`) can be compared bit-exactly
+/// against the compiled-in constants.
+///
+/// # Arguments
+///
+/// * `base_graph` - Base graph number: 1 (46x68) or 2 (42x52)
+/// * `i_ls` - Lifting set index (0..=7) per TS 38.212 Table 5.3.2-1
+///
+/// # Panics
+///
+/// Panics if `base_graph` is not 1 or 2, or if `i_ls >= 8`.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_coding::ldpc::nr_5g::shift_table;
+///
+/// let bg1_ils0 = shift_table(1, 0);
+/// assert_eq!(bg1_ils0.len(), 46);
+/// assert_eq!(bg1_ils0[0].len(), 68);
+/// assert_eq!(bg1_ils0[0][0], 250); // TS 38.212 Table 5.3.2-2, i_LS=0, (0,0)
+/// assert_eq!(bg1_ils0[0][4], -1); // no connection
+///
+/// let bg2_ils6 = shift_table(2, 6);
+/// assert_eq!(bg2_ils6.len(), 42);
+/// assert_eq!(bg2_ils6[0].len(), 52);
+/// assert_eq!(bg2_ils6[0][0], 143); // TS 38.212 Table 5.3.2-3, i_LS=6, (0,0)
+/// ```
+///
+/// # Complexity
+///
+/// O(rows × cols) for the table copy (46×68 for BG1, 42×52 for BG2).
+pub fn shift_table(base_graph: u8, i_ls: usize) -> Vec<Vec<i16>> {
+    assert!(
+        base_graph == 1 || base_graph == 2,
+        "base_graph must be 1 or 2, got {base_graph}"
+    );
+    assert!(i_ls < 8, "i_ls must be in 0..8, got {i_ls}");
+    match base_graph {
+        1 => bg1::bg1_raw_shift_table(i_ls)
+            .iter()
+            .map(|row| row.to_vec())
+            .collect(),
+        2 => bg2::bg2_raw_shift_table(i_ls)
+            .iter()
+            .map(|row| row.to_vec())
+            .collect(),
+        _ => unreachable!(),
+    }
+}
+
 /// Returns the lifting set index for Z, panicking if Z is invalid.
 ///
 /// Shared validation used by both `bg1_base_matrix` and `bg2_base_matrix`.
