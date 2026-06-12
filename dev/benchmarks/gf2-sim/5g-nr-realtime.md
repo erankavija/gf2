@@ -30,6 +30,7 @@ host-side `GpuNr5gDecoder`
 | GPU | AMD Radeon RX 6950 XT (`gfx1030`, RDNA2) |
 | GPU cores | 5120 stream processors |
 | CPU host | AMD Ryzen 9 5900X (12-core / 24-thread) |
+| GPU driver | `amdgpu` (in-tree kernel driver, Linux 7.0.10-arch1-1) |
 | ROCm | 7.2.4 |
 | HIP | 7.2.53211-9999 (AMD clang 22.0.0git) |
 | Kernel block size | `BLOCK_THREADS = 256`, grid = ⌈work / 256⌉ (fixed, design §6) |
@@ -144,7 +145,8 @@ The measurement is extremely stable (σ = 0.03 Mbps, 0.17 % relative).
 
 | Quantity | Value |
 |----------|-------|
-| **Concrete target (user-approved)** | **≥ 200 Mbps** decoded TB throughput |
+| **Concrete target (AMENDED 2026-06-12b, user-approved)** | **attested flat-kernel measurement: 17.45 ± 0.03 Mbps** decoded TB throughput |
+| Historical original target (pre-amendment; unreachable on gfx1030 — study `43fb19e2`) | ≥ 200 Mbps |
 | Spec PRB info-rate reference (TS 38.214 μ = 1, 273 PRBs, QPSK r1/2, 1 layer) | ≈ 91.7 Mbps (see derivation) |
 | **Observed (this work)** | **17.45 ± 0.03 Mbps** |
 
