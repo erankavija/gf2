@@ -2,7 +2,7 @@
   "id": "110e45cc-0574-46e6-8648-74f416a3f434",
   "title": "Researcher onboarding examples and rustdoc for gf2-sim",
   "description": "## Goal\n\nResearcher-facing onboarding: `crates/gf2-sim/examples/` covering\nthe DVB-T2 preset, the 5G NR preset, and a novel-chain example via\nthe graph API. Rustdoc walk-through landing pages for both API\nlayers. Lands the final CLAUDE.md amendments that close epic\n`f9717e7e`.\n\n## Context\n\nTask under story `a5635da5` (5G NR + research enablers) within epic\n`gf2-sim` (`f9717e7e`). Sequencing: depends on `acf9b11a` (5G NR\nbase graphs), `e478daa8` (5G NR preset), `8c8302c8` (DVB-T2 preset\n+ graph example). This is the Phase E (and epic) closing task per\nQ5 decision: lands CLAUDE.md updates documenting Phase E\ndeliverables and the overall research-grade pipeline story.\n\n## Deliverables\n\n1. `crates/gf2-sim/examples/`:\n   - `dvb_t2_quickstart.rs` — 40-line example: build pipeline,\n     submit one batch, collect, print summary.\n   - `nr_5g_quickstart.rs` — same shape for BG1 / Z=384 / r1/2.\n   - `novel_chain_via_graph.rs` — demonstrates the graph API for\n     a non-standard chain (e.g., adding a custom puncturing stage\n     between encoder and modulator).\n   - `parallel_byte_identity.rs` — runs the same configuration at\n     parallelism ∈ {1, 24} and prints the byte-identity assertion\n     output.\n   - `gpu_hybrid.rs` (under `#[cfg(feature = \"hip\")]`) — runs the\n     same chain on the CPU+GPU path, asserts byte-identity vs\n     CPU-only.\n2. Rustdoc landing pages:\n   - `crates/gf2-sim/src/lib.rs` module-level docstring expanded\n     with a quickstart linking to the typestate builder, the\n     graph API, and the example files.\n   - `crates/gf2-sim/src/presets/mod.rs` documents the preset\n     pattern and links to DVB-T2 + 5G NR specifics.\n3. CLAUDE.md amendments (Phase E + epic close):\n   - Document the 5G NR LDPC preset with its in-scope BG / Z /\n     rate combinations.\n   - Document the comparison harness pointing to\n     `dev/benchmarks/gf2-sim/comparison/`.\n   - Document the researcher onboarding entry point.\n   - Final pass: confirm CLAUDE.md's `gf2-sim` section is complete\n     (module map, determinism contract, CPU+GPU dispatch model,\n     multi-arch HIP target list, layered API style, `parallelism-pays`\n     gate, receipts directory). The epic's `[hard]` criterion\n     \"CLAUDE.md updated with …\" closes here.\n\n## Success Criteria\n\n- [hard] `crates/gf2-sim/examples/` contains the five examples\n  listed above; each runs via `cargo run -p gf2-sim --example\n  <name> --release` (or `--features hip` for the GPU example)\n  and produces documented output.\n- [hard] `cargo doc --no-deps -p gf2-sim` produces rustdoc with\n  the quickstart on the crate landing page; the preset and graph\n  API have linked walk-throughs.\n- [hard] `doc-review` gate green: documentation comments\n  (description, examples, panics where relevant) present on every\n  public item exposed by `gf2-sim`.\n- [hard] CLAUDE.md fully covers the gf2-sim section per the\n  enumeration above; the epic's docs criterion is met.\n- [hard] `cargo-ci`, `code-review`, `doc-review` gates green.\n\n## Non-goals\n\n- Tutorial-length documentation site (out of scope).\n- Translation / localisation (out of scope).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "normal",
   "assignee": "agent:claude",
   "dependencies": [
@@ -14,6 +14,16 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T16:27:27.047992748Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": null,
+      "updated_at": "2026-06-12T16:30:13.318499508Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -28,5 +38,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:05:17.741615079+00:00",
-  "updated_at": "2026-06-12T16:21:01.287159011+00:00"
+  "updated_at": "2026-06-12T16:30:13.418573887+00:00"
 }
