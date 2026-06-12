@@ -2,7 +2,7 @@
   "id": "43fb19e2-6719-4171-9bb1-60facd46029e",
   "title": "Feasibility study: gfx1030 NR LDPC kernel ceiling (layered BP, fp16, QC layout)",
   "description": "## Goal\n\nEstimate, with measurements and a roofline model — NOT guesses — the decoded-TB throughput achievable on gfx1030 for the canonical configuration (BG1, i_LS = 1, Z = 384, rate 1/2, BLER <= 1e-2) with kernel-level optimisations, so the user can decide whether the epic's >= 200 Mbps headline (23d3525f) is reachable via a kernel-optimisation task or must be amended.\n\n## Context\n\nUser decision 2026-06-12 after 23d3525f's escalation: the Phase B flat kernel's measured ceiling is 17.45 +/- 0.03 Mbps (~11.5x below target; receipt dev/benchmarks/gf2-sim/5g-nr-realtime.md), root cause full-mother-code BP (26112 vars / 17664 checks), compute/bandwidth-bound, saturated at batch 128. The user chose 'pause for feasibility study first' over immediately committing to a kernel task or amending the target. 23d3525f is held open, blocked on this study.\n\n## Deliverables\n\n1. Design doc dev/active/<this-id>-nr-kernel-feasibility.md:\n   - Roofline model of the flat kernel at the canonical config anchored on the MEASURED 17.45 Mbps (bytes moved per edge per iteration vs RDNA2 6950 XT envelope: VRAM bandwidth, LDS, FP32 rate). Identify whether the kernel is bandwidth- or compute-bound and the measured-vs-roofline gap.\n   - Per-lever projection, each grounded in a measurement or cited literature: (a) layered BP iteration reduction — MEASURED via a CPU layered-BP prototype's iterations-to-BLER<=1e-2 vs the flooding baseline at the same operating point; (b) fp16 / packed-LLR traffic reduction — include the section on what fp16 does to the design-doc §11 determinism contracts (which columns/contracts survive, which break); (c) QC-aware coalesced layout — microbenchmark the access-pattern traffic difference (probe, not a kernel rewrite); (d) reduced-graph decoding (rate-dependent row pruning, host-side only) — quantify the work reduction for r1/2.\n   - Combined projected throughput RANGE with stated confidence, per-lever effort estimates, and a recommendation.\n2. Microbenchmark / prototype code under dev/research/ (non-workspace stub conventions apply: .gitignore with target/ + Cargo.lock) or as gf2-sim benches — NO GPU kernel implementation, NO change to the existing kernel.\n3. The doc ends with an explicit USER DECISION section laying out the options (kernel task scoped from the findings vs amend the 200 Mbps target) — the decision itself is NOT made in this task.\n\n## Success Criteria\n\n- [hard] Roofline model anchored on the measured 17.45 Mbps receipt, identifying the binding resource with arithmetic shown.\n- [hard] CPU layered-BP convergence measurement: iterations-to-BLER<=1e-2 (layered vs flooding) at the canonical operating point, with the measured numbers in the doc.\n- [hard] Every projected gain grounded in a measurement or a cited source; combined range + per-lever effort estimates + §11 fp16 implications recorded.\n- [hard] Explicit user-decision section; no amendment made, no kernel code written.\n- [hard] cargo-ci, code-review gates green.\n\n## Non-goals\n\n- GPU kernel implementation or modification.\n- Amending 23d3525f or the epic criterion (user decision after this study).\n- aff3ct/IT++ comparison (18e69a1a).",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -11,24 +11,32 @@
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-12T10:22:12.018997489Z"
-    },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-12T10:22:12.010980707Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T10:53:19.034897797Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T10:53:48.854021968Z"
     }
   },
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/43fb19e2-nr-kernel-feasibility.md",
+      "commit": null,
+      "label": "NR kernel feasibility study",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "type:task",
     "epic:gf2-sim",
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-06-12T10:22:02.369758399+00:00",
-  "updated_at": "2026-06-12T10:22:12.081611387+00:00"
+  "updated_at": "2026-06-12T10:56:00.878929781+00:00"
 }
