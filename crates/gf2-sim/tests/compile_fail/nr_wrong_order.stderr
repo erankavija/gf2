@@ -1,0 +1,8 @@
+error[E0599]: no method named `lifting_size` found for struct `gf2_sim::presets::nr_5g::Builder<NeedsBaseGraph>` in the current scope
+  --> tests/compile_fail/nr_wrong_order.rs:10:31
+   |
+10 |     let _ = Pipeline::nr_5g().lifting_size(384);
+   |                               ^^^^^^^^^^^^ method not found in `gf2_sim::presets::nr_5g::Builder<NeedsBaseGraph>`
+   |
+   = note: the method was found for
+           - `gf2_sim::presets::nr_5g::Builder<NeedsLifting>`
