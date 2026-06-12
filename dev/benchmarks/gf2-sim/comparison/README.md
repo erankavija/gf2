@@ -143,9 +143,11 @@ the committed deliverables (CSVs + PNGs) directly into this directory; the
 Each Es/N0 point runs until `target_errors` frame errors or `max_frames`
 frames, whichever first. The full sweep uses `target_errors = 200`,
 `max_frames = 12000` (gf2-sim) and `-e 200` (aff3ct), so the FER=1e-2 region
-(the criterion point) accumulates ≈ 200 frame errors — a stable ~7% relative
-estimate. Both sides use seed 42 and a 50-iteration cap. Representative
-gf2-sim per-point frame/error counts (from `scratch/full_run.log`):
+(the criterion point) accumulates ≈ 100–200 frame errors per bracketing point
+— a stable ≤ 10% relative estimate (the two deep-tail NR rows have their own
+documented budgets; see the provenance note below). Both sides use seed 42
+and a 50-iteration cap. Representative gf2-sim per-point frame/error counts
+(from `scratch/full_run.log`):
 
 | Es/N0 (dB) | gf2-sim BLER | frames | frame errors |
 |---|---|---|---|
@@ -163,8 +165,41 @@ gf2-sim per-point frame/error counts (from `scratch/full_run.log`):
 > time; the merge left-joins on Es/N0, so a skipped aff3ct point leaves an
 > empty `aff3ct_bler` cell (e.g. NR −4.10 / −4.00, where the gf2-sim BLER is 0
 > in 12000 frames). The FER=1e-2 crossing region is fully covered on both
-> sides. The committed aff3ct NR sub-1e-2 points (−4.25, −4.20) were obtained
-> with a longer per-point budget so the aff3ct curve brackets FER=1e-2.
+> sides.
+>
+> **Deep-tail NR points (−4.25, −4.20) — exact provenance.** The −4.25 point
+> is deliberately off `run.sh`'s 0.1 dB grid (it exists to bracket FER=1e-2
+> tightly on both sides), and the committed −4.25/−4.20 aff3ct cells used a
+> larger budget than the `run.sh` defaults. These rows were produced by the
+> following exact invocations (run from `comparison/` after a `run.sh` full
+> sweep has built aff3ct and exported the AList) and merged into the
+> committed CSV:
+>
+> ```bash
+> # aff3ct, both points in one run: 600 s budget, -e 50 (~14% relative
+> # error at FER 5e-3 — ample for tail bracketing below the 1e-2
+> # criterion point). Produced the committed -4.25 / -4.20 aff3ct cells:
+> timeout 600 .aff3ct-build/build/bin/aff3ct --sim-type BFER -C LDPC \
+>     --dec-h-path scratch/nr_bg1_r12.alist -K 8448 -N 26112 \
+>     --enc-type AZCW --src-type AZCW --mdm-type BPSK --chn-type AWGN \
+>     --sim-noise-type ESN0 -R "-4.25,-4.2" \
+>     --dec-type BP_FLOODING --dec-implem NMS --dec-norm 0.75 --dec-ite 50 \
+>     --dec-h-reorder NONE -e 50 --sim-seed 42 --ter-freq 0
+>
+> # gf2-sim, the off-grid -4.25 point (deterministic at seed 42 on the
+> # 24-thread host below; stops at 22272 frames / 101 errors):
+> cargo run -p gf2-sim --release --features test-support --bin ldpc_bler_sweep -- \
+>     --code nr-bg1-r12 --esn0-range -4.25:-4.25:0.1 \
+>     --max-frames 60000 --target-errors 100 --max-iter 50 --seed 42 \
+>     --output scratch/gf2_nr_425.csv
+> ```
+>
+> Every other committed row comes from the plain `run.sh` full sweep
+> (aff3ct `-e 200` under the 240 s default; gf2-sim 12000-frame /
+> 200-error budgets). The gf2-sim −4.20 row is the on-grid `run.sh` value
+> (14 errors in 12000 frames — tail-of-curve resolution only; the FER=1e-2
+> crossing interpolates between −4.30 and −4.25, both of which have ≥ 100
+> frame errors).
 
 ## Host
 
