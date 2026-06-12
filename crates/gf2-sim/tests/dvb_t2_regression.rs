@@ -198,81 +198,17 @@ fn build_mode_c(
 }
 
 /// Asserts four-column byte-identity between two [`SnrPointResult`]s (design
-/// doc §11 CPU-only/parallel contract): `frames`, `errors`, `fer` bit pattern,
-/// `mean_iters` bit pattern. `ber` / `total_bit_errors` are NOT checked (§11
-/// "Always-excluded").
+/// doc §11 CPU-only/parallel contract) by adapting both points back to the
+/// SSOT [`WorkerCounters`](gf2_sim::parallel::WorkerCounters) via the shared
+/// `tests/common` adapter and delegating to
+/// `common::assert_four_columns_byte_identical` — the single source of truth
+/// for the four-column set and the BER exclusion. No column logic lives here.
 #[track_caller]
 fn assert_four_columns(a: &SnrPointResult, b: &SnrPointResult, label: &str) {
-    assert_eq!(
-        a.frames, b.frames,
-        "{label}: `frames` differs ({} vs {})",
-        a.frames, b.frames
-    );
-    assert_eq!(
-        a.errors, b.errors,
-        "{label}: `errors` (frame errors) differs ({} vs {})",
-        a.errors, b.errors
-    );
-    assert_eq!(
-        a.fer.to_bits(),
-        b.fer.to_bits(),
-        "{label}: `fer` bit pattern differs ({} vs {})",
-        a.fer,
-        b.fer
-    );
-    assert_eq!(
-        a.mean_iters.to_bits(),
-        b.mean_iters.to_bits(),
-        "{label}: `mean_iters` bit pattern differs ({} vs {})",
-        a.mean_iters,
-        b.mean_iters
-    );
-    assert_eq!(
-        a.total_iterations, b.total_iterations,
-        "{label}: `total_iterations` (mean_iters numerator) differs ({} vs {})",
-        a.total_iterations, b.total_iterations
-    );
-}
-
-/// Asserts three-column byte-identity between two [`SnrPointResult`]s (design
-/// doc §11 CPU-vs-GPU relaxed contract): `frames`, `errors`, `fer` bit pattern.
-/// `mean_iters` is LOGGED but NOT asserted. `ber` / `total_bit_errors` are NOT
-/// checked (§11 "Always-excluded").
-#[cfg(feature = "hip")]
-#[track_caller]
-fn assert_three_columns_log_mean_iters(a: &SnrPointResult, c: &SnrPointResult, label: &str) {
-    // The §11 HARD escalation boundary: if the frame-error verdict diverges
-    // between CPU and GPU that is a genuine §11 violation. PANIC with precise
-    // detail — do NOT relax the criterion, do NOT move the operating point.
-    assert_eq!(
-        a.frames, c.frames,
-        "[{label}] BYTE-IDENTITY VIOLATION: column `frames` diverged \
-         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
-        a.frames, c.frames
-    );
-    assert_eq!(
-        a.errors, c.errors,
-        "[{label}] BYTE-IDENTITY VIOLATION: column `errors` (frame errors) diverged \
-         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
-        a.errors, c.errors
-    );
-    assert_eq!(
-        a.fer.to_bits(),
-        c.fer.to_bits(),
-        "[{label}] BYTE-IDENTITY VIOLATION: column `fer` bit pattern diverged \
-         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
-        a.fer,
-        c.fer
-    );
-
-    // mean_iters: LOGGED, NOT asserted (§11 CPU-vs-GPU exclusion — RDNA2
-    // transcendental ULP drift can shift BP early-termination by ±1).
-    eprintln!(
-        "[{label}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
-         CPU {:.4}, GPU {:.4}, diff {:+.4}",
-        a.mean_iters,
-        c.mean_iters,
-        c.mean_iters - a.mean_iters,
+    common::assert_four_columns_byte_identical(
+        &common::snr_point_to_counters(b),
+        &common::snr_point_to_counters(a),
+        label,
     );
 }
 
@@ -373,7 +309,11 @@ fn run_regression(point: &ModcodPoint, frames: u64) {
                 c.frames, c.errors, c.fer, c.mean_iters,
             );
 
-            assert_three_columns_log_mean_iters(&a, &c, &format!("(A-vs-C) {label}"));
+            common::assert_three_columns_byte_identical_log_mean_iters(
+                &c,
+                &a,
+                &format!("(A-vs-C) {label}"),
+            );
 
             eprintln!(
                 "{label}: Mode A == Mode C (three columns: frames/errors/fer byte-identical; \
@@ -481,7 +421,11 @@ fn test_dvb_t2_regression_smoke_gpu_r12_16qam() {
         c.frames, c.errors, c.fer, c.mean_iters
     );
 
-    assert_three_columns_log_mean_iters(&a, &c, "smoke GPU r1/2 16-QAM @9.0dB");
+    common::assert_three_columns_byte_identical_log_mean_iters(
+        &c,
+        &a,
+        "smoke GPU r1/2 16-QAM @9.0dB",
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

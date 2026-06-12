@@ -38,6 +38,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use gf2_sim::error::{FatalError, RecoverableError, StageError};
+use gf2_sim::executor::SnrPointResult;
 use gf2_sim::parallel::WorkerCounters;
 use gf2_sim::stage::{BatchSize, ExecutionClass, Stage};
 
@@ -123,6 +124,87 @@ pub fn assert_four_columns_byte_identical(
     // BER (total_bit_errors / total_bits) is intentionally NOT asserted — it is
     // always excluded from byte-identity (issue `152388f4`; design-doc §11
     // "Always-excluded"). No comparison is offered for it on purpose.
+}
+
+/// Reconstructs the SSOT [`WorkerCounters`] from a [`SnrPointResult`] (the
+/// projection [`Pipeline::run`](gf2_sim::Pipeline::run) returns) so
+/// [`assert_four_columns_byte_identical`] stays the single source of truth
+/// for the byte-identity column set and the BER exclusion when a test holds
+/// `SnrPointResult`s rather than raw counters.
+///
+/// Shared by `tests/hybrid_resume.rs` (issue `571c11c4`, where it originated)
+/// and `tests/dvb_t2_regression.rs` (issue `0d9cb8e3`).
+pub fn snr_point_to_counters(p: &SnrPointResult) -> WorkerCounters {
+    WorkerCounters {
+        frames: p.frames,
+        errors: p.errors,
+        total_iterations: p.total_iterations,
+        total_bits: p.total_bits,
+        total_bit_errors: p.total_bit_errors,
+    }
+}
+
+/// Asserts the **three** byte-identity columns of the §11 CPU-vs-GPU
+/// *relaxed* contract — `frames`, `errors`, `fer` — between a GPU-arm
+/// [`SnrPointResult`] (`actual`) and its CPU-arm baseline, and **logs**
+/// `mean_iters` (with the diff) WITHOUT asserting it.
+///
+/// `mean_iters` is EXCLUDED from CPU-vs-GPU byte-identity (design-doc §11,
+/// user-approved Q3 2026-06-07): RDNA2 hardware transcendental ULP drift can
+/// shift BP early-termination by ±1 iteration per frame, while the frame's
+/// final verdict — and therefore `frames` / `errors` / `fer` — stays
+/// byte-identical. BER is always excluded (issue `152388f4`), as in the
+/// four-column helper.
+///
+/// A divergence in any of the three asserted columns is a genuine §11
+/// contract violation: escalate, do not relax the criterion or move the
+/// operating point.
+///
+/// # Arguments
+///
+/// * `actual` — the CPU+GPU (`with_gpu(true)`) arm's point result.
+/// * `baseline` — the CPU-only arm's point result.
+/// * `label` — a human-readable config label for assertion messages.
+///
+/// # Panics
+///
+/// Panics (via `assert_eq!`) if `frames`, `errors`, or the `fer` bit pattern
+/// differ between `actual` and `baseline`. Never panics on `mean_iters`.
+#[track_caller]
+pub fn assert_three_columns_byte_identical_log_mean_iters(
+    actual: &SnrPointResult,
+    baseline: &SnrPointResult,
+    label: &str,
+) {
+    assert_eq!(
+        baseline.frames, actual.frames,
+        "[{label}] BYTE-IDENTITY VIOLATION: column `frames` diverged \
+         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
+        baseline.frames, actual.frames
+    );
+    assert_eq!(
+        baseline.errors, actual.errors,
+        "[{label}] BYTE-IDENTITY VIOLATION: column `errors` (frame errors) diverged \
+         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
+        baseline.errors, actual.errors
+    );
+    assert_eq!(
+        baseline.fer.to_bits(),
+        actual.fer.to_bits(),
+        "[{label}] BYTE-IDENTITY VIOLATION: column `fer` bit pattern diverged \
+         (CPU={} GPU={}). ESCALATE per §11 HARD trigger.",
+        baseline.fer,
+        actual.fer
+    );
+
+    // mean_iters: LOGGED, NOT asserted (§11 CPU-vs-GPU exclusion).
+    eprintln!(
+        "[{label}] mean_iters (LOGGED, NOT asserted — §11 CPU-vs-GPU exclusion): \
+         CPU {:.4}, GPU {:.4}, diff {:+.4}",
+        baseline.mean_iters,
+        actual.mean_iters,
+        actual.mean_iters - baseline.mean_iters,
+    );
 }
 
 // ────────────────────────────────────────────────────────────────────────────
