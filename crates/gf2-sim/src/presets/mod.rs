@@ -6,3 +6,4 @@
 // owned by 81d05bab (typestate builder framework)
 
 pub mod dvb_t2;
+pub mod nr_5g;

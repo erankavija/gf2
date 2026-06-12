@@ -111,6 +111,30 @@ impl Nr5gEncode {
     pub fn k(&self) -> usize {
         self.code.k()
     }
+
+    /// The codeword length `n` (= `target_n`, the rate-matched length `E`)
+    /// this stage emits per frame.
+    ///
+    /// Exposed so consumers (e.g. the 5G NR preset's tests) can verify the
+    /// built code's dimensions — in particular that `E` is a multiple of the
+    /// modulation order `Q_m`, the TS 38.212 §5.4.2.2 interleaver precondition.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use gf2_sim::stages::nr_5g::Nr5gEncode;
+    /// use gf2_coding::ldpc::QuasiCyclicLdpc;
+    ///
+    /// let code = Arc::new(QuasiCyclicLdpc::nr_5g_rate_matched(2, 256, 121));
+    /// let stage = Nr5gEncode::new(code.clone());
+    /// assert_eq!(stage.n(), 256);
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn n(&self) -> usize {
+        self.code.n()
+    }
 }
 
 impl Stage<BitPackedBatch, BitPackedBatch> for Nr5gEncode {
@@ -580,10 +604,8 @@ impl Stage<LlrBatch, HardDecisionBatch> for Nr5gDecode {
         // Reusing a single decoder across the batch would require &mut self.
         let mut frames: Vec<BitVec> = Vec::with_capacity(input.frames.len());
         for llrs in &input.frames {
-            let mut decoder = Nr5gRateMatchedDecoder::with_algorithm(
-                (*self.code).clone(),
-                self.algorithm,
-            );
+            let mut decoder =
+                Nr5gRateMatchedDecoder::with_algorithm((*self.code).clone(), self.algorithm);
             let result = decoder.decode_iterative(llrs, self.max_iterations);
             scratch.iterations.push(result.iterations as u64);
             frames.push(result.decoded_bits);
