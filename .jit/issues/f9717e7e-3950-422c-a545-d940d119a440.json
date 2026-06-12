@@ -24,6 +24,12 @@
       "label": "Project plan — gf2-sim run-book",
       "doc_type": "plan",
       "format": "markdown"
+    },
+    {
+      "path": "dev/presentations/gf2-sim-showcase/talk.html",
+      "commit": null,
+      "label": "Epic showcase presentation (reveal.js, 18 slides)",
+      "doc_type": "presentation"
     }
   ],
   "labels": [
@@ -33,5 +39,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T19:57:19.102973904+00:00",
-  "updated_at": "2026-06-12T16:31:15.248477216+00:00"
+  "updated_at": "2026-06-12T16:53:01.008506147+00:00"
 }
