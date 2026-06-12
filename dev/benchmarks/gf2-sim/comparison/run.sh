@@ -55,12 +55,12 @@ if [[ "$QUICK" == "1" ]]; then
   NR_RANGE="-4.5:-4.3:0.1";   NR_FRAMES=300;   NR_ERR=30
 else
   # Full sweep: spans FER ~1e-1 -> ~1e-3 across the steep part of each
-  # waterfall with enough frames for a stable 1e-2 estimate (>= a few
-  # thousand frames near the bracket). Brackets located by bisection:
+  # waterfall with enough frames for a stable 1e-2 estimate (>= ~200 frame
+  # errors at the FER=1e-2 crossing). Brackets located by bisection:
   #   DVB-T2 r1/2 (rate 0.50) waterfall ~ -1.35 dB Es/N0 at FER 1e-2.
   #   NR BG1 Z=384 mother (rate 0.32) waterfall ~ -4.3 dB Es/N0 (very steep).
-  DVB_RANGE="-2.0:-0.8:0.2";  DVB_FRAMES=30000; DVB_ERR=300
-  NR_RANGE="-4.6:-4.0:0.1";   NR_FRAMES=30000;  NR_ERR=300
+  DVB_RANGE="-1.8:-0.8:0.2";  DVB_FRAMES=12000; DVB_ERR=200
+  NR_RANGE="-4.6:-4.0:0.1";   NR_FRAMES=12000;  NR_ERR=200
 fi
 
 mkdir -p "$SCRATCH"
@@ -120,21 +120,47 @@ run_gf2() {
 # SIM_THR is BIT throughput; we record frames/s ~= SIM_THR*1e6 / N
 # (informational only — wall-clock-dependent, never a contractual column).
 # ---------------------------------------------------------------------------
+# aff3ct v4.4.0 has NO per-point frame or wall-clock cap (only -e max frame
+# errors), so a point with FER ~ 0 would run forever trying to reach -e errors.
+# We therefore drive aff3ct ONE Es/N0 point at a time under a per-point
+# `timeout`; a point that cannot accumulate -e errors within the cap is
+# recorded with whatever FER it reached, or skipped if it produced no data
+# line. The merge step left-joins on Es/N0, so any point aff3ct skips simply
+# appears with an empty aff3ct column (the curves are compared where BOTH
+# sides have data). AFF_POINT_TIMEOUT bounds each point.
+AFF_POINT_TIMEOUT="${AFF_POINT_TIMEOUT:-240}"
 run_aff3ct() {
   local alist="$1" n="$2" k="$3" range="$4" err="$5" out="$6"
-  # Convert start:stop:step -> aff3ct -m/-M/-s.
-  local m M s
-  m="${range%%:*}"; local rest="${range#*:}"; M="${rest%%:*}"; s="${rest##*:}"
   echo "es_n0_db,aff3ct_bler,aff3ct_fps" > "$out"
-  "$AFF_BIN" --sim-type BFER -C LDPC \
-    --dec-h-path "$alist" -K "$k" -N "$n" \
-    --enc-type AZCW --src-type AZCW --mdm-type BPSK --chn-type AWGN \
-    --sim-noise-type ESN0 -m "$m" -M "$M" -s "$s" \
-    --dec-type BP_FLOODING --dec-implem NMS --dec-norm 0.75 --dec-ite "$MAX_ITER" \
-    --dec-h-reorder NONE -e "$err" --sim-seed "$SEED" --ter-freq 0 \
-    | grep -vE '^#' | grep -E '[0-9]' | sed 's/|/ /g' \
-    | awk -v n="$n" '{ fps = ($8+0) * 1e6 / n; printf "%s,%s,%.3f\n", $1, $7, fps }' \
-      >> "$out"
+  # Enumerate the Es/N0 points start:stop:step (inclusive).
+  local start stop step
+  start="${range%%:*}"; local rest="${range#*:}"; stop="${rest%%:*}"; step="${rest##*:}"
+  # Use awk to generate the point list (floating-point safe).
+  local pts
+  pts="$(awk -v a="$start" -v b="$stop" -v s="$step" \
+    'BEGIN{ n=int((b-a)/s + 0.5); for(i=0;i<=n;i++) printf "%.4f\n", a+i*s }')"
+  local esn0 raw rc
+  raw="$(mktemp)"
+  while IFS= read -r esn0; do
+    [[ -z "$esn0" ]] && continue
+    set +e
+    timeout "$AFF_POINT_TIMEOUT" "$AFF_BIN" --sim-type BFER -C LDPC \
+      --dec-h-path "$alist" -K "$k" -N "$n" \
+      --enc-type AZCW --src-type AZCW --mdm-type BPSK --chn-type AWGN \
+      --sim-noise-type ESN0 -R "$esn0" \
+      --dec-type BP_FLOODING --dec-implem NMS --dec-norm 0.75 --dec-ite "$MAX_ITER" \
+      --dec-h-reorder NONE -e "$err" --sim-seed "$SEED" --ter-freq 0 > "$raw" 2>/dev/null
+    rc=$?
+    set -e
+    if [[ "$rc" -eq 124 ]]; then
+      echo ">> aff3ct Es/N0=$esn0 dB timed out (FER ~ 0, no -e errors reached); skipped" >&2
+      continue
+    fi
+    grep -vE '^#' "$raw" | grep -E '[0-9]' | sed 's/|/ /g' \
+      | awk -v n="$n" '{ fps = ($8+0) * 1e6 / n; printf "%s,%s,%.3f\n", $1, $7, fps }' \
+        >> "$out"
+  done <<< "$pts"
+  rm -f "$raw"
 }
 
 # ---------------------------------------------------------------------------
@@ -146,14 +172,29 @@ merge_csv() {
   echo "# gf2-sim vs aff3ct $AFF_TAG, AWGN-BPSK, AZCW, NMS 0.75, flooding," \
        "Es/N0 (ESN0) in dB, seed $SEED, max_iter $MAX_ITER" > "$out"
   echo "es_n0_db,gf2_sim_bler,aff3ct_bler,gf2_sim_fps,aff3ct_fps" >> "$out"
-  # Join on the Es/N0 key (rounded to 2 dp to dodge float formatting drift).
+  # Full outer join on the Es/N0 key (rounded to 2 dp to dodge float-format
+  # drift), preserving EVERY point present in either file, sorted ascending by
+  # Es/N0. gf2-only points (e.g. an FER ~ 0 point aff3ct skipped on timeout)
+  # keep an empty aff3ct column; the comparison is read where both columns are
+  # present.
   awk -F, '
     FNR==1 { next }                            # skip per-file header
-    NR==FNR { key=sprintf("%.2f",$1+0); gb[key]=$2; gf[key]=$3; next }
-    {
-      key=sprintf("%.2f",$1+0); ab=$2; af=$3
-      printf "%s,%s,%s,%s,%s\n", key, (key in gb?gb[key]:""), ab,
-                                  (key in gf?gf[key]:""), af
+    NR==FNR {                                  # first file = gf2 sweep
+      key=sprintf("%.2f",$1+0); gb[key]=$2; gf[key]=$3; seen[key]=1; next
+    }
+    {                                          # second file = aff3ct sweep
+      key=sprintf("%.2f",$1+0); ab[key]=$2; af[key]=$3; seen[key]=1
+    }
+    END {
+      n=0; for (k in seen) keys[++n]=k+0          # numeric copy for sorting
+      for (i=1;i<=n;i++) for (j=i+1;j<=n;j++)
+        if (keys[j] < keys[i]) { t=keys[i]; keys[i]=keys[j]; keys[j]=t }
+      for (i=1;i<=n;i++) {
+        k=sprintf("%.2f", keys[i])
+        printf "%s,%s,%s,%s,%s\n", k,
+          (k in gb?gb[k]:""), (k in ab?ab[k]:""),
+          (k in gf?gf[k]:""), (k in af?af[k]:"")
+      }
     }
   ' "$gf2" "$aff" >> "$out"
 }
