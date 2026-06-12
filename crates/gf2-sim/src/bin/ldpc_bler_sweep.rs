@@ -228,7 +228,11 @@ fn run_point(
 ) -> (f64, u64, u64, f64) {
     let n = code.n();
     let k = code.k();
-    let chunk: u64 = 256;
+    // Small per-worker slice so the error-budget check between waves stops the
+    // run promptly at deep BLER (where a frame error is near-certain): a wave
+    // is `chunk · workers` frames, and at BLER ~ 1 the `target_errors` budget
+    // is reached within the first wave, capping overshoot to one wave.
+    let chunk: u64 = 32;
 
     let start = Instant::now();
     let mut frames_done: u64 = 0;
