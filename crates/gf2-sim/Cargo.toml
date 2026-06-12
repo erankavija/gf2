@@ -57,6 +57,15 @@ test-support = []
 name = "gpu_ldpc_throughput"
 required-features = ["test-support"]
 
+# LDPC-only AWGN-BPSK BLER sweep for the external-library comparison harness
+# (issue 18e69a1a). Uses `testutil::AwgnLlrSource`, so it requires the
+# `test-support` feature explicitly:
+#   cargo run -p gf2-sim --release --features test-support \
+#       --bin ldpc_bler_sweep -- --code dvb-t2-r12 ...
+[[bin]]
+name = "ldpc_bler_sweep"
+required-features = ["test-support"]
+
 # 5G NR LDPC GPU real-time decode-rate tuning sweep (issue 23d3525f). Custom
 # main (harness = false): a BLER + decoded-throughput cell sweep, not a
 # Criterion micro-benchmark. Builds on non-ROCm hosts (no-hip is a no-op main);
