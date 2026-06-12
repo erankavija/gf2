@@ -13,7 +13,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T16:19:48.056084419Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -22,5 +28,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:05:17.741615079+00:00",
-  "updated_at": "2026-06-12T15:44:43.909794058+00:00"
+  "updated_at": "2026-06-12T16:21:01.287159011+00:00"
 }
