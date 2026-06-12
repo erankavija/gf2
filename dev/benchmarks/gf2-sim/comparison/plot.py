@@ -74,7 +74,11 @@ def fer_crossing(xs, blers, target=1e-2):
     Returns ``None`` if the curve never brackets ``target`` (all points above
     or all below). Assumes ``xs`` ascending. Interpolates in (x, log10(BLER)).
     """
-    pts = [(x, b) for x, b in zip(xs, blers) if b is not None and b > 0.0]
+    pts = [
+        (x, b)
+        for x, b in zip(xs, blers)
+        if x is not None and b is not None and b > 0.0
+    ]
     pts.sort(key=lambda t: t[0])
     import math
 
@@ -104,7 +108,11 @@ def main():
     fig, ax = plt.subplots(figsize=(7.5, 5.5))
 
     def plot_curve(blers, label, marker, color):
-        pts = [(x, b) for x, b in zip(xs, blers) if b is not None and b > 0.0]
+        pts = [
+            (x, b)
+            for x, b in zip(xs, blers)
+            if x is not None and b is not None and b > 0.0
+        ]
         if pts:
             px = [p[0] for p in pts]
             pb = [p[1] for p in pts]
