@@ -547,8 +547,14 @@ production sweep (e4849f07) re-baselines on its own host anyway.
 - **Selected cell** (highest throughput at BLER ≤ 1e-2): batch = 128,
   max_iters = 20, BLER = 0.00067, **throughput = 17.45 ± 0.03 Mbps**
   (5 reps; σ = 0.03 Mbps, host load 0.63).
-- **`parallelism-pays` verdict: BELOW TARGET (escalation).** 17.45 Mbps
-  is ~11.5× below the 200 Mbps concrete target. After genuine tuning of
+- **`parallelism-pays` verdict: PASS under the AMENDED criterion
+  (2026-06-12b, user option B): the attested flat-kernel measurement
+  17.45 ± 0.03 Mbps IS the bar** (lead re-measure 17.50 ± 0.08 Mbps
+  reproduces it; see the OUTCOME bullet below and the lead
+  attestation in `5g-nr-realtime.md`). Historical record of the
+  pre-amendment escalation: at measurement time the verdict was
+  BELOW TARGET — 17.45 Mbps is ~11.5× below the original 200 Mbps
+  concrete target (since amended; study `43fb19e2`). After genuine tuning of
   every exposed lever (batch, iters, algorithm NMS/MinSum, early
   termination on/off — kernel source unchanged per the task), the
   measured ceiling is ~17–20 Mbps: the NR rate-matched decoder runs BP
