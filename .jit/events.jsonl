@@ -6065,3 +6065,8 @@
 {"type":"issue_state_changed","id":"a1e1ce42-8d25-4eac-9aec-f6026aaa5f74","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T08:52:54.799740307Z","from":"backlog","to":"ready"}
 {"type":"issue_state_changed","id":"1e46a1e4-6714-4159-8b5b-6e095d0e494c","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T09:19:34.067879551Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"f9887a8f-1f95-49fb-b0fd-6e5c372a41f5","issue_id":"23d3525f-fa74-4cac-9a3a-86d941606808","timestamp":"2026-06-12T09:19:34.068083191Z","assignee":"agent:claude"}
+{"type":"issue_created","id":"8f7348cb-3c44-4189-9761-2157717837d3","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:22:02.371674679Z","title":"Feasibility study: gfx1030 NR LDPC kernel ceiling (layered BP, fp16, QC layout)","priority":"high"}
+{"type":"gate_added","id":"c6f51280-aecd-4d64-be0d-ca6b65a86e5f","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:22:12.010989817Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"0af1556e-0e24-4c84-8268-d4951a416160","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:22:12.019006329Z","gate_key":"code-review"}
+{"type":"issue_state_changed","id":"779a8206-3a80-408c-9258-e06610b1c07e","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:22:12.081555087Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"fbe2e1a7-6a69-4e75-8163-0ac4f347f4e7","issue_id":"43fb19e2-6719-4171-9bb1-60facd46029e","timestamp":"2026-06-12T10:22:12.081742377Z","assignee":"agent:claude"}
