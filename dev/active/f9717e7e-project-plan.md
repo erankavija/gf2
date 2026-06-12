@@ -335,6 +335,8 @@ change in existing encoders.
 - `dev/benchmarks/dvb_t2_awgn/PLAN.md` — pre-pipeline campaign plan;
   remains valid until Phase D landing adds a closing forward pointer to
   `dev/benchmarks/gf2-sim/cpu-foundation-receipts.md` and `bbf6b6ee`.
+  (Landed: the closing forward-pointer note was added at Phase D close,
+  `0d9cb8e3`, 2026-06-12.)
 - `dev/benchmarks/dvb_t2_awgn/README.md` — pre-pipeline calibration
   smoke results; remains valid history.
 - Memory: `feedback_no_autonomous_amendments`, `feedback_measurements_not_guesses`,

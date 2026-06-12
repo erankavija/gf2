@@ -112,3 +112,18 @@ For each of the 6 curves:
 
 Once all six curves + plots + README + closure note are committed
 under this directory, e4849f07 and then epic 2928ccce can be closed.
+
+## Legacy forward-pointer (Phase D close, issue 0d9cb8e3)
+
+This directory (`dev/benchmarks/dvb_t2_awgn/`) contains the pre-gf2-sim
+pipeline campaign artefacts. The v2 gf2-sim pipeline has superseded the
+legacy `SimulationRunner`-based binary:
+
+- **New campaign binary**: `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`
+  (migrated in issue `bbf6b6ee`; same CLI, backed by `Pipeline::run`).
+- **Throughput and parallel-executor receipts**: `dev/benchmarks/gf2-sim/parallelism-receipts.md`
+  and `dev/benchmarks/gf2-sim/cpu-foundation-receipts.md`.
+- **GPU-stages receipts**: `dev/benchmarks/gf2-sim/gpu-stages-receipts.md`.
+- **DVB-T2 byte-identity regression receipts** (200-frame off-test completion
+  evidence for all six MODCODs, issue `0d9cb8e3`):
+  `dev/benchmarks/gf2-sim/dvb-t2-regression-receipts.md`.
