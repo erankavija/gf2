@@ -1,0 +1,53 @@
+{
+  "id": "3be770d5-779b-4a82-ad66-f9cec35057dc",
+  "title": "Profile and close the CPU LDPC BP throughput gap vs aff3ct",
+  "description": "## Goal\n\nThe E.4 comparison harness (`18e69a1a`) showed aff3ct v4.4.0 decoding\n~5-6x more frames/s than `gf2_coding::LdpcDecoder` on the CPU under\nthe committed run.sh invocations (DVB-T2: ~72-168 vs ~12-30 fps; NR:\n~152-313 vs ~29-78 fps). The fps columns were informational and the\nthread accounting was NOT normalized (our bin used 24 rayon workers;\naff3ct ran at its own threading default, never pinned). Establish the\ntrue per-core gap, find out where the time goes, and recommend the\nlevers — measurements first, no speedup promises before profiling.\n\n## Context\n\nThe project vision says 'push beyond existing implementations'. Our\nGPU LDPC stage (639 fps decode-stage on gfx1030, `a930be7f` receipt)\nalready beats aff3ct's CPU by ~4-9x on the same host; the CPU scalar\ndecoder is the slow piece. The E.4 harness\n(`dev/benchmarks/gf2-sim/comparison/`) is the ready-made measurement\nrig: `run.sh` hermetically builds aff3ct, `ldpc_bler_sweep` is the\ngf2-sim arm, `export_alist` pins the bit-identical H.\n\n## Deliverables\n\n1. Pinned-thread apples-to-apples re-measure on the E.4 configs\n   (DVB-T2 r1/2 N=64800 + NR BG1 Z=384 mother), quiet host:\n   aff3ct `-t 1` vs single-rayon-worker `ldpc_bler_sweep`, and\n   24-vs-24; per-core and per-host ratios documented.\n2. Profile of the `LdpcDecoder` NMS decode hot path (perf record or\n   equivalent): top contributors (memory layout, message storage,\n   per-iteration allocation, Llr genericity) with numbers.\n3. Evidence doc `dev/benchmarks/gf2-sim/cpu-decoder-profile.md`\n   with the measurements, flamegraph/annotated summary, and a\n   recommendation section ranking levers (e.g. compressed message\n   layout, allocation hoisting, inter-frame AVX2 SIMD batch decode)\n   by estimated ROI. Any follow-up implementation work is scoped\n   from this doc, not before it.\n\n## Success Criteria\n\n- [hard] Pinned-thread measurements (1-vs-1 and 24-vs-24) for both\n  E.4 configs on a verified-quiet host, committed in the evidence\n  doc with exact invocations (reproducible).\n- [hard] Profile identifies the top >=3 hot-path contributors with\n  percentages; claims backed by profiler output, not inspection.\n- [hard] Recommendation section ranks the candidate levers with\n  measured or first-principles-estimated ROI; AVX-512/VNNI/GFNI\n  work is explicitly OUT of scope here (routes to epic `7f809931`\n  per project policy).\n- [hard] `cargo-ci`, `code-review` gates green.\n\n## Non-goals\n\n- No decoder optimization implementation in this task (scoped by the\n  evidence doc afterwards).\n- No AVX-512 lane work (epic `7f809931`).\n- No GPU kernel work (covered by study `43fb19e2`'s future epic).",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "18e69a1a-c86f-49dc-b381-88f62cd20aa0"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-12T16:50:17.097931252Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-12T16:50:17.105475134Z"
+    }
+  },
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/benchmarks/gf2-sim/comparison/README.md",
+      "commit": null,
+      "label": "E.4 comparison harness (the measurement rig)",
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "assets": [
+        {
+          "original_path": "https://aff3ct.github.io/",
+          "resolved_path": null,
+          "asset_type": "external",
+          "mime_type": null,
+          "content_hash": null,
+          "is_shared": false
+        }
+      ]
+    }
+  ],
+  "labels": [
+    "type:task",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-06-12T16:50:06.823759512+00:00",
+  "updated_at": "2026-06-12T16:50:17.113163566+00:00"
+}

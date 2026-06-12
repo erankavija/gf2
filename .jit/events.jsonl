@@ -6113,3 +6113,6 @@
 {"type":"issue_completed","id":"c495bc69-1421-49f5-b6f6-6cae696d709c","issue_id":"a5635da5-1bae-4619-9579-566d70a2f5d7","timestamp":"2026-06-12T16:30:37.119118537Z"}
 {"type":"issue_state_changed","id":"aa1fa4a4-d443-4cf7-bbb3-b949b10fe345","issue_id":"f9717e7e-3950-422c-a545-d940d119a440","timestamp":"2026-06-12T16:31:15.248679896Z","from":"in_progress","to":"done"}
 {"type":"issue_completed","id":"451b4b12-645e-4107-a0bf-0a552824ec0c","issue_id":"f9717e7e-3950-422c-a545-d940d119a440","timestamp":"2026-06-12T16:31:15.248702496Z"}
+{"type":"issue_created","id":"e7e4b5fe-5dea-4955-ae08-30d94b61f698","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-06-12T16:50:06.825332013Z","title":"Profile and close the CPU LDPC BP throughput gap vs aff3ct","priority":"normal"}
+{"type":"gate_added","id":"0f654839-a44f-4262-964d-55e7d76e5a28","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-06-12T16:50:17.097942612Z","gate_key":"cargo-ci"}
+{"type":"gate_added","id":"e29a49da-1c7f-4bdb-9883-1495a2c813a9","issue_id":"3be770d5-779b-4a82-ad66-f9cec35057dc","timestamp":"2026-06-12T16:50:17.105483164Z","gate_key":"code-review"}
