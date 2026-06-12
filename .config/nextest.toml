@@ -28,7 +28,7 @@ slow-timeout = { period = "90s", terminate-after = 1 }
 gpu-serial = { max-threads = 1 }
 
 [[profile.ci.overrides]]
-filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity))'
+filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(dvb_t2_regression))'
 test-group = 'gpu-serial'
 
 [profile.slow]
@@ -38,5 +38,5 @@ fail-fast = false
 # The slow tier's GPU legs contend the same single device; two concurrent
 # 60-90 s GPU legs would bust the 120 s cap the same way. Same group.
 [[profile.slow.overrides]]
-filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity))'
+filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(dvb_t2_regression))'
 test-group = 'gpu-serial'
