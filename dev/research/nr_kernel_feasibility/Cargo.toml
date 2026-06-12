@@ -1,0 +1,37 @@
+[package]
+name = "nr_kernel_feasibility"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Standalone feasibility-study prototype for JIT issue 43fb19e2 — gfx1030 NR LDPC kernel ceiling (layered BP convergence + roofline + QC-layout traffic probe). NOT part of the gf2 workspace."
+rust-version = "1.95"
+
+# Reuses the PRODUCTION 5G NR mother code + flooding decoder from gf2-coding via
+# a path dependency. The flooding decoder is the ground-truth baseline the
+# layered-BP prototype is measured against (same Tanner graph, same operating
+# point). This stub carries its own [workspace] table so Cargo does not pull it
+# into the parent workspace (matching dev/research/permanent_gpu_speedup).
+[dependencies]
+gf2-core = { path = "../../../crates/gf2-core" }
+gf2-coding = { path = "../../../crates/gf2-coding" }
+rand = "0.8"
+rand_chacha = "0.3"
+
+[[bin]]
+name = "layered_convergence"
+path = "src/layered_convergence.rs"
+
+[[bin]]
+name = "roofline_bytes"
+path = "src/roofline_bytes.rs"
+
+[[bin]]
+name = "qc_layout_probe"
+path = "src/qc_layout_probe.rs"
+
+[workspace]
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
