@@ -303,3 +303,65 @@ fn main() {
     }
     eprintln!("wrote {}", cfg.output.display());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_range_inclusive_endpoints() {
+        let pts = parse_range("0:1:0.5").unwrap();
+        assert_eq!(pts.len(), 3);
+        assert!((pts[0] - 0.0).abs() < 1e-12);
+        assert!((pts[1] - 0.5).abs() < 1e-12);
+        assert!((pts[2] - 1.0).abs() < 1e-12);
+    }
+
+    /// The committed full-sweep DVB range: negative endpoints, float step —
+    /// must produce 6 points spanning [-1.8, -0.8] despite f64 step drift.
+    #[test]
+    fn test_parse_range_negative_float_step() {
+        let pts = parse_range("-1.8:-0.8:0.2").unwrap();
+        assert_eq!(pts.len(), 6);
+        assert!((pts[0] - (-1.8)).abs() < 1e-9);
+        assert!((pts[5] - (-0.8)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_parse_range_single_point() {
+        let pts = parse_range("2.5:2.5:1.0").unwrap();
+        assert_eq!(pts.len(), 1);
+        assert!((pts[0] - 2.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn test_parse_range_rejects_malformed() {
+        assert!(parse_range("1:2").is_err()); // missing step
+        assert!(parse_range("1:2:3:4").is_err()); // too many parts
+        assert!(parse_range("a:2:1").is_err()); // bad start
+        assert!(parse_range("1:b:1").is_err()); // bad stop
+        assert!(parse_range("1:2:c").is_err()); // bad step
+        assert!(parse_range("1:2:0").is_err()); // zero step
+        assert!(parse_range("1:2:-0.5").is_err()); // negative step
+    }
+
+    /// `sigma = sqrt(1 / (2 * 10^(EsN0/10)))` for unit-energy BPSK:
+    /// 0 dB -> sigma^2 = 0.5; 10 dB -> sigma^2 = 0.05; -10 dB -> sigma^2 = 5.
+    #[test]
+    fn test_esn0_db_to_sigma_known_values() {
+        assert!((esn0_db_to_sigma(0.0) - 0.5f64.sqrt()).abs() < 1e-12);
+        assert!((esn0_db_to_sigma(10.0) - 0.05f64.sqrt()).abs() < 1e-12);
+        assert!((esn0_db_to_sigma(-10.0) - 5.0f64.sqrt()).abs() < 1e-12);
+    }
+
+    /// The N0 the LLR uses is `2 * sigma^2 = 10^(-EsN0_dB/10)` — the README's
+    /// channel convention (aff3ct `--sim-noise-type ESN0`, Es = 1).
+    #[test]
+    fn test_esn0_db_to_sigma_n0_relation() {
+        for &db in &[-4.3, -1.4, 0.0, 3.7] {
+            let sigma = esn0_db_to_sigma(db);
+            let n0 = 2.0 * sigma * sigma;
+            assert!((n0 - 10f64.powf(-db / 10.0)).abs() < 1e-12, "EsN0={db} dB");
+        }
+    }
+}

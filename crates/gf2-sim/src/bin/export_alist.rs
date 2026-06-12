@@ -60,6 +60,14 @@ use gf2_sim::testutil::ComparisonCode;
 
 /// Writes `h` to `path` in MacKay AList format.
 fn write_alist(h: &SpBitMatrixDual, path: &PathBuf) -> std::io::Result<()> {
+    let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);
+    write_alist_into(h, &mut f)?;
+    f.flush()
+}
+
+/// Writes `h` in MacKay AList format to any [`Write`] sink (the testable
+/// core of [`write_alist`]).
+fn write_alist_into<W: Write>(h: &SpBitMatrixDual, f: &mut W) -> std::io::Result<()> {
     let m = h.rows();
     let n = h.cols();
 
@@ -75,8 +83,6 @@ fn write_alist(h: &SpBitMatrixDual, path: &PathBuf) -> std::io::Result<()> {
     let dc_max = cols.iter().map(Vec::len).max().unwrap_or(0);
     let dv_max = rows.iter().map(Vec::len).max().unwrap_or(0);
 
-    let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);
-
     writeln!(f, "{n} {m}")?;
     writeln!(f, "{dc_max} {dv_max}")?;
 
@@ -89,14 +95,14 @@ fn write_alist(h: &SpBitMatrixDual, path: &PathBuf) -> std::io::Result<()> {
 
     // Per-column entries, right-padded to dc_max with zeros.
     for c in &cols {
-        write_padded(&mut f, c, dc_max)?;
+        write_padded(f, c, dc_max)?;
     }
     // Per-row entries, right-padded to dv_max with zeros.
     for r in &rows {
-        write_padded(&mut f, r, dv_max)?;
+        write_padded(f, r, dv_max)?;
     }
 
-    f.flush()
+    Ok(())
 }
 
 /// Writes one AList entry line: the indices, then `(width - len)` zeros.
@@ -160,4 +166,68 @@ fn main() {
         output.display(),
         1.0 - (m as f64) / (n as f64)
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Renders `h` through the testable core and returns the AList text.
+    fn alist_string(h: &SpBitMatrixDual) -> String {
+        let mut buf = Vec::new();
+        write_alist_into(h, &mut buf).unwrap();
+        String::from_utf8(buf).unwrap()
+    }
+
+    /// A 2x3 H with a known AList rendering, checked line-for-line against
+    /// the MacKay format spec in the module docs:
+    ///
+    /// ```text
+    /// H = [ 1 0 1 ]   entries (0,0) (0,2)
+    ///     [ 0 1 1 ]           (1,1) (1,2)
+    /// ```
+    #[test]
+    fn test_write_alist_small_matrix_exact() {
+        let h = SpBitMatrixDual::from_coo(2, 3, &[(0, 0), (0, 2), (1, 1), (1, 2)]);
+        assert_eq!(
+            alist_string(&h),
+            "3 2\n\
+             2 2\n\
+             1 1 2\n\
+             2 2\n\
+             1 0\n\
+             2 0\n\
+             1 2\n\
+             1 3\n\
+             2 3\n"
+        );
+    }
+
+    /// Zero-weight columns must render as all-padding lines (all zeros), and
+    /// the max column weight must ignore them.
+    #[test]
+    fn test_write_alist_zero_weight_column_pads_with_zeros() {
+        // Only column 0 has entries; columns 1 and 2 are empty.
+        let h = SpBitMatrixDual::from_coo(2, 3, &[(0, 0), (1, 0)]);
+        assert_eq!(
+            alist_string(&h),
+            "3 2\n\
+             2 1\n\
+             2 0 0\n\
+             1 1\n\
+             1 2\n\
+             0 0\n\
+             0 0\n\
+             1\n\
+             1\n"
+        );
+    }
+
+    /// The 1-indexing convention: entry (row 0, col 0) renders as index 1 in
+    /// both the per-column and per-row sections.
+    #[test]
+    fn test_write_alist_one_indexed() {
+        let h = SpBitMatrixDual::from_coo(1, 1, &[(0, 0)]);
+        assert_eq!(alist_string(&h), "1 1\n1 1\n1\n1\n1\n1\n");
+    }
 }
