@@ -37,6 +37,8 @@
 //! (channel) → QAM-demap → bit-deinterleave → decode. The inverse (receive)
 //! half is demap + deinterleave + decode.
 
+pub mod nr_5g;
+
 use std::sync::Arc;
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{

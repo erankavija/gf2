@@ -85,6 +85,7 @@
 
 pub(crate) mod bg1;
 pub(crate) mod bg2;
+pub mod interleaver;
 pub mod lifting;
 
 pub use lifting::{all_lifting_sizes, is_valid_lifting_size, lifting_set_index};
