@@ -156,7 +156,7 @@ fn gpu_nr_5g_smoke_byte_identical_to_cpu() {
     }
     let cw = code.encode(&msg);
 
-    let mut src = LlrSource::new(0x23D3_525F_5_0E);
+    let mut src = LlrSource::new(0x23D3_525F_0050_0E5E);
     let frames: Vec<Vec<Llr>> = (0..frames_per_batch)
         .map(|_| src.frame(&cw, 0.70))
         .collect();
