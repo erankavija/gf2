@@ -99,6 +99,9 @@ const _: () = assert!(
 
 /// Deterministic LCG → unit-interval f32, for a reproducible channel
 /// realisation shared identically by the CPU and GPU paths.
+///
+/// NOT a copy of `gf2_sim::testutil::AwgnLlrSource` (review F3): a signed-unit
+/// IQ filler (no Box-Muller, no LLR) — a different generator contract.
 struct Lcg {
     state: u64,
 }

@@ -16,12 +16,18 @@
 //! 21.44 fps 24-thread) are printed for CONTEXT only; the gate is decode-vs-decode.
 //!
 //! Manually invoked (not a nextest test). Without `--features hip` it prints a
-//! notice and exits 0.
+//! notice and exits 0. The target carries `required-features = ["test-support"]`
+//! (Cargo.toml) because the deterministic AWGN LLR population comes from the
+//! shared `gf2_sim::testutil::AwgnLlrSource` (SSOT; review F3, jit:23d3525f) —
+//! bit-identical draw sequence to the generator this bin originally inlined,
+//! so the per-seed frame population (and the attested receipt numbers) are
+//! unchanged.
 //!
 //! # Usage
 //!
 //! ```bash
-//! cargo run -p gf2-sim --release --features hip --bin gpu_ldpc_throughput -- \
+//! cargo run -p gf2-sim --release --features hip,test-support \
+//!     --bin gpu_ldpc_throughput -- \
 //!     --frames 200 --repeats 3 --max-iters 50
 //! ```
 
@@ -30,8 +36,8 @@ fn main() {
     {
         eprintln!(
             "gpu_ldpc_throughput requires --features hip (HIP/ROCm GPU). \
-             Rebuild with: cargo run -p gf2-sim --release --features hip \
-             --bin gpu_ldpc_throughput"
+             Rebuild with: cargo run -p gf2-sim --release --features \
+             hip,test-support --bin gpu_ldpc_throughput"
         );
     }
 
@@ -46,35 +52,12 @@ mod imp {
     use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig, LdpcCode, LdpcDecoder};
     use gf2_coding::{CodeRate, Llr};
     use gf2_sim::gpu::ldpc_bp::GpuLdpcBp;
+    use gf2_sim::testutil::AwgnLlrSource;
     use gf2_sim::LlrBatch;
 
     const SEED: u64 = 0xA930_BE7F_C0DE;
     const FULL_FRAME_1T_BASELINE_FPS: f64 = 1.6216;
     const FULL_FRAME_24T_BASELINE_FPS: f64 = 21.44;
-
-    fn awgn_llr_frame(state: &mut u64, n: usize, sigma: f64) -> Vec<Llr> {
-        let n0 = 2.0 * sigma * sigma;
-        let mut next = || {
-            *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-            let mut z = *state;
-            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-            (z ^ (z >> 31)) >> 11
-        };
-        let uniform = |v: u64| v as f64 * (1.0 / 9007199254740992.0);
-        (0..n)
-            .map(|_| {
-                let mut u1 = uniform(next());
-                let u2 = uniform(next());
-                if u1 < 1e-15 {
-                    u1 = 1e-15;
-                }
-                let r = (-2.0 * u1.ln()).sqrt();
-                let noise = r * (std::f64::consts::TAU * u2).cos() * sigma;
-                Llr::new((2.0 * (1.0 + noise) / n0) as f32)
-            })
-            .collect()
-    }
 
     pub fn run() {
         let args: Vec<String> = std::env::args().skip(1).collect();
@@ -115,11 +98,12 @@ mod imp {
         println!("# config: DVB-T2 r1/2 n={n}, SumProduct, early-term on, waterfall sigma={sigma:.4} (mean BP ~25.7 iters)");
         println!("# frames={frames} repeats={repeats} max_iters={max_iters} seed={SEED:#x}");
 
-        // Pre-generate the frame population once (shared by all paths).
-        let mut state = SEED;
-        let llr_frames: Vec<Vec<Llr>> = (0..frames)
-            .map(|_| awgn_llr_frame(&mut state, n, sigma))
-            .collect();
+        // Pre-generate the frame population once (shared by all paths) from the
+        // shared deterministic AWGN LLR source (testutil SSOT, review F3) —
+        // bit-identical draw sequence to the original in-file generator, so the
+        // per-seed frame population (and the receipt numbers) are unchanged.
+        let mut src = AwgnLlrSource::new(SEED);
+        let llr_frames: Vec<Vec<Llr>> = (0..frames).map(|_| src.frame_all_zero(n, sigma)).collect();
 
         // ---- GPU decode-stage throughput (batch all frames per launch) ----
         let stage = GpuLdpcBp::new(code.clone(), config, max_iters);
