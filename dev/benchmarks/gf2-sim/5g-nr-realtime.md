@@ -14,6 +14,15 @@ host-side `GpuNr5gDecoder`
 > task's STOP instruction ("report your measured ceiling … the lead escalates;
 > the gate is never weakened and the receipt is never fudged").
 
+> **OUTCOME (2026-06-12b, user-approved option B):** the criterion was
+> amended to the attested measurement above. Study `43fb19e2`
+> (`dev/active/43fb19e2-nr-kernel-feasibility.md`) showed the kernel
+> is bandwidth-bound at 44% of peak VRAM; the full optimisation stack
+> (layered BP 1.756× measured, fp16 ≈1.95×, QC layout 1.16×,
+> reduced-graph 1.07×) projects 50–83 Mbps — kernel work deferred to a
+> future epic. The ≥ 200 Mbps references below are the receipt's
+> historical record of the original target.
+
 ## Hardware / software
 
 | Item | Value |

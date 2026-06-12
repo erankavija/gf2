@@ -568,3 +568,9 @@ production sweep (e4849f07) re-baselines on its own host anyway.
   canonical BG1 i_LS=1 Z=384 r1/2 lifted code **bit-for-bit** vs the CPU
   `Nr5gRateMatchedDecoder` — `gpu_nr_5g_byte_identity.rs` (smoke 0.08 s
   + 600-frame slow leg 56.7 s).
+
+- **OUTCOME (2026-06-12b, user-approved option B):** `23d3525f`'s
+  throughput criterion amended to the attested 17.45 ± 0.03 Mbps
+  (flat-kernel ceiling; study `43fb19e2` projects 50–83 Mbps with
+  kernel work, deferred to a future epic). The attested measurement
+  above is the gate's PASS basis under the amended criterion.

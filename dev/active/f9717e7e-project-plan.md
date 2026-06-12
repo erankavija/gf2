@@ -142,7 +142,7 @@ ID-map (canonical short IDs throughout the rest of this document):
   |---|---|---|
   | E.1 | `acf9b11a` | base graphs + per-`i_LS` shift tables (memory `feedback_ldpc_shift_tables` is the relevant trap) |
   | E.2 | `e478daa8` | 5G NR typestate preset |
-  | E.3 | `23d3525f` | kernel tuning to real-time; concrete target = BG1, `i_LS` = 8, Z = 384, rate 1/2, BLER ≤ 10⁻², ≥ 200 Mbps decoded TB throughput on gfx1030 (audit C1 fix 2026-06-07) |
+  | E.3 | `23d3525f` | kernel tuning to real-time; concrete target = BG1, `i_LS` = 8, Z = 384, rate 1/2, BLER ≤ 10⁻², ≥ 200 Mbps decoded TB throughput on gfx1030 (audit C1 fix 2026-06-07). (AMENDED 2026-06-12b: label bug — Z=384 is `i_LS` = 1; target amended to the attested 17.45 ± 0.03 Mbps after study `43fb19e2` showed gfx1030 bandwidth-bound, 50–83 Mbps max with kernel work, deferred to a future epic — user option B.) |
   | E.4 | `18e69a1a` | comparison harness vs aff3ct / IT++ |
   | E.5 | `110e45cc` | onboarding examples + CLAUDE.md (Phase E + epic close); waits on `e478daa8` and `8c8302c8` (audit H4 fix 2026-06-07) |
 
@@ -390,7 +390,7 @@ corresponding plan-side updates:
 |---|---|---|
 | B1, C3 (D wall-clock) | §2 Phase D | `bbf6b6ee` criterion changed to speedup-vs-legacy; wall-clock owned by `e4849f07` |
 | B2 (placeholder bodies) | §1 SSOT map | All 24 task bodies expanded; placeholders gone |
-| C1 (E real-time undefined) | §2 Phase E | Concrete target pinned: BG1, Z=384, r1/2, BLER ≤ 10⁻², ≥ 200 Mbps |
+| C1 (E real-time undefined) | §2 Phase E | Concrete target pinned: BG1, Z=384, r1/2, BLER ≤ 10⁻², ≥ 200 Mbps (later amended 2026-06-12b to the attested 17.45 Mbps; see `23d3525f` + study `43fb19e2`) |
 | C2 (Phase B baseline) | §5 Receipt schema | Dual-baseline reporting required (single-thread + CPU-24-thread); `a930be7f` ≥ 3× CPU-24 |
 | C5 (heartbeat missing channel) | §2 Phase A Wave A.3 | Edge `5f12e7ff → db9836e4` added |
 | C6 (epic critical-path) | §2 ID-map | Epic body diagram rewritten using story IDs; plan ID-map unchanged |
