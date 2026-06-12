@@ -785,6 +785,7 @@ mod span_capture {
 
     /// One captured span: its metadata name and recorded fields (rendered via
     /// `Debug`).
+    #[derive(Clone)]
     pub struct CapturedSpan {
         pub name: &'static str,
         pub fields: HashMap<String, String>,
@@ -793,6 +794,16 @@ mod span_capture {
     /// A minimal capturing `tracing::Subscriber` (no `tracing-subscriber`
     /// dependency): records every span's name and fields, including fields
     /// recorded after creation (`wall_us`).
+    ///
+    /// Installed as the GLOBAL subscriber (the executor's spans are emitted
+    /// on scheduler threads, which a thread-local subscriber would miss), so
+    /// under bare `cargo test` (one process, tests on concurrent threads) it
+    /// captures spans from EVERY test in this binary that runs after
+    /// installation — not just the installing test. Consumers must therefore
+    /// filter captured spans by a field unique to their own run (e.g. a
+    /// distinctive `batch_id`), and the lock sites below are poison-tolerant
+    /// so an asserting test can never cascade panics into the scheduler
+    /// threads of concurrently-running tests.
     pub struct Capture {
         pub spans: Arc<Mutex<Vec<CapturedSpan>>>,
     }
@@ -812,7 +823,12 @@ mod span_capture {
         fn new_span(&self, attrs: &tracing::span::Attributes<'_>) -> tracing::span::Id {
             let mut fields = HashMap::new();
             attrs.record(&mut Visitor(&mut fields));
-            let mut spans = self.spans.lock().unwrap();
+            // Poison-tolerant: a panicking test elsewhere in this process must
+            // not cascade into scheduler threads emitting spans here.
+            let mut spans = self
+                .spans
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             spans.push(CapturedSpan {
                 name: attrs.metadata().name(),
                 fields,
@@ -820,7 +836,10 @@ mod span_capture {
             tracing::span::Id::from_u64(spans.len() as u64)
         }
         fn record(&self, id: &tracing::span::Id, values: &tracing::span::Record<'_>) {
-            let mut spans = self.spans.lock().unwrap();
+            let mut spans = self
+                .spans
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let idx = (id.into_u64() - 1) as usize;
             if let Some(span) = spans.get_mut(idx) {
                 values.record(&mut Visitor(&mut span.fields));
@@ -838,9 +857,12 @@ fn test_per_stage_spans_carry_six_fields() {
     use gf2_sim::BatchHandle;
 
     // Global subscriber: the executor's spans are emitted on the scheduler's
-    // rayon pool threads, which a thread-local subscriber would miss. This is
-    // the only test in this binary installing one, and nextest runs each test
-    // in its own process.
+    // rayon pool threads, which a thread-local subscriber would miss. Under
+    // nextest each test runs in its own process; under bare `cargo test`
+    // (one process, concurrent test threads) the global subscriber also
+    // receives spans from every OTHER test running after installation, so
+    // the assertions below filter on this test's unique `batch_id` (7 — all
+    // other tests in this binary use the default handle, batch_id 0).
     let spans = Arc::new(Mutex::new(Vec::new()));
     tracing::subscriber::set_global_default(span_capture::Capture {
         spans: spans.clone(),
@@ -872,10 +894,22 @@ fn test_per_stage_spans_carry_six_fields() {
     )
     .expect("runs");
 
-    let spans = spans.lock().unwrap();
-    let stage_spans: Vec<_> = spans
+    // Snapshot-then-assert: clone the captured spans out and DROP the lock
+    // guard before any assertion. Panicking while holding the guard would
+    // poison the mutex for concurrently-running tests' scheduler threads
+    // (which still emit through the leaked global subscriber under bare
+    // `cargo test`).
+    let spans_snapshot = spans
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    // Filter on this test's unique batch_id (7): foreign tests' spans use
+    // the default handle (batch_id 0) and must not pollute the count.
+    let stage_spans: Vec<_> = spans_snapshot
         .iter()
-        .filter(|s| s.name == "pipeline_stage")
+        .filter(|s| {
+            s.name == "pipeline_stage" && s.fields.get("batch_id").map(String::as_str) == Some("7")
+        })
         .collect();
     assert_eq!(
         stage_spans.len(),
