@@ -1,13 +1,13 @@
 //! GPU LDPC belief-propagation decode stage (design doc §6 / §10 / §11,
 //! `feature = "hip"`).
 //!
-//! [`GpuLdpcBp`] is the device-accelerated counterpart of the CPU
+//! `GpuLdpcBp` is the device-accelerated counterpart of the CPU
 //! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder). It runs the same
 //! flooding belief-propagation schedule (init → alternating check-node and
 //! variable-node updates with optional per-iteration syndrome
-//! early-termination) on the device LDPC BP kernel
-//! (`gf2-kernels-hip`'s [`GpuLdpcBp`](gf2_kernels_hip::GpuLdpcBp)) and emits the
-//! hard-decision codeword (all `n` positions) per frame.
+//! early-termination) on the device LDPC BP kernel (`gf2-kernels-hip`'s
+//! `GpuLdpcBp`) and emits the hard-decision codeword (all `n` positions) per
+//! frame.
 //!
 //! # Byte-identity (design doc §11)
 //!
@@ -26,15 +26,16 @@
 //! # CPU fallback (§8)
 //!
 //! The [`Stage::CpuFallback`](crate::Stage) is the CPU
-//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder):
-//! [`cpu_fallback`](GpuLdpcBp::cpu_fallback) returns a decoder built from the
-//! *same* code and [`DecoderConfig`], so the Phase C executor can substitute it
-//! on a GPU out-of-memory or unsupported-arch fault.
+//! [`LdpcDecoder`](gf2_coding::ldpc::LdpcDecoder): `GpuLdpcBp::cpu_fallback`
+//! returns a decoder built from the *same* code and
+//! [`DecoderConfig`](gf2_coding::ldpc::DecoderConfig), so the Phase C executor
+//! can substitute it on a GPU out-of-memory or unsupported-arch fault.
 //!
 //! # 5G NR seam (design doc §6, Phase E `23d3525f`)
 //!
-//! The standard seam is the flat [`LdpcGraphLayout`](gf2_kernels_hip::launch_ldpc_bp::LdpcGraphLayout),
-//! NOT a kernel parameter: the device kernel is standard-agnostic and decodes
+//! The standard seam is the flat `LdpcGraphLayout` (the `gf2-kernels-hip`
+//! kernel layout type), NOT a kernel parameter: the device kernel is
+//! standard-agnostic and decodes
 //! whatever expanded Tanner-graph layout the host hands it, so the same binary
 //! is reused unchanged across DVB-T2 and 5G NR (design §6 shared binary). This
 //! stage builds the DVB-T2 layout today by flattening the parity-check matrix; a
@@ -44,7 +45,8 @@
 //!
 //! The module home is declared unconditionally in [`gpu`](crate::gpu); the items
 //! are gated on `feature = "hip"` so the crate builds cleanly with the feature
-//! off.
+//! off. The `GpuLdpcBp`-prefixed and `LdpcGraphLayout` code spans above resolve
+//! to live intra-doc links only on the `--features hip` documentation build.
 
 #[cfg(feature = "hip")]
 mod imp {

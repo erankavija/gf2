@@ -135,8 +135,8 @@ pub(crate) fn es_n0_db_to_sigma_f64(es_n0_db: f64) -> f32 {
 /// Returns `N0 = 2 * sigma^2` with `sigma^2 = 1 / (2 * 10^(Es/N0 / 10))` —
 /// the per-symbol total complex noise variance a soft demapper must assume to
 /// be physically consistent with an AWGN channel at `es_n0_db` (the sibling
-/// of [`es_n0_db_to_sigma`], which returns the per-axis standard deviation
-/// the channel injects).
+/// of the crate-private `es_n0_db_to_sigma`, which returns the per-axis
+/// standard deviation the channel injects).
 ///
 /// # The once-rounded contract
 ///
@@ -148,7 +148,7 @@ pub(crate) fn es_n0_db_to_sigma_f64(es_n0_db: f64) -> f32 {
 /// and breaking the chain-vs-SSOT byte-identity (`de160fc5`, design doc
 /// §11). Every consumer (the preset's channel→demapper N0 coupling, the
 /// [`DvbT2BicmFrameSim`](crate::frame_sim::DvbT2BicmFrameSim) frame kernel
-/// via [`es_n0_db_to_n0_f64`], tests, and examples) must derive N0 through
+/// via the crate-private `es_n0_db_to_n0_f64` core, tests, and examples) must derive N0 through
 /// this helper rather than re-deriving the formula inline.
 ///
 /// # Arguments

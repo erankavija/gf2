@@ -2,7 +2,7 @@
 //!
 //! The 5G NR sibling of the DVB-T2 preset ([`dvb_t2`](crate::presets::dvb_t2),
 //! design doc §9): a **thin wrapper** over the graph
-//! [`Chain`](crate::graph::Chain) that composes the 5G NR stage wrappers from
+//! [`Chain`] that composes the 5G NR stage wrappers from
 //! [`stages::nr_5g`](crate::stages::nr_5g) — rate-matched LDPC encode, the
 //! TS 38.212 §5.4.2.2 bit interleaver, Gray-QAM map, AWGN channel, soft demap,
 //! §5.4.2.2 LLR deinterleave, and rate-matched BP decode — into a seven-stage
@@ -657,7 +657,7 @@ impl Builder<Ready> {
     /// Assembles the seven-stage chain — [`Nr5gEncode`] →
     /// [`Nr5gBitInterleave`] → [`NrGrayQamMap`] → [`Awgn`] →
     /// [`NrGrayQamDemap`] → [`Nr5gLlrDeinterleave`] → [`Nr5gDecode`] — into a
-    /// [`Chain`](crate::graph::Chain), connects the stages consecutively, and
+    /// [`Chain`], connects the stages consecutively, and
     /// returns [`Chain::build`](crate::graph::Chain::build)'s [`Pipeline`]
     /// carrying the configured `seed`, `parallelism`, and `checkpoint_dir`.
     ///

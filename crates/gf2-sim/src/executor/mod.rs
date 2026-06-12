@@ -9,7 +9,7 @@
 //! spans, defensive execution-start validation). `42eac5cc` adds OOM
 //! auto-fallback dispatch and hard-fail diagnostic dumps ([`failure`]).
 //! `571c11c4` adds the GPU drain-for-checkpoint and the checkpointed hybrid
-//! sweep with `--resume` ([`drain`] module:
+//! sweep with `--resume` (the crate-private `drain` module:
 //! [`Scheduler::drain_for_checkpoint`],
 //! [`Scheduler::run_sweep_checkpointed`],
 //! [`Pipeline::run_checkpointed`](crate::Pipeline::run_checkpointed)).
@@ -30,7 +30,7 @@
 //! | [`RunPlan`] | how a built [`Pipeline`](crate::Pipeline) is run (DVB-T2 BICM preset) |
 //! | [`SimulationResults`] / [`SnrPointResult`] | the per-SNR-point aggregate columns (SSOT [`WorkerCounters`](crate::WorkerCounters) projection) |
 //! | [`OverlapTimeline`] / [`ActivityInterval`] / [`ActivityKind`] | CPU↔GPU overlap attestation (criterion 1) |
-//! | [`failure`] | [`dispatch_with_fallback`](failure::dispatch_with_fallback): OOM auto-fallback + hard-fail diagnostic dump (`42eac5cc`) |
+//! | [`failure`] | [`failure::dispatch_with_fallback`] — OOM auto-fallback + hard-fail diagnostic dump (`42eac5cc`) |
 //! | [`StreamInFlight`] / [`CheckpointedSweep`] | per-stream drain tally + checkpointed hybrid sweep outcome (`571c11c4`) |
 
 mod drain;
