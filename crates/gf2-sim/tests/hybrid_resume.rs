@@ -60,12 +60,14 @@ use gf2_sim::checkpoint::{
 };
 use gf2_sim::error::{RecoverableError, StageError};
 use gf2_sim::executor::SnrPointResult;
-use gf2_sim::parallel::WorkerCounters;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
 use gf2_sim::{Pipeline, Scheduler};
 
 mod common;
 use common::assert_four_columns_byte_identical;
+// The shared SnrPointResult → WorkerCounters adapter (originated here, moved
+// to `tests/common` for issue `0d9cb8e3` so it has a single home).
+use common::snr_point_to_counters as to_counters;
 
 /// Fixed base seed for every run in this suite.
 const SEED: u64 = 0x571C_11C4;
@@ -192,19 +194,6 @@ const CONFIGS: [ResumeConfig; 3] = [
         interrupt_at: (1, 4),
     },
 ];
-
-/// Reconstructs the SSOT [`WorkerCounters`] from a [`SnrPointResult`] so the
-/// shared four-column comparison helper (`tests/common`) stays the single
-/// source of truth for the byte-identity column set and the BER exclusion.
-fn to_counters(p: &SnrPointResult) -> WorkerCounters {
-    WorkerCounters {
-        frames: p.frames,
-        errors: p.errors,
-        total_iterations: p.total_iterations,
-        total_bits: p.total_bits,
-        total_bit_errors: p.total_bit_errors,
-    }
-}
 
 /// Logs (never asserts) a point's BER — the §11 always-excluded column.
 fn record_ber(p: &SnrPointResult, label: &str) {
