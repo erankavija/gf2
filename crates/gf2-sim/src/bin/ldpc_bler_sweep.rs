@@ -48,7 +48,7 @@
 //! Normalized min-sum (NMS) with scale 0.75 and early termination, the 5G NR
 //! default and a standard DVB-T2 choice — matched on the aff3ct side with
 //! `--dec-implem NMS --dec-type BP_FLOODING` (flooding schedule) and the same
-//! `--dec-ite` cap and `--dec-norm-factor 0.75`.
+//! `--dec-ite` cap and `--dec-norm 0.75`.
 //!
 //! # Output
 //!
