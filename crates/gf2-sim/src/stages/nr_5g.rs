@@ -32,23 +32,14 @@ use std::sync::Arc;
 use gf2_coding::ldpc::nr_5g::interleaver::{deinterleave_llrs, interleave_bits};
 use gf2_coding::ldpc::nr_5g::{Nr5gRateMatchedCode, Nr5gRateMatchedDecoder};
 use gf2_coding::ldpc::DecoderAlgorithm;
-use gf2_coding::modem::{
-    BatchMapper, BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, GrayQamMapper,
-    ModemSpec,
-};
+use gf2_coding::modem::DemapMethod;
 use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
-use gf2_coding::Llr;
 use gf2_core::BitVec;
 
 use crate::batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
 use crate::error::StageError;
 use crate::stage::{ExecutionClass, Stage};
-use crate::stages::DEFAULT_DEMAP_NOISE_VAR;
-
-/// Builds the QAM constellation order `2^q_m` for a modulation order `q_m`.
-fn qam_order(q_m: usize) -> usize {
-    1usize << q_m
-}
+use crate::stages::{GrayQamDemapCore, GrayQamMapCore, DEFAULT_DEMAP_NOISE_VAR};
 
 // ===========================================================================
 // Nr5gEncode
@@ -297,8 +288,7 @@ impl Stage<LlrBatch, LlrBatch> for Nr5gLlrDeinterleave {
 /// assert_eq!(out.i[0].len(), 2);
 /// ```
 pub struct NrGrayQamMap {
-    mapper: GrayQamMapper<f32>,
-    q_m: usize,
+    core: GrayQamMapCore,
 }
 
 impl NrGrayQamMap {
@@ -309,8 +299,7 @@ impl NrGrayQamMap {
     /// * `q_m` — bits per QAM symbol (`2`/`4`/`6`/`8`).
     pub fn new(q_m: usize) -> Self {
         Self {
-            mapper: GrayQamMapper::from_preset_order(qam_order(q_m)),
-            q_m,
+            core: GrayQamMapCore::new(q_m),
         }
     }
 }
@@ -324,18 +313,7 @@ impl Stage<BitPackedBatch, SymbolBatch> for NrGrayQamMap {
         input: &BitPackedBatch,
         _scratch: &mut (),
     ) -> Result<SymbolBatch, StageError> {
-        let mut i_lanes = Vec::with_capacity(input.frames.len());
-        let mut q_lanes = Vec::with_capacity(input.frames.len());
-        for frame in &input.frames {
-            let num_symbols = frame.len() / self.q_m;
-            let bits: Vec<bool> = (0..frame.len()).map(|b| frame.get(b)).collect();
-            let mut out_i = vec![0.0_f32; num_symbols];
-            let mut out_q = vec![0.0_f32; num_symbols];
-            self.mapper.map_bits(&bits, &mut out_i, &mut out_q);
-            i_lanes.push(out_i);
-            q_lanes.push(out_q);
-        }
-        Ok(SymbolBatch::new(i_lanes, q_lanes))
+        Ok(self.core.map_batch(input))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -371,10 +349,7 @@ impl Stage<BitPackedBatch, SymbolBatch> for NrGrayQamMap {
 /// assert_eq!(llrs.frames[0].len(), 8);
 /// ```
 pub struct NrGrayQamDemap {
-    demapper: FastGrayQamDemapper<f32>,
-    method: DemapMethod,
-    q_m: usize,
-    noise_var: f32,
+    core: GrayQamDemapCore,
 }
 
 impl NrGrayQamDemap {
@@ -402,16 +377,8 @@ impl NrGrayQamDemap {
     ///
     /// Panics if `noise_var` is not strictly positive and finite.
     pub fn with_noise_var(q_m: usize, method: DemapMethod, noise_var: f32) -> Self {
-        assert!(
-            noise_var.is_finite() && noise_var > 0.0,
-            "NrGrayQamDemap: noise_var must be finite and > 0, got {noise_var}"
-        );
-        let spec = ModemSpec::<f32>::gray_square_qam(qam_order(q_m));
         Self {
-            demapper: FastGrayQamDemapper::new(spec),
-            method,
-            q_m,
-            noise_var,
+            core: GrayQamDemapCore::new(q_m, method, noise_var, "NrGrayQamDemap"),
         }
     }
 
@@ -429,7 +396,7 @@ impl NrGrayQamDemap {
     #[inline]
     #[must_use]
     pub fn noise_var(&self) -> f32 {
-        self.noise_var
+        self.core.noise_var()
     }
 }
 
@@ -438,29 +405,7 @@ impl Stage<SymbolBatch, LlrBatch> for NrGrayQamDemap {
     type CpuFallback = Self;
 
     fn process(&self, input: &SymbolBatch, _scratch: &mut ()) -> Result<LlrBatch, StageError> {
-        let frames = input
-            .i
-            .iter()
-            .zip(input.q.iter())
-            .map(|(rx_i, rx_q)| {
-                let num_symbols = rx_i.len();
-                let noise_var = vec![self.noise_var; num_symbols];
-                let mut out = vec![Llr::zero(); num_symbols * self.q_m];
-                self.demapper.demap_llrs(
-                    DemapInput {
-                        rx_i,
-                        rx_q,
-                        gain_i: None,
-                        gain_q: None,
-                        noise_var: &noise_var,
-                        method: self.method,
-                    },
-                    &mut out,
-                );
-                out
-            })
-            .collect();
-        Ok(LlrBatch::new(frames))
+        Ok(self.core.demap_batch(input))
     }
 
     fn execution_class(&self) -> ExecutionClass {
@@ -622,14 +567,7 @@ impl Stage<LlrBatch, HardDecisionBatch> for Nr5gDecode {
 mod tests {
     use super::*;
     use gf2_coding::ldpc::QuasiCyclicLdpc;
-
-    #[test]
-    fn test_qam_order() {
-        assert_eq!(qam_order(2), 4);
-        assert_eq!(qam_order(4), 16);
-        assert_eq!(qam_order(6), 64);
-        assert_eq!(qam_order(8), 256);
-    }
+    use gf2_coding::Llr;
 
     #[test]
     fn test_encode_decode_roundtrip_zero_message() {

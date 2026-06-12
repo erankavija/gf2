@@ -68,9 +68,7 @@
 #[cfg(feature = "hip")]
 mod imp {
     use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
-    use gf2_coding::modem::{
-        BatchSoftDemapper, DemapInput, DemapMethod, FastGrayQamDemapper, ModemSpec,
-    };
+    use gf2_coding::modem::{DemapMethod, FastGrayQamDemapper};
     use gf2_coding::Llr;
     use gf2_kernels_hip::host::HipStream;
     use gf2_kernels_hip::{DemapStreamScratch, GpuGrayQamDemapper as KernelGpuDemapper};
@@ -79,15 +77,11 @@ mod imp {
     use crate::error::StageError;
     use crate::gpu::map_hip_error;
     use crate::stage::{ExecutionClass, Stage};
+    use crate::stages::GrayQamDemapCore;
 
     /// Bits-per-symbol (`m`) for a [`DvbT2Modulation`].
     fn bits_per_symbol(modulation: DvbT2Modulation) -> usize {
         modulation.bits_per_cell()
-    }
-
-    /// QAM constellation order (`2^m`) for a [`DvbT2Modulation`].
-    fn qam_order(modulation: DvbT2Modulation) -> usize {
-        1usize << bits_per_symbol(modulation)
     }
 
     /// CPU Gray-QAM soft-demap stage wrapping
@@ -99,16 +93,15 @@ mod imp {
     /// `Stage<SymbolBatch, LlrBatch>`; `FastGrayQamDemapper` lives in
     /// `gf2-coding` and does not (and cannot, by the orphan rule) implement this
     /// `gf2-sim` trait, so this thin wrapper carries the `Stage` impl while
-    /// delegating the actual soft-demap to an owned `FastGrayQamDemapper`. It
-    /// produces the same symbol-major, MSB-first LLR layout as the GPU stage, so
-    /// substituting it on a GPU fault is transparent; it is also the home of the
-    /// `ExactLogMap` method (which the GPU kernel does not compute).
-    /// [`demapper`](Self::demapper) exposes the underlying demapper.
+    /// delegating the actual soft-demap to the shared
+    /// [`stages`](crate::stages) demap kernel (`GrayQamDemapCore`, the same
+    /// core behind the DVB-T2 `GrayQamDemap` and 5G NR `NrGrayQamDemap`
+    /// stages). It produces the same symbol-major, MSB-first LLR layout as the
+    /// GPU stage, so substituting it on a GPU fault is transparent; it is also
+    /// the home of the `ExactLogMap` method (which the GPU kernel does not
+    /// compute). [`demapper`](Self::demapper) exposes the underlying demapper.
     pub struct CpuGrayQamDemapper {
-        demapper: FastGrayQamDemapper<f32>,
-        method: DemapMethod,
-        bits_per_symbol: usize,
-        noise_var: f32,
+        core: GrayQamDemapCore,
     }
 
     impl CpuGrayQamDemapper {
@@ -127,16 +120,13 @@ mod imp {
         /// Panics if `noise_var` is not finite and strictly positive.
         #[must_use]
         pub fn new(modulation: DvbT2Modulation, method: DemapMethod, noise_var: f32) -> Self {
-            assert!(
-                noise_var.is_finite() && noise_var > 0.0,
-                "CpuGrayQamDemapper: noise_var must be finite and > 0, got {noise_var}"
-            );
-            let spec = ModemSpec::<f32>::gray_square_qam(qam_order(modulation));
             Self {
-                demapper: FastGrayQamDemapper::new(spec),
-                method,
-                bits_per_symbol: bits_per_symbol(modulation),
-                noise_var,
+                core: GrayQamDemapCore::new(
+                    bits_per_symbol(modulation),
+                    method,
+                    noise_var,
+                    "CpuGrayQamDemapper",
+                ),
             }
         }
 
@@ -144,47 +134,28 @@ mod imp {
         #[inline]
         #[must_use]
         pub fn bits_per_symbol(&self) -> usize {
-            self.bits_per_symbol
+            self.core.bits_per_symbol()
         }
 
         /// The demap method (exact log-MAP or max-log).
         #[inline]
         #[must_use]
         pub fn method(&self) -> DemapMethod {
-            self.method
+            self.core.method()
         }
 
         /// The per-symbol total complex AWGN noise variance (`N0 = 2 sigma^2`).
         #[inline]
         #[must_use]
         pub fn noise_var(&self) -> f32 {
-            self.noise_var
+            self.core.noise_var()
         }
 
         /// The underlying [`FastGrayQamDemapper`] this stage delegates to.
         #[inline]
         #[must_use]
         pub fn demapper(&self) -> &FastGrayQamDemapper<f32> {
-            &self.demapper
-        }
-
-        /// Demaps one frame's I/Q symbols into `frame.len()` * `m` LLRs.
-        fn demap_frame(&self, rx_i: &[f32], rx_q: &[f32]) -> Vec<Llr> {
-            let num_symbols = rx_i.len();
-            let noise_var = vec![self.noise_var; num_symbols];
-            let mut out = vec![Llr::zero(); num_symbols * self.bits_per_symbol];
-            self.demapper.demap_llrs(
-                DemapInput {
-                    rx_i,
-                    rx_q,
-                    gain_i: None,
-                    gain_q: None,
-                    noise_var: &noise_var,
-                    method: self.method,
-                },
-                &mut out,
-            );
-            out
+            self.core.demapper()
         }
     }
 
@@ -193,13 +164,7 @@ mod imp {
         type CpuFallback = Self;
 
         fn process(&self, input: &SymbolBatch, _scratch: &mut ()) -> Result<LlrBatch, StageError> {
-            let frames = input
-                .i
-                .iter()
-                .zip(input.q.iter())
-                .map(|(rx_i, rx_q)| self.demap_frame(rx_i, rx_q))
-                .collect();
-            Ok(LlrBatch::new(frames))
+            Ok(self.core.demap_batch(input))
         }
 
         fn execution_class(&self) -> ExecutionClass {
@@ -427,6 +392,10 @@ mod imp {
             input: &SymbolBatch,
             demapper: &KernelGpuDemapper,
         ) -> Result<LlrBatch, StageError> {
+            // Not the shared CPU demap kernel (`stages::GrayQamDemapCore`):
+            // only the per-frame loop shell matches — the body is the DEVICE
+            // demapper (H2D upload, kernel launch, D2H readback), a different
+            // compute backend (same for `demap_batch_on_stream` below).
             let m = self.m as usize;
             let mut frames = Vec::with_capacity(input.i.len());
             for (rx_i, rx_q) in input.i.iter().zip(input.q.iter()) {

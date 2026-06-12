@@ -138,6 +138,9 @@ mod imp {
             let (gpu_mean, gpu_sigma) = mean_sigma(&gpu_sps);
 
             // ---- CPU single-thread demap-step throughput ----
+            // Deliberately NOT the shared `stages::GrayQamDemapCore` frame loop:
+            // the per-iteration `out` allocation and raw `demap_llrs` call ARE
+            // the measured quantity (benchmark geometry, not a stage duplicate).
             let cpu = FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
             let nv = vec![noise_var; symbols];
             let mut cpu1_sps = Vec::new();
@@ -173,7 +176,9 @@ mod imp {
                     .into_par_iter()
                     .map(|fi| {
                         // Per-frame independent demapper (the demap is a pure
-                        // function of the frame's I/Q, deterministic per thread).
+                        // function of the frame's I/Q, deterministic per thread);
+                        // hand-rolled for the same benchmark-geometry reason as
+                        // the single-thread loop above.
                         let dem =
                             FastGrayQamDemapper::new(ModemSpec::<f32>::gray_square_qam(order));
                         let (ri, rq) = &iq[fi];
