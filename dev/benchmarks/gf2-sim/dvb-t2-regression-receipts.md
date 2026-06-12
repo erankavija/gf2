@@ -128,8 +128,10 @@ mean_iters C diff vs A: 0.0000.
 All six MODCODs at 200 frames: A=B=C on all three contractual columns
 (`frames`, `errors`, `fer`); A=B also on `mean_iters` (four-column CPU
 contract). The `mean_iters` CPU-vs-GPU diff is 0.0000 for all six on this
-host (well within the §11 ±1 iteration bound). Non-vacuity holds for all
-six (errors in range [58, 130] out of 200 frames).
+host — logged for diagnostics only; `mean_iters` is EXCLUDED from the
+CPU-vs-GPU contract (§11's rationale anticipates per-frame ±1 iteration
+drift from RDNA2 transcendental ULPs; none manifested at these seeds).
+Non-vacuity holds for all six (errors in range [58, 130] out of 200 frames).
 
 ## 50-frame slow-tier observed values (AMENDMENT 2026-06-12 in-test legs)
 

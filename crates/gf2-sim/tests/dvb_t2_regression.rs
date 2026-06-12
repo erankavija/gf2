@@ -101,8 +101,12 @@ const SMOKE_ES_N0: f64 = 9.0;
 /// Frame count override via environment variable for off-test 200-frame
 /// attestation runs. Default (absent env var) is [`SLOW_FRAMES`].
 ///
-/// Usage: `GF2_SIM_REGRESSION_FRAMES=200 cargo nextest run -p gf2-sim \
-///   --release -E 'test(dvb_t2_regression_50f_r12_16qam)' --run-ignored ignored-only`
+/// Usage: `GF2_SIM_REGRESSION_FRAMES=200 cargo test -p gf2-sim --all-features \
+///   --release --test dvb_t2_regression -- test_dvb_t2_regression_50f_r12_16qam \
+///   --ignored --nocapture`
+///
+/// Via `cargo test`, NOT nextest: at 200 frames the legs run 189-332 s,
+/// beyond the 120 s slow-tier cap nextest enforces (see the receipts file).
 fn slow_frames() -> u64 {
     std::env::var("GF2_SIM_REGRESSION_FRAMES")
         .ok()
