@@ -141,9 +141,16 @@
 //!     Approximate progress, not exact accounting: on the hybrid GPU path,
 //!     frames in a batch discarded at an interrupt are observed-but-unrecorded
 //!     and re-observed on resume, and the counter restarts each invocation.
-//!   - `snr_point_completed` — one per point with `es_n0_db`/`fer`/`frames`/
-//!     `errors`/`mean_iters`/`wall_seconds`, emitted **post-sweep** (after the
-//!     run returns, when per-point results exist), not live at each boundary.
+//!   - `snr_point_completed` — one per point with the full CSV field schema
+//!     `es_n0_db`/`fer`/`ber`/`frames`/`errors`/`mean_iters`/`wall_seconds`.
+//!     On the production (checkpointed) path it is emitted **live** at each
+//!     SNR-point boundary from inside
+//!     [`gf2_sim::Scheduler::run_sweep_checkpointed`], so a monitor tailing
+//!     this file sees each point complete as the sweep advances (there
+//!     `wall_seconds` is the measured per-point wall; the CSV column reports
+//!     the sweep-averaged `wall_per_point`). On the calibration
+//!     (non-checkpointed) path it is emitted post-run (that path has no
+//!     per-point boundary hook).
 //! - `README.md` — invocation, seed, host info, total wall-clock.
 //! - `checkpoints/` — per-SNR JSON files (v2 schema with BLAKE3-verified
 //!   config hash), written by the pipeline's checkpoint subsystem.
@@ -1036,24 +1043,30 @@ fn run_campaign(args: &Args) -> Result<(), String> {
         .map(|(&es_n0_db, p)| point_to_csv_row(es_n0_db, p, wall_per_point))
         .collect();
 
-    // Emit one snr_point_completed event per completed point. NOTE: these are
-    // emitted POST-SWEEP (after run_sweep_checkpointed / run_with_decoder
-    // returns), not live at each SNR boundary — the executor's frame_observer
-    // carries no per-point result data, so a live boundary event could not
-    // include fer/errors/mean_iters. Live progress during the sweep is the
-    // campaign_heartbeat channel above.
-    for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in &csv_rows {
-        tracing::info!(
-            name: "snr_point_completed",
-            event_type = "snr_point_completed",
-            es_n0_db,
-            fer,
-            ber,
-            frames,
-            errors,
-            mean_iters,
-            wall_seconds,
-        );
+    // Emit `snr_point_completed` events for the NON-checkpointed (calibration)
+    // path only. The checkpointed production sweep emits one such event LIVE at
+    // each SNR-point boundary from inside `Scheduler::run_sweep_checkpointed`
+    // (so monitors tailing `tracing.jsonl` see each point as the sweep
+    // advances); re-emitting here would double-log it. The calibration path
+    // runs the plain `Pipeline::run_with_decoder` (no per-point boundary hook),
+    // so it has no live emission — emit the records post-run here. Both paths
+    // carry the same field schema (`es_n0_db`, `fer`, `ber`, `frames`,
+    // `errors`, `mean_iters`, `wall_seconds`) so existing `jq`/parsers work
+    // regardless of path.
+    if checkpoint_dir.is_none() {
+        for &(es_n0_db, fer, ber, frames, errors, mean_iters, wall_seconds) in &csv_rows {
+            tracing::info!(
+                name: "snr_point_completed",
+                event_type = "snr_point_completed",
+                es_n0_db,
+                fer,
+                ber,
+                frames,
+                errors,
+                mean_iters,
+                wall_seconds,
+            );
+        }
     }
 
     write_campaign_csv(&csv_path, &csv_rows)
