@@ -1,0 +1,34 @@
+{
+  "id": "7bdaf999-e051-4ed0-ab28-5f42cc9de7fc",
+  "title": "gf2-sim: live per-SNR tracing + multi-SNR kill/resume test for DVB-T2 campaign",
+  "description": "## Goal\n\nClose the two gf2-sim campaign-binary gaps that block epic `2928ccce`\nfrom satisfying its [hard] observability and resume criteria (surfaced\nby the epic-level code-review on 2026-06-13). The DVB-T2 AWGN campaign\nbinary migrated to the gf2-sim pipeline (`bbf6b6ee`) regressed two\nproperties relative to the parent epic's criteria.\n\n## Context\n\nBinary: `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs`.\nExecutor sweep: `crates/gf2-sim/src/executor/drain.rs`\n(`Scheduler::run_sweep_checkpointed`, per-SNR loop ~line 32-50 where each\n`SnrPointResult::from_counters(es_n0_db, run.counters)` is pushed).\n\n## Deliverables\n\n### 1. Live `snr_point_completed` tracing\n\nToday (`dvb_t2_awgn_campaign.rs:1039`) the `snr_point_completed` tracing\nevents are emitted POST-SWEEP, after `run_sweep_checkpointed` returns —\nonly `campaign_heartbeat` is live. Epic `2928ccce` [hard] criterion\nrequires: \"All campaign progress is emitted as structured `tracing`\nevents to a JSON file (one record per SNR point completion plus\nconfigurable per-N-frames heartbeats), tailable with `jq` during the\nrun.\"\n\nEmit one `snr_point_completed` tracing event LIVE at each SNR-point\nboundary during the sweep (inside the checkpointed sweep loop, right\nafter each point's `SnrPointResult` is available / its checkpoint is\nwritten), carrying at least `es_n0_db`, `fer`, `frames`, `errors`,\n`mean_iters`. Keep the existing event name and field schema so existing\n`jq`/parsing keeps working. Do NOT keep a duplicate post-sweep emission\nthat would double-log each point (the post-sweep loop at lines 1045-1057\nshould be removed or made conditional so each point is logged exactly\nonce). The non-checkpointed `run_with_decoder` calibration path may keep\nits post-run emission (calibration is short and not the production\ncriterion), but document the distinction.\n\nVerify the field schema and `jq`-tailability are preserved; add/adjust a\nunit or integration test asserting a `snr_point_completed` record is\nwritten to the tracing JSON before the sweep completes (e.g. a 2-point\nrun where the first point's record appears while the second is still\nrunning, or by asserting record ordering interleaved with heartbeats).\n\n### 2. Multi-SNR kill/resume integration test\n\n`crates/gf2-sim/tests/campaign_cli_flags.rs::cli_resume_byte_identical_to_uninterrupted`\nuses a SINGLE SNR point (`--esn0-range 6.25:6.25:0.5`), so it does not\nexercise the epic [hard] criterion: \"A campaign run interrupted by\nSIGINT or process kill AFTER AT LEAST ONE SNR POINT HAS COMPLETED resumes\nfrom the NEXT UNFINISHED SNR POINT on restart, without recomputing\nfinished work ... validated by an integration test that kills the runner\nmid-campaign and verifies the resumed CSV is bit-identical to an\nuninterrupted reference run with the same seed.\"\n\nAdd an integration test (in `campaign_cli_flags.rs` or a sibling) that:\n- runs the campaign binary over MULTIPLE SNR points (>= 3),\n- kills the process (SIGINT or SIGKILL) after at least one SNR point has\n  completed (its `snr_<NNNN>.json` checkpoint exists) but before the\n  sweep finishes,\n- restarts with `--resume`,\n- asserts the resumed run does NOT recompute the already-completed\n  point(s) (e.g. the completed checkpoint's mtime / frame count is\n  unchanged across the restart, or via a tracing/stderr signal), and\n- asserts the final CSV is byte-identical to an uninterrupted reference\n  run at the same seed on the deterministic columns\n  (`es_n0_db, fer, frames, errors, mean_iters`) — matching the existing\n  single-SNR test's column contract (per `152388f4` the `wall_seconds`\n  and `ber` columns are excluded).\n- Mark `#[ignore = \"sim: ...\"]` (spawns full-codec subprocesses) per the\n  test-tier rules; keep per-test wall-clock within the slow tier.\n\n## Success criteria\n\n- [hard] `snr_point_completed` tracing events are emitted live during the\n  checkpointed production sweep (one per SNR point, at the point\n  boundary), each carrying `es_n0_db, fer, frames, errors, mean_iters`,\n  and each point is logged exactly once (no post-sweep duplicate).\n- [hard] A multi-SNR (>= 3 point) kill/resume integration test exists\n  that kills mid-campaign after >= 1 completed SNR point, resumes,\n  asserts completed points are not recomputed, and asserts CSV\n  byte-identity to an uninterrupted reference on\n  `es_n0_db, fer, frames, errors, mean_iters`.\n- [hard] `cargo nextest run -p gf2-sim --release --profile ci` passes\n  (fast tier); the new ignored test runs green when invoked explicitly.\n- [hard] No stale narrative: update the `dvb_t2_awgn_campaign.rs:1039`\n  comment and any doc that says completion events are post-sweep only.\n\n## Non-goals\n\n- No change to the numerical results or the committed curves.\n- No change to the CPU-vs-GPU byte-identity contract (§11) — `ber` and\n  `wall_seconds` remain excluded from determinism.\n- Do not touch files outside `crates/gf2-sim/` except doc comments made\n  stale by this change.",
+  "state": "done",
+  "priority": "high",
+  "assignee": "agent:project-lead",
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-13T20:19:25.633779847Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-13T20:17:03.888377513Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "component:gf2-coding",
+    "epic:dvb-t2-awgn-campaign"
+  ],
+  "created_at": "2026-06-13T19:49:31.361187682+00:00",
+  "updated_at": "2026-06-13T20:21:52.734243553+00:00"
+}
