@@ -123,6 +123,7 @@ else
 fi
 
 # Run all steps in order; continue through failures to report all of them.
+run_step claude-md ./scripts/check-claude-md.sh
 run_step check  cargo check --workspace $FEAT_FLAGS
 run_step test   cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 run_step clippy cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings
