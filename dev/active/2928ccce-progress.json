@@ -40,7 +40,23 @@
     {"topic": "Wave 5 production run scope", "resolution": "Session 1: lead delivers calibration, user runs prod. Session 2: user directs lead to run full production on GPU to completion.", "at": "2026-06-13"},
     {"topic": "64-QAM curves miss [hard] <=0.5 dB gap (measured 0.51-0.61 dB)", "cause": "ETSI TS 102 831 Table 44 anchors use Genie-Aided demapping; spec (S14.2, above Table 44) states this is optimistic for high-order constellations. Our in-scope single-pass ExactLogMap BICM is below the genie bound. 16-QAM passes (0.12-0.23 dB), 64-QAM does not, exactly as spec predicts.", "resolution": "User APPROVED 'Amend with spec rationale' (2026-06-13): keep <=0.5 dB for 16-QAM, set data-backed 64-QAM target citing genie-aided spec text, record observed numbers. Then close.", "at": "2026-06-13"}
   ],
-  "rework_counts": {"87a2402f": 1, "a18956a4": 1, "fd73e8a8": 1},
+  "session_2_closure_status": {
+    "e4849f07": "DONE — code-review PASS (4 rounds: bracket-criterion amendment, commit artefacts, PLAN stale fix, portable script paths) + doc-review PASS",
+    "epic_code_review": "FAILED on 2 gf2-sim infra gaps (live snr_point_completed tracing; multi-SNR kill/resume test). User chose: fix the infrastructure.",
+    "7bdaf999": "in_progress; epic depends on it. Worker (ac2fd673e805a446f) implemented (1) live per-SNR tracing, (2) multi-SNR kill/resume test. cargo-ci PASS. code-review round 1 FAIL: snr_point_completed emitted before the run.interrupted check -> false-completed an interrupted point + double-logs already-complete points on resume. Rework dispatched: emit only when run.completed && !run.interrupted && !was_loaded_complete; add exact-once-across-interrupt+resume test assertions.",
+    "amendments_user_approved": [
+      "gap: <=0.5 dB 16-QAM / <=0.65 dB 64-QAM (genie-aided demapping, TS 102 831 S14.2)",
+      "frame floor: >=1e6 frames at deepest plotted + >=100 errors at above-cliff bracketing point (near-vertical waterfall)"
+    ]
+  },
+  "rework_counts": {"87a2402f": 1, "a18956a4": 1, "fd73e8a8": 1, "e4849f07_codereview_rounds": 4},
   "started_at": "2026-05-27T15:30:00Z",
-  "session_2_started_at": "2026-06-13T01:06:00Z"
+  "session_2_started_at": "2026-06-13T01:06:00Z",
+  "epic_closed": {
+    "state": "done",
+    "at": "2026-06-13",
+    "gates": {"code-review": "passed", "doc-review": "passed"},
+    "children_done": ["e4849f07", "7bdaf999"],
+    "completion_report": "dev/active/2928ccce-completion-report.md"
+  }
 }
