@@ -3,127 +3,44 @@
   "epic_short_id": "2928ccce",
   "epic_title": "DVB-T2 AWGN simulation campaign — Normal frame, rates 1/2 / 2/3 / 3/4",
   "current_wave": 5,
-  "wave_5_policy": "lead-delivers-calibration-only; user runs production sims and closes epic",
-  "waves": [
-    {
-      "wave_number": 1,
-      "description": "Parallel infrastructure + codec pieces. Worktree dispatch required (shared mod.rs + Cargo.toml).",
-      "issues": [
-        {
-          "id": "87a2402f-f076-4775-a265-294271b29944",
-          "short_id": "87a2402f",
-          "title": "Implement DVB-T2 bit interleaving (column-row)",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review"],
-          "status": "done",
-          "rework_reason": "Worker hardcoded Rate3_5 as in-scope; epic's in-scope set is Rate3_4."
-        },
-        {
-          "id": "a18956a4-915b-47c0-873c-73c48eb5acfe",
-          "short_id": "a18956a4",
-          "title": "DVB-T2 BCH+LDPC concatenation codec",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review"],
-          "status": "done",
-          "rework_reason": "code-review FAIL: missing standard rustdoc sections on public getters + ConcatError; encode/decode_soft take &mut self instead of spec &self.",
-          "merged_to_main_at_commit": "f778933e"
-        },
-        {
-          "id": "fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e",
-          "short_id": "fd73e8a8",
-          "title": "Resumable observable SimulationRunner",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "done",
-          "rework_reason": "code-review FAIL: tracing crate absent; observability not wired into uncoded + parallel paths; weak tests; spans missing; RNG formula deviation.",
-          "merged_to_main_at_commit": "20e89bdf"
-        },
-        {
-          "id": "cef2e631-0109-4889-b560-2191ea1a1d20",
-          "short_id": "cef2e631",
-          "title": "Populate remaining 11 DVB-T2 LDPC table data files",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review"],
-          "status": "done",
-          "closed_at_commit": "22add158"
-        }
-      ]
-    },
-    {
-      "wave_number": 2,
-      "description": "Glue story integrating bit interleaver + concat + QAM into the documented BICM call sequence.",
-      "issues": [
-        {
-          "id": "003e4088-d24d-4b58-961f-d82df215ff7c",
-          "short_id": "003e4088",
-          "title": "Integrate BCH + LDPC + interleaver + QAM into unified FEC chain",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "done"
-        }
-      ]
-    },
-    {
-      "wave_number": 3,
-      "description": "TP07a ETSI vector validation through the full chain.",
-      "issues": [
-        {
-          "id": "4cdaf1c5-0d93-4320-bc41-7485e18f94a3",
-          "short_id": "4cdaf1c5",
-          "title": "Validate full TP04 -> TP05 -> TP06 -> TP07a DVB-T2 chain",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "done",
-          "note": "TP07a = §6.1.3 output (post parity-interleave + column-twist), verified bit-exact on VV020/VV009/VV014. Required parity-interleaver fix (548a8563)."
-        }
-      ]
-    },
-    {
-      "wave_number": 4,
-      "description": "Campaign runner binary + reference TOML + plot script.",
-      "issues": [
-        {
-          "id": "152388f4-2018-47ff-8dc1-c3594c84e466",
-          "short_id": "152388f4",
-          "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
-          "classification": "implementation",
-          "gates": ["cargo-ci", "code-review", "doc-review"],
-          "status": "done"
-        }
-      ]
-    },
-    {
-      "wave_number": 5,
-      "description": "Calibration-only delivery from the lead; production campaign deferred to user. e4849f07 stays open after this session.",
-      "issues": [
-        {
-          "id": "e4849f07-2871-42c6-b65b-aa7edb942b72",
-          "short_id": "e4849f07",
-          "title": "Run FER simulation over AWGN for full DVB-T2 FEC chain",
-          "classification": "execution",
-          "gates": ["code-review", "doc-review"],
-          "status": "ready_for_user_production_runs",
-          "delivery_scope": "calibration smoke + PLAN.md + README.md delivered; production runs (multi-day) + final closure are user-side",
-          "calibration_finding": "Runner + chain correct (FER=0 at high SNR). Waterfall knee ~7.0 dB vs ETSI QEF 6.0 dB → ~1-1.5 dB gap from plain MinSum + MaxLog. Closing the [hard] 0.5 dB gap likely needs NormalizedMinSum/SumProduct + ExactLogMap tuning (allowed by epic)."
-        }
-      ]
+  "session": 2,
+  "session_2_note": "User directive: drive epic to completion. Run the 6 production FER curves on GPU (gf2-sim hybrid pipeline, --features hip, SumProduct+ExactLogMap). Refresh stale docs (PLAN/README, legacy SimulationRunner -> gf2-sim GPU pipeline). Link final results + plots to e4849f07 and the epic.",
+  "wave_5_terminal_child": {
+    "id": "e4849f07-2871-42c6-b65b-aa7edb942b72",
+    "short_id": "e4849f07",
+    "title": "Run FER simulation over AWGN for full DVB-T2 FEC chain",
+    "classification": "execution",
+    "gates": ["code-review", "doc-review"],
+    "status": "in_progress",
+    "claimed_by": "agent:project-lead",
+    "campaign": {
+      "runner": "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs (gf2-sim hybrid CPU+GPU pipeline)",
+      "config": "--decoder sumproduct --demap exactlogmap --gpu (--features hip)",
+      "host": "AMD Ryzen 9 5900X + AMD Radeon RX 6950 XT (gfx1030), seed 42",
+      "driver": "dev/benchmarks/dvb_t2_awgn/run_campaign.sh (serial on single GPU, resumable)",
+      "brackets_step_dB": 0.05,
+      "max_frames": 1200000,
+      "target_errors": 100,
+      "harness_task_id": "b558uqcb0",
+      "throughput_fps_deep_point": 192,
+      "waterfall": "sharp cliff (~1 decade FER per 0.045 dB); FER=1e-4 crossing ~0.15 dB above the regression FER-at-anchor. r1/2 16qam measured crossing ~6.145 dB vs ETSI 6.0 anchor => gap ~0.15 dB.",
+      "configs": [
+        {"modcod": "1/2 16qam",  "range": "5.85:6.20:0.05", "etsi_qef_cn_db": 6.0,  "status": "running"},
+        {"modcod": "2/3 16qam",  "range": "8.70:9.00:0.05",  "etsi_qef_cn_db": 8.9,  "status": "pending"},
+        {"modcod": "3/4 16qam",  "range": "9.85:10.20:0.05", "etsi_qef_cn_db": 10.0, "status": "pending"},
+        {"modcod": "1/2 64qam",  "range": "10.15:10.50:0.05","etsi_qef_cn_db": 9.9,  "status": "pending"},
+        {"modcod": "2/3 64qam",  "range": "13.65:14.00:0.05","etsi_qef_cn_db": 13.5, "status": "pending"},
+        {"modcod": "3/4 64qam",  "range": "15.25:15.60:0.05","etsi_qef_cn_db": 15.1, "status": "pending"}
+      ],
+      "gap_risk": "64-QAM configs (1/2, 2/3, 3/4) have FER-at-anchor 0.31-0.65 and may land near/over the 0.5 dB gap criterion; measure first, escalate per policy if any curve exceeds 0.5 dB."
     }
-  ],
-  "created_during_execution": [
-    {"short_id": "548a8563", "title": "Add §6.1.3 parity interleaving to DVB-T2 bit interleaver", "status": "done", "reason": "Calibration/TP07a work surfaced that 87a2402f shipped only the column-twist sub-stage; parity interleaving (+ corrected Nc=8/12 tables) was missing. Verified bit-exact vs ETSI TP07a after fix."},
-    {"short_id": "a7b1bb21", "title": "Implement DVB-T2 §6.1.4 bit-to-cell-word demuxer", "status": "rejected:obsolete", "reason": "Created when TP07a was believed to be §6.1.4 output; empirically TP07a is §6.1.3 output, so §6.1.4 is not needed for this epic."}
-  ],
-  "escalations": [
-    {
-      "topic": "Wave 5 production run scope",
-      "resolution": "User chose: lead delivers calibration smoke, user runs prod",
-      "at": "2026-05-27"
-    }
-  ],
-  "rework_counts": {
-    "87a2402f": 1,
-    "a18956a4": 1,
-    "fd73e8a8": 1
   },
-  "started_at": "2026-05-27T15:30:00Z"
+  "prior_session_waves_done": ["cef2e631","a18956a4","87a2402f","548a8563","fd73e8a8","003e4088","4cdaf1c5","152388f4"],
+  "escalations": [
+    {"topic": "Wave 5 production run scope", "resolution": "Session 1: lead delivers calibration, user runs prod. Session 2: user directs lead to run full production on GPU to completion.", "at": "2026-06-13"},
+    {"topic": "64-QAM curves miss [hard] <=0.5 dB gap (measured 0.51-0.61 dB)", "cause": "ETSI TS 102 831 Table 44 anchors use Genie-Aided demapping; spec (S14.2, above Table 44) states this is optimistic for high-order constellations. Our in-scope single-pass ExactLogMap BICM is below the genie bound. 16-QAM passes (0.12-0.23 dB), 64-QAM does not, exactly as spec predicts.", "resolution": "User APPROVED 'Amend with spec rationale' (2026-06-13): keep <=0.5 dB for 16-QAM, set data-backed 64-QAM target citing genie-aided spec text, record observed numbers. Then close.", "at": "2026-06-13"}
+  ],
+  "rework_counts": {"87a2402f": 1, "a18956a4": 1, "fd73e8a8": 1},
+  "started_at": "2026-05-27T15:30:00Z",
+  "session_2_started_at": "2026-06-13T01:06:00Z"
 }

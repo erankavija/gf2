@@ -1,103 +1,93 @@
-# DVB-T2 AWGN campaign — calibration smoke results
+# DVB-T2 AWGN production campaign — results (e4849f07 / epic 2928ccce)
 
-This directory holds the DVB-T2 BICM AWGN campaign artefacts for epic
-2928ccce. **The production FER curves are not yet run** — see `PLAN.md`.
-This README records the **calibration smoke** delivered by the
-project-lead session, which validates the runner end-to-end and
-characterises the implementation's waterfall position before the
-multi-day production campaign.
+Production FER-vs-Es/N₀ curves for the six in-scope DVB-T2 Normal-frame
+MODCODs (rates 1/2, 2/3, 3/4 × 16-QAM, 64-QAM), run on the **`gf2-sim`
+hybrid CPU+GPU pipeline** with SumProduct LDPC decoding + ExactLogMap
+soft-demapping, compared against the ETSI TS 102 831 Table 44 QEF
+anchors.
 
-## What was run
+See `CLOSURE.md` for the per-curve gap analysis and the criterion
+amendment record. See `PLAN.md` for the sweep design and invocation.
 
-The campaign binary `dvb_t2_awgn_campaign` (issue 152388f4) was run in
-`--calibrate` mode for all six in-scope MODCODs:
+## Deliverables (one per MODCOD)
 
-```bash
-for rate in 1/2 2/3 3/4; do for mod in 16qam 64qam; do
-  ./target/release/dvb_t2_awgn_campaign --calibrate \
-    --rate "$rate" --modulation "$mod" \
-    --output-dir dev/benchmarks/dvb_t2_awgn/smoke \
-    --calibrate-frames 200 --seed 42
-done; done
-```
+- `curve_<rate>_<mod>.csv` — the FER/BER sweep.
+- `curve_<rate>_<mod>.png` — simulated FER vs the ETSI TS 102 831
+  QEF anchor.
+- `tracing_<rate>_<mod>.jsonl` — structured `tracing` events
+  (per-SNR completion + per-1000-frame heartbeats), tailable with `jq`.
 
-Calibration CSVs are under `smoke/calibration/`. Each is a 3-point
-bracket around the ETSI TS 102 831 Table 44 QEF threshold for that
-MODCOD, at 200 frames/point.
+(The per-config `curve_<slug>/` and `curve_<slug>_ext/` scratch dirs —
+checkpoints, raw logs — are gitignored; the flat files above are the
+committed artefacts.)
+
+## Configuration
+
+- Runner: `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` (issue
+  `bbf6b6ee`), `Pipeline::dvb_t2` + `Scheduler::run_sweep_checkpointed`.
+- Decoder: `--decoder sumproduct`; demap: `--demap exactlogmap`.
+- GPU: `--gpu` on a `--features hip` build (LDPC BP + Gray-QAM demap
+  offloaded to the HIP/ROCm device; CPU runs encode / interleave / AWGN /
+  aggregation across the rayon pool).
+- `--target-errors 100`, `--max-frames 1200000`, `--seed 42`.
+- Driver: `run_campaign.sh` (main sweeps) + `run_extend.sh` (sub-10⁻⁴
+  extension points). Resumable per SNR checkpoint.
 
 ## Host
 
-- AMD Ryzen 9 5900X (24 threads), 31 GiB RAM
-- Linux 7.0.3-arch1-1, rustc 1.95.0
+- CPU: AMD Ryzen 9 5900X (12C / 24T)
+- GPU: AMD Radeon RX 6950 XT (gfx1030, RDNA2)
+- RAM: 31 GiB; OS: Linux 7.0.10-arch1-1; rustc 1.95.0
 - RNG seed: 42
 
-## Key finding — implementation waterfall vs ETSI QEF threshold
+## Wall-clock
 
-The runner executes end-to-end correctly: at high Es/N0 the chain
-decodes with zero errors in 1 BP iteration (verified r1/2 16-QAM at
-Es/N0 = 15 dB → FER = 0, mean_iters = 1). The full BCH+LDPC+interleave+
-QAM forward/inverse chain is sound.
+- Main six-config sweep: 2026-06-13 01:12 → 06:41 (~5 h 28 m).
+- Sub-10⁻⁴ extension points (5 curves): 08:31 → 19:25 (~10 h 54 m;
+  the host carried an external load average of ~28 on 24 threads during
+  the extensions, which throttled the CPU-bound per-frame prep).
+- Per-curve GPU-active time is in each CSV's `wall_seconds` column.
 
-A coarse sweep located the r1/2 16-QAM waterfall knee:
+## Results — FER = 10⁻⁴ gap to ETSI TS 102 831 Table 44
 
-| Es/N0 (dB) | FER (60 frames) | mean_iters |
-|------------|-----------------|------------|
-| 6.5        | 1.0             | 50 (max)   |
-| 7.5        | 0.0             | 1          |
-| ≥ 8.5      | 0.0             | 1          |
+| MODCOD     | ETSI QEF C/N | sim FER=10⁻⁴ crossing | gap (dB) | criterion |
+|------------|:------------:|:---------------------:|:--------:|:---------:|
+| 1/2 16-QAM | 6.0          | 6.167                 | **0.167**| ≤0.5 ✓    |
+| 2/3 16-QAM | 8.9          | 9.017                 | **0.117**| ≤0.5 ✓    |
+| 3/4 16-QAM | 10.0         | 10.224                | **0.224**| ≤0.5 ✓    |
+| 1/2 64-QAM | 9.9          | 10.506                | **0.606**| ≤0.65 ✓   |
+| 2/3 64-QAM | 13.5         | 14.085                | **0.585**| ≤0.65 ✓   |
+| 3/4 64-QAM | 15.1         | 15.614                | **0.514**| ≤0.65 ✓   |
 
-So the implementation's waterfall sits at **~7.0 dB**, against the
-**6.0 dB** ETSI TS 102 831 Table 44 QEF threshold (BER = 1e-7 after
-LDPC) — an implementation gap of **~1.0–1.5 dB**.
+Crossing = log-linear interpolation of the two measured points
+straddling FER = 10⁻⁴. Every curve has ≥ 100 frame errors at the
+above-cliff bracketing point and ≥ 10⁶ frames at the deepest plotted
+(sub-10⁻⁴) point.
 
-### Why the gap exists (and how to close it)
+### Why 16-QAM and 64-QAM differ
 
-The gap is fully attributable to two algorithmic approximations in the
-current default configuration, both of which the epic explicitly
-permits tuning ("Tuning parameters ... allowed if needed to hit the
-gap target"):
+The ETSI TS 102 831 Table 44 anchors assume **"Genie-Aided" demapping**
+(TS 102 831 §14.2, the paragraph immediately above Table 44):
 
-1. **LDPC decoder = plain `DecoderAlgorithm::MinSum`** (the
-   `DvbT2Concat` default; `crates/gf2-coding/src/ldpc/core.rs`
-   `DecoderConfig::default`). Plain min-sum loses ~0.5–1.0 dB vs
-   sum-product / normalized-min-sum. Switching to
-   `NormalizedMinSum(~0.75)` or `SumProduct` recovers most of it.
-2. **QAM demapping = `DemapMethod::MaxLog`** (campaign runner default).
-   Max-log loses ~0.3–0.5 dB vs exact log-MAP (`ExactLogMap`).
+> "The simulations include 'Genie-Aided' demapping ... Iterative
+> demapping will approach this performance at low BERs and low-order
+> constellations but **will be optimistic at higher BERs and for
+> high-order constellations**."
 
-Neither is a decoder *algorithm* change in the prohibited sense — both
-are within the "tuning parameters / schedule" allowance. Closing the
-gap to the epic's [hard] ≤ 0.5 dB criterion will very likely require
-selecting `NormalizedMinSum` (or `SumProduct`) decoding and
-`ExactLogMap` demapping for the production runs.
+Our chain uses real **single-pass** ExactLogMap BICM demapping (no
+iterative demapping — that would be new code, out of scope; LDPC
+decoder-algorithm changes are also out of scope). Single-pass demapping
+is strictly below the genie bound, and the genie gap grows with
+constellation order — exactly the measured pattern: ~0.12–0.22 dB for
+16-QAM, ~0.51–0.61 dB for 64-QAM. The [hard] gap criterion was amended
+accordingly (user-approved 2026-06-13): ≤0.5 dB for 16-QAM, ≤0.65 dB for
+64-QAM. See `CLOSURE.md`.
 
-## Recommendation for the production phase (e4849f07)
+## Reproduce
 
-Before launching the multi-day production campaign:
-
-1. Add decoder/demapper selection to the runner (or set the
-   `DvbT2Concat` decoder to `NormalizedMinSum` and the demap method to
-   `ExactLogMap`), then re-run the r1/2 16-QAM calibration to confirm
-   the waterfall moves toward ~6.0–6.5 dB.
-2. Re-derive the per-config production `--esn0-range` brackets from the
-   tuned waterfall knees (the brackets in `PLAN.md` are anchored on the
-   QEF thresholds and should be re-centred on the tuned knees).
-3. Run the six production sweeps per `PLAN.md`, collecting ≥ 100 frame
-   errors at the FER = 10⁻⁴ bracket.
-4. Plot with `plot.py` and record the achieved gap per curve.
-
-If, after tuning, the gap still exceeds 0.5 dB, escalate per the
-amendment/escalation policy before closing e4849f07 (the 0.5 dB figure
-is the epic's [hard] target; "measurements, not guesses" applies — a
-data-backed amendment may be warranted).
-
-## Files
-
-- `PLAN.md` — production SNR sweep plan (per-config ranges, invocation,
-  closure criteria).
-- `smoke/calibration/calibration_<rate>_<mod>.csv` — the six
-  calibration brackets (200 frames/point).
-- `smoke/tracing.jsonl` — structured tracing log from the calibration runs.
-- `plot.py` — operator plotting script (CSV + reference TOML → PNG).
-- `../../../crates/gf2-coding/data/dvb_t2_tr102831_reference.toml` —
-  ETSI TS 102 831 Table 44 QEF C/N anchors.
+```bash
+cargo build -p gf2-sim --release --features hip --bin dvb_t2_awgn_campaign
+bash dev/benchmarks/dvb_t2_awgn/run_campaign.sh   # six main sweeps
+bash dev/benchmarks/dvb_t2_awgn/run_extend.sh     # sub-1e-4 extension points
+python3 dev/benchmarks/dvb_t2_awgn/finalize.py    # merge + plot + gap table
+```
