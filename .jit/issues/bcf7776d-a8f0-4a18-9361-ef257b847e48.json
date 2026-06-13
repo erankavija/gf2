@@ -7,9 +7,7 @@
   "assignee": "agent:project-lead",
   "dependencies": [
     "81d05bab-4e68-4289-9e64-cb8a82187225",
-    "48a0db6c-c87d-48f2-9df6-d52bbca050ec",
-    "c09d3e95-bb68-4e25-8f72-69aef1c042b5",
-    "c0b1702d-7cbe-4cfe-868d-611746defac1"
+    "48a0db6c-c87d-48f2-9df6-d52bbca050ec"
   ],
   "gates_required": [],
   "gates_status": {},
@@ -29,5 +27,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:01:13.027874246+00:00",
-  "updated_at": "2026-06-12T15:13:34.197217359+00:00"
+  "updated_at": "2026-06-13T22:37:17.750775768+00:00"
 }

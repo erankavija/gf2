@@ -15,6 +15,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-05T11:22:32.692055801Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -24,11 +29,6 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-05T11:28:41.156323419Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T11:22:32.692055801Z"
     }
   },
   "context": {},
@@ -47,18 +47,6 @@
       "doc_type": "evidence"
     },
     {
-      "path": "dev/plans/ntl_promotion_evidence.md",
-      "commit": "435dd0f",
-      "label": "ntl promotion evidence",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/plans/flint_promotion_evidence.md",
-      "commit": "435dd0f",
-      "label": "flint promotion evidence",
-      "doc_type": "evidence"
-    },
-    {
       "path": "dev/plans/m4rie_promotion_evidence.md",
       "commit": null,
       "label": "m4rie promotion evidence",
@@ -70,6 +58,20 @@
       "label": "SOTA target matrix",
       "doc_type": "design",
       "format": "markdown"
+    },
+    {
+      "path": "dev/plans/ntl_promotion_evidence.md",
+      "commit": "5871eccf",
+      "label": "ntl promotion evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/plans/flint_promotion_evidence.md",
+      "commit": "5871eccf",
+      "label": "flint promotion evidence",
+      "doc_type": "evidence",
+      "format": "markdown"
     }
   ],
   "labels": [
@@ -79,5 +81,5 @@
     "story:sota-reference-matrix"
   ],
   "created_at": "2026-04-30T06:43:02.433953673+00:00",
-  "updated_at": "2026-05-05T11:28:41.578930430+00:00"
+  "updated_at": "2026-06-13T22:35:43.884794533+00:00"
 }

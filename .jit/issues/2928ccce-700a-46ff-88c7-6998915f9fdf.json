@@ -7,7 +7,8 @@
   "assignee": "agent:project-lead",
   "dependencies": [
     "e4849f07-2871-42c6-b65b-aa7edb942b72",
-    "7bdaf999-e051-4ed0-ab28-5f42cc9de7fc"
+    "7bdaf999-e051-4ed0-ab28-5f42cc9de7fc",
+    "a7b1bb21-834c-434f-8d61-17b829f5592d"
   ],
   "gates_required": [
     "code-review",
@@ -41,5 +42,5 @@
     "epic:dvb-t2-awgn-campaign"
   ],
   "created_at": "2026-05-25T21:46:35.686241688+00:00",
-  "updated_at": "2026-06-13T20:24:27.831433716+00:00"
+  "updated_at": "2026-06-13T22:36:35.910816038+00:00"
 }

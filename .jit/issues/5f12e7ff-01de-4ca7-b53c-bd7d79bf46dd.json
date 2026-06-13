@@ -6,23 +6,22 @@
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [
-    "db9836e4-0115-4769-95ae-5ad414a80ed5",
-    "3fcb7025-7f12-4d47-930d-3c9116bac421"
+    "db9836e4-0115-4769-95ae-5ad414a80ed5"
   ],
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-08T19:54:06.258619954Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-08T19:53:54.319259419Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-08T19:54:06.258619954Z"
     }
   },
   "context": {},
@@ -33,5 +32,5 @@
     "epic:gf2-sim"
   ],
   "created_at": "2026-06-05T22:03:09.566020958+00:00",
-  "updated_at": "2026-06-08T19:56:04.189139675+00:00"
+  "updated_at": "2026-06-13T22:37:17.747197997+00:00"
 }
