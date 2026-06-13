@@ -5,3 +5,6 @@
 # --output-dir (typically under /tmp); any curve_* dir that lands here is a
 # local run and must not be tracked.
 curve_*/
+
+# Driver run logs (ephemeral; wall-clock recorded in README.md)
+*_driver.log

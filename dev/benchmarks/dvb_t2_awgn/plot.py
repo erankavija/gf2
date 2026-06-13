@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot a single DVB-T2 BICM AWGN campaign curve against ETSI TR 102 831 reference points.
+"""Plot a single DVB-T2 BICM AWGN campaign curve against ETSI TS 102 831 reference points.
 
 Reads:
   - ``<output_dir>/curve_<rate>_<mod>.csv``  (produced by dvb_t2_awgn_campaign)
@@ -52,7 +52,7 @@ except ImportError:
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description="Plot DVB-T2 BICM AWGN simulated FER vs ETSI TR 102 831 reference.",
+        description="Plot DVB-T2 BICM AWGN simulated FER vs ETSI TS 102 831 reference.",
     )
     p.add_argument(
         "--curve-csv",
@@ -189,7 +189,7 @@ def main():
             color="darkorange",
             linewidth=1.5,
             markersize=5,
-            label="ETSI TR 102 831 reference",
+            label="ETSI TS 102 831 reference",
         )
 
     ax.set_xlabel("Es/N0 (dB)", fontsize=12)
