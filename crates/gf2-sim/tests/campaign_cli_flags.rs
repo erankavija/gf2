@@ -180,8 +180,9 @@ fn count_events(jsonl: &str, event_type: &str) -> usize {
 /// writes the curve CSV with the canonical 7-column schema (so `plot.py` keeps
 /// working) **and** writes a non-vacuous `tracing.jsonl`: every line valid
 /// JSON, at least one **live worker-thread** `campaign_heartbeat` event
-/// (`--heartbeat-frames 2` with 4 frames guarantees two), and at least one
-/// post-sweep `snr_point_completed` event. The heartbeat assertion proves
+/// (`--heartbeat-frames 2` with 4 frames guarantees two), and exactly one
+/// live `snr_point_completed` event (the checkpointed sweep emits it at the
+/// SNR-point boundary). The heartbeat assertion proves
 /// events emitted from the executor's rayon workers reach the file through
 /// the process-GLOBAL subscriber (a thread-local default would drop them).
 ///
@@ -502,4 +503,358 @@ struct DetRow {
     frames: String,
     errors: String,
     mean_iters: String,
+}
+
+/// Returns the line indices (in file/emission order) of every valid-JSON
+/// `tracing.jsonl` line whose `fields.event_type` matches `event_type`.
+/// Shared by the live-tracing ordering test below.
+fn event_line_indices(jsonl: &str, event_type: &str) -> Vec<usize> {
+    let mut idxs = Vec::new();
+    for (i, line) in jsonl.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let v: serde_json::Value = serde_json::from_str(line)
+            .unwrap_or_else(|e| panic!("tracing.jsonl line {i} is not valid JSON: {e}\n{line}"));
+        if v["fields"]["event_type"] == event_type {
+            idxs.push(i);
+        }
+    }
+    idxs
+}
+
+/// Returns the `es_n0_db` value (as a string key) of every `snr_point_completed`
+/// record in `jsonl`, in emission order. Used to tally completion records per
+/// SNR point and detect double-logging across an interrupt+resume lifecycle.
+fn completed_point_keys(jsonl: &str) -> Vec<String> {
+    let mut keys = Vec::new();
+    for (i, line) in jsonl.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let v: serde_json::Value = serde_json::from_str(line)
+            .unwrap_or_else(|e| panic!("tracing.jsonl line {i} is not valid JSON: {e}\n{line}"));
+        if v["fields"]["event_type"] == "snr_point_completed" {
+            // es_n0_db is a float field; format it via the serde Number so the
+            // key is a stable textual identity per SNR point.
+            keys.push(v["fields"]["es_n0_db"].to_string());
+        }
+    }
+    keys
+}
+
+/// Returns the line indices of `campaign_heartbeat` events whose `snr_idx`
+/// field equals `snr_idx`, in emission order.
+fn heartbeat_line_indices_for_snr(jsonl: &str, snr_idx: u64) -> Vec<usize> {
+    let mut idxs = Vec::new();
+    for (i, line) in jsonl.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let v: serde_json::Value = serde_json::from_str(line)
+            .unwrap_or_else(|e| panic!("tracing.jsonl line {i} is not valid JSON: {e}\n{line}"));
+        if v["fields"]["event_type"] == "campaign_heartbeat"
+            && v["fields"]["snr_idx"].as_u64() == Some(snr_idx)
+        {
+            idxs.push(i);
+        }
+    }
+    idxs
+}
+
+/// Fix 1 (epic 2928ccce): the checkpointed sweep emits each
+/// `snr_point_completed` record **live** at its SNR-point boundary, not in a
+/// post-sweep batch. A multi-point run with a small per-point heartbeat budget
+/// interleaves events as: point 0 heartbeats → point 0 `snr_point_completed`
+/// → point 1 heartbeats → point 1 `snr_point_completed`. We assert that the
+/// FIRST `snr_point_completed` line is ordered BEFORE the first point-1
+/// `campaign_heartbeat`, which can only hold if point 0's completion record was
+/// written live during the sweep (a post-sweep batch would emit both
+/// completions only after every heartbeat).
+///
+/// `#[ignore]` — spawns a full-codec multi-point subprocess (heavy live
+/// simulation; slow tier).
+#[test]
+#[ignore = "sim: multi-point checkpointed run asserting live snr_point_completed ordering"]
+fn cli_snr_point_completed_emitted_live_during_sweep() {
+    let out_dir = "/tmp/dvb_d2_cli_live_completed";
+    let _ = std::fs::remove_dir_all(out_dir);
+    let out = Command::new(binary_path())
+        .args([
+            "--rate",
+            "1/2",
+            "--modulation",
+            "16qam",
+            "--esn0-range",
+            // Two SNR points.
+            "6.0:6.5:0.5",
+            "--max-frames",
+            "4",
+            "--target-errors",
+            "1000",
+            "--decoder",
+            "sumproduct",
+            "--demap",
+            "exactlogmap",
+            "--output-dir",
+            out_dir,
+            "--seed",
+            "11",
+            "--heartbeat-frames",
+            "2",
+        ])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .expect("spawn dvb_t2_awgn_campaign multi-point");
+    assert!(
+        out.status.success(),
+        "multi-point run must succeed; stderr: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let jsonl = std::fs::read_to_string(format!("{out_dir}/tracing.jsonl"))
+        .expect("tracing.jsonl must be written");
+
+    // Two SNR points ⇒ exactly two live snr_point_completed records.
+    let completed = event_line_indices(&jsonl, "snr_point_completed");
+    assert_eq!(
+        completed.len(),
+        2,
+        "two SNR points must each emit exactly one snr_point_completed; got {}",
+        completed.len()
+    );
+
+    // The first completion (point 0) must be ordered BEFORE point 1's first
+    // heartbeat. With post-sweep batching, BOTH completions would land after
+    // all heartbeats, so first_completed > last point-1 heartbeat — which this
+    // assertion rules out. This is the "reaches the JSON before the sweep
+    // completes" guarantee.
+    let snr1_heartbeats = heartbeat_line_indices_for_snr(&jsonl, 1);
+    assert!(
+        !snr1_heartbeats.is_empty(),
+        "expected at least one campaign_heartbeat for snr_idx=1 \
+         (4 frames at --heartbeat-frames 2 ⇒ 2 per point)"
+    );
+    let first_completed = completed[0];
+    let first_snr1_heartbeat = snr1_heartbeats[0];
+    assert!(
+        first_completed < first_snr1_heartbeat,
+        "point 0's snr_point_completed (line {first_completed}) must be emitted \
+         LIVE before point 1's first heartbeat (line {first_snr1_heartbeat}); \
+         a post-sweep batch would emit it after every heartbeat"
+    );
+}
+
+/// Fix 2 (epic 2928ccce): a multi-SNR kill/resume integration test that
+/// actually exercises "kill after >= 1 SNR point completed -> resume from the
+/// NEXT point" (the single-point `cli_resume_byte_identical_to_uninterrupted`
+/// cannot). Runs a >= 3-point sweep, kills the process once at least one SNR
+/// point's checkpoint exists but before the sweep finishes, resumes with
+/// `--resume`, asserts the already-completed point's checkpoint is NOT
+/// recomputed (its on-disk file is byte-unchanged across the restart), and
+/// asserts the final CSV is byte-identical to an uninterrupted reference run on
+/// the deterministic columns (`es_n0_db`, `fer`, `frames`, `errors`,
+/// `mean_iters`; `wall_seconds`/`ber` excluded, matching the single-SNR test).
+///
+/// It also pins the EXACTLY-ONCE-AT-COMPLETION `snr_point_completed` contract
+/// across the interrupt+resume lifecycle (regression guard for the Fix 1 bug
+/// where the event was emitted unconditionally, before the interrupt/resume
+/// checks): on the interrupted run's `tracing.jsonl` a completion record exists
+/// for each point that finished before the kill and NOT for the partial point;
+/// and across interrupt + resume COMBINED (the subscriber opens the log in
+/// append mode, so the resume's events accrue onto the same file) every SNR
+/// point has exactly ONE completion record total — points completed before the
+/// kill are not re-logged on resume.
+///
+/// `#[ignore]` — spawns multiple full-codec subprocesses with SIGINT delivery
+/// (slow tier).
+#[test]
+#[ignore = "sim: multi-SNR kill/resume campaign subprocess for checkpoint byte-identity"]
+fn cli_multi_snr_resume_skips_completed_points() {
+    use std::time::Duration;
+
+    // A 3-point sweep, tiny per-point budget so the whole reference run is fast
+    // but each point still takes long enough that we can SIGINT mid-sweep.
+    const ESN0_RANGE: &str = "6.0:7.0:0.5"; // 6.0, 6.5, 7.0 -> 3 points
+    let common = |dir: &str| -> Vec<String> {
+        vec![
+            "--rate".into(),
+            "1/2".into(),
+            "--modulation".into(),
+            "16qam".into(),
+            "--esn0-range".into(),
+            ESN0_RANGE.into(),
+            "--max-frames".into(),
+            "8".into(),
+            "--target-errors".into(),
+            "1000".into(),
+            "--decoder".into(),
+            "sumproduct".into(),
+            "--demap".into(),
+            "exactlogmap".into(),
+            "--output-dir".into(),
+            dir.into(),
+            "--seed".into(),
+            "42".into(),
+        ]
+    };
+
+    // Reference: uninterrupted 3-point run.
+    let ref_dir = "/tmp/dvb_d2_cli_multi_resume_ref";
+    let _ = std::fs::remove_dir_all(ref_dir);
+    let ref_status = Command::new(binary_path())
+        .args(common(ref_dir))
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .expect("spawn reference multi-point campaign");
+    assert!(ref_status.success(), "reference run must succeed");
+    let ref_csv = std::fs::read_to_string(format!("{ref_dir}/curve_1_2_16qam.csv"))
+        .expect("reference curve CSV");
+    let ref_rows = parse_det_rows(&ref_csv);
+    assert_eq!(ref_rows.len(), 3, "three SNR points in the reference");
+
+    // Interrupted run: spawn, wait until at least the first point's checkpoint
+    // (snr_0000.json) is on disk but the sweep is not yet done, then SIGINT.
+    let int_dir = "/tmp/dvb_d2_cli_multi_resume_int";
+    let _ = std::fs::remove_dir_all(int_dir);
+    let first_ckpt = format!("{int_dir}/checkpoints/snr_0000.json");
+    let final_csv = format!("{int_dir}/curve_1_2_16qam.csv");
+    let mut child = Command::new(binary_path())
+        .args(common(int_dir))
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("spawn interrupted multi-point campaign");
+
+    // Poll for the first SNR point's checkpoint, but bail before the final CSV
+    // is written (that would mean the whole sweep already finished). Up to ~10s.
+    let mut saw_first_ckpt = false;
+    for _ in 0..200 {
+        if std::path::Path::new(&final_csv).exists() {
+            break; // sweep finished before we could interrupt
+        }
+        if std::path::Path::new(&first_ckpt).exists() {
+            saw_first_ckpt = true;
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    assert!(
+        saw_first_ckpt,
+        "first SNR point's checkpoint ({first_ckpt}) must appear before the \
+         sweep finishes; if this fails the per-point work is too fast to \
+         interrupt — lower --max-frames is not possible, raise it instead"
+    );
+
+    // Snapshot the completed point's checkpoint so we can prove resume does not
+    // recompute it.
+    let ckpt_before = std::fs::read(&first_ckpt).expect("read snr_0000.json before interrupt");
+
+    let pid = child.id();
+    #[cfg(unix)]
+    {
+        let _ = std::process::Command::new("kill")
+            .args(["-INT", &pid.to_string()])
+            .status();
+    }
+    let _ = child.wait();
+
+    // The first point's checkpoint must still be on disk after the interrupt.
+    assert!(
+        std::path::Path::new(&first_ckpt).exists(),
+        "completed point's checkpoint must survive the interrupt"
+    );
+
+    // EXACTLY-ONCE part 1 — snapshot the INTERRUPTED run's tracing.jsonl (the
+    // resume below appends to the same file, so capture it now). At least the
+    // first SNR point completed before the kill (its checkpoint exists), so its
+    // completion record must be present; the interrupted/partial point must NOT
+    // have one. We know point 0 is complete (snr_0000.json on disk pre-kill),
+    // and the sweep was still running, so at least one but fewer than all 3
+    // points completed. With a fresh `--esn0-range 6.0:7.0:0.5` and default
+    // heartbeat the per-point checkpoint lands only at the SNR boundary, so the
+    // number of completion records equals the number of fully finished points.
+    let tracing_path = format!("{int_dir}/tracing.jsonl");
+    let int_jsonl = std::fs::read_to_string(&tracing_path).expect("interrupted run tracing.jsonl");
+    let int_completed = completed_point_keys(&int_jsonl);
+    assert!(
+        !int_completed.is_empty(),
+        "the interrupted run must have logged at least one snr_point_completed \
+         (point 0 finished before the kill); got none"
+    );
+    assert!(
+        int_completed.len() < 3,
+        "the interrupted run must NOT log a completion for the partial/interrupted \
+         point — fewer than all 3 points should be logged; got {}",
+        int_completed.len()
+    );
+    // No point double-logged within the interrupted run itself.
+    {
+        let mut sorted = int_completed.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(
+            sorted.len(),
+            int_completed.len(),
+            "no SNR point may be logged twice within the interrupted run: {int_completed:?}"
+        );
+    }
+
+    // Resume.
+    let resume_status = Command::new(binary_path())
+        .args(common(int_dir))
+        .arg("--resume")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .expect("spawn resumed multi-point campaign");
+    assert!(resume_status.success(), "resumed run must succeed");
+
+    // The already-completed point's checkpoint must be byte-unchanged across the
+    // restart: resume folds its saved counters and skips the point rather than
+    // recomputing and rewriting it.
+    let ckpt_after = std::fs::read(&first_ckpt).expect("read snr_0000.json after resume");
+    assert_eq!(
+        ckpt_before, ckpt_after,
+        "resume must NOT recompute the already-completed first SNR point \
+         (its checkpoint file must be byte-identical across the restart)"
+    );
+
+    // EXACTLY-ONCE part 2 — across interrupt + resume COMBINED, every SNR point
+    // has exactly ONE completion record. The subscriber appends, so the
+    // post-resume tracing.jsonl holds both invocations' events. Points completed
+    // before the kill must NOT be re-logged on resume (the bug this regression
+    // guards), and the interrupted point must be logged exactly once when the
+    // resume finishes it.
+    let combined_jsonl =
+        std::fs::read_to_string(&tracing_path).expect("combined tracing.jsonl after resume");
+    let combined_completed = completed_point_keys(&combined_jsonl);
+    assert_eq!(
+        combined_completed.len(),
+        3,
+        "across interrupt + resume there must be exactly 3 snr_point_completed \
+         records (one per SNR point), no double-logging; got {combined_completed:?}"
+    );
+    let mut unique = combined_completed.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(
+        unique.len(),
+        3,
+        "each of the 3 SNR points must have exactly ONE completion record across \
+         the interrupt+resume lifecycle (no point logged twice): {combined_completed:?}"
+    );
+
+    // Final CSV byte-identical to the uninterrupted reference on the
+    // deterministic columns.
+    let res_csv = std::fs::read_to_string(&final_csv).expect("resumed curve CSV");
+    let res_rows = parse_det_rows(&res_csv);
+    assert_eq!(res_rows.len(), 3, "three SNR points after resume");
+    assert_eq!(
+        ref_rows, res_rows,
+        "resumed multi-point run must be byte-identical to the reference on \
+         es_n0_db/fer/frames/errors/mean_iters (§11 CPU-only contract)"
+    );
 }

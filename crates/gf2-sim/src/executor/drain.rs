@@ -377,6 +377,15 @@ impl Scheduler {
     /// checkpoint is flushed, and the sweep returns with `interrupted = true`
     /// (criterion 1).
     ///
+    /// As each SNR point completes, this emits one `snr_point_completed`
+    /// `tracing` event **live** at the point boundary (carrying `es_n0_db`,
+    /// `fer`, `frames`, `errors`, `mean_iters`), so a monitor tailing the
+    /// campaign's `tracing.jsonl` observes completed points as the sweep
+    /// advances rather than only after the whole run returns. The campaign
+    /// binary therefore does NOT re-emit these post-sweep on the checkpointed
+    /// path (the non-checkpointed calibration path keeps its own post-run
+    /// emission, as it never runs through this loop).
+    ///
     /// # Arguments
     ///
     /// * `pipeline` — the built pipeline; must carry a
@@ -460,7 +469,13 @@ impl Scheduler {
             } else {
                 None
             };
+            // Was this point already COMPLETE in the loaded checkpoint? If so,
+            // `run_point_checkpointed` folds + skips it and returns
+            // `completed = true` without doing any work this process — it must
+            // NOT be (re-)logged here. Captured before `loaded` is moved.
+            let was_loaded_complete = loaded.as_ref().is_some_and(|c| c.completed);
             let template = DvbT2BicmFrameSim::new(rate, modulation, es_n0_db, decoder, demap);
+            let point_start = std::time::Instant::now();
             let run = self.run_point_checkpointed(
                 pipeline,
                 &template,
@@ -472,7 +487,52 @@ impl Scheduler {
                 loaded,
                 frame_observer,
             )?;
-            per_point.push(SnrPointResult::from_counters(es_n0_db, run.counters));
+            let point_wall_seconds = point_start.elapsed().as_secs_f64();
+            let point = SnrPointResult::from_counters(es_n0_db, run.counters);
+            // Emit one `snr_point_completed` tracing event LIVE at this SNR-point
+            // boundary, the moment the point's aggregate is available (not
+            // post-sweep). This is the tailable per-point liveness record:
+            // monitors `jq`-filtering `tracing.jsonl` on `snr_point_completed`
+            // see each completed point as the checkpointed sweep advances,
+            // rather than only after the whole run returns.
+            //
+            // EXACTLY-ONCE-AT-COMPLETION: emit only when the point genuinely
+            // completed in THIS process. Three cases must NOT log:
+            //   * an INTERRUPTED point (`run.interrupted`, partial counters,
+            //     `run.completed == false`) — it did not finish;
+            //   * (defensively) any non-completed point;
+            //   * a point already COMPLETE in the loaded checkpoint
+            //     (`was_loaded_complete`) — it was logged by the earlier process
+            //     that completed it, and `run.completed` is `true` only because
+            //     the loaded aggregate was folded, so without this guard a
+            //     `--resume` would double-log every previously-finished point.
+            // The event carries the full `snr_point_completed` field schema the
+            // campaign binary's post-sweep emission used (`es_n0_db`, `fer`,
+            // `ber`, `frames`, `errors`, `mean_iters`, `wall_seconds`) so
+            // existing `jq`/parsers keep working. `ber` is derived from the
+            // point's bit counters exactly as `point_to_csv_row` does;
+            // `wall_seconds` is this point's measured wall time (the executor
+            // sees each point boundary, so it is the true per-point wall, where
+            // the binary's CSV uses the sweep-averaged `wall_per_point`).
+            let ber = if point.total_bits > 0 {
+                point.total_bit_errors as f64 / point.total_bits as f64
+            } else {
+                0.0
+            };
+            if run.completed && !run.interrupted && !was_loaded_complete {
+                tracing::info!(
+                    name: "snr_point_completed",
+                    event_type = "snr_point_completed",
+                    es_n0_db = point.es_n0_db,
+                    fer = point.fer,
+                    ber,
+                    frames = point.frames,
+                    errors = point.errors,
+                    mean_iters = point.mean_iters,
+                    wall_seconds = point_wall_seconds,
+                );
+            }
+            per_point.push(point);
             if run.interrupted {
                 // The interrupted point's resumable checkpoint is already on
                 // disk; stop the sweep (mirrors `checkpoint::run_sweep_checkpointed`).
