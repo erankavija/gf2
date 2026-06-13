@@ -2,7 +2,7 @@
   "id": "698fc999-fa44-4062-a10e-095b4d2ec476",
   "title": "Add GPU benchmark evidence harness",
   "description": "Add benchmark support for reproducible GPU evidence across LDPC, BCH, and scheduler work.\n\n## Background\n\nThe GPU prototype wave needs repeatable benchmark commands and raw artifacts that reviewers can inspect. The harness should capture batch sweeps and phase timings where possible.\n\n## Success Criteria\n\n- [hard] Benchmark support records hardware/ROCm metadata, commit hash, comparator identity, command line, and raw result path for each run.\n- [hard] Batch-size sweeps include the design workload and at least one smaller and larger batch size.\n- [hard] Phase timing support covers CPU preparation, H2D copy, kernel execution, D2H copy, synchronization/waiting, and postprocessing where the production path exposes those boundaries.\n- [hard] Output format is machine-readable enough for threshold checker scripts and human-readable enough for lead review.\n- [hard] Default workspace CI remains green without ROCm installed.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
-  "state": "ready",
+  "state": "rejected",
   "priority": "high",
   "assignee": null,
   "dependencies": [],
@@ -19,8 +19,9 @@
     "epic:hip-gpu-prototype",
     "story:gpu-evidence-infra",
     "component:gf2-coding",
-    "component:gf2-kernels-hip"
+    "component:gf2-kernels-hip",
+    "resolution:superseded-by-gf2-sim-gpu-stages-receipts"
   ],
   "created_at": "2026-04-29T22:50:09.681031376+00:00",
-  "updated_at": "2026-04-29T22:50:09.681037496+00:00"
+  "updated_at": "2026-06-13T22:27:30.006353193+00:00"
 }

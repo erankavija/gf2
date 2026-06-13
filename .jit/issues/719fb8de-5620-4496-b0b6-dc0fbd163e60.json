@@ -2,7 +2,7 @@
   "id": "719fb8de-5620-4496-b0b6-dc0fbd163e60",
   "title": "HIP LDPC belief-propagation prototype",
   "description": "Implement and evaluate a HIP/ROCm batch LDPC normalized min-sum belief-propagation prototype.\n\n## Background\n\nLDPC BP dominates decoding time in coded simulation campaigns. The prototype batches frames on GPU while preserving CPU/GPU correctness and comparing against the best current production CPU path.\n\n## Success Criteria\n\n- [hard] GPU Tanner graph representation matches CPU sparse matrix structure, including check/variable offsets and mate indices.\n- [hard] HIP kernels implement check-node NMS, variable-node update, and syndrome or early-termination support.\n- [hard] Safe Rust wrappers and `gf2-coding` integration are feature-gated behind `hip`; default workspace builds succeed without ROCm.\n- [hard] CPU/GPU correctness fixtures cover Hamming, 5G NR BG2, and DVB-T2 short Rate1/2 with specified LLR tolerances and exact hard-decision equality where required.\n- [hard] GPU LDPC BP is at least 3x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`. Existing design doc: `dev/active/gpu-batch-ldpc-bp-plan.md`. This story depends on GPU evidence infrastructure.",
-  "state": "backlog",
+  "state": "rejected",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -21,8 +21,9 @@
     "epic:hip-gpu-prototype",
     "story:gpu-ldpc-bp",
     "component:gf2-coding",
-    "component:gf2-kernels-hip"
+    "component:gf2-kernels-hip",
+    "resolution:superseded-by-gf2-sim-a930be7f"
   ],
   "created_at": "2026-04-29T22:49:32.277572374+00:00",
-  "updated_at": "2026-04-29T22:56:55.998509444+00:00"
+  "updated_at": "2026-06-13T22:27:14.915026515+00:00"
 }

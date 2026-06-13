@@ -2,7 +2,7 @@
   "id": "fd0de46c-60c0-473f-b0c3-acd9802c4aa5",
   "title": "Add GPU correctness equivalence scaffolding",
   "description": "Add reusable CPU/GPU correctness scaffolding for HIP LDPC and BCH prototype work.\n\n## Background\n\nGPU speedups are only meaningful after correctness is established. This task creates shared fixture and comparison support for downstream LDPC and BCH work without forcing slow simulations into the fast test tier.\n\n## Success Criteria\n\n- [hard] LDPC equivalence scaffolding supports Hamming, 5G NR BG2, and DVB-T2 short fixtures with hard-decision checks and configurable LLR tolerances.\n- [hard] BCH equivalence scaffolding supports small BCH plus DVB-T2 short and normal syndrome fixtures with exact integer comparisons.\n- [hard] Fixture generation is deterministic and records any random seeds used.\n- [hard] Fast-tier tests stay within project limits; expensive ROCm/hardware checks are gated or documented as manual/ignored according to project conventions.\n- [hard] Downstream LDPC and BCH issues can reuse the scaffolding without duplicating comparator logic.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
-  "state": "ready",
+  "state": "rejected",
   "priority": "high",
   "assignee": null,
   "dependencies": [],
@@ -19,8 +19,9 @@
     "epic:hip-gpu-prototype",
     "story:gpu-evidence-infra",
     "component:gf2-coding",
-    "component:gf2-kernels-hip"
+    "component:gf2-kernels-hip",
+    "resolution:superseded-by-gf2-sim-byte-identity-suite"
   ],
   "created_at": "2026-04-29T22:50:23.316734897+00:00",
-  "updated_at": "2026-04-29T22:50:23.316740237+00:00"
+  "updated_at": "2026-06-13T22:27:21.123656612+00:00"
 }

@@ -2,7 +2,7 @@
   "id": "dc32270e-cb5a-4b98-8efc-06eb343ae847",
   "title": "GPU evidence and baseline infrastructure",
   "description": "Create the measurement foundation needed before GPU prototype issues can claim speedups.\n\n## Background\n\nEpic `806eb14e` requires hard performance evidence. GPU tasks must compare against the best existing production CPU path, record hardware and ROCm metadata, and preserve raw benchmark artifacts.\n\n## Success Criteria\n\n- [hard] Baseline capture covers BCJR, LDPC BP CPU comparator, and BCH syndrome CPU comparator with commit hash, hardware metadata, ROCm version, and benchmark command recorded.\n- [hard] GPU benchmark support records batch-size sweeps and phase timing where practical: CPU preparation, host-to-device copy, kernel execution, device-to-host copy, synchronization/waiting, and postprocessing.\n- [hard] Speed-threshold checker coverage exists for LDPC >=3x, BCH >=5x, and scheduler throughput improvement, or the issue documents why a checker must remain manual.\n- [hard] CPU/GPU equivalence scaffolding exists for small fixtures and production-sized LDPC/BCH fixtures without exceeding fast-tier test limits.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`. This story blocks scheduler, LDPC, and BCH implementation waves.",
-  "state": "backlog",
+  "state": "rejected",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -24,8 +24,9 @@
     "epic:hip-gpu-prototype",
     "story:gpu-evidence-infra",
     "component:gf2-coding",
-    "component:gf2-kernels-hip"
+    "component:gf2-kernels-hip",
+    "resolution:superseded-by-gf2-sim-gpu-evidence"
   ],
   "created_at": "2026-04-29T22:49:19.703209667+00:00",
-  "updated_at": "2026-04-29T22:51:36.597278513+00:00"
+  "updated_at": "2026-06-13T22:27:53.449287680+00:00"
 }
