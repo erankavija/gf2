@@ -208,7 +208,7 @@
       "version": 1,
       "key": "doc-review",
       "title": "Documentation review completed",
-      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated, and CLAUDE.md module map reflects any new modules.",
+      "description": "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated. For CLAUDE.md: check for staleness only (remove or correct entries that no longer match the code). Do NOT add implementation detail or expand existing entries. CLAUDE.md must stay under 200 lines.",
       "stage": "postcheck",
       "mode": "manual",
       "priority": 100,
