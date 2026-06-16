@@ -1,327 +1,320 @@
-# Plan: HIP/ROCm GPU-Accelerated Batch BCH Syndrome Evaluation
+# GPU batch BCH syndrome evaluation — design plan
 
-## Context
+JIT issue: `9012f8a0` (HIP/ROCm GPU-accelerated batch BCH syndrome evaluation)
+Epic: `806eb14e` (`epic:hip-gpu-prototype`) · Story: `aeab2ee4` (`story:gpu-bch-syndrome`)
+Status: design (pre-implementation). Author: agent:claude, 2026-06-16.
 
-BCH syndrome evaluation is the first and most parallelizable step of BCH decoding.
-For each received codeword, the decoder evaluates the received polynomial r(x) at
-2t points α, α², ..., α^(2t) in GF(2^m). This produces 2t syndrome values that
-feed into Berlekamp-Massey for error-locator polynomial computation.
+> Supersedes the 2026-04 breakdown stub at this path. The stub's performance
+> section gated GPU against a *serial* CPU loop with guessed speedups; this
+> revision gates decode-vs-decode against the best production CPU path (rayon),
+> per the `a930be7f` precedent, and grounds every formula in the CPU source.
 
-**Current implementation**: `BchCode::compute_syndromes()` evaluates r(x) at each
-point sequentially using Horner's method. `eval_batch()` is a serial loop.
-`decode_batch()` parallelizes across codewords via rayon but each codeword's 2t
-syndrome evaluations are serial.
+## 1. Goal and scope
 
-**Key observation**: Syndrome evaluation is embarrassingly parallel along two axes:
-1. **Cross-codeword**: N codewords are independent
-2. **Within-codeword**: 2t evaluation points are independent
+Offload the **syndrome-evaluation** sub-step of BCH decoding to the GPU as a
+batched kernel, proving exact CPU/GPU equivalence and measuring throughput
+against the best production CPU path. Berlekamp-Massey and Chien search remain
+on the CPU (per issue background: "keeps Berlekamp-Massey and Chien search on
+CPU unless evidence shows they dominate").
 
-This gives N × 2t independent Horner evaluations, each requiring n GF(2^m)
-multiply-accumulate steps. For DVB-T2 Normal (t=12, n=32400): 24 × 32400 = 777,600
-field operations per codeword, perfectly suited for GPU.
+**Integration shape (decided 2026-06-16):** an *evaluator*, not a pipeline
+`Stage`. BCH syndrome eval maps received-bits -> `2t` syndromes, an intermediate
+decode sub-step, so it is not a natural full-decode `Stage<In,Out>` like
+`GpuLdpcBp` (`LlrBatch -> HardDecisionBatch`). We deliver:
 
-**Hardware**: AMD RX 6950 XT (RDNA2, gfx1030, 80 CUs, 16GB VRAM).
-ROCm 7.2, hipcc at `/opt/rocm/bin/hipcc`.
+1. A HIP kernel `crates/gf2-kernels-hip/hip/bch_syndrome.hip`.
+2. A safe host wrapper `crates/gf2-kernels-hip/src/launch_bch_syndrome.rs`
+   (`GpuBchSyndrome` evaluator), mirroring `launch_ldpc_bp.rs` conventions
+   (`HipError` boundary, lazy device build, default-stream path with a
+   stream-ordered seam).
+3. A `gf2-coding` hook `BchDecoder::compute_syndromes_batch_gpu(...)` under
+   `--features hip` that calls the wrapper; the existing CPU
+   `compute_syndromes` path is untouched (no auto-threshold inside
+   `decode_batch`).
 
-**Existing infrastructure**: `gf2-kernels-hip` crate with hipcc build, DeviceBuffer,
-FFI pattern.
+No `gf2-sim` pipeline `Stage`. No production multi-backend selection (epic
+non-goal).
 
----
+## 2. Success criteria (verbatim from issue `9012f8a0`)
 
-## Algorithm: GF(2^m) Arithmetic on GPU
+- [hard] GPU GF($2^m$) multiplication support matches CPU `Gf2mField`
+  arithmetic exactly for the required table-backed fields, including
+  exhaustive GF($2^4$) checks.
+- [hard] HIP Horner syndrome evaluation matches CPU polynomial evaluation
+  exactly on small BCH fixtures.
+- [hard] DVB-T2 short and normal BCH syndrome fixtures match CPU exactly for
+  valid codewords and injected-error codewords.
+- [hard] Batch correctness covers the selected design workload and at least one
+  smaller fixture; GPU batch syndromes match the CPU comparator exactly.
+- [hard] GPU syndromes fed into the CPU Berlekamp-Massey and Chien pipeline
+  decode the same received words as the CPU-only pipeline.
+- [hard] Safe Rust wrappers in `gf2-kernels-hip` and feature-gated `gf2-coding`
+  integration compile only behind the `hip` feature; default workspace builds
+  succeed without ROCm installed.
+- [hard] Performance evidence records hardware metadata, ROCm version,
+  benchmark command, raw result paths, batch-size sweep, and phase timing where
+  practical.
+- [hard] GPU BCH syndrome evaluation is at least 5x faster than the best
+  existing production CPU path at the selected design workload.
 
-### Field representation
+## 3. CPU reference (the SSOT we must reproduce bit-for-bit)
 
-GF(2^m) elements are m-bit integers. For DVB-T2:
-- **Short frames**: m=14, primitive poly `0x4035` (x^14 + x^5 + x^3 + x + 1)
-- **Normal frames**: m=16, primitive poly `0x1002D` (x^16 + x^5 + x^3 + x^2 + 1)
+### 3.1 Syndrome construction — `BchDecoder::compute_syndromes` (`crates/gf2-coding/src/bch/core.rs:568`)
 
-Elements fit in a single `uint32_t`. Addition is XOR.
+`S_i = r(α^i)` for `i = 1..=2t`, where `r(x)` is the received polynomial. The
+coefficient vector passed to the evaluator is built as (core.rs:576-605):
 
-### Multiplication strategies for GPU
+- Parity bits first: `for i in (k..n).rev()` push `received[i]` -> `coeffs[0..r]`
+  (so `coeffs[0] = received[n-1]`), `r = n - k`.
+- Then message bits: `for i in (0..k).rev()` push `received[i]` ->
+  `coeffs[r..n]` (so `coeffs[n-1] = received[0]`).
+- Each pushed coefficient is `field.one()` (bit set) or `field.zero()` (clear).
 
-**Option A — Log/exp table lookup** (chosen for m ≤ 16):
+Evaluation points: `alpha = field.primitive_element()`, then
+`alpha_power = alpha; for _ in 0..2t { push alpha_power; alpha_power *= alpha }`,
+giving `[α^1, α^2, ..., α^(2t)]`.
+
+### 3.2 Horner recurrence — `FieldPoly::eval` (`crates/gf2-core/src/field/poly.rs:1130`)
+
+`coeffs` is little-endian (`coeffs[0]` is the constant term). The recurrence is:
+
+```rust
+let mut result = self.coeffs.last().unwrap().clone(); // highest-index coeff
+for i in (0..self.coeffs.len() - 1).rev() {
+    result = result * x.clone() + self.coeffs[i].clone();
+}
+```
+
+On the all-zero polynomial every result is the field zero (total contract; the
+all-zero received vector needs no special case).
+
+### 3.3 GF(2^m) multiplication — `Gf2mField` mul (`crates/gf2-core/src/gf2m/field.rs:1033`)
+
+Table-backed path (the one we replicate; both DVB-T2 fields carry tables):
+
+```text
+mul(a, b):
+  if a == 0 || b == 0: return 0
+  order = (1 << m) - 1                 // 2^m - 1
+  log_result = (log_table[a] + log_table[b]) % order
+  return exp_table[log_result]
+```
+
+`log_table` has `2^m` u16 entries; `exp_table` has `order = 2^m - 1` u16 entries.
+Addition in GF(2^m) is XOR.
+
+## 4. Design workload and fields (decided 2026-06-16)
+
+Parameters are read from `DvbBchParams::for_code` (`bch/dvb_t2/params.rs:54`) —
+the SSOT; do not hardcode `n`/`k`/`t`/primitive-poly here (the breakdown stub
+mis-transcribed the Short poly).
+
+| Role | Config | n | k | t | 2t | field |
+|------|--------|---|---|---|----|-------|
+| Primary design workload | DVB-T2 Normal Rate 1/2 | 32400 | 32208 | 12 | 24 | GF(2^16) |
+| Secondary (smaller field) | DVB-T2 Short Rate 1/2 | 7200 | 7032 | 12 | 24 | GF(2^14) |
+| Small exhaustive fixture | textbook BCH over GF(2^4) | 15 | per t | small | — | GF(2^4) |
+
+Table sizes: GF(2^16) -> 128 KB `exp` + 128 KB `log`; GF(2^14) -> 32 KB each.
+
+## 5. GPU GF(2^m) arithmetic (criterion 1)
+
+Upload the **exact CPU `exp`/`log` tables** to device global memory; the kernel
+multiply is byte-identical to §3.3 by construction:
+
 ```c
-// Tables in constant/shared memory
-__constant__ uint16_t log_table[1 << M];  // log_table[a] = i where α^i = a
-__constant__ uint16_t exp_table[1 << M];  // exp_table[i] = α^i
-
-__device__ uint32_t gf_mul(uint32_t a, uint32_t b) {
+// d_log: 2^m u16,  d_exp: (2^m - 1) u16,  order = (2^m - 1)
+__device__ uint16_t gf_mul(uint16_t a, uint16_t b,
+                           const uint16_t* d_log, const uint16_t* d_exp,
+                           uint32_t order) {
     if (a == 0 || b == 0) return 0;
-    uint32_t order = (1u << M) - 1;
-    uint32_t log_sum = (uint32_t)log_table[a] + (uint32_t)log_table[b];
-    if (log_sum >= order) log_sum -= order;  // Modular reduction without division
-    return (uint32_t)exp_table[log_sum];
+    uint32_t s = (uint32_t)d_log[a] + (uint32_t)d_log[b];
+    if (s >= order) s -= order;          // (log_a + log_b) % order, single subtract
+    return d_exp[s];
 }
 ```
 
-**Memory**: For m=16: 2 × 64K × 2 bytes = 256 KB. Fits in constant memory (64 KB limit
-per array on RDNA2) only for m ≤ 15. For m=16, use shared memory or global + L2 cache.
+`s < 2*order` always, so one conditional subtract realises the modulus.
+Tables live in global memory (L1/L2 + Infinity Cache absorb the hot `exp`
+lookups; 256 KB for m=16 is negligible in 16 GB VRAM). Addition is `^`.
 
-**Revised for m=16**: Upload tables to global memory. The 128 MB Infinity Cache on
-RX 6950 XT will cache both tables (256 KB) after the first access — effectively constant
-memory speed for repeated lookups.
+The host hands the tables to the wrapper from the live `Gf2mField`, so there is
+a single source of truth and no on-device table regeneration.
 
-**Option B — Schoolbook multiply** (fallback for m > 16 or no tables):
-```c
-__device__ uint32_t gf_mul_schoolbook(uint32_t a, uint32_t b, int m, uint32_t prim_poly) {
-    uint32_t result = 0;
-    for (int i = 0; i < m; i++) {
-        if (b & (1u << i)) result ^= a;
-        uint32_t overflow = a & (1u << (m - 1));
-        a <<= 1;
-        if (overflow) a ^= prim_poly;
-    }
-    return result & ((1u << m) - 1);
-}
-```
-O(m) bit operations per multiply. No memory access. Good for registers-rich GPU
-but m=16 means 16 iterations with branch divergence.
+## 6. Coefficient layout and kernel (criteria 2-4)
 
-**Decision**: Use log/exp tables for m ≤ 16 (covers all DVB-T2 codes). The table
-approach reduces multiplication to 3 memory lookups + 1 comparison + 1 addition,
-which is far more GPU-friendly than 16 iterations of schoolbook with branches.
+**Host-side reorder (keeps the kernel trivial and exactness in tested Rust).**
+The `gf2-coding` hook reorders each received `BitVec` into the §3.1 `coeffs`
+order (parity-reversed ++ message-reversed) and uploads it as a packed
+little-endian bit stream of `n` bits per frame (`ceil(n/64)` u64 words). The
+kernel runs a pure Horner pass with no knowledge of the parity/message split.
 
-### Horner evaluation on GPU
+> Packed-bit upload (not bit-to-u32 expansion): the design workload is
+> `batch * ceil(32400/64)` words ~= `batch * 507` u64, i.e. ~4 MB at batch 1024,
+> vs ~133 MB if expanded to u32. The stub's u32 expansion is dropped.
 
-Each thread evaluates r(x) at one point α^j for one codeword:
+**Thread mapping (decided 2026-06-16): one thread per `(frame, point)`.**
+A flat grid of `batch * 2t` threads. Thread `(f, i)` evaluates `S_{i+1}` for
+frame `f`:
 
 ```c
-__device__ uint32_t horner_eval(
-    const uint32_t* coeffs,  // Polynomial coefficients [n]
-    int n,                    // Degree + 1
-    uint32_t x,              // Evaluation point α^j
-    const uint16_t* log_tbl,
-    const uint16_t* exp_tbl,
-    uint32_t order            // 2^m - 1
-) {
-    uint32_t result = coeffs[n - 1];
-    for (int i = n - 2; i >= 0; i--) {
-        result = gf_mul_log(result, x, log_tbl, exp_tbl, order);
-        result ^= coeffs[i];  // GF(2^m) addition = XOR
-    }
-    return result;
+uint16_t alpha_i = d_points[i];          // α^(i+1), uploaded as u16
+uint16_t acc = coeff_bit(f, n-1);        // coeffs[n-1] (0 or 1)
+for (int d = n - 2; d >= 0; --d) {
+    acc = gf_mul(acc, alpha_i, d_log, d_exp, order) ^ coeff_bit(f, d);
 }
+d_syndromes[f * (2*t) + i] = acc;        // u16 field element
 ```
 
-### Thread mapping
+`coeff_bit(f, d)` is one word load + shift from frame `f`'s packed stream.
+Adjacent threads share the coeff stream (broadcast-friendly) and keep `d_exp`
+cache-hot. Determinism is automatic: the recurrence is strictly sequential per
+`(f,i)`, identical order to the CPU, so equality is exact and total.
 
-**One thread per (codeword, syndrome_index)**:
-- `blockIdx.x` = codeword index in batch
-- `threadIdx.x` = syndrome index (0..2t-1)
-- Block size = 32 (one wavefront, since 2t ≤ 24 typically)
+Occupancy: the design workload is `batch * 24` threads (batch 1024 -> 24576
+threads); the `n`-length sequential chain is the latency the batch hides. The
+batch sweep (§11) finds the working point — no occupancy claims are asserted
+without measurement.
 
-For batch=128, t=12: 128 × 24 = 3072 threads = 96 wavefronts → fills ~1.2 CUs.
-Under-utilization is acceptable because each thread does n=32400 multiply-accumulate
-steps — the per-thread work is enormous.
+## 7. Host wrapper API — `launch_bch_syndrome.rs`
 
-**Alternative mapping for higher occupancy** (for large n):
-- Partition the Horner evaluation across multiple threads using parallel prefix
-- Not worth the complexity for this prototype — single-thread Horner is simple
-  and the inner loop is fully sequential anyway
-
-### Input format
-
-BCH codewords are `BitVec` (binary). We need GF(2^m) polynomial coefficients.
-For a systematic BCH code, the received word r = [message | parity] is interpreted
-as a polynomial r(x) = r_{n-1} x^{n-1} + ... + r_1 x + r_0 where each r_i ∈ {0, 1}
-(embedded in GF(2^m) as 0 or 1).
-
-**Conversion**: Pack bits into u32 array where each element is 0 or 1. This is
-trivial — just extract each bit of the BitVec.
-
-### Evaluation points
-
-The evaluation points α^1, α^2, ..., α^{2t} are precomputed on the host and
-uploaded as a constant array. Each is an m-bit GF(2^m) element (u32).
-
----
-
-## Implementation Plan
-
-### Step 1: GF(2^m) GPU tables
-
-Extract log/exp tables from `Gf2mField` and upload to device memory.
+Mirrors `launch_ldpc_bp.rs`. All FFI stays in `gf2-kernels-hip` behind
+`// SAFETY:` comments; errors map to the existing `HipError`
+(`OutOfMemory`/`UnsupportedArch` recoverable, surfaced not dispatched).
 
 ```rust
-pub struct GpuGf2mTables {
-    d_log_table: DeviceBuffer<u16>,   // [2^m]
-    d_exp_table: DeviceBuffer<u16>,   // [2^m]
-    m: usize,
-    order: u32,  // 2^m - 1
+pub struct BchFieldTables { /* m, order, exp: Vec<u16>, log: Vec<u16> */ }
+
+pub struct GpuBchSyndrome { /* device id, n, t, device tables + points, max_batch */ }
+
+impl GpuBchSyndrome {
+    /// Lazy builder — no device allocation until first evaluate.
+    pub fn new(tables: &BchFieldTables, eval_points: &[u16],
+               n: usize, t: usize, max_batch: usize, device_id: i32)
+        -> Result<Self, HipError>;
+
+    /// Default-stream batch: upload packed coeff streams, launch, sync, read back.
+    /// `coeff_streams`: batch * ceil(n/64) u64 words in §3.1 order.
+    /// Returns batch * 2t u16 syndromes (row-major per frame).
+    pub fn evaluate_batch(&mut self, coeff_streams: &[u64], batch: usize)
+        -> Result<Vec<u16>, HipError>;
 }
 
-impl GpuGf2mTables {
-    pub fn from_field(field: &Gf2mField) -> Result<Self, HipError>;
-}
+// Stream-ordered seam (structured now, implemented later if needed):
+// pub fn evaluate_batch_on_stream(&mut self, ..., stream: &HipStream,
+//                                 scratch: &mut BchStreamScratch) -> Result<...>;
 ```
 
-### Step 2: HIP kernel (`hip/bch_syndrome_kernel.hip`)
+Stream scope (decided 2026-06-16): default-stream now, stream-ordered seam left
+in place for a follow-up, no rework required.
 
-```c
-extern "C" __global__ void bch_syndrome_batch_kernel(
-    const uint32_t* __restrict__ received,    // [batch × n], each element 0 or 1
-    const uint32_t* __restrict__ eval_points, // [2t], α^1 through α^(2t)
-    uint32_t* __restrict__ syndromes,         // [batch × 2t], output
-    const uint16_t* __restrict__ log_table,   // [2^m]
-    const uint16_t* __restrict__ exp_table,   // [2^m]
-    int n,                                     // Codeword length
-    int two_t,                                // Number of syndromes (2t)
-    uint32_t order                            // 2^m - 1
-);
-```
+## 8. gf2-coding hook
 
-Host wrapper: `launch_bch_syndrome_batch(...)`.
-
-### Step 3: Safe Rust wrapper
-
-```rust
-pub struct GpuBchSyndromeBatch {
-    tables: GpuGf2mTables,
-    d_eval_points: DeviceBuffer<u32>,  // [2t]
-    d_received: DeviceBuffer<u32>,     // [max_batch × n]
-    d_syndromes: DeviceBuffer<u32>,    // [max_batch × 2t]
-    n: usize,
-    two_t: usize,
-    max_batch: usize,
-}
-
-impl GpuBchSyndromeBatch {
-    pub fn new(code: &BchCode, max_batch: usize) -> Result<Self, HipError>;
-    pub fn compute_syndromes_batch(
-        &self,
-        received: &[&BitVec],
-    ) -> Result<Vec<Vec<Gf2mElement>>, HipError>;
-}
-```
-
-### Step 4: Integration into BchDecoder
-
-Feature-gated path in `decode_batch`:
 ```rust
 #[cfg(feature = "hip")]
-if batch.len() >= GPU_SYNDROME_THRESHOLD {
-    let syndromes = self.gpu_syndrome.compute_syndromes_batch(&received);
-    // Continue with Berlekamp-Massey on CPU (sequential, O(t²) per codeword)
-    // GPU syndrome evaluation is the bottleneck; BM is fast
+impl BchDecoder {
+    /// GPU batch of `compute_syndromes`; bit-identical to the per-frame CPU path.
+    pub fn compute_syndromes_batch_gpu(&self, received: &[BitVec])
+        -> Result<Vec<Vec<Gf2mElement>>, HipError>;
 }
 ```
 
-**Rationale for CPU Berlekamp-Massey**: BM is O(t²) per codeword with t ≤ 12.
-That's ~144 field operations — negligible compared to syndrome evaluation's
-n × 2t = 777,600 operations. GPU-porting BM would add complexity for no benefit.
+It extracts `exp`/`log` tables + `α^1..α^2t` from `self.code.field`, reorders each
+`received` into the packed coeff stream, calls `GpuBchSyndrome::evaluate_batch`,
+and rehydrates `u16` -> `Gf2mElement`. The CPU `compute_syndromes` is the oracle.
+`gf2-coding`'s `hip` feature forwards to `gf2-kernels-hip`.
 
-### Step 5: Chien search (optional, future)
+## 9. Build / multi-arch wiring
 
-Chien search (error location) is also parallelizable: evaluate Λ(x) at all α^i
-for i=0..n-1. This is n independent evaluations of a degree-t polynomial.
-Same pattern as syndrome evaluation but with a shorter polynomial.
+- Add `hip/bch_syndrome.hip` to the static-lib source list in
+  `crates/gf2-kernels-hip/build.rs` (alongside `ldpc_bp`) and to its
+  rerun-if-changed triggers.
+- Per-arch blob (`kernels/<gfx>/bch_syndrome.cpp`) optional; gfx1030 mandatory,
+  others best-effort, matching the existing `GFX_TARGETS` pattern.
+- `pub mod launch_bch_syndrome;` + re-exports in `crates/gf2-kernels-hip/src/lib.rs`.
 
-For this prototype, Chien search stays on CPU — it's O(n × t) which is smaller
-than syndrome evaluation's O(n × 2t) and has lower constant factor.
+## 10. Correctness ladder (full — decided 2026-06-16)
 
----
+1. **Exhaustive GF(2^4) mult**: all 256 `(a,b)` products, GPU `gf_mul` vs CPU
+   `Gf2mField` — bit-identical.
+2. **Uploaded-table equality**: device `exp`/`log` for GF(2^14) and GF(2^16)
+   equal the CPU tables element-for-element.
+3. **Small BCH(15)/GF(2^4) Horner fixture**: hand-derived expected syndromes for
+   a known received word; GPU == hand value == CPU.
+4. **DVB-T2 Short + Normal syndrome byte-identity**, 200 frames per config at a
+   fixed seed, **mixed**: valid codewords (all-zero syndromes), `<=t`
+   correctable errors, and `>t` uncorrectable errors. All `2t` `u16` syndromes
+   equal CPU with **zero tolerance** (exact integer GF arithmetic — no ULP
+   drift, unlike LDPC).
+5. **Decode-equivalence** (criterion 5): feed GPU syndromes into CPU
+   Berlekamp-Massey + Chien and assert the decoded output equals the CPU-only
+   pipeline on the same valid + injected-error frames.
 
-## Memory Budget
+Tests are `#[cfg(feature = "hip")]`, carry `#[ignore = "sim: ..."]` where they
+need the GPU, and skip cleanly when `device_mem_info().is_err()` (mirrors
+`gpu_ldpc_byte_identity.rs`). Field-level checks (1-3) live in
+`crates/gf2-kernels-hip/tests/`; chain checks (4-5) in
+`crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs`.
 
-For DVB-T2 Normal (n=32400, m=16, t=12):
+## 11. Performance evidence (criteria 7-8)
 
-| Array | Size | Location |
-|-------|------|----------|
-| log_table | 128 KB | Global (Infinity Cache) |
-| exp_table | 128 KB | Global (Infinity Cache) |
-| eval_points | 96 B | Constant |
-| received (batch=128) | 128 × 32400 × 4 = 15.8 MB | Global |
-| syndromes (batch=128) | 128 × 24 × 4 = 12 KB | Global |
-| **Total** | **~16.1 MB** | |
+Bench bin `crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs`, patterned on
+`gpu_ldpc_throughput.rs`:
 
-Well within 16GB VRAM. The received array dominates because we expand bits to u32.
+- **Apples-to-apples divisor (decided 2026-06-16):** CPU `compute_syndromes`
+  measured **in isolation** (no BM/Chien), at single-thread **and** rayon-24T,
+  same DVB-T2 Normal Rate 1/2 config and operating point.
+- **`[hard]` gate:** GPU syndrome throughput >= **5x the best production CPU
+  path** = rayon-24T `compute_syndromes` (the issue's "including rayon where
+  production uses rayon"). The single-thread number is reported for context, not
+  the gate divisor. This follows the `a930be7f` decode-vs-decode precedent
+  (avoid GPU-vs-serial category confusion — the defect in the stub's perf table).
+- **Batch-size sweep** (e.g. 64 / 256 / 1024 / 4096) and **phase timing** where
+  practical: H2D (coeff streams), kernel, D2H (syndromes). Tables uploaded once,
+  excluded from per-batch timing (amortised).
+- Record hardware metadata, ROCm version, exact command, and raw result paths.
+- Receipt: `dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md`, attestation
+  table matching `gpu-stages-receipts.md`.
 
-**Optimization opportunity** (future): Pack 32 bits per u32 word and have threads
-extract bits. Reduces received array by 32x but adds bit-extraction overhead.
-Not worth it for prototype — the current layout ensures coalesced global memory reads.
+No speedup numbers are asserted in this plan. The 5x target is `[hard]` and must
+be backed by measurement; if the data falsifies it, amend only with the observed
+number + user approval (project "measurements, not guesses" rule).
 
----
+## 12. Risks / open items
 
-## Verification
+- **5x vs 24-thread CPU is the binding constraint.** Syndrome eval is
+  mul-heavy and memory-light (coeffs are bits), favourable for GPU, but `t=12`
+  -> only 24 points/frame; throughput rests on batch parallelism. The batch
+  sweep finds the crossover; report honestly.
+- **exp-table cache behaviour** for m=16 (128 KB) under `batch*24` divergent
+  `log` values — measure L2/IC hit rate; acceptable for a prototype either way.
+- **Coeff bit-unpacking cost** on device — one word load + shift per Horner
+  step; cheap relative to a GF mul, but verify it does not dominate.
 
-### Unit tests (in `gf2-kernels-hip`)
+## 13. Criteria -> evidence traceability
 
-1. **GF(2^m) multiply correctness**: For m=4 (GF(16)), verify GPU `gf_mul` matches
-   CPU `Gf2mField::mul` for all 16×16 = 256 element pairs (exhaustive).
+| Criterion | Evidence |
+|-----------|----------|
+| GF(2^m) mult exact, exhaustive GF(2^4) | ladder 1-2 |
+| Horner exact on small fixtures | ladder 3 |
+| DVB-T2 short/normal, valid + error | ladder 4 |
+| Batch + smaller fixture exact | ladder 4 (Normal + Short) |
+| GPU syndromes -> CPU BM/Chien equal | ladder 5 |
+| hip-gated; default build green w/o ROCm | feature gating §1,§8; CI `check` step |
+| perf metadata + sweep + phase timing | §11 receipt |
+| >= 5x vs best production CPU path | §11 gate |
 
-2. **Horner evaluation correctness**: For m=4, evaluate a known polynomial at all
-   15 nonzero field elements on GPU. Compare against CPU `Gf2mPoly::eval()`.
-   Must match exactly (no floating point — pure integer GF arithmetic).
+## 14. Implementation manifest
 
-3. **Single-codeword syndrome**: For BCH(15,7,2) over GF(2^4), compute syndromes
-   of 10 known codewords on GPU. Compare against CPU `compute_syndromes()`.
-   Must match exactly (integer results).
-
-4. **DVB-T2 short syndrome**: For BCH(7200,7032,12) over GF(2^14), compute
-   syndromes of 10 codewords (5 error-free + 5 with injected errors) on GPU.
-   Must match CPU exactly.
-
-5. **DVB-T2 normal syndrome**: For BCH(32400,32208,12) over GF(2^16), compute
-   syndromes of 10 codewords on GPU. Must match CPU exactly.
-
-6. **Batch correctness**: `compute_syndromes_batch(128 codewords)` produces
-   identical results to 128 individual CPU `compute_syndromes()` calls.
-
-7. **Zero-syndrome property**: For valid codewords (no errors), all 2t syndromes
-   must be zero. Verify on GPU for 20 valid DVB-T2 short codewords.
-
-8. **Error-syndrome property**: For codewords with 1..t injected errors, at least
-   one syndrome must be nonzero. Verify on GPU for 20 corrupted codewords.
-
-### Cross-check tests (in `gf2-kernels-hip/tests/`)
-
-9. **Full decode pipeline**: GPU syndromes fed to CPU Berlekamp-Massey + Chien
-   search produces correct decoded codewords for 20 codewords with 1..5 errors.
-   Decoded result must match CPU-only pipeline exactly.
-
-10. **Throughput benchmark**: GPU batch-128 syndrome evaluation of DVB-T2 short
-    BCH(7200,7032,12) is at least 5x faster than 128 serial CPU evaluations.
-
-### Property-based tests
-
-11. **prop_gpu_cpu_syndrome_match**: For random received words on BCH(15,7,2),
-    GPU and CPU syndromes match exactly.
-
-12. **prop_batch_size_invariant**: For random batch sizes 1-32 on BCH(15,7,2),
-    GPU batch result matches CPU serial result exactly.
-
----
-
-## Expected Performance
-
-| Code | Batch | CPU (serial) | GPU (est.) | Speedup |
-|------|-------|-------------|------------|---------|
-| BCH(15,7,2) GF(16) | 128 | 128 × 1μs = 128μs | ~20μs | ~6x |
-| BCH(7200,7032,12) GF(2^14) | 128 | 128 × 0.8ms = 102ms | ~4ms | ~25x |
-| BCH(32400,32208,12) GF(2^16) | 128 | 128 × 4ms = 512ms | ~12ms | ~43x |
-
-GPU advantage scales with n (longer Horner loops = more work per thread) and
-batch size. The DVB-T2 normal case is the strongest candidate: each thread
-does 32400 multiply-accumulate steps, fully hiding memory latency.
-
----
-
-## Risks and Mitigations
-
-| Risk | Mitigation |
-|------|------------|
-| Log/exp tables don't fit constant memory for m=16 | Use global memory + Infinity Cache; 256KB tables cached after first batch |
-| Low occupancy (24 threads per block) | Each thread does O(n) work; GPU utilization comes from per-thread compute, not thread count |
-| Bit-to-u32 expansion wastes bandwidth | Accepted for prototype; future optimization can use bit-packed format with extraction |
-| Integer-only arithmetic → no GPU float units used | GF(2^m) arithmetic is inherently integer; GPU INT32 units are still parallel. RDNA2 has dedicated INT32 pipes |
-| BM stays on CPU → pipeline stall | BM is O(t²) ≈ 144 ops vs syndrome O(n×2t) ≈ 778K ops. BM is <0.02% of total decode time |
-
----
-
-## References
-
-- Berlekamp, "Algebraic Coding Theory," 1968
-- Lin & Costello, "Error Control Coding," 2nd ed., Ch. 6 (BCH decoding)
-- DVB-T2 ETSI EN 302 755, Annex C (BCH/LDPC concatenated coding)
-- GPU GF arithmetic surveys in coding theory / cryptography literature
+| File | Change |
+|------|--------|
+| `crates/gf2-kernels-hip/hip/bch_syndrome.hip` | new — `gf_mul` + Horner kernel |
+| `crates/gf2-kernels-hip/src/launch_bch_syndrome.rs` | new — `GpuBchSyndrome`, `BchFieldTables` |
+| `crates/gf2-kernels-hip/src/lib.rs` | `pub mod` + re-exports |
+| `crates/gf2-kernels-hip/build.rs` | add source + rerun trigger |
+| `crates/gf2-coding/src/bch/core.rs` | `compute_syndromes_batch_gpu` under `--features hip` |
+| `crates/gf2-coding/Cargo.toml` | `hip` feature -> `gf2-kernels-hip` |
+| `crates/gf2-sim/tests/gpu_bch_syndrome_byte_identity.rs` | new — ladder 4-5 |
+| `crates/gf2-kernels-hip/tests/...` | new — ladder 1-3 (field-level) |
+| `crates/gf2-sim/src/bin/gpu_bch_syndrome_throughput.rs` | new — perf bin |
+| `dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md` | new — attestation |
