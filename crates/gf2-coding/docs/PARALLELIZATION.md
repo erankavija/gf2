@@ -18,7 +18,8 @@
 ┌─────────────────────────────────────────────────────────┐
 │ Backend Abstraction (gf2-core/compute)                  │
 │ - Trait: ComputeBackend                                 │
-│ - Implementations: CpuBackend, VulkanBackend (planned)  │
+│ - Implementations: CpuBackend; GPU via HIP/ROCm         │
+│   (gf2-kernels-hip). Vulkan path superseded.            │
 │ - Batch operations: Always operate on batches (≥1)      │
 └─────────────────────────────────────────────────────────┘
                        ▼
@@ -205,9 +206,9 @@ impl Llr {
 - What batch size amortizes PCIe transfer overhead?
 - GPU crossover point vs 24-core CPU?
 
-**Technology Choices**:
-- Vulkan Compute (recommended): Cross-platform
-- CUDA: NVIDIA-only, mature ecosystem
+**Technology Choices** (selected: HIP/ROCm — epic `806eb14e`):
+- HIP/ROCm (selected): isolated in `gf2-kernels-hip`; targets `gfx1030`
+- Vulkan Compute / CUDA: superseded, not pursued in the prototype wave
 - FPGA: Broadcast applications (1 Gbps+)
 
 **Decision Criteria**: Only proceed if profiling shows >20% time in GPU-acceleratable operations with >5× speedup potential.
