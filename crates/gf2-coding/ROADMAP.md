@@ -267,10 +267,12 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 - [x] Device enumeration and selection (`gfx1030` target)
 - [x] Pinned host-buffer staging
 
-**Milestone 2: LDPC Compute Shader** (Week 3-4):
-- [ ] Write GLSL compute shader for min-sum BP
-- [ ] Implement check-node and variable-node update kernels
-- [ ] Pipeline: Upload → Compute → Download
+**Milestone 2: LDPC GPU kernel** (GLSL plan superseded — done in HIP):
+- [x] LDPC belief-propagation kernel in HIP (`gf2-kernels-hip/hip/ldpc_bp.hip`),
+      not GLSL. Delivered via the gf2-sim GPU pipeline (jit `a930be7f`); design:
+      [`dev/active/gpu-batch-ldpc-bp-plan.md`](../../dev/active/gpu-batch-ldpc-bp-plan.md).
+- [x] Check-node / variable-node update kernels (normalized min-sum / sum-product)
+- [x] Pipeline: Upload → Compute → Download (H2D → kernel → D2H, stream-ordered)
 
 **Milestone 3: Benchmarking** (Week 5-6):
 - [ ] Measure throughput vs. batch size (1, 10, 50, 100, 500)
