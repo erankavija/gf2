@@ -282,7 +282,7 @@ xdg-open target/criterion/report/index.html
 
 ### GPU/FPGA Exploration
 
-**GPU**: Vulkan compute shaders for massively parallel belief propagation  
+**GPU**: HIP/ROCm kernels for massively parallel belief propagation (LDPC BP delivered in `gf2-kernels-hip/hip/ldpc_bp.hip`; GLSL/Vulkan shader plan superseded)  
 **FPGA**: Custom bit widths, hardware pipelines for broadcast (1 Gbps+)  
 **Timeline**: Research phase after achieving 50-100 Mbps on CPU
 
