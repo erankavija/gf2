@@ -29,7 +29,7 @@
 //! - **default**: Scalar kernel backend (always available)
 //! - **simd**: SIMD-accelerated kernel backend (opt-in, runtime detected)
 //! - **parallel**: Rayon-based parallel execution for CPU backend (opt-in)
-//! - **gpu**: GPU backend via Vulkan (future, opt-in)
+//! - **gpu**: GPU backend via HIP/ROCm (`gf2-kernels-hip`; future, opt-in)
 //!
 //! # Examples
 //!

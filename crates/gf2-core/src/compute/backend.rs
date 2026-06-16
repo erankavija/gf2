@@ -41,7 +41,7 @@ use crate::{alg::rref::RrefResult, BitMatrix, BitVec};
 /// # Implementations
 ///
 /// - `CpuBackend`: CPU execution with optional rayon parallelism
-/// - `GpuBackend`: GPU execution via Vulkan (future, opt-in feature)
+/// - `GpuBackend`: GPU execution via HIP/ROCm (`gf2-kernels-hip`; future, opt-in feature)
 pub trait ComputeBackend: Send + Sync {
     /// Returns a human-readable name for this backend.
     ///

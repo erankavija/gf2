@@ -3,7 +3,7 @@
 //! This module provides a unified interface for different execution backends:
 //! - **Scalar**: Pure Rust baseline (always available)
 //! - **SIMD**: AVX2/AVX-512/NEON acceleration (optional, runtime detected)
-//! - **GPU**: Future CUDA/OpenCL/Vulkan compute (planned)
+//! - **GPU**: HIP/ROCm compute via `gf2-kernels-hip` (planned for this layer)
 //! - **FPGA**: Future hardware acceleration (planned)
 //!
 //! # Architecture

@@ -165,7 +165,7 @@ See [docs/DVB_T2.md](docs/DVB_T2.md) for implementation status and verification 
 - **Backend Abstraction**: `ComputeBackend` trait (CPU, GPU, FPGA)
 - **Algorithm Layer**: LDPC, BCH, Viterbi, Polar
 - **Primitive Layer**: SIMD kernels, word-level operations (gf2-core)
-- **Hardware Layer**: Rayon, Vulkan/CUDA, FPGA
+- **Hardware Layer**: Rayon, HIP/ROCm (`gf2-kernels-hip`), FPGA
 
 See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and implementation plan.
 
@@ -248,12 +248,24 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 
 ### Phase C11.3: GPU Prototype (Month 3-6) ⏭ FUTURE
 
+> **⚠ SUPERSEDED — backend decision (epic `806eb14e`, 2026-06).** The
+> Vulkan/GLSL/CUDA plan in Phase C11.3/C11.4 is superseded. The selected and
+> implemented GPU backend is **HIP/ROCm**, isolated in the `gf2-kernels-hip`
+> crate (same unsafe-isolation pattern as `gf2-kernels-simd`). Do **not** add
+> `vulkano`/Vulkan or CUDA dependencies or implement a `VulkanBackend`. The
+> original GPU-setup requirements are already covered by the HIP evidence
+> infrastructure (batch BCJR, LDPC BP `ldpc_bp.hip`, Gray-QAM demap, multi-arch
+> `build.rs --offload-arch=gfx1030`); CUDA and a production multi-backend
+> selection layer are explicitly out of scope for the prototype wave. Wave plan:
+> [`dev/plans/hip_gpu_prototype_wave.md`](../../dev/plans/hip_gpu_prototype_wave.md).
+> The go/investigate/abandon decision is tracked in epic `806eb14e`.
+
 **Goal**: Validate GPU acceleration feasibility for LDPC
 
-**Milestone 1: Vulkan Setup** (Week 1-2):
-- [ ] Add `vulkano` dependency (behind `gpu` feature flag)
-- [ ] Device enumeration and selection
-- [ ] Memory allocation (pinned host buffers)
+**Milestone 1: HIP/ROCm Setup** (delivered in `gf2-kernels-hip`):
+- [x] HIP device buffers, stream pool, multi-arch dispatch (no `vulkano`)
+- [x] Device enumeration and selection (`gfx1030` target)
+- [x] Pinned host-buffer staging
 
 **Milestone 2: LDPC Compute Shader** (Week 3-4):
 - [ ] Write GLSL compute shader for min-sum BP
@@ -275,11 +287,11 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 
 **Prerequisites**: Phase C11.3 feasibility study shows > 3× speedup
 
-**Tasks**:
-1. Implement `VulkanBackend` for all code types (LDPC, BCH, Viterbi)
+**Tasks** (HIP/ROCm backend; Vulkan/CUDA superseded — see banner above):
+1. Extend the `gf2-kernels-hip` HIP backend across code types (LDPC, BCH, Viterbi)
 2. Optimize memory layout (Structure-of-Arrays for coalescing)
-3. Add CUDA backend for NVIDIA-specific optimizations
-4. Implement automatic backend selection with fallback
+3. (Out of scope) CUDA backend — not pursued in this wave
+4. Implement automatic backend selection with CPU fallback
 5. Performance tuning (occupancy, memory bandwidth)
 
 **Target**: 500-1000 Mbps LDPC decoding (10-30× CPU)
