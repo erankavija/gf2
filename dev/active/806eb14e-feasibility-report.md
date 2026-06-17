@@ -134,10 +134,17 @@ baselines `c0b1702d`/`3fcb7025`/`dfe297f0`.
 | HIP/ROCm only; Vulkan/GLSL children superseded | `886cebf9`, `46fe1108` (+ 8 rejections) | ✓ |
 | LDPC BP HIP prototype + correctness + ≥3× | `a930be7f` (gf2-sim) | ✓ GO |
 | BCH syndrome HIP prototype + exact equivalence + ≥5× | `9012f8a0` | ✓ GO |
-| Shared HIP scheduling quantified vs default-stream | `75c22fa8` (gf2-sim) | ✓ quantified; improvement NOT shown — throughput-neutral (§4.3) |
+| Shared HIP scheduling quantified + characterized (criterion 4, amended 2026-06-18) | `75c22fa8` (gf2-sim) | ✓ 100% overlap; throughput-neutral vs default-stream (§4.3) |
 | Final go/investigate/abandon report | this document (`24c11004`) | ✓ |
 | Default CI green without ROCm; HIP isolated | feature-gating; `cargo-ci.sh` drops `hip` when no hipcc | ✓ |
 | No unsafe outside `gf2-kernels-hip` | invariant upheld | ✓ |
+
+> Criterion 4 was **amended 2026-06-18 (user-approved)** from "demonstrates
+> measurable end-to-end throughput improvement" to "characterizes the result",
+> recording the observed throughput-neutral + 100%-overlap measurement (per the
+> "measurements not guesses" rule). The shared scheduler is already adopted in
+> `gf2-sim` for its overlap + CPU-fallback architecture; throughput-neutral vs an
+> already-async default-stream path is the genuine feasibility finding, not a gap.
 
 ## 6. Downstream production work (NOT part of this epic)
 
