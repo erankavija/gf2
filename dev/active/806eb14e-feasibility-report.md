@@ -11,7 +11,7 @@ Date: 2026-06-17. Author: agent:project-lead.
 |----------|-----------|----------|---------|
 | LDPC BP decode (GPU) | ≥ 3× best production CPU path | **28.98×** vs CPU-24T (253.51× vs CPU-1T), decode-vs-decode | **GO** |
 | BCH syndrome evaluation (GPU) | ≥ 5× best production CPU path | **87.9×** vs best existing CPU path (1T), exact byte-identity | **GO** |
-| Shared CPU∥GPU scheduler | measurable end-to-end improvement | **100% GPU-decode overlap**, 2.40× directional | **GO (model adopted)** |
+| Shared CPU∥GPU scheduler | measurable improvement vs default-stream | **100% overlap; throughput-neutral** (123.03 vs 123.25 fps) | **Overlap achieved; no throughput win at this config** |
 
 All correctness is exact/byte-identical against the CPU reference. Both
 acceleration targets clear their hard thresholds. **Recommendation: GO** on
@@ -46,6 +46,21 @@ benchmark receipts. That is recorded honestly rather than re-attributed.
 Comparators use the **best existing production CPU path at the same workload
 shape, including rayon**, with the decode-vs-decode discipline established by the
 `a930be7f` amendment (no GPU-vs-full-frame category confusion).
+
+### 3.1 Benchmark commands and raw result paths
+
+| Workload | Benchmark command | Raw result path |
+|----------|-------------------|-----------------|
+| LDPC BP throughput | `cargo run -p gf2-sim --release --features hip --bin gpu_ldpc_throughput` | `dev/benchmarks/gf2-sim/parallelism-receipts.md` (§a930be7f), `dev/benchmarks/gf2-sim/gpu-stages-receipts.md` |
+| LDPC BP byte-identity | `cargo test -p gf2-sim --features hip --release --test gpu_ldpc_byte_identity -- --ignored` | `dev/benchmarks/gf2-sim/gpu-stages-receipts.md` |
+| BCH syndrome throughput | `cargo run -p gf2-sim --release --features hip --bin gpu_bch_syndrome_throughput -- --frames 1024 --repeats 5 --sweep 64,256,1024,4096` | `dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md` |
+| BCH syndrome correctness | `cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release --test gpu_bch_syndrome_field -- --ignored` and `cargo test -p gf2-sim --features hip --release --test gpu_bch_syndrome_byte_identity -- --ignored` | `dev/benchmarks/gf2-sim/gpu-bch-syndrome-receipt.md` |
+| Shared scheduler / hybrid | `cargo run -p gf2-sim --release --features hip --bin hybrid_throughput -- --frames 240 --repeats 3 --es-n0 6.0` | `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`, `dev/benchmarks/gf2-sim/parallelism-receipts.md` |
+| CPU baselines | `dev/benchmarks/gf2-sim/baseline_runner/` (standalone) | `dev/benchmarks/gf2-sim/baseline-single-thread.csv`, `dev/benchmarks/gf2-sim/baseline-single-thread.md` |
+
+Hardware/ROCm metadata for every run is in §3 (gfx1030, ROCm 7.2.4). Commit
+hashes: LDPC `3d0a4bb0`/`a930be7f`; BCH `fc0783f0`+`4d2a6245` (merge `eb8a7d57`);
+baselines `c0b1702d`/`3fcb7025`/`dfe297f0`.
 
 ## 4. Per-workload findings
 
@@ -87,18 +102,30 @@ shape, including rayon**, with the decode-vs-decode discipline established by th
   measured best-existing path, with this caveat explicit.
 - Verdict: **GO** (as a syndrome-evaluation offload; not yet a production decode stage — §6).
 
-### 4.3 Shared CPU∥GPU scheduler — GO (measurable improvement)
+### 4.3 Shared CPU∥GPU scheduler — overlap achieved; throughput-neutral vs default-stream
 
 - The shared-scheduler question (direct per-thread/default-stream submission vs a
   shared scheduler) was answered by the `gf2-sim` hybrid executor (`75c22fa8`),
   which this epic's scheduler story (`bfd1aa89`/`d77519a3`) was rejected in favour of.
-- Evidence (`dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`): the scheduler
-  records an `OverlapTimeline`; **measured CPU-prep∥GPU-decode overlap = 100.0%**
-  (72 intervals, real GPU, `hybrid_scheduler.rs::hybrid_gpu_cpu_overlap_exceeds_50pct`),
-  with two-run byte-identity vs a direct `run_snr_point`. Directional end-to-end:
-  hybrid 51.44 fps → 2.40× the canonical divisor under load.
-- Verdict: the shared scheduler **measurably improves** end-to-end GPU throughput
-  over direct default-stream submission; the hybrid model is adopted in `gf2-sim`.
+- **Quantified comparison (the criterion's required comparator):** the reworked
+  shared scheduler (real per-worker streams, pinned async staging) is
+  **throughput-neutral versus the pre-rework direct default-stream code —
+  123.03 vs 123.25 fps** (`dev/benchmarks/gf2-sim/parallelism-receipts.md`). It
+  does **not** post a measurable end-to-end throughput *improvement* over direct
+  default-stream submission at the tested single-consumer / single-GPU operating
+  point.
+- What the scheduler **does** deliver: **100.0% CPU-prep∥GPU-decode overlap**
+  (72 intervals, real GPU, `hybrid_scheduler.rs::hybrid_gpu_cpu_overlap_exceeds_50pct`,
+  `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`) with two-run
+  byte-identity vs a direct `run_snr_point`, and **5.74×** over the CPU-24-thread
+  full-frame baseline (123.03 vs 21.44 fps) — but that ratio is vs CPU, not vs
+  default-stream GPU submission.
+- Verdict: the shared scheduler is **throughput-neutral vs direct default-stream
+  submission** (no measurable speedup at this config) while achieving full
+  CPU/GPU overlap. The hybrid model is adopted in `gf2-sim` for its overlap and
+  fallback architecture, not for a throughput win at this operating point; an
+  overlap-driven gain would require heavier CPU-prep contention or multi-stream
+  saturation (downstream, §6).
 
 ## 5. Epic success-criteria → artifact mapping
 
@@ -107,7 +134,7 @@ shape, including rayon**, with the decode-vs-decode discipline established by th
 | HIP/ROCm only; Vulkan/GLSL children superseded | `886cebf9`, `46fe1108` (+ 8 rejections) | ✓ |
 | LDPC BP HIP prototype + correctness + ≥3× | `a930be7f` (gf2-sim) | ✓ GO |
 | BCH syndrome HIP prototype + exact equivalence + ≥5× | `9012f8a0` | ✓ GO |
-| Shared HIP scheduling quantified + measurable improvement | `75c22fa8` (gf2-sim) | ✓ |
+| Shared HIP scheduling quantified vs default-stream | `75c22fa8` (gf2-sim) | ✓ quantified; improvement NOT shown — throughput-neutral (§4.3) |
 | Final go/investigate/abandon report | this document (`24c11004`) | ✓ |
 | Default CI green without ROCm; HIP isolated | feature-gating; `cargo-ci.sh` drops `hip` when no hipcc | ✓ |
 | No unsafe outside `gf2-kernels-hip` | invariant upheld | ✓ |
