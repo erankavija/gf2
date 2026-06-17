@@ -8,12 +8,15 @@
 //! path (H2D of packed coeff streams + Horner kernel + D2H of syndromes) against
 //! the CPU [`compute_syndromes`](gf2_coding::bch::BchDecoder::compute_syndromes)
 //! measured **in isolation** (NO Berlekamp-Massey / Chien), at 1 thread and at
-//! the full rayon pool (the best production CPU path — the §11 gate divisor).
+//! the full rayon pool. The honest **best existing production CPU path is
+//! single-thread**: the rayon-24T `compute_syndromes` is anomalously *slower*
+//! than 1T due to `Arc<FieldParams>` refcount contention (see the receipt), so
+//! 1T is the gate divisor, not 24T.
 //!
-//! The `[hard]` gate is GPU syndrome throughput >= 5x the rayon-pool CPU
-//! `compute_syndromes`. The single-thread number is reported for context. This
-//! follows the `a930be7f` decode-vs-decode precedent (avoid GPU-vs-serial
-//! category confusion).
+//! The `[hard]` gate is GPU syndrome throughput >= 5x the best existing CPU
+//! path (single-thread); both 1T and 24T are reported. This follows the
+//! `a930be7f` decode-vs-decode precedent (avoid GPU-vs-serial category
+//! confusion).
 //!
 //! Also reports a batch-size sweep (64 / 256 / 1024 / 4096 by default) and a
 //! coarse host-side phase split (coeff repack+H2D vs kernel+D2H), plus the

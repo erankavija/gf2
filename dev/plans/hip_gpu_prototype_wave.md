@@ -71,7 +71,7 @@ Epic-level success criteria:
 - [hard] The epic uses HIP/ROCm as the only GPU backend direction; Vulkan/GLSL children are rewritten or closed as superseded.
 - [hard] LDPC BP has a HIP prototype with CPU/GPU correctness evidence and at least 3x speedup versus the best production CPU path at the selected design workload.
 - [hard] BCH syndrome evaluation has a HIP prototype with exact CPU/GPU syndrome equivalence and at least 5x speedup versus the best production CPU path at the selected design workload.
-- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and demonstrates measurable end-to-end throughput improvement.
+- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and characterizes the result. Observed (amended 2026-06-18, user-approved): 100% CPU/GPU overlap; throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps) — no measurable improvement at the single-consumer config; overlap pays only under CPU-prep contention / multi-stream saturation.
 - [hard] The final feasibility report states go/investigate/abandon for LDPC BP and BCH syndrome evaluation, with raw evidence paths and downstream production recommendations.
 - [hard] Default workspace CI remains green without ROCm installed; HIP-only checks are isolated to the `gf2-kernels-hip` crate or `gf2-coding --features hip` on ROCm hosts.
 - [hard] No unsafe code leaks outside `gf2-kernels-hip`.
@@ -112,7 +112,7 @@ Hard evidence:
 
 - phase breakdown across thread count, batch size, and stream count;
 - explicit conclusion on whether default stream and full-device sync serialize submissions;
-- measurable end-to-end throughput improvement versus direct submission.
+- characterization of end-to-end throughput versus direct submission (improvement, neutral, or regression — recorded with numbers; observed: throughput-neutral, per the criterion-4 amendment 2026-06-18).
 
 ### S2: HIP LDPC BP prototype
 
