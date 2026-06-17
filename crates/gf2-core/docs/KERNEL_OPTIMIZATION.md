@@ -605,7 +605,7 @@ When optimizing an operation:
 - [ ] SIMD for GF(2^m) polynomial operations
 
 ### Long Term
-- [ ] GPU backend (CUDA/OpenCL/Vulkan)
+- [ ] GPU backend via HIP/ROCm (`gf2-kernels-hip`; Vulkan/CUDA superseded — epic 806eb14e)
 - [ ] FPGA backend
 - [ ] Portable SIMD (std::simd when stable)
 - [ ] Auto-vectorization hints

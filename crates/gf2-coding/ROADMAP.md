@@ -322,7 +322,7 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 |------|-------------|------------|---------|----------|
 | **1. Software Recording** | PC DVB-T2 receiver | 10-50 Mbps | CPU (rayon) | ✅ Week 1 |
 | **2. Live Reception** | Real-time SDR | 50-200 Mbps | CPU (SIMD) | Week 2-4 |
-| **3. Professional** | Broadcast equipment | 200-1000 Mbps | GPU (Vulkan) | Month 3-6 |
+| **3. Professional** | Broadcast equipment | 200-1000 Mbps | GPU (HIP/ROCm) | Month 3-6 |
 | **4. Broadcast** | High-throughput links | 1-10 Gbps | FPGA | Year 1-2 |
 
 ### Research Questions
