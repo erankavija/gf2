@@ -636,10 +636,46 @@ impl BchDecoder {
     /// layout: both [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu)
     /// and the `gpu_bch_syndrome_throughput` benchmark's repack-phase timing call
     /// it, so the measured repack cost matches the real path exactly.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` — one received codeword of length `n` (the code block length).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `received.len()` is not the code length `n`.
+    ///
+    /// # Examples
+    ///
+    /// Requires a HIP/ROCm GPU build (`--features hip`), so this is `no_run`; the
+    /// body is gated behind a hidden `cfg` so the doctest is a no-op on the
+    /// default build.
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "hip")]
+    /// # fn demo() {
+    /// use gf2_coding::bch::{BchCode, BchDecoder};
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let code = BchCode::new(15, 11, 1, field);
+    /// let decoder = BchDecoder::new(code);
+    ///
+    /// let received = BitVec::zeros(15);
+    /// let stream = decoder.pack_coeff_stream(&received);
+    /// assert_eq!(stream.len(), 15usize.div_ceil(64)); // ceil(n/64) u64 words
+    /// # }
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(n)` — one pass over the `n` received bits.
     #[cfg(feature = "hip")]
     pub fn pack_coeff_stream(&self, received: &BitVec) -> Vec<u64> {
         let n = self.code.n;
         let k = self.code.k;
+        assert_eq!(received.len(), n, "received must have length n = {n}");
         let words_per_frame = n.div_ceil(64);
         let mut stream = vec![0u64; words_per_frame];
         let mut idx = 0usize;
