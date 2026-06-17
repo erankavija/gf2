@@ -2,7 +2,7 @@
   "id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
   "title": "Prototype GPU acceleration for belief propagation",
   "description": "Prototype a HIP/ROCm GPU acceleration wave for coding workloads and decide, from measured evidence, whether LDPC BP and BCH syndrome evaluation should move toward production GPU backends.\n\n## Background\n\nThe current epic mixes newer HIP/ROCm work with older Vulkan/GLSL tasks and a downstream production-backend epic. The confirmed direction for this epic is HIP/ROCm only, using the existing `gf2-kernels-hip` unsafe-isolation pattern. The epic covers a prototype and feasibility decision, not production backend rollout.\n\nThe target evidence environment is AMD RX 6950 XT / `gfx1030` with ROCm 7.2 and `hipcc` at `/opt/rocm/bin/hipcc`. GPU performance claims compare against the best existing production CPU path at the same batch or campaign shape, including rayon where production uses rayon.\n\n## Success Criteria\n\n- [hard] The epic uses HIP/ROCm as the only GPU backend direction; Vulkan/GLSL children are rewritten or closed as superseded.\n- [hard] LDPC BP has a HIP prototype with CPU/GPU correctness evidence and at least 3x speedup versus the best production CPU path at the selected design workload.\n- [hard] BCH syndrome evaluation has a HIP prototype with exact CPU/GPU syndrome equivalence and at least 5x speedup versus the best production CPU path at the selected design workload.\n- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and characterizes the result. Observed (gf2-sim hybrid `75c22fa8`, gfx1030): 100% CPU-prep∥GPU-decode overlap; throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps) — no measurable improvement at the single-consumer config; overlap converts to a speedup only under CPU-prep contention / multi-stream saturation.\n- [hard] The final feasibility report states go/investigate/abandon for LDPC BP and BCH syndrome evaluation, with raw evidence paths and downstream production recommendations.\n- [hard] Default workspace CI remains green without ROCm installed; HIP-only checks are isolated to the `gf2-kernels-hip` crate or `gf2-coding --features hip` on ROCm hosts.\n- [hard] No unsafe code leaks outside `gf2-kernels-hip`.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`.\n\nNon-goals: Vulkan/GLSL, CUDA, production multi-backend selection, and production GPU backend rollout for all code types. Production work remains downstream of this prototype epic's final decision.\n\nAMENDMENT 2026-06-18 (user-approved, measurements-not-guesses): criterion 4 reworded from \"demonstrates measurable end-to-end throughput improvement\" to \"characterizes the result\", recording the observed measurement — 100% CPU/GPU overlap and throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps, gf2-sim hybrid `75c22fa8`). The \"improvement\" wording was written before evidence existed. The shared scheduler is already adopted in `gf2-sim` for its overlap + CPU-fallback architecture; the throughput-neutral result is the genuine feasibility finding (the default-stream path is already async/stream-capable), not an implementation gap. Evidence: `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`, `parallelism-receipts.md`; report `dev/active/806eb14e-feasibility-report.md` §4.3.",
-  "state": "backlog",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [
@@ -18,20 +18,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:49:05.415024009Z"
-    },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:49:05.414950269Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-17T23:06:40.758541573Z"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:49:05.415077799Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-17T23:10:51.373651855Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-17T23:07:43.966451137Z"
     }
   },
   "context": {},
@@ -51,5 +51,5 @@
     "epic:hip-gpu-prototype"
   ],
   "created_at": "2026-02-21T19:35:51.589062719+00:00",
-  "updated_at": "2026-06-17T22:51:23.728540579+00:00"
+  "updated_at": "2026-06-17T23:10:51.461441540+00:00"
 }
