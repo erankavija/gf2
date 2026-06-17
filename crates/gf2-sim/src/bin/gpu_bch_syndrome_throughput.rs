@@ -187,8 +187,9 @@ mod imp {
 
         // CPU 1-thread: compute_syndromes in isolation. fps is a rate, so this
         // is measured on a smaller subset (single-thread n=32400 syndrome eval
-        // is ~ms/frame; the full batch would take minutes) and reported as fps
-        // for context only — NOT the gate divisor.
+        // is ~ms/frame; the full batch would take minutes) and reported as fps.
+        // This IS the gate divisor: 1T is the honest best existing production CPU
+        // path, because the rayon-24T path is anomalously slower (Arc contention).
         let cpu1_count = frames.min(64);
         let cpu1_fps = {
             let sub = &frames_all[..cpu1_count];
@@ -209,7 +210,8 @@ mod imp {
             cpu1_count as f64 / best
         };
 
-        // CPU rayon pool: compute_syndromes in isolation (the gate divisor).
+        // CPU rayon pool: compute_syndromes in isolation (context only — slower
+        // than 1T due to Arc<FieldParams> refcount contention; see the receipt).
         let cpu24_fps = {
             let _: Vec<_> = pop
                 .par_iter()
@@ -233,13 +235,13 @@ mod imp {
 
         println!("## Operating point (frames = {frames})");
         println!("GPU  syndrome fps : {gpu_fps:>14.1}");
-        println!("CPU  1T  fps      : {cpu1_fps:>14.1}   (measured on {cpu1_count} frames, context only)");
-        println!("CPU {threads}T  fps      : {cpu24_fps:>14.1}");
-        println!("speedup vs 1T     : {speedup_vs_1t:>14.2}x");
-        println!("speedup vs {threads}T     : {speedup_vs_24t:>14.2}x   <-- [hard] gate (>= 5x)");
+        println!("CPU  1T  fps      : {cpu1_fps:>14.1}   (measured on {cpu1_count} frames; best existing CPU path)");
+        println!("CPU {threads}T  fps      : {cpu24_fps:>14.1}   (context only — slower than 1T, Arc contention)");
+        println!("speedup vs 1T     : {speedup_vs_1t:>14.2}x   <-- [hard] gate (>= 5x vs best existing CPU path)");
+        println!("speedup vs {threads}T     : {speedup_vs_24t:>14.2}x   (context only)");
         println!(
-            "GATE (>= 5x vs {threads}T): {}",
-            if speedup_vs_24t >= 5.0 {
+            "GATE (>= 5x vs 1T): {}",
+            if speedup_vs_1t >= 5.0 {
                 "PASS"
             } else {
                 "FAIL"

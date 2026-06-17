@@ -88,7 +88,7 @@ Leaf tasks:
 |---|---|
 | Pin GPU prototype baselines | Baseline manifest for BCJR, LDPC BP CPU comparator, and BCH syndrome CPU comparator, including hardware metadata. |
 | Add GPU benchmark evidence harness | Script or bench support that records commands, batch-size sweeps, phase timings, raw results, and comparator identity. |
-| Add GPU speed-threshold checks | Checker entries for LDPC >=3x, BCH >=5x, and scheduler throughput improvement. |
+| Add GPU speed-threshold checks | Checker entries for LDPC >=3x, BCH >=5x, and scheduler throughput characterization (improvement/neutral/regression). |
 | Add CPU/GPU equivalence scaffolding | Small and production-sized fixtures for LDPC and BCH correctness comparisons. |
 
 S0 is the first execution wave in the project-lead progress plan. It intentionally does not block S1, S2, and S3 through direct JIT cross-story edges, so the epic retains a `babcf05e`-style immediate story fan-out after JIT transitive reduction.

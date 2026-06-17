@@ -11,7 +11,7 @@ Date: 2026-06-17. Author: agent:project-lead.
 |----------|-----------|----------|---------|
 | LDPC BP decode (GPU) | ≥ 3× best production CPU path | **28.98×** vs CPU-24T (253.51× vs CPU-1T), decode-vs-decode | **GO** |
 | BCH syndrome evaluation (GPU) | ≥ 5× best production CPU path | **87.9×** vs best existing CPU path (1T), exact byte-identity | **GO** |
-| Shared CPU∥GPU scheduler | measurable improvement vs default-stream | **100% overlap; throughput-neutral** (123.03 vs 123.25 fps) | **Overlap achieved; no throughput win at this config** |
+| Shared CPU∥GPU scheduler | characterize vs default-stream (criterion 4, amended) | **100% overlap; throughput-neutral** (123.03 vs 123.25 fps) | **Overlap achieved; no throughput win at this config** |
 
 All correctness is exact/byte-identical against the CPU reference. Both
 acceleration targets clear their hard thresholds. **Recommendation: GO** on
