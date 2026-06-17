@@ -631,8 +631,13 @@ impl BchDecoder {
     /// [`compute_syndromes`](Self::compute_syndromes) builds: coefficient index
     /// `0` is `received[n-1]` (highest parity bit), index `n-1` is
     /// `received[0]`. The returned stream is `ceil(n/64)` u64 words.
+    ///
+    /// This is the single source of truth for the GPU coefficient-stream
+    /// layout: both [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu)
+    /// and the `gpu_bch_syndrome_throughput` benchmark's repack-phase timing call
+    /// it, so the measured repack cost matches the real path exactly.
     #[cfg(feature = "hip")]
-    fn pack_coeff_stream(&self, received: &BitVec) -> Vec<u64> {
+    pub fn pack_coeff_stream(&self, received: &BitVec) -> Vec<u64> {
         let n = self.code.n;
         let k = self.code.k;
         let words_per_frame = n.div_ceil(64);
