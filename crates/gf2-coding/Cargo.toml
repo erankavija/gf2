@@ -50,8 +50,11 @@ parallel = ["dep:rayon", "gf2-core/parallel"]
 visualization = ["gf2-core/visualization"]
 # Use f64 precision for LLRs instead of f32 (slower, for research/comparison)
 llr-f64 = []
-# HIP/ROCm GPU acceleration (requires hipcc and AMD GPU)
-hip = ["dep:gf2-kernels-hip"]
+# HIP/ROCm GPU acceleration (requires hipcc and AMD GPU). Propagates the
+# `hip` feature into gf2-kernels-hip so the BCH syndrome wrappers
+# (`GpuBchSyndrome` / `BchFieldTables`), gated behind that feature there,
+# resolve for the `compute_syndromes_batch_gpu` / `decode_batch_gpu` hook.
+hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 # Bench-csv emitter support (jit:47698404). Pulls in `gf2-core/test-support`
 # which exposes the `bench_seed` module used by the sparse CSV harness.
 bench-csv = ["gf2-core/test-support"]

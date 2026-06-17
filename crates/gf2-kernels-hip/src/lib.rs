@@ -55,8 +55,14 @@ pub use launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout, LdpcStreamS
 /// [`GpuBchSyndrome`] and the [`BchFieldTables`] GF(2^m) `exp`/`log` bundle it
 /// uploads. An evaluator (received bits → `2t` syndromes), not a pipeline
 /// stage; Berlekamp-Massey and Chien search stay on the CPU.
+///
+/// Only compiled when the `hip` Cargo feature is enabled (issue `9012f8a0`
+/// criterion 6); the standalone `gf_mul` test kernel and the device-table
+/// upload path it wraps need the BCH device kernels the `hip` feature compiles.
+#[cfg(feature = "hip")]
 pub mod launch_bch_syndrome;
 
+#[cfg(feature = "hip")]
 #[doc(inline)]
 pub use launch_bch_syndrome::{BchFieldTables, GpuBchSyndrome};
 

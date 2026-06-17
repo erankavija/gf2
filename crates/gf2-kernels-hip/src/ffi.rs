@@ -225,6 +225,62 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
+    pub fn hip_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
+    pub fn hip_free(ptr: *mut c_void) -> c_int;
+    pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
+    pub fn hip_memcpy_d2h(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
+    pub fn hip_device_synchronize() -> c_int;
+
+    // ---- Host-runtime wrappers (hip/host_runtime.hip) --------------------
+    // Stream management.
+    pub fn hip_stream_create(stream: *mut *mut c_void) -> c_int;
+    pub fn hip_stream_destroy(stream: *mut c_void) -> c_int;
+    pub fn hip_stream_synchronize(stream: *mut c_void) -> c_int;
+    pub fn hip_stream_query(stream: *mut c_void) -> c_int;
+
+    // Device selection / introspection.
+    pub fn hip_set_device(device_id: c_int) -> c_int;
+    pub fn hip_get_device(device_id: *mut c_int) -> c_int;
+    pub fn hip_device_get_count(count: *mut c_int) -> c_int;
+    /// Writes the device's GCN arch name (`hipDeviceProp_t.gcnArchName`, e.g.
+    /// `"gfx1030"`, `"gfx940"`, `"gfx942"`) into `buf` (capacity `buf_len`
+    /// bytes), NUL-terminated. This is the authoritative kernel-blob
+    /// discriminator (design doc §6); compute capability cannot distinguish
+    /// gfx940 from gfx942.
+    pub fn hip_device_get_arch_name(
+        device_id: c_int,
+        buf: *mut std::os::raw::c_char,
+        buf_len: usize,
+    ) -> c_int;
+    pub fn hip_mem_get_info(free_bytes: *mut usize, total_bytes: *mut usize) -> c_int;
+
+    // Pinned host memory.
+    pub fn hip_host_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
+    pub fn hip_host_free(ptr: *mut c_void) -> c_int;
+
+    // Stream-ordered transfers.
+    pub fn hip_memcpy_h2d_async(
+        dst: *mut c_void,
+        src: *const c_void,
+        size: usize,
+        stream: *mut c_void,
+    ) -> c_int;
+    pub fn hip_memcpy_d2h_async(
+        dst: *mut c_void,
+        src: *const c_void,
+        size: usize,
+        stream: *mut c_void,
+    ) -> c_int;
+}
+
+// ---- BCH syndrome device kernels (hip/bch_syndrome.hip) -------------------
+//
+// These two externs resolve against `hip/bch_syndrome.hip`, which `build.rs`
+// only compiles under the `hip` feature (issue `9012f8a0` criterion 6). Gating
+// the declarations keeps the default (non-`hip`) build from referencing symbols
+// the static lib does not contain.
+#[cfg(feature = "hip")]
+extern "C" {
     /// Launch the batch BCH syndrome evaluator.
     ///
     /// For each frame and each evaluation point `α^(i+1)` (`i = 0..two_t-1`),
@@ -291,53 +347,6 @@ extern "C" {
         d_out: *mut u16,
         order: u32,
         count: c_int,
-        stream: *mut c_void,
-    ) -> c_int;
-
-    pub fn hip_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
-    pub fn hip_free(ptr: *mut c_void) -> c_int;
-    pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
-    pub fn hip_memcpy_d2h(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
-    pub fn hip_device_synchronize() -> c_int;
-
-    // ---- Host-runtime wrappers (hip/host_runtime.hip) --------------------
-    // Stream management.
-    pub fn hip_stream_create(stream: *mut *mut c_void) -> c_int;
-    pub fn hip_stream_destroy(stream: *mut c_void) -> c_int;
-    pub fn hip_stream_synchronize(stream: *mut c_void) -> c_int;
-    pub fn hip_stream_query(stream: *mut c_void) -> c_int;
-
-    // Device selection / introspection.
-    pub fn hip_set_device(device_id: c_int) -> c_int;
-    pub fn hip_get_device(device_id: *mut c_int) -> c_int;
-    pub fn hip_device_get_count(count: *mut c_int) -> c_int;
-    /// Writes the device's GCN arch name (`hipDeviceProp_t.gcnArchName`, e.g.
-    /// `"gfx1030"`, `"gfx940"`, `"gfx942"`) into `buf` (capacity `buf_len`
-    /// bytes), NUL-terminated. This is the authoritative kernel-blob
-    /// discriminator (design doc §6); compute capability cannot distinguish
-    /// gfx940 from gfx942.
-    pub fn hip_device_get_arch_name(
-        device_id: c_int,
-        buf: *mut std::os::raw::c_char,
-        buf_len: usize,
-    ) -> c_int;
-    pub fn hip_mem_get_info(free_bytes: *mut usize, total_bytes: *mut usize) -> c_int;
-
-    // Pinned host memory.
-    pub fn hip_host_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
-    pub fn hip_host_free(ptr: *mut c_void) -> c_int;
-
-    // Stream-ordered transfers.
-    pub fn hip_memcpy_h2d_async(
-        dst: *mut c_void,
-        src: *const c_void,
-        size: usize,
-        stream: *mut c_void,
-    ) -> c_int;
-    pub fn hip_memcpy_d2h_async(
-        dst: *mut c_void,
-        src: *const c_void,
-        size: usize,
         stream: *mut c_void,
     ) -> c_int;
 }

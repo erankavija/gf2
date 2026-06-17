@@ -71,10 +71,18 @@ speedup vs 24T    :         625.30x   <-- [hard] gate (>= 5x)
 GATE (>= 5x vs 24T): PASS
 ```
 
-The GPU full call is `compute_syndromes_batch_gpu` (host repack + H2D + Horner
-kernel + D2H + Gf2mElement rehydrate). CPU numbers are `compute_syndromes` in
-isolation (no BM/Chien). CPU-1T is measured on a 64-frame subset (single-thread
-n=32400 GF(2^16) syndrome eval is ~12 ms/frame; fps is rate-invariant).
+The GPU full call is `compute_syndromes_batch_gpu` measured end-to-end. That
+function does NOT amortise device setup across calls: on EVERY invocation it
+rebuilds `BchFieldTables` from the CPU exp/log tables, allocates a fresh
+`GpuBchSyndrome` evaluator, uploads the exp/log tables AND the `α^1..α^(2t)`
+points to the device, repacks every frame's coefficient stream, runs the H2D +
+Horner kernel + D2H, rehydrates the u16 syndromes into `Gf2mElement`s, and drops
+the evaluator. The throughput bin times that entire function, so the 7267.9 fps
+/ 87.9x figure is **conservative and inclusive** — it pays per-call table/point
+upload and allocation, not the amortised-setup best case. CPU numbers are
+`compute_syndromes` in isolation (no BM/Chien). CPU-1T is measured on a 64-frame
+subset (single-thread n=32400 GF(2^16) syndrome eval is ~12 ms/frame; fps is
+rate-invariant).
 
 ### `[hard]` 5x gate — MET, by a very large margin
 
@@ -112,22 +120,34 @@ flat (the Arc contention above dominates regardless of batch).
 ## Coarse phase split (1024 frames)
 
 ```
-host coeff repack :    114.450 ms  (81.2% of full call)
-device+xfer       :     26.444 ms  (18.8% of full call)
+host coeff repack       :    114.450 ms  (81.2% of full call)
+device setup + xfer + kernel :     26.444 ms  (18.8% of full call)
 ```
+
+The second line is the whole non-repack remainder of the call, NOT device
+transfer alone: it includes the per-call `BchFieldTables` rebuild, the
+`GpuBchSyndrome` allocation, the one-shot exp/log + points upload, the input
+H2D, the Horner kernel, the output D2H, and the `Gf2mElement` rehydrate. (A
+finer device-internal H2D / kernel / D2H split would need wrapper-level event
+instrumentation; this coarse two-way split is the "where practical" §11 ask.)
 
 The GPU call is currently dominated by the **host-side coefficient repack** (per
 frame: parity-reversed ++ message-reversed bit packing into ceil(n/64) u64
-words), not by the device. The device-side H2D + kernel + D2H is only ~18.8% of
-the wall time. Even with the repack included, the full GPU call clears the gate
-by 87.9x; a future optimisation could parallelise or SIMD the repack to widen the
-margin further (the repack is pure CPU bit-twiddling and embarrassingly
-parallel). A finer device-internal H2D / kernel / D2H split would need
-wrapper-level event instrumentation; this coarse split is the "where practical"
-§11 ask.
+words), not by the device. Everything device-touching (setup + transfers +
+kernel) is only ~18.8% of the wall time. Even with the repack AND the per-call
+setup included, the full GPU call clears the gate by 87.9x; a future
+optimisation could parallelise or SIMD the repack to widen the margin further
+(the repack is pure CPU bit-twiddling and embarrassingly parallel).
 
-## Field tables uploaded once (amortised)
+## Per-call device setup is included, not amortised
 
-The GF(2^m) `exp`/`log` tables (256 KB total for m=16) and the `α^1..α^(2t)`
-evaluation points are uploaded once at `GpuBchSyndrome` construction and excluded
-from the per-batch timing above.
+`compute_syndromes_batch_gpu` rebuilds the `BchFieldTables`, allocates a fresh
+`GpuBchSyndrome`, and uploads the GF(2^m) `exp`/`log` tables (256 KB total for
+m=16) plus the `α^1..α^(2t)` evaluation points ON EVERY CALL — the evaluator is
+constructed and dropped inside the function rather than held across batches. The
+throughput figures above therefore **include** that per-call upload and
+allocation in the timed region; they are not the amortised-setup best case. A
+future API change could hoist the evaluator out of the call to amortise the
+table/point upload across batches, but those numbers would have to be
+re-measured on the GPU before being claimed — the figures here reflect the
+current inclusive code path.
