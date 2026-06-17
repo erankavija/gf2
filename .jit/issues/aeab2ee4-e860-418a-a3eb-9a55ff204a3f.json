@@ -2,7 +2,7 @@
   "id": "aeab2ee4-e860-418a-a3eb-9a55ff204a3f",
   "title": "HIP BCH syndrome prototype",
   "description": "Implement and evaluate a HIP/ROCm batch BCH syndrome-evaluation prototype.\n\n## Background\n\nBCH syndrome evaluation is highly parallel across codewords and syndrome points. The prototype keeps Berlekamp-Massey and Chien search on CPU unless evidence shows they dominate, while proving exact syndrome equivalence and measuring speed against the best current production CPU path.\n\n## Success Criteria\n\n- [hard] GPU GF($2^m$) log/exp table support covers $m \\le 16$ for DVB-T2 short and normal BCH configurations.\n- [hard] HIP Horner syndrome kernel computes one `(codeword, syndrome_index)` result per thread with exact integer arithmetic.\n- [hard] Safe Rust wrappers and BCH integration are feature-gated behind `hip`; default workspace builds succeed without ROCm.\n- [hard] CPU/GPU correctness fixtures cover small BCH, DVB-T2 short, and DVB-T2 normal with exact syndrome equality.\n- [hard] GPU BCH syndrome evaluation is at least 5x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`. Existing design doc: `dev/active/gpu-batch-bch-syndrome-plan.md`. This story depends on GPU evidence infrastructure.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "high",
   "assignee": null,
   "dependencies": [
@@ -24,5 +24,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-04-29T22:49:39.397225471+00:00",
-  "updated_at": "2026-04-29T22:56:56.000705195+00:00"
+  "updated_at": "2026-06-17T01:02:54.175305962+00:00"
 }

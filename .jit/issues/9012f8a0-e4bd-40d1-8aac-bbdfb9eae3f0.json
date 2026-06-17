@@ -2,7 +2,7 @@
   "id": "9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0",
   "title": "HIP/ROCm GPU-accelerated batch BCH syndrome evaluation",
   "description": "Implement and evaluate a HIP/ROCm batch BCH syndrome-evaluation prototype.\n\n## Background\n\nBCH syndrome evaluation is parallel across codewords and syndrome points. The prototype keeps Berlekamp-Massey and Chien search on CPU unless evidence shows they dominate, while proving exact syndrome equivalence and measuring speed against the best current production CPU path at the same workload shape, including rayon where production uses rayon.\n\nExisting design doc: `dev/active/gpu-batch-bch-syndrome-plan.md`. Epic spec: `dev/plans/hip_gpu_prototype_wave.md`.\n\n## Success Criteria\n\n- [hard] GPU GF($2^m$) multiplication support matches CPU `Gf2mField` arithmetic exactly for the required table-backed fields, including exhaustive GF($2^4$) checks.\n- [hard] HIP Horner syndrome evaluation matches CPU polynomial evaluation exactly on small BCH fixtures.\n- [hard] DVB-T2 short and normal BCH syndrome fixtures match CPU exactly for valid codewords and injected-error codewords.\n- [hard] Batch correctness covers the selected design workload and at least one smaller fixture; GPU batch syndromes match the CPU comparator exactly.\n- [hard] GPU syndromes fed into the CPU Berlekamp-Massey and Chien pipeline decode the same received words as the CPU-only pipeline.\n- [hard] Safe Rust wrappers in `gf2-kernels-hip` and feature-gated `gf2-coding` integration compile only behind the `hip` feature; default workspace builds succeed without ROCm installed.\n- [hard] Performance evidence records hardware metadata, ROCm version, benchmark command, raw result paths, batch-size sweep, and phase timing where practical.\n- [hard] GPU BCH syndrome evaluation is at least 5x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nTarget environment: AMD RX 6950 XT / `gfx1030`, ROCm 7.2, `/opt/rocm/bin/hipcc`. Do not compare only against an artificially serial CPU loop unless the best production CPU path is also reported and used for the hard speed criterion.",
-  "state": "in_progress",
+  "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
   "dependencies": [],
@@ -13,19 +13,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-11T15:33:50.139515106Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-17T01:00:36.596139480Z"
     },
     "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:50:44.666832185Z"
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-17T01:02:53.891935461Z"
     },
     "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-11T15:33:50.139477256Z"
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-17T00:59:05.016304579Z"
     }
   },
   "context": {},
@@ -46,5 +46,5 @@
     "story:gpu-bch-syndrome"
   ],
   "created_at": "2026-04-11T15:33:39.428069767+00:00",
-  "updated_at": "2026-06-16T20:47:48.946224632+00:00"
+  "updated_at": "2026-06-17T01:02:53.986545838+00:00"
 }

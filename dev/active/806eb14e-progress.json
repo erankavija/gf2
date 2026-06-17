@@ -2,174 +2,66 @@
   "epic_id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
   "epic_short_id": "806eb14e",
   "title": "Prototype GPU acceleration for belief propagation",
-  "claimed_by": null,
+  "claimed_by": "agent:project-lead",
   "started_at": "2026-04-30T01:37:22+03:00",
-  "last_updated": "planning scaffold created",
-  "phase": "planned; ready for project-lead execution",
+  "last_updated": "2026-06-17 project-lead resumed post-reconciliation",
+  "phase": "executing",
   "spec_doc": "dev/plans/hip_gpu_prototype_wave.md",
   "current_wave": 1,
   "waves": [
     {
       "wave_number": 1,
-      "label": "Evidence infrastructure and legacy cleanup note",
+      "label": "BCH syndrome implementation (worktree) + Vulkan supersede note",
       "issues": [
-        {
-          "id": "dfe297f0-eb91-4aff-869d-5cc05e2850a7",
-          "short_id": "dfe297f0",
-          "title": "Pin GPU prototype baselines",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "698fc999-fa44-4062-a10e-095b4d2ec476",
-          "short_id": "698fc999",
-          "title": "Add GPU benchmark evidence harness",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "100eda77-ef37-4da3-8634-13d4b74abd95",
-          "short_id": "100eda77",
-          "title": "Add GPU speed-threshold checks",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "fd0de46c-60c0-473f-b0c3-acd9802c4aa5",
-          "short_id": "fd0de46c",
-          "title": "Add GPU correctness equivalence scaffolding",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "886cebf9-a434-4efd-bdb2-9883545878a0",
-          "short_id": "886cebf9",
-          "title": "Document Vulkan GPU setup as superseded by HIP",
-          "classification": "documentation",
-          "status": "pending"
-        }
+        {"id": "9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0", "short_id": "9012f8a0", "title": "HIP/ROCm GPU-accelerated batch BCH syndrome evaluation", "classification": "implementation", "status": "dispatched", "worktree": "../gf2-wt-9012f8a0", "branch": "wf/bch-9012f8a0", "design_doc": "dev/active/gpu-batch-bch-syndrome-plan.md"},
+        {"id": "886cebf9-a434-4efd-bdb2-9883545878a0", "short_id": "886cebf9", "title": "Document Vulkan GPU setup as superseded by HIP", "classification": "documentation", "status": "lead-authoring"}
       ]
     },
     {
       "wave_number": 2,
-      "label": "Evidence story closure",
+      "label": "GLSL supersede note (depends on 886cebf9)",
       "issues": [
-        {
-          "id": "dc32270e-cb5a-4b98-8efc-06eb343ae847",
-          "short_id": "dc32270e",
-          "title": "GPU evidence and baseline infrastructure",
-          "classification": "implementation",
-          "status": "blocked"
-        }
+        {"id": "46fe1108-3b33-4596-92d9-33e1364fa00d", "short_id": "46fe1108", "title": "Document GLSL LDPC shader plan as superseded by HIP", "classification": "documentation", "status": "pending"}
       ]
     },
     {
       "wave_number": 3,
-      "label": "Scheduler, LDPC, BCH prototypes, and GLSL cleanup",
+      "label": "Feasibility decision report (depends on 46fe1108 + BCH outcome)",
       "issues": [
-        {
-          "id": "d77519a3-0cc7-42f7-90d8-042a9309f2ab",
-          "short_id": "d77519a3",
-          "title": "Investigate shared CPU/GPU work-queue strategy for maximum decoder throughput",
-          "classification": "research",
-          "status": "blocked"
-        },
-        {
-          "id": "37e0b235-9fc6-48cd-93e0-0f35f1d3e545",
-          "short_id": "37e0b235",
-          "title": "HIP/ROCm GPU-accelerated batch LDPC BP decoder",
-          "classification": "implementation",
-          "status": "blocked"
-        },
-        {
-          "id": "9012f8a0-e4bd-40d1-8aac-bbdfb9eae3f0",
-          "short_id": "9012f8a0",
-          "title": "HIP/ROCm GPU-accelerated batch BCH syndrome evaluation",
-          "classification": "implementation",
-          "status": "blocked"
-        },
-        {
-          "id": "46fe1108-3b33-4596-92d9-33e1364fa00d",
-          "short_id": "46fe1108",
-          "title": "Document GLSL LDPC shader plan as superseded by HIP",
-          "classification": "documentation",
-          "status": "blocked"
-        }
+        {"id": "24c11004-18e1-4ceb-a0ec-946a16716d57", "short_id": "24c11004", "title": "Write GPU prototype feasibility decision report", "classification": "documentation", "status": "pending"}
       ]
     },
     {
       "wave_number": 4,
-      "label": "Prototype story closure",
+      "label": "Story + epic closure",
       "issues": [
-        {
-          "id": "bfd1aa89-e0d8-4fdc-8750-0d1b6b294df9",
-          "short_id": "bfd1aa89",
-          "title": "Shared HIP scheduler and work-queue strategy",
-          "classification": "research",
-          "status": "blocked"
-        },
-        {
-          "id": "719fb8de-5620-4496-b0b6-dc0fbd163e60",
-          "short_id": "719fb8de",
-          "title": "HIP LDPC belief-propagation prototype",
-          "classification": "implementation",
-          "status": "blocked"
-        },
-        {
-          "id": "aeab2ee4-e860-418a-a3eb-9a55ff204a3f",
-          "short_id": "aeab2ee4",
-          "title": "HIP BCH syndrome prototype",
-          "classification": "implementation",
-          "status": "blocked"
-        }
-      ]
-    },
-    {
-      "wave_number": 5,
-      "label": "Final feasibility decision and epic closure",
-      "issues": [
-        {
-          "id": "24c11004-18e1-4ceb-a0ec-946a16716d57",
-          "short_id": "24c11004",
-          "title": "Write GPU prototype feasibility decision report",
-          "classification": "documentation",
-          "status": "blocked"
-        },
-        {
-          "id": "86a363aa-a824-4e59-a43c-c3688fbb0b92",
-          "short_id": "86a363aa",
-          "title": "GPU prototype feasibility decision and cleanup",
-          "classification": "documentation",
-          "status": "blocked"
-        }
+        {"id": "aeab2ee4-e860-418a-a3eb-9a55ff204a3f", "short_id": "aeab2ee4", "title": "HIP BCH syndrome prototype (story)", "classification": "story-close", "status": "pending"},
+        {"id": "86a363aa-a824-4e59-a43c-c3688fbb0b92", "short_id": "86a363aa", "title": "GPU prototype feasibility decision and cleanup (story)", "classification": "story-close", "status": "pending"}
       ]
     }
   ],
-  "created_during_execution": [
-    "dc32270e",
-    "bfd1aa89",
-    "719fb8de",
-    "aeab2ee4",
-    "86a363aa",
-    "dfe297f0",
-    "698fc999",
-    "100eda77",
-    "fd0de46c"
-  ],
+  "rejected_superseded": ["37e0b235", "719fb8de", "fd0de46c", "698fc999", "100eda77", "dc32270e", "d77519a3", "bfd1aa89"],
+  "done_prior": ["795c156e", "dfe297f0"],
+  "created_during_execution": [],
   "escalations": [
     {
       "category": "scope decisions",
       "status": "resolved",
-      "decision": "User selected HIP/ROCm only, broader prototype wave, hard speed gates, best-production-CPU comparator, story checkpoints, in-place child rewrites, and prototype-only completion."
+      "decision": "User selected HIP/ROCm only, hard speed gates, best-production-CPU comparator, story checkpoints, prototype-only completion."
     }
   ],
   "rework_counts": {},
   "notes": [
-    "Use manual worktree dispatch for parallel waves; do not use stale agent worktree isolation.",
-    "Workers must not edit .jit state, pass/fail gates, or mark issues done.",
-    "Pre-dispatch criterion audits are mandatory for hard speed thresholds.",
-    "GPU benchmarks target AMD RX 6950 XT / gfx1030 with ROCm 7.2 and /opt/rocm/bin/hipcc.",
-    "Compare speedups against the best existing production CPU path at the same workload shape, including rayon where applicable.",
-    "The JIT DAG intentionally preserves immediate epic-to-story fan-out. Cross-story ordering is enforced by this progress file rather than JIT edges, because transitive reduction collapses fan-out when a final story depends on every earlier story."
+    "2026-06-13 reconciliation: 8 children rejected as superseded by gf2-sim GPU pipeline (a930be7f LDPC, 75c22fa8 hybrid scheduler, gpu-stages byte-identity + parallelism-pays). Live remainder = BCH syndrome eval + feasibility-decision branch.",
+    "GPU AVAILABLE this session: AMD RX 6950 XT / gfx1030, ROCm at /opt/rocm/bin/hipcc. Hard GPU criteria are genuinely measurable.",
+    "9012f8a0 design doc (dev/active/gpu-batch-bch-syndrome-plan.md, commit 4cda35c2) authored 2026-06-16 via user interview; it is the worker spec.",
+    "BCH 5x gate is decode-vs-decode: GPU syndrome throughput vs rayon-24T CPU compute_syndromes in isolation (a930be7f precedent). Single-thread reported for context.",
+    "Worktree-dispatch scripts absent; hand-roll worktrees anchored to main HEAD with SHA verification + post-wave leak check.",
+    "Workers must not edit .jit state, pass/fail gates, or mark issues done. Lead owns all transitions.",
+    "Feasibility report (24c11004) must reflect rejections honestly: LDPC/scheduler evidence comes from the gf2-sim epic that absorbed those prototypes.",
+    "TRAP (2026-06-17): ran 886cebf9 cargo-ci on main while the BCH agent built the workspace (--features hip) in the worktree. 31Gi RAM + 4Gi swap exhausted -> kernel killed a build proc -> gate 'Error, exit code None'. Two full Rust builds do NOT fit concurrently on this box even with separate target dirs. FIX: serialize all heavy gates (cargo-ci, code-review/codex) AFTER the BCH agent finishes; never run them concurrently with an agent build. 886cebf9 cargo-ci must be re-run (clean doc-only change -> will pass).",
+    "LDPC BP evidence for the report (gpu-stages-receipts.md:25): 253.51x GPU/CPU-1T, 28.98x GPU/CPU-24T decode-vs-decode -> GO, clears >=3x.",
+    "TRAP (2026-06-17): cargo-ci gate has timeout_seconds=300 (gates.json:53). On a hipcc host cargo-ci.sh uses --all-features (incl hip) and builds BOTH dev (check+clippy) and release (test) profiles. A from-scratch build exceeds 5 min -> jit kills the checker -> 'Error, exit code None' (NOT a real test failure, NOT only OOM; capping -j made it slower/worse). FIX: pre-warm the full cache directly (cargo check --all-features; cargo clippy --all-targets --all-features; cargo nextest --all-features --release --no-run) BEFORE running the gate, so the gate's incremental re-run fits in 300s. Do NOT change the gate timeout (forbidden gate modification). Run gates serially; never concurrent with another build (rust-analyzer alone holds ~5.4GB; ~12Gi free).",
+    "9012f8a0 correctness re-verified by lead on gfx1030: field test (3) + byte-identity/decode-equiv (2) all PASS. Impl merged to main eb8a7d57. Throughput 87.9x vs best CPU path (1T)."
   ]
 }

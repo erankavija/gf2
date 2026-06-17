@@ -2,9 +2,9 @@
   "id": "886cebf9-a434-4efd-bdb2-9883545878a0",
   "title": "Document Vulkan GPU setup as superseded by HIP",
   "description": "Document that the older Vulkan device setup path is superseded by the HIP/ROCm backend direction for epic `806eb14e`.\n\n## Background\n\nThis issue previously requested Vulkan compute infrastructure. The confirmed scope for `806eb14e` is HIP/ROCm only, using `gf2-kernels-hip`. This cleanup task preserves the historical decision and prevents workers from implementing an obsolete Vulkan path.\n\n## Success Criteria\n\n- [hard] The issue no longer asks workers to add Vulkan or `vulkano` dependencies.\n- [hard] The cleanup note records HIP/ROCm as the selected backend for this epic and links to `dev/plans/hip_gpu_prototype_wave.md`.\n- [hard] Any still-useful requirements from the original task are either already covered by HIP evidence infrastructure or explicitly marked out of scope.\n- [hard] Default workspace CI remains unaffected.\n\n## Notes\n\nNo production code changes are expected unless a stale reference to this Vulkan task needs to be removed from planning docs.",
-  "state": "ready",
+  "state": "in_progress",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [],
   "gates_required": [
     "cargo-ci",
@@ -12,15 +12,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:51:11.093609596Z"
-    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
       "updated_at": "2026-04-29T22:51:11.093694096Z"
+    },
+    "cargo-ci": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-16T22:19:06.613825155Z"
     },
     "doc-review": {
       "status": "pending",
@@ -38,5 +38,5 @@
     "component:gf2-kernels-hip"
   ],
   "created_at": "2026-02-21T19:35:51.643501801+00:00",
-  "updated_at": "2026-04-29T22:51:11.097611877+00:00"
+  "updated_at": "2026-06-16T22:24:06.852814154+00:00"
 }
