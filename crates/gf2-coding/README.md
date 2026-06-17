@@ -105,7 +105,7 @@ use gf2_coding::grand::OrbGrandDecoder;
   RAYON_NUM_THREADS=8 cargo bench -p gf2-coding --bench quick_parallel --features parallel
   ```
 
-- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding and Gray-QAM demapping. Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
+- **GPU** (opt-in, `--features hip`): HIP/ROCm kernels on gfx1030 accelerate batched BCJR soft decoding, Gray-QAM demapping, LDPC belief propagation, and BCH syndrome evaluation (`BchDecoder::compute_syndromes_batch_gpu` / `decode_batch_gpu`: GPU Horner over GF(2^m), CPU Berlekamp-Massey + Chien). Requires `hipcc` and an AMD GPU; see [`../gf2-kernels-hip/`](../gf2-kernels-hip/). The HIP crate is excluded from the default workspace build.
 
 See [`docs/SIMD_PERFORMANCE_GUIDE.md`](docs/SIMD_PERFORMANCE_GUIDE.md), [`docs/PARALLELIZATION.md`](docs/PARALLELIZATION.md), and [`docs/LDPC_PERFORMANCE.md`](docs/LDPC_PERFORMANCE.md) for benchmarks and methodology.
 

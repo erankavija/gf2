@@ -696,6 +696,43 @@ impl BchDecoder {
     /// O(`batch * 2t * n`) device work; host-side cost is the per-frame
     /// coefficient repack plus the H2D of `batch * ceil(n/64)` u64 words and the
     /// D2H of `batch * 2t` u16 syndromes.
+    ///
+    /// # Examples
+    ///
+    /// Requires a HIP/ROCm GPU at runtime, so this is `no_run`. The body is
+    /// compiled only under `--features hip` (the method exists only there); the
+    /// hidden `cfg` gate keeps the doctest a no-op on the default build.
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "hip")]
+    /// # fn demo() {
+    /// use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder};
+    /// use gf2_coding::traits::BlockEncoder;
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let code = BchCode::new(15, 11, 1, field);
+    /// let encoder = BchEncoder::new(code.clone());
+    /// let decoder = BchDecoder::new(code);
+    ///
+    /// // A small batch of valid codewords.
+    /// let received: Vec<BitVec> = (0..4)
+    ///     .map(|i| {
+    ///         let mut msg = BitVec::with_capacity(11);
+    ///         for j in 0..11 {
+    ///             msg.push_bit((i + j) % 2 == 0);
+    ///         }
+    ///         encoder.encode(&msg)
+    ///     })
+    ///     .collect();
+    ///
+    /// // GPU syndromes are byte-identical to the per-frame CPU path.
+    /// let syndromes = decoder.compute_syndromes_batch_gpu(&received).unwrap();
+    /// assert_eq!(syndromes.len(), 4);
+    /// assert_eq!(syndromes[0].len(), 2); // 2t = 2 for t = 1
+    /// # }
+    /// ```
     #[cfg(feature = "hip")]
     pub fn compute_syndromes_batch_gpu(
         &self,
@@ -799,6 +836,43 @@ impl BchDecoder {
     ///
     /// O(`batch * 2t * n`) device syndrome work plus the per-frame CPU
     /// Berlekamp-Massey + Chien search (O(`batch * t * n`)).
+    ///
+    /// # Examples
+    ///
+    /// Requires a HIP/ROCm GPU at runtime, so this is `no_run`. The body is
+    /// compiled only under `--features hip` (the method exists only there); the
+    /// hidden `cfg` gate keeps the doctest a no-op on the default build.
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "hip")]
+    /// # fn demo() {
+    /// use gf2_coding::bch::{BchCode, BchEncoder, BchDecoder};
+    /// use gf2_coding::traits::BlockEncoder;
+    /// use gf2_core::gf2m::Gf2mField;
+    /// use gf2_core::BitVec;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let code = BchCode::new(15, 11, 1, field);
+    /// let encoder = BchEncoder::new(code.clone());
+    /// let decoder = BchDecoder::new(code);
+    ///
+    /// // Encode messages, then decode the batch via GPU syndromes + CPU BM/Chien.
+    /// let messages: Vec<BitVec> = (0..4)
+    ///     .map(|i| {
+    ///         let mut msg = BitVec::with_capacity(11);
+    ///         for j in 0..11 {
+    ///             msg.push_bit((i + j) % 2 == 0);
+    ///         }
+    ///         msg
+    ///     })
+    ///     .collect();
+    /// let received: Vec<BitVec> = messages.iter().map(|m| encoder.encode(m)).collect();
+    ///
+    /// let decoded = decoder.decode_batch_gpu(&received).unwrap();
+    /// // Byte-identical to the CPU-only `decode_batch` on valid codewords.
+    /// assert_eq!(decoded, messages);
+    /// # }
+    /// ```
     #[cfg(feature = "hip")]
     pub fn decode_batch_gpu(
         &self,

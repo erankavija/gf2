@@ -13,7 +13,7 @@ A research-grade Rust toolkit for finite field computing and modern coding theor
 - **Codes**: Hamming, BCH, LDPC (belief-propagation, quasi-cyclic), convolutional/Viterbi, product codes, generalized LDPC with Chase–Pyndiah, and GRAND family (ORBGRAND, SO-GRAND).
 - **Standards**: DVB-T2 LDPC + BCH validated against ETSI EN 302 755 test vectors (202/202); 5G NR LDPC BG1/BG2 base graphs with per-i_LS shift tables.
 - **Modulation & channel**: BPSK + Gray-QAM (QPSK/16/64/256) with soft demapping, AWGN, Rician fading, BCJR batch decoder.
-- **Acceleration**: AVX2/AVX-512 CPU kernels (runtime-dispatched) and optional HIP/ROCm GPU kernels (gfx1030) for batched BCJR and Gray-QAM demap.
+- **Acceleration**: AVX2/AVX-512 CPU kernels (runtime-dispatched) and optional HIP/ROCm GPU kernels (gfx1030) for batched BCJR, Gray-QAM demap, LDPC belief propagation, and BCH syndrome evaluation.
 - **Formal verification**: Lean4 proofs of prime-field Montgomery arithmetic and bipedal F_3 arithmetic (add/sub/mul/neg) extracted from the live Rust source via Charon/Aeneas.
 
 Active work is tracked in-repo with [jit](https://github.com/erankavija/just-in-time) under `.jit/` — run `jit status` or browse issues there for the current backlog and in-progress items.
@@ -26,7 +26,7 @@ Active work is tracked in-repo with [jit](https://github.com/erankavija/just-in-
 | [`gf2-coding`](crates/gf2-coding/) | Block codes, streaming codes, GRAND decoders, modem framework, channel models, simulation harness. |
 | [`gf2-algebra`](crates/gf2-algebra/) | Packed F_3 / F_5 / F_7 element types and fast matrix permanents (bipedal F_3, packed F_5 / F_7) on CPU (scalar, AVX2, rayon) and HIP/ROCm GPU. |
 | [`gf2-kernels-simd`](crates/gf2-kernels-simd/) | Isolated unsafe CPU kernels (AVX2, AVX-512, aarch64). |
-| [`gf2-kernels-hip`](crates/gf2-kernels-hip/) | Isolated unsafe HIP/ROCm GPU kernels. Excluded from the default workspace; opt in with `--features hip` on `gf2-coding` (BCJR / Gray-QAM demap) or `gf2-algebra` (batch permanents). |
+| [`gf2-kernels-hip`](crates/gf2-kernels-hip/) | Isolated unsafe HIP/ROCm GPU kernels. Excluded from the default workspace; opt in with `--features hip` on `gf2-coding` (BCJR / Gray-QAM demap / LDPC BP / BCH syndrome eval) or `gf2-algebra` (batch permanents). |
 | [`proofs/`](proofs/) | Lean4 formal-verification package for `gfp/`, `gfpn/`, and `gf2-algebra::packed::bipedal3`. |
 
 All `unsafe` code is confined to the two kernel crates; everything else is `#![deny(unsafe_code)]`.
@@ -113,7 +113,7 @@ See [crates/gf2-coding/README.md](crates/gf2-coding/README.md) for the full menu
 | `gf2-coding` | `simd` | ✅ | Propagates to `gf2-core/simd` |
 | `gf2-coding` | `parallel` | — | Rayon batch encode/decode |
 | `gf2-coding` | `llr-f64` | — | f64 LLRs (default f32) |
-| `gf2-coding` | `hip` | — | HIP/ROCm GPU kernels (BCJR, Gray-QAM demap; requires hipcc) |
+| `gf2-coding` | `hip` | — | HIP/ROCm GPU kernels (BCJR, Gray-QAM demap, LDPC BP, BCH syndrome eval; requires hipcc) |
 | `gf2-algebra` | `simd` | ✅ | AVX2 bipedal3 path (default on) |
 | `gf2-algebra` | `parallel` | ✅ | Rayon batch permanents (default on) |
 | `gf2-algebra` | `f5` | ✅ | F_5 packed types + permanent (default on) |

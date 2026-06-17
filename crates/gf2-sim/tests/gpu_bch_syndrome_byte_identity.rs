@@ -145,9 +145,9 @@ fn run_config(frame_size: FrameSize, label: &str) {
 
 #[test]
 #[ignore = "sim: 200-frame DVB-T2 Short BCH GF(2^14) CPU-vs-GPU syndrome byte-identity + decode-equiv (gfx1030-gated)"]
-fn gpu_bch_syndrome_short_byte_identical_to_cpu() {
+fn test_gpu_bch_syndrome_short_byte_identical_to_cpu() {
     if device_mem_info().is_err() {
-        eprintln!("skipping gpu_bch_syndrome_short_byte_identical_to_cpu: no usable GPU");
+        eprintln!("skipping test_gpu_bch_syndrome_short_byte_identical_to_cpu: no usable GPU");
         return;
     }
     run_config(FrameSize::Short, "dvb-t2-short-r1/2-gf14");
@@ -155,9 +155,9 @@ fn gpu_bch_syndrome_short_byte_identical_to_cpu() {
 
 #[test]
 #[ignore = "sim: 200-frame DVB-T2 Normal BCH GF(2^16) CPU-vs-GPU syndrome byte-identity + decode-equiv (gfx1030-gated)"]
-fn gpu_bch_syndrome_normal_byte_identical_to_cpu() {
+fn test_gpu_bch_syndrome_normal_byte_identical_to_cpu() {
     if device_mem_info().is_err() {
-        eprintln!("skipping gpu_bch_syndrome_normal_byte_identical_to_cpu: no usable GPU");
+        eprintln!("skipping test_gpu_bch_syndrome_normal_byte_identical_to_cpu: no usable GPU");
         return;
     }
     run_config(FrameSize::Normal, "dvb-t2-normal-r1/2-gf16");

@@ -50,9 +50,9 @@ fn eval_points(field: &Gf2mField, two_t: usize) -> Vec<u16> {
 
 #[test]
 #[ignore = "sim: exhaustive GF(2^4) GPU gf_mul vs CPU Gf2mField (gfx1030-gated)"]
-fn gpu_gf16_mul_exhaustive_matches_cpu() {
+fn test_gpu_gf16_mul_exhaustive_matches_cpu() {
     if device_mem_info().is_err() {
-        eprintln!("skipping gpu_gf16_mul_exhaustive_matches_cpu: no usable GPU");
+        eprintln!("skipping test_gpu_gf16_mul_exhaustive_matches_cpu: no usable GPU");
         return;
     }
     let field = gf16();
@@ -85,9 +85,9 @@ fn gpu_gf16_mul_exhaustive_matches_cpu() {
 
 #[test]
 #[ignore = "sim: device exp/log table equality for GF(2^14)/GF(2^16) (gfx1030-gated)"]
-fn gpu_uploaded_tables_equal_cpu_for_dvb_fields() {
+fn test_gpu_uploaded_tables_equal_cpu_for_dvb_fields() {
     if device_mem_info().is_err() {
-        eprintln!("skipping gpu_uploaded_tables_equal_cpu_for_dvb_fields: no usable GPU");
+        eprintln!("skipping test_gpu_uploaded_tables_equal_cpu_for_dvb_fields: no usable GPU");
         return;
     }
     // GF(2^14) (DVB-T2 Short) and GF(2^16) (DVB-T2 Normal) primitive polys.
@@ -123,9 +123,9 @@ fn gpu_uploaded_tables_equal_cpu_for_dvb_fields() {
 
 #[test]
 #[ignore = "sim: small BCH(15)/GF(2^4) Horner fixture GPU vs hand value vs CPU (gfx1030-gated)"]
-fn gpu_bch15_horner_fixture_matches_cpu_and_hand() {
+fn test_gpu_bch15_horner_fixture_matches_cpu_and_hand() {
     if device_mem_info().is_err() {
-        eprintln!("skipping gpu_bch15_horner_fixture_matches_cpu_and_hand: no usable GPU");
+        eprintln!("skipping test_gpu_bch15_horner_fixture_matches_cpu_and_hand: no usable GPU");
         return;
     }
     let field = gf16();
