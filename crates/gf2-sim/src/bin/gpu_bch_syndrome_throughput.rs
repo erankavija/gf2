@@ -289,26 +289,12 @@ mod imp {
             let mut repack_best = f64::INFINITY;
             for _ in 0..repeats {
                 let t0 = Instant::now();
-                // Mirror the hook's per-frame repack (parity reversed ++ message
-                // reversed) so the measured cost matches the real path.
+                // Use the SAME packer as the production hook (SSOT) so the
+                // measured repack cost matches the real path exactly.
                 let wpf = n.div_ceil(64);
                 let mut streams: Vec<u64> = Vec::with_capacity(frames * wpf);
                 for frame in pop {
-                    let mut s = vec![0u64; wpf];
-                    let mut idx = 0usize;
-                    for i in (k..n).rev() {
-                        if frame.get(i) {
-                            s[idx >> 6] |= 1u64 << (idx & 63);
-                        }
-                        idx += 1;
-                    }
-                    for i in (0..k).rev() {
-                        if frame.get(i) {
-                            s[idx >> 6] |= 1u64 << (idx & 63);
-                        }
-                        idx += 1;
-                    }
-                    streams.extend_from_slice(&s);
+                    streams.extend_from_slice(&decoder.pack_coeff_stream(frame));
                 }
                 std::hint::black_box(&streams);
                 repack_best = repack_best.min(t0.elapsed().as_secs_f64());
