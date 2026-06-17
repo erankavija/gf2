@@ -38,7 +38,7 @@ gf2-sim = { path = ".", features = ["test-support"] }
 
 [features]
 default = []
-hip = ["dep:gf2-kernels-hip"]
+hip = ["dep:gf2-kernels-hip", "gf2-coding/hip"]
 llr-f64 = ["gf2-coding/llr-f64"]
 
 # Exposes the canonical test/bench-only deterministic AWGN channel-LLR source
@@ -56,6 +56,14 @@ test-support = []
 [[bin]]
 name = "gpu_ldpc_throughput"
 required-features = ["test-support"]
+
+# GPU BCH syndrome-evaluation throughput bin (issue 9012f8a0 receipt). Builds
+# its own DVB-T2 BCH frames via the encoder (no AwgnLlrSource), so it needs only
+# `hip`. Without `--features hip` the main prints a notice and exits 0:
+#   cargo run -p gf2-sim --release --features hip \
+#       --bin gpu_bch_syndrome_throughput -- --frames 1024 --repeats 5
+[[bin]]
+name = "gpu_bch_syndrome_throughput"
 
 # LDPC-only AWGN-BPSK BLER sweep for the external-library comparison harness
 # (issue 18e69a1a). Uses `testutil::AwgnLlrSource` and the shared

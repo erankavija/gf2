@@ -28,7 +28,8 @@ fn main() {
         .file("hip/bcjr_kernel.hip")
         .file("hip/gray_qam_demapper.hip")
         .file("hip/chacha20_awgn.hip")
-        .file("hip/ldpc_bp.hip");
+        .file("hip/ldpc_bp.hip")
+        .file("hip/bch_syndrome.hip");
 
     let hip_feature = env::var("CARGO_FEATURE_HIP").is_ok();
     if hip_feature {
@@ -81,6 +82,7 @@ fn main() {
     println!("cargo:rerun-if-changed=hip/gray_qam_demapper.hip");
     println!("cargo:rerun-if-changed=hip/chacha20_awgn.hip");
     println!("cargo:rerun-if-changed=hip/ldpc_bp.hip");
+    println!("cargo:rerun-if-changed=hip/bch_syndrome.hip");
     if hip_feature {
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal3.hip");
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal5.hip");

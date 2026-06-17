@@ -50,6 +50,16 @@ pub mod launch_ldpc_bp;
 #[doc(inline)]
 pub use launch_ldpc_bp::{GpuBpAlgorithm, GpuLdpcBp, LdpcGraphLayout, LdpcStreamScratch};
 
+/// Safe host wrapper for the device batch BCH syndrome evaluator
+/// (`hip/bch_syndrome.hip`, design doc §5 / §6 / §7 / §10):
+/// [`GpuBchSyndrome`] and the [`BchFieldTables`] GF(2^m) `exp`/`log` bundle it
+/// uploads. An evaluator (received bits → `2t` syndromes), not a pipeline
+/// stage; Berlekamp-Massey and Chien search stay on the CPU.
+pub mod launch_bch_syndrome;
+
+#[doc(inline)]
+pub use launch_bch_syndrome::{BchFieldTables, GpuBchSyndrome};
+
 /// Per-prime permanent computation kernels (placeholder scaffold).
 ///
 /// Populated by downstream issues ad55b777, b43cdf33, and 5c0505b2.
