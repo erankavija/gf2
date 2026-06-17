@@ -241,11 +241,7 @@ mod imp {
         println!("speedup vs {threads}T     : {speedup_vs_24t:>14.2}x   (context only)");
         println!(
             "GATE (>= 5x vs 1T): {}",
-            if speedup_vs_1t >= 5.0 {
-                "PASS"
-            } else {
-                "FAIL"
-            }
+            if speedup_vs_1t >= 5.0 { "PASS" } else { "FAIL" }
         );
         println!();
 
