@@ -505,6 +505,65 @@ impl<V: UintExt> Gf2mField_<V> {
             .map(|log| log[element.value().to_usize()])
     }
 
+    /// Returns the raw antilog (`exp`) table, if precomputed.
+    ///
+    /// `exp_table[i] = α^i` (as a field-element value) for
+    /// `i = 0..2^m - 1`, where `α` is the primitive element. The table has
+    /// exactly `order = 2^m - 1` entries. Returns `None` for fields without
+    /// tables (`m > 16` or constructed via [`Gf2mField::new`] rather than
+    /// [`with_tables`](Self::with_tables)).
+    ///
+    /// This is the exact device-upload source for the GPU `gf_mul` kernel
+    /// (`gf2-kernels-hip`): handing the *live* table to the device guarantees
+    /// the GPU multiply is bit-identical to the CPU table path
+    /// ([`Gf2mField`] `Mul`), with no on-device table regeneration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let exp = field.exp_table().unwrap();
+    /// assert_eq!(exp.len(), (1 << 4) - 1); // 15 entries
+    /// assert_eq!(exp[0], 1); // α^0 = 1
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)` — returns a borrow of the stored table.
+    pub fn exp_table(&self) -> Option<&[u16]> {
+        self.params.exp_table.as_deref()
+    }
+
+    /// Returns the raw discrete-log (`log`) table, if precomputed.
+    ///
+    /// `log_table[v]` is the discrete log of the field-element value `v`
+    /// (i.e. `α^log_table[v] = v`) for `v = 1..2^m - 1`; `log_table[0]` is a
+    /// don't-care `0` (zero has no log). The table has exactly `2^m` entries.
+    /// Returns `None` for fields without tables (see [`exp_table`](Self::exp_table)).
+    ///
+    /// Paired with [`exp_table`](Self::exp_table), this is the exact
+    /// device-upload source for the GPU `gf_mul` kernel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_core::gf2m::Gf2mField;
+    ///
+    /// let field = Gf2mField::new(4, 0b10011).with_tables();
+    /// let log = field.log_table().unwrap();
+    /// assert_eq!(log.len(), 1 << 4); // 16 entries
+    /// assert_eq!(log[1], 0); // log(1) = 0
+    /// ```
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)` — returns a borrow of the stored table.
+    pub fn log_table(&self) -> Option<&[u16]> {
+        self.params.log_table.as_deref()
+    }
+
     /// Returns α^i where α is the primitive element (if tables exist).
     pub fn exp_value(&self, i: usize) -> Option<Gf2mElement_<V>> {
         if !self.has_tables() {
