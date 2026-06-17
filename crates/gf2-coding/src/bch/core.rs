@@ -622,6 +622,210 @@ impl BchDecoder {
         // Batch evaluate r(x) at all syndrome points.
         r_poly.eval_batch(&eval_points)
     }
+
+    /// Packs one received frame into the GPU coefficient stream in the
+    /// design-doc §3.1 order (parity bits reversed, then message bits
+    /// reversed), as a little-endian packed bit stream of `n` bits.
+    ///
+    /// This is the bit-packed equivalent of the `coeffs` vector
+    /// [`compute_syndromes`](Self::compute_syndromes) builds: coefficient index
+    /// `0` is `received[n-1]` (highest parity bit), index `n-1` is
+    /// `received[0]`. The returned stream is `ceil(n/64)` u64 words.
+    #[cfg(feature = "hip")]
+    fn pack_coeff_stream(&self, received: &BitVec) -> Vec<u64> {
+        let n = self.code.n;
+        let k = self.code.k;
+        let words_per_frame = n.div_ceil(64);
+        let mut stream = vec![0u64; words_per_frame];
+        let mut idx = 0usize;
+        // Parity bits first: received[n-1], received[n-2], ..., received[k].
+        for i in (k..n).rev() {
+            if received.get(i) {
+                stream[idx >> 6] |= 1u64 << (idx & 63);
+            }
+            idx += 1;
+        }
+        // Then message bits: received[k-1], ..., received[0].
+        for i in (0..k).rev() {
+            if received.get(i) {
+                stream[idx >> 6] |= 1u64 << (idx & 63);
+            }
+            idx += 1;
+        }
+        stream
+    }
+
+    /// Computes the syndrome sequence `S_1, ..., S_{2t}` for a batch of
+    /// received words on the GPU, bit-identical to the per-frame CPU
+    /// [`compute_syndromes`](Self::compute_syndromes).
+    ///
+    /// Drives the [`GpuBchSyndrome`](gf2_kernels_hip::GpuBchSyndrome) evaluator:
+    /// it extracts the `exp` / `log` tables and the `α^1..α^(2t)` evaluation
+    /// points from `self.code.field`, reorders each `received` frame into the
+    /// design-doc §3.1 packed coefficient stream, runs the device Horner
+    /// kernel, and rehydrates the returned u16 field values into
+    /// [`Gf2mElement`]s. The CPU `compute_syndromes` is the oracle — the GPU
+    /// multiply IS the uploaded CPU table, so the result is exact (design doc
+    /// §5, §8). Berlekamp-Massey and Chien search remain on the CPU.
+    ///
+    /// Only compiled under `--features hip`.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` — the batch of received codewords (each of length `n`).
+    ///
+    /// # Returns
+    ///
+    /// One `Vec<Gf2mElement>` of length `2t` per frame, in the same order as
+    /// `received`. An empty input yields an empty output.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) on device allocation,
+    /// memcpy, kernel launch, or synchronization failure (an OOM is the
+    /// distinguished [`HipError::OutOfMemory`](gf2_kernels_hip::HipError::OutOfMemory)).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the field has no precomputed tables (the DVB-T2 fields always
+    /// do), if it has no primitive element, or if any `received` frame has
+    /// length != `n`.
+    ///
+    /// # Complexity
+    ///
+    /// O(`batch * 2t * n`) device work; host-side cost is the per-frame
+    /// coefficient repack plus the H2D of `batch * ceil(n/64)` u64 words and the
+    /// D2H of `batch * 2t` u16 syndromes.
+    #[cfg(feature = "hip")]
+    pub fn compute_syndromes_batch_gpu(
+        &self,
+        received: &[BitVec],
+    ) -> Result<Vec<Vec<Gf2mElement>>, gf2_kernels_hip::HipError> {
+        use gf2_kernels_hip::{BchFieldTables, GpuBchSyndrome};
+
+        let field = &self.code.field;
+        let n = self.code.n;
+        let two_t = 2 * self.code.t;
+
+        if received.is_empty() {
+            return Ok(Vec::new());
+        }
+        for (i, frame) in received.iter().enumerate() {
+            assert_eq!(
+                frame.len(),
+                n,
+                "received frame {i} has length {}, expected n = {n}",
+                frame.len()
+            );
+        }
+
+        // Field tables (the exact CPU exp/log tables) and the m = field degree.
+        let exp = field
+            .exp_table()
+            .expect("BCH field must have precomputed tables")
+            .to_vec();
+        let log = field
+            .log_table()
+            .expect("BCH field must have precomputed tables")
+            .to_vec();
+        let tables = BchFieldTables::new(field.degree(), exp, log);
+
+        // Evaluation points α^1..α^(2t), built identically to compute_syndromes.
+        let alpha = field
+            .primitive_element()
+            .expect("Field must have primitive element");
+        let mut eval_points: Vec<u16> = Vec::with_capacity(two_t);
+        let mut alpha_power = alpha.clone();
+        for _ in 0..two_t {
+            eval_points.push(alpha_power.value() as u16);
+            alpha_power = &alpha_power * &alpha;
+        }
+
+        // Pack every frame's coefficient stream (design-doc §3.1 order).
+        let words_per_frame = n.div_ceil(64);
+        let batch = received.len();
+        let mut coeff_streams: Vec<u64> = Vec::with_capacity(batch * words_per_frame);
+        for frame in received {
+            coeff_streams.extend_from_slice(&self.pack_coeff_stream(frame));
+        }
+
+        // One device evaluator sized for this batch; default-stream evaluate.
+        let mut evaluator = GpuBchSyndrome::new(&tables, &eval_points, n, self.code.t, batch, 0)?;
+        let flat = evaluator.evaluate_batch(&coeff_streams, batch)?;
+
+        // Rehydrate u16 field values into Gf2mElements, row-major per frame.
+        let mut out = Vec::with_capacity(batch);
+        for f in 0..batch {
+            let row = &flat[f * two_t..(f + 1) * two_t];
+            out.push(row.iter().map(|&v| field.element(v as u64)).collect());
+        }
+        Ok(out)
+    }
+
+    /// Decodes a batch of received words by computing the syndromes on the GPU
+    /// and feeding them into the CPU Berlekamp-Massey + Chien search pipeline.
+    ///
+    /// This is the GPU counterpart of the per-frame CPU
+    /// [`decode`](HardDecisionDecoder::decode): syndromes come from
+    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu), then
+    /// the IDENTICAL post-syndrome path (zero-syndrome short-circuit,
+    /// [`berlekamp_massey`](Self::berlekamp_massey),
+    /// [`chien_search`](Self::chien_search), bit-position correction, message
+    /// extraction) runs on the CPU. Because the GPU syndromes are byte-identical
+    /// to the CPU syndromes (design doc §5), the decoded messages are identical
+    /// to the CPU-only [`decode_batch`](Self::decode_batch) (issue criterion 5).
+    ///
+    /// Only compiled under `--features hip`.
+    ///
+    /// # Arguments
+    ///
+    /// * `received` — the batch of received codewords (each of length `n`).
+    ///
+    /// # Returns
+    ///
+    /// One decoded message [`BitVec`] of length `k` per frame, in input order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HipError`](gf2_kernels_hip::HipError) on any GPU failure during
+    /// syndrome evaluation.
+    ///
+    /// # Panics
+    ///
+    /// Panics under the same conditions as
+    /// [`compute_syndromes_batch_gpu`](Self::compute_syndromes_batch_gpu).
+    ///
+    /// # Complexity
+    ///
+    /// O(`batch * 2t * n`) device syndrome work plus the per-frame CPU
+    /// Berlekamp-Massey + Chien search (O(`batch * t * n`)).
+    #[cfg(feature = "hip")]
+    pub fn decode_batch_gpu(
+        &self,
+        received: &[BitVec],
+    ) -> Result<Vec<BitVec>, gf2_kernels_hip::HipError> {
+        let all_syndromes = self.compute_syndromes_batch_gpu(received)?;
+        let mut out = Vec::with_capacity(received.len());
+        for (frame, syndromes) in received.iter().zip(all_syndromes.iter()) {
+            // Identical post-syndrome path to the CPU `decode`.
+            if syndromes.iter().all(|s| s.is_zero()) {
+                out.push(self.extract_message(frame));
+                continue;
+            }
+            let lambda = self.berlekamp_massey(syndromes);
+            let error_positions = self.chien_search(&lambda);
+            let mut corrected = frame.clone();
+            for poly_pos in error_positions {
+                // Both parity (poly_pos < r) and message (poly_pos >= r)
+                // degrees map to the same systematic position in the CPU
+                // `decode`, so a single formula covers both.
+                let sys_pos = self.code.n - 1 - poly_pos;
+                corrected.set(sys_pos, !corrected.get(sys_pos));
+            }
+            out.push(self.extract_message(&corrected));
+        }
+        Ok(out)
+    }
 }
 
 impl HardDecisionDecoder for BchDecoder {

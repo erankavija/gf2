@@ -225,6 +225,75 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
+    /// Launch the batch BCH syndrome evaluator.
+    ///
+    /// For each frame and each evaluation point `α^(i+1)` (`i = 0..two_t-1`),
+    /// computes the syndrome `S_{i+1} = r(α^(i+1))` by Horner's rule over
+    /// GF(2^m) using the uploaded `exp` / `log` tables. One device thread per
+    /// `(frame, point)`. Byte-identical to the CPU
+    /// `BchDecoder::compute_syndromes` path (design doc §5, §6, §10).
+    ///
+    /// # Arguments
+    /// - `d_coeffs`: device ptr, `[batch_size * words_per_frame]` u64 packed
+    ///   coefficient streams in the design-doc §3.1 order (parity reversed ++
+    ///   message reversed), little-endian bit order.
+    /// - `d_points`: device ptr, `[two_t]` u16 evaluation points `α^1..α^(2t)`.
+    /// - `d_log`: device ptr, `[2^m]` u16 discrete-log table.
+    /// - `d_exp`: device ptr, `[2^m - 1]` u16 antilog table.
+    /// - `d_syndromes`: device ptr (output), `[batch_size * two_t]` u16
+    ///   syndromes, row-major per frame.
+    /// - `n`: codeword length (coefficient count).
+    /// - `two_t`: number of syndromes per frame (`2t`).
+    /// - `words_per_frame`: `ceil(n / 64)` u64 words per packed coeff stream.
+    /// - `order`: `2^m - 1` (the multiplicative-group order / modulus).
+    /// - `batch_size`: number of frames.
+    /// - `stream`: hipStream_t (null for default stream).
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_bch_syndrome(
+        d_coeffs: *const u64,
+        d_points: *const u16,
+        d_log: *const u16,
+        d_exp: *const u16,
+        d_syndromes: *mut u16,
+        n: c_int,
+        two_t: c_int,
+        words_per_frame: c_int,
+        order: u32,
+        batch_size: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Launch the standalone device `gf_mul` test kernel.
+    ///
+    /// Computes `d_out[j] = gf_mul(d_a[j], d_b[j])` over GF(2^m) using the
+    /// uploaded `exp` / `log` tables — the SAME multiply the syndrome kernel
+    /// uses. Exposed for the exhaustive GF(2^m) correctness rung (design doc
+    /// §10 rung 1). One device thread per pair.
+    ///
+    /// # Arguments
+    /// - `d_a` / `d_b`: device ptrs, `[count]` u16 operands.
+    /// - `d_log`: device ptr, `[2^m]` u16 discrete-log table.
+    /// - `d_exp`: device ptr, `[2^m - 1]` u16 antilog table.
+    /// - `d_out`: device ptr (output), `[count]` u16 products.
+    /// - `order`: `2^m - 1`.
+    /// - `count`: number of `(a, b)` pairs.
+    /// - `stream`: hipStream_t (null for default stream).
+    ///
+    /// # Returns
+    /// 0 on success (hipSuccess), nonzero on error.
+    pub fn launch_gf_mul_test(
+        d_a: *const u16,
+        d_b: *const u16,
+        d_log: *const u16,
+        d_exp: *const u16,
+        d_out: *mut u16,
+        order: u32,
+        count: c_int,
+        stream: *mut c_void,
+    ) -> c_int;
+
     pub fn hip_malloc(ptr: *mut *mut c_void, size: usize) -> c_int;
     pub fn hip_free(ptr: *mut c_void) -> c_int;
     pub fn hip_memcpy_h2d(dst: *mut c_void, src: *const c_void, size: usize) -> c_int;
