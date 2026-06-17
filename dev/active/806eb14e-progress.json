@@ -55,7 +55,7 @@
     "2026-06-13 reconciliation: 8 children rejected as superseded by gf2-sim GPU pipeline (a930be7f LDPC, 75c22fa8 hybrid scheduler, gpu-stages byte-identity + parallelism-pays). Live remainder = BCH syndrome eval + feasibility-decision branch.",
     "GPU AVAILABLE this session: AMD RX 6950 XT / gfx1030, ROCm at /opt/rocm/bin/hipcc. Hard GPU criteria are genuinely measurable.",
     "9012f8a0 design doc (dev/active/gpu-batch-bch-syndrome-plan.md, commit 4cda35c2) authored 2026-06-16 via user interview; it is the worker spec.",
-    "BCH 5x gate is decode-vs-decode: GPU syndrome throughput vs rayon-24T CPU compute_syndromes in isolation (a930be7f precedent). Single-thread reported for context.",
+    "BCH 5x gate is decode-vs-decode: GPU syndrome throughput vs the BEST EXISTING CPU compute_syndromes in isolation = single-thread (rayon-24T is anomalously slower due to Arc<FieldParams> contention, so 1T is the honest divisor; gate met 87.9x). 24T reported for context only.",
     "Worktree-dispatch scripts absent; hand-roll worktrees anchored to main HEAD with SHA verification + post-wave leak check.",
     "Workers must not edit .jit state, pass/fail gates, or mark issues done. Lead owns all transitions.",
     "Feasibility report (24c11004) must reflect rejections honestly: LDPC/scheduler evidence comes from the gf2-sim epic that absorbed those prototypes.",

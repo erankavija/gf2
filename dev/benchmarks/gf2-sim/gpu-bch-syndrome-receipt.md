@@ -64,11 +64,11 @@ with **zero tolerance** — no ULP drift (unlike the LDPC f32 path).
 
 ```
 GPU  syndrome fps :         7267.9
-CPU  1T  fps      :           82.7   (measured on 64 frames, context only)
-CPU 24T  fps      :           11.6
-speedup vs 1T     :          87.88x
-speedup vs 24T    :         625.30x   <-- [hard] gate (>= 5x)
-GATE (>= 5x vs 24T): PASS
+CPU  1T  fps      :           82.7   (measured on 64 frames; best existing CPU path)
+CPU 24T  fps      :           11.6   (context only — slower than 1T, Arc contention)
+speedup vs 1T     :          87.88x   <-- [hard] gate (>= 5x vs best existing CPU path)
+speedup vs 24T    :         625.30x   (context only)
+GATE (>= 5x vs 1T): PASS
 ```
 
 The GPU full call is `compute_syndromes_batch_gpu` measured end-to-end. That
@@ -86,9 +86,11 @@ rate-invariant).
 
 ### `[hard]` 5x gate — MET, by a very large margin
 
-GPU syndrome throughput is **625x** the rayon-24T CPU `compute_syndromes` and
-**87.9x** the single-thread path. The gate (`>= 5x` vs the best production CPU
-path) passes against *either* CPU baseline.
+GPU syndrome throughput is **87.9x** the single-thread CPU `compute_syndromes` —
+the honest best existing production CPU path, since rayon-24T is anomalously
+slower (see the note below). The gate (`>= 5x` vs the best existing CPU path) is
+met at **87.9x**. For context the GPU is also 625x the rayon-24T path, but **24T
+is NOT the gate divisor**.
 
 ### Note on the CPU-24T anomaly (24T slower than 1T)
 
