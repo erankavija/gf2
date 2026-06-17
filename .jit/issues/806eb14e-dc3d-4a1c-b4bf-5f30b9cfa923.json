@@ -23,15 +23,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-06-17T23:06:40.758541573Z"
     },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-17T23:10:51.373651855Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-17T23:07:43.966451137Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-17T23:10:51.373651855Z"
     }
   },
   "context": {},
@@ -40,6 +40,13 @@
       "path": "dev/plans/hip_gpu_prototype_wave.md",
       "commit": null,
       "label": "HIP/ROCm GPU prototype wave plan",
+      "doc_type": "design",
+      "format": "markdown"
+    },
+    {
+      "path": "dev/active/806eb14e-completion-report.md",
+      "commit": "b148f81b",
+      "label": "Epic completion report",
       "doc_type": "design",
       "format": "markdown"
     }
@@ -51,5 +58,5 @@
     "epic:hip-gpu-prototype"
   ],
   "created_at": "2026-02-21T19:35:51.589062719+00:00",
-  "updated_at": "2026-06-17T23:10:51.461441540+00:00"
+  "updated_at": "2026-06-17T23:11:47.136257779+00:00"
 }
