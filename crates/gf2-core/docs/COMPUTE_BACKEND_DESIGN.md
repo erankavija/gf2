@@ -113,7 +113,7 @@ println!("Rank: {}", result.rank);
 [features]
 default = ["rand", "io"]
 parallel = ["rayon"]  # Enable rayon thread pool in CpuBackend
-gpu = ["vulkano"]     # Future: GPU backend
+gpu = ["gf2-kernels-hip"]  # Future: GPU backend via HIP/ROCm (Vulkan superseded — epic 806eb14e)
 ```
 
 ## Testing Strategy
@@ -140,10 +140,14 @@ fn decode_batch(&self, decoder: &dyn Decodable, llrs: &[Vec<Llr>]) -> Vec<Result
 
 ### Phase 3: GPU Backend (Months 3-6)
 
+> Backend direction: **HIP/ROCm** via `gf2-kernels-hip` (the Vulkan path is
+> superseded — see `dev/plans/hip_gpu_prototype_wave.md` / epic `806eb14e`). The
+> sketch below is illustrative; the real GPU code lives in `gf2-kernels-hip`.
+
 ```rust
 #[cfg(feature = "gpu")]
 pub struct GpuBackend {
-    device: vulkano::Device,
+    device: HipDevice, // gf2-kernels-hip handle (Vulkan superseded)
     cpu_fallback: CpuBackend,
 }
 
