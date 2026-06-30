@@ -1,0 +1,30 @@
+diff --git a/charon/src/transform/normalize/expand_associated_types.rs b/charon/src/transform/normalize/expand_associated_types.rs
+index ad49d032..726a4c52 100644
+--- a/charon/src/transform/normalize/expand_associated_types.rs
++++ b/charon/src/transform/normalize/expand_associated_types.rs
+@@ -827,7 +827,24 @@ impl<'a> ComputeItemModifications<'a> {
+                     .iter()
+                     .any(|pat| pat.matches(&self.ctx.translated, &tr.item_meta.name));
+             let remove_assoc_types = !is_self_referential && remove_assoc_type;
+-            let type_constraints = self.compute_constraint_set(&tr.generics);
++            let mut type_constraints = self.compute_constraint_set(&tr.generics);
++            // Patch (project-local, gf2 verify-lean): propagate type constraints
++            // from implied (supertrait) clauses. Mirrors compute_constraint_set's
++            // trait_clauses handling but for `tr.implied_clauses`, rebased under
++            // parent_clause refs. Without this, constraints like `Mul::Output = Self`
++            // on a supertrait are invisible to child traits referencing grandparent
++            // associated types, producing "Could not compute the value of ...Output"
++            // warnings on gfpn quadratic/cubic arithmetic.
++            for clause in &tr.implied_clauses {
++                let trait_id = clause.trait_.skip_binder.id;
++                if let Some(trait_mods) = self.compute_trait_modifications(trait_id).as_processed() {
++                    let base_path = TraitRefPath::parent_clause(clause.clause_id, trait_id);
++                    for (path, ty) in trait_mods.type_constraints.iter_self_paths() {
++                        let path = path.on_tref(&base_path);
++                        type_constraints.insert_path(&path, ty);
++                    }
++                }
++            }
+             let mut modifications =
+                 ItemModifications::from_constraint_set(type_constraints, remove_assoc_types);
+             modifications.next_assoc_type_id = Some(tr.types.next_id());

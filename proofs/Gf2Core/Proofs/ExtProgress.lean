@@ -152,7 +152,9 @@ theorem qinv_progress (hv : ValidExtConfig inst)
     simp only [hr_inv_eq, core.option.Option.map, bind_tc_ok]
     -- Progress through closure call_once
     progress as ⟨closure_r, hclosure_c0, hclosure_c1⟩
-    exact ⟨fun h => (hn0 (by rw [hnorm_def, h.1, h.2]; simp [sq])).elim,
+    -- Aeneas 5220259c normalises the postcondition's `c0 = 0 ∧ c1 = 0 → _`
+    -- antecedent to its curried form `c0 = 0 → c1 = 0 → _`.
+    exact ⟨fun h0 h1 => (hn0 (by rw [hnorm_def, h0, h1]; simp [sq])).elim,
       fun _ => ⟨closure_r, rfl,
         by rw [hclosure_c0, hr_inv_val],
         by rw [hclosure_c1, hr_inv_val]⟩⟩

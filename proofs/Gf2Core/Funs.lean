@@ -42,7 +42,7 @@ def U64.Insts.CoreFmtDisplay : core.fmt.Display Std.U64 := {
 }
 
 /-- Trait implementation: [core::ops::arith::{impl core::ops::arith::Add<u128, u128> for u128}]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 99:8-99:29
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 98:8-98:29
     Name pattern: [core::ops::arith::Add<u128, u128, u128>] -/
 @[reducible, rust_trait_impl "core::ops::arith::Add<u128, u128, u128>"]
 def U128.Insts.CoreOpsArithAddU128U128 : core.ops.arith.Add Std.U128 Std.U128
@@ -51,7 +51,7 @@ def U128.Insts.CoreOpsArithAddU128U128 : core.ops.arith.Add Std.U128 Std.U128
 }
 
 /-- Trait implementation: [core::ops::arith::{impl core::ops::arith::AddAssign<u128> for u128}]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 787:8-787:35
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 786:8-786:35
     Name pattern: [core::ops::arith::AddAssign<u128, u128>] -/
 @[reducible, rust_trait_impl "core::ops::arith::AddAssign<u128, u128>"]
 def U128.Insts.CoreOpsArithAddAssignU128 : core.ops.arith.AddAssign Std.U128
@@ -380,10 +380,10 @@ def gfp.Fp.Insts.CoreCmpPartialEqFp (P : Std.U64) : core.cmp.PartialEq (gfp.Fp
   eq := gfp.Fp.Insts.CoreCmpPartialEqFp.eq
 }
 
-/-- [gf2_core::gfp::{impl core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfp::{impl core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35
     Visibility: public -/
-def gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+def gfp.Fp.Insts.CoreCmpEq.assert_fields_are_eq
   {P : Std.U64} (self : gfp.Fp P) : Result Unit := do
   ok ()
 
@@ -392,8 +392,7 @@ def gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
 @[reducible]
 def gfp.Fp.Insts.CoreCmpEq (P : Std.U64) : core.cmp.Eq (gfp.Fp P) := {
   partialEqInst := gfp.Fp.Insts.CoreCmpPartialEqFp P
-  assert_receiver_is_total_eq :=
-    gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  assert_fields_are_eq := gfp.Fp.Insts.CoreCmpEq.assert_fields_are_eq
 }
 
 /-- [gf2_core::gfp::{impl core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
@@ -410,7 +409,7 @@ def gfp.Fp.Insts.CoreHashHash.hash
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:37-133:41 -/
 @[reducible]
 def gfp.Fp.Insts.CoreHashHash (P : Std.U64) : core.hash.Hash (gfp.Fp P) := {
-  hash := fun {__H : Type} (corehashHasherInst : core.hash.Hasher __H) =>
+  hash := fun {H : Type} (corehashHasherInst : core.hash.Hasher H) =>
     gfp.Fp.Insts.CoreHashHash.hash corehashHasherInst
 }
 
@@ -1559,10 +1558,10 @@ def gfp.specialized.PrimeShape.Insts.CoreCmpPartialEqPrimeShape :
   eq := gfp.specialized.PrimeShape.Insts.CoreCmpPartialEqPrimeShape.eq
 }
 
-/-- [gf2_core::gfp::specialized::{impl core::cmp::Eq for gf2_core::gfp::specialized::PrimeShape}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfp::specialized::{impl core::cmp::Eq for gf2_core::gfp::specialized::PrimeShape}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 101:40-101:42
     Visibility: public -/
-def gfp.specialized.PrimeShape.Insts.CoreCmpEq.assert_receiver_is_total_eq
+def gfp.specialized.PrimeShape.Insts.CoreCmpEq.assert_fields_are_eq
   (self : gfp.specialized.PrimeShape) : Result Unit := do
   ok ()
 
@@ -1572,8 +1571,8 @@ def gfp.specialized.PrimeShape.Insts.CoreCmpEq.assert_receiver_is_total_eq
 def gfp.specialized.PrimeShape.Insts.CoreCmpEq : core.cmp.Eq
   gfp.specialized.PrimeShape := {
   partialEqInst := gfp.specialized.PrimeShape.Insts.CoreCmpPartialEqPrimeShape
-  assert_receiver_is_total_eq :=
-    gfp.specialized.PrimeShape.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  assert_fields_are_eq :=
+    gfp.specialized.PrimeShape.Insts.CoreCmpEq.assert_fields_are_eq
 }
 
 /-- [gf2_core::gfp::specialized::is_mersenne_prime]:
@@ -1744,10 +1743,10 @@ def gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp :
   eq := gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp.eq
 }
 
-/-- [gf2_core::gfp::specialized::{impl core::cmp::Eq for gf2_core::gfp::specialized::GoldilocksFp}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfp::specialized::{impl core::cmp::Eq for gf2_core::gfp::specialized::GoldilocksFp}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfp/specialized.rs', lines 779:33-779:35
     Visibility: public -/
-def gfp.specialized.GoldilocksFp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+def gfp.specialized.GoldilocksFp.Insts.CoreCmpEq.assert_fields_are_eq
   (self : gfp.specialized.GoldilocksFp) : Result Unit := do
   ok ()
 
@@ -1758,8 +1757,8 @@ def gfp.specialized.GoldilocksFp.Insts.CoreCmpEq : core.cmp.Eq
   gfp.specialized.GoldilocksFp := {
   partialEqInst :=
     gfp.specialized.GoldilocksFp.Insts.CoreCmpPartialEqGoldilocksFp
-  assert_receiver_is_total_eq :=
-    gfp.specialized.GoldilocksFp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  assert_fields_are_eq :=
+    gfp.specialized.GoldilocksFp.Insts.CoreCmpEq.assert_fields_are_eq
 }
 
 /-- [gf2_core::gfp::specialized::{impl core::hash::Hash for gf2_core::gfp::specialized::GoldilocksFp}::hash]:
@@ -1777,7 +1776,7 @@ def gfp.specialized.GoldilocksFp.Insts.CoreHashHash.hash
 @[reducible]
 def gfp.specialized.GoldilocksFp.Insts.CoreHashHash : core.hash.Hash
   gfp.specialized.GoldilocksFp := {
-  hash := fun {__H : Type} (corehashHasherInst : core.hash.Hasher __H) =>
+  hash := fun {H : Type} (corehashHasherInst : core.hash.Hasher H) =>
     gfp.specialized.GoldilocksFp.Insts.CoreHashHash.hash corehashHasherInst
 }
 
@@ -2697,14 +2696,8 @@ def gfpn.cubic.CubicExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField : Type}
   Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
   Clause0_Clause0_Clause0_Wide) : core.cmp.Eq (gfpn.cubic.CubicExt C
   Clause0_BaseField Clause0_Clause0_Clause0_Characteristic
-  Clause0_Clause0_Clause0_Wide) := {
-  partialEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt
-    ext_configExtConfigInst
-  assert_receiver_is_total_eq :=
-    gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
-    ext_configExtConfigInst
-}
-
+  Clause0_Clause0_Clause0_Wide) := by
+  sorry
 /-- [gf2_core::gfpn::cubic::{impl core::hash::Hash for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::hash]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 278:4-282:5
     Visibility: public -/
@@ -2799,21 +2792,6 @@ def gfpn.cubic.CubicExt.impl.c2
   := do
   ok self.c2
 
-/-- [gf2_core::gfpn::ext_config::ExtConfig::mul_by_non_residue]:
-    Source: 'crates/gf2-core/src/gfpn/ext_config.rs', lines 100:4-109:5
-    Visibility: public -/
-def gfpn.ext_config.ExtConfig.mul_by_non_residue.default
-  {Self : Type} {Clause0_BaseField : Type}
-  {Clause0_Clause0_Clause0_Characteristic : Type} {Clause0_Clause0_Clause0_Wide
-  : Type} (ExtConfigInst : gfpn.ext_config.ExtConfig Self Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  (x : Clause0_BaseField) :
-  Result Clause0_BaseField
-  := do
-  let t ← ExtConfigInst.NON_RESIDUE
-  ExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithMulInst.mul
-    x t
-
 /-- [gf2_core::gfpn::cubic::{gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::norm]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 352:4-362:5
     Visibility: public -/
@@ -2899,209 +2877,8 @@ def gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   (f : core.fmt.Formatter) :
   Result ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
-  := do
-  let c0_zero ←
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.is_zero
-      self.c0
-  let c1_zero ←
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.is_zero
-      self.c1
-  let c2_zero ←
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.is_zero
-      self.c2
-  if c0_zero
-  then
-    if c1_zero
-    then
-      if c2_zero
-      then
-        let a ← core.fmt.Arguments.from_str (toStr "0")
-        core.fmt.Formatter.write_fmt f a
-      else
-        let a ← core.fmt.rt.Argument.new_display corefmtDisplayInst self.c2
-        let a1 ←
-          core.fmt.Arguments.new
-            (Array.make 8#usize [
-              192#u8, 5#u8, 194#u8, 183#u8, 118#u8, 194#u8, 178#u8, 0#u8
-              ]) (Array.make 1#usize [ a ])
-        let (r, f1) ← core.fmt.Formatter.write_fmt f a1
-        let cf ←
-          core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-            r
-        match cf with
-        | core.ops.control_flow.ControlFlow.Continue _ =>
-          ok (core.result.Result.Ok (), f1)
-        | core.ops.control_flow.ControlFlow.Break residual =>
-          let r1 ←
-            core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-              Unit (core.convert.FromSame core.fmt.Error) residual
-          ok (r1, f1)
-    else
-      let a ← core.fmt.rt.Argument.new_display corefmtDisplayInst self.c1
-      let a1 ←
-        core.fmt.Arguments.new
-          (Array.make 6#usize [ 192#u8, 3#u8, 194#u8, 183#u8, 118#u8, 0#u8 ])
-          (Array.make 1#usize [ a ])
-      let (r, f1) ← core.fmt.Formatter.write_fmt f a1
-      let cf ←
-        core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch r
-      match cf with
-      | core.ops.control_flow.ControlFlow.Continue _ =>
-        if c2_zero
-        then ok (core.result.Result.Ok (), f1)
-        else
-          let a2 ← core.fmt.Arguments.from_str (toStr " + ")
-          let (r1, f2) ← core.fmt.Formatter.write_fmt f1 a2
-          let cf1 ←
-            core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-              r1
-          match cf1 with
-          | core.ops.control_flow.ControlFlow.Continue _ =>
-            let a3 ←
-              core.fmt.rt.Argument.new_display corefmtDisplayInst self.c2
-            let a4 ←
-              core.fmt.Arguments.new
-                (Array.make 8#usize [
-                  192#u8, 5#u8, 194#u8, 183#u8, 118#u8, 194#u8, 178#u8, 0#u8
-                  ]) (Array.make 1#usize [ a3 ])
-            let (r2, f3) ← core.fmt.Formatter.write_fmt f2 a4
-            let cf2 ←
-              core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-                r2
-            match cf2 with
-            | core.ops.control_flow.ControlFlow.Continue _ =>
-              ok (core.result.Result.Ok (), f3)
-            | core.ops.control_flow.ControlFlow.Break residual =>
-              let r3 ←
-                core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                  Unit (core.convert.FromSame core.fmt.Error) residual
-              ok (r3, f3)
-          | core.ops.control_flow.ControlFlow.Break residual =>
-            let r2 ←
-              core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                Unit (core.convert.FromSame core.fmt.Error) residual
-            ok (r2, f2)
-      | core.ops.control_flow.ControlFlow.Break residual =>
-        let r1 ←
-          core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-            Unit (core.convert.FromSame core.fmt.Error) residual
-        ok (r1, f1)
-  else
-    let a ← core.fmt.rt.Argument.new_display corefmtDisplayInst self.c0
-    let a1 ←
-      core.fmt.Arguments.new (Array.make 2#usize [ 192#u8, 0#u8 ])
-        (Array.make 1#usize [ a ])
-    let (r, f1) ← core.fmt.Formatter.write_fmt f a1
-    let cf ←
-      core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch r
-    match cf with
-    | core.ops.control_flow.ControlFlow.Continue _ =>
-      if c1_zero
-      then
-        if c2_zero
-        then ok (core.result.Result.Ok (), f1)
-        else
-          let a2 ← core.fmt.Arguments.from_str (toStr " + ")
-          let (r1, f2) ← core.fmt.Formatter.write_fmt f1 a2
-          let cf1 ←
-            core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-              r1
-          match cf1 with
-          | core.ops.control_flow.ControlFlow.Continue _ =>
-            let a3 ←
-              core.fmt.rt.Argument.new_display corefmtDisplayInst self.c2
-            let a4 ←
-              core.fmt.Arguments.new
-                (Array.make 8#usize [
-                  192#u8, 5#u8, 194#u8, 183#u8, 118#u8, 194#u8, 178#u8, 0#u8
-                  ]) (Array.make 1#usize [ a3 ])
-            let (r2, f3) ← core.fmt.Formatter.write_fmt f2 a4
-            let cf2 ←
-              core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-                r2
-            match cf2 with
-            | core.ops.control_flow.ControlFlow.Continue _ =>
-              ok (core.result.Result.Ok (), f3)
-            | core.ops.control_flow.ControlFlow.Break residual =>
-              let r3 ←
-                core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                  Unit (core.convert.FromSame core.fmt.Error) residual
-              ok (r3, f3)
-          | core.ops.control_flow.ControlFlow.Break residual =>
-            let r2 ←
-              core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                Unit (core.convert.FromSame core.fmt.Error) residual
-            ok (r2, f2)
-      else
-        let a2 ← core.fmt.Arguments.from_str (toStr " + ")
-        let (r1, f2) ← core.fmt.Formatter.write_fmt f1 a2
-        let cf1 ←
-          core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-            r1
-        match cf1 with
-        | core.ops.control_flow.ControlFlow.Continue _ =>
-          let a3 ← core.fmt.rt.Argument.new_display corefmtDisplayInst self.c1
-          let a4 ←
-            core.fmt.Arguments.new
-              (Array.make 6#usize [
-                192#u8, 3#u8, 194#u8, 183#u8, 118#u8, 0#u8
-                ]) (Array.make 1#usize [ a3 ])
-          let (r2, f3) ← core.fmt.Formatter.write_fmt f2 a4
-          let cf2 ←
-            core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-              r2
-          match cf2 with
-          | core.ops.control_flow.ControlFlow.Continue _ =>
-            if c2_zero
-            then ok (core.result.Result.Ok (), f3)
-            else
-              let (r3, f4) ← core.fmt.Formatter.write_fmt f3 a2
-              let cf3 ←
-                core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-                  r3
-              match cf3 with
-              | core.ops.control_flow.ControlFlow.Continue _ =>
-                let a5 ←
-                  core.fmt.rt.Argument.new_display corefmtDisplayInst self.c2
-                let a6 ←
-                  core.fmt.Arguments.new
-                    (Array.make 8#usize [
-                      192#u8, 5#u8, 194#u8, 183#u8, 118#u8, 194#u8, 178#u8,
-                      0#u8
-                      ]) (Array.make 1#usize [ a5 ])
-                let (r4, f5) ← core.fmt.Formatter.write_fmt f4 a6
-                let cf4 ←
-                  core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
-                    r4
-                match cf4 with
-                | core.ops.control_flow.ControlFlow.Continue _ =>
-                  ok (core.result.Result.Ok (), f5)
-                | core.ops.control_flow.ControlFlow.Break residual =>
-                  let r5 ←
-                    core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                      Unit (core.convert.FromSame core.fmt.Error) residual
-                  ok (r5, f5)
-              | core.ops.control_flow.ControlFlow.Break residual =>
-                let r4 ←
-                  core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                    Unit (core.convert.FromSame core.fmt.Error) residual
-                ok (r4, f4)
-          | core.ops.control_flow.ControlFlow.Break residual =>
-            let r3 ←
-              core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-                Unit (core.convert.FromSame core.fmt.Error) residual
-            ok (r3, f3)
-        | core.ops.control_flow.ControlFlow.Break residual =>
-          let r2 ←
-            core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-              Unit (core.convert.FromSame core.fmt.Error) residual
-          ok (r2, f2)
-    | core.ops.control_flow.ControlFlow.Break residual =>
-      let r1 ←
-        core.result.Result.Insts.CoreOpsTry_traitFromResidualResultInfallibleE.from_residual
-          Unit (core.convert.FromSame core.fmt.Error) residual
-      ok (r1, f1)
-
+  := by
+  sorry
 /-- Trait implementation: [gf2_core::gfpn::cubic::{impl core::fmt::Display for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 396:0-434:1 -/
 @[reducible]
@@ -4254,128 +4031,6 @@ def
   Result Clause0_Clause0_Clause0_Characteristic
   := by
   sorry
-/-- Trait implementation: [gf2_core::gfpn::cubic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
-    Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 633:0-751:1 -/
-@[reducible]
-impl_def
-  gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.FiniteField (gfpn.cubic.CubicExt C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  Clause0_Clause0_Clause0_Characteristic (gfpn.cubic.CubicExtWide
-  Clause0_Clause0_Clause0_Wide) := {
-  WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 8#usize
-  PLE_BASE_COLS := ok 1#usize
-  PLE_PANEL_COLS := ok 1#usize
-  corecloneCloneInst := gfpn.cubic.CubicExt.Insts.CoreCloneClone
-    ext_configExtConfigInst
-  corecmpPartialEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpPartialEqCubicExt
-    ext_configExtConfigInst
-  corecmpEqInst := gfpn.cubic.CubicExt.Insts.CoreCmpEq ext_configExtConfigInst
-  corehashHashInst := gfpn.cubic.CubicExt.Insts.CoreHashHash
-    ext_configExtConfigInst
-  corefmtDebugInst := gfpn.cubic.CubicExt.Insts.CoreFmtDebug
-    ext_configExtConfigInst
-  coreopsarithAddInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithAddCubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithAddSelfSharedSelfSelfInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithAddShared0CubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithSubInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithSubCubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithSubSelfSharedSelfSelfInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithSubShared0CubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithMulInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithMulCubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithMulSelfSharedSelfSelfInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithMulShared0CubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithDivInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithDivCubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithDivSelfSharedSelfSelfInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithDivShared0CubicExtCubicExt
-    ext_configExtConfigInst
-  coreopsarithNegInst := gfpn.cubic.CubicExt.Insts.CoreOpsArithNegCubicExt
-    ext_configExtConfigInst
-  coreopsarithAddAssignInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignCubicExt
-    ext_configExtConfigInst
-  coreopsarithAddAssignSelfSharedSelfInst :=
-    gfpn.cubic.CubicExt.Insts.CoreOpsArithAddAssignShared0CubicExt
-    ext_configExtConfigInst
-  corecloneCloneCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneCharacteristicInst
-  corefmtDebugCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugCharacteristicInst
-  corecmpPartialEqCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqCharacteristicInst
-  corecmpEqCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqCharacteristicInst
-  corecloneCloneWideInst := gfpn.cubic.CubicExtWide.Insts.CoreCloneClone
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneWideInst
-  coreopsarithAddWideInst := 
-    gfpn.cubic.CubicExtWide.Insts.CoreOpsArithAddCubicExtWideCubicExtWide
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddWideInst
-  coreopsarithAddAssignWideInst := 
-    gfpn.cubic.CubicExtWide.Insts.CoreOpsArithAddAssignCubicExtWide
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddAssignWideInst
-  characteristic :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.characteristic
-    ext_configExtConfigInst
-  extension_degree :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.extension_degree
-    ext_configExtConfigInst
-  is_zero :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.is_zero
-    ext_configExtConfigInst
-  is_one :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.is_one
-    ext_configExtConfigInst
-  inv :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.inv
-    ext_configExtConfigInst
-  zero_like :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.zero_like
-    ext_configExtConfigInst
-  one_like :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.one_like
-    ext_configExtConfigInst
-  zero_hint :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.zero_hint
-    ext_configExtConfigInst
-  cardinality_log2_hint :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint
-    ext_configExtConfigInst
-  to_wide :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.to_wide
-    ext_configExtConfigInst
-  mul_to_wide :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.mul_to_wide
-    ext_configExtConfigInst
-  mul_product_sum_wide :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.mul_product_sum_wide
-    ext_configExtConfigInst
-  reduce_wide :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.reduce_wide
-    ext_configExtConfigInst
-  reduce_product_sum_wide :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.reduce_product_sum_wide
-    ext_configExtConfigInst
-  max_unreduced_additions :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.max_unreduced_additions
-    ext_configExtConfigInst
-  theorem_4_operand_bound := ok 0#u128
-}
-
 /-- [gf2_core::gfpn::cubic::{impl gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::cubic::CubicExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::order]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 774:4-777:5
     Visibility: public -/
@@ -4419,22 +4074,22 @@ def
   field.traits.ConstField (gfpn.cubic.CubicExt C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   Clause0_Clause0_Clause0_Characteristic (gfpn.cubic.CubicExtWide
-  Clause0_Clause0_Clause0_Wide) := {
-  FiniteFieldInst :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide
-    ext_configExtConfigInst
-  coremarkerCopyInst := gfpn.cubic.CubicExt.Insts.CoreMarkerCopy
-    ext_configExtConfigInst
-  zero :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.zero
-    ext_configExtConfigInst
-  one :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.one
-    ext_configExtConfigInst
-  order :=
-    gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.order
-    ext_configExtConfigInst
-}
+  Clause0_Clause0_Clause0_Wide) := by
+  sorry
+/-- [gf2_core::gfpn::ext_config::ExtConfig::mul_by_non_residue]:
+    Source: 'crates/gf2-core/src/gfpn/ext_config.rs', lines 100:4-109:5
+    Visibility: public -/
+def gfpn.ext_config.ExtConfig.mul_by_non_residue.default
+  {Self : Type} {Clause0_BaseField : Type}
+  {Clause0_Clause0_Clause0_Characteristic : Type} {Clause0_Clause0_Clause0_Wide
+  : Type} (ExtConfigInst : gfpn.ext_config.ExtConfig Self Clause0_BaseField
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
+  (x : Clause0_BaseField) :
+  Result Clause0_BaseField
+  := do
+  let t ← ExtConfigInst.NON_RESIDUE
+  ExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithMulInst.mul
+    x t
 
 /-- [gf2_core::gfpn::quadratic::{gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::new]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 122:4-124:5
@@ -4706,15 +4361,8 @@ def gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq {C : Type} {Clause0_BaseField :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   core.cmp.Eq (gfpn.quadratic.QuadraticExt C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := {
-  partialEqInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt
-    ext_configExtConfigInst
-  assert_receiver_is_total_eq :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
-    ext_configExtConfigInst
-}
-
+  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) := by
+  sorry
 /-- [gf2_core::gfpn::quadratic::{impl core::hash::Hash for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::hash]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 256:4-259:5
     Visibility: public -/
@@ -5976,131 +5624,6 @@ def
   Result Clause0_Clause0_Clause0_Characteristic
   := by
   sorry
-/-- Trait implementation: [gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::FiniteField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}]
-    Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 582:0-696:1 -/
-@[reducible]
-impl_def
-  gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide
-  {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
-  : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
-  gfpn.ext_config.ExtConfig C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
-  field.traits.FiniteField (gfpn.quadratic.QuadraticExt C Clause0_BaseField
-  Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
-  Clause0_Clause0_Clause0_Characteristic (gfpn.quadratic.QuadraticExtWide
-  Clause0_Clause0_Clause0_Wide) := {
-  WINOGRAD_THRESHOLD := ok 32#usize
-  TRI_BASE_THRESHOLD := ok 8#usize
-  PLE_BASE_COLS := ok 1#usize
-  PLE_PANEL_COLS := ok 1#usize
-  corecloneCloneInst := gfpn.quadratic.QuadraticExt.Insts.CoreCloneClone
-    ext_configExtConfigInst
-  corecmpPartialEqInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreCmpPartialEqQuadraticExt
-    ext_configExtConfigInst
-  corecmpEqInst := gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq
-    ext_configExtConfigInst
-  corehashHashInst := gfpn.quadratic.QuadraticExt.Insts.CoreHashHash
-    ext_configExtConfigInst
-  corefmtDebugInst := gfpn.quadratic.QuadraticExt.Insts.CoreFmtDebug
-    ext_configExtConfigInst
-  coreopsarithAddInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddQuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithAddSelfSharedSelfSelfInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddShared0QuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithSubInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubQuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithSubSelfSharedSelfSelfInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithSubShared0QuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithMulInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulQuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithMulSelfSharedSelfSelfInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithMulShared0QuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithDivInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivQuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithDivSelfSharedSelfSelfInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithDivShared0QuadraticExtQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithNegInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithNegQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithAddAssignInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignQuadraticExt
-    ext_configExtConfigInst
-  coreopsarithAddAssignSelfSharedSelfInst :=
-    gfpn.quadratic.QuadraticExt.Insts.CoreOpsArithAddAssignShared0QuadraticExt
-    ext_configExtConfigInst
-  corecloneCloneCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneCharacteristicInst
-  corefmtDebugCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corefmtDebugCharacteristicInst
-  corecmpPartialEqCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpPartialEqCharacteristicInst
-  corecmpEqCharacteristicInst := 
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecmpEqCharacteristicInst
-  corecloneCloneWideInst := gfpn.quadratic.QuadraticExtWide.Insts.CoreCloneClone
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.corecloneCloneWideInst
-  coreopsarithAddWideInst := 
-    gfpn.quadratic.QuadraticExtWide.Insts.CoreOpsArithAddQuadraticExtWideQuadraticExtWide
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddWideInst
-  coreopsarithAddAssignWideInst := 
-    gfpn.quadratic.QuadraticExtWide.Insts.CoreOpsArithAddAssignQuadraticExtWide
-    ext_configExtConfigInst.fieldtraitsConstFieldInst.FiniteFieldInst.coreopsarithAddAssignWideInst
-  characteristic :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.characteristic
-    ext_configExtConfigInst
-  extension_degree :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.extension_degree
-    ext_configExtConfigInst
-  is_zero :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.is_zero
-    ext_configExtConfigInst
-  is_one :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.is_one
-    ext_configExtConfigInst
-  inv :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.inv
-    ext_configExtConfigInst
-  zero_like :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.zero_like
-    ext_configExtConfigInst
-  one_like :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.one_like
-    ext_configExtConfigInst
-  zero_hint :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.zero_hint
-    ext_configExtConfigInst
-  cardinality_log2_hint :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.cardinality_log2_hint
-    ext_configExtConfigInst
-  to_wide :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.to_wide
-    ext_configExtConfigInst
-  mul_to_wide :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.mul_to_wide
-    ext_configExtConfigInst
-  mul_product_sum_wide :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.mul_product_sum_wide
-    ext_configExtConfigInst
-  reduce_wide :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.reduce_wide
-    ext_configExtConfigInst
-  reduce_product_sum_wide :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.reduce_product_sum_wide
-    ext_configExtConfigInst
-  max_unreduced_additions :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.max_unreduced_additions
-    ext_configExtConfigInst
-  theorem_4_operand_bound := ok 0#u128
-}
-
 /-- [gf2_core::gfpn::quadratic::{impl gf2_core::field::traits::ConstField<Clause0_Clause0_Clause0_Characteristic, gf2_core::gfpn::quadratic::QuadraticExtWide<Clause0_Clause0_Clause0_Wide>> for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::order]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 714:4-717:5
     Visibility: public -/
@@ -6143,21 +5666,6 @@ def
   field.traits.ConstField (gfpn.quadratic.QuadraticExt C Clause0_BaseField
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide)
   Clause0_Clause0_Clause0_Characteristic (gfpn.quadratic.QuadraticExtWide
-  Clause0_Clause0_Clause0_Wide) := {
-  FiniteFieldInst :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide
-    ext_configExtConfigInst
-  coremarkerCopyInst := gfpn.quadratic.QuadraticExt.Insts.CoreMarkerCopy
-    ext_configExtConfigInst
-  zero :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.zero
-    ext_configExtConfigInst
-  one :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.one
-    ext_configExtConfigInst
-  order :=
-    gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide.order
-    ext_configExtConfigInst
-}
-
+  Clause0_Clause0_Clause0_Wide) := by
+  sorry
 end gf2_core

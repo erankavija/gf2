@@ -16,7 +16,7 @@ set_option maxRecDepth 2048
 open gf2_algebra
 
 /-- [core::array::from_fn]:
-    Source: '/rustc/library/core/src/array/mod.rs', lines 109:0-111:52
+    Source: '/rustc/library/core/src/array/mod.rs', lines 110:0-112:52
     Name pattern: [core::array::from_fn]
     Visibility: public -/
 @[rust_fun "core::array::from_fn"]
@@ -25,13 +25,12 @@ axiom core.array.from_fn
   core.ops.function.FnMut F Std.Usize T) :
   F → Result (Array T N)
 
-/-- [core::cmp::impls::{impl core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
-    Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
-    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq]
+/-- [core::cmp::impls::{impl core::cmp::Eq for u64}::assert_fields_are_eq]:
+    Source: '/rustc/library/core/src/cmp.rs', lines 1906:12-1906:32
+    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_fields_are_eq]
     Visibility: public -/
-@[rust_fun
-  "core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq"]
-axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
+@[rust_fun "core::cmp::impls::{core::cmp::Eq<u64>}::assert_fields_are_eq"]
+axiom U64.Insts.CoreCmpEq.assert_fields_are_eq : Std.U64 → Result Unit
 
 /-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]:
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 132:4-132:76
@@ -60,7 +59,7 @@ axiom core.fmt.builders.DebugStruct.finish
     (core.fmt.builders.DebugStruct → core.fmt.builders.DebugStruct))
 
 /-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]:
-    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2441:4-2441:76
+    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2448:4-2448:76
     Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]
     Visibility: public -/
 @[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct"]
@@ -77,19 +76,6 @@ axiom core.fmt.Formatter.debug_struct
 axiom U64.Insts.CoreHashHash.hash
   {H : Type} (HasherInst : core.hash.Hasher H) : Std.U64 → H → Result H
 
-/-- [core::iter::adapters::enumerate::{impl core::iter::traits::iterator::Iterator<(usize, Clause0_Item)> for core::iter::adapters::enumerate::Enumerate<I>}::next]:
-    Source: '/rustc/library/core/src/iter/adapters/enumerate.rs', lines 79:4-79:64
-    Name pattern: [core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<core::iter::adapters::enumerate::Enumerate<@I>, (usize, @Clause0_Item)>}::next]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::adapters::enumerate::{core::iter::traits::iterator::Iterator<core::iter::adapters::enumerate::Enumerate<@I>, (usize, @Clause0_Item)>}::next"]
-axiom
-  core.iter.adapters.enumerate.Enumerate.Insts.CoreIterTraitsIteratorIteratorPairUsizeClause0_Item.next
-  {I : Type} {Clause0_Item : Type} (traitsiteratorIteratorInst :
-  core.iter.traits.iterator.Iterator I Clause0_Item) :
-  core.iter.adapters.enumerate.Enumerate I → Result ((Option (Std.Usize ×
-    Clause0_Item)) × (core.iter.adapters.enumerate.Enumerate I))
-
 /-- [core::iter::adapters::map::{impl core::iter::traits::iterator::Iterator<B> for core::iter::adapters::map::Map<I, F>}::collect]:
     Source: '/rustc/library/core/src/iter/adapters/map.rs', lines 99:0-101:27
     Name pattern: [core::iter::adapters::map::{core::iter::traits::iterator::Iterator<core::iter::adapters::map::Map<@I, @F>, @B>}::collect]
@@ -105,7 +91,7 @@ axiom core.iter.adapters.map.Map.Insts.CoreIterTraitsIteratorIterator.collect
   core.iter.adapters.map.Map I F → Result B1
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::next]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 84:4-84:44
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 82:4-82:44
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::next]
     Visibility: public -/
 @[rust_fun
@@ -119,7 +105,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.next
     Clause1_Item)) × (core.iter.adapters.zip.Zip A B))
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::all]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 74:0-77:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::all]
     Visibility: public -/
 @[rust_fun
@@ -135,7 +121,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.all
     (core.iter.adapters.zip.Zip A B))
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::collect]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 74:0-77:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::collect]
     Visibility: public -/
 @[rust_fun
@@ -151,7 +137,7 @@ axiom
   core.iter.adapters.zip.Zip A B → Result B1
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::enumerate]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 74:0-77:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::enumerate]
     Visibility: public -/
 @[rust_fun
@@ -166,7 +152,7 @@ axiom
     (core.iter.adapters.enumerate.Enumerate (core.iter.adapters.zip.Zip A B))
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::map]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 74:0-77:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::map]
     Visibility: public -/
 @[rust_fun
@@ -182,7 +168,7 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.map
     (core.iter.adapters.zip.Zip A B) F)
 
 /-- [core::iter::adapters::zip::{impl core::iter::traits::iterator::Iterator<(Clause0_Item, Clause1_Item)> for core::iter::adapters::zip::Zip<A, B>}::zip]:
-    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 76:0-79:16
+    Source: '/rustc/library/core/src/iter/adapters/zip.rs', lines 74:0-77:16
     Name pattern: [core::iter::adapters::zip::{core::iter::traits::iterator::Iterator<core::iter::adapters::zip::Zip<@A, @B>, (@Clause0_Item, @Clause1_Item)>}::zip]
     Visibility: public -/
 @[rust_fun
@@ -197,60 +183,8 @@ axiom core.iter.adapters.zip.Zip.Insts.CoreIterTraitsIteratorIteratorPair.zip
   core.iter.adapters.zip.Zip A B → U → Result (core.iter.adapters.zip.Zip
     (core.iter.adapters.zip.Zip A B) Clause2_IntoIter)
 
-/-- [core::iter::range::{impl core::iter::range::Step for u64}::backward_checked]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 289:16-289:74
-    Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::backward_checked]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<u64>}::backward_checked"]
-axiom U64.Insts.CoreIterRangeStep.backward_checked
-  : Std.U64 → Std.Usize → Result (Option Std.U64)
-
-/-- [core::iter::range::{impl core::iter::range::Step for u64}::forward_checked]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 281:16-281:73
-    Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::forward_checked]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<u64>}::forward_checked"]
-axiom U64.Insts.CoreIterRangeStep.forward_checked
-  : Std.U64 → Std.Usize → Result (Option Std.U64)
-
-/-- [core::iter::range::{impl core::iter::range::Step for u64}::steps_between]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 270:16-270:84
-    Name pattern: [core::iter::range::{core::iter::range::Step<u64>}::steps_between]
-    Visibility: public -/
-@[rust_fun "core::iter::range::{core::iter::range::Step<u64>}::steps_between"]
-axiom U64.Insts.CoreIterRangeStep.steps_between
-  : Std.U64 → Std.U64 → Result (Std.Usize × (Option Std.Usize))
-
-/-- [core::iter::range::{impl core::iter::range::Step for u128}::backward_checked]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 388:16-388:74
-    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::backward_checked]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<u128>}::backward_checked"]
-axiom U128.Insts.CoreIterRangeStep.backward_checked
-  : Std.U128 → Std.Usize → Result (Option Std.U128)
-
-/-- [core::iter::range::{impl core::iter::range::Step for u128}::forward_checked]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 383:16-383:73
-    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::forward_checked]
-    Visibility: public -/
-@[rust_fun
-  "core::iter::range::{core::iter::range::Step<u128>}::forward_checked"]
-axiom U128.Insts.CoreIterRangeStep.forward_checked
-  : Std.U128 → Std.Usize → Result (Option Std.U128)
-
-/-- [core::iter::range::{impl core::iter::range::Step for u128}::steps_between]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 370:16-370:84
-    Name pattern: [core::iter::range::{core::iter::range::Step<u128>}::steps_between]
-    Visibility: public -/
-@[rust_fun "core::iter::range::{core::iter::range::Step<u128>}::steps_between"]
-axiom U128.Insts.CoreIterRangeStep.steps_between
-  : Std.U128 → Std.U128 → Result (Std.Usize × (Option Std.Usize))
-
 /-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::all]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Source: '/rustc/library/core/src/iter/range.rs', lines 980:0-980:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::all]
     Visibility: public -/
 @[rust_fun
@@ -261,7 +195,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.all
   core.ops.range.Range A → F → Result (Bool × (core.ops.range.Range A))
 
 /-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::collect]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Source: '/rustc/library/core/src/iter/range.rs', lines 980:0-980:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::collect]
     Visibility: public -/
 @[rust_fun
@@ -272,7 +206,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.collect
   core.ops.range.Range A → Result B
 
 /-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::map]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Source: '/rustc/library/core/src/iter/range.rs', lines 980:0-980:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::map]
     Visibility: public -/
 @[rust_fun
@@ -284,7 +218,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.map
     (core.ops.range.Range A) F)
 
 /-- [core::iter::range::{impl core::iter::traits::iterator::Iterator<A> for core::ops::range::Range<A>}::zip]:
-    Source: '/rustc/library/core/src/iter/range.rs', lines 852:0-852:40
+    Source: '/rustc/library/core/src/iter/range.rs', lines 980:0-980:40
     Name pattern: [core::iter::range::{core::iter::traits::iterator::Iterator<core::ops::range::Range<@A>, @A>}::zip]
     Visibility: public -/
 @[rust_fun
@@ -297,7 +231,7 @@ axiom core.ops.range.Range.Insts.CoreIterTraitsIteratorIterator.zip
     (core.ops.range.Range A) Clause1_IntoIter)
 
 /-- [core::iter::traits::iterator::Iterator::zip]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 626:4-629:24
+    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 629:4-632:24
     Name pattern: [core::iter::traits::iterator::Iterator::zip]
     Visibility: public -/
 @[rust_fun "core::iter::traits::iterator::Iterator::zip"]
@@ -309,7 +243,7 @@ axiom core.iter.traits.iterator.Iterator.zip.default
   Self → U → Result (core.iter.adapters.zip.Zip Self Clause1_IntoIter)
 
 /-- [core::iter::traits::iterator::Iterator::map]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 789:4-792:34
+    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 831:4-834:34
     Name pattern: [core::iter::traits::iterator::Iterator::map]
     Visibility: public -/
 @[rust_fun "core::iter::traits::iterator::Iterator::map"]
@@ -320,18 +254,8 @@ axiom core.iter.traits.iterator.Iterator.map.default
   Clause0_Item B) :
   Self → F → Result (core.iter.adapters.map.Map Self F)
 
-/-- [core::iter::traits::iterator::Iterator::enumerate]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 1005:4-1007:20
-    Name pattern: [core::iter::traits::iterator::Iterator::enumerate]
-    Visibility: public -/
-@[rust_fun "core::iter::traits::iterator::Iterator::enumerate"]
-axiom core.iter.traits.iterator.Iterator.enumerate.default
-  {Self : Type} {Clause0_Item : Type} (IteratorInst :
-  core.iter.traits.iterator.Iterator Self Clause0_Item) :
-  Self → Result (core.iter.adapters.enumerate.Enumerate Self)
-
 /-- [core::iter::traits::iterator::Iterator::all]:
-    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 2809:4-2812:37
+    Source: '/rustc/library/core/src/iter/traits/iterator.rs', lines 2831:4-2834:37
     Name pattern: [core::iter::traits::iterator::Iterator::all]
     Visibility: public -/
 @[rust_fun "core::iter::traits::iterator::Iterator::all"]
@@ -350,14 +274,14 @@ axiom core.iter.traits.iterator.Iterator.all.default
 axiom core.num.U128.trailing_zeros : Std.U128 → Result Std.U32
 
 /-- [core::num::{usize}::div_ceil]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3657:8-3657:54
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3755:8-3755:54
     Name pattern: [core::num::{usize}::div_ceil]
     Visibility: public -/
 @[rust_fun "core::num::{usize}::div_ceil"]
 axiom core.num.Usize.div_ceil : Std.Usize → Std.Usize → Result Std.Usize
 
 /-- [core::ops::arith::{impl core::ops::arith::Add<u128, u128> for u128}::add]:
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 104:12-104:41
     Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add]
     Visibility: public -/
 @[rust_fun "core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add"]
@@ -365,7 +289,7 @@ axiom U128.Insts.CoreOpsArithAddU128U128.add
   : Std.U128 → Std.U128 → Result Std.U128
 
 /-- [core::ops::arith::{impl core::ops::arith::AddAssign<u128> for u128}::add_assign]:
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 790:12-790:47
     Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign]
     Visibility: public -/
 @[rust_fun
@@ -564,13 +488,13 @@ axiom gf2_core.gfp.Fp.Insts.CoreCloneClone.clone
 axiom gf2_core.gfp.Fp.Insts.CoreCmpPartialEqFp.eq
   {P : Std.U64} : gf2_core.gfp.Fp P → gf2_core.gfp.Fp P → Result Bool
 
-/-- [gf2_core::gfp::{impl core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfp::{impl core::cmp::Eq for gf2_core::gfp::Fp<P>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfp/mod.rs', lines 133:33-133:35
-    Name pattern: [gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_receiver_is_total_eq]
+    Name pattern: [gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_fields_are_eq]
     Visibility: public -/
 @[rust_fun
-  "gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_receiver_is_total_eq"]
-axiom gf2_core.gfp.Fp.Insts.CoreCmpEq.assert_receiver_is_total_eq
+  "gf2_core::gfp::{core::cmp::Eq<gf2_core::gfp::Fp<@P>>}::assert_fields_are_eq"]
+axiom gf2_core.gfp.Fp.Insts.CoreCmpEq.assert_fields_are_eq
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Unit
 
 /-- [gf2_core::gfp::{impl core::hash::Hash for gf2_core::gfp::Fp<P>}::hash]:
@@ -827,41 +751,40 @@ axiom
   gf2_core.gfp.Fp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic
   {P : Std.U64} : gf2_core.gfp.Fp P → Result Std.U64
 
-/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 137:0-137:23
     Visibility: public -/
-axiom packed.bipedal3.Bipedal3.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.bipedal3.Bipedal3.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3 → Result Unit
 
-/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Vec}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 1769:0-1769:26
     Visibility: public -/
-axiom packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.bipedal3.Bipedal3Vec.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3Vec → Result Unit
 
-/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::bipedal3::{impl core::cmp::Eq for gf2_algebra::packed::bipedal3::Bipedal3Matrix}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2912:0-2912:29
     Visibility: public -/
-axiom
-  packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.bipedal3.Bipedal3Matrix.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.bipedal3.Bipedal3Matrix → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 260:0-260:22
     Visibility: public -/
-axiom packed.packed5.Packed5.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.packed5.Packed5.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5 → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Vec}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 939:0-939:25
     Visibility: public -/
-axiom packed.packed5.Packed5Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.packed5.Packed5Vec.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5Vec → Result Unit
 
-/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed5::{impl core::cmp::Eq for gf2_algebra::packed::packed5::Packed5Matrix}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1417:0-1417:28
     Visibility: public -/
-axiom packed.packed5.Packed5Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.packed5.Packed5Matrix.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed5.Packed5Matrix → Result Unit
 
 /-- [gf2_algebra::packed::packed7::build_add_lut]:
@@ -891,15 +814,15 @@ axiom packed.packed7.SUB_LUT : Result (Array Std.U8 65536#usize)
     Visibility: public -/
 axiom packed.packed7.MUL_LUT : Result (Array Std.U8 65536#usize)
 
-/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Vec}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Vec}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1021:0-1021:25
     Visibility: public -/
-axiom packed.packed7.Packed7Vec.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.packed7.Packed7Vec.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed7.Packed7Vec → Result Unit
 
-/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Matrix}::assert_receiver_is_total_eq]:
+/-- [gf2_algebra::packed::packed7::{impl core::cmp::Eq for gf2_algebra::packed::packed7::Packed7Matrix}::assert_fields_are_eq]:
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1378:0-1378:28
     Visibility: public -/
-axiom packed.packed7.Packed7Matrix.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom packed.packed7.Packed7Matrix.Insts.CoreCmpEq.assert_fields_are_eq
   : packed.packed7.Packed7Matrix → Result Unit
 
