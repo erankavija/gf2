@@ -115,3 +115,48 @@ pub fn install_campaign_subscriber(config: &PipelineConfig) -> Result<(), SetGlo
     let subscriber = registry().with(layer);
     tracing::subscriber::set_global_default(subscriber)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::num::NonZeroUsize;
+
+    fn minimal_config(path: Option<std::path::PathBuf>) -> PipelineConfig {
+        PipelineConfig {
+            seed: 0,
+            esn0_db_points: vec![],
+            target_errors: 0,
+            max_frames: 0,
+            heartbeat_every_frames: 0,
+            checkpoint_dir: None,
+            tracing_log_path: path,
+            parallelism: NonZeroUsize::new(1).unwrap(),
+            gpu_enabled: false,
+            strict_gpu: false,
+            diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
+        }
+    }
+
+    #[test]
+    fn test_install_campaign_subscriber_noop_when_no_path() {
+        // tracing_log_path = None → early return Ok(()) before touching global state.
+        let cfg = minimal_config(None);
+        let result = install_campaign_subscriber(&cfg);
+        assert!(result.is_ok(), "None path must return Ok: {result:?}");
+    }
+
+    #[test]
+    fn test_install_campaign_subscriber_bad_path_is_noop() {
+        // A path in a nonexistent directory → file::open Err → Ok(()) degraded.
+        let cfg = minimal_config(Some(std::path::PathBuf::from(
+            "/this/path/cannot/exist/trace_gf2sim.json",
+        )));
+        // The file-open error returns Ok(()) before set_global_default is called.
+        let result = install_campaign_subscriber(&cfg);
+        assert!(
+            result.is_ok(),
+            "bad-path must return Ok (degraded): {result:?}"
+        );
+    }
+}

@@ -153,3 +153,57 @@ impl From<&SimulationConfig> for PipelineConfig {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gf2_coding::simulation::SimulationConfig;
+    use std::num::NonZeroUsize;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_from_simulation_config_maps_all_fields() {
+        let sc = SimulationConfig {
+            rng_seed: Some(42),
+            eb_n0_range_db: vec![3.0, 4.0, 5.0],
+            min_errors: 50,
+            max_frames: 10000,
+            max_decoder_iterations: 50,
+            heartbeat_every_frames: Some(100),
+            checkpoint_dir: Some(PathBuf::from("/tmp/cp")),
+            tracing_log_path: Some(PathBuf::from("/tmp/trace.json")),
+            output_path: None,
+        };
+        let pc = PipelineConfig::from(&sc);
+        assert_eq!(pc.seed, 42);
+        assert_eq!(pc.esn0_db_points, vec![3.0, 4.0, 5.0]);
+        assert_eq!(pc.target_errors, 50);
+        assert_eq!(pc.max_frames, 10000);
+        assert_eq!(pc.heartbeat_every_frames, 100);
+        assert_eq!(pc.checkpoint_dir, Some(PathBuf::from("/tmp/cp")));
+        assert_eq!(pc.tracing_log_path, Some(PathBuf::from("/tmp/trace.json")));
+        assert_eq!(pc.parallelism, NonZeroUsize::new(1).unwrap());
+        assert!(!pc.gpu_enabled);
+        assert!(!pc.strict_gpu);
+        assert!(pc.diagnostic_dump_dir.is_none());
+        assert!(pc.inject_gpu_oom_modulus.is_none());
+    }
+
+    #[test]
+    fn test_from_simulation_config_none_seed_defaults_to_zero() {
+        let sc = SimulationConfig {
+            rng_seed: None,
+            eb_n0_range_db: vec![],
+            min_errors: 0,
+            max_frames: 0,
+            max_decoder_iterations: 0,
+            heartbeat_every_frames: None,
+            checkpoint_dir: None,
+            tracing_log_path: None,
+            output_path: None,
+        };
+        let pc = PipelineConfig::from(&sc);
+        assert_eq!(pc.seed, 0);
+        assert_eq!(pc.heartbeat_every_frames, 0);
+    }
+}

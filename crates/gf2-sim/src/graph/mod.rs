@@ -1545,4 +1545,16 @@ mod tests {
             Ok(_) => panic!("expected FallbackRoleConflict, got a built pipeline"),
         }
     }
+
+    #[test]
+    fn test_chain_default_is_same_as_new() {
+        // Chain::default() delegates to Chain::new(); the result is an empty chain.
+        let chain = Chain::default();
+        let pipeline = chain.build().unwrap();
+        assert_eq!(
+            pipeline.stage_count(),
+            0,
+            "default chain builds an empty pipeline"
+        );
+    }
 }

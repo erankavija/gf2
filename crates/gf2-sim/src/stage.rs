@@ -789,4 +789,145 @@ mod tests {
             "the stateless fallback must process the input"
         );
     }
+
+    #[test]
+    fn test_prefers_soa_default_returns_true() {
+        // The default Stage::prefers_soa() must return true (Doubler does not
+        // override it, so this exercises the provided default).
+        assert!(Doubler.prefers_soa());
+    }
+
+    #[test]
+    fn test_anystage_default_method_impls() {
+        // A minimal AnyStage impl that does NOT override the three default methods
+        // (stage_as_any, default_scratch, name, cpu_fallback_process_any).
+        struct MinimalAny;
+        impl AnyStage for MinimalAny {
+            fn input_type(&self) -> std::any::TypeId {
+                std::any::TypeId::of::<InBatch>()
+            }
+            fn output_type(&self) -> std::any::TypeId {
+                std::any::TypeId::of::<OutBatch>()
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::CpuOnly
+            }
+            fn fallback_kind(&self) -> FallbackKind {
+                FallbackKind::None
+            }
+            fn process_any(
+                &self,
+                _: &dyn TypedBatch,
+                _: &mut dyn AnyScratch,
+            ) -> Result<Box<dyn TypedBatch>, StageError> {
+                Ok(Box::new(OutBatch(0)))
+            }
+        }
+
+        let m = MinimalAny;
+        // Default impl of stage_as_any returns None.
+        assert!(m.stage_as_any().is_none());
+        // Default impl of default_scratch returns () boxed.
+        let mut scratch = m.default_scratch();
+        assert!((*scratch).as_any_mut().downcast_mut::<()>().is_some());
+        // Default impl of name returns "unnamed-stage".
+        assert_eq!(m.name(), "unnamed-stage");
+        // Default impl of cpu_fallback_process_any returns None.
+        let input: Box<dyn TypedBatch> = Box::new(InBatch(0));
+        assert!(m
+            .cpu_fallback_process_any(input.as_ref(), scratch.as_mut())
+            .is_none());
+    }
+
+    #[test]
+    fn test_fallback_kind_registered_for_stage_with_fallback() {
+        // Build a GPU stage whose cpu_fallback() returns Some; the erased handle
+        // must report FallbackKind::Registered (not FallbackKind::None).
+        struct UnitFb2;
+        impl Stage<InBatch, OutBatch> for UnitFb2 {
+            type Scratch = ();
+            type CpuFallback = Self;
+            fn process(&self, i: &InBatch, _: &mut ()) -> Result<OutBatch, StageError> {
+                Ok(OutBatch(i.0))
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::CpuOnly
+            }
+        }
+        struct GpuWithFb {
+            fb: UnitFb2,
+        }
+        impl Stage<InBatch, OutBatch> for GpuWithFb {
+            type Scratch = ();
+            type CpuFallback = UnitFb2;
+            fn process(&self, _: &InBatch, _: &mut ()) -> Result<OutBatch, StageError> {
+                Ok(OutBatch(0))
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::GpuOnly
+            }
+            fn cpu_fallback(&self) -> Option<&UnitFb2> {
+                Some(&self.fb)
+            }
+        }
+        let erased: Box<dyn AnyStage> = erase(GpuWithFb { fb: UnitFb2 });
+        assert_eq!(erased.fallback_kind(), FallbackKind::Registered);
+    }
+
+    #[test]
+    fn test_process_any_scratch_type_mismatch() {
+        // Doubler expects Scratch = u32; passing u64 triggers TypeMismatch.
+        let erased: Box<dyn AnyStage> = erase(Doubler);
+        let input: Box<dyn TypedBatch> = Box::new(InBatch(5));
+        let mut wrong_scratch: Box<dyn AnyScratch> = Box::new(0u64);
+        let result = erased.process_any(input.as_ref(), wrong_scratch.as_mut());
+        assert!(
+            matches!(result, Err(StageError::TypeMismatch { .. })),
+            "expected TypeMismatch for wrong scratch type"
+        );
+    }
+
+    #[test]
+    fn test_cpu_fallback_process_any_type_mismatch_on_wrong_input() {
+        // A stage with a ()-scratch fallback (so the §11 guard passes), but the
+        // input type is wrong — must return TypeMismatch via the erased hook.
+        struct UnitFb3;
+        impl Stage<InBatch, OutBatch> for UnitFb3 {
+            type Scratch = ();
+            type CpuFallback = Self;
+            fn process(&self, i: &InBatch, _: &mut ()) -> Result<OutBatch, StageError> {
+                Ok(OutBatch(i.0))
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::CpuOnly
+            }
+        }
+        struct GpuWithUnitFb3 {
+            fb: UnitFb3,
+        }
+        impl Stage<InBatch, OutBatch> for GpuWithUnitFb3 {
+            type Scratch = ();
+            type CpuFallback = UnitFb3;
+            fn process(&self, _: &InBatch, _: &mut ()) -> Result<OutBatch, StageError> {
+                Ok(OutBatch(0))
+            }
+            fn execution_class(&self) -> ExecutionClass {
+                ExecutionClass::GpuOnly
+            }
+            fn cpu_fallback(&self) -> Option<&UnitFb3> {
+                Some(&self.fb)
+            }
+        }
+        let erased: Box<dyn AnyStage> = erase(GpuWithUnitFb3 { fb: UnitFb3 });
+        // Feed OutBatch (wrong type) as input; the fallback expects InBatch.
+        let wrong_input: Box<dyn TypedBatch> = Box::new(OutBatch(99));
+        let mut scratch = erased.default_scratch();
+        let result = erased
+            .cpu_fallback_process_any(wrong_input.as_ref(), scratch.as_mut())
+            .expect("fallback IS registered");
+        assert!(
+            matches!(result, Err(StageError::TypeMismatch { .. })),
+            "wrong input type must produce TypeMismatch"
+        );
+    }
 }

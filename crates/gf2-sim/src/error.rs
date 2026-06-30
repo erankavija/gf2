@@ -296,3 +296,47 @@ impl std::fmt::Display for StageError {
 }
 
 impl std::error::Error for StageError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::any::TypeId;
+
+    #[test]
+    fn test_stage_error_display_recoverable() {
+        let r = StageError::Recoverable(RecoverableError::OutOfMemory {
+            device_id: 0,
+            bytes_requested: 1024,
+        });
+        let s = format!("{r}");
+        assert!(s.contains("recoverable"), "Recoverable variant: {s}");
+    }
+
+    #[test]
+    fn test_stage_error_display_fatal() {
+        let f = StageError::Fatal(FatalError::KernelLaunch {
+            hip_code: 42,
+            kernel: "test_kernel",
+            args: "args".to_string(),
+        });
+        let s = format!("{f}");
+        assert!(s.contains("fatal"), "Fatal variant: {s}");
+    }
+
+    #[test]
+    fn test_stage_error_display_type_mismatch() {
+        let tm = StageError::TypeMismatch {
+            expected: TypeId::of::<u32>(),
+            actual: TypeId::of::<u64>(),
+        };
+        let s = format!("{tm}");
+        assert!(s.contains("downcast"), "TypeMismatch variant: {s}");
+    }
+
+    #[test]
+    fn test_stage_error_is_error_trait() {
+        // Verify StageError implements std::error::Error.
+        let e: &dyn std::error::Error = &StageError::Fatal(FatalError::DeviceUnavailable);
+        assert!(!format!("{e}").is_empty());
+    }
+}

@@ -75,3 +75,30 @@ pub struct Edge {
 /// An opaque, stable identifier for a stage within one pipeline build.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct StageId(pub u32);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::stage::BatchSize;
+
+    #[derive(Clone)]
+    struct TestBatch(#[allow(dead_code)] u32);
+    impl BatchSize for TestBatch {
+        fn batch_size(&self) -> usize {
+            1
+        }
+    }
+
+    #[test]
+    fn test_connector_new_stores_fields() {
+        let c = Connector::<TestBatch>::new(8, 64800);
+        assert_eq!(c.batch_size, 8);
+        assert_eq!(c.frame_len_bits, 64800);
+    }
+
+    #[test]
+    fn test_stage_id_ordering() {
+        assert!(StageId(0) < StageId(1));
+        assert_eq!(StageId(5), StageId(5));
+    }
+}
