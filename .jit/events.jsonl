@@ -6328,3 +6328,11 @@
 {"type":"issue_completed","id":"6b87f71a-7f7f-4789-bce7-0d43b1ed22eb","issue_id":"1fa9c5d0-41d2-4814-8b3f-7c48bd2c595a","timestamp":"2026-06-30T20:59:14.200036473Z"}
 {"type":"issue_state_changed","id":"877f2246-b67a-459f-8c3b-9234a444dc96","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T20:59:14.499959952Z","from":"ready","to":"in_progress"}
 {"type":"issue_claimed","id":"864d58b0-c806-4384-8d46-754c080f0cfe","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T20:59:14.500161692Z","assignee":"agent:claude"}
+{"type":"gate_failed","id":"169dc8a9-498f-499f-8d93-4bc980c5ba62","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T22:55:30.999606662Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_failed","id":"2532fefe-d458-4d97-ab17-50757af05e7a","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T22:57:53.169859184Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"7d600dd1-baf4-4880-af60-84e1eb976078","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T23:00:54.854595175Z","gate_key":"cargo-ci","updated_by":"auto:executor"}
+{"type":"gate_passed","id":"b9244f82-2b2c-4e79-acdf-3e4c8f46dcc3","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T23:03:00.517875867Z","gate_key":"code-review","updated_by":"auto:executor"}
+{"type":"issue_state_changed","id":"0afc6f35-557c-4e12-a225-478a676459ee","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T23:03:21.021353082Z","from":"in_progress","to":"done"}
+{"type":"issue_completed","id":"520b149b-af10-4a23-9fbd-8fd9459fb4f1","issue_id":"ee304787-9a19-41f1-a355-97bfa2c21bbe","timestamp":"2026-06-30T23:03:21.021376922Z"}
+{"type":"issue_state_changed","id":"54c29ce3-15f5-4b1c-9ee6-b562d1cbd155","issue_id":"6a5f0305-2b2d-4f27-805c-d69eff988528","timestamp":"2026-06-30T23:03:21.316064596Z","from":"ready","to":"in_progress"}
+{"type":"issue_claimed","id":"84871d9c-19df-42c6-bce2-926dd1b1a158","issue_id":"6a5f0305-2b2d-4f27-805c-d69eff988528","timestamp":"2026-06-30T23:03:21.316240986Z","assignee":"agent:claude"}
