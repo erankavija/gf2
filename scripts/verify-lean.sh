@@ -5,26 +5,32 @@
 # translates to Lean4 via Aeneas, and verifies with lake build.
 #
 # Prerequisites:
-#   - charon (upstream e069223a + 4 project-local patches; built with rustc
-#     nightly-2026-02-22 per charon/rust-toolchain)
-#   - aeneas (upstream 0f99a049, unmodified)
+#   - charon (upstream 487f0320 + 1 project-local patch; built with rustc
+#     nightly-2026-06-01 per charon/rust-toolchain)
+#   - aeneas (upstream 5220259c, unmodified; OCaml dep `ppx_deriving_yojson`
+#     newly required by src/dune — `opam install ppx_deriving_yojson`)
 #   - elan / lean / lake
 #
 # Usage: ./scripts/verify-lean.sh
 #
-# Toolchain (as of issue 150d7d79, 2026-05-31):
-#   * Charon: upstream HEAD `e069223a` (the commit pinned by Aeneas main via
-#     `/data/aeneas-build/charon-pin`) + 4 project-local patches (HRTB-erase,
-#     SelfClause/Local(0,0) fallback in `lookup_type_replacement`,
-#     implied-clause constraint propagation — all in
-#     `expand_associated_types.rs` — plus the obsolete-asserts removal in
-#     `pretty/fmt_with_ctx.rs` `DynPredicate::fmt_with_ctx`). All four patches
-#     still apply cleanly and are still required at e069223a. Patches preserved
-#     at `dev/active/charon-patch-backup-2026-05-15/` (rebased copy:
-#     `expand_and_fmt-rebased-150d7d79.patch`).
-#   * Aeneas: upstream HEAD `0f99a049` (tag nightly-2026.05.30), unmodified.
+# Toolchain (as of the 2026-06-30 Aeneas/Charon upgrade):
+#   * Charon: upstream `487f0320` (the commit pinned by Aeneas main via
+#     `/data/aeneas-build/charon-pin`) + 1 project-local patch: implied-clause
+#     constraint propagation in `expand_associated_types.rs`
+#     `compute_trait_modifications` (propagates supertrait associated-type
+#     values; eliminates 86 "Could not compute the value of ...Output" warnings
+#     on gfpn quadratic/cubic arithmetic). The other three patches that were
+#     load-bearing at e069223a (HRTB-erase, SelfClause/Local(0,0) fallback,
+#     and the `pretty/fmt_with_ctx.rs` assert removal) are now OBSOLETE —
+#     upstream Charon handles those cases, and gfpn extraction is clean without
+#     them (2 residual `FiniteField::Wide` warnings on the opaque `field`
+#     trait are benign). Patch preserved at
+#     `dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`.
+#   * Aeneas: upstream HEAD `5220259c`, unmodified. Links charon-ml from the
+#     nested charon submodule, so that submodule must be at the same 487f0320
+#     pin before `dune build` (else `TTraitType` arity mismatch).
 #   * Lean: v4.30.0-rc2; Mathlib: v4.30.0-rc2 (see `proofs/lean-toolchain`,
-#     `proofs/lakefile.lean`) — unchanged across the 150d7d79 upgrade.
+#     `proofs/lakefile.lean`) — unchanged across this upgrade.
 #
 # Workarounds in place (issue 9efd9c39):
 #   * `crates/gf2-core/src/gfp/mod.rs` — 11 SIMD-fast-path overrides on the
@@ -58,6 +64,19 @@
 #     injects `set_option warn.sorry false` into generated `Funs.lean`
 #     so Aeneas extraction-artefact sorrys do not trip the strict
 #     `lake-build` gate (added in issue 2e544a34).
+#   * `scripts/fix-aeneas-sorrys.py` `OPAQUE_DEFS` (2026-06-30 upgrade): added
+#     the non-Wide gfpn `CoreCmpEq`, the cubic `CoreFmtDisplay.fmt`, and the
+#     `ConstField for {Cubic,Quadratic}Ext` instance dictionaries. Aeneas
+#     5220259c + rustc nightly-2026-06-01 emit a broken `assert_fields_are_eq`
+#     projection for the parametrised derived `Eq`, a `?`-desugaring to the
+#     unprovided `CoreOpsTry_traitTry.branch` in Display, and a `sorry`
+#     `FiniteFieldInst` (trait-impl resolution gap). None are arithmetic proof
+#     targets — proofs use the separate `.order`/`.zero`/`.one` sub-defs — so
+#     they are opaqued.
+#   * `proofs/Gf2Core/Proofs/ExtProgress.lean` `qinv_progress` (2026-06-30):
+#     Aeneas 5220259c normalises the `c0 = 0 ∧ c1 = 0 → _` postcondition
+#     antecedent to its curried form `c0 = 0 → c1 = 0 → _`; the proof now binds
+#     two lambda args instead of destructuring one conjunction.
 #
 # This script runs end-to-end clean on the toolchain above. If a step
 # fails on `main`, file an issue rather than reverting the workarounds —
@@ -77,7 +96,7 @@ mkdir -p "$(dirname "$LLBC_FILE")"
 #
 # Narrow Charon workaround: enable cfg(verify_lean) so ExtConfig exposes
 # NON_RESIDUE() as a trait method instead of an associated const during extraction.
-# Charon (e069223a) rejects associated consts whose type is an associated type of
+# Charon (487f0320) rejects associated consts whose type is an associated type of
 # Self (Self::BaseField) before Aeneas sees the arithmetic. This keeps gfp/gfpn
 # production arithmetic transparent; only the config-level beta accessor shape is
 # changed for extraction and can be removed when Charon handles that pattern.
@@ -256,8 +275,8 @@ text = re.sub(
 path.write_text(text)
 PY
 
-# Workaround: Aeneas (0f99a049) cannot translate some gfpn function bodies from
-# Charon (e069223a) LLBC. Restore known-good implementations from previous
+# Workaround: Aeneas (5220259c) cannot translate some gfpn function bodies from
+# Charon (487f0320) LLBC. Restore known-good implementations from previous
 # working extraction. See fix-aeneas-sorrys.py docstring for details.
 python3 "$REPO_ROOT/scripts/fix-aeneas-sorrys.py" "$LEAN_DIR/Funs.lean"
 

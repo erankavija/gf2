@@ -179,7 +179,7 @@ DEFAULT_CONST_BODIES = {
     'PLE_BASE_COLS': 'ok 1#usize',
     # `const PLE_PANEL_COLS: usize = Self::PLE_BASE_COLS;` (field/traits.rs).
     # Instances that do not override it inherit the trait default, which
-    # resolves to the default PLE_BASE_COLS = 1. Aeneas (0f99a049) references
+    # resolves to the default PLE_BASE_COLS = 1. Aeneas (5220259c) references
     # it via the `.default` sibling for those instances without emitting a def.
     'PLE_PANEL_COLS': 'ok 1#usize',
 }

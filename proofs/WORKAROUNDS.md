@@ -66,7 +66,7 @@ inference.
 
 ## ExtConfig associated const extraction
 
-Charon (e069223a) rejects `ExtConfig::NON_RESIDUE` during trait
+Charon (487f0320) rejects `ExtConfig::NON_RESIDUE` during trait
 declaration checking because the associated const's type is the associated type
 `Self::BaseField`; the diagnostic is "Found incorrect clause var" followed by a
 Charon stack overflow. During `scripts/verify-lean.sh` only, the script passes
@@ -92,7 +92,7 @@ from `Types.lean`. This is outside the `gfp/` and `gfpn/` proof target.
 
 ## FiniteField default method projection extraction
 
-Aeneas 0f99a049 can generate `FiniteField` implementation records that project
+Aeneas 5220259c can generate `FiniteField` implementation records that project
 default trait methods from impl-specific constants it never emitted. This showed
 up after adding delayed product-sum hooks as missing
 `mul_product_sum_wide`/`reduce_product_sum_wide` definitions for
@@ -184,7 +184,7 @@ the same four ops as the production trait surface.
 
 | Tool | Version | Pin |
 |------|---------|-----|
-| Charon | v0.1.204 | local patched build, base `e069223a` + 4 fixes (`patches/charon-e069223a-assoc-type-fixes.patch`) |
-| Aeneas | 0f99a049 | git rev `0f99a049` (tag nightly-2026.05.30); declares Charon `e069223a` via `charon-pin` |
+| Charon | v0.1.217 | local patched build, base `487f0320` + 1 implied-clause fix (`dev/active/charon-patch-backup-2026-05-15/implied-clause-rebased-487f0320.patch`) |
+| Aeneas | 5220259c | git rev `5220259c`; declares Charon `487f0320` via `charon-pin`; needs OCaml dep `ppx_deriving_yojson` |
 | Lean4 | v4.30.0-rc2 | via `proofs/lean-toolchain` |
-| Rust nightly | nightly-2026-02-22 | required by Charon for rustc internals (components incl. `miri`) |
+| Rust nightly | nightly-2026-06-01 | required by Charon for rustc internals (components incl. `miri`) |

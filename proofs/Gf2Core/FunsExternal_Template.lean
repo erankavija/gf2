@@ -15,13 +15,12 @@ set_option maxHeartbeats 1000000
 set_option maxRecDepth 2048
 open gf2_core
 
-/-- [core::cmp::impls::{impl core::cmp::Eq for u64}::assert_receiver_is_total_eq]:
-    Source: '/rustc/library/core/src/cmp.rs', lines 1898:12-1898:32
-    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq]
+/-- [core::cmp::impls::{impl core::cmp::Eq for u64}::assert_fields_are_eq]:
+    Source: '/rustc/library/core/src/cmp.rs', lines 1906:12-1906:32
+    Name pattern: [core::cmp::impls::{core::cmp::Eq<u64>}::assert_fields_are_eq]
     Visibility: public -/
-@[rust_fun
-  "core::cmp::impls::{core::cmp::Eq<u64>}::assert_receiver_is_total_eq"]
-axiom U64.Insts.CoreCmpEq.assert_receiver_is_total_eq : Std.U64 → Result Unit
+@[rust_fun "core::cmp::impls::{core::cmp::Eq<u64>}::assert_fields_are_eq"]
+axiom U64.Insts.CoreCmpEq.assert_fields_are_eq : Std.U64 → Result Unit
 
 /-- [core::fmt::builders::{core::fmt::builders::DebugStruct<'a, 'b>}::field]:
     Source: '/rustc/library/core/src/fmt/builders.rs', lines 132:4-132:76
@@ -50,7 +49,7 @@ axiom core.fmt.builders.DebugStruct.finish
     (core.fmt.builders.DebugStruct → core.fmt.builders.DebugStruct))
 
 /-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]:
-    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2441:4-2441:76
+    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2448:4-2448:76
     Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct]
     Visibility: public -/
 @[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct"]
@@ -60,7 +59,7 @@ axiom core.fmt.Formatter.debug_struct
     (core.fmt.builders.DebugStruct → core.fmt.Formatter))
 
 /-- [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]:
-    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2466:4-2473:15
+    Source: '/rustc/library/core/src/fmt/mod.rs', lines 2473:4-2480:15
     Name pattern: [core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish]
     Visibility: public -/
 @[rust_fun "core::fmt::{core::fmt::Formatter<'a>}::debug_struct_field2_finish"]
@@ -86,28 +85,28 @@ axiom U64.Insts.CoreHashHash.hash
 axiom core.num.U64.trailing_zeros : Std.U64 → Result Std.U32
 
 /-- [core::num::{u128}::saturating_mul]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2389:8-2389:60
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2516:8-2516:60
     Name pattern: [core::num::{u128}::saturating_mul]
     Visibility: public -/
 @[rust_fun "core::num::{u128}::saturating_mul"]
 axiom core.num.U128.saturating_mul : Std.U128 → Std.U128 → Result Std.U128
 
 /-- [core::num::{u64}::wrapping_neg]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2665:8-2665:47
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 2792:8-2792:47
     Name pattern: [core::num::{u64}::wrapping_neg]
     Visibility: public -/
 @[rust_fun "core::num::{u64}::wrapping_neg"]
 axiom core.num.U64.wrapping_neg : Std.U64 → Result Std.U64
 
 /-- [core::num::{u64}::is_power_of_two]:
-    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3761:8-3761:50
+    Source: '/rustc/library/core/src/num/uint_macros.rs', lines 3859:8-3859:50
     Name pattern: [core::num::{u64}::is_power_of_two]
     Visibility: public -/
 @[rust_fun "core::num::{u64}::is_power_of_two"]
 axiom core.num.U64.is_power_of_two : Std.U64 → Result Bool
 
 /-- [core::ops::arith::{impl core::ops::arith::Add<u128, u128> for u128}::add]:
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 105:12-105:41
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 104:12-104:41
     Name pattern: [core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add]
     Visibility: public -/
 @[rust_fun "core::ops::arith::{core::ops::arith::Add<u128, u128, u128>}::add"]
@@ -115,7 +114,7 @@ axiom U128.Insts.CoreOpsArithAddU128U128.add
   : Std.U128 → Std.U128 → Result Std.U128
 
 /-- [core::ops::arith::{impl core::ops::arith::AddAssign<u128> for u128}::add_assign]:
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 791:12-791:47
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 790:12-790:47
     Name pattern: [core::ops::arith::{core::ops::arith::AddAssign<u128, u128>}::add_assign]
     Visibility: public -/
 @[rust_fun
@@ -124,7 +123,7 @@ axiom U128.Insts.CoreOpsArithAddAssignU128.add_assign
   : Std.U128 → Std.U128 → Result Std.U128
 
 /-- [core::option::{core::option::Option<T>}::map]:
-    Source: '/rustc/library/core/src/option.rs', lines 1160:4-1162:53
+    Source: '/rustc/library/core/src/option.rs', lines 1157:4-1159:53
     Name pattern: [core::option::{core::option::Option<@T>}::map]
     Visibility: public -/
 @[rust_fun "core::option::{core::option::Option<@T>}::map"]
@@ -134,7 +133,7 @@ axiom core.option.Option.map
   Option T → F → Result (Option U)
 
 /-- [core::option::{core::option::Option<T>}::and_then]:
-    Source: '/rustc/library/core/src/option.rs', lines 1541:4-1543:61
+    Source: '/rustc/library/core/src/option.rs', lines 1538:4-1540:61
     Name pattern: [core::option::{core::option::Option<@T>}::and_then]
     Visibility: public -/
 @[rust_fun "core::option::{core::option::Option<@T>}::and_then"]
@@ -143,19 +142,19 @@ axiom core.option.Option.and_then
   core.ops.function.FnOnce F T (Option U)) :
   Option T → F → Result (Option U)
 
-/-- [core::result::{impl core::ops::try_trait::Try<T, core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, E>}::branch]:
-    Source: '/rustc/library/core/src/result.rs', lines 2172:4-2172:64
-    Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch]
+/-- [core::result::{impl core::ops::try_trait::Try for core::result::Result<T, E>}::branch]:
+    Source: '/rustc/library/core/src/result.rs', lines 2177:4-2177:64
+    Name pattern: [core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>>}::branch]
     Visibility: public -/
 @[rust_fun
-  "core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>, @T, core::result::Result<core::convert::Infallible, @E>>}::branch"]
-axiom core.result.Result.Insts.CoreOpsTry_traitTryTResultInfallibleE.branch
+  "core::result::{core::ops::try_trait::Try<core::result::Result<@T, @E>>}::branch"]
+axiom core.result.Result.Insts.CoreOpsTry_traitTry.branch
   {T : Type} {E : Type} :
   core.result.Result T E → Result (core.ops.control_flow.ControlFlow
     (core.result.Result core.convert.Infallible E) T)
 
 /-- [core::result::{impl core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible, E>> for core::result::Result<T, F>}::from_residual]:
-    Source: '/rustc/library/core/src/result.rs', lines 2187:4-2187:70
+    Source: '/rustc/library/core/src/result.rs', lines 2192:4-2192:70
     Name pattern: [core::result::{core::ops::try_trait::FromResidual<core::result::Result<@T, @F>, core::result::Result<core::convert::Infallible, @E>>}::from_residual]
     Visibility: public -/
 @[rust_fun
@@ -265,17 +264,17 @@ axiom gfp.specialized.batch_mul_add_mersenne31
 axiom gfp.specialized.batch_dot_mersenne31
   : Slice Std.U32 → Slice Std.U32 → Result Std.U32
 
-/-- [gf2_core::gfpn::cubic::{impl core::cmp::Eq for gf2_core::gfpn::cubic::CubicExtWide<W>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::cubic::{impl core::cmp::Eq for gf2_core::gfpn::cubic::CubicExtWide<W>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 184:0-184:37
     Visibility: public -/
-axiom gfpn.cubic.CubicExtWide.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom gfpn.cubic.CubicExtWide.Insts.CoreCmpEq.assert_fields_are_eq
   {W : Type} (corecmpEqInst : core.cmp.Eq W) :
   gfpn.cubic.CubicExtWide W → Result Unit
 
-/-- [gf2_core::gfpn::cubic::{impl core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::cubic::{impl core::cmp::Eq for gf2_core::gfpn::cubic::CubicExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfpn/cubic.rs', lines 275:0-275:40
     Visibility: public -/
-axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom gfpn.cubic.CubicExt.Insts.CoreCmpEq.assert_fields_are_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField
@@ -295,18 +294,17 @@ axiom
   Clause0_Clause0_Clause0_Characteristic Clause0_Clause0_Clause0_Wide) :
   Result Std.U128
 
-/-- [gf2_core::gfpn::quadratic::{impl core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::quadratic::{impl core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExtWide<W>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 167:0-167:41
     Visibility: public -/
-axiom
-  gfpn.quadratic.QuadraticExtWide.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom gfpn.quadratic.QuadraticExtWide.Insts.CoreCmpEq.assert_fields_are_eq
   {W : Type} (corecmpEqInst : core.cmp.Eq W) :
   gfpn.quadratic.QuadraticExtWide W → Result Unit
 
-/-- [gf2_core::gfpn::quadratic::{impl core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_receiver_is_total_eq]:
+/-- [gf2_core::gfpn::quadratic::{impl core::cmp::Eq for gf2_core::gfpn::quadratic::QuadraticExt<C, Clause0_BaseField, Clause0_Clause0_Clause0_Characteristic, Clause0_Clause0_Clause0_Wide>}::assert_fields_are_eq]:
     Source: 'crates/gf2-core/src/gfpn/quadratic.rs', lines 253:0-253:44
     Visibility: public -/
-axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_receiver_is_total_eq
+axiom gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq.assert_fields_are_eq
   {C : Type} {Clause0_BaseField : Type} {Clause0_Clause0_Clause0_Characteristic
   : Type} {Clause0_Clause0_Clause0_Wide : Type} (ext_configExtConfigInst :
   gfpn.ext_config.ExtConfig C Clause0_BaseField

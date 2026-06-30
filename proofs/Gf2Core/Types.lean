@@ -16,7 +16,7 @@ set_option maxRecDepth 2048
 namespace gf2_core
 
 /-- Trait declaration: [core::ops::arith::Add]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 77:0-77:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 76:0-76:31
     Name pattern: [core::ops::arith::Add]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Add"]
@@ -25,7 +25,7 @@ structure core.ops.arith.Add (Self : Type) (Rhs : Type) (Self_Output : Type)
   add : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Sub]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 190:0-190:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 188:0-188:31
     Name pattern: [core::ops::arith::Sub]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Sub"]
@@ -34,7 +34,7 @@ structure core.ops.arith.Sub (Self : Type) (Rhs : Type) (Self_Output : Type)
   sub : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Mul]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 324:0-324:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 322:0-322:31
     Name pattern: [core::ops::arith::Mul]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Mul"]
@@ -43,7 +43,7 @@ structure core.ops.arith.Mul (Self : Type) (Rhs : Type) (Self_Output : Type)
   mul : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Div]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 462:0-462:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 460:0-460:31
     Name pattern: [core::ops::arith::Div]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Div"]
@@ -52,7 +52,7 @@ structure core.ops.arith.Div (Self : Type) (Rhs : Type) (Self_Output : Type)
   div : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Neg]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 692:0-692:19
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 690:0-690:19
     Name pattern: [core::ops::arith::Neg]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Neg"]
@@ -60,7 +60,7 @@ structure core.ops.arith.Neg (Self : Type) (Self_Output : Type) where
   neg : Self → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::AddAssign]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 769:0-769:37
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 768:0-768:37
     Name pattern: [core::ops::arith::AddAssign]
     Visibility: public -/
 @[rust_trait "core::ops::arith::AddAssign"]

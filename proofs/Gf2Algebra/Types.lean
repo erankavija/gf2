@@ -16,7 +16,7 @@ set_option maxRecDepth 2048
 namespace gf2_algebra
 
 /-- Trait declaration: [core::ops::arith::Add]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 77:0-77:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 76:0-76:31
     Name pattern: [core::ops::arith::Add]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Add"]
@@ -25,7 +25,7 @@ structure core.ops.arith.Add (Self : Type) (Rhs : Type) (Self_Output : Type)
   add : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Sub]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 190:0-190:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 188:0-188:31
     Name pattern: [core::ops::arith::Sub]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Sub"]
@@ -34,7 +34,7 @@ structure core.ops.arith.Sub (Self : Type) (Rhs : Type) (Self_Output : Type)
   sub : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Mul]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 324:0-324:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 322:0-322:31
     Name pattern: [core::ops::arith::Mul]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Mul"]
@@ -43,7 +43,7 @@ structure core.ops.arith.Mul (Self : Type) (Rhs : Type) (Self_Output : Type)
   mul : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Div]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 462:0-462:31
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 460:0-460:31
     Name pattern: [core::ops::arith::Div]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Div"]
@@ -52,7 +52,7 @@ structure core.ops.arith.Div (Self : Type) (Rhs : Type) (Self_Output : Type)
   div : Self → Rhs → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::Neg]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 692:0-692:19
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 690:0-690:19
     Name pattern: [core::ops::arith::Neg]
     Visibility: public -/
 @[rust_trait "core::ops::arith::Neg"]
@@ -60,7 +60,7 @@ structure core.ops.arith.Neg (Self : Type) (Self_Output : Type) where
   neg : Self → Result Self_Output
 
 /-- Trait declaration: [core::ops::arith::AddAssign]
-    Source: '/rustc/library/core/src/ops/arith.rs', lines 769:0-769:37
+    Source: '/rustc/library/core/src/ops/arith.rs', lines 768:0-768:37
     Name pattern: [core::ops::arith::AddAssign]
     Visibility: public -/
 @[rust_trait "core::ops::arith::AddAssign"]
@@ -192,7 +192,7 @@ structure packed.PackedFieldVec (Self : Type) (F : Type) (Self_Element : Type)
   mul_assign : Self → Self → Result Self
   all_zero : Self → Result Bool
 
-/-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3 : u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::bipedal3::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<3u64>, gf2_algebra::packed::bipedal3::Bipedal3, u64, u128, u64, u128> for gf2_algebra::packed::bipedal3::Bipedal3Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/bipedal3.rs', lines 2124:28-2124:39 -/
 @[reducible]
 def packed.bipedal3.PackedFieldVecBipedal3VecFp3Bipedal3U64U128U64U128.all_zero.closure
@@ -260,7 +260,7 @@ structure packed.packed5.Packed5Vec where
 @[reducible]
 def packed.packed5.DebugPacked5Vec.fmt.closure := packed.packed5.Packed5Vec
 
-/-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5 : u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::packed5::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<5u64>, gf2_algebra::packed::packed5::Packed5, u64, u128, u64, u128> for gf2_algebra::packed::packed5::Packed5Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/packed5.rs', lines 1278:17-1281:13 -/
 @[reducible]
 def packed.packed5.PackedFieldVecPacked5VecFp5Packed5U64U128U64U128.all_zero.closure
@@ -319,7 +319,7 @@ structure packed.packed7.Packed7Vec where
 @[reducible]
 def packed.packed7.DebugPacked7Vec.fmt.closure := packed.packed7.Packed7Vec
 
-/-- [gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7 : u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::all_zero::closure]
+/-- [gf2_algebra::packed::packed7::{impl gf2_algebra::packed::PackedFieldVec<gf2_core::gfp::Fp<7u64>, gf2_algebra::packed::packed7::Packed7, u64, u128, u64, u128> for gf2_algebra::packed::packed7::Packed7Vec}::all_zero::closure]
     Source: 'crates/gf2-algebra/src/packed/packed7.rs', lines 1294:30-1294:41 -/
 @[reducible]
 def packed.packed7.PackedFieldVecPacked7VecFp7Packed7U64U128U64U128.all_zero.closure

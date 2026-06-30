@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Replace Aeneas-generated 'sorry' function bodies with known-good implementations.
 
-Aeneas (0f99a049) cannot translate certain gfpn function bodies from the LLBC
-produced by Charon (e069223a). The error is "Assertion failed: new value doesn't
+Aeneas (5220259c) cannot translate certain gfpn function bodies from the LLBC
+produced by Charon (487f0320). The error is "Assertion failed: new value doesn't
 have the same type as its destination" for trait impl ops (Add, Sub, Neg, Mul) on
 QuadraticExt and CubicExt. This script restores the correct bodies, which are
 semantically equivalent to the Rust source and were previously generated correctly
@@ -470,6 +470,21 @@ OPAQUE_DEFS = {
     "gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.cardinality_log2_hint",
     "gfp.specialized.GoldilocksFp.Insts.Gf2_coreFieldTraitsFiniteFieldU64U128.characteristic",
     "gfpn.cubic.CubicExtWide.Insts.CoreCmpEq",
+    # Aeneas 5220259c + rustc nightly-2026-06-01: the derived `Eq` impl now
+    # emits an `assert_fields_are_eq` projection on the unapplied
+    # `ExtConfig → core.cmp.Eq` function for the parametrised gfpn types, which
+    # does not type-check. The Display `fmt` impl desugars `?` to
+    # `core.result.Result.Insts.CoreOpsTry_traitTry.branch`, a constant the
+    # current Aeneas Lean Std backend does not provide. The `ConstField for
+    # CubicExt` dictionary's `FiniteFieldInst` field fails trait-impl
+    # resolution (`Could not find: trait_impl_id`). None are arithmetic proof
+    # targets — the proofs use the separate `.order`/`.zero`/`.one` sub-defs —
+    # so opaque the offending instance/fmt dictionaries.
+    "gfpn.cubic.CubicExt.Insts.CoreCmpEq",
+    "gfpn.cubic.CubicExt.Insts.CoreFmtDisplay.fmt",
+    "gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide",
+    "gfpn.quadratic.QuadraticExt.Insts.CoreCmpEq",
+    "gfpn.quadratic.QuadraticExt.Insts.Gf2_coreFieldTraitsConstFieldClause0_Clause0_Clause0_CharacteristicQuadraticExtWide",
     "Shared0CubicExt.Insts.CoreOpsArithNegCubicExt",
     "gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.cardinality_log2_hint",
     "gfpn.cubic.CubicExt.Insts.Gf2_coreFieldTraitsFiniteFieldClause0_Clause0_Clause0_CharacteristicCubicExtWide.characteristic",
