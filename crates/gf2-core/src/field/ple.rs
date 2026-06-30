@@ -4316,4 +4316,50 @@ mod tests {
             }
         }
     }
+
+    // ─── Coverage: try_blocked_back_sub (BLOCKED_BACK_SUB_MIN_DIM = 128) ────────
+    //
+    // `try_blocked_back_sub` fires only when max(m, n) >= BLOCKED_BACK_SUB_MIN_DIM.
+    // The proptest sweep stays at PANEL_BOUNDARY_LENS (max = 65) and never reaches
+    // the threshold.  These four deterministic tests close the gap.
+
+    #[test]
+    fn test_rref_128x128_fp7_blocked_back_sub() {
+        let a = random_fp::<7>(128, 128, 0xBB01);
+        let (x_blocked, r_blocked) = a.rref();
+        let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+        assert_eq!(r_blocked, r_scalar, "RREF mismatch 128×128 Fp<7>");
+        assert_eq!(x_blocked, x_scalar, "transform mismatch 128×128 Fp<7>");
+    }
+
+    #[test]
+    fn test_rref_128x64_fp7_blocked_back_sub() {
+        // max(m, n) = 128 >= threshold; n = 64 < threshold.
+        let a = random_fp::<7>(128, 64, 0xBB02);
+        let (x_blocked, r_blocked) = a.rref();
+        let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+        assert_eq!(r_blocked, r_scalar);
+        assert_eq!(x_blocked, x_scalar);
+    }
+
+    #[test]
+    fn test_rref_64x128_fp7_blocked_back_sub() {
+        // max(m, n) = 128 >= threshold; m = 64 < threshold.
+        let a = random_fp::<7>(64, 128, 0xBB03);
+        let (x_blocked, r_blocked) = a.rref();
+        let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+        assert_eq!(r_blocked, r_scalar);
+        assert_eq!(x_blocked, x_scalar);
+    }
+
+    #[test]
+    fn test_rref_128x128_rank_deficient_fp7_blocked_back_sub() {
+        // Rank-deficient 128×128 matrix: rank 64, so some pivot columns are
+        // absent.  The blocked back-substitution must handle this gracefully.
+        let a = random_fp_rank_deficient::<7>(128, 128, 64, 0xBB04);
+        let (x_blocked, r_blocked) = a.rref();
+        let (x_scalar, r_scalar) = rref_scalar_oracle(&a);
+        assert_eq!(r_blocked, r_scalar);
+        assert_eq!(x_blocked, x_scalar);
+    }
 }

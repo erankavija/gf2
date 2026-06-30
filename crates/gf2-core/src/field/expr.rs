@@ -2958,4 +2958,322 @@ mod tests {
         let t_mat: FieldMatrix<M31> = t.into();
         assert_eq!(t_mat, a.transpose());
     }
+
+    // ─── MatrixLike::transpose on proxy types ────────────────────────────────
+    //
+    // The `.transpose()` method on Sum / Scale / NegProxy / FusedLinear all
+    // delegate to `materialise(self).transpose()`, exercising the private
+    // `materialise` helper.  `Transposed<&FM>.transpose()` returns `self.0.clone()`
+    // directly without going through `materialise`.
+
+    #[test]
+    fn test_sum_proxy_transpose_via_matrixlike() {
+        use crate::matrix_like::MatrixLike;
+        let a = rand_m31(3, 4, 0x4001);
+        let b = rand_m31(3, 4, 0x4002);
+        let s = &a + &b;
+        let t = MatrixLike::transpose(&s);
+        // (A + B)ᵀ = materialise(A+B).transpose()
+        let eager: FieldMatrix<M31> = (&a + &b).into();
+        assert_eq!(t, eager.transpose());
+    }
+
+    #[test]
+    fn test_scale_proxy_transpose_via_matrixlike() {
+        use crate::matrix_like::MatrixLike;
+        let a = rand_m31(3, 4, 0x4101);
+        let alpha = M31::new(5);
+        let s = alpha * &a;
+        let t = MatrixLike::transpose(&s);
+        // (α·A)ᵀ = materialise(α·A).transpose()
+        let eager: FieldMatrix<M31> = (alpha * &a).into();
+        assert_eq!(t, eager.transpose());
+    }
+
+    #[test]
+    fn test_neg_proxy_transpose_via_matrixlike() {
+        use crate::matrix_like::MatrixLike;
+        let a = rand_m31(3, 4, 0x4201);
+        let n = -&a;
+        let t = MatrixLike::transpose(&n);
+        // (-A)ᵀ = materialise(-A).transpose()
+        let eager: FieldMatrix<M31> = (-&a).into();
+        assert_eq!(t, eager.transpose());
+    }
+
+    #[test]
+    fn test_transposed_ref_proxy_transpose_returns_clone() {
+        use crate::matrix_like::MatrixLike;
+        let a = rand_m31(3, 5, 0x4301);
+        let t = a.t(); // Transposed<&FM>
+                       // Transposed<&FM>.transpose() returns self.0.clone() — the original matrix.
+        let tt = MatrixLike::transpose(&t);
+        assert_eq!(tt, a);
+    }
+
+    // ─── Generic MatrixLike kernel paths ─────────────────────────────────────
+    //
+    // Each kernel (gemm_matrixlike, TransposedProduct generic, etc.) has a
+    // concrete fast path that fires when both operands are `&FieldMatrix<F>`
+    // and a generic fallback for other `ConcreteRef<F>` implementors that
+    // return `None` from `as_concrete`.  `Scale<F, &FM>` is one such type:
+    // it satisfies `ConcreteRef<F>` but returns `None`, routing evaluation
+    // through the generic loop.
+
+    #[test]
+    fn test_product_scale_operand_uses_gemm_matrixlike() {
+        // Product<Scale<M31, &FM>, &FM> → as_concrete returns None for Scale
+        // → gemm_matrixlike fires.
+        let a = rand_m31(4, 3, 0x5001);
+        let b = rand_m31(3, 5, 0x5002);
+        let scale_a = M31::new(2) * &a; // Scale<M31, &FM>
+        let p = Product(scale_a, &b);
+        let result: FieldMatrix<M31> = p.into();
+        // Reference: 2·(A·B)
+        let ab: FieldMatrix<M31> = (&a * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(4, 5);
+        for r in 0..4 {
+            for c in 0..5 {
+                expected.set(r, c, M31::new(2) * ab.get(r, c));
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_transposed_product_scale_a_generic_path() {
+        // TransposedProduct<Scale<M31, &FM>, &FM>: as_concrete returns None for A
+        // → generic `_ =>` branch in TransposedProduct::evaluate_into fires.
+        // Shape: a is (k=4)×(m=3), b is (k=4)×(n=5), output is (m=3)×(n=5).
+        let a = rand_m31(4, 3, 0x6001);
+        let b = rand_m31(4, 5, 0x6002);
+        let scale_a = M31::new(3) * &a; // Scale<M31, &FM>, shape (4, 3)
+        let tp = TransposedProduct(scale_a, &b);
+        let result: FieldMatrix<M31> = tp.into();
+        // Reference: (3·A)ᵀ · B = 3 · (Aᵀ · B)
+        let at_b: FieldMatrix<M31> = (a.t() * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(3, 5);
+        for r in 0..3 {
+            for c in 0..5 {
+                expected.set(r, c, M31::new(3) * at_b.get(r, c));
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_fused_product_plus_transposed_generic_path() {
+        // FusedProductPlus<TransposedProduct<Scale<M31,&FM>, &FM>, &FM>:
+        // as_concrete returns None for A → generic `_ =>` branch fires.
+        let a = rand_m31(4, 3, 0x7001);
+        let b = rand_m31(4, 5, 0x7002);
+        let c = rand_m31(3, 5, 0x7003);
+        let scale_a = M31::new(2) * &a;
+        let tp = TransposedProduct(scale_a, &b);
+        let fused = FusedProductPlus(tp, &c);
+        let result: FieldMatrix<M31> = fused.into();
+        // Reference: (2·Aᵀ)·B + C = 2·(Aᵀ·B) + C
+        let at_b: FieldMatrix<M31> = (a.t() * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(3, 5);
+        for r in 0..3 {
+            for c_idx in 0..5 {
+                expected.set(r, c_idx, M31::new(2) * at_b.get(r, c_idx) + c.get(r, c_idx));
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_scaled_transposed_product_generic_path() {
+        // ScaledTransposedProduct<M31, Scale<M31,&FM>, &FM>:
+        // as_concrete returns None for A → generic `_ =>` branch fires.
+        let a = rand_m31(4, 3, 0x8001);
+        let b = rand_m31(4, 5, 0x8002);
+        let inner_scale = M31::new(2) * &a; // Scale<M31, &FM>
+        let alpha = M31::new(5);
+        let stp = ScaledTransposedProduct(alpha, inner_scale, &b);
+        let result: FieldMatrix<M31> = stp.into();
+        // Reference: 5 · ((2·Aᵀ)·B) = 10 · (Aᵀ·B)
+        let at_b: FieldMatrix<M31> = (a.t() * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(3, 5);
+        for r in 0..3 {
+            for c in 0..5 {
+                expected.set(r, c, M31::new(10) * at_b.get(r, c));
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    // ─── Coverage: empty-matrix fast-returns and remaining generic paths ──────
+
+    #[test]
+    fn test_gemm_matrixlike_empty_m_returns_zero_matrix() {
+        // Covers `gemm_matrixlike` line ~383: `if m == 0 || n == 0 || k1 == 0 { return; }`.
+        // Trigger via Product(Scale<M31,&FM>, &FM) where the left operand has 0 rows.
+        let a = rand_m31(0, 3, 0x9001); // 0×3
+        let b = rand_m31(3, 4, 0x9002);
+        let scale_a = M31::new(2) * &a; // Scale<M31, &FM(0×3)>
+        let p = Product(scale_a, &b);
+        let result: FieldMatrix<M31> = p.into();
+        assert_eq!(result.shape(), (0, 4));
+    }
+
+    #[test]
+    fn test_gemm_concrete_empty_m_returns_zero_matrix() {
+        // Covers `gemm_concrete` line ~421: `if m == 0 || n == 0 { return; }`.
+        // Trigger via Product<&FM, &FM> with 0-row left operand.
+        let a = rand_m31(0, 3, 0x9101); // 0×3
+        let b = rand_m31(3, 5, 0x9102);
+        let p = Product(&a, &b);
+        let result: FieldMatrix<M31> = p.into();
+        assert_eq!(result.shape(), (0, 5));
+    }
+
+    #[test]
+    fn test_gemm_with_beta_k_zero_path() {
+        // Covers `gemm_with_beta_concrete` lines ~489-494: `if k == 0 { out <- β·C; return; }`.
+        // Use Product<&FM(3×0), &FM(0×4)> which has inner dim k=0.
+        let a = rand_m31(3, 0, 0x9201); // 3×0
+        let b = rand_m31(0, 4, 0x9202); // 0×4
+        let c = rand_m31(3, 4, 0x9203);
+        let beta = M31::new(3);
+        // (A·B) + β·C = 0 + β·C = β·C  (A·B is zero because k=0)
+        let fused: FieldMatrix<M31> = (&a * &b + beta * &c).into();
+        let mut expected = FieldMatrix::<M31>::zeros(3, 4);
+        for r in 0..3 {
+            for c_idx in 0..4 {
+                expected.set(r, c_idx, beta * c.get(r, c_idx));
+            }
+        }
+        assert_eq!(fused, expected);
+    }
+
+    #[test]
+    fn test_sum_evaluate_into_empty_rows_is_noop() {
+        // Covers `Sum::evaluate_into` line ~1367: `if rows == 0 || cols == 0 { return; }`.
+        let a = rand_m31(0, 4, 0x9301);
+        let b = rand_m31(0, 4, 0x9302);
+        let s = &a + &b;
+        let result: FieldMatrix<M31> = s.into();
+        assert_eq!(result.shape(), (0, 4));
+    }
+
+    #[test]
+    fn test_transposed_matrixlike_rows_cols_get() {
+        // Covers `Transposed<&FM>::MatrixLike` rows/cols/get (lines ~1177-1187).
+        // We use the `Transposed<&FM>` as a MatrixLike operand via Product.
+        // Transposed<&FM> as `MatrixLike<F>` is used when transposing produces
+        // a FusedProductPlus or similar expression.  Simplest trigger: use
+        // `.t()` directly as an operand to another product.
+        let a = rand_m31(4, 3, 0x9401); // a.t() is 3×4
+        let _b = rand_m31(3, 5, 0x9402);
+        // a.t() * &b uses Transposed<&FM> as `MatrixLike<F>` operand via the
+        // Mul impl, which calls TransposedProduct — covering rows/cols/get
+        // via gemm_trans_a_matrixlike's generic path for non-concrete operands.
+        // To force the MatrixLike methods (rows, cols, get) rather than the
+        // concrete path, wrap a.t() in a product with a Scale to prevent the
+        // concrete check.
+        //
+        // Actually, to directly exercise the `MatrixLike<F> for Transposed<&FM>`
+        // impl's `rows()`, `cols()`, `get()`, we can access them via the
+        // MatrixLike trait directly.
+        let t = a.t();
+        // Calls `Transposed<&FM> as MatrixLike<F>` rows()/cols()/get()
+        let rows = <_ as crate::matrix_like::MatrixLike<M31>>::rows(&t);
+        let cols = <_ as crate::matrix_like::MatrixLike<M31>>::cols(&t);
+        let v = <_ as crate::matrix_like::MatrixLike<M31>>::get(&t, 0, 0);
+        assert_eq!(rows, 3);
+        assert_eq!(cols, 4);
+        assert_eq!(v, a.get(0, 0));
+        // Also call transpose() via the MatrixLike impl to cover line ~1188.
+        let _tt: FieldMatrix<M31> = <_ as crate::matrix_like::MatrixLike<M31>>::transpose(&t);
+    }
+
+    #[test]
+    fn test_fused_linear_matrixlike_rows_cols_get_transpose() {
+        // Covers `FusedLinear<Scale<F,A>, Scale<F,B>>::MatrixLike` (lines ~1201-1214).
+        let a = rand_m31(3, 4, 0x9501);
+        let b = rand_m31(3, 4, 0x9502);
+        // α·a + β·b produces FusedLinear<Scale<M31,&FM>, Scale<M31,&FM>>
+        let fl = M31::new(2) * &a + M31::new(3) * &b;
+        // rows() and cols() are the MatrixLike methods
+        let rows = <_ as crate::matrix_like::MatrixLike<M31>>::rows(&fl);
+        let cols = <_ as crate::matrix_like::MatrixLike<M31>>::cols(&fl);
+        assert_eq!(rows, 3);
+        assert_eq!(cols, 4);
+        // get() computes 2·a[r,c] + 3·b[r,c]
+        let v = <_ as crate::matrix_like::MatrixLike<M31>>::get(&fl, 1, 2);
+        assert_eq!(v, M31::new(2) * a.get(1, 2) + M31::new(3) * b.get(1, 2));
+        // transpose() via materialise (line ~1212-1214)
+        let t: FieldMatrix<M31> = <_ as crate::matrix_like::MatrixLike<M31>>::transpose(&fl);
+        assert_eq!(t.shape(), (4, 3));
+    }
+
+    #[test]
+    fn test_fused_product_plus_product_scale_generic_path() {
+        // Covers `FusedProductPlus<Product<A,B>, C>` generic path (lines ~1431-1448)
+        // where A = Scale<M31, &FM> so as_concrete returns None.
+        let a = rand_m31(4, 3, 0x9601);
+        let b = rand_m31(3, 5, 0x9602);
+        let c = rand_m31(4, 5, 0x9603);
+        let scale_a = M31::new(2) * &a; // Scale<M31, &FM>, as_concrete = None
+        let p = Product(scale_a, &b); // Product<Scale<M31,&FM>, &FM>
+        let fused = FusedProductPlus(p, &c);
+        let result: FieldMatrix<M31> = fused.into();
+        // Reference: 2·(A·B) + C
+        let ab: FieldMatrix<M31> = (&a * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(4, 5);
+        for r in 0..4 {
+            for cc in 0..5 {
+                expected.set(r, cc, M31::new(2) * ab.get(r, cc) + c.get(r, cc));
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_fused_product_plus_scaled_product_scale_generic_path() {
+        // Covers `FusedProductPlusScaled<Product<A,B>, Scale<F,C>>` generic path
+        // (lines ~1477-1498) where A = Scale<M31, &FM> so as_concrete = None.
+        let a = rand_m31(4, 3, 0x9701);
+        let b = rand_m31(3, 5, 0x9702);
+        let c = rand_m31(4, 5, 0x9703);
+        let scale_a = M31::new(2) * &a; // Scale<M31, &FM>, as_concrete = None
+        let beta = M31::new(3);
+        let p = Product(scale_a, &b); // Product<Scale<M31,&FM>, &FM>
+        let fused = FusedProductPlusScaled(p, beta * &c);
+        let result: FieldMatrix<M31> = fused.into();
+        // Reference: 2·(A·B) + 3·C
+        let ab: FieldMatrix<M31> = (&a * &b).into();
+        let mut expected = FieldMatrix::<M31>::zeros(4, 5);
+        for r in 0..4 {
+            for cc in 0..5 {
+                expected.set(
+                    r,
+                    cc,
+                    M31::new(2) * ab.get(r, cc) + M31::new(3) * c.get(r, cc),
+                );
+            }
+        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_transposed_product_generic_empty_output() {
+        // Covers `TransposedProduct` generic path lines ~1543-1544: empty output.
+        // A = Scale<M31, &FM(0×3)>, B = &FM(0×5) → Aᵀ·B shape = (3, 5) but
+        // A.rows()==0, B.rows()==0, so m=3, n=5, k=0.
+        let a = rand_m31(0, 3, 0x9801); // 0×3 → a.t() is 3×0 (k=0)
+        let b = rand_m31(0, 5, 0x9802); // 0×5
+        let scale_a = M31::new(2) * &a; // Scale<M31, &FM(0×3)>, as_concrete=None
+        let tp = TransposedProduct(scale_a, &b);
+        let result: FieldMatrix<M31> = tp.into();
+        // k=0: output must be all zeros
+        assert_eq!(result.shape(), (3, 5));
+        for r in 0..3 {
+            for c in 0..5 {
+                assert_eq!(result.get(r, c), M31::new(0));
+            }
+        }
+    }
 }

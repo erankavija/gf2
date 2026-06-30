@@ -221,3 +221,36 @@ impl Lcg {
         (self.next_u64() as usize) % n
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lcg_derived_methods_stay_in_range() {
+        let mut rng = Lcg::new(42);
+
+        // next_u32: must produce a value in the u32 range
+        let _v = rng.next_u32();
+
+        // next_unit_f32: in [-1.0, 1.0]
+        let uf32 = rng.next_unit_f32();
+        assert!((-1.0_f32..=1.0_f32).contains(&uf32));
+
+        // next_unit_f64: in [-1.0, 1.0]
+        let uf64 = rng.next_unit_f64();
+        assert!((-1.0_f64..=1.0_f64).contains(&uf64));
+
+        // next_positive_f32: in [lo, hi]
+        let pf32 = rng.next_positive_f32(0.1, 0.9);
+        assert!((0.1_f32..=0.9_f32).contains(&pf32));
+
+        // next_positive_f64: in [lo, hi]
+        let pf64 = rng.next_positive_f64(0.1, 0.9);
+        assert!((0.1_f64..=0.9_f64).contains(&pf64));
+
+        // next_bounded_usize: must be in [0, n)
+        let bu = rng.next_bounded_usize(7);
+        assert!(bu < 7);
+    }
+}
