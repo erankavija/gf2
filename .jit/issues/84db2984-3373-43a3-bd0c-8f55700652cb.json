@@ -1,0 +1,20 @@
+{
+  "id": "84db2984-3373-43a3-bd0c-8f55700652cb",
+  "title": "Fix SparseFieldMatrix::from_entries reference in FieldMatrix deck",
+  "description": "**Severity: high · Dimension: doc-drift** (report finding #6)\n\n`docs/presentations/bb85c68a-fieldmatrix/talk.html` slide 16 (line ~250) calls `SparseFieldMatrix::from_entries(3, 6, entries)`. No such method exists; the actual constructor is `from_triplets`. The slide as written would not compile.\n\n## Success Criteria\n\n- [hard] Slide 16 uses `SparseFieldMatrix::from_triplets` with the correct argument order/types as verified against the current `gf2-algebra` API.\n- [hard] A grep confirms no other `from_entries` reference to `SparseFieldMatrix` remains in the deck.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:docs"
+  ],
+  "created_at": "2026-06-30T20:04:42.603020918Z",
+  "updated_at": "2026-06-30T20:04:42.604512177Z"
+}

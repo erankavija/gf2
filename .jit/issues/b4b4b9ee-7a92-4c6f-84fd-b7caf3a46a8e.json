@@ -1,0 +1,35 @@
+{
+  "id": "b4b4b9ee-7a92-4c6f-84fd-b7caf3a46a8e",
+  "title": "Technical debt assessment remediation (2026-06-30)",
+  "description": "Remediation of technical debt surfaced by the 2026-06-30 workflow-driven assessment of the gf2 workspace. The assessment audited all six crates against the project coding ideals (CLAUDE.md + scripts/code-review-prompt.md) and for documentation drift, producing 71 verified findings (1 critical, 6 high, 44 medium, 20 low) across 9 dimensions: tail-masking, unsafe-isolation, bitwise-arithmetic, functional-api, doc-completeness, test-conventions, msrv, ssot-duplication, separation-of-concerns, doc-drift.\n\nThe full report is attached to this epic via `jit doc list`.\n\n## Scope\n\n- **Critical/high (7 findings):** one task each, filed up front. These cover the single correctness hole (BitVec::from_words tail masking), the unsafe-doc isolation gap, the polar_transform performance regression, the CI-budget-breaking SimulationRunner tests, and three user-facing documentation-drift defects.\n- **Medium/low (64 findings):** filed as a follow-up batch after scoping with the user; granularity and inclusion decided per dimension.\n\n## Success Criteria\n\n- [hard] All 7 critical/high findings have dedicated task issues wired under this epic.\n- [hard] The assessment report is linked to this epic via `jit doc add`.\n- [hard] Every child task carries explicit, verifiable success criteria traceable to a report finding.\n- The epic is `done` only when all child tasks are `done` or explicitly rejected with justification.",
+  "state": "backlog",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [
+    "ad978596-08fd-415a-963f-cfd21fa2d481",
+    "79873126-1d34-4dd9-ba67-e3f691242ed9",
+    "84db2984-3373-43a3-bd0c-8f55700652cb",
+    "44c98235-d5e2-4f6e-85fa-d043504553e0",
+    "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
+    "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
+    "45a962da-b51a-4bf5-b147-9c5ffec18634"
+  ],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [
+    {
+      "path": "dev/active/tech-debt-assessment-2026-06-30.md",
+      "commit": null,
+      "label": "Tech Debt Assessment Report (2026-06-30)",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
+  "labels": [
+    "type:epic",
+    "epic:tech-debt-2026-06-30"
+  ],
+  "created_at": "2026-06-30T20:00:46.349908352Z",
+  "updated_at": "2026-06-30T20:05:11.212449137Z"
+}

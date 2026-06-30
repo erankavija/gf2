@@ -1,0 +1,20 @@
+{
+  "id": "45a962da-b51a-4bf5-b147-9c5ffec18634",
+  "title": "Mark SimulationRunner modem-analysis integration tests as ignored",
+  "description": "**Severity: high · Dimension: test-conventions** (report finding #4)\n\nFive `SimulationRunner` tests in `crates/gf2-coding/tests/modem_analysis_integration.rs` have `max_frames` of 4,000-8,000 and no `#[ignore]` annotation, so they exceed the 5 s CI per-test hard-kill budget on every run. Per CLAUDE.md, tests calling `SimulationRunner`/`run_curve`/`run_coded` with `max_frames > 50` MUST carry `#[ignore = \"sim: ...\"]`.\n\n## Success Criteria\n\n- [hard] All five affected tests carry `#[ignore = \"sim: <descriptive reason>, N frames\"]`.\n- [hard] The fast tier (`cargo nextest run -p gf2-coding --release --profile ci`) completes these as ignored and stays within the 60 s wall-clock / 5 s per-test budget.\n- [hard] No other test in the file regresses; fmt passes.",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-06-30T20:04:42.473060093Z",
+  "updated_at": "2026-06-30T20:04:42.474257042Z"
+}

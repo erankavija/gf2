@@ -1,0 +1,20 @@
+{
+  "id": "44c98235-d5e2-4f6e-85fa-d043504553e0",
+  "title": "Add gf2-sim to README workspace table and fix GPU LDPC BP attribution",
+  "description": "**Severity: high · Dimension: doc-drift** (report finding #5)\n\n`README.md` omits `gf2-sim` entirely from the workspace layout table, despite it being a full workspace member with its own `Pipeline`/`Stage`/`Connector` infrastructure. Additionally the table attributes GPU LDPC BP to `gf2-coding --features hip`, but no GPU LDPC BP code exists in `gf2-coding` — it lives in `gf2-sim/src/gpu/ldpc_bp.rs`.\n\n## Success Criteria\n\n- [hard] `README.md` workspace table gains a `gf2-sim` row describing the CPU+GPU FEC simulation pipeline crate and its `hip` / `llr-f64` features.\n- [hard] The \"LDPC BP\" GPU attribution is removed from the `gf2-coding` hip-feature description and correctly placed on `gf2-sim`.\n- [hard] Claims verified against actual code paths before committing (no new drift introduced).",
+  "state": "ready",
+  "priority": "high",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:docs"
+  ],
+  "created_at": "2026-06-30T20:04:42.540155853Z",
+  "updated_at": "2026-06-30T20:04:42.541557612Z"
+}

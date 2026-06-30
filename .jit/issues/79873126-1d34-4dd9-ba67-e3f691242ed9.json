@@ -1,0 +1,20 @@
+{
+  "id": "79873126-1d34-4dd9-ba67-e3f691242ed9",
+  "title": "Enforce tail masking in BitVec::from_words",
+  "description": "**Severity: critical · Dimension: tail-masking** (report finding #1)\n\n`BitVec::from_words` (`crates/gf2-core/src/bitvec.rs:204`) is the only public constructor that accepts caller-supplied words without calling `mask_tail()`. Every other constructor that could produce dirty padding masks. When a caller passes a final word with bits set above `len_bits % 64`, the padding-bits-must-be-zero invariant is broken, silently corrupting popcount, rank/select, equality, and all downstream bitwise operations.\n\nThis is the most critical correctness invariant in the crate (CLAUDE.md design invariant #1).\n\n## Success Criteria\n\n- [hard] `BitVec::from_words` calls `mask_tail()` before returning, enforcing the invariant internally.\n- [hard] The \"caller must ensure padding is zero\" note is removed from the doc comment (invariant now enforced, not delegated).\n- [hard] A regression test constructs a `BitVec` via `from_words` with a deliberately dirty final word and asserts padding bits are zero (and that popcount/equality are correct). Cover word-boundary lengths (1, 63, 64, 65 bits).\n- [hard] Full `cargo nextest --profile ci` and clippy pass.",
+  "state": "ready",
+  "priority": "critical",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-06-30T20:04:21.150862637Z",
+  "updated_at": "2026-06-30T20:04:21.152255945Z"
+}
