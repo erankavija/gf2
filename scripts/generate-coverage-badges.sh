@@ -59,7 +59,9 @@ data = json.load(open(sys.argv[1]))
 
 crates = defaultdict(lambda: [0, 0])
 for f in data['data'][0]['files']:
-    for name in ['gf2-core', 'gf2-coding', 'gf2-kernels-simd']:
+    # gf2-kernels-hip is intentionally absent: it is feature-gated out of the
+    # default workspace and needs a GPU/ROCm device CI runners don't have.
+    for name in ['gf2-core', 'gf2-coding', 'gf2-algebra', 'gf2-sim', 'gf2-kernels-simd']:
         if '/crates/' + name + '/' in f['filename']:
             crates[name][0] += f['summary']['lines']['covered']
             crates[name][1] += f['summary']['lines']['count']
