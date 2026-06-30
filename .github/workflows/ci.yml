@@ -116,15 +116,25 @@ jobs:
         #   /src/bin/    — CLI/campaign binary entrypoints (orchestration glue, not library logic)
         #   /tests/      — integration-test files (test code, not library code)
         #   /benches/    — benchmark harness drivers (bench code, not library code)
-        #   bench_seed\.rs — shared bench-seed helper (dev helper, not library code)
-        #   testutil\.rs   — test utility module (dev helper, not library code)
+        # plus the dedicated test/bench-support modules that live under src/ but
+        # are gated behind `cfg(any(test, feature = "test-support"))` (compiled
+        # only for tests) or are doc-hidden test oracles — they are test
+        # infrastructure, not production API:
+        #   bench_seed\.rs         — shared bench-seed helper
+        #   testutil\.rs           — deterministic test-matrix generators
+        #   test_support\.rs       — DVB-T2 verified-vector test helpers
+        #   test_oracle\.rs        — brute-force log-MAP demapper oracle
+        #   axiom_tests\.rs        — FiniteField axiom property-test harness
+        #   test_random_matrix\.rs — shared random FieldMatrix/FieldVec builders
+        # Algorithm modules that merely happen to be cfg(test-support)-gated
+        # (e.g. alg/strassen.rs) are NOT excluded — they are real library logic.
         cargo llvm-cov \
           --features simd,parallel,visualization,io,rand,llr-f64 \
           --workspace \
           --json \
           --summary-only \
           --output-path coverage.json \
-          --ignore-filename-regex '(/src/bin/|/tests/|/benches/|bench_seed\.rs|testutil\.rs)'
+          --ignore-filename-regex '(/src/bin/|/tests/|/benches/|bench_seed\.rs|testutil\.rs|test_support\.rs|test_oracle\.rs|axiom_tests\.rs|test_random_matrix\.rs)'
 
     - name: Generate coverage badges
       run: bash scripts/generate-coverage-badges.sh coverage.json badges

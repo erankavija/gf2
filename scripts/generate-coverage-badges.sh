@@ -58,9 +58,12 @@ from collections import defaultdict
 data = json.load(open(sys.argv[1]))
 
 # CLI binaries (src/bin/), integration-test files (tests/), benchmark harnesses
-# (benches/), and dev helpers (bench_seed.rs, testutil.rs) are already excluded
-# from the JSON by --ignore-filename-regex in the CI 'Generate coverage data' step.
-# No duplicate filtering is needed here; all files[] entries are library code.
+# (benches/), and the dedicated test/bench-support modules under src/
+# (bench_seed.rs, testutil.rs, test_support.rs, test_oracle.rs, axiom_tests.rs,
+# test_random_matrix.rs) are already excluded from the JSON by
+# --ignore-filename-regex in the CI 'Generate coverage data' step (see that step
+# for the full rationale). No duplicate filtering is needed here; the remaining
+# files[] entries are library code.
 crates = defaultdict(lambda: [0, 0])
 for f in data['data'][0]['files']:
     # gf2-kernels-hip is intentionally absent: it is feature-gated out of the
