@@ -2130,4 +2130,359 @@ mod tests {
         assert_eq!(a.mul(b).lane(0), Fp::<7>::new(6)); // (4*5)%7=6
         assert_eq!(a.neg().lane(0), Fp::<7>::new(3)); // (7-4)%7=3
     }
+
+    // -----------------------------------------------------------------------
+    // fold_mul_first_n unit tests
+    // -----------------------------------------------------------------------
+
+    /// fold_mul_first_n(1) returns lane 0 regardless of other lanes.
+    #[test]
+    fn test_fold_mul_first_n_single_lane() {
+        let mut p = Packed7::one();
+        p = p.with_lane(0, Fp::<7>::new(5));
+        assert_eq!(p.fold_mul_first_n(1), Fp::<7>::new(5));
+    }
+
+    /// fold_mul_first_n(n) computes product of first n lanes against scalar reference.
+    #[test]
+    fn test_fold_mul_first_n_matches_scalar() {
+        let vals: [u64; 16] = [3, 2, 6, 4, 1, 5, 2, 3, 4, 1, 6, 2, 3, 5, 1, 4];
+        let arr: [Fp<7>; 16] = core::array::from_fn(|i| Fp::<7>::new(vals[i]));
+        let p = Packed7::pack(&arr);
+        for n in 1..=16 {
+            let expected = vals[..n].iter().fold(1u64, |acc, &v| (acc * v) % 7);
+            assert_eq!(
+                p.fold_mul_first_n(n).value(),
+                expected,
+                "fold_mul_first_n({n}) mismatch"
+            );
+        }
+    }
+
+    /// fold_mul_first_n with all-ones returns 1.
+    #[test]
+    fn test_fold_mul_first_n_all_ones() {
+        let p = Packed7::one();
+        for n in 1..=16 {
+            assert_eq!(p.fold_mul_first_n(n), Fp::<7>::new(1), "n={n}");
+        }
+    }
+
+    /// fold_mul_first_n with a zero lane returns 0.
+    #[test]
+    fn test_fold_mul_first_n_zero_lane() {
+        let mut p = Packed7::one();
+        p = p.with_lane(3, Fp::<7>::new(0));
+        // Product of lanes 0..4 contains a zero
+        assert_eq!(p.fold_mul_first_n(4), Fp::<7>::new(0));
+    }
+
+    /// fold_mul_first_n(0) panics.
+    #[test]
+    #[should_panic(expected = "n must satisfy 1 <= n")]
+    fn test_fold_mul_first_n_panic_n0() {
+        let _ = Packed7::one().fold_mul_first_n(0);
+    }
+
+    /// fold_mul_first_n(17) panics.
+    #[test]
+    #[should_panic(expected = "n must satisfy 1 <= n")]
+    fn test_fold_mul_first_n_panic_n17() {
+        let _ = Packed7::one().fold_mul_first_n(17);
+    }
+
+    // -----------------------------------------------------------------------
+    // Inherent wrapper methods (add_inherent / sub_inherent / mul_inherent /
+    // neg_inherent).  These delegate verbatim to the PackedField trait impl;
+    // tests confirm the delegation produces the same result as calling the
+    // trait method directly.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_add_inherent_matches_trait() {
+        for a in 0u64..7 {
+            for b in 0u64..7 {
+                let pa = Packed7::splat(Fp::<7>::new(a));
+                let pb = Packed7::splat(Fp::<7>::new(b));
+                let via_inherent = Packed7::add_inherent(pa, pb);
+                let via_trait = pa.add(pb);
+                assert_eq!(via_inherent, via_trait, "add_inherent({a},{b})");
+            }
+        }
+    }
+
+    #[test]
+    fn test_sub_inherent_matches_trait() {
+        for a in 0u64..7 {
+            for b in 0u64..7 {
+                let pa = Packed7::splat(Fp::<7>::new(a));
+                let pb = Packed7::splat(Fp::<7>::new(b));
+                let via_inherent = Packed7::sub_inherent(pa, pb);
+                let via_trait = pa.sub(pb);
+                assert_eq!(via_inherent, via_trait, "sub_inherent({a},{b})");
+            }
+        }
+    }
+
+    #[test]
+    fn test_mul_inherent_matches_trait() {
+        for a in 0u64..7 {
+            for b in 0u64..7 {
+                let pa = Packed7::splat(Fp::<7>::new(a));
+                let pb = Packed7::splat(Fp::<7>::new(b));
+                let via_inherent = Packed7::mul_inherent(pa, pb);
+                let via_trait = pa.mul(pb);
+                assert_eq!(via_inherent, via_trait, "mul_inherent({a},{b})");
+            }
+        }
+    }
+
+    #[test]
+    fn test_neg_inherent_matches_trait() {
+        for a in 0u64..7 {
+            let pa = Packed7::splat(Fp::<7>::new(a));
+            let via_inherent = Packed7::neg_inherent(pa);
+            let via_trait = pa.neg();
+            assert_eq!(via_inherent, via_trait, "neg_inherent({a})");
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Packed7Vec — PartialEq, Debug, panics, raw_words, is_empty
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_packed7vec_partialeq_equal() {
+        let xs: Vec<Fp<7>> = (0..20).map(|i| Fp::<7>::new((i as u64) % 7)).collect();
+        let a = Packed7Vec::from_field_slice(&xs);
+        let b = Packed7Vec::from_field_slice(&xs);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_packed7vec_partialeq_different_values() {
+        let xs1: Vec<Fp<7>> = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
+        let xs2: Vec<Fp<7>> = vec![Fp::<7>::new(1), Fp::<7>::new(3)];
+        let a = Packed7Vec::from_field_slice(&xs1);
+        let b = Packed7Vec::from_field_slice(&xs2);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_packed7vec_partialeq_different_len() {
+        let xs1: Vec<Fp<7>> = vec![Fp::<7>::new(1)];
+        let xs2: Vec<Fp<7>> = vec![Fp::<7>::new(1), Fp::<7>::new(1)];
+        let a = Packed7Vec::from_field_slice(&xs1);
+        let b = Packed7Vec::from_field_slice(&xs2);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_packed7vec_debug_contains_lanes() {
+        let xs: Vec<Fp<7>> = vec![Fp::<7>::new(3), Fp::<7>::new(6)];
+        let v = Packed7Vec::from_field_slice(&xs);
+        let s = format!("{v:?}");
+        assert!(
+            s.contains("lanes"),
+            "debug output should contain 'lanes': {s}"
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_packed7vec_get_panic_out_of_range() {
+        let v = Packed7Vec::zeros(3);
+        let _ = v.get(3);
+    }
+
+    #[test]
+    #[should_panic(expected = "length mismatch")]
+    fn test_packed7vec_add_assign_length_mismatch() {
+        let mut a = Packed7Vec::zeros(2);
+        let b = Packed7Vec::zeros(3);
+        a.add_assign(&b);
+    }
+
+    #[test]
+    #[should_panic(expected = "length mismatch")]
+    fn test_packed7vec_sub_assign_length_mismatch() {
+        let mut a = Packed7Vec::zeros(2);
+        let b = Packed7Vec::zeros(3);
+        a.sub_assign(&b);
+    }
+
+    #[test]
+    #[should_panic(expected = "length mismatch")]
+    fn test_packed7vec_mul_assign_length_mismatch() {
+        let mut a = Packed7Vec::zeros(2);
+        let b = Packed7Vec::zeros(3);
+        a.mul_assign(&b);
+    }
+
+    #[test]
+    fn test_packed7vec_raw_words_encodes_lanes() {
+        // Lane 0 = 3 (nibble 3), lane 1 = 5 (nibble 5) → first byte = 0x53
+        let xs: Vec<Fp<7>> = vec![Fp::<7>::new(3), Fp::<7>::new(5)];
+        let v = Packed7Vec::from_field_slice(&xs);
+        let words = v.raw_words();
+        assert!(!words.is_empty());
+        assert_eq!(words[0] & 0xff, (5u64 << 4) | 3u64);
+    }
+
+    #[test]
+    fn test_packed7vec_is_empty() {
+        assert!(Packed7Vec::zeros(0).is_empty());
+        assert!(!Packed7Vec::zeros(1).is_empty());
+        assert!(!Packed7Vec::zeros(16).is_empty());
+    }
+
+    #[test]
+    fn test_packed7vec_neg_assign_correctness() {
+        let xs: Vec<Fp<7>> = (0..7).map(|i| Fp::<7>::new(i as u64)).collect();
+        let mut v = Packed7Vec::from_field_slice(&xs);
+        v.neg_assign();
+        for i in 0..7usize {
+            let expected = scalar_neg(i as u64);
+            assert_eq!(v.get(i).value(), expected, "neg_assign lane {i}");
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Packed7Matrix — construction, access, panics, Debug, PartialEq
+    // -----------------------------------------------------------------------
+
+    /// Build a 3×4 matrix and verify rows()/cols()/get() round-trip.
+    #[test]
+    fn test_packed7matrix_shape_and_get() {
+        let rows = 3usize;
+        let cols = 4usize;
+        let data: Vec<Fp<7>> = (0..(rows * cols) as u64)
+            .map(|v| Fp::<7>::new(v % 7))
+            .collect();
+        let m = Packed7Matrix::from_row_major(&data, rows, cols);
+        assert_eq!(m.rows(), rows);
+        assert_eq!(m.cols(), cols);
+        for i in 0..rows {
+            for j in 0..cols {
+                assert_eq!(m.get(i, j), data[i * cols + j], "get({i},{j}) mismatch");
+            }
+        }
+    }
+
+    /// Empty matrix (0 rows): rows()==0, cols()==5.
+    #[test]
+    fn test_packed7matrix_empty_rows() {
+        let m = Packed7Matrix::from_row_major(&[], 0, 5);
+        assert_eq!(m.rows(), 0);
+        assert_eq!(m.cols(), 5);
+    }
+
+    /// Empty matrix (0 cols): rows()==5, cols()==0.
+    #[test]
+    fn test_packed7matrix_empty_cols() {
+        let m = Packed7Matrix::from_row_major(&[], 5, 0);
+        assert_eq!(m.rows(), 5);
+        assert_eq!(m.cols(), 0);
+    }
+
+    /// column() returns the correct Packed7Vec for each column.
+    #[test]
+    fn test_packed7matrix_column_access() {
+        let rows = 4usize;
+        let cols = 3usize;
+        let data: Vec<Fp<7>> = (0..(rows * cols) as u64)
+            .map(|v| Fp::<7>::new(v % 7))
+            .collect();
+        let m = Packed7Matrix::from_row_major(&data, rows, cols);
+        for j in 0..cols {
+            let col = m.column(j);
+            assert_eq!(col.len(), rows);
+            for i in 0..rows {
+                assert_eq!(col.get(i), data[i * cols + j], "column({j}).get({i})");
+            }
+        }
+    }
+
+    /// PartialEq: same data → equal.
+    #[test]
+    fn test_packed7matrix_partialeq_equal() {
+        let data: Vec<Fp<7>> = (0..9u64).map(|v| Fp::<7>::new(v % 7)).collect();
+        let a = Packed7Matrix::from_row_major(&data, 3, 3);
+        let b = Packed7Matrix::from_row_major(&data, 3, 3);
+        assert_eq!(a, b);
+    }
+
+    /// PartialEq: different values → not equal.
+    #[test]
+    fn test_packed7matrix_partialeq_different_values() {
+        let data1: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
+        let data2: Vec<Fp<7>> = (1..5u64).map(|v| Fp::<7>::new(v % 7)).collect();
+        let a = Packed7Matrix::from_row_major(&data1, 2, 2);
+        let b = Packed7Matrix::from_row_major(&data2, 2, 2);
+        assert_ne!(a, b);
+    }
+
+    /// PartialEq: different shapes → not equal.
+    #[test]
+    fn test_packed7matrix_partialeq_different_shape() {
+        let data: Vec<Fp<7>> = (0..4u64).map(|v| Fp::<7>::new(v % 7)).collect();
+        let a = Packed7Matrix::from_row_major(&data, 2, 2);
+        let b = Packed7Matrix::from_row_major(&data, 4, 1);
+        assert_ne!(a, b);
+    }
+
+    /// Debug formatting contains "rows" and "cols".
+    #[test]
+    fn test_packed7matrix_debug_format() {
+        let data = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
+        let m = Packed7Matrix::from_row_major(&data, 1, 2);
+        let s = format!("{m:?}");
+        assert!(s.contains("rows"), "debug output missing 'rows': {s}");
+        assert!(s.contains("cols"), "debug output missing 'cols': {s}");
+    }
+
+    /// from_row_major panics if data.len() != rows * cols.
+    #[test]
+    #[should_panic(expected = "data.len()")]
+    fn test_packed7matrix_from_row_major_length_mismatch_panic() {
+        let data = vec![Fp::<7>::new(0); 5];
+        let _ = Packed7Matrix::from_row_major(&data, 2, 3); // needs 6, got 5
+    }
+
+    /// get() panics when column index is out of range.
+    #[test]
+    #[should_panic(expected = "column index")]
+    fn test_packed7matrix_get_col_out_of_range_panic() {
+        let data: Vec<Fp<7>> = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
+        let m = Packed7Matrix::from_row_major(&data, 1, 2);
+        let _ = m.get(0, 2);
+    }
+
+    /// column() panics when column index is out of range.
+    #[test]
+    #[should_panic(expected = "out of range")]
+    fn test_packed7matrix_column_out_of_range_panic() {
+        let data: Vec<Fp<7>> = vec![Fp::<7>::new(1), Fp::<7>::new(2)];
+        let m = Packed7Matrix::from_row_major(&data, 1, 2);
+        let _ = m.column(2);
+    }
+
+    /// Cross-check Packed7Matrix against permanent_bipedal7 and permanent_ryser:
+    /// a 3×3 known matrix validates that get() and column() feed into the
+    /// permanent algorithm correctly.
+    #[test]
+    fn test_packed7matrix_permanent_cross_check() {
+        use crate::permanent::bipedal7::permanent_bipedal7_singleword;
+        use crate::permanent::ryser::permanent_ryser;
+
+        // [[1,2,3],[4,5,6],[0,1,2]] mod 7
+        let data: Vec<Fp<7>> = [1u64, 2, 3, 4, 5, 6, 0, 1, 2]
+            .iter()
+            .map(|&v| Fp::<7>::new(v))
+            .collect();
+        let m = Packed7Matrix::from_row_major(&data, 3, 3);
+        let bipedal = permanent_bipedal7_singleword(&m);
+        let ryser = permanent_ryser::<Fp<7>>(&data, 3);
+        assert_eq!(bipedal, ryser, "permanent mismatch for 3×3 matrix");
+    }
 }
