@@ -5943,4 +5943,114 @@ mod tests {
             }
         }
     }
+
+    // ─── Coverage: Transposed, row_range/col_range, axpy_row variants, etc. ──
+
+    #[test]
+    fn test_transposed_rows_and_cols_methods() {
+        // Covers `Transposed<&FM>::rows()` (line ~259) and `cols()` (line ~276).
+        let m = FieldMatrix::<F>::zeros(3, 7);
+        let t = m.t();
+        assert_eq!(t.rows(), 7);
+        assert_eq!(t.cols(), 3);
+    }
+
+    #[test]
+    fn test_row_range_and_col_range() {
+        // Covers `FieldMatrix::row_range` and `col_range`.
+        let m = FieldMatrix::<F>::identity(5);
+        let rv = m.row_range(1..3);
+        assert_eq!(rv.rows(), 2);
+        assert_eq!(rv.cols(), 5);
+        let cv = m.col_range(2..4);
+        assert_eq!(cv.rows(), 5);
+        assert_eq!(cv.cols(), 2);
+    }
+
+    #[test]
+    fn test_swap_rows_same_row_is_noop() {
+        // Covers the `if r1 == r2 { return; }` early-return in `swap_rows`.
+        let mut m = FieldMatrix::<F>::identity(3);
+        m.swap_rows(1, 1);
+        assert_eq!(m.get(1, 1), f(1));
+    }
+
+    #[test]
+    fn test_axpy_row_zero_cols_is_noop() {
+        // Covers the `if self.cols == 0 { return; }` early-return in `axpy_row`.
+        let mut m = FieldMatrix::<F>::zeros(3, 0);
+        m.axpy_row(0, 1, f(5)); // no-op — zero columns
+        assert_eq!(m.shape(), (3, 0));
+    }
+
+    #[test]
+    fn test_axpy_row_dst_eq_src_scales_in_place() {
+        // Covers the `if dst == src { ... return; }` path in `axpy_row`.
+        // row[dst] += factor * row[dst]  ⇔  row[dst] = (1 + factor) * row[dst].
+        let mut m = FieldMatrix::<F>::zeros(2, 3);
+        m.set(1, 0, f(2));
+        m.set(1, 1, f(3));
+        m.set(1, 2, f(1));
+        // factor = 2, so row[1] = (1 + 2) * [2, 3, 1] = [6, 9, 3] mod 7 = [6, 2, 3]
+        m.axpy_row(1, 1, f(2));
+        assert_eq!(m.get(1, 0), f(6));
+        assert_eq!(m.get(1, 1), f(2)); // 9 mod 7 = 2
+        assert_eq!(m.get(1, 2), f(3));
+    }
+
+    #[test]
+    fn test_axpy_row_dst_less_than_src_path() {
+        // When dst < src, `axpy_row` takes the `(lo_slice, &*hi_slice)` branch.
+        let mut m = FieldMatrix::<F>::zeros(3, 2);
+        m.set(0, 0, f(1));
+        m.set(0, 1, f(2));
+        m.set(2, 0, f(3));
+        m.set(2, 1, f(4));
+        // row[0] += 1 * row[2]  →  [1+3, 2+4] = [4, 6] mod 7
+        m.axpy_row(0, 2, f(1));
+        assert_eq!(m.get(0, 0), f(4));
+        assert_eq!(m.get(0, 1), f(6));
+    }
+
+    #[test]
+    fn test_find_pivot_row_out_of_bounds_returns_none() {
+        // Covers the `if col >= self.cols || start_row >= self.rows { return None; }` path.
+        let m = FieldMatrix::<F>::identity(3);
+        assert_eq!(m.find_pivot_row(5, 0), None); // col OOB
+        assert_eq!(m.find_pivot_row(0, 5), None); // start_row OOB
+    }
+
+    #[test]
+    fn test_is_square_non_square_returns_false() {
+        // Covers the `#[inline] pub fn is_square`.
+        let rect = FieldMatrix::<F>::zeros(2, 3);
+        assert!(!rect.is_square());
+        let sq = FieldMatrix::<F>::zeros(3, 3);
+        assert!(sq.is_square());
+    }
+
+    #[test]
+    fn test_is_symmetric_non_square_returns_false() {
+        // Covers the `if self.rows != self.cols { return false; }` path.
+        let m = FieldMatrix::<F>::zeros(2, 3);
+        assert!(!m.is_symmetric());
+    }
+
+    #[test]
+    fn test_is_symmetric_asymmetric_matrix_returns_false() {
+        // Covers the `return false` path inside the element-mismatch loop.
+        let mut m = FieldMatrix::<F>::zeros(3, 3);
+        m.set(0, 1, f(1)); // m[0,1] = 1 but m[1,0] = 0 → asymmetric
+        assert!(!m.is_symmetric());
+    }
+
+    #[cfg(feature = "rand")]
+    #[test]
+    fn test_random_seeded_is_deterministic() {
+        // Covers `FieldMatrix::random_seeded` and `FieldMatrix::random`.
+        let a = FieldMatrix::<F>::random_seeded(4, 5, 0xC0FFEE);
+        let b = FieldMatrix::<F>::random_seeded(4, 5, 0xC0FFEE);
+        assert_eq!(a, b);
+        assert_eq!(a.shape(), (4, 5));
+    }
 }

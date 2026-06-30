@@ -2588,4 +2588,44 @@ mod tests {
         }
         eprintln!("--- d36cc414-whole END ---");
     }
+
+    // ─── Coverage: det and solve_batch edge cases (n == 0 / k == 0) ─────────────
+    //
+    // `det` on a 0×0 matrix returns the multiplicative identity (empty product
+    // convention) via `F::zero_hint().one_like()`.  `solve_batch` on a 0×0
+    // system or with a zero-column right-hand side returns a trivially empty
+    // solution matrix without entering the PLE path.
+
+    #[test]
+    fn test_det_n_zero_returns_one_fp7() {
+        let a = FieldMatrix::<Fp<7>>::zeros(0, 0);
+        let d = a.det();
+        assert_eq!(d, Fp::<7>::new(1), "det(0×0) must equal 1");
+    }
+
+    #[test]
+    fn test_solve_batch_n_zero_returns_empty_solution_fp7() {
+        // A is 0×0 (trivially full rank), B is 0×3.
+        // solve_batch hits the `if n == 0` branch and returns Some(0×3 matrix).
+        let a = FieldMatrix::<Fp<7>>::zeros(0, 0);
+        let b = FieldMatrix::<Fp<7>>::zeros(0, 3);
+        let x = a
+            .solve_batch(&b)
+            .expect("0×0 system has a unique empty solution");
+        assert_eq!(x.rows(), 0);
+        assert_eq!(x.cols(), 3);
+    }
+
+    #[test]
+    fn test_solve_batch_k_zero_returns_empty_solution_fp7() {
+        // A is 4×4 invertible, B is 4×0.
+        // solve_batch hits the `if k == 0` branch and returns Some(4×0 matrix).
+        let a = random_fp_invertible::<7>(4, 0xEE01);
+        let b = FieldMatrix::<Fp<7>>::zeros(4, 0);
+        let x = a
+            .solve_batch(&b)
+            .expect("invertible A, k=0 has a unique empty solution");
+        assert_eq!(x.rows(), 4);
+        assert_eq!(x.cols(), 0);
+    }
 }

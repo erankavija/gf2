@@ -2065,6 +2065,26 @@ mod tests {
     }
 
     #[test]
+    fn test_shift_left_zero_is_noop() {
+        // Covers the `if k == 0 || self.len_bits == 0 { return; }` early-return
+        // in `shift_left` when k == 0.
+        let mut bv = BitVec::from_bytes_le(&[0b10101010]);
+        let before = bv.to_bytes_le();
+        bv.shift_left(0);
+        assert_eq!(bv.to_bytes_le(), before);
+    }
+
+    #[test]
+    fn test_shift_right_zero_is_noop() {
+        // Covers the `if k == 0 || self.len_bits == 0 { return; }` early-return
+        // in `shift_right` when k == 0.
+        let mut bv = BitVec::from_bytes_le(&[0b11001100]);
+        let before = bv.to_bytes_le();
+        bv.shift_right(0);
+        assert_eq!(bv.to_bytes_le(), before);
+    }
+
+    #[test]
     fn test_shift_right_beyond_length() {
         let mut bv = BitVec::from_bytes_le(&[0xFF]);
         let orig_len = bv.len();
