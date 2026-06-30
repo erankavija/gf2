@@ -6,8 +6,22 @@
   "priority": "critical",
   "assignee": null,
   "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:27.089412749Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:27.089476519Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -16,5 +30,5 @@
     "component:gf2-core"
   ],
   "created_at": "2026-06-30T20:04:21.150862637Z",
-  "updated_at": "2026-06-30T20:04:21.152255945Z"
+  "updated_at": "2026-06-30T20:12:27.089497869Z"
 }

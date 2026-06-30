@@ -1,0 +1,34 @@
+{
+  "id": "8b3fe657-586c-4191-813e-6ab7799a28ab",
+  "title": "Eliminate SSOT duplication across the workspace",
+  "description": "**Dimension: ssot-duplication · 9 findings (8 medium, 1 low)** — see report §ssot-duplication.\n\nEliminate duplicated logic across the workspace. Highest code-quality leverage in the assessment.\n\nFindings:\n1. `gf2-coding/src/ldpc/nr_5g/mod.rs:753` — `compute_mother_encoding` has two literal copies of a 28-line pivot/swap/eliminate kernel; extract a private `rref_column_pass` helper and call twice.\n2. `gf2-coding/src/drm.rs:624` — `DrmCode::systematic_form` reimplements Gaussian elimination; replace body with `gf2_core::alg::rref::rref(&g, false)`, keep only column rearrangement.\n3. `gf2-coding/src/bch/core.rs:225` — `BchCode::lcm_poly` duplicates `gf2_core::field::charpoly::poly_lcm`; promote to `pub fn FieldPoly::lcm`, remove `lcm_poly`, have `poly_lcm` delegate.\n4. `gf2-kernels-simd/src/bipedal/packed7.rs:37` — F_7 LUT builders duplicated verbatim with `gf2-algebra`; make `gf2-kernels-simd` the SSOT and import from `gf2-algebra`.\n5. `gf2-sim/src/bin/*` — `mean_sigma` copy-pasted into 4 bin files; add `pub(crate) fn mean_sigma` to `gf2-sim/src/observability.rs` and replace copies (incl. inlined one in `parallel_throughput.rs`).\n6. `gf2-kernels-hip/tests/common/mod.rs:18` — test helper re-declares raw HIP FFI; use `DeviceBuffer` RAII + `crate::ffi::hip_device_synchronize`.\n7. `gf2-core/src/kernels/x86.rs` — unused detection stubs duplicate `gf2-kernels-simd::detect()` + 3 unimplemented TODO stubs; delete or delegate.\n8. `gf2-algebra/src/packed/{packed5,packed7}.rs` — `Packed5Matrix`/`Packed7Matrix` omit `row()`/`to_row_major()`/`transpose()` that `Bipedal3Matrix` has (lib.rs:31 advertises all three); add them or document the asymmetry.\n9. (low) `gf2-sim/src/bin/ldpc_bler_sweep.rs:177` — private `esn0_db_to_sigma` duplicates `channels::es_n0_db_to_sigma_f64`; remove local copy.\n\n## Success Criteria\n\n- [hard] Findings 1-7 resolved: duplicated logic factored to a single source per the remediation; no remaining copy of each algorithm. Where a finding is a sanctioned performance/legacy exception, record the justification in this issue instead of deduping.\n- [hard] Finding 8 resolved either by adding the three methods to both matrix types or by an explicit struct-doc note that the asymmetry is intentional.\n- [hard] Finding 9 resolved (local copy removed).\n- [hard] Full `cargo nextest --profile ci`, clippy `-D warnings`, fmt pass.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.307897083Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.307945773Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding"
+  ],
+  "created_at": "2026-06-30T20:12:46.197123962Z",
+  "updated_at": "2026-06-30T20:12:55.307967163Z"
+}

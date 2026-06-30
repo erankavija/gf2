@@ -1,0 +1,34 @@
+{
+  "id": "1c29a70e-36d4-4dc9-bf83-6f6f97f4f72d",
+  "title": "Resolve separation-of-concerns / dependency-direction debt",
+  "description": "**Dimension: separation-of-concerns · 4 findings (2 medium, 2 low)** — see report §separation-of-concerns.\n\n- (med) `gf2-core/src/bitvec.rs:1466` — four `polar_transform*` methods implement the Arikan (2009) coding-theory kernel on the lowest-level primitive type. Move to `gf2-coding` as free functions / extension trait, OR rename neutrally (e.g. `hadamard_butterfly`) if a generic GF(2) butterfly genuinely belongs in core.\n- (med) `gf2-kernels-hip/Cargo.toml:24` — dev-deps on `gf2-algebra` AND `gf2-coding`, which depend on `gf2-kernels-hip` in production (two reversed test-layer edges). Relocate the cross-check/QAM tests to the crates where the reference types live.\n- (low) `gf2-kernels-simd/Cargo.toml:34` — dev-dep on `gf2-algebra` inverts layer order; move Packed5/Packed7 cross-check proptests into `gf2-algebra`'s own suite.\n- (low) `gf2-core/src/sparse.rs:558` — `deterministic_ldpc_like_fixture` embeds \"ldpc\" in a core `#[doc(hidden)]` export; rename to `deterministic_sparse_fixture`.\n\n## Success Criteria\n\n- [hard] `polar_transform*` placement resolved (moved to gf2-coding or renamed neutrally in core) with a recorded rationale.\n- [hard] The two reversed dev-dep edges (hip→algebra/coding, simd→algebra) removed by relocating the affected tests, OR explicitly justified in this issue if relocation is infeasible.\n- [hard] `deterministic_ldpc_like_fixture` renamed (all call sites updated).\n- [hard] `cargo nextest --profile ci`, clippy, fmt pass; dependency graph free of the cited reversed edges.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.443103283Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.443147373Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-06-30T20:12:46.362203031Z",
+  "updated_at": "2026-06-30T20:12:55.443167423Z"
+}

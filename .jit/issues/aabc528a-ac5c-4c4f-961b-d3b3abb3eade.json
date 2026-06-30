@@ -1,0 +1,34 @@
+{
+  "id": "aabc528a-ac5c-4c4f-961b-d3b3abb3eade",
+  "title": "Fill public-API doc-completeness gaps",
+  "description": "**Dimension: doc-completeness · 17 findings (11 medium, 6 low)** — see report §doc-completeness.\n\nFill required doc sections (description, # Arguments, # Examples, # Panics, # Complexity) on public items.\n\nMedium:\n- `gf2-kernels-simd/src/lib.rs:1` — remove crate-wide `#![allow(clippy::missing_safety_doc)]` + 14 per-file copies; add real `# Safety` (overlaps the fp_generic high task — coordinate).\n- `gf2-kernels-simd/src/lib.rs:83` — `LogicalFns` 15 public fn-pointer fields need per-field `///`.\n- `gf2-core/src/matrix.rs:987` — `find_pivot_row` needs `# Examples` + `# Complexity`; `to_sparse` needs `# Complexity`.\n- `gf2-core/src/sparse.rs:890` — `SpBitMatrix::from_dense`/`to_dense` need `# Examples`/`# Complexity`/`# Panics`.\n- `gf2-coding/src/grand/orbgrand.rs:852,863` — `ln_1_plus_exp`/`log_sum_exp` need `# Arguments`/`# Examples`/`# Complexity`.\n- `gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:374` — `generator()` needs `# Panics` + `# Examples`.\n- `gf2-coding/src/modem/analysis.rs:829` — `per_bit_mi_histogram_bits` needs `# Arguments`.\n- `gf2-algebra/src/packed/packed5.rs:1410` — `Packed5Matrix` PartialEq/Debug impls need full doc blocks.\n- `gf2-sim/src/presets/dvb_t2.rs:411` — 6 builder methods need `# Examples`.\n- `gf2-sim/src/stages/mod.rs:274` — 4 stage constructors need `# Examples`.\n- `gf2-kernels-hip/src/lib.rs:411` + launch_*.rs — ~20 public getters need `# Examples` (no_run).\n\nLow:\n- `gf2-core/src/bitvec.rs:847,873` — `find_first_set`/`find_last_set` need `# Complexity`.\n- `gf2-sim/src/connector.rs` — `Connector::new` needs `# Examples`.\n- `gf2-sim/src/executor/results.rs:59` — `SnrPointResult::from_counters` needs `# Examples`.\n- `gf2-sim/src/parallel/mod.rs:259` — `WorkerCounters::fer()`/`mean_iters()` need `# Examples`.\n- `gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:113`; `traits.rs:279,316`; `nr_5g/mod.rs:1306` — 4 ` ```ignore ` examples → `no_run` or self-contained.\n- `gf2-coding/src/ldpc/nr_5g/mod.rs:1362,1385` — `with_scale`/`with_algorithm` need doctests.\n\n## Success Criteria\n\n- [hard] Every listed item gains the missing required sections; doctests compile and pass under `cargo test --doc` (use `no_run` only for device/GPU-dependent examples).\n- [hard] All ` ```ignore ` examples in the four cited files converted to compilable `no_run` or self-contained form.\n- [hard] clippy `-D warnings` and fmt pass.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.375700853Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.375652803Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core"
+  ],
+  "created_at": "2026-06-30T20:12:46.280192696Z",
+  "updated_at": "2026-06-30T20:12:55.375722873Z"
+}

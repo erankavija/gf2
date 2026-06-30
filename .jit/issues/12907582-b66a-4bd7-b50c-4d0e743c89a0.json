@@ -1,0 +1,34 @@
+{
+  "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
+  "title": "Resolve medium/low documentation drift",
+  "description": "**Dimension: doc-drift · 17 findings (12 medium, 5 low)** — see report §doc-drift (the 3 high items are filed separately).\n\nBring documentation back in line with code.\n\nMedium:\n- `CLAUDE.md` — \"AARCH64\" listed as supported SIMD target but only TODO stubs exist; correct the parenthetical.\n- `CONTRIBUTING.md:43` — project tree lists 3 crates; add `gf2-algebra`, `gf2-sim`, `gf2-kernels-hip`, `proofs/`, `dev/`.\n- `crates/gf2-algebra/README.md:84` — \"16 lanes per u64-pair\" for `Packed7` (it is a single u64); fix to \"16 lanes per u64\".\n- `README.md:132` — `cargo test --workspace --all-features --release` should be `cargo nextest run ... --profile ci` (5 s per-test note).\n- `CONTRIBUTING.md:28,31,222` — three `cargo test` invocations missing `--release`/nextest; fix all three.\n- `CONTRIBUTING.md:139` — doc example `use gf2::BitVec` → `use gf2_core::BitVec`.\n- `crates/gf2-algebra/src/permanent/mod.rs:15` — \"F_5 covers n <= Packed5::LANES = 64\" → n <= 63.\n- `crates/gf2-algebra/src/permanent/bipedal5.rs:8,25` — single-word limit stated as n <= LANES = 64 → n <= 63.\n- `crates/gf2-kernels-simd/src/lib.rs:9` — \"AVX-512F (experimental)\" but all AVX-512 fns are `unimplemented!()` stubs; correct the claim.\n- `docs/presentations/ae82bd73-.../talk.html:125` — slide 8 \"proven on the FiniteField trait\" → Mathlib CommRing/ZMod 3 (Charon binding descoped).\n- `docs/presentations/6efb756b-.../talk.html` — slides 9/11/28 cite private/`pub(crate)` paths as public API; annotate or replace.\n\nLow:\n- `crates/gf2-algebra/src/lib.rs:15` — crate docs embed internal wave/task designators (W2/W4-T18 etc.); remove from cargo-doc-visible entry point.\n- `README.md` — features table omits `gf2-coding` default-on `sim-observability`; add row (and to crate README).\n- `docs/presentations/6efb756b-.../talk.html:362` — slide 26 stale `cargo test` cmd + stale 2816 test count.\n- `crates/gf2-sim/src/frame_sim.rs:17` — \"not yet on main\" comment stale (landed db9836e4); state actual reason only.\n- `crates/gf2-core/src/compute/cpu.rs:101` — bare `// TODO: parallel version`; implement under `#[cfg(feature=\"parallel\")]` or reference a JIT issue id.\n\n## Success Criteria\n\n- [hard] Every listed site corrected; each claim verified against current code before edit (no new drift).\n- [hard] The `compute/cpu.rs` TODO is either implemented or replaced with a traceable JIT reference (not left bare).\n- [hard] `cargo fmt`/`cargo doc --no-deps` clean for touched Rust files.",
+  "state": "ready",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.342791317Z"
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-06-30T20:12:55.342832337Z"
+    }
+  },
+  "context": {},
+  "documents": [],
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:docs"
+  ],
+  "created_at": "2026-06-30T20:12:46.239191939Z",
+  "updated_at": "2026-06-30T20:12:55.342854557Z"
+}
