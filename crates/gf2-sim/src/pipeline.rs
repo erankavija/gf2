@@ -364,4 +364,42 @@ mod tests {
         assert_eq!(h.batch_id(), 7);
         assert_eq!(h.snr_idx(), 3);
     }
+
+    /// Build a trivial DVB-T2 preset pipeline with zero SNR points so that
+    /// `run()` / `run_with_decoder()` / `run_parallel()` return immediately
+    /// with empty results.
+    fn empty_sweep_pipeline() -> crate::Pipeline {
+        use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+        use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+        use gf2_coding::modem::DemapMethod;
+        use gf2_coding::CodeRate;
+        let mut p = crate::Pipeline::dvb_t2()
+            .modcod(crate::presets::dvb_t2::Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+            .demap(DemapMethod::ExactLogMap)
+            .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
+            .seed(42)
+            .build()
+            .expect("DVB-T2 r1/2 16-QAM builds");
+        // Empty sweep: no SNR points → returns immediately.
+        p.config_mut().esn0_db_points = vec![];
+        p
+    }
+
+    #[test]
+    fn test_run_with_decoder_empty_sweep_returns_ok() {
+        let p = empty_sweep_pipeline();
+        let r = p.run_with_decoder().expect("empty sweep must succeed");
+        assert_eq!(r.per_point.len(), 0);
+    }
+
+    #[test]
+    fn test_run_parallel_empty_sweep_returns_ok() {
+        let p = empty_sweep_pipeline();
+        let r = p.run_parallel().expect("empty sweep must succeed");
+        assert_eq!(r.per_point.len(), 0);
+    }
 }

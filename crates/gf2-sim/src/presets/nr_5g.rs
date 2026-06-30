@@ -1421,4 +1421,45 @@ mod tests {
             .expect("first stage is the NR encode");
         assert_eq!(encode.k(), 416, "k = 8 * 52 (the kb=8 band payload)");
     }
+
+    #[test]
+    fn test_nr5g_modulation_bits_per_symbol_all_variants() {
+        assert_eq!(NrModulation::Qpsk.bits_per_symbol(), 2);
+        assert_eq!(NrModulation::Qam16.bits_per_symbol(), 4);
+        assert_eq!(NrModulation::Qam64.bits_per_symbol(), 6);
+        assert_eq!(NrModulation::Qam256.bits_per_symbol(), 8);
+    }
+
+    #[test]
+    fn test_channel_awgn_and_demap_noise_var() {
+        // Channel::awgn() constructs the enum variant correctly.
+        let ch = Channel::awgn(5.0);
+        assert_eq!(ch, Channel::Awgn { es_n0_db: 5.0 });
+        // demap_noise_var() returns a finite, positive N0.
+        let n0 = ch.demap_noise_var();
+        assert!(
+            n0.is_finite() && n0 > 0.0,
+            "N0 must be finite positive: {n0}"
+        );
+    }
+
+    #[test]
+    fn test_build_rejects_offset_min_sum_nan() {
+        // OffsetMinSum(NaN) fails the `beta.is_finite()` guard in validate().
+        let result = Pipeline::nr_5g()
+            .base_graph(BaseGraph::Bg2)
+            .lifting_size(52)
+            .rate(Nr5gRate::R1_3)
+            .decoder(Nr5gDecoderConfig::new(
+                DecoderAlgorithm::OffsetMinSum(f32::NAN),
+                25,
+            ))
+            .demap(NrModulation::Qpsk, DemapMethod::ExactLogMap)
+            .channel(Channel::awgn(3.0))
+            .build();
+        assert!(
+            matches!(result, Err(BuildError::InvalidNr5gParams { .. })),
+            "OffsetMinSum(NaN) must produce InvalidNr5gParams"
+        );
+    }
 }

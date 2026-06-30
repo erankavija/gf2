@@ -576,4 +576,84 @@ mod tests {
         assert_eq!(counters.frames, 1);
         assert_eq!(counters.errors, 0, "frame above threshold must decode");
     }
+
+    #[test]
+    fn test_from_eb_n0_constructs_sim() {
+        let sim = DvbT2BicmFrameSim::from_eb_n0(
+            CodeRate::Rate1_2,
+            DvbT2Modulation::Qam16,
+            5.0,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+            DemapMethod::ExactLogMap,
+        );
+        assert!(sim.k() > 0);
+        assert!(sim.n_ldpc() > sim.k());
+        // The eb_n0 roundtrip at the construction rate must be near 5.0.
+        let roundtrip = sim.eb_n0_db(CodeRate::Rate1_2);
+        assert!(
+            (roundtrip - 5.0).abs() < 0.5,
+            "eb_n0 roundtrip: {roundtrip}"
+        );
+    }
+
+    #[test]
+    fn test_all_accessor_methods() {
+        let sim = DvbT2BicmFrameSim::new(
+            CodeRate::Rate2_3,
+            DvbT2Modulation::Qam64,
+            7.0,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, false),
+            DemapMethod::ExactLogMap,
+        );
+        assert!(sim.k() > 0, "k must be positive");
+        assert!(sim.n_ldpc() > sim.k(), "n_ldpc must exceed k");
+        let _code = sim.ldpc_code();
+        let dc = sim.decoder_config();
+        assert_eq!(dc.algorithm(), DecoderAlgorithm::SumProduct);
+        assert_eq!(sim.rate(), CodeRate::Rate2_3);
+        assert_eq!(sim.modulation(), DvbT2Modulation::Qam64);
+        assert_eq!(sim.demap(), DemapMethod::ExactLogMap);
+        assert!(sim.sigma() > 0.0, "sigma must be positive");
+        assert!(
+            (sim.noise_var() - 2.0 * sim.sigma() * sim.sigma()).abs() < 1e-4,
+            "noise_var must equal 2*sigma^2"
+        );
+        assert!((sim.es_n0_db() - 7.0).abs() < 1e-9, "es_n0_db roundtrip");
+        let eb = sim.eb_n0_db(CodeRate::Rate2_3);
+        assert!(
+            eb.is_finite() && eb > 0.0,
+            "eb_n0_db must be finite positive"
+        );
+    }
+
+    #[test]
+    fn test_random_bitvec_zero_length_returns_empty() {
+        use rand::SeedableRng;
+        use rand_chacha::ChaCha20Rng;
+        let mut rng = ChaCha20Rng::seed_from_u64(0);
+        let bv = random_bitvec(0, &mut rng);
+        assert_eq!(bv.len(), 0);
+    }
+
+    #[test]
+    fn test_prepare_frame_and_decode_codeword_to_outcome() {
+        let sim = DvbT2BicmFrameSim::new(
+            CodeRate::Rate1_2,
+            DvbT2Modulation::Qam16,
+            9.0,
+            DecoderConfig::new(DecoderAlgorithm::SumProduct, true),
+            DemapMethod::ExactLogMap,
+        );
+        let mut ctx = crate::parallel::WorkerCtx::new(42, 0, 0);
+        let prep = sim.prepare_frame(0, &mut ctx);
+        assert_eq!(prep.message.len(), sim.k(), "message has k bits");
+        assert_eq!(prep.llrs.len(), sim.n_ldpc(), "llrs has n_ldpc entries");
+
+        // Decode an all-zeros codeword (not a valid codeword, but
+        // decode_codeword_to_outcome does not panic on it).
+        let codeword = gf2_core::BitVec::zeros(sim.n_ldpc());
+        let outcome = sim.decode_codeword_to_outcome(&prep.message, &codeword, 10);
+        assert_eq!(outcome.info_bits, sim.k() as u64);
+        assert_eq!(outcome.iterations, 10);
+    }
 }

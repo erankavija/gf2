@@ -1757,4 +1757,171 @@ mod tests {
         let batch = BitPackedBatch::new(vec![BitVec::zeros(2)]);
         assert!(split_half(&batch).is_none());
     }
+
+    // --- DagOutputs::into_outputs / into_single --------------------------
+
+    #[test]
+    fn test_dag_outputs_into_outputs_consumes_and_returns_pairs() {
+        let mut chain = crate::graph::Chain::new();
+        chain.add(erase(BitId));
+        let p = chain.build().unwrap();
+        let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
+        let dag_out = TopologyExecutor::run(&p, &sched, Box::new(BitPackedBatch::new(vec![])))
+            .expect("single-stage pipeline runs");
+        let pairs = dag_out.into_outputs();
+        assert_eq!(pairs.len(), 1, "one sink");
+        assert_eq!(pairs[0].0, 0, "stage at position 0");
+    }
+
+    #[test]
+    fn test_dag_outputs_into_single_returns_none_for_multi_sink() {
+        // Two stages with no connecting edge → both are sinks.
+        let p = raw_pipeline(vec![erase(BitId), erase(BitId)], vec![]);
+        let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
+        let dag_out = TopologyExecutor::run(&p, &sched, Box::new(BitPackedBatch::new(vec![])))
+            .expect("multi-sink pipeline runs");
+        assert!(
+            dag_out.into_single().is_none(),
+            "two sinks → into_single must return None"
+        );
+    }
+
+    // --- HardDecisionBatch concat / split --------------------------------
+
+    #[test]
+    fn test_concat_batches_hard_decision() {
+        let a = HardDecisionBatch::new(vec![BitVec::ones(4)]);
+        let b = HardDecisionBatch::new(vec![BitVec::zeros(4), BitVec::ones(4)]);
+        let merged = concat_batches(&[&a, &b]).expect("HardDecisionBatch concatenates");
+        let m = merged.as_any().downcast_ref::<HardDecisionBatch>().unwrap();
+        assert_eq!(m.frames.len(), 3);
+        assert_eq!(m.frames[0], BitVec::ones(4));
+    }
+
+    #[test]
+    fn test_split_half_hard_decision() {
+        let frames: Vec<_> = (0..4)
+            .map(|i| {
+                if i < 2 {
+                    BitVec::ones(4)
+                } else {
+                    BitVec::zeros(4)
+                }
+            })
+            .collect();
+        let batch = HardDecisionBatch::new(frames);
+        let (lo, hi) = split_half(&batch).expect("4 frames split");
+        assert_eq!(lo.batch_size(), 2);
+        assert_eq!(hi.batch_size(), 2);
+        let lo = lo.as_any().downcast_ref::<HardDecisionBatch>().unwrap();
+        assert_eq!(lo.frames[0], BitVec::ones(4));
+        assert_eq!(lo.frames[1], BitVec::ones(4));
+    }
+
+    // --- LlrBatch concat / split -----------------------------------------
+
+    #[test]
+    fn test_concat_batches_llr() {
+        use gf2_coding::Llr;
+        let a = LlrBatch::new(vec![vec![Llr::new(1.0), Llr::new(-1.0)]]);
+        let b = LlrBatch::new(vec![vec![Llr::new(2.0)], vec![Llr::new(3.0)]]);
+        let merged = concat_batches(&[&a, &b]).expect("LlrBatch concatenates");
+        let m = merged.as_any().downcast_ref::<LlrBatch>().unwrap();
+        assert_eq!(m.frames.len(), 3);
+        assert_eq!(m.frames[0].len(), 2);
+    }
+
+    #[test]
+    fn test_split_half_llr() {
+        use gf2_coding::Llr;
+        let frames: Vec<Vec<Llr>> = (0..3).map(|i| vec![Llr::new(i as f32)]).collect();
+        let batch = LlrBatch::new(frames);
+        let (lo, hi) = split_half(&batch).expect("3 frames split");
+        assert_eq!(lo.batch_size(), 2, "ceil(3/2) = 2");
+        assert_eq!(hi.batch_size(), 1);
+    }
+
+    // --- SymbolBatch split -----------------------------------------------
+
+    #[test]
+    fn test_split_half_symbol() {
+        let i_data: Vec<Vec<f32>> = (0..4).map(|j| vec![j as f32]).collect();
+        let q_data: Vec<Vec<f32>> = (0..4).map(|j| vec![-(j as f32)]).collect();
+        let batch = SymbolBatch::new(i_data, q_data);
+        let (lo, hi) = split_half(&batch).expect("4-frame SymbolBatch splits");
+        assert_eq!(lo.batch_size(), 2);
+        assert_eq!(hi.batch_size(), 2);
+        let lo = lo.as_any().downcast_ref::<SymbolBatch>().unwrap();
+        assert_eq!(lo.i[0], vec![0.0_f32]);
+        assert_eq!(lo.i[1], vec![1.0_f32]);
+    }
+
+    // --- GpuOnly stage degrades to CPU on non-hip build ------------------
+
+    struct GpuBitId2;
+    impl Stage<BitPackedBatch, BitPackedBatch> for GpuBitId2 {
+        type Scratch = ();
+        type CpuFallback = Self;
+        fn process(&self, i: &BitPackedBatch, _: &mut ()) -> Result<BitPackedBatch, StageError> {
+            Ok(i.clone())
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::GpuOnly
+        }
+    }
+
+    #[test]
+    #[cfg(not(feature = "hip"))]
+    fn test_run_gpu_only_stage_degrades_to_cpu_without_hip() {
+        // On a non-hip build a GpuOnly stage must degrade to process_any and
+        // return the identity output rather than panicking.
+        let p = raw_pipeline(vec![erase(GpuBitId2)], vec![]);
+        let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
+        let frame = BitPackedBatch::new(vec![BitVec::ones(4)]);
+        let out = TopologyExecutor::run(&p, &sched, Box::new(frame.clone()))
+            .expect("GpuOnly degrades to CPU on non-hip build")
+            .into_single()
+            .expect("single sink");
+        let out = out
+            .as_any()
+            .downcast_ref::<BitPackedBatch>()
+            .expect("BitPackedBatch");
+        assert_eq!(out.frames, frame.frames);
+    }
+
+    // --- Hybrid stage splits and re-merges -------------------------------
+
+    struct HybridBitId2;
+    impl Stage<BitPackedBatch, BitPackedBatch> for HybridBitId2 {
+        type Scratch = ();
+        type CpuFallback = Self;
+        fn process(&self, i: &BitPackedBatch, _: &mut ()) -> Result<BitPackedBatch, StageError> {
+            Ok(i.clone())
+        }
+        fn execution_class(&self) -> ExecutionClass {
+            ExecutionClass::Hybrid
+        }
+    }
+
+    #[test]
+    fn test_run_hybrid_stage_splits_and_merges_batch() {
+        let p = raw_pipeline(vec![erase(HybridBitId2)], vec![]);
+        let sched = Scheduler::new(std::num::NonZeroUsize::new(1).unwrap(), false, 0);
+        // 4-frame batch → split into 2+2, processed separately, merged back.
+        let frames: Vec<_> = (0..4).map(|_| BitVec::ones(4)).collect();
+        let input = BitPackedBatch::new(frames);
+        let out = TopologyExecutor::run(&p, &sched, Box::new(input.clone()))
+            .expect("Hybrid stage runs")
+            .into_single()
+            .expect("single sink");
+        let out = out
+            .as_any()
+            .downcast_ref::<BitPackedBatch>()
+            .expect("BitPackedBatch");
+        assert_eq!(
+            out.frames.len(),
+            4,
+            "4 frames preserved through hybrid split-merge"
+        );
+    }
 }
