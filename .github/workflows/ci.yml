@@ -166,7 +166,7 @@ jobs:
     - name: Install Rust nightly (for Charon)
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: nightly-2026-02-22
+        toolchain: nightly-2026-06-01
         components: rustc-dev, llvm-tools-preview, rust-src, miri
 
     - name: Cache Charon binary
@@ -174,17 +174,17 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cargo/bin/charon*
-        key: charon-patched-e069223a-${{ hashFiles('patches/charon-e069223a-assoc-type-fixes.patch') }}
+        key: charon-patched-487f0320-${{ hashFiles('patches/charon-487f0320-implied-clause.patch') }}
 
     - name: Install Charon (patched)
       if: steps.cache-charon.outputs.cache-hit != 'true'
       run: |
         git clone https://github.com/AeneasVerif/charon.git /tmp/charon
         cd /tmp/charon
-        git checkout e069223a
-        git apply $GITHUB_WORKSPACE/patches/charon-e069223a-assoc-type-fixes.patch
+        git checkout 487f0320
+        git apply $GITHUB_WORKSPACE/patches/charon-487f0320-implied-clause.patch
         cd charon
-        cargo +nightly-2026-02-22 install --path . --locked
+        cargo +nightly-2026-06-01 install --path . --locked
 
     - name: Install OCaml and Aeneas
       run: |
@@ -192,11 +192,11 @@ jobs:
         opam init --disable-sandboxing --no-setup --auto-setup --yes
         opam switch create 5.2.1
         eval $(opam env)
-        opam install ppx_deriving visitors easy_logging zarith yojson core_unix \
+        opam install ppx_deriving ppx_deriving_yojson visitors easy_logging zarith yojson core_unix \
           odoc ocamlgraph menhir unionFind zarith progress domainslib dune --yes
         git clone https://github.com/AeneasVerif/aeneas.git /tmp/aeneas
         cd /tmp/aeneas
-        git checkout 0f99a049
+        git checkout 5220259c
         make setup-charon && make build-dev
         cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
 
