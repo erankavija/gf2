@@ -2,7 +2,7 @@
   "id": "1fa9c5d0-41d2-4814-8b3f-7c48bd2c595a",
   "title": "gf2-algebra library coverage to 90%",
   "description": "Add targeted tests so gf2-algebra library line coverage reaches at least 90%.\n\n## Background\n\nPost-exclusion, gf2-algebra library coverage is 89.6% — about 18 covered lines short of 90%. The under-covered library modules are `packed/packed7.rs` (138 uncov), `permanent/ryser.rs` (47), `permanent/bipedal3.rs` (41), `permanent/parallel_bipedal3.rs` (27), and `permanent/bipedal5.rs` (26).\n\n## Success Criteria\n\n- [ ] `[hard]` REQ-1: gf2-algebra library line coverage is at or above 90.0% under the post-exclusion measurement.\n- [ ] `[hard]` REQ-2: New coverage comes from tests exercising real library behaviour (correctness against an oracle or known vectors), not assertions contrived solely to touch lines.\n- [ ] `[hard]` REQ-3: All added tests are deterministic and complete within the fast-tier per-test budget; any test exceeding it carries an ignore marker per project convention.\n\n## Notes\n\n`packed7.rs` and the permanent fast-path variants are the highest-yield targets. The permanent oracle (`permanent_ryser`) can validate the bipedal fast paths.",
-  "state": "backlog",
+  "state": "ready",
   "priority": "normal",
   "assignee": null,
   "dependencies": [
@@ -20,5 +20,5 @@
     "type:task"
   ],
   "created_at": "2026-06-30T19:47:52.339192105Z",
-  "updated_at": "2026-06-30T19:48:34.890758354Z"
+  "updated_at": "2026-06-30T20:15:28.251564282Z"
 }
