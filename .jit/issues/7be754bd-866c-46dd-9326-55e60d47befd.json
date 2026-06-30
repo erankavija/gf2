@@ -18,8 +18,9 @@
   "documents": [],
   "labels": [
     "epic:coverage-90",
-    "type:epic"
+    "type:epic",
+    "milestone:1.0"
   ],
   "created_at": "2026-06-30T19:47:25.220846190Z",
-  "updated_at": "2026-06-30T19:48:34.030240716Z"
+  "updated_at": "2026-06-30T19:53:05.835952131Z"
 }
