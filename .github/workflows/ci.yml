@@ -110,7 +110,21 @@ jobs:
       uses: taiki-e/install-action@cargo-llvm-cov
 
     - name: Generate coverage data
-      run: cargo llvm-cov --features simd,parallel,visualization,io,rand,llr-f64 --workspace --json --summary-only --output-path coverage.json
+      run: |
+        # --ignore-filename-regex excludes non-library files from coverage totals
+        # and the per-file list so badge denominators reflect library code only:
+        #   /src/bin/    — CLI/campaign binary entrypoints (orchestration glue, not library logic)
+        #   /tests/      — integration-test files (test code, not library code)
+        #   /benches/    — benchmark harness drivers (bench code, not library code)
+        #   bench_seed\.rs — shared bench-seed helper (dev helper, not library code)
+        #   testutil\.rs   — test utility module (dev helper, not library code)
+        cargo llvm-cov \
+          --features simd,parallel,visualization,io,rand,llr-f64 \
+          --workspace \
+          --json \
+          --summary-only \
+          --output-path coverage.json \
+          --ignore-filename-regex '(/src/bin/|/tests/|/benches/|bench_seed\.rs|testutil\.rs)'
 
     - name: Generate coverage badges
       run: bash scripts/generate-coverage-badges.sh coverage.json badges
