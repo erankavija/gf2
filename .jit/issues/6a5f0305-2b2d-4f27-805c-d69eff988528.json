@@ -1,0 +1,24 @@
+{
+  "id": "6a5f0305-2b2d-4f27-805c-d69eff988528",
+  "title": "gf2-sim library coverage to 90%",
+  "description": "Add targeted tests so gf2-sim library line coverage reaches at least 90%.\n\n## Background\n\nPost-exclusion (CLI binaries removed), gf2-sim library coverage is 86.7% — about 176 covered lines short of 90%. The under-covered library modules are `executor/topology.rs` (138 uncov, 79%), `executor/drain.rs` (102 uncov, 44%), `executor/failure.rs` (40 uncov), `frame_sim.rs` (72 uncov, 59%), `stage.rs` (72 uncov, 73%), `graph/mod.rs` (64 uncov, 90%), and `presets/nr_5g.rs` (48 uncov, 92%).\n\n## Success Criteria\n\n- [ ] `[hard]` REQ-1: gf2-sim library line coverage is at or above 90.0% under the post-exclusion measurement.\n- [ ] `[hard]` REQ-2: New coverage targets the executor and pipeline modules above and exercises real behaviour (topology/drain/failure paths, frame-sim flow), not contrived line-touching.\n- [ ] `[hard]` REQ-3: All added tests are deterministic and respect the fast-tier discipline: any test driving the simulation runner above the frame/query thresholds in CLAUDE.md carries the required ignore marker.\n\n## Notes\n\n`gf2-sim` is `#![deny(unsafe_code)]`. The executor failure/drain paths benefit from fault-injection style tests; the project already has `executor_failure_modes` and `determinism` test patterns to follow.",
+  "state": "backlog",
+  "priority": "normal",
+  "assignee": null,
+  "dependencies": [
+    "e192b14d-c260-40f1-89e0-9e01f04a6788"
+  ],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "context": {},
+  "documents": [],
+  "labels": [
+    "epic:coverage-90",
+    "type:task"
+  ],
+  "created_at": "2026-06-30T19:48:10.682768240Z",
+  "updated_at": "2026-06-30T19:48:35.829925950Z"
+}
