@@ -7,14 +7,27 @@ fail-fast = false
 
 # The gf2-sim typestate compile-fail guard (issue 81d05bab) uses `trybuild`,
 # which spawns a *fresh* `cargo` compile of the wrong-order example to assert it
-# fails to compile. That cargo invocation inherently exceeds the 5 s fast-tier
-# budget under the full `--all-features` workspace (it is fast in isolation but
-# not under load). It stays in the enforced fast (`ci`) profile — only its
-# timeout is raised to a realistic value for a compiler-spawning test; no other
-# test's budget changes.
+# fails to compile. Its `.stderr` snapshots are rustc-version-specific, so it is
+# now gated behind `RUN_TRYBUILD` and skips by default (CI runs it in a dedicated
+# step pinned to the MSRV toolchain — see `.github/workflows/ci.yml`). This
+# override is defensive: should it ever run under nextest (RUN_TRYBUILD=1), the
+# compiler-spawning invocation needs a realistic timeout; no other test changes.
 [[profile.ci.overrides]]
 filter = 'test(typestate_rejects_out_of_order_calls)'
 slow-timeout = { period = "90s", terminate-after = 1 }
+
+# CPU "smoke" sim regression guards. In isolation they run in 0.8-2.5 s, well
+# inside the 5 s fast-tier cap, but they are CPU-bound and starve under the full
+# parallel workspace battery on the 2-core GitHub runner, intermittently grazing
+# the cap (observed 2026-06-30: dvb_t2_regression 5.11 s, pipeline_run_cpu
+# 5.03 s, preset_vs_graph 5.03 s, stage_driven 5.02 s — all four killed at the
+# boundary). They are genuinely fast-tier tests, not slow ones, so raise only
+# their per-test ceiling to absorb runner contention; every other test keeps the
+# default 5 s budget. (dvb_t2_regression and stage_driven_byte_identity are also
+# in the gpu-serial group below; nextest merges the two overrides.)
+[[profile.ci.overrides]]
+filter = 'package(gf2-sim) and (binary(dvb_t2_regression) or binary(pipeline_run_cpu) or binary(preset_vs_graph_byte_identity) or binary(stage_driven_byte_identity))'
+slow-timeout = { period = "20s", terminate-after = 1 }
 
 # GPU-gated tests share ONE physical gfx1030. nextest runs test binaries in
 # parallel, so two GPU tests scheduled concurrently contend the device and

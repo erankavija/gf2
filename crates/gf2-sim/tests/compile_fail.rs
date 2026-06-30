@@ -8,13 +8,33 @@
 //! `.lifting_size()` cannot precede `.base_graph()` on the 5G NR builder.
 //!
 //! The expectation `.stderr` files are checked in alongside the failing cases.
-//! `trybuild` stderr is rustc-version-sensitive, so the failing examples are
-//! kept minimal (a single offending method call) to keep the rendered error
-//! stable. Regenerate with `TRYBUILD=overwrite cargo test -p gf2-sim --release
-//! --test compile_fail`.
+//! `trybuild` compares the *rendered* rustc diagnostic byte-for-byte, so the
+//! snapshots are specific to the rustc version they were generated against.
+//! Running this on a floating toolchain breaks the build on every rustc bump
+//! (observed 2026-06-30: CI's `@stable` moved past 1.95.0 and re-rendered the
+//! E0599 note). To keep the guard meaningful without that churn it is gated
+//! behind `RUN_TRYBUILD` and exercised in CI only under the pinned MSRV
+//! toolchain the snapshots target (see the `Lean`-adjacent compile-fail step in
+//! `.github/workflows/ci.yml`).
+//!
+//! Run locally and regenerate snapshots under the pinned toolchain:
+//!   RUN_TRYBUILD=1 cargo +1.95.0 test -p gf2-sim --release --test compile_fail
+//!   TRYBUILD=overwrite RUN_TRYBUILD=1 cargo +1.95.0 test -p gf2-sim --release \
+//!     --test compile_fail
 
 #[test]
 fn typestate_rejects_out_of_order_calls() {
+    // Skip on toolchains the `.stderr` snapshots were not generated against so a
+    // rustc diagnostic-format change cannot fail the default `cargo test` /
+    // nextest battery (which CI runs on floating `@stable`). CI re-enables this
+    // via RUN_TRYBUILD=1 under the pinned MSRV toolchain.
+    if std::env::var_os("RUN_TRYBUILD").is_none() {
+        eprintln!(
+            "skipping typestate_rejects_out_of_order_calls: rustc-version-specific; \
+             set RUN_TRYBUILD=1 and run under the pinned MSRV toolchain"
+        );
+        return;
+    }
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/compile_fail/*.rs");
 }

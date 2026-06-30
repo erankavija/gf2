@@ -64,6 +64,21 @@ jobs:
     - name: Build benchmarks
       run: cargo build --workspace --release --benches
 
+    # The typestate compile-fail guard uses trybuild, whose .stderr snapshots are
+    # rustc-version-specific. The battery above runs on floating `@stable` and
+    # skips it (RUN_TRYBUILD unset) so a rustc diagnostic-format change cannot
+    # break CI. Enforce it here under the pinned MSRV toolchain the snapshots
+    # target; regenerate snapshots with TRYBUILD=overwrite under the same rustc.
+    # Kept last because installing this toolchain makes it the rustup default.
+    - name: Install MSRV toolchain (trybuild snapshots)
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: "1.95.0"
+    - name: Typestate compile-fail guard (pinned rustc)
+      env:
+        RUN_TRYBUILD: "1"
+      run: cargo +1.95.0 test -p gf2-sim --release --test compile_fail
+
   coverage:
     name: Coverage Badges
     runs-on: ubuntu-latest
