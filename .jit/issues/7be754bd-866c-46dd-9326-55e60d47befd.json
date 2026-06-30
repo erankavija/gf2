@@ -4,7 +4,7 @@
   "description": "Every production crate should report at least 90% library line coverage. The current shortfall is driven mostly by CLI/campaign binaries and dev helpers counted in the denominator, not by under-tested library logic.\n\n## Background\n\nA fresh `cargo llvm-cov --workspace` run shows the headline per-crate numbers are dragged down by non-library code. Splitting uncovered lines by file type:\n\n| Crate | Library-only | CLI binaries (`src/bin/`) | dev/test helpers |\n|-------|:---:|:---:|:---:|\n| gf2-coding | 91.1% | 30.1% (736 uncov) | — |\n| gf2-kernels-simd | 92.8% | — | — |\n| gf2-algebra | 89.6% | — | 33.3% (26 uncov) |\n| gf2-core | 89.5% | — | 57.4% (294 uncov) |\n| gf2-sim | 86.7% | 51.9% (734 uncov) | 83.3% |\n\nTwo levers close the gap: (1) measure coverage against library code only, excluding CLI `main()` entrypoints and dev/bench/test helpers; (2) add targeted tests for the genuinely under-covered library modules in gf2-core, gf2-algebra, and gf2-sim. After lever 1, gf2-coding and gf2-kernels-simd already clear the bar; the remaining real-test work is roughly 356 covered lines across three crates.\n\n## Success Criteria\n\n- [ ] `[hard]` REQ-1: Every production crate (gf2-core, gf2-coding, gf2-algebra, gf2-sim, gf2-kernels-simd) reports library line coverage at or above 90.0% on the CI badge run.\n- [ ] `[hard]` REQ-2: Coverage measurement excludes non-library code (CLI binaries under `src/bin/`, plus dev/bench/test-support helpers), and the exclusion set is documented.\n- [ ] `[hard]` REQ-3: README coverage badges display the at-or-above-90% per-crate numbers.\n\n## Notes\n\n`gfp/simd_ops.rs` (gf2-core) is SIMD-feature-gated and low-ROI to cover; it is not a required target. New tests must respect the fast-tier discipline in CLAUDE.md (per-test 5s budget; sim tests above the frame/query thresholds carry `#[ignore]`).",
   "state": "backlog",
   "priority": "normal",
-  "assignee": null,
+  "assignee": "agent:project-lead",
   "dependencies": [
     "ee304787-9a19-41f1-a355-97bfa2c21bbe",
     "e192b14d-c260-40f1-89e0-9e01f04a6788",
@@ -22,5 +22,5 @@
     "milestone:1.0"
   ],
   "created_at": "2026-06-30T19:47:25.220846190Z",
-  "updated_at": "2026-06-30T19:53:05.835952131Z"
+  "updated_at": "2026-06-30T19:54:45.230187487Z"
 }

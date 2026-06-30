@@ -1,0 +1,22 @@
+{
+  "epic_id": "7be754bd-866c-46dd-9326-55e60d47befd",
+  "epic_short_id": "7be754bd",
+  "current_wave": 1,
+  "waves": [
+    {"wave_number": 1, "issues": [
+      {"id": "e192b14d-c260-40f1-89e0-9e01f04a6788", "short_id": "e192b14d", "title": "Exclude CLI binaries and dev helpers from coverage measurement", "classification": "implementation", "status": "pending"}
+    ]},
+    {"wave_number": 2, "issues": [
+      {"id": "1fa9c5d0-41d2-4814-8b3f-7c48bd2c595a", "short_id": "1fa9c5d0", "title": "gf2-algebra library coverage to 90%", "classification": "implementation", "status": "pending"},
+      {"id": "ee304787-9a19-41f1-a355-97bfa2c21bbe", "short_id": "ee304787", "title": "gf2-core library coverage to 90%", "classification": "implementation", "status": "pending"},
+      {"id": "6a5f0305-2b2d-4f27-805c-d69eff988528", "short_id": "6a5f0305", "title": "gf2-sim library coverage to 90%", "classification": "implementation", "status": "pending"}
+    ]},
+    {"wave_number": 3, "issues": [
+      {"id": "ed51b844-0e96-475a-8f5c-e4ac1d95862a", "short_id": "ed51b844", "title": "Verify all crates at 90% coverage and refresh badges", "classification": "implementation", "status": "pending"}
+    ]}
+  ],
+  "created_during_execution": [],
+  "escalations": [],
+  "rework_counts": {},
+  "started_at": "2026-06-30T19:54:45Z"
+}
