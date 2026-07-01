@@ -5,9 +5,7 @@
   "state": "done",
   "priority": "normal",
   "assignee": null,
-  "dependencies": [
-    "886af072-ecdf-477a-9fc7-685a88d7abf5"
-  ],
+  "dependencies": [],
   "gates_required": [
     "code-review",
     "doc-review",

@@ -5,23 +5,21 @@
   "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
-  "dependencies": [
-    "ec530af9-4f06-4eca-a699-ad072a1f5af8"
-  ],
+  "dependencies": [],
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-06T23:24:21.516462695Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-06T23:24:42.506571880Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-06T23:24:21.516462695Z"
     }
   },
   "context": {},
@@ -31,6 +29,6 @@
     "component:gf2-coding",
     "epic:gf2-sim"
   ],
-  "created_at": "2026-06-05T22:02:50.954566093+00:00",
-  "updated_at": "2026-06-06T23:26:45.916386198+00:00"
+  "created_at": "2026-06-05T22:02:50.954566093Z",
+  "updated_at": "2026-07-01T06:59:57.399794192Z"
 }

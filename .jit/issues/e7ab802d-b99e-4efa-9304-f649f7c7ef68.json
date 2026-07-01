@@ -6,7 +6,6 @@
   "priority": "high",
   "assignee": "agent:claude-wt-e7ab802d",
   "dependencies": [
-    "085cbd0b-a2b5-4d11-af6c-b1fb53e7392b",
     "86c09a51-8d7e-4610-854b-6110ab830d4c"
   ],
   "gates_required": [

@@ -5,9 +5,7 @@
   "state": "done",
   "priority": "high",
   "assignee": "agent:claude",
-  "dependencies": [
-    "ec530af9-4f06-4eca-a699-ad072a1f5af8"
-  ],
+  "dependencies": [],
   "gates_required": [
     "cargo-ci",
     "code-review"
