@@ -619,4 +619,133 @@ mod tests {
         // TypeMismatch is not a GPU failure; no dump.
         assert!(!dir.exists());
     }
+
+    // ── injects_oom_at (free fn and FailurePolicy method) ──────────────────
+
+    /// Free function: `None` modulus never fires (lines 102-104).
+    #[test]
+    fn test_injects_oom_at_none_never_fires() {
+        assert!(!injects_oom_at(None, 0));
+        assert!(!injects_oom_at(None, 100));
+    }
+
+    /// Free function: modulus 0 is treated as "inactive" (m >= 1 guard, lines 102-104).
+    #[test]
+    fn test_injects_oom_at_zero_modulus_never_fires() {
+        assert!(!injects_oom_at(Some(0), 0));
+        assert!(!injects_oom_at(Some(0), 6));
+    }
+
+    /// Free function: fires exactly at multiples of m (lines 102-104).
+    #[test]
+    fn test_injects_oom_at_modulus_logic() {
+        // modulus 1 fires on every frame
+        assert!(injects_oom_at(Some(1), 0));
+        assert!(injects_oom_at(Some(1), 7));
+        // modulus 3: only multiples
+        assert!(injects_oom_at(Some(3), 0));
+        assert!(injects_oom_at(Some(3), 3));
+        assert!(injects_oom_at(Some(3), 6));
+        assert!(!injects_oom_at(Some(3), 1));
+        assert!(!injects_oom_at(Some(3), 2));
+        assert!(!injects_oom_at(Some(3), 5));
+    }
+
+    /// `FailurePolicy::injects_oom_at` delegates to the free function
+    /// (lines 92-94).
+    #[test]
+    fn test_failure_policy_injects_oom_at_delegates() {
+        let tmp = std::path::Path::new("/tmp");
+        let policy = FailurePolicy {
+            strict_gpu: false,
+            dump_dir: tmp,
+            inject_gpu_oom_modulus: Some(4),
+        };
+        // frame 0: 0 % 4 == 0 → fires
+        assert!(policy.injects_oom_at(0));
+        // frame 4: 4 % 4 == 0 → fires
+        assert!(policy.injects_oom_at(4));
+        // frame 1: 1 % 4 != 0 → no fire
+        assert!(!policy.injects_oom_at(1));
+        // None modulus never fires
+        let silent = FailurePolicy {
+            strict_gpu: false,
+            dump_dir: tmp,
+            inject_gpu_oom_modulus: None,
+        };
+        assert!(!silent.injects_oom_at(0));
+    }
+
+    // ── Fatal variants in write_diagnostic_dump ─────────────────────────────
+
+    /// `FatalError::DeviceUnavailable` must produce a dump and propagate
+    /// (exercises the `DeviceUnavailable` match arm in `write_diagnostic_dump`,
+    /// line 188).
+    #[test]
+    fn test_fatal_device_unavailable_propagates_and_writes_dump() {
+        let dir = dump_dir();
+        let fatal = StageError::Fatal(FatalError::DeviceUnavailable);
+        let err = dispatch_with_fallback::<u32, _>(Err(fatal), || Ok(0), ctx(), false, &dir)
+            .expect_err("DeviceUnavailable must propagate");
+        assert!(
+            matches!(err, StageError::Fatal(FatalError::DeviceUnavailable)),
+            "got {err:?}"
+        );
+        // A diagnostic dump file must exist.
+        let entries: Vec<_> = std::fs::read_dir(&dir)
+            .expect("dump dir must exist after DeviceUnavailable")
+            .filter_map(|e| e.ok())
+            .collect();
+        assert!(
+            !entries.is_empty(),
+            "DeviceUnavailable fatal must write a dump file"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// `FatalError::BuildError` must produce a dump and propagate (exercises
+    /// the `BuildError` match arm in `write_diagnostic_dump`, line 189).
+    #[test]
+    fn test_fatal_build_error_propagates_and_writes_dump() {
+        use crate::error::BuildError;
+        let dir = dump_dir();
+        let fatal = StageError::Fatal(FatalError::BuildError(BuildError::ExecutionValidation {
+            reason: "unit test build error".to_string(),
+        }));
+        let err = dispatch_with_fallback::<u32, _>(Err(fatal), || Ok(0), ctx(), false, &dir)
+            .expect_err("BuildError must propagate");
+        assert!(
+            matches!(err, StageError::Fatal(FatalError::BuildError(_))),
+            "got {err:?}"
+        );
+        let entries: Vec<_> = std::fs::read_dir(&dir)
+            .expect("dump dir must exist after BuildError fatal")
+            .filter_map(|e| e.ok())
+            .collect();
+        assert!(
+            !entries.is_empty(),
+            "BuildError fatal must write a dump file"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// When `dump_dir` cannot be created (e.g. because a path component is a
+    /// character device on Linux), `write_diagnostic_dump` logs and returns
+    /// without panicking, and `dispatch_with_fallback` still propagates the
+    /// original fatal error (lines 213-215, the `create_dir_all` failure branch).
+    #[test]
+    fn test_write_dump_silently_skips_on_unwritable_dir() {
+        // /dev/null is a character device — create_dir_all("/dev/null/…")
+        // fails with ENOTDIR on Linux, exercising the create_dir_all error arm.
+        let impossible = std::path::Path::new("/dev/null/gf2sim-impossible-dump-test");
+        let fatal = StageError::Fatal(FatalError::DeviceUnavailable);
+        let err = dispatch_with_fallback::<u32, _>(Err(fatal), || Ok(0), ctx(), false, impossible)
+            .expect_err("DeviceUnavailable must propagate even when dump dir fails");
+        assert!(
+            matches!(err, StageError::Fatal(FatalError::DeviceUnavailable)),
+            "original fatal must be returned unchanged: {err:?}"
+        );
+        // Nothing was created under /dev/null.
+        assert!(!impossible.exists());
+    }
 }
