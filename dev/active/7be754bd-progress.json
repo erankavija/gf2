@@ -49,7 +49,7 @@
           "short_id": "ed51b844",
           "title": "Verify all crates at 90% coverage and refresh badges",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         }
       ]
     }
