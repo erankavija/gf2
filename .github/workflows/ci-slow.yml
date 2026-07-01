@@ -38,7 +38,19 @@ jobs:
       uses: taiki-e/install-action@nextest
 
     - name: Run slow / simulation tests
-      run: cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64 --release --profile slow --run-ignored ignored-only
+      # Exclude ignored tests that are structurally beyond the nightly's reach —
+      # they stay runnable on demand / locally, just not in this job:
+      #   test_ira_vs_rref_normal_rate_* — RREF preprocessing of the DVB-T2
+      #     Normal parity matrices takes several minutes each, past the 120 s
+      #     slow-tier cap (the fast Short-rate IRA-vs-RREF checks still run here).
+      #   test_simd_vs_scalar_n32 — the 2^32-step permanent oracle exceeds 120 s
+      #     on the runner (smaller-n SIMD-vs-scalar checks still run here).
+      #   test_tp06_to_tp07a_parity_interleave_* — needs the external ETSI DVB-T2
+      #     vectors ($DVB_TEST_VECTORS_PATH), which the CI runner does not have.
+      run: >
+        cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64
+        --release --profile slow --run-ignored ignored-only
+        -E 'not (test(test_ira_vs_rref_normal_rate) | test(test_simd_vs_scalar_n32) | test(test_tp06_to_tp07a_parity_interleave))'
 
   kani-heavy:
     name: Kani Verification (heavy GF(256) harnesses)
