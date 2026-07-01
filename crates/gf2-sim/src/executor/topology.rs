@@ -1858,7 +1858,9 @@ mod tests {
 
     // --- GpuOnly stage degrades to CPU on non-hip build ------------------
 
+    #[cfg(not(feature = "hip"))]
     struct GpuBitId2;
+    #[cfg(not(feature = "hip"))]
     impl Stage<BitPackedBatch, BitPackedBatch> for GpuBitId2 {
         type Scratch = ();
         type CpuFallback = Self;
