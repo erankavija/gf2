@@ -1,7 +1,7 @@
 {
   "epic_id": "7be754bd-866c-46dd-9326-55e60d47befd",
   "epic_short_id": "7be754bd",
-  "current_wave": 2,
+  "current_wave": 3,
   "waves": [
     {
       "wave_number": 1,
@@ -37,7 +37,7 @@
           "short_id": "6a5f0305",
           "title": "gf2-sim library coverage to 90%",
           "classification": "implementation",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
