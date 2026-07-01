@@ -1227,4 +1227,201 @@ mod tests {
             other => panic!("expected ExecutionValidation, got {other:?}"),
         }
     }
+
+    // ── run_sweep_checkpointed paths ────────────────────────────────────────
+
+    /// Helper: unique temp dir for a checkpointed sweep test.
+    fn sweep_tmp(label: &str) -> std::path::PathBuf {
+        let mut p = std::env::temp_dir();
+        p.push(format!(
+            "gf2-drain-sweep-{}-{}-{}",
+            label,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        p
+    }
+
+    /// A pipeline without a `RunPlan` (built via `from_parts`, not a preset)
+    /// must be rejected with an `ExecutionValidation` error at the first guard
+    /// in `run_sweep_checkpointed` (lines 441-445).
+    #[test]
+    fn test_run_sweep_checkpointed_rejects_missing_run_plan() {
+        let config = PipelineConfig {
+            seed: 0,
+            esn0_db_points: vec![5.0],
+            target_errors: 0,
+            max_frames: 1,
+            heartbeat_every_frames: 0,
+            checkpoint_dir: Some(std::env::temp_dir()),
+            tracing_log_path: None,
+            parallelism: NonZeroUsize::new(1).unwrap(),
+            gpu_enabled: false,
+            strict_gpu: false,
+            diagnostic_dump_dir: None,
+            inject_gpu_oom_modulus: None,
+        };
+        let pipeline =
+            Pipeline::from_parts(vec![], vec![], std::collections::HashMap::new(), config);
+        let sched = Scheduler::new(NonZeroUsize::new(1).unwrap(), false, 0);
+        let err = sched
+            .run_sweep_checkpointed(&pipeline, false, &|_, _| {})
+            .expect_err("no RunPlan must be an error");
+        match err {
+            SweepError::Stage(StageError::Fatal(FatalError::BuildError(
+                BuildError::ExecutionValidation { reason },
+            ))) => {
+                assert!(
+                    reason.contains("RunPlan"),
+                    "error reason must mention RunPlan: {reason}"
+                );
+            }
+            other => panic!("expected SweepError::Stage(ExecutionValidation), got {other:?}"),
+        }
+    }
+
+    /// A pipeline WITH a `RunPlan` but WITHOUT a `checkpoint_dir` must be
+    /// rejected at the second guard in `run_sweep_checkpointed` (lines 447-452).
+    #[test]
+    fn test_run_sweep_checkpointed_rejects_missing_checkpoint_dir() {
+        use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+        use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+        use gf2_coding::modem::DemapMethod;
+        use gf2_coding::CodeRate;
+
+        let mut pipeline = Pipeline::dvb_t2()
+            .modcod(crate::presets::dvb_t2::Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+            .demap(DemapMethod::MaxLog)
+            .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
+            .parallelism(NonZeroUsize::new(1).unwrap())
+            .seed(42)
+            // No .checkpoint_dir() → stays None
+            .build()
+            .expect("pipeline builds");
+        pipeline.config_mut().esn0_db_points = vec![9.0];
+        pipeline.config_mut().max_frames = 1;
+
+        let sched = Scheduler::from_pipeline(&pipeline);
+        let err = sched
+            .run_sweep_checkpointed(&pipeline, false, &|_, _| {})
+            .expect_err("missing checkpoint_dir must be an error");
+        match err {
+            SweepError::Stage(StageError::Fatal(FatalError::BuildError(
+                BuildError::ExecutionValidation { reason },
+            ))) => {
+                assert!(
+                    reason.contains("checkpoint_dir"),
+                    "error reason must mention checkpoint_dir: {reason}"
+                );
+            }
+            other => panic!("expected SweepError::Stage(ExecutionValidation), got {other:?}"),
+        }
+    }
+
+    /// A properly configured pipeline with no `esn0_db_points` must complete
+    /// immediately, returning an empty sweep with `interrupted = false`
+    /// (exercises the for-loop setup and the `Ok(CheckpointedSweep { … })`
+    /// return path, lines 453-465, 542-548).
+    #[test]
+    fn test_run_sweep_checkpointed_empty_points_returns_immediately() {
+        use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+        use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+        use gf2_coding::modem::DemapMethod;
+        use gf2_coding::CodeRate;
+
+        let tmp = sweep_tmp("empty");
+        std::fs::create_dir_all(&tmp).expect("temp dir");
+
+        let mut pipeline = Pipeline::dvb_t2()
+            .modcod(crate::presets::dvb_t2::Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+            .demap(DemapMethod::MaxLog)
+            .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
+            .parallelism(NonZeroUsize::new(1).unwrap())
+            .seed(0)
+            .checkpoint_dir(Some(tmp.clone()))
+            .build()
+            .expect("pipeline builds");
+        pipeline.config_mut().esn0_db_points = vec![]; // no points: loop doesn't run
+        pipeline.config_mut().max_frames = 1;
+
+        let sched = Scheduler::from_pipeline(&pipeline);
+        let sweep = sched
+            .run_sweep_checkpointed(&pipeline, false, &|_, _| {})
+            .expect("empty-points sweep must succeed");
+        assert!(!sweep.interrupted, "no points → not interrupted");
+        assert_eq!(
+            sweep.results.per_point.len(),
+            0,
+            "no points → empty per_point"
+        );
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    /// A checkpointed CPU sweep over one SNR point with one frame must complete
+    /// successfully (exercises `run_sweep_checkpointed` lines 466-548 and the
+    /// CPU arm of `run_point_checkpointed` lines 554-607).
+    ///
+    /// Uses `gpu_enabled = false` so the CPU arm runs on both HIP and non-HIP
+    /// builds. Fast tier: one DVB-T2 frame at high SNR decodes well under 5 s.
+    #[test]
+    fn test_run_sweep_checkpointed_cpu_single_frame_completes() {
+        use gf2_coding::ldpc::dvb_t2::bit_interleaver::DvbT2Modulation;
+        use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
+        use gf2_coding::modem::DemapMethod;
+        use gf2_coding::CodeRate;
+
+        let tmp = sweep_tmp("single");
+        std::fs::create_dir_all(&tmp).expect("temp dir");
+
+        let mut pipeline = Pipeline::dvb_t2()
+            .modcod(crate::presets::dvb_t2::Modcod::Normal {
+                rate: CodeRate::Rate1_2,
+                modulation: DvbT2Modulation::Qam16,
+            })
+            .decoder(DecoderConfig::new(DecoderAlgorithm::SumProduct, true))
+            .demap(DemapMethod::MaxLog)
+            // 9 dB: well above the r1/2 16-QAM waterfall — fast decode.
+            .channel(crate::presets::dvb_t2::Channel::awgn(9.0_f32))
+            .parallelism(NonZeroUsize::new(1).unwrap())
+            .seed(0xDEAD_BEEF_u64)
+            .checkpoint_dir(Some(tmp.clone()))
+            .build()
+            .expect("pipeline builds");
+        pipeline.config_mut().esn0_db_points = vec![9.0];
+        pipeline.config_mut().max_frames = 1;
+        pipeline.config_mut().target_errors = 0;
+        pipeline.config_mut().heartbeat_every_frames = 0;
+
+        let sched = Scheduler::from_pipeline(&pipeline);
+        let frames_observed = std::sync::atomic::AtomicU64::new(0);
+        let sweep = sched
+            .run_sweep_checkpointed(&pipeline, false, &|_snr, _g| {
+                frames_observed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            })
+            .expect("single-frame checkpointed sweep must succeed");
+
+        assert!(!sweep.interrupted, "not interrupted");
+        assert_eq!(sweep.results.per_point.len(), 1, "one SNR point");
+        assert_eq!(
+            sweep.results.per_point[0].frames, 1,
+            "exactly one frame simulated"
+        );
+        assert_eq!(
+            frames_observed.load(std::sync::atomic::Ordering::Relaxed),
+            1,
+            "frame observer must fire once"
+        );
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }
