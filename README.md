@@ -5,6 +5,7 @@
 [![gf2-coding coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-coding.svg)](https://github.com/erankavija/gf2/actions)
 [![gf2-algebra coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-algebra.svg)](https://github.com/erankavija/gf2/actions)
 [![gf2-sim coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-sim.svg)](https://github.com/erankavija/gf2/actions)
+[![gf2-kernels-simd coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/gf2-kernels-simd.svg)](https://github.com/erankavija/gf2/actions)
 [![workspace coverage](https://raw.githubusercontent.com/erankavija/gf2/badges/workspace.svg)](https://github.com/erankavija/gf2/actions)
 
 A research-grade Rust toolkit for finite field computing and modern coding theory — binary fields, prime fields, tower extensions, and error-correcting codes with SIMD/GPU kernels and machine-checked proofs. Built to explore algorithms that compete with specialized CAS (Magma, Sage) and production PHY stacks (DVB-T2, 5G NR), behind clean, composable Rust APIs.
