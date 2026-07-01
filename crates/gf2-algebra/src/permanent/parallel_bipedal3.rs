@@ -550,13 +550,16 @@ mod tests {
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_i, 24, 10, 8_000);
     large_n_parallel_cross_check!(test_parallel_cross_check_n24_j, 24, 10, 9_000);
 
-    // n=28: 5 sub-tests × 20 matrices each = 100 total. Serial oracle
-    // dominates (~1 s/matrix); 20 matrices ~ 20 s/sub-test, fits 120 s.
-    large_n_parallel_cross_check!(test_parallel_cross_check_n28_a, 28, 20, 0);
-    large_n_parallel_cross_check!(test_parallel_cross_check_n28_b, 28, 20, 1_000);
-    large_n_parallel_cross_check!(test_parallel_cross_check_n28_c, 28, 20, 2_000);
-    large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 20, 3_000);
-    large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 20, 4_000);
+    // n=28: 5 sub-tests × 5 matrices each = 25 total. The serial oracle
+    // dominates (~1 s/matrix on the dev box, ~6 s/matrix on the slower GitHub
+    // nightly runner); 20 matrices/sub-test overran the 120 s slow-tier cap
+    // there, so this is reduced to 5 matrices (~30 s/sub-test) to fit with
+    // margin while keeping n=28 parallel-vs-serial coverage.
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_a, 28, 5, 0);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_b, 28, 5, 1_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_c, 28, 5, 2_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_d, 28, 5, 3_000);
+    large_n_parallel_cross_check!(test_parallel_cross_check_n28_e, 28, 5, 4_000);
 
     // -----------------------------------------------------------------------
     // Determinism test: same seed + same n=24 across varied thread counts.
