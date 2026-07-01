@@ -11,9 +11,21 @@
     "6a5f0305-2b2d-4f27-805c-d69eff988528"
   ],
   "gates_required": [
-    "code-review"
+    "code-review",
+    "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-07-01T06:09:38.112703380Z"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-07-01T01:34:51.054877399Z"
+    }
+  },
   "context": {},
   "documents": [],
   "labels": [
@@ -21,5 +33,5 @@
     "type:task"
   ],
   "created_at": "2026-06-30T19:48:21.111357405Z",
-  "updated_at": "2026-07-01T00:56:49.900898244Z"
+  "updated_at": "2026-07-01T06:09:38.112759350Z"
 }
