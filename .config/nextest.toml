@@ -55,13 +55,32 @@ filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fal
 test-group = 'gpu-serial'
 
 [profile.slow]
-# 300 s, not 120 s: the heavy legs below run serialized (one at a time, whole
-# machine), and a serialized sim sweep or n=28 permanent cross-check still needs
-# well past 120 s on a 4-core hosted runner. Tests too big for even this cap —
-# the Normal-rate RREF comparisons (minutes each) and the wall-clock benchmark
-# sweeps — are gated behind GF2_BENCH=1 and skip here.
-slow-timeout = { period = "300s", terminate-after = 1 }
+# 600 s, not 120 s: the heavy legs below run serialized (one at a time, whole
+# machine), and a serialized sim sweep still needs minutes on a 4-core hosted
+# runner. Measured on run 29187854558 (nightly, ubuntu-latest, serialized):
+# dvb_t2_regression 50f r3/4 64-QAM 269 s, preset_vs_graph 50f r3/4 16-QAM
+# 230 s, determinism r1/2 16-QAM workers {1,4,8,24} 213 s — so a 300 s cap left
+# the r3/4 legs no margin at all and killed two of them. 600 s gives the
+# measured worst case ~2.2x headroom for runner variance. Tests too big for even
+# this — the Normal-rate RREF comparisons (minutes each) and the wall-clock
+# benchmark sweeps — are gated behind GF2_BENCH=1 and skip here.
+slow-timeout = { period = "600s", terminate-after = 1 }
 fail-fast = false
+
+# The two legs that overran the 300 s cap outright on run 29187854558, so their
+# true serialized cost is only known to be >300 s. r3/4 16-QAM is the worst
+# MODCOD in the set (mean_iters 47.1 of a 50-iteration BP ceiling — nearly every
+# frame runs to the ceiling), and the waterfall byte-identity test runs a whole
+# Es/N0 sweep twice over. Give them 900 s until a green run reports what they
+# actually cost, then tighten to fit.
+[[profile.slow.overrides]]
+filter = '''
+    package(gf2-sim) and (
+        test(byte_identical_two_runs_waterfall)
+        or test(test_dvb_t2_regression_50f_r34_16qam)
+    )
+'''
+slow-timeout = { period = "900s", terminate-after = 1 }
 
 # Everything that wants the whole machine for the duration of one test:
 #   * GPU legs — they share ONE physical device, so two concurrent 60-90 s legs

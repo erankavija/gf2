@@ -58,12 +58,12 @@ Two tiers. Use the fast tier by default. Never run the slow tier as an agent.
 | Tier | Command | Per-test limit | Who runs it |
 |------|---------|---------------|-------------|
 | Fast | `cargo nextest run --workspace --all-features --release --profile ci` | 5 s (hard kill) | CI + agents |
-| Slow | `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only` | 300 s | Nightly CI only |
+| Slow | `cargo nextest run --workspace --all-features --release --profile slow --run-ignored ignored-only` | 600 s | Nightly CI only |
 
 - **NEVER** pass `--run-ignored all`, `--run-ignored ignored-only`, `-- --ignored`, or `-- --include-ignored` in normal work.
 - Tests calling `SimulationRunner`, `run_curve`, `run_coded`, or `run_coded_iterative` with `max_frames > 50` or `max_queries > 500` **MUST** carry `#[ignore = "sim: ..."]`.
 - Tests expected to exceed 5 s **MUST** carry `#[ignore = "slow: ..."]` or `#[ignore = "sim: ..."]`.
-- Tests too heavy for the slow tier's 300 s cap run one at a time via the
+- Tests too heavy for the slow tier's 600 s cap run one at a time via the
   `slow-serial` nextest test group (`.config/nextest.toml`). Add a heavy sim or
   permanent test's binary there rather than raising the cap.
 

@@ -15,8 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     # The heavy legs run serialized (see the `slow-serial` test group in
     # .config/nextest.toml), so wall-clock is dominated by them running back to
-    # back rather than by the widest parallel batch. ~50 min nominal.
-    timeout-minutes: 120
+    # back rather than by the widest parallel batch: ~76 min of tests plus ~16
+    # min of build on run 29187854558. The ceiling leaves room for a slow runner
+    # and for the two 900 s legs running to completion rather than being killed.
+    timeout-minutes: 150
     permissions:
       contents: read
 
