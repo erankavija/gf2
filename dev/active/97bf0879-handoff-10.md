@@ -107,4 +107,4 @@ None blocking at handoff time. The session-12 user decisions (Path A amendment f
 - Lead review protocol: `~/.claude/skills/project-lead/references/lead-review-protocol.md`
 - Project conventions: `/home/vkaskivuo/Projects/gf2/CLAUDE.md`
 - JIT events log: `.jit/events.jsonl` (append-only)
-- Gate definitions: `.jit/gates.json`
+- Gate definitions: `.jit/gates.toml`

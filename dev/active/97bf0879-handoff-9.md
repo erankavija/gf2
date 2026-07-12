@@ -153,4 +153,4 @@ None blocking. The two amendment decisions of this session were resolved at the 
 - Lead review protocol: `~/.claude/skills/project-lead/references/lead-review-protocol.md`
 - Project conventions: `/home/vkaskivuo/Projects/gf2/CLAUDE.md`
 - JIT events log: `.jit/events.jsonl` (append-only)
-- Gate definitions: `.jit/gates.json`
+- Gate definitions: `.jit/gates.toml`

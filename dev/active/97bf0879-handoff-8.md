@@ -110,4 +110,4 @@ None blocking. The user already approved Path A (the 5cacaec5/662f7a15 GF(251) a
 - Lead review protocol: `~/.claude/skills/project-lead/references/lead-review-protocol.md`
 - Project conventions: `/home/vkaskivuo/Projects/gf2/CLAUDE.md`
 - JIT events log: `.jit/events.jsonl` (append-only)
-- Gate definitions: `.jit/gates.json`
+- Gate definitions: `.jit/gates.toml`
