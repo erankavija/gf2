@@ -268,38 +268,41 @@ pub fn invert_m4ri(m: &BitMatrix) -> Option<BitMatrix> {
         while current_row < n && col < n && block_pivots.len() < block_size {
             // Reduce the candidate row by the pivots already collected in this
             // block so its column-`col` bit reflects post-elimination state.
-            if let Some(pivot_row) =
-                find_block_pivot_invert(&mut aug, block_row_start, current_row, col, &block_pivots)
-            {
-                if pivot_row != current_row {
-                    aug.swap_rows(current_row, pivot_row);
-                }
-                // The pivots collected so far in this block have their pivot
-                // bits cleared in rows below `current_row` (by
-                // find_block_pivot_invert). The row we just promoted still has
-                // those pivot bits cleared *below* the pivot row, but the
-                // previously promoted pivot rows above may still carry bits
-                // for *this* new pivot column. We need to clear them so the
-                // block stays triangular within its k×k pivot square.
-                for (offset, &prev_pivot_col) in block_pivots.iter().enumerate() {
-                    let prev_row = block_row_start + offset;
-                    debug_assert!(
-                        !aug.get(current_row, prev_pivot_col),
-                        "block pivot reduction left an earlier pivot bit set"
-                    );
-                    if aug.get(prev_row, col) {
-                        aug.row_xor_from(prev_row, current_row, col / 64);
-                    }
-                }
+            // No pivot in this column → singular: a square matrix has no free
+            // columns to skip when computing a full inverse, so `?` propagates
+            // the `None` straight out of `invert_m4ri`.
+            let pivot_row = find_block_pivot_invert(
+                &mut aug,
+                block_row_start,
+                current_row,
+                col,
+                &block_pivots,
+            )?;
 
-                block_pivots.push(col);
-                current_row += 1;
-                col += 1;
-            } else {
-                // No pivot in this column → singular (square matrix has no
-                // free columns to skip when computing a full inverse).
-                return None;
+            if pivot_row != current_row {
+                aug.swap_rows(current_row, pivot_row);
             }
+            // The pivots collected so far in this block have their pivot bits
+            // cleared in rows below `current_row` (by find_block_pivot_invert).
+            // The row we just promoted still has those pivot bits cleared
+            // *below* the pivot row, but the previously promoted pivot rows
+            // above may still carry bits for *this* new pivot column. We need
+            // to clear them so the block stays triangular within its k×k pivot
+            // square.
+            for (offset, &prev_pivot_col) in block_pivots.iter().enumerate() {
+                let prev_row = block_row_start + offset;
+                debug_assert!(
+                    !aug.get(current_row, prev_pivot_col),
+                    "block pivot reduction left an earlier pivot bit set"
+                );
+                if aug.get(prev_row, col) {
+                    aug.row_xor_from(prev_row, current_row, col / 64);
+                }
+            }
+
+            block_pivots.push(col);
+            current_row += 1;
+            col += 1;
         }
 
         if block_pivots.is_empty() {
