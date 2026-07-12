@@ -728,12 +728,22 @@ fn cli_multi_snr_resume_skips_completed_points() {
         .spawn()
         .expect("spawn interrupted multi-point campaign");
 
-    // Poll for the first SNR point's checkpoint, but bail before the final CSV
-    // is written (that would mean the whole sweep already finished). Up to ~10s.
+    // Poll for the first SNR point's checkpoint, but bail if the final CSV is
+    // written first (that would mean the whole sweep finished uninterrupted).
+    //
+    // The window is 120 s, not the 10 s this used to allow: one SNR point takes
+    // a few seconds on the dev box but well over 10 s on a hosted CI runner, so
+    // the old budget expired mid-point and the test failed as if the checkpoint
+    // were missing. The bound is a liveness backstop, not a performance
+    // assertion — it must be generous enough that only a genuinely stuck writer
+    // trips it.
     let mut saw_first_ckpt = false;
-    for _ in 0..200 {
+    let mut sweep_finished = false;
+    let deadline = std::time::Instant::now() + Duration::from_secs(120);
+    while std::time::Instant::now() < deadline {
         if std::path::Path::new(&final_csv).exists() {
-            break; // sweep finished before we could interrupt
+            sweep_finished = true;
+            break;
         }
         if std::path::Path::new(&first_ckpt).exists() {
             saw_first_ckpt = true;
@@ -742,10 +752,14 @@ fn cli_multi_snr_resume_skips_completed_points() {
         std::thread::sleep(Duration::from_millis(50));
     }
     assert!(
+        !sweep_finished,
+        "the sweep finished before it could be interrupted: the per-point work \
+         is too fast — raise --max-frames / --target-errors"
+    );
+    assert!(
         saw_first_ckpt,
-        "first SNR point's checkpoint ({first_ckpt}) must appear before the \
-         sweep finishes; if this fails the per-point work is too fast to \
-         interrupt — lower --max-frames is not possible, raise it instead"
+        "first SNR point's checkpoint ({first_ckpt}) did not appear within 120 s \
+         while the sweep was still running — the checkpoint writer is stuck"
     );
 
     // Snapshot the completed point's checkpoint so we can prove resume does not

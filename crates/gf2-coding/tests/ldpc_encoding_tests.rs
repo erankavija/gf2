@@ -206,16 +206,15 @@ fn test_dvb_t2_encoded_codewords_valid() {
 }
 
 #[test]
-#[ignore = "Slow: DVB-T2 preprocessing (~2 seconds) + flaky decoder"]
+#[ignore = "slow: DVB-T2 Short encode + 50-iteration BP decode"]
 fn test_ldpc_encode_decode_roundtrip_simple() {
     use gf2_coding::bch::CodeRate;
-    use gf2_coding::ldpc::{encoding::EncodingCache, LdpcDecoder, LdpcEncoder};
+    use gf2_coding::ldpc::{LdpcDecoder, LdpcEncoder};
     use gf2_coding::llr::Llr;
     use gf2_coding::traits::{BlockEncoder, IterativeSoftDecoder};
 
-    let cache = EncodingCache::new();
     let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
-    let encoder = LdpcEncoder::with_cache(code.clone(), &cache);
+    let encoder = LdpcEncoder::new(code.clone());
     let mut decoder = LdpcDecoder::new(code.clone());
 
     // Random message
@@ -227,14 +226,15 @@ fn test_ldpc_encode_decode_roundtrip_simple() {
     // Encode
     let codeword = encoder.encode(&message);
 
-    // Perfect channel: convert bits to high-confidence LLRs
+    // Perfect channel: convert bits to high-confidence LLRs. The convention is
+    // L = log(P(0)/P(1)), so a set bit maps to a NEGATIVE LLR.
     let mut llrs = Vec::with_capacity(codeword.len());
     for i in 0..codeword.len() {
         let bit = codeword.get(i);
         llrs.push(if bit {
-            Llr::new(10.0f32) // Strong belief in '1'
+            Llr::new(-10.0f32) // Strong belief in '1'
         } else {
-            Llr::new(-10.0f32) // Strong belief in '0'
+            Llr::new(10.0f32) // Strong belief in '0'
         });
     }
 

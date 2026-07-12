@@ -4,24 +4,53 @@
 //!
 //! This verifies that the cached parity matrix P is mathematically consistent
 //! with the parity-check matrix H.
+//!
+//! The cache is a host-local artefact (~640 MB, not committed); these tests
+//! skip when it has not been generated. They encode through the cached
+//! [`RuEncodingMatrices`] directly rather than through `LdpcEncoder::with_cache`,
+//! which short-circuits to the IRA path for DVB-T2 and would never touch the
+//! cache under test.
 
-use gf2_coding::ldpc::encoding::EncodingCache;
+mod common;
+
+use gf2_coding::ldpc::encoding::{CacheKey, RuEncodingMatrices};
 use gf2_coding::ldpc::LdpcCode;
-use gf2_coding::traits::BlockEncoder;
 use gf2_coding::CodeRate;
 use gf2_core::BitVec;
-use std::path::PathBuf;
+use std::sync::Arc;
 
-fn load_cache() -> EncodingCache {
-    let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/ldpc/dvb_t2");
-    EncodingCache::from_directory(&cache_dir).expect("Cache must exist")
+/// Loads the cached RREF matrices for DVB-T2 Normal Rate 3/5, or `None` when
+/// the host-local cache is absent.
+fn load_normal_r35() -> Option<(LdpcCode, Arc<RuEncodingMatrices>)> {
+    let cache_dir = common::dvb_t2_generator_cache_dir()?;
+    let cache = gf2_coding::ldpc::encoding::EncodingCache::from_directory(&cache_dir)
+        .expect("generator cache directory exists but failed to load");
+
+    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let key = CacheKey::from_params(code.n(), code.k(), code.parity_check_matrix());
+    let matrices = cache.get(&key).unwrap_or_else(|| {
+        panic!(
+            "generator cache at {} has no entry for DVB-T2 Normal Rate3/5; \
+             regenerate it with EncodingCache::precompute_and_save_dvb_t2",
+            cache_dir.display()
+        )
+    });
+
+    Some((code, matrices))
 }
+
+/// Reason printed when the host-local generator cache is missing.
+const NO_CACHE: &str = "precomputed DVB-T2 generator cache absent \
+    (crates/gf2-coding/data/ldpc/dvb_t2); generate it with \
+    EncodingCache::precompute_and_save_dvb_t2";
 
 #[test]
 #[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_cached_parity_matrix_property() {
-    let cache = load_cache();
-    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let Some((code, encoder)) = load_normal_r35() else {
+        common::skip("test_cached_parity_matrix_property", NO_CACHE);
+        return;
+    };
 
     let k = code.k();
     let m = code.m();
@@ -48,7 +77,6 @@ fn test_cached_parity_matrix_property() {
 
     println!("Testing {} standard basis vectors...", test_indices.len());
 
-    let encoder = gf2_coding::ldpc::LdpcEncoder::with_cache(code.clone(), &cache);
     let mut all_pass = true;
     let mut failed_indices = Vec::new();
 
@@ -101,8 +129,10 @@ fn test_cached_parity_matrix_property() {
 #[test]
 #[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_problematic_parity_bits_property() {
-    let cache = load_cache();
-    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let Some((code, encoder)) = load_normal_r35() else {
+        common::skip("test_problematic_parity_bits_property", NO_CACHE);
+        return;
+    };
 
     let k = code.k();
     let _m = code.m();
@@ -123,8 +153,6 @@ fn test_problematic_parity_bits_property() {
 
     // We can test this by checking if H × [e_i | 0]^T gives us information about
     // which parity bits should be set for info bit i
-
-    let encoder = gf2_coding::ldpc::LdpcEncoder::with_cache(code.clone(), &cache);
 
     println!("For each problematic parity bit, testing its relationship with info bits...");
     println!();
@@ -173,8 +201,10 @@ fn test_problematic_parity_bits_property() {
 #[test]
 #[ignore = "external: requires precomputed LDPC DVB-T2 cache at crates/gf2-coding/data/ldpc/dvb_t2"]
 fn test_full_generator_orthogonality() {
-    let cache = load_cache();
-    let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
+    let Some((code, encoder)) = load_normal_r35() else {
+        common::skip("test_full_generator_orthogonality", NO_CACHE);
+        return;
+    };
 
     let k = code.k();
     let m = code.m();
@@ -183,8 +213,6 @@ fn test_full_generator_orthogonality() {
     println!("Testing H × G^T = 0 for ALL {} standard basis vectors", k);
     println!("This will take a while...");
     println!();
-
-    let encoder = gf2_coding::ldpc::LdpcEncoder::with_cache(code.clone(), &cache);
 
     let mut fail_count = 0;
     let mut fail_indices = Vec::new();

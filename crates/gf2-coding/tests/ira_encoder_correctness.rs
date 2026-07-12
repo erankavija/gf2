@@ -7,14 +7,18 @@
 //! 2. Systematic: codeword[0..k] = info bits (fast tier; all 12 configs,
 //!    asserted alongside the syndrome check).
 //! 3. Bit-identity vs the RREF encoder. Together with (1) and (2) this
-//!    establishes the [hard] bit-identity criterion directly. Marked
-//!    `#[ignore = "slow:"]` for every config because RREF preprocessing
-//!    is ~2-3 s per Short rate (load-sensitive at the 5 s per-test fast-
-//!    tier hard kill) and minutes per Normal rate. Properties (1)+(2)
-//!    algebraically imply bit-identity (uniqueness of the systematic
-//!    codeword for a full-rank LDPC code), so the fast tier still has
-//!    automated coverage of the criterion via the syndrome+systematic
-//!    tests below.
+//!    establishes the [hard] bit-identity criterion directly. RREF
+//!    preprocessing is ~2-3 s per Short rate (load-sensitive at the 5 s
+//!    per-test fast-tier hard kill) and several minutes per Normal rate, so
+//!    the six Short configs are `#[ignore = "slow:"]` (nightly tier) while
+//!    the six Normal configs are `#[ignore = "bench:"]` and additionally
+//!    gated behind `GF2_BENCH=1` — minutes per config puts them beyond any
+//!    CI per-test cap. Properties (1)+(2) algebraically imply bit-identity
+//!    (uniqueness of the systematic codeword for a full-rank LDPC code), so
+//!    the fast tier still has automated coverage of the criterion via the
+//!    syndrome+systematic tests below.
+
+mod common;
 
 use gf2_coding::ldpc::{LdpcCode, LdpcEncoder};
 use gf2_coding::traits::BlockEncoder;
@@ -191,11 +195,12 @@ fn test_ira_short_rate_1_2_encode_decode_roundtrip() {
 }
 
 // ---------------------------------------------------------------------------
-// Bit-identity vs RREF — slow tier only. All twelve (Short and Normal) configs
-// are covered below; each test is `#[ignore]` because RREF preprocessing is
-// load-sensitive against the 5 s fast-tier hard kill (Short ~2-3 s, Normal
-// several minutes). The fast-tier syndrome + systematic tests above
-// algebraically imply this bit-identity.
+// Bit-identity vs RREF. All twelve (Short and Normal) configs are covered
+// below; every test is `#[ignore]` because RREF preprocessing is load-sensitive
+// against the 5 s fast-tier hard kill. The six Short configs (~2-3 s) run in
+// the nightly slow tier; the six Normal configs (several minutes each) exceed
+// any CI per-test cap and additionally require `GF2_BENCH=1`. The fast-tier
+// syndrome + systematic tests above algebraically imply this bit-identity.
 // ---------------------------------------------------------------------------
 
 /// Short Rate 1/2: IRA output must be bit-identical to RREF output.
@@ -336,9 +341,14 @@ fn test_ira_vs_rref_short_rate_5_6() {
 
 /// Normal Rate 1/2: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 1/2 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 1/2 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_1_2() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_1_2",
+        "RREF preprocessing of the Normal DVB-T2 Rate 1/2 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate1_2);
     let ira_enc = LdpcEncoder::new(code.clone());
@@ -356,9 +366,14 @@ fn test_ira_vs_rref_normal_rate_1_2() {
 
 /// Normal Rate 3/5: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 3/5 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 3/5 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_3_5() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_3_5",
+        "RREF preprocessing of the Normal DVB-T2 Rate 3/5 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_5);
     let ira_enc = LdpcEncoder::new(code.clone());
@@ -376,9 +391,14 @@ fn test_ira_vs_rref_normal_rate_3_5() {
 
 /// Normal Rate 2/3: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 2/3 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 2/3 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_2_3() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_2_3",
+        "RREF preprocessing of the Normal DVB-T2 Rate 2/3 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate2_3);
     let ira_enc = LdpcEncoder::new(code.clone());
@@ -396,9 +416,14 @@ fn test_ira_vs_rref_normal_rate_2_3() {
 
 /// Normal Rate 3/4: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 3/4 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 3/4 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_3_4() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_3_4",
+        "RREF preprocessing of the Normal DVB-T2 Rate 3/4 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate3_4);
     let ira_enc = LdpcEncoder::new(code.clone());
@@ -416,9 +441,14 @@ fn test_ira_vs_rref_normal_rate_3_4() {
 
 /// Normal Rate 4/5: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 4/5 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 4/5 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_4_5() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_4_5",
+        "RREF preprocessing of the Normal DVB-T2 Rate 4/5 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate4_5);
     let ira_enc = LdpcEncoder::new(code.clone());
@@ -436,9 +466,14 @@ fn test_ira_vs_rref_normal_rate_4_5() {
 
 /// Normal Rate 5/6: IRA vs RREF bit identity (RREF takes several minutes).
 #[test]
-#[ignore = "slow: RREF preprocessing for Normal DVB-T2 Rate 5/6 takes several minutes"]
+#[ignore = "bench: RREF preprocessing for Normal DVB-T2 Rate 5/6 takes several minutes; run on a quiesced host"]
 fn test_ira_vs_rref_normal_rate_5_6() {
     use gf2_coding::ldpc::encoding::RuEncodingMatrices;
+
+    skip_unless_bench!(
+        "test_ira_vs_rref_normal_rate_5_6",
+        "RREF preprocessing of the Normal DVB-T2 Rate 5/6 parity matrix takes several minutes"
+    );
 
     let code = LdpcCode::dvb_t2_normal(CodeRate::Rate5_6);
     let ira_enc = LdpcEncoder::new(code.clone());
