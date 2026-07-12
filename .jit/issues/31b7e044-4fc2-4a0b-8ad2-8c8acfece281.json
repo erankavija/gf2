@@ -17,25 +17,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "clippy": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T22:13:33.362162773Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T22:13:36.288865392Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T21:26:26.431724117Z"
     },
-    "tests": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T22:13:18.329022562Z"
+      "updated_at": "2026-04-05T22:13:36.288865392Z"
     },
     "doc-review": {
       "status": "passed",
@@ -46,6 +36,16 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-05T22:13:35.869257956Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:33.362162773Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:13:18.329022562Z"
     }
   },
   "context": {},
@@ -56,6 +56,9 @@
     "component:gf2-kernels-simd",
     "story:0fb994"
   ],
-  "created_at": "2026-04-05T20:21:42.622158413+00:00",
-  "updated_at": "2026-04-05T22:17:49.329609587+00:00"
+  "created_at": "2026-04-05T20:21:42.622158413Z",
+  "updated_at": "2026-07-12T20:02:55.433060687Z",
+  "first_ready_at": "2026-04-05T20:43:51.627541194Z",
+  "claimed_at": "2026-04-05T21:26:31.826210240Z",
+  "done_at": "2026-04-05T22:17:49.329512027Z"
 }

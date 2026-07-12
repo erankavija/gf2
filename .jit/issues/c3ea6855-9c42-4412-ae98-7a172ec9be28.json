@@ -18,20 +18,20 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T23:11:25.235046226Z"
     },
-    "cargo-ci": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T09:21:15.562495259Z"
+      "updated_at": "2026-04-06T09:21:37.486984802Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T23:49:55.166056093Z"
     },
-    "code-review": {
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T09:21:37.486984802Z"
+      "updated_at": "2026-04-06T09:21:15.562495259Z"
     }
   },
   "context": {},
@@ -40,6 +40,9 @@
     "type:story",
     "component:gf2-coding"
   ],
-  "created_at": "2026-02-21T19:35:51.688727674+00:00",
-  "updated_at": "2026-04-06T09:28:48.367852449+00:00"
+  "created_at": "2026-02-21T19:35:51.688727674Z",
+  "updated_at": "2026-07-12T20:02:55.472140905Z",
+  "first_ready_at": "2026-02-21T19:49:04.235117881Z",
+  "claimed_at": "2026-04-05T23:11:31.681603714Z",
+  "done_at": "2026-04-06T09:28:48.367786699Z"
 }

@@ -12,15 +12,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "lake-build": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-15T13:27:25.230815421Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-15T13:27:26.245066441Z"
+    },
+    "lake-build": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-15T13:27:25.230815421Z"
     },
     "doc-review": {
       "status": "passed",
@@ -35,6 +35,8 @@
     "component:gf2-core",
     "story:8889e712"
   ],
-  "created_at": "2026-03-11T21:07:52.350515636+00:00",
-  "updated_at": "2026-03-15T13:29:14.353798872+00:00"
+  "created_at": "2026-03-11T21:07:52.350515636Z",
+  "updated_at": "2026-07-12T20:02:55.421388688Z",
+  "claimed_at": "2026-03-15T08:30:48.049059748Z",
+  "done_at": "2026-03-15T13:29:14.353739152Z"
 }

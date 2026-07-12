@@ -17,35 +17,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "tests": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:46:24.922914900Z"
+      "updated_at": "2026-03-05T21:57:56.582367892Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-05T21:46:35.652459027Z"
     },
     "fmt": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-05T21:46:37.267261297Z"
     },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-05T21:46:24.922914900Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-03-05T22:39:16.688932485Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:57:56.582367892Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-03-05T20:54:31.346668997Z"
-    },
-    "clippy": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:46:35.652459027Z"
     }
   },
   "context": {},
@@ -62,6 +62,9 @@
     "component:gf2-core",
     "type:task"
   ],
-  "created_at": "2026-02-26T00:09:06.971401251+00:00",
-  "updated_at": "2026-03-05T22:39:20.867798907+00:00"
+  "created_at": "2026-02-26T00:09:06.971401251Z",
+  "updated_at": "2026-07-12T20:02:55.418250726Z",
+  "first_ready_at": "2026-03-03T17:59:03.364898387Z",
+  "claimed_at": "2026-03-05T20:54:31.366116394Z",
+  "done_at": "2026-03-05T22:39:20.867762087Z"
 }

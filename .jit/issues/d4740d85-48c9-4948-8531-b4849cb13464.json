@@ -12,6 +12,11 @@
     "lake-build"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T23:45:49.125281666Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -21,11 +26,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-27T23:42:21.166863168Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-27T23:45:49.125281666Z"
     }
   },
   "context": {},
@@ -36,6 +36,8 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-dispatch-routing"
   ],
-  "created_at": "2026-04-27T22:36:17.000063951+00:00",
-  "updated_at": "2026-04-27T23:52:21.986593894+00:00"
+  "created_at": "2026-04-27T22:36:17.000063951Z",
+  "updated_at": "2026-07-12T20:02:55.476426888Z",
+  "claimed_at": "2026-04-27T22:36:48.168949589Z",
+  "done_at": "2026-04-27T23:52:21.986477974Z"
 }

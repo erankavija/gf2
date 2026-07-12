@@ -18,15 +18,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T11:48:17.809921455Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T12:06:58.766369328Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T12:13:33.653006980Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T12:06:58.766369328Z"
     },
     "doc-review": {
       "status": "passed",
@@ -50,6 +50,8 @@
     "epic:d4851c3d",
     "story:modem-core-api"
   ],
-  "created_at": "2026-04-12T19:40:37.522724970+00:00",
-  "updated_at": "2026-04-13T12:17:29.786719281+00:00"
+  "created_at": "2026-04-12T19:40:37.522724970Z",
+  "updated_at": "2026-07-12T20:02:55.473379386Z",
+  "claimed_at": "2026-04-13T11:48:20.923668509Z",
+  "done_at": "2026-04-13T12:17:29.786662731Z"
 }

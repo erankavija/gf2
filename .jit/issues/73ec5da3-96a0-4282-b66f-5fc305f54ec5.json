@@ -19,15 +19,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-07T02:27:14.681370129Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T02:06:57.788074233Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T02:25:33.162170624Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-07T02:06:57.788074233Z"
     }
   },
   "context": {},
@@ -46,6 +46,9 @@
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.807131980+00:00",
-  "updated_at": "2026-05-07T02:27:15.086941815+00:00"
+  "created_at": "2026-04-30T06:43:02.807131980Z",
+  "updated_at": "2026-07-12T20:02:55.450961840Z",
+  "first_ready_at": "2026-05-04T14:52:54.786538769Z",
+  "claimed_at": "2026-05-06T21:28:08.536533297Z",
+  "done_at": "2026-05-07T02:27:15.086896995Z"
 }

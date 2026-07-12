@@ -17,15 +17,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-04T22:38:22.493832216Z"
     },
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-04T22:38:24.299838769Z"
-    },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-04T22:38:06.571296428Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-04T22:38:24.299838769Z"
     }
   },
   "context": {},
@@ -43,6 +43,8 @@
     "component:gf2-core",
     "story:8889e712"
   ],
-  "created_at": "2026-03-30T23:48:30.601313588+00:00",
-  "updated_at": "2026-04-04T22:38:38.913425446+00:00"
+  "created_at": "2026-03-30T23:48:30.601313588Z",
+  "updated_at": "2026-07-12T20:02:55.466257051Z",
+  "claimed_at": "2026-04-02T23:13:45.719691224Z",
+  "done_at": "2026-04-04T22:38:38.913376006Z"
 }

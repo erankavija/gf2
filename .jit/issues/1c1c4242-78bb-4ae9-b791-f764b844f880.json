@@ -15,25 +15,25 @@
     "criterion-1.5x"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T00:52:49.831147750Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T00:53:03.133891216Z"
+    },
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T00:52:56.948143676Z"
     },
     "criterion-1.5x": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T00:52:57.108995112Z"
     },
-    "asm-artefact-present": {
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T00:52:56.948143676Z"
+      "updated_at": "2026-04-29T00:52:49.831147750Z"
     }
   },
   "context": {},
@@ -46,6 +46,9 @@
     "story:ppc-dense-bitmatrix",
     "ppc-kernel:B1"
   ],
-  "created_at": "2026-04-25T15:17:45.194536413+00:00",
-  "updated_at": "2026-04-29T04:25:11.885833280+00:00"
+  "created_at": "2026-04-25T15:17:45.194536413Z",
+  "updated_at": "2026-07-12T20:02:55.427403543Z",
+  "first_ready_at": "2026-04-25T19:18:08.891627875Z",
+  "claimed_at": "2026-04-28T17:08:58.738218632Z",
+  "done_at": "2026-04-29T04:25:11.885721740Z"
 }

@@ -12,15 +12,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-17T05:38:38.269380294Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-17T05:37:16.596974897Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-17T05:38:38.269380294Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -37,6 +37,9 @@
     "story:gpu-feasibility-decision",
     "component:gf2-kernels-hip"
   ],
-  "created_at": "2026-02-21T19:35:51.643501801+00:00",
-  "updated_at": "2026-06-17T05:38:38.291960440+00:00"
+  "created_at": "2026-02-21T19:35:51.643501801Z",
+  "updated_at": "2026-07-12T20:02:55.454882493Z",
+  "first_ready_at": "2026-02-21T19:49:04.102079842Z",
+  "claimed_at": "2026-06-16T22:14:31.403243107Z",
+  "done_at": "2026-06-17T05:38:38.292142920Z"
 }

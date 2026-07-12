@@ -17,11 +17,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T16:52:24.994628536Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -31,6 +26,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T20:52:30.707080501Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T16:52:24.994628536Z"
     }
   },
   "context": {},
@@ -70,6 +70,9 @@
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-04-30T06:43:02.871775398+00:00",
-  "updated_at": "2026-05-08T16:52:24.994629266+00:00"
+  "created_at": "2026-04-30T06:43:02.871775398Z",
+  "updated_at": "2026-07-12T20:02:55.475708328Z",
+  "first_ready_at": "2026-05-04T13:54:22.801101092Z",
+  "claimed_at": "2026-05-07T09:09:36.465540417Z",
+  "done_at": "2026-05-07T20:55:05.230468840Z"
 }

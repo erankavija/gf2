@@ -20,15 +20,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T06:22:49.873390249Z"
     },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T06:31:00.982258796Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-07T06:23:01.291647196Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-07T06:31:00.982258796Z"
     }
   },
   "context": {},
@@ -55,6 +55,9 @@
     "epic:gf2-core-sota-performance",
     "story:sota-gf2m-reference"
   ],
-  "created_at": "2026-04-30T06:43:02.494673140+00:00",
-  "updated_at": "2026-05-07T06:31:01.349555511+00:00"
+  "created_at": "2026-04-30T06:43:02.494673140Z",
+  "updated_at": "2026-07-12T20:02:55.431426625Z",
+  "first_ready_at": "2026-05-06T21:27:11.746711120Z",
+  "claimed_at": "2026-05-07T06:22:36.119343554Z",
+  "done_at": "2026-05-07T06:31:01.349505031Z"
 }

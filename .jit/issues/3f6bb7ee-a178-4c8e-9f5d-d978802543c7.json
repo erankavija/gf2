@@ -14,21 +14,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-13T18:52:13.859230689Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-13T18:48:41.922152943Z"
-    },
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-13T17:57:45.443423948Z"
-    },
     "clippy": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -38,6 +23,21 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-13T18:20:34.117970648Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T18:52:13.859230689Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-13T17:57:45.443423948Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-13T18:48:41.922152943Z"
     }
   },
   "context": {},
@@ -47,6 +47,8 @@
     "component:gf2-core",
     "story:8889e712"
   ],
-  "created_at": "2026-03-11T21:08:16.334484538+00:00",
-  "updated_at": "2026-03-13T19:05:52.235717078+00:00"
+  "created_at": "2026-03-11T21:08:16.334484538Z",
+  "updated_at": "2026-07-12T20:02:55.437022110Z",
+  "claimed_at": "2026-03-12T22:44:31.208245854Z",
+  "done_at": "2026-03-13T19:05:52.235662278Z"
 }

@@ -20,11 +20,6 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T18:37:48.956130666Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T19:07:34.474996013Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -34,6 +29,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T18:47:29.697333547Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T19:07:34.474996013Z"
     }
   },
   "context": {},
@@ -44,6 +44,9 @@
     "epic:d4851c3d",
     "story:bit-channel-analysis"
   ],
-  "created_at": "2026-04-12T20:04:48.345075553+00:00",
-  "updated_at": "2026-04-13T19:13:40.377785699+00:00"
+  "created_at": "2026-04-12T20:04:48.345075553Z",
+  "updated_at": "2026-07-12T20:02:55.471413325Z",
+  "first_ready_at": "2026-04-13T18:36:11.419349650Z",
+  "claimed_at": "2026-04-13T18:37:51.969095527Z",
+  "done_at": "2026-04-13T19:13:40.377731679Z"
 }

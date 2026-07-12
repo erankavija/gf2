@@ -15,25 +15,25 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T13:24:13.438930111Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T14:52:25.284568485Z"
     },
-    "cargo-ci": {
+    "tdd-reminder": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T13:53:03.447927322Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T13:24:13.438930111Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-13T14:08:39.087294547Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-13T13:53:03.447927322Z"
     }
   },
   "context": {},
@@ -44,6 +44,9 @@
     "epic:d4851c3d",
     "story:gray-square-qam-fast-path"
   ],
-  "created_at": "2026-04-12T19:40:37.531504266+00:00",
-  "updated_at": "2026-04-13T15:07:43.184438200+00:00"
+  "created_at": "2026-04-12T19:40:37.531504266Z",
+  "updated_at": "2026-07-12T20:02:55.446670667Z",
+  "first_ready_at": "2026-04-13T13:06:38.053260680Z",
+  "claimed_at": "2026-04-13T13:24:14.218360118Z",
+  "done_at": "2026-04-13T15:07:43.184384970Z"
 }

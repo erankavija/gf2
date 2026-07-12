@@ -13,15 +13,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T20:38:44.120762589Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T20:42:25.377562321Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T20:38:44.120762589Z"
     }
   },
   "context": {},
@@ -40,6 +40,9 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-multithread"
   ],
-  "created_at": "2026-04-25T15:19:32.997709196+00:00",
-  "updated_at": "2026-04-29T22:36:30.087686198+00:00"
+  "created_at": "2026-04-25T15:19:32.997709196Z",
+  "updated_at": "2026-07-12T20:02:55.422341589Z",
+  "first_ready_at": "2026-04-29T13:03:24.830505390Z",
+  "claimed_at": "2026-04-29T20:21:51.592653283Z",
+  "done_at": "2026-04-29T20:52:53.648306001Z"
 }

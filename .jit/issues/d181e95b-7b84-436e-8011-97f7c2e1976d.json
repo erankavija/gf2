@@ -16,11 +16,6 @@
     "asm-artefact-present"
   ],
   "gates_status": {
-    "asm-artefact-present": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-11T13:12:06.421948167Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -30,6 +25,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-11T13:11:20.181324057Z"
+    },
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-11T13:12:06.421948167Z"
     }
   },
   "context": {},
@@ -39,6 +39,9 @@
     "epic:gf2-algebra-permanent",
     "component:gf2-kernels-simd"
   ],
-  "created_at": "2026-05-09T09:44:29.498586741+00:00",
-  "updated_at": "2026-05-11T13:41:41.892405063+00:00"
+  "created_at": "2026-05-09T09:44:29.498586741Z",
+  "updated_at": "2026-07-12T20:02:55.475414627Z",
+  "first_ready_at": "2026-05-10T21:37:57.646541368Z",
+  "claimed_at": "2026-05-11T12:48:13.480525349Z",
+  "done_at": "2026-05-11T13:41:41.892353693Z"
 }

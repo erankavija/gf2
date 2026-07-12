@@ -11,15 +11,15 @@
     "code-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T07:03:39.699726742Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-09T07:25:58.786843668Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-09T07:03:39.699726742Z"
     }
   },
   "context": {},
@@ -37,6 +37,8 @@
     "epic:gf2-algebra-permanent",
     "component:proofs"
   ],
-  "created_at": "2026-04-30T21:39:35.649828751+00:00",
-  "updated_at": "2026-05-09T07:27:27.663588026+00:00"
+  "created_at": "2026-04-30T21:39:35.649828751Z",
+  "updated_at": "2026-07-12T20:02:55.440474032Z",
+  "claimed_at": "2026-05-08T22:21:22.232909023Z",
+  "done_at": "2026-05-09T07:27:27.663528846Z"
 }

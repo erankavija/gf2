@@ -39,6 +39,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-sparse-fieldmatrix"
   ],
-  "created_at": "2026-04-30T06:43:02.927979274+00:00",
-  "updated_at": "2026-05-07T08:33:46.113225026+00:00"
+  "created_at": "2026-04-30T06:43:02.927979274Z",
+  "updated_at": "2026-07-12T20:02:55.424597830Z",
+  "first_ready_at": "2026-05-07T07:57:46.232028190Z",
+  "done_at": "2026-05-07T08:33:46.113170866Z"
 }

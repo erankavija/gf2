@@ -14,15 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T15:10:44.243846415Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-06T15:10:28.697919537Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-06T15:10:44.243846415Z"
     },
     "doc-review": {
       "status": "passed",
@@ -46,6 +46,9 @@
     "epic:gf2-core-sota-performance",
     "story:sota-gf2-m4ri"
   ],
-  "created_at": "2026-04-30T06:43:02.664988249+00:00",
-  "updated_at": "2026-05-06T15:25:12.634936904+00:00"
+  "created_at": "2026-04-30T06:43:02.664988249Z",
+  "updated_at": "2026-07-12T20:02:55.456508294Z",
+  "first_ready_at": "2026-05-06T13:46:36.917552354Z",
+  "claimed_at": "2026-05-06T13:48:19.043343812Z",
+  "done_at": "2026-05-06T15:24:28.922518807Z"
 }

@@ -27,15 +27,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T20:51:28.615438559Z"
     },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T16:30:05.347490391Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T20:53:03.251024396Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T16:30:05.347490391Z"
     }
   },
   "context": {},
@@ -45,6 +45,9 @@
     "component:gf2-coding",
     "epic:d4851c3d"
   ],
-  "created_at": "2026-04-12T19:39:51.665092663+00:00",
-  "updated_at": "2026-04-14T20:53:03.658134782+00:00"
+  "created_at": "2026-04-12T19:39:51.665092663Z",
+  "updated_at": "2026-07-12T20:02:55.442289173Z",
+  "first_ready_at": "2026-04-14T16:30:04.642518359Z",
+  "claimed_at": "2026-04-14T16:30:10.574740062Z",
+  "done_at": "2026-04-14T20:53:03.658079692Z"
 }

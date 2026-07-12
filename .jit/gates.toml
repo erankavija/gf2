@@ -1,0 +1,237 @@
+[[gates]]
+version = 1
+key = "asm-artefact-present"
+title = "ASM artefact present"
+description = "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/asm-artefact-present.sh"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "cargo-ci"
+title = "Rust CI checks pass"
+description = "Full Rust workspace CI: build, test, clippy, fmt"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/cargo-ci.sh"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "cargo-kani"
+title = "Kani proof harnesses pass"
+description = "cargo kani must pass all bounded model checking harnesses; the full log is compressed under .jit/gate-artifacts/cargo-kani and JIT stores a bounded summary"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/cargo-kani-gate.sh"
+timeout_seconds = 1800
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "clippy"
+title = "Clippy lints pass"
+description = "No clippy warnings allowed"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo clippy --all-targets -- -D warnings"
+timeout_seconds = 120
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "code-review"
+title = "Code Review"
+description = "AI-powered code review against gf2 project standards"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./scripts/code-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "criterion-1.5x"
+title = "Criterion 1.5x speedup"
+description = "geomean speedup vs pinned baseline >= 1.5x for the kernel named by ppc-kernel:<id>"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/criterion-1.5x.sh"
+timeout_seconds = 300
+pass_context = true
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "doc-review"
+title = "Documentation review completed"
+description = "Confirm that necessary documentation updates were made: doc comments on public APIs (description, arguments, examples, panics, complexity), relevant design docs updated. For CLAUDE.md: check for staleness only (remove or correct entries that no longer match the code). Do NOT add implementation detail or expand existing entries. CLAUDE.md must stay under 200 lines."
+stage = "postcheck"
+mode = "manual"
+priority = 100
+auto = false
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "fmt"
+title = "Code formatted"
+description = "Code must be formatted with cargo fmt"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo fmt --check"
+timeout_seconds = 30
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "lake-build"
+title = "Lean4 proofs compile"
+description = "lake build must succeed AND no sorry warnings in hand-written Proofs/ files (issue 2e544a34). Wraps lake build via scripts/lake-build-strict.sh."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/lake-build-strict.sh"
+timeout_seconds = 600
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "parallelism-pays"
+title = "Parallelism speedup demonstrated"
+description = "Measured speedup vs single-thread (or single-CPU-host for GPU-included tasks) baseline meets the per-task target documented in the task's success criteria. Receipt artefact (benchmark CSV or markdown summary) committed under dev/benchmarks/gf2-sim/. Attestation: lead/operator records the measurement, baseline, and observed speedup before passing."
+stage = "postcheck"
+mode = "manual"
+priority = 100
+auto = false
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "tdd-reminder"
+title = "Write tests first (TDD)"
+description = "Reminder to write failing tests before implementation"
+stage = "precheck"
+mode = "manual"
+priority = 100
+auto = false
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "tests"
+title = "All tests pass"
+description = "cargo test must pass"
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "verify-lean"
+title = "Lean extraction regenerates"
+description = "scripts/verify-lean.sh must regenerate LLBC+Lean from current Rust and lake build the result successfully (Charon -> Aeneas -> lake). Wraps scripts/verify-lean.sh."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/verify-lean.sh"
+timeout_seconds = 1200
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]

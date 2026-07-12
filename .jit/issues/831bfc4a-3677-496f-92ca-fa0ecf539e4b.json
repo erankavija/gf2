@@ -16,25 +16,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "tdd-reminder": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T12:50:17.742750598Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T21:09:48.430406125Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-15T19:16:35.142536380Z"
     },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-15T12:50:17.742750598Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T21:09:45.893426959Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T21:09:48.430406125Z"
     }
   },
   "context": {},
@@ -59,6 +59,9 @@
     "epic:grand",
     "component:gf2-coding"
   ],
-  "created_at": "2026-02-22T21:16:11.471663274+00:00",
-  "updated_at": "2026-04-15T21:52:59.420097773+00:00"
+  "created_at": "2026-02-22T21:16:11.471663274Z",
+  "updated_at": "2026-07-12T20:02:55.453510842Z",
+  "first_ready_at": "2026-04-12T19:35:33.159415254Z",
+  "claimed_at": "2026-04-15T12:50:21.592081737Z",
+  "done_at": "2026-04-15T21:52:59.420048933Z"
 }

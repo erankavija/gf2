@@ -17,15 +17,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-04T13:54:16.034088666Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T11:04:36.272829183Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T10:48:04.527351223Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T11:04:36.272829183Z"
     }
   },
   "context": {},
@@ -62,6 +62,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-04-30T06:43:02.844003240+00:00",
-  "updated_at": "2026-05-04T13:54:22.236378450+00:00"
+  "created_at": "2026-04-30T06:43:02.844003240Z",
+  "updated_at": "2026-07-12T20:02:55.471999425Z",
+  "claimed_at": "2026-05-04T11:04:21.244629934Z",
+  "done_at": "2026-05-04T13:54:22.236335410Z"
 }

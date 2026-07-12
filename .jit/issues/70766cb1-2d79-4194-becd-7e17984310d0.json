@@ -45,6 +45,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-05-07T13:18:34.433733503+00:00",
-  "updated_at": "2026-05-07T19:16:45.634535793+00:00"
+  "created_at": "2026-05-07T13:18:34.433733503Z",
+  "updated_at": "2026-07-12T20:02:55.450049569Z",
+  "claimed_at": "2026-05-07T13:19:30.799441149Z",
+  "done_at": "2026-05-07T19:16:45.634488043Z"
 }

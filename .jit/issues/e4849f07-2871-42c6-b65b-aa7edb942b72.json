@@ -17,15 +17,15 @@
     "code-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-13T17:04:40.146658273Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-13T17:02:34.515773970Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-06-13T17:04:40.146658273Z"
     }
   },
   "context": {},
@@ -57,6 +57,9 @@
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign"
   ],
-  "created_at": "2026-02-21T19:35:51.787951418+00:00",
-  "updated_at": "2026-06-13T17:04:50.364423007+00:00"
+  "created_at": "2026-02-21T19:35:51.787951418Z",
+  "updated_at": "2026-07-12T20:02:55.480597261Z",
+  "first_ready_at": "2026-05-28T12:06:48.823802414Z",
+  "claimed_at": "2026-06-05T11:53:44.313358958Z",
+  "done_at": "2026-06-13T17:04:50.364602927Z"
 }

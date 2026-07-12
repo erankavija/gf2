@@ -54,6 +54,21 @@ description = "Issue type (hierarchical). Exactly one per issue."
 unique = true
 examples = ["type:task", "type:bug", "type:epic", "type:simulation"]
 
+[namespaces.milestone]
+description = "Release or time-bounded goal membership."
+unique = false
+examples = ["milestone:1.0", "milestone:gf2-core-perf"]
+
+[namespaces.epic]
+description = "Epic membership."
+unique = false
+examples = ["epic:gf2-sim", "epic:coverage-90"]
+
+[namespaces.story]
+description = "Story membership."
+unique = false
+examples = ["story:ppc-infrastructure", "story:sota-dense-la"]
+
 [namespaces.component]
 description = "Technical area or subsystem affected."
 unique = false

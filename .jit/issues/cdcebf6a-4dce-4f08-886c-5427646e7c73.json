@@ -14,15 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-24T02:15:20.179981649Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-24T02:15:27.045386804Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-24T02:15:20.179981649Z"
     },
     "code-review": {
       "status": "passed",
@@ -55,6 +55,9 @@
     "component:gf2-core",
     "epic:bb85c68a"
   ],
-  "created_at": "2026-04-23T15:56:15.403572187+00:00",
-  "updated_at": "2026-04-24T02:17:40.699097292+00:00"
+  "created_at": "2026-04-23T15:56:15.403572187Z",
+  "updated_at": "2026-07-12T20:02:55.474561237Z",
+  "first_ready_at": "2026-04-24T01:59:01.589330982Z",
+  "claimed_at": "2026-04-24T01:59:25.528563101Z",
+  "done_at": "2026-04-24T02:17:40.699042852Z"
 }

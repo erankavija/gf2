@@ -17,11 +17,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-01T19:02:15.121271559Z"
-    },
     "clippy": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -36,6 +31,11 @@
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-03-01T19:02:08.894379124Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-01T19:02:15.121271559Z"
     },
     "fmt": {
       "status": "passed",
@@ -55,6 +55,9 @@
     "component:gf2-core",
     "component:gf2-kernels-simd"
   ],
-  "created_at": "2026-02-21T19:35:51.847368329+00:00",
-  "updated_at": "2026-03-01T19:02:18.910367582+00:00"
+  "created_at": "2026-02-21T19:35:51.847368329Z",
+  "updated_at": "2026-07-12T20:02:55.429381464Z",
+  "first_ready_at": "2026-02-26T00:10:56.135584704Z",
+  "claimed_at": "2026-02-26T18:41:37.495068374Z",
+  "done_at": "2026-03-01T19:02:18.910332042Z"
 }

@@ -12,11 +12,6 @@
     "lake-build"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T20:02:13.640647788Z"
-    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -26,6 +21,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T20:05:49.505319817Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T20:02:13.640647788Z"
     }
   },
   "context": {},
@@ -36,6 +36,8 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-verification"
   ],
-  "created_at": "2026-04-29T19:19:34.337468476+00:00",
-  "updated_at": "2026-04-29T20:17:14.800727762+00:00"
+  "created_at": "2026-04-29T19:19:34.337468476Z",
+  "updated_at": "2026-07-12T20:02:55.474418647Z",
+  "claimed_at": "2026-04-29T19:43:45.372494240Z",
+  "done_at": "2026-04-29T20:17:14.800613972Z"
 }

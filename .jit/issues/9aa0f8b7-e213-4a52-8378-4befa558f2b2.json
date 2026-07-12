@@ -13,6 +13,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T20:40:23.027988420Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -22,11 +27,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T20:38:41.876274045Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:40:23.027988420Z"
     },
     "doc-review": {
       "status": "passed",
@@ -42,6 +42,8 @@
     "epic:d4851c3d",
     "story:arbitrary-constellation-reference"
   ],
-  "created_at": "2026-04-14T20:25:35.962647807+00:00",
-  "updated_at": "2026-04-14T20:44:18.699864535+00:00"
+  "created_at": "2026-04-14T20:25:35.962647807Z",
+  "updated_at": "2026-07-12T20:02:55.459944246Z",
+  "claimed_at": "2026-04-14T20:25:41.531278337Z",
+  "done_at": "2026-04-14T20:44:18.699819025Z"
 }

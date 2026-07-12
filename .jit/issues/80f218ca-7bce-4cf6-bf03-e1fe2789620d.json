@@ -21,11 +21,6 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T06:35:01.123977260Z"
     },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:29:02.140480793Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -35,6 +30,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T06:35:01.819195946Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:29:02.140480793Z"
     }
   },
   "context": {},
@@ -45,6 +45,9 @@
     "epic:d4851c3d",
     "story:bit-channel-analysis"
   ],
-  "created_at": "2026-04-12T20:04:48.349166676+00:00",
-  "updated_at": "2026-04-15T06:40:34.517587356+00:00"
+  "created_at": "2026-04-12T20:04:48.349166676Z",
+  "updated_at": "2026-07-12T20:02:55.453076631Z",
+  "first_ready_at": "2026-04-14T22:15:16.947116072Z",
+  "claimed_at": "2026-04-14T22:29:02.975982781Z",
+  "done_at": "2026-04-15T06:40:34.517543436Z"
 }

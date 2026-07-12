@@ -7,6 +7,7 @@
   "assignee": "agent:project-lead",
   "dependencies": [
     "e4849f07-2871-42c6-b65b-aa7edb942b72",
+    "548a8563-8e67-4956-8e1f-d44803eca4d1",
     "7bdaf999-e051-4ed0-ab28-5f42cc9de7fc",
     "a7b1bb21-834c-434f-8d61-17b829f5592d"
   ],
@@ -41,6 +42,7 @@
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign"
   ],
-  "created_at": "2026-05-25T21:46:35.686241688+00:00",
-  "updated_at": "2026-06-13T22:36:35.910816038+00:00"
+  "created_at": "2026-05-25T21:46:35.686241688Z",
+  "updated_at": "2026-07-12T20:02:55.430976795Z",
+  "done_at": "2026-06-13T20:24:27.831580597Z"
 }

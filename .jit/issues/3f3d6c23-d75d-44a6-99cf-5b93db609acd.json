@@ -17,35 +17,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-06T23:05:05.162902959Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-06T23:15:14.889500388Z"
-    },
     "clippy": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-06T23:04:58.553649363Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-06T23:00:34.712465661Z"
     },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-06T23:04:37.536884150Z"
     },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-06T23:15:14.889500388Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-06T23:00:34.712465661Z"
+    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-06T23:19:27.692495801Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-06T23:05:05.162902959Z"
     }
   },
   "context": {},
@@ -62,6 +62,9 @@
     "component:gf2-core",
     "type:task"
   ],
-  "created_at": "2026-02-26T00:09:07.133453836+00:00",
-  "updated_at": "2026-03-06T23:25:07.316629019+00:00"
+  "created_at": "2026-02-26T00:09:07.133453836Z",
+  "updated_at": "2026-07-12T20:02:55.436547819Z",
+  "first_ready_at": "2026-03-05T22:39:20.999947736Z",
+  "claimed_at": "2026-03-06T23:00:38.899569922Z",
+  "done_at": "2026-03-06T23:25:07.316593959Z"
 }

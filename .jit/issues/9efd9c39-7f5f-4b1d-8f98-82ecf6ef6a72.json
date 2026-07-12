@@ -17,15 +17,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-05-15T18:28:21.929479406Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T18:18:37.207414816Z"
-    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-15T18:18:48.758755991Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-15T18:18:37.207414816Z"
     }
   },
   "context": {},
@@ -35,6 +35,8 @@
     "component:gf2-core",
     "milestone:1.0"
   ],
-  "created_at": "2026-05-15T17:17:56.457786669+00:00",
-  "updated_at": "2026-05-15T18:32:48.578710095+00:00"
+  "created_at": "2026-05-15T17:17:56.457786669Z",
+  "updated_at": "2026-07-12T20:02:55.461131967Z",
+  "claimed_at": "2026-05-15T18:18:28.782947316Z",
+  "done_at": "2026-05-15T18:27:28.683736142Z"
 }

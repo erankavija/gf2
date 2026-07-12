@@ -16,6 +16,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T23:17:20.588702536Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -25,11 +30,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T23:01:16.149933869Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T23:17:20.588702536Z"
     },
     "code-review": {
       "status": "passed",
@@ -45,6 +45,9 @@
     "epic:d4851c3d",
     "story:modem-ergonomics-validation-benchmarks"
   ],
-  "created_at": "2026-04-12T19:41:45.872268442+00:00",
-  "updated_at": "2026-04-14T23:17:20.858792652+00:00"
+  "created_at": "2026-04-12T19:41:45.872268442Z",
+  "updated_at": "2026-07-12T20:02:55.477910479Z",
+  "first_ready_at": "2026-04-14T15:59:32.343863035Z",
+  "claimed_at": "2026-04-14T17:18:05.203180334Z",
+  "done_at": "2026-04-14T23:17:20.591730758Z"
 }

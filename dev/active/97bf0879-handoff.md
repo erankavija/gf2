@@ -122,4 +122,4 @@ One non-blocking question worth surfacing if Wave 2 dispatch encounters trouble:
 - Lead review protocol: `.claude/skills/project-lead/references/lead-review-protocol.md`
 - Project conventions: `/home/vkaskivuo/Projects/gf2/CLAUDE.md`
 - JIT events log (audit trail): `.jit/events.jsonl` (append-only)
-- Gate definitions: `.jit/gates.json` (note the current `code-review` REVIEWER_AGENT — see Trap 1)
+- Gate definitions: `.jit/gates.toml` (note the current `code-review` REVIEWER_AGENT — see Trap 1)

@@ -19,15 +19,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-20T20:13:18.185898065Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T21:09:12.093641286Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-20T21:11:22.132332050Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-20T21:09:12.093641286Z"
     }
   },
   "context": {},
@@ -38,6 +38,9 @@
     "epic:e095a100",
     "story:bdf95060"
   ],
-  "created_at": "2026-04-20T17:26:47.475690551+00:00",
-  "updated_at": "2026-04-20T21:17:04.556283468+00:00"
+  "created_at": "2026-04-20T17:26:47.475690551Z",
+  "updated_at": "2026-07-12T20:02:55.418997546Z",
+  "first_ready_at": "2026-04-20T19:36:14.257961334Z",
+  "claimed_at": "2026-04-20T19:36:15.011213160Z",
+  "done_at": "2026-04-20T21:17:04.556229678Z"
 }

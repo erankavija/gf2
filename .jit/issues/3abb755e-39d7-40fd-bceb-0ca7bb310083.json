@@ -16,11 +16,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T22:28:01.142686358Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -30,6 +25,11 @@
       "status": "passed",
       "updated_by": null,
       "updated_at": "2026-04-29T22:28:01.083334901Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T22:28:01.142686358Z"
     }
   },
   "context": {},
@@ -69,6 +69,8 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-benchmark-gap"
   ],
-  "created_at": "2026-04-27T21:07:47.090492414+00:00",
-  "updated_at": "2026-04-29T22:38:36.778769385+00:00"
+  "created_at": "2026-04-27T21:07:47.090492414Z",
+  "updated_at": "2026-07-12T20:02:55.435286128Z",
+  "first_ready_at": "2026-04-29T22:27:03.243202513Z",
+  "done_at": "2026-04-29T22:38:36.778666275Z"
 }

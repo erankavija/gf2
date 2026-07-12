@@ -11,15 +11,15 @@
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-07T06:26:34.625029744Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-06-07T06:24:12.248439779Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-07T06:26:34.625029744Z"
     }
   },
   "context": {},
@@ -54,6 +54,9 @@
     "component:gf2-coding",
     "epic:gf2-sim"
   ],
-  "created_at": "2026-06-06T21:26:33.468073581+00:00",
-  "updated_at": "2026-06-12T15:13:34.190414777+00:00"
+  "created_at": "2026-06-06T21:26:33.468073581Z",
+  "updated_at": "2026-07-12T20:02:55.471702885Z",
+  "first_ready_at": "2026-06-06T22:35:04.384658423Z",
+  "claimed_at": "2026-06-06T22:40:41.448010578Z",
+  "done_at": "2026-06-07T06:32:35.155609002Z"
 }

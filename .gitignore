@@ -63,9 +63,12 @@ target/charon/
 
 # JIT artifacts
 .jit/**/*.lock
+.jit/worktree.json
+.jit/tmp/
 .jit/server.log
 .jit/server.pid.json
 .jit/gate-runs/
+.jit/gate-artifacts/
 .claude/worktrees/
 crates/gf2-kernels-hip/target/
 

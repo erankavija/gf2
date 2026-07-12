@@ -16,15 +16,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T15:33:17.573041032Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-28T15:33:04.740307491Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-28T15:33:17.573041032Z"
     }
   },
   "context": {},
@@ -35,6 +35,9 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-dispatch-routing"
   ],
-  "created_at": "2026-04-25T15:15:21.137490908+00:00",
-  "updated_at": "2026-04-28T15:38:28.251614228+00:00"
+  "created_at": "2026-04-25T15:15:21.137490908Z",
+  "updated_at": "2026-07-12T20:02:55.477162559Z",
+  "first_ready_at": "2026-04-28T14:59:40.835416839Z",
+  "claimed_at": "2026-04-28T15:01:00.606479122Z",
+  "done_at": "2026-04-28T15:38:28.251506548Z"
 }

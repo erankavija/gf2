@@ -30,6 +30,8 @@
     "story:ppc-multithread",
     "resolution:preflight-memory-bound"
   ],
-  "created_at": "2026-04-25T15:19:27.982645121+00:00",
-  "updated_at": "2026-04-29T22:36:30.094433900+00:00"
+  "created_at": "2026-04-25T15:19:27.982645121Z",
+  "updated_at": "2026-07-12T20:02:55.428565543Z",
+  "first_ready_at": "2026-04-29T09:00:14.423014512Z",
+  "claimed_at": "2026-04-29T20:18:06.560481791Z"
 }

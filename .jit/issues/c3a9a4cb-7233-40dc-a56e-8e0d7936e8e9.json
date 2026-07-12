@@ -11,15 +11,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T20:47:29.498429357Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-26T20:47:26.240934105Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T20:47:29.498429357Z"
     }
   },
   "context": {},
@@ -38,6 +38,8 @@
     "epic:gf2-core-ppc-spiral",
     "story:ppc-infrastructure"
   ],
-  "created_at": "2026-04-25T15:16:37.719800588+00:00",
-  "updated_at": "2026-04-26T21:42:40.981509980+00:00"
+  "created_at": "2026-04-25T15:16:37.719800588Z",
+  "updated_at": "2026-07-12T20:02:55.471853265Z",
+  "claimed_at": "2026-04-26T20:28:06.600330680Z",
+  "done_at": "2026-04-26T20:51:03.828713858Z"
 }

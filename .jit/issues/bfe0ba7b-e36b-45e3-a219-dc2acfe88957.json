@@ -22,6 +22,11 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-02-26T00:08:40.401062109Z"
     },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-26T00:10:55.332027289Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
@@ -32,20 +37,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-02-26T00:08:25.674639581Z"
     },
-    "clippy": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-02-26T00:08:38.596552189Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-02-26T00:10:55.332027289Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-02-26T00:10:56.055390256Z"
+    },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-26T00:08:38.596552189Z"
     }
   },
   "context": {},
@@ -54,6 +54,8 @@
     "type:story",
     "component:gf2-core"
   ],
-  "created_at": "2026-02-21T19:35:51.812921984+00:00",
-  "updated_at": "2026-02-26T00:10:58.979013693+00:00"
+  "created_at": "2026-02-21T19:35:51.812921984Z",
+  "updated_at": "2026-07-12T20:02:55.471272074Z",
+  "first_ready_at": "2026-02-22T23:52:15.750189562Z",
+  "done_at": "2026-02-26T00:10:56.058515256Z"
 }

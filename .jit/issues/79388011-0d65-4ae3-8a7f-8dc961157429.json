@@ -12,20 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T06:29:43.659922220Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-04T06:33:10.425383106Z"
     },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T05:25:46.192270272Z"
     },
-    "doc-review": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T06:33:10.425383106Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T06:29:43.659922220Z"
     }
   },
   "context": {},
@@ -43,6 +43,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-reference-matrix"
   ],
-  "created_at": "2026-04-30T06:43:02.616799375+00:00",
-  "updated_at": "2026-05-04T06:33:13.324372056+00:00"
+  "created_at": "2026-04-30T06:43:02.616799375Z",
+  "updated_at": "2026-07-12T20:02:55.451547270Z",
+  "claimed_at": "2026-05-04T04:35:49.951166341Z",
+  "done_at": "2026-05-04T06:33:13.324322416Z"
 }

@@ -38,6 +38,7 @@
     "component:gf2-kernels-simd",
     "milestone:gf2-core-perf"
   ],
-  "created_at": "2026-04-25T15:23:54.395404062+00:00",
-  "updated_at": "2026-05-30T23:05:04.213636330+00:00"
+  "created_at": "2026-04-25T15:23:54.395404062Z",
+  "updated_at": "2026-07-12T20:02:55.467135941Z",
+  "first_ready_at": "2026-04-29T23:24:31.641163657Z"
 }

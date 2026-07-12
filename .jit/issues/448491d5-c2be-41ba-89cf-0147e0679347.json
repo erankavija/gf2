@@ -17,16 +17,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T06:55:02.129514413Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T06:40:35.245464835Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -36,6 +26,16 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T06:55:01.563372801Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-15T06:40:35.245464835Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T06:55:02.129514413Z"
     }
   },
   "context": {},
@@ -46,6 +46,9 @@
     "epic:d4851c3d",
     "story:bit-channel-analysis"
   ],
-  "created_at": "2026-04-12T20:04:48.350582117+00:00",
-  "updated_at": "2026-04-15T07:00:14.456526910+00:00"
+  "created_at": "2026-04-12T20:04:48.350582117Z",
+  "updated_at": "2026-07-12T20:02:55.438392381Z",
+  "first_ready_at": "2026-04-15T06:40:34.576773419Z",
+  "claimed_at": "2026-04-15T06:40:35.577452777Z",
+  "done_at": "2026-04-15T07:00:14.456467749Z"
 }

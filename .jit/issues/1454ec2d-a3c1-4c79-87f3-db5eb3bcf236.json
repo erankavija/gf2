@@ -13,15 +13,15 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T13:09:03.278814407Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-26T13:10:51.973515265Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T13:09:03.278814407Z"
     }
   },
   "context": {},
@@ -32,6 +32,9 @@
     "story:e47231cd",
     "epic:bb85c68a"
   ],
-  "created_at": "2026-04-23T16:30:59.804478248+00:00",
-  "updated_at": "2026-04-26T13:18:54.546285840+00:00"
+  "created_at": "2026-04-23T16:30:59.804478248Z",
+  "updated_at": "2026-07-12T20:02:55.423258380Z",
+  "first_ready_at": "2026-04-26T10:51:41.205708272Z",
+  "claimed_at": "2026-04-26T10:52:14.227624439Z",
+  "done_at": "2026-04-26T13:18:54.546147320Z"
 }

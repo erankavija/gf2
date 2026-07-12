@@ -19,15 +19,15 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T15:55:07.269043576Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-10T15:56:12.710078063Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-10T15:55:07.269043576Z"
     },
     "doc-review": {
       "status": "passed",
@@ -55,6 +55,9 @@
     "epic:grand",
     "component:gf2-coding"
   ],
-  "created_at": "2026-02-22T21:16:05.912701895+00:00",
-  "updated_at": "2026-04-10T16:02:27.117449673+00:00"
+  "created_at": "2026-02-22T21:16:05.912701895Z",
+  "updated_at": "2026-07-12T20:02:55.435614288Z",
+  "first_ready_at": "2026-04-07T09:05:06.340294572Z",
+  "claimed_at": "2026-04-07T09:06:38.062548661Z",
+  "done_at": "2026-04-10T16:02:27.117396183Z"
 }

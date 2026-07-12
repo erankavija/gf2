@@ -17,11 +17,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-02T23:32:25.469998848Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:claude",
@@ -31,6 +26,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-03T17:28:05.905266061Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-02T23:32:25.469998848Z"
     },
     "fmt": {
       "status": "passed",
@@ -54,6 +54,9 @@
     "type:story",
     "component:gf2-core"
   ],
-  "created_at": "2026-02-21T19:35:51.842498530+00:00",
-  "updated_at": "2026-03-03T17:59:03.272869541+00:00"
+  "created_at": "2026-02-21T19:35:51.842498530Z",
+  "updated_at": "2026-07-12T20:02:55.456071653Z",
+  "first_ready_at": "2026-03-02T18:13:55.990911744Z",
+  "claimed_at": "2026-03-02T23:32:28.141249404Z",
+  "done_at": "2026-03-03T17:59:03.272833591Z"
 }

@@ -23,6 +23,7 @@
     "story:6fb4abad",
     "resolution:scalar-path-rarely-hit"
   ],
-  "created_at": "2026-04-18T22:40:09.403716142+00:00",
-  "updated_at": "2026-04-20T17:24:10.808889628+00:00"
+  "created_at": "2026-04-18T22:40:09.403716142Z",
+  "updated_at": "2026-07-12T20:02:55.474857977Z",
+  "first_ready_at": "2026-04-20T17:14:29.573589955Z"
 }

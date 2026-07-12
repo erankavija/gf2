@@ -14,11 +14,6 @@
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T11:22:56.761008400Z"
-    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -28,6 +23,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-16T11:22:46.549908889Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-16T11:22:56.761008400Z"
     }
   },
   "context": {},
@@ -37,6 +37,8 @@
     "component:gf2-core",
     "milestone:1.0"
   ],
-  "created_at": "2026-05-15T18:37:31.483640045+00:00",
-  "updated_at": "2026-05-16T11:26:14.906691160+00:00"
+  "created_at": "2026-05-15T18:37:31.483640045Z",
+  "updated_at": "2026-07-12T20:02:55.432056566Z",
+  "claimed_at": "2026-05-15T18:40:08.985418356Z",
+  "done_at": "2026-05-16T11:26:14.906639910Z"
 }

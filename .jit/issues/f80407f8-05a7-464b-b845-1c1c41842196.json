@@ -20,20 +20,20 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T23:18:27.736643964Z"
     },
-    "tdd-reminder": {
+    "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:13:08.706825039Z"
+      "updated_at": "2026-04-15T04:46:35.519040700Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T23:18:27.781231176Z"
     },
-    "doc-review": {
+    "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T04:46:35.519040700Z"
+      "updated_at": "2026-04-14T22:13:08.706825039Z"
     }
   },
   "context": {},
@@ -44,6 +44,9 @@
     "epic:d4851c3d",
     "story:modem-ergonomics-validation-benchmarks"
   ],
-  "created_at": "2026-04-12T19:41:45.870562801+00:00",
-  "updated_at": "2026-04-15T04:46:35.780670970+00:00"
+  "created_at": "2026-04-12T19:41:45.870562801Z",
+  "updated_at": "2026-07-12T20:02:55.483942094Z",
+  "first_ready_at": "2026-04-14T15:59:32.387965927Z",
+  "claimed_at": "2026-04-14T22:13:10.655113706Z",
+  "done_at": "2026-04-15T04:46:35.520418751Z"
 }

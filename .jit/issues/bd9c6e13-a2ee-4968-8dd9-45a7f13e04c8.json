@@ -17,15 +17,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-05-24T19:01:10.746434180Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T19:05:06.536015180Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-05-24T19:10:34.800569327Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T19:05:06.536015180Z"
     }
   },
   "context": {},
@@ -50,6 +50,8 @@
     "component:gf2-core",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-24T10:45:37.973733708+00:00",
-  "updated_at": "2026-05-24T19:10:35.378456742+00:00"
+  "created_at": "2026-05-24T10:45:37.973733708Z",
+  "updated_at": "2026-07-12T20:02:55.470511224Z",
+  "claimed_at": "2026-05-24T17:05:16.145991083Z",
+  "done_at": "2026-05-24T19:10:35.378412502Z"
 }

@@ -15,35 +15,35 @@
     "doc-review"
   ],
   "gates_status": {
-    "clippy": {
+    "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T20:41:37.493468635Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-05T20:23:41.578687996Z"
-    },
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T20:41:37.696400643Z"
+      "updated_at": "2026-04-05T20:41:26.078497324Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T20:43:47.426637779Z"
     },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:37.493468635Z"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T20:41:37.696400643Z"
+    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-05T20:41:38.215166360Z"
     },
-    "tests": {
+    "tdd-reminder": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T20:41:26.078497324Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-05T20:23:41.578687996Z"
     }
   },
   "context": {},
@@ -53,6 +53,8 @@
     "component:gf2-core",
     "story:0fb994"
   ],
-  "created_at": "2026-04-05T20:21:33.005580870+00:00",
-  "updated_at": "2026-04-05T22:19:48.318267012+00:00"
+  "created_at": "2026-04-05T20:21:33.005580870Z",
+  "updated_at": "2026-07-12T20:02:55.420796108Z",
+  "claimed_at": "2026-04-05T20:23:46.986483148Z",
+  "done_at": "2026-04-05T20:43:51.570439443Z"
 }

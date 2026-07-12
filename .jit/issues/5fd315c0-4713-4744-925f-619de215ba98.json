@@ -16,25 +16,25 @@
     "doc-review"
   ],
   "gates_status": {
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T15:25:02.717794672Z"
+    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T15:51:55.179973606Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T15:53:11.352231557Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T15:59:31.290027068Z"
     },
-    "tdd-reminder": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T15:25:02.717794672Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T15:53:11.352231557Z"
     }
   },
   "context": {},
@@ -45,6 +45,9 @@
     "epic:d4851c3d",
     "story:legacy-modem-surface-migration"
   ],
-  "created_at": "2026-04-12T19:41:45.869446170+00:00",
-  "updated_at": "2026-04-14T15:59:32.086602258+00:00"
+  "created_at": "2026-04-12T19:41:45.869446170Z",
+  "updated_at": "2026-07-12T20:02:55.445969806Z",
+  "first_ready_at": "2026-04-14T15:24:58.188738839Z",
+  "claimed_at": "2026-04-14T15:25:03.058661410Z",
+  "done_at": "2026-04-14T15:59:32.086556248Z"
 }

@@ -15,6 +15,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-13T15:16:00.931154989Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -29,11 +34,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-13T15:07:59.439079480Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T15:16:00.931154989Z"
     }
   },
   "context": {},
@@ -51,6 +51,9 @@
     "component:gf2-coding",
     "epic:d4851c3d"
   ],
-  "created_at": "2026-04-12T19:39:51.663910092+00:00",
-  "updated_at": "2026-04-14T16:30:04.535794301+00:00"
+  "created_at": "2026-04-12T19:39:51.663910092Z",
+  "updated_at": "2026-07-12T20:02:55.430030364Z",
+  "first_ready_at": "2026-04-13T13:06:37.976791654Z",
+  "claimed_at": "2026-04-13T15:07:46.871156091Z",
+  "done_at": "2026-04-14T16:30:04.535742411Z"
 }

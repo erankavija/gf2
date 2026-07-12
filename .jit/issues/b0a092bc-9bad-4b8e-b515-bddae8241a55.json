@@ -12,6 +12,11 @@
     "lake-build"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "manual: all proof files have descriptive headers and theorem-level documentation",
+      "updated_at": "2026-03-10T21:15:08.436238950Z"
+    },
     "lake-build": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -21,11 +26,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-10T21:30:13.736575199Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "manual: all proof files have descriptive headers and theorem-level documentation",
-      "updated_at": "2026-03-10T21:15:08.436238950Z"
     }
   },
   "context": {},
@@ -35,6 +35,8 @@
     "component:gf2-core",
     "story:9509d8cc"
   ],
-  "created_at": "2026-03-07T18:06:23.441813586+00:00",
-  "updated_at": "2026-03-10T21:32:40.948339436+00:00"
+  "created_at": "2026-03-07T18:06:23.441813586Z",
+  "updated_at": "2026-07-12T20:02:55.466844451Z",
+  "first_ready_at": "2026-03-08T18:23:22.898868050Z",
+  "done_at": "2026-03-10T21:32:40.948282446Z"
 }

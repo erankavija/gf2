@@ -14,6 +14,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T19:54:29.856501562Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -23,11 +28,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-24T19:54:35.249658515Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T19:54:29.856501562Z"
     }
   },
   "context": {},
@@ -53,6 +53,9 @@
     "component:gf2-kernels-simd",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-24T00:31:27.771394573+00:00",
-  "updated_at": "2026-05-24T19:55:53.389206311+00:00"
+  "created_at": "2026-05-24T00:31:27.771394573Z",
+  "updated_at": "2026-07-12T20:02:55.447997607Z",
+  "first_ready_at": "2026-05-24T05:47:44.867661103Z",
+  "claimed_at": "2026-05-24T17:05:15.623998824Z",
+  "done_at": "2026-05-24T19:55:53.389163291Z"
 }

@@ -15,11 +15,6 @@
     "tests"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-10T21:33:26.784849484Z"
-    },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -29,6 +24,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-10T21:11:02.314638508Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-10T21:33:26.784849484Z"
     }
   },
   "context": {},
@@ -38,6 +38,9 @@
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-05-09T09:43:37.190776575+00:00",
-  "updated_at": "2026-05-10T21:37:57.051639488+00:00"
+  "created_at": "2026-05-09T09:43:37.190776575Z",
+  "updated_at": "2026-07-12T20:02:55.466694481Z",
+  "first_ready_at": "2026-05-09T22:44:38.102494396Z",
+  "claimed_at": "2026-05-09T23:28:10.200479883Z",
+  "done_at": "2026-05-10T21:37:57.051591068Z"
 }

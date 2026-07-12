@@ -12,20 +12,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:48:23.898310705Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-04T14:52:39.490261962Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-04T14:50:36.422351362Z"
     },
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T14:52:39.490261962Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-04T10:48:23.898310705Z"
     }
   },
   "context": {},
@@ -74,6 +74,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.797812087+00:00",
-  "updated_at": "2026-05-04T14:52:54.508998009+00:00"
+  "created_at": "2026-04-30T06:43:02.797812087Z",
+  "updated_at": "2026-07-12T20:02:55.435431748Z",
+  "claimed_at": "2026-05-04T11:04:23.019566282Z",
+  "done_at": "2026-05-04T14:52:54.508944229Z"
 }

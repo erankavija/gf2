@@ -15,6 +15,11 @@
     "parallelism-pays"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-06-12T12:02:39.896707998Z"
+    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -24,11 +29,6 @@
       "status": "passed",
       "updated_by": null,
       "updated_at": "2026-06-12T11:03:48.537827309Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-12T12:02:39.896707998Z"
     }
   },
   "context": {},
@@ -64,6 +64,9 @@
     "component:gf2-kernels-hip",
     "epic:gf2-sim"
   ],
-  "created_at": "2026-06-05T22:05:07.853331510+00:00",
-  "updated_at": "2026-06-12T15:13:34.262055008+00:00"
+  "created_at": "2026-06-05T22:05:07.853331510Z",
+  "updated_at": "2026-07-12T20:02:55.429702524Z",
+  "first_ready_at": "2026-06-12T08:52:54.799740307Z",
+  "claimed_at": "2026-06-12T09:19:34.068083191Z",
+  "done_at": "2026-06-12T12:05:17.489803356Z"
 }

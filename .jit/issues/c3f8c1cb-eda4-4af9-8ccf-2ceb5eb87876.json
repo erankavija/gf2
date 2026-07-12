@@ -14,15 +14,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T08:06:09.850764879Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-26T08:08:01.041570311Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T08:06:09.850764879Z"
     },
     "doc-review": {
       "status": "passed",
@@ -44,6 +44,9 @@
     "component:gf2-core",
     "type:story"
   ],
-  "created_at": "2026-02-23T19:20:28.213415862+00:00",
-  "updated_at": "2026-04-26T08:18:37.074230101+00:00"
+  "created_at": "2026-02-23T19:20:28.213415862Z",
+  "updated_at": "2026-07-12T20:02:55.472291565Z",
+  "first_ready_at": "2026-04-24T01:59:01.573760658Z",
+  "claimed_at": "2026-04-25T20:20:23.180554003Z",
+  "done_at": "2026-04-26T08:18:21.341694400Z"
 }
