@@ -3297,9 +3297,21 @@ mod tests {
     ///
     /// Output is CSV emitted to stderr between `--- rref-nonreg BEGIN ---`
     /// and `--- rref-nonreg END ---`.
+    ///
+    /// It is a wall-clock measurement, so it is additionally gated behind
+    /// `GF2_BENCH=1`: on a shared CI runner the numbers measure the runner, not
+    /// the code, and the sweep exceeds the nightly per-test cap.
     #[test]
-    #[ignore = "slow: rref SC#5 non-regression paired 10-trial sweep (~30 s)"]
+    #[ignore = "bench: rref SC#5 non-regression paired 10-trial sweep (~30 s); run on a quiesced host"]
     fn test_rref_non_regression_wall_time() {
+        if !matches!(std::env::var("GF2_BENCH"), Ok(ref v) if v != "0") {
+            eprintln!(
+                "SKIP test_rref_non_regression_wall_time: wall-clock sweep — \
+                 set GF2_BENCH=1 on a quiesced host to run it"
+            );
+            return;
+        }
+
         // Previously-PASSing cells only (echelon ratio ≤ 1.5× at 38387525).
         const CELLS: &[(u64, &str, usize, &str)] = &[
             (7, "GF(7)", 64, "uniform"),

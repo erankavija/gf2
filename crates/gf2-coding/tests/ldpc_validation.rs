@@ -9,6 +9,7 @@
 //! 3. DVB-T2 specific validation (parameter correctness, structure)
 //! 4. Systematic encoding validation (when applicable)
 
+mod common;
 mod test_vectors;
 
 use gf2_coding::ldpc::{LdpcCode, LdpcDecoder};
@@ -478,11 +479,15 @@ mod edge_case_validation {
 }
 
 #[test]
-#[ignore]
+#[ignore = "external: requires DVB-T2 ETSI test vectors at $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_parity_construction() {
-    use std::path::PathBuf;
-
-    let base_path = PathBuf::from(std::env::var("HOME").unwrap()).join("Projects/dvb_test_vectors");
+    let Some(base_path) = common::dvb_vectors_dir() else {
+        common::skip(
+            "test_tp06_parity_construction",
+            "DVB-T2 ETSI test vectors absent; set DVB_TEST_VECTORS_PATH to a tree containing VV001-CR35",
+        );
+        return;
+    };
 
     let vectors = test_vectors::TestVectorSet::load(&base_path, "VV001-CR35")
         .expect("Failed to load test vectors");

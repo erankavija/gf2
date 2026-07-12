@@ -13,6 +13,10 @@ jobs:
   slow:
     name: Slow / simulation tests
     runs-on: ubuntu-latest
+    # The heavy legs run serialized (see the `slow-serial` test group in
+    # .config/nextest.toml), so wall-clock is dominated by them running back to
+    # back rather than by the widest parallel batch. ~50 min nominal.
+    timeout-minutes: 120
     permissions:
       contents: read
 
@@ -38,19 +42,18 @@ jobs:
       uses: taiki-e/install-action@nextest
 
     - name: Run slow / simulation tests
-      # Exclude ignored tests that are structurally beyond the nightly's reach —
-      # they stay runnable on demand / locally, just not in this job:
-      #   test_ira_vs_rref_normal_rate_* — RREF preprocessing of the DVB-T2
-      #     Normal parity matrices takes several minutes each, past the 120 s
-      #     slow-tier cap (the fast Short-rate IRA-vs-RREF checks still run here).
-      #   test_simd_vs_scalar_n32 — the 2^32-step permanent oracle exceeds 120 s
-      #     on the runner (smaller-n SIMD-vs-scalar checks still run here).
-      #   test_tp06_to_tp07a_parity_interleave_* — needs the external ETSI DVB-T2
-      #     vectors ($DVB_TEST_VECTORS_PATH), which the CI runner does not have.
+      # No exclusion list. Tests structurally beyond this job's reach stand down
+      # by themselves and print `SKIP <name>: <reason>`:
+      #   * host-local data (ETSI DVB-T2 vectors, the precomputed generator
+      #     cache) — skipped when the tree is absent, which it is here;
+      #   * benchmark-grade tests (wall-clock assertions, multi-minute RREF
+      #     preprocessing) — skipped unless GF2_BENCH=1, which this job does not
+      #     set. Run them on a quiesced host instead.
+      # A name-based filter here would rot as tests are added; the gates live
+      # with the tests. See crates/gf2-coding/tests/common/mod.rs.
       run: >
         cargo nextest run --workspace --features simd,parallel,visualization,io,rand,llr-f64
         --release --profile slow --run-ignored ignored-only
-        -E 'not (test(test_ira_vs_rref_normal_rate) | test(test_simd_vs_scalar_n32) | test(test_tp06_to_tp07a_parity_interleave))'
 
   kani-heavy:
     name: Kani Verification (heavy GF(256) harnesses)

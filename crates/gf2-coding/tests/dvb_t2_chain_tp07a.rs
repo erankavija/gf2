@@ -60,6 +60,8 @@
 //! §6.1.4 (cell-word demux) and §6.1.5 (cell interleaver) are out of scope for
 //! this module and are deferred to a follow-on issue.
 
+mod common;
+
 use std::path::PathBuf;
 
 use gf2_coding::ldpc::dvb_t2::bit_interleaver::{
@@ -74,16 +76,9 @@ use gf2_coding::test_support::{parse_tp_blocks, tp_path_for};
 // Test vector discovery helpers
 // ---------------------------------------------------------------------------
 
-/// Returns the default path for DVB-T2 test vectors.
-///
-/// Preference order:
-/// 1. `$DVB_TEST_VECTORS_PATH` environment variable.
-/// 2. `/data/specs/dvb/t2/streams/` (host-local default).
-fn dvb_vectors_base() -> PathBuf {
-    std::env::var("DVB_TEST_VECTORS_PATH")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("/data/specs/dvb/t2/streams"))
-}
+/// Reason printed when the ETSI vector tree is absent.
+const NO_VECTORS: &str = "DVB-T2 ETSI test vectors absent; \
+    set DVB_TEST_VECTORS_PATH to the stream tree to run this";
 
 /// Count data lines (lines that are neither comments nor blank) in a CSP file.
 ///
@@ -261,14 +256,13 @@ fn discover_in_scope_vectors(base: &std::path::Path) -> Vec<(PathBuf, DvbT2Modul
 #[test]
 #[ignore = "external: DVB-T2 ETSI test vectors required at $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
-    let base = dvb_vectors_base();
-    if !base.exists() {
-        eprintln!(
-            "DVB test vector base directory not found at {:?}; skipping",
-            base
+    let Some(base) = common::dvb_vectors_dir() else {
+        common::skip(
+            "test_tp06_to_tp07a_forward_match_in_scope_normal",
+            NO_VECTORS,
         );
         return;
-    }
+    };
 
     let candidates = discover_in_scope_vectors(&base);
 
@@ -385,14 +379,13 @@ fn test_tp06_to_tp07a_forward_match_in_scope_normal() {
 #[test]
 #[ignore = "external: DVB-T2 ETSI test vectors required at $DVB_TEST_VECTORS_PATH"]
 fn test_tp06_tp07a_structural_sanity_in_scope_normal() {
-    let base = dvb_vectors_base();
-    if !base.exists() {
-        eprintln!(
-            "DVB test vector base directory not found at {:?}; skipping",
-            base
+    let Some(base) = common::dvb_vectors_dir() else {
+        common::skip(
+            "test_tp06_tp07a_structural_sanity_in_scope_normal",
+            NO_VECTORS,
         );
         return;
-    }
+    };
 
     let candidates = discover_in_scope_vectors(&base);
     if candidates.is_empty() {
@@ -479,11 +472,13 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
     const MAX_BLOCKS: usize = 10;
     const N_FEC: usize = 64800;
 
-    // Resolve vector base path from the standard env var (used by the
-    // rest of the gf2-coding external-vector test pattern), with a
-    // sensible host-local default.
-    let base = std::env::var("DVB_TEST_VECTORS_PATH")
-        .unwrap_or_else(|_| "/data/specs/dvb/t2/streams".to_owned());
+    let Some(base) = common::dvb_vectors_dir() else {
+        common::skip(
+            "test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014",
+            NO_VECTORS,
+        );
+        return;
+    };
 
     // (dir_name, code_rate, modulation)
     let test_cases = [
@@ -499,7 +494,7 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
     let mut tested_count = 0usize;
 
     for (dir_name, code_rate, modulation) in &test_cases {
-        let config_dir = PathBuf::from(&base).join(dir_name);
+        let config_dir = base.join(dir_name);
         if !config_dir.exists() {
             eprintln!("Vector directory {:?} not found; skipping", config_dir);
             continue;
@@ -587,12 +582,15 @@ fn test_tp06_to_tp07a_parity_interleave_vv020_vv009_vv014() {
     }
 
     // The [hard] criterion requires bit-exact forward + reverse on all
-    // 3 in-scope configurations.  Silent skips would let the test pass
-    // vacuously; enforce that all 3 were exercised when the test runs.
+    // 3 in-scope configurations. Silent skips would let the test pass
+    // vacuously; once a vector tree is present, enforce that all 3 were
+    // exercised. (An absent tree skips the test outright, above.)
     assert_eq!(
-        tested_count, expected_tested,
+        tested_count,
+        expected_tested,
         "expected to exercise {expected_tested} ETSI vectors but only {tested_count} \
-         were present at {base:?}; set DVB_TEST_VECTORS_PATH to a tree containing \
+         were present at {}; set DVB_TEST_VECTORS_PATH to a tree containing \
          VV020-FEF_CSP, VV009-4KFFT_CSP, and VV014-64QAM34_CSP",
+        base.display(),
     );
 }

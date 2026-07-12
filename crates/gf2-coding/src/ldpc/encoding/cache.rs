@@ -150,6 +150,42 @@ impl EncodingCache {
         }
     }
 
+    /// Look up encoding matrices without computing them on a miss.
+    ///
+    /// Use this when a cache miss is an error rather than a reason to spend
+    /// minutes in RREF preprocessing — e.g. when verifying a cache loaded from
+    /// disk with [`Self::from_directory`].
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Cache key identifying the LDPC code
+    ///
+    /// # Returns
+    ///
+    /// `Some` with the cached matrices, or `None` if the key is not present.
+    ///
+    /// # Complexity
+    ///
+    /// O(1) hash lookup under a read lock.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gf2_coding::ldpc::encoding::{CacheKey, EncodingCache};
+    /// use gf2_coding::ldpc::LdpcCode;
+    /// use gf2_coding::CodeRate;
+    ///
+    /// let code = LdpcCode::dvb_t2_short(CodeRate::Rate1_2);
+    /// let key = CacheKey::from_params(code.n(), code.k(), code.parity_check_matrix());
+    ///
+    /// let cache = EncodingCache::new();
+    /// assert!(cache.get(&key).is_none()); // empty cache: miss, no preprocessing
+    /// ```
+    pub fn get(&self, key: &CacheKey) -> Option<Arc<RuEncodingMatrices>> {
+        let cache_read = self.cache.read().unwrap();
+        cache_read.get(key).map(Arc::clone)
+    }
+
     /// Get or compute encoding matrices for the given parity-check matrix.
     ///
     /// If the matrices are already cached, returns them immediately (<1μs).

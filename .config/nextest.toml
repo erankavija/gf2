@@ -37,19 +37,51 @@ slow-timeout = { period = "20s", terminate-after = 1 }
 # hybrid_checkpointed_recoverable_fault_aborts_resumably, both at 5.04 s).
 # This group serializes the GPU-exercising gf2-sim test binaries so at most
 # one GPU job runs at a time. Scheduling only — no per-test timeout changes.
+#
+# `slow-serial` is the nightly analogue for CPU-bound heavy tests (see
+# [profile.slow] below): the sim MODCOD sweeps and the n=28/32 permanent
+# cross-checks each want the whole machine, and nextest's default parallelism
+# (one test per core) had them fighting each other — and their own rayon pools —
+# on a 4-core hosted runner. Every one of them hit the per-test cap dead on
+# (120.004 s), i.e. lost to contention rather than hanging. Serializing them
+# subsumes the GPU constraint for the slow profile, so `gpu-serial` is only used
+# by [profile.ci] and the two groups never overlap on a single test.
 [test-groups]
 gpu-serial = { max-threads = 1 }
+slow-serial = { max-threads = 1 }
 
 [[profile.ci.overrides]]
 filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))'
 test-group = 'gpu-serial'
 
 [profile.slow]
-slow-timeout = { period = "120s", terminate-after = 1 }
+# 300 s, not 120 s: the heavy legs below run serialized (one at a time, whole
+# machine), and a serialized sim sweep or n=28 permanent cross-check still needs
+# well past 120 s on a 4-core hosted runner. Tests too big for even this cap —
+# the Normal-rate RREF comparisons (minutes each) and the wall-clock benchmark
+# sweeps — are gated behind GF2_BENCH=1 and skip here.
+slow-timeout = { period = "300s", terminate-after = 1 }
 fail-fast = false
 
-# The slow tier's GPU legs contend the same single device; two concurrent
-# 60-90 s GPU legs would bust the 120 s cap the same way. Same group.
+# Everything that wants the whole machine for the duration of one test:
+#   * GPU legs — they share ONE physical device, so two concurrent 60-90 s legs
+#     would bust the cap exactly as they do in the fast tier.
+#   * CPU-bound sim sweeps and permanent cross-checks — each drives its own
+#     rayon pool (up to 24 workers), so running several at once oversubscribes
+#     the runner several times over.
 [[profile.slow.overrides]]
-filter = 'package(gf2-sim) and (binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler) or binary(stage_driven_byte_identity) or binary(gpu_byte_identity) or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity) or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression))'
-test-group = 'gpu-serial'
+filter = '''
+    (package(gf2-sim) and (
+        binary(hybrid_resume) or binary(executor_oom_fallback_run) or binary(hybrid_scheduler)
+        or binary(stage_driven_byte_identity) or binary(gpu_byte_identity)
+        or binary(gpu_ldpc_byte_identity) or binary(gpu_demap_byte_identity)
+        or binary(gpu_nr_5g_byte_identity) or binary(dvb_t2_regression)
+        or binary(determinism) or binary(parallel_determinism)
+        or binary(preset_vs_graph_byte_identity) or binary(campaign_byte_identity)
+        or binary(campaign_cli_flags)
+    ))
+    or (package(gf2-algebra) and (
+        test(test_simd_vs_scalar_n32) or test(test_parallel_cross_check_n28)
+    ))
+'''
+test-group = 'slow-serial'
