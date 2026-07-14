@@ -6378,3 +6378,4 @@
 {"type":"issue_state_changed","id":"83d12c2e-80b4-45ba-bf90-3057d6c54950","issue_id":"84db2984-3373-43a3-bd0c-8f55700652cb","timestamp":"2026-07-14T20:40:58.795899460Z","from":"ready","to":"rejected"}
 {"type":"issue_updated","id":"9696b13f-f91d-452d-9d44-841c585b1cf7","issue_id":"84db2984-3373-43a3-bd0c-8f55700652cb","timestamp":"2026-07-14T20:40:58.795930330Z","updated_by":"issue-update","fields":["labels"]}
 {"type":"issue_updated","id":"e53fb058-bc3f-4971-a9a1-bd541e32a5f6","issue_id":"fa787f85-f4ed-4f43-be78-cb9ebe5a0f88","timestamp":"2026-07-14T20:43:39.886758492Z","updated_by":"doc-add","fields":["documents"]}
+{"type":"issue_updated","id":"a5fa45bd-a8fd-4037-8358-cadae13e2956","issue_id":"3f29e945-8b12-4862-82c8-f2ec6573287c","timestamp":"2026-07-14T20:43:57.766945694Z","updated_by":"issue-update","fields":["labels"]}
