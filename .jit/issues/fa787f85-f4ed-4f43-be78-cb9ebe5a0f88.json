@@ -17,13 +17,21 @@
   ],
   "gates_status": {},
   "context": {},
-  "documents": [],
+  "documents": [
+    {
+      "path": "dev/active/fa787f85-documentation-overhaul/fa787f85-planning-brief.md",
+      "commit": null,
+      "label": "Documentation Overhaul Planning Brief",
+      "doc_type": "design",
+      "format": "markdown"
+    }
+  ],
   "labels": [
     "epic:documentation-overhaul",
     "component:docs",
     "type:epic"
   ],
   "created_at": "2026-07-14T20:40:18.243554691Z",
-  "updated_at": "2026-07-14T20:40:18.472991968Z",
+  "updated_at": "2026-07-14T20:43:39.886551891Z",
   "first_ready_at": "2026-07-14T20:40:18.243561271Z"
 }
