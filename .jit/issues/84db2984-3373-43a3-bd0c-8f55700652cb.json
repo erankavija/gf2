@@ -21,8 +21,9 @@
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
-    "component:docs"
+    "component:docs",
+    "epic:documentation-overhaul"
   ],
   "created_at": "2026-06-30T20:04:42.603020918Z",
-  "updated_at": "2026-06-30T20:12:27.135720771Z"
+  "updated_at": "2026-07-14T20:40:18.344874645Z"
 }

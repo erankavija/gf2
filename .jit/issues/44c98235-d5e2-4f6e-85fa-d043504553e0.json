@@ -1,15 +1,29 @@
 {
   "id": "44c98235-d5e2-4f6e-85fa-d043504553e0",
-  "title": "Add gf2-sim to README workspace table and fix GPU LDPC BP attribution",
-  "description": "**Severity: high · Dimension: doc-drift** (report finding #5)\n\n`README.md` omits `gf2-sim` entirely from the workspace layout table, despite it being a full workspace member with its own `Pipeline`/`Stage`/`Connector` infrastructure. Additionally the table attributes GPU LDPC BP to `gf2-coding --features hip`, but no GPU LDPC BP code exists in `gf2-coding` — it lives in `gf2-sim/src/gpu/ldpc_bp.rs`.\n\n## Success Criteria\n\n- [hard] `README.md` workspace table gains a `gf2-sim` row describing the CPU+GPU FEC simulation pipeline crate and its `hip` / `llr-f64` features.\n- [hard] The \"LDPC BP\" GPU attribution is removed from the `gf2-coding` hip-feature description and correctly placed on `gf2-sim`.\n- [hard] Claims verified against actual code paths before committing (no new drift introduced).",
-  "state": "ready",
+  "title": "Rewrite README for research adoption",
+  "description": "Rewrite the root README as gf2's concise entry point for researchers evaluating or adopting the library. The page presents only supported current behavior and directs readers to canonical crate, workflow, reference, and performance material.\n\n## Success Criteria\n\n- [hard] REQ-01: `README.md` briefly states what gf2 strives to provide for research-grade finite-field computing and coding theory without marketing superlatives or future promises.\n- [hard] REQ-02: The workspace capability map accurately includes `gf2-core`, `gf2-coding`, `gf2-algebra`, and `gf2-sim`; SIMD and HIP crates are described as implementation backends through their supported integration paths.\n- [hard] REQ-03: Acceleration and feature claims are verified against current manifests and code, including correct ownership of GPU LDPC belief propagation and default features.\n- [hard] REQ-04: Installation instructions describe only mechanisms available in the current tree and identify material toolchain or hardware constraints.\n- [hard] REQ-05: Performance highlights are concise, non-marketing, and link to compliant benchmark evidence rather than duplicating detailed tables.\n- [hard] REQ-06: The README links to the permanent documentation index and advanced research workflows without embedding elementary API tutorials or duplicating Rustdoc.\n- [hard] REQ-07: All README links, commands, crate names, and feature names pass the documentation and Rust CI gates.\n",
+  "state": "backlog",
   "priority": "high",
   "assignee": null,
-  "dependencies": [],
+  "dependencies": [
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
   "gates_required": [
-    "code-review"
+    "code-review",
+    "cargo-ci",
+    "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-07-14T20:40:18.323530830Z"
+    },
+    "cargo-ci": {
+      "status": "pending",
+      "updated_by": null,
+      "updated_at": "2026-07-14T20:40:18.323488040Z"
+    },
     "code-review": {
       "status": "pending",
       "updated_by": null,
@@ -21,8 +35,9 @@
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
-    "component:docs"
+    "component:docs",
+    "epic:documentation-overhaul"
   ],
   "created_at": "2026-06-30T20:04:42.540155853Z",
-  "updated_at": "2026-06-30T20:12:27.128248149Z"
+  "updated_at": "2026-07-14T20:40:18.395578602Z"
 }
