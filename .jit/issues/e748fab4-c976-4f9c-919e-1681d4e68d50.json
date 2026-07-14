@@ -13,9 +13,10 @@
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "component:gf2-core"
+    "component:gf2-core",
+    "story:implement-polar-code-construction-with-bit-channel-reliability"
   ],
   "created_at": "2026-02-21T19:35:51.653536989Z",
-  "updated_at": "2026-07-12T20:02:55.481037292Z",
+  "updated_at": "2026-07-14T20:49:36.037972166Z",
   "first_ready_at": "2026-02-21T19:49:04.115416490Z"
 }

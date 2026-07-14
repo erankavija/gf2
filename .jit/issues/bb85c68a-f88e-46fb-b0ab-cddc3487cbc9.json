@@ -14,20 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T08:42:53.287743692Z"
+      "updated_at": "2026-04-30T08:46:35.232164981Z"
     },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-30T08:52:53.130785819Z"
     },
-    "code-review": {
+    "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T08:46:35.232164981Z"
+      "updated_at": "2026-04-30T08:42:53.287743692Z"
     }
   },
   "context": {},
@@ -188,10 +188,11 @@
   ],
   "labels": [
     "type:epic",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:implement-generic-finite-field-linear-algebra-fieldmatrix"
   ],
   "created_at": "2026-02-23T19:19:40.625724847Z",
-  "updated_at": "2026-07-12T20:02:55.469909023Z",
+  "updated_at": "2026-07-14T20:49:35.836875130Z",
   "first_ready_at": "2026-04-30T08:05:04.832178322Z",
   "claimed_at": "2026-04-23T15:53:14.209507837Z",
   "done_at": "2026-04-30T08:53:07.347027106Z"

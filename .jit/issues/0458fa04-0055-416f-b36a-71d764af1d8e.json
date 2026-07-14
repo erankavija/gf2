@@ -15,10 +15,15 @@
     "code-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
+    "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-04T23:26:42.177663437Z"
+      "updated_at": "2026-04-04T23:35:56.712020541Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T00:02:31.614272336Z"
     },
     "clippy": {
       "status": "passed",
@@ -30,30 +35,26 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-05T00:02:31.198767914Z"
     },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-04T23:26:42.177663437Z"
+    },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-05T00:02:13.769356050Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-04T23:35:56.712020541Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T00:02:31.614272336Z"
     }
   },
   "context": {},
   "documents": [],
   "labels": [
     "component:gf2-core",
-    "type:task"
+    "type:task",
+    "story:implement-carry-less-multiplication-simd-kernels-for-gf-2-m"
   ],
   "created_at": "2026-02-21T23:11:07.235907264Z",
-  "updated_at": "2026-07-12T20:02:55.418847096Z",
+  "updated_at": "2026-07-14T20:51:29.839255600Z",
   "first_ready_at": "2026-02-22T23:54:41.475073799Z",
   "claimed_at": "2026-04-04T23:26:45.797583409Z",
   "done_at": "2026-04-04T23:40:05.061228255Z"

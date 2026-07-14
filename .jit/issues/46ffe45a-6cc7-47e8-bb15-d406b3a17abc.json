@@ -22,15 +22,15 @@
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T22:15:17.618008150Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T22:29:02.482829792Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-14T22:38:29.383598859Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-14T22:29:02.482829792Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -43,10 +43,11 @@
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d"
+    "epic:d4851c3d",
+    "story:legacy-modem-surface-migration"
   ],
   "created_at": "2026-04-12T19:39:51.669734207Z",
-  "updated_at": "2026-07-12T20:02:55.439521851Z",
+  "updated_at": "2026-07-14T20:49:35.511919564Z",
   "first_ready_at": "2026-04-14T22:15:16.902446970Z",
   "claimed_at": "2026-04-14T22:15:18.141952101Z",
   "done_at": "2026-04-14T22:38:29.396794368Z"

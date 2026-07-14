@@ -14,9 +14,10 @@
   "documents": [],
   "labels": [
     "type:story",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:build-live-dvb-t2-reception-demo-with-sdr-hardware"
   ],
   "created_at": "2026-02-21T19:35:51.797961207Z",
-  "updated_at": "2026-07-12T20:02:55.484731984Z",
+  "updated_at": "2026-07-14T20:49:36.076907625Z",
   "first_ready_at": "2026-05-27T17:21:55.523886141Z"
 }

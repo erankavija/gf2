@@ -23,15 +23,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-05T22:46:28.750295168Z"
     },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-05T22:44:15.722493554Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T22:25:22.192372058Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-05T22:44:15.722493554Z"
     }
   },
   "context": {},
@@ -39,10 +39,11 @@
   "labels": [
     "type:story",
     "component:gf2-core",
-    "component:gf2-kernels-simd"
+    "component:gf2-kernels-simd",
+    "story:0fb994"
   ],
   "created_at": "2026-02-21T19:35:51.857178518Z",
-  "updated_at": "2026-07-12T20:02:55.421829578Z",
+  "updated_at": "2026-07-14T20:49:35.336312226Z",
   "first_ready_at": "2026-04-05T19:39:41.627274536Z",
   "claimed_at": "2026-04-04T23:26:11.694443150Z",
   "done_at": "2026-04-05T22:46:57.866654721Z"

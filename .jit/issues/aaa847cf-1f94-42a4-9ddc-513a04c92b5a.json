@@ -12,6 +12,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-05-24T12:13:19.642336703Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -21,11 +26,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-24T12:09:04.471234428Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T12:13:19.642336703Z"
     }
   },
   "context": {},
@@ -52,10 +52,11 @@
     }
   ],
   "labels": [
-    "type:task"
+    "type:task",
+    "epic:gf2-core-sota-stretch"
   ],
   "created_at": "2026-05-08T19:12:03.098969420Z",
-  "updated_at": "2026-07-12T20:02:55.464501419Z",
+  "updated_at": "2026-07-14T20:51:30.067739436Z",
   "claimed_at": "2026-05-24T11:21:38.166708874Z",
   "done_at": "2026-05-24T12:18:17.840704088Z"
 }

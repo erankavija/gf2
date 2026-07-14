@@ -28,8 +28,9 @@
   "labels": [
     "type:epic",
     "component:gf2-coding",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:quality-documentation-tech-debt"
   ],
   "created_at": "2026-02-21T19:35:51.583905100Z",
-  "updated_at": "2026-06-30T20:00:52.321485868Z"
+  "updated_at": "2026-07-14T20:49:35.636717014Z"
 }

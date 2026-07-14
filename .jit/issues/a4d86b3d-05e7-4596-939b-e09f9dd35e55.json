@@ -35,10 +35,11 @@
   "labels": [
     "type:story",
     "epic:grand",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:configurable-simulation-campaign-runner"
   ],
   "created_at": "2026-04-09T11:43:22.371974187Z",
-  "updated_at": "2026-07-12T20:02:55.462882848Z",
+  "updated_at": "2026-07-14T20:49:35.740750500Z",
   "claimed_at": "2026-04-09T13:57:13.978407149Z",
   "done_at": "2026-04-09T16:50:23.138247858Z"
 }

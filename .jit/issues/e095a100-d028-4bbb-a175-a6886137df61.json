@@ -28,6 +28,11 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-21T03:17:15.462339426Z"
     },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-21T03:15:04.948995046Z"
+    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -37,11 +42,6 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-21T02:44:45.296229949Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-21T03:15:04.948995046Z"
     }
   },
   "context": {},
@@ -199,10 +199,11 @@
   ],
   "labels": [
     "type:epic",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:e095a100"
   ],
   "created_at": "2026-02-21T19:35:51.633739852Z",
-  "updated_at": "2026-07-12T20:02:55.479159130Z",
+  "updated_at": "2026-07-14T20:49:35.999050868Z",
   "claimed_at": "2026-04-17T19:30:59.366893920Z",
   "done_at": "2026-04-21T03:32:29.582295698Z"
 }

@@ -14,20 +14,20 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-25T20:15:08.278662939Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-25T20:19:59.182404837Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-25T20:15:15.674147135Z"
     },
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-25T20:19:59.182404837Z"
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-25T20:15:08.278662939Z"
     }
   },
   "context": {},
@@ -35,10 +35,11 @@
   "labels": [
     "type:story",
     "component:gf2-core",
-    "epic:bb85c68a"
+    "epic:bb85c68a",
+    "story:implement-block-recursive-trsm-trmm-trtri-trtrm-triangular-primitives"
   ],
   "created_at": "2026-04-23T15:56:35.298288069Z",
-  "updated_at": "2026-07-12T20:02:55.453654052Z",
+  "updated_at": "2026-07-14T20:49:35.627382568Z",
   "first_ready_at": "2026-04-25T17:06:17.178500796Z",
   "claimed_at": "2026-04-25T17:06:50.667572707Z",
   "done_at": "2026-04-25T20:19:59.977339615Z"

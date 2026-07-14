@@ -53,10 +53,11 @@
   "labels": [
     "type:story",
     "component:gf2-core",
-    "epic:bb85c68a"
+    "epic:bb85c68a",
+    "story:design-fieldmatrix-expression-template-algebra-proxy-types"
   ],
   "created_at": "2026-04-23T15:56:15.403572187Z",
-  "updated_at": "2026-07-12T20:02:55.474561237Z",
+  "updated_at": "2026-07-14T20:49:35.893716301Z",
   "first_ready_at": "2026-04-24T01:59:01.589330982Z",
   "claimed_at": "2026-04-24T01:59:25.528563101Z",
   "done_at": "2026-04-24T02:17:40.699042852Z"

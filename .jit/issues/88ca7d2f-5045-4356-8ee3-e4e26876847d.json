@@ -12,9 +12,10 @@
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "epic:quality-documentation-tech-debt"
   ],
   "created_at": "2026-02-21T19:35:51.733318957Z",
-  "updated_at": "2026-07-12T20:02:55.455167263Z",
+  "updated_at": "2026-07-14T20:51:30.020543722Z",
   "first_ready_at": "2026-02-21T19:49:04.354655073Z"
 }

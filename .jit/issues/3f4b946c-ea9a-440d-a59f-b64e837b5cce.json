@@ -36,10 +36,11 @@
   "documents": [],
   "labels": [
     "type:story",
-    "component:gf2-core"
+    "component:gf2-core",
+    "story:implement-tower-extension-field-architecture-for-gf-p-n"
   ],
   "created_at": "2026-02-21T19:35:51.862089277Z",
-  "updated_at": "2026-07-12T20:02:55.436723319Z",
+  "updated_at": "2026-07-14T20:49:35.492677110Z",
   "first_ready_at": "2026-04-18T21:37:29.153356056Z",
   "claimed_at": "2026-04-18T20:55:04.355232703Z",
   "done_at": "2026-04-18T22:36:34.760153362Z"

@@ -13,25 +13,25 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T12:53:37.161126156Z"
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-06T12:56:26.155491075Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-06T12:54:00.446249938Z"
     },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-06T12:56:26.155491075Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-05T23:11:24.785331309Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-06T12:53:37.161126156Z"
     }
   },
   "context": {},
@@ -39,10 +39,11 @@
   "labels": [
     "type:story",
     "epic:grand",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:upgrade-simulation-harness-for-coded-ber-fer-sweeps"
   ],
   "created_at": "2026-02-22T21:14:47.737812660Z",
-  "updated_at": "2026-07-12T20:02:55.430821245Z",
+  "updated_at": "2026-07-14T20:49:35.453821291Z",
   "claimed_at": "2026-04-05T23:11:31.490054385Z",
   "done_at": "2026-04-06T12:56:26.158707087Z"
 }

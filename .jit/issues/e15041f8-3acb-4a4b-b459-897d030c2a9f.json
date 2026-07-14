@@ -12,9 +12,10 @@
   "documents": [],
   "labels": [
     "type:story",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:implement-soft-input-viterbi-algorithm-sova"
   ],
   "created_at": "2026-02-21T19:35:51.703681171Z",
-  "updated_at": "2026-07-12T20:02:55.479458560Z",
+  "updated_at": "2026-07-14T20:49:36.008780915Z",
   "first_ready_at": "2026-02-21T19:49:04.274992975Z"
 }

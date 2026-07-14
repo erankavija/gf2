@@ -24,10 +24,11 @@
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:gf2-sim"
+    "epic:gf2-sim",
+    "story:cpu-foundation-for-gf2-sim-pipeline"
   ],
   "created_at": "2026-06-05T22:01:13.027874246Z",
-  "updated_at": "2026-07-12T20:02:55.470216994Z",
+  "updated_at": "2026-07-14T20:49:35.846235267Z",
   "first_ready_at": "2026-06-09T05:37:17.575929098Z",
   "claimed_at": "2026-06-09T05:37:45.636176456Z",
   "done_at": "2026-06-09T05:38:59.929276051Z"

@@ -6,8 +6,8 @@
   "priority": "high",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "39f02525-deb4-4c58-8942-ecee42dd869a",
-    "54fd3f0b-60d9-439c-90d1-e54c470f2563"
+    "54fd3f0b-60d9-439c-90d1-e54c470f2563",
+    "8f3fdc34-66aa-4c94-8919-a31bdd94ebb3"
   ],
   "gates_required": [
     "code-review",
@@ -15,11 +15,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T18:43:24.729019441Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -29,6 +24,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-05-08T18:43:18.411272923Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-05-08T18:43:24.729019441Z"
     }
   },
   "context": {},
@@ -173,7 +173,7 @@
     "story:sota-final-scorecard"
   ],
   "created_at": "2026-04-30T06:43:02.531571131Z",
-  "updated_at": "2026-07-12T20:02:55.417941496Z",
+  "updated_at": "2026-07-14T20:51:49.700241792Z",
   "first_ready_at": "2026-05-08T18:42:32.989171398Z",
   "claimed_at": "2026-05-08T18:42:55.904691184Z",
   "done_at": "2026-05-08T18:47:07.718132398Z"

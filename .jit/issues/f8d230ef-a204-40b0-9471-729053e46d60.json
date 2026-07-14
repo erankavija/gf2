@@ -15,8 +15,9 @@
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-kernels-simd"
+    "component:gf2-kernels-simd",
+    "epic:simd-and-platform-expansion"
   ],
-  "created_at": "2026-05-12T05:34:39.888361764+00:00",
-  "updated_at": "2026-05-12T05:34:39.888367094+00:00"
+  "created_at": "2026-05-12T05:34:39.888361764Z",
+  "updated_at": "2026-07-14T20:51:30.142668330Z"
 }

@@ -13,16 +13,6 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T16:25:21.807106621Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T16:25:44.993216162Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -32,6 +22,16 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-06T16:27:57.699719233Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-06T16:25:21.807106621Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-06T16:25:44.993216162Z"
     }
   },
   "context": {},
@@ -39,10 +39,11 @@
   "labels": [
     "type:story",
     "epic:grand",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:implement-rician-fading-channel-and-qpsk-modulation"
   ],
   "created_at": "2026-02-22T21:14:54.611545645Z",
-  "updated_at": "2026-07-12T20:02:55.422968989Z",
+  "updated_at": "2026-07-14T20:49:35.356640541Z",
   "first_ready_at": "2026-04-05T23:08:54.807432689Z",
   "claimed_at": "2026-04-05T23:11:31.785237250Z",
   "done_at": "2026-04-06T16:27:57.702885335Z"

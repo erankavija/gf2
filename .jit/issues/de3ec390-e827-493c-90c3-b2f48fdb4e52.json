@@ -18,9 +18,10 @@
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-core"
+    "component:gf2-core",
+    "epic:quality-documentation-tech-debt"
   ],
   "created_at": "2026-05-31T12:11:54.255756957Z",
-  "updated_at": "2026-07-12T20:02:55.478703200Z",
+  "updated_at": "2026-07-14T20:51:30.124057067Z",
   "first_ready_at": "2026-05-31T12:23:38.213427051Z"
 }

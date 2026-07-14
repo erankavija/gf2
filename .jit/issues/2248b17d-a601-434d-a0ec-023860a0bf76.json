@@ -22,16 +22,6 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-02-26T18:44:42.825680453Z"
     },
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-02-26T18:44:26.298564075Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-01T19:02:08.894379124Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:claude",
@@ -46,6 +36,16 @@
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-02-26T18:32:51.426930770Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-01T19:02:08.894379124Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-26T18:44:26.298564075Z"
     }
   },
   "context": {},
@@ -53,10 +53,11 @@
   "labels": [
     "type:task",
     "component:gf2-core",
-    "component:gf2-kernels-simd"
+    "component:gf2-kernels-simd",
+    "story:implement-montgomery-multiplication-for-gf-p-prime-fields"
   ],
   "created_at": "2026-02-21T19:35:51.847368329Z",
-  "updated_at": "2026-07-12T20:02:55.429381464Z",
+  "updated_at": "2026-07-14T20:51:29.896710412Z",
   "first_ready_at": "2026-02-26T00:10:56.135584704Z",
   "claimed_at": "2026-02-26T18:41:37.495068374Z",
   "done_at": "2026-03-01T19:02:18.910332042Z"

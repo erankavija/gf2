@@ -16,15 +16,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T08:21:03.855546067Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-15T08:31:37.629431382Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-15T08:21:03.855546067Z"
     },
     "doc-review": {
       "status": "passed",
@@ -42,10 +42,11 @@
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d"
+    "epic:d4851c3d",
+    "story:bit-channel-analysis"
   ],
   "created_at": "2026-04-12T20:04:48.343842982Z",
-  "updated_at": "2026-07-12T20:02:55.480027011Z",
+  "updated_at": "2026-07-14T20:49:36.018971422Z",
   "first_ready_at": "2026-04-15T07:00:14.670535445Z",
   "claimed_at": "2026-04-15T07:00:15.971576381Z",
   "done_at": "2026-04-15T08:37:36.037435158Z"

@@ -14,6 +14,11 @@
     "doc-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "lead:project-lead",
+      "updated_at": "2026-04-24T10:52:12.112835662Z"
+    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
@@ -23,21 +28,17 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-24T10:49:49.451822676Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "lead:project-lead",
-      "updated_at": "2026-04-24T10:52:12.112835662Z"
     }
   },
   "context": {},
   "documents": [],
   "labels": [
     "component:gf2-core",
-    "type:story"
+    "type:story",
+    "story:implement-sparse-fieldmatrix-csr-csc-over-finitefield"
   ],
   "created_at": "2026-02-23T19:20:28.214212942Z",
-  "updated_at": "2026-07-12T20:02:55.455304353Z",
+  "updated_at": "2026-07-14T20:49:35.655360178Z",
   "first_ready_at": "2026-04-24T01:59:01.496404246Z",
   "claimed_at": "2026-04-24T10:12:06.603188220Z",
   "done_at": "2026-04-24T10:52:12.480770087Z"

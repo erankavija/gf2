@@ -17,20 +17,15 @@
     "doc-review"
   ],
   "gates_status": {
-    "clippy": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-02T18:13:36.237151546Z"
+      "updated_by": "agent:claude",
+      "updated_at": "2026-03-02T18:13:47.655906716Z"
     },
     "tests": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-03-02T18:13:25.620444781Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-02T18:13:47.655906716Z"
     },
     "fmt": {
       "status": "passed",
@@ -42,6 +37,11 @@
       "updated_by": "agent:claude",
       "updated_at": "2026-03-02T18:13:51.138280136Z"
     },
+    "clippy": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-03-02T18:13:36.237151546Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:claude",
@@ -52,10 +52,11 @@
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-core"
+    "component:gf2-core",
+    "story:implement-montgomery-multiplication-for-gf-p-prime-fields"
   ],
   "created_at": "2026-02-22T23:52:30.801053260Z",
-  "updated_at": "2026-07-12T20:02:55.433812077Z",
+  "updated_at": "2026-07-14T20:51:29.935106940Z",
   "first_ready_at": "2026-03-01T19:02:19.147335856Z",
   "claimed_at": "2026-03-01T23:38:32.760273618Z",
   "done_at": "2026-03-02T18:13:55.814228622Z"

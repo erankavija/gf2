@@ -15,45 +15,46 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-02-25T22:53:26.257883965Z"
-    },
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-02-25T23:31:22.635597660Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-02-25T23:31:49.214897511Z"
-    },
     "clippy": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-02-25T23:31:21.831599235Z"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-02-25T23:31:11.914789202Z"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-25T22:53:26.257883965Z"
     },
     "code-review": {
       "status": "passed",
       "updated_by": "agent:claude",
       "updated_at": "2026-02-25T23:32:19.350082061Z"
     },
-    "tests": {
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:claude",
+      "updated_at": "2026-02-25T23:31:49.214897511Z"
+    },
+    "fmt": {
       "status": "passed",
       "updated_by": "auto:executor",
-      "updated_at": "2026-02-25T23:31:11.914789202Z"
+      "updated_at": "2026-02-25T23:31:22.635597660Z"
     }
   },
   "context": {},
   "documents": [],
   "labels": [
     "type:task",
-    "component:gf2-core"
+    "component:gf2-core",
+    "story:design-and-implement-finitefield-trait-for-generic-field-arithmetic"
   ],
   "created_at": "2026-02-22T23:52:24.359407408Z",
-  "updated_at": "2026-07-12T20:02:55.420081087Z",
+  "updated_at": "2026-07-14T20:51:29.849017887Z",
   "claimed_at": "2026-02-25T22:53:28.381651246Z",
   "done_at": "2026-02-25T23:32:21.402630123Z"
 }

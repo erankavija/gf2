@@ -6,14 +6,13 @@
   "priority": "normal",
   "assignee": "agent:project-lead",
   "dependencies": [
-    "afc80980-350e-4e7f-8172-9929e7c5f350",
+    "3abb755e-39d7-40fd-bceb-0ca7bb310083",
+    "211102c6-d6ad-4a3c-b497-534165902c43",
     "01afbd6d-791e-4867-81cf-0f6c5ae131d9",
+    "afc80980-350e-4e7f-8172-9929e7c5f350",
     "d76f6931-a450-4651-9ab8-cfe5d7f8c7b2",
     "cd356d0b-cfee-4951-a1dd-8fbac708f1fc",
-    "211102c6-d6ad-4a3c-b497-534165902c43",
-    "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5",
-    "3abb755e-39d7-40fd-bceb-0ca7bb310083",
-    "e555c46d-cb1d-45d4-91a6-871f32866ad0"
+    "2c866544-1ec7-4ba4-94ad-f7bd7f7993d5"
   ],
   "gates_required": [
     "code-review",
@@ -21,11 +20,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T22:58:21.584752700Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": null,
@@ -35,6 +29,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-29T23:16:05.710550679Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-29T22:58:21.584752700Z"
     }
   },
   "context": {},
@@ -159,7 +158,7 @@
     "milestone:gf2-core-perf"
   ],
   "created_at": "2026-04-25T15:14:12.083946312Z",
-  "updated_at": "2026-07-12T20:02:55.469600213Z",
+  "updated_at": "2026-07-14T20:51:49.734504977Z",
   "claimed_at": "2026-04-26T19:24:42.475663561Z",
   "done_at": "2026-04-29T23:24:31.431719157Z"
 }

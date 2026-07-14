@@ -23,15 +23,15 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-12T19:35:33.056026929Z"
-    },
     "code-review": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-12T19:33:20.023979441Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-12T19:35:33.056026929Z"
     },
     "tdd-reminder": {
       "status": "passed",
@@ -57,10 +57,11 @@
   "labels": [
     "type:story",
     "epic:grand",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:run-phase-1-awgn-simulations-fig-1-and-fig-3-product-codes-vs-5g-nr-ldpc"
   ],
   "created_at": "2026-02-22T21:15:55.572874888Z",
-  "updated_at": "2026-07-12T20:02:55.457674245Z",
+  "updated_at": "2026-07-14T20:49:35.674521022Z",
   "first_ready_at": "2026-04-07T05:36:43.761668546Z",
   "claimed_at": "2026-04-07T09:06:37.482840389Z",
   "done_at": "2026-04-12T19:35:33.059093991Z"

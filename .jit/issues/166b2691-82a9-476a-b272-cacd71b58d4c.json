@@ -7,29 +7,29 @@
   "assignee": "agent:project-lead",
   "dependencies": [
     "2a0ffb18-eb7f-459a-855b-11faea76b733",
-    "1d230525-3f47-4065-bf85-60a9584007d4",
     "b2ecd2ff-7b1d-4072-aa8b-d0b2e8f04b64",
-    "bd00d76a-75bc-494c-9f7a-7dd59e814b24",
     "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
     "986ddc44-63da-4d9c-9fc1-ebb035da9e3b",
+    "c7e91dfd-3c9e-481a-9492-2c3b84495436",
+    "1d230525-3f47-4065-bf85-60a9584007d4",
+    "e555c46d-cb1d-45d4-91a6-871f32866ad0",
     "4f845881-2fbc-4ba5-baf5-48ade75830bc",
-    "941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c",
-    "c7e91dfd-3c9e-481a-9492-2c3b84495436"
+    "941d1528-0108-4cb1-a0a0-4dfc0cc4cd8c"
   ],
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-27T19:06:20.255467955Z"
-    },
     "cargo-ci": {
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-27T18:55:48.001328575Z"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-27T19:06:20.255467955Z"
     }
   },
   "context": {},
@@ -41,7 +41,7 @@
     "story:ppc-infrastructure"
   ],
   "created_at": "2026-04-25T15:15:09.453383205Z",
-  "updated_at": "2026-07-12T20:02:55.424303390Z",
+  "updated_at": "2026-07-14T20:51:49.732166275Z",
   "first_ready_at": "2026-04-27T18:55:23.897009809Z",
   "claimed_at": "2026-04-27T18:55:45.494984828Z",
   "done_at": "2026-04-27T19:14:42.988169188Z"

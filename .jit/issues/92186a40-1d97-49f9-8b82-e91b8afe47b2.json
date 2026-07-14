@@ -16,11 +16,6 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:15:16.462228200Z"
-    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -30,6 +25,11 @@
       "status": "passed",
       "updated_by": "auto:executor",
       "updated_at": "2026-04-14T22:08:07.216358692Z"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_by": "agent:project-lead",
+      "updated_at": "2026-04-14T22:15:16.462228200Z"
     },
     "cargo-ci": {
       "status": "passed",
@@ -42,10 +42,11 @@
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d"
+    "epic:d4851c3d",
+    "story:simulation-channel-integration"
   ],
   "created_at": "2026-04-12T19:39:51.667858715Z",
-  "updated_at": "2026-07-12T20:02:55.457826905Z",
+  "updated_at": "2026-07-14T20:49:35.684079569Z",
   "first_ready_at": "2026-04-14T20:53:03.819417990Z",
   "claimed_at": "2026-04-14T21:51:22.270743670Z",
   "done_at": "2026-04-14T22:15:16.818367369Z"

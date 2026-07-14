@@ -19,15 +19,15 @@
       "updated_by": "auto:executor",
       "updated_at": "2026-04-26T08:08:01.041570311Z"
     },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T08:06:09.850764879Z"
-    },
     "doc-review": {
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-26T08:18:18.584172981Z"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-26T08:06:09.850764879Z"
     }
   },
   "context": {},
@@ -42,10 +42,11 @@
   ],
   "labels": [
     "component:gf2-core",
-    "type:story"
+    "type:story",
+    "story:implement-ple-decomposition-and-echelon-forms-over-finitefield"
   ],
   "created_at": "2026-02-23T19:20:28.213415862Z",
-  "updated_at": "2026-07-12T20:02:55.472291565Z",
+  "updated_at": "2026-07-14T20:49:35.883956664Z",
   "first_ready_at": "2026-04-24T01:59:01.573760658Z",
   "claimed_at": "2026-04-25T20:20:23.180554003Z",
   "done_at": "2026-04-26T08:18:21.341694400Z"

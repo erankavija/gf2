@@ -16,8 +16,9 @@
   "documents": [],
   "labels": [
     "type:milestone",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "milestone:end-to-end-dvb-t2-fec-bicm-simulation"
   ],
-  "created_at": "2026-02-21T19:35:51.638599852+00:00",
-  "updated_at": "2026-05-25T21:54:24.358519206+00:00"
+  "created_at": "2026-02-21T19:35:51.638599852Z",
+  "updated_at": "2026-07-14T20:49:36.057598571Z"
 }

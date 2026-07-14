@@ -15,6 +15,11 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_by": "auto:executor",
+      "updated_at": "2026-04-06T22:19:50.507804493Z"
+    },
     "tdd-reminder": {
       "status": "passed",
       "updated_by": "agent:project-lead",
@@ -29,11 +34,6 @@
       "status": "passed",
       "updated_by": "agent:project-lead",
       "updated_at": "2026-04-06T22:29:31.558297949Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-06T22:19:50.507804493Z"
     }
   },
   "context": {},
@@ -41,10 +41,11 @@
   "labels": [
     "type:story",
     "epic:grand",
-    "component:gf2-coding"
+    "component:gf2-coding",
+    "story:implement-sogrand-soft-output-computation"
   ],
   "created_at": "2026-02-22T21:15:18.601426767Z",
-  "updated_at": "2026-07-12T20:02:55.482904933Z",
+  "updated_at": "2026-07-14T20:49:36.048021174Z",
   "first_ready_at": "2026-04-06T08:38:24.806637297Z",
   "claimed_at": "2026-04-06T21:46:40.490317900Z",
   "done_at": "2026-04-06T22:29:32.294279674Z"
