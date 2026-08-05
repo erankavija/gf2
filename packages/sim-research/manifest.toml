@@ -1,0 +1,923 @@
+dependencies = ["jit-default"]
+
+[profile]
+manifest-version = 1
+id = "sim-research"
+version = "1.0.0"
+jit = ">=1.0.0, <2.0.0"
+
+# Repository-neutral workflow taxonomy. `jit-default` supplies the shared
+# hierarchy and vocabulary; this profile adds bracket and task specialization.
+
+[[contribution]]
+kind = "map-entry"
+target = "type-hierarchy-types"
+identity = "planning"
+value = 3
+
+[[contribution]]
+kind = "map-entry"
+target = "type-hierarchy-types"
+identity = "breakdown"
+value = 3
+
+[[contribution]]
+kind = "map-entry"
+target = "type-hierarchy-types"
+identity = "bug"
+value = 4
+
+[[contribution]]
+kind = "map-entry"
+target = "type-hierarchy-types"
+identity = "enhancement"
+value = 4
+
+[[contribution]]
+kind = "map-entry"
+target = "type-hierarchy-types"
+identity = "simulation"
+value = 4
+
+[[contribution]]
+kind = "map-entry"
+target = "namespaces"
+identity = "epic"
+value = { description = "Epic membership.", unique = false, examples = ["epic:gf2-sim", "epic:coverage-90"] }
+
+[[contribution]]
+kind = "map-entry"
+target = "namespaces"
+identity = "story"
+value = { description = "Story membership (optional).", unique = false, examples = ["story:ppc-infrastructure", "story:sota-dense-la"] }
+
+[[contribution]]
+kind = "map-entry"
+target = "namespaces"
+identity = "ppc-kernel"
+value = { description = "PPC-spiral kernel ID consumed by the Criterion speedup gate.", unique = true, examples = ["ppc-kernel:A1", "ppc-kernel:B2", "ppc-kernel:C4", "ppc-kernel:D1"] }
+
+[[contribution]]
+kind = "map-entry"
+target = "namespaces"
+identity = "brackets"
+value = { description = "Planning-bracket container pointer: on a breakdown node, names the container it brackets", unique = true, examples = ["brackets:0123abcd"] }
+
+[[contribution]]
+kind = "map-entry"
+target = "namespaces"
+identity = "satisfies"
+value = { description = "Coverage credit: on an impl child, names a container [hard] criterion id this child CONTRIBUTES to. Several children may credit one id; the label denotes contribution, not sole delivery. Read by the label-coverage gate, which credits a criterion when any labelled child exists.", unique = false, examples = ["satisfies:REQ-01"] }
+
+# Advisory authoring structure plus enforced plan-time and completion coverage.
+[[contribution]]
+kind = "keyed-array"
+target = "rules"
+identity = "jit-content-standards"
+
+[contribution.value]
+name = "jit-content-standards"
+origin = "sim-research"
+description = "Warn when nonterminal work lacks marked, stable success criteria."
+severity = "warn"
+enforce = false
+when = { state = ["backlog", "ready", "in_progress", "gated"] }
+assert = { json-schema = "schemas/jit-content-standards.json" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "rules"
+identity = "hard-criteria-covered"
+
+[contribution.value]
+name = "hard-criteria-covered"
+origin = "sim-research"
+description = "Before an epic completes, every hard requirement is credited to a completed implementation descendant."
+when = { type = "epic", state = "done" }
+severity = "error"
+enforce = true
+assert = { label-coverage = { criteria-section = "success_criteria", marker = "[hard]", id-pattern = "REQ-[0-9]+", satisfies-namespace = "satisfies", child-state = "done", child-link = "dependencies", child-type-exclude = ["planning", "breakdown"] } }
+
+[[contribution]]
+kind = "keyed-array"
+target = "rules"
+identity = "coverage-preview"
+
+[contribution.value]
+name = "coverage-preview"
+origin = "sim-research"
+description = "While breakdown is reviewed, every hard requirement is credited to a drafted implementation descendant."
+when = { type = "breakdown", state = ["in_progress", "gated", "done"] }
+severity = "error"
+enforce = true
+assert = { label-coverage = { criteria-section = "success_criteria", marker = "[hard]", id-pattern = "REQ-[0-9]+", satisfies-namespace = "satisfies", container-from-label = "brackets", child-link = "dependencies", child-type-exclude = ["breakdown", "planning"] } }
+
+[[contribution]]
+kind = "keyed-array"
+target = "rules"
+identity = "orphan-leaf"
+
+[contribution.value]
+name = "orphan-leaf"
+origin = "sim-research"
+description = "Warn when a leaf-level-typed issue carries no parent-membership label, leaving it unattached to any strategic container. Advisory: never blocks a write."
+severity = "warn"
+enforce = false
+assert = { type-hierarchy = { kind = "orphan-leaf" } }
+
+[[contribution]]
+kind = "keyed-array"
+target = "rules"
+identity = "strategic-consistency"
+
+[contribution.value]
+name = "strategic-consistency"
+origin = "sim-research"
+description = "Warn when a strategic-typed issue lacks its own identifying membership label. Advisory: never blocks a write."
+severity = "warn"
+enforce = false
+assert = { type-hierarchy = { kind = "strategic-consistency" } }
+
+# AI-assisted review gates use the repository-owned, read-only review wrapper.
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "plan-review"
+
+[contribution.value]
+version = 1
+key = "plan-review"
+title = "Plan Review"
+description = "Independently review the linked plan before implementation work fans out."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/plan-review-prompt.md"
+env = { REVIEWER_AGENT = "codex exec" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "breakdown-review"
+
+[contribution.value]
+version = 1
+key = "breakdown-review"
+title = "Breakdown Review"
+description = "Independently review decomposition quality, issue content, and dependency ordering before implementation."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/breakdown-review-prompt.md"
+env = { REVIEWER_AGENT = "codex exec" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "code-review"
+
+[contribution.value]
+version = 1
+key = "code-review"
+title = "Code Review"
+description = "Review issue-attributable implementation changes against repository policy and success criteria."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/code-review-prompt.md"
+env = { REVIEWER_AGENT = "codex exec" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "coverage-preview"
+
+[contribution.value]
+version = 1
+key = "coverage-preview"
+title = "Coverage Preview"
+description = "Validate the container named by the breakdown issue's brackets label."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "label_target_validation"
+label_namespace = "brackets"
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "jit-validate"
+
+[contribution.value]
+version = 1
+key = "jit-validate"
+title = "Issue Validation"
+description = "Run declarative validation for the gated issue."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "issue_validation"
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "repo-validate"
+
+[contribution.value]
+version = 1
+key = "repo-validate"
+title = "Repository Validation"
+description = "Run structural and declarative validation for the whole repository."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "repository_validation"
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "doc-review"
+
+[contribution.value]
+version = 1
+key = "doc-review"
+title = "Documentation Review"
+description = "Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/doc-review-prompt.md"
+env = { REVIEWER_AGENT = "codex exec" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "holistic-review"
+
+[contribution.value]
+version = 1
+key = "holistic-review"
+title = "Holistic Container Review"
+description = "Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/holistic-review-prompt.md"
+env = { REVIEWER_AGENT = "codex exec" }
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "asm-artefact-present"
+
+[contribution.value]
+version = 1
+key = "asm-artefact-present"
+title = "ASM artefact present"
+description = "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/asm-artefact-present.sh"
+timeout_seconds = 300
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "cargo-ci"
+
+[contribution.value]
+version = 1
+key = "cargo-ci"
+title = "Rust CI checks pass"
+description = "Run the full release-mode Rust workspace CI pipeline: build, tests, clippy, and formatting."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/cargo-ci.sh"
+timeout_seconds = 300
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "cargo-kani"
+
+[contribution.value]
+version = 1
+key = "cargo-kani"
+title = "Kani proof harnesses pass"
+description = "Run all bounded model-checking harnesses and retain the bounded summary and compressed proof log."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/cargo-kani-gate.sh"
+timeout_seconds = 1800
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "clippy"
+
+[contribution.value]
+version = 1
+key = "clippy"
+title = "Clippy lints pass"
+description = "Require the configured Clippy targets to pass with warnings denied."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "cargo clippy --all-targets -- -D warnings"
+timeout_seconds = 120
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "criterion-1.5x"
+
+[contribution.value]
+version = 1
+key = "criterion-1.5x"
+title = "Criterion 1.5x speedup"
+description = "Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/criterion-1.5x.sh"
+timeout_seconds = 300
+pass_context = true
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "fmt"
+
+[contribution.value]
+version = 1
+key = "fmt"
+title = "Code formatted"
+description = "Require cargo fmt to report no formatting drift."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "cargo fmt --check"
+timeout_seconds = 30
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "lake-build"
+
+[contribution.value]
+version = 1
+key = "lake-build"
+title = "Lean4 proofs compile"
+description = "Require lake build to succeed with no sorry warnings in hand-written proof files."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/lake-build-strict.sh"
+timeout_seconds = 600
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "parallelism-pays"
+
+[contribution.value]
+version = 1
+key = "parallelism-pays"
+title = "Parallelism speedup demonstrated"
+description = "Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target."
+stage = "postcheck"
+mode = "manual"
+priority = 100
+auto = false
+reserved = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "tdd-reminder"
+
+[contribution.value]
+version = 1
+key = "tdd-reminder"
+title = "Write tests first (TDD)"
+description = "Remind implementers to establish failing behavioral evidence before implementation."
+stage = "precheck"
+mode = "manual"
+priority = 100
+auto = false
+reserved = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "tests"
+
+[contribution.value]
+version = 1
+key = "tests"
+title = "All tests pass"
+description = "Run the legacy cargo test gate retained for issues that explicitly require it."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "cargo test"
+timeout_seconds = 300
+pass_context = false
+env = {}
+
+[[contribution]]
+kind = "keyed-array"
+target = "gates"
+identity = "verify-lean"
+
+[contribution.value]
+version = 1
+key = "verify-lean"
+title = "Lean extraction regenerates"
+description = "Regenerate LLBC and Lean from current Rust with Charon and Aeneas, then build the proof package."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+reserved = {}
+
+[contribution.value.checker]
+type = "exec"
+command = "./scripts/verify-lean.sh"
+timeout_seconds = 1200
+pass_context = false
+env = {}
+
+# Configured-container plan-before-fan-out bracket. Built-in compatibility presets derive
+# their node gate definitions from this template and the gate contributions.
+[[contribution]]
+kind = "keyed-array"
+target = "templates"
+identity = "plan"
+
+[contribution.value]
+name = "plan"
+description = "Plan-before-fan-out bracket with planning and breakdown review."
+applies_to = ["milestone", "epic", "story"]
+
+[[contribution.value.anchors]]
+name = "container"
+gates = ["repo-validate", "doc-review", "holistic-review"]
+
+[[contribution.value.nodes]]
+role = "planning"
+type = "planning"
+gates = ["plan-review"]
+doc_area = "dev/active"
+doc = "{container.dir}/plan.md"
+description = "Plan {container.title} ({container.short_id}) against every hard success criterion, write the concise design at {doc} and its authoritative sibling breakdown manifest, and link both to this planning issue."
+
+[[contribution.value.nodes]]
+role = "breakdown"
+type = "breakdown"
+gates = ["coverage-preview", "breakdown-review"]
+labels = ["brackets:{container.short_id}"]
+description = "After the plan-review checkpoint passes, decompose the plan for {container.title} ({container.short_id}) into well-ordered implementation issues."
+depends_on = ["planning"]
+
+[[contribution.value.anchor_edges]]
+from = "container"
+to = "breakdown"
+
+[[contribution.value.transforms]]
+kind = "move-upstream-to-role"
+role = "planning"
+
+# The workflow and gf2 engineering invariants are profile-owned registry items.
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "label-format"
+
+[contribution.value]
+id = "label-format"
+statement = "Every label is namespace:value (namespace lowercase-kebab, value non-empty)."
+kind = "enforced"
+enforced-by = "@/rule/label-format"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "namespace-registry"
+
+[contribution.value]
+id = "namespace-registry"
+statement = "Every label namespace is declared in the namespace registry."
+kind = "enforced"
+enforced-by = "@/rule/namespace-registry"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "dag-acyclic"
+
+[contribution.value]
+id = "dag-acyclic"
+statement = "Cycle detection runs before every dependency operation; the graph stays acyclic."
+kind = "enforced"
+enforced-by = "@/gate/repo-validate"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "gate-semantics"
+
+[contribution.value]
+id = "gate-semantics"
+statement = "An issue cannot reach Done with pending or failed gates; unpassed gates divert completion to Gated."
+kind = "enforced"
+enforced-by = "@/gate/repo-validate"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "bitvec-tail-padding"
+
+[contribution.value]
+id = "bitvec-tail-padding"
+statement = "Every BitVec mutation leaves padding bits beyond len_bits zero, including construction from externally supplied words."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "canonical-bit-indexing"
+
+[contribution.value]
+id = "canonical-bit-indexing"
+statement = "Canonical bit index i maps to word i >> 6 and mask 1u64 << (i & 63); conversions preserve this little-endian numbering."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "finite-field-laws"
+
+[contribution.value]
+id = "finite-field-laws"
+statement = "Every finite-field implementation satisfies the shared field-law conformance suite for its supported domain."
+kind = "enforced"
+enforced-by = "@/gate/cargo-ci"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "standards-vector-conformance"
+
+[contribution.value]
+id = "standards-vector-conformance"
+statement = "Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "assignee-format"
+
+[contribution.value]
+id = "assignee-format"
+statement = "Every assignee is {type}:{identifier} (e.g. agent:worker-1, human:alice)."
+kind = "enforced"
+enforced-by = "@/gate/repo-validate"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "backend-behavioral-equivalence"
+
+[contribution.value]
+id = "backend-behavioral-equivalence"
+statement = "Scalar, SIMD, parallel CPU, and GPU implementations expose equivalent observable results within their declared numerical contract."
+kind = "enforced"
+enforced-by = "@/gate/cargo-ci"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "single-source-prose"
+
+[contribution.value]
+id = "single-source-prose"
+statement = "Every fact with a single source of truth reaches prose by projection or citation; volatile facts (counts, enumerations, registry contents) are stated structurally or derived, and a hand-maintained copy is a staleness defect."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "semantic-test-assertions"
+
+[contribution.value]
+id = "semantic-test-assertions"
+statement = "Tests assert observable semantic properties or relationships; exact field-name inventories and literal-value assertions are confined to one canonical suite for an intentionally stable external contract."
+kind = "advisory"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "shared-test-contracts"
+
+[contribution.value]
+id = "shared-test-contracts"
+statement = "Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite; implementation-specific tests cover only implementation-specific behavior."
+kind = "advisory"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "accelerator-safe-fallback"
+
+[contribution.value]
+id = "accelerator-safe-fallback"
+statement = "Unsupported SIMD or GPU capabilities and recoverable accelerator resource failures select a tested safe fallback; fatal kernel or driver failures remain explicit."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "semantic-types"
+
+[contribution.value]
+id = "semantic-types"
+statement = "Every identity, constrained token, closed vocabulary, and protocol sentinel has one canonical semantic type; raw strings exist only at parsing and serialization boundaries."
+kind = "advisory"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "canonical-cutover"
+
+[contribution.value]
+id = "canonical-cutover"
+statement = "Superseded aliases, fields, and representations are removed after cutover; compatibility code is allowed only in a named, versioned migration boundary with a tracked removal condition."
+kind = "advisory"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "unsafe-kernel-isolation"
+
+[contribution.value]
+id = "unsafe-kernel-isolation"
+statement = "Production unsafe code is isolated to gf2-kernels-simd and gf2-kernels-hip, with explicit safety contracts at every unsafe boundary."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "crate-dependency-direction"
+
+[contribution.value]
+id = "crate-dependency-direction"
+statement = "Crate dependencies point from domain orchestration toward mathematical primitives and isolated kernels; mathematical, coding-domain, simulation, and kernel layers do not acquire reverse production dependencies."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "deterministic-seeded-execution"
+
+[contribution.value]
+id = "deterministic-seeded-execution"
+statement = "A fixed seed and configuration produce identical observable results across supported worker counts, scheduling paths, checkpoint/resume boundaries, and accelerator fallbacks."
+kind = "enforced"
+enforced-by = "@/gate/cargo-ci"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "benchmark-backed-performance"
+
+[contribution.value]
+id = "benchmark-backed-performance"
+statement = "Performance and crossover claims cite a reproducible benchmark protocol and committed receipt from a suitable uncontended host; estimates are identified as estimates."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "fast-test-tier-budget"
+
+[contribution.value]
+id = "fast-test-tier-budget"
+statement = "Release-mode fast-tier tests respect the configured five-second per-test and sixty-second suite budgets; slower work carries a descriptive ignore tier."
+kind = "enforced"
+enforced-by = "@/gate/cargo-ci"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "slow-test-tier-budget"
+
+[contribution.value]
+id = "slow-test-tier-budget"
+statement = "Ignored slow and simulation tests respect the six-hundred-second nightly budget or self-select an explicitly serialized or host-gated execution path."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "convention-convergence"
+
+[contribution.value]
+id = "convention-convergence"
+statement = "A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition."
+kind = "advisory"
+
+[[contribution]]
+kind = "projection"
+name = "invariants"
+value = { kind = "invariant", mode = "region", target = "AGENTS.md", style = "id-anchor" }
+
+[[contribution]]
+kind = "projection"
+name = "rules-and-gates"
+value = { kind = ["rule", "gate"], mode = "separate-file", target = ".jit/reference/rules-and-gates.md", style = "full" }
+
+# Install-only adopter state. The invariant registry is not among it:
+# initialization creates that registry, and the package contributes its
+# invariant entries into it instead of publishing a file over it.
+[[asset]]
+source = "assets/install/.jit/schemas/jit-content-standards.json"
+target = ".jit/schemas/jit-content-standards.json"
+
+[[asset]]
+source = "assets/install/.jit/reference/rules-and-gates.md"
+target = ".jit/reference/rules-and-gates.md"
+
+# Repository roots the live assets below are drawn from. Each exclusion pattern
+# matches a repository-relative path and names a category of repository material
+# the package deliberately does not carry, so material of the same shape needs
+# no new entry. A tracked file beneath a root that neither an asset packages nor
+# a pattern matches fails the suite, so every list here is measured against the
+# repository tree rather than maintained by hand.
+[[live-source]]
+root = ".jit/reference"
+exclude = []
+
+[[live-source]]
+root = "contrib/gates"
+exclude = [
+  # The contributed prompt library: worked examples an adopter composes a gate
+  # from, rather than prompts this workflow's own gates resolve.
+  "contrib/gates/prompts/**",
+]
+
+# Live consumers, drawn from the roots declared above. The `assets/live/` source
+# prefix is also the renderer's data-owned selection rule; targets remain
+# ordinary repository paths.
+[[asset]]
+source = "assets/live/.jit/reference/content-standards.md"
+target = ".jit/reference/content-standards.md"
+
+[[asset]]
+source = "assets/live/contrib/gates/ai-review.sh"
+target = "contrib/gates/ai-review.sh"
+executable = true
+
+[[asset]]
+source = "assets/live/contrib/gates/breakdown-review-prompt.md"
+target = "contrib/gates/breakdown-review-prompt.md"
+
+[[asset]]
+source = "assets/live/contrib/gates/code-review-prompt.md"
+target = "contrib/gates/code-review-prompt.md"
+
+[[asset]]
+source = "assets/live/contrib/gates/doc-review-prompt.md"
+target = "contrib/gates/doc-review-prompt.md"
+
+[[asset]]
+source = "assets/live/contrib/gates/holistic-review-prompt.md"
+target = "contrib/gates/holistic-review-prompt.md"
+
+[[asset]]
+source = "assets/live/contrib/gates/plan-review-prompt.md"
+target = "contrib/gates/plan-review-prompt.md"
+
+[[region]]
+source = "assets/regions/agents-profile-guidance.md"
+target = "AGENTS.md"
+region-id = "profile-sim-research-guidance"
+placement = "append"

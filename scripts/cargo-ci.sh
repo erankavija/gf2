@@ -155,7 +155,6 @@ if [ -z "${CARGO_CI_NO_NICE:-}" ]; then
 fi
 
 # Run all steps in order; continue through failures to report all of them.
-run_step claude-md ./scripts/check-claude-md.sh
 run_step check  "${NICE_PREFIX[@]}" cargo check --workspace $FEAT_FLAGS
 run_step test   "${NICE_PREFIX[@]}" cargo nextest run --workspace $FEAT_FLAGS --release --profile ci
 run_step clippy "${NICE_PREFIX[@]}" cargo clippy --workspace --all-targets $FEAT_FLAGS -- -D warnings

@@ -18,25 +18,24 @@ set -euo pipefail
 #                       review to stdout. Evaluated as a shell command.
 #
 # Example REVIEWER_AGENT values:
-#   codex review -
-#   copilot -s --model claude-haiku-4.5
-#   claude --model haiku -p -
+#   your-reviewer-command                   # configure inspection-only mode
 #   cat                                    # dry-run (echoes the prompt)
 #
 # Setup:
-#   1. Copy this script into your repo (e.g. scripts/ai-review.sh)
-#   2. chmod +x scripts/ai-review.sh
-#   3. Define the gate:
+#   1. Applying the profile installs this script, executable, at
+#      contrib/gates/ai-review.sh. Working from a source checkout instead,
+#      copy it there yourself and `chmod +x contrib/gates/ai-review.sh`.
+#   2. Define the gate:
 #        jit gate define ai-review \
 #          --title "AI Code Review" \
 #          --description "AI-powered code review" \
 #          --mode auto --stage postcheck \
 #          --pass-context \
 #          --prompt "Review the implementation for correctness and style." \
-#          --checker-command "./scripts/ai-review.sh" \
-#          --env REVIEWER_AGENT="codex review -" \
+#          --checker-command "./contrib/gates/ai-review.sh" \
+#          --env REVIEWER_AGENT="your-reviewer-command" \
 #          --timeout 120
-#   4. Run: jit gate check <issue> ai-review
+#   3. Run: jit gate evaluate <issue> ai-review
 
 if [ -z "${JIT_CONTEXT_FILE:-}" ]; then
   echo "ERROR: JIT_CONTEXT_FILE not set. This gate requires --pass-context." >&2
@@ -51,40 +50,56 @@ fi
 if [ -z "${REVIEWER_AGENT:-}" ]; then
   echo "ERROR: REVIEWER_AGENT not set." >&2
   echo "  Set it to a command that reads a prompt from stdin and writes to stdout." >&2
-  echo "  Example: REVIEWER_AGENT='codex review -'" >&2
+  echo "  Example: REVIEWER_AGENT='your-reviewer-command'" >&2
   exit 1
 fi
 
-PROMPT=$(jq -r '.prompt // empty' "$JIT_CONTEXT_FILE")
-
-if [ -z "${PROMPT:-}" ]; then
+if ! grep -Eq '"prompt"[[:space:]]*:[[:space:]]*"[^"]+' "$JIT_CONTEXT_FILE"; then
   echo "ERROR: No prompt defined for this gate. Set --prompt or --prompt-file when defining the gate." >&2
   exit 1
 fi
-
-# Extract structured fields from context so the prompt leads the input.
-CONTEXT_JSON=$(jq -c 'del(.prompt)' "$JIT_CONTEXT_FILE")
 
 # Capture agent stderr to a temp file so we can surface it on errors.
 AGENT_STDERR=$(mktemp)
 trap 'rm -f "$AGENT_STDERR"' EXIT
 
-# Feed the agent: prompt first, then context data, then verdict instruction.
-REVIEW_OUTPUT=$(cat <<EOF | eval "$REVIEWER_AGENT" 2>"$AGENT_STDERR"
-${PROMPT}
+# Feed the complete context directly. The JSON contains the resolved `prompt`
+# plus the issue, gate, and prior-run data, so no external JSON parser is
+# required on the adopter host.
+REVIEW_OUTPUT=$(
+  {
+    cat <<'EOF'
+Read the complete JIT gate context below. Follow its top-level `prompt` field as
+the review policy and use the remaining fields as evidence.
 
 ## Context
 
-\`\`\`json
-${CONTEXT_JSON}
-\`\`\`
+```json
+EOF
+    cat "$JIT_CONTEXT_FILE"
+    cat <<'EOF'
+```
 
-You MUST let any subagents finish before issuing your final reviev and verdict.
+Before the verdict line, output a numbered list of every finding across all categories, followed by a single line stating the total count (e.g., "Total findings: N"). All findings must appear in this single enumeration — none may be withheld for a later round.
+
+Then emit a machine-readable findings block so jit can consume the findings as data. The block is two line-exact fence markers wrapping a single JSON object:
+
+<<<JIT-FINDINGS-JSON
+{"verdict":"fail","summary":"<one line>","findings":[{"id":"F1","severity":"high","summary":"<one line>","file":"path/to/file.rs","line":42,"references":["<qualified-policy-id>"]}]}
+JIT-FINDINGS-JSON>>>
+
+Rules for the block:
+- \`verdict\` is "pass" or "fail" and MUST match the VERDICT line below.
+- \`findings\` lists every finding from the numbered list above, in order. Use an empty array when there are none; when the checker-specific policy distinguishes blocking from advisory feedback, a passing verdict may include advisory findings.
+- \`severity\` is one of "high", "medium", "low". \`disposition\` (blocking or advisory) and \`origin\` (issue-impact or pre-existing) are optional classifications that checker-specific policies may require. \`file\` and \`line\` are optional; omit them when a finding is not tied to a specific location. \`references\` is an optional array of policy identifiers and may be omitted when no policy reference governs the finding.
+- Emit valid JSON on a single line. Do not wrap the block in a code fence.
+
 You MUST end your response with exactly one of these lines:
 VERDICT: PASS
 VERDICT: FAIL
 No text may follow the verdict line.
 EOF
+  } | eval "$REVIEWER_AGENT" 2>"$AGENT_STDERR"
 ) || true
 
 # A reviewer agent's stderr can be enormous -- it may echo its entire prompt and
@@ -133,9 +148,12 @@ fi
 
 echo "$REVIEW_OUTPUT"
 
-# Extract verdict from the last non-blank line (portable — works on BSD and GNU).
-LAST_LINE=$(echo "$REVIEW_OUTPUT" | sed '/^[[:space:]]*$/d' | tail -1)
-VERDICT=$(echo "$LAST_LINE" | sed -n 's/.*VERDICT:[[:space:]]*\(PASS\|FAIL\).*/\1/p')
+# Extract the last line that matches VERDICT: PASS or VERDICT: FAIL (portable —
+# works on BSD and GNU). Scanning for the last *matching* line rather than the
+# last non-blank line makes the parser robust to reviewer prose that follows the
+# verdict line. Rule: if both PASS and FAIL appear, the last verdict line wins.
+# No matching line → verdict-unparseable → treated as failure.
+VERDICT=$(echo "$REVIEW_OUTPUT" | grep -E 'VERDICT:[[:space:]]*(PASS|FAIL)' | tail -1 | sed -n 's/.*VERDICT:[[:space:]]*\(PASS\|FAIL\).*/\1/p')
 
 if [ "$VERDICT" = "PASS" ]; then
   echo "---"
