@@ -1,34 +1,35 @@
 {
-  "id": "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
-  "title": "Add word-level fast path to BitVec::polar_transform_into for stride>=64",
-  "description": "**Severity: high · Dimension: bitwise-arithmetic** (report finding #3)\n\n`BitVec::polar_transform_into` (`crates/gf2-core/src/bitvec.rs:1532`) iterates bit-by-bit for all stride values. For stride >= 64 the Arikan butterfly reduces to a word-level XOR, so the bit loop is ~64x slower than necessary on large inputs.\n\n## Success Criteria\n\n- [hard] A fast path XOR-assigns word slices when stride >= 64 and both butterfly segments are word-aligned, via `kernels::ops::xor_inplace` (or equivalent existing core helper); the bit-by-bit loop is retained only for stride < 64.\n- [hard] Output is bit-identical to the previous implementation across word-boundary sizes (existing polar-transform tests still pass; add a test comparing fast-path vs scalar reference for n spanning multiple words).\n- [aspirational] Benchmark shows a measurable speedup for large inputs (record the observed factor in the issue per the measurements-not-guesses rule).\n- [hard] Full `cargo nextest --profile ci`, clippy, fmt pass.",
-  "state": "ready",
-  "priority": "high",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-06-30T20:04:42.407957131Z",
   "dependencies": [],
+  "description": "**Severity: high · Dimension: bitwise-arithmetic** (report finding #3)\n\n`BitVec::polar_transform_into` (`crates/gf2-core/src/bitvec.rs:1532`) iterates bit-by-bit for all stride values. For stride >= 64 the Arikan butterfly reduces to a word-level XOR, so the bit loop is ~64x slower than necessary on large inputs.\n\n## Success Criteria\n\n- [hard] REQ-01: A fast path XOR-assigns word slices when stride >= 64 and both butterfly segments are word-aligned, via `kernels::ops::xor_inplace` (or equivalent existing core helper); the bit-by-bit loop is retained only for stride < 64.\n- [hard] REQ-02: Output is bit-identical to the previous implementation across word-boundary sizes (existing polar-transform tests still pass; add a test comparing fast-path vs scalar reference for n spanning multiple words).\n- [aspirational] REQ-03: Benchmark shows a measurable speedup for large inputs (record the observed factor in the issue per the measurements-not-guesses rule).\n- [hard] REQ-04: Full `cargo nextest --profile ci`, clippy, fmt pass.\n",
+  "documents": [],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
   "gates_status": {
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:27.105270813Z"
+      "updated_at": "2026-06-30T20:12:27.105270813Z",
+      "updated_by": null
     },
     "code-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:27.105328613Z"
+      "updated_at": "2026-06-30T20:12:27.105328613Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "07a1813a-bcfc-4fd0-9611-6d3c6928776e",
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-core"
   ],
-  "created_at": "2026-06-30T20:04:42.407957131Z",
-  "updated_at": "2026-06-30T20:12:27.105353223Z"
+  "priority": "high",
+  "state": "ready",
+  "title": "Add word-level fast path to BitVec::polar_transform_into for stride>=64",
+  "updated_at": "2026-08-05T12:22:17.640386897Z"
 }

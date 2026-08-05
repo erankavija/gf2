@@ -1,24 +1,28 @@
 {
-  "id": "b81c239c-952c-4017-85fb-629dc8965410",
-  "title": "Implement 5G NR polar codes with CRC-aided SCL decoder",
-  "description": "Implement polar codes for 5G NR compliance. Includes: bit-channel reliability sorting (Bhattacharyya parameters), information/frozen bit selection, rate-compatible families, successive cancellation (SC) decoder, SC-List (SCL) decoder with path metrics, CRC-aided SCL for improved performance. Validate against 3GPP test vectors. Reuse existing AWGN channel and LLR infrastructure.",
-  "state": "backlog",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.618837855Z",
   "dependencies": [
     "21eb03e8-2366-4ddb-b2a6-841741026bde"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "Implement polar codes for 5G NR compliance. Includes: bit-channel reliability sorting (Bhattacharyya parameters), information/frozen bit selection, rate-compatible families, successive cancellation (SC) decoder, SC-List (SCL) decoder with path metrics, CRC-aided SCL for improved performance. Validate against 3GPP test vectors. Reuse existing AWGN channel and LLR infrastructure.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Implement 5G NR polar codes with CRC-aided SCL decoder” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-02-21T19:49:04.475141124Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "b81c239c-952c-4017-85fb-629dc8965410",
   "labels": [
     "type:epic",
     "component:gf2-coding",
     "component:gf2-core",
     "epic:implement-5g-nr-polar-codes-with-crc-aided-scl-decoder"
   ],
-  "created_at": "2026-02-21T19:35:51.618837855Z",
-  "updated_at": "2026-07-14T20:49:35.808078729Z",
-  "first_ready_at": "2026-02-21T19:49:04.475141124Z"
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Implement 5G NR polar codes with CRC-aided SCL decoder",
+  "updated_at": "2026-08-05T12:25:03.051994818Z"
 }

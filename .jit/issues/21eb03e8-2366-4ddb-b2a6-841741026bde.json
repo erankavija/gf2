@@ -1,23 +1,27 @@
 {
-  "id": "21eb03e8-2366-4ddb-b2a6-841741026bde",
-  "title": "Run polar code FER simulations and compare with Shannon limit",
-  "description": "FER simulation campaign for polar codes over AWGN channels. Compare performance with Shannon limit, characterize rate vs Eb/N0, verify capacity-approaching behavior for various block lengths, and compare with LDPC codes.",
-  "state": "backlog",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.822973303Z",
   "dependencies": [
     "b94e2821-211d-4bbb-9a20-59a94495ee25",
     "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "FER simulation campaign for polar codes over AWGN channels. Compare performance with Shannon limit, characterize rate vs Eb/N0, verify capacity-approaching behavior for various block lengths, and compare with LDPC codes.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Run polar code FER simulations and compare with Shannon limit” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "21eb03e8-2366-4ddb-b2a6-841741026bde",
   "labels": [
     "type:simulation",
     "component:gf2-coding",
     "epic:implement-5g-nr-polar-codes-with-crc-aided-scl-decoder"
   ],
-  "created_at": "2026-02-21T19:35:51.822973303Z",
-  "updated_at": "2026-07-14T20:51:29.887099885Z"
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Run polar code FER simulations and compare with Shannon limit",
+  "updated_at": "2026-08-05T12:22:53.049408061Z"
 }

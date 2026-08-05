@@ -63,6 +63,7 @@ target/charon/
 
 # JIT artifacts
 .jit/**/*.lock
+.jit-bootstrap.lock
 .jit/worktree.json
 .jit/tmp/
 .jit/server.log

@@ -1,16 +1,27 @@
 {
-  "id": "9509d8cc-db28-4952-bd90-f13e9209ed99",
-  "title": "Formal verification of field arithmetic (Aeneas + Kani)",
-  "description": "Two-track formal verification for field arithmetic in `gfp/` and `gfpn/`:\n\n- **Track 1 (Aeneas)**: Translate Rust→Lean4 via Charon/Aeneas, prove field axioms and algorithm correctness against Mathlib typeclasses. Universal proofs for any prime P.\n- **Track 2 (Kani)**: Bounded model checking for machine-arithmetic edge cases (overflow, representation bounds, bit manipulation).\n\nSee `dev/plans/formal_verification.md` for full rationale and detailed plans.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-code",
+  "claimed_at": "2026-03-11T16:33:08.649562483Z",
+  "context": {},
+  "created_at": "2026-03-07T18:06:00.720467707Z",
   "dependencies": [
     "13aad888-164f-4d55-9d00-4b83f47bdc33",
-    "f9819a76-c249-4a25-8b77-60805a849b2e",
+    "751f359c-c9af-4df5-a63b-032b1def7930",
+    "886af072-ecdf-477a-9fc7-685a88d7abf5",
     "b0a092bc-9bad-4b8e-b515-bddae8241a55",
-    "751f359c-c9af-4df5-a63b-032b1def7930"
+    "f9819a76-c249-4a25-8b77-60805a849b2e"
   ],
+  "description": "Two-track formal verification for field arithmetic in `gfp/` and `gfpn/`:\n\n- **Track 1 (Aeneas)**: Translate Rust→Lean4 via Charon/Aeneas, prove field axioms and algorithm correctness against Mathlib typeclasses. Universal proofs for any prime P.\n- **Track 2 (Kani)**: Bounded model checking for machine-arithmetic edge cases (overflow, representation bounds, bit manipulation).\n\nSee `dev/plans/formal_verification.md` for full rationale and detailed plans.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Formal verification design plan (Aeneas + Kani)",
+      "path": "dev/plans/formal_verification.md"
+    }
+  ],
+  "done_at": "2026-03-11T21:25:36.093288816Z",
+  "first_ready_at": "2026-03-11T16:27:46.497947635Z",
   "gates_required": [
     "tdd-reminder",
     "tests",
@@ -20,56 +31,46 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-11T21:12:18.580341475Z"
-    },
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-11T21:12:08.944483789Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:claude-code",
-      "updated_at": "2026-03-11T16:33:04.513986210Z"
-    },
-    "fmt": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-11T21:12:18.171135508Z"
-    },
     "clippy": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-11T21:12:17.968162190Z"
+      "updated_at": "2026-03-11T21:12:17.968162190Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-03-11T21:12:18.580341475Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:claude-code",
-      "updated_at": "2026-03-11T21:25:32.541475159Z"
+      "updated_at": "2026-03-11T21:25:32.541475159Z",
+      "updated_by": "agent:claude-code"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_at": "2026-03-11T21:12:18.171135508Z",
+      "updated_by": "auto:executor"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-03-11T16:33:04.513986210Z",
+      "updated_by": "agent:claude-code"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_at": "2026-03-11T21:12:08.944483789Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/formal_verification.md",
-      "commit": null,
-      "label": "Formal verification design plan (Aeneas + Kani)",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "9509d8cc-db28-4952-bd90-f13e9209ed99",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:e095a100",
     "story:9509d8cc"
   ],
-  "created_at": "2026-03-07T18:06:00.720467707Z",
-  "updated_at": "2026-07-14T20:49:35.702897063Z",
-  "first_ready_at": "2026-03-11T16:27:46.497947635Z",
-  "claimed_at": "2026-03-11T16:33:08.649562483Z",
-  "done_at": "2026-03-11T21:25:36.093288816Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Formal verification of field arithmetic (Aeneas + Kani)",
+  "updated_at": "2026-08-05T12:08:00.578747348Z"
 }

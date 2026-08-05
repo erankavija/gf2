@@ -1,21 +1,25 @@
 {
-  "id": "9b3452e9-2a34-43ea-8ba7-d80acdb8e2fd",
-  "title": "Consolidate expensive LDPC doctests into integration tests",
-  "description": "Currently 6 LDPC encoding doctests are marked no_run because they take 2-10 seconds each. These should be consolidated into a single comprehensive example or moved to integration tests to enable proper doctest validation.",
-  "state": "ready",
-  "priority": "normal",
   "assignee": null,
-  "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
   "context": {},
+  "created_at": "2026-02-21T19:35:51.738251596Z",
+  "dependencies": [],
+  "description": "Currently 6 LDPC encoding doctests are marked no_run because they take 2-10 seconds each. These should be consolidated into a single comprehensive example or moved to integration tests to enable proper doctest validation.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Consolidate expensive LDPC doctests into integration tests” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-02-21T19:49:04.367868631Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "9b3452e9-2a34-43ea-8ba7-d80acdb8e2fd",
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:quality-documentation-tech-debt"
   ],
-  "created_at": "2026-02-21T19:35:51.738251596Z",
-  "updated_at": "2026-07-14T20:51:30.039589726Z",
-  "first_ready_at": "2026-02-21T19:49:04.367868631Z"
+  "priority": "normal",
+  "state": "ready",
+  "title": "Consolidate expensive LDPC doctests into integration tests",
+  "updated_at": "2026-08-05T12:24:31.502982195Z"
 }

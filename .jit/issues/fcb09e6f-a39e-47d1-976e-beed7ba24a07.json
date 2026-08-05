@@ -1,23 +1,27 @@
 {
-  "id": "fcb09e6f-a39e-47d1-976e-beed7ba24a07",
-  "title": "Build live DVB-T2 reception demo with SDR hardware",
-  "description": "Create a demonstration of live DVB-T2 signal reception using SDR hardware (RTL-SDR or HackRF). This validates the complete FEC chain with real-world RF signals rather than simulated AWGN.",
-  "state": "ready",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.797961207Z",
   "dependencies": [
     "003e4088-d24d-4b58-961f-d82df215ff7c"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "Create a demonstration of live DVB-T2 signal reception using SDR hardware (RTL-SDR or HackRF). This validates the complete FEC chain with real-world RF signals rather than simulated AWGN.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Build live DVB-T2 reception demo with SDR hardware” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-05-27T17:21:55.523886141Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "fcb09e6f-a39e-47d1-976e-beed7ba24a07",
   "labels": [
     "type:story",
     "component:gf2-coding",
     "story:build-live-dvb-t2-reception-demo-with-sdr-hardware"
   ],
-  "created_at": "2026-02-21T19:35:51.797961207Z",
-  "updated_at": "2026-07-14T20:49:36.076907625Z",
-  "first_ready_at": "2026-05-27T17:21:55.523886141Z"
+  "priority": "normal",
+  "state": "ready",
+  "title": "Build live DVB-T2 reception demo with SDR hardware",
+  "updated_at": "2026-08-05T12:26:05.701091980Z"
 }

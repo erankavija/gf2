@@ -1,14 +1,13 @@
 {
-  "id": "c7c0e991-4480-4c23-bdfd-6c781352a1fe",
-  "title": "Implement AVX-512 VPCLMULQDQ (512-bit) and GF2P8AFFINEQB GFNI kernels for GF(2^m)",
-  "description": "Extend the carry-less multiplication SIMD kernels (055bda14) with full-width AVX-512 paths:\n\n## AVX-512 VPCLMULQDQ (512-bit, 4× throughput)\n\nThe current VPCLMULQDQ implementation uses 256-bit lanes (`_mm256_clmulepi64_epi128`), processing 2 multiplies per instruction. Full AVX-512 (`_mm512_clmulepi64_epi128`) would process 4 multiplies per instruction for 4× throughput over scalar PCLMULQDQ.\n\nRequires: AVX-512F + VPCLMULQDQ CPU features (not available on all hardware).\n\n## GF2P8AFFINEQB (GFNI) specialization\n\n`GF2P8AFFINEQB` performs a GF(2) affine transformation over 8-bit elements. For GF(2^8) batch operations, this can be used to implement field multiplication as an affine transformation, potentially faster than PCLMULQDQ+Barrett for GF(2^8)-specific workloads.\n\nRequires: AVX-512F + GFNI CPU features.\n\n## Kernel API additions\n\n```rust\n/// Batch carry-less multiplication using 512-bit VPCLMULQDQ.\n/// Processes 4 independent multiplications per instruction.\n#[target_feature(enable = \"avx512f\", enable = \"vpclmulqdq\")]\npub unsafe fn clmul_batch_512(a: &[u64], b: &[u64], out: &mut [u128]);\n\n/// GF(2^8) batch multiplication using GFNI affine transformation.\n#[target_feature(enable = \"avx512f\", enable = \"gfni\")]\npub unsafe fn gf2p8_mul_batch(a: &[u8], b: &[u8], out: &mut [u8], affine_matrix: &[u8; 8]);\n```\n\n## Dependencies\n\n- 055bda14 (carry-less multiplication SIMD kernels) — provides the 256-bit foundation\n- 4b5d8948 (AVX-512 SIMD backend) — provides the AVX-512 infrastructure\n\n## Success criteria\n\n- 512-bit VPCLMULQDQ batch produces identical results to 256-bit and sequential paths\n- ≥10× throughput over scalar for batch dot products on AVX-512 hardware\n- GFNI GF(2^8) batch multiplication matches PCLMULQDQ+Barrett for correctness\n- Runtime detection gracefully falls back when AVX-512F/VPCLMULQDQ/GFNI unavailable",
-  "state": "backlog",
-  "priority": "low",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-04-05T18:50:01.404427219Z",
   "dependencies": [
     "055bda14-7351-4245-b81a-350e749e547b",
     "4b5d8948-79ab-47f3-a90a-104317840f17"
   ],
+  "description": "Extend the carry-less multiplication SIMD kernels (055bda14) with full-width AVX-512 paths:\n\n## AVX-512 VPCLMULQDQ (512-bit, 4× throughput)\n\nThe current VPCLMULQDQ implementation uses 256-bit lanes (`_mm256_clmulepi64_epi128`), processing 2 multiplies per instruction. Full AVX-512 (`_mm512_clmulepi64_epi128`) would process 4 multiplies per instruction for 4× throughput over scalar PCLMULQDQ.\n\nRequires: AVX-512F + VPCLMULQDQ CPU features (not available on all hardware).\n\n## GF2P8AFFINEQB (GFNI) specialization\n\n`GF2P8AFFINEQB` performs a GF(2) affine transformation over 8-bit elements. For GF(2^8) batch operations, this can be used to implement field multiplication as an affine transformation, potentially faster than PCLMULQDQ+Barrett for GF(2^8)-specific workloads.\n\nRequires: AVX-512F + GFNI CPU features.\n\n## Kernel API additions\n\n```rust\n/// Batch carry-less multiplication using 512-bit VPCLMULQDQ.\n/// Processes 4 independent multiplications per instruction.\n#[target_feature(enable = \"avx512f\", enable = \"vpclmulqdq\")]\npub unsafe fn clmul_batch_512(a: &[u64], b: &[u64], out: &mut [u128]);\n\n/// GF(2^8) batch multiplication using GFNI affine transformation.\n#[target_feature(enable = \"avx512f\", enable = \"gfni\")]\npub unsafe fn gf2p8_mul_batch(a: &[u8], b: &[u8], out: &mut [u8], affine_matrix: &[u8; 8]);\n```\n\n## Dependencies\n\n- 055bda14 (carry-less multiplication SIMD kernels) — provides the 256-bit foundation\n- 4b5d8948 (AVX-512 SIMD backend) — provides the AVX-512 infrastructure\n\n## Success Criteria\n\n- [hard] REQ-01: 512-bit VPCLMULQDQ batch produces identical results to 256-bit and sequential paths\n- [aspirational] REQ-02: ≥10× throughput over scalar for batch dot products on AVX-512 hardware\n- [hard] REQ-03: GFNI GF(2^8) batch multiplication matches PCLMULQDQ+Barrett for correctness\n- [hard] REQ-04: Runtime detection gracefully falls back when AVX-512F/VPCLMULQDQ/GFNI unavailable\n",
+  "documents": [],
   "gates_required": [
     "code-review",
     "doc-review",
@@ -17,18 +16,19 @@
   "gates_status": {
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-05T19:51:53.179221863Z"
+      "updated_at": "2026-04-05T19:51:53.179221863Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "c7c0e991-4480-4c23-bdfd-6c781352a1fe",
   "labels": [
     "type:task",
     "component:gf2-kernels-simd",
     "component:gf2-core",
     "epic:simd-and-platform-expansion"
   ],
-  "created_at": "2026-04-05T18:50:01.404427219Z",
-  "updated_at": "2026-07-14T20:51:30.095472236Z"
+  "priority": "low",
+  "state": "backlog",
+  "title": "Implement AVX-512 VPCLMULQDQ (512-bit) and GF2P8AFFINEQB GFNI kernels for GF(2^m)",
+  "updated_at": "2026-08-05T12:25:18.873758120Z"
 }

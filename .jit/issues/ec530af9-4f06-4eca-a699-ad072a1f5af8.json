@@ -12,7 +12,7 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_by": "user",
+      "updated_by": "human:user",
       "updated_at": "2026-06-06T22:35:00.306315256Z"
     }
   },

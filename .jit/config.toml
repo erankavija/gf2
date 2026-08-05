@@ -1,124 +1,164 @@
-# JIT Configuration File
-#
-# Created by `jit init`. Customize as needed.
-# All settings are optional — JIT uses sensible defaults without this file.
-
 [version]
 schema = 2
 
-[type_hierarchy]
-# Issue types and their hierarchy level (lower number = more strategic).
-types = { milestone = 1, epic = 2, story = 3, simulation = 4, task = 4, bug = 4 }
+# =============================================================================
+# PROJECT IDENTITY
+# =============================================================================
+# Canonical, human-editable project name: the `@<project>` scope token in the
+# multi-jit addressing scheme. Must match ^[a-z][a-z0-9-]*$. Defaults to a
+# slug of this repository's directory name; edit freely.
+[project]
+name = "gf2"
 
-# Types shown by `jit query strategic`.
+[type_hierarchy]
+types = { milestone = 1, epic = 2, story = 3, planning = 3, breakdown = 3, task = 4, bug = 4, enhancement = 4, simulation = 4 }
 strategic_types = ["milestone", "epic"]
 
-# Maps each parent type to its membership label namespace.
-# E.g. issues belonging to an epic carry an "epic:<name>" label.
 [type_hierarchy.label_associations]
 milestone = "milestone"
 epic = "epic"
 story = "story"
 
-# Icon preset for the web UI: "simple" | "navigation" | "minimal" | "construction"
 [type_hierarchy.icons]
-preset = "construction"
 custom = { simulation = "🧪", bug = "🐛" }
 
 [validation]
-# How strictly JIT enforces rules:
-#   strict      — fail on any violation; suitable for CI and automated pipelines.
-#   loose       — warn but allow operations; good for everyday development (default).
-#   permissive  — minimal checks; useful during imports or migrations.
 strictness = "loose"
-
-# Auto-assign this type when creating issues without a type:* label.
 default_type = "task"
 
-# Warning toggles (both enabled by default; set to false to silence):
-# warn_orphaned_leaves = true       # tasks that carry no parent epic/story label
-# warn_strategic_consistency = true # hierarchy inconsistencies across issues
-
-# Label format enforcement (default: warn only):
-# label_regex = '^[a-z][a-z0-9-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*$'
-# reject_malformed_labels = false   # set true to block instead of warn
-# enforce_namespace_registry = false # set true to reject undeclared namespaces
-
-# =============================================================================
-# NAMESPACE REGISTRY (optional)
-# =============================================================================
-# Define label namespaces for documentation and optional enforcement.
+[namespaces]
 
 [namespaces.type]
-description = "Issue type (hierarchical). Exactly one per issue."
+description = "Issue type (hierarchical). At most one per issue."
+examples = ["type:task", "type:simulation", "type:story", "type:epic", "type:milestone"]
 unique = true
-examples = ["type:task", "type:bug", "type:epic", "type:simulation"]
-
-[namespaces.milestone]
-description = "Release or time-bounded goal membership."
-unique = false
-examples = ["milestone:1.0", "milestone:gf2-core-perf"]
-
-[namespaces.epic]
-description = "Epic membership."
-unique = false
-examples = ["epic:gf2-sim", "epic:coverage-90"]
-
-[namespaces.story]
-description = "Story membership."
-unique = false
-examples = ["story:ppc-infrastructure", "story:sota-dense-la"]
 
 [namespaces.component]
 description = "Technical area or subsystem affected."
+examples = ["component:gf2-core", "component:gf2-coding", "component:gf2-algebra", "component:gf2-sim", "component:gf2-kernels-simd", "component:gf2-kernels-hip"]
 unique = false
-examples = ["component:gf2-core", "component:gf2-coding"]
+
+[namespaces.priority]
+description = "Work priority. Orthogonal to issue priority field; used for filtering."
+examples = ["priority:high", "priority:low"]
+unique = true
+
+[namespaces.team]
+description = "Owning team."
+examples = ["team:backend", "team:platform"]
+unique = true
+
+[namespaces.milestone]
+description = "Release milestone membership (version tag)."
+examples = ["milestone:v1.0", "milestone:v1.2.3", "milestone:v2.0-rc1"]
+unique = false
 
 [namespaces.resolution]
 description = "Reason for issue closure (used with rejected state)."
-unique = true
 examples = ["resolution:wont-fix", "resolution:duplicate", "resolution:obsolete"]
+unique = true
+
+[namespaces.enforces]
+description = "Enforcement link: names an invariant, rule, or gate item that the labeled issue enforces."
+examples = ["enforces:@/invariant/label-format", "enforces:@/rule/label-format", "enforces:@/gate/cargo-ci"]
+unique = false
+
+[namespaces.epic]
+description = "Epic membership."
+examples = ["epic:gf2-sim", "epic:coverage-90"]
+unique = false
+
+[namespaces.story]
+description = "Story membership (optional)."
+examples = ["story:ppc-infrastructure", "story:sota-dense-la"]
+unique = false
 
 [namespaces.ppc-kernel]
-description = "PPC-spiral kernel ID (Tier A-D from dev/plans/gf2_core_ppc_spiral.md). Consumed by scripts/criterion-1.5x.sh to look up the kernel's bench target + size leaves in dev/benchmarks/ppc-baselines.json."
+description = "PPC-spiral kernel ID consumed by the Criterion speedup gate."
+examples = ["ppc-kernel:A1", "ppc-kernel:B2", "ppc-kernel:C4", "ppc-kernel:D1"]
 unique = true
-examples = ["ppc-kernel:A1", "ppc-kernel:A2", "ppc-kernel:A3", "ppc-kernel:B1", "ppc-kernel:B2", "ppc-kernel:B3", "ppc-kernel:C1", "ppc-kernel:C2", "ppc-kernel:C3", "ppc-kernel:C4", "ppc-kernel:C5", "ppc-kernel:D1", "ppc-kernel:D2"]
 
-# =============================================================================
-# ADVANCED (uncomment to enable)
-# =============================================================================
+[namespaces.brackets]
+description = "Planning-bracket container pointer: on a breakdown node, names the container it brackets"
+examples = ["brackets:0123abcd"]
+unique = true
 
-# Worktree isolation and lease enforcement for parallel/agent work.
-# [worktree]
-# mode = "auto"              # "auto" | "on" | "off"
-# enforce_leases = "strict"  # "strict" | "warn" | "off"
+[namespaces.satisfies]
+description = "Coverage credit: on an impl child, names a container [hard] criterion id this child CONTRIBUTES to. Several children may credit one id; the label denotes contribution, not sole delivery. Read by the label-coverage gate, which credits a criterion when any labelled child exists."
+examples = ["satisfies:REQ-01"]
+unique = false
 
-# Multi-agent lease coordination.
-# [coordination]
-# default_ttl_secs = 600              # claim TTL before expiry
-# heartbeat_interval_secs = 30        # renewal interval for indefinite leases
-# stale_threshold_secs = 3600         # age at which a TTL=0 lease is considered stale
-# max_indefinite_leases_per_agent = 2
-# max_indefinite_leases_per_repo = 10
-# auto_renew_leases = false
+[item_kinds]
 
-# Development document lifecycle (design docs, session notes, etc.).
-# [documentation]
-# development_root = "dev"
-# managed_paths = ["dev/active", "dev/sessions"]
-# permanent_paths = ["docs/"]         # never archived
-# archive_root = "dev/archive"
-# [documentation.categories]          # doc-type → archive subdirectory
-# design = "features"
-# session = "sessions"
+[item_kinds.requirement]
+id-pattern = "REQ-[0-9]+"
+link-namespaces = ["satisfies"]
+markers = ["[hard]", "[aspirational]"]
+scope = "issue"
+section = "success_criteria"
+source-of-truth = "markdown-first"
 
-# Branches permitted to modify global config (default: ["main"]).
-# [global_operations]
-# require_main_history = true
-# allowed_branches = ["main"]
+[item_kinds.decision]
+id-pattern = "D-[0-9]+"
+link-namespaces = ["per"]
+markers = []
+scope = "issue"
+section = "decisions"
+source-of-truth = "markdown-first"
 
-# Low-level tuning (rarely needed):
-# [locks]
-# max_age_secs = 3600       # stale lock file threshold
-# [events]
-# enable_sequences = true   # sequence numbers in event log
+[item_kinds.risk]
+id-pattern = "RISK-[0-9]+"
+link-namespaces = ["mitigates", "resolves"]
+markers = []
+scope = "issue"
+section = "risks"
+source-of-truth = "markdown-first"
+
+[item_kinds.invariant]
+aliases = ["inv"]
+id-pattern = "[a-z][a-z0-9-]*"
+link-namespaces = ["enforces"]
+markers = []
+scope = "project"
+section = "success_criteria"
+source = { id-field = "id", table = "invariants", text-field = "statement", toml = ".jit/invariants.toml" }
+source-of-truth = "registry-first"
+
+[item_kinds.rule]
+id-pattern = "[a-z][a-z0-9-]*"
+link-namespaces = ["enforces"]
+markers = []
+scope = "project"
+section = "success_criteria"
+source = { id-field = "name", table = "rules", text-field = "description", toml = ".jit/rules.toml" }
+source-of-truth = "registry-first"
+
+[item_kinds.gate]
+id-pattern = "[a-z][a-z0-9-]*"
+link-namespaces = ["enforces"]
+markers = []
+scope = "project"
+section = "success_criteria"
+source = { id-field = "key", table = "gates", text-field = "description", toml = ".jit/gates.toml" }
+source-of-truth = "registry-first"
+
+[documentation]
+development_root = "dev"
+archive_root = "dev/archive"
+managed_paths = ["dev/active", "dev/studies", "dev/sessions", "dev/plans", "dev/presentations", "dev/design", "dev/benchmarks", "dev/experiments"]
+permanent_paths = ["docs", "dev/archive", "dev/bench_results", "dev/campaigns", "dev/reference_data", "dev/research", "dev/scripts", "dev/simulation_results"]
+issue_scoped_areas = ["dev/active", "dev/studies", "dev/plans", "dev/presentations"]
+
+[projection]
+
+[projection.invariants]
+kind = "invariant"
+mode = "region"
+style = "id-anchor"
+target = "AGENTS.md"
+
+[projection.rules-and-gates]
+kind = ["rule", "gate"]
+mode = "separate-file"
+style = "full"
+target = ".jit/reference/rules-and-gates.md"

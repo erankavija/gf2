@@ -1,0 +1,8 @@
+[[template]]
+anchor_edges = [{ from = "container", to = "breakdown" }]
+anchors = [{ gates = ["repo-validate", "doc-review", "holistic-review"], name = "container" }]
+applies_to = ["milestone", "epic", "story"]
+description = "Plan-before-fan-out bracket with planning and breakdown review."
+name = "plan"
+nodes = [{ description = "Plan {container.title} ({container.short_id}) against every hard success criterion, write the concise design at {doc} and its authoritative sibling breakdown manifest, and link both to this planning issue.", doc = "{container.dir}/plan.md", doc_area = "dev/active", gates = ["plan-review"], role = "planning", type = "planning" }, { depends_on = ["planning"], description = "After the plan-review checkpoint passes, decompose the plan for {container.title} ({container.short_id}) into well-ordered implementation issues.", gates = ["coverage-preview", "breakdown-review"], labels = ["brackets:{container.short_id}"], role = "breakdown", type = "breakdown" }]
+transforms = [{ kind = "move-upstream-to-role", role = "planning" }]

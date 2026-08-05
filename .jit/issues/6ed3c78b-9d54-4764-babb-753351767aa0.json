@@ -1,21 +1,25 @@
 {
-  "id": "6ed3c78b-9d54-4764-babb-753351767aa0",
-  "title": "Implement irregular LDPC codes with degree distribution optimization",
-  "description": "Implement irregular LDPC code construction with configurable variable and check node degree distributions. Irregular codes can approach capacity more closely than regular codes through optimized degree distributions.",
-  "state": "ready",
-  "priority": "low",
   "assignee": null,
-  "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
   "context": {},
+  "created_at": "2026-02-21T19:35:51.698652012Z",
+  "dependencies": [],
+  "description": "Implement irregular LDPC code construction with configurable variable and check node degree distributions. Irregular codes can approach capacity more closely than regular codes through optimized degree distributions.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Implement irregular LDPC codes with degree distribution optimization” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-02-21T19:49:04.261450507Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "6ed3c78b-9d54-4764-babb-753351767aa0",
   "labels": [
     "type:story",
     "component:gf2-coding",
     "story:implement-irregular-ldpc-codes-with-degree-distribution-optimization"
   ],
-  "created_at": "2026-02-21T19:35:51.698652012Z",
-  "updated_at": "2026-07-14T20:49:35.589281880Z",
-  "first_ready_at": "2026-02-21T19:49:04.261450507Z"
+  "priority": "low",
+  "state": "ready",
+  "title": "Implement irregular LDPC codes with degree distribution optimization",
+  "updated_at": "2026-08-05T12:24:00.071171941Z"
 }

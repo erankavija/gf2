@@ -1,22 +1,26 @@
 {
-  "id": "b3766524-f893-48b5-b380-ce38a8bf5467",
-  "title": "Implement SIMD-accelerated polar transforms",
-  "description": "Add AVX2 butterfly operations and cache blocking for polar transforms with N > 8K. Optional enhancement to the existing Fast Hadamard Transform implementation which already achieves 81x speedup vs naive.",
-  "state": "ready",
-  "priority": "low",
   "assignee": null,
-  "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
   "context": {},
+  "created_at": "2026-02-21T19:35:51.683560715Z",
+  "dependencies": [],
+  "description": "Add AVX2 butterfly operations and cache blocking for polar transforms with N > 8K. Optional enhancement to the existing Fast Hadamard Transform implementation which already achieves 81x speedup vs naive.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Implement SIMD-accelerated polar transforms” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-02-21T19:49:04.222104443Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "b3766524-f893-48b5-b380-ce38a8bf5467",
   "labels": [
     "type:story",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "story:implement-simd-accelerated-polar-transforms"
   ],
-  "created_at": "2026-02-21T19:35:51.683560715Z",
-  "updated_at": "2026-07-14T20:49:35.788637935Z",
-  "first_ready_at": "2026-02-21T19:49:04.222104443Z"
+  "priority": "low",
+  "state": "ready",
+  "title": "Implement SIMD-accelerated polar transforms",
+  "updated_at": "2026-08-05T12:24:51.140601678Z"
 }

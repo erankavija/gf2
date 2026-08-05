@@ -1,26 +1,28 @@
 {
-  "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
-  "title": "Define documentation contract and enforcement baseline",
-  "description": "Establish the addressable documentation contract and enforcement baseline that all rewrite and archival work must satisfy. This checkpoint makes the project's documentation rules explicit, reviewable, projected into operational guidance, and testable before migration begins.\n\n## Success Criteria\n\n- [hard] REQ-01: The JIT item-kind registry supports project-scoped addressable invariants with stable `@/inv/<id>` resolution and an `enforces` linkage namespace.\n- [hard] REQ-02: An approved invariant registry states the researcher audience, current-state-only rule, no-marketing rule, no historical or transition narration, no speculative promises, adapted Diátaxis placement, single-source prose, evidence-backed performance claims, concise style, active-epic directory convention, and non-trivial Rustdoc-example policy.\n- [hard] REQ-03: Invariants are projected into a delimited region of the authoritative root `AGENTS.md`; projection is deterministic and leaves hand-authored content outside the region unchanged.\n- [hard] REQ-04: The root `AGENTS.md` defines recursive scope and the crate-local override convention, remains at or below 200 lines, and `CLAUDE.md` resolves to it through a repository symlink.\n- [hard] REQ-05: The existing manual documentation-review placeholder is replaced by an automated, issue-scoped review grounded in `AGENTS.md` and the addressable invariant registry; its rubric evaluates accuracy, canonical placement, research relevance, aggregate concision, current-state prose, evidence, and example value.\n- [hard] REQ-06: A `docs-mechanical` gate checks Markdown links and anchors, repository-local citations, addressable-item citations, and invariant/rule/gate projection freshness over a configuration-derived documentation footprint.\n- [hard] REQ-07: Documentation checks have committed self-tests covering clean inputs, each supported failure class, environment errors, and projection drift without encoding a hand-maintained inventory of product facts.\n- [hard] REQ-08: Rust CI builds Rustdoc and retained documentation examples using the repository's canonical release-mode policy, with failures surfaced independently from Markdown-mechanical findings.\n- [hard] REQ-09: A migration-manifest schema and transient progress checker classify the complete pre-overhaul artifact inventory without treating the checker as permanent policy enforcement.\n- [hard] REQ-10: `jit invariant check`, invariant projection, documentation review, documentation mechanical checks, and JIT validation all pass together on the established baseline.\n\n## Notes\n\nThis story defines the prerequisite contract. It does not migrate historical documents or author the new permanent documentation corpus.",
-  "state": "ready",
-  "priority": "high",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-07-14T20:40:18.283655981Z",
   "dependencies": [],
+  "description": "Establish the addressable documentation contract and enforcement baseline that all rewrite and archival work must satisfy. This checkpoint makes the project's documentation rules explicit, reviewable, projected into operational guidance, and testable before migration begins.\n\n## Success Criteria\n\n- [hard] REQ-01: The JIT item-kind registry supports project-scoped addressable invariants with stable `@/inv/<id>` resolution and an `enforces` linkage namespace.\n- [hard] REQ-02: An approved invariant registry states the researcher audience, current-state-only rule, no-marketing rule, no historical or transition narration, no speculative promises, adapted Diátaxis placement, single-source prose, evidence-backed performance claims, concise style, active-epic directory convention, and non-trivial Rustdoc-example policy.\n- [hard] REQ-03: Invariants are projected into a delimited region of the authoritative root `AGENTS.md`; projection is deterministic and leaves hand-authored content outside the region unchanged.\n- [hard] REQ-04: The root `AGENTS.md` defines recursive scope and the crate-local override convention, remains at or below 200 lines, and `AGENTS.md` resolves to it through a repository symlink.\n- [hard] REQ-05: The existing manual documentation-review placeholder is replaced by an automated, issue-scoped review grounded in `AGENTS.md` and the addressable invariant registry; its rubric evaluates accuracy, canonical placement, research relevance, aggregate concision, current-state prose, evidence, and example value.\n- [hard] REQ-06: A `docs-mechanical` gate checks Markdown links and anchors, repository-local citations, addressable-item citations, and invariant/rule/gate projection freshness over a configuration-derived documentation footprint.\n- [hard] REQ-07: Documentation checks have committed self-tests covering clean inputs, each supported failure class, environment errors, and projection drift without encoding a hand-maintained inventory of product facts.\n- [hard] REQ-08: Rust CI builds Rustdoc and retained documentation examples using the repository's canonical release-mode policy, with failures surfaced independently from Markdown-mechanical findings.\n- [hard] REQ-09: A migration-manifest schema and transient progress checker classify the complete pre-overhaul artifact inventory without treating the checker as permanent policy enforcement.\n- [hard] REQ-10: `jit invariant check`, invariant projection, documentation review, documentation mechanical checks, and JIT validation all pass together on the established baseline.\n\n## Notes\n\nThis story defines the prerequisite contract. It does not migrate historical documents or author the new permanent documentation corpus.\n",
+  "documents": [],
+  "first_ready_at": "2026-07-14T20:40:18.283660931Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "repo-validate",
+    "holistic-review"
   ],
   "gates_status": {},
-  "context": {},
-  "documents": [],
+  "id": "3f29e945-8b12-4862-82c8-f2ec6573287c",
   "labels": [
     "epic:documentation-overhaul",
     "component:docs",
     "type:story",
     "story:documentation-contract"
   ],
-  "created_at": "2026-07-14T20:40:18.283655981Z",
-  "updated_at": "2026-07-14T20:43:57.766748493Z",
-  "first_ready_at": "2026-07-14T20:40:18.283660931Z"
+  "priority": "high",
+  "state": "ready",
+  "title": "Define documentation contract and enforcement baseline",
+  "updated_at": "2026-08-05T12:23:32.417482247Z"
 }

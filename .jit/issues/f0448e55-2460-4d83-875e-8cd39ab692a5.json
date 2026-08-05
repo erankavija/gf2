@@ -1,24 +1,28 @@
 {
-  "id": "f0448e55-2460-4d83-875e-8cd39ab692a5",
-  "title": "End-to-end DVB-T2 FEC + BICM simulation",
-  "description": "Integrate all DVB-T2 FEC components into a complete end-to-end simulation: BCH outer code + LDPC inner code + bit interleaving (column-row) + QAM modulation (BICM). Generate FER curves over AWGN and compare against Shannon limit. Validate full TP04 -> TP05 -> TP06 -> TP07a chain. This is the primary integration milestone for DVB-T2.",
-  "state": "backlog",
-  "priority": "high",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.638599852Z",
   "dependencies": [
     "b8baca8a-cda2-44b0-b0c6-c8a11219c119",
     "2928ccce-700a-46ff-88c7-6998915f9fdf",
     "fcb09e6f-a39e-47d1-976e-beed7ba24a07"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "Integrate all DVB-T2 FEC components into a complete end-to-end simulation: BCH outer code + LDPC inner code + bit interleaving (column-row) + QAM modulation (BICM). Generate FER curves over AWGN and compare against Shannon limit. Validate full TP04 -> TP05 -> TP06 -> TP07a chain. This is the primary integration milestone for DVB-T2.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “End-to-end DVB-T2 FEC + BICM simulation” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "f0448e55-2460-4d83-875e-8cd39ab692a5",
   "labels": [
     "type:milestone",
     "component:gf2-coding",
     "milestone:end-to-end-dvb-t2-fec-bicm-simulation"
   ],
-  "created_at": "2026-02-21T19:35:51.638599852Z",
-  "updated_at": "2026-07-14T20:49:36.057598571Z"
+  "priority": "high",
+  "state": "backlog",
+  "title": "End-to-end DVB-T2 FEC + BICM simulation",
+  "updated_at": "2026-08-05T12:25:53.980023257Z"
 }

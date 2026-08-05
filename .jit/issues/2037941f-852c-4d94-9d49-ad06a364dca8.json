@@ -1,22 +1,26 @@
 {
-  "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
-  "title": "Profile and optimize mid-range buffer operations (8-64 words)",
-  "description": "Investigate whether mid-range buffer operations (8-64 words) can be further optimized. Current performance is already 10-12 GiB/s across all sizes. Profiling plan: 1) Profile real workloads, 2) Microbenchmark unroll factors, 3) Test BitSlice zero-copy operations. Decision: proceed only if >15% speedup on real workloads.",
-  "state": "ready",
-  "priority": "low",
   "assignee": null,
-  "dependencies": [],
-  "gates_required": [],
-  "gates_status": {},
   "context": {},
+  "created_at": "2026-02-21T19:35:51.678433895Z",
+  "dependencies": [],
+  "description": "Investigate whether mid-range buffer operations (8-64 words) can be further optimized. Current performance is already 10-12 GiB/s across all sizes. Profiling plan: 1) Profile real workloads, 2) Microbenchmark unroll factors, 3) Test BitSlice zero-copy operations. Decision: proceed only if >15% speedup on real workloads.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “Profile and optimize mid-range buffer operations (8-64 words)” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "first_ready_at": "2026-02-21T19:49:04.209118475Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "2037941f-852c-4d94-9d49-ad06a364dca8",
   "labels": [
     "type:story",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "story:profile-and-optimize-mid-range-buffer-operations-8-64-words"
   ],
-  "created_at": "2026-02-21T19:35:51.678433895Z",
-  "updated_at": "2026-07-14T20:49:35.425611161Z",
-  "first_ready_at": "2026-02-21T19:49:04.209118475Z"
+  "priority": "low",
+  "state": "ready",
+  "title": "Profile and optimize mid-range buffer operations (8-64 words)",
+  "updated_at": "2026-08-05T12:22:45.204468216Z"
 }

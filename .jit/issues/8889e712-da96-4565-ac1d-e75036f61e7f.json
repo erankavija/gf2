@@ -1,50 +1,51 @@
 {
-  "id": "8889e712-da96-4565-ac1d-e75036f61e7f",
-  "title": "Extended formal verification: complete gfp proofs and expand to gf2m",
-  "description": "Complete the remaining gaps in gfp/ formal verification and expand coverage to gf2m/ arithmetic.\n\n## Scope\n\n**gfp/ completion (Lean4):**\n- Eliminate the sole remaining sorry (`p_inv_value_spec`) by proving the Newton iteration loop invariant\n- Prove binary exponentiation (`mod_pow_mont`) correctness\n- Prove `inv()` via Fermat's little theorem, completing the full Fp arithmetic chain\n- After this, every Fp operation (new, value, add, sub, mul, neg, inv, div, pow) has a machine-checked proof\n\n**bitvec/ expanded coverage (Kani):**\n- Add Kani harnesses for remaining mutating operations (shift_right, bit_and_into, bit_or_into, set, clear)\n- Lean4 not feasible for bitvec (Vec-backed array indexing)\n\n**gf2m/ new coverage:**\n- Assess Charon/Aeneas extraction feasibility for the gf2m module (UintExt sealed trait, Arc params)\n- Prove schoolbook multiplication (`mul_raw`) and inverse correctness in Lean4 if extraction works\n- Kani harnesses for table-based operations (log/exp table validity) where Lean4 is not feasible\n\n## Principles\n\n- Kani only when Lean4 is not feasible (array indexing, dynamic allocation, SIMD)\n- No duplication: gfp Montgomery bounds, extension field Karatsuba, and gfpn arithmetic are already universally proven in Lean4 — no redundant Kani harnesses for those\n- All proofs track the actual Rust code via Charon/Aeneas extraction or inline `#[cfg(kani)]` harnesses\n\n## Known limitation: CBMC cannot verify through Gf2mElement API\n\nThe GF(2^m) Kani harnesses call production `generate_tables()` and `gf2m_mul_raw()` directly, but cannot go through the full `Gf2mElement` / `Mul` trait API. This is a hard CBMC constraint, not a design choice:\n\n- **Attempted**: Harnesses using `Gf2mField::new(m, poly).with_tables()` → `field.element(val)` → `&a * &b` (the production `Mul` trait path). All 3 GF(16) harnesses OOM on CBMC even for the smallest field (16 elements), consuming 28 GB RAM before crashing.\n- **Root cause**: The `Gf2mElement` `Mul` impl has 4 dispatch branches (table lookup, SIMD clmul+Barrett, SIMD combined, schoolbook fallback) behind `Arc<FieldParams>` with `Option<Vec<u16>>` unwrapping. CBMC symbolically explores all branches and their `Arc` reference-count paths, producing SAT instances that exceed available memory.\n- **What the harnesses DO verify**: Production `generate_tables()` (including `find_primitive_element` / `is_primitive` loops), production `gf2m_mul_raw()` schoolbook multiplication, table consistency (bijection), and table arithmetic correctness (mul + inverse). The table lookup formula verified (`exp[(log[a]+log[b]) % order]`) is identical to the one in the production `Mul` impl's table path.\n- **Gap**: The `Arc`/dispatch wrapper around the table lookup is not formally verified by Kani. It is covered by the extensive `#[test]` suite (property-based axiom tests over all 49 GF(7²) and all 256 GF(2^8) elements).\n\nThis should be revisited if future Kani/CBMC versions improve memory efficiency for `Arc`-heavy code.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-07T09:44:01.103673307Z",
+  "context": {},
+  "created_at": "2026-03-11T21:07:15.911783041Z",
   "dependencies": [
-    "60c9d605-a5e1-46e7-93d2-8eef441ab35a",
-    "ec0743e1-819d-4efc-bc5c-f900e569130d",
     "104a46c2-0c49-4f66-8fcb-e84416b9b0ce",
+    "3f6bb7ee-a178-4c8e-9f5d-d978802543c7",
+    "467d835e-6afd-4638-a0e6-5e5c1ae54904",
+    "60c9d605-a5e1-46e7-93d2-8eef441ab35a",
     "afc7bdaf-0dcc-4a25-a110-1d8a5af3731d",
-    "3f6bb7ee-a178-4c8e-9f5d-d978802543c7"
+    "ec0743e1-819d-4efc-bc5c-f900e569130d"
   ],
+  "description": "Complete the remaining gaps in gfp/ formal verification and expand coverage to gf2m/ arithmetic.\n\n## Scope\n\n**gfp/ completion (Lean4):**\n- Eliminate the sole remaining sorry (`p_inv_value_spec`) by proving the Newton iteration loop invariant\n- Prove binary exponentiation (`mod_pow_mont`) correctness\n- Prove `inv()` via Fermat's little theorem, completing the full Fp arithmetic chain\n- After this, every Fp operation (new, value, add, sub, mul, neg, inv, div, pow) has a machine-checked proof\n\n**bitvec/ expanded coverage (Kani):**\n- Add Kani harnesses for remaining mutating operations (shift_right, bit_and_into, bit_or_into, set, clear)\n- Lean4 not feasible for bitvec (Vec-backed array indexing)\n\n**gf2m/ new coverage:**\n- Assess Charon/Aeneas extraction feasibility for the gf2m module (UintExt sealed trait, Arc params)\n- Prove schoolbook multiplication (`mul_raw`) and inverse correctness in Lean4 if extraction works\n- Kani harnesses for table-based operations (log/exp table validity) where Lean4 is not feasible\n\n## Principles\n\n- Kani only when Lean4 is not feasible (array indexing, dynamic allocation, SIMD)\n- No duplication: gfp Montgomery bounds, extension field Karatsuba, and gfpn arithmetic are already universally proven in Lean4 — no redundant Kani harnesses for those\n- All proofs track the actual Rust code via Charon/Aeneas extraction or inline `#[cfg(kani)]` harnesses\n\n## Known limitation: CBMC cannot verify through Gf2mElement API\n\nThe GF(2^m) Kani harnesses call production `generate_tables()` and `gf2m_mul_raw()` directly, but cannot go through the full `Gf2mElement` / `Mul` trait API. This is a hard CBMC constraint, not a design choice:\n\n- **Attempted**: Harnesses using `Gf2mField::new(m, poly).with_tables()` → `field.element(val)` → `&a * &b` (the production `Mul` trait path). All 3 GF(16) harnesses OOM on CBMC even for the smallest field (16 elements), consuming 28 GB RAM before crashing.\n- **Root cause**: The `Gf2mElement` `Mul` impl has 4 dispatch branches (table lookup, SIMD clmul+Barrett, SIMD combined, schoolbook fallback) behind `Arc<FieldParams>` with `Option<Vec<u16>>` unwrapping. CBMC symbolically explores all branches and their `Arc` reference-count paths, producing SAT instances that exceed available memory.\n- **What the harnesses DO verify**: Production `generate_tables()` (including `find_primitive_element` / `is_primitive` loops), production `gf2m_mul_raw()` schoolbook multiplication, table consistency (bijection), and table arithmetic correctness (mul + inverse). The table lookup formula verified (`exp[(log[a]+log[b]) % order]`) is identical to the one in the production `Mul` impl's table path.\n- **Gap**: The `Arc`/dispatch wrapper around the table lookup is not formally verified by Kani. It is covered by the extensive `#[test]` suite (property-based axiom tests over all 49 GF(7²) and all 256 GF(2^8) elements).\n\nThis should be revisited if future Kani/CBMC versions improve memory efficiency for `Arc`-heavy code.",
+  "documents": [],
+  "done_at": "2026-04-07T20:29:54.097032299Z",
+  "first_ready_at": "2026-04-07T09:43:48.150940968Z",
   "gates_required": [
     "lake-build",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-04-07T18:04:59.968085736Z",
+      "updated_by": "auto:executor"
+    },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-04-07T09:56:14.396823560Z"
+      "updated_at": "2026-04-07T09:56:14.396823560Z",
+      "updated_by": "agent:claude"
     },
     "lake-build": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T09:50:05.043911465Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-07T18:04:59.968085736Z"
+      "updated_at": "2026-04-07T09:50:05.043911465Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "8889e712-da96-4565-ac1d-e75036f61e7f",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:e095a100",
     "story:8889e712"
   ],
-  "created_at": "2026-03-11T21:07:15.911783041Z",
-  "updated_at": "2026-07-14T20:49:35.646093381Z",
-  "first_ready_at": "2026-04-07T09:43:48.150940968Z",
-  "claimed_at": "2026-04-07T09:44:01.103673307Z",
-  "done_at": "2026-04-07T20:29:54.097032299Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Extended formal verification: complete gfp proofs and expand to gf2m",
+  "updated_at": "2026-08-05T12:07:56.658068548Z"
 }

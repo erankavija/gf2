@@ -1,34 +1,35 @@
 {
-  "id": "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
-  "title": "Correct F_3 permanent n<=63 bound in gf2-kernels-hip FFI docs",
-  "description": "**Severity: high · Dimension: doc-drift** (report finding #7)\n\nFour F_3 FFI doc sites in `crates/gf2-kernels-hip/src/permanent/mod.rs` (lines 33, 57, 269, 324) claim `permanent_bipedal3_singleword` supports n=64 via a u128 counter. The function asserts `n <= 63` and panics for n=64 (a `#[should_panic]` test confirms this). The parallel F_5 docs (lines 85-86) were correctly updated; the F_3 docs were not synchronized.\n\n## Success Criteria\n\n- [hard] All four F_3 doc sites state the correct bound (`n <= 63`) using the same language as the corrected F_5 docs.\n- [hard] The false \"u128 counter enables n=64\" claim is removed from all four sites.\n- [hard] Bound matches the actual `assert!`/`#[should_panic]` behaviour in code (verified).",
-  "state": "ready",
-  "priority": "high",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-06-30T20:05:11.150341201Z",
   "dependencies": [],
+  "description": "**Severity: high · Dimension: doc-drift** (report finding #7)\n\nFour F_3 FFI doc sites in `crates/gf2-kernels-hip/src/permanent/mod.rs` (lines 33, 57, 269, 324) claim `permanent_bipedal3_singleword` supports n=64 via a u128 counter. The function asserts `n <= 63` and panics for n=64 (a `#[should_panic]` test confirms this). The parallel F_5 docs (lines 85-86) were correctly updated; the F_3 docs were not synchronized.\n\n## Success Criteria\n\n- [hard] REQ-01: All four F_3 doc sites state the correct bound (`n <= 63`) using the same language as the corrected F_5 docs.\n- [hard] REQ-02: The false \"u128 counter enables n=64\" claim is removed from all four sites.\n- [hard] REQ-03: Bound matches the actual `assert!`/`#[should_panic]` behaviour in code (verified).\n",
+  "documents": [],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:27.120571797Z"
-    },
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:27.120527127Z"
+      "updated_at": "2026-06-30T20:12:27.120527127Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-06-30T20:12:27.120571797Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-hip"
   ],
-  "created_at": "2026-06-30T20:05:11.150341201Z",
-  "updated_at": "2026-06-30T20:12:27.120593987Z"
+  "priority": "high",
+  "state": "ready",
+  "title": "Correct F_3 permanent n<=63 bound in gf2-kernels-hip FFI docs",
+  "updated_at": "2026-08-05T12:22:21.612895460Z"
 }

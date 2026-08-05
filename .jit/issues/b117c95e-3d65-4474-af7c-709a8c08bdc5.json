@@ -1,10 +1,7 @@
 {
-  "id": "b117c95e-3d65-4474-af7c-709a8c08bdc5",
-  "title": "gf2-core competitive performance",
-  "description": "Long-running tracker for performance work targeting Magma/Sage parity in `gf2-core` and pushing beyond on extension-field tower arithmetic. Currently scoped to one epic; future performance epics (gf2-coding LDPC throughput, GPU offload research) will hang under this milestone.\n\n## Background\n\nThe project vision is research-grade finite-field computing competitive with specialized computer algebra systems (Magma/Sage). This milestone exists so that performance-oriented epics share a coherent home and can be tracked against the same benchmarking baseline. The scoped epic is `gf2-core-ppc-spiral` — a comprehensive PPC-spiral sweep through every scalar gap in `gf2-core` with proof-of-gain at every spiral step.\n\n## Success Criteria\n\n- [hard] Every Tier A–D kernel from epic `gf2-core-ppc-spiral` ships its proof-of-gain artefact (criterion delta + asm + perf-stat).\n- [hard] No `unsafe` outside `gf2-kernels-simd` / `gf2-kernels-hip` (apex constraint preserved).\n- [hard] MSRV drift only happens with explicit user approval per `escalation-policy.md`.\n- [aspirational] On a representative workload (LDPC-coded simulation, tower-field GEMM), `gf2-core` matches or beats Magma 2.28 on a single core.\n\n## Notes\n\nFuture performance epics (gf2-coding LDPC throughput, GPU offload research, verification coverage) can hang under this milestone without restructuring.",
-  "state": "backlog",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-04-25T15:23:54.395404062Z",
   "dependencies": [
     "babcf05e-29e8-4c81-ba77-843ec6409cfa",
     "3eeb57f6-91cc-4833-9415-a0b34ed9678d",
@@ -12,33 +9,39 @@
     "026fc832-a480-4d07-8d25-47b8bfcb69a3",
     "47c1538f-14df-4f2c-9ff9-9ab90b121fa3"
   ],
-  "gates_required": [
-    "code-review"
-  ],
-  "gates_status": {},
-  "context": {},
+  "description": "Long-running tracker for performance work targeting Magma/Sage parity in `gf2-core` and pushing beyond on extension-field tower arithmetic. Currently scoped to one epic; future performance epics (gf2-coding LDPC throughput, GPU offload research) will hang under this milestone.\n\n## Background\n\nThe project vision is research-grade finite-field computing competitive with specialized computer algebra systems (Magma/Sage). This milestone exists so that performance-oriented epics share a coherent home and can be tracked against the same benchmarking baseline. The scoped epic is `gf2-core-ppc-spiral` — a comprehensive PPC-spiral sweep through every scalar gap in `gf2-core` with proof-of-gain at every spiral step.\n\n## Success Criteria\n\n- [hard] REQ-01: Every Tier A–D kernel from epic `gf2-core-ppc-spiral` ships its proof-of-gain artefact (criterion delta + asm + perf-stat).\n- [hard] REQ-02: No `unsafe` outside `gf2-kernels-simd` / `gf2-kernels-hip` (apex constraint preserved).\n- [hard] REQ-03: MSRV drift only happens with explicit user approval per `escalation-policy.md`.\n- [aspirational] REQ-04: On a representative workload (LDPC-coded simulation, tower-field GEMM), `gf2-core` matches or beats Magma 2.28 on a single core.\n\n## Notes\n\nFuture performance epics (gf2-coding LDPC throughput, GPU offload research, verification coverage) can hang under this milestone without restructuring.\n",
   "documents": [
     {
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
       "commit": null,
-      "label": "gf2-core SOTA closure scorecard (epic 97bf0879)",
       "doc_type": null,
-      "format": "markdown"
+      "format": "markdown",
+      "label": "gf2-core SOTA closure scorecard (epic 97bf0879)",
+      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
     },
     {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
       "commit": null,
+      "doc_type": "presentation",
       "label": "gf2-core SOTA closure deck (epic 97bf0879)",
-      "doc_type": "presentation"
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
     }
   ],
+  "first_ready_at": "2026-04-29T23:24:31.641163657Z",
+  "gates_required": [
+    "code-review",
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "b117c95e-3d65-4474-af7c-709a8c08bdc5",
   "labels": [
     "type:milestone",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "milestone:gf2-core-perf"
   ],
-  "created_at": "2026-04-25T15:23:54.395404062Z",
-  "updated_at": "2026-07-14T20:51:49.667617939Z",
-  "first_ready_at": "2026-04-29T23:24:31.641163657Z"
+  "priority": "normal",
+  "state": "backlog",
+  "title": "gf2-core competitive performance",
+  "updated_at": "2026-08-05T12:24:47.201262239Z"
 }

@@ -1,10 +1,7 @@
 {
-  "id": "7f809931-11e3-40ab-b9ab-6b1e38c12712",
-  "title": "SIMD and platform expansion",
-  "description": "Expand SIMD backend support and optimize platform-specific kernels. Covers AVX-512, ARM NEON, buffer optimizations, and SIMD-accelerated polar transforms.",
-  "state": "backlog",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.570386512Z",
   "dependencies": [
     "2037941f-852c-4d94-9d49-ad06a364dca8",
     "b3766524-f893-48b5-b380-ce38a8bf5467",
@@ -12,16 +9,23 @@
     "f8d230ef-a204-40b0-9471-729053e46d60",
     "194b902a-5fcb-4b37-bb19-8d5c80d5c279"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "Expand SIMD backend support and optimize platform-specific kernels. Covers AVX-512, ARM NEON, buffer optimizations, and SIMD-accelerated polar transforms.\n\n## Success Criteria\n\n- [hard] REQ-01: Delivers “SIMD and platform expansion” with the behavior, scope, evidence, and constraints described above.\n",
   "documents": [],
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "7f809931-11e3-40ab-b9ab-6b1e38c12712",
   "labels": [
     "type:epic",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:simd-and-platform-expansion"
   ],
-  "created_at": "2026-02-21T19:35:51.570386512Z",
-  "updated_at": "2026-07-14T20:49:35.608283984Z"
+  "priority": "normal",
+  "state": "backlog",
+  "title": "SIMD and platform expansion",
+  "updated_at": "2026-08-05T12:24:07.929206577Z"
 }

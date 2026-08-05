@@ -4,7 +4,7 @@
   "description": "- Install Aeneas/Charon as external dev toolchain (not cargo dep)\n- Create `proofs/` directory: `lakefile.lean`, `lean-toolchain`, Mathlib dependency\n- Run Charon extraction: `charon --crate gf2-core` → LLBC JSON\n- Run Aeneas translation: `aeneas --backend lean` → `proofs/GF2Core/*.lean`\n- Verify translation succeeds for `gfp/` and `gfpn/` modules\n- Document any const-generic or trait workarounds needed\n- Add CI job: `charon && aeneas && lake build`\n- **Risk gate**: If Charon cannot handle `Fp<const P: u64>`, document the blocker and fall back to monomorphized wrappers for specific primes\n\n**Success criteria**: `lake build` compiles the auto-generated Lean code without errors",
   "state": "done",
   "priority": "normal",
-  "assignee": "claude",
+  "assignee": "agent:claude",
   "dependencies": [],
   "gates_required": [
     "code-review",
@@ -20,7 +20,7 @@
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "user",
+      "updated_by": "human:user",
       "updated_at": "2026-03-08T18:22:32.927347174Z"
     },
     "cargo-ci": {

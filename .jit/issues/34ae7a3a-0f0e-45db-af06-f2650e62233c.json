@@ -1,34 +1,35 @@
 {
-  "id": "34ae7a3a-0f0e-45db-af06-f2650e62233c",
-  "title": "Apply branchless GF(2) bitwise idioms",
-  "description": "**Dimension: bitwise-arithmetic · 2 findings (both low)** — see report §bitwise-arithmetic (the high polar_transform item is filed separately).\n\n- `gf2-coding/src/convolutional.rs:92,187`; `crc.rs:300`; `drm.rs:305` — GF(2) parity via `count_ones() % 2` / `weight % 2` at four sites; use branchless `& 1 != 0`.\n- `gf2-coding/src/bch/core.rs:685` — `pack_coeff_stream` hand-rolls the bit-numbering idiom into a raw `Vec<u64>` while reading via `BitVec::get`; route through a `BitVec` accumulator + `.words().to_vec()`, or add a `// SAFETY`-style comment documenting the convention match.\n\n## Success Criteria\n\n- [hard] All four parity sites use the `& 1` idiom; behaviour unchanged (existing tests pass).\n- [hard] `pack_coeff_stream` either routed through `BitVec` or annotated with the convention-match comment.\n- [hard] `cargo nextest --profile ci`, clippy, fmt pass.",
-  "state": "ready",
-  "priority": "low",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-06-30T20:12:46.443413197Z",
   "dependencies": [],
+  "description": "**Dimension: bitwise-arithmetic · 2 findings (both low)** — see report §bitwise-arithmetic (the high polar_transform item is filed separately).\n\n- `gf2-coding/src/convolutional.rs:92,187`; `crc.rs:300`; `drm.rs:305` — GF(2) parity via `count_ones() % 2` / `weight % 2` at four sites; use branchless `& 1 != 0`.\n- `gf2-coding/src/bch/core.rs:685` — `pack_coeff_stream` hand-rolls the bit-numbering idiom into a raw `Vec<u64>` while reading via `BitVec::get`; route through a `BitVec` accumulator + `.words().to_vec()`, or add a `// SAFETY`-style comment documenting the convention match.\n\n## Success Criteria\n\n- [hard] REQ-01: All four parity sites use the `& 1` idiom; behaviour unchanged (existing tests pass).\n- [hard] REQ-02: `pack_coeff_stream` either routed through `BitVec` or annotated with the convention-match comment.\n- [hard] REQ-03: `cargo nextest --profile ci`, clippy, fmt pass.\n",
+  "documents": [],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
   "gates_status": {
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.509551464Z"
+      "updated_at": "2026-06-30T20:12:55.509551464Z",
+      "updated_by": null
     },
     "code-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.509605074Z"
+      "updated_at": "2026-06-30T20:12:55.509605074Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "34ae7a3a-0f0e-45db-af06-f2650e62233c",
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-coding"
   ],
-  "created_at": "2026-06-30T20:12:46.443413197Z",
-  "updated_at": "2026-06-30T20:12:55.509626554Z"
+  "priority": "low",
+  "state": "ready",
+  "title": "Apply branchless GF(2) bitwise idioms",
+  "updated_at": "2026-08-05T12:23:04.815043926Z"
 }

@@ -24,7 +24,7 @@
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "manual",
+      "updated_by": "human:manual",
       "updated_at": "2026-03-15T07:57:41.675743292Z"
     }
   },

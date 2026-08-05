@@ -1,0 +1,132 @@
+[[invariants]]
+enforced-by = "@/rule/label-format"
+id = "label-format"
+kind = "enforced"
+statement = "Every label is namespace:value (namespace lowercase-kebab, value non-empty)."
+
+[[invariants]]
+enforced-by = "@/rule/namespace-registry"
+id = "namespace-registry"
+kind = "enforced"
+statement = "Every label namespace is declared in the namespace registry."
+
+[[invariants]]
+enforced-by = "@/gate/repo-validate"
+id = "dag-acyclic"
+kind = "enforced"
+statement = "Cycle detection runs before every dependency operation; the graph stays acyclic."
+
+[[invariants]]
+enforced-by = "@/gate/repo-validate"
+id = "gate-semantics"
+kind = "enforced"
+statement = "An issue cannot reach Done with pending or failed gates; unpassed gates divert completion to Gated."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "bitvec-tail-padding"
+kind = "enforced"
+statement = "Every BitVec mutation leaves padding bits beyond len_bits zero, including construction from externally supplied words."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "canonical-bit-indexing"
+kind = "enforced"
+statement = "Canonical bit index i maps to word i >> 6 and mask 1u64 << (i & 63); conversions preserve this little-endian numbering."
+
+[[invariants]]
+enforced-by = "@/gate/cargo-ci"
+id = "finite-field-laws"
+kind = "enforced"
+statement = "Every finite-field implementation satisfies the shared field-law conformance suite for its supported domain."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "standards-vector-conformance"
+kind = "enforced"
+statement = "Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence."
+
+[[invariants]]
+enforced-by = "@/gate/repo-validate"
+id = "assignee-format"
+kind = "enforced"
+statement = "Every assignee is {type}:{identifier} (e.g. agent:worker-1, human:alice)."
+
+[[invariants]]
+enforced-by = "@/gate/cargo-ci"
+id = "backend-behavioral-equivalence"
+kind = "enforced"
+statement = "Scalar, SIMD, parallel CPU, and GPU implementations expose equivalent observable results within their declared numerical contract."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "single-source-prose"
+kind = "enforced"
+statement = "Every fact with a single source of truth reaches prose by projection or citation; volatile facts (counts, enumerations, registry contents) are stated structurally or derived, and a hand-maintained copy is a staleness defect."
+
+[[invariants]]
+id = "semantic-test-assertions"
+kind = "advisory"
+statement = "Tests assert observable semantic properties or relationships; exact field-name inventories and literal-value assertions are confined to one canonical suite for an intentionally stable external contract."
+
+[[invariants]]
+id = "shared-test-contracts"
+kind = "advisory"
+statement = "Every implementation of a shared field, codec, modem, pipeline, or kernel interface runs the same behavioral conformance suite; implementation-specific tests cover only implementation-specific behavior."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "accelerator-safe-fallback"
+kind = "enforced"
+statement = "Unsupported SIMD or GPU capabilities and recoverable accelerator resource failures select a tested safe fallback; fatal kernel or driver failures remain explicit."
+
+[[invariants]]
+id = "semantic-types"
+kind = "advisory"
+statement = "Every identity, constrained token, closed vocabulary, and protocol sentinel has one canonical semantic type; raw strings exist only at parsing and serialization boundaries."
+
+[[invariants]]
+id = "canonical-cutover"
+kind = "advisory"
+statement = "Superseded aliases, fields, and representations are removed after cutover; compatibility code is allowed only in a named, versioned migration boundary with a tracked removal condition."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "unsafe-kernel-isolation"
+kind = "enforced"
+statement = "Production unsafe code is isolated to gf2-kernels-simd and gf2-kernels-hip, with explicit safety contracts at every unsafe boundary."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "crate-dependency-direction"
+kind = "enforced"
+statement = "Crate dependencies point from domain orchestration toward mathematical primitives and isolated kernels; mathematical, coding-domain, simulation, and kernel layers do not acquire reverse production dependencies."
+
+[[invariants]]
+enforced-by = "@/gate/cargo-ci"
+id = "deterministic-seeded-execution"
+kind = "enforced"
+statement = "A fixed seed and configuration produce identical observable results across supported worker counts, scheduling paths, checkpoint/resume boundaries, and accelerator fallbacks."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "benchmark-backed-performance"
+kind = "enforced"
+statement = "Performance and crossover claims cite a reproducible benchmark protocol and committed receipt from a suitable uncontended host; estimates are identified as estimates."
+
+[[invariants]]
+enforced-by = "@/gate/cargo-ci"
+id = "fast-test-tier-budget"
+kind = "enforced"
+statement = "Release-mode fast-tier tests respect the configured five-second per-test and sixty-second suite budgets; slower work carries a descriptive ignore tier."
+
+[[invariants]]
+enforced-by = "@/gate/code-review"
+id = "slow-test-tier-budget"
+kind = "enforced"
+statement = "Ignored slow and simulation tests respect the six-hundred-second nightly budget or self-select an explicitly serialized or host-gated execution path."
+
+[[invariants]]
+id = "convention-convergence"
+kind = "advisory"
+statement = "A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition."

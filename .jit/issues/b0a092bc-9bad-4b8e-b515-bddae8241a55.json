@@ -14,7 +14,7 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_by": "manual: all proof files have descriptive headers and theorem-level documentation",
+      "updated_by": "human:manual",
       "updated_at": "2026-03-10T21:15:08.436238950Z"
     },
     "lake-build": {

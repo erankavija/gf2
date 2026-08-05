@@ -1,15 +1,17 @@
 {
-  "id": "ed51b844-0e96-475a-8f5c-e4ac1d95862a",
-  "title": "Verify all crates at 90% coverage and refresh badges",
-  "description": "Confirm the coverage goal is met across all production crates and that the published badges reflect it.\n\n## Background\n\nThis is the epic closeout. With the measurement exclusion in place and the per-crate test work done, a final CI coverage run should show every production crate at or above 90% and deploy the updated badges.\n\n## Success Criteria\n\n- [ ] `[hard]` REQ-1: A CI coverage run reports library line coverage at or above 90.0% for each of gf2-core, gf2-coding, gf2-algebra, gf2-sim, and gf2-kernels-simd.\n- [ ] `[hard]` REQ-2: The badges deployed to the `badges` branch show those numbers, and the README references resolve to them.\n- [ ] `[hard]` REQ-3: No fast-tier test-suite regression: the workspace test battery stays green within its wall-clock budget.\n\n## Notes\n\nThis task only verifies and reports; it does not add new tests. If a crate falls short, the gap routes back to that crate's task rather than being patched here.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-07-01T00:56:49.901023654Z",
+  "context": {},
+  "created_at": "2026-06-30T19:48:21.111357405Z",
   "dependencies": [
     "1fa9c5d0-41d2-4814-8b3f-7c48bd2c595a",
     "ee304787-9a19-41f1-a355-97bfa2c21bbe",
     "6a5f0305-2b2d-4f27-805c-d69eff988528"
   ],
+  "description": "Confirm the coverage goal is met across all production crates and that the published badges reflect it.\n\n## Background\n\nThis is the epic closeout. With the measurement exclusion in place and the per-crate test work done, a final CI coverage run should show every production crate at or above 90% and deploy the updated badges.\n\n## Success Criteria\n\n- [ ] `[hard]` REQ-1: A CI coverage run reports library line coverage at or above 90.0% for each of gf2-core, gf2-coding, gf2-algebra, gf2-sim, and gf2-kernels-simd.\n- [ ] `[hard]` REQ-2: The badges deployed to the `badges` branch show those numbers, and the README references resolve to them.\n- [ ] `[hard]` REQ-3: No fast-tier test-suite regression: the workspace test battery stays green within its wall-clock budget.\n\n## Notes\n\nThis task only verifies and reports; it does not add new tests. If a crate falls short, the gap routes back to that crate's task rather than being patched here.",
+  "documents": [],
+  "done_at": "2026-07-01T06:13:03.328960916Z",
+  "first_ready_at": "2026-07-01T00:56:49.851500345Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
@@ -17,24 +19,25 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-07-01T06:09:47.080961639Z"
+      "updated_at": "2026-07-01T06:09:47.080961639Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-07-01T06:10:23.455657044Z"
+      "updated_at": "2026-07-01T06:10:23.455657044Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "ed51b844-0e96-475a-8f5c-e4ac1d95862a",
   "labels": [
     "epic:coverage-90",
-    "type:task"
+    "type:task",
+    "satisfies:REQ-1",
+    "satisfies:REQ-2",
+    "satisfies:REQ-3"
   ],
-  "created_at": "2026-06-30T19:48:21.111357405Z",
-  "updated_at": "2026-07-12T20:02:55.481894282Z",
-  "first_ready_at": "2026-07-01T00:56:49.851500345Z",
-  "claimed_at": "2026-07-01T00:56:49.901023654Z",
-  "done_at": "2026-07-01T06:13:03.328960916Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Verify all crates at 90% coverage and refresh badges",
+  "updated_at": "2026-08-05T12:07:48.821063986Z"
 }

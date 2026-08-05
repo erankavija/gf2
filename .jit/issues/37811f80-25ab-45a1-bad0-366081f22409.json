@@ -1,34 +1,35 @@
 {
-  "id": "37811f80-25ab-45a1-bad0-366081f22409",
-  "title": "Pin MSRV 1.95 on gf2-kernels-simd and align CLAUDE.md",
-  "description": "**Dimension: msrv · 2 findings (1 medium, 1 low)** — see report §msrv.\n\n- (med) `crates/gf2-kernels-simd/Cargo.toml` — no `rust-version` field; all peer crates declare `rust-version = \"1.95\"`. Without it `cargo check --locked` silently accepts older toolchains for this crate. Add `rust-version = \"1.95\"` to `[package]`.\n- (low) `CLAUDE.md` — MSRV section omits `gf2-algebra` and `gf2-sim` and does not flag the missing pin. Update the sentence to list all enforcing crates (after the fix above, gf2-kernels-simd is pinned too).\n\n## Success Criteria\n\n- [hard] `gf2-kernels-simd/Cargo.toml` declares `rust-version = \"1.95\"`.\n- [hard] CLAUDE.md MSRV sentence lists every crate that pins 1.95, consistent with reality post-fix.\n- [hard] `rustup run 1.95.0 cargo check -p gf2-kernels-simd` succeeds; fmt clean.",
-  "state": "ready",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-06-30T20:12:46.402542559Z",
   "dependencies": [],
+  "description": "**Dimension: msrv · 2 findings (1 medium, 1 low)** — see report §msrv.\n\n- (med) `crates/gf2-kernels-simd/Cargo.toml` — no `rust-version` field; all peer crates declare `rust-version = \"1.95\"`. Without it `cargo check --locked` silently accepts older toolchains for this crate. Add `rust-version = \"1.95\"` to `[package]`.\n- (low) `AGENTS.md` — MSRV section omits `gf2-algebra` and `gf2-sim` and does not flag the missing pin. Update the sentence to list all enforcing crates (after the fix above, gf2-kernels-simd is pinned too).\n\n## Success Criteria\n\n- [hard] REQ-01: `gf2-kernels-simd/Cargo.toml` declares `rust-version = \"1.95\"`.\n- [hard] REQ-02: AGENTS.md MSRV sentence lists every crate that pins 1.95, consistent with reality post-fix.\n- [hard] REQ-03: `rustup run 1.95.0 cargo check -p gf2-kernels-simd` succeeds; fmt clean.\n",
+  "documents": [],
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "doc-review"
   ],
   "gates_status": {
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.476197689Z"
+      "updated_at": "2026-06-30T20:12:55.476197689Z",
+      "updated_by": null
     },
     "code-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.476244299Z"
+      "updated_at": "2026-06-30T20:12:55.476244299Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "37811f80-25ab-45a1-bad0-366081f22409",
   "labels": [
     "type:task",
     "epic:tech-debt-2026-06-30",
     "component:gf2-kernels-simd"
   ],
-  "created_at": "2026-06-30T20:12:46.402542559Z",
-  "updated_at": "2026-06-30T20:12:55.476261739Z"
+  "priority": "normal",
+  "state": "ready",
+  "title": "Pin MSRV 1.95 on gf2-kernels-simd and align CLAUDE.md",
+  "updated_at": "2026-08-05T12:23:12.680011123Z"
 }
