@@ -13,7 +13,7 @@ set -euo pipefail
 
 # Host-wide build serialization. Only one cargo-ci run executes the heavy
 # build/test steps at a time. Concurrent gate runs (e.g. several agent sessions
-# each calling `jit gate pass ... cargo-ci`) otherwise oversubscribe the CPU —
+# each calling `jit gate evaluate ... cargo-ci`) otherwise oversubscribe the CPU —
 # every cargo build fans out to all cores, so K runs demand K×nproc — and
 # multiply peak RAM into swap, making the host and any interactive shell laggy.
 # That hurts especially here: the test step is a `--release` nextest run with
