@@ -1,28 +1,4 @@
 [[invariants]]
-enforced-by = "@/rule/label-format"
-id = "label-format"
-kind = "enforced"
-statement = "Every label is namespace:value (namespace lowercase-kebab, value non-empty)."
-
-[[invariants]]
-enforced-by = "@/rule/namespace-registry"
-id = "namespace-registry"
-kind = "enforced"
-statement = "Every label namespace is declared in the namespace registry."
-
-[[invariants]]
-enforced-by = "@/gate/repo-validate"
-id = "dag-acyclic"
-kind = "enforced"
-statement = "Cycle detection runs before every dependency operation; the graph stays acyclic."
-
-[[invariants]]
-enforced-by = "@/gate/repo-validate"
-id = "gate-semantics"
-kind = "enforced"
-statement = "An issue cannot reach Done with pending or failed gates; unpassed gates divert completion to Gated."
-
-[[invariants]]
 enforced-by = "@/gate/code-review"
 id = "bitvec-tail-padding"
 kind = "enforced"
@@ -45,12 +21,6 @@ enforced-by = "@/gate/code-review"
 id = "standards-vector-conformance"
 kind = "enforced"
 statement = "Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence."
-
-[[invariants]]
-enforced-by = "@/gate/repo-validate"
-id = "assignee-format"
-kind = "enforced"
-statement = "Every assignee is {type}:{identifier} (e.g. agent:worker-1, human:alice)."
 
 [[invariants]]
 enforced-by = "@/gate/cargo-ci"

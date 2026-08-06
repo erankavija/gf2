@@ -1,4 +1,4 @@
-## Project Invariants
+## gf2 Engineering Invariants
 
 <!-- jit:invariants:begin -->
 _No invariants declared._

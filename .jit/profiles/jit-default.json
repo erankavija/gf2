@@ -1,12 +1,12 @@
 {
   "id": "jit-default",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "origin": {
     "source": "directory",
     "location": "packages/jit-default"
   },
-  "package_hash": "ef07621e2ff78878975eef5ef1a465491eeace2695e9fbfd666a109cf79e79bd",
+  "package_hash": "3993999b61c6b1cb973339fd2dccd2c8609ea2a1a006a7d03e405946a5a937e3",
   "target_hashes": {
-    ".jit/config.toml": "010814ed5bc9d3ce0bab65418089758accaf7ad908d0563289bebc7712956742"
+    ".jit/config.toml": "973ac4da36516ed4ab0616d6598aa5aeaa3cf11df3ce0e356bacd2a12260fb09"
   }
 }

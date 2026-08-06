@@ -60,7 +60,7 @@ unique = true
 
 [namespaces.enforces]
 description = "Enforcement link: names an invariant, rule, or gate item that the labeled issue enforces."
-examples = ["enforces:@/invariant/label-format", "enforces:@/rule/label-format", "enforces:@/gate/cargo-ci"]
+examples = ["enforces:@/rule/label-format", "enforces:@/gate/cargo-ci"]
 unique = false
 
 [namespaces.epic]
