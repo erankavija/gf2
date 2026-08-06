@@ -14,12 +14,12 @@ workflow all live there. This file is only the contributor entry point.
 - Confirm dependencies and required gates before changing code.
 
 The core project invariants are addressable JIT registry items. In particular,
-changes must preserve `@/invariant/bitvec-tail-padding`,
-`@/invariant/canonical-bit-indexing`, `@/invariant/finite-field-laws`,
-`@/invariant/standards-vector-conformance`,
-`@/invariant/backend-behavioral-equivalence`,
-`@/invariant/unsafe-kernel-isolation`, and
-`@/invariant/crate-dependency-direction`. The complete rendered registry is in
+changes must preserve `@/inv/bitvec-tail-padding`,
+`@/inv/canonical-bit-indexing`, `@/inv/finite-field-laws`,
+`@/inv/standards-vector-conformance`,
+`@/inv/backend-behavioral-equivalence`,
+`@/inv/unsafe-kernel-isolation`, and
+`@/inv/crate-dependency-direction`. The complete rendered registry is in
 `AGENTS.md`; `.jit/invariants.toml` is its source of truth.
 
 ## Make and verify the change
@@ -52,7 +52,7 @@ fix(jit:8ce6f8aa): preserve zeroed BitVec tail padding
 In the pull request or handoff, identify the JIT item, summarize observable
 behavior, list verification performed, link documentation and benchmark/proof
 evidence, and call out any explicitly approved exception. Do not duplicate
-registry facts in prose; cite their `@/invariant/...`, `@/rule/...`, or
+registry facts in prose; cite their `@/inv/...`, `@/rule/...`, or
 `@/gate/...` address.
 
 This project follows the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).

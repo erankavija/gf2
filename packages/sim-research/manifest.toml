@@ -3,7 +3,7 @@ dependencies = ["jit-default"]
 [profile]
 manifest-version = 1
 id = "sim-research"
-version = "1.0.0"
+version = "1.0.1"
 jit = ">=1.0.0, <2.0.0"
 
 # Repository-neutral workflow taxonomy. `jit-default` supplies the shared
@@ -596,50 +596,7 @@ to = "breakdown"
 kind = "move-upstream-to-role"
 role = "planning"
 
-# The workflow and gf2 engineering invariants are profile-owned registry items.
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "label-format"
-
-[contribution.value]
-id = "label-format"
-statement = "Every label is namespace:value (namespace lowercase-kebab, value non-empty)."
-kind = "enforced"
-enforced-by = "@/rule/label-format"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "namespace-registry"
-
-[contribution.value]
-id = "namespace-registry"
-statement = "Every label namespace is declared in the namespace registry."
-kind = "enforced"
-enforced-by = "@/rule/namespace-registry"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "dag-acyclic"
-
-[contribution.value]
-id = "dag-acyclic"
-statement = "Cycle detection runs before every dependency operation; the graph stays acyclic."
-kind = "enforced"
-enforced-by = "@/gate/repo-validate"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "gate-semantics"
-
-[contribution.value]
-id = "gate-semantics"
-statement = "An issue cannot reach Done with pending or failed gates; unpassed gates divert completion to Gated."
-kind = "enforced"
-enforced-by = "@/gate/repo-validate"
+# The gf2 engineering invariants are profile-owned registry items.
 
 [[contribution]]
 kind = "keyed-array"
@@ -684,17 +641,6 @@ id = "standards-vector-conformance"
 statement = "Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence."
 kind = "enforced"
 enforced-by = "@/gate/code-review"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "assignee-format"
-
-[contribution.value]
-id = "assignee-format"
-statement = "Every assignee is {type}:{identifier} (e.g. agent:worker-1, human:alice)."
-kind = "enforced"
-enforced-by = "@/gate/repo-validate"
 
 [[contribution]]
 kind = "keyed-array"

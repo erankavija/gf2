@@ -54,8 +54,8 @@ substantial work must use release mode.
 Keep mathematical primitives, coding-domain behavior, orchestration, and
 machine-specific kernels separated. Dependencies point inward; a lower layer
 must not acquire a production dependency on a higher one. See
-`@/invariant/crate-dependency-direction` and
-`@/invariant/unsafe-kernel-isolation`.
+`@/inv/crate-dependency-direction` and
+`@/inv/unsafe-kernel-isolation`.
 
 ## Correctness and test policy
 
@@ -97,7 +97,7 @@ Keep permanent documentation under `README.md`, crate-level rustdoc, or `docs/`.
 Keep active designs, experiments, plans, presentations, and benchmark receipts
 in the development areas registered in `.jit/config.toml`; link issue-scoped
 material with `jit doc`. Prefer citations or generated projections over copied
-facts. See `@/invariant/single-source-prose`.
+facts. See `@/inv/single-source-prose`.
 
 ## Planning, proof, and change discipline
 
@@ -119,18 +119,13 @@ facts. See `@/invariant/single-source-prose`.
   JIT short ID in the scope when a commit implements an issue.
 
 <!-- jit:profile-sim-research-guidance:begin -->
-## Project Invariants
+## gf2 Engineering Invariants
 
 <!-- jit:invariants:begin -->
-- **label-format** — Every label is namespace:value (namespace lowercase-kebab, value non-empty).
-- **namespace-registry** — Every label namespace is declared in the namespace registry.
-- **dag-acyclic** — Cycle detection runs before every dependency operation; the graph stays acyclic.
-- **gate-semantics** — An issue cannot reach Done with pending or failed gates; unpassed gates divert completion to Gated.
 - **bitvec-tail-padding** — Every BitVec mutation leaves padding bits beyond len_bits zero, including construction from externally supplied words.
 - **canonical-bit-indexing** — Canonical bit index i maps to word i >> 6 and mask 1u64 << (i & 63); conversions preserve this little-endian numbering.
 - **finite-field-laws** — Every finite-field implementation satisfies the shared field-law conformance suite for its supported domain.
 - **standards-vector-conformance** — Standards-based coding and modem behavior is checked against the authoritative standard or a named, versioned vector source; generated fixtures do not replace external conformance evidence.
-- **assignee-format** — Every assignee is {type}:{identifier} (e.g. agent:worker-1, human:alice).
 - **backend-behavioral-equivalence** — Scalar, SIMD, parallel CPU, and GPU implementations expose equivalent observable results within their declared numerical contract.
 - **single-source-prose** — Every fact with a single source of truth reaches prose by projection or citation; volatile facts (counts, enumerations, registry contents) are stated structurally or derived, and a hand-maintained copy is a staleness defect.
 - **semantic-test-assertions** — Tests assert observable semantic properties or relationships; exact field-name inventories and literal-value assertions are confined to one canonical suite for an intentionally stable external contract.
