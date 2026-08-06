@@ -9,7 +9,7 @@
 [profile]
 manifest-version = 1
 id = "jit-default"
-version = "1.0.1"
+version = "1.0.0"
 jit = ">=1.0.0, <2.0.0"
 
 # =============================================================================
@@ -173,8 +173,9 @@ kind = "map-entry"
 target = "namespaces"
 identity = "enforces"
 value = { description = "Enforcement link: names an invariant, rule, or gate item that the labeled issue enforces.", unique = false, examples = [
+  "enforces:@/invariant/<self-id>",
   "enforces:@/rule/label-format",
-  "enforces:@/gate/cargo-ci",
+  "enforces:@/gate/<self-id>",
 ] }
 
 # =============================================================================
