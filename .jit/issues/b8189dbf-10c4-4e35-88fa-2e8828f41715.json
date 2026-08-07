@@ -1,133 +1,51 @@
 {
-  "id": "b8189dbf-10c4-4e35-88fa-2e8828f41715",
-  "title": "Publish post-PPC benchmark delta appendix",
-  "description": "Overlay PPC results on the original 64c88ae4 report so the baseline reflects current main.\n\n## Success Criteria\n\n- [hard] The appendix or new report includes GF(2), GF(p), and GF(2^m) post-PPC deltas with ratios.\n- [hard] Existing PPC evidence docs are cited instead of duplicating raw methodology.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-b8189dbf",
+  "claimed_at": "2026-04-30T14:47:20.350068587Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.560026419Z",
   "dependencies": [],
+  "description": "Overlay PPC results on the original 64c88ae4 report so the baseline reflects current main.\n\n## Success Criteria\n\n- [hard] The appendix or new report includes GF(2), GF(p), and GF(2^m) post-PPC deltas with ratios.\n- [hard] Existing PPC evidence docs are cited instead of duplicating raw methodology.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Post-PPC delta appendix",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+    }
+  ],
+  "done_at": "2026-04-30T15:17:11.004780837Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-30T15:17:01.413723593Z"
+      "updated_at": "2026-04-30T15:14:40.131796662Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T15:14:47.013885811Z"
+      "updated_at": "2026-04-30T15:14:47.013885811Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T15:14:40.131796662Z"
+      "updated_at": "2026-04-30T15:17:01.413723593Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
-      "commit": null,
-      "label": "Post-PPC delta appendix",
-      "doc_type": "evidence",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "2026-04-26-uncompetitiveness-profile.md",
-          "resolved_path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-7c954fb5-criterion.txt",
-          "resolved_path": "dev/bench_results/2026-04-29-7c954fb5-criterion.txt",
-          "asset_type": "local",
-          "mime_type": "text/plain",
-          "content_hash": "79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26-profile-release-delta.md",
-          "resolved_path": "dev/bench_results/2026-04-26-profile-release-delta.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-3abb755e-benchmark-gap-closure.md",
-          "resolved_path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26.md",
-          "resolved_path": "dev/bench_results/2026-04-26.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "a8eaa7d61c3ff54cac56c7993988c2b4d050c134ef459da04d9c5e3cb1e13e98",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-27-asm-audit.md",
-          "resolved_path": "dev/bench_results/2026-04-27-asm-audit.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-          "resolved_path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-          "resolved_path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-strassen-matmul-crossover.md",
-          "resolved_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
-          "is_shared": false
-        },
-        {
-          "original_path": "../active/babcf05e-handoff-5.md",
-          "resolved_path": "dev/active/babcf05e-handoff-5.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6",
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "b8189dbf-10c4-4e35-88fa-2e8828f41715",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-baseline-scorecard"
   ],
-  "created_at": "2026-04-30T06:43:02.560026419Z",
-  "updated_at": "2026-07-12T20:02:55.468950563Z",
-  "claimed_at": "2026-04-30T14:47:20.350068587Z",
-  "done_at": "2026-04-30T15:17:11.004780837Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Publish post-PPC benchmark delta appendix",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

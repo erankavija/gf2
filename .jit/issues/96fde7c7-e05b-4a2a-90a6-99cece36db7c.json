@@ -11,7 +11,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": "96fde7c7 pre-impl design sketch (verification work)",
-      "path": "dev/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/96fde7c7/sparse_smoke_gf2core_integration_sketch.md"
     }
   ],
   "done_at": "2026-05-05T05:41:59.359386389Z",
@@ -47,5 +47,5 @@
   "priority": "high",
   "state": "done",
   "title": "sparse_smoke gf2-core integration design + impl",
-  "updated_at": "2026-08-07T21:14:56.317948459Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Phase 4 extension-field matrix GEMM design",
-      "path": "dev/active/873cbec1/873cbec1-extension-field-matrix-gemm-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/873cbec1/873cbec1-extension-field-matrix-gemm-design.md"
     }
   ],
   "done_at": "2026-05-25T07:16:39.023867378Z",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design extension-field matrix GEMM via base-field decomposition (615db3b9 Phase 4)",
-  "updated_at": "2026-08-07T21:14:35.366683442Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

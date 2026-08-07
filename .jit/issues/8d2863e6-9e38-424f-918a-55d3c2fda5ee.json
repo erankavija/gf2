@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "QuadraticExt implementation plan",
-      "path": "dev/plans/8d2863e6/quadratic_ext.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/8d2863e6/quadratic_ext.md"
     }
   ],
   "done_at": "2026-03-06T22:55:41.621322572Z",
@@ -67,5 +67,5 @@
   "priority": "low",
   "state": "done",
   "title": "Implement QuadraticExt<C> with Karatsuba multiplication",
-  "updated_at": "2026-08-07T21:14:53.246264536Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

@@ -1,4 +1,5 @@
 {
+  "archived_from": "done",
   "assignee": "agent:project-lead",
   "claimed_at": "2026-04-30T14:15:19.006890937Z",
   "context": {},
@@ -13,35 +14,35 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "PPC benchmark-gap closure evidence",
-      "path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2) Strassen/M4RI crossover evidence",
-      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(p) fflas-comparable sweep",
-      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2^m) batch GEMM evidence",
-      "path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "FieldMatrix baseline handoff from 64c88ae4",
-      "path": "dev/bench_results/2026-04-26.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26.md"
     },
     {
       "commit": "47e4525",
@@ -79,461 +80,151 @@
       "doc_type": null,
       "format": "markdown",
       "label": "Final SOTA scorecard (16-cell summary across 4 matrix families)",
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "label": "Final SOTA aggregate gf2 measurements (243 rows)",
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
     },
     {
       "commit": null,
       "doc_type": null,
       "label": "Final SOTA aggregate reference measurements (335 rows)",
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Aggregate CSV schema + supersession rules",
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Polynomial parity publication (16-cell scorecard)",
-      "path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "base.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "presentation",
       "format": "html",
       "label": "Final SOTA closure Reveal.js deck (28 slides)",
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 10",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-10.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-10.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 11",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-11.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-11.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 2",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-2.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-2.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 3",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-3.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-3.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 4",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-4.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-4.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 5",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-5.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-5.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 6",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-6.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-6.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 7",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-7.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-7.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 8",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-8.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-8.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 9",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-9.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff-9.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-handoff.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "label": "Container progress record",
-      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-progress.json"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/97bf0879-progress.json"
     },
     {
       "commit": null,
       "doc_type": "meta",
       "format": "markdown",
       "label": "project-lead skill improvements (deferred from 47698404 post-mortem)",
-      "path": "dev/plans/97bf0879-gf2-core-sota-performance/project_lead_skill_improvements.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/project_lead_skill_improvements.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/bench_results/97bf0879-gf2-core-sota-performance/themes/rust.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "base.css",
-          "resolved_path": "dev/bench_results/97bf0879-gf2-core-sota-performance/base.css"
-        }
-      ],
       "commit": null,
       "doc_type": "presentation",
       "format": "html",
       "label": "SOTA journey Reveal.js deck (43 slides — narrative arc)",
-      "path": "dev/bench_results/97bf0879-gf2-core-sota-performance/talk.html"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/talk.html"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Wave-12 bench extension: GF(31) dense-LA PENDING cell measurements",
-      "path": "dev/bench_results/97bf0879-gf2-core-sota-performance/2026-05-08-pending-cell-measurement.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-pending-cell-measurement.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "base.css",
-          "resolved_path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/base.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/rust.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "presentation",
       "format": "html",
       "label": "PPC epic Reveal.js completion deck",
-      "path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html"
     }
   ],
   "done_at": "2026-05-08T21:52:26.258919417Z",
@@ -568,7 +259,7 @@
     "epic:gf2-core-sota-performance"
   ],
   "priority": "high",
-  "state": "done",
+  "state": "archived",
   "title": "Close gf2-core SOTA performance gaps",
-  "updated_at": "2026-08-07T21:18:43.613325551Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

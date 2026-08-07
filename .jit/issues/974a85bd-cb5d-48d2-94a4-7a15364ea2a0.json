@@ -1,121 +1,113 @@
 {
-  "id": "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
-  "title": "Close GF(2) BitMatrix gaps to M4RI",
-  "description": "Close GF(2) BitMatrix performance gaps to M4RI.\n\n## Background\n\nPost-PPC matmul improved substantially but remains about 0.42x M4RI at n=1024 and 0.31x at n=4096. One-level Strassen did not cross over through n=8192, so the next work must target M4RI-style table/cache scheduling and related GF(2) operations.\n\n## Success Criteria\n\n- [hard] GF(2) matmul target rows are within 1.5x of M4RI or faster.\n- [hard] GF(2) echelon/rank rows required by the target matrix are measured and within threshold or have user-approved scope amendments.\n- [hard] A final GF(2) parity report records raw numbers, ratios, and production dispatch policy.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-07T06:22:36.100235808Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.444480246Z",
   "dependencies": [
     "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
     "cbecfced-d91e-404f-a1f9-b2e960f5b55f"
   ],
+  "description": "Close GF(2) BitMatrix performance gaps to M4RI.\n\n## Background\n\nPost-PPC matmul improved substantially but remains about 0.42x M4RI at n=1024 and 0.31x at n=4096. One-level Strassen did not cross over through n=8192, so the next work must target M4RI-style table/cache scheduling and related GF(2) operations.\n\n## Success Criteria\n\n- [hard] GF(2) matmul target rows are within 1.5x of M4RI or faster.\n- [hard] GF(2) echelon/rank rows required by the target matrix are measured and within threshold or have user-approved scope amendments.\n- [hard] A final GF(2) parity report records raw numbers, ratios, and production dispatch policy.",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-04-26-reference.csv",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-reference.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "2026-04-26-gf2.csv",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-gf2.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c37b90f4093fe2ba3045a1bd2f4df3f874dd195c2773a7075687b359ac07245a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "/crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
+          "resolved_path": "crates/gf2-core/examples/m4rm_multiply_perfstat.rs"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4206dc4ed755433923f087223479cbace8713201b398f51789ed03570e5c128b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/0fd48627/2026-05-04-0fd48627-gf2-m4ri-host.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-29-strassen-matmul-crossover.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2) M4RI gap profile (ingested by 0fd48627)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md"
+    }
+  ],
+  "done_at": "2026-05-07T06:49:52.333341608Z",
+  "first_ready_at": "2026-05-06T17:44:51.367392958Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T06:49:51.654801244Z"
+      "updated_at": "2026-05-07T06:22:43.539763567Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T06:44:20.669564118Z"
+      "updated_at": "2026-05-07T06:44:20.669564118Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T06:22:43.539763567Z"
+      "updated_at": "2026-05-07T06:49:51.654801244Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-profile.md",
-      "commit": null,
-      "label": "GF(2) M4RI gap profile (ingested by 0fd48627)",
-      "doc_type": "evidence",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "../active/97bf0879-handoff-2.md",
-          "resolved_path": "dev/active/97bf0879-handoff-2.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "35a8f42e7c105c6f021172c788a5bf82aeed5492611d57adb755632c5dcad423",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
-          "resolved_path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-perf-stat.txt",
-          "asset_type": "local",
-          "mime_type": "text/plain",
-          "content_hash": "0a17b6eee99267fab6c3aa30386015ef86af1ed947d205e581bdd78fac27a63e",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
-          "resolved_path": "crates/gf2-core/examples/m4rm_multiply_perfstat.rs",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "c224b6d2899c41883185ca28546f4f4ab719521a44a77ae716dbc08caa82acaa",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-05-04-0fd48627-gf2-m4ri-host.txt",
-          "resolved_path": "dev/bench_results/2026-05-04-0fd48627-gf2-m4ri-host.txt",
-          "asset_type": "local",
-          "mime_type": "text/plain",
-          "content_hash": "35b331d8b77fe514a30e836ef3a142c2e5345383ddaf540b0129afd1b9de3ec1",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26-reference.csv",
-          "resolved_path": "dev/bench_results/2026-04-26-reference.csv",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "ef6488dc80414b41246a4cad24216ac48a6f1e68effd95dc7eef43a2788904a5",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-strassen-matmul-crossover.md",
-          "resolved_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
-          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26-gf2.csv",
-          "resolved_path": "dev/bench_results/2026-04-26-gf2.csv",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "59e860e297705230a28c8baf6ab8d4c8abc68e28d5ce2d9d7871feb73f0a0254",
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gf2-m4ri"
   ],
-  "created_at": "2026-04-30T06:43:02.444480246Z",
-  "updated_at": "2026-07-12T20:02:55.459120476Z",
-  "first_ready_at": "2026-05-06T17:44:51.367392958Z",
-  "claimed_at": "2026-05-07T06:22:36.100235808Z",
-  "done_at": "2026-05-07T06:49:52.333341608Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Close GF(2) BitMatrix gaps to M4RI",
+  "updated_at": "2026-08-07T21:35:11.186920735Z"
 }

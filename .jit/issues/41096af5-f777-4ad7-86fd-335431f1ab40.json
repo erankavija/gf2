@@ -15,7 +15,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Route selection decision doc with post-wire-in bench results",
-      "path": "dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md"
     }
   ],
   "done_at": "2026-05-25T06:58:38.954436957Z",
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Select and wire the GF(251) production route (615db3b9 Phase 1 fan-in)",
-  "updated_at": "2026-08-07T21:15:09.777452370Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

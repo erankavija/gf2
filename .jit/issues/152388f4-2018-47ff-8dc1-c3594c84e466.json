@@ -14,7 +14,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Design doc — DVB-T2 BICM AWGN campaign runner",
-      "path": "dev/active/152388f4/152388f4-campaign-runner.md"
+      "path": "dev/archive/2928ccce-dvb-t2-awgn-campaign/active/152388f4/152388f4-campaign-runner.md"
     }
   ],
   "done_at": "2026-05-28T12:06:48.504087682Z",
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "done",
   "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
-  "updated_at": "2026-08-07T21:14:30.626828914Z"
+  "updated_at": "2026-08-07T21:28:23.773934966Z"
 }

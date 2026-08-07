@@ -1,74 +1,64 @@
 {
-  "id": "72ab6d0e-60ae-4148-8168-bbfd2b238546",
-  "title": "Close dense factorization and solve gaps",
-  "description": "Close dense factorization and solve gaps after GEMM parity work lands.\n\n## Background\n\nPLE, echelon, invert, solve, determinant, and rank-deficient regimes must inherit the optimized GEMM/TRSM paths rather than remaining separate bottlenecks.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve target rows are within 1.5x of the best accepted reference or faster, scoped per-cell by the maturity markers recorded in the 7e41400f evidence doc.\n- [hard] Rank-deficient regimes are measured and optimized separately from full-rank regimes.\n- [hard] A final dense linear-algebra report records raw numbers, ratios, and block-size/dispatch policy.\n\n## Amendment - 2026-05-07 (user-approved, Path A propagation from 7e41400f)\n\nPer AskUserQuestion 2026-05-07 (7e41400f closure), criterion #1 inherits the per-cell maturity-marker scoping established in `7e41400f`. Empirical basis: `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` and `dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md`.\n\nThe 2 invert/uniform cells (n=256 + n=1024) are [aspirational] with documented algorithm-choice cause (Dumas-Pernet driver vs fflas in-place LU-reuse); follow-up tracked in `d1a5fea8` (Replace Dumas-Pernet inv() driver with in-place LU-reuse), filed as a sibling under this story.\n\nAll other dense LA cells (PLE, echelon, TRSM, solve, det, invert/deficient, invert/uniform/n=64) PASS [hard] per 4eb105f7 § 1.\n\nRe-escalation threshold: re-escalate when `d1a5fea8` closes (revisit invert/uniform cells with fresh measurements).",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-07T10:09:31.637975364Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.503836063Z",
   "dependencies": [
     "2c7548ae-c35b-4a78-b0dc-8aacfd550e93",
     "cc5de315-109f-4178-999c-a47460a571c2",
     "974a85bd-cb5d-48d2-94a4-7a15364ea2a0",
     "4eb105f7-ea4f-4ec9-8003-df75ef48ce15"
   ],
+  "description": "Close dense factorization and solve gaps after GEMM parity work lands.\n\n## Background\n\nPLE, echelon, invert, solve, determinant, and rank-deficient regimes must inherit the optimized GEMM/TRSM paths rather than remaining separate bottlenecks.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve target rows are within 1.5x of the best accepted reference or faster, scoped per-cell by the maturity markers recorded in the 7e41400f evidence doc.\n- [hard] Rank-deficient regimes are measured and optimized separately from full-rank regimes.\n- [hard] A final dense linear-algebra report records raw numbers, ratios, and block-size/dispatch policy.\n\n## Amendment - 2026-05-07 (user-approved, Path A propagation from 7e41400f)\n\nPer AskUserQuestion 2026-05-07 (7e41400f closure), criterion #1 inherits the per-cell maturity-marker scoping established in `7e41400f`. Empirical basis: `dev/bench_results/2026-05-07-7e41400f-invert-solve-det.md` and `dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md`.\n\nThe 2 invert/uniform cells (n=256 + n=1024) are [aspirational] with documented algorithm-choice cause (Dumas-Pernet driver vs fflas in-place LU-reuse); follow-up tracked in `d1a5fea8` (Replace Dumas-Pernet inv() driver with in-place LU-reuse), filed as a sibling under this story.\n\nAll other dense LA cells (PLE, echelon, TRSM, solve, det, invert/deficient, invert/uniform/n=64) PASS [hard] per 4eb105f7 § 1.\n\nRe-escalation threshold: re-escalate when `d1a5fea8` closes (revisit invert/uniform cells with fresh measurements).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense LA post-GEMM scorecard (ingested by 3b762764)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense LA parity evidence (story 72ab6d0e closure)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md"
+    }
+  ],
+  "done_at": "2026-05-07T10:26:35.648116135Z",
+  "first_ready_at": "2026-05-07T06:49:52.903992771Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-07T10:09:35.310796915Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T10:20:44.232521075Z"
+      "updated_at": "2026-05-07T10:20:44.232521075Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T10:26:35.204448238Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T10:09:35.310796915Z"
+      "updated_at": "2026-05-07T10:26:35.204448238Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
-      "commit": null,
-      "label": "Dense LA post-GEMM scorecard (ingested by 3b762764)",
-      "doc_type": "evidence",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
-          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
-      "commit": null,
-      "label": "Dense LA parity evidence (story 72ab6d0e closure)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "72ab6d0e-60ae-4148-8168-bbfd2b238546",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.503836063Z",
-  "updated_at": "2026-07-12T20:02:55.450662629Z",
-  "first_ready_at": "2026-05-07T06:49:52.903992771Z",
-  "claimed_at": "2026-05-07T10:09:31.637975364Z",
-  "done_at": "2026-05-07T10:26:35.648116135Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Close dense factorization and solve gaps",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

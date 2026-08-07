@@ -11,21 +11,21 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "PPC-spiral epic spec doc (per-step protocol + kernel inventory)",
-      "path": "dev/plans/gf2_core_ppc_spiral.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Uncompetitiveness profile (motivation: ThinLTO hypothesis)",
-      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26-uncompetitiveness-profile.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Measured profile.release delta (worker output, 0.91× on SIMD matmul)",
-      "path": "dev/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
     }
   ],
   "done_at": "2026-04-26T19:54:08.722148318Z",
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Add workspace [profile.release] block (lto, codegen-units)",
-  "updated_at": "2026-08-07T21:14:57.137555378Z"
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

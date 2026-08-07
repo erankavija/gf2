@@ -1,13 +1,23 @@
 {
-  "id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8",
-  "title": "Route BitMatrix::matvec through popcnt SIMD dispatch",
-  "description": "Route `BitMatrix::matvec` through AVX2-dispatched popcount machinery at the A1 dense design sizes.\n\n## Background\n\n`BitMatrix::matvec` computes parity per row with scalar `(row_word & x_word).count_ones() % 2`. The SIMD dispatch bundle was already available through `gf2_core::simd::maybe_simd()`, but this path did not use it.\n\nThe original routing-only design attempted to reduce each row using existing logical kernels and then call `popcnt_fn`. Lead review rejected the first implementation because its 512/1024-column speedup came from scalar ILP fallback instead of SIMD routing. The user then approved a scope amendment for R1: add a fused `LogicalFns::and_popcnt_fn` in `gf2-kernels-simd` so the 512/1024 design sizes route through AVX2 while keeping unsafe code isolated in the SIMD kernel crate.\n\nThe accepted fix: for row width >= 8 u64 words (512 columns), `BitMatrix::matvec` calls `LogicalFns::and_popcnt_fn` once per row and uses the low bit of the popcount as the GF(2) dot-product parity. Below threshold, or without an available SIMD backend, it keeps the scalar fallback.\n\n## Success Criteria\n\n- [hard] Existing `matrix.rs` tests pass; new word-boundary `#[test]` for matvec passes at n in {0, 1, 63, 64, 65, 127, 128, 129}.\n- [hard] Proptest equivalence vs. scalar holds for all sizes 0..1024 via the I4 helper.\n- [hard] Crossover threshold documented in code with the bench data point that justifies it.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows the approved fused `vpand` + popcount mnemonics (`vpshufb`, `vpsadbw`, `vpaddq`) in the dispatched call site.\n- [hard] `perf stat -r 10` capture before/after recorded in this JIT issue.\n- [aspirational] >= 1.5x geomean over baseline at design size class (matrices >= 512 x 512). Below the bar: revert and try a different transform; do not merge.\n\n## Perf evidence\n\nCriterion comparator on main after refreshing A1 leaves:\n\n- Baseline: `ppc-v0-2026-04-27 @ 52eaac8`.\n- `dense_matvec/512`: 4127.9 ns baseline, 1752.4 ns new, 2.356x speedup.\n- `dense_matvec/1024`: 12796.5 ns baseline, 4339.5 ns new, 2.949x speedup.\n- Geomean: 2.636x, target >= 1.5x, PASS.\n\n`perf stat -r 10` before/after capture is recorded in `dev/benchmarks/jit-8e4b189c-matvec.txt`:\n\n- Before 512: task-clock:u 1,646.72 msec (+- 9.62%); cycles 7,841,963,728; instructions 28,659,913,752; IPC 3.7; elapsed 1.648834236 +- 0.158433851 s.\n- Before 1024: task-clock:u 1,799.87 msec (+- 1.79%); cycles 8,583,412,208; instructions 31,989,786,831; IPC 3.7; elapsed 1.802012654 +- 0.032136800 s.\n- After 512: task-clock:u 1,931.52 msec (+- 0.22%); cycles 9,178,731,655; instructions 47,826,074,590; IPC 5.2; elapsed 1.933668333 +- 0.004307532 s.\n- After 1024: task-clock:u 1,181.15 msec (+- 0.16%); cycles 5,585,455,595; instructions 28,810,989,455; IPC 5.2; elapsed 1.183225150 +- 0.001845080 s.\n\n## Notes\n\nBench: `matrix_vector` (existing, pinned by I1). Implementation commit: `54c0a21 perf(jit:8e4b189c): route matvec through SIMD popcount`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`. Scope amendment approved by the user during lead review on 2026-04-28.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-8e4b189c",
+  "claimed_at": "2026-04-28T09:49:37.081118004Z",
+  "context": {},
+  "created_at": "2026-04-25T15:17:06.452613859Z",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
+  "description": "Route `BitMatrix::matvec` through AVX2-dispatched popcount machinery at the A1 dense design sizes.\n\n## Background\n\n`BitMatrix::matvec` computes parity per row with scalar `(row_word & x_word).count_ones() % 2`. The SIMD dispatch bundle was already available through `gf2_core::simd::maybe_simd()`, but this path did not use it.\n\nThe original routing-only design attempted to reduce each row using existing logical kernels and then call `popcnt_fn`. Lead review rejected the first implementation because its 512/1024-column speedup came from scalar ILP fallback instead of SIMD routing. The user then approved a scope amendment for R1: add a fused `LogicalFns::and_popcnt_fn` in `gf2-kernels-simd` so the 512/1024 design sizes route through AVX2 while keeping unsafe code isolated in the SIMD kernel crate.\n\nThe accepted fix: for row width >= 8 u64 words (512 columns), `BitMatrix::matvec` calls `LogicalFns::and_popcnt_fn` once per row and uses the low bit of the popcount as the GF(2) dot-product parity. Below threshold, or without an available SIMD backend, it keeps the scalar fallback.\n\n## Success Criteria\n\n- [hard] Existing `matrix.rs` tests pass; new word-boundary `#[test]` for matvec passes at n in {0, 1, 63, 64, 65, 127, 128, 129}.\n- [hard] Proptest equivalence vs. scalar holds for all sizes 0..1024 via the I4 helper.\n- [hard] Crossover threshold documented in code with the bench data point that justifies it.\n- [hard] Sibling `*.asm.txt` artefact regenerated and shows the approved fused `vpand` + popcount mnemonics (`vpshufb`, `vpsadbw`, `vpaddq`) in the dispatched call site.\n- [hard] `perf stat -r 10` capture before/after recorded in this JIT issue.\n- [aspirational] >= 1.5x geomean over baseline at design size class (matrices >= 512 x 512). Below the bar: revert and try a different transform; do not merge.\n\n## Perf evidence\n\nCriterion comparator on main after refreshing A1 leaves:\n\n- Baseline: `ppc-v0-2026-04-27 @ 52eaac8`.\n- `dense_matvec/512`: 4127.9 ns baseline, 1752.4 ns new, 2.356x speedup.\n- `dense_matvec/1024`: 12796.5 ns baseline, 4339.5 ns new, 2.949x speedup.\n- Geomean: 2.636x, target >= 1.5x, PASS.\n\n`perf stat -r 10` before/after capture is recorded in `dev/benchmarks/jit-8e4b189c-matvec.txt`:\n\n- Before 512: task-clock:u 1,646.72 msec (+- 9.62%); cycles 7,841,963,728; instructions 28,659,913,752; IPC 3.7; elapsed 1.648834236 +- 0.158433851 s.\n- Before 1024: task-clock:u 1,799.87 msec (+- 1.79%); cycles 8,583,412,208; instructions 31,989,786,831; IPC 3.7; elapsed 1.802012654 +- 0.032136800 s.\n- After 512: task-clock:u 1,931.52 msec (+- 0.22%); cycles 9,178,731,655; instructions 47,826,074,590; IPC 5.2; elapsed 1.933668333 +- 0.004307532 s.\n- After 1024: task-clock:u 1,181.15 msec (+- 0.16%); cycles 5,585,455,595; instructions 28,810,989,455; IPC 5.2; elapsed 1.183225150 +- 0.001845080 s.\n\n## Notes\n\nBench: `matrix_vector` (existing, pinned by I1). Implementation commit: `54c0a21 perf(jit:8e4b189c): route matvec through SIMD popcount`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`. Scope amendment approved by the user during lead review on 2026-04-28.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "PPC spiral spec",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md"
+    }
+  ],
+  "done_at": "2026-04-28T13:22:13.871319030Z",
+  "first_ready_at": "2026-04-25T19:18:07.062141261Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -16,30 +26,21 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T13:05:11.142460395Z"
+      "updated_at": "2026-04-28T13:05:11.142460395Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T13:19:17.372988003Z"
+      "updated_at": "2026-04-28T13:19:17.372988003Z",
+      "updated_by": "auto:executor"
     },
     "criterion-1.5x": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T13:08:43.527541879Z"
+      "updated_at": "2026-04-28T13:08:43.527541879Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/gf2_core_ppc_spiral.md",
-      "commit": null,
-      "label": "PPC spiral spec",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "8e4b189c-75a6-4c93-8056-c3c9c994b1c8",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -47,9 +48,8 @@
     "story:ppc-dispatch-routing",
     "ppc-kernel:A1"
   ],
-  "created_at": "2026-04-25T15:17:06.452613859Z",
-  "updated_at": "2026-07-12T20:02:55.456650644Z",
-  "first_ready_at": "2026-04-25T19:18:07.062141261Z",
-  "claimed_at": "2026-04-28T09:49:37.081118004Z",
-  "done_at": "2026-04-28T13:22:13.871319030Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Route BitMatrix::matvec through popcnt SIMD dispatch",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

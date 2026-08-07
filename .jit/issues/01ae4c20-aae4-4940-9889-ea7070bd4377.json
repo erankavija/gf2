@@ -1,180 +1,74 @@
 {
-  "id": "01ae4c20-aae4-4940-9889-ea7070bd4377",
-  "title": "Publish final gf2-core SOTA closure report",
-  "description": "Publish the final gf2-core SOTA closure report and presentation.\n\n## Background\n\nThe epic should close with a single authoritative scorecard, raw CSVs, linked evidence, and a Reveal.js presentation summarizing achieved ratios and remaining non-goal boundaries.\n\n## Success Criteria\n\n- [hard] Final raw CSVs and markdown scorecard cover every in-scope benchmark cell and reference owner.\n- [hard] A Reveal.js presentation is linked to the epic and summarizes ratios, algorithms, no-go decisions, and future research.\n- [hard] All child stories are done, gates pass, and the epic can serve as the SOTA checkpoint for b117c95e.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-08T18:42:55.904691184Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.531571131Z",
   "dependencies": [
     "54fd3f0b-60d9-439c-90d1-e54c470f2563",
     "8f3fdc34-66aa-4c94-8919-a31bdd94ebb3"
   ],
+  "description": "Publish the final gf2-core SOTA closure report and presentation.\n\n## Background\n\nThe epic should close with a single authoritative scorecard, raw CSVs, linked evidence, and a Reveal.js presentation summarizing achieved ratios and remaining non-goal boundaries.\n\n## Success Criteria\n\n- [hard] Final raw CSVs and markdown scorecard cover every in-scope benchmark cell and reference owner.\n- [hard] A Reveal.js presentation is linked to the epic and summarizes ratios, algorithms, no-go decisions, and future research.\n- [hard] All child stories are done, gates pass, and the epic can serve as the SOTA checkpoint for b117c95e.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Final SOTA scorecard (16-cell summary, all matrix families)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "SOTA aggregate gf2 measurements",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "SOTA aggregate reference measurements",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "Final SOTA closure Reveal.js deck (28 slides)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+    }
+  ],
+  "done_at": "2026-05-08T18:47:07.718132398Z",
+  "first_ready_at": "2026-05-08T18:42:32.989171398Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T18:43:24.794308509Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T18:43:18.411272923Z"
+      "updated_at": "2026-05-08T18:43:18.411272923Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-08T18:43:24.794308509Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T18:43:24.729019441Z"
+      "updated_at": "2026-05-08T18:43:24.729019441Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
-      "commit": null,
-      "label": "Final SOTA scorecard (16-cell summary, all matrix families)",
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
-      "commit": null,
-      "label": "SOTA aggregate gf2 measurements",
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
-      "commit": null,
-      "label": "SOTA aggregate reference measurements",
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
-      "commit": null,
-      "label": "Final SOTA closure Reveal.js deck (28 slides)",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "base.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "01ae4c20-aae4-4940-9889-ea7070bd4377",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-final-scorecard"
   ],
-  "created_at": "2026-04-30T06:43:02.531571131Z",
-  "updated_at": "2026-07-14T20:51:49.700241792Z",
-  "first_ready_at": "2026-05-08T18:42:32.989171398Z",
-  "claimed_at": "2026-05-08T18:42:55.904691184Z",
-  "done_at": "2026-05-08T18:47:07.718132398Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Publish final gf2-core SOTA closure report",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

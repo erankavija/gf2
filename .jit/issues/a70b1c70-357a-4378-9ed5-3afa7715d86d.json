@@ -11,7 +11,7 @@
       "doc_type": "research",
       "format": "markdown",
       "label": "Phase 0 controls evidence",
-      "path": "dev/bench_results/a70b1c70/2026-05-24-a70b1c70-phase0-controls.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/a70b1c70/2026-05-24-a70b1c70-phase0-controls.md"
     }
   ],
   "done_at": "2026-05-24T05:47:44.730316863Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Refresh GF(251) and control-lane benchmarks (615db3b9 Phase 0)",
-  "updated_at": "2026-08-07T21:15:08.596264529Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

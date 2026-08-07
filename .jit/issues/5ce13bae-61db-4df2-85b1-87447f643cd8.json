@@ -7,28 +7,18 @@
   "description": "gf2-core's sparse Gauss-Jordan elimination uses a straight-line column-sweep that doesn't match LinBox's `GaussDomain::NoReordering` pivot-priority strategy. Cross-ratios (sparse-elim × {GF(2), GF(7), GF(251), GF(65521), GF(2^31-1)} at n=256/1024 density 3.9%/0.98%) are uniformly 1.97x-2.61x of LinBox — uniformly outside the 1.5x SOTA contract.\n\n## Background\n\nPer `dev/bench_results/2026-05-04-47698404-sparse-scorecard.md` § 4 *Feasible CPU gaps* and `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` § 4.4, this is an algorithmic gap, not a kernel-tuning gap. LinBox stores priority-queue pivots and does early-out on dependent rows; gf2-core does straight-line sparse Gauss-Jordan.\n\n## Success Criteria\n\n- [hard] Implement Markowitz-degree pivot selection in `SpBitMatrix::rref` (GF(2)) and `SparseFieldMatrix::rref` (GF(p)).\n- [hard] Cross-ratios for **7 of the 10** sparse-elim cells (GF(2)/GF(p) × {n=256, n=1024} × scorecard densities) come within 1.5x of LinBox `GaussDomain::NoReordering`. The remaining 3 cells are amended to `[aspirational]` per the user-approved 2026-05-24 amendment below.\n- [aspirational] GF(7)/GF(251)/GF(65521) at n=256 (dense regime density=3.9%) deliver at least 1.35x speedup over the pre-Markowitz baseline. Architectural cause: per-pivot O(m) argmin scan + Montgomery REDC per axpy element dominate at small dense n; achievable ratios on the implemented algorithm are 0.516 / 0.604 / 0.627 vs the 0.667 threshold. Closing the residual gap requires lazy-reduction MAC, sparse priority queue, or block elimination — each a separate scoped follow-up.\n- [hard] Bit-exact equality vs a canonical Gauss-Jordan reference (the worker's `direct_rref_reference_fp` / `_g8` textbook oracle) — the originally-named `FieldMatrix::rref` dense reference cannot be used because of a separately-discovered pre-existing non-canonical-RREF bug in its PLE path (see follow-up issue).\n- [hard] No regression on the existing sparse-rref proptests in `crates/gf2-core/src/sparse.rs::tests`.\n- [hard] Filed under epic 97bf0879 umbrella amendment A8 as named follow-up for the 10 sparse-elim FAIL cells documented in `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` § 4.4.\n\n## Amendment — 2026-05-24 (user-approved)\n\nOriginal criterion 2 required all 10 sparse-elim cells to reach within 1.5× of LinBox. Empirical 5-trial CCX1-pinned measurement post-Markowitz delivers:\n\n| Field | n | ratio (gf2/LinBox) | speedup vs pre | verdict |\n|---|---:|---:|---:|---|\n| GF(2) | 256 | 0.782 | 1.68× | [hard] PASS |\n| GF(2) | 1024 | 0.745 | 1.65× | [hard] PASS |\n| GF(7) | 256 | 0.516 | 1.35× | [aspirational] |\n| GF(7) | 1024 | 0.669 | 1.56× | [hard] PASS |\n| GF(251) | 256 | 0.604 | 1.42× | [aspirational] |\n| GF(251) | 1024 | 0.749 | 1.60× | [hard] PASS |\n| GF(65521) | 256 | 0.627 | 1.43× | [aspirational] |\n| GF(65521) | 1024 | 0.791 | 1.56× | [hard] PASS |\n| GF(2^31-1) | 256 | 0.720 | 1.54× | [hard] PASS |\n| GF(2^31-1) | 1024 | 0.857 | 1.76× | [hard] PASS |\n\nArchitectural cause for the 3 [aspirational] cells (GF(7)/GF(251)/GF(65521) at n=256): all GF(p) at the smaller-n + denser regime where per-pivot O(m) argmin scan and Montgomery REDC per axpy element dominate. All 3 deliver 1.35×-1.43× speedup over pre-Markowitz baseline; closing the residual 0.04–0.15 gap to the 1.5× threshold requires a separate optimisation pass (lazy-reduction MAC, sparse priority queue, or block elimination at small n). Same architectural pattern as 27bb2f75's small-n dispatch overhead (closed via table-lookup pack/unpack for n=64 dense GEMM).\n\nUser-approved amendment recorded at session-2 close, 2026-05-24. Aggregate contract: 7/10 cells [hard] PASS; 3/10 cells [aspirational] PASS at 1.35×-1.43× speedup over pre-Markowitz baseline (all 10 cells improved by Markowitz).\n\nEvidence: `dev/bench_results/2026-05-24-5ce13bae-markowitz-sparse-rref.md` § 5.",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://en.wikipedia.org/wiki/Sparse_matrix",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Markowitz pivot selection design note",
-      "path": "dev/active/5ce13bae/5ce13bae-markowitz-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/5ce13bae/5ce13bae-markowitz-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Markowitz sparse RREF evidence",
-      "path": "dev/bench_results/5ce13bae/2026-05-24-5ce13bae-markowitz-sparse-rref.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5ce13bae/2026-05-24-5ce13bae-markowitz-sparse-rref.md"
     }
   ],
   "done_at": "2026-05-24T11:21:08.503216057Z",
@@ -62,5 +52,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Markowitz-degree pivot selection for sparse RREF",
-  "updated_at": "2026-08-07T21:15:07.437399744Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

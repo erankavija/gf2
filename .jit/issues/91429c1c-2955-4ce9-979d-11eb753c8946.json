@@ -12,45 +12,45 @@
       "commit": null,
       "doc_type": "implementation",
       "label": "Route B BLAS cascade harness (out-of-tree, non-workspace; FieldMatrix + canonical-byte entrypoints)",
-      "path": "dev/research/blas_sgemm_gf251/src/lib.rs"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/lib.rs"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "label": "Route B CBLAS FFI surface (cblas_sgemm + OpenBLAS thread-control extern decls)",
-      "path": "dev/research/blas_sgemm_gf251/src/blas_ffi.rs"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/src/blas_ffi.rs"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "label": "Route B bit-exact equality tests vs Candidate C at n in {64,256,1024}",
-      "path": "dev/research/blas_sgemm_gf251/tests/bit_exact.rs"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/research/blas_sgemm_gf251/tests/bit_exact.rs"
     },
     {
       "commit": null,
       "doc_type": "data",
       "label": "Route B aggregate CSV (5-trial median/Q1/Q3/IQR per cell)",
-      "path": "dev/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas-aggregate.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas-aggregate.csv"
     },
     {
       "commit": null,
       "doc_type": "data",
       "label": "Route B raw 5-trial CSV (n in {64,256,1024}, route_b_full + route_b_canon)",
-      "path": "dev/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.csv"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Route B BLAS-cascade evidence",
-      "path": "dev/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/2026-05-24-91429c1c-route-b-blas.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Route B 5-trial CCX1-pinned bench driver",
-      "path": "dev/bench_results/91429c1c/run_91429c1c_route_b_bench.sh"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/91429c1c/run_91429c1c_route_b_bench.sh"
     }
   ],
   "done_at": "2026-05-24T20:42:49.357492776Z",
@@ -86,5 +86,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Prototype optional BLAS-backed GF(251) cascade (615db3b9 Phase 1 route B)",
-  "updated_at": "2026-08-07T21:15:13.535253937Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

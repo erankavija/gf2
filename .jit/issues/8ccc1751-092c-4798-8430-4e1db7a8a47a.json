@@ -1,80 +1,80 @@
 {
-  "id": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
-  "title": "Publish polynomial parity evidence",
-  "description": "Publish final charpoly/minpoly evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Algorithmic dispatch and non-goal boundaries are documented.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-07T21:00:23.927946180Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.881646211Z",
   "dependencies": [
     "b87362a3-a021-4508-a544-0228ff5c8665"
   ],
+  "description": "Publish final charpoly/minpoly evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Algorithmic dispatch and non-goal boundaries are documented.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "polynomial-parity-publish",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "integrated-16-cell-scorecard",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "charpoly-reference-csv",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "label": "minpoly-reference-csv",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-minpoly-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "reference-promotion-evidence",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md"
+    }
+  ],
+  "done_at": "2026-05-07T21:08:40.674733381Z",
+  "first_ready_at": "2026-05-07T20:59:40.965682809Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T16:52:25.008315080Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T21:03:40.758648324Z"
+      "updated_at": "2026-05-07T21:03:40.758648324Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T21:03:54.397636826Z"
+      "updated_at": "2026-05-07T21:03:54.397636826Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-08T16:52:25.008315080Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
-      "commit": null,
-      "label": "polynomial-parity-publish",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
-      "commit": null,
-      "label": "integrated-16-cell-scorecard",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv",
-      "commit": null,
-      "label": "charpoly-reference-csv",
-      "doc_type": "design"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv",
-      "commit": null,
-      "label": "minpoly-reference-csv",
-      "doc_type": "design"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
-      "commit": null,
-      "label": "reference-promotion-evidence",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "8ccc1751-092c-4798-8430-4e1db7a8a47a",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-04-30T06:43:02.881646211Z",
-  "updated_at": "2026-07-12T20:02:55.455929443Z",
-  "first_ready_at": "2026-05-07T20:59:40.965682809Z",
-  "claimed_at": "2026-05-07T21:00:23.927946180Z",
-  "done_at": "2026-05-07T21:08:40.674733381Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Publish polynomial parity evidence",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

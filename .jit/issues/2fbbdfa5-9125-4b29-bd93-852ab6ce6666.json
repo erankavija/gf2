@@ -17,7 +17,7 @@
       "doc_type": "verification",
       "format": "markdown",
       "label": "gfx1030 dispatcher run evidence",
-      "path": "dev/active/ae82bd73-gf2-algebra-permanent/ae82bd73-w5-gpu-dispatcher-verification.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/ae82bd73-w5-gpu-dispatcher-verification.md"
     }
   ],
   "done_at": "2026-05-15T13:42:35.943441922Z",
@@ -47,5 +47,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Host-side GPU dispatcher in gf2-algebra",
-  "updated_at": "2026-08-07T21:16:28.764110195Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

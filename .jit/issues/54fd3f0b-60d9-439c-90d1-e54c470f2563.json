@@ -14,58 +14,58 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Sparse benchmark corpus + references (ingested by a3412e15)",
-      "path": "dev/plans/sparse_benchmark_corpus.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_benchmark_corpus.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "label": null,
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse-reference.csv"
     },
     {
       "commit": null,
       "doc_type": null,
       "label": null,
-      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv"
-    },
-    {
-      "commit": null,
-      "doc_type": null,
-      "format": "markdown",
-      "label": null,
-      "path": "dev/plans/sparse_cpu_vs_gpu_handoff.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse.csv"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": null,
-      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md"
-    },
-    {
-      "commit": null,
-      "doc_type": null,
-      "label": null,
-      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv"
-    },
-    {
-      "commit": null,
-      "doc_type": null,
-      "label": null,
-      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/sparse_cpu_vs_gpu_handoff.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": null,
-      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "label": null,
-      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv"
     }
   ],
   "done_at": "2026-05-07T10:06:57.477206638Z",
@@ -102,5 +102,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
-  "updated_at": "2026-08-07T21:15:04.799461629Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

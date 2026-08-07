@@ -13,14 +13,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Route A f32/FMA design note",
-      "path": "dev/active/68cdf4c8/68cdf4c8-route-a-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/68cdf4c8/68cdf4c8-route-a-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Route A f32/FMA cascade evidence",
-      "path": "dev/bench_results/68cdf4c8/2026-05-24-68cdf4c8-route-a-f32-cascade.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/68cdf4c8/2026-05-24-68cdf4c8-route-a-f32-cascade.md"
     }
   ],
   "done_at": "2026-05-24T19:55:53.389163291Z",
@@ -57,5 +57,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Prototype in-Rust GF(251) f32/FMA cascade (615db3b9 Phase 1 route A)",
-  "updated_at": "2026-08-07T21:15:07.668734846Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

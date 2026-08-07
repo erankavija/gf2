@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2) parity evidence (story 974a85bd closure)",
-      "path": "dev/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md"
     }
   ],
   "done_at": "2026-05-06T17:44:51.072178753Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Publish GF(2) parity evidence",
-  "updated_at": "2026-08-07T21:15:00.844934945Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

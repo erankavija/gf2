@@ -14,14 +14,14 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Panelized PLE R0 evidence",
-      "path": "dev/bench_results/6823c8a0/2026-05-26-6823c8a0-panelized-ple.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-panelized-ple.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Recursive PLUQ R1 evidence (4 of 6 GF(251) cells PASS)",
-      "path": "dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md"
     }
   ],
   "done_at": "2026-05-26T19:29:28.657565128Z",
@@ -58,5 +58,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement panelized GF(p) PLE/LU — small-prime family (026fc832 Phase 6)",
-  "updated_at": "2026-08-07T21:15:11.169042809Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

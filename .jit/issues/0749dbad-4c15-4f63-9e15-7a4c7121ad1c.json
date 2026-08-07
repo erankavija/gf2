@@ -11,7 +11,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "f64 GEMM cascade evidence — GF(65521)/n=4096 1.732→1.283 PASS + non-regression sweep",
-      "path": "dev/bench_results/0749dbad/2026-05-27-0749dbad-fp-medium-f64-cascade.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/0749dbad/2026-05-27-0749dbad-fp-medium-f64-cascade.md"
     }
   ],
   "done_at": "2026-05-28T14:00:45.546698645Z",
@@ -48,5 +48,5 @@
   "priority": "normal",
   "state": "done",
   "title": "f64 GEMM cascade for fp_medium (695350fd Phase 6e)",
-  "updated_at": "2026-08-07T21:15:11.894063936Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

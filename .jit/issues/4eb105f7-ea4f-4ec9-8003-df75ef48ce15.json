@@ -1,54 +1,54 @@
 {
-  "id": "4eb105f7-ea4f-4ec9-8003-df75ef48ce15",
-  "title": "Publish dense LA parity evidence",
-  "description": "Publish final dense linear-algebra evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Block-size and dispatch policy are documented.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-07T06:06:41.663941822Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.834989508Z",
   "dependencies": [
     "7e41400f-187f-4d28-b316-49cbb127189d"
   ],
+  "description": "Publish final dense linear-algebra evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Block-size and dispatch policy are documented.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense LA parity evidence (story 72ab6d0e closure)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md"
+    }
+  ],
+  "done_at": "2026-05-07T06:21:07.194497442Z",
+  "first_ready_at": "2026-05-07T06:06:31.907695751Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-07T06:12:30.965809008Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T06:16:39.071560042Z"
+      "updated_at": "2026-05-07T06:16:39.071560042Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T06:21:06.617282527Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T06:12:30.965809008Z"
+      "updated_at": "2026-05-07T06:21:06.617282527Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-07-4eb105f7-dense-la-parity-evidence.md",
-      "commit": null,
-      "label": "Dense LA parity evidence (story 72ab6d0e closure)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "4eb105f7-ea4f-4ec9-8003-df75ef48ce15",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.834989508Z",
-  "updated_at": "2026-07-12T20:02:55.441472883Z",
-  "first_ready_at": "2026-05-07T06:06:31.907695751Z",
-  "claimed_at": "2026-05-07T06:06:41.663941822Z",
-  "done_at": "2026-05-07T06:21:07.194497442Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Publish dense LA parity evidence",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

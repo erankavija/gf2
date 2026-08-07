@@ -12,20 +12,20 @@
       "commit": null,
       "doc_type": "evidence",
       "label": "gf2 panelized GEMM rows GF(2^8)/GF(2^16)",
-      "path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2m-panelized.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "gf2 panelized GEMM rows GF(2^32)",
-      "path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-gf2pow32-panelized.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Panelized GF(2^m) GEMM evidence (e24f7839)",
-      "path": "dev/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/e24f7839/2026-05-06-e24f7839-panelized-gf2m-gemm.md"
     }
   ],
   "done_at": "2026-05-06T21:09:53.604625195Z",
@@ -62,5 +62,5 @@
   "priority": "high",
   "state": "done",
   "title": "Implement panelized GF(2^m) GEMM",
-  "updated_at": "2026-08-07T21:15:03.399466406Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

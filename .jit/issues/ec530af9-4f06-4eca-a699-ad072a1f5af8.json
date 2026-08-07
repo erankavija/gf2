@@ -10,7 +10,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Phase 0 design doc — gf2-sim pipeline",
-      "path": "dev/active/ec530af9/ec530af9-pipeline-design.md"
+      "path": "dev/archive/f9717e7e-gf2-sim/active/ec530af9/ec530af9-pipeline-design.md"
     }
   ],
   "gates_required": [
@@ -32,5 +32,5 @@
   "priority": "high",
   "state": "done",
   "title": "Pipeline design doc — gf2-sim",
-  "updated_at": "2026-08-07T21:14:45.180725926Z"
+  "updated_at": "2026-08-07T21:28:28.028611624Z"
 }

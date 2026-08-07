@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GFNI/AVX-512 evaluation decision (fb271c41)",
-      "path": "dev/plans/fb271c41/gf2m_avx512_gfni_evaluation.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/fb271c41/gf2m_avx512_gfni_evaluation.md"
     }
   ],
   "done_at": "2026-05-06T19:01:27.173209098Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Evaluate GFNI and AVX-512 follow-on routing",
-  "updated_at": "2026-08-07T21:14:50.944299431Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -13,21 +13,21 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "gf2_core_ppc_spiral.md",
-      "path": "dev/plans/gf2_core_ppc_spiral.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "2026-04-26-uncompetitiveness-profile.md",
-      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-26-uncompetitiveness-profile.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "085cbd0b-benchmark-gap-strategy.md",
-      "path": "dev/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
     }
   ],
   "done_at": "2026-04-27T22:30:34.055577714Z",
@@ -65,5 +65,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Hoist maybe_simd() out of xor_inplace hot path",
-  "updated_at": "2026-08-07T21:16:31.092248702Z"
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

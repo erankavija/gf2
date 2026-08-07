@@ -14,7 +14,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": null,
-      "path": "dev/active/a7886bd8/a7886bd8-amendments-2026-05-11.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/a7886bd8/a7886bd8-amendments-2026-05-11.md"
     }
   ],
   "done_at": "2026-05-11T18:53:57.072646799Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Multi-word streaming column-sum for n greater than 64",
-  "updated_at": "2026-08-07T21:14:37.700942978Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

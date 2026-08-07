@@ -1,10 +1,8 @@
 {
-  "id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07",
-  "title": "Run Phase 3 AWGN simulation: Fig 7 GLDPC vs 5G NR LDPC",
-  "description": "Run the GLDPC vs 5G NR LDPC simulation from Figure 7.\n\n## Figure 7: (1024, 646) QC-GLDPC vs 5G NR LDPC\n\n- GLDPC: QC structure with eBCH check nodes, BP + SOGRAND\n- LDPC: 5G NR, BP (I_max=50)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–4 dB\n\n**Note:** The QC-GLDPC code has actual dimension (1024, 646) due to circulant rank deficiency (see d0e2af0c and epic Open Issues). The 5G NR LDPC baseline is rate-matched to (1024, 646) for a fair comparison.\n\n## Acceptance Criteria\n\n- Simulation runs to completion with sufficient statistics: >=100 frame errors per SNR point where BLER > 0.01; at least 5000 frames at remaining deep-waterfall points where collecting 100 errors is computationally infeasible.\n- Results compared against paper's reference data.\n- GLDPC performance is documented relative to 5G NR LDPC.\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-07T09:06:38.062548661Z",
+  "context": {},
+  "created_at": "2026-02-22T21:16:05.912701895Z",
   "dependencies": [
     "d0e2af0c-8d51-4dbd-bbde-04da9947313c",
     "6bf5dd47-6af0-49c5-a0fe-38759f0d0967",
@@ -12,6 +10,18 @@
     "a4d86b3d-05e7-4596-939b-e09f9dd35e55",
     "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c"
   ],
+  "description": "Run the GLDPC vs 5G NR LDPC simulation from Figure 7.\n\n## Figure 7: (1024, 646) QC-GLDPC vs 5G NR LDPC\n\n- GLDPC: QC structure with eBCH check nodes, BP + SOGRAND\n- LDPC: 5G NR, BP (I_max=50)\n- Metrics: BLER, BER, queries/bit, iterations\n- Eb/N0 range: 0–4 dB\n\n**Note:** The QC-GLDPC code has actual dimension (1024, 646) due to circulant rank deficiency (see d0e2af0c and epic Open Issues). The 5G NR LDPC baseline is rate-matched to (1024, 646) for a fair comparison.\n\n## Acceptance Criteria\n\n- Simulation runs to completion with sufficient statistics: >=100 frame errors per SNR point where BLER > 0.01; at least 5000 frames at remaining deep-waterfall points where collecting 100 errors is computationally infeasible.\n- Results compared against paper's reference data.\n- GLDPC performance is documented relative to 5G NR LDPC.\n- Results saved in CSV/JSON format.\n\n## Location\n\nExtend simulation runners.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "SOGRAND n=32 soft-output quality analysis",
+      "path": "dev/archive/6efb756b-grand/active/sogrand-n32-analysis.md"
+    }
+  ],
+  "done_at": "2026-04-10T16:02:27.117396183Z",
+  "first_ready_at": "2026-04-07T09:05:06.340294572Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -19,46 +29,36 @@
     "tdd-reminder"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-10T16:02:21.709168260Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T15:55:07.269043576Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-07T09:06:36.847389487Z"
+      "updated_at": "2026-04-10T15:55:07.269043576Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-10T15:56:12.710078063Z"
+      "updated_at": "2026-04-10T15:56:12.710078063Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-10T16:02:21.709168260Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-07T09:06:36.847389487Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/sogrand-n32-analysis.md",
-      "commit": null,
-      "label": "SOGRAND n=32 soft-output quality analysis",
-      "doc_type": "notes",
-      "format": "markdown"
-    }
-  ],
+  "id": "3ce1cd12-d0d6-421b-b005-3cfb6d448f07",
   "labels": [
     "type:story",
     "epic:grand",
     "component:gf2-coding",
     "story:run-phase-3-awgn-simulation-fig-7-gldpc-vs-5g-nr-ldpc"
   ],
-  "created_at": "2026-02-22T21:16:05.912701895Z",
-  "updated_at": "2026-07-14T20:49:35.482864313Z",
-  "first_ready_at": "2026-04-07T09:05:06.340294572Z",
-  "claimed_at": "2026-04-07T09:06:38.062548661Z",
-  "done_at": "2026-04-10T16:02:27.117396183Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Run Phase 3 AWGN simulation: Fig 7 GLDPC vs 5G NR LDPC",
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

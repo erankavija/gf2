@@ -15,34 +15,34 @@
       "doc_type": "data",
       "format": "markdown",
       "label": "GPU high-N resample CSV (18 cells: q=3 n=6..32, F_5 n=8..24, F_7 n=8..20; all genuine PASS diff_q95<0; 8e4e19a0 schema, seed-pinned)",
-      "path": "dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv"
     },
     {
       "commit": null,
       "doc_type": "figure",
       "label": "TVD vs n plot (perm + det, CI bands, faceted by q=3/5/7; 18-cell high-N GPU resample)",
-      "path": "dev/benchmarks/perm_uniformity/tvd_vs_n_gpu.png"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/perm_uniformity/tvd_vs_n_gpu.png"
     },
     {
       "commit": null,
       "doc_type": "decision",
       "format": "markdown",
       "label": "Recorded amendment",
-      "path": "dev/active/b293af5a/b293af5a-amendment.txt"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/b293af5a/b293af5a-amendment.txt"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Impl handoff",
-      "path": "dev/active/b293af5a/b293af5a-impl-handoff.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/b293af5a/b293af5a-impl-handoff.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "R4 GPU high-N uniformity resample writeup (q=3 headline reproduced; F_5/F_7 extended to n=20; vs HKS + 8e4e19a0)",
-      "path": "dev/plans/b293af5a/r4_gpu_uniformity_resample.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md"
     }
   ],
   "done_at": "2026-05-22T21:44:04.791750183Z",
@@ -71,5 +71,5 @@
   "priority": "normal",
   "state": "done",
   "title": "GPU-accelerated high-N uniformity resample — reproduce perm→uniform convergence (F_3 large-n, F_5, F_7)",
-  "updated_at": "2026-08-07T21:14:54.442144500Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

@@ -11,26 +11,26 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(p) by-prime-family classification",
-      "path": "dev/bench_results/2026-05-04-609855d9-gfp-by-family.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-609855d9-gfp-by-family.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "GF(31) bench-day supplement (closes MEASUREMENT GAP)",
-      "path": "dev/bench_results/609855d9/2026-05-04-609855d9-gf31-supplement.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gf31-supplement.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(p) by-family worktree host capture",
-      "path": "dev/bench_results/609855d9/2026-05-04-609855d9-gfp-host.txt"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-host.txt"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "GF(p) by-family consolidated reference CSV",
-      "path": "dev/bench_results/609855d9/2026-05-04-609855d9-gfp-reference.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/609855d9/2026-05-04-609855d9-gfp-reference.csv"
     }
   ],
   "done_at": "2026-05-04T14:29:21.616730308Z",
@@ -66,5 +66,5 @@
   "priority": "high",
   "state": "done",
   "title": "Classify GF(p) gap by prime family",
-  "updated_at": "2026-08-07T21:15:00.150545597Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

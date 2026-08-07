@@ -13,7 +13,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "S1 speedup results and escalation",
-      "path": "dev/plans/c98ed603/s1_speedup_results.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/c98ed603/s1_speedup_results.md"
     }
   ],
   "done_at": "2026-05-12T05:52:39.876249321Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "50x single-thread speedup vs reference at n=36",
-  "updated_at": "2026-08-07T21:14:54.907659550Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

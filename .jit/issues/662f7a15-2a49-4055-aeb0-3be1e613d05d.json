@@ -31,13 +31,13 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Mersenne+Fp65537 non-regression (same-session pre/post)",
-      "path": "dev/bench_results/662f7a15/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "Small-prime sweep aggregate (5-trial median, 22 cells)",
-      "path": "dev/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv"
     }
   ],
   "done_at": "2026-05-06T10:43:00.288973082Z",
@@ -74,5 +74,5 @@
   "priority": "high",
   "state": "done",
   "title": "Implement small-prime GEMM kernels",
-  "updated_at": "2026-08-07T21:15:01.762578001Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

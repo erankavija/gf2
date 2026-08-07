@@ -11,14 +11,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Canonical RREF fix design note",
-      "path": "dev/active/bd9c6e13/bd9c6e13-canonical-rref-fix.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/bd9c6e13/bd9c6e13-canonical-rref-fix.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Canonical RREF fix evidence",
-      "path": "dev/bench_results/bd9c6e13/2026-05-24-bd9c6e13-canonical-rref-fix.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bd9c6e13/2026-05-24-bd9c6e13-canonical-rref-fix.md"
     }
   ],
   "done_at": "2026-05-24T19:10:35.378412502Z",
@@ -53,5 +53,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Fix non-canonical RREF in FieldMatrix::rref dense PLE path",
-  "updated_at": "2026-08-07T21:15:09.286601810Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

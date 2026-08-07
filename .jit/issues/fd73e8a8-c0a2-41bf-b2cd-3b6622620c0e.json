@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Design doc — resumable observable SimulationRunner",
-      "path": "dev/active/fd73e8a8/fd73e8a8-resumable-runner.md"
+      "path": "dev/archive/2928ccce-dvb-t2-awgn-campaign/active/fd73e8a8/fd73e8a8-resumable-runner.md"
     }
   ],
   "done_at": "2026-05-27T16:49:36.597425Z",
@@ -46,5 +46,5 @@
   "priority": "high",
   "state": "done",
   "title": "Resumable observable SimulationRunner (tracing + JSON log + checkpoint/resume)",
-  "updated_at": "2026-08-07T21:14:45.635271527Z"
+  "updated_at": "2026-08-07T21:28:23.773934966Z"
 }

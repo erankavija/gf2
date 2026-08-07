@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Finite-field dense linear algebra SOTA catch-up plan",
-      "path": "dev/active/615db3b9/615db3b9-finite-field-la-sota-plan.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/615db3b9/615db3b9-finite-field-la-sota-plan.md"
     }
   ],
   "done_at": "2026-05-24T00:30:11.830495866Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Pursue fflas-like GF(251) GEMM performance",
-  "updated_at": "2026-08-07T21:14:32.792569569Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

@@ -14,7 +14,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "gf2-algebra public-API freeze for W6 Lean verification",
-      "path": "dev/plans/8c902184/gf_api_freeze_w6.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/8c902184/gf_api_freeze_w6.md"
     }
   ],
   "done_at": "2026-05-14T21:33:24.361844695Z",
@@ -38,5 +38,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Freeze gf2-algebra public API surface for verification",
-  "updated_at": "2026-08-07T21:14:51.176510575Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

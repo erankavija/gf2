@@ -14,7 +14,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Wide accumulator tower design plan",
-      "path": "dev/plans/d11b769a/wide_accumulator_tower.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/d11b769a/wide_accumulator_tower.md"
     }
   ],
   "done_at": "2026-04-18T20:34:31.955920581Z",
@@ -50,5 +50,5 @@
   "priority": "low",
   "state": "done",
   "title": "Wide accumulator integration for tower types",
-  "updated_at": "2026-08-07T21:14:56.546270547Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

@@ -14,7 +14,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "S5 GPU-vs-CPU-SIMD crossover writeup",
-      "path": "dev/plans/a9e461de/s5_gpu_crossover.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/a9e461de/s5_gpu_crossover.md"
     }
   ],
   "done_at": "2026-05-15T19:38:49.519150279Z",
@@ -44,5 +44,5 @@
   "priority": "normal",
   "state": "done",
   "title": "GPU vs CPU SIMD crossover at n greater equal 40 for F_3",
-  "updated_at": "2026-08-07T21:14:55.840681691Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

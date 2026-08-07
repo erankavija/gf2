@@ -13,14 +13,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Route C integer-panel design note",
-      "path": "dev/active/fc182ed5/fc182ed5-route-c-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/fc182ed5/fc182ed5-route-c-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Route C integer-panel evidence",
-      "path": "dev/bench_results/fc182ed5/2026-05-24-fc182ed5-route-c-integer-panel.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/fc182ed5/2026-05-24-fc182ed5-route-c-integer-panel.md"
     }
   ],
   "done_at": "2026-05-24T21:50:50.830370854Z",
@@ -57,5 +57,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Prototype pure integer panelized GF(251) micro-kernel (615db3b9 Phase 1 route C)",
-  "updated_at": "2026-08-07T21:15:09.515849179Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

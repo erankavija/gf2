@@ -1,4 +1,5 @@
 {
+  "archived_from": "done",
   "assignee": "agent:project-lead",
   "context": {},
   "created_at": "2026-06-30T19:47:25.220846190Z",
@@ -12,13 +13,13 @@
       "doc_type": "report",
       "format": "markdown",
       "label": "Completion Report",
-      "path": "dev/active/7be754bd-coverage-90/7be754bd-completion.md"
+      "path": "dev/archive/7be754bd-coverage-90/active/7be754bd-completion.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "label": "Container progress record",
-      "path": "dev/active/7be754bd-coverage-90/7be754bd-progress.json"
+      "path": "dev/archive/7be754bd-coverage-90/active/7be754bd-progress.json"
     }
   ],
   "done_at": "2026-07-01T06:13:30.255657660Z",
@@ -32,7 +33,7 @@
     "milestone:1.0"
   ],
   "priority": "normal",
-  "state": "done",
+  "state": "archived",
   "title": "Raise per-crate library coverage to 90%",
-  "updated_at": "2026-08-07T21:14:34.208126667Z"
+  "updated_at": "2026-08-07T21:28:01.252117102Z"
 }

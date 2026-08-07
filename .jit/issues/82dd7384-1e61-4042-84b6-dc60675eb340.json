@@ -11,7 +11,7 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "IRA encoder timing closing note",
-      "path": "dev/active/82dd7384/82dd7384-encoder-timing-closure.md"
+      "path": "dev/archive/2928ccce-dvb-t2-awgn-campaign/active/82dd7384/82dd7384-encoder-timing-closure.md"
     }
   ],
   "done_at": "2026-05-30T23:01:49.149756002Z",
@@ -40,5 +40,5 @@
   "priority": "high",
   "state": "done",
   "title": "Linear-time DVB-T2 LDPC encoder via dual-diagonal staircase accumulator",
-  "updated_at": "2026-08-07T21:14:34.910836518Z"
+  "updated_at": "2026-08-07T21:28:23.773934966Z"
 }

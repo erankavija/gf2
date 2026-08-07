@@ -11,20 +11,20 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "M4RM invert design note",
-      "path": "dev/active/aaa847cf/aaa847cf-m4rm-invert-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/aaa847cf/aaa847cf-m4rm-invert-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "label": "M4RM invert raw CSV",
-      "path": "dev/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.csv"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "M4RM invert evidence",
-      "path": "dev/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/aaa847cf/2026-05-24-aaa847cf-m4rm-invert.md"
     }
   ],
   "done_at": "2026-05-24T12:18:17.840704088Z",
@@ -58,5 +58,5 @@
   "priority": "normal",
   "state": "done",
   "title": "M4RI-style invert path for BitMatrix",
-  "updated_at": "2026-08-07T21:15:09.057137751Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

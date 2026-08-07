@@ -21,21 +21,11 @@
       "path": "crates/gf2-core/tests/gf2pow32_constant_drift.rs"
     },
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/CP2.html",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2^32) NTL matmul promotion evidence",
-      "path": "dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md"
     }
   ],
   "done_at": "2026-05-05T09:36:36.895616443Z",
@@ -71,5 +61,5 @@
   "priority": "high",
   "state": "done",
   "title": "Build GF(2^32) matmul reference harness",
-  "updated_at": "2026-08-07T21:15:00.383229031Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

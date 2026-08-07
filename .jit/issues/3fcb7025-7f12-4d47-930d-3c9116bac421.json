@@ -1,65 +1,55 @@
 {
-  "id": "3fcb7025-7f12-4d47-930d-3c9116bac421",
-  "title": "Within-SNR frame parallelism + deterministic aggregation (gf2-sim)",
-  "description": "## Goal\n\nWithin-SNR frame parallelism with deterministic aggregation\nprimitives, landing inside the new `gf2-sim` crate. Per-worker\nChaCha20 stream partitioning via `set_word_pos`; order-independent\nreductions; byte-identity guarantee for `fer` / `frames` /\n`errors` / `mean_iters` across worker counts {1, 2, 4, 8, 24}.\n\n## Context — scope amendment (2026-06-06, user-approved)\n\nOriginally filed (2026-06-05) as a modification to\n`SimulationRunner` in `crates/gf2-coding/src/simulation.rs`.\nRe-scoped during the architecture interview that created\nepic `gf2-sim` (`f9717e7e`): the parallelism work moves into the\nnew `gf2-sim` crate as the Phase A core, providing the\ndeterministic-aggregation primitives every other CPU + GPU stage\nbuilds on. Existing dep edge `e4849f07 → 3fcb7025` preserved —\nthe production campaign still depends on parallelism landing.\n\n## Sequencing\n\n- Prereq: Phase 0 design doc (`ec530af9`) — the per-worker seek\n  scheme and aggregation contract are locked there.\n- Prereq: gf2-sim crate scaffolding task (filed alongside this\n  amendment) — provides `Pipeline`, `Stage`, batch types.\n\n## Deliverables\n\n1. Per-worker `ChaCha20Rng::set_word_pos` partitioning helper\n   (`worker_idx`, `chunk_words` → seek offset).\n2. Frame-batch dispatch primitive that runs a stage on N rayon\n   workers within one SNR point, each owning its own seeked RNG.\n3. Order-independent reduction of per-worker counters\n   (`frames`, `errors`, `total_iterations`, `total_bits`,\n   `total_bit_errors`).\n4. Heartbeat / per-SNR-boundary checkpoint compatibility\n   preserved (per the design doc).\n\n## Success Criteria\n\n- [hard] Property test: parallel run on {1, 2, 4, 8, 24} workers\n  produces byte-identical `fer` / `frames` / `errors` /\n  `mean_iters` vs single-thread for the same seed across at least\n  three (rate, modulation) configurations (DVB-T2 BICM is the\n  canonical regression target).\n- [hard] Throughput on AMD Ryzen 9 5900X (24 threads) ≥ **12x**\n  single-thread for DVB-T2 r1/2 16-QAM at Es/N0=6.5 dB.\n  Receipt under `dev/benchmarks/gf2-sim/parallelism-receipts.md`.\n- [hard] Lives in `gf2-sim`; no new `unsafe`; `gf2-sim` is\n  `#![deny(unsafe_code)]`.\n- [hard] `cargo-ci`, `code-review`, and `parallelism-pays` gates\n  green.\n- [hard] Documentation: module-level rustdoc on the per-worker\n  dispatch primitive; CLAUDE.md updated for `gf2-sim`.\n\n## Non-goals\n\n- GPU parallelism (handled in Phase B stages).\n- Across-SNR parallelism (handled by the hybrid executor in\n  Phase C).\n- New channel models (Phase A.5 task).",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-06-07T19:06:43.877423902Z",
+  "context": {},
+  "created_at": "2026-06-05T18:50:39.966846512Z",
   "dependencies": [
     "c0b1702d-7cbe-4cfe-868d-611746defac1",
     "19ae6540-2bf4-4854-bbc7-fea79eb4a2b3"
   ],
+  "description": "## Goal\n\nWithin-SNR frame parallelism with deterministic aggregation\nprimitives, landing inside the new `gf2-sim` crate. Per-worker\nChaCha20 stream partitioning via `set_word_pos`; order-independent\nreductions; byte-identity guarantee for `fer` / `frames` /\n`errors` / `mean_iters` across worker counts {1, 2, 4, 8, 24}.\n\n## Context — scope amendment (2026-06-06, user-approved)\n\nOriginally filed (2026-06-05) as a modification to\n`SimulationRunner` in `crates/gf2-coding/src/simulation.rs`.\nRe-scoped during the architecture interview that created\nepic `gf2-sim` (`f9717e7e`): the parallelism work moves into the\nnew `gf2-sim` crate as the Phase A core, providing the\ndeterministic-aggregation primitives every other CPU + GPU stage\nbuilds on. Existing dep edge `e4849f07 → 3fcb7025` preserved —\nthe production campaign still depends on parallelism landing.\n\n## Sequencing\n\n- Prereq: Phase 0 design doc (`ec530af9`) — the per-worker seek\n  scheme and aggregation contract are locked there.\n- Prereq: gf2-sim crate scaffolding task (filed alongside this\n  amendment) — provides `Pipeline`, `Stage`, batch types.\n\n## Deliverables\n\n1. Per-worker `ChaCha20Rng::set_word_pos` partitioning helper\n   (`worker_idx`, `chunk_words` → seek offset).\n2. Frame-batch dispatch primitive that runs a stage on N rayon\n   workers within one SNR point, each owning its own seeked RNG.\n3. Order-independent reduction of per-worker counters\n   (`frames`, `errors`, `total_iterations`, `total_bits`,\n   `total_bit_errors`).\n4. Heartbeat / per-SNR-boundary checkpoint compatibility\n   preserved (per the design doc).\n\n## Success Criteria\n\n- [hard] Property test: parallel run on {1, 2, 4, 8, 24} workers\n  produces byte-identical `fer` / `frames` / `errors` /\n  `mean_iters` vs single-thread for the same seed across at least\n  three (rate, modulation) configurations (DVB-T2 BICM is the\n  canonical regression target).\n- [hard] Throughput on AMD Ryzen 9 5900X (24 threads) ≥ **12x**\n  single-thread for DVB-T2 r1/2 16-QAM at Es/N0=6.5 dB.\n  Receipt under `dev/benchmarks/gf2-sim/parallelism-receipts.md`.\n- [hard] Lives in `gf2-sim`; no new `unsafe`; `gf2-sim` is\n  `#![deny(unsafe_code)]`.\n- [hard] `cargo-ci`, `code-review`, and `parallelism-pays` gates\n  green.\n- [hard] Documentation: module-level rustdoc on the per-worker\n  dispatch primitive; CLAUDE.md updated for `gf2-sim`.\n\n## Non-goals\n\n- GPU parallelism (handled in Phase B stages).\n- Across-SNR parallelism (handled by the hybrid executor in\n  Phase C).\n- New channel models (Phase A.5 task).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "parallelism-pays throughput receipts",
+      "path": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/parallelism-receipts.md"
+    }
+  ],
+  "done_at": "2026-06-08T04:49:02.333930361Z",
+  "first_ready_at": "2026-06-07T07:28:42.745394757Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "parallelism-pays"
   ],
   "gates_status": {
-    "parallelism-pays": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-06-08T04:46:56.251351219Z"
+      "updated_at": "2026-06-08T04:46:12.036280049Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-08T04:47:07.246317855Z"
+      "updated_at": "2026-06-08T04:47:07.246317855Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "parallelism-pays": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-08T04:46:12.036280049Z"
+      "updated_at": "2026-06-08T04:46:56.251351219Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/gf2-sim/parallelism-receipts.md",
-      "commit": null,
-      "label": "parallelism-pays throughput receipts",
-      "doc_type": "benchmark",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "./5g-nr-realtime.md",
-          "resolved_path": "dev/benchmarks/gf2-sim/5g-nr-realtime.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "e7f91ba1060e714044696847145c8fcce0ade4f40beb452a78ba7c29b50208ad",
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "3fcb7025-7f12-4d47-930d-3c9116bac421",
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign",
     "epic:gf2-sim"
   ],
-  "created_at": "2026-06-05T18:50:39.966846512Z",
-  "updated_at": "2026-07-12T20:02:55.437231160Z",
-  "first_ready_at": "2026-06-07T07:28:42.745394757Z",
-  "claimed_at": "2026-06-07T19:06:43.877423902Z",
-  "done_at": "2026-06-08T04:49:02.333930361Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Within-SNR frame parallelism + deterministic aggregation (gf2-sim)",
+  "updated_at": "2026-08-07T21:28:28.028611624Z"
 }

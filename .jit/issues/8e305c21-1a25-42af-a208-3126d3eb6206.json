@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Production M4RM schedule improvement evidence",
-      "path": "dev/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/8e305c21/2026-05-06-8e305c21-production-m4rm.md"
     }
   ],
   "done_at": "2026-05-06T15:24:28.922518807Z",
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "done",
   "title": "Implement production GF(2) matmul improvement",
-  "updated_at": "2026-08-07T21:15:01.997071029Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

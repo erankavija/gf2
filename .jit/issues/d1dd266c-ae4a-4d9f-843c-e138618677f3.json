@@ -16,28 +16,28 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Wiedemann minpoly + measurement raw",
-      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Integrated post-sibling scorecard (14/16 PASS)",
-      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "No-exclusions minpoly SOTA implementation plan",
-      "path": "dev/active/d1dd266c/d1dd266c-minpoly-sota-plan.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/active/d1dd266c/d1dd266c-minpoly-sota-plan.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Performance gap analysis (specialist task)",
-      "path": "dev/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/plans/d1dd266c/d1dd266c-minpoly-performance-gaps.md"
     }
   ],
   "done_at": "2026-05-07T20:55:05.230468840Z",
@@ -74,5 +74,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Tune minimal polynomial path",
-  "updated_at": "2026-08-07T21:14:48.385042373Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

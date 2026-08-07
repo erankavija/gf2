@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Blocked invert design",
-      "path": "dev/active/feb15da9/feb15da9-blocked-invert-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/feb15da9/feb15da9-blocked-invert-design.md"
     }
   ],
   "done_at": "2026-05-25T20:45:12.862009444Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design blocked GF(p) invert via PLE (026fc832 Phase 6)",
-  "updated_at": "2026-08-07T21:14:45.865176667Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

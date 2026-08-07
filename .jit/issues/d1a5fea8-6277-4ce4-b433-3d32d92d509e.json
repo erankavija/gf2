@@ -13,7 +13,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": "In-place trtrm invert evidence (n=256 1.29x, n=1024 1.44x)",
-      "path": "dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md"
     }
   ],
   "done_at": "2026-05-07T21:03:47.532102252Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Replace Dumas-Pernet inv() driver with in-place LU-reuse",
-  "updated_at": "2026-08-07T21:15:05.753042743Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

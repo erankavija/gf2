@@ -1,4 +1,5 @@
 {
+  "archived_from": "done",
   "assignee": "agent:project-lead",
   "claimed_at": "2026-04-17T19:30:59.366893920Z",
   "context": {},
@@ -17,174 +18,66 @@
   "description": "Implement prime field arithmetic for GF(p) and general extension fields GF(p^m). This is the foundational algebraic expansion from GF(2)/GF(2^m) to a general-purpose finite field toolkit.\n\nSee linked design documents for detailed architecture.\n\n## Success Criteria\n\n- **Trait hierarchy**: `FiniteField` + `ConstField` + `FiniteFieldExt` implemented and proven across `Gf2mElement`, `Fp<P>`, `Gf2_8`/`Gf2_16`, and `QuadraticExt<F>`\n- **Wide accumulator**: Associated `Wide` type on `FiniteField` for bounds-aware delayed reduction, enabling generic matrix kernels to accumulate without field-specific code (inspired by fflas-ffpack's `MMHelper` pattern)\n- **FieldVec**: Generic `FieldVec<F>` with scalar and SIMD-accelerated operations, including delayed-reduction dot product with bounds-aware scheduling\n- **Axiom tests**: All trait implementations pass property-based field axiom test harness (associativity, commutativity, distributivity, characteristic, inverse, hash consistency)\n- **Linear algebra readiness**: Trait expressiveness and kernel performance proven sufficient to support generic `FieldMatrix` linear algebra — the downstream linear algebra epic can build directly on this foundation without trait changes\n- **Performance**: Zero-overhead abstraction for const-generic types; competitive with fflas-ffpack element-level throughput for prime field arithmetic\n\n## References\n\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) — design patterns and benchmark targets\n- [GF(p^n) groundwork analysis](dev/plans/gfpn_groundwork_analysis.md) — trait hierarchy and build order\n- [GF(p^n) planning session](dev/plans/gfpn_planning_session.md) — architecture exploration",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://github.com/linbox-team/fflas-ffpack",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "fflas-ffpack analysis and applicability",
-      "path": "dev/plans/fflas_ffpack_analysis.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/fflas_ffpack_analysis.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Completion report (session 4 / epic rollup)",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-completion-report.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-completion-report.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 2",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-handoff-2.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-handoff-2.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session handoff 3",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-handoff-3.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-handoff-3.md"
     },
     {
       "commit": null,
       "doc_type": "session",
       "format": "markdown",
       "label": "Session 1 handoff (Wave 1 complete, Wave 2 plan ready)",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-handoff.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-handoff.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "label": "Container progress record",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-progress.json"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-progress.json"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "GF(p^n) groundwork architecture analysis",
-      "path": "dev/plans/e095a100-gfpm-arithmetic/gfpn_groundwork_analysis.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/gfpn_groundwork_analysis.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "GF(p^n) planning session",
-      "path": "dev/plans/e095a100-gfpm-arithmetic/gfpn_planning_session.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/gfpn_planning_session.md"
     },
     {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/themes/rust.css"
-        },
-        {
-          "asset_type": "local",
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "base.css",
-          "resolved_path": "dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/base.css"
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null
-        },
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null
-        }
-      ],
       "commit": null,
       "doc_type": "presentation",
       "format": "html",
       "label": "Epic close-out reveal.js presentation",
-      "path": "dev/active/e095a100-gfpm-arithmetic/e095a100-presentation/talk.html"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/e095a100-presentation/talk.html"
     }
   ],
   "done_at": "2026-04-21T03:32:29.582295698Z",
@@ -223,7 +116,7 @@
     "epic:gfpm-arithmetic"
   ],
   "priority": "low",
-  "state": "done",
+  "state": "archived",
   "title": "Implement general Galois field GF(p^m) arithmetic",
-  "updated_at": "2026-08-07T21:16:28.423097486Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

@@ -13,7 +13,7 @@
       "doc_type": "verification",
       "format": "markdown",
       "label": "gfx1030 GPU run evidence + init state machine unit tests for W5",
-      "path": "dev/active/ae82bd73-gf2-algebra-permanent/ae82bd73-w5-gpu-verification.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/ae82bd73-w5-gpu-verification.md"
     }
   ],
   "done_at": "2026-05-15T09:23:39.195555084Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "F_7 HIP device kernel",
-  "updated_at": "2026-08-07T21:16:28.100893848Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

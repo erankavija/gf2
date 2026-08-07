@@ -13,14 +13,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Vector modular reduction design",
-      "path": "dev/active/e8a0c47a/e8a0c47a-vector-modular-reduction-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/e8a0c47a/e8a0c47a-vector-modular-reduction-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Phase 2 evidence doc with post-refactor bench",
-      "path": "dev/bench_results/e8a0c47a/2026-05-25-e8a0c47a-phase2-generalization.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/e8a0c47a/2026-05-25-e8a0c47a-phase2-generalization.md"
     }
   ],
   "done_at": "2026-05-25T08:20:45.903990279Z",
@@ -57,5 +57,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Generalize GF(p) reductions and dispatch policy (615db3b9 Phase 2)",
-  "updated_at": "2026-08-07T21:15:10.466579179Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

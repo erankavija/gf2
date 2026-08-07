@@ -13,14 +13,14 @@
       "commit": null,
       "doc_type": "data",
       "label": "S1g GPU speedup CSV (n=24/28/32/36, hardware fingerprint + seed)",
-      "path": "dev/benchmarks/gf2_algebra_permanent/s1g_gpu_speedup-2026-05-16.csv"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/s1g_gpu_speedup-2026-05-16.csv"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "S1g GPU 50x speedup writeup (n=36 100.24x; det-check PASS)",
-      "path": "dev/plans/9480f8a6/s1g_gpu_speedup_results.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/9480f8a6/s1g_gpu_speedup_results.md"
     }
   ],
   "done_at": "2026-05-16T20:45:57.791216328Z",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "S1g: 50x GPU speedup vs T8 at n=36",
-  "updated_at": "2026-08-07T21:14:55.147858246Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

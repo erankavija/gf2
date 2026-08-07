@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GPU prototype feasibility decision report",
-      "path": "dev/active/806eb14e-hip-gpu-prototype/806eb14e-feasibility-report.md"
+      "path": "dev/archive/806eb14e-hip-gpu-prototype/active/806eb14e-feasibility-report.md"
     }
   ],
   "done_at": "2026-06-17T05:49:04.003651008Z",
@@ -51,5 +51,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Write GPU prototype feasibility decision report",
-  "updated_at": "2026-08-07T21:16:32.092428401Z"
+  "updated_at": "2026-08-07T21:28:16.590614106Z"
 }

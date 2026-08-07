@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Constellation data model implementation plan",
-      "path": "dev/active/c87c5043/c87c5043-constellation-data-model-plan.md"
+      "path": "dev/archive/d4851c3d-modem-framework/active/c87c5043/c87c5043-constellation-data-model-plan.md"
     }
   ],
   "done_at": "2026-04-13T12:17:29.786662731Z",
@@ -53,5 +53,5 @@
   "priority": "high",
   "state": "done",
   "title": "Define constellation and labeling data model",
-  "updated_at": "2026-08-07T21:14:42.761669593Z"
+  "updated_at": "2026-08-07T21:28:20.229403362Z"
 }

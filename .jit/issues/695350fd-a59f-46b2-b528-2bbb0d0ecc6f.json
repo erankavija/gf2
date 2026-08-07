@@ -11,7 +11,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "695350fd R0 wall-hit evidence + uop analysis",
-      "path": "dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md"
     }
   ],
   "done_at": "2026-05-26T20:10:08.316290860Z",
@@ -48,5 +48,5 @@
   "priority": "normal",
   "state": "done",
   "title": "fp_medium u16-lane BLIS MC/KC restructure (74ba1cdc Phase 6b)",
-  "updated_at": "2026-08-07T21:16:27.097858603Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

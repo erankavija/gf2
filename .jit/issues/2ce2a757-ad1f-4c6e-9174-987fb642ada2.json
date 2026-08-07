@@ -14,7 +14,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Karatsuba cross-verification design plan",
-      "path": "dev/plans/2ce2a757/karatsuba_cross_verification.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/2ce2a757/karatsuba_cross_verification.md"
     }
   ],
   "done_at": "2026-04-18T20:34:32.425452725Z",
@@ -50,5 +50,5 @@
   "priority": "low",
   "state": "done",
   "title": "Karatsuba vs naive cross-verification with property-based tests",
-  "updated_at": "2026-08-07T21:14:52.558467289Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

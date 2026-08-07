@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "PLE/TRSM block tuning evidence",
-      "path": "dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md"
     }
   ],
   "done_at": "2026-05-07T02:27:15.086896995Z",
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "done",
   "title": "Tune PLE and TRSM block integration",
-  "updated_at": "2026-08-07T21:15:05.289187857Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -14,21 +14,21 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "Phase 2 Paper-Alignment Resolution",
-      "path": "dev/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/45649554-paper-alignment-resolution.md"
+      "path": "dev/archive/6efb756b-grand/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/45649554-paper-alignment-resolution.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Phase 2 Figure 4 paper-alignment investigation",
-      "path": "dev/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/phase2_fig4_alignment_investigation.md"
+      "path": "dev/archive/6efb756b-grand/active/45649554-run-phase-2-awgn-simulations-figs-4-6-additional/phase2_fig4_alignment_investigation.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Session handoff 2026-04-16 (even-code lead)",
-      "path": "dev/active/6efb756b-grand/6efb756b-session-handoff-2026-04-16.md"
+      "path": "dev/archive/6efb756b-grand/active/6efb756b-session-handoff-2026-04-16.md"
     }
   ],
   "done_at": "2026-04-16T22:42:25.262959359Z",
@@ -71,5 +71,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Run Phase 2 AWGN simulations: Figs 4-6 additional product code dimensions",
-  "updated_at": "2026-08-07T21:16:30.081761995Z"
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

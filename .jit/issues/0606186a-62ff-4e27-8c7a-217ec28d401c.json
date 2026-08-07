@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D3 Lean Ryser proof sketch (user-approved per CLAUDE.md §Verification work)",
-      "path": "dev/plans/d3_lean_ryser_sketch.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/d3_lean_ryser_sketch.md"
     },
     {
       "commit": null,
@@ -27,21 +27,21 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "Impl handoff",
-      "path": "dev/active/0606186a/0606186a-impl-handoff.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/0606186a/0606186a-impl-handoff.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Path1 spike changes",
-      "path": "dev/active/0606186a/0606186a-path1-spike-changes.patch"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/0606186a/0606186a-path1-spike-changes.patch"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "V2 Path-1 sketch + §9 Option-3 addendum (Path-1 §2 falsified; final landing = abstract-only, user-approved)",
-      "path": "dev/plans/0606186a/d3_v2_path1_sketch.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/0606186a/d3_v2_path1_sketch.md"
     }
   ],
   "done_at": "2026-05-16T23:04:31.286259027Z",
@@ -77,5 +77,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Lean proof — Ryser bounded n less equal 63 per D3 sketch",
-  "updated_at": "2026-08-07T21:14:48.846268085Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

@@ -1,13 +1,29 @@
 {
-  "id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
-  "title": "CubicExt::mul Karatsuba SoA batched SIMD",
-  "description": "Apply the QuadraticExt SoA pattern to `gfpn::CubicExt::mul`. Karatsuba-3 has 6 independent base-field multiplications per element — the same V2 ILP + V3 SIMD batched scaffolding wins again.\n\n## Background\n\n`gfpn::CubicExt::mul` in `crates/gf2-core/src/gfpn/cubic.rs` does Karatsuba-3: 6 base-field multiplications per element. No SoA batched path.\n\nThe fix applies the same V2 ILP + V3 SIMD + SoA scaffolding as `gfpn::QuadraticExt::mul`, reusing the SoA module structure introduced there. The 6 muls schedule across SIMD lanes once SoA is in place.\n\n## Amendment Note\n\nThe aspirational benchmark target is amended from `field_matrix_gemm` cubic-field row to the direct C5 microbenchmark pair `soa_batch_mul_fq3_fp65537/batch_soa` vs `soa_batch_mul_fq3_fp65537/sequential_aos`. Reason: the C5 deliverable adds the SoA cubic batch leaf itself; the `field_matrix_gemm` cubic-field row is a downstream consumer that also depends on later FieldMatrix wiring. The lead-side rerun of `criterion-1.5x` recorded a `3.766x` geomean speedup on the amended C5 leaf benchmark, above the `1.5x` target.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing AoS `CubicExt::mul`.\n- [hard] AoS path unchanged.\n- [hard] SoA path covers add, sub, mul, square (all four ops).\n- [hard] Sibling `*.asm.txt` artefact regenerated.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on the direct C5 SoA cubic batch leaf benchmark pair `soa_batch_mul_fq3_fp65537/batch_soa` vs `soa_batch_mul_fq3_fp65537/sequential_aos`; downstream `field_matrix_gemm` impact remains future FieldMatrix integration work.\n\n## Notes\n\nBench: `field_matrix_fusion`, `field_matrix_gemm` (existing, pinned by I1), and direct C5 leaf `soa_batch_mul_fq3_fp65537`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-33d3f5b7",
+  "claimed_at": "2026-04-29T09:44:55.748050695Z",
+  "context": {},
+  "created_at": "2026-04-25T15:18:54.618594605Z",
   "dependencies": [
     "3168d114-57f2-4a21-a28f-3c191833385d"
   ],
+  "description": "Apply the QuadraticExt SoA pattern to `gfpn::CubicExt::mul`. Karatsuba-3 has 6 independent base-field multiplications per element — the same V2 ILP + V3 SIMD batched scaffolding wins again.\n\n## Background\n\n`gfpn::CubicExt::mul` in `crates/gf2-core/src/gfpn/cubic.rs` does Karatsuba-3: 6 base-field multiplications per element. No SoA batched path.\n\nThe fix applies the same V2 ILP + V3 SIMD + SoA scaffolding as `gfpn::QuadraticExt::mul`, reusing the SoA module structure introduced there. The 6 muls schedule across SIMD lanes once SoA is in place.\n\n## Amendment Note\n\nThe aspirational benchmark target is amended from `field_matrix_gemm` cubic-field row to the direct C5 microbenchmark pair `soa_batch_mul_fq3_fp65537/batch_soa` vs `soa_batch_mul_fq3_fp65537/sequential_aos`. Reason: the C5 deliverable adds the SoA cubic batch leaf itself; the `field_matrix_gemm` cubic-field row is a downstream consumer that also depends on later FieldMatrix wiring. The lead-side rerun of `criterion-1.5x` recorded a `3.766x` geomean speedup on the amended C5 leaf benchmark, above the `1.5x` target.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing AoS `CubicExt::mul`.\n- [hard] AoS path unchanged.\n- [hard] SoA path covers add, sub, mul, square (all four ops).\n- [hard] Sibling `*.asm.txt` artefact regenerated.\n- [hard] `perf stat -r 10` capture before/after recorded.\n- [aspirational] $\\geq 1.5\\times$ geomean on the direct C5 SoA cubic batch leaf benchmark pair `soa_batch_mul_fq3_fp65537/batch_soa` vs `soa_batch_mul_fq3_fp65537/sequential_aos`; downstream `field_matrix_gemm` impact remains future FieldMatrix integration work.\n\n## Notes\n\nBench: `field_matrix_fusion`, `field_matrix_gemm` (existing, pinned by I1), and direct C5 leaf `soa_batch_mul_fq3_fp65537`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "C5 perf stat capture",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/33d3f5b7-perf-stat.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "C5 criterion speedup evidence",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/33d3f5b7-criterion.txt"
+    }
+  ],
+  "done_at": "2026-04-29T13:03:24.410807840Z",
+  "first_ready_at": "2026-04-29T09:00:10.450852176Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -15,43 +31,28 @@
     "criterion-1.5x"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:37:35.788248676Z"
-    },
-    "criterion-1.5x": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:35:48.233531384Z"
-    },
     "asm-artefact-present": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:35:48.070174457Z"
+      "updated_at": "2026-04-29T12:35:48.070174457Z",
+      "updated_by": "auto:executor"
     },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:35:48.344750646Z"
+      "updated_at": "2026-04-29T12:35:48.344750646Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-29T12:37:35.788248676Z",
+      "updated_by": "auto:executor"
+    },
+    "criterion-1.5x": {
+      "status": "passed",
+      "updated_at": "2026-04-29T12:35:48.233531384Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/33d3f5b7-perf-stat.txt",
-      "commit": null,
-      "label": "C5 perf stat capture",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/benchmarks/33d3f5b7-criterion.txt",
-      "commit": null,
-      "label": "C5 criterion speedup evidence",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "33d3f5b7-5942-445d-8e34-9b87c0903f7f",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -60,9 +61,8 @@
     "story:ppc-field-batch",
     "ppc-kernel:C5"
   ],
-  "created_at": "2026-04-25T15:18:54.618594605Z",
-  "updated_at": "2026-07-12T20:02:55.433492627Z",
-  "first_ready_at": "2026-04-29T09:00:10.450852176Z",
-  "claimed_at": "2026-04-29T09:44:55.748050695Z",
-  "done_at": "2026-04-29T13:03:24.410807840Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "CubicExt::mul Karatsuba SoA batched SIMD",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

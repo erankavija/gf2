@@ -1,50 +1,50 @@
 {
-  "id": "79388011-0d65-4ae3-8a7f-8dc961157429",
-  "title": "Evaluate LinBox for exact linear algebra references",
-  "description": "Determine whether LinBox can cover exact linear algebra, charpoly, and minpoly reference rows.\n\n## Success Criteria\n\n- [hard] A reproducible LinBox harness exists or a rejection note explains why it is not viable.\n- [hard] The target matrix uses or explicitly excludes LinBox based on evidence.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-04T04:35:49.951166341Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.616799375Z",
   "dependencies": [],
+  "description": "Determine whether LinBox can cover exact linear algebra, charpoly, and minpoly reference rows.\n\n## Success Criteria\n\n- [hard] A reproducible LinBox harness exists or a rejection note explains why it is not viable.\n- [hard] The target matrix uses or explicitly excludes LinBox based on evidence.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "linbox promotion evidence",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/linbox_promotion_evidence.md"
+    }
+  ],
+  "done_at": "2026-05-04T06:33:13.324322416Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T06:33:10.425383106Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T05:25:46.192270272Z"
+      "updated_at": "2026-05-04T05:25:46.192270272Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T06:29:43.659922220Z"
+      "updated_at": "2026-05-04T06:29:43.659922220Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-04T06:33:10.425383106Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/linbox_promotion_evidence.md",
-      "commit": null,
-      "label": "linbox promotion evidence",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "79388011-0d65-4ae3-8a7f-8dc961157429",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-reference-matrix"
   ],
-  "created_at": "2026-04-30T06:43:02.616799375Z",
-  "updated_at": "2026-07-12T20:02:55.451547270Z",
-  "claimed_at": "2026-05-04T04:35:49.951166341Z",
-  "done_at": "2026-05-04T06:33:13.324322416Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Evaluate LinBox for exact linear algebra references",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

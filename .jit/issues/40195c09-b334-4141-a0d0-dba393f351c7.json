@@ -11,7 +11,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "gemm_axpy_into_view lift evidence",
-      "path": "dev/bench_results/40195c09/2026-05-26-40195c09-gemm-axpy-lift.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/40195c09/2026-05-26-40195c09-gemm-axpy-lift.md"
     }
   ],
   "done_at": "2026-05-26T09:36:17.997966772Z",
@@ -47,5 +47,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Lift gemm_axpy_into_view with small-prime SIMD fast path (026fc832 Phase 6 prereq)",
-  "updated_at": "2026-08-07T21:15:10.699760524Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

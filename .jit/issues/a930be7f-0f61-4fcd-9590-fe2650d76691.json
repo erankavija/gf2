@@ -1,13 +1,30 @@
 {
-  "id": "a930be7f-0f61-4fcd-9590-fe2650d76691",
-  "title": "GPU LDPC belief-propagation batch decode kernel",
-  "description": "## Goal\n\nLDPC belief-propagation batch decode kernel on gfx1030 covering\nDVB-T2 n=64800 today; the kernel is a flat, standard-agnostic\nTanner-graph decoder so the same kernel binary parameterises both\nstandards (5G NR BG1 / BG2 in Phase E `23d3525f` via host-side graph\nexpansion — see the 2026-06-09 shift-table amendment below).\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §6 (multi-arch dispatch,\nshared kernel binary across BG / lifting set); §8 (OOM signalled,\nnot dispatched, by this stage); §10 (f32 messages). Wave B.2\nfan-out from `36075e4c`. May absorb in-scope tasks from\n`epic:hip-gpu-prototype` (`806eb14e`).\n\nAlgorithm baselines: BP MinSum / Normalized-MinSum(α) / SumProduct,\nmatching the CPU `LdpcDecoder` configuration knobs from\n`gf2_coding::ldpc::core::DecoderConfig`. Variable-node and\ncheck-node updates run in parallel across the batch; per-iteration\nsynchronisation via shared memory; deterministic message ordering\n(no atomic-add reductions on f32; per-edge ordered accumulation\ninto a per-edge scratch followed by an ordered reduction).\n\n**AMENDMENT 2026-06-09a (user-approved, apples-to-apples perf baseline).**\nThe `parallelism-pays` gate compares **decode-stage throughput vs\ndecode-stage throughput**, NOT GPU-decode vs CPU-full-frame. The\n`c0b1702d` (1.6216 fps single-thread) and `3fcb7025` (21.44 fps\n24-thread) receipts are FULL-FRAME numbers; using them as the divisor\nfor a decode-only kernel is category-confused and too lenient — the\nsame defect that was user-amended on `f6004add`. The gate divisor is\nthe **CPU `LdpcDecoder` decode stage measured in isolation** (same\nDVB-T2 r1/2 16-QAM Normal config, SumProduct, early-termination on,\nat Es/N0 = 6.5 dB), at single-thread and 24-thread. Record the\nfull-frame numbers for context, but gate on decode-vs-decode.\n\n**AMENDMENT 2026-06-09b (user-approved, shift-table consumption is host-side).**\nThe per-`i_LS` shift table is consumed by the **host-side\n`LdpcGraphLayout` builder**, NOT by an in-kernel uniform-buffer\nparameter. The GPU kernel is flat and standard-agnostic: it decodes\nwhatever expanded Tanner graph the host hands it. DVB-T2 is already\nfully expanded (no lifting). For 5G NR, the host expands base graph +\nper-`i_LS` shift table into the flat `LdpcGraphLayout`, and the SAME\nkernel binary decodes it unchanged (design §6 \"shared kernel binary\nacross BG / lifting set\"). This avoids an untested in-kernel shift\npath (DVB-T2 has no shifts to exercise; the real BG1/BG2 shift tables\ndo not exist until Phase E `acf9b11a`). **The full per-`i_LS`\ncriterion is fulfilled later in Phase E `23d3525f`**, which builds the\n5G NR flat layout via host-side expansion and proves GPU-vs-CPU\nbyte-identity on a real lifted code — that obligation is recorded as\na `[hard]` criterion on `23d3525f`. The cosmetic in-kernel\n`shift_table`/`shift_len` ABI parameter added in rework-r1 is removed\n(it was an accept-and-discard placeholder).\n\n## Deliverables\n\n1. `crates/gf2-kernels-hip/hip/ldpc_bp.hip` (flat Tanner-graph kernel;\n   sources live in `hip/`, wired into `build.rs`):\n   - Decodes the flat (expanded) Tanner-graph layout for any standard;\n     DVB-T2 (n=64800, m=32400) today. 5G NR BG1/BG2 reuse the same\n     kernel via host-side expansion of base graph + per-`i_LS` shift\n     table into the flat layout (Phase E `23d3525f`), so no in-kernel\n     shift parameter is needed.\n   - Implements MinSum, NormalizedMinSum(α), SumProduct per the\n     `DecoderAlgorithm` enum.\n   - Maximum BP iterations parameterised; early termination via\n     parity-check after each iteration (per-frame freeze matching the\n     CPU `decode_to_codeword` first-convergence break).\n   - Hard-decision output written to a device buffer.\n2. `crates/gf2-kernels-hip/src/launch_ldpc_bp.rs`:\n   - `launch_ldpc_bp(stream, layout, llrs, ..., algorithm, max_iters)`\n     over the flat `LdpcGraphLayout`.\n3. `crates/gf2-sim/src/gpu/ldpc_bp.rs` (under `--features hip`):\n   - `pub struct GpuLdpcBp { config: DecoderConfig, base_graph: H }`\n     implementing `Stage<LlrBatch, HardDecisionBatch>`.\n   - `cpu_fallback()` returns a CPU stage wrapping\n     `gf2_coding::ldpc::core::LdpcDecoder`.\n4. Byte-identity test (under `--features hip`) in\n   `tests/gpu_ldpc_byte_identity.rs`:\n   - For DVB-T2 r1/2 16-QAM, fixed seed, 200 frames at three SNRs:\n     GPU hard-decision output equal to CPU `LdpcDecoder` output\n     bit-for-bit, across MinSum, NormalizedMinSum(0.75), SumProduct.\n5. Parallelism-pays receipt entry in\n   `dev/benchmarks/gf2-sim/parallelism-receipts.md` (apples-to-apples,\n   decode-vs-decode per amendment 2026-06-09a):\n   - GPU LDPC BP decode throughput vs **single-thread CPU\n     `LdpcDecoder` decode-stage** throughput (≥ 10×).\n   - GPU LDPC BP decode throughput vs **CPU-24-thread `LdpcDecoder`\n     decode-stage** throughput (≥ 3×). Resolves audit C2.\n   - Record the full-frame `c0b1702d`/`3fcb7025` numbers for context\n     only; they are NOT the gate divisor.\n\n## Success Criteria\n\n- [hard] GPU LDPC BP hard-decision output matches CPU `LdpcDecoder`\n  bit-for-bit for DVB-T2 r1/2 16-QAM at fixed seed and 200 frames\n  across MinSum, NormalizedMinSum(0.75), SumProduct.\n- [hard] `parallelism-pays` gate (apples-to-apples, decode-vs-decode\n  per amendment 2026-06-09a): receipt records\n  - GPU decode throughput ≥ 10× single-thread CPU `LdpcDecoder`\n    decode-stage throughput (measured in isolation, same config)\n  - **AND** GPU decode throughput ≥ 3× CPU-24-thread `LdpcDecoder`\n    decode-stage throughput.\n  - The full-frame `c0b1702d`/`3fcb7025` baselines are context only.\n- [hard] The flat `LdpcGraphLayout` is the standard-agnostic\n  representation the kernel decodes (per amendment 2026-06-09b): the\n  kernel decodes any expanded Tanner graph unchanged, so Phase E\n  `23d3525f` can reuse the same kernel binary for 5G NR by\n  host-expanding base graph + per-`i_LS` shift table into the flat\n  layout. The full per-`i_LS` shift consumption + 5G NR GPU-vs-CPU\n  byte-identity is a `[hard]` criterion on `23d3525f` (deferred there\n  per the user decision; DVB-T2 has no lifting to exercise it here).\n- [hard] `cpu_fallback()` returns the CPU decoder (wrapped as a\n  `Stage`); integration verified by Phase B `ed575f15`.\n- [hard] `cargo-ci`, `code-review`, `parallelism-pays` gates green.\n\n## Non-goals\n\n- No 5G NR-specific tuning here (Phase E `23d3525f` does that,\n  including the host-side base+shift→flat-layout expansion).\n- No multi-GPU dispatch (epic non-goal).\n- No floating-point f16 / mixed-precision (deferred per design-doc\n  §10).",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-06-09T06:55:18.092126394Z",
+  "context": {},
+  "created_at": "2026-06-05T22:03:40.776920338Z",
   "dependencies": [
     "36075e4c-9813-48cd-bee6-5fc28de15818"
   ],
+  "description": "## Goal\n\nLDPC belief-propagation batch decode kernel on gfx1030 covering\nDVB-T2 n=64800 today; the kernel is a flat, standard-agnostic\nTanner-graph decoder so the same kernel binary parameterises both\nstandards (5G NR BG1 / BG2 in Phase E `23d3525f` via host-side graph\nexpansion — see the 2026-06-09 shift-table amendment below).\n\n## Context\n\nTask under story `1f588e2a` (GPU stages) within epic `gf2-sim`\n(`f9717e7e`). Phase 0 design doc:\n`dev/active/ec530af9-pipeline-design.md` §6 (multi-arch dispatch,\nshared kernel binary across BG / lifting set); §8 (OOM signalled,\nnot dispatched, by this stage); §10 (f32 messages). Wave B.2\nfan-out from `36075e4c`. May absorb in-scope tasks from\n`epic:hip-gpu-prototype` (`806eb14e`).\n\nAlgorithm baselines: BP MinSum / Normalized-MinSum(α) / SumProduct,\nmatching the CPU `LdpcDecoder` configuration knobs from\n`gf2_coding::ldpc::core::DecoderConfig`. Variable-node and\ncheck-node updates run in parallel across the batch; per-iteration\nsynchronisation via shared memory; deterministic message ordering\n(no atomic-add reductions on f32; per-edge ordered accumulation\ninto a per-edge scratch followed by an ordered reduction).\n\n**AMENDMENT 2026-06-09a (user-approved, apples-to-apples perf baseline).**\nThe `parallelism-pays` gate compares **decode-stage throughput vs\ndecode-stage throughput**, NOT GPU-decode vs CPU-full-frame. The\n`c0b1702d` (1.6216 fps single-thread) and `3fcb7025` (21.44 fps\n24-thread) receipts are FULL-FRAME numbers; using them as the divisor\nfor a decode-only kernel is category-confused and too lenient — the\nsame defect that was user-amended on `f6004add`. The gate divisor is\nthe **CPU `LdpcDecoder` decode stage measured in isolation** (same\nDVB-T2 r1/2 16-QAM Normal config, SumProduct, early-termination on,\nat Es/N0 = 6.5 dB), at single-thread and 24-thread. Record the\nfull-frame numbers for context, but gate on decode-vs-decode.\n\n**AMENDMENT 2026-06-09b (user-approved, shift-table consumption is host-side).**\nThe per-`i_LS` shift table is consumed by the **host-side\n`LdpcGraphLayout` builder**, NOT by an in-kernel uniform-buffer\nparameter. The GPU kernel is flat and standard-agnostic: it decodes\nwhatever expanded Tanner graph the host hands it. DVB-T2 is already\nfully expanded (no lifting). For 5G NR, the host expands base graph +\nper-`i_LS` shift table into the flat `LdpcGraphLayout`, and the SAME\nkernel binary decodes it unchanged (design §6 \"shared kernel binary\nacross BG / lifting set\"). This avoids an untested in-kernel shift\npath (DVB-T2 has no shifts to exercise; the real BG1/BG2 shift tables\ndo not exist until Phase E `acf9b11a`). **The full per-`i_LS`\ncriterion is fulfilled later in Phase E `23d3525f`**, which builds the\n5G NR flat layout via host-side expansion and proves GPU-vs-CPU\nbyte-identity on a real lifted code — that obligation is recorded as\na `[hard]` criterion on `23d3525f`. The cosmetic in-kernel\n`shift_table`/`shift_len` ABI parameter added in rework-r1 is removed\n(it was an accept-and-discard placeholder).\n\n## Deliverables\n\n1. `crates/gf2-kernels-hip/hip/ldpc_bp.hip` (flat Tanner-graph kernel;\n   sources live in `hip/`, wired into `build.rs`):\n   - Decodes the flat (expanded) Tanner-graph layout for any standard;\n     DVB-T2 (n=64800, m=32400) today. 5G NR BG1/BG2 reuse the same\n     kernel via host-side expansion of base graph + per-`i_LS` shift\n     table into the flat layout (Phase E `23d3525f`), so no in-kernel\n     shift parameter is needed.\n   - Implements MinSum, NormalizedMinSum(α), SumProduct per the\n     `DecoderAlgorithm` enum.\n   - Maximum BP iterations parameterised; early termination via\n     parity-check after each iteration (per-frame freeze matching the\n     CPU `decode_to_codeword` first-convergence break).\n   - Hard-decision output written to a device buffer.\n2. `crates/gf2-kernels-hip/src/launch_ldpc_bp.rs`:\n   - `launch_ldpc_bp(stream, layout, llrs, ..., algorithm, max_iters)`\n     over the flat `LdpcGraphLayout`.\n3. `crates/gf2-sim/src/gpu/ldpc_bp.rs` (under `--features hip`):\n   - `pub struct GpuLdpcBp { config: DecoderConfig, base_graph: H }`\n     implementing `Stage<LlrBatch, HardDecisionBatch>`.\n   - `cpu_fallback()` returns a CPU stage wrapping\n     `gf2_coding::ldpc::core::LdpcDecoder`.\n4. Byte-identity test (under `--features hip`) in\n   `tests/gpu_ldpc_byte_identity.rs`:\n   - For DVB-T2 r1/2 16-QAM, fixed seed, 200 frames at three SNRs:\n     GPU hard-decision output equal to CPU `LdpcDecoder` output\n     bit-for-bit, across MinSum, NormalizedMinSum(0.75), SumProduct.\n5. Parallelism-pays receipt entry in\n   `dev/benchmarks/gf2-sim/parallelism-receipts.md` (apples-to-apples,\n   decode-vs-decode per amendment 2026-06-09a):\n   - GPU LDPC BP decode throughput vs **single-thread CPU\n     `LdpcDecoder` decode-stage** throughput (≥ 10×).\n   - GPU LDPC BP decode throughput vs **CPU-24-thread `LdpcDecoder`\n     decode-stage** throughput (≥ 3×). Resolves audit C2.\n   - Record the full-frame `c0b1702d`/`3fcb7025` numbers for context\n     only; they are NOT the gate divisor.\n\n## Success Criteria\n\n- [hard] GPU LDPC BP hard-decision output matches CPU `LdpcDecoder`\n  bit-for-bit for DVB-T2 r1/2 16-QAM at fixed seed and 200 frames\n  across MinSum, NormalizedMinSum(0.75), SumProduct.\n- [hard] `parallelism-pays` gate (apples-to-apples, decode-vs-decode\n  per amendment 2026-06-09a): receipt records\n  - GPU decode throughput ≥ 10× single-thread CPU `LdpcDecoder`\n    decode-stage throughput (measured in isolation, same config)\n  - **AND** GPU decode throughput ≥ 3× CPU-24-thread `LdpcDecoder`\n    decode-stage throughput.\n  - The full-frame `c0b1702d`/`3fcb7025` baselines are context only.\n- [hard] The flat `LdpcGraphLayout` is the standard-agnostic\n  representation the kernel decodes (per amendment 2026-06-09b): the\n  kernel decodes any expanded Tanner graph unchanged, so Phase E\n  `23d3525f` can reuse the same kernel binary for 5G NR by\n  host-expanding base graph + per-`i_LS` shift table into the flat\n  layout. The full per-`i_LS` shift consumption + 5G NR GPU-vs-CPU\n  byte-identity is a `[hard]` criterion on `23d3525f` (deferred there\n  per the user decision; DVB-T2 has no lifting to exercise it here).\n- [hard] `cpu_fallback()` returns the CPU decoder (wrapped as a\n  `Stage`); integration verified by Phase B `ed575f15`.\n- [hard] `cargo-ci`, `code-review`, `parallelism-pays` gates green.\n\n## Non-goals\n\n- No 5G NR-specific tuning here (Phase E `23d3525f` does that,\n  including the host-side base+shift→flat-layout expansion).\n- No multi-GPU dispatch (epic non-goal).\n- No floating-point f16 / mixed-precision (deferred per design-doc\n  §10).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "parallelism-pays throughput receipts",
+      "path": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/parallelism-receipts.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "benchmark",
+      "format": "markdown",
+      "label": "GPU stages byte-identity + throughput receipts",
+      "path": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/gpu-stages-receipts.md"
+    }
+  ],
+  "done_at": "2026-06-09T14:29:34.046999383Z",
+  "first_ready_at": "2026-06-07T11:34:25.286067591Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -16,66 +33,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-09T14:26:35.168022525Z"
-    },
-    "parallelism-pays": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-09T08:23:19.740606355Z"
+      "updated_at": "2026-06-09T14:26:35.168022525Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-09T14:26:46.112152596Z"
+      "updated_at": "2026-06-09T14:26:46.112152596Z",
+      "updated_by": "auto:executor"
+    },
+    "parallelism-pays": {
+      "status": "passed",
+      "updated_at": "2026-06-09T08:23:19.740606355Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/gf2-sim/parallelism-receipts.md",
-      "commit": null,
-      "label": "parallelism-pays throughput receipts",
-      "doc_type": "benchmark",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "./5g-nr-realtime.md",
-          "resolved_path": "dev/benchmarks/gf2-sim/5g-nr-realtime.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "e7f91ba1060e714044696847145c8fcce0ade4f40beb452a78ba7c29b50208ad",
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/benchmarks/gf2-sim/gpu-stages-receipts.md",
-      "commit": null,
-      "label": "GPU stages byte-identity + throughput receipts",
-      "doc_type": "benchmark",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "./parallelism-receipts.md",
-          "resolved_path": "dev/benchmarks/gf2-sim/parallelism-receipts.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "0df1bac872d991159e54b97271a8168563ea6c311964c7c14a6ebd83645d3c94",
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "a930be7f-0f61-4fcd-9590-fe2650d76691",
   "labels": [
     "type:task",
     "component:gf2-coding",
     "component:gf2-kernels-hip",
     "epic:gf2-sim"
   ],
-  "created_at": "2026-06-05T22:03:40.776920338Z",
-  "updated_at": "2026-07-12T20:02:55.463897749Z",
-  "first_ready_at": "2026-06-07T11:34:25.286067591Z",
-  "claimed_at": "2026-06-09T06:55:18.092126394Z",
-  "done_at": "2026-06-09T14:29:34.046999383Z"
+  "priority": "high",
+  "state": "done",
+  "title": "GPU LDPC belief-propagation batch decode kernel",
+  "updated_at": "2026-08-07T21:28:28.028611624Z"
 }

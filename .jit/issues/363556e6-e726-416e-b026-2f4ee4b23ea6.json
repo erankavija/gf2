@@ -13,14 +13,14 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "S3 amendment narrative — AVX2-only scope",
-      "path": "dev/active/363556e6/363556e6-amendments-2026-05-12.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/active/363556e6/363556e6-amendments-2026-05-12.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "S3 cross-CPU portability writeup",
-      "path": "dev/plans/363556e6/s3_cross_cpu_portability.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/363556e6/s3_cross_cpu_portability.md"
     }
   ],
   "done_at": "2026-05-12T06:26:05.666812372Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Cross-CPU portability sweep on AVX2-only dev host (AVX-512 deferred to f8d230ef)",
-  "updated_at": "2026-08-07T21:14:55.610146630Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

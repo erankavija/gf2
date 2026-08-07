@@ -12,20 +12,20 @@
       "commit": null,
       "doc_type": "evidence",
       "label": "gf2-core GF(2^m) matmul rows (a1172cea)",
-      "path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-gf2-rows.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2^m) post-PPC scorecard",
-      "path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-gf2m-scorecard.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "NTL GF(2^32) reference rows at n=64,256,1024 (path A)",
-      "path": "dev/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/a1172cea/2026-05-06-a1172cea-ntl-gf2pow32-large.csv"
     }
   ],
   "done_at": "2026-05-06T18:45:36.377939113Z",
@@ -62,5 +62,5 @@
   "priority": "high",
   "state": "done",
   "title": "Measure GF(2^m) post-PPC GEMM against reference",
-  "updated_at": "2026-08-07T21:15:02.693753220Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

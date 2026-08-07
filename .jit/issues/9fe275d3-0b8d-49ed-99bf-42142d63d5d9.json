@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D1b: PackedField + Permanent API",
-      "path": "dev/plans/9fe275d3/d1b_packed_field_api.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md"
     }
   ],
   "done_at": "2026-05-09T09:06:45.519928391Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Specify PackedField and Permanent trait surface",
-  "updated_at": "2026-08-07T21:14:47.924885002Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

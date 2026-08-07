@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D4: MSRV 1.95 intrinsic feasibility",
-      "path": "dev/plans/4c534d31/d4_intrinsic_feasibility.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/4c534d31/d4_intrinsic_feasibility.md"
     }
   ],
   "done_at": "2026-05-09T07:17:18.512906726Z",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "done",
   "title": "MSRV 1.95 intrinsic feasibility for bipedal SIMD kernels",
-  "updated_at": "2026-08-07T21:14:49.074276532Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Non-residue config trait design plan",
-      "path": "dev/plans/0203bebd/non_residue_config_trait.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/0203bebd/non_residue_config_trait.md"
     }
   ],
   "done_at": "2026-03-05T22:39:20.867762087Z",
@@ -67,5 +67,5 @@
   "priority": "low",
   "state": "done",
   "title": "Design non-residue specification pattern for tower extensions",
-  "updated_at": "2026-08-07T21:14:52.783199441Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

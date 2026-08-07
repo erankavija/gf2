@@ -11,14 +11,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Bespoke AVX2 design note",
-      "path": "dev/active/52cce970/52cce970-bespoke-avx2-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/52cce970/52cce970-bespoke-avx2-design.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Charpoly/minpoly bespoke kernel evidence",
-      "path": "dev/bench_results/52cce970/2026-05-24-52cce970-charpoly-minpoly-closure.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/52cce970/2026-05-24-52cce970-charpoly-minpoly-closure.md"
     }
   ],
   "done_at": "2026-05-24T17:00:16.422633082Z",
@@ -54,5 +54,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells",
-  "updated_at": "2026-08-07T21:15:07.172303997Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

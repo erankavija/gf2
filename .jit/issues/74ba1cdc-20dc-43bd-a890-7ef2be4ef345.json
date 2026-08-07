@@ -11,14 +11,14 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "fgemm engineering wall-hit evidence (74ba1cdc)",
-      "path": "dev/bench_results/74ba1cdc/2026-05-25-74ba1cdc-fgemm-engineering.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-25-74ba1cdc-fgemm-engineering.md"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "fgemm engineering R1 evidence (74ba1cdc)",
-      "path": "dev/bench_results/74ba1cdc/2026-05-26-74ba1cdc-fgemm-engineering.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/74ba1cdc/2026-05-26-74ba1cdc-fgemm-engineering.md"
     }
   ],
   "done_at": "2026-05-26T11:32:39.517740230Z",
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Improve single-thread fgemm engineering: Route A + fp_medium at n=4096",
-  "updated_at": "2026-08-07T21:16:27.598585099Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

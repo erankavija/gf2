@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Keller-Gehrig crossover post-Wave-9",
-      "path": "dev/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md"
     }
   ],
   "done_at": "2026-05-07T07:54:33.506235680Z",
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "done",
   "title": "Reassess Keller-Gehrig crossover",
-  "updated_at": "2026-08-07T21:15:05.059714007Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

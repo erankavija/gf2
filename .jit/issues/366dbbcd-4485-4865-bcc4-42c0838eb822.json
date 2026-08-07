@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "GF(2) echelon/rank target closure evidence",
-      "path": "dev/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md"
     }
   ],
   "done_at": "2026-05-06T16:49:33.172234755Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Close GF(2) echelon and rank rows",
-  "updated_at": "2026-08-07T21:15:01.075445855Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

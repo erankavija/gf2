@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "NR kernel feasibility study",
-      "path": "dev/active/43fb19e2/43fb19e2-nr-kernel-feasibility.md"
+      "path": "dev/archive/f9717e7e-gf2-sim/active/43fb19e2/43fb19e2-nr-kernel-feasibility.md"
     }
   ],
   "done_at": "2026-06-12T10:56:00.879108651Z",
@@ -40,5 +40,5 @@
   "priority": "high",
   "state": "done",
   "title": "Feasibility study: gfx1030 NR LDPC kernel ceiling (layered BP, fp16, QC layout)",
-  "updated_at": "2026-08-07T21:14:31.891543249Z"
+  "updated_at": "2026-08-07T21:28:28.028611624Z"
 }

@@ -13,7 +13,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "n=4096 fgemm consolidated re-bench — all 6 primes PASS (GF251 1.490× isolated)",
-      "path": "dev/bench_results/98336ab4/2026-05-28-98336ab4-fgemm-n4096.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/98336ab4/2026-05-28-98336ab4-fgemm-n4096.md"
     }
   ],
   "done_at": "2026-05-28T15:32:58.351711213Z",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Extend GF(p) fgemm benchmarks + dispatch to n=4096 (026fc832 Phase 6)",
-  "updated_at": "2026-08-07T21:15:12.123523905Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

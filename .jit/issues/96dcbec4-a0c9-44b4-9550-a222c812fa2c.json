@@ -13,7 +13,7 @@
       "doc_type": "analysis",
       "format": "markdown",
       "label": "Sa paper Table 2 slope reproduction",
-      "path": "dev/plans/96dcbec4/sa_paper_repro_slope.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/96dcbec4/sa_paper_repro_slope.md"
     }
   ],
   "done_at": "2026-05-11T12:43:28.664982462Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Reproduce paper Table 2 scaling slope within plus/minus 10 percent",
-  "updated_at": "2026-08-07T21:14:56.066477744Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

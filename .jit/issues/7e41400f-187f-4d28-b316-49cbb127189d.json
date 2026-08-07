@@ -14,7 +14,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Invert/solve/det inheritance evidence (7e41400f)",
-      "path": "dev/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/7e41400f/2026-05-07-7e41400f-invert-solve-det.md"
     }
   ],
   "done_at": "2026-05-07T06:06:31.758847388Z",
@@ -51,5 +51,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Close inversion solve determinant rows",
-  "updated_at": "2026-08-07T21:15:05.521936301Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Panelized PLE design",
-      "path": "dev/active/2e8c5a29/2e8c5a29-panelized-ple-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/2e8c5a29/2e8c5a29-panelized-ple-design.md"
     }
   ],
   "done_at": "2026-05-25T20:45:11.407084818Z",
@@ -47,5 +47,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design panelized GF(p) PLE/LU kernel (026fc832 Phase 6)",
-  "updated_at": "2026-08-07T21:14:31.430508227Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

@@ -1,88 +1,88 @@
 {
-  "id": "cbecfced-d91e-404f-a1f9-b2e960f5b55f",
-  "title": "Define reproducible gf2-core SOTA reference matrix",
-  "description": "Define the reproducible SOTA reference matrix for gf2-core finite-field and linear-algebra performance.\n\n## Background\n\nfflas-ffpack and M4RI are primary hard references, but GF(2^m), charpoly/minpoly, and sparse operations may require M4RIE, LinBox, NTL, or FLINT. Only reproducible and comparable references become hard targets.\n\n## Success Criteria\n\n- [hard] A linked design doc defines the reference acceptance protocol and the reference owner for every in-scope operation/field family.\n- [hard] fflas-ffpack and M4RI lanes are hardened for the primary GF(p) and GF(2) comparisons.\n- [hard] M4RIE, LinBox, NTL, and FLINT are either promoted to hard references with working harnesses or rejected with evidence.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-05T11:10:09.102256058Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.433953673Z",
   "dependencies": [
     "4c0d0202-bb1c-40cc-910c-412f33fc95f4",
     "b0434149-9385-4149-8fec-dc2b4663333f"
   ],
+  "description": "Define the reproducible SOTA reference matrix for gf2-core finite-field and linear-algebra performance.\n\n## Background\n\nfflas-ffpack and M4RI are primary hard references, but GF(2^m), charpoly/minpoly, and sparse operations may require M4RIE, LinBox, NTL, or FLINT. Only reproducible and comparable references become hard targets.\n\n## Success Criteria\n\n- [hard] A linked design doc defines the reference acceptance protocol and the reference owner for every in-scope operation/field family.\n- [hard] fflas-ffpack and M4RI lanes are hardened for the primary GF(p) and GF(2) comparisons.\n- [hard] M4RIE, LinBox, NTL, and FLINT are either promoted to hard references with working harnesses or rejected with evidence.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "SOTA reference acceptance protocol",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "linbox promotion evidence",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/linbox_promotion_evidence.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "m4rie promotion evidence",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/m4rie_promotion_evidence.md"
+    },
+    {
+      "commit": "47e4525",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "SOTA target matrix",
+      "path": "dev/plans/sota_target_matrix.md"
+    },
+    {
+      "commit": "5871eccf",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "ntl promotion evidence",
+      "path": "dev/plans/ntl_promotion_evidence.md"
+    },
+    {
+      "commit": "5871eccf",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "flint promotion evidence",
+      "path": "dev/plans/flint_promotion_evidence.md"
+    }
+  ],
+  "done_at": "2026-05-05T11:28:41.578884810Z",
+  "first_ready_at": "2026-05-05T11:10:03.666196693Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-05T11:22:26.008786668Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T11:22:32.692055801Z"
+      "updated_at": "2026-05-05T11:22:32.692055801Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-05T11:28:41.156323419Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T11:22:26.008786668Z"
+      "updated_at": "2026-05-05T11:28:41.156323419Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/sota_reference_acceptance_protocol.md",
-      "commit": null,
-      "label": "SOTA reference acceptance protocol",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/linbox_promotion_evidence.md",
-      "commit": null,
-      "label": "linbox promotion evidence",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/plans/m4rie_promotion_evidence.md",
-      "commit": null,
-      "label": "m4rie promotion evidence",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/plans/sota_target_matrix.md",
-      "commit": "47e4525",
-      "label": "SOTA target matrix",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/ntl_promotion_evidence.md",
-      "commit": "5871eccf",
-      "label": "ntl promotion evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/flint_promotion_evidence.md",
-      "commit": "5871eccf",
-      "label": "flint promotion evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "cbecfced-d91e-404f-a1f9-b2e960f5b55f",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-reference-matrix"
   ],
-  "created_at": "2026-04-30T06:43:02.433953673Z",
-  "updated_at": "2026-07-12T20:02:55.473960666Z",
-  "first_ready_at": "2026-05-05T11:10:03.666196693Z",
-  "claimed_at": "2026-05-05T11:10:09.102256058Z",
-  "done_at": "2026-05-05T11:28:41.578884810Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Define reproducible gf2-core SOTA reference matrix",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

@@ -11,21 +11,21 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "F_3/F_5/F_7 cross-prime comparison",
-      "path": "dev/plans/r2_f3_f5_f7_cross_prime_comparison.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/r2_f3_f5_f7_cross_prime_comparison.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Cross-prime packed-encoding generalizations",
-      "path": "dev/plans/r2_packed_encoding_generalizations.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/r2_packed_encoding_generalizations.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "R2 F_7 encoding decision",
-      "path": "dev/plans/f10152f6/r2_f7_encoding_decision.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/f10152f6/r2_f7_encoding_decision.md"
     }
   ],
   "done_at": "2026-05-03T00:47:24.018644072Z",
@@ -54,5 +54,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Research best-effort F_7 packed encoding",
-  "updated_at": "2026-08-07T21:14:53.711267554Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

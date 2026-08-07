@@ -12,14 +12,14 @@
       "commit": null,
       "doc_type": "evidence",
       "label": "Small-n dispatch raw bench CSV",
-      "path": "dev/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.csv"
     },
     {
       "commit": null,
       "doc_type": "implementation",
       "format": "markdown",
       "label": "Small-n dispatch evidence",
-      "path": "dev/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/27bb2f75/2026-05-24-27bb2f75-small-n-dispatch.md"
     }
   ],
   "done_at": "2026-05-24T07:34:28.694839802Z",
@@ -55,5 +55,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Optimize small-n GEMM dispatch path (n≤128) to close per-call-overhead gap",
-  "updated_at": "2026-08-07T21:15:06.933058372Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

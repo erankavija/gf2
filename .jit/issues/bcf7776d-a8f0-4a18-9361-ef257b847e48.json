@@ -1,35 +1,35 @@
 {
-  "id": "bcf7776d-a8f0-4a18-9361-ef257b847e48",
-  "title": "CPU foundation for gf2-sim pipeline",
-  "description": "## Goal\n\nLand the CPU side of the `gf2-sim` pipeline: crate scaffolding,\ndeterministic-aggregation primitives (per-worker ChaCha20 seek,\norder-independent reductions), layered builder + graph APIs, CPU\nchannel stages, heartbeat-checkpoint integration, and the\ndeterminism property-test harness.\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Runs in parallel with\nthe GPU stages story (lockstep handoff via the Phase 0 design\ndoc `ec530af9`). Containment for all CPU-side foundation tasks.\n\n## Deliverables (themes)\n\n- New crate `gf2-sim` with `Pipeline` / `Stage<I,O>` / `Connector`\n  primitives and batch types.\n- Within-SNR frame parallelism + deterministic aggregation (the\n  amended issue `3fcb7025` is the core).\n- Layered API: typestate builder for the DVB-T2 preset; graph\n  API for novel chains.\n- CPU AWGN + Rayleigh / Rician channel stages.\n- Heartbeat-checkpoint integration with the parallel executor.\n- Property-test harness asserting byte-identity across\n  {1, 2, 4, 8, 24} workers.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] Determinism property test passes for at least 3\n  (rate, modulation) configurations.\n- [hard] Receipt artefact under\n  `dev/benchmarks/gf2-sim/cpu-foundation-receipts.md` records\n  the per-worker speedup and the byte-identity attestation.\n- [hard] CLAUDE.md updated with the `gf2-sim` module map and the\n  determinism contract.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals; GPU work is in the GPU stages\nstory.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-06-09T05:37:45.636176456Z",
+  "context": {},
+  "created_at": "2026-06-05T22:01:13.027874246Z",
   "dependencies": [
     "81d05bab-4e68-4289-9e64-cb8a82187225",
     "48a0db6c-c87d-48f2-9df6-d52bbca050ec"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "## Goal\n\nLand the CPU side of the `gf2-sim` pipeline: crate scaffolding,\ndeterministic-aggregation primitives (per-worker ChaCha20 seek,\norder-independent reductions), layered builder + graph APIs, CPU\nchannel stages, heartbeat-checkpoint integration, and the\ndeterminism property-test harness.\n\n## Context\n\nStory under epic `gf2-sim` (`f9717e7e`). Runs in parallel with\nthe GPU stages story (lockstep handoff via the Phase 0 design\ndoc `ec530af9`). Containment for all CPU-side foundation tasks.\n\n## Deliverables (themes)\n\n- New crate `gf2-sim` with `Pipeline` / `Stage<I,O>` / `Connector`\n  primitives and batch types.\n- Within-SNR frame parallelism + deterministic aggregation (the\n  amended issue `3fcb7025` is the core).\n- Layered API: typestate builder for the DVB-T2 preset; graph\n  API for novel chains.\n- CPU AWGN + Rayleigh / Rician channel stages.\n- Heartbeat-checkpoint integration with the parallel executor.\n- Property-test harness asserting byte-identity across\n  {1, 2, 4, 8, 24} workers.\n\n## Success Criteria\n\n- [hard] All child tasks complete with required gates green.\n- [hard] Determinism property test passes for at least 3\n  (rate, modulation) configurations.\n- [hard] Receipt artefact under\n  `dev/benchmarks/gf2-sim/cpu-foundation-receipts.md` records\n  the per-worker speedup and the byte-identity attestation.\n- [hard] CLAUDE.md updated with the `gf2-sim` module map and the\n  determinism contract.\n\n## Non-goals\n\nSee epic `f9717e7e` non-goals; GPU work is in the GPU stages\nstory.",
   "documents": [
     {
-      "path": "dev/benchmarks/gf2-sim/cpu-foundation-receipts.md",
       "commit": null,
-      "label": "CPU foundation receipts (Phase A close)",
       "doc_type": "benchmark",
-      "format": "markdown"
+      "format": "markdown",
+      "label": "CPU foundation receipts (Phase A close)",
+      "path": "dev/archive/f9717e7e-gf2-sim/benchmarks/gf2-sim/cpu-foundation-receipts.md"
     }
   ],
+  "done_at": "2026-06-09T05:38:59.929276051Z",
+  "first_ready_at": "2026-06-09T05:37:17.575929098Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "bcf7776d-a8f0-4a18-9361-ef257b847e48",
   "labels": [
     "type:story",
     "component:gf2-coding",
     "epic:gf2-sim",
     "story:cpu-foundation-for-gf2-sim-pipeline"
   ],
-  "created_at": "2026-06-05T22:01:13.027874246Z",
-  "updated_at": "2026-07-14T20:49:35.846235267Z",
-  "first_ready_at": "2026-06-09T05:37:17.575929098Z",
-  "claimed_at": "2026-06-09T05:37:45.636176456Z",
-  "done_at": "2026-06-09T05:38:59.929276051Z"
+  "priority": "high",
+  "state": "done",
+  "title": "CPU foundation for gf2-sim pipeline",
+  "updated_at": "2026-08-07T21:28:28.028611624Z"
 }

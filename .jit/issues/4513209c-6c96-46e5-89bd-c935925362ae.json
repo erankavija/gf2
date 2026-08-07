@@ -13,7 +13,7 @@
       "doc_type": null,
       "format": "markdown",
       "label": null,
-      "path": "dev/plans/4513209c/s2_parallel_scaling.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/4513209c/s2_parallel_scaling.md"
     }
   ],
   "done_at": "2026-05-11T21:25:50.824337114Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Parallel scaling 1..N cores at 0.85x linear at n greater equal 28",
-  "updated_at": "2026-08-07T21:14:55.376684424Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

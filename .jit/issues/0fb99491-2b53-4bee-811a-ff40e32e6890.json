@@ -16,7 +16,7 @@
       "commit": null,
       "doc_type": "notes",
       "label": "Container progress record",
-      "path": "dev/active/0fb99491-0fb994/0fb99491-progress.json"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/active/0fb99491-0fb994/0fb99491-progress.json"
     }
   ],
   "done_at": "2026-04-05T22:46:57.866654721Z",
@@ -53,5 +53,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement SIMD-accelerated FieldVec operations with delayed reduction",
-  "updated_at": "2026-08-07T21:14:30.173216934Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

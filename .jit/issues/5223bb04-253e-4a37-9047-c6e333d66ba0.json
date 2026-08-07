@@ -1,45 +1,46 @@
 {
-  "id": "5223bb04-253e-4a37-9047-c6e333d66ba0",
-  "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch",
-  "description": "Route `BitMatrix::mul` non-M4RM row-XOR fallback through the existing AVX2 XOR dispatch.\n\n## Background\n\n`BitMatrix::mul` normally uses the M4RM implementation in `crates/gf2-core/src/alg/m4rm.rs`. When `choose_k_block(k, n)` degenerates to `1`, M4RM table precomputation has no reuse advantage; that path is now routed to a direct row-XOR fallback, `BitMatrix::mul_row_xor_dispatch`, which computes each output row as the XOR of rows of `rhs` selected by set bits in the corresponding row of `lhs`.\n\nThe fallback resolves `crate::kernels::ops::resolve_xor_inplace` once before the row loop. For output rows with width >= 8 u64 words, the resolved function pointer routes through the existing `LogicalFns::xor_fn` AVX2 dispatch. No new unsafe code is added to `gf2-core`, and `choose_k_block` / the normal M4RM crossover remain unchanged.\n\n## Lead review history\n\nR0 was rejected before merge because it benchmarked `matmul_square/1024` and `/2048`; those shapes use M4RM with `k_block=8`, so they measured the prior `c69d2055` M4RM row-XOR dispatch rather than this issue's non-M4RM fallback. The user approved rework to add/route a benchmark that actually exercises the fallback and gate performance on that path.\n\nR1 adds the dedicated Criterion leaf `matmul_row_xor_fallback/{scalar_backend,dispatch_helper,production_mul}/512x1x8192`:\n\n- `lhs` shape is 512x1 and `rhs` shape is 1x8192.\n- `choose_k_block(k=1, n=8192)` must return 1 because the selector cannot choose a block size greater than `k`.\n- `alg::m4rm::multiply` therefore branches to `BitMatrix::mul_row_xor_dispatch`.\n- `rhs.cols = 8192`, so output rows are 128 u64 words, above the 8-word SIMD dispatch threshold.\n\nThe `criterion-1.5x` A2 comparator was amended to compare the current scalar fallback leaf (`matmul_row_xor_fallback/scalar_backend`) against the current dispatched production fallback leaf (`matmul_row_xor_fallback/production_mul`). This current-leaf mode is used only for benchmark leaves created after the pinned V0 baseline commit.\n\n## Success Criteria\n\n- [hard] Existing matmul tests + word-boundary `#[test]`s pass at n in {0, 1, 63, 64, 65, 127, 128, 129}.\n- [hard] Proptest equivalence vs. scalar via the I4 helper.\n- [hard] M4RM path crossover unchanged: `choose_k_block` logic is unchanged and square 1024/2048 remain on M4RM (`k_block=8`).\n- [hard] Sibling `*.asm.txt` artefact shows the dispatched fallback call site and vector XOR in `LogicalFns::xor_fn`; on this toolchain the full-vector XOR mnemonic for that function is `vxorps`, which is the inspected 256-bit register XOR for the fallback call site.\n- [hard] `perf stat -r 10` capture before/after recorded in this JIT issue.\n- [aspirational] >= 1.5x geomean over the scalar fallback comparator at the non-M4RM fallback design shape. Below the bar: revert.\n\n## Perf evidence\n\nFinal A2 comparator on main after refreshing `matmul_row_xor_fallback` leaves:\n\n- Baseline leaf: `matmul_row_xor_fallback/scalar_backend/512x1x8192`.\n- New leaf: `matmul_row_xor_fallback/production_mul/512x1x8192`.\n- Scalar fallback: 26302.8 ns.\n- Dispatched production fallback: 13050.9 ns.\n- Geomean: 2.015x, target >= 1.5x, PASS.\n\nWorktree Criterion medians recorded in `dev/benchmarks/jit-5223bb04-mul.txt`:\n\n- `scalar_backend/512x1x8192`: 26.804 us.\n- `dispatch_helper/512x1x8192`: 14.033 us.\n- `production_mul/512x1x8192`: 12.745 us.\n- Production fallback vs scalar fallback: 2.10x.\n\n`perf stat -r 10` captures for the fallback benchmark are recorded in `dev/benchmarks/jit-5223bb04-mul.txt`:\n\n- Scalar fallback comparator: task-clock:u 253.18 msec (+- 0.37%); cycles 1,170,911,703; instructions 1,843,375,406; IPC 1.6; branch-misses 24,885,970; elapsed 0.255080650 +- 0.000954239 s.\n- Production dispatched fallback: task-clock:u 254.79 msec (+- 0.39%); cycles 1,168,862,654; instructions 1,841,195,150; IPC 1.6; branch-misses 24,875,774; elapsed 0.256652447 +- 0.000969137 s.\n- Note: `--profile-time` runs each selected routine for a fixed profiling duration, so the speed gate is the Criterion median table above; `perf stat` is retained for repeatable counter capture under the same filtered benchmark leaf.\n\n## Notes\n\nBench: `matmul_row_xor_fallback` in `crates/gf2-core/benches/matmul.rs`. Implementation commit: `dfa42df perf(jit:5223bb04): route row-xor matmul fallback`; comparator commit: `c217269 test(jit:5223bb04): gate fallback row-xor benchmark`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-5223bb04",
+  "claimed_at": "2026-04-28T13:23:36.084683801Z",
+  "context": {},
+  "created_at": "2026-04-25T15:17:12.786762591Z",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
+  "description": "Route `BitMatrix::mul` non-M4RM row-XOR fallback through the existing AVX2 XOR dispatch.\n\n## Background\n\n`BitMatrix::mul` normally uses the M4RM implementation in `crates/gf2-core/src/alg/m4rm.rs`. When `choose_k_block(k, n)` degenerates to `1`, M4RM table precomputation has no reuse advantage; that path is now routed to a direct row-XOR fallback, `BitMatrix::mul_row_xor_dispatch`, which computes each output row as the XOR of rows of `rhs` selected by set bits in the corresponding row of `lhs`.\n\nThe fallback resolves `crate::kernels::ops::resolve_xor_inplace` once before the row loop. For output rows with width >= 8 u64 words, the resolved function pointer routes through the existing `LogicalFns::xor_fn` AVX2 dispatch. No new unsafe code is added to `gf2-core`, and `choose_k_block` / the normal M4RM crossover remain unchanged.\n\n## Lead review history\n\nR0 was rejected before merge because it benchmarked `matmul_square/1024` and `/2048`; those shapes use M4RM with `k_block=8`, so they measured the prior `c69d2055` M4RM row-XOR dispatch rather than this issue's non-M4RM fallback. The user approved rework to add/route a benchmark that actually exercises the fallback and gate performance on that path.\n\nR1 adds the dedicated Criterion leaf `matmul_row_xor_fallback/{scalar_backend,dispatch_helper,production_mul}/512x1x8192`:\n\n- `lhs` shape is 512x1 and `rhs` shape is 1x8192.\n- `choose_k_block(k=1, n=8192)` must return 1 because the selector cannot choose a block size greater than `k`.\n- `alg::m4rm::multiply` therefore branches to `BitMatrix::mul_row_xor_dispatch`.\n- `rhs.cols = 8192`, so output rows are 128 u64 words, above the 8-word SIMD dispatch threshold.\n\nThe `criterion-1.5x` A2 comparator was amended to compare the current scalar fallback leaf (`matmul_row_xor_fallback/scalar_backend`) against the current dispatched production fallback leaf (`matmul_row_xor_fallback/production_mul`). This current-leaf mode is used only for benchmark leaves created after the pinned V0 baseline commit.\n\n## Success Criteria\n\n- [hard] Existing matmul tests + word-boundary `#[test]`s pass at n in {0, 1, 63, 64, 65, 127, 128, 129}.\n- [hard] Proptest equivalence vs. scalar via the I4 helper.\n- [hard] M4RM path crossover unchanged: `choose_k_block` logic is unchanged and square 1024/2048 remain on M4RM (`k_block=8`).\n- [hard] Sibling `*.asm.txt` artefact shows the dispatched fallback call site and vector XOR in `LogicalFns::xor_fn`; on this toolchain the full-vector XOR mnemonic for that function is `vxorps`, which is the inspected 256-bit register XOR for the fallback call site.\n- [hard] `perf stat -r 10` capture before/after recorded in this JIT issue.\n- [aspirational] >= 1.5x geomean over the scalar fallback comparator at the non-M4RM fallback design shape. Below the bar: revert.\n\n## Perf evidence\n\nFinal A2 comparator on main after refreshing `matmul_row_xor_fallback` leaves:\n\n- Baseline leaf: `matmul_row_xor_fallback/scalar_backend/512x1x8192`.\n- New leaf: `matmul_row_xor_fallback/production_mul/512x1x8192`.\n- Scalar fallback: 26302.8 ns.\n- Dispatched production fallback: 13050.9 ns.\n- Geomean: 2.015x, target >= 1.5x, PASS.\n\nWorktree Criterion medians recorded in `dev/benchmarks/jit-5223bb04-mul.txt`:\n\n- `scalar_backend/512x1x8192`: 26.804 us.\n- `dispatch_helper/512x1x8192`: 14.033 us.\n- `production_mul/512x1x8192`: 12.745 us.\n- Production fallback vs scalar fallback: 2.10x.\n\n`perf stat -r 10` captures for the fallback benchmark are recorded in `dev/benchmarks/jit-5223bb04-mul.txt`:\n\n- Scalar fallback comparator: task-clock:u 253.18 msec (+- 0.37%); cycles 1,170,911,703; instructions 1,843,375,406; IPC 1.6; branch-misses 24,885,970; elapsed 0.255080650 +- 0.000954239 s.\n- Production dispatched fallback: task-clock:u 254.79 msec (+- 0.39%); cycles 1,168,862,654; instructions 1,841,195,150; IPC 1.6; branch-misses 24,875,774; elapsed 0.256652447 +- 0.000969137 s.\n- Note: `--profile-time` runs each selected routine for a fixed profiling duration, so the speed gate is the Criterion median table above; `perf stat` is retained for repeatable counter capture under the same filtered benchmark leaf.\n\n## Notes\n\nBench: `matmul_row_xor_fallback` in `crates/gf2-core/benches/matmul.rs`. Implementation commit: `dfa42df perf(jit:5223bb04): route row-xor matmul fallback`; comparator commit: `c217269 test(jit:5223bb04): gate fallback row-xor benchmark`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "PPC spiral spec",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md"
+    }
+  ],
+  "done_at": "2026-04-28T14:59:40.445578768Z",
+  "first_ready_at": "2026-04-25T19:18:07.702897805Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "criterion-1.5x"
   ],
   "gates_status": {
-    "criterion-1.5x": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T14:47:45.875767088Z"
+      "updated_at": "2026-04-28T14:48:13.838226918Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T14:52:07.318942257Z"
+      "updated_at": "2026-04-28T14:52:07.318942257Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "criterion-1.5x": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-28T14:48:13.838226918Z"
+      "updated_at": "2026-04-28T14:47:45.875767088Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/gf2_core_ppc_spiral.md",
-      "commit": null,
-      "label": "PPC spiral spec",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "5223bb04-253e-4a37-9047-c6e333d66ba0",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -47,9 +48,8 @@
     "story:ppc-dispatch-routing",
     "ppc-kernel:A2"
   ],
-  "created_at": "2026-04-25T15:17:12.786762591Z",
-  "updated_at": "2026-07-12T20:02:55.442780804Z",
-  "first_ready_at": "2026-04-25T19:18:07.702897805Z",
-  "claimed_at": "2026-04-28T13:23:36.084683801Z",
-  "done_at": "2026-04-28T14:59:40.445578768Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Route BitMatrix::mul row-XOR through xor_fn dispatch",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

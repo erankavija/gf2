@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Blocked echelon design",
-      "path": "dev/active/24a93e4e/24a93e4e-blocked-echelon-design.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/active/24a93e4e/24a93e4e-blocked-echelon-design.md"
     }
   ],
   "done_at": "2026-05-25T20:45:12.420145078Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Design blocked GF(p) echelon / RREF kernel (026fc832 Phase 6)",
-  "updated_at": "2026-08-07T21:14:30.857496265Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

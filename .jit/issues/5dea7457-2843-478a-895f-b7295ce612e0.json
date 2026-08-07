@@ -11,13 +11,13 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "5dea7457 lane hardening evidence",
-      "path": "dev/plans/5dea7457/5dea7457_lane_hardening_evidence.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/5dea7457/5dea7457_lane_hardening_evidence.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "Reference CSV extension",
-      "path": "dev/bench_results/5dea7457/2026-05-04-5dea7457-reference-extension.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/5dea7457/2026-05-04-5dea7457-reference-extension.csv"
     }
   ],
   "done_at": "2026-05-04T05:53:27.171941952Z",
@@ -53,5 +53,5 @@
   "priority": "high",
   "state": "done",
   "title": "Harden fflas-ffpack and M4RI reference lanes",
-  "updated_at": "2026-08-07T21:14:59.460068046Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

@@ -1,69 +1,69 @@
 {
-  "id": "c3e79272-13f1-47e1-9492-65947116a08a",
-  "title": "Build charpoly minpoly reference lane",
-  "description": "Create accepted reference rows for charpoly and minpoly.\n\n## Success Criteria\n\n- [hard] LinBox/NTL/FLINT reference rows exist where accepted by S1.\n- [hard] Unsupported references are excluded with evidence.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-04T11:04:21.244629934Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.844003240Z",
   "dependencies": [],
+  "description": "Create accepted reference rows for charpoly and minpoly.\n\n## Success Criteria\n\n- [hard] LinBox/NTL/FLINT reference rows exist where accepted by S1.\n- [hard] Unsupported references are excluded with evidence.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "charpoly/minpoly reference-lane evidence (c3e79272)",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "charpoly reference CSV (c3e79272)",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-charpoly-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "minpoly reference CSV (c3e79272)",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-c3e79272-minpoly-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "LinBox↔FLINT charpoly/minpoly smoke oracle (c3e79272)",
+      "path": "benchmarks/reference/charpoly_minpoly_smoke.cpp"
+    }
+  ],
+  "done_at": "2026-05-04T13:54:22.236335410Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T13:54:16.034088666Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:48:04.527351223Z"
+      "updated_at": "2026-05-04T10:48:04.527351223Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T11:04:36.272829183Z"
+      "updated_at": "2026-05-04T11:04:36.272829183Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-04T13:54:16.034088666Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-charpoly-minpoly-refs.md",
-      "commit": null,
-      "label": "charpoly/minpoly reference-lane evidence (c3e79272)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-charpoly-reference.csv",
-      "commit": null,
-      "label": "charpoly reference CSV (c3e79272)",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-c3e79272-minpoly-reference.csv",
-      "commit": null,
-      "label": "minpoly reference CSV (c3e79272)",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "benchmarks/reference/charpoly_minpoly_smoke.cpp",
-      "commit": null,
-      "label": "LinBox↔FLINT charpoly/minpoly smoke oracle (c3e79272)",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "c3e79272-13f1-47e1-9492-65947116a08a",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-04-30T06:43:02.844003240Z",
-  "updated_at": "2026-07-12T20:02:55.471999425Z",
-  "claimed_at": "2026-05-04T11:04:21.244629934Z",
-  "done_at": "2026-05-04T13:54:22.236335410Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Build charpoly minpoly reference lane",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

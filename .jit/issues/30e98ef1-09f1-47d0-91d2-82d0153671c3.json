@@ -15,14 +15,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D5 Lean proof sketch — F_5 Packed5 correctness (sketch, awaiting user approval)",
-      "path": "dev/plans/30e98ef1/d5_lean_packed5_sketch.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d5_lean_packed5_sketch.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "D6 Lean proof sketch — F_7 Packed7 correctness (sketch; Path A/B decision pending user)",
-      "path": "dev/plans/30e98ef1/d6_lean_packed7_sketch.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/30e98ef1/d6_lean_packed7_sketch.md"
     }
   ],
   "done_at": "2026-05-16T20:08:58.552505068Z",
@@ -52,5 +52,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Lean F_5 and F_7 packed correctness",
-  "updated_at": "2026-08-07T21:14:49.554037424Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

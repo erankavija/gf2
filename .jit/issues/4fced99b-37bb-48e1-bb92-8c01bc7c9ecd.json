@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D1c: gf2-algebra feature-gate matrix",
-      "path": "dev/plans/4fced99b/d1c_feature_matrix.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md"
     }
   ],
   "done_at": "2026-05-09T09:56:07.009491750Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Define gf2-algebra Cargo feature-gate matrix",
-  "updated_at": "2026-08-07T21:14:48.151096606Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

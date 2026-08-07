@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GPU batch BCH syndrome design plan",
-      "path": "dev/active/9012f8a0/gpu-batch-bch-syndrome-plan.md"
+      "path": "dev/archive/806eb14e-hip-gpu-prototype/active/9012f8a0/gpu-batch-bch-syndrome-plan.md"
     }
   ],
   "done_at": "2026-06-17T01:02:53.986760608Z",
@@ -49,5 +49,5 @@
   "priority": "high",
   "state": "done",
   "title": "HIP/ROCm GPU-accelerated batch BCH syndrome evaluation",
-  "updated_at": "2026-08-07T21:14:46.093077504Z"
+  "updated_at": "2026-08-07T21:28:16.590614106Z"
 }

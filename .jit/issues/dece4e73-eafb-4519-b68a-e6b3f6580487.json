@@ -1,15 +1,37 @@
 {
-  "id": "dece4e73-eafb-4519-b68a-e6b3f6580487",
-  "title": "Aggregate final SOTA raw CSVs",
-  "description": "Collect all gf2 and reference benchmark rows for final publication.\n\n## Success Criteria\n\n- [hard] Versioned CSV files cover every in-scope cell.\n- [hard] CSV schemas are compatible with the analysis renderer.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-07T21:31:11.635496284Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.936851387Z",
   "dependencies": [
     "66190ccd-60aa-4675-bb59-153f1834b92e",
     "72ab6d0e-60ae-4148-8168-bbfd2b238546",
     "d1a5fea8-6277-4ce4-b433-3d32d92d509e"
   ],
+  "description": "Collect all gf2 and reference benchmark rows for final publication.\n\n## Success Criteria\n\n- [hard] Versioned CSV files cover every in-scope cell.\n- [hard] CSV schemas are compatible with the analysis renderer.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "SOTA aggregate gf2 measurements (459 rows)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "data",
+      "label": "SOTA aggregate reference measurements (644 rows)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Aggregate CSV schema and renderer compatibility contract",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
+    }
+  ],
+  "done_at": "2026-05-07T22:05:29.079798093Z",
+  "first_ready_at": "2026-05-05T09:36:37.420060073Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -18,51 +40,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T21:58:48.222456917Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T16:52:25.014899012Z"
+      "updated_at": "2026-05-07T21:58:48.222456917Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T21:58:58.252209176Z"
+      "updated_at": "2026-05-07T21:58:58.252209176Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-08T16:52:25.014899012Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
-      "commit": null,
-      "label": "SOTA aggregate gf2 measurements (459 rows)",
-      "doc_type": "data"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
-      "commit": null,
-      "label": "SOTA aggregate reference measurements (644 rows)",
-      "doc_type": "data"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
-      "commit": null,
-      "label": "Aggregate CSV schema and renderer compatibility contract",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "dece4e73-eafb-4519-b68a-e6b3f6580487",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-final-scorecard"
   ],
-  "created_at": "2026-04-30T06:43:02.936851387Z",
-  "updated_at": "2026-07-12T20:02:55.478843910Z",
-  "first_ready_at": "2026-05-05T09:36:37.420060073Z",
-  "claimed_at": "2026-05-07T21:31:11.635496284Z",
-  "done_at": "2026-05-07T22:05:29.079798093Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Aggregate final SOTA raw CSVs",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

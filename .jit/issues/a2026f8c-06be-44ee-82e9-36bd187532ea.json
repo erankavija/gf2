@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Implementation plan",
-      "path": "dev/active/a2026f8c/a2026f8c-incremental-logging-plan.md"
+      "path": "dev/archive/6efb756b-grand/active/a2026f8c/a2026f8c-incremental-logging-plan.md"
     }
   ],
   "done_at": "2026-04-08T22:42:24.855589389Z",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Incremental simulation logging and per-point result persistence",
-  "updated_at": "2026-08-07T21:14:37.243101452Z"
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

@@ -16,13 +16,13 @@
       "commit": null,
       "doc_type": "evidence",
       "label": "47698404 sparse gf2-side CSV",
-      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "47698404 sparse reference CSV (fflas-ffpack + LinBox)",
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-04-47698404-sparse-reference.csv"
     },
     {
       "commit": null,
@@ -41,28 +41,28 @@
       "commit": null,
       "doc_type": "evidence",
       "label": "47698404 sparse gf2-side CSV (re-run)",
-      "path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-extended.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "47698404 host capture",
-      "path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-host.txt"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-host.txt"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "47698404 sparse post-PPC scorecard",
-      "path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-scorecard.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "47698404 sparse-tables (analyze.py output)",
-      "path": "dev/bench_results/47698404/2026-05-04-47698404-sparse-tables.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/47698404/2026-05-04-47698404-sparse-tables.md"
     }
   ],
   "done_at": "2026-05-05T08:44:04.226451008Z",
@@ -99,5 +99,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Re-run sparse post-PPC scorecard",
-  "updated_at": "2026-08-07T21:14:59.226750530Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

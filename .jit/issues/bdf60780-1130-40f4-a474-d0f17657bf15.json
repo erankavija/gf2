@@ -10,7 +10,7 @@
       "doc_type": "implementation",
       "format": "markdown",
       "label": "matmul GF(2) small-n M4RI parity — n=64 1.213x, n=256 1.070x PASS (from 2.73x/2.54x)",
-      "path": "dev/bench_results/bdf60780/2026-05-28-bdf60780-matmul-gf2-smalln.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/bdf60780/2026-05-28-bdf60780-matmul-gf2-smalln.md"
     }
   ],
   "done_at": "2026-05-28T19:46:27.483639849Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Close matmul GF(2) small-n (n=64, n=256) to M4RI parity",
-  "updated_at": "2026-08-07T21:15:12.355900559Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

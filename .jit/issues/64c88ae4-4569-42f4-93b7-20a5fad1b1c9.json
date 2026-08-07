@@ -1,141 +1,141 @@
 {
-  "id": "64c88ae4-4569-42f4-93b7-20a5fad1b1c9",
-  "title": "Benchmark FieldMatrix linear algebra against fflas-ffpack (and M4RI for GF(2))",
-  "description": "Rigorous performance benchmarking of `gf2` finite field linear algebra against `fflas-ffpack` (for GF(p) and GF(2^m)) and `M4RI` (for GF(2)). **This story is scoped to baseline publication; SOTA closure is owned by `97bf0879`.** Reproducible via a pinned container image.\n\n## Benchmark suite\n\n| Operation | Sizes |\n|-----------|-------|\n| Matrix multiply (`fgemm`) | 64², 256², 1024², 4096² |\n| PLE decomposition | 64², 256², 1024², 4096² |\n| Row/Reduced echelon form | 64², 256², 1024² |\n| Matrix inversion | 64², 256², 1024² |\n| Linear solve (`Ax = b`) | 64², 256², 1024², 4096² |\n| Characteristic polynomial | 32², 128², 512² |\n| Minimal polynomial | 32², 128², 512² |\n| Rectangular fgemm | m × k × n at (1024, 1024, 1024^0.5), (1024, 1024, 1024^0.3) — Winograd crossover |\n| SpMV | sparsity 1%, 5% at n = 1024, 4096 |\n\n## Field coverage\n\n- **Small GF(p)**: p = 7, 31, 251, 65521\n- **Medium GF(p)**: p = 2^31 − 1 (Mersenne), other 32-bit primes\n- **GF(2^m)**: m = 8, 16, 32\n- **GF(2)**: matched against M4RI only (our M4RM is the reference implementation here; bench vs M4RI)\n\n## Rank profile regimes\n\nAll factorizations (PLE, echelon, inv, solve) benchmarked on **both**:\n- Uniformly random (full-rank w.p. ~1) matrices\n- Explicitly rank-deficient matrices (rank = n/2) — measures PLE's advantage over PLU.\n\n## Targets (historical context only — SOTA closure handed off to `97bf0879`)\n\nThe original throughput targets below are retained for context and are no longer in force as completion criteria for this story. SOTA gap closure is now owned by `97bf0879`, which mandates a stricter `[hard]` ≤1.5x ratio against the best reproducible reference for every in-scope cell.\n\n- **GF(p)**: Originally aimed within 2× of `fflas-ffpack` throughput\n- **GF(2^m)**: Originally aimed to **exceed** `fflas-ffpack` (direct PCLMULQDQ vs. float-BLAS detour)\n- **GF(2)**: Originally aimed within 1.5× of `M4RI`\n\n## Methodology\n\n- Criterion.rs with statistical rigor; median of 100+ iterations, warm-up per Criterion defaults.\n- Reproducibility: pinned **container image** (Debian-slim + pinned gcc, OpenBLAS, fflas-ffpack, Givaro, GMP, M4RI) — built from `benchmarks/Containerfile` in-repo. Container image digest pinned in a `benchmarks/image.lock` file.\n- Host hardware captured in `benchmarks/host.txt` at run time (CPU model, MHz, L1/L2/L3 sizes).\n- Same matrix data used across gf2 and reference runs — seed-controlled generators.\n- Published results at `dev/bench_results/<date>.md` with full methodology and raw numbers (CSV).\n\n## Deliverables\n\n1. `benchmarks/Containerfile` + `benchmarks/image.lock` — reproducible bench environment.\n2. `benchmarks/run.sh` — launches the pinned container, runs criterion, dumps CSV.\n3. `crates/gf2-core/benches/fieldmatrix_*.rs` — criterion benches for gf2 side.\n4. `benchmarks/reference/fflas_bench.cpp` + `benchmarks/reference/m4ri_bench.c` — reference implementations invoking fflas-ffpack / M4RI on identical matrices.\n5. `dev/bench_results/2026-*.md` — first published run with analysis.\n\n## Success criteria — baseline publication scope\n\nThese criteria reflect what this story actually delivers; SOTA closure criteria live in `97bf0879`.\n\n- [hard] Criterion benchmarks exist for every (operation, field, size) combination that is reproducible inside the pinned container and within baseline scope. Cells declared out-of-scope, slow/nightly, harness-scope-gap, or optimization-gap are documented in the published report rather than implemented inside this story.\n- [hard] Reference fflas-ffpack + M4RI benchmarks run inside the pinned container and emit CSV compatible with our analysis script for every reference row in scope; non-comparable rows are explicitly listed.\n- [hard] Published results document in `dev/bench_results/` shows gf2 numbers side-by-side with reference numbers, percentage delta where available, and a clear status legend (measured / N/A / slow-or-nightly / harness-scope gap / optimization gap).\n- [hard] Rank-deficient and rectangular regimes are included where the harness supports them; missing combinations are listed as harness-scope gaps and handed off to `97bf0879`.\n- [hard] The published report names every cell handed off to `97bf0879` (including `GF(31)` and `GF(2^32)`) and links the new epic for SOTA closure.\n\n## Dependencies\n\n- Matrix multiplication (d48a3cfd)\n- PLE + echelon (c3f8c1cb)\n- Triangular primitives (83b1ad8b)\n- Inverse/solve/det (ae1d1e88) — via the transitive closure through PLE/trsm\n- Characteristic polynomial (e47231cd)\n- Sparse matrix (8a90882e) — for SpMV benches\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §5\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §8\n\n## Scope Amendment — baseline publication, not SOTA closure\n\nThis story is scoped to the reproducible FieldMatrix benchmark publication and post-PPC baseline scorecard. It must report the current `gf2-core` numbers against the available reference rows, classify missing or non-comparable cells honestly, and explain each measured gap.\n\nThis story does not own closing every performance gap to state-of-the-art. The new epic `97bf0879` owns SOTA closure and requires each in-scope cell to reach within 1.5x of the best reproducible reference or faster.\n\n## Scope Amendment — GF(31) and GF(2^32) handed off to `97bf0879`\n\nUser-approved on 2026-04-30: the original field-coverage rows `GF(31)` and `GF(2^32)` are explicit baseline gaps, not blockers for this story's closure. They must be named in the published report and transferred to `97bf0879` (\"Close gf2-core SOTA performance gaps\"), where the SOTA target matrix will decide whether to keep them as distinct rows, replace them with representative small-prime / wide-extension-field rows, or add the missing gf2/reference harnesses. This story closes on the reproducible baseline it can publish today plus that explicit handoff.\n\n## Scope Amendment — success criteria rewritten on 2026-04-30 by `d3c2cc8f`\n\nThe Success Criteria block above replaces the original aspirational throughput targets with criteria that match the baseline-publication deliverable actually provided. SOTA-closure responsibility moves to `97bf0879`. The original aspirational targets are preserved under \"Targets (historical context only — SOTA closure handed off to `97bf0879`)\" so the report can be interpreted against both the original aim and the handed-off closure work.",
-  "state": "done",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-02-23T19:20:28.214456832Z",
   "dependencies": [
     "a9ab0a4f-5ae3-4da2-a15f-636b62cff0ec"
   ],
+  "description": "Rigorous performance benchmarking of `gf2` finite field linear algebra against `fflas-ffpack` (for GF(p) and GF(2^m)) and `M4RI` (for GF(2)). **This story is scoped to baseline publication; SOTA closure is owned by `97bf0879`.** Reproducible via a pinned container image.\n\n## Benchmark suite\n\n| Operation | Sizes |\n|-----------|-------|\n| Matrix multiply (`fgemm`) | 64², 256², 1024², 4096² |\n| PLE decomposition | 64², 256², 1024², 4096² |\n| Row/Reduced echelon form | 64², 256², 1024² |\n| Matrix inversion | 64², 256², 1024² |\n| Linear solve (`Ax = b`) | 64², 256², 1024², 4096² |\n| Characteristic polynomial | 32², 128², 512² |\n| Minimal polynomial | 32², 128², 512² |\n| Rectangular fgemm | m × k × n at (1024, 1024, 1024^0.5), (1024, 1024, 1024^0.3) — Winograd crossover |\n| SpMV | sparsity 1%, 5% at n = 1024, 4096 |\n\n## Field coverage\n\n- **Small GF(p)**: p = 7, 31, 251, 65521\n- **Medium GF(p)**: p = 2^31 − 1 (Mersenne), other 32-bit primes\n- **GF(2^m)**: m = 8, 16, 32\n- **GF(2)**: matched against M4RI only (our M4RM is the reference implementation here; bench vs M4RI)\n\n## Rank profile regimes\n\nAll factorizations (PLE, echelon, inv, solve) benchmarked on **both**:\n- Uniformly random (full-rank w.p. ~1) matrices\n- Explicitly rank-deficient matrices (rank = n/2) — measures PLE's advantage over PLU.\n\n## Targets (historical context only — SOTA closure handed off to `97bf0879`)\n\nThe original throughput targets below are retained for context and are no longer in force as completion criteria for this story. SOTA gap closure is now owned by `97bf0879`, which mandates a stricter `[hard]` ≤1.5x ratio against the best reproducible reference for every in-scope cell.\n\n- **GF(p)**: Originally aimed within 2× of `fflas-ffpack` throughput\n- **GF(2^m)**: Originally aimed to **exceed** `fflas-ffpack` (direct PCLMULQDQ vs. float-BLAS detour)\n- **GF(2)**: Originally aimed within 1.5× of `M4RI`\n\n## Methodology\n\n- Criterion.rs with statistical rigor; median of 100+ iterations, warm-up per Criterion defaults.\n- Reproducibility: pinned **container image** (Debian-slim + pinned gcc, OpenBLAS, fflas-ffpack, Givaro, GMP, M4RI) — built from `benchmarks/Containerfile` in-repo. Container image digest pinned in a `benchmarks/image.lock` file.\n- Host hardware captured in `benchmarks/host.txt` at run time (CPU model, MHz, L1/L2/L3 sizes).\n- Same matrix data used across gf2 and reference runs — seed-controlled generators.\n- Published results at `dev/bench_results/<date>.md` with full methodology and raw numbers (CSV).\n\n## Deliverables\n\n1. `benchmarks/Containerfile` + `benchmarks/image.lock` — reproducible bench environment.\n2. `benchmarks/run.sh` — launches the pinned container, runs criterion, dumps CSV.\n3. `crates/gf2-core/benches/fieldmatrix_*.rs` — criterion benches for gf2 side.\n4. `benchmarks/reference/fflas_bench.cpp` + `benchmarks/reference/m4ri_bench.c` — reference implementations invoking fflas-ffpack / M4RI on identical matrices.\n5. `dev/bench_results/2026-*.md` — first published run with analysis.\n\n## Success criteria — baseline publication scope\n\nThese criteria reflect what this story actually delivers; SOTA closure criteria live in `97bf0879`.\n\n- [hard] Criterion benchmarks exist for every (operation, field, size) combination that is reproducible inside the pinned container and within baseline scope. Cells declared out-of-scope, slow/nightly, harness-scope-gap, or optimization-gap are documented in the published report rather than implemented inside this story.\n- [hard] Reference fflas-ffpack + M4RI benchmarks run inside the pinned container and emit CSV compatible with our analysis script for every reference row in scope; non-comparable rows are explicitly listed.\n- [hard] Published results document in `dev/bench_results/` shows gf2 numbers side-by-side with reference numbers, percentage delta where available, and a clear status legend (measured / N/A / slow-or-nightly / harness-scope gap / optimization gap).\n- [hard] Rank-deficient and rectangular regimes are included where the harness supports them; missing combinations are listed as harness-scope gaps and handed off to `97bf0879`.\n- [hard] The published report names every cell handed off to `97bf0879` (including `GF(31)` and `GF(2^32)`) and links the new epic for SOTA closure.\n\n## Dependencies\n\n- Matrix multiplication (d48a3cfd)\n- PLE + echelon (c3f8c1cb)\n- Triangular primitives (83b1ad8b)\n- Inverse/solve/det (ae1d1e88) — via the transitive closure through PLE/trsm\n- Characteristic polynomial (e47231cd)\n- Sparse matrix (8a90882e) — for SpMV benches\n\n## References\n\n- [Dumas–Pernet takeaways](dev/plans/dumas_pernet_takeaways.md) §5\n- [fflas-ffpack analysis](dev/plans/fflas_ffpack_analysis.md) §8\n\n## Scope Amendment — baseline publication, not SOTA closure\n\nThis story is scoped to the reproducible FieldMatrix benchmark publication and post-PPC baseline scorecard. It must report the current `gf2-core` numbers against the available reference rows, classify missing or non-comparable cells honestly, and explain each measured gap.\n\nThis story does not own closing every performance gap to state-of-the-art. The new epic `97bf0879` owns SOTA closure and requires each in-scope cell to reach within 1.5x of the best reproducible reference or faster.\n\n## Scope Amendment — GF(31) and GF(2^32) handed off to `97bf0879`\n\nUser-approved on 2026-04-30: the original field-coverage rows `GF(31)` and `GF(2^32)` are explicit baseline gaps, not blockers for this story's closure. They must be named in the published report and transferred to `97bf0879` (\"Close gf2-core SOTA performance gaps\"), where the SOTA target matrix will decide whether to keep them as distinct rows, replace them with representative small-prime / wide-extension-field rows, or add the missing gf2/reference harnesses. This story closes on the reproducible baseline it can publish today plus that explicit handoff.\n\n## Scope Amendment — success criteria rewritten on 2026-04-30 by `d3c2cc8f`\n\nThe Success Criteria block above replaces the original aspirational throughput targets with criteria that match the baseline-publication deliverable actually provided. SOTA-closure responsibility moves to `97bf0879`. The original aspirational targets are preserved under \"Targets (historical context only — SOTA closure handed off to `97bf0879`)\" so the report can be interpreted against both the original aim and the handed-off closure work.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "2026-04-26 bench results (gf2 + reference baseline)",
+      "path": "dev/archive/bb85c68a-field-linear-algebra/bench_results/2026-04-26.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-29-strassen-matmul-crossover.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-strassen-matmul-crossover.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-27-asm-audit.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-27-asm-audit.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-26.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-29-3abb755e-benchmark-gap-closure.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-26-uncompetitiveness-profile.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-26-uncompetitiveness-profile.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "2026-04-29-7c954fb5-criterion.txt",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-29-7c954fb5-criterion.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "c7791a20/2026-04-26-profile-release-delta.md",
+          "resolved_path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/c7791a20/2026-04-26-profile-release-delta.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Post-PPC delta appendix (corrected scorecard)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+    }
+  ],
+  "done_at": "2026-04-30T08:05:04.066890263Z",
+  "first_ready_at": "2026-04-26T16:11:14.027745919Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-30T08:05:04.050859698Z"
+      "updated_at": "2026-04-30T07:59:03.544161847Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T07:59:09.910120628Z"
+      "updated_at": "2026-04-30T07:59:09.910120628Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T07:59:03.544161847Z"
+      "updated_at": "2026-04-30T08:05:04.050859698Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-04-26.md",
-      "commit": null,
-      "label": "2026-04-26 bench results (gf2 + reference baseline)",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
-      "commit": null,
-      "label": "Post-PPC delta appendix (corrected scorecard)",
-      "doc_type": "evidence",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "2026-04-26-profile-release-delta.md",
-          "resolved_path": "dev/bench_results/2026-04-26-profile-release-delta.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f4110bc8e6fb9530b148ca0bb5c0b6d8f10a2d8facbcddf495913ea405cc2372",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-          "resolved_path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "c39f868fc494bfe0b9feac4d41c3527b2612d42fd2c3d2daf9465a782e41b242",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-strassen-matmul-crossover.md",
-          "resolved_path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f44b0e0c34d05e232b69d637e8c5ac7b0023868b4dbd38311628e44e874df804",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26.md",
-          "resolved_path": "dev/bench_results/2026-04-26.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f22f42270c983790cf99951479babb69169ccf4425dabc9bf6f55389423d3da9",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-7c954fb5-criterion.txt",
-          "resolved_path": "dev/bench_results/2026-04-29-7c954fb5-criterion.txt",
-          "asset_type": "local",
-          "mime_type": "text/plain",
-          "content_hash": "79aac44afac9cc8f3d3cde08bf0680603f2a14e2872819e554f052b7537a3b38",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-          "resolved_path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "c61f7d463421a9730102085745afa4a0631c07014c6d871f0760f6a6c71dfc97",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-27-asm-audit.md",
-          "resolved_path": "dev/bench_results/2026-04-27-asm-audit.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "f8a0f2a5226e5d78b1eb31ff8e33e339ace2ac79e58ce733292760e3d1d2770e",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-29-3abb755e-benchmark-gap-closure.md",
-          "resolved_path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "6c9fe00bcb214820043e64da80fa05657e6a83e94cb8d56d1e8d58bab5082295",
-          "is_shared": false
-        },
-        {
-          "original_path": "2026-04-26-uncompetitiveness-profile.md",
-          "resolved_path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "227a57cfae3e0ab8e1fbf6959cbd0962405b3d38570032c899c70c484d27c169",
-          "is_shared": false
-        },
-        {
-          "original_path": "../active/babcf05e-handoff-5.md",
-          "resolved_path": "dev/active/babcf05e-handoff-5.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "036d0cffac8fe40d7ab192048e4859cebec517089e3ea75e604aec1ef9c113e6",
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "64c88ae4-4569-42f4-93b7-20a5fad1b1c9",
   "labels": [
     "component:gf2-core",
     "type:story",
     "story:64c88ae4"
   ],
-  "created_at": "2026-02-23T19:20:28.214456832Z",
-  "updated_at": "2026-07-14T20:49:35.579064473Z",
-  "first_ready_at": "2026-04-26T16:11:14.027745919Z",
-  "done_at": "2026-04-30T08:05:04.066890263Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Benchmark FieldMatrix linear algebra against fflas-ffpack (and M4RI for GF(2))",
+  "updated_at": "2026-08-07T21:31:14.733369375Z"
 }

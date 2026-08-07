@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "R4: SIMD batching strategy decision",
-      "path": "dev/plans/c7542983/r4_simd_batching_decision.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/c7542983/r4_simd_batching_decision.md"
     }
   ],
   "done_at": "2026-05-09T09:52:04.773849276Z",
@@ -43,5 +43,5 @@
   "priority": "normal",
   "state": "done",
   "title": "SIMD batching strategy: generic framework vs per-prime kernels",
-  "updated_at": "2026-08-07T21:14:54.673055342Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

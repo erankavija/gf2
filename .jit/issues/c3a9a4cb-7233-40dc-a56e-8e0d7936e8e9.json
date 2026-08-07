@@ -1,11 +1,20 @@
 {
-  "id": "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
-  "title": "ASM-inspection convention + asm-artefact-present gate",
-  "description": "Establish the per-kernel `*.asm.txt` artefact convention and register the `asm-artefact-present` JIT gate. Reviewers use these artefacts to confirm SIMD/ILP transforms actually emitted the expected mnemonics.\n\n## Background\n\nThe PPC spiral makes specific claims at each step (e.g., \"V3 SIMD via VPCLMULQDQ\", \"V2 ILP with 8 independent accumulators\"). Without a committed asm artefact, reviewers have to regenerate disassembly themselves to verify each claim. This task:\n\n1. Adds `dev/scripts/regen-asm.sh <crate> <symbol> <output-path> [extra-symbol …]` wrapping `cargo show-asm -p <crate> --simplify <symbol>` with a metadata header recording **crate, primary symbol, extra symbols, output path, rustc version, host triple, target-cpu, RUSTFLAGS, git commit SHA, regeneration timestamp (UTC), and tool used (cargo-show-asm vs. fallback)**. The git commit SHA is the canonical \"is this artefact still current?\" indicator; the timestamp is informational.\n2. Establishes the convention that each new SIMD kernel has a sibling `<kernel-name>.asm.txt` artefact in `crates/gf2-kernels-simd/src/x86/asm/`. Per-fn artefacts (`<module>_<fn>.asm.txt`) are also accepted by the gate.\n3. Registers the `asm-artefact-present` gate (auto, postcheck, runs `./scripts/asm-artefact-present.sh`) which fails if any `crates/gf2-kernels-simd/src/x86/*.rs` file (excluding `mod.rs`) modified at HEAD lacks a corresponding sibling `*.asm.txt` modification *in the same commit*. The \"co-modified\" semantics enforce that every spiral-step regenerates the artefact rather than leaving a stale one in place.\n4. Documents the convention in `crates/gf2-kernels-simd/README.md`.\n\n## Success Criteria\n\n- [hard] `dev/scripts/regen-asm.sh` runs `cargo show-asm` successfully on at least one existing SIMD symbol; metadata header includes git commit SHA, rustc version, and host triple (date alone is insufficient — the commit SHA is the reproducibility anchor).\n- [hard] JIT gate `asm-artefact-present` registered with `auto: true, stage: postcheck`.\n- [hard] Sample artefact `crates/gf2-kernels-simd/src/x86/asm/avx2_xor.asm.txt` committed alongside this task to demonstrate the convention.\n- [hard] README documents the regeneration procedure and what the gate enforces.\n\n## Verification (post-merge)\n\nThe gate runner was exercised in a temp test repo against 8 scenarios — all pass:\n\n| # | Scenario | Result |\n|---|---|---|\n| A | No SIMD changes | vacuous pass |\n| B | `.rs` added without `.asm.txt` | FAIL with clear error |\n| C | Exact `<module>.asm.txt` match | PASS |\n| D | Per-fn `<module>_<fn>.asm.txt` match | PASS |\n| E | Only `mod.rs` modified | vacuous pass (mod.rs excluded) |\n| F | Multi-file partial coverage | FAIL, names the uncovered file |\n| G | `.rs` modified, `.asm.txt` NOT co-modified in same commit | FAIL (co-modification enforced) |\n| H | Fresh repo (no HEAD~1) | defensive vacuous pass |\n\n## Notes\n\nSpec doc: attached as `dev/plans/gf2_core_ppc_spiral.md`. Out-of-scope follow-up: bug `1d230525` tracks a duplicate `--out-dir` flag in the `REGEN_ASM_FALLBACK=1` path (primary cargo-show-asm path is unaffected).",
-  "state": "done",
-  "priority": "normal",
   "assignee": null,
+  "claimed_at": "2026-04-26T20:28:06.600330680Z",
+  "context": {},
+  "created_at": "2026-04-25T15:16:37.719800588Z",
   "dependencies": [],
+  "description": "Establish the per-kernel `*.asm.txt` artefact convention and register the `asm-artefact-present` JIT gate. Reviewers use these artefacts to confirm SIMD/ILP transforms actually emitted the expected mnemonics.\n\n## Background\n\nThe PPC spiral makes specific claims at each step (e.g., \"V3 SIMD via VPCLMULQDQ\", \"V2 ILP with 8 independent accumulators\"). Without a committed asm artefact, reviewers have to regenerate disassembly themselves to verify each claim. This task:\n\n1. Adds `dev/scripts/regen-asm.sh <crate> <symbol> <output-path> [extra-symbol …]` wrapping `cargo show-asm -p <crate> --simplify <symbol>` with a metadata header recording **crate, primary symbol, extra symbols, output path, rustc version, host triple, target-cpu, RUSTFLAGS, git commit SHA, regeneration timestamp (UTC), and tool used (cargo-show-asm vs. fallback)**. The git commit SHA is the canonical \"is this artefact still current?\" indicator; the timestamp is informational.\n2. Establishes the convention that each new SIMD kernel has a sibling `<kernel-name>.asm.txt` artefact in `crates/gf2-kernels-simd/src/x86/asm/`. Per-fn artefacts (`<module>_<fn>.asm.txt`) are also accepted by the gate.\n3. Registers the `asm-artefact-present` gate (auto, postcheck, runs `./scripts/asm-artefact-present.sh`) which fails if any `crates/gf2-kernels-simd/src/x86/*.rs` file (excluding `mod.rs`) modified at HEAD lacks a corresponding sibling `*.asm.txt` modification *in the same commit*. The \"co-modified\" semantics enforce that every spiral-step regenerates the artefact rather than leaving a stale one in place.\n4. Documents the convention in `crates/gf2-kernels-simd/README.md`.\n\n## Success Criteria\n\n- [hard] `dev/scripts/regen-asm.sh` runs `cargo show-asm` successfully on at least one existing SIMD symbol; metadata header includes git commit SHA, rustc version, and host triple (date alone is insufficient — the commit SHA is the reproducibility anchor).\n- [hard] JIT gate `asm-artefact-present` registered with `auto: true, stage: postcheck`.\n- [hard] Sample artefact `crates/gf2-kernels-simd/src/x86/asm/avx2_xor.asm.txt` committed alongside this task to demonstrate the convention.\n- [hard] README documents the regeneration procedure and what the gate enforces.\n\n## Verification (post-merge)\n\nThe gate runner was exercised in a temp test repo against 8 scenarios — all pass:\n\n| # | Scenario | Result |\n|---|---|---|\n| A | No SIMD changes | vacuous pass |\n| B | `.rs` added without `.asm.txt` | FAIL with clear error |\n| C | Exact `<module>.asm.txt` match | PASS |\n| D | Per-fn `<module>_<fn>.asm.txt` match | PASS |\n| E | Only `mod.rs` modified | vacuous pass (mod.rs excluded) |\n| F | Multi-file partial coverage | FAIL, names the uncovered file |\n| G | `.rs` modified, `.asm.txt` NOT co-modified in same commit | FAIL (co-modification enforced) |\n| H | Fresh repo (no HEAD~1) | defensive vacuous pass |\n\n## Notes\n\nSpec doc: attached as `dev/plans/gf2_core_ppc_spiral.md`. Out-of-scope follow-up: bug `1d230525` tracks a duplicate `--out-dir` flag in the `REGEN_ASM_FALLBACK=1` path (primary cargo-show-asm path is unaffected).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "PPC-spiral epic spec doc (per-step protocol + kernel inventory)",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/plans/gf2_core_ppc_spiral.md"
+    }
+  ],
+  "done_at": "2026-04-26T20:51:03.828713858Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
@@ -13,33 +22,24 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T20:47:26.240934105Z"
+      "updated_at": "2026-04-26T20:47:26.240934105Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-26T20:47:29.498429357Z"
+      "updated_at": "2026-04-26T20:47:29.498429357Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/gf2_core_ppc_spiral.md",
-      "commit": null,
-      "label": "PPC-spiral epic spec doc (per-step protocol + kernel inventory)",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "c3a9a4cb-7233-40dc-a56e-8e0d7936e8e9",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-ppc-spiral",
     "story:ppc-infrastructure"
   ],
-  "created_at": "2026-04-25T15:16:37.719800588Z",
-  "updated_at": "2026-07-12T20:02:55.471853265Z",
-  "claimed_at": "2026-04-26T20:28:06.600330680Z",
-  "done_at": "2026-04-26T20:51:03.828713858Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "ASM-inspection convention + asm-artefact-present gate",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

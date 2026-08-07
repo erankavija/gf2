@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Sparse RCM amortized matvec evidence",
-      "path": "dev/bench_results/cbf576d1/cbf576d1-rcm-sparse-matvec.md"
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/cbf576d1/cbf576d1-rcm-sparse-matvec.md"
     }
   ],
   "done_at": "2026-04-29T18:41:59.710285142Z",
@@ -45,5 +45,5 @@
   "priority": "normal",
   "state": "done",
   "title": "SparseBitMatrix Cuthill-McKee row reorder",
-  "updated_at": "2026-08-07T21:15:13.295399661Z"
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

@@ -1,50 +1,51 @@
 {
-  "id": "f1a896f0-097a-4598-9484-d4a2efe711ad",
-  "title": "SparseBitMatrix::matvec prefetch + block-CSR layout",
-  "description": "Add an opt-in block-CSR layout and software-prefetch-capable sparse matvec path for `SparseBitMatrix`, while preserving the existing CSR matvec path for current callers.\n\n## Background\n\n`SparseBitMatrix::matvec` in `crates/gf2-core/src/sparse.rs` does scalar CSR iteration. The gather pattern reads sparse column indices and follows them into the input vector, which can be cache-unfriendly for LDPC-sized matrices. The implementation adds a separate block-CSR transformer and matvec entrypoint so callers can opt into the experimental layout without changing existing CSR behavior.\n\n## Amendment Note\n\nUser-approved amendment after a focused rework and fixed-iteration perf harness showed the original hard performance criterion was not met on this host/fixture. Evidence in `dev/benchmarks/f1a896f0-perf-stat.txt` records fixed 50,000-matvec comparisons for `8192x16384_w6`: CSR L1d miss rate `2.61%` and `1.739s`, block-CSR no-prefetch `3.92%` and `2.027s`, block-CSR prefetch distance 16 `3.43%` and `2.513s`. Therefore the accepted deliverable is the correctness-tested opt-in scaffold plus honest evidence; existing CSR remains the default production path, and prefetch remains explicit rather than enabled by default.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing CSR matvec.\n- [hard] Block-CSR transformer is a separate function; existing CSR path unchanged for callers that do not opt in.\n- [hard] Sibling `*.asm.txt` artefact shows prefetch instructions actually emitted.\n- [hard] Fixed-iteration `perf stat -r 10` evidence compares CSR, block-CSR without prefetch, and block-CSR with explicit prefetch on an LDPC-sized sparse bench, and records that block-CSR/prefetch do not beat CSR on the measured fixture.\n- [hard] Word-boundary `#[test]`s pass for the transformer.\n- [hard] Default production sparse matvec remains the existing CSR path; block-CSR and prefetch are opt-in until future evidence shows a win.\n- [aspirational] Future sparse-layout work finds a layout/prefetch combination with >=1.5x geomean speedup on LDPC parity-check sizes.\n\n## Notes\n\nCache-bound kernel: the measured branch did not improve miss rate or runtime vs CSR on the fixed harness. Follow-up work should try a more substantial layout change, such as row-block accumulator tiling or interleaved edge slots, before enabling block-CSR/prefetch by default. Bench: `sparse` and `sparse_block_csr_perfstat`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-f1a896f0",
+  "claimed_at": "2026-04-29T13:04:36.014653596Z",
+  "context": {},
+  "created_at": "2026-04-25T15:19:11.130623480Z",
   "dependencies": [
     "166b2691-82a9-476a-b272-cacd71b58d4c"
   ],
+  "description": "Add an opt-in block-CSR layout and software-prefetch-capable sparse matvec path for `SparseBitMatrix`, while preserving the existing CSR matvec path for current callers.\n\n## Background\n\n`SparseBitMatrix::matvec` in `crates/gf2-core/src/sparse.rs` does scalar CSR iteration. The gather pattern reads sparse column indices and follows them into the input vector, which can be cache-unfriendly for LDPC-sized matrices. The implementation adds a separate block-CSR transformer and matvec entrypoint so callers can opt into the experimental layout without changing existing CSR behavior.\n\n## Amendment Note\n\nUser-approved amendment after a focused rework and fixed-iteration perf harness showed the original hard performance criterion was not met on this host/fixture. Evidence in `dev/benchmarks/f1a896f0-perf-stat.txt` records fixed 50,000-matvec comparisons for `8192x16384_w6`: CSR L1d miss rate `2.61%` and `1.739s`, block-CSR no-prefetch `3.92%` and `2.027s`, block-CSR prefetch distance 16 `3.43%` and `2.513s`. Therefore the accepted deliverable is the correctness-tested opt-in scaffold plus honest evidence; existing CSR remains the default production path, and prefetch remains explicit rather than enabled by default.\n\n## Success Criteria\n\n- [hard] Bit-exact vs. existing CSR matvec.\n- [hard] Block-CSR transformer is a separate function; existing CSR path unchanged for callers that do not opt in.\n- [hard] Sibling `*.asm.txt` artefact shows prefetch instructions actually emitted.\n- [hard] Fixed-iteration `perf stat -r 10` evidence compares CSR, block-CSR without prefetch, and block-CSR with explicit prefetch on an LDPC-sized sparse bench, and records that block-CSR/prefetch do not beat CSR on the measured fixture.\n- [hard] Word-boundary `#[test]`s pass for the transformer.\n- [hard] Default production sparse matvec remains the existing CSR path; block-CSR and prefetch are opt-in until future evidence shows a win.\n- [aspirational] Future sparse-layout work finds a layout/prefetch combination with >=1.5x geomean speedup on LDPC parity-check sizes.\n\n## Notes\n\nCache-bound kernel: the measured branch did not improve miss rate or runtime vs CSR on the fixed harness. Follow-up work should try a more substantial layout change, such as row-block accumulator tiling or interleaved edge slots, before enabling block-CSR/prefetch by default. Bench: `sparse` and `sparse_block_csr_perfstat`. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "D1 fixed-iteration perf-stat evidence",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/f1a896f0-perf-stat.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "D1 criterion sparse benchmark evidence",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/f1a896f0-criterion.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "D1 sparse prefetch asm evidence",
+      "path": "crates/gf2-core/src/sparse.asm.txt"
+    }
+  ],
+  "done_at": "2026-04-29T16:05:16.315426190Z",
+  "first_ready_at": "2026-04-25T19:18:13.648179846Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T16:01:02.647429105Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T15:57:19.366566414Z"
+      "updated_at": "2026-04-29T15:57:19.366566414Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-29T16:01:02.647429105Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/f1a896f0-perf-stat.txt",
-      "commit": null,
-      "label": "D1 fixed-iteration perf-stat evidence",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/benchmarks/f1a896f0-criterion.txt",
-      "commit": null,
-      "label": "D1 criterion sparse benchmark evidence",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "crates/gf2-core/src/sparse.asm.txt",
-      "commit": null,
-      "label": "D1 sparse prefetch asm evidence",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "f1a896f0-097a-4598-9484-d4a2efe711ad",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -52,9 +53,8 @@
     "story:ppc-sparse-layout",
     "ppc-kernel:D1"
   ],
-  "created_at": "2026-04-25T15:19:11.130623480Z",
-  "updated_at": "2026-07-12T20:02:55.483497743Z",
-  "first_ready_at": "2026-04-25T19:18:13.648179846Z",
-  "claimed_at": "2026-04-29T13:04:36.014653596Z",
-  "done_at": "2026-04-29T16:05:16.315426190Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "SparseBitMatrix::matvec prefetch + block-CSR layout",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

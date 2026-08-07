@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "PLE replanning artefact (R1 lessons + R2 contract)",
-      "path": "dev/active/c3f8c1cb-implement-ple-decomposition-and-echelon-forms-ov/c3f8c1cb-ple-replan.md"
+      "path": "dev/archive/bb85c68a-field-linear-algebra/active/c3f8c1cb-implement-ple-decomposition-and-echelon-forms-ov/c3f8c1cb-ple-replan.md"
     }
   ],
   "done_at": "2026-04-26T08:18:21.341694400Z",
@@ -49,5 +49,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement PLE decomposition and echelon forms over FiniteField",
-  "updated_at": "2026-08-07T21:14:42.534286187Z"
+  "updated_at": "2026-08-07T21:31:14.733369375Z"
 }

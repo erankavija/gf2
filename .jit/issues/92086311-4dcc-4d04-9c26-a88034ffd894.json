@@ -1,10 +1,8 @@
 {
-  "id": "92086311-4dcc-4d04-9c26-a88034ffd894",
-  "title": "Run Phase 1 AWGN simulations: Fig 1 and Fig 3 product codes vs 5G NR LDPC",
-  "description": "Run the headline AWGN simulations from the paper (Figures 1 and 3) and validate results against reference data.\n\n## Figure 1: (1024, 441) product code vs 5G NR LDPC\n\n- Component: dRM(32,21) — `[(32,21)^2 dRM]` product code\n- Decoder: GPU BCJR turbo (`I_max=20`, `alpha=0.5`). BCJR is used because it is practical for `n=32`, whereas the current SOGRAND configuration with `max_queries=100K` is not. The repository contains a diagnostic BCJR/SOGRAND comparison, but not an equality proof for their extrinsic outputs.\n- LDPC: 5G NR with BP (sum-product) and normalized min-sum (`I_max=50`)\n- Metric: BLER, `Eb/N0` range 0.5-2.0 dB for product and 0.0-2.5 dB for LDPC baselines\n\n## Figure 3: (256, 121) product code vs 5G NR LDPC\n\n- Component: eBCH(16,11) — `[(16,11)^2 eBCH]` product code\n- Decoder: turbo-SOGRAND (`I_max=20`, `alpha=0.5`, `L=4`, `max_queries=100K`)\n- Metrics: BLER, BER, queries/bit, `Eb/N0` range 0.5-3.5 dB for product and 0.0-4.0 dB for LDPC baselines\n\n## Acceptance Criteria\n\n- Both simulations run to completion with at least 100 frame errors per SNR point where that is achievable within the configured `max_frames`. When measured BLER falls below roughly `100/max_frames`, the frame cap limits collection and the lower error count is expected and documented.\n- LDPC BP baseline matches paper within ~0.1 dB at the reference points we measured (verified: our 0.0858 vs paper 0.074 at 1.0 dB for Figure 1).\n- Product code results are qualitatively consistent with paper: Figure 1 crosses the checked-in LDPC SP baseline somewhere between 1.5 and 2.0 dB; Figure 3 beats the checked-in LDPC SP baseline from 2.0 dB onward and the paper LDPC BP curve from 1.5 dB onward.\n- Results saved in CSV/JSON format with all metrics.\n- Comparison report produced with per-SNR tables tied to the checked-in CSVs.\n\n## Results\n\nFig 1 dRM product code (GPU BCJR):\n- BLER=0.202 at 1.0 dB\n- BLER=0.0073 at 1.5 dB, 0.00043 at 1.75 dB, 0.000035 at 2.0 dB\n- Checked-in LDPC SP crossover is bracketed between 1.5 and 2.0 dB\n- Artifacts: `dev/simulation_results/fig1_drm_product.{csv,json}`\n\nFig 3 eBCH product code (SOGRAND with queries/bit):\n- BLER=0.401 at 1.0 dB, queries/bit=44.0K\n- BLER=0.0309 at 2.0 dB, queries/bit=6.3K\n- BLER=0.000603 at 3.0 dB, queries/bit=1.8K\n- Beats checked-in LDPC SP from 2.0 dB onward; beats paper LDPC BP from 1.5 dB onward\n- Artifacts: `dev/simulation_results/fig3_ebch_product.{csv,json}`\n\nLDPC baselines: SP and NMS curves with CSV+JSON in `dev/simulation_results/`\nComparison report: `dev/simulation_results/phase1_comparison_report.md`",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-07T09:06:37.482840389Z",
+  "context": {},
+  "created_at": "2026-02-22T21:15:55.572874888Z",
   "dependencies": [
     "dd22a099-6bdf-42eb-a012-8109da9c0b00",
     "a4d86b3d-05e7-4596-939b-e09f9dd35e55",
@@ -16,6 +14,18 @@
     "290b4fa0-aad1-4480-b9d1-9a1ddf460f1c",
     "f326ff2f-f10e-4b8b-9fa3-00971cb5e146"
   ],
+  "description": "Run the headline AWGN simulations from the paper (Figures 1 and 3) and validate results against reference data.\n\n## Figure 1: (1024, 441) product code vs 5G NR LDPC\n\n- Component: dRM(32,21) — `[(32,21)^2 dRM]` product code\n- Decoder: GPU BCJR turbo (`I_max=20`, `alpha=0.5`). BCJR is used because it is practical for `n=32`, whereas the current SOGRAND configuration with `max_queries=100K` is not. The repository contains a diagnostic BCJR/SOGRAND comparison, but not an equality proof for their extrinsic outputs.\n- LDPC: 5G NR with BP (sum-product) and normalized min-sum (`I_max=50`)\n- Metric: BLER, `Eb/N0` range 0.5-2.0 dB for product and 0.0-2.5 dB for LDPC baselines\n\n## Figure 3: (256, 121) product code vs 5G NR LDPC\n\n- Component: eBCH(16,11) — `[(16,11)^2 eBCH]` product code\n- Decoder: turbo-SOGRAND (`I_max=20`, `alpha=0.5`, `L=4`, `max_queries=100K`)\n- Metrics: BLER, BER, queries/bit, `Eb/N0` range 0.5-3.5 dB for product and 0.0-4.0 dB for LDPC baselines\n\n## Acceptance Criteria\n\n- Both simulations run to completion with at least 100 frame errors per SNR point where that is achievable within the configured `max_frames`. When measured BLER falls below roughly `100/max_frames`, the frame cap limits collection and the lower error count is expected and documented.\n- LDPC BP baseline matches paper within ~0.1 dB at the reference points we measured (verified: our 0.0858 vs paper 0.074 at 1.0 dB for Figure 1).\n- Product code results are qualitatively consistent with paper: Figure 1 crosses the checked-in LDPC SP baseline somewhere between 1.5 and 2.0 dB; Figure 3 beats the checked-in LDPC SP baseline from 2.0 dB onward and the paper LDPC BP curve from 1.5 dB onward.\n- Results saved in CSV/JSON format with all metrics.\n- Comparison report produced with per-SNR tables tied to the checked-in CSVs.\n\n## Results\n\nFig 1 dRM product code (GPU BCJR):\n- BLER=0.202 at 1.0 dB\n- BLER=0.0073 at 1.5 dB, 0.00043 at 1.75 dB, 0.000035 at 2.0 dB\n- Checked-in LDPC SP crossover is bracketed between 1.5 and 2.0 dB\n- Artifacts: `dev/simulation_results/fig1_drm_product.{csv,json}`\n\nFig 3 eBCH product code (SOGRAND with queries/bit):\n- BLER=0.401 at 1.0 dB, queries/bit=44.0K\n- BLER=0.0309 at 2.0 dB, queries/bit=6.3K\n- BLER=0.000603 at 3.0 dB, queries/bit=1.8K\n- Beats checked-in LDPC SP from 2.0 dB onward; beats paper LDPC BP from 1.5 dB onward\n- Artifacts: `dev/simulation_results/fig3_ebch_product.{csv,json}`\n\nLDPC baselines: SP and NMS curves with CSV+JSON in `dev/simulation_results/`\nComparison report: `dev/simulation_results/phase1_comparison_report.md`",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "SOGRAND n=32 soft-output quality analysis",
+      "path": "dev/archive/6efb756b-grand/active/sogrand-n32-analysis.md"
+    }
+  ],
+  "done_at": "2026-04-12T19:35:33.059093991Z",
+  "first_ready_at": "2026-04-07T05:36:43.761668546Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -23,46 +33,36 @@
     "tdd-reminder"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-04-12T19:32:07.184621224Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-12T19:33:20.023979441Z"
+      "updated_at": "2026-04-12T19:33:20.023979441Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-12T19:35:33.056026929Z"
+      "updated_at": "2026-04-12T19:35:33.056026929Z",
+      "updated_by": "agent:project-lead"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-07T09:06:35.856203046Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-12T19:32:07.184621224Z"
+      "updated_at": "2026-04-07T09:06:35.856203046Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/sogrand-n32-analysis.md",
-      "commit": null,
-      "label": "SOGRAND n=32 soft-output quality analysis",
-      "doc_type": "notes",
-      "format": "markdown"
-    }
-  ],
+  "id": "92086311-4dcc-4d04-9c26-a88034ffd894",
   "labels": [
     "type:story",
     "epic:grand",
     "component:gf2-coding",
     "story:run-phase-1-awgn-simulations-fig-1-and-fig-3-product-codes-vs-5g-nr-ldpc"
   ],
-  "created_at": "2026-02-22T21:15:55.572874888Z",
-  "updated_at": "2026-07-14T20:49:35.674521022Z",
-  "first_ready_at": "2026-04-07T05:36:43.761668546Z",
-  "claimed_at": "2026-04-07T09:06:37.482840389Z",
-  "done_at": "2026-04-12T19:35:33.059093991Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Run Phase 1 AWGN simulations: Fig 1 and Fig 3 product codes vs 5G NR LDPC",
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

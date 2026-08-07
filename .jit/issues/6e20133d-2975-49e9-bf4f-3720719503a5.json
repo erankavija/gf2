@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D1a: gf2-algebra crate boundary",
-      "path": "dev/plans/6e20133d/d1a_gf2_algebra_boundary.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/6e20133d/d1a_gf2_algebra_boundary.md"
     }
   ],
   "done_at": "2026-05-09T07:13:56.975699896Z",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Decide gf2-algebra crate boundary against gf2-core",
-  "updated_at": "2026-08-07T21:14:47.696124634Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

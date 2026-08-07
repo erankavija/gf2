@@ -13,14 +13,14 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Final SOTA scorecard",
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
     },
     {
       "commit": null,
       "doc_type": null,
       "format": "markdown",
       "label": "Self-canonical sparse-elim × GF(2^m) one-shot bench evidence",
-      "path": "dev/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md"
     }
   ],
   "done_at": "2026-05-08T15:55:24.366678017Z",
@@ -57,5 +57,5 @@
   "priority": "high",
   "state": "done",
   "title": "Render final SOTA markdown scorecard",
-  "updated_at": "2026-08-07T21:15:05.990497745Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -14,14 +14,14 @@
       "doc_type": "notes",
       "format": "markdown",
       "label": "Phase 4 Comparison Report",
-      "path": "dev/simulation_results/phase4_comparison_report.md"
+      "path": "dev/archive/6efb756b-grand/simulation_results/phase4_comparison_report.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Phase 4 Completion Report",
-      "path": "dev/active/831bfc4a-run-phase-4-fading-channel-simulations-figs-8-10/831bfc4a-completion.md"
+      "path": "dev/archive/6efb756b-grand/active/831bfc4a-run-phase-4-fading-channel-simulations-figs-8-10/831bfc4a-completion.md"
     }
   ],
   "done_at": "2026-04-15T21:52:59.420048933Z",
@@ -64,5 +64,5 @@
   "priority": "low",
   "state": "done",
   "title": "Run Phase 4 fading channel simulations: Figs 8-10",
-  "updated_at": "2026-08-07T21:14:35.138819125Z"
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

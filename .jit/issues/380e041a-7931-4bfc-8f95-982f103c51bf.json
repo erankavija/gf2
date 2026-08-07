@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "M4RI-style Gray-table schedule benchmark evidence",
-      "path": "dev/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md"
     }
   ],
   "done_at": "2026-05-06T13:46:36.626471561Z",
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "done",
   "title": "Prototype M4RI-style table scheduling",
-  "updated_at": "2026-08-07T21:15:01.304015233Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

@@ -1,4 +1,5 @@
 {
+  "archived_from": "done",
   "assignee": "agent:claude",
   "claimed_at": "2026-04-12T20:11:06.459386289Z",
   "context": {},
@@ -144,28 +145,28 @@
       "doc_type": "report",
       "format": "markdown",
       "label": "Completion report",
-      "path": "dev/active/d4851c3d-modem-framework/d4851c3d-completion-report.md"
+      "path": "dev/archive/d4851c3d-modem-framework/active/d4851c3d-completion-report.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Project-lead session handoff (2026-04-13)",
-      "path": "dev/active/d4851c3d-modem-framework/d4851c3d-handoff.md"
+      "path": "dev/archive/d4851c3d-modem-framework/active/d4851c3d-handoff.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Modem framework design (story-level)",
-      "path": "dev/active/d4851c3d-modem-framework/d4851c3d-modem-framework-design.md"
+      "path": "dev/archive/d4851c3d-modem-framework/active/d4851c3d-modem-framework-design.md"
     },
     {
       "commit": null,
       "doc_type": "notes",
       "format": "markdown",
       "label": "Container progress record",
-      "path": "dev/active/d4851c3d-modem-framework/d4851c3d-progress.json"
+      "path": "dev/archive/d4851c3d-modem-framework/active/d4851c3d-progress.json"
     }
   ],
   "done_at": "2026-04-15T08:37:47.367356807Z",
@@ -178,7 +179,7 @@
     "epic:modem-framework"
   ],
   "priority": "high",
-  "state": "done",
+  "state": "archived",
   "title": "Implement QAM modulation with soft-decision demapping",
-  "updated_at": "2026-08-07T21:14:43.678456818Z"
+  "updated_at": "2026-08-07T21:28:20.229403362Z"
 }

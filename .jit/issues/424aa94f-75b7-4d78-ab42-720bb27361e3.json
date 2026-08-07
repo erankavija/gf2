@@ -1,13 +1,47 @@
 {
-  "id": "424aa94f-75b7-4d78-ab42-720bb27361e3",
-  "title": "Plot generation scripts for permanent benchmarks",
-  "description": "Add plot generation scripts that turn the criterion JSON outputs (T10, S1, S2, S3, S5) into publication-grade figures.\n\n## Background\n\nThe reproducible benchmark artefact (S6) needs PNG/SVG plots of: (a) log-time vs $n$ for the F_3 permanent paths (reference, bipedal, SIMD, parallel), (b) parallel scaling vs core count, (c) AVX2-vs-AVX-512 cross-CPU bars, (d) GPU vs CPU crossover. This issue lands the plotting scripts under `scripts/plot_permanent_*.py` (matplotlib) or `scripts/plot_permanent_*.rs` (plotters), reading from the criterion JSON paths in `target/criterion/` or the simulation CSVs in `dev/benchmarks/gf2_algebra_permanent/`.\n\nThe choice of matplotlib vs plotters is left to the implementer; the constraint is that the script must be deterministically reproducible.\n\n## Success Criteria\n\n- [ ] [hard] `scripts/plot_permanent_*` scripts exist (matplotlib or plotters; document the choice in the script header).\n- [ ] [hard] At least four figure types are produced: (a) log-time vs $n$ for the F_3 permanent paths (see 2026-05-15 amendment a for the impl-series enumeration that materially exists in S1 + S2), (b) parallel-scaling, (c) AVX2-vs-AVX-512 cross-CPU bars (see 2026-05-15 amendment b for the dev-host AVX-512 hardware constraint), (d) GPU-vs-CPU.\n- [ ] [hard] Figures are written to `dev/benchmarks/gf2_algebra_permanent/figures/` with deterministic file names.\n- [ ] [hard] Running the scripts twice produces bit-identical output (after timestamp normalisation, if any).\n- [ ] [hard] Scripts read from the conventional CSV locations recorded in S1/S2/S3/S5 (S4 dropped per 2026-05-15 amendment c — same hardware constraint as figure (c)); missing input data produces a clear error, not a partial figure.\n\n## Amendment 2026-05-15a — Figure (a) impl-series enumeration\n\nThe original criterion 2(a) listed four series: \"reference, bipedal, SIMD, parallel\". After consulting the upstream benchmark inputs:\n\n- `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` columns: `impl ∈ {permanent_mod3_reference, permanent_bipedal3_simd}` — i.e., **S1 has only two distinct impl curves**, not three. The \"bipedal\" scalar fallback path (used at runtime only when AVX2 is unavailable) is exercised in unit tests (`test_simd_vs_scalar_n24` and friends) but not separately benchmarked because the production dispatch on every supported host selects the SIMD path.\n- `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-2026-05-11.csv` adds the parallel path at `n ∈ {28, 32, 36}` with thread counts `{1, 2, 4, 8, 12}`.\n\n**Amended scope for figure (a):** the figure overlays the three series that materially exist in the benchmark CSVs:\n\n1. `permanent_mod3_reference` (S1)\n2. `permanent_bipedal3_simd` (S1) — the \"bipedal-SIMD\" production path; on the dev host this is the only bipedal variant exercised, so the original \"bipedal\" and \"SIMD\" entries in the criterion's series list collapse into this single curve.\n3. `permanent_bipedal3_parallel` (S2 at max thread count = 12)\n\nA separately-benchmarked scalar bipedal path would require either a new S1' run with SIMD disabled (substantial work) or a runtime-toggle path on the same dev host. Neither is in this epic's scope; it is recorded as a future follow-up at criterion-fidelity-tier (not in scope for `ae82bd73`).\n\n## Amendment 2026-05-15b — Figure (c) AVX-512 hardware constraint (lead-direct per 363556e6 precedent)\n\nCriterion 2 bullet (c) names \"AVX2-vs-AVX-512 cross-CPU bars\". The dev host (AMD Ryzen 9 5900X, Zen 3) has AVX2 but no AVX-512; collecting AVX-512 measurements would require a different host class.\n\n**Precedent (`363556e6` \"Cross-CPU portability sweep on AVX2-only dev host\"):** that issue's title was amended in the same way during W3, deferring the AVX-512 axis to the separately-tracked future issue `f8d230ef`. The S3 CSV consumed by this issue's figure (c) (`dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv`) is the artefact `363556e6` produced under that amendment — i.e., it inherits the AVX-512 deferral by construction.\n\n**Amended scope for figure (c):** the implementation produces an AVX2-vs-scalar cross-impl bar chart (the AVX2-vs-AVX-512 contrast as it materialises on the dev host) and annotates the AVX-512 axis as \"N/A (dev host: AVX2 only)\" inline on the figure. When AVX-512 hardware becomes available and `f8d230ef` lands its S3' measurement, the `plot_cross_cpu` function in `scripts/plot_permanent_benchmarks.py` already accepts a third `avx512_impl` series via its substring classifier and will render the third bar set without further changes.\n\n**Why amendment-not-escalation here:** the constraint is `363556e6`-precedented and the amendment scope (AVX-512 deferral with explicit follow-up to `f8d230ef`) matches that precedent's resolution exactly. No new architectural decision; the precedent already exists.\n\n## Amendment 2026-05-15c — S4 input dropped (same hardware constraint as figure (c))\n\nThe original criterion 5 named S1/S2/S3/**S4**/S5 as conventional CSV inputs. S4 was the planned AVX-512 cross-CPU sweep that was deferred to `f8d230ef` for the same hardware reason that drives amendment 2026-05-15b (the dev host has no AVX-512). No S4 CSV was produced under this epic; the input list collapses to S1/S2/S3/S5.\n\nWhen `f8d230ef` produces an S4 CSV on a future AVX-512 host, the `plot_cross_cpu` function in `scripts/plot_permanent_benchmarks.py` accepts an `avx512_impl` series automatically (substring classifier); a follow-up commit can wire an `S4_FILENAME` constant and pre-flight entry into the script without redesign.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-424aa94f",
+  "claimed_at": "2026-05-15T18:52:07.447501210Z",
+  "context": {},
+  "created_at": "2026-05-09T09:48:33.594996107Z",
   "dependencies": [
     "b315564a-cfd2-4513-abb2-a7a7b46f5748"
   ],
+  "description": "Add plot generation scripts that turn the criterion JSON outputs (T10, S1, S2, S3, S5) into publication-grade figures.\n\n## Background\n\nThe reproducible benchmark artefact (S6) needs PNG/SVG plots of: (a) log-time vs $n$ for the F_3 permanent paths (reference, bipedal, SIMD, parallel), (b) parallel scaling vs core count, (c) AVX2-vs-AVX-512 cross-CPU bars, (d) GPU vs CPU crossover. This issue lands the plotting scripts under `scripts/plot_permanent_*.py` (matplotlib) or `scripts/plot_permanent_*.rs` (plotters), reading from the criterion JSON paths in `target/criterion/` or the simulation CSVs in `dev/benchmarks/gf2_algebra_permanent/`.\n\nThe choice of matplotlib vs plotters is left to the implementer; the constraint is that the script must be deterministically reproducible.\n\n## Success Criteria\n\n- [ ] [hard] `scripts/plot_permanent_*` scripts exist (matplotlib or plotters; document the choice in the script header).\n- [ ] [hard] At least four figure types are produced: (a) log-time vs $n$ for the F_3 permanent paths (see 2026-05-15 amendment a for the impl-series enumeration that materially exists in S1 + S2), (b) parallel-scaling, (c) AVX2-vs-AVX-512 cross-CPU bars (see 2026-05-15 amendment b for the dev-host AVX-512 hardware constraint), (d) GPU-vs-CPU.\n- [ ] [hard] Figures are written to `dev/benchmarks/gf2_algebra_permanent/figures/` with deterministic file names.\n- [ ] [hard] Running the scripts twice produces bit-identical output (after timestamp normalisation, if any).\n- [ ] [hard] Scripts read from the conventional CSV locations recorded in S1/S2/S3/S5 (S4 dropped per 2026-05-15 amendment c — same hardware constraint as figure (c)); missing input data produces a clear error, not a partial figure.\n\n## Amendment 2026-05-15a — Figure (a) impl-series enumeration\n\nThe original criterion 2(a) listed four series: \"reference, bipedal, SIMD, parallel\". After consulting the upstream benchmark inputs:\n\n- `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` columns: `impl ∈ {permanent_mod3_reference, permanent_bipedal3_simd}` — i.e., **S1 has only two distinct impl curves**, not three. The \"bipedal\" scalar fallback path (used at runtime only when AVX2 is unavailable) is exercised in unit tests (`test_simd_vs_scalar_n24` and friends) but not separately benchmarked because the production dispatch on every supported host selects the SIMD path.\n- `dev/benchmarks/gf2_algebra_permanent/s2_parallel_scaling-2026-05-11.csv` adds the parallel path at `n ∈ {28, 32, 36}` with thread counts `{1, 2, 4, 8, 12}`.\n\n**Amended scope for figure (a):** the figure overlays the three series that materially exist in the benchmark CSVs:\n\n1. `permanent_mod3_reference` (S1)\n2. `permanent_bipedal3_simd` (S1) — the \"bipedal-SIMD\" production path; on the dev host this is the only bipedal variant exercised, so the original \"bipedal\" and \"SIMD\" entries in the criterion's series list collapse into this single curve.\n3. `permanent_bipedal3_parallel` (S2 at max thread count = 12)\n\nA separately-benchmarked scalar bipedal path would require either a new S1' run with SIMD disabled (substantial work) or a runtime-toggle path on the same dev host. Neither is in this epic's scope; it is recorded as a future follow-up at criterion-fidelity-tier (not in scope for `ae82bd73`).\n\n## Amendment 2026-05-15b — Figure (c) AVX-512 hardware constraint (lead-direct per 363556e6 precedent)\n\nCriterion 2 bullet (c) names \"AVX2-vs-AVX-512 cross-CPU bars\". The dev host (AMD Ryzen 9 5900X, Zen 3) has AVX2 but no AVX-512; collecting AVX-512 measurements would require a different host class.\n\n**Precedent (`363556e6` \"Cross-CPU portability sweep on AVX2-only dev host\"):** that issue's title was amended in the same way during W3, deferring the AVX-512 axis to the separately-tracked future issue `f8d230ef`. The S3 CSV consumed by this issue's figure (c) (`dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv`) is the artefact `363556e6` produced under that amendment — i.e., it inherits the AVX-512 deferral by construction.\n\n**Amended scope for figure (c):** the implementation produces an AVX2-vs-scalar cross-impl bar chart (the AVX2-vs-AVX-512 contrast as it materialises on the dev host) and annotates the AVX-512 axis as \"N/A (dev host: AVX2 only)\" inline on the figure. When AVX-512 hardware becomes available and `f8d230ef` lands its S3' measurement, the `plot_cross_cpu` function in `scripts/plot_permanent_benchmarks.py` already accepts a third `avx512_impl` series via its substring classifier and will render the third bar set without further changes.\n\n**Why amendment-not-escalation here:** the constraint is `363556e6`-precedented and the amendment scope (AVX-512 deferral with explicit follow-up to `f8d230ef`) matches that precedent's resolution exactly. No new architectural decision; the precedent already exists.\n\n## Amendment 2026-05-15c — S4 input dropped (same hardware constraint as figure (c))\n\nThe original criterion 5 named S1/S2/S3/**S4**/S5 as conventional CSV inputs. S4 was the planned AVX-512 cross-CPU sweep that was deferred to `f8d230ef` for the same hardware reason that drives amendment 2026-05-15b (the dev host has no AVX-512). No S4 CSV was produced under this epic; the input list collapses to S1/S2/S3/S5.\n\nWhen `f8d230ef` produces an S4 CSV on a future AVX-512 host, the `plot_cross_cpu` function in `scripts/plot_permanent_benchmarks.py` accepts an `avx512_impl` series automatically (substring classifier); a follow-up commit can wire an `S4_FILENAME` constant and pre-flight entry into the script without redesign.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "plot generation script (matplotlib, deterministic)",
+      "path": "scripts/plot_permanent_benchmarks.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "figure",
+      "label": "Figure (a): F_3 permanent log-time vs n (S1 + S2 overlay)",
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/figures/s1_perm_log_time_vs_n.png"
+    },
+    {
+      "commit": null,
+      "doc_type": "figure",
+      "label": "Figure (b): parallel scaling vs core count",
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/figures/s2_parallel_scaling.png"
+    },
+    {
+      "commit": null,
+      "doc_type": "figure",
+      "label": "Figure (c): cross-CPU bars (AVX2-only dev host; AVX-512 N/A)",
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/figures/s3_cross_cpu_bars.png"
+    },
+    {
+      "commit": null,
+      "doc_type": "figure",
+      "label": "Figure (d): GPU vs CPU SIMD crossover",
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/figures/s5_gpu_vs_cpu_crossover.png"
+    }
+  ],
+  "done_at": "2026-05-15T20:15:26.318885828Z",
+  "first_ready_at": "2026-05-11T09:03:49.877893312Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -15,57 +49,23 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T19:40:06.969221197Z"
+      "updated_at": "2026-05-15T19:40:06.969221197Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T20:09:50.357845529Z"
+      "updated_at": "2026-05-15T20:09:50.357845529Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "scripts/plot_permanent_benchmarks.py",
-      "commit": null,
-      "label": "plot generation script (matplotlib, deterministic)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/benchmarks/gf2_algebra_permanent/figures/s1_perm_log_time_vs_n.png",
-      "commit": null,
-      "label": "Figure (a): F_3 permanent log-time vs n (S1 + S2 overlay)",
-      "doc_type": "figure"
-    },
-    {
-      "path": "dev/benchmarks/gf2_algebra_permanent/figures/s2_parallel_scaling.png",
-      "commit": null,
-      "label": "Figure (b): parallel scaling vs core count",
-      "doc_type": "figure"
-    },
-    {
-      "path": "dev/benchmarks/gf2_algebra_permanent/figures/s3_cross_cpu_bars.png",
-      "commit": null,
-      "label": "Figure (c): cross-CPU bars (AVX2-only dev host; AVX-512 N/A)",
-      "doc_type": "figure"
-    },
-    {
-      "path": "dev/benchmarks/gf2_algebra_permanent/figures/s5_gpu_vs_cpu_crossover.png",
-      "commit": null,
-      "label": "Figure (d): GPU vs CPU SIMD crossover",
-      "doc_type": "figure"
-    }
-  ],
+  "id": "424aa94f-75b7-4d78-ab42-720bb27361e3",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-05-09T09:48:33.594996107Z",
-  "updated_at": "2026-07-12T20:02:55.437858250Z",
-  "first_ready_at": "2026-05-11T09:03:49.877893312Z",
-  "claimed_at": "2026-05-15T18:52:07.447501210Z",
-  "done_at": "2026-05-15T20:15:26.318885828Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Plot generation scripts for permanent benchmarks",
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

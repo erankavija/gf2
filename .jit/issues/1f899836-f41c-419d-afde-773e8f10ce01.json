@@ -1,28 +1,28 @@
 {
-  "id": "1f899836-f41c-419d-afde-773e8f10ce01",
-  "title": "Rayon row-tile multithread for B1/B3 dense kernels",
-  "description": "Apply rayon row-tile parallelism to the post-Tier-B dense kernels (transpose, M4RM tile-reuse multiply). Pre-flight cache-miss check is mandatory — multithreading a memory-bound kernel adds bus contention without throughput.\n\n## Background\n\n`crates/gf2-core/src/compute/cpu.rs` already has rayon-parallel M4RM/RREF/rank, but the kernels delivered by Tier B (transpose, M4RM tile-reuse multiply) need their parallel scheduling tuned to the new tile shapes.\n\nPre-flight (mandatory before V10): run `perf stat -r 10` on the post-Tier-B single-thread kernel. If `cache-misses / instructions $> 1\\%$` the kernel is memory-bound and multithreading will hurt — abort and revert.\n\nIf pre-flight passes, V10 applies rayon row-tile parallelism over the post-Tier-B tile shape using `rayon::ThreadPoolBuilder` with the project's existing thread-count convention. Tile boundaries align to 64-byte cache lines to avoid false sharing.\n\n## Success Criteria\n\n- [hard] Pre-flight `perf stat` cache-miss check executed and recorded in the JIT issue.\n- [hard] No correctness regression vs. single-threaded path (existing tests pass under multi-thread).\n- [hard] Strong-scaling efficiency $\\geq 70\\%$ at 4 threads at the design size class.\n- [hard] False-sharing check: tile boundaries align to 64-byte cache lines.\n- [hard] Strong-scaling measured at 1, 2, 4, 8 threads; numbers recorded.\n- [aspirational] $\\geq 3\\times$ total speedup over the post-Tier-B single-thread baseline at 4 threads.\n\n## Notes\n\nBench: post-Tier-B variants of `matmul` and the new `transpose` bench. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
-  "state": "rejected",
-  "priority": "normal",
   "assignee": "agent:claude-wt-1f899836",
+  "claimed_at": "2026-04-29T20:18:06.560481791Z",
+  "context": {},
+  "created_at": "2026-04-25T15:19:27.982645121Z",
   "dependencies": [
     "19bc3199-e140-405f-9d16-d7722d7b7927",
     "54a0e75c-0d45-4dbc-b895-a0f6674fa331"
   ],
+  "description": "Apply rayon row-tile parallelism to the post-Tier-B dense kernels (transpose, M4RM tile-reuse multiply). Pre-flight cache-miss check is mandatory — multithreading a memory-bound kernel adds bus contention without throughput.\n\n## Background\n\n`crates/gf2-core/src/compute/cpu.rs` already has rayon-parallel M4RM/RREF/rank, but the kernels delivered by Tier B (transpose, M4RM tile-reuse multiply) need their parallel scheduling tuned to the new tile shapes.\n\nPre-flight (mandatory before V10): run `perf stat -r 10` on the post-Tier-B single-thread kernel. If `cache-misses / instructions $> 1\\%$` the kernel is memory-bound and multithreading will hurt — abort and revert.\n\nIf pre-flight passes, V10 applies rayon row-tile parallelism over the post-Tier-B tile shape using `rayon::ThreadPoolBuilder` with the project's existing thread-count convention. Tile boundaries align to 64-byte cache lines to avoid false sharing.\n\n## Success Criteria\n\n- [hard] Pre-flight `perf stat` cache-miss check executed and recorded in the JIT issue.\n- [hard] No correctness regression vs. single-threaded path (existing tests pass under multi-thread).\n- [hard] Strong-scaling efficiency $\\geq 70\\%$ at 4 threads at the design size class.\n- [hard] False-sharing check: tile boundaries align to 64-byte cache lines.\n- [hard] Strong-scaling measured at 1, 2, 4, 8 threads; numbers recorded.\n- [aspirational] $\\geq 3\\times$ total speedup over the post-Tier-B single-thread baseline at 4 threads.\n\n## Notes\n\nBench: post-Tier-B variants of `matmul` and the new `transpose` bench. Spec doc: `dev/plans/gf2_core_ppc_spiral.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Dense multithread preflight abort",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/1f899836-preflight-abort.txt"
+    }
+  ],
+  "first_ready_at": "2026-04-29T09:00:14.423014512Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
   "gates_status": {},
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/1f899836-preflight-abort.txt",
-      "commit": null,
-      "label": "Dense multithread preflight abort",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "1f899836-f41c-419d-afde-773e8f10ce01",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -30,8 +30,8 @@
     "story:ppc-multithread",
     "resolution:preflight-memory-bound"
   ],
-  "created_at": "2026-04-25T15:19:27.982645121Z",
-  "updated_at": "2026-07-12T20:02:55.428565543Z",
-  "first_ready_at": "2026-04-29T09:00:14.423014512Z",
-  "claimed_at": "2026-04-29T20:18:06.560481791Z"
+  "priority": "normal",
+  "state": "rejected",
+  "title": "Rayon row-tile multithread for B1/B3 dense kernels",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

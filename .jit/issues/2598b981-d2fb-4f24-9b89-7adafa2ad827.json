@@ -1,49 +1,49 @@
 {
-  "id": "2598b981-d2fb-4f24-9b89-7adafa2ad827",
-  "title": "Run full GF(p) FieldMatrix fflas-comparable benchmark sweep",
-  "description": "Run the deferred full `fieldmatrix_gemm` reference benchmark sweep for the GF(p) delayed-reduction work from `e7ab802d`.\n\n## Background\n\n`e7ab802d` implemented delayed product-sum reductions for `FieldMatrix::gemm` over prime fields and recorded fast-budget 64x64x64 cells in `dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md`. The original aspirational target involved n>=256 comparison against fflas-ffpack, but that sweep is too slow/reference-host-dependent for the normal agent fast tier and was explicitly deferred.\n\n## Success Criteria\n\n- [hard] Run the existing full `fieldmatrix_gemm`/reference comparison path for the GF(p) cells relevant to `64c88ae4`, including at least one n>=256 square cell and any rectangular cells that fit the reference-host budget.\n- [hard] Record commands, host/toolchain, matrix shapes, fields, gf2 throughput, reference fflas-ffpack throughput where available, and ratios in a committed evidence document.\n- [hard] Clearly mark cells deferred to nightly/slow infrastructure if they exceed the reference-host budget, with the reason.\n- [hard] Compare the measured post-`e7ab802d` numbers against the `64c88ae4` published gf2-side baseline and state whether the within-10x aspirational target is met for any n>=256 cell.\n- [hard] No implementation changes are required unless the benchmark harness is broken; any code changes must pass `cargo-ci` and `code-review`.\n\n## Notes\n\nThis is a benchmarking/evidence task, not normal fast-tier implementation work. Do not run slow/ignored tests as part of routine agent validation. Use the reference host or slow/nightly lane appropriate for fflas-comparable benchmarking.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-2598b981",
+  "claimed_at": "2026-04-29T21:58:44.693795564Z",
+  "context": {},
+  "created_at": "2026-04-29T14:10:43.520036798Z",
   "dependencies": [
     "e7ab802d-b99e-4efa-9304-f649f7c7ef68"
   ],
+  "description": "Run the deferred full `fieldmatrix_gemm` reference benchmark sweep for the GF(p) delayed-reduction work from `e7ab802d`.\n\n## Background\n\n`e7ab802d` implemented delayed product-sum reductions for `FieldMatrix::gemm` over prime fields and recorded fast-budget 64x64x64 cells in `dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md`. The original aspirational target involved n>=256 comparison against fflas-ffpack, but that sweep is too slow/reference-host-dependent for the normal agent fast tier and was explicitly deferred.\n\n## Success Criteria\n\n- [hard] Run the existing full `fieldmatrix_gemm`/reference comparison path for the GF(p) cells relevant to `64c88ae4`, including at least one n>=256 square cell and any rectangular cells that fit the reference-host budget.\n- [hard] Record commands, host/toolchain, matrix shapes, fields, gf2 throughput, reference fflas-ffpack throughput where available, and ratios in a committed evidence document.\n- [hard] Clearly mark cells deferred to nightly/slow infrastructure if they exceed the reference-host budget, with the reason.\n- [hard] Compare the measured post-`e7ab802d` numbers against the `64c88ae4` published gf2-side baseline and state whether the within-10x aspirational target is met for any n>=256 cell.\n- [hard] No implementation changes are required unless the benchmark harness is broken; any code changes must pass `cargo-ci` and `code-review`.\n\n## Notes\n\nThis is a benchmarking/evidence task, not normal fast-tier implementation work. Do not run slow/ignored tests as part of routine agent validation. Use the reference host or slow/nightly lane appropriate for fflas-comparable benchmarking.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Deferred GF(p) benchmark context",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GFp fflas sweep evidence",
+      "path": "dev/archive/babcf05e-gf2-core-ppc-spiral/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+    }
+  ],
+  "done_at": "2026-04-29T22:27:03.132116231Z",
+  "first_ready_at": "2026-04-29T14:11:57.797915179Z",
   "gates_required": [
     "code-review"
   ],
   "gates_status": {
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T22:20:00.404007437Z"
+      "updated_at": "2026-04-29T22:20:00.404007437Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/e7ab802d-fieldmatrix-gemm-delayed.md",
-      "commit": null,
-      "label": "Deferred GF(p) benchmark context",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-      "commit": null,
-      "label": "GFp fflas sweep evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "2598b981-d2fb-4f24-9b89-7adafa2ad827",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-ppc-spiral",
     "story:ppc-benchmark-gap"
   ],
-  "created_at": "2026-04-29T14:10:43.520036798Z",
-  "updated_at": "2026-07-12T20:02:55.430495355Z",
-  "first_ready_at": "2026-04-29T14:11:57.797915179Z",
-  "claimed_at": "2026-04-29T21:58:44.693795564Z",
-  "done_at": "2026-04-29T22:27:03.132116231Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Run full GF(p) FieldMatrix fflas-comparable benchmark sweep",
+  "updated_at": "2026-08-07T21:28:36.091323269Z"
 }

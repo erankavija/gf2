@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "D2: Lean F_3 bipedal correctness sketch",
-      "path": "dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md"
+      "path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/a0c0a45f/d2_lean_bipedal3_sketch.md"
     }
   ],
   "done_at": "2026-05-09T07:15:32.980283553Z",
@@ -40,5 +40,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Lean4 proof sketch: bipedal F_3 arithmetic vs canonical prime field",
-  "updated_at": "2026-08-07T21:14:48.611097636Z"
+  "updated_at": "2026-08-07T21:28:57.832153747Z"
 }

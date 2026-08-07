@@ -18,14 +18,14 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "v2 cross-family SOTA scorecard (FINAL) — every A8 cell PASS/AMENDED-with-citation/EXCLUDED; rows 4-5 closed PASS via bdf60780; zero bare-FAIL; SC#5 satisfied",
-      "path": "dev/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-28-b0fa00af-sota-scorecard-final.md"
     },
     {
       "commit": null,
       "doc_type": "design",
       "format": "markdown",
       "label": "Interim Phase-5 scorecard (2026-05-25) — SUPERSEDED by v2 2026-05-28; retained for audit trail",
-      "path": "dev/bench_results/b0fa00af/2026-05-25-b0fa00af-sota-scorecard-final.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/b0fa00af/2026-05-25-b0fa00af-sota-scorecard-final.md"
     }
   ],
   "done_at": "2026-05-30T22:20:32.889713928Z",
@@ -61,5 +61,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Publish cross-family dense LA SOTA scorecard (615db3b9 Phase 5)",
-  "updated_at": "2026-08-07T21:15:10.237384220Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

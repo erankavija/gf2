@@ -13,7 +13,7 @@
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Rank-deficient dense paths evidence",
-      "path": "dev/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md"
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md"
     }
   ],
   "done_at": "2026-05-07T00:08:22.324301913Z",
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Optimize rank-deficient dense paths",
-  "updated_at": "2026-08-07T21:15:03.868138650Z"
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

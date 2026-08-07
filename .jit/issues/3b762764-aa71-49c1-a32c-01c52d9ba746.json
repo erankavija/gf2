@@ -7,41 +7,31 @@
   "description": "Measure dense factorization and solve rows after GEMM parity work.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes.\n- [hard] The report identifies operations still outside 1.5x.",
   "documents": [
     {
-      "assets": [
-        {
-          "asset_type": "local",
-          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
-          "is_shared": false,
-          "mime_type": "text/markdown",
-          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
-          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md"
-        }
-      ],
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Dense LA post-GEMM scorecard (3b762764)",
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "label": "Fresh post-PPC dense-LA bench-day rows (3b762764)",
-      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-fresh.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-fresh.csv"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "3b762764 worktree host capture",
-      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-host.txt"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-host.txt"
     },
     {
       "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Dense LA aggregated reference CSV (3b762764)",
-      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-reference.csv"
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/bench_results/3b762764/2026-05-04-3b762764-dense-la-reference.csv"
     }
   ],
   "done_at": "2026-05-04T14:52:54.508944229Z",
@@ -77,5 +67,5 @@
   "priority": "high",
   "state": "done",
   "title": "Re-run dense LA post-GEMM scorecard",
-  "updated_at": "2026-08-07T21:14:58.299697498Z"
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

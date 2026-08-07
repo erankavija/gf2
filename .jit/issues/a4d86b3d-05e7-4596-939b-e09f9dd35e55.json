@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Implementation plan",
-      "path": "dev/active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md"
+      "path": "dev/archive/6efb756b-grand/active/a4d86b3d-configurable-simulation-campaign-runner/a4d86b3d-campaign-runner-plan.md"
     }
   ],
   "done_at": "2026-04-09T16:50:23.138247858Z",
@@ -41,5 +41,5 @@
   "priority": "high",
   "state": "done",
   "title": "Configurable simulation campaign runner",
-  "updated_at": "2026-08-07T21:14:37.478722351Z"
+  "updated_at": "2026-08-07T21:28:45.796696218Z"
 }

@@ -1,54 +1,54 @@
 {
-  "id": "a3412e15-e73d-4556-a2aa-e4296677cfa5",
-  "title": "Select sparse benchmark corpus and references",
-  "description": "Define meaningful sparse FieldMatrix comparisons.\n\n## Success Criteria\n\n- [hard] The corpus includes random, structured, and coding-theory sparse matrices.\n- [hard] Accepted references support comparable finite-field semantics.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-04T11:04:20.850159331Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.890544374Z",
   "dependencies": [
     "2403c054-8abd-4e0e-a41d-468b0837e9ad",
     "eb57f944-9d82-4bbe-8b58-68eae7622654"
   ],
+  "description": "Define meaningful sparse FieldMatrix comparisons.\n\n## Success Criteria\n\n- [hard] The corpus includes random, structured, and coding-theory sparse matrices.\n- [hard] Accepted references support comparable finite-field semantics.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Sparse benchmark corpus + references",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/sparse_benchmark_corpus.md"
+    }
+  ],
+  "done_at": "2026-05-04T17:38:42.044767831Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T17:16:23.363353561Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T17:16:16.993361719Z"
+      "updated_at": "2026-05-04T17:16:16.993361719Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-04T17:16:23.363353561Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T17:38:38.114721877Z"
+      "updated_at": "2026-05-04T17:38:38.114721877Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/sparse_benchmark_corpus.md",
-      "commit": null,
-      "label": "Sparse benchmark corpus + references",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "a3412e15-e73d-4556-a2aa-e4296677cfa5",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-sparse-fieldmatrix"
   ],
-  "created_at": "2026-04-30T06:43:02.890544374Z",
-  "updated_at": "2026-07-12T20:02:55.462738648Z",
-  "claimed_at": "2026-05-04T11:04:20.850159331Z",
-  "done_at": "2026-05-04T17:38:42.044767831Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Select sparse benchmark corpus and references",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }

@@ -10,7 +10,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GPU batch LDPC BP design plan",
-      "path": "dev/active/37e0b235/gpu-batch-ldpc-bp-plan.md"
+      "path": "dev/archive/806eb14e-hip-gpu-prototype/active/37e0b235/gpu-batch-ldpc-bp-plan.md"
     }
   ],
   "first_ready_at": "2026-04-29T22:56:56.123754770Z",
@@ -48,5 +48,5 @@
   "priority": "high",
   "state": "rejected",
   "title": "HIP/ROCm GPU-accelerated batch LDPC BP decoder",
-  "updated_at": "2026-08-07T21:14:46.325894859Z"
+  "updated_at": "2026-08-07T21:28:16.590614106Z"
 }

@@ -1,43 +1,43 @@
 {
-  "id": "70766cb1-2d79-4194-becd-7e17984310d0",
-  "title": "Inline small-prime panel-kernel + Barrett-constant cache for n=64",
-  "description": "Eliminate the per-call panel-kernel function-pointer dispatch + Barrett-constant load overhead that dominates `gemm_row_panel_fn` at small `n` (≈ 50 ns per row-panel call). Closes the residual minpoly gap on `GF(251)/n=64` which the d1dd266c packed matvec landing did not amortize.\n\n## Background\n\n`d1dd266c` landed `crate::gfp::simd_ops::gemm_row_panel_fn` (canonical-byte AVX2 row-panel kernel processing four rows per iteration). At n=256 the kernel amortises across 64 panel iterations and the `GF(251)/256` charpoly cell PASSes (0.63x). At n=64 the kernel only runs 16 panel iterations and the per-call overhead (function-pointer indirection + Barrett constant load + SIMD register spill at the AVX2 boundary) dominates.\n\n## Hard ceilings (fflas-ffpack reference)\n\n| Cell | fflas wall | 1.5x ceiling | Pre-task gf2 wall | Pre-task ratio |\n|---|---:|---:|---:|---:|\n| GF(251)/n=64 minpoly | 0.135 ms | 0.202 ms | 0.545 ms | 4.04x FAIL |\n\n## Success Criteria\n\n- [hard] The `GF(251)/n=64` minpoly cell meets the 1.5x ceiling (≤ 0.202 ms) on the current Zen 3 host, **OR is covered by a user-approved scope amendment to the broader 97bf0879 epic per the 2026-05-07 amendment below.**\n- [hard] Either: (a) the panel-kernel call site is **lifted from the per-row inner loop to the per-`matvec_packed` boundary** so the runtime SIMD function pointer is loaded once per matvec rather than once per row-panel iteration (full elimination of the runtime-dispatch indirection conflicts with the project's `OnceLock`-based portability contract documented in `CLAUDE.md` § \"Unsafe isolation\"), or (b) a per-prime Barrett-constant cache amortises the constant load across an entire matvec (rather than per row-panel call), or (c) both. The choice is implementation discretion.\n- [hard] No regression on `GF(251)/n=256` charpoly or `GF(251)/n=256` minpoly cells (already tracked by sibling tasks; verify both still pass / improve, do not regress).\n- [hard] No regression on the GF(2^31-1) and GF(65521) minpoly/charpoly cells.\n- [hard] Correctness: scalar-equivalence proptest comparing the inlined / cached path to the reference scalar matvec for boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or a successor doc) with the new GF(251)/n=64 minpoly Criterion median + before/after comparison.\n\n## Amendment — 2026-05-07 (user-approved)\n\nPer AskUserQuestion 2026-05-07: 70766cb1 delivered a ~30% gap reduction (0.545 ms → 0.383 ms; 4.04x → 2.84x of fflas), but the residual gap is below the granularity that further inline + Barrett-table tuning can close at this `n=64` boundary. The remaining gap is the per-call AVX2 register/lane setup overhead in the small-n row-panel kernel; closing it requires a bespoke register-scheduled small-n AVX2 kernel.\n\nThat work is filed as **`52cce970`** (Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells) and tracked under the broader finite-field LA SOTA catch-up planning issue **`615db3b9`**, NOT as a blocker on this issue.\n\nEmpirical basis: `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` § 3.1, § 6.1.\n\nRe-escalation threshold: re-evaluate the GF(251)/n=64 minpoly cell when `52cce970` closes.\n\n## Amendment 2 — 2026-05-07 (user-approved, SC#2 architectural clarification)\n\nPer AskUserQuestion 2026-05-07 (R2 review escalation): SC#2 option (a) — \"the panel-kernel call site is inlined at the dispatch boundary so the function-pointer indirection is removed\" — is amended to \"the panel-kernel call site is **lifted from the per-row inner loop to the per-`matvec_packed` boundary** so the runtime SIMD function pointer is loaded once per matvec rather than once per row-panel iteration\".\n\nEmpirical basis: full elimination of the AVX2 runtime-dispatch indirection conflicts with the project's `OnceLock`-based portability contract documented in `CLAUDE.md` § \"Unsafe isolation\" (`gf2-core/src/lib.rs` `simd::maybe_simd()` → optional `LogicalFns`). The `OnceLock` cache is the project's intended contract; eliminating the function-pointer call would require a `target_feature(\"avx2\")` compile-gate that the project does not adopt.\n\nThe current implementation lifts the `fns` load to the `PackedFpMatrix::Small` construction site (one read per `matvec_packed`, not per row-panel) and uses a global per-prime `SmallPrimeTables::from_mont` / `to_mont` cache built once via a `OnceLock` (`crates/gf2-core/src/gfp/simd_ops.rs:1180-1208`). This satisfies SC#2 option (a) under the amended reading, and option (b) is independently satisfied by the Barrett-constant cache.\n\n## Notes\n\nAllowed to add a small `#[inline]` hint or a fast-path branch in `crates/gf2-core/src/gfp/simd_ops.rs` and/or `crates/gf2-core/src/gfp/mod.rs`. SIMD register-scheduling work that requires unsafe goes into `gf2-kernels-simd` per project unsafe-isolation rules.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-07T13:19:30.799441149Z",
+  "context": {},
+  "created_at": "2026-05-07T13:18:34.433733503Z",
   "dependencies": [],
+  "description": "Eliminate the per-call panel-kernel function-pointer dispatch + Barrett-constant load overhead that dominates `gemm_row_panel_fn` at small `n` (≈ 50 ns per row-panel call). Closes the residual minpoly gap on `GF(251)/n=64` which the d1dd266c packed matvec landing did not amortize.\n\n## Background\n\n`d1dd266c` landed `crate::gfp::simd_ops::gemm_row_panel_fn` (canonical-byte AVX2 row-panel kernel processing four rows per iteration). At n=256 the kernel amortises across 64 panel iterations and the `GF(251)/256` charpoly cell PASSes (0.63x). At n=64 the kernel only runs 16 panel iterations and the per-call overhead (function-pointer indirection + Barrett constant load + SIMD register spill at the AVX2 boundary) dominates.\n\n## Hard ceilings (fflas-ffpack reference)\n\n| Cell | fflas wall | 1.5x ceiling | Pre-task gf2 wall | Pre-task ratio |\n|---|---:|---:|---:|---:|\n| GF(251)/n=64 minpoly | 0.135 ms | 0.202 ms | 0.545 ms | 4.04x FAIL |\n\n## Success Criteria\n\n- [hard] The `GF(251)/n=64` minpoly cell meets the 1.5x ceiling (≤ 0.202 ms) on the current Zen 3 host, **OR is covered by a user-approved scope amendment to the broader 97bf0879 epic per the 2026-05-07 amendment below.**\n- [hard] Either: (a) the panel-kernel call site is **lifted from the per-row inner loop to the per-`matvec_packed` boundary** so the runtime SIMD function pointer is loaded once per matvec rather than once per row-panel iteration (full elimination of the runtime-dispatch indirection conflicts with the project's `OnceLock`-based portability contract documented in `CLAUDE.md` § \"Unsafe isolation\"), or (b) a per-prime Barrett-constant cache amortises the constant load across an entire matvec (rather than per row-panel call), or (c) both. The choice is implementation discretion.\n- [hard] No regression on `GF(251)/n=256` charpoly or `GF(251)/n=256` minpoly cells (already tracked by sibling tasks; verify both still pass / improve, do not regress).\n- [hard] No regression on the GF(2^31-1) and GF(65521) minpoly/charpoly cells.\n- [hard] Correctness: scalar-equivalence proptest comparing the inlined / cached path to the reference scalar matvec for boundary lengths {0, 1, 15, 16, 17, 63, 64, 65}.\n- [hard] Final evidence updates `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` (or a successor doc) with the new GF(251)/n=64 minpoly Criterion median + before/after comparison.\n\n## Amendment — 2026-05-07 (user-approved)\n\nPer AskUserQuestion 2026-05-07: 70766cb1 delivered a ~30% gap reduction (0.545 ms → 0.383 ms; 4.04x → 2.84x of fflas), but the residual gap is below the granularity that further inline + Barrett-table tuning can close at this `n=64` boundary. The remaining gap is the per-call AVX2 register/lane setup overhead in the small-n row-panel kernel; closing it requires a bespoke register-scheduled small-n AVX2 kernel.\n\nThat work is filed as **`52cce970`** (Bespoke small-prime AVX2 kernel for GF(251) charpoly+minpoly residual cells) and tracked under the broader finite-field LA SOTA catch-up planning issue **`615db3b9`**, NOT as a blocker on this issue.\n\nEmpirical basis: `dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md` § 3.1, § 6.1.\n\nRe-escalation threshold: re-evaluate the GF(251)/n=64 minpoly cell when `52cce970` closes.\n\n## Amendment 2 — 2026-05-07 (user-approved, SC#2 architectural clarification)\n\nPer AskUserQuestion 2026-05-07 (R2 review escalation): SC#2 option (a) — \"the panel-kernel call site is inlined at the dispatch boundary so the function-pointer indirection is removed\" — is amended to \"the panel-kernel call site is **lifted from the per-row inner loop to the per-`matvec_packed` boundary** so the runtime SIMD function pointer is loaded once per matvec rather than once per row-panel iteration\".\n\nEmpirical basis: full elimination of the AVX2 runtime-dispatch indirection conflicts with the project's `OnceLock`-based portability contract documented in `CLAUDE.md` § \"Unsafe isolation\" (`gf2-core/src/lib.rs` `simd::maybe_simd()` → optional `LogicalFns`). The `OnceLock` cache is the project's intended contract; eliminating the function-pointer call would require a `target_feature(\"avx2\")` compile-gate that the project does not adopt.\n\nThe current implementation lifts the `fns` load to the `PackedFpMatrix::Small` construction site (one read per `matvec_packed`, not per row-panel) and uses a global per-prime `SmallPrimeTables::from_mont` / `to_mont` cache built once via a `OnceLock` (`crates/gf2-core/src/gfp/simd_ops.rs:1180-1208`). This satisfies SC#2 option (a) under the amended reading, and option (b) is independently satisfied by the Barrett-constant cache.\n\n## Notes\n\nAllowed to add a small `#[inline]` hint or a fast-path branch in `crates/gf2-core/src/gfp/simd_ops.rs` and/or `crates/gf2-core/src/gfp/mod.rs`. SIMD register-scheduling work that requires unsafe goes into `gf2-kernels-simd` per project unsafe-isolation rules.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Integrated post-sibling scorecard (panel-kernel inline, residual tracked under 52cce970)",
+      "path": "dev/archive/97bf0879-gf2-core-sota-performance/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md"
+    }
+  ],
+  "done_at": "2026-05-07T19:16:45.634488043Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T19:16:45.473478757Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T19:08:27.385968383Z"
+      "updated_at": "2026-05-07T19:08:27.385968383Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T19:13:38.947190091Z"
+      "updated_at": "2026-05-07T19:13:38.947190091Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-07T19:16:45.473478757Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-07-d1dd266c-minpoly-tuning.md",
-      "commit": null,
-      "label": "Integrated post-sibling scorecard (panel-kernel inline, residual tracked under 52cce970)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "70766cb1-2d79-4194-becd-7e17984310d0",
   "labels": [
     "type:task",
     "component:gf2-core",
@@ -45,8 +45,8 @@
     "epic:gf2-core-sota-performance",
     "story:sota-polynomial-invariants"
   ],
-  "created_at": "2026-05-07T13:18:34.433733503Z",
-  "updated_at": "2026-07-12T20:02:55.450049569Z",
-  "claimed_at": "2026-05-07T13:19:30.799441149Z",
-  "done_at": "2026-05-07T19:16:45.634488043Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Inline small-prime panel-kernel + Barrett-constant cache for n=64",
+  "updated_at": "2026-08-07T21:30:21.698239965Z"
 }

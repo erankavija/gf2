@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GPU prototype baseline manifest (CPU comparators, design workloads, HIP submission model)",
-      "path": "dev/bench_results/dfe297f0/2026-05-31-dfe297f0-gpu-baseline-manifest.md"
+      "path": "dev/archive/806eb14e-hip-gpu-prototype/bench_results/dfe297f0/2026-05-31-dfe297f0-gpu-baseline-manifest.md"
     }
   ],
   "done_at": "2026-05-30T23:37:02.068340212Z",
@@ -48,5 +48,5 @@
   "priority": "high",
   "state": "done",
   "title": "Pin GPU prototype baselines",
-  "updated_at": "2026-08-07T21:15:12.587968363Z"
+  "updated_at": "2026-08-07T21:28:16.590614106Z"
 }

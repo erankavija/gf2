@@ -11,7 +11,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Implementation plan",
-      "path": "dev/plans/afc7bdaf/charon-aeneas-upstream-sync.md"
+      "path": "dev/archive/e095a100-gfpm-arithmetic/plans/afc7bdaf/charon-aeneas-upstream-sync.md"
     }
   ],
   "done_at": "2026-04-04T22:38:38.913376006Z",
@@ -46,5 +46,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Update Charon to 419f53b6 and Aeneas to 1180be60 (upstream sync)",
-  "updated_at": "2026-08-07T21:14:47.242588184Z"
+  "updated_at": "2026-08-07T21:28:41.073179567Z"
 }

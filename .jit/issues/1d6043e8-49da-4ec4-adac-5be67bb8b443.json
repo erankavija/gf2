@@ -1,51 +1,51 @@
 {
-  "id": "1d6043e8-49da-4ec4-adac-5be67bb8b443",
-  "title": "Define SOTA reference acceptance protocol",
-  "description": "Define what makes a reference implementation acceptable as a hard performance target.\n\n## Success Criteria\n\n- [hard] The protocol requires reproducible build, same hardware, comparable semantics, shared data shape, and CSV merge support.\n- [hard] The protocol is linked as a design doc to the reference-matrix story.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude-wt-1d6043e8",
+  "claimed_at": "2026-04-30T14:47:19.676255804Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.588180557Z",
   "dependencies": [],
+  "description": "Define what makes a reference implementation acceptable as a hard performance target.\n\n## Success Criteria\n\n- [hard] The protocol requires reproducible build, same hardware, comparable semantics, shared data shape, and CSV merge support.\n- [hard] The protocol is linked as a design doc to the reference-matrix story.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "SOTA reference acceptance protocol",
+      "path": "dev/archive/026fc832-gf2-core-sota-stretch/plans/sota_reference_acceptance_protocol.md"
+    }
+  ],
+  "done_at": "2026-04-30T15:14:34.048344172Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T15:12:50.496781235Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-30T15:12:40.379813391Z"
+      "updated_at": "2026-04-30T15:12:40.379813391Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-30T15:12:50.496781235Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-30T15:13:53.762959376Z"
+      "updated_at": "2026-04-30T15:13:53.762959376Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/sota_reference_acceptance_protocol.md",
-      "commit": null,
-      "label": "SOTA reference acceptance protocol",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "1d6043e8-49da-4ec4-adac-5be67bb8b443",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-reference-matrix"
   ],
-  "created_at": "2026-04-30T06:43:02.588180557Z",
-  "updated_at": "2026-07-12T20:02:55.427932603Z",
-  "claimed_at": "2026-04-30T14:47:19.676255804Z",
-  "done_at": "2026-04-30T15:14:34.048344172Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Define SOTA reference acceptance protocol",
+  "updated_at": "2026-08-07T21:29:07.540503831Z"
 }
