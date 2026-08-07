@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T11:43:30.830480182Z",
+  "dependencies": [
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
+  "description": "Remove the Rustdoc example blocks that restate a signature rather than teach anything, and record the resulting change in example count and documentation-test time.\n\n## Background\n\nRoughly half of the workspace's Rustdoc example blocks demonstrate a straightforward accessor, constant, constructor, predicate, or direct field mapping, or repeat a near-identical shape across every method of a type. They compile and run as documentation tests on every check, consuming a large share of the documentation-test budget while teaching a reader nothing the signature already states.\n\nA pre-removal audit linked to this issue classifies every example block in the workspace as either tautological or contract-clarifying, cites each one by file and line, and records the baseline census and documentation-test timing. A census script accompanying that audit produces the mechanical counts, so the before and after figures come from one method.\n\nOne crate sits outside the default Cargo workspace. Its example blocks compile in no documentation-test run reachable from the workspace root, so the canonical checks do not currently observe them.\n\n## Success Criteria\n\n- [hard] REQ-01: Every example block the linked audit classifies as tautological is either removed or retained with a recorded reason grounded in the project's non-trivial-example policy.\n- [hard] REQ-02: Retained examples compile under the canonical documentation checks, and the documentation-test suite passes with no loss of contract-clarifying coverage.\n- [hard] REQ-03: A post-removal census records example-heading count, code-fence disposition, per-crate example counts, documentation-test count, and documentation-test execution time, produced by the same census method as the pre-removal baseline.\n- [hard] REQ-04: Example blocks in the crate excluded from the default workspace are held to the same policy, and their exclusion from workspace documentation-test runs is stated rather than left implicit.\n\n## Notes\n\nThe audit's boundary between tautological and contract-clarifying resolves toward retention, so its tautological count is a floor rather than a target. A block the audit retained may still be removed where the policy plainly calls for it.\n",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/fa787f85-documentation-overhaul/fa787f85-rustdoc-example-audit.md"
+    }
+  ],
+  "first_ready_at": "2026-08-07T11:43:30.830480182Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "a0a29512-ce14-4110-a541-65ef6612278d",
+  "labels": [
+    "epic:documentation-overhaul",
+    "satisfies:REQ-07",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Remove tautological Rustdoc examples across the workspace",
+  "updated_at": "2026-08-07T11:43:44.605974261Z"
+}

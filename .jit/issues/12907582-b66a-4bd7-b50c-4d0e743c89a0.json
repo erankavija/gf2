@@ -1,43 +1,43 @@
 {
-  "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
-  "title": "Correct surviving source-level documentation drift",
-  "description": "Correct factual drift in source-level documentation and operational comments that will survive the documentation migration. Material located only in obsolete roadmaps, contributor prose, or historical presentations is handled by removal or archival rather than edited in place.\n\n## Success Criteria\n\n- [hard] REQ-01: Surviving crate- and module-level Rustdoc states the correct single-word permanent bounds, packed-lane layouts, implemented SIMD targets, and public API surface as verified against current code.\n- [hard] REQ-02: Internal wave and task designators are absent from adopter-visible Rustdoc.\n- [hard] REQ-03: Surviving operational comments state current reasons and contracts without transition narration such as “not yet on main” or comparisons with superseded implementations.\n- [hard] REQ-04: Bare implementation TODOs found by the inherited drift audit are either implemented within an explicitly scoped child issue or replaced by a traceable JIT item without adding promises to adopter documentation.\n- [hard] REQ-05: Findings whose only location is a removed contributor file, removed roadmap, rewritten permanent page, or archived presentation are classified in the migration manifest rather than patched in obsolete prose.\n- [hard] REQ-06: Rust formatting, Rustdoc compilation, documentation review, and code review pass for every surviving source-level edit.\n",
-  "state": "backlog",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-06-30T20:12:46.239191939Z",
   "dependencies": [
+    "0b45a5fa-ca47-4e32-a7a8-04a13d65c348",
     "3f29e945-8b12-4862-82c8-f2ec6573287c"
   ],
+  "description": "Correct factual drift in source-level documentation and operational comments that will survive the documentation migration. Material located only in obsolete roadmaps, contributor prose, or historical presentations is handled by removal or archival rather than edited in place.\n\n## Success Criteria\n\n- [hard] REQ-01: Surviving crate- and module-level Rustdoc states the correct packed-lane layouts, implemented SIMD targets, and public API surface as verified against current code. The single-word permanent bounds are verified as already correct rather than re-fixed here: `0b45a5fa` owns that correction and blocks this issue.\n- [hard] REQ-02: Internal wave and task designators are absent from adopter-visible Rustdoc.\n- [hard] REQ-03: Surviving operational comments state current reasons and contracts without transition narration such as \"not yet on main\" or comparisons with superseded implementations.\n- [hard] REQ-04: Bare implementation TODOs found by the inherited drift audit are either implemented within an explicitly scoped child issue or replaced by a traceable JIT item without adding promises to adopter documentation.\n- [hard] REQ-05: Findings whose only location is a removed contributor file, removed roadmap, rewritten permanent page, or archived presentation are classified in the migration manifest rather than patched in obsolete prose.\n- [hard] REQ-06: Rust formatting, Rustdoc compilation, documentation review, and code review pass for every surviving source-level edit.\n\n## Notes\n\nRe-homed from epic `b4b4b9ee` to `fa787f85` on 2026-08-07 so that code remediation is not gated on the documentation contract. Depends on `0b45a5fa` (F_3 permanent bound) so the bound this issue verifies is already corrected upstream.\n",
+  "documents": [],
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-07-14T20:40:18.333589827Z"
-    },
     "cargo-ci": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.342791317Z"
+      "updated_at": "2026-06-30T20:12:55.342791317Z",
+      "updated_by": null
     },
     "code-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-06-30T20:12:55.342832337Z"
+      "updated_at": "2026-06-30T20:12:55.342832337Z",
+      "updated_by": null
+    },
+    "doc-review": {
+      "status": "pending",
+      "updated_at": "2026-07-14T20:40:18.333589827Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "12907582-b66a-4bd7-b50c-4d0e743c89a0",
   "labels": [
     "type:task",
-    "epic:tech-debt-2026-06-30",
     "component:docs",
     "epic:documentation-overhaul"
   ],
-  "created_at": "2026-06-30T20:12:46.239191939Z",
-  "updated_at": "2026-07-14T20:40:18.430437397Z"
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Correct surviving source-level documentation drift",
+  "updated_at": "2026-08-07T12:04:49.814866311Z"
 }

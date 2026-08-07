@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:04:01.910892708Z",
+  "dependencies": [],
+  "description": "**Dimension: separation-of-concerns · 1 medium finding** — see report §separation-of-concerns. Split out of `1c29a70e` on 2026-08-07 so that `07a1813a` can depend on the rename alone rather than on the whole dependency-direction bundle.\n\n`gf2-core/src/bitvec.rs` names the Arikan (2009) coding-theory kernel on the lowest-level primitive type. Resolved 2026-08-07: rename neutrally in core rather than relocate to gf2-coding. The transform has no consumer outside gf2-core — the only references are `gf2-core/tests/polar_tests.rs` — and gf2-coding has no polar module, so relocation would create a coding-theory home with no callers. The operation itself is a generic GF(2) butterfly and belongs in core under a neutral name.\n\n## Success Criteria\n\n- [hard] REQ-01: The four methods at `gf2-core/src/bitvec.rs:1496`, `:1532`, `:1593`, `:1629` are renamed to `hadamard_butterfly`, `hadamard_butterfly_into`, `hadamard_butterfly_inverse`, and `hadamard_butterfly_inverse_into`, remaining in gf2-core.\n- [hard] REQ-02: All call sites are updated, including `gf2-core/tests/polar_tests.rs`; no `polar_transform` identifier survives in the workspace.\n- [hard] REQ-03: No coding-theory vocabulary remains in the method names or their Rustdoc summaries; the doc prose describes a generic GF(2) butterfly. The rationale for keeping the kernel in core is recorded in the module or method Rustdoc.\n- [hard] REQ-04: Behaviour is unchanged — the existing polar-transform tests pass unmodified apart from the renamed calls.\n- [hard] REQ-05: `cargo nextest --profile ci`, clippy `-D warnings`, and fmt pass.\n\n## Notes\n\nBlocks `07a1813a`, which adds a word-level fast path to the same functions; the rename lands first so the fast path is written against the final names. Carries no parent edge by design: it is a shared-blocker node, resolved into the epic through its dependent.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:04:01.910892708Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "cdb951cc-325d-4e65-897f-295a691bf6e3",
+  "labels": [
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Rename polar_transform to hadamard_butterfly in gf2-core",
+  "updated_at": "2026-08-07T12:04:01.910892708Z"
+}

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:01:38.720737148Z",
+  "dependencies": [
+    "3f29e945-8b12-4862-82c8-f2ec6573287c"
+  ],
+  "description": "Seven doc-completeness findings from the 2026-06-30 technical debt assessment request `# Examples` blocks on accessor-, getter-, builder-, and simple-constructor-shaped public items. Those are the categories the workspace Rustdoc example audit classifies as tautological, so the findings cannot be actioned as written until the non-trivial-example policy exists in the addressable invariant registry.\n\nThis issue carries them forward and resolves each one against that policy: either the gap is closed because the item's contract is genuinely non-obvious, or the finding is closed as superseded because the policy says no example belongs there.\n\n## Inherited findings\n\nSplit out of `aabc528a` on 2026-08-07:\n\n- `gf2-kernels-hip/src/lib.rs:411` + `launch_*.rs` — ~20 public getters requested `# Examples` (`no_run`).\n- `gf2-sim/src/presets/dvb_t2.rs:411` — 6 builder methods.\n- `gf2-sim/src/stages/mod.rs:274` — 4 stage constructors.\n- `gf2-sim/src/connector.rs` — `Connector::new`.\n- `gf2-sim/src/executor/results.rs:59` — `SnrPointResult::from_counters`.\n- `gf2-sim/src/parallel/mod.rs:259` — `WorkerCounters::fer()` / `mean_iters()`.\n- `gf2-coding/src/ldpc/nr_5g/mod.rs:1362,1385` — `with_scale` / `with_algorithm` doctests.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the seven inherited findings is resolved against the registry's non-trivial-example policy, recording per finding whether an example was added or the finding was closed as superseded, with the reason grounded in the policy text rather than in the original report's wording.\n- [hard] REQ-02: No example is added that restates a signature; any example added materially clarifies a non-obvious contract.\n- [hard] REQ-03: Items in the crate excluded from the default Cargo workspace are held to the same policy, and any example added there is stated as unobserved by workspace documentation-test runs.\n- [hard] REQ-04: Examples added compile under the canonical documentation checks; clippy `-D warnings` and fmt pass.\n\n## Notes\n\nSequenced after the tautological-example removal so the retained corpus is the baseline this issue judges against; resolving it before that pass would measure against a corpus half of which is scheduled for deletion.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:01:38.720737148Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "153297cf-7687-4599-be56-23e038efee3d",
+  "labels": [
+    "epic:documentation-overhaul",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Decide accessor-shaped Rustdoc example gaps against the example policy",
+  "updated_at": "2026-08-07T12:03:22.362627282Z"
+}

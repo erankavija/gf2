@@ -3,7 +3,7 @@
   "context": {},
   "created_at": "2026-06-30T20:12:46.402542559Z",
   "dependencies": [],
-  "description": "**Dimension: msrv · 2 findings (1 medium, 1 low)** — see report §msrv.\n\n- (med) `crates/gf2-kernels-simd/Cargo.toml` — no `rust-version` field; all peer crates declare `rust-version = \"1.95\"`. Without it `cargo check --locked` silently accepts older toolchains for this crate. Add `rust-version = \"1.95\"` to `[package]`.\n- (low) `AGENTS.md` — MSRV section omits `gf2-algebra` and `gf2-sim` and does not flag the missing pin. Update the sentence to list all enforcing crates (after the fix above, gf2-kernels-simd is pinned too).\n\n## Success Criteria\n\n- [hard] REQ-01: `gf2-kernels-simd/Cargo.toml` declares `rust-version = \"1.95\"`.\n- [hard] REQ-02: AGENTS.md MSRV sentence lists every crate that pins 1.95, consistent with reality post-fix.\n- [hard] REQ-03: `rustup run 1.95.0 cargo check -p gf2-kernels-simd` succeeds; fmt clean.\n",
+  "description": "**Dimension: msrv · 2 findings (1 medium, 1 low)** — see report §msrv. Criteria amended 2026-08-07.\n\n- (med) `crates/gf2-kernels-simd/Cargo.toml` — no `rust-version` field. Verified 2026-08-07: it is the only crate under `crates/` without one; the other five (`gf2-core`, `gf2-coding`, `gf2-algebra`, `gf2-sim`, `gf2-kernels-hip`) all declare `rust-version = \"1.95\"`. Without it `cargo check --locked` silently accepts older toolchains for this crate.\n- (low) The AGENTS.md MSRV statement. The original finding asked for the sentence to enumerate the enforcing crates. That is superseded: `AGENTS.md:17` now reads \"The Rust MSRV is 1.95. Use that toolchain for compatibility-sensitive work.\", a blanket statement, and the documentation-overhaul epic caps that file at 200 lines. Make the blanket sentence true by pinning every crate rather than by maintaining a list that drifts whenever a crate is added.\n\n## Success Criteria\n\n- [hard] REQ-01: `crates/gf2-kernels-simd/Cargo.toml` declares `rust-version = \"1.95\"` in `[package]`.\n- [hard] REQ-02: Every crate under `crates/` declares `rust-version = \"1.95\"`, so the blanket AGENTS.md MSRV sentence is accurate without a per-crate list. No crate enumeration is added to AGENTS.md.\n- [hard] REQ-03: `rustup run 1.95.0 cargo check -p gf2-kernels-simd` succeeds; fmt clean.\n",
   "documents": [],
   "gates_required": [
     "cargo-ci",
@@ -30,6 +30,6 @@
   ],
   "priority": "normal",
   "state": "ready",
-  "title": "Pin MSRV 1.95 on gf2-kernels-simd and align CLAUDE.md",
-  "updated_at": "2026-08-05T12:23:12.680011123Z"
+  "title": "Pin MSRV 1.95 across all workspace crates",
+  "updated_at": "2026-08-07T12:02:13.903120648Z"
 }
