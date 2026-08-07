@@ -33,6 +33,7 @@
 - **@/gate/parallelism-pays** — Parallelism speedup demonstrated: Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target.
 - **@/gate/plan-review** — Plan Review: Independently review the linked plan before implementation work fans out.
 - **@/gate/repo-validate** — Repository Validation: Run structural and declarative validation for the whole repository.
+- **@/gate/research-review** — Research Review: Verify scientific rigor: claims trace to artifacts, statistics are sound, citations resolve, results are reproducible.
 - **@/gate/tdd-reminder** — Write tests first (TDD): Remind implementers to establish failing behavioral evidence before implementation.
 - **@/gate/tests** — All tests pass: Run the legacy cargo test gate retained for issues that explicitly require it.
 - **@/gate/verify-lean** — Lean extraction regenerates: Regenerate LLBC and Lean from current Rust with Charon and Aeneas, then build the proof package.

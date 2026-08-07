@@ -144,6 +144,10 @@ facts. See `@/inv/single-source-prose`.
 - **fast-test-tier-budget** — Release-mode fast-tier tests respect the configured five-second per-test and sixty-second suite budgets; slower work carries a descriptive ignore tier.
 - **slow-test-tier-budget** — Ignored slow and simulation tests respect the six-hundred-second nightly budget or self-select an explicitly serialized or host-gated execution path.
 - **convention-convergence** — A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition.
+- **claims-trace-to-artifacts** — Every published scientific number — error rate, threshold, probability estimate, statistic — traces to a committed, versioned artifact recording seeds, git revision, hardware, and toolchain.
+- **uncertainty-reported** — Every Monte Carlo estimate in a published artifact states its sample count and confidence interval; plots and tables of stochastic results carry error bars or interval columns.
+- **external-claims-cited** — Every reproduction target or externally sourced number cites a key resolving in the citation registry; a work referenced only by prose title is a staleness defect.
+- **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
 <!-- jit:invariants:end -->
 
 ## JIT workflow

@@ -100,3 +100,26 @@ statement = "Ignored slow and simulation tests respect the six-hundred-second ni
 id = "convention-convergence"
 kind = "advisory"
 statement = "A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition."
+
+[[invariants]]
+enforced-by = "@/gate/research-review"
+id = "claims-trace-to-artifacts"
+kind = "enforced"
+statement = "Every published scientific number — error rate, threshold, probability estimate, statistic — traces to a committed, versioned artifact recording seeds, git revision, hardware, and toolchain."
+
+[[invariants]]
+enforced-by = "@/gate/research-review"
+id = "uncertainty-reported"
+kind = "enforced"
+statement = "Every Monte Carlo estimate in a published artifact states its sample count and confidence interval; plots and tables of stochastic results carry error bars or interval columns."
+
+[[invariants]]
+enforced-by = "@/gate/research-review"
+id = "external-claims-cited"
+kind = "enforced"
+statement = "Every reproduction target or externally sourced number cites a key resolving in the citation registry; a work referenced only by prose title is a staleness defect."
+
+[[invariants]]
+id = "falsification-preserved"
+kind = "advisory"
+statement = "Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect."
