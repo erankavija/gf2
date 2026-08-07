@@ -14,6 +14,7 @@ use crate::sampler::MatrixSampler;
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
+use gf2_core::gfp::Fp;
 
 /// One backend's agreement with the scalar reference at a given `(q, n)`.
 #[derive(Clone, Debug)]
@@ -153,9 +154,158 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
     rows
 }
 
+/// Exact $\Pr[\mathrm{per} = 0]$ over all $q^{9}$ matrices of order 3, computed
+/// two ways: once through the production kernel and once by an independent
+/// six-term expansion of the $3 \times 3$ permanent.
+///
+/// The cross-backend check in [`check`] compares implementations of the *same*
+/// per-field algorithm against each other. That cannot detect an error shared
+/// by all of them, and the campaign's headline statistic is precisely a zero
+/// count, so the kernels also need an anchor outside their own family. Order 3
+/// is the largest size where full enumeration is instant for every supported
+/// `q` ($7^9 \approx 4.0 \times 10^7$).
+///
+/// Returns `(kernel zero count, independent zero count, total matrices)`.
+#[must_use]
+pub fn exact_zero_count_order3(q: u64) -> (u64, u64, u64) {
+    fn digits(mut m: u64, q: u64) -> [u64; 9] {
+        let mut d = [0u64; 9];
+        for slot in &mut d {
+            *slot = m % q;
+            m /= q;
+        }
+        d
+    }
+    // Independent permanent: sum over the six permutations of S_3.
+    fn per3(d: &[u64; 9], q: u64) -> u64 {
+        (d[0] * d[4] * d[8]
+            + d[0] * d[5] * d[7]
+            + d[1] * d[3] * d[8]
+            + d[1] * d[5] * d[6]
+            + d[2] * d[3] * d[7]
+            + d[2] * d[4] * d[6])
+            % q
+    }
+
+    let total = q.pow(9);
+    let mut kernel_zeros = 0u64;
+    let mut independent_zeros = 0u64;
+    for m in 0..total {
+        let d = digits(m, q);
+        if per3(&d, q) == 0 {
+            independent_zeros += 1;
+        }
+        let kernel_value = match q {
+            3 => {
+                let data: Vec<Fp<3>> = d.iter().map(|&x| Fp::<3>::new(x)).collect();
+                gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword(
+                    &Bipedal3Matrix::from_row_major(&data, 3, 3),
+                )
+                .value()
+            }
+            5 => {
+                let data: Vec<Fp<5>> = d.iter().map(|&x| Fp::<5>::new(x)).collect();
+                gf2_algebra::permanent::bipedal5::permanent_bipedal5(
+                    &Packed5Matrix::from_row_major(&data, 3, 3),
+                )
+                .value()
+            }
+            7 => {
+                let data: Vec<Fp<7>> = d.iter().map(|&x| Fp::<7>::new(x)).collect();
+                gf2_algebra::permanent::bipedal7::permanent_bipedal7(
+                    &Packed7Matrix::from_row_major(&data, 3, 3),
+                )
+                .value()
+            }
+            _ => panic!("exact_zero_count_order3: unsupported q = {q}"),
+        };
+        if kernel_value == 0 {
+            kernel_zeros += 1;
+        }
+    }
+    (kernel_zeros, independent_zeros, total)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Sampling through the campaign's own sampler must recover the exact
+    /// zero fraction at order 3, for every `q`.
+    ///
+    /// This is the end-to-end anchor. [`exact_zero_count_order3`] validates the
+    /// kernels by enumeration, which bypasses the sampler entirely; the
+    /// cross-backend check validates backends against each other, and they all
+    /// draw from the same sampler. Neither can detect a sampler that biases the
+    /// statistic. This test closes that gap by estimating a quantity whose true
+    /// value is known exactly.
+    #[test]
+    fn sampled_zero_fraction_recovers_the_exact_value_at_order_3() {
+        for q in [3u64, 5, 7] {
+            let (_, exact_zeros, total) = exact_zero_count_order3(q);
+            let truth = exact_zeros as f64 / total as f64;
+
+            let draws = 400_000usize;
+            let mut sampler = MatrixSampler::new(0xB488_F02C, q, 3, 12_345);
+            let mut zeros = 0u64;
+            for _ in 0..draws {
+                let value = match q {
+                    3 => {
+                        let d = sampler.next_matrix::<3>(3);
+                        gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword(
+                            &Bipedal3Matrix::from_row_major(&d, 3, 3),
+                        )
+                        .value()
+                    }
+                    5 => {
+                        let d = sampler.next_matrix::<5>(3);
+                        gf2_algebra::permanent::bipedal5::permanent_bipedal5(
+                            &Packed5Matrix::from_row_major(&d, 3, 3),
+                        )
+                        .value()
+                    }
+                    _ => {
+                        let d = sampler.next_matrix::<7>(3);
+                        gf2_algebra::permanent::bipedal7::permanent_bipedal7(
+                            &Packed7Matrix::from_row_major(&d, 3, 3),
+                        )
+                        .value()
+                    }
+                };
+                if value == 0 {
+                    zeros += 1;
+                }
+            }
+            let p_hat = zeros as f64 / draws as f64;
+            let se = (truth * (1.0 - truth) / draws as f64).sqrt();
+            let z = (p_hat - truth) / se;
+            assert!(
+                z.abs() < 4.0,
+                "q={q}: sampled {p_hat:.6} vs exact {truth:.6} is {z:+.2} sigma \
+over {draws} draws; the sampler or the kernel biases the campaign statistic"
+            );
+        }
+    }
+
+    /// The F_3 kernel must reproduce [Scheinerman2024] Table 3's exact
+    /// `z(3) = 8163`, and every kernel must agree with an independent
+    /// six-term permanent over the whole space. This is the anchor that the
+    /// backend-vs-backend comparison cannot provide: it would catch an error
+    /// shared by all implementations of one field's algorithm.
+    #[test]
+    fn kernels_match_exact_enumeration_at_order_3() {
+        for q in [3u64, 5, 7] {
+            let (kernel, independent, total) = exact_zero_count_order3(q);
+            assert_eq!(
+                kernel, independent,
+                "q={q}: kernel counted {kernel} zeros over {total} matrices, \
+independent expansion counted {independent}"
+            );
+            if q == 3 {
+                assert_eq!(kernel, 8_163, "must reproduce Scheinerman2024 z(3)");
+            }
+        }
+    }
 
     /// The CPU backends must agree per matrix at a size small enough for the
     /// fast test tier. F_7 is included at `n = 8`, inside its `n <= 16` bound.
