@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T15:02:21.199991448Z",
+  "dependencies": [],
+  "description": "The BPSK/AWGN capacity helper misinterprets its SNR input: results are correct only for rate-1/2 codes, and the Shannon-limit search is biased by $10\\log_{10}(2R)$ dB at any other rate.\n\n## Background\n\n`shannon_capacity(eb_n0_db)` converts its argument to linear $x$ and integrates the BPSK mutual information with signal amplitude $\\sqrt{x}$ and unit noise variance. For BPSK with amplitude $a$ and noise variance $\\sigma^2$, $E_s/N_0 = a^2/(2\\sigma^2)$, so the function actually computes capacity at $E_s/N_0 = x/2$ — its input is $2 \\cdot E_s/N_0$, not $E_b/N_0$. Since $E_s = R\\,E_b$, the input equals $E_b/N_0$ exactly when $R = 1/2$: the existing rate-half test passes while masking the defect, and the doc comment's claim that the argument \"= Es/N0 for BPSK\" is wrong on both readings. Consequently `shannon_limit(rate)` returns an $E_b/N_0$ that is off by $10\\log_{10}(2R)$ dB for every rate other than $1/2$ (e.g. $+2.55$ dB at $R = 0.9$). The modem-side link setup derives noise variance with the rate factor correctly, so the two disagree. A finite-blocklength bounds layer cannot be built on this primitive.\n\n## Success Criteria\n\n- [hard] REQ-01: A canonical BI-AWGN capacity (and channel-dispersion) primitive is parameterized by $E_s/N_0$, with an explicit, rate-aware conversion function between $E_b/N_0$ and $E_s/N_0$; doc comments state the convention unambiguously.\n- [hard] REQ-02: `shannon_limit` (or its successor) returns the correct minimum $E_b/N_0$ for rates other than $1/2$, validated against published BPSK Shannon-limit values at no fewer than three rates spanning $(0, 1)$.\n- [hard] REQ-03: All in-tree callers and examples using the old convention are swept and updated in the same change; the rate-half test no longer masks the convention (a non-half-rate test exists).\n\n## References\n\n- [PPV2010] Polyanskiy, Poor, Verdú — Channel Coding Rate in the Finite Blocklength Regime. IEEE Trans. Inf. Theory 56(5):2307–2359, 2010.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T15:02:21.199991448Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "325e5c89-3362-40d0-ad63-a97fab53202b",
+  "labels": [
+    "type:bug",
+    "epic:finite-blocklength-bounds",
+    "component:gf2-coding",
+    "cites:PPV2010"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "BPSK capacity helper misreads Eb/N0; Shannon limit biased off rate 1/2",
+  "updated_at": "2026-08-07T15:02:21.199991448Z"
+}

@@ -6,7 +6,15 @@
     "24701af9-138e-4c45-85a9-60debe9458d0"
   ],
   "description": "Implement the additive NTT over GF($2^m$) — the missing transform that unlocks binary-field proof-system workloads (FRI-Binius) and Frobenius-FFT-accelerated GF(2)[x] multiplication for code-based post-quantum cryptography.\n\n## Background\n\nThe additive NTT [Lch2014] evaluates polynomials over an $\\mathbb{F}_2$-linear subspace in the novel polynomial basis in $O(n \\log n)$ field operations, replacing the multiplicative NTT that characteristic 2 lacks. It is the core transform behind small-field polynomial commitment schemes over binary towers [DiamondPosen2023], the ring-switching FRI-Binius construction [DiamondPosen2024], and interleaved RAA-code SNARKs [Blaze2024]. The Frobenius additive FFT line applies the same machinery to GF(2)[x] multiplication at HQC/BIKE parameter sizes, where tuned carryless-multiply implementations currently set the bar [Jang2026]. The workspace already has tower-field arithmetic, Karatsuba multipliers, and SIMD kernel infrastructure (GFNI/VPCLMULQDQ paths); the transform itself is absent. One implementation pays into both the proof-system and the PQC benchmark directions.\n\n## Success Criteria\n\n- [hard] REQ-01: Forward and inverse additive NTT over GF($2^m$) in the novel polynomial basis, with property tests covering roundtrip identity and agreement with naive multipoint evaluation.\n- [hard] REQ-02: NTT-based polynomial multiplication in GF($2^m$)[x] beats the existing Karatsuba path beyond a measured crossover degree, documented from benchmarks.\n- [hard] REQ-03: Benchmark comparison against a published binary-field NTT implementation (e.g. the binius-field crate), with methodology and results documented.\n- [aspirational] REQ-04: SIMD-accelerated RAA (repeat–accumulate–accumulate) encoder demonstrating the interleaved-code commitment workload.\n- [aspirational] REQ-05: Frobenius-FFT GF(2)[x] multiplication evaluated against carryless-multiply baselines at HQC parameter sizes.\n\n## References\n\n- [Lch2014] Lin, Chung, Han — Novel Polynomial Basis and Its Application to Reed–Solomon Erasure Codes. FOCS 2014. arXiv:1404.3458.\n- [DiamondPosen2023] Diamond, Posen — Succinct Arguments over Towers of Binary Fields (Binius). IACR eprint 2023/1784; EUROCRYPT 2025.\n- [DiamondPosen2024] Diamond, Posen — Polylogarithmic Proofs for Multilinears over Binary Towers (ring switching / FRI-Binius). IACR eprint 2024/504.\n- [Blaze2024] Brehm, Chen, Fisch, Resch, Rothblum, Zeilberger — Blaze: fast SNARKs from interleaved RAA codes over binary fields. IACR eprint 2024/1609; EUROCRYPT 2025.\n- [Jang2026] Jang et al. — Optimized GF(2)[x] multiplication via VPCLMULQDQ/PMULL on HQC. J. Cryptographic Engineering (2026), doi:10.1007/s13389-026-00392-0.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "External epic review 2026-08-07",
+      "path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+    }
+  ],
   "first_ready_at": "2026-08-07T12:32:17.649879029Z",
   "gates_required": [
     "repo-validate",
@@ -28,5 +36,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Additive NTT over GF(2^m) for proof-system and PQC workloads",
-  "updated_at": "2026-08-07T12:33:59.579736027Z"
+  "updated_at": "2026-08-07T15:03:06.548775259Z"
 }

@@ -7,7 +7,15 @@
     "b81c239c-952c-4017-85fb-629dc8965410"
   ],
   "description": "Extend the polar-code stack with polarization-adjusted convolutional (PAC) codes and automorphism-ensemble decoding (AED), targeting the short-blocklength regime where these approach finite-length optimal performance.\n\n## Background\n\nPAC codes [Arikan2019] prepend a convolutional precoder to the polar transform and approach the finite-length bound at $(128, 64)$ under sequential or large-list decoding; list decoding with $L \\ge 128$ matches Fano-decoding performance [Yao2020], and simplified successive-cancellation-list variants reduce complexity further [PacScl2024]. AED runs SC or SCL over an ensemble of automorphism-permuted received words and matches or beats CRC-aided SCL at lower latency on shortened and rate-compatible polar codes [Aed2024], [Rcaed2023]; ensemble members are independent decodes of the same channel output, so the scheme parallelizes naturally onto existing thread/GPU batch paths. Survey context for the 6G decoder landscape: [Rowshan2024]. This epic builds on the 5G NR polar SC/SCL foundation and reuses existing CRC, convolutional-encoding, modem, and channel infrastructure.\n\n## Success Criteria\n\n- [hard] REQ-01: PAC encoding (rate profile, convolutional precoding, polar transform) with list decoding; BLER at $(128, 64)$ on BI-AWGN is consistent with published PAC list-decoding curves.\n- [hard] REQ-02: Automorphism-ensemble decoding with configurable ensemble size $M$ reproduces the published accuracy-versus-ensemble-size trade-off on a documented polar code.\n- [hard] REQ-03: A short-blocklength comparison campaign (PAC, CRC-aided SCL, and ORBGRAND on the same $(n, k)$ and channel) produces overlaid BLER curves including finite-blocklength reference bounds.\n- [aspirational] REQ-04: AED on shortened and rate-compatible constructions.\n\n## References\n\n- [Arikan2019] Arıkan — From Sequential Decoding to Channel Polarization and Back Again (PAC codes). arXiv:1908.09594.\n- [Yao2020] Yao, Fazeli, Vardy — List Decoding of Arıkan's PAC Codes. arXiv:2002.06805.\n- [PacScl2024] Simplified Successive-Cancellation List Decoding of PAC Codes. arXiv:2401.13922.\n- [Aed2024] Shortened Polar Codes under Automorphism Ensemble Decoding. arXiv:2403.00622.\n- [Rcaed2023] Rate-Compatible Polar Codes for Automorphism Ensemble Decoding. arXiv:2305.01214.\n- [Rowshan2024] Rowshan, Qiu, Xie, Gu, Yuan — Channel Coding Toward 6G: Technical Overview and Outlook. arXiv:2405.07547.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "External epic review 2026-08-07",
+      "path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+    }
+  ],
   "first_ready_at": "2026-08-07T12:32:13.719709594Z",
   "gates_required": [
     "repo-validate",
@@ -30,5 +38,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "PAC codes and automorphism-ensemble decoding for short blocklengths",
-  "updated_at": "2026-08-07T12:32:37.042949719Z"
+  "updated_at": "2026-08-07T15:03:06.436050777Z"
 }

@@ -6,7 +6,15 @@
     "b7157be6-16d8-4050-834c-e996d4fa27c3"
   ],
   "description": "Enter quantum-LDPC decoding on the decoder side: construct CSS code families with GF(2) linear algebra, parse Stim detector-error models, and decode with belief-propagation variants plus GF(2) post-processing.\n\n## Background\n\nDecoding stabilizer codes under Pauli noise reduces to classical syndrome decoding over $\\mathbb{F}_2$: a CSS code is a matrix pair $H_X, H_Z$ with $H_X H_Z^T = 0$, and circuit-level decoding consumes a *detector error model* (DEM) — a sparse binary check matrix plus per-mechanism priors and an observable matrix — produced by the Stim stabilizer simulator [Gidney2021]. Bivariate-bicycle codes [Bravyi2024] (including the $[[144,12,12]]$ \"gross\" code) and the lifted/hypergraph-product families are block-circulant GF(2) constructions. The accuracy baseline is BP+OSD [Roffe2020]; the recent decoder frontier — Relay-BP [Muller2025], BP+LSD [Hillmann2024] — is message passing plus sparse GF(2) elimination. Incumbent tooling is C++/Cython with serial post-processing; no Rust BP+OSD stack exists, so a fast implementation consuming Stim DEM files fills a genuine gap. The workspace's sparse GF(2) machinery, LDPC BP experience, and SIMD kernels transfer directly. A stabilizer simulator is explicitly out of scope: circuit-level inputs arrive as externally generated DEM files.\n\n## Success Criteria\n\n- [hard] REQ-01: Bivariate-bicycle and hypergraph/lifted-product constructors produce $H_X, H_Z$ with verified CSS orthogonality and code dimension $k = n - \\mathrm{rank}(H_X) - \\mathrm{rank}(H_Z)$ matching published parameters, including the $[[144,12,12]]$ gross code.\n- [hard] REQ-02: A Stim DEM text-format parser yields the sparse GF(2) check matrix, per-mechanism priors, and observable matrix, validated on documented test files.\n- [hard] REQ-03: BP+OSD decodes code-capacity depolarizing noise on bivariate-bicycle codes with logical error rates consistent with published curves.\n- [hard] REQ-04: Relay-BP is implemented and its published accuracy advantage over plain BP is reproduced on at least one bivariate-bicycle code.\n- [aspirational] REQ-05: A circuit-level memory experiment is decoded from externally generated DEM files with results comparable to published gross-code numbers.\n- [aspirational] REQ-06: BP+LSD parallel cluster post-processing.\n\n## References\n\n- [Gidney2021] Gidney — Stim: a fast stabilizer circuit simulator. Quantum 5:497 (2021). arXiv:2103.02202.\n- [Bravyi2024] Bravyi, Cross, Gambetta, Maslov, Rall, Yoder — High-threshold and low-overhead fault-tolerant quantum memory. Nature 627:778–782 (2024). arXiv:2308.07915.\n- [Roffe2020] Roffe, White, Burton, Campbell — Decoding across the quantum low-density parity-check code landscape. Phys. Rev. Research 2:043423 (2020). arXiv:2005.07016.\n- [Muller2025] Müller et al. (IBM) — Relay-BP: improved belief propagation for real-time quantum-memory decoding. arXiv:2506.01779.\n- [Hillmann2024] Hillmann, Berent, Quintavalle, Eisert, Wille, Roffe — Localized statistics decoding (BP+LSD). arXiv:2406.18655.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "review",
+      "format": "markdown",
+      "label": "External epic review 2026-08-07",
+      "path": "dev/active/aed96ef9-finite-blocklength-bounds/external-review-2026-08-07.md"
+    }
+  ],
   "first_ready_at": "2026-08-07T12:31:58.874799384Z",
   "gates_required": [
     "repo-validate",
@@ -29,5 +37,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Quantum LDPC decoding with classical GF(2) machinery",
-  "updated_at": "2026-08-07T12:33:55.707704066Z"
+  "updated_at": "2026-08-07T15:03:06.657182443Z"
 }
