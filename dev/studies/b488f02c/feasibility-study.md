@@ -171,6 +171,12 @@ generated each number is exactly the code in that commit. An earlier set of
 receipts recorded a whole-repo SHA that predated the harness entirely and was
 discarded rather than reinterpreted.
 
+One follow-up commit, `bf481703`, post-dates these receipts. It is additive and
+test-only — it introduces the order-3 enumeration anchors of §4.7 and touches no
+function on the measurement path — so the receipts remain reproducible from
+`5f195e84`, and the current harness reproduces them. The receipts deliberately
+name the commit that produced them rather than the tip.
+
 Host: AMD Ryzen 9 5900X (12 cores / 24 threads, `powersave` governor), AMD
 Radeon RX 6950 XT (gfx1030, 80 compute units), rustc 1.97.0, ROCm/HIP 7.2.
 
