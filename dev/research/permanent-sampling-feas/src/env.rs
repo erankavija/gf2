@@ -47,6 +47,18 @@ fn cpuinfo(key: &str) -> String {
 pub struct HostInfo {
     pub git_sha: String,
     pub git_dirty: bool,
+    /// SHA of the most recent commit touching this crate's own source tree.
+    ///
+    /// `git_sha` alone does not identify the measured source: the repository
+    /// carries workflow state (`.jit/`) that other agents commit and modify
+    /// independently, so `git_dirty` can be true for reasons unrelated to the
+    /// harness. This field, with [`Self::harness_dirty`], pins the state of the
+    /// code that actually produced the numbers.
+    pub harness_sha: String,
+    /// Whether this crate's own source tree has uncommitted changes. A receipt
+    /// with `harness_dirty: true` does not identify a reproducible source state
+    /// and must not be published as evidence.
+    pub harness_dirty: bool,
     pub rustc: String,
     pub cargo: String,
     pub cpu_model: String,
@@ -70,9 +82,14 @@ impl HostInfo {
     pub fn probe() -> Self {
         let git_status = capture("git", &["status", "--porcelain"]);
         let invocation = std::env::args().collect::<Vec<_>>().join(" ");
+        // This crate's own directory, resolved at build time.
+        let crate_dir = env!("CARGO_MANIFEST_DIR");
+        let harness_status = capture("git", &["status", "--porcelain", "--", crate_dir]);
         Self {
             git_sha: capture("git", &["rev-parse", "HEAD"]),
             git_dirty: git_status != "unavailable" && !git_status.is_empty(),
+            harness_sha: capture("git", &["log", "-1", "--format=%H", "--", crate_dir]),
+            harness_dirty: harness_status != "unavailable" && !harness_status.is_empty(),
             rustc: capture("rustc", &["--version"]),
             cargo: capture("cargo", &["--version"]),
             cpu_model: cpuinfo("model name"),
@@ -96,6 +113,14 @@ impl HostInfo {
         let mut s = String::new();
         let _ = writeln!(s, "# git_sha: {}", self.git_sha);
         let _ = writeln!(s, "# git_worktree_dirty: {}", self.git_dirty);
+        let _ = writeln!(s, "# harness_source_sha: {}", self.harness_sha);
+        let _ = writeln!(s, "# harness_source_dirty: {}", self.harness_dirty);
+        let _ = writeln!(
+            s,
+            "# note: git_worktree_dirty covers the whole repository, including \
+.jit/ workflow state other agents own; harness_source_* pin the state of the \
+crate that produced these numbers, which is what makes the run reproducible"
+        );
         let _ = writeln!(s, "# rustc: {}", self.rustc);
         let _ = writeln!(s, "# cargo: {}", self.cargo);
         let _ = writeln!(s, "# cpu: {}", self.cpu_model);
