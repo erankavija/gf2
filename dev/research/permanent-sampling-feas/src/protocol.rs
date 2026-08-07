@@ -30,19 +30,43 @@
 //!
 //! Three outcomes are therefore distinguishable in the CSV: `measured`,
 //! `unsupported` (a kernel bound forbids the cell), and `censored` (the cell
-//! was not attempted at its batch size because the probe was too slow).
+//! was not attempted at its batch size because it was projected too slow).
 //!
-//! # Why a censored cell reports no rate
+//! # The censoring contract
 //!
-//! A censored cell records its probe time in `probe_matrix_s` and leaves
-//! `composite_matrices_per_s` empty. The probe's reciprocal is deliberately
-//! *not* published as a throughput bound: the GPU backend parallelises across
-//! the batch, one block per matrix, so a batch of one occupies a single compute
-//! unit and runs roughly two orders of magnitude below the device's batched
-//! rate. Treating `1 / probe` as an upper bound would therefore be false for
-//! exactly the backend most likely to be censored. The probe time is reported
-//! as what it is — the cost of one matrix — and the cell is marked as carrying
-//! no rate measurement.
+//! This is the single normative statement of what a censored row means; the
+//! study and the CSV preamble restate it and must not diverge from it.
+//!
+//! A censored row carries **no measured rate**. `composite_matrices_per_s` is
+//! `NaN`. What it does carry is `projected_matrices_per_s`: an **estimate**
+//! obtained by scaling a *measured batched rate* from another `n` on the same
+//! `(q, backend, batch size)` through Ryser's exact `n * 2^n` work model, with
+//! the reference size recorded in `projection_reference_n`.
+//!
+//! ## Two inferences that do not work, and why
+//!
+//! Neither reciprocal of the single-matrix probe is a valid bound on a batched
+//! rate, and the committed measurements disprove both:
+//!
+//! - `1 / probe` is not a *lower* bound in any useful sense and badly
+//!   understates the device: one matrix occupies one compute unit.
+//! - `W / probe`, with `W` the compute-unit count, is **not an upper bound**.
+//!   At `q = 3, n = 28` the probe is 28.04 s and `W = 80`, giving 2.85
+//!   matrices/s, yet the same grid measures **8.52 matrices/s** at `M = 256`.
+//!   The model fails because a compute unit hosts more than one workgroup at a
+//!   time, and because the probe carries the whole per-launch overhead —
+//!   allocation, transfers, synchronisation — that a real batch amortises.
+//!
+//! ## What the projection is worth
+//!
+//! Scaling a measured batched rate by the work ratio is empirically sound and
+//! slightly **pessimistic** on this hardware: validated along the `q = 3` GPU
+//! chain at `M = 256`, projecting 20 -> 24 gives 110.7 against a measured
+//! 133.7, and 24 -> 28 gives 7.16 against a measured 8.52 — the projection
+//! lands 17-21 % low both times, because longer kernels amortise per-launch
+//! overhead better. A cell whose *projected* rate already misses the budget by
+//! an order of magnitude is therefore confidently infeasible; a cell that
+//! misses it by 20 % is not, and is attempted rather than censored.
 
 use std::fmt::Write as _;
 use std::time::Instant;
@@ -74,6 +98,9 @@ pub const GPU_COMPUTE_UNITS: usize = 80;
 pub const TARGET_REP_SECONDS: f64 = 2.0;
 /// Ceiling on `M`, to bound a cell's resident matrix memory.
 pub const MAX_BATCH: usize = 65_536;
+/// Minimum matrices per rayon worker in an adaptively sized batch, so the tail
+/// of each batch does not leave most of the pool idle.
+pub const MATRICES_PER_WORKER: usize = 4;
 /// Physical core the single-thread cells are pinned to.
 pub const PINNED_CORE: usize = 0;
 
@@ -116,10 +143,16 @@ pub struct CellResult {
     pub store_s: f64,
     /// `matrices / total_s`, or `NaN` for a cell that carries no rate.
     pub composite_rate: f64,
-    /// Wall-clock of the single-matrix probe that sized the batch and decided
-    /// affordability. Reported for every attempted cell, and the sole
-    /// quantitative evidence a censored cell carries.
+    /// Wall-clock of the single-matrix probe that sized the batch, where one
+    /// was run. It is a latency, not a throughput, and no bound on the cell's
+    /// batched rate may be derived from it — see the module docs.
     pub probe_matrix_s: f64,
+    /// For a censored cell, the estimated batched rate obtained by scaling the
+    /// measured rate at [`Self::projection_reference_n`] through Ryser's
+    /// `n * 2^n` work model. An **estimate**, not a measurement or a bound.
+    pub projected_rate: f64,
+    /// The `n` whose measured rate the projection came from, or 0 if none.
+    pub projection_reference_n: usize,
     /// `matrices / eval_s`: the kernel-only rate, for attribution only.
     pub eval_rate: f64,
     pub rep_min_s: f64,
@@ -140,7 +173,8 @@ pub struct CellResult {
 /// CSV header for [`CellResult::to_csv_row`].
 pub const CELL_CSV_HEADER: &str = "q,n,backend,outcome,batch_size,reps,matrices,zeros,\
 total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,\
-probe_matrix_s,rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_stream_first,\
+probe_matrix_s,projected_matrices_per_s,projection_reference_n,\
+rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_stream_first,\
 cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note";
 
 impl CellResult {
@@ -150,7 +184,7 @@ impl CellResult {
         let _ = write!(
             s,
             "{},{},{},{},{},{},{},{},{:.6},{:.6},{:.6},{:.6},{:.6},{:.4},{:.4},\
-{:.6},{:.6},{:.6},{:.6},{},{},0x{:016x},{},{:.1},{:.1},{:.1},{},{}",
+{:.6},{:.6},{},{:.6},{:.6},{:.6},{},{},0x{:016x},{},{:.1},{:.1},{:.1},{},{}",
             self.q,
             self.n,
             self.backend,
@@ -167,6 +201,8 @@ impl CellResult {
             self.composite_rate,
             self.eval_rate,
             self.probe_matrix_s,
+            self.projected_rate,
+            self.projection_reference_n,
             self.rep_min_s,
             self.rep_max_s,
             self.rep_sd_s,
@@ -327,12 +363,17 @@ pub fn parallel_width(backend: Backend) -> usize {
 
 /// Measured single-matrix probes, keyed by `(q, backend, n)`.
 ///
-/// Serves two purposes: a cell whose exact `(q, backend, n)` was already probed
-/// reuses that number instead of re-measuring it — which matters because the
-/// two GPU batch-size variants of one `(q, n)` share a probe, and at
-/// `q = 7, n = 28` that probe costs about 42 minutes — and a cell with no exact
-/// match projects from the nearest measured `n` on the same `(q, backend)`.
+/// A cell whose exact `(q, backend, n)` was already probed reuses that number
+/// instead of re-measuring it: the two GPU batch-size variants of one `(q, n)`
+/// share a probe, and at `q = 7, n = 28` that probe costs about 42 minutes.
 pub type ProbeCache = std::collections::HashMap<(u64, &'static str, usize), f64>;
+
+/// Measured *batched* composite rates, keyed by `(q, backend, batch size)`.
+///
+/// This is what censoring projects from. `batch_size` is the cell's requested
+/// size, or 0 for the adaptive backends, so a projection only ever compares
+/// like with like.
+pub type RateCache = std::collections::HashMap<(u64, &'static str, usize), (usize, f64)>;
 
 /// The measured probe at exactly `(q, backend, n)`, if one exists.
 #[must_use]
@@ -340,19 +381,46 @@ pub fn exact_probe(probes: &ProbeCache, q: u64, backend: Backend, n: usize) -> O
     probes.get(&(q, backend.name(), n)).copied()
 }
 
-/// The measured probe on the same `(q, backend)` at the largest other `n`.
-#[must_use]
-pub fn projection_reference(
-    probes: &ProbeCache,
+/// Record a measured batched rate, keeping the reference closest to `n` from
+/// below — the nearest size minimises the extrapolation distance.
+pub fn record_rate(
+    rates: &mut RateCache,
     q: u64,
     backend: Backend,
+    batch_key: usize,
+    n: usize,
+    rate: f64,
+) {
+    if !rate.is_finite() || rate <= 0.0 {
+        return;
+    }
+    rates
+        .entry((q, backend.name(), batch_key))
+        .and_modify(|e| {
+            if n > e.0 {
+                *e = (n, rate);
+            }
+        })
+        .or_insert((n, rate));
+}
+
+/// Project this cell's batched rate from the nearest measured rate on the same
+/// `(q, backend, batch size)`.
+///
+/// Returns `(reference n, projected rate)`. See the module docs for why this,
+/// and not any function of the single-matrix probe, is the defensible estimate.
+#[must_use]
+pub fn project_rate(
+    rates: &RateCache,
+    q: u64,
+    backend: Backend,
+    batch_key: usize,
     n: usize,
 ) -> Option<(usize, f64)> {
-    probes
-        .iter()
-        .filter(|((pq, pb, pn), _)| *pq == q && *pb == backend.name() && *pn != n)
-        .max_by_key(|((_, _, pn), _)| *pn)
-        .map(|((_, _, pn), probe)| (*pn, *probe))
+    rates
+        .get(&(q, backend.name(), batch_key))
+        .filter(|(ref_n, _)| *ref_n != n)
+        .map(|(ref_n, ref_rate)| (*ref_n, ref_rate * ryser_work(*ref_n) / ryser_work(n)))
 }
 
 /// Run one cell of the grid end to end.
@@ -361,12 +429,14 @@ pub fn projection_reference(
 /// pass a handle to a scratch file so the measured cost is a real filesystem
 /// write rather than a discard.
 ///
-/// `probes` accumulates measured probe costs and is consulted to decline a cell
-/// whose projected cost is hopeless before running its own probe.
+/// `probes` caches single-matrix latencies so a repeated `(q, backend, n)` is
+/// not re-measured. `rates` accumulates measured batched rates and is the sole
+/// basis for censoring; both are updated in place.
 pub fn run_cell(
     spec: &CellSpec,
     sink: &mut dyn std::io::Write,
     probes: &mut ProbeCache,
+    rates: &mut RateCache,
 ) -> CellResult {
     let CellSpec {
         q,
@@ -399,6 +469,8 @@ pub fn run_cell(
         composite_rate: f64::NAN,
         eval_rate: f64::NAN,
         probe_matrix_s: f64::NAN,
+        projected_rate: f64::NAN,
+        projection_reference_n: 0,
         rep_min_s: f64::NAN,
         rep_max_s: f64::NAN,
         rep_sd_s: f64::NAN,
@@ -444,79 +516,76 @@ pub fn run_cell(
     let mut sampler = MatrixSampler::new(seed_root, q, n, stream);
     let mut devnull = std::io::sink();
 
-    // Decline before probing when a measured probe at another n on the same
-    // (q, backend) already projects past the threshold. At q=7, n=28 on the GPU
-    // the probe alone costs about 42 minutes, so paying it to learn what the
-    // n=20 probe already implies is not affordable.
-    if exact_probe(probes, q, backend, n).is_none() {
-        if let Some((ref_n, ref_probe)) = projection_reference(probes, q, backend, n) {
-            let projected = project_probe(ref_n, ref_probe, n);
-            if projected > CENSOR_MATRIX_SECONDS {
-                result.outcome = Outcome::Censored;
-                result.note = format!(
-                    "declined without probing: the measured probe at n={ref_n} ({ref_probe:.3} s) \
-projects to {projected:.1} s at n={n} under Ryser's n*2^n work model, above the \
-{CENSOR_MATRIX_SECONDS:.0} s threshold; projection is an ESTIMATE and the cell carries no rate"
-                );
-                return result;
-            }
-        }
-    }
-
-    // Probe: one matrix, to size the batch for the adaptive backends and to
-    // decide whether the cell is affordable at its batch size. A probe already
-    // measured for this exact (q, backend, n) is reused: the two GPU batch-size
-    // variants of one (q, n) would otherwise pay for it twice.
-    let per_matrix_s = match exact_probe(probes, q, backend, n) {
-        Some(cached) => {
-            result.note =
-                "probe reused from an earlier cell at the same (q, n, backend)".to_string();
-            cached
-        }
-        None => {
-            let cal = Instant::now();
-            let _ = one_rep(q, n, 1, backend, &mut sampler, stream, &mut devnull);
-            let measured = cal.elapsed().as_secs_f64();
-            probes.insert((q, backend.name(), n), measured);
-            measured
-        }
-    };
-    result.probe_matrix_s = per_matrix_s;
-
-    if per_matrix_s > CENSOR_MATRIX_SECONDS {
-        result.outcome = Outcome::Censored;
-        result.batch_size = spec.batch_size.unwrap_or(0);
-        result.note = format!(
-            "probe of one matrix took {per_matrix_s:.1} s, above the \
-{CENSOR_MATRIX_SECONDS:.0} s threshold; cell not attempted at its batch size and carries \
-no rate (1/probe is not a bound: the GPU runs one block per matrix, so a batch of one \
-occupies a single compute unit)"
-        );
-        return result;
-    }
-
-    // Decline a fixed-batch cell whose projected repetition would blow the
-    // per-cell cap: the cap is only checked after a repetition completes, so a
-    // single oversized repetition would otherwise run to the end regardless.
-    if let Some(m) = spec.batch_size {
-        let width = parallel_width(backend);
-        let projected_rep_s = per_matrix_s * m as f64 / width as f64;
+    // Censoring decision, made from a measured batched rate at another n on the
+    // same (q, backend, batch size). This is the only inference used: no
+    // function of the single-matrix probe bounds a batched rate (module docs).
+    let batch_key = spec.batch_size.unwrap_or(0);
+    if let Some((ref_n, projected)) = project_rate(rates, q, backend, batch_key, n) {
+        result.projected_rate = projected;
+        result.projection_reference_n = ref_n;
+        let projected_rep_s = match spec.batch_size {
+            // Fixed-batch cells run M matrices per repetition whatever the cost.
+            Some(m) => m as f64 / projected.max(1e-12),
+            // Adaptive cells size themselves, so the only unaffordable case is a
+            // single matrix already exceeding the cap.
+            None => 1.0 / projected.max(1e-12),
+        };
         if projected_rep_s > MAX_CELL_SECONDS {
             result.outcome = Outcome::Censored;
-            result.batch_size = m;
             result.note = format!(
-                "probe {per_matrix_s:.1} s projects a {projected_rep_s:.0} s repetition at \
-M={m} over {width} concurrent units, above the {MAX_CELL_SECONDS:.0} s per-cell cap; \
-cell not attempted and carries no rate (projection is an ESTIMATE)"
+                "not attempted: the measured rate at n={ref_n} projects to {projected:.4} \
+matrices/s at n={n} under Ryser's n*2^n work model, so one repetition would take \
+{projected_rep_s:.0} s against the {MAX_CELL_SECONDS:.0} s cap. The projection is an \
+ESTIMATE and runs 17-21% LOW on this hardware, so the true rate is somewhat higher; \
+the cell carries no measured rate"
             );
             return result;
         }
     }
 
+    // Probe: one matrix, to size the batch for the adaptive backends. Fixed-batch
+    // cells need no probe at all once a projection exists. A probe already
+    // measured for this exact (q, backend, n) is reused, since the two GPU
+    // batch-size variants of one (q, n) would otherwise pay for it twice.
+    let needs_probe = spec.batch_size.is_none() || result.projection_reference_n == 0;
+    let per_matrix_s = if needs_probe {
+        match exact_probe(probes, q, backend, n) {
+            Some(cached) => cached,
+            None => {
+                let cal = Instant::now();
+                let _ = one_rep(q, n, 1, backend, &mut sampler, stream, &mut devnull);
+                let measured = cal.elapsed().as_secs_f64();
+                probes.insert((q, backend.name(), n), measured);
+                measured
+            }
+        }
+    } else {
+        f64::NAN
+    };
+    result.probe_matrix_s = per_matrix_s;
+
+    // Fallback for a cell with no projection reference yet: a single matrix
+    // costing more than the whole per-cell budget cannot be batched into it.
+    if per_matrix_s.is_finite() && per_matrix_s > MAX_CELL_SECONDS {
+        result.outcome = Outcome::Censored;
+        result.note = format!(
+            "not attempted: one matrix alone took {per_matrix_s:.1} s, beyond the \
+{MAX_CELL_SECONDS:.0} s per-cell cap, and no measured rate at another n was available to \
+project from. This is a latency, not a throughput: no bound on the batched rate follows \
+from it, and the cell carries no rate"
+        );
+        return result;
+    }
+
     let m = spec.batch_size.unwrap_or_else(|| {
         let target = (TARGET_REP_SECONDS / per_matrix_s.max(1e-9)).ceil() as usize;
+        // A rayon batch is floored at several matrices per worker, not at one:
+        // with a batch barely larger than the pool, the tail of every batch
+        // leaves most workers idle. The 2026-08-07 sustained runs measured that
+        // penalty at 21-25 % against `MATRICES_PER_WORKER = 4`, so the floor
+        // exists to keep the grid and a real campaign on the same footing.
         let floor = if backend.is_multithreaded() {
-            rayon::current_num_threads()
+            MATRICES_PER_WORKER * rayon::current_num_threads()
         } else {
             1
         };
@@ -572,6 +641,7 @@ cell not attempted and carries no rate (projection is an ESTIMATE)"
     result.rep_max_s = rep_totals.iter().copied().fold(f64::NEG_INFINITY, f64::max);
     result.rep_sd_s = sample_sd(&rep_totals);
     result.outcome = Outcome::Measured;
+    record_rate(rates, q, backend, batch_key, n, result.composite_rate);
     result
 }
 

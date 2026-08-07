@@ -9,7 +9,17 @@
 /// no proportion needs more samples than that column states.
 #[must_use]
 pub fn required_n(p: f64, se: f64) -> u64 {
-    (p * (1.0 - p) / (se * se)).ceil() as u64
+    let raw = p * (1.0 - p) / (se * se);
+    // `p (1 - p)` is not exactly representable for most `p`: at `p = 1/5` the
+    // product evaluates to 0.16000000000000003, so a bare `ceil` returns
+    // 160_001 where the exact answer is 160_000. Snap to the nearest integer
+    // when the value is within a relative 1e-9 of one, and round up otherwise.
+    let nearest = raw.round();
+    if (raw - nearest).abs() <= 1e-9 * raw.abs().max(1.0) {
+        nearest as u64
+    } else {
+        raw.ceil() as u64
+    }
 }
 
 /// Standard error of a proportion estimate at `p` after `n` samples.
@@ -178,6 +188,19 @@ mod tests {
         assert_eq!(required_n(1.0 / 3.0, 1e-3), 222_223);
         // Conservative p = 1/2, SE = 1e-4: 0.25/1e-8 = 25_000_000.
         assert_eq!(required_n(0.5, 1e-4), 25_000_000);
+    }
+
+    /// `p (1 - p)` is exact in binary for `p = 1/2` but not for `p = 1/5`, so
+    /// the exactly-integral cases must not be inflated by one.
+    #[test]
+    fn required_n_does_not_round_exact_integers_up() {
+        // p = 1/5: 0.2 * 0.8 = 0.16 exactly in real arithmetic.
+        assert_eq!(required_n(0.2, 1e-3), 160_000);
+        assert_eq!(required_n(0.2, 1e-4), 16_000_000);
+        // p = 1/2: 0.25 / 1e-6 = 250_000 exactly.
+        assert_eq!(required_n(0.5, 1e-3), 250_000);
+        // A genuinely fractional case must still round up.
+        assert_eq!(required_n(1.0 / 7.0, 1e-3), 122_449);
     }
 
     #[test]

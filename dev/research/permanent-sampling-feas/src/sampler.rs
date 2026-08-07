@@ -58,12 +58,32 @@ use rand_core::{RngCore, SeedableRng};
 ///
 /// | `q` | bound | rejection probability |
 /// |-----|-------|-----------------------|
+/// | 2   | 256   | 0 (no byte rejected)  |
 /// | 3   | 255   | 1/256                 |
 /// | 5   | 255   | 1/256                 |
 /// | 7   | 252   | 4/256                 |
+///
+/// # Supported domain
+///
+/// `2 <= q <= 256`. The return type is `u16` rather than `u8` precisely so that
+/// the divisors of 256 are representable: at `q = 2` the bound is 256, and
+/// truncating that to a `u8` would yield 0, which would reject every byte and
+/// make [`MatrixSampler::next_entry`] loop forever. The campaign only uses
+/// `q in {3, 5, 7}`, but a silently non-terminating sampler is not an
+/// acceptable failure mode for a public function.
+///
+/// # Panics
+///
+/// Panics if `q < 2` or `q > 256`. A one-element field has no uniform
+/// distribution worth sampling, and above 256 a single byte cannot cover the
+/// range — that would need a wider draw, which this sampler does not implement.
 #[must_use]
-pub const fn accept_bound(q: u64) -> u8 {
-    (256 - 256 % q) as u8
+pub const fn accept_bound(q: u64) -> u16 {
+    assert!(
+        2 <= q && q <= 256,
+        "accept_bound: q must satisfy 2 <= q <= 256; this sampler draws one byte per entry"
+    );
+    (256 - 256 % q) as u16
 }
 
 /// Assemble the 32-byte ChaCha20 seed for one `(root, q, n, stream)` tuple.
@@ -117,11 +137,23 @@ impl MatrixSampler {
     }
 
     /// Next entry, uniform on `0..Q`, by rejection.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `Q` is outside [`accept_bound`]'s supported domain
+    /// `2 <= Q <= 256`.
+    ///
+    /// # Termination
+    ///
+    /// Each iteration accepts with probability `accept_bound(Q) / 256`, which
+    /// is at least `(256 - Q + 1) / 256 >= 1/256` on the supported domain, so
+    /// the loop terminates with probability 1 and takes at most `256/(256-Q+1)`
+    /// draws in expectation — under 1.02 draws for every `Q <= 7`.
     pub fn next_entry<const Q: u64>(&mut self) -> Fp<Q> {
         let bound = accept_bound(Q);
         loop {
             let b = self.next_raw_byte();
-            if b < bound {
+            if u16::from(b) < bound {
                 return Fp::<Q>::new(u64::from(b) % Q);
             }
         }
@@ -155,6 +187,36 @@ mod tests {
             assert_eq!(bound % q, 0, "accept bound for q={q} must be a multiple");
             assert!(bound > 256 - q, "accept bound for q={q} discards too much");
         }
+    }
+
+    /// Every divisor of 256 must accept the whole byte range. A `u8` return
+    /// type would truncate 256 to 0 here and hang `next_entry` forever.
+    #[test]
+    fn divisors_of_256_accept_every_byte() {
+        for q in [2u64, 4, 8, 16, 32, 64, 128, 256] {
+            assert_eq!(accept_bound(q), 256, "q={q} must reject nothing");
+        }
+    }
+
+    #[test]
+    fn accept_bound_covers_the_whole_supported_domain() {
+        for q in 2u64..=256 {
+            let bound = u64::from(accept_bound(q));
+            assert!(bound >= 1, "q={q} would reject every byte");
+            assert_eq!(bound % q, 0, "q={q} bound is not a multiple of q");
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "2 <= q <= 256")]
+    fn accept_bound_rejects_q_below_two() {
+        let _ = accept_bound(1);
+    }
+
+    #[test]
+    #[should_panic(expected = "2 <= q <= 256")]
+    fn accept_bound_rejects_q_above_256() {
+        let _ = accept_bound(257);
     }
 
     #[test]
