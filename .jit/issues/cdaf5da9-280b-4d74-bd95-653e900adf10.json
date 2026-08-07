@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:17.477025157Z",
+  "dependencies": [],
+  "description": "The packed F_5 matrix type documents its equality implementation in a single line and leaves its debug formatting undocumented, while both sibling matrix types carry full documentation blocks.\n\n## Background\n\nThe implementations are at `crates/gf2-algebra/src/packed/packed5.rs:1410`. The F_3 sibling type establishes the shape the project expects here: a description of what the implementation does, an example, and the cost.\n\nEquality on a packed representation is worth stating explicitly, because whether it compares logical values or the underlying packed words determines whether two matrices holding equal values but different padding compare equal.\n\n## Success Criteria\n\n- [hard] REQ-01: The equality implementation carries a description, an example, and its cost.\n- [hard] REQ-02: The description states whether equality compares logical element values or the packed representation, and what that means for matrices whose padding differs.\n- [hard] REQ-03: The debug formatting implementation carries a description and states the shape of its output.\n- [hard] REQ-04: Both blocks follow the documentation shape already used by the F_3 sibling type.\n- [hard] REQ-05: Every example added compiles and passes as a documentation test.\n- [hard] REQ-06: Clippy with warnings denied and formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:17.477025157Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "cdaf5da9-280b-4d74-bd95-653e900adf10",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-algebra",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Document Packed5Matrix equality and debug formatting",
+  "updated_at": "2026-08-07T12:22:17.477025157Z"
+}

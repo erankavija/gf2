@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [
+    "fe26dc9a-be55-4be6-a911-c5328cd7b1d8"
+  ],
+  "description": "The prime-field SIMD kernels are covered only by deterministic fixed cases. Add property tests asserting the field axioms and equivalence with the scalar path.\n\n## Background\n\nFixed cases exercise chosen inputs; they do not probe lane boundaries, carry propagation, or the tail handling that distinguishes a vector kernel from its scalar reference. The affected modules are the Mersenne, F_65537, medium-prime, small-prime, and generic prime-field kernels.\n\nA property-test suite already exists for one of the packed kernels in this crate and establishes the shape to follow, including how it selects a case count.\n\n## Success Criteria\n\n- [hard] REQ-01: Each prime-field kernel module carries property tests asserting the field axioms its operations must satisfy.\n- [hard] REQ-02: Each module carries property tests asserting that the vector path and the scalar path agree on the same inputs.\n- [hard] REQ-03: Generated input lengths cross the kernel's lane width, including lengths that are not a whole multiple of it, so tail handling is exercised.\n- [hard] REQ-04: Tests that require a CPU feature the host may lack are gated so an unsupported host reports them as ignored rather than failed.\n- [hard] REQ-05: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "493a5330-be91-41a6-b83d-eb5201394724",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Add property tests to the SIMD prime-field kernel modules",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "`DrmCode::systematic_form` reimplements Gaussian elimination over a bit matrix when the core crate already provides the identical operation. Replace the hand-rolled elimination with the shared routine and keep only the logic that is genuinely DRM-specific.\n\n## Background\n\nThe reimplementation sits at `crates/gf2-coding/src/drm.rs:624`. The core routine `gf2_core::alg::rref::rref` with right-pivoting disabled performs the same reduction. What the DRM path adds beyond the reduction is the column rearrangement that follows it, which stays.\n\n## Success Criteria\n\n- [hard] REQ-01: `DrmCode::systematic_form` obtains its reduced form from the shared core RREF routine rather than from elimination code written in this module.\n- [hard] REQ-02: The post-reduction column-rearrangement logic is retained and continues to produce the same systematic ordering.\n- [hard] REQ-03: No Gaussian-elimination loop remains in `drm.rs`.\n- [hard] REQ-04: DRM encode and decode results are unchanged across the crate's existing DRM tests.\n- [hard] REQ-05: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "69ff9f3c-8886-4d18-8b80-fa412739946c",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Route DrmCode::systematic_form through the core RREF routine",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

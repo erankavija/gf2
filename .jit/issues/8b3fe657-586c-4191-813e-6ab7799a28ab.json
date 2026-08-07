@@ -2,7 +2,15 @@
   "assignee": null,
   "context": {},
   "created_at": "2026-06-30T20:12:46.197123962Z",
-  "dependencies": [],
+  "dependencies": [
+    "595415c8-f396-4c5b-a5b8-c5f1000e644c",
+    "69ff9f3c-8886-4d18-8b80-fa412739946c",
+    "6d2ab2bd-2af6-4b29-b640-f5411140d1ac",
+    "704c90b8-6fdc-4584-ba78-f2bbee136917",
+    "8f51d6cf-873a-4b30-8f98-58875cfd79d2",
+    "afbe89f5-ba5b-44cf-870c-00b3d8509a45",
+    "ef5b75f4-657b-45ea-a167-cd79ea26fb30"
+  ],
   "description": "**Dimension: ssot-duplication · 9 findings (8 medium, 1 low)** — see report §ssot-duplication.\n\nEliminate duplicated logic across the workspace. Highest code-quality leverage in the assessment.\n\nFindings:\n1. `gf2-coding/src/ldpc/nr_5g/mod.rs:753` — `compute_mother_encoding` has two literal copies of a 28-line pivot/swap/eliminate kernel; extract a private `rref_column_pass` helper and call twice.\n2. `gf2-coding/src/drm.rs:624` — `DrmCode::systematic_form` reimplements Gaussian elimination; replace body with `gf2_core::alg::rref::rref(&g, false)`, keep only column rearrangement.\n3. `gf2-coding/src/bch/core.rs:225` — `BchCode::lcm_poly` duplicates `gf2_core::field::charpoly::poly_lcm`; promote to `pub fn FieldPoly::lcm`, remove `lcm_poly`, have `poly_lcm` delegate.\n4. `gf2-kernels-simd/src/bipedal/packed7.rs:37` — F_7 LUT builders duplicated verbatim with `gf2-algebra`; make `gf2-kernels-simd` the SSOT and import from `gf2-algebra`.\n5. `gf2-sim/src/bin/*` — `mean_sigma` copy-pasted into 4 bin files; add `pub(crate) fn mean_sigma` to `gf2-sim/src/observability.rs` and replace copies (incl. inlined one in `parallel_throughput.rs`).\n6. `gf2-kernels-hip/tests/common/mod.rs:18` — test helper re-declares raw HIP FFI; use `DeviceBuffer` RAII + `crate::ffi::hip_device_synchronize`.\n7. `gf2-core/src/kernels/x86.rs` — unused detection stubs duplicate `gf2-kernels-simd::detect()` + 3 unimplemented TODO stubs; delete or delegate.\n8. `gf2-algebra/src/packed/{packed5,packed7}.rs` — `Packed5Matrix`/`Packed7Matrix` omit `row()`/`to_row_major()`/`transpose()` that `Bipedal3Matrix` has (lib.rs:31 advertises all three); add them or document the asymmetry.\n9. (low) `gf2-sim/src/bin/ldpc_bler_sweep.rs:177` — private `esn0_db_to_sigma` duplicates `channels::es_n0_db_to_sigma_f64`; remove local copy.\n\n## Success Criteria\n\n- [hard] REQ-01: Findings 1-7 resolved: duplicated logic factored to a single source per the remediation; no remaining copy of each algorithm. Where a finding is a sanctioned performance/legacy exception, record the justification in this issue instead of deduping.\n- [hard] REQ-02: Finding 8 resolved either by adding the three methods to both matrix types or by an explicit struct-doc note that the asymmetry is intentional.\n- [hard] REQ-03: Finding 9 resolved (local copy removed).\n- [hard] REQ-04: Full `cargo nextest --profile ci`, clippy `-D warnings`, fmt pass.\n",
   "documents": [],
   "gates_required": [
@@ -29,7 +37,7 @@
     "component:gf2-coding"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Eliminate SSOT duplication across the workspace",
-  "updated_at": "2026-08-05T12:24:19.725321341Z"
+  "updated_at": "2026-08-07T12:22:27.261859964Z"
 }

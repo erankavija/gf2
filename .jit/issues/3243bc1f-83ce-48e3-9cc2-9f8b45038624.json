@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "The BCH implementation has only fixed-case tests, while its sibling extended-BCH and generic linear-code modules both carry property tests. Add property coverage for the invariants that define correct BCH behaviour.\n\n## Background\n\nThe two invariants that matter most are recoverability and syndrome consistency: a codeword corrupted in at most the designed number of positions must decode back to the original message, and a valid codeword must produce a zero syndrome. Fixed cases can pass while the boundary at the correction limit is wrong.\n\nThe generator lives in `crates/gf2-coding/src/bch/core.rs`. The existing property-test modules in the same crate establish the shape to follow.\n\n## Success Criteria\n\n- [hard] REQ-01: A property-test module in the BCH core covers encode-then-decode round trips with error counts up to the code's designed correction capability, recovering the original message every time.\n- [hard] REQ-02: A property test asserts that every valid codeword yields a zero syndrome.\n- [hard] REQ-03: Generated cases span more than one BCH parameter set rather than fixing a single code.\n- [hard] REQ-04: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-05: The new tests fail if the correction limit is reduced, demonstrating that they constrain the boundary rather than only the easy cases.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "3243bc1f-83ce-48e3-9cc2-9f8b45038624",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Add property tests for BCH encode and decode invariants",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

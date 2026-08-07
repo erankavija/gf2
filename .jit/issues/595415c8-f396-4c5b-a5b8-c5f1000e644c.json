@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "A core module carries unused CPU-feature detection functions that duplicate the SIMD kernel crate's detection entry point, alongside kernel stubs that were never implemented. Resolve the module by deletion or delegation.\n\n## Background\n\n`crates/gf2-core/src/kernels/x86.rs` declares AVX2, AVX-512F, PCLMULQDQ, and BMI2 detection helpers that no caller uses, plus three bare implementation markers for kernels that do not exist. The SIMD kernel crate already owns feature detection for the workspace.\n\nEither the module goes away entirely along with its module declaration, or its detection helpers delegate to the kernel crate's detection and the unimplemented markers are dropped. Deletion is preferred where no caller is found; record which was chosen and why.\n\n## Success Criteria\n\n- [hard] REQ-01: The duplicated detection helpers no longer exist in `gf2-core`, either through deletion of the module or through delegation to the kernel crate's detection entry point.\n- [hard] REQ-02: The three unimplemented kernel markers are removed rather than carried forward.\n- [hard] REQ-03: If the module is deleted, its declaration is removed from the parent module and the crate builds with no dangling reference.\n- [hard] REQ-04: The choice between deletion and delegation is recorded with the reason, including the search that established whether any caller exists.\n- [hard] REQ-05: No public item of `gf2-core` changes behaviour for existing callers.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "595415c8-f396-4c5b-a5b8-c5f1000e644c",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Remove the unused x86 detection stubs from gf2-core",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

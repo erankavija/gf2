@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:17.477025157Z",
+  "dependencies": [],
+  "description": "Several public coding-crate items omit required argument, panic, or cost sections, and four annotate their examples so they are never compiled. Complete the sections and bring the examples under the documentation build.\n\n## Background\n\nAn example marked so the toolchain skips it is worse than no example: it looks like verified usage while being free to drift. Four public items across the LDPC encoding, trait, and 5G NR modules are annotated this way, at `crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:113`, `crates/gf2-coding/src/traits.rs:279` and `:316`, and `crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1306`.\n\nSeparately, the two log-domain helpers at `crates/gf2-coding/src/grand/orbgrand.rs:852` and `:863` omit argument, example, and cost sections that the function immediately after them carries in full. The generator accessor at `crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:374` panics for non-systematic codes without saying so. The per-bit histogram at `crates/gf2-coding/src/modem/analysis.rs:829` omits its argument description while the function after it has one.\n\n## Success Criteria\n\n- [hard] REQ-01: Both log-domain helpers state their arguments, their cost, and carry an example, matching the shape of the documented function beside them.\n- [hard] REQ-02: The generator accessor states the condition under which it panics and carries an example.\n- [hard] REQ-03: The per-bit histogram states its argument.\n- [hard] REQ-04: The four skipped examples either compile without running, where they need a device or external data, or are made self-contained and run.\n- [hard] REQ-05: No example in the crate is annotated so the toolchain skips compiling it.\n- [hard] REQ-06: Every example added or converted compiles and passes as a documentation test.\n- [hard] REQ-07: No example is added to an accessor, constant, simple constructor, predicate, or direct field mapping.\n- [hard] REQ-08: Clippy with warnings denied and formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:17.477025157Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "3d34f504-4adb-453c-b5a6-3d4e6d2dc223",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Complete doc sections and make gf2-coding examples compile",
+  "updated_at": "2026-08-07T12:22:17.477025157Z"
+}

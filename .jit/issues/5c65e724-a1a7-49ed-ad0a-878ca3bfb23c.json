@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "The F_7 nibble-pair lookup-table builders exist verbatim in two crates. Consolidate them in the kernel crate, export them, and have the algebra crate import rather than rebuild them.\n\n## Background\n\n`build_add7_lut`, `build_sub7_lut`, and `build_mul7_lut` are duplicated between `crates/gf2-kernels-simd/src/bipedal/packed7.rs:37` and the algebra crate. A comment in the kernel file already acknowledges the duplication and the reason it was tolerated.\n\nThe kernel crate is the correct owner: it sits below the algebra crate in the dependency order, so the import direction is the one the layering already permits.\n\n## Success Criteria\n\n- [hard] REQ-01: The three F_7 LUT builders are defined once, in the SIMD kernel crate, and are publicly reachable.\n- [hard] REQ-02: The algebra crate imports them and defines no LUT builder of its own.\n- [hard] REQ-03: The comment acknowledging the duplication is removed, since the condition it described no longer holds.\n- [hard] REQ-04: Generated table contents are byte-identical to the pre-change tables in both crates.\n- [hard] REQ-05: No new dependency edge is introduced against the established crate layering.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "5c65e724-a1a7-49ed-ad0a-878ca3bfb23c",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "component:gf2-algebra",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Make the SIMD kernel crate the single source for F_7 nibble LUTs",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

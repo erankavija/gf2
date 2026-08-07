@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "The BCH code builder carries its own least-common-multiple routine for polynomials that duplicates the core crate's implementation. Publish the core implementation and remove the duplicate.\n\n## Background\n\n`BchCode::lcm_poly` at `crates/gf2-coding/src/bch/core.rs:225` and `gf2_core::field::charpoly::poly_lcm` share identical gcd-then-quotient logic. The core version is crate-private, which is why the coding crate grew its own copy rather than calling it.\n\nThe fix runs in the other direction from the duplication: expose the operation as a method on the polynomial type in core, have the existing crate-private helper delegate to it, and delete the copy in the coding crate.\n\n## Success Criteria\n\n- [hard] REQ-01: `FieldPoly` exposes a public least-common-multiple method in `gf2-core`.\n- [hard] REQ-02: The crate-private `charpoly` helper delegates to that method rather than repeating the algorithm.\n- [hard] REQ-03: `BchCode::lcm_poly` is removed and its call sites use the public method.\n- [hard] REQ-04: The public method carries rustdoc stating its purpose and any panic conditions.\n- [hard] REQ-05: BCH generator-polynomial construction produces identical results across the crate's existing BCH tests.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "8f51d6cf-873a-4b30-8f98-58875cfd79d2",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Promote polynomial LCM to a public FieldPoly method and drop the BCH copy",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

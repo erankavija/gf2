@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "The GPU test helper module re-declares raw HIP allocation, free, copy, and synchronise bindings instead of using the wrappers the crate already provides. Route the helper through those wrappers.\n\n## Background\n\nThe redundant `extern \"C\"` block is at `crates/gf2-kernels-hip/tests/common/mod.rs:18`. The crate exposes an owning device-buffer type with host-to-device and device-to-host copies, plus a checked device-synchronise call in its FFI module. Test code duplicating the raw bindings bypasses the crate's error handling and lifetime management, so a leak or a dropped error status in the helper goes unnoticed.\n\n## Success Criteria\n\n- [hard] REQ-01: The test helper allocates and frees device memory through the crate's owning buffer type rather than raw allocation calls.\n- [hard] REQ-02: Host-to-device and device-to-host transfers in the helper use the buffer type's copy methods.\n- [hard] REQ-03: Device synchronisation in the helper uses the crate's checked FFI wrapper.\n- [hard] REQ-04: No `extern \"C\"` HIP declaration remains in the test helper module.\n- [hard] REQ-05: Device-gated tests that use the helper behave unchanged where a supported device is present, and remain correctly gated where one is not.\n- [hard] REQ-06: Formatting, clippy with warnings denied, and the crate's host-side build all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "704c90b8-6fdc-4584-ba78-f2bbee136917",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-hip",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Replace raw HIP FFI in test helpers with the crate's RAII buffers",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

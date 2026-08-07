@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:17.477025157Z",
+  "dependencies": [],
+  "description": "Several public matrix, sparse-matrix, and bit-vector operations omit the sections the project requires: cost characteristics on operations whose cost is not obvious, panic conditions on operations that can panic, and examples where the contract is not evident from the signature.\n\n## Background\n\nFour groups are affected. The pivot search at `crates/gf2-core/src/matrix.rs:987` states neither its cost nor how it behaves, and the dense-to-sparse conversion beside it omits its cost despite scaling with the full matrix area. The sparse conversions at `crates/gf2-core/src/sparse.rs:890` carry a single sentence each with no cost, no panic conditions, and no example. The two bit-scan operations at `crates/gf2-core/src/bitvec.rs:847` and `:873` omit cost, while their two immediate siblings state it.\n\nThe project documents examples where they clarify a non-obvious contract, not on items whose signature already says everything. These four groups qualify because the traversal order, the early-exit behaviour, and the panic delegation are not visible from the signatures.\n\n## Success Criteria\n\n- [hard] REQ-01: The pivot search states its cost and carries an example showing what it returns when no pivot exists.\n- [hard] REQ-02: The dense-to-sparse conversion states its cost in terms of the matrix dimensions.\n- [hard] REQ-03: Both sparse conversions state their cost, their panic conditions including any delegated from the element accessor, and carry an example.\n- [hard] REQ-04: Both bit-scan operations state their cost, including the early-exit behaviour, in the same terms their two siblings use.\n- [hard] REQ-05: Every example added compiles and passes as a documentation test.\n- [hard] REQ-06: No example is added to an accessor, constant, simple constructor, predicate, or direct field mapping.\n- [hard] REQ-07: Clippy with warnings denied and formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:17.477025157Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "23f22f53-2c4a-489c-bc85-52ff4ccc6629",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "satisfies:REQ-01",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Complete the missing doc sections on gf2-core matrix and bit-vector APIs",
+  "updated_at": "2026-08-07T12:22:17.477025157Z"
+}

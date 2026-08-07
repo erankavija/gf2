@@ -1,0 +1,311 @@
+[
+  {
+    "key": "nr5g-rref-column-pass",
+    "title": "Extract the repeated RREF column pass in 5G NR mother encoding",
+    "description": "`compute_mother_encoding` in the 5G NR LDPC module carries two literal copies of the same pivot-find, row-swap, and full-column-eliminate kernel, applied to different column ranges. Factor the kernel out so the algorithm exists once.\n\n## Background\n\nThe duplicated block is 28 lines and appears at `crates/gf2-coding/src/ldpc/nr_5g/mod.rs:753`. The sibling encoder in the same crate, `richardson_urbanke.rs`, already delegates its elimination to the shared core routine, so the copies here are the outlier rather than the convention.\n\nThe two call sites differ only in the column range they sweep and the pivot bookkeeping they carry forward, which is what the extracted helper takes as parameters.\n\n## Success Criteria\n\n- [hard] REQ-01: A single private helper performs the pivot-find, row-swap, and column-eliminate pass, and `compute_mother_encoding` calls it for both column ranges.\n- [hard] REQ-02: No copy of the pivot/swap/eliminate kernel remains in the module.\n- [hard] REQ-03: Encoding output is unchanged for every 5G NR base graph and lifting size already covered by the crate's tests.\n- [hard] REQ-04: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-coding",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "The 5G NR mother-encoding RREF pass exists once and is called twice.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-coding 5G NR LDPC encoder",
+        "test_boundary": "existing 5G NR encoding tests in gf2-coding",
+        "worker_sized_reason": "One in-file extraction of a 28-line block with two call sites and no API change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "drm-systematic-form-via-rref",
+    "title": "Route DrmCode::systematic_form through the core RREF routine",
+    "description": "`DrmCode::systematic_form` reimplements Gaussian elimination over a bit matrix when the core crate already provides the identical operation. Replace the hand-rolled elimination with the shared routine and keep only the logic that is genuinely DRM-specific.\n\n## Background\n\nThe reimplementation sits at `crates/gf2-coding/src/drm.rs:624`. The core routine `gf2_core::alg::rref::rref` with right-pivoting disabled performs the same reduction. What the DRM path adds beyond the reduction is the column rearrangement that follows it, which stays.\n\n## Success Criteria\n\n- [hard] REQ-01: `DrmCode::systematic_form` obtains its reduced form from the shared core RREF routine rather than from elimination code written in this module.\n- [hard] REQ-02: The post-reduction column-rearrangement logic is retained and continues to produce the same systematic ordering.\n- [hard] REQ-03: No Gaussian-elimination loop remains in `drm.rs`.\n- [hard] REQ-04: DRM encode and decode results are unchanged across the crate's existing DRM tests.\n- [hard] REQ-05: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-coding",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "DRM systematic form reuses the core RREF routine instead of its own elimination.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-coding DRM code construction",
+        "test_boundary": "existing DRM tests in gf2-coding",
+        "worker_sized_reason": "One function body swapped for a library call, with the surrounding rearrangement untouched.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/drm.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "field-poly-lcm-single-source",
+    "title": "Promote polynomial LCM to a public FieldPoly method and drop the BCH copy",
+    "description": "The BCH code builder carries its own least-common-multiple routine for polynomials that duplicates the core crate's implementation. Publish the core implementation and remove the duplicate.\n\n## Background\n\n`BchCode::lcm_poly` at `crates/gf2-coding/src/bch/core.rs:225` and `gf2_core::field::charpoly::poly_lcm` share identical gcd-then-quotient logic. The core version is crate-private, which is why the coding crate grew its own copy rather than calling it.\n\nThe fix runs in the other direction from the duplication: expose the operation as a method on the polynomial type in core, have the existing crate-private helper delegate to it, and delete the copy in the coding crate.\n\n## Success Criteria\n\n- [hard] REQ-01: `FieldPoly` exposes a public least-common-multiple method in `gf2-core`.\n- [hard] REQ-02: The crate-private `charpoly` helper delegates to that method rather than repeating the algorithm.\n- [hard] REQ-03: `BchCode::lcm_poly` is removed and its call sites use the public method.\n- [hard] REQ-04: The public method carries rustdoc stating its purpose and any panic conditions.\n- [hard] REQ-05: BCH generator-polynomial construction produces identical results across the crate's existing BCH tests.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-core",
+      "component:gf2-coding",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Polynomial LCM lives once in gf2-core as a public method that both callers use.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "polynomial least-common-multiple callers",
+        "test_boundary": "existing BCH generator-polynomial tests",
+        "worker_sized_reason": "One visibility promotion plus one deletion; both call sites are known and few.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/field/poly.rs",
+            "crates/gf2-core/src/field/charpoly.rs",
+            "crates/gf2-coding/src/bch/core.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "f7-lut-single-source",
+    "title": "Make the SIMD kernel crate the single source for F_7 nibble LUTs",
+    "description": "The F_7 nibble-pair lookup-table builders exist verbatim in two crates. Consolidate them in the kernel crate, export them, and have the algebra crate import rather than rebuild them.\n\n## Background\n\n`build_add7_lut`, `build_sub7_lut`, and `build_mul7_lut` are duplicated between `crates/gf2-kernels-simd/src/bipedal/packed7.rs:37` and the algebra crate. A comment in the kernel file already acknowledges the duplication and the reason it was tolerated.\n\nThe kernel crate is the correct owner: it sits below the algebra crate in the dependency order, so the import direction is the one the layering already permits.\n\n## Success Criteria\n\n- [hard] REQ-01: The three F_7 LUT builders are defined once, in the SIMD kernel crate, and are publicly reachable.\n- [hard] REQ-02: The algebra crate imports them and defines no LUT builder of its own.\n- [hard] REQ-03: The comment acknowledging the duplication is removed, since the condition it described no longer holds.\n- [hard] REQ-04: Generated table contents are byte-identical to the pre-change tables in both crates.\n- [hard] REQ-05: No new dependency edge is introduced against the established crate layering.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-simd",
+      "component:gf2-algebra",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "F_7 LUT builders are defined once in the kernel crate and imported by the algebra crate.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "F_7 packed arithmetic LUT consumers",
+        "test_boundary": "existing Packed7 cross-check tests in both crates",
+        "worker_sized_reason": "Three table builders moved across one existing dependency edge with byte-identical output.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/bipedal/packed7.rs",
+            "crates/gf2-algebra/src/packed/packed7.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "sim-bin-stat-helpers",
+    "title": "Share the mean/sigma and Es/N0 conversion helpers across gf2-sim binaries",
+    "description": "Two statistics helpers are copy-pasted across the simulation binaries. Give each one a single home in the library and have every binary call it.\n\n## Background\n\n`mean_sigma` appears verbatim in four binaries, and a fifth inlines the same three-step computation without wrapping it. Separately, `ldpc_bler_sweep.rs:177` carries a private Es/N0-to-sigma conversion that duplicates the library's `channels::es_n0_db_to_sigma_f64`, differing only in return type.\n\nBoth are the same shape of debt in the same crate's binary layer, so they share one landing.\n\n## Success Criteria\n\n- [hard] REQ-01: A single crate-internal `mean_sigma` is defined in the library and used by every binary that previously carried a copy.\n- [hard] REQ-02: The binary that inlined the computation without a wrapper also calls the shared helper.\n- [hard] REQ-03: No private copy of `mean_sigma` remains in any binary.\n- [hard] REQ-04: The private Es/N0-to-sigma conversion in the BLER sweep binary is removed in favour of the library conversion, with any return-type difference handled at the call site or by a documented library variant.\n- [hard] REQ-05: Reported statistics are numerically unchanged for a fixed seed.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-sim",
+      "satisfies:REQ-01",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "gf2-sim binaries call one shared mean/sigma helper and the library Es/N0 conversion.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-sim binary statistics helpers",
+        "test_boundary": "fixed-seed statistics output from the affected binaries",
+        "worker_sized_reason": "Two helper consolidations confined to one crate's binary layer, with no algorithm change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-sim/src/observability.rs",
+            "crates/gf2-sim/src/bin"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "hip-test-buffer-raii",
+    "title": "Replace raw HIP FFI in test helpers with the crate's RAII buffers",
+    "description": "The GPU test helper module re-declares raw HIP allocation, free, copy, and synchronise bindings instead of using the wrappers the crate already provides. Route the helper through those wrappers.\n\n## Background\n\nThe redundant `extern \"C\"` block is at `crates/gf2-kernels-hip/tests/common/mod.rs:18`. The crate exposes an owning device-buffer type with host-to-device and device-to-host copies, plus a checked device-synchronise call in its FFI module. Test code duplicating the raw bindings bypasses the crate's error handling and lifetime management, so a leak or a dropped error status in the helper goes unnoticed.\n\n## Success Criteria\n\n- [hard] REQ-01: The test helper allocates and frees device memory through the crate's owning buffer type rather than raw allocation calls.\n- [hard] REQ-02: Host-to-device and device-to-host transfers in the helper use the buffer type's copy methods.\n- [hard] REQ-03: Device synchronisation in the helper uses the crate's checked FFI wrapper.\n- [hard] REQ-04: No `extern \"C\"` HIP declaration remains in the test helper module.\n- [hard] REQ-05: Device-gated tests that use the helper behave unchanged where a supported device is present, and remain correctly gated where one is not.\n- [hard] REQ-06: Formatting, clippy with warnings denied, and the crate's host-side build all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-hip",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "HIP test helpers use the crate's RAII device buffers instead of raw FFI declarations.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-kernels-hip integration test helpers",
+        "test_boundary": "device-gated integration tests that consume the helper module",
+        "worker_sized_reason": "One helper module rewritten against an existing wrapper API; no kernel or host library change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-hip/tests/common/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "core-x86-detection-stubs",
+    "title": "Remove the unused x86 detection stubs from gf2-core",
+    "description": "A core module carries unused CPU-feature detection functions that duplicate the SIMD kernel crate's detection entry point, alongside kernel stubs that were never implemented. Resolve the module by deletion or delegation.\n\n## Background\n\n`crates/gf2-core/src/kernels/x86.rs` declares AVX2, AVX-512F, PCLMULQDQ, and BMI2 detection helpers that no caller uses, plus three bare implementation markers for kernels that do not exist. The SIMD kernel crate already owns feature detection for the workspace.\n\nEither the module goes away entirely along with its module declaration, or its detection helpers delegate to the kernel crate's detection and the unimplemented markers are dropped. Deletion is preferred where no caller is found; record which was chosen and why.\n\n## Success Criteria\n\n- [hard] REQ-01: The duplicated detection helpers no longer exist in `gf2-core`, either through deletion of the module or through delegation to the kernel crate's detection entry point.\n- [hard] REQ-02: The three unimplemented kernel markers are removed rather than carried forward.\n- [hard] REQ-03: If the module is deleted, its declaration is removed from the parent module and the crate builds with no dangling reference.\n- [hard] REQ-04: The choice between deletion and delegation is recorded with the reason, including the search that established whether any caller exists.\n- [hard] REQ-05: No public item of `gf2-core` changes behaviour for existing callers.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-core",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "gf2-core no longer carries duplicate CPU-feature detection or unimplemented kernel markers.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core kernel dispatch module",
+        "test_boundary": "the gf2-core test suite after the module is resolved",
+        "worker_sized_reason": "One module either deleted or reduced to delegation, bounded by a caller search that is part of the work.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/kernels/x86.rs",
+            "crates/gf2-core/src/kernels/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "packed-matrix-api-symmetry",
+    "title": "Resolve the Packed5 and Packed7 matrix API asymmetry",
+    "description": "The F_5 and F_7 packed matrix types omit three accessor and layout methods that the F_3 type provides, while the crate's own overview advertises all three as part of the matrix API. Close the gap or state that it is deliberate.\n\n## Background\n\n`Packed5Matrix` and `Packed7Matrix` lack the row accessor, the row-major conversion, and the transpose that `Bipedal3Matrix` carries. The crate overview lists all three as matrix-API surface, so a reader who arrives from that list finds them missing on two of the three types with no explanation.\n\nThis is a deliberate design call, not a mechanical fix. Adding the methods widens the supported surface and commits to maintaining it for both types; documenting the asymmetry keeps the surface narrow but must say what a caller should use instead. Decide on the merits and record the reasoning.\n\n## Success Criteria\n\n- [hard] REQ-01: Either both packed matrix types gain the row accessor, row-major conversion, and transpose, or each type's struct-level documentation states that the omission is intentional and names the supported alternative.\n- [hard] REQ-02: The crate overview and the two types agree: a reader following the advertised matrix API finds either the methods or the explanation.\n- [hard] REQ-03: If the methods are added, they match the F_3 type's semantics for equivalent inputs and carry rustdoc with complexity stated.\n- [hard] REQ-04: If the methods are added, tests cover the row accessor, the round trip through row-major form, and transpose involution for both types.\n- [hard] REQ-05: The decision and its reasoning are recorded.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-algebra",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "f7-lut-single-source"
+    ],
+    "planning": {
+      "outcome": "The Packed5 and Packed7 matrix API gap is closed or documented as intentional.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra packed matrix types",
+        "test_boundary": "packed matrix tests in gf2-algebra covering the three methods or their documented absence",
+        "worker_sized_reason": "One design call over two sibling types, with the implementation bounded by an existing reference implementation.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-algebra/src/packed/packed5.rs",
+            "crates/gf2-algebra/src/packed/packed7.rs",
+            "crates/gf2-algebra/src/lib.rs"
+          ]
+        }
+      }
+    }
+  }
+]

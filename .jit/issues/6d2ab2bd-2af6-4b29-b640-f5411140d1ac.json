@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [
+    "5c65e724-a1a7-49ed-ad0a-878ca3bfb23c"
+  ],
+  "description": "The F_5 and F_7 packed matrix types omit three accessor and layout methods that the F_3 type provides, while the crate's own overview advertises all three as part of the matrix API. Close the gap or state that it is deliberate.\n\n## Background\n\n`Packed5Matrix` and `Packed7Matrix` lack the row accessor, the row-major conversion, and the transpose that `Bipedal3Matrix` carries. The crate overview lists all three as matrix-API surface, so a reader who arrives from that list finds them missing on two of the three types with no explanation.\n\nThis is a deliberate design call, not a mechanical fix. Adding the methods widens the supported surface and commits to maintaining it for both types; documenting the asymmetry keeps the surface narrow but must say what a caller should use instead. Decide on the merits and record the reasoning.\n\n## Success Criteria\n\n- [hard] REQ-01: Either both packed matrix types gain the row accessor, row-major conversion, and transpose, or each type's struct-level documentation states that the omission is intentional and names the supported alternative.\n- [hard] REQ-02: The crate overview and the two types agree: a reader following the advertised matrix API finds either the methods or the explanation.\n- [hard] REQ-03: If the methods are added, they match the F_3 type's semantics for equivalent inputs and carry rustdoc with complexity stated.\n- [hard] REQ-04: If the methods are added, tests cover the row accessor, the round trip through row-major form, and transpose involution for both types.\n- [hard] REQ-05: The decision and its reasoning are recorded.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6d2ab2bd-2af6-4b29-b640-f5411140d1ac",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-algebra",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Resolve the Packed5 and Packed7 matrix API asymmetry",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

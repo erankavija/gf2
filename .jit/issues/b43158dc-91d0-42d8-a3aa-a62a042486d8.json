@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "The packed prime-field types are property-tested only against the scalar implementation lane by lane. A shared misconception between the two implementations would pass unnoticed. Add property tests that assert the field laws directly.\n\n## Background\n\nCross-checking against a reference catches divergence but not agreement on something wrong. Direct invariant tests state the laws themselves: addition and multiplication commute, multiplication distributes over addition, and negation is an involution.\n\nThe scalar module in the same crate already carries this style of test and establishes the shape to follow.\n\n## Success Criteria\n\n- [hard] REQ-01: Both packed types carry property tests asserting commutativity of addition and multiplication, distributivity of multiplication over addition, and negation involution, stated over the packed types themselves rather than against a scalar reference.\n- [hard] REQ-02: Generated values cover the full residue range of each field, including the additive and multiplicative identities and the largest residue.\n- [hard] REQ-03: The existing cross-check property tests are retained.\n- [hard] REQ-04: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-05: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b43158dc-91d0-42d8-a3aa-a62a042486d8",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-algebra",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Add direct algebraic property tests for the packed F_5 and F_7 types",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

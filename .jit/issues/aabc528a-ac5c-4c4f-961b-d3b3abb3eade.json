@@ -2,7 +2,12 @@
   "assignee": null,
   "context": {},
   "created_at": "2026-06-30T20:12:46.280192696Z",
-  "dependencies": [],
+  "dependencies": [
+    "23f22f53-2c4a-489c-bc85-52ff4ccc6629",
+    "3d34f504-4adb-453c-b5a6-3d4e6d2dc223",
+    "54278d0c-8fe8-4022-b560-584c26e6d41d",
+    "cdaf5da9-280b-4d74-bd95-653e900adf10"
+  ],
   "description": "**Dimension: doc-completeness · 17 findings (11 medium, 6 low)** — see report §doc-completeness. Scope narrowed 2026-08-07: 1 finding reassigned, 7 deferred, 9 retained here (see \"Reassigned and deferred scope\").\n\nFill required doc sections (description, `# Arguments`, `# Examples`, `# Panics`, `# Complexity`) on public items whose contracts are not evident from the signature.\n\nMedium:\n- `gf2-kernels-simd/src/lib.rs:83` — `LogicalFns` 15 public fn-pointer fields need per-field `///`.\n- `gf2-core/src/matrix.rs:987` — `find_pivot_row` needs `# Examples` + `# Complexity`; `to_sparse` needs `# Complexity`.\n- `gf2-core/src/sparse.rs:890` — `SpBitMatrix::from_dense`/`to_dense` need `# Examples`/`# Complexity`/`# Panics`.\n- `gf2-coding/src/grand/orbgrand.rs:852,863` — `ln_1_plus_exp`/`log_sum_exp` need `# Arguments`/`# Examples`/`# Complexity`.\n- `gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:374` — `generator()` needs `# Panics` + `# Examples`.\n- `gf2-coding/src/modem/analysis.rs:829` — `per_bit_mi_histogram_bits` needs `# Arguments`.\n- `gf2-algebra/src/packed/packed5.rs:1410` — `Packed5Matrix` PartialEq/Debug impls need full doc blocks.\n\nLow:\n- `gf2-core/src/bitvec.rs:847,873` — `find_first_set`/`find_last_set` need `# Complexity`.\n- `gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:113`; `traits.rs:279,316`; `nr_5g/mod.rs:1306` — 4 ` ```ignore ` examples → `no_run` or self-contained.\n\n## Reassigned and deferred scope\n\n- **Reassigned to `ad978596`:** the `gf2-kernels-simd/src/lib.rs:1` crate-wide `#![allow(clippy::missing_safety_doc)]` removal and the real `# Safety` sections. That issue is now the sole owner.\n- **Deferred to the documentation-overhaul epic:** the seven findings that request `# Examples` on accessor-, getter-, builder-, and simple-constructor-shaped items (`gf2-kernels-hip` ~20 public getters, `gf2-sim/src/presets/dvb_t2.rs:411` 6 builder methods, `gf2-sim/src/stages/mod.rs:274` 4 stage constructors, `gf2-sim/src/connector.rs` `Connector::new`, `gf2-sim/src/executor/results.rs:59` `SnrPointResult::from_counters`, `gf2-sim/src/parallel/mod.rs:259` `WorkerCounters::fer()`/`mean_iters()`, `gf2-coding/src/ldpc/nr_5g/mod.rs:1362,1385` `with_scale`/`with_algorithm`). Those are exactly the categories the workspace Rustdoc example audit classifies as tautological, and the policy that governs them is established by `3f29e945`. Adding them here would manufacture examples that the pruning pass then deletes.\n\nThe items retained above are non-trivial methods — a pivot search, dense/sparse conversions, numerically delicate log-domain helpers, a fallible generator construction — whose examples clarify contracts rather than restate signatures.\n\n## Success Criteria\n\n- [hard] REQ-01: Every item listed in the Medium and Low sections above gains the missing required sections; doctests compile and pass under `cargo test --doc` (use `no_run` only for device/GPU-dependent examples).\n- [hard] REQ-02: All ` ```ignore ` examples in the four cited files converted to compilable `no_run` or self-contained form.\n- [hard] REQ-03: No `# Examples` block is added to an accessor, constant, simple constructor, predicate, or direct field mapping; such items are out of scope here per \"Reassigned and deferred scope\".\n- [hard] REQ-04: clippy `-D warnings` and fmt pass.\n",
   "documents": [],
   "gates_required": [
@@ -29,7 +34,7 @@
     "component:gf2-core"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "backlog",
   "title": "Fill public-API doc-completeness gaps",
-  "updated_at": "2026-08-07T12:01:20.835604845Z"
+  "updated_at": "2026-08-07T12:22:35.087520058Z"
 }

@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [
+    "fe26dc9a-be55-4be6-a911-c5328cd7b1d8"
+  ],
+  "description": "The polynomial-multiply SIMD kernels are covered only by deterministic fixed cases. Add property tests asserting their algebraic invariants and equivalence with the scalar path.\n\n## Background\n\nCarry-less multiplication and the batch and GEMM kernels built on it have tail and blocking behaviour that fixed cases do not reach. The affected modules are the batch, GEMM, and wide polynomial-multiply kernels.\n\nA property-test suite already exists for one of the packed kernels in this crate and establishes the shape to follow, including how it selects a case count.\n\n## Success Criteria\n\n- [hard] REQ-01: Each polynomial-multiply kernel module carries property tests asserting the algebraic invariants its operations must satisfy, including commutativity of the product and correct degree bounds.\n- [hard] REQ-02: Each module carries property tests asserting that the vector path and the scalar path agree on the same inputs.\n- [hard] REQ-03: Generated operand and matrix shapes cross the kernel's blocking boundaries, including shapes that are not a whole multiple of them, so tail and remainder handling are exercised.\n- [hard] REQ-04: Tests that require a CPU feature the host may lack are gated so an unsupported host reports them as ignored rather than failed.\n- [hard] REQ-05: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b146e998-e8a2-418c-a2cb-63debc4e6df4",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Add property tests to the SIMD polynomial-multiply kernel modules",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

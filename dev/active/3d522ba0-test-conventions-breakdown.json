@@ -1,0 +1,404 @@
+[
+  {
+    "key": "test-conventions-core",
+    "title": "Bring gf2-core test names and ignore annotations to convention",
+    "description": "Several gf2-core tests deviate from the project's test-naming and ignore-annotation conventions. Bring them into line so the suite reads uniformly and the slow tier is self-describing.\n\n## Background\n\nThe project requires every ignored test to carry a tagged reason string and every test function to be named `test_<operation>_<scenario>`.\n\nTwo deviations exist in this crate. The wide-field axiom stress test at `crates/gf2-core/src/field/axiom_tests.rs:1027` uses a bare ignore attribute with no reason, unlike every other ignored test in the same file. Separately, four tests near `crates/gf2-core/src/bitvec.rs:1705` are named for the operation alone with no scenario suffix, and the same pattern repeats in the quadratic and cubic extension-field modules.\n\n## Success Criteria\n\n- [hard] REQ-01: The wide-field axiom stress test carries a lowercase `slow:` tagged reason describing why it exceeds the fast tier.\n- [hard] REQ-02: No bare ignore attribute remains anywhere in gf2-core.\n- [hard] REQ-03: The four bit-vector tests and their counterparts in the quadratic and cubic extension modules are renamed to `test_<operation>_<scenario>`, where the scenario names the asserted outcome.\n- [hard] REQ-04: Renamed tests assert the same behaviour as before; no test is dropped or weakened.\n- [hard] REQ-05: The fast tier stays inside its per-test and whole-suite time budgets, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-core",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "gf2-core tests conform to the project's naming and ignore-annotation conventions.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core test suite",
+        "test_boundary": "the gf2-core test suite after renaming",
+        "worker_sized_reason": "Mechanical convention edits confined to one crate, with no behaviour change to assert.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/field/axiom_tests.rs",
+            "crates/gf2-core/src/bitvec.rs",
+            "crates/gf2-core/src/gfpn/quadratic.rs",
+            "crates/gf2-core/src/gfpn/cubic.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "test-ignore-reasons-coding",
+    "title": "Give every ignored gf2-coding test a tagged reason string",
+    "description": "More than twenty ignored tests across the coding crate carry no reason string, one records its cost in a code comment instead of an annotation, and six use the wrong capitalisation. Make every ignore annotation self-describing and consistently tagged.\n\n## Background\n\nThe project tags ignored tests by why they are skipped: `slow:` for tests that exceed the fast tier, `external:` for tests needing hardware or data the checkout does not carry, and `sim:` for long simulation runs. The tag is what lets a reader tell an expensive test from an unrunnable one.\n\nBare annotations appear across nine test and source files, concentrated in the DVB-T2 verification suite, the test-vector parser and loader, backend integration, LDPC validation and core, and the 5G NR regression suite. One test in the BCJR module records an approximate runtime in a leading comment rather than in the annotation. Six annotations in the LDPC cache I/O tests use a capitalised prefix where the project standard is lowercase.\n\n## Success Criteria\n\n- [hard] REQ-01: Every ignored test in gf2-coding carries a reason string opening with a lowercase `slow:`, `external:`, or `sim:` tag.\n- [hard] REQ-02: The tag chosen for each test reflects why it is actually skipped, and the text after the tag names the cost or the missing prerequisite.\n- [hard] REQ-03: The BCJR test that records its runtime in a comment carries that information in its reason string instead, and the comment is removed.\n- [hard] REQ-04: The six capitalised prefixes in the LDPC cache I/O tests are lowercase.\n- [hard] REQ-05: No bare ignore attribute remains anywhere in gf2-coding.\n- [hard] REQ-06: The set of tests that run in the fast tier is unchanged, the tier stays inside its time budgets, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-coding",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Every ignored gf2-coding test states why it is skipped in a lowercase tagged reason.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-coding test suite",
+        "test_boundary": "the gf2-coding ignored-test inventory",
+        "worker_sized_reason": "One annotation sweep over one crate; each edit is local and independently checkable.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/tests",
+            "crates/gf2-coding/src/bcjr/mod.rs",
+            "crates/gf2-coding/src/ldpc/core.rs"
+          ]
+        },
+        "warning_overrides": {
+          "broad-quantifier": "The quantifier is the deliverable: the outcome is that no bare ignore attribute survives in the crate. Splitting per file yields nine trivial edits with no independent value and one shared review, and would let a missed file pass as complete."
+        }
+      }
+    }
+  },
+  {
+    "key": "test-gpu-gating-hip",
+    "title": "Gate the device-dependent gf2-kernels-hip tests correctly",
+    "description": "Several GPU tests in the HIP crate run without an ignore annotation or a feature gate, so a checkout with no supported device reports failures that are really absent hardware, and one benchmark-shaped test runs inside the fast tier. Gate them by what they actually require.\n\n## Background\n\nThe project marks tests needing hardware the checkout may not have with an `external:` tagged reason, and marks tests exceeding the fast tier with a `slow:` tag.\n\nFour groups are affected. A throughput test at `crates/gf2-kernels-hip/tests/throughput_bench.rs:13` uses a benchmark-style name rather than the required test prefix and runs two hundred iterations with no ignore annotation. Two property tests at `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs:272` lack both an ignore annotation and the feature gate that guards device code. Three in-module GPU tests near `crates/gf2-kernels-hip/src/lib.rs:1227` lack ignore annotations, as does a stream-behaviour test alongside them.\n\n## Success Criteria\n\n- [hard] REQ-01: The throughput test is renamed to the `test_<operation>_<scenario>` form and carries a `slow:` tagged reason naming its iteration cost.\n- [hard] REQ-02: The two cross-check property tests carry an `external:` tagged reason naming the required device, and are behind the feature gate that guards device code.\n- [hard] REQ-03: The three in-module GPU tests and the stream-behaviour test alongside them carry an `external:` tagged reason naming the required device.\n- [hard] REQ-04: A checkout with no supported device reports these tests as ignored rather than failed.\n- [hard] REQ-05: Where a supported device is present, the gated tests still run and still assert what they asserted before.\n- [hard] REQ-06: Formatting, clippy with warnings denied, and the crate's host-side build all pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-hip",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "HIP device tests are gated by required hardware and by runtime cost.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-kernels-hip device tests",
+        "test_boundary": "HIP test collection on a checkout without a supported device",
+        "worker_sized_reason": "Annotation and gate edits at four known sites in one crate, verifiable by collecting tests without a device.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-hip/tests/throughput_bench.rs",
+            "crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs",
+            "crates/gf2-kernels-hip/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "test-name-prefix-sim",
+    "title": "Add the required test prefix to the gf2-sim campaign binary tests",
+    "description": "Eighteen test functions in the DVB-T2 campaign binary are named without the required prefix, so they do not match the convention the rest of the workspace follows.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions in `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` are named for the scenario alone, so a filtered run that selects on the prefix silently skips them.\n\n## Success Criteria\n\n- [hard] REQ-01: All eighteen test functions in the campaign binary are named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: No test function in the binary lacks the prefix afterwards.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-sim",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Campaign-binary tests carry the required test_ prefix.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-sim campaign binary tests",
+        "test_boundary": "test collection over the campaign binary",
+        "worker_sized_reason": "Eighteen renames in a single file with no behaviour change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "test-name-prefix-simd",
+    "title": "Add the required test prefix to the SIMD kernel module tests",
+    "description": "Around fourteen test functions across the SIMD kernel modules are named without the required prefix. The deviation is systemic rather than isolated, so fix it across the crate in one pass.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions are spread across the Mersenne, F_65537, medium- and small-prime, generic prime-field, and polynomial-multiply kernel modules, with names such as the batch-multiply exact-multiple case, the panelised GEMM square case, and the safe-wrapper word-boundary case.\n\nLocating every offender is part of the work: enumerate the crate's test functions and fix all that lack the prefix, rather than only the ones named here.\n\n## Success Criteria\n\n- [hard] REQ-01: Every test function in the SIMD kernel crate is named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: The enumeration that established the full offender set is recorded, so the sweep is verifiable as complete rather than partial.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-02",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Every SIMD kernel test function carries the required test_ prefix.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-kernels-simd module tests",
+        "test_boundary": "test collection over the SIMD kernel crate",
+        "worker_sized_reason": "One enumerate-and-rename sweep over one crate with no behaviour change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src"
+          ],
+          "uncertainty": "The report cites module paths that differ from the current layout, so the offender set is established by enumeration rather than from the cited list."
+        },
+        "warning_overrides": {
+          "broad-quantifier": "The quantifier is the deliverable: the outcome is that no unprefixed test function survives in the crate. The offender set is established by enumeration, so a per-file split would fragment the one check that proves the sweep complete."
+        }
+      }
+    }
+  },
+  {
+    "key": "proptests-bch",
+    "title": "Add property tests for BCH encode and decode invariants",
+    "description": "The BCH implementation has only fixed-case tests, while its sibling extended-BCH and generic linear-code modules both carry property tests. Add property coverage for the invariants that define correct BCH behaviour.\n\n## Background\n\nThe two invariants that matter most are recoverability and syndrome consistency: a codeword corrupted in at most the designed number of positions must decode back to the original message, and a valid codeword must produce a zero syndrome. Fixed cases can pass while the boundary at the correction limit is wrong.\n\nThe generator lives in `crates/gf2-coding/src/bch/core.rs`. The existing property-test modules in the same crate establish the shape to follow.\n\n## Success Criteria\n\n- [hard] REQ-01: A property-test module in the BCH core covers encode-then-decode round trips with error counts up to the code's designed correction capability, recovering the original message every time.\n- [hard] REQ-02: A property test asserts that every valid codeword yields a zero syndrome.\n- [hard] REQ-03: Generated cases span more than one BCH parameter set rather than fixing a single code.\n- [hard] REQ-04: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-05: The new tests fail if the correction limit is reduced, demonstrating that they constrain the boundary rather than only the easy cases.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-coding",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "BCH encode/decode invariants are covered by property tests over multiple parameter sets.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-coding BCH codec",
+        "test_boundary": "the new BCH property-test module",
+        "worker_sized_reason": "One property-test module against a stable existing API, following a pattern already present in the crate.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/bch/core.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "proptests-bitvec",
+    "title": "Add property tests for BitVec structural invariants",
+    "description": "The bit-vector type has no property coverage for the invariants that its whole API depends on. Add property tests for the five invariant families that define correct behaviour.\n\n## Background\n\nThe padding invariant is the crate's most load-bearing: bits beyond the logical length must be zero after every mutation, because population count, rank, select, and equality all read the underlying words directly. The other four families are the algebraic ones a reader would expect to hold: double inversion is the identity, a shift one way and back recovers the original, push followed by pop recovers the original, and the butterfly transform is its own inverse.\n\n## Success Criteria\n\n- [hard] REQ-01: A property-test module covers padding bits remaining zero after every mutating operation the type exposes.\n- [hard] REQ-02: Property tests cover double inversion, shift round trips, push-and-pop round trips, and butterfly self-inversion.\n- [hard] REQ-03: Generated lengths span word boundaries, including lengths of zero, one, sixty-three, sixty-four, and sixty-five bits.\n- [hard] REQ-04: The padding property fails if tail masking is removed from any constructor, demonstrating that it constrains the invariant rather than restating it.\n- [hard] REQ-05: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-core",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "test-conventions-core"
+    ],
+    "planning": {
+      "outcome": "BitVec padding and algebraic invariants are covered by property tests across word boundaries.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core BitVec",
+        "test_boundary": "the new BitVec property-test module",
+        "worker_sized_reason": "One property-test module against a stable type, sequenced after the same file's test renames.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/bitvec.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "proptests-packed-algebra",
+    "title": "Add direct algebraic property tests for the packed F_5 and F_7 types",
+    "description": "The packed prime-field types are property-tested only against the scalar implementation lane by lane. A shared misconception between the two implementations would pass unnoticed. Add property tests that assert the field laws directly.\n\n## Background\n\nCross-checking against a reference catches divergence but not agreement on something wrong. Direct invariant tests state the laws themselves: addition and multiplication commute, multiplication distributes over addition, and negation is an involution.\n\nThe scalar module in the same crate already carries this style of test and establishes the shape to follow.\n\n## Success Criteria\n\n- [hard] REQ-01: Both packed types carry property tests asserting commutativity of addition and multiplication, distributivity of multiplication over addition, and negation involution, stated over the packed types themselves rather than against a scalar reference.\n- [hard] REQ-02: Generated values cover the full residue range of each field, including the additive and multiplicative identities and the largest residue.\n- [hard] REQ-03: The existing cross-check property tests are retained.\n- [hard] REQ-04: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-05: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-algebra",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Packed F_5 and F_7 types carry direct field-law property tests, not only scalar cross-checks.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra packed prime-field types",
+        "test_boundary": "the new algebraic property tests in the packed modules",
+        "worker_sized_reason": "One test module per sibling type following an existing in-crate pattern, with no production change.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-algebra/src/packed/packed5.rs",
+            "crates/gf2-algebra/src/packed/packed7.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "proptests-simd-prime-fields",
+    "title": "Add property tests to the SIMD prime-field kernel modules",
+    "description": "The prime-field SIMD kernels are covered only by deterministic fixed cases. Add property tests asserting the field axioms and equivalence with the scalar path.\n\n## Background\n\nFixed cases exercise chosen inputs; they do not probe lane boundaries, carry propagation, or the tail handling that distinguishes a vector kernel from its scalar reference. The affected modules are the Mersenne, F_65537, medium-prime, small-prime, and generic prime-field kernels.\n\nA property-test suite already exists for one of the packed kernels in this crate and establishes the shape to follow, including how it selects a case count.\n\n## Success Criteria\n\n- [hard] REQ-01: Each prime-field kernel module carries property tests asserting the field axioms its operations must satisfy.\n- [hard] REQ-02: Each module carries property tests asserting that the vector path and the scalar path agree on the same inputs.\n- [hard] REQ-03: Generated input lengths cross the kernel's lane width, including lengths that are not a whole multiple of it, so tail handling is exercised.\n- [hard] REQ-04: Tests that require a CPU feature the host may lack are gated so an unsupported host reports them as ignored rather than failed.\n- [hard] REQ-05: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "test-name-prefix-simd"
+    ],
+    "planning": {
+      "outcome": "SIMD prime-field kernels carry field-axiom and scalar-equivalence property tests.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-kernels-simd prime-field kernels",
+        "test_boundary": "the new property-test suites in the prime-field modules",
+        "worker_sized_reason": "One replicated test pattern across sibling modules of a single family, sequenced after the crate's renames.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/x86/mersenne.rs",
+            "crates/gf2-kernels-simd/src/x86/fp65537.rs",
+            "crates/gf2-kernels-simd/src/x86/fp_medium.rs",
+            "crates/gf2-kernels-simd/src/x86/fp_small.rs",
+            "crates/gf2-kernels-simd/src/x86/fp_small_f32.rs",
+            "crates/gf2-kernels-simd/src/x86/fp_generic.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "proptests-simd-polymul",
+    "title": "Add property tests to the SIMD polynomial-multiply kernel modules",
+    "description": "The polynomial-multiply SIMD kernels are covered only by deterministic fixed cases. Add property tests asserting their algebraic invariants and equivalence with the scalar path.\n\n## Background\n\nCarry-less multiplication and the batch and GEMM kernels built on it have tail and blocking behaviour that fixed cases do not reach. The affected modules are the batch, GEMM, and wide polynomial-multiply kernels.\n\nA property-test suite already exists for one of the packed kernels in this crate and establishes the shape to follow, including how it selects a case count.\n\n## Success Criteria\n\n- [hard] REQ-01: Each polynomial-multiply kernel module carries property tests asserting the algebraic invariants its operations must satisfy, including commutativity of the product and correct degree bounds.\n- [hard] REQ-02: Each module carries property tests asserting that the vector path and the scalar path agree on the same inputs.\n- [hard] REQ-03: Generated operand and matrix shapes cross the kernel's blocking boundaries, including shapes that are not a whole multiple of them, so tail and remainder handling are exercised.\n- [hard] REQ-04: Tests that require a CPU feature the host may lack are gated so an unsupported host reports them as ignored rather than failed.\n- [hard] REQ-05: Cases that exceed the fast tier carry a lowercase `slow:` tagged reason, and the fast tier stays inside its per-test and whole-suite budgets.\n- [hard] REQ-06: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "test-name-prefix-simd"
+    ],
+    "planning": {
+      "outcome": "SIMD polynomial-multiply kernels carry algebraic and scalar-equivalence property tests.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-kernels-simd polynomial-multiply kernels",
+        "test_boundary": "the new property-test suites in the polynomial-multiply modules",
+        "worker_sized_reason": "One replicated test pattern across sibling modules of a single family, sequenced after the crate's renames.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/x86/gf2m_batch.rs",
+            "crates/gf2-kernels-simd/src/x86/gf2m_gemm.rs",
+            "crates/gf2-kernels-simd/src/x86/gf2m_wide.rs"
+          ]
+        }
+      }
+    }
+  }
+]

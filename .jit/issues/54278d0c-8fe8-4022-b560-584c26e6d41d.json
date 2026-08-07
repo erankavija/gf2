@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:17.477025157Z",
+  "dependencies": [],
+  "description": "The dispatch table that selects logical kernels exposes fifteen public function-pointer fields with no per-field documentation, so a caller cannot tell what any one of them expects without reading the kernel it points at.\n\n## Background\n\nThe struct sits at `crates/gf2-kernels-simd/src/lib.rs:83`. Its type-level comment states only that the kernels have identical semantics to the scalar implementation, which says nothing about what each individual entry takes.\n\nWhat a caller needs per field is the shape of the slices involved, whether the operation writes in place or to a separate destination, any length or alignment precondition, and what the operation computes.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the fifteen fields carries documentation stating what the kernel computes, the shape of its slice arguments, and any length or alignment precondition.\n- [hard] REQ-02: Documentation states whether each kernel writes in place or to a separate destination.\n- [hard] REQ-03: The field documentation is accurate against the kernels currently assigned to each entry, verified by reading them rather than inferred from field names.\n- [hard] REQ-04: Documentation builds without warnings, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:17.477025157Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "54278d0c-8fe8-4022-b560-584c26e6d41d",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Document the individual LogicalFns dispatch fields",
+  "updated_at": "2026-08-07T12:22:17.477025157Z"
+}

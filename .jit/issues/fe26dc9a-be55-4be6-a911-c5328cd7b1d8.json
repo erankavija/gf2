@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "Around fourteen test functions across the SIMD kernel modules are named without the required prefix. The deviation is systemic rather than isolated, so fix it across the crate in one pass.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions are spread across the Mersenne, F_65537, medium- and small-prime, generic prime-field, and polynomial-multiply kernel modules, with names such as the batch-multiply exact-multiple case, the panelised GEMM square case, and the safe-wrapper word-boundary case.\n\nLocating every offender is part of the work: enumerate the crate's test functions and fix all that lack the prefix, rather than only the ones named here.\n\n## Success Criteria\n\n- [hard] REQ-01: Every test function in the SIMD kernel crate is named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: The enumeration that established the full offender set is recorded, so the sweep is verifiable as complete rather than partial.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "fe26dc9a-be55-4be6-a911-c5328cd7b1d8",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-simd",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Add the required test prefix to the SIMD kernel module tests",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

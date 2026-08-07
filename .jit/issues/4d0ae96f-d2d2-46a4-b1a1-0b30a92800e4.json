@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "Several gf2-core tests deviate from the project's test-naming and ignore-annotation conventions. Bring them into line so the suite reads uniformly and the slow tier is self-describing.\n\n## Background\n\nThe project requires every ignored test to carry a tagged reason string and every test function to be named `test_<operation>_<scenario>`.\n\nTwo deviations exist in this crate. The wide-field axiom stress test at `crates/gf2-core/src/field/axiom_tests.rs:1027` uses a bare ignore attribute with no reason, unlike every other ignored test in the same file. Separately, four tests near `crates/gf2-core/src/bitvec.rs:1705` are named for the operation alone with no scenario suffix, and the same pattern repeats in the quadratic and cubic extension-field modules.\n\n## Success Criteria\n\n- [hard] REQ-01: The wide-field axiom stress test carries a lowercase `slow:` tagged reason describing why it exceeds the fast tier.\n- [hard] REQ-02: No bare ignore attribute remains anywhere in gf2-core.\n- [hard] REQ-03: The four bit-vector tests and their counterparts in the quadratic and cubic extension modules are renamed to `test_<operation>_<scenario>`, where the scenario names the asserted outcome.\n- [hard] REQ-04: Renamed tests assert the same behaviour as before; no test is dropped or weakened.\n- [hard] REQ-05: The fast tier stays inside its per-test and whole-suite time budgets, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "4d0ae96f-d2d2-46a4-b1a1-0b30a92800e4",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-core",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Bring gf2-core test names and ignore annotations to convention",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

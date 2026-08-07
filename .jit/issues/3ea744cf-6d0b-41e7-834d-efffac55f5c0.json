@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "Several GPU tests in the HIP crate run without an ignore annotation or a feature gate, so a checkout with no supported device reports failures that are really absent hardware, and one benchmark-shaped test runs inside the fast tier. Gate them by what they actually require.\n\n## Background\n\nThe project marks tests needing hardware the checkout may not have with an `external:` tagged reason, and marks tests exceeding the fast tier with a `slow:` tag.\n\nFour groups are affected. A throughput test at `crates/gf2-kernels-hip/tests/throughput_bench.rs:13` uses a benchmark-style name rather than the required test prefix and runs two hundred iterations with no ignore annotation. Two property tests at `crates/gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs:272` lack both an ignore annotation and the feature gate that guards device code. Three in-module GPU tests near `crates/gf2-kernels-hip/src/lib.rs:1227` lack ignore annotations, as does a stream-behaviour test alongside them.\n\n## Success Criteria\n\n- [hard] REQ-01: The throughput test is renamed to the `test_<operation>_<scenario>` form and carries a `slow:` tagged reason naming its iteration cost.\n- [hard] REQ-02: The two cross-check property tests carry an `external:` tagged reason naming the required device, and are behind the feature gate that guards device code.\n- [hard] REQ-03: The three in-module GPU tests and the stream-behaviour test alongside them carry an `external:` tagged reason naming the required device.\n- [hard] REQ-04: A checkout with no supported device reports these tests as ignored rather than failed.\n- [hard] REQ-05: Where a supported device is present, the gated tests still run and still assert what they asserted before.\n- [hard] REQ-06: Formatting, clippy with warnings denied, and the crate's host-side build all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "3ea744cf-6d0b-41e7-834d-efffac55f5c0",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-kernels-hip",
+    "satisfies:REQ-01",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Gate the device-dependent gf2-kernels-hip tests correctly",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

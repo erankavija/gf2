@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "Eighteen test functions in the DVB-T2 campaign binary are named without the required prefix, so they do not match the convention the rest of the workspace follows.\n\n## Background\n\nThe project names test functions `test_<operation>_<scenario>`. The affected functions in `crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` are named for the scenario alone, so a filtered run that selects on the prefix silently skips them.\n\n## Success Criteria\n\n- [hard] REQ-01: All eighteen test functions in the campaign binary are named `test_<operation>_<scenario>`.\n- [hard] REQ-02: Each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-03: No test function in the binary lacks the prefix afterwards.\n- [hard] REQ-04: The suite passes, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b60de44f-ed6d-4c73-a759-6643391b94c0",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "satisfies:REQ-02",
+    "satisfies:REQ-04"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Add the required test prefix to the gf2-sim campaign binary tests",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}

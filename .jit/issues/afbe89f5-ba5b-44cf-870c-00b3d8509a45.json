@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:09.483114622Z",
+  "dependencies": [],
+  "description": "Two statistics helpers are copy-pasted across the simulation binaries. Give each one a single home in the library and have every binary call it.\n\n## Background\n\n`mean_sigma` appears verbatim in four binaries, and a fifth inlines the same three-step computation without wrapping it. Separately, `ldpc_bler_sweep.rs:177` carries a private Es/N0-to-sigma conversion that duplicates the library's `channels::es_n0_db_to_sigma_f64`, differing only in return type.\n\nBoth are the same shape of debt in the same crate's binary layer, so they share one landing.\n\n## Success Criteria\n\n- [hard] REQ-01: A single crate-internal `mean_sigma` is defined in the library and used by every binary that previously carried a copy.\n- [hard] REQ-02: The binary that inlined the computation without a wrapper also calls the shared helper.\n- [hard] REQ-03: No private copy of `mean_sigma` remains in any binary.\n- [hard] REQ-04: The private Es/N0-to-sigma conversion in the BLER sweep binary is removed in favour of the library conversion, with any return-type difference handled at the call site or by a documented library variant.\n- [hard] REQ-05: Reported statistics are numerically unchanged for a fixed seed.\n- [hard] REQ-06: The workspace test suite, clippy with warnings denied, and formatting all pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:09.483114622Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "afbe89f5-ba5b-44cf-870c-00b3d8509a45",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-sim",
+    "satisfies:REQ-01",
+    "satisfies:REQ-03",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Share the mean/sigma and Es/N0 conversion helpers across gf2-sim binaries",
+  "updated_at": "2026-08-07T12:22:09.483114622Z"
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "key": "docs-simd-logical-fns",
+    "title": "Document the individual LogicalFns dispatch fields",
+    "description": "The dispatch table that selects logical kernels exposes fifteen public function-pointer fields with no per-field documentation, so a caller cannot tell what any one of them expects without reading the kernel it points at.\n\n## Background\n\nThe struct sits at `crates/gf2-kernels-simd/src/lib.rs:83`. Its type-level comment states only that the kernels have identical semantics to the scalar implementation, which says nothing about what each individual entry takes.\n\nWhat a caller needs per field is the shape of the slices involved, whether the operation writes in place or to a separate destination, any length or alignment precondition, and what the operation computes.\n\n## Success Criteria\n\n- [hard] REQ-01: Each of the fifteen fields carries documentation stating what the kernel computes, the shape of its slice arguments, and any length or alignment precondition.\n- [hard] REQ-02: Documentation states whether each kernel writes in place or to a separate destination.\n- [hard] REQ-03: The field documentation is accurate against the kernels currently assigned to each entry, verified by reading them rather than inferred from field names.\n- [hard] REQ-04: Documentation builds without warnings, and clippy with warnings denied plus formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-kernels-simd",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "The fifteen LogicalFns dispatch fields document their contracts and slice shapes.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "callers of the SIMD logical dispatch table",
+        "test_boundary": "documentation build over the SIMD kernel crate",
+        "worker_sized_reason": "Fifteen field comments in one struct, each verified against the kernel it points at.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-kernels-simd/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "docs-core-matrix-sparse",
+    "title": "Complete the missing doc sections on gf2-core matrix and bit-vector APIs",
+    "description": "Several public matrix, sparse-matrix, and bit-vector operations omit the sections the project requires: cost characteristics on operations whose cost is not obvious, panic conditions on operations that can panic, and examples where the contract is not evident from the signature.\n\n## Background\n\nFour groups are affected. The pivot search at `crates/gf2-core/src/matrix.rs:987` states neither its cost nor how it behaves, and the dense-to-sparse conversion beside it omits its cost despite scaling with the full matrix area. The sparse conversions at `crates/gf2-core/src/sparse.rs:890` carry a single sentence each with no cost, no panic conditions, and no example. The two bit-scan operations at `crates/gf2-core/src/bitvec.rs:847` and `:873` omit cost, while their two immediate siblings state it.\n\nThe project documents examples where they clarify a non-obvious contract, not on items whose signature already says everything. These four groups qualify because the traversal order, the early-exit behaviour, and the panic delegation are not visible from the signatures.\n\n## Success Criteria\n\n- [hard] REQ-01: The pivot search states its cost and carries an example showing what it returns when no pivot exists.\n- [hard] REQ-02: The dense-to-sparse conversion states its cost in terms of the matrix dimensions.\n- [hard] REQ-03: Both sparse conversions state their cost, their panic conditions including any delegated from the element accessor, and carry an example.\n- [hard] REQ-04: Both bit-scan operations state their cost, including the early-exit behaviour, in the same terms their two siblings use.\n- [hard] REQ-05: Every example added compiles and passes as a documentation test.\n- [hard] REQ-06: No example is added to an accessor, constant, simple constructor, predicate, or direct field mapping.\n- [hard] REQ-07: Clippy with warnings denied and formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-core",
+      "satisfies:REQ-01",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "gf2-core matrix, sparse, and bit-scan APIs state cost, panics, and non-obvious contracts.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-core structural-inspection API",
+        "test_boundary": "documentation tests over gf2-core",
+        "worker_sized_reason": "Four documentation groups in one crate, each bounded by an item whose behaviour is already implemented.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-core/src/matrix.rs",
+            "crates/gf2-core/src/sparse.rs",
+            "crates/gf2-core/src/bitvec.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "docs-coding-sections-and-examples",
+    "title": "Complete doc sections and make gf2-coding examples compile",
+    "description": "Several public coding-crate items omit required argument, panic, or cost sections, and four annotate their examples so they are never compiled. Complete the sections and bring the examples under the documentation build.\n\n## Background\n\nAn example marked so the toolchain skips it is worse than no example: it looks like verified usage while being free to drift. Four public items across the LDPC encoding, trait, and 5G NR modules are annotated this way, at `crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:113`, `crates/gf2-coding/src/traits.rs:279` and `:316`, and `crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1306`.\n\nSeparately, the two log-domain helpers at `crates/gf2-coding/src/grand/orbgrand.rs:852` and `:863` omit argument, example, and cost sections that the function immediately after them carries in full. The generator accessor at `crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:374` panics for non-systematic codes without saying so. The per-bit histogram at `crates/gf2-coding/src/modem/analysis.rs:829` omits its argument description while the function after it has one.\n\n## Success Criteria\n\n- [hard] REQ-01: Both log-domain helpers state their arguments, their cost, and carry an example, matching the shape of the documented function beside them.\n- [hard] REQ-02: The generator accessor states the condition under which it panics and carries an example.\n- [hard] REQ-03: The per-bit histogram states its argument.\n- [hard] REQ-04: The four skipped examples either compile without running, where they need a device or external data, or are made self-contained and run.\n- [hard] REQ-05: No example in the crate is annotated so the toolchain skips compiling it.\n- [hard] REQ-06: Every example added or converted compiles and passes as a documentation test.\n- [hard] REQ-07: No example is added to an accessor, constant, simple constructor, predicate, or direct field mapping.\n- [hard] REQ-08: Clippy with warnings denied and formatting pass.\n",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-coding",
+      "satisfies:REQ-01",
+      "satisfies:REQ-02",
+      "satisfies:REQ-03",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "The cited gf2-coding items state their contracts under a compiling example set.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-03",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-coding public API documentation",
+        "test_boundary": "documentation tests over gf2-coding",
+        "worker_sized_reason": "One crate's documentation gaps, all at cited sites, verified by the documentation test run.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-coding/src/grand/orbgrand.rs",
+            "crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs",
+            "crates/gf2-coding/src/modem/analysis.rs",
+            "crates/gf2-coding/src/traits.rs",
+            "crates/gf2-coding/src/ldpc/nr_5g/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "docs-algebra-packed5-impls",
+    "title": "Document Packed5Matrix equality and debug formatting",
+    "description": "The packed F_5 matrix type documents its equality implementation in a single line and leaves its debug formatting undocumented, while both sibling matrix types carry full documentation blocks.\n\n## Background\n\nThe implementations are at `crates/gf2-algebra/src/packed/packed5.rs:1410`. The F_3 sibling type establishes the shape the project expects here: a description of what the implementation does, an example, and the cost.\n\nEquality on a packed representation is worth stating explicitly, because whether it compares logical values or the underlying packed words determines whether two matrices holding equal values but different padding compare equal.\n\n## Success Criteria\n\n- [hard] REQ-01: The equality implementation carries a description, an example, and its cost.\n- [hard] REQ-02: The description states whether equality compares logical element values or the packed representation, and what that means for matrices whose padding differs.\n- [hard] REQ-03: The debug formatting implementation carries a description and states the shape of its output.\n- [hard] REQ-04: Both blocks follow the documentation shape already used by the F_3 sibling type.\n- [hard] REQ-05: Every example added compiles and passes as a documentation test.\n- [hard] REQ-06: Clippy with warnings denied and formatting pass.\n",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:tech-debt-2026-06-30",
+      "component:gf2-algebra",
+      "satisfies:REQ-01",
+      "satisfies:REQ-04"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Packed5Matrix equality and debug formatting carry the crate's standard documentation.",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-01",
+        "REQ-04"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra packed F_5 matrix type",
+        "test_boundary": "documentation tests over gf2-algebra",
+        "worker_sized_reason": "Two trait implementations on one type, with a sibling implementation as the reference shape.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-algebra/src/packed/packed5.rs"
+          ]
+        }
+      }
+    }
+  }
+]

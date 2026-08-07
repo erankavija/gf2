@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:22:13.470051249Z",
+  "dependencies": [],
+  "description": "More than twenty ignored tests across the coding crate carry no reason string, one records its cost in a code comment instead of an annotation, and six use the wrong capitalisation. Make every ignore annotation self-describing and consistently tagged.\n\n## Background\n\nThe project tags ignored tests by why they are skipped: `slow:` for tests that exceed the fast tier, `external:` for tests needing hardware or data the checkout does not carry, and `sim:` for long simulation runs. The tag is what lets a reader tell an expensive test from an unrunnable one.\n\nBare annotations appear across nine test and source files, concentrated in the DVB-T2 verification suite, the test-vector parser and loader, backend integration, LDPC validation and core, and the 5G NR regression suite. One test in the BCJR module records an approximate runtime in a leading comment rather than in the annotation. Six annotations in the LDPC cache I/O tests use a capitalised prefix where the project standard is lowercase.\n\n## Success Criteria\n\n- [hard] REQ-01: Every ignored test in gf2-coding carries a reason string opening with a lowercase `slow:`, `external:`, or `sim:` tag.\n- [hard] REQ-02: The tag chosen for each test reflects why it is actually skipped, and the text after the tag names the cost or the missing prerequisite.\n- [hard] REQ-03: The BCJR test that records its runtime in a comment carries that information in its reason string instead, and the comment is removed.\n- [hard] REQ-04: The six capitalised prefixes in the LDPC cache I/O tests are lowercase.\n- [hard] REQ-05: No bare ignore attribute remains anywhere in gf2-coding.\n- [hard] REQ-06: The set of tests that run in the fast tier is unchanged, the tier stays inside its time budgets, and clippy with warnings denied plus formatting pass.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:22:13.470051249Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b9539134-d320-44f0-abf9-a5c27243a1ec",
+  "labels": [
+    "type:task",
+    "epic:tech-debt-2026-06-30",
+    "component:gf2-coding",
+    "satisfies:REQ-01",
+    "satisfies:REQ-04"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Give every ignored gf2-coding test a tagged reason string",
+  "updated_at": "2026-08-07T12:22:13.470051249Z"
+}
