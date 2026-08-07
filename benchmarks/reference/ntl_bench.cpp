@@ -34,7 +34,7 @@
 // both libraries store an extension element as a polynomial of degree
 // < 32 with coefficient `c_i` at bit `i`, **no basis-change matrix is
 // required** — gf2-core element bytes load directly into NTL via
-// `GF2XFromBytes`. See `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`
+// `GF2XFromBytes`. See `dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md`
 // for the criterion #3 evidence.
 //
 // Determinism: NTL `zz_p` arithmetic is deterministic; the only
@@ -62,7 +62,7 @@
 //         `crates/gf2-core/tests/gf2pow32_matmul.rs` is retained as a
 //         separate Rust-internal gf2-core ↔ scalar witness, but is no
 //         longer load-bearing for the cross-language smoke contract.
-//         See dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md
+//         See dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md
 //         § "Smoke transcript" and § "Implementation note: smoke
 //         architecture (R2 rewrite)" for the rationale.
 // --large enables n=256, 1024 cells. Off by default because at n=1024

@@ -1,6 +1,6 @@
 //! F_5 SIMD batch kernels (R1 Candidate D 3-plane bit-sliced).
 //!
-//! The F_5 encoding follows R1 Candidate D (`dev/plans/r1_f5_encoding_decision.md`):
+//! The F_5 encoding follows R1 Candidate D (`dev/plans/6b3f6054/r1_f5_encoding_decision.md`):
 //! each `F_5` element is stored as a 3-bit canonical value in three parallel
 //! bit-planes `(b0, b1, b2)`:
 //!

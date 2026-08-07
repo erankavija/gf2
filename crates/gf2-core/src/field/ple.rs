@@ -638,7 +638,7 @@ fn ple_in_place_window<F: FiniteField>(
     // but each panel handles few enough columns that the wide GEMM
     // dominates the work between panels. 128 was empirically selected
     // from a tuning sweep over {32, 48, 64, 96, 128} — see
-    // `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
+    // `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md` § 2.
     const PLE_PANEL_RECURSIVE_BASE: usize = 128;
     if F::has_simd_ple_panel_base() && win > PLE_PANEL_RECURSIVE_BASE {
         return ple_panel_recursive_window::<F>(
@@ -750,7 +750,7 @@ fn ple_in_place_window<F: FiniteField>(
 /// 2D recursion. The 2D split is structurally equivalent at the cost
 /// of more recursion bookkeeping; the 1D column-axis form has been
 /// sufficient to close the GF(251) ratio gap empirically (see
-/// `dev/bench_results/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
+/// `dev/bench_results/6823c8a0/2026-05-26-6823c8a0-r1-recursive-pluq.md`).
 ///
 /// # Correctness invariants preserved
 ///
@@ -2911,7 +2911,7 @@ mod tests {
     // jit:73ec5da3 R1 rework: the deeper trsm recursion at threshold=8
     // adds ~13% more allocations at n=1024 (4192 → 4736) but reduces
     // wall-time by 1–7% on the target Mersenne-31 cells (see the sweep
-    // table in dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md).
+    // table in dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md).
     const EXPECTED_PLE_N4: u64 = 14;
     const EXPECTED_PLE_N64: u64 = 264;
     const EXPECTED_PLE_N1024: u64 = 4736;

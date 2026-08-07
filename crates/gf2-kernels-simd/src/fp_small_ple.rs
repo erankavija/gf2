@@ -12,7 +12,7 @@
 //!
 //! # Algorithm summary
 //!
-//! See `dev/active/2e8c5a29-panelized-ple-design.md` for the full
+//! See `dev/active/2e8c5a29/2e8c5a29-panelized-ple-design.md` for the full
 //! design. The base-case kernel processes an `m × win` column window
 //! of canonical-byte storage in-place, performing:
 //!   1. Linear-scan pivot search (rank-revealing, preserves the

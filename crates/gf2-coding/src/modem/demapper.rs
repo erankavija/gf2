@@ -13,7 +13,7 @@
 //! (task `e2c0f65a`) composes around these traits rather than threading
 //! observability into the hot demap loop. This is the load-bearing design
 //! decision documented in
-//! `dev/active/d4851c3d-modem-framework-design.md` under
+//! `dev/active/d4851c3d-modem-framework/d4851c3d-modem-framework-design.md` under
 //! "Zero-overhead analysis split".
 //!
 //! Concrete backends land in tasks `51334873` (reference path) and

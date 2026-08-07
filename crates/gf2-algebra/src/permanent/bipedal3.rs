@@ -33,7 +33,7 @@
 //! For `n > 63` the column-sum spans `W = ceil(n / 64)` words per leg.
 //! The multi-word streaming path lives in `super::bipedal3_multiword` and
 //! implements the R3 cache-blocking design
-//! (`dev/plans/r3_multi_word_streaming.md`).
+//! (`dev/plans/60c30e2d/r3_multi_word_streaming.md`).
 //!
 //! ## Dispatcher
 //!
@@ -48,8 +48,8 @@
 //!
 //! # Algorithm reference
 //!
-//! `dev/plans/gf2_algebra_permanent.md` §7.3 (single-word path).
-//! `dev/plans/r3_multi_word_streaming.md` §8 (multi-word pseudocode).
+//! `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §7.3 (single-word path).
+//! `dev/plans/60c30e2d/r3_multi_word_streaming.md` §8 (multi-word pseudocode).
 
 use gf2_core::gfp::Fp;
 

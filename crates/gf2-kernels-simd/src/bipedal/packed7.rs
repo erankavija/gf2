@@ -1,6 +1,6 @@
 //! F_7 SIMD batch kernels (R2 Candidate A 3-bit + 2^16 LUT).
 //!
-//! The F_7 encoding follows R2 Candidate A (`dev/plans/r2_f7_encoding_decision.md`):
+//! The F_7 encoding follows R2 Candidate A (`dev/plans/f10152f6/r2_f7_encoding_decision.md`):
 //! each `u64` packs **16 elements** at 4-bit-aligned slots. Slot `i` occupies
 //! bits `[4i .. 4i+4)`. Canonical values are `0..=6`; the high bit of each
 //! slot is always zero for canonical packings (since 6 = `0b0110 < 8`).

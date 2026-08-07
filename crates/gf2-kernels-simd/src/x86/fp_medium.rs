@@ -799,7 +799,7 @@ fn fp_medium_nc_panels_outer(n_panels: usize, k: usize) -> usize {
     // 16 MB — half of Zen 3's 32 MB CCX-shared L3. Matches the Route
     // A calibration in `fp_small_f32.rs::n_c_panels_outer` (74ba1cdc
     // R1, 16 MB sweet spot). The empirical sweep for u16 lanes lives
-    // in `dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md`.
+    // in `dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md`.
     const L3_BUDGET_BYTES: usize = 16 * 1024 * 1024;
     let panel_bytes = k
         .saturating_mul(FP_MEDIUM_PANEL_NR)

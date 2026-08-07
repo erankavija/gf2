@@ -4,7 +4,7 @@ Packed finite-field abstractions and high-performance matrix permanent algorithm
 
 `gf2-algebra` is the workspace home for the **bipedal encoding** of F_3 / F_5 / F_7 elements into parallel `u64` bit-planes, and the `permanent_bipedal*` algorithm family that evaluates the matrix permanent via Ryser's inclusion-exclusion formula in Gray-code order. It sits on top of `gf2-core` (for `FiniteField`, `Fp<P>`, `BitVec`) and is `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip` crates, in keeping with the project's unsafe-isolation invariant.
 
-Epic design doc: [`dev/plans/gf2_algebra_permanent.md`](../../dev/plans/gf2_algebra_permanent.md).
+Epic design doc: [`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`](../../dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md).
 
 ## Motivation
 
@@ -126,8 +126,8 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 ## Acceleration
 
 - **SIMD** (default on): On x86_64 hosts with AVX2, `permanent_bipedal3` dispatches the inner column-sum add/sub through the AVX2 batch kernel in `gf2-kernels-simd`. Runtime detection via `OnceLock` (no `build.rs` magic). Scalar fallback on non-AVX2 and non-x86 hosts.
-- **Parallel** (default on): `permanent_bipedal3_parallel` partitions the 2^n Gray-code walk into independent chunks, each dispatched via Rayon work-stealing. Chunk size tunable via the optional `chunk_log2` parameter; default is auto-selected from `dev/plans/gf2_algebra_permanent.md`.
-- **Multi-word** (built-in): For `n > 63` the column-sum vector spans `ceil(n / 64)` Bipedal3 words, using the R3 cache-blocking design from `dev/plans/r3_multi_word_streaming.md`. Supported up to `n = 255`.
+- **Parallel** (default on): `permanent_bipedal3_parallel` partitions the 2^n Gray-code walk into independent chunks, each dispatched via Rayon work-stealing. Chunk size tunable via the optional `chunk_log2` parameter; default is auto-selected from `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`.
+- **Multi-word** (built-in): For `n > 63` the column-sum vector spans `ceil(n / 64)` Bipedal3 words, using the R3 cache-blocking design from `dev/plans/60c30e2d/r3_multi_word_streaming.md`. Supported up to `n = 255`.
 - **GPU** (opt-in, `--features hip`): `gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}` sends a whole batch to the device in one kernel launch (one GPU block per matrix). Requires `hipcc` and a ROCm 6.x+ environment; the crate is excluded from the default workspace build.
 
 ## Examples
@@ -170,10 +170,10 @@ Always use `--release`: debug mode is 10-100x slower on the packed arithmetic an
 
 ## Documentation
 
-- Epic design: [`dev/plans/gf2_algebra_permanent.md`](../../dev/plans/gf2_algebra_permanent.md)
-- Crate boundary: [`dev/plans/d1a_gf2_algebra_boundary.md`](../../dev/plans/d1a_gf2_algebra_boundary.md)
-- Packed API surface: [`dev/plans/d1b_packed_field_api.md`](../../dev/plans/d1b_packed_field_api.md)
-- Feature-gate matrix: [`dev/plans/d1c_feature_matrix.md`](../../dev/plans/d1c_feature_matrix.md)
+- Epic design: [`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`](../../dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md)
+- Crate boundary: [`dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../dev/plans/6e20133d/d1a_gf2_algebra_boundary.md)
+- Packed API surface: [`dev/plans/9fe275d3/d1b_packed_field_api.md`](../../dev/plans/9fe275d3/d1b_packed_field_api.md)
+- Feature-gate matrix: [`dev/plans/4fced99b/d1c_feature_matrix.md`](../../dev/plans/4fced99b/d1c_feature_matrix.md)
 - S1 speedup data: [`dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`](../../dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv)
 - GPU crossover data: [`dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`](../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv)
 - Workspace overview: [`../../README.md`](../../README.md)

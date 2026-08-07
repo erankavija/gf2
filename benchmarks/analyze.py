@@ -291,7 +291,7 @@ def reference_lib_for(field_value: str, operation: Optional[str] = None) -> str:
         # Promoted 2026-05-04 (jit:b13799ac). M4RIE caps at m ≤ 16, so
         # the (matmul, GF(2^32)) cell cannot share the GF(2^m)
         # reference and is routed to NTL `mat_GF2E` instead. See
-        # `dev/bench_results/2026-05-04-b13799ac-gf2pow32-promotion.md`.
+        # `dev/bench_results/b13799ac/2026-05-04-b13799ac-gf2pow32-promotion.md`.
         # Other GF(2^32) operations (invert, solve, charpoly, …) fall
         # through to the field-default rule below; they have no
         # promoted reference yet.

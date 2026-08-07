@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Post-processing fixups for the gf2-algebra Aeneas extraction.
 
-The bipedal3 V1 proofs (see `dev/plans/d2_lean_bipedal3_sketch.md` and
+The bipedal3 V1 proofs (see `dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md` and
 JIT issue f05ffbe1) target the inherent `Bipedal3::{add,sub,mul,neg}_inherent`
 methods. These are pure bitwise on `Std.U64` and do not reach into the
 `gf2_core::gfp::Fp` or `FiniteField` machinery at runtime — but Charon still
@@ -117,7 +117,7 @@ def fixup_funs(path: str) -> None:
     #    helper bodies are never even defined (undefined references).
     #
     #    `Packed5Vec` is explicitly out of D5 scope
-    #    (`dev/plans/d5_lean_packed5_sketch.md` §7); the proofs target
+    #    (`dev/plans/30e98ef1/d5_lean_packed5_sketch.md` §7); the proofs target
     #    only the `Packed5::{add,sub,mul,neg}_inherent` element ops and
     #    never project this `Zip` instance (it is referenced nowhere
     #    outside its own malformed body). Replacing the whole `def …
@@ -175,7 +175,7 @@ def fixup_funs(path: str) -> None:
     #     collect,all}` helper bodies are never even defined.
     #
     #     `Packed7Vec` (like `Packed5Vec`) is explicitly out of D5/D6
-    #     scope (`dev/plans/d6_lean_packed7_sketch.md` §7); the proofs
+    #     scope (`dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §7); the proofs
     #     target only the `Packed7::{add,sub,mul,neg}_inherent` element
     #     ops and never project this `IterMut` instance (it is referenced
     #     nowhere outside its own malformed body / the out-of-scope

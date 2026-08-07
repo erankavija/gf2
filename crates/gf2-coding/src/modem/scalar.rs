@@ -3,7 +3,7 @@
 //! The [`ModemScalar`] trait is a sealed abstraction over `f32` and `f64` that
 //! lets constellation storage and demapper math remain generic without
 //! opening the trait up to arbitrary external implementations. See the
-//! epic design document (`dev/active/d4851c3d-modem-framework-design.md`)
+//! epic design document (`dev/active/d4851c3d-modem-framework/d4851c3d-modem-framework-design.md`)
 //! for why a fixed-point flavor is intentionally deferred.
 
 mod sealed {

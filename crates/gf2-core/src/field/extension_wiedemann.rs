@@ -7,7 +7,7 @@
 //!
 //! # Algorithm (issue `6c926de0`)
 //!
-//! Per the binding plan in `dev/active/d1dd266c-minpoly-sota-plan.md` § 4,
+//! Per the binding plan in `dev/active/d1dd266c/d1dd266c-minpoly-sota-plan.md` § 4,
 //! refined to the **decoupled-component** formulation that lets BM stay in
 //! base arithmetic:
 //!

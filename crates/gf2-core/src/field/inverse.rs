@@ -111,7 +111,7 @@ impl<F: FiniteField> FieldMatrix<F> {
     /// triangular. The total dense `n³` work drops from `≈ 1.33 n³`
     /// (PLE-share excluded) to `≈ 0.83 n³`, closing the gap to
     /// fflas-ffpack's `dgetri`-style in-place driver. See
-    /// `dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md` for
+    /// `dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md` for
     /// the per-cell ratios.
     ///
     /// # Arguments
@@ -200,7 +200,7 @@ impl<F: FiniteField> FieldMatrix<F> {
         // from `trtri_lower` are not read by `trtrm`).
         //
         // Algorithm-choice rationale: see method-level docs and
-        // `dev/bench_results/2026-05-07-d1a5fea8-invert-inplace.md`.
+        // `dev/bench_results/d1a5fea8/2026-05-07-d1a5fea8-invert-inplace.md`.
         // Allocation budget: NO `n × n` scratch (the prior driver
         // allocated `temp` of shape `n × n` for the `gemm` target);
         // `trtrm`'s recursion adds the documented per-level

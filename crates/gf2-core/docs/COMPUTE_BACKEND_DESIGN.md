@@ -141,7 +141,7 @@ fn decode_batch(&self, decoder: &dyn Decodable, llrs: &[Vec<Llr>]) -> Vec<Result
 ### Phase 3: GPU Backend (Months 3-6)
 
 > Backend direction: **HIP/ROCm** via `gf2-kernels-hip` (the Vulkan path is
-> superseded — see `dev/plans/hip_gpu_prototype_wave.md` / epic `806eb14e`). The
+> superseded — see `dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md` / epic `806eb14e`). The
 > sketch below is illustrative; the real GPU code lives in `gf2-kernels-hip`.
 
 ```rust

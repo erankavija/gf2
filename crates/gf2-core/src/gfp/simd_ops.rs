@@ -526,7 +526,7 @@ fn fp_small_try_dot_vec<const P: u64>(_a: &[Fp<P>], _b: &[Fp<P>]) -> Option<Fp<P
 /// primes (GF(7), GF(31), GF(127), GF(241)) have `P < 251` and therefore
 /// `P >= N_THRESH_PRIME` evaluates to `false`, routing them to Candidate C
 /// unchanged. See
-/// `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`
+/// `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
 /// for the full side-by-side evidence table and decision-rule application.
 ///
 /// To select F for primes ≥ some threshold, lower this constant (e.g.
@@ -555,7 +555,7 @@ const N_THRESH_PRIME: u64 = 251;
 /// GF(251)/n=1024 ratio: 0.683 vs fflas-ffpack on Zen 3, PASS (≥ 0.667).
 /// GF(251)/n=256 ratio: 0.547 — pack cost dominates; Candidate C wins.
 ///
-/// See `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`
+/// See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
 /// for the full side-by-side evidence table and decision-rule application.
 #[cfg(feature = "simd")]
 #[inline]
@@ -567,7 +567,7 @@ const fn select_f32_path<const P: u64>(_m: usize, _k: usize, n: usize) -> bool {
     //
     // GF(251)/n ≥ 512: ratio 0.683 vs fflas-ffpack on Zen 3, PASS.
     // GF(251)/n < 512: pack cost dominates; Candidate C wins.
-    // See `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`.
+    // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`.
     P >= N_THRESH_PRIME && P <= 251 && n >= 512
 }
 
@@ -713,7 +713,7 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// every cell except GF(251)/n=1024 where route A clears 1.5× of fflas-ffpack
 /// (ratio 0.679 > 0.667). `select_f32_path` returns `true` for `P == 251 &&
 /// n >= 512` (the pack-cost amortisation threshold determined by the Phase 1
-/// route-selection decision, `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`);
+/// route-selection decision, `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`);
 /// `N_THRESH_PRIME = 251` combined with `n >= 512` routes exactly the cell
 /// `P == 251 && n >= 512` through route A; all other in-scope primes have
 /// `P < 251` and stay on Candidate C.
@@ -738,7 +738,7 @@ fn route_c_gf251_enabled<const P: u64>() -> bool {
 /// has been called with `true` AND `P == 251`, this function routes through
 /// route A for any n (not just n ≥ 512). This preserves backward
 /// compatibility with bench drivers that force route A unconditionally.
-/// See `dev/active/68cdf4c8-route-a-design.md`.
+/// See `dev/active/68cdf4c8/68cdf4c8-route-a-design.md`.
 ///
 /// **Small-n overhead amortisation (issue 27bb2f75):** for `n ≤ 128` the
 /// per-call constants (panel-pack heap allocations + Montgomery REDC on
@@ -812,7 +812,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         //       preserves local readability. GF(7)/GF(31)/GF(127)/GF(241)
         //       and GF(251)/n<512 use Candidate C.
         //
-        // See `dev/bench_results/2026-05-25-41096af5-route-selection-decision.md`
+        // See `dev/bench_results/41096af5/2026-05-25-41096af5-route-selection-decision.md`
         // for the Phase 1 decision table and wire-in rationale.
         if let Some(fns_f32) = crate::simd::maybe_fp_small_f32() {
             let tables = build_small_prime_tables::<P>();
@@ -875,7 +875,7 @@ pub(crate) fn fp_small_try_gemm_classical<const P: u64>(
         // packing + KC blocking. The toggle is opt-in via
         // `set_route_c_gf251_enabled(true)`; default production
         // dispatch is unaffected (Candidate C continues to own all
-        // `p ≤ 251` cells). See `dev/active/fc182ed5-route-c-design.md`
+        // `p ≤ 251` cells). See `dev/active/fc182ed5/fc182ed5-route-c-design.md`
         // for the panel-dimension derivation (MR × NR × KC = 4 × 24 × 256).
         if let Some(fns_panel) = crate::simd::maybe_fp_small_panel() {
             let tables = build_small_prime_tables::<P>();

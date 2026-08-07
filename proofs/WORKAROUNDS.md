@@ -133,7 +133,7 @@ wrappers were needed.
 The `Gf2Algebra/` Lean library is a second Aeneas extraction covering only the
 bipedal F_3 packed arithmetic at `gf2_algebra::packed::bipedal3::Bipedal3`,
 needed for the D2 V1 correctness proof
-(`dev/plans/d2_lean_bipedal3_sketch.md`). It is verified in lock-step with the
+(`dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`). It is verified in lock-step with the
 existing `Gf2Core/` extraction via the same `scripts/verify-lean.sh`. The
 Bipedal3 V1 proofs (`proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean`)
 target the four inherent wrappers

@@ -46,7 +46,7 @@
 //!   `permanent_bipedal5` and `permanent_bipedal7` — landed in W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
-//! [`dev/plans/d1a_gf2_algebra_boundary.md`](../../../dev/plans/d1a_gf2_algebra_boundary.md)
+//! [`dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/plans/6e20133d/d1a_gf2_algebra_boundary.md)
 //! §2.
 //!
 //! # Module map (D1a §2)
@@ -61,7 +61,7 @@
 //!
 //! # Features
 //!
-//! See [`dev/plans/d1c_feature_matrix.md`](../../../dev/plans/d1c_feature_matrix.md)
+//! See [`dev/plans/4fced99b/d1c_feature_matrix.md`](../../../dev/plans/4fced99b/d1c_feature_matrix.md)
 //! for the authoritative feature catalogue and the 64-cell compatibility
 //! matrix. Defaults are `["simd", "parallel", "f5", "f7"]`; `f5` and
 //! `f7` were flipped default-on as the W4 closing edit after the
@@ -69,10 +69,10 @@
 //!
 //! # See also
 //!
-//! - Epic design: `dev/plans/gf2_algebra_permanent.md`.
-//! - Crate boundary decision: `dev/plans/d1a_gf2_algebra_boundary.md`.
-//! - Trait surface decision: `dev/plans/d1b_packed_field_api.md`.
-//! - Feature-gate matrix decision: `dev/plans/d1c_feature_matrix.md`.
+//! - Epic design: `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md`.
+//! - Crate boundary decision: `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`.
+//! - Trait surface decision: `dev/plans/9fe275d3/d1b_packed_field_api.md`.
+//! - Feature-gate matrix decision: `dev/plans/4fced99b/d1c_feature_matrix.md`.
 
 pub mod gray;
 pub mod packed;
@@ -101,7 +101,7 @@ mod tests {
     /// Verifies the crate compiles and links into a test binary.
     ///
     /// This is a placeholder; the trait + algorithm coverage is added
-    /// by T2-T6 of the W1 wave per `dev/plans/d1a_gf2_algebra_boundary.md`
+    /// by T2-T6 of the W1 wave per `dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`
     /// §5 validation checklist.
     #[test]
     fn test_skeleton_compiles_smoke() {

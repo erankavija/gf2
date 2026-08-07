@@ -236,7 +236,7 @@ pub(crate) mod simd {
     /// of the k-axis.
     ///
     /// The 695350fd R0 post-mortem
-    /// (`dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` § 9)
+    /// (`dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9)
     /// identified the f64 cascade as the structural lever required to
     /// close GF(65521)/n=4096 — the u16-lane `_mm256_pmullw + _mm256_pmulhuw`
     /// kernel sits at ~92 % of its arithmetic ceiling (~40 Gop/s) while
@@ -281,7 +281,7 @@ pub(crate) mod simd {
     /// runtime** on any in-scope cell. `select_f32_path::<P>` (in
     /// `crates/gf2-core/src/gfp/simd_ops.rs`) returns `false` for every
     /// `P ≤ 251` because empirical 5-trial CCX1-pinned bench at GF(7)..GF(251)
-    /// at n ∈ {256, 1024} (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`)
+    /// at n ∈ {256, 1024} (`dev/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv`)
     /// shows Candidate C (the AVX2-only `_mm256_madd_epi16` kernel) beats
     /// Candidate F at every cell by 5–10 %. Production therefore routes
     /// to [`maybe_fp_small`] for these cells.
@@ -304,8 +304,8 @@ pub(crate) mod simd {
     /// panelized GEMM kernel, if any.
     ///
     /// Provides **Route C** from the jit:615db3b9 Phase 1 plan
-    /// (`dev/active/615db3b9-finite-field-la-sota-plan.md` § Phase 1,
-    /// item 3) and the design note `dev/active/fc182ed5-route-c-design.md`
+    /// (`dev/active/615db3b9/615db3b9-finite-field-la-sota-plan.md` § Phase 1,
+    /// item 3) and the design note `dev/active/fc182ed5/fc182ed5-route-c-design.md`
     /// — an explicit A/B panel-packed AVX2 register-blocked
     /// `_mm256_madd_epi16`-based GEMM for canonical-byte `Fp<P>`
     /// operands with `P ≤ 251`.

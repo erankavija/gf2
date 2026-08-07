@@ -2,7 +2,7 @@
   Gf2Algebra.Proofs.Bipedal3Correctness — V1 bipedal F_3 correctness
 
   Implements the 20 lemmas of the D2 proof sketch
-  (`dev/plans/d2_lean_bipedal3_sketch.md`) for JIT issue f05ffbe1.
+  (`dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md`) for JIT issue f05ffbe1.
 
   Proof target (Option A in the dispatch prompt; sketch §5): the four
   inherent wrappers `Bipedal3.{add,sub,mul,neg}_inherent` defined in

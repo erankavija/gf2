@@ -5,7 +5,7 @@
 //! `0749dbad` — analogous to Route A's f32-FMA cascade for fp_small
 //! (`P ≤ 251`), but at f64 lane density so it covers the medium-prime
 //! range `(251, 2^16)`. The structural model is documented in
-//! `dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` § 9.
+//! `dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9.
 //!
 //! The unsafe AVX2 + FMA3 implementation lives in
 //! [`crate::x86::fp_medium_f64`]; this module exposes only safe

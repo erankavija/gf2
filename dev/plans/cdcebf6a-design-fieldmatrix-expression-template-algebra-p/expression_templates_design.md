@@ -23,7 +23,7 @@
 
 ### 1.1 What the user writes
 
-The epic's UX contract (see [`armadillo_ux_mapping.md`](armadillo_ux_mapping.md) §4)
+The epic's UX contract (see [`../bb85c68a-field-linear-algebra/armadillo_ux_mapping.md`](../bb85c68a-field-linear-algebra/armadillo_ux_mapping.md) §4)
 says the following expressions must compile and evaluate efficiently in
 idiomatic Rust:
 
@@ -738,7 +738,7 @@ Two layers:
 
 When a proxy is built, we know the operand shapes. Mismatches are caller
 bugs. **Panic at construction** with the existing BitMatrix-style message
-(see `armadillo_ux_mapping.md` §6). Applies to:
+(see `../bb85c68a-field-linear-algebra/armadillo_ux_mapping.md` §6). Applies to:
 
 - `Product::new(a, b)`: panic if `a.cols() != b.rows()`.
 - `Sum::new(a, b)`, `FusedLinear::new(sa, sb)`: panic if shapes mismatch.
@@ -862,7 +862,7 @@ is a valid coercion target because of `From<E>`.
    requires a procedural macro crate which is disproportionate for a
    single gotcha. We accept the documentation-level defence.
 4. **The one-line idiom is `(expr).into()`.** The existing Armadillo UX
-   example (`armadillo_ux_mapping.md` §4) already uses it. Library
+   example (`../bb85c68a-field-linear-algebra/armadillo_ux_mapping.md` §4) already uses it. Library
    examples (in `examples/`) and test code must adhere.
 5. **Optional helper: `FieldMatrix::eval(expr: impl Evaluate<F>) -> Self`**
    — sugar for `(expr).into()` that reads closer to Armadillo's
