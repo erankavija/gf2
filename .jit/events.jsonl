@@ -6739,3 +6739,4 @@
 {"fields":["documents"],"id":"75f5b6ff-9a98-4d24-a29e-dc0c1e3174f8","issue_id":"55087229-89d6-4e23-afb2-96fd62de0cda","timestamp":"2026-08-07T15:03:06.436050777Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"a09a3516-c923-41ef-8c30-f62113146a69","issue_id":"c7cfd37e-866e-42fd-9ad3-d33bc61e2f2b","timestamp":"2026-08-07T15:03:06.548775259Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"46179696-40bf-4c4b-9622-8b3ad59d4403","issue_id":"cce5da8c-acba-47f2-a629-ecc6cb7f593c","timestamp":"2026-08-07T15:03:06.657182443Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"eb340faa-d7d7-42fb-be6c-4dbb8068ba33","issue_id":"b488f02c-b16b-4444-9274-1cfc95172d3b","timestamp":"2026-08-07T16:21:31.739649990Z","type":"gate_failed","updated_by":"auto:executor"}

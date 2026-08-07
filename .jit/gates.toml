@@ -226,7 +226,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/research-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/research-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/research-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-sol -c model_reasoning_effort=xhigh" }, pass_context = true, prompt_file = "./contrib/gates/research-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Verify scientific rigor: claims trace to artifacts, statistics are sound, citations resolve, results are reproducible."
 key = "research-review"
 mode = "auto"

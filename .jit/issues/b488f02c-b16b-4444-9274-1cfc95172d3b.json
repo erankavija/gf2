@@ -20,6 +20,11 @@
     "research-review"
   ],
   "gates_status": {
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-07T16:21:31.739649990Z",
+      "updated_by": "auto:executor"
+    },
     "research-review": {
       "status": "pending",
       "updated_at": "2026-08-07T12:59:20.503839815Z",
@@ -37,5 +42,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T14:44:37.151994391Z"
+  "updated_at": "2026-08-07T16:21:31.739649990Z"
 }
