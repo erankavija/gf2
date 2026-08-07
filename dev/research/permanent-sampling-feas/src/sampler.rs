@@ -103,6 +103,9 @@ pub struct MatrixSampler {
     buf: Vec<u8>,
     /// Read cursor into `buf`; `buf[cursor..]` is unconsumed randomness.
     cursor: usize,
+    /// The `q` this stream was addressed with. Retained only to catch a `Q`
+    /// that disagrees with it; see [`MatrixSampler::new`].
+    stream_q: u64,
 }
 
 /// Bytes drawn from ChaCha20 per refill. One ChaCha20 block is 64 bytes; a
@@ -112,12 +115,33 @@ const REFILL_BYTES: usize = 4096;
 
 impl MatrixSampler {
     /// Open the stream addressed by `(root, q, n, stream)`.
+    ///
+    /// # The two `q`s
+    ///
+    /// This `q` is a **stream label**: it only feeds [`derive_seed`], and it is
+    /// what makes the F_3, F_5 and F_7 streams of one campaign disjoint. The
+    /// field order actually sampled is the const parameter `Q` on
+    /// [`MatrixSampler::next_entry`] and [`MatrixSampler::next_matrix`].
+    ///
+    /// Nothing in the type system ties them together, so
+    /// `MatrixSampler::new(root, 5, n, s).next_matrix::<7>(n)` is accepted and
+    /// silently draws F_7 matrices from the stream reserved for F_5 — a
+    /// reproducibility defect rather than a distributional one, since the draws
+    /// are still uniform over F_7, but it collides with whatever else uses the
+    /// F_5 stream. A `debug_assert` in `next_entry` catches the mismatch in
+    /// debug and test builds; release builds do not pay for the check.
+    ///
+    /// `q` is deliberately unconstrained here: [`crate::protocol::shuffle`]
+    /// opens a stream with a sentinel `q` far outside the samplable domain and
+    /// only ever calls [`MatrixSampler::next_raw_byte`], which has no domain
+    /// restriction.
     #[must_use]
     pub fn new(root: u64, q: u64, n: usize, stream: u64) -> Self {
         Self {
             rng: ChaCha20Rng::from_seed(derive_seed(root, q, n, stream)),
             buf: vec![0u8; REFILL_BYTES],
             cursor: REFILL_BYTES,
+            stream_q: q,
         }
     }
 
@@ -141,7 +165,9 @@ impl MatrixSampler {
     /// # Panics
     ///
     /// Panics if `Q` is outside [`accept_bound`]'s supported domain
-    /// `2 <= Q <= 256`.
+    /// `2 <= Q <= 256`. In debug builds, also panics if `Q` disagrees with the
+    /// `q` this sampler's stream was addressed with — see
+    /// [`MatrixSampler::new`] for why those are two different values.
     ///
     /// # Termination
     ///
@@ -150,6 +176,12 @@ impl MatrixSampler {
     /// the loop terminates with probability 1 and takes at most `256/(256-Q+1)`
     /// draws in expectation — under 1.02 draws for every `Q <= 7`.
     pub fn next_entry<const Q: u64>(&mut self) -> Fp<Q> {
+        debug_assert_eq!(
+            Q, self.stream_q,
+            "sampling F_{Q} from the stream addressed as q={}: the draws are \
+uniform but they collide with that stream's own reservation",
+            self.stream_q
+        );
         let bound = accept_bound(Q);
         loop {
             let b = self.next_raw_byte();
@@ -159,13 +191,36 @@ impl MatrixSampler {
         }
     }
 
-    /// Draw one `n × n` matrix in row-major order.
+    /// Draw one `n × n` matrix in row-major order: draw `k` becomes
+    /// `A[k / n][k % n]`.
+    ///
+    /// # Supported domain
+    ///
+    /// `2 <= Q <= 256`, and `Q` must equal the `q` this sampler was opened with
+    /// — see [`MatrixSampler::new`] for why the two are separate and what goes
+    /// wrong when they disagree. Both conditions are inherited from
+    /// [`MatrixSampler::next_entry`], which draws every element.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `Q` is outside the supported domain. In debug builds, also
+    /// panics if `Q` disagrees with the sampler's stream `q`.
+    ///
+    /// # Termination
+    ///
+    /// Terminates with probability 1, drawing `n^2` entries at under 1.02 bytes
+    /// each for every `Q <= 7`; see [`MatrixSampler::next_entry`] for the
+    /// rejection bound this follows from.
     pub fn next_matrix<const Q: u64>(&mut self, n: usize) -> Vec<Fp<Q>> {
         (0..n * n).map(|_| self.next_entry::<Q>()).collect()
     }
 
     /// Fill `out` with one `n × n` matrix in row-major order, reusing the
     /// caller's allocation. `out` is cleared first.
+    ///
+    /// Same supported domain, panics, and termination as
+    /// [`MatrixSampler::next_matrix`]; this differs only in reusing the
+    /// caller's buffer.
     pub fn fill_matrix<const Q: u64>(&mut self, n: usize, out: &mut Vec<Fp<Q>>) {
         out.clear();
         out.reserve(n * n);
@@ -205,6 +260,17 @@ mod tests {
             assert!(bound >= 1, "q={q} would reject every byte");
             assert_eq!(bound % q, 0, "q={q} bound is not a multiple of q");
         }
+    }
+
+    /// The stream-label guard must actually fire, or it is dead weight. Only
+    /// compiled in debug builds, since `debug_assert` is a no-op in release and
+    /// this crate's normal test invocation is `--release`.
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic(expected = "stream addressed as q=5")]
+    fn drawing_a_field_from_another_fields_stream_is_caught() {
+        let mut s = MatrixSampler::new(0xB488_F02C, 5, 4, 0);
+        let _ = s.next_entry::<7>();
     }
 
     #[test]
