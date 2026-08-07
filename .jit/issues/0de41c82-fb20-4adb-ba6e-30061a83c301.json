@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T22:43:35.681967553Z",
+  "dependencies": [],
+  "description": "Determine whether production-shaped HIP kernels can accelerate Ryser permanent calculations over $\\mathbb{F}_3$, $\\mathbb{F}_5$, and $\\mathbb{F}_7$, and identify the viable kernel and arithmetic design for each field. The study must preserve exact finite-field semantics and may conclude no-go for any field when reproducible evidence does not support GPU acceleration.\n\n## Background\n\nThe current HIP paths assign one matrix to a one-thread block and execute the Gray-code Ryser walk sequentially. This leaves most lanes of a 32-lane wavefront inactive, and committed measurements show the $\\mathbb{F}_5$ and $\\mathbb{F}_7$ paths losing to the best in-tree CPU implementations at measured sizes. The $\\mathbb{F}_3$ bipedal representation still offers cheap Boolean arithmetic, but that advantage is distinct from computing the permanent over $\\mathbb{F}_2$ and does not by itself establish an efficient GPU execution mapping.\n\nThe feasibility study should prototype intra-matrix parallelism, such as independent Gray-code ranges with wave-cooperative row updates and reductions, rather than relying only on batching independent matrices. It must evaluate arithmetic representations independently per field: bipedal Boolean arithmetic for $\\mathbb{F}_3$; packed bit planes versus scalar or native modular arithmetic for $\\mathbb{F}_5$; and compact native tables or modular arithmetic versus bit-sliced representations for $\\mathbb{F}_7$.\n\n## Success Criteria\n\n- [hard] REQ-01: A linked study artifact and executable prototype specify and exercise at least one intra-matrix parallel Ryser decomposition that assigns multiple GPU lanes to each matrix, including Gray-range initialization, row-sum updates, row-product reduction, and partial-sum reduction.\n- [hard] REQ-02: Every measured candidate returns results exactly equal to an in-tree CPU oracle over $\\mathbb{F}_3$, $\\mathbb{F}_5$, and $\\mathbb{F}_7$ on a deterministic seeded suite covering representative small and medium orders, empty and singleton cases where supported, Gray-range boundaries, and both addition and subtraction transitions; any rejected candidate retains its falsifying correctness evidence.\n- [hard] REQ-03: Committed raw receipts compare the current GPU path, every retained prototype, and the best applicable in-tree CPU path under one preregistered protocol for all three fields. The receipts record matrix order, batch size, seed, kernel-only and end-to-end throughput, launch duration, git revision, CPU and GPU models, ROCm and compiler versions, and censoring or failure observations.\n- [hard] REQ-04: The study quantifies wave utilization, occupancy-limiting resources, private and shared memory use, transfer and launch overhead, sustained-kernel duration, and watchdog-safe work bounds. It states the supported GPU architecture scope and records compile evidence for every architecture claimed to be supported.\n- [hard] REQ-05: The field-by-field comparison explains why the $\\mathbb{F}_3$ Boolean representation is valid without treating an odd-characteristic permanent as an $\\mathbb{F}_2$ permanent, and measures at least two plausible arithmetic representations for each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$ before selecting or rejecting a design.\n- [hard] REQ-06: A go/no-go decision for each field is supported by the receipts and includes measured crossover conditions or an explicit absence of crossover. Every go decision provides a breakdown-ready production design covering input layout, persistent buffers and streams, bounded-duration launches, per-device initialization, error propagation, tested CPU fallback, and behavioral-equivalence coverage.\n- [aspirational] REQ-07: A production-shaped prototype exceeds the best applicable CPU throughput by at least $1.5\\times$ at one declared scientifically relevant operating point for each of $\\mathbb{F}_5$ and $\\mathbb{F}_7$ while remaining within the documented safe launch-duration bound.\n\n## Notes\n\nUse the committed feasibility receipts under `dev/studies/b488f02c/` as baseline evidence, including negative and censored observations. Prototype artifacts and final findings belong in this issue resolved study directory and must remain reproducible from committed commands. Production integration is follow-up work after a go decision.\n\nThe $\\mathbb{F}_3$ arithmetic background follows [Scheinerman2024]; the study must distinguish Boolean bit-slicing from a field embedding into $\\mathbb{F}_2$.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T22:43:35.681967553Z",
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
+  "labels": [
+    "epic:gf2-algebra-permanent",
+    "component:gf2-algebra",
+    "component:gf2-kernels-hip",
+    "cites:Scheinerman2024",
+    "type:simulation"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
+  "updated_at": "2026-08-07T22:43:35.681967553Z"
+}
