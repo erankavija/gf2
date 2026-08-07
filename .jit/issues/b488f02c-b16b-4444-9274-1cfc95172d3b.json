@@ -15,9 +15,16 @@
   ],
   "first_ready_at": "2026-08-07T12:32:25.499859632Z",
   "gates_required": [
-    "doc-review"
+    "doc-review",
+    "research-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "research-review": {
+      "status": "pending",
+      "updated_at": "2026-08-07T12:59:20.503839815Z",
+      "updated_by": null
+    }
+  },
   "id": "b488f02c-b16b-4444-9274-1cfc95172d3b",
   "labels": [
     "type:task",
@@ -29,5 +36,5 @@
   "priority": "high",
   "state": "ready",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T12:34:52.103948445Z"
+  "updated_at": "2026-08-07T12:59:20.503839815Z"
 }
