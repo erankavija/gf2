@@ -1,6 +1,6 @@
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/plan-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/plan-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Independently review the linked plan before implementation work fans out."
 key = "plan-review"
 mode = "auto"
@@ -12,7 +12,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/breakdown-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/breakdown-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Independently review decomposition quality, issue content, and dependency ordering before implementation."
 key = "breakdown-review"
 mode = "auto"
@@ -24,7 +24,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/code-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/code-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Review issue-attributable implementation changes against repository policy and success criteria."
 key = "code-review"
 mode = "auto"
@@ -72,7 +72,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/doc-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/doc-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material."
 key = "doc-review"
 mode = "auto"
@@ -84,7 +84,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec" }, pass_context = true, prompt_file = "./contrib/gates/holistic-review-prompt.md", timeout_seconds = 1800, type = "exec" }
+checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/holistic-review-prompt.md", timeout_seconds = 1800, type = "exec" }
 description = "Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants."
 key = "holistic-review"
 mode = "auto"
