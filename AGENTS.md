@@ -73,8 +73,12 @@ contract is mathematical or implemented by several backends.
 - Scalar, SIMD, parallel, and GPU implementations share behavioral suites.
   Seeded work remains deterministic across supported worker counts, scheduling,
   checkpoint/resume, and fallbacks.
-- Public APIs need useful rustdoc and runnable examples. Document panics, safety
-  conditions, and non-obvious complexity where applicable.
+- Public APIs need rustdoc stating purpose, panics, safety conditions, and
+  non-obvious complexity. Add a runnable example where it teaches a workflow or
+  clarifies a material contract that prose and focused tests leave unclear;
+  prefer one type- or module-level walkthrough over per-method repetition.
+  Repetitive examples for accessors, constants, constructors, predicates, and
+  direct field mappings are documentation and doctest burden.
 
 The ordinary fast tier has a five-second per-test kill and a sixty-second suite
 budget. Tests expected to exceed it use a descriptive `#[ignore = "slow: ..."]`
