@@ -1,13 +1,23 @@
 {
-  "id": "9c37ec8c-f310-47f8-b54e-ba4a41143b0c",
-  "title": "Measure GPU crossover and document the decision",
-  "description": "Benchmark the GPU prototype against CPU scalar and SIMD demappers and decide whether the modem GPU path should ship, remain experimental, or be deferred.\n\n## Success Criteria\n\n- [ ] Benchmarks identify the batch-size crossover region versus CPU scalar and SIMD baselines.\n- [ ] The outcome is documented clearly as ship, keep-experimental, or defer.\n- [ ] The conclusion reflects measured data rather than speculation.\n\n## Notes\n\nThis task closes the conditional GPU story with an evidence-based decision.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T17:18:05.041610126Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.875377574Z",
   "dependencies": [
     "71c19c32-3a80-4df8-9640-0fd5e8d6653d"
   ],
+  "description": "Benchmark the GPU prototype against CPU scalar and SIMD demappers and decide whether the modem GPU path should ship, remain experimental, or be deferred.\n\n## Success Criteria\n\n- [ ] Benchmarks identify the batch-size crossover region versus CPU scalar and SIMD baselines.\n- [ ] The outcome is documented clearly as ship, keep-experimental, or defer.\n- [ ] The conclusion reflects measured data rather than speculation.\n\n## Notes\n\nThis task closes the conditional GPU story with an evidence-based decision.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "decision",
+      "format": "markdown",
+      "label": "GPU crossover decision (keep-experimental)",
+      "path": "dev/active/9c37ec8c-gpu-crossover-decision.md"
+    }
+  ],
+  "done_at": "2026-04-15T05:14:08.123323964Z",
+  "first_ready_at": "2026-04-14T14:22:54.517623954Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -15,46 +25,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T05:08:53.845321048Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:04:03.839748069Z"
+      "updated_at": "2026-04-14T23:04:03.839748069Z",
+      "updated_by": "auto:executor"
     },
-    "tdd-reminder": {
+    "code-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T17:18:03.454575712Z"
+      "updated_at": "2026-04-15T05:08:53.845321048Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T05:14:08.108865413Z"
+      "updated_at": "2026-04-15T05:14:08.108865413Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-14T17:18:03.454575712Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/9c37ec8c-gpu-crossover-decision.md",
-      "commit": null,
-      "label": "GPU crossover decision (keep-experimental)",
-      "doc_type": "decision",
-      "format": "markdown"
-    }
-  ],
+  "id": "9c37ec8c-f310-47f8-b54e-ba4a41143b0c",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:gpu-demapper-prototype"
+    "story:gpu-demapper-prototype",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.875377574Z",
-  "updated_at": "2026-07-12T20:02:55.460221606Z",
-  "first_ready_at": "2026-04-14T14:22:54.517623954Z",
-  "claimed_at": "2026-04-14T17:18:05.041610126Z",
-  "done_at": "2026-04-15T05:14:08.123323964Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Measure GPU crossover and document the decision",
+  "updated_at": "2026-08-07T20:39:41.522438790Z"
 }

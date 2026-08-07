@@ -46,10 +46,10 @@
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:competitive-benchmarking-against-magma-sage-aff3ct"
+    "epic:competitive-benchmarking"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Profile and close the CPU LDPC BP throughput gap vs aff3ct",
-  "updated_at": "2026-08-05T12:23:20.560011195Z"
+  "updated_at": "2026-08-07T20:38:15.266163166Z"
 }

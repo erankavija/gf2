@@ -1,13 +1,15 @@
 {
-  "id": "d36ae697-cd9b-419d-89cb-24410496a25e",
-  "title": "Define batched map and demap traits",
-  "description": "Add the batch-oriented mapper, hard demapper, and soft demapper interfaces that all modem backends must satisfy.\n\n## Success Criteria\n\n- [ ] Public traits exist for batched modulation, hard demodulation, and soft demapping.\n- [ ] The batch interfaces do not leak backend-specific details into the high-level API.\n- [ ] The trait surface is sufficient for scalar, SIMD, and future GPU implementations.\n\n## Notes\n\nThis task should build directly on the shared modem data model.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-13T12:18:28.522282082Z",
+  "context": {},
+  "created_at": "2026-04-12T19:40:37.523894831Z",
   "dependencies": [
     "c87c5043-ff07-4209-bf23-a1a4b71daaa9"
   ],
+  "description": "Add the batch-oriented mapper, hard demapper, and soft demapper interfaces that all modem backends must satisfy.\n\n## Success Criteria\n\n- [ ] Public traits exist for batched modulation, hard demodulation, and soft demapping.\n- [ ] The batch interfaces do not leak backend-specific details into the high-level API.\n- [ ] The trait surface is sufficient for scalar, SIMD, and future GPU implementations.\n\n## Notes\n\nThis task should build directly on the shared modem data model.",
+  "documents": [],
+  "done_at": "2026-04-13T12:42:34.451287397Z",
+  "first_ready_at": "2026-04-13T12:17:30.127150828Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -15,38 +17,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T12:36:50.068310080Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T12:18:27.559728872Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T12:24:58.374717953Z"
+      "updated_at": "2026-04-13T12:24:58.374717953Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-13T12:36:50.068310080Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T12:42:27.222045450Z"
+      "updated_at": "2026-04-13T12:42:27.222045450Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-13T12:18:27.559728872Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "d36ae697-cd9b-419d-89cb-24410496a25e",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:modem-core-api"
+    "story:modem-core-api",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:40:37.523894831Z",
-  "updated_at": "2026-07-12T20:02:55.475855538Z",
-  "first_ready_at": "2026-04-13T12:17:30.127150828Z",
-  "claimed_at": "2026-04-13T12:18:28.522282082Z",
-  "done_at": "2026-04-13T12:42:34.451287397Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Define batched map and demap traits",
+  "updated_at": "2026-08-07T20:41:15.694792854Z"
 }

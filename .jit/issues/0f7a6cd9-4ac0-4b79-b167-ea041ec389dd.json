@@ -1,13 +1,15 @@
 {
-  "id": "0f7a6cd9-4ac0-4b79-b167-ea041ec389dd",
-  "title": "Implement per-bit MI and GMI estimators",
-  "description": "Implement information-metric estimators that can evaluate the reliability of individual bit-channels from modem outputs or collected LLR statistics.\n\n## Success Criteria\n\n- [ ] The analysis tooling can estimate per-bit mutual information or GMI for supported modem paths.\n- [ ] The estimators are compatible with the demapper semantics selected for analysis.\n- [ ] Results are suitable for comparing the relative quality of different bit positions within a symbol.\n\n## Notes\n\nThis task builds on the per-bit LLR statistics tooling and should remain compatible with the shared modem source of truth.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T22:13:11.524612858Z",
+  "context": {},
+  "created_at": "2026-04-12T20:04:48.348117625Z",
   "dependencies": [
     "a9ccb8ae-62de-4631-9bae-532499bf8ae0"
   ],
+  "description": "Implement information-metric estimators that can evaluate the reliability of individual bit-channels from modem outputs or collected LLR statistics.\n\n## Success Criteria\n\n- [ ] The analysis tooling can estimate per-bit mutual information or GMI for supported modem paths.\n- [ ] The estimators are compatible with the demapper semantics selected for analysis.\n- [ ] Results are suitable for comparing the relative quality of different bit positions within a symbol.\n\n## Notes\n\nThis task builds on the per-bit LLR statistics tooling and should remain compatible with the shared modem source of truth.",
+  "documents": [],
+  "done_at": "2026-04-14T23:17:21.390686169Z",
+  "first_ready_at": "2026-04-14T21:51:08.877314570Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -15,38 +17,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:13:10.240794224Z"
+      "updated_at": "2026-04-14T23:01:16.150265779Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:19.666693666Z"
+      "updated_at": "2026-04-14T23:01:19.666693666Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T23:17:21.377317239Z"
+      "updated_at": "2026-04-14T23:17:21.377317239Z",
+      "updated_by": "agent:project-lead"
     },
-    "cargo-ci": {
+    "tdd-reminder": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:16.150265779Z"
+      "updated_at": "2026-04-14T22:13:10.240794224Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "0f7a6cd9-4ac0-4b79-b167-ea041ec389dd",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:bit-channel-analysis"
+    "story:bit-channel-analysis",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T20:04:48.348117625Z",
-  "updated_at": "2026-07-12T20:02:55.421678458Z",
-  "first_ready_at": "2026-04-14T21:51:08.877314570Z",
-  "claimed_at": "2026-04-14T22:13:11.524612858Z",
-  "done_at": "2026-04-14T23:17:21.390686169Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement per-bit MI and GMI estimators",
+  "updated_at": "2026-08-07T20:37:29.914638611Z"
 }

@@ -1,13 +1,15 @@
 {
-  "id": "c5cee991-b410-469c-bd9b-849f717f8f51",
-  "title": "Add SIMD-ready Gray square-QAM batch kernels",
-  "description": "Make the Gray square-QAM hot path batch-oriented and compatible with SIMD dispatch and future accelerator backends.\n\n## Success Criteria\n\n- [ ] The Gray-QAM fast path uses batch-oriented data flow rather than per-symbol allocation-heavy code.\n- [ ] Memory layout and control flow are structured so SIMD dispatch can plug in cleanly.\n- [ ] The kernel boundary is reusable by future accelerator backends without API churn.\n\n## Notes\n\nThis task is the performance-focused leaf that prepares the modem path for SIMD and conditional GPU work.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-13T22:27:30.475968789Z",
+  "context": {},
+  "created_at": "2026-04-12T19:40:37.533493308Z",
   "dependencies": [
     "db1dda70-a870-4b52-a4ea-92acee4e3fad"
   ],
+  "description": "Make the Gray square-QAM hot path batch-oriented and compatible with SIMD dispatch and future accelerator backends.\n\n## Success Criteria\n\n- [ ] The Gray-QAM fast path uses batch-oriented data flow rather than per-symbol allocation-heavy code.\n- [ ] Memory layout and control flow are structured so SIMD dispatch can plug in cleanly.\n- [ ] The kernel boundary is reusable by future accelerator backends without API churn.\n\n## Notes\n\nThis task is the performance-focused leaf that prepares the modem path for SIMD and conditional GPU work.",
+  "documents": [],
+  "done_at": "2026-04-13T23:15:07.207220225Z",
+  "first_ready_at": "2026-04-13T21:36:34.629537560Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -15,38 +17,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-13T22:49:20.431075537Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T22:27:28.066241536Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T23:06:46.007941845Z"
+      "updated_at": "2026-04-13T23:06:46.007941845Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-13T23:08:09.528278959Z"
+      "updated_at": "2026-04-13T23:08:09.528278959Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-13T22:49:20.431075537Z",
+      "updated_by": null
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-13T22:27:28.066241536Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "c5cee991-b410-469c-bd9b-849f717f8f51",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:gray-square-qam-fast-path"
+    "story:gray-square-qam-fast-path",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:40:37.533493308Z",
-  "updated_at": "2026-07-12T20:02:55.472604615Z",
-  "first_ready_at": "2026-04-13T21:36:34.629537560Z",
-  "claimed_at": "2026-04-13T22:27:30.475968789Z",
-  "done_at": "2026-04-13T23:15:07.207220225Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Add SIMD-ready Gray square-QAM batch kernels",
+  "updated_at": "2026-08-07T20:41:02.168414306Z"
 }

@@ -1,170 +1,170 @@
 {
-  "id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
-  "title": "Implement QAM modulation with soft-decision demapping",
-  "description": "Build a general modem framework for link simulation that supports arbitrary constellations and arbitrary bit mappings, while making common Gray-coded square QAM the optimized default path for production-style BICM workflows.\n\n## Background\n\nThe current modulation surface is fragmented across `crates/gf2-coding/src/channel.rs` (BPSK + AWGN), `crates/gf2-coding/src/modulation.rs` (QPSK-only logic), and `crates/gf2-coding/src/fading.rs` (QPSK + Rician integration). That split was sufficient for the SOGRAND-era placeholder QPSK path, but it does not scale to DVB-T2-style QAM, custom research constellations, or accelerator-friendly batch demapping.\n\nThis epic replaces the placeholder QPSK implementation with a shared modem framework that separates constellation geometry, bit labeling, mapping, demapping, and channel composition. The framework must support arbitrary constellations for research ergonomics, while providing extremely fast Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM. CPU scalar + SIMD support is required in this epic; GPU work is tracked only as a conditional prototype branch.\n\nBit-channel analysis is also a requirement. Different bit positions inside one symbol can have different reliability, so the modem surface must support per-bit-channel LLR distribution and information-metric analysis without imposing overhead on simulations that do not request it.\n\nDownstream story `003e4088` depends on this epic for the unified DVB-T2 FEC + QAM chain, so the resulting API must be ergonomic enough to slot into the existing simulation harness without bespoke glue.\n\n## Success Criteria\n\n- [ ] A public modem surface exists in `gf2-coding` that provides validated custom-constellation construction and built-in preset constructors for common modulations.\n- [ ] Built-in Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM exist and route through the shared modem source of truth while selecting the specialized batch demapper path.\n- [ ] Existing BPSK/AWGN and QPSK/Rician-facing simulation surfaces delegate to the shared modem implementation; `channel.rs`, `modulation.rs`, and `fading.rs` do not remain independent sources of modem logic.\n- [ ] Demapper semantics are explicit where mode selection is exposed, with exact log-MAP available as the analysis/reference mode and max-log available as a supported approximation.\n- [ ] Bit-channel analysis tooling exposes bit-position identity, per-bit conditional LLR statistics, and per-bit MI or GMI outputs for supported modem paths.\n- [ ] When bit-channel analysis is not requested, the normal simulation path performs no analysis-specific collection or buffer allocation and is covered by benchmark comparisons against the standard hot path.\n- [ ] Benchmarks cover generic versus specialized modem paths, and the accelerator boundary remains batch-oriented and reusable by SIMD and future GPU backends without public API divergence.\n- [ ] The downstream DVB-T2 integration story `003e4088` can compose the modem path through shared constructors and channel configuration without a custom conversion layer.\n\n## Notes\n\nCreate child stories and leaf tasks that cover the modem core API, the arbitrary-constellation reference path, the Gray square-QAM fast path, simulation integration, migration of legacy modem surfaces, bit-channel analysis, public-facing validation and benchmarking, and a conditional GPU prototype path.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-12T20:11:06.459386289Z",
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.598964928Z",
   "dependencies": [
     "0884289e-33a4-495b-97a3-9ba5625dd878",
     "19069bc1-2010-4a41-804e-316036ec3e11",
     "e2c0f65a-5e65-4cfc-abdd-e65377f7da2b"
   ],
-  "gates_required": [],
-  "gates_status": {},
-  "context": {},
+  "description": "Build a general modem framework for link simulation that supports arbitrary constellations and arbitrary bit mappings, while making common Gray-coded square QAM the optimized default path for production-style BICM workflows.\n\n## Background\n\nThe current modulation surface is fragmented across `crates/gf2-coding/src/channel.rs` (BPSK + AWGN), `crates/gf2-coding/src/modulation.rs` (QPSK-only logic), and `crates/gf2-coding/src/fading.rs` (QPSK + Rician integration). That split was sufficient for the SOGRAND-era placeholder QPSK path, but it does not scale to DVB-T2-style QAM, custom research constellations, or accelerator-friendly batch demapping.\n\nThis epic replaces the placeholder QPSK implementation with a shared modem framework that separates constellation geometry, bit labeling, mapping, demapping, and channel composition. The framework must support arbitrary constellations for research ergonomics, while providing extremely fast Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM. CPU scalar + SIMD support is required in this epic; GPU work is tracked only as a conditional prototype branch.\n\nBit-channel analysis is also a requirement. Different bit positions inside one symbol can have different reliability, so the modem surface must support per-bit-channel LLR distribution and information-metric analysis without imposing overhead on simulations that do not request it.\n\nDownstream story `003e4088` depends on this epic for the unified DVB-T2 FEC + QAM chain, so the resulting API must be ergonomic enough to slot into the existing simulation harness without bespoke glue.\n\n## Success Criteria\n\n- [ ] A public modem surface exists in `gf2-coding` that provides validated custom-constellation construction and built-in preset constructors for common modulations.\n- [ ] Built-in Gray-coded square-QAM presets for QPSK, 16-QAM, 64-QAM, and 256-QAM exist and route through the shared modem source of truth while selecting the specialized batch demapper path.\n- [ ] Existing BPSK/AWGN and QPSK/Rician-facing simulation surfaces delegate to the shared modem implementation; `channel.rs`, `modulation.rs`, and `fading.rs` do not remain independent sources of modem logic.\n- [ ] Demapper semantics are explicit where mode selection is exposed, with exact log-MAP available as the analysis/reference mode and max-log available as a supported approximation.\n- [ ] Bit-channel analysis tooling exposes bit-position identity, per-bit conditional LLR statistics, and per-bit MI or GMI outputs for supported modem paths.\n- [ ] When bit-channel analysis is not requested, the normal simulation path performs no analysis-specific collection or buffer allocation and is covered by benchmark comparisons against the standard hot path.\n- [ ] Benchmarks cover generic versus specialized modem paths, and the accelerator boundary remains batch-oriented and reusable by SIMD and future GPU backends without public API divergence.\n- [ ] The downstream DVB-T2 integration story `003e4088` can compose the modem path through shared constructors and channel configuration without a custom conversion layer.\n\n## Notes\n\nCreate child stories and leaf tasks that cover the modem core API, the arbitrary-constellation reference path, the Gray square-QAM fast path, simulation integration, migration of legacy modem surfaces, bit-channel analysis, public-facing validation and benchmarking, and a conditional GPU prototype path.",
   "documents": [
     {
-      "path": "dev/active/d4851c3d-modem-framework-design.md",
       "commit": null,
-      "label": "General modem framework design",
       "doc_type": "design",
-      "format": "markdown"
+      "format": "markdown",
+      "label": "General modem framework design",
+      "path": "dev/active/d4851c3d-modem-framework-design.md"
     },
     {
-      "path": "dev/active/d4851c3d-handoff.md",
       "commit": null,
-      "label": "Project-lead session handoff (2026-04-13)",
       "doc_type": "notes",
-      "format": "markdown"
+      "format": "markdown",
+      "label": "Project-lead session handoff (2026-04-13)",
+      "path": "dev/active/d4851c3d-handoff.md"
     },
     {
-      "path": "docs/presentations/d4851c3d-modem-framework/talk.html",
-      "commit": null,
-      "label": "Modem framework for gf2 — researcher-facing highlights (revealjs)",
-      "doc_type": "presentation",
-      "format": "html",
       "assets": [
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
-          "original_path": "themes/rust.css",
-          "resolved_path": "docs/presentations/d4851c3d-modem-framework/themes/rust.css",
           "asset_type": "local",
-          "mime_type": null,
           "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "themes/rust.css",
+          "resolved_path": "docs/presentations/d4851c3d-modem-framework/themes/rust.css"
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
-          "original_path": "base.css",
-          "resolved_path": "docs/presentations/d4851c3d-modem-framework/base.css",
           "asset_type": "local",
-          "mime_type": null,
           "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "base.css",
+          "resolved_path": "docs/presentations/d4851c3d-modem-framework/base.css"
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
           "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
+          "resolved_path": null
         },
         {
-          "original_path": "../figures/per_bit_mi_16qam.svg",
-          "resolved_path": "docs/presentations/figures/per_bit_mi_16qam.svg",
           "asset_type": "local",
-          "mime_type": "image/svg+xml",
           "content_hash": "137e6201ec6bc9362512a482f8d0616794ddb9fb510ac90d1adba08f54ee403d",
-          "is_shared": false
+          "is_shared": false,
+          "mime_type": "image/svg+xml",
+          "original_path": "../figures/per_bit_mi_16qam.svg",
+          "resolved_path": "docs/presentations/figures/per_bit_mi_16qam.svg"
         },
         {
-          "original_path": "../figures/llr_histograms_16qam.svg",
-          "resolved_path": "docs/presentations/figures/llr_histograms_16qam.svg",
           "asset_type": "local",
-          "mime_type": "image/svg+xml",
           "content_hash": "e45e2c58d4fe719a096e3bb16550a0ea23f9c488e1ddc1b8b986616f7fd20c2c",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "../figures/ber_curves.svg",
-          "resolved_path": "docs/presentations/figures/ber_curves.svg",
-          "asset_type": "local",
+          "is_shared": false,
           "mime_type": "image/svg+xml",
+          "original_path": "../figures/llr_histograms_16qam.svg",
+          "resolved_path": "docs/presentations/figures/llr_histograms_16qam.svg"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
           "content_hash": "0d38c663ecb1baa6573fbde1fb0ddbd3f72ba05f71d64dd7766e5ac253cf4a85",
-          "is_shared": false
+          "is_shared": false,
+          "mime_type": "image/svg+xml",
+          "original_path": "../figures/ber_curves.svg",
+          "resolved_path": "docs/presentations/figures/ber_curves.svg"
         }
-      ]
+      ],
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "Modem framework for gf2 — researcher-facing highlights (revealjs)",
+      "path": "docs/presentations/d4851c3d-modem-framework/talk.html"
     }
   ],
+  "done_at": "2026-04-15T08:37:47.367356807Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "d4851c3d-a9ae-42cc-bf5d-31ab973ba0fe",
   "labels": [
     "type:epic",
     "component:gf2-coding",
-    "epic:d4851c3d"
+    "epic:modem-framework"
   ],
-  "created_at": "2026-02-21T19:35:51.598964928Z",
-  "updated_at": "2026-07-14T20:49:35.912883975Z",
-  "claimed_at": "2026-04-12T20:11:06.459386289Z",
-  "done_at": "2026-04-15T08:37:47.367356807Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement QAM modulation with soft-decision demapping",
+  "updated_at": "2026-08-07T20:41:20.187345704Z"
 }

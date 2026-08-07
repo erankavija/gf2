@@ -1,11 +1,12 @@
 {
-  "id": "9aa0f8b7-e213-4a52-8378-4befa558f2b2",
-  "title": "Consolidate workspace deterministic-LCG helpers onto gf2_core::rng::Lcg",
-  "description": "Eliminate remaining duplicates of the Numerical-Recipes deterministic LCG (constants `6364136223846793005` and `1442695040888963407`) across the workspace. The modem path was consolidated in 51334873 onto `gf2_core::test_rng::Lcg`; four non-modem sites still carry their own copies and must be migrated before the modem story's code-review gate accepts the workspace as SSOT-clean.\n\n## Success Criteria\n\n- [ ] Promote `gf2_core::test_rng` to `gf2_core::rng` as a public module (deterministic LCG is legitimately useful outside tests — `fading.rs::generate_permutation` is production code).\n- [ ] Migrate `crates/gf2-coding/src/fading.rs::generate_permutation` to call `gf2_core::rng::Lcg` while preserving bit-exact output (same seed → same permutation) so existing BER regression tests still pass.\n- [ ] Migrate `crates/gf2-coding/src/gldpc/mod.rs` test RNG to `gf2_core::rng::Lcg`.\n- [ ] Migrate `crates/gf2-core/src/gf2m/field.rs` test RNG (two sites at lines ~4943 and ~4984) to `gf2_core::rng::Lcg`.\n- [ ] Migrate `crates/gf2-core/benches/gf2m_mul_strategies.rs::pseudo_random_element` to `gf2_core::rng::Lcg`.\n- [ ] Update `gf2-coding::modem::test_oracle::Lcg` re-export path to point at the new public module.\n- [ ] `grep -rn \"6364136223846793005\" crates/` returns only hits inside `gf2_core::rng`.\n- [ ] Full test suite (`cargo test --workspace --all-features --release`) passes with no behavioral drift.\n\n## Notes\n\nFollow-up to 51334873. The modem-framework epic's code-review gate refuses to pass until the workspace-wide LCG SSOT finding is resolved, so this issue must complete before 51334873 can close.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-04-14T20:25:41.531278337Z",
+  "context": {},
+  "created_at": "2026-04-14T20:25:35.962647807Z",
   "dependencies": [],
+  "description": "Eliminate remaining duplicates of the Numerical-Recipes deterministic LCG (constants `6364136223846793005` and `1442695040888963407`) across the workspace. The modem path was consolidated in 51334873 onto `gf2_core::test_rng::Lcg`; four non-modem sites still carry their own copies and must be migrated before the modem story's code-review gate accepts the workspace as SSOT-clean.\n\n## Success Criteria\n\n- [ ] Promote `gf2_core::test_rng` to `gf2_core::rng` as a public module (deterministic LCG is legitimately useful outside tests — `fading.rs::generate_permutation` is production code).\n- [ ] Migrate `crates/gf2-coding/src/fading.rs::generate_permutation` to call `gf2_core::rng::Lcg` while preserving bit-exact output (same seed → same permutation) so existing BER regression tests still pass.\n- [ ] Migrate `crates/gf2-coding/src/gldpc/mod.rs` test RNG to `gf2_core::rng::Lcg`.\n- [ ] Migrate `crates/gf2-core/src/gf2m/field.rs` test RNG (two sites at lines ~4943 and ~4984) to `gf2_core::rng::Lcg`.\n- [ ] Migrate `crates/gf2-core/benches/gf2m_mul_strategies.rs::pseudo_random_element` to `gf2_core::rng::Lcg`.\n- [ ] Update `gf2-coding::modem::test_oracle::Lcg` re-export path to point at the new public module.\n- [ ] `grep -rn \"6364136223846793005\" crates/` returns only hits inside `gf2_core::rng`.\n- [ ] Full test suite (`cargo test --workspace --all-features --release`) passes with no behavioral drift.\n\n## Notes\n\nFollow-up to 51334873. The modem-framework epic's code-review gate refuses to pass until the workspace-wide LCG SSOT finding is resolved, so this issue must complete before 51334873 can close.",
+  "documents": [],
+  "done_at": "2026-04-14T20:44:18.699819025Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -13,37 +14,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:40:23.027988420Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T20:25:40.753191601Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:38:41.876274045Z"
+      "updated_at": "2026-04-14T20:38:41.876274045Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T20:40:23.027988420Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T20:44:17.885912083Z"
+      "updated_at": "2026-04-14T20:44:17.885912083Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-14T20:25:40.753191601Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "9aa0f8b7-e213-4a52-8378-4befa558f2b2",
   "labels": [
     "type:task",
     "component:workspace",
-    "epic:d4851c3d",
-    "story:arbitrary-constellation-reference"
+    "story:arbitrary-constellation-reference",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-14T20:25:35.962647807Z",
-  "updated_at": "2026-07-12T20:02:55.459944246Z",
-  "claimed_at": "2026-04-14T20:25:41.531278337Z",
-  "done_at": "2026-04-14T20:44:18.699819025Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Consolidate workspace deterministic-LCG helpers onto gf2_core::rng::Lcg",
+  "updated_at": "2026-08-07T20:39:37.101015235Z"
 }

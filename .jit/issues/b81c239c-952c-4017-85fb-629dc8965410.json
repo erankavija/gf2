@@ -19,10 +19,10 @@
     "type:epic",
     "component:gf2-coding",
     "component:gf2-core",
-    "epic:implement-5g-nr-polar-codes-with-crc-aided-scl-decoder"
+    "epic:nr-polar-scl"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Implement 5G NR polar codes with CRC-aided SCL decoder",
-  "updated_at": "2026-08-05T12:25:03.051994818Z"
+  "updated_at": "2026-08-07T20:40:44.253128004Z"
 }

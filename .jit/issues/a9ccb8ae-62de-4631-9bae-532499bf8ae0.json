@@ -1,14 +1,16 @@
 {
-  "id": "a9ccb8ae-62de-4631-9bae-532499bf8ae0",
-  "title": "Implement per-bit LLR distribution and statistics tools",
-  "description": "Implement analysis utilities that compute empirical per-bit LLR statistics and conditional distributions for each bit position within a symbol.\n\n## Success Criteria\n\n- [ ] Analysis utilities can accumulate per-bit LLR samples or equivalent statistics for each bit position.\n- [ ] The tooling can compute or export conditional statistics for $p(L_k \\mid B_k = 0)$ and $p(L_k \\mid B_k = 1)$.\n- [ ] The output is usable for comparing different bit positions in Gray-QAM and other supported constellations.\n\n## Notes\n\nThis task is about analysis tooling on top of the shared demapper outputs, not about creating a second demapper implementation.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T10:33:16.974794294Z",
+  "context": {},
+  "created_at": "2026-04-12T20:04:48.346611684Z",
   "dependencies": [
     "c007875b-33fb-4ebd-b377-38045fbb9c30",
     "51334873-c2dc-4174-ab13-60c45997b9d4"
   ],
+  "description": "Implement analysis utilities that compute empirical per-bit LLR statistics and conditional distributions for each bit position within a symbol.\n\n## Success Criteria\n\n- [ ] Analysis utilities can accumulate per-bit LLR samples or equivalent statistics for each bit position.\n- [ ] The tooling can compute or export conditional statistics for $p(L_k \\mid B_k = 0)$ and $p(L_k \\mid B_k = 1)$.\n- [ ] The output is usable for comparing different bit positions in Gray-QAM and other supported constellations.\n\n## Notes\n\nThis task is about analysis tooling on top of the shared demapper outputs, not about creating a second demapper implementation.",
+  "documents": [],
+  "done_at": "2026-04-14T21:51:08.850596491Z",
+  "first_ready_at": "2026-04-14T20:53:03.831138078Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-04-14T20:59:02.703278461Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T21:34:09.110246110Z"
+      "updated_at": "2026-04-14T21:34:09.110246110Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T21:51:08.739591190Z"
+      "updated_at": "2026-04-14T21:51:08.739591190Z",
+      "updated_by": "agent:project-lead"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T10:33:42.488216276Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T20:59:02.703278461Z"
+      "updated_at": "2026-04-14T10:33:42.488216276Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "a9ccb8ae-62de-4631-9bae-532499bf8ae0",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:bit-channel-analysis"
+    "story:bit-channel-analysis",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T20:04:48.346611684Z",
-  "updated_at": "2026-07-12T20:02:55.464211829Z",
-  "first_ready_at": "2026-04-14T20:53:03.831138078Z",
-  "claimed_at": "2026-04-14T10:33:16.974794294Z",
-  "done_at": "2026-04-14T21:51:08.850596491Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement per-bit LLR distribution and statistics tools",
+  "updated_at": "2026-08-07T20:40:08.389142908Z"
 }

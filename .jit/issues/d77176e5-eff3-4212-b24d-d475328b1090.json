@@ -18,10 +18,10 @@
     "type:epic",
     "component:gf2-core",
     "component:gf2-coding",
-    "epic:competitive-benchmarking-against-magma-sage-aff3ct"
+    "epic:competitive-benchmarking"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Competitive benchmarking against Magma/Sage/AFF3CT",
-  "updated_at": "2026-08-05T12:25:26.667768363Z"
+  "updated_at": "2026-08-07T20:41:26.192533948Z"
 }

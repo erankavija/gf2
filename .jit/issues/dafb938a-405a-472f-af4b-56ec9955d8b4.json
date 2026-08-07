@@ -1,14 +1,16 @@
 {
-  "id": "dafb938a-405a-472f-af4b-56ec9955d8b4",
-  "title": "Add modem regression and property tests",
-  "description": "Add modem-level invariants, round-trip tests, and regression coverage for the migrated public entry points.\n\n## Success Criteria\n\n- [ ] The shared modem surface has regression coverage for standard presets and migrated compatibility entry points.\n- [ ] Property tests cover relevant round-trip or labeling invariants where appropriate.\n- [ ] The new tests protect both the reference path and the optimized path from divergence.\n\n## Notes\n\nThis task extends the earlier reference tests into full framework-level regression protection.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T17:18:05.203180334Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.872268442Z",
   "dependencies": [
     "5fd315c0-4713-4744-925f-619de215ba98",
     "0aac93c6-189d-430f-bc74-050f24d9b780"
   ],
+  "description": "Add modem-level invariants, round-trip tests, and regression coverage for the migrated public entry points.\n\n## Success Criteria\n\n- [ ] The shared modem surface has regression coverage for standard presets and migrated compatibility entry points.\n- [ ] Property tests cover relevant round-trip or labeling invariants where appropriate.\n- [ ] The new tests protect both the reference path and the optimized path from divergence.\n\n## Notes\n\nThis task extends the earlier reference tests into full framework-level regression protection.",
+  "documents": [],
+  "done_at": "2026-04-14T23:17:20.591730758Z",
+  "first_ready_at": "2026-04-14T15:59:32.343863035Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T23:17:20.588702536Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T17:18:04.198380233Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:16.149933869Z"
+      "updated_at": "2026-04-14T23:01:16.149933869Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:19.665920415Z"
+      "updated_at": "2026-04-14T23:01:19.665920415Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T23:17:20.588702536Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-14T17:18:04.198380233Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "dafb938a-405a-472f-af4b-56ec9955d8b4",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:modem-ergonomics-validation-benchmarks"
+    "story:modem-ergonomics-validation-benchmarks",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.872268442Z",
-  "updated_at": "2026-07-12T20:02:55.477910479Z",
-  "first_ready_at": "2026-04-14T15:59:32.343863035Z",
-  "claimed_at": "2026-04-14T17:18:05.203180334Z",
-  "done_at": "2026-04-14T23:17:20.591730758Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Add modem regression and property tests",
+  "updated_at": "2026-08-07T20:41:35.236637453Z"
 }

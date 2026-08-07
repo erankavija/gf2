@@ -1,46 +1,46 @@
 {
-  "id": "a1229d72-ab01-49f8-a757-6e30c056d909",
-  "title": "Axiom harness coverage for Gf2mWide<4> (GF(2^256))",
-  "description": "Close the 6fb4abad story's first success criterion: `Gf2mWide<4>` passes the full field axiom harness.\n\n## Scope\n\n- Add `pub fn gf2m_wide_strategy<const N: usize, Cfg: Gf2mWideConfig<N>>() -> BoxedStrategy<Gf2mWide<N, Cfg>>` to `crates/gf2-core/src/field/axiom_tests.rs` (mirror `gf2m_u128_strategy`). Generates 2N random u64s, packs as `[u64; N]`, calls `Gf2mWide::new` (which tail-masks to `Cfg::M`).\n- `#[test] fn test_axioms_gf2m_wide_256()` → `test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2)`. Use `test_field_axioms` (not `test_const_field_axioms`) because `order()` overflows at M=256 per Task 4.\n- `#[test] fn test_const_field_zero_one_gf2m_wide_256()` asserts `Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero()` and `one().is_one()` (skip the `order()` assertion).\n- Respect 60s workspace-test budget: use `ProptestConfig::with_cases(100)` locally (~200 ms wall-clock) rather than the harness default 1000.\n- `#[test] #[ignore] fn test_axioms_gf2m_wide_256_stress()` at 1000 cases for manual runs.\n- Stretch (PR-body only, no blocker): `#[cfg(feature = \"slow-tests\")]`/`#[ignore]` smoke for `N = 8`.\n- Do NOT modify `test_const_field_axioms`.\n\n## Success criteria\n\n- Axiom harness passes for `Gf2mWide<4, Gf2m256TestConfig>`.\n- Full suite completes in ≤60s.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 4.\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 5.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-19T22:12:25.298219319Z",
+  "context": {},
+  "created_at": "2026-04-18T22:39:50.354169721Z",
   "dependencies": [
     "b77768f0-9d1c-4058-b331-be3047cdf041"
   ],
+  "description": "Close the 6fb4abad story's first success criterion: `Gf2mWide<4>` passes the full field axiom harness.\n\n## Scope\n\n- Add `pub fn gf2m_wide_strategy<const N: usize, Cfg: Gf2mWideConfig<N>>() -> BoxedStrategy<Gf2mWide<N, Cfg>>` to `crates/gf2-core/src/field/axiom_tests.rs` (mirror `gf2m_u128_strategy`). Generates 2N random u64s, packs as `[u64; N]`, calls `Gf2mWide::new` (which tail-masks to `Cfg::M`).\n- `#[test] fn test_axioms_gf2m_wide_256()` → `test_field_axioms(gf2m_wide_strategy::<4, Gf2m256TestConfig>(), 2)`. Use `test_field_axioms` (not `test_const_field_axioms`) because `order()` overflows at M=256 per Task 4.\n- `#[test] fn test_const_field_zero_one_gf2m_wide_256()` asserts `Gf2mWide::<4, Gf2m256TestConfig>::zero().is_zero()` and `one().is_one()` (skip the `order()` assertion).\n- Respect 60s workspace-test budget: use `ProptestConfig::with_cases(100)` locally (~200 ms wall-clock) rather than the harness default 1000.\n- `#[test] #[ignore] fn test_axioms_gf2m_wide_256_stress()` at 1000 cases for manual runs.\n- Stretch (PR-body only, no blocker): `#[cfg(feature = \"slow-tests\")]`/`#[ignore]` smoke for `N = 8`.\n- Do NOT modify `test_const_field_axioms`.\n\n## Success criteria\n\n- Axiom harness passes for `Gf2mWide<4, Gf2m256TestConfig>`.\n- Full suite completes in ≤60s.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 4.\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 5.",
+  "documents": [],
+  "done_at": "2026-04-20T00:02:27.143351661Z",
+  "first_ready_at": "2026-04-19T22:11:00.377561273Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T23:56:47.972638044Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T22:55:09.733609309Z"
+      "updated_at": "2026-04-19T22:55:09.733609309Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-19T23:56:47.972638044Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-20T00:02:27.129302237Z"
+      "updated_at": "2026-04-20T00:02:27.129302237Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "a1229d72-ab01-49f8-a757-6e30c056d909",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:6fb4abad"
+    "story:6fb4abad",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-18T22:39:50.354169721Z",
-  "updated_at": "2026-07-12T20:02:55.462161658Z",
-  "first_ready_at": "2026-04-19T22:11:00.377561273Z",
-  "claimed_at": "2026-04-19T22:12:25.298219319Z",
-  "done_at": "2026-04-20T00:02:27.143351661Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Axiom harness coverage for Gf2mWide<4> (GF(2^256))",
+  "updated_at": "2026-08-07T20:39:54.876984412Z"
 }

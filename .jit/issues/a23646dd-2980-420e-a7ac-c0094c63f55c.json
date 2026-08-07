@@ -1,13 +1,15 @@
 {
-  "id": "a23646dd-2980-420e-a7ac-c0094c63f55c",
-  "title": "Adapt the Rician fading link to the common modem surface",
-  "description": "Rewire the existing fading and interleaving path so it uses the shared modem abstractions instead of bespoke QPSK-specific modem logic.\n\n## Success Criteria\n\n- [ ] The current Rician fading link can use the shared modem surface for modulation and demapping.\n- [ ] Existing interleaving and fading composition still works with the migrated modem pipeline.\n- [ ] The resulting path no longer depends on a unique QPSK-only modem implementation.\n\n## Notes\n\nThis task closes the simulation integration story by bringing the current fading pipeline onto the shared surface.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-13T23:15:31.851717286Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.864789186Z",
   "dependencies": [
     "bf865220-f00f-4567-84d5-5f12db79cb63"
   ],
+  "description": "Rewire the existing fading and interleaving path so it uses the shared modem abstractions instead of bespoke QPSK-specific modem logic.\n\n## Success Criteria\n\n- [ ] The current Rician fading link can use the shared modem surface for modulation and demapping.\n- [ ] Existing interleaving and fading composition still works with the migrated modem pipeline.\n- [ ] The resulting path no longer depends on a unique QPSK-only modem implementation.\n\n## Notes\n\nThis task closes the simulation integration story by bringing the current fading pipeline onto the shared surface.",
+  "documents": [],
+  "done_at": "2026-04-14T09:55:35.903055986Z",
+  "first_ready_at": "2026-04-13T22:22:19.949265181Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -17,36 +19,34 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T09:47:18.048623828Z"
+      "updated_at": "2026-04-14T09:47:18.048623828Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T09:48:36.758749384Z"
+      "updated_at": "2026-04-14T09:48:36.758749384Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-14T05:49:28.756707220Z"
+      "updated_at": "2026-04-14T05:49:28.756707220Z",
+      "updated_by": null
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T23:15:27.260169578Z"
+      "updated_at": "2026-04-13T23:15:27.260169578Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "a23646dd-2980-420e-a7ac-c0094c63f55c",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:simulation-channel-integration"
+    "story:simulation-channel-integration",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.864789186Z",
-  "updated_at": "2026-07-12T20:02:55.462590078Z",
-  "first_ready_at": "2026-04-13T22:22:19.949265181Z",
-  "claimed_at": "2026-04-13T23:15:31.851717286Z",
-  "done_at": "2026-04-14T09:55:35.903055986Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Adapt the Rician fading link to the common modem surface",
+  "updated_at": "2026-08-07T20:39:59.438328083Z"
 }

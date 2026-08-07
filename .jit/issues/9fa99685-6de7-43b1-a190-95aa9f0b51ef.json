@@ -1,43 +1,43 @@
 {
-  "id": "9fa99685-6de7-43b1-a190-95aa9f0b51ef",
-  "title": "Gf2mWideConfig<N> trait + Gf2mWide<N, Cfg> type shell",
-  "description": "Introduce the const-generic multi-word GF(2^m) type and its config trait. This is Task 1 of the 6fb4abad story breakdown.\n\n## Scope\n\n- `pub trait Gf2mWideConfig<const N: usize>: 'static` in new module `crates/gf2-core/src/gf2m/wide_config.rs` with:\n  - `const M: usize` — extension degree (must satisfy `64*(N-1) < M <= 64*N`).\n  - `const MODULUS: [u64; N]` — the low-order `M` bits of the irreducible polynomial (bit `M` implicit = 1).\n  - Cached `MODULUS_HIGH_BIT_WORD` / `MODULUS_HIGH_BIT_MASK` or a default `fn` to derive.\n  - Optional `const NAME: &'static str` for `Debug`.\n- `pub struct Gf2mWide<const N: usize, Cfg: Gf2mWideConfig<N>> { words: [u64; N], _marker: PhantomData<Cfg> }` in `crates/gf2-core/src/gf2m/wide.rs` with `Copy`, `Clone`, `PartialEq`, `Eq`, `Hash`, `Debug`.\n- Constructors: `from_words` (debug-asserts tail mask), `new` (masks tail), `zero`, `one`, `from_u64`.\n- Accessors: `words`, `bit(i)`, `is_zero`, `is_one`.\n- `Add`, `Sub`, `Neg`, `AddAssign` (owned + `&`-RHS, matching `Gf2mElement_` boilerplate). `Neg` is identity (char 2). `Sub == Add`.\n- Private helper `mask_tail_in_place`. Document as multi-word analogue of the tail-masking invariant.\n- `mod.rs`: `pub mod wide;` + re-exports.\n- A minimal test `Gf2m256TestConfig` citing a documented Seroussi pentanomial for `M = 256` (pick one from HPL-98-135 Table 1, e.g. `x^256 + x^10 + x^5 + x^2 + 1`).\n- Unit tests: addition commutativity, `zero() + a == a`, `a - a == zero()`, tail masking zeroes bits above `M`.\n\n## Success criteria\n\nAll items above implemented, `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 1.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-18T22:40:25.380086402Z",
+  "context": {},
+  "created_at": "2026-04-18T22:39:02.815530621Z",
   "dependencies": [],
+  "description": "Introduce the const-generic multi-word GF(2^m) type and its config trait. This is Task 1 of the 6fb4abad story breakdown.\n\n## Scope\n\n- `pub trait Gf2mWideConfig<const N: usize>: 'static` in new module `crates/gf2-core/src/gf2m/wide_config.rs` with:\n  - `const M: usize` — extension degree (must satisfy `64*(N-1) < M <= 64*N`).\n  - `const MODULUS: [u64; N]` — the low-order `M` bits of the irreducible polynomial (bit `M` implicit = 1).\n  - Cached `MODULUS_HIGH_BIT_WORD` / `MODULUS_HIGH_BIT_MASK` or a default `fn` to derive.\n  - Optional `const NAME: &'static str` for `Debug`.\n- `pub struct Gf2mWide<const N: usize, Cfg: Gf2mWideConfig<N>> { words: [u64; N], _marker: PhantomData<Cfg> }` in `crates/gf2-core/src/gf2m/wide.rs` with `Copy`, `Clone`, `PartialEq`, `Eq`, `Hash`, `Debug`.\n- Constructors: `from_words` (debug-asserts tail mask), `new` (masks tail), `zero`, `one`, `from_u64`.\n- Accessors: `words`, `bit(i)`, `is_zero`, `is_one`.\n- `Add`, `Sub`, `Neg`, `AddAssign` (owned + `&`-RHS, matching `Gf2mElement_` boilerplate). `Neg` is identity (char 2). `Sub == Add`.\n- Private helper `mask_tail_in_place`. Document as multi-word analogue of the tail-masking invariant.\n- `mod.rs`: `pub mod wide;` + re-exports.\n- A minimal test `Gf2m256TestConfig` citing a documented Seroussi pentanomial for `M = 256` (pick one from HPL-98-135 Table 1, e.g. `x^256 + x^10 + x^5 + x^2 + 1`).\n- Unit tests: addition commutativity, `zero() + a == a`, `a - a == zero()`, tail masking zeroes bits above `M`.\n\n## Success criteria\n\nAll items above implemented, `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 1.",
+  "documents": [],
+  "done_at": "2026-04-19T03:46:53.566720733Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-19T03:46:53.109776473Z"
+      "updated_at": "2026-04-19T03:37:16.252708873Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T03:40:58.544601281Z"
+      "updated_at": "2026-04-19T03:40:58.544601281Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T03:37:16.252708873Z"
+      "updated_at": "2026-04-19T03:46:53.109776473Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "9fa99685-6de7-43b1-a190-95aa9f0b51ef",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:6fb4abad"
+    "story:6fb4abad",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-18T22:39:02.815530621Z",
-  "updated_at": "2026-07-12T20:02:55.461423897Z",
-  "claimed_at": "2026-04-18T22:40:25.380086402Z",
-  "done_at": "2026-04-19T03:46:53.566720733Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Gf2mWideConfig<N> trait + Gf2mWide<N, Cfg> type shell",
+  "updated_at": "2026-08-07T20:39:50.449036376Z"
 }

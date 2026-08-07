@@ -1,10 +1,8 @@
 {
-  "id": "47698404-edd8-4035-a4a1-9820001fc5d7",
-  "title": "Re-run sparse post-PPC scorecard",
-  "description": "Measure sparse CPU paths against accepted references.\n\n## Success Criteria\n\n- [hard] CSR/CSC, block-CSR, RCM, and prefetch variants are represented where relevant.\n- [hard] The report identifies feasible CPU gaps and no-go cases.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-47698404",
+  "claimed_at": "2026-05-04T18:11:38.346508055Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.900080306Z",
   "dependencies": [
     "0f708b36-5b37-44cb-8176-fdfc5b871f86",
     "0d6ca3b6-add7-4e6f-921c-64aa54da177d",
@@ -12,126 +10,94 @@
     "521390db-8f2e-4955-ac11-b6bf0ca8a53c",
     "96fde7c7-e05b-4a2a-90a6-99cece36db7c"
   ],
+  "description": "Measure sparse CPU paths against accepted references.\n\n## Success Criteria\n\n- [hard] CSR/CSC, block-CSR, RCM, and prefetch variants are represented where relevant.\n- [hard] The report identifies feasible CPU gaps and no-go cases.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "47698404 sparse post-PPC scorecard",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-scorecard.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "47698404 sparse-tables (analyze.py output)",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-tables.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "47698404 sparse gf2-side CSV",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "47698404 sparse gf2-side CSV (re-run)",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-extended.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "47698404 sparse reference CSV (fflas-ffpack + LinBox)",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "47698404 host capture",
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-host.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "harness",
+      "format": "markdown",
+      "label": "47698404 Rust bench harness",
+      "path": "crates/gf2-coding/examples/bench_sparse_csv_emitter.rs"
+    },
+    {
+      "commit": null,
+      "doc_type": "harness",
+      "label": "47698404 sparse smoke oracle (n=16)",
+      "path": "benchmarks/reference/sparse_smoke.cpp"
+    }
+  ],
+  "done_at": "2026-05-05T08:44:04.226451008Z",
+  "first_ready_at": "2026-05-04T17:38:42.222988592Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-05T05:44:44.045996356Z"
+      "updated_at": "2026-05-05T05:43:00.082640752Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T08:34:13.162200883Z"
+      "updated_at": "2026-05-05T08:34:13.162200883Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T05:43:00.082640752Z"
+      "updated_at": "2026-05-05T05:44:44.045996356Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-scorecard.md",
-      "commit": null,
-      "label": "47698404 sparse post-PPC scorecard",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-tables.md",
-      "commit": null,
-      "label": "47698404 sparse-tables (analyze.py output)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
-      "commit": null,
-      "label": "47698404 sparse gf2-side CSV",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-extended.csv",
-      "commit": null,
-      "label": "47698404 sparse gf2-side CSV (re-run)",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
-      "commit": null,
-      "label": "47698404 sparse reference CSV (fflas-ffpack + LinBox)",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-host.txt",
-      "commit": null,
-      "label": "47698404 host capture",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "crates/gf2-coding/examples/bench_sparse_csv_emitter.rs",
-      "commit": null,
-      "label": "47698404 Rust bench harness",
-      "doc_type": "harness",
-      "format": "markdown"
-    },
-    {
-      "path": "benchmarks/reference/fflas_sparse_bench.cpp",
-      "commit": null,
-      "label": "47698404 fflas/ffpack sparse harness",
-      "doc_type": "harness",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "std::chrono::nanoseconds",
-          "resolved_path": "benchmarks/reference/std::chrono::nanoseconds",
-          "asset_type": "missing",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "benchmarks/reference/linbox_sparse_bench.cpp",
-      "commit": null,
-      "label": "47698404 LinBox sparse harness",
-      "doc_type": "harness",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "std::chrono::nanoseconds",
-          "resolved_path": "benchmarks/reference/std::chrono::nanoseconds",
-          "asset_type": "missing",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "benchmarks/reference/sparse_smoke.cpp",
-      "commit": null,
-      "label": "47698404 sparse smoke oracle (n=16)",
-      "doc_type": "harness"
-    }
-  ],
+  "id": "47698404-edd8-4035-a4a1-9820001fc5d7",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-sparse-fieldmatrix"
   ],
-  "created_at": "2026-04-30T06:43:02.900080306Z",
-  "updated_at": "2026-07-12T20:02:55.439740911Z",
-  "first_ready_at": "2026-05-04T17:38:42.222988592Z",
-  "claimed_at": "2026-05-04T18:11:38.346508055Z",
-  "done_at": "2026-05-05T08:44:04.226451008Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Re-run sparse post-PPC scorecard",
+  "updated_at": "2026-08-07T20:43:02.889561795Z"
 }

@@ -1,45 +1,45 @@
 {
-  "id": "72a2118a-0648-462d-802d-ee0f616dbe07",
-  "title": "Implement batch inversion using Montgomery's trick",
-  "description": "Implement Montgomery's batch inversion trick for computing N multiplicative inverses in any finite field using only 1 field inversion and 3(N-1) field multiplications. This is critical for algorithms that require many inversions (elliptic curve arithmetic, projective-to-affine coordinate conversion, coding theory syndrome computation).\n\n## Algorithm\n\nGiven elements `[a₁, a₂, ..., aₙ]`, compute `[a₁⁻¹, a₂⁻¹, ..., aₙ⁻¹]`:\n\n1. **Forward pass** — compute running products:\n   ```\n   prefix[0] = a₁\n   prefix[1] = a₁ · a₂\n   prefix[2] = a₁ · a₂ · a₃\n   ...\n   prefix[N-1] = a₁ · a₂ · ... · aₙ\n   ```\n\n2. **Single inversion**:\n   ```\n   inv_product = prefix[N-1]⁻¹    // The only inversion\n   ```\n\n3. **Backward pass** — recover individual inverses:\n   ```\n   aₙ⁻¹ = prefix[N-2] · inv_product\n   inv_product = inv_product · aₙ\n   aₙ₋₁⁻¹ = prefix[N-3] · inv_product\n   inv_product = inv_product · aₙ₋₁\n   ...\n   a₁⁻¹ = inv_product\n   ```\n\n**Cost**: 1 inversion + 3(N-1) multiplications, versus N inversions naively.\n\n## API design\n\n```rust\n/// Compute batch multiplicative inverses using Montgomery's trick.\n/// Returns None if any element is zero.\n/// \n/// # Complexity\n/// 1 field inversion + 3(N-1) field multiplications.\npub fn batch_inverse<F: FiniteField>(elements: &[F]) -> Option<Vec<F>>;\n\n/// In-place variant that overwrites the input slice.\npub fn batch_inverse_in_place<F: FiniteField>(elements: &mut [F]) -> Option<()>;\n\n/// Batch inverse with a pre-allocated scratch buffer to avoid allocation.\npub fn batch_inverse_with_scratch<F: FiniteField>(\n    elements: &[F],\n    output: &mut [F],\n    scratch: &mut [F],\n) -> Option<()>;\n```\n\n## Zero handling\n\nIf any element is zero, the batch product is zero and cannot be inverted. Options:\n1. **Return None** (simplest, recommended for the primary API).\n2. **Skip zeros**: Return inverses for non-zero elements and zero for zero elements. Useful for algorithms that expect this behavior (e.g., projective coordinate normalization where the point at infinity has z=0).\n\nProvide both variants.\n\n## SIMD optimization opportunity\n\nThe forward and backward passes are sequential (each step depends on the previous). However, for `FieldVec<F>` where elements are stored contiguously, the multiplications in each pass can be dispatched to SIMD batch multiplication kernels when available. This is a future optimization, not required for the initial implementation.\n\n## Location\n\n`crates/gf2-core/src/field/batch_ops.rs` (new file in the field module)\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — batch inversion is most impactful for prime fields where individual inversions are expensive (extended Euclidean algorithm or Fermat's little theorem via exponentiation)\n\n## Success criteria\n\n- For N elements, exactly 1 inversion and 3(N-1) multiplications are performed (verify via operation counting or mocking).\n- `batch_inverse(elements)` produces the same results as `elements.iter().map(|e| e.inv()).collect()` for all non-zero inputs.\n- Property test: for random non-zero elements, `a[i] * batch_inverse(a)[i] == one` for all i.\n- Benchmark: ≥5× speedup over individual inversions for N=100 elements in Fp<65537>.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-18T17:55:21.087325816Z",
+  "context": {},
+  "created_at": "2026-02-21T23:11:10.404816143Z",
   "dependencies": [
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
+  "description": "Implement Montgomery's batch inversion trick for computing N multiplicative inverses in any finite field using only 1 field inversion and 3(N-1) field multiplications. This is critical for algorithms that require many inversions (elliptic curve arithmetic, projective-to-affine coordinate conversion, coding theory syndrome computation).\n\n## Algorithm\n\nGiven elements `[a₁, a₂, ..., aₙ]`, compute `[a₁⁻¹, a₂⁻¹, ..., aₙ⁻¹]`:\n\n1. **Forward pass** — compute running products:\n   ```\n   prefix[0] = a₁\n   prefix[1] = a₁ · a₂\n   prefix[2] = a₁ · a₂ · a₃\n   ...\n   prefix[N-1] = a₁ · a₂ · ... · aₙ\n   ```\n\n2. **Single inversion**:\n   ```\n   inv_product = prefix[N-1]⁻¹    // The only inversion\n   ```\n\n3. **Backward pass** — recover individual inverses:\n   ```\n   aₙ⁻¹ = prefix[N-2] · inv_product\n   inv_product = inv_product · aₙ\n   aₙ₋₁⁻¹ = prefix[N-3] · inv_product\n   inv_product = inv_product · aₙ₋₁\n   ...\n   a₁⁻¹ = inv_product\n   ```\n\n**Cost**: 1 inversion + 3(N-1) multiplications, versus N inversions naively.\n\n## API design\n\n```rust\n/// Compute batch multiplicative inverses using Montgomery's trick.\n/// Returns None if any element is zero.\n/// \n/// # Complexity\n/// 1 field inversion + 3(N-1) field multiplications.\npub fn batch_inverse<F: FiniteField>(elements: &[F]) -> Option<Vec<F>>;\n\n/// In-place variant that overwrites the input slice.\npub fn batch_inverse_in_place<F: FiniteField>(elements: &mut [F]) -> Option<()>;\n\n/// Batch inverse with a pre-allocated scratch buffer to avoid allocation.\npub fn batch_inverse_with_scratch<F: FiniteField>(\n    elements: &[F],\n    output: &mut [F],\n    scratch: &mut [F],\n) -> Option<()>;\n```\n\n## Zero handling\n\nIf any element is zero, the batch product is zero and cannot be inverted. Options:\n1. **Return None** (simplest, recommended for the primary API).\n2. **Skip zeros**: Return inverses for non-zero elements and zero for zero elements. Useful for algorithms that expect this behavior (e.g., projective coordinate normalization where the point at infinity has z=0).\n\nProvide both variants.\n\n## SIMD optimization opportunity\n\nThe forward and backward passes are sequential (each step depends on the previous). However, for `FieldVec<F>` where elements are stored contiguously, the multiplications in each pass can be dispatched to SIMD batch multiplication kernels when available. This is a future optimization, not required for the initial implementation.\n\n## Location\n\n`crates/gf2-core/src/field/batch_ops.rs` (new file in the field module)\n\n## Dependencies\n\n- 8ce6f8aa (Montgomery multiplication for GF(p)) — batch inversion is most impactful for prime fields where individual inversions are expensive (extended Euclidean algorithm or Fermat's little theorem via exponentiation)\n\n## Success criteria\n\n- For N elements, exactly 1 inversion and 3(N-1) multiplications are performed (verify via operation counting or mocking).\n- `batch_inverse(elements)` produces the same results as `elements.iter().map(|e| e.inv()).collect()` for all non-zero inputs.\n- Property test: for random non-zero elements, `a[i] * batch_inverse(a)[i] == one` for all i.\n- Benchmark: ≥5× speedup over individual inversions for N=100 elements in Fp<65537>.",
+  "documents": [],
+  "done_at": "2026-04-18T20:34:31.612188363Z",
+  "first_ready_at": "2026-03-03T17:59:03.345766400Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-18T20:34:27.123600499Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-18T19:49:21.053917726Z"
+      "updated_at": "2026-04-18T19:49:21.053917726Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-18T19:59:44.577524498Z"
+      "updated_at": "2026-04-18T19:59:44.577524498Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-18T20:34:27.123600499Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "72a2118a-0648-462d-802d-ee0f616dbe07",
   "labels": [
     "component:gf2-core",
     "type:task",
-    "epic:e095a100"
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-02-21T23:11:10.404816143Z",
-  "updated_at": "2026-07-14T20:51:30.000640097Z",
-  "first_ready_at": "2026-03-03T17:59:03.345766400Z",
-  "claimed_at": "2026-04-18T17:55:21.087325816Z",
-  "done_at": "2026-04-18T20:34:31.612188363Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Implement batch inversion using Montgomery's trick",
+  "updated_at": "2026-08-07T20:39:14.605730993Z"
 }

@@ -18,10 +18,10 @@
   "labels": [
     "type:simulation",
     "component:gf2-coding",
-    "epic:implement-5g-nr-polar-codes-with-crc-aided-scl-decoder"
+    "epic:nr-polar-scl"
   ],
   "priority": "normal",
   "state": "backlog",
   "title": "Run polar code FER simulations and compare with Shannon limit",
-  "updated_at": "2026-08-05T12:22:53.049408061Z"
+  "updated_at": "2026-08-07T20:37:57.095008693Z"
 }

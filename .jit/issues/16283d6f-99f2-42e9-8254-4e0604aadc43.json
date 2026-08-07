@@ -29,10 +29,10 @@
     "type:epic",
     "component:gf2-core",
     "component:gf2-kernels-hip",
-    "epic:gpu-accelerated-fieldmatrix-hip-dense-matmul-spmv"
+    "epic:fieldmatrix-gpu"
   ],
   "priority": "low",
   "state": "ready",
   "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)",
-  "updated_at": "2026-08-05T12:22:29.510303789Z"
+  "updated_at": "2026-08-07T20:37:34.495386583Z"
 }

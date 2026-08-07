@@ -1,129 +1,129 @@
 {
-  "id": "16f03734-51ca-42e6-8fb3-e2d3ad9aba24",
-  "title": "gf2-algebra README plus doc-test examples",
-  "description": "Write the `gf2-algebra` README with usage examples, and add doc-test examples to all public APIs (per the project's documentation standards in CLAUDE.md).\n\n## Background\n\nCLAUDE.md §Documentation standards: every public item needs a doc comment with description, `# Arguments`, `# Examples` (tested), `# Panics`, and `# Complexity` (for non-trivial operations). The doc-test examples are exercised by `cargo test --doc`; they must compile and pass.\n\nThis issue covers both the crate-level `README.md` and the per-item doc comments for the public surface (`PackedField`, `Bipedal3`, `permanent_ryser`, `permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`, `gpu::*`).\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/README.md` exists with: motivation, basic usage example, perf headline numbers (post-S1), feature flags table, and link to the epic design doc.\n- [ ] [hard] Every public item in `gf2-algebra::packed::*`, `gf2-algebra::permanent::*`, and `gf2-algebra::gpu::*` (when `hip` feature on) has a doc-comment per CLAUDE.md standards.\n- [ ] [hard] `cargo test --doc -p gf2-algebra --all-features` passes (every `# Examples` block compiles and runs).\n- [ ] [hard] At least one runnable example under `crates/gf2-algebra/examples/permanent_demo.rs` reproduces the headline benchmark within $\\pm 5\\%$ (epic success criterion 12).\n- [ ] [hard] `cargo run -p gf2-algebra --example permanent_demo --release` succeeds.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-16f03734",
+  "claimed_at": "2026-05-15T18:52:05.990148333Z",
+  "context": {},
+  "created_at": "2026-05-09T09:48:59.148834418Z",
   "dependencies": [
     "686ee1b5-6ac8-4547-9b66-d472b2753676",
     "05250df5-495a-462e-bd04-aacd6bfb4505"
   ],
+  "description": "Write the `gf2-algebra` README with usage examples, and add doc-test examples to all public APIs (per the project's documentation standards in CLAUDE.md).\n\n## Background\n\nCLAUDE.md §Documentation standards: every public item needs a doc comment with description, `# Arguments`, `# Examples` (tested), `# Panics`, and `# Complexity` (for non-trivial operations). The doc-test examples are exercised by `cargo test --doc`; they must compile and pass.\n\nThis issue covers both the crate-level `README.md` and the per-item doc comments for the public surface (`PackedField`, `Bipedal3`, `permanent_ryser`, `permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`, `gpu::*`).\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-algebra/README.md` exists with: motivation, basic usage example, perf headline numbers (post-S1), feature flags table, and link to the epic design doc.\n- [ ] [hard] Every public item in `gf2-algebra::packed::*`, `gf2-algebra::permanent::*`, and `gf2-algebra::gpu::*` (when `hip` feature on) has a doc-comment per CLAUDE.md standards.\n- [ ] [hard] `cargo test --doc -p gf2-algebra --all-features` passes (every `# Examples` block compiles and runs).\n- [ ] [hard] At least one runnable example under `crates/gf2-algebra/examples/permanent_demo.rs` reproduces the headline benchmark within $\\pm 5\\%$ (epic success criterion 12).\n- [ ] [hard] `cargo run -p gf2-algebra --example permanent_demo --release` succeeds.",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "fc0908032e3ba5f6f01f51d28801164720a5f07171cc500a8e00e62f81b36010",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../dev/plans/d1a_gf2_algebra_boundary.md",
+          "resolved_path": "dev/plans/d1a_gf2_algebra_boundary.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4a99cea66f04c75e3f738b307f57ded9e2d5fbca7f06d75ad637c429cd8c7361",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../dev/plans/gf2_algebra_permanent.md",
+          "resolved_path": "dev/plans/gf2_algebra_permanent.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "31cc5064fb725630f04893ecd327d4783006cf3385d364ba4c496b281e43f029",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv",
+          "resolved_path": "dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "70a4b32ed19ed99cd8115aec078183afc650108a20ee942054c0a935dacd06ec",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../gf2-core/README.md",
+          "resolved_path": "crates/gf2-core/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9401e19a41c9684454cc83be45c4ba43b88b0efee53430a02b30327c6971826e",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../dev/plans/d1b_packed_field_api.md",
+          "resolved_path": "dev/plans/d1b_packed_field_api.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "354baa7b2100eb95de8a3a510ab9939119abc558cc8bf0654b5c2b67e20989ac",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../README.md",
+          "resolved_path": "README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "1bb0b5a2f1561eef87f79f4860c63a74c2eff263fcc1cccbf72d42e4a7af21a8",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv",
+          "resolved_path": "dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "426696c6000258ed53b7a20afb102ff8df38950b0f69024c0b41f19855bc22fa",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../LICENSE-MIT",
+          "resolved_path": "LICENSE-MIT"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "65c5d526f3a25270c7d4ed1d535f5c30c69c147db2c5cb8ae9ed2d02fcbe738b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../dev/plans/d1c_feature_matrix.md",
+          "resolved_path": "dev/plans/d1c_feature_matrix.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "documentation",
+      "format": "markdown",
+      "label": "gf2-algebra crate README (motivation, usage, headline perf, feature flags)",
+      "path": "crates/gf2-algebra/README.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "permanent_demo example (headline-benchmark reproducer, ±5% check)",
+      "path": "crates/gf2-algebra/examples/permanent_demo.rs"
+    }
+  ],
+  "done_at": "2026-05-15T20:50:43.864612643Z",
+  "first_ready_at": "2026-05-11T20:05:39.937858358Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T20:44:56.478170975Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T20:44:27.041882183Z"
+      "updated_at": "2026-05-15T20:44:27.041882183Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-15T20:44:56.478170975Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "crates/gf2-algebra/README.md",
-      "commit": null,
-      "label": "gf2-algebra crate README (motivation, usage, headline perf, feature flags)",
-      "doc_type": "documentation",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "../gf2-core/",
-          "resolved_path": "crates/gf2-core",
-          "asset_type": "missing",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/plans/gf2_algebra_permanent.md",
-          "resolved_path": "dev/plans/gf2_algebra_permanent.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "4a99cea66f04c75e3f738b307f57ded9e2d5fbca7f06d75ad637c429cd8c7361",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv",
-          "resolved_path": "dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "1bb0b5a2f1561eef87f79f4860c63a74c2eff263fcc1cccbf72d42e4a7af21a8",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/plans/d1b_packed_field_api.md",
-          "resolved_path": "dev/plans/d1b_packed_field_api.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "9401e19a41c9684454cc83be45c4ba43b88b0efee53430a02b30327c6971826e",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv",
-          "resolved_path": "dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "31cc5064fb725630f04893ecd327d4783006cf3385d364ba4c496b281e43f029",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/plans/d1a_gf2_algebra_boundary.md",
-          "resolved_path": "dev/plans/d1a_gf2_algebra_boundary.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "fc0908032e3ba5f6f01f51d28801164720a5f07171cc500a8e00e62f81b36010",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../dev/plans/d1c_feature_matrix.md",
-          "resolved_path": "dev/plans/d1c_feature_matrix.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "65c5d526f3a25270c7d4ed1d535f5c30c69c147db2c5cb8ae9ed2d02fcbe738b",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../README.md",
-          "resolved_path": "README.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "5e2e933b8970ec2606226a7f1a6869d71fdf302b39de1b426f8f41e77aa85bc4",
-          "is_shared": false
-        },
-        {
-          "original_path": "../../LICENSE-MIT",
-          "resolved_path": "LICENSE-MIT",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "426696c6000258ed53b7a20afb102ff8df38950b0f69024c0b41f19855bc22fa",
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "crates/gf2-algebra/examples/permanent_demo.rs",
-      "commit": null,
-      "label": "permanent_demo example (headline-benchmark reproducer, ±5% check)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    }
-  ],
+  "id": "16f03734-51ca-42e6-8fb3-e2d3ad9aba24",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-05-09T09:48:59.148834418Z",
-  "updated_at": "2026-07-12T20:02:55.424444650Z",
-  "first_ready_at": "2026-05-11T20:05:39.937858358Z",
-  "claimed_at": "2026-05-15T18:52:05.990148333Z",
-  "done_at": "2026-05-15T20:50:43.864612643Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "gf2-algebra README plus doc-test examples",
+  "updated_at": "2026-08-07T20:44:42.381988671Z"
 }

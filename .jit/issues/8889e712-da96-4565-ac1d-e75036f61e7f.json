@@ -41,11 +41,11 @@
   "labels": [
     "type:story",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:8889e712"
+    "story:8889e712",
+    "epic:gfpm-arithmetic"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Extended formal verification: complete gfp proofs and expand to gf2m",
-  "updated_at": "2026-08-05T12:07:56.658068548Z"
+  "updated_at": "2026-08-07T20:39:23.608738652Z"
 }

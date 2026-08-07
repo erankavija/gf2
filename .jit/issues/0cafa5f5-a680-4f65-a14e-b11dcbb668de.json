@@ -1,13 +1,15 @@
 {
-  "id": "0cafa5f5-a680-4f65-a14e-b11dcbb668de",
-  "title": "Reimplement BPSK compatibility surface on the modem framework",
-  "description": "Back the current BPSK entry points with the shared modem framework so existing BPSK users keep working without preserving a separate modem implementation.\n\n## Success Criteria\n\n- [ ] Existing BPSK-facing helpers are implemented as framework-backed adapters or equivalent wrappers.\n- [ ] BPSK call sites do not require bespoke modulation logic outside the shared modem framework.\n- [ ] No standalone BPSK implementation remains as an alternative source of modem functionality.\n- [ ] Compatibility is preserved for the existing simulation-facing surface.\n\n## Notes\n\nThis task handles the BPSK migration half of the legacy-surface cleanup story and should converge behavior onto the single shared modem implementation.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-13T23:15:31.419169602Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.866585418Z",
   "dependencies": [
     "bf865220-f00f-4567-84d5-5f12db79cb63"
   ],
+  "description": "Back the current BPSK entry points with the shared modem framework so existing BPSK users keep working without preserving a separate modem implementation.\n\n## Success Criteria\n\n- [ ] Existing BPSK-facing helpers are implemented as framework-backed adapters or equivalent wrappers.\n- [ ] BPSK call sites do not require bespoke modulation logic outside the shared modem framework.\n- [ ] No standalone BPSK implementation remains as an alternative source of modem functionality.\n- [ ] Compatibility is preserved for the existing simulation-facing surface.\n\n## Notes\n\nThis task handles the BPSK migration half of the legacy-surface cleanup story and should converge behavior onto the single shared modem implementation.",
+  "documents": [],
+  "done_at": "2026-04-14T09:55:35.034334024Z",
+  "first_ready_at": "2026-04-13T22:22:19.764257397Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -15,38 +17,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T05:43:37.389361664Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-13T23:15:26.783515121Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T05:42:14.666136839Z"
+      "updated_at": "2026-04-14T05:42:14.666136839Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T05:43:37.389361664Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-14T05:43:37.332244602Z"
+      "updated_at": "2026-04-14T05:43:37.332244602Z",
+      "updated_by": null
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-13T23:15:26.783515121Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "0cafa5f5-a680-4f65-a14e-b11dcbb668de",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:legacy-modem-surface-migration"
+    "story:legacy-modem-surface-migration",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.866585418Z",
-  "updated_at": "2026-07-12T20:02:55.420948248Z",
-  "first_ready_at": "2026-04-13T22:22:19.764257397Z",
-  "claimed_at": "2026-04-13T23:15:31.419169602Z",
-  "done_at": "2026-04-14T09:55:35.034334024Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Reimplement BPSK compatibility surface on the modem framework",
+  "updated_at": "2026-08-07T20:37:25.357174717Z"
 }

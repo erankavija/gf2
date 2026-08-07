@@ -1,15 +1,17 @@
 {
-  "id": "448491d5-c2be-41ba-89cf-0147e0679347",
-  "title": "Benchmark zero-overhead disabled path for bit-channel analysis",
-  "description": "Validate that bit-channel analysis remains opt-in by benchmarking and testing the analysis-disabled path against the normal simulation and modem hot paths.\n\n## Success Criteria\n\n- [ ] Benchmark coverage compares the standard hot path with analysis disabled against the same modem and simulation scenarios with bit-channel analysis support available.\n- [ ] The analysis-disabled path performs no analysis-specific collector calls or analysis-buffer allocation during normal runs.\n- [ ] Validation covers both correctness of bit-channel separation and non-interference with the shared fast path.\n- [ ] The evidence is strong enough to reject designs that impose analysis overhead on normal simulations.\n\n## Notes\n\nThis task is the guardrail that ensures analysis tooling does not compromise the modem framework's performance goals.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-15T06:40:35.577452777Z",
+  "context": {},
+  "created_at": "2026-04-12T20:04:48.350582117Z",
   "dependencies": [
     "c5cee991-b410-469c-bd9b-849f717f8f51",
     "0f7a6cd9-4ac0-4b79-b167-ea041ec389dd",
     "80f218ca-7bce-4cf6-bf03-e1fe2789620d"
   ],
+  "description": "Validate that bit-channel analysis remains opt-in by benchmarking and testing the analysis-disabled path against the normal simulation and modem hot paths.\n\n## Success Criteria\n\n- [ ] Benchmark coverage compares the standard hot path with analysis disabled against the same modem and simulation scenarios with bit-channel analysis support available.\n- [ ] The analysis-disabled path performs no analysis-specific collector calls or analysis-buffer allocation during normal runs.\n- [ ] Validation covers both correctness of bit-channel separation and non-interference with the shared fast path.\n- [ ] The evidence is strong enough to reject designs that impose analysis overhead on normal simulations.\n\n## Notes\n\nThis task is the guardrail that ensures analysis tooling does not compromise the modem framework's performance goals.",
+  "documents": [],
+  "done_at": "2026-04-15T07:00:14.456467749Z",
+  "first_ready_at": "2026-04-15T06:40:34.576773419Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -17,38 +19,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T07:00:14.442481319Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T06:55:01.563372801Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T06:40:35.245464835Z"
+      "updated_at": "2026-04-15T06:55:01.563372801Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T06:55:02.129514413Z"
+      "updated_at": "2026-04-15T06:55:02.129514413Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-15T07:00:14.442481319Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-15T06:40:35.245464835Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "448491d5-c2be-41ba-89cf-0147e0679347",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:bit-channel-analysis"
+    "story:bit-channel-analysis",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T20:04:48.350582117Z",
-  "updated_at": "2026-07-12T20:02:55.438392381Z",
-  "first_ready_at": "2026-04-15T06:40:34.576773419Z",
-  "claimed_at": "2026-04-15T06:40:35.577452777Z",
-  "done_at": "2026-04-15T07:00:14.456467749Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Benchmark zero-overhead disabled path for bit-channel analysis",
+  "updated_at": "2026-08-07T20:38:33.451032822Z"
 }

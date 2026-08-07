@@ -1,14 +1,16 @@
 {
-  "id": "5fd315c0-4713-4744-925f-619de215ba98",
-  "title": "Delete duplicated modem implementations",
-  "description": "Delete modem logic that becomes redundant after the BPSK and QPSK migration is complete. This task exists to enforce a single shared modem implementation rather than multiple compatibility-era implementations.\n\n## Success Criteria\n\n- [ ] Duplicated modem code paths are removed cleanly rather than deprecated.\n- [ ] One coherent shared modem implementation remains as the source of truth for functionality.\n- [ ] Custom or parallel modem implementations do not remain scattered across the codebase after cleanup.\n- [ ] Legacy cleanup does not break the migrated public entry points.\n\n## Notes\n\nDo not add deprecation shims, compatibility aliases, or transitional duplicated logic here. The expected outcome is direct deletion of superseded modem code once the shared framework-backed path is in place.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T15:25:03.058661410Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.869446170Z",
   "dependencies": [
     "0cafa5f5-a680-4f65-a14e-b11dcbb668de",
     "b3bb774a-5c57-4d95-9ce4-43fbb3b7d0fd"
   ],
+  "description": "Delete modem logic that becomes redundant after the BPSK and QPSK migration is complete. This task exists to enforce a single shared modem implementation rather than multiple compatibility-era implementations.\n\n## Success Criteria\n\n- [ ] Duplicated modem code paths are removed cleanly rather than deprecated.\n- [ ] One coherent shared modem implementation remains as the source of truth for functionality.\n- [ ] Custom or parallel modem implementations do not remain scattered across the codebase after cleanup.\n- [ ] Legacy cleanup does not break the migrated public entry points.\n\n## Notes\n\nDo not add deprecation shims, compatibility aliases, or transitional duplicated logic here. The expected outcome is direct deletion of superseded modem code once the shared framework-backed path is in place.",
+  "documents": [],
+  "done_at": "2026-04-14T15:59:32.086556248Z",
+  "first_ready_at": "2026-04-14T15:24:58.188738839Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T15:25:02.717794672Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T15:51:55.179973606Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T15:59:31.290027068Z"
+      "updated_at": "2026-04-14T15:51:55.179973606Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T15:53:11.352231557Z"
+      "updated_at": "2026-04-14T15:53:11.352231557Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T15:59:31.290027068Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-14T15:25:02.717794672Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "5fd315c0-4713-4744-925f-619de215ba98",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:legacy-modem-surface-migration"
+    "story:legacy-modem-surface-migration",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.869446170Z",
-  "updated_at": "2026-07-12T20:02:55.445969806Z",
-  "first_ready_at": "2026-04-14T15:24:58.188738839Z",
-  "claimed_at": "2026-04-14T15:25:03.058661410Z",
-  "done_at": "2026-04-14T15:59:32.086556248Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Delete duplicated modem implementations",
+  "updated_at": "2026-08-07T20:38:56.333503797Z"
 }

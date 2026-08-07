@@ -1,13 +1,15 @@
 {
-  "id": "a7c81834-a34b-474c-88a3-50989295b68b",
-  "title": "FieldPoly batch_mul + batch_gcd",
-  "description": "Two batch primitives for `FieldPoly<F>` using a balanced product tree and pairwise reduction.\n\n## API\n\n- `pub fn batch_mul(polys: &[Self]) -> Self` via balanced binary product tree (fold-by-pairs).\n- `pub fn batch_mul_with_field(sample: &F, polys: &[Self]) -> Self` — same, but caller provides a `&F` so the `polys: []` case can return `FieldPoly::one_like(sample)` without needing any element from the slice.\n- `pub fn batch_gcd(polys: &[Self]) -> Self` via pairwise `fold(gcd)`. Explicit in the story spec as \"pairwise reduction\".\n\n## Success criteria\n\n- Proptest: `batch_mul(polys) == polys.iter().fold(one, |a, b| a*b)`.\n- Proptest: `d` divides `batch_gcd([a*d, b*d, c*d])` (mathematical invariant: `gcd(a·d, b·d, c·d) = d · gcd(a, b, c)`, so `d` is a common divisor of the inputs and therefore divides the result). Verify by checking that `batch_gcd([a*d, b*d, c*d]).div_rem(&d)` has a zero remainder. The original issue wording had this direction reversed; the literal \"result divides d\" is only true in the trivial case where `gcd(a, b, c) = 1`, which is not a useful invariant to test.\n- Unit tests: empty slice, single-element slice for both.\n- Bench showing `batch_mul` beats left-fold schoolbook when inputs are balanced.\n- `cargo fmt` / `cargo clippy -- -D warnings` / `cargo test --release` clean.\n\n## Depends on\n\nTask 1 (`70972f06`) supplies Karatsuba, div_rem, gcd. Task 2 (`d9c3d414`) was rejected as subsumed by 70972f06; no additional prereq.\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 5.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-19T19:48:56.882050872Z",
+  "context": {},
+  "created_at": "2026-04-18T21:56:36.470153436Z",
   "dependencies": [
     "d9c3d414-580e-4f3e-bb59-71a198ed0c96"
   ],
+  "description": "Two batch primitives for `FieldPoly<F>` using a balanced product tree and pairwise reduction.\n\n## API\n\n- `pub fn batch_mul(polys: &[Self]) -> Self` via balanced binary product tree (fold-by-pairs).\n- `pub fn batch_mul_with_field(sample: &F, polys: &[Self]) -> Self` — same, but caller provides a `&F` so the `polys: []` case can return `FieldPoly::one_like(sample)` without needing any element from the slice.\n- `pub fn batch_gcd(polys: &[Self]) -> Self` via pairwise `fold(gcd)`. Explicit in the story spec as \"pairwise reduction\".\n\n## Success criteria\n\n- Proptest: `batch_mul(polys) == polys.iter().fold(one, |a, b| a*b)`.\n- Proptest: `d` divides `batch_gcd([a*d, b*d, c*d])` (mathematical invariant: `gcd(a·d, b·d, c·d) = d · gcd(a, b, c)`, so `d` is a common divisor of the inputs and therefore divides the result). Verify by checking that `batch_gcd([a*d, b*d, c*d]).div_rem(&d)` has a zero remainder. The original issue wording had this direction reversed; the literal \"result divides d\" is only true in the trivial case where `gcd(a, b, c) = 1`, which is not a useful invariant to test.\n- Unit tests: empty slice, single-element slice for both.\n- Bench showing `batch_mul` beats left-fold schoolbook when inputs are balanced.\n- `cargo fmt` / `cargo clippy -- -D warnings` / `cargo test --release` clean.\n\n## Depends on\n\nTask 1 (`70972f06`) supplies Karatsuba, div_rem, gcd. Task 2 (`d9c3d414`) was rejected as subsumed by 70972f06; no additional prereq.\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 5.",
+  "documents": [],
+  "done_at": "2026-04-19T20:46:18.590465532Z",
+  "first_ready_at": "2026-04-19T15:57:12.821119419Z",
   "gates_required": [
     "code-review",
     "doc-review",
@@ -16,31 +18,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T20:18:40.118340799Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-19T20:46:18.576411348Z"
+      "updated_at": "2026-04-19T20:18:40.118340799Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T20:38:37.103225230Z"
+      "updated_at": "2026-04-19T20:38:37.103225230Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-19T20:46:18.576411348Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "a7c81834-a34b-474c-88a3-50989295b68b",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:bdf95060"
+    "story:bdf95060",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-18T21:56:36.470153436Z",
-  "updated_at": "2026-07-12T20:02:55.463607419Z",
-  "first_ready_at": "2026-04-19T15:57:12.821119419Z",
-  "claimed_at": "2026-04-19T19:48:56.882050872Z",
-  "done_at": "2026-04-19T20:46:18.590465532Z"
+  "priority": "low",
+  "state": "done",
+  "title": "FieldPoly batch_mul + batch_gcd",
+  "updated_at": "2026-08-07T20:40:03.905989073Z"
 }

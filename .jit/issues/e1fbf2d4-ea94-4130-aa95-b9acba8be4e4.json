@@ -1,46 +1,46 @@
 {
-  "id": "e1fbf2d4-ea94-4130-aa95-b9acba8be4e4",
-  "title": "Multi-word schoolbook carry-less multiplication",
-  "description": "`clmul_wide<const N: usize>` — schoolbook GF(2)-polynomial multiplication of two `[u64; N]` operands into `[u64; 2*N]`. Task 2 of the 6fb4abad breakdown.\n\n## Scope\n\n- `fn clmul_wide<const N: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; 2*N]` in `crates/gf2-core/src/gf2m/wide.rs`.\n  - Pure safe Rust. Inner word-word clmul uses `barrett::clmul(u64, u64) -> u128` (or a local copy).\n  - O(N²) schoolbook. For each `(i, j)` accumulate `a[i] * b[j]` into `out[i+j]` / `out[i+j+1]`.\n- **Rust 1.80 MSRV caveat**: `[u64; 2*N]` as return type may not compile. Use one of: (a) a `const M: usize` second parameter with `const _: () = assert!(M == 2*N);`, or (c) out-parameter `&mut [u64; 2*N]`. Pick (a) or (c); no new deps. Document the choice.\n\n## Success criteria\n\n- Unit tests with known vectors: `(1)*(1) = 1`, `(x)*(x) = x^2`, `(x+1)*(x+1) = x^2+1`, all-ones squared.\n- Cross-check for `N=2` (128-bit operands): result matches `u128`-based reference built on `barrett::clmul`.\n- Proptest (≤128 cases): `clmul_wide(a, b) == clmul_wide(b, a)`.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 1 of 6fb4abad (type shell).\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 2.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-19T12:48:31.946721362Z",
+  "context": {},
+  "created_at": "2026-04-18T22:39:12.876123059Z",
   "dependencies": [
     "9fa99685-6de7-43b1-a190-95aa9f0b51ef"
   ],
+  "description": "`clmul_wide<const N: usize>` — schoolbook GF(2)-polynomial multiplication of two `[u64; N]` operands into `[u64; 2*N]`. Task 2 of the 6fb4abad breakdown.\n\n## Scope\n\n- `fn clmul_wide<const N: usize>(a: &[u64; N], b: &[u64; N]) -> [u64; 2*N]` in `crates/gf2-core/src/gf2m/wide.rs`.\n  - Pure safe Rust. Inner word-word clmul uses `barrett::clmul(u64, u64) -> u128` (or a local copy).\n  - O(N²) schoolbook. For each `(i, j)` accumulate `a[i] * b[j]` into `out[i+j]` / `out[i+j+1]`.\n- **Rust 1.80 MSRV caveat**: `[u64; 2*N]` as return type may not compile. Use one of: (a) a `const M: usize` second parameter with `const _: () = assert!(M == 2*N);`, or (c) out-parameter `&mut [u64; 2*N]`. Pick (a) or (c); no new deps. Document the choice.\n\n## Success criteria\n\n- Unit tests with known vectors: `(1)*(1) = 1`, `(x)*(x) = x^2`, `(x+1)*(x+1) = x^2+1`, all-ones squared.\n- Cross-check for `N=2` (128-bit operands): result matches `u128`-based reference built on `barrett::clmul`.\n- Proptest (≤128 cases): `clmul_wide(a, b) == clmul_wide(b, a)`.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 1 of 6fb4abad (type shell).\n\n## Breakdown reference\n\nSee `dev/plans/6fb4abad_breakdown.md` Task 2.",
+  "documents": [],
+  "done_at": "2026-04-19T16:12:34.795769788Z",
+  "first_ready_at": "2026-04-19T03:46:53.845175433Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-04-19T15:46:47.289652453Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T16:06:06.021902189Z"
+      "updated_at": "2026-04-19T16:06:06.021902189Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-04-19T16:12:34.781477404Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-19T15:46:47.289652453Z"
+      "updated_at": "2026-04-19T16:12:34.781477404Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "e1fbf2d4-ea94-4130-aa95-b9acba8be4e4",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:6fb4abad"
+    "story:6fb4abad",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-18T22:39:12.876123059Z",
-  "updated_at": "2026-07-12T20:02:55.479743061Z",
-  "first_ready_at": "2026-04-19T03:46:53.845175433Z",
-  "claimed_at": "2026-04-19T12:48:31.946721362Z",
-  "done_at": "2026-04-19T16:12:34.795769788Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Multi-word schoolbook carry-less multiplication",
+  "updated_at": "2026-08-07T20:42:02.004785742Z"
 }

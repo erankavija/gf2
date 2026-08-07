@@ -1,14 +1,16 @@
 {
-  "id": "19069bc1-2010-4a41-804e-316036ec3e11",
-  "title": "Prototype a GPU batch demapper backend",
-  "description": "Prototype a GPU demapper that uses the shared batch-oriented modem interface without changing the high-level API. This story is conditional work that follows the CPU scalar and SIMD implementation, and exists to measure whether demapping has a worthwhile GPU crossover.\n\n## Background\n\nThe repository already contains a dedicated GPU kernel crate, so there is a natural place for experimental accelerator work. For this epic, GPU support is exploratory rather than mandatory: the primary deliverable is the CPU scalar and SIMD framework, and this story is used to determine whether modem demapping should also have a GPU branch.\n\n## Success Criteria\n\n- [ ] A GPU prototype consumes the same batch demapper input and output shape, LLR ordering, and modem metadata semantics as the CPU fast path.\n- [ ] The prototype does not require a second public modem API or public API divergence from the shared modem surface.\n- [ ] The crossover report records tested hardware, batch sizes, demapper mode, and the resulting ship, experimental, or defer decision.\n\n## Notes\n\nThis story should remain conditional and should not block the core modem framework from shipping.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-15T05:14:17.737227425Z",
+  "context": {},
+  "created_at": "2026-04-12T19:39:51.672221548Z",
   "dependencies": [
     "9c37ec8c-f310-47f8-b54e-ba4a41143b0c",
     "92186a40-1d97-49f9-8b82-e91b8afe47b2"
   ],
+  "description": "Prototype a GPU demapper that uses the shared batch-oriented modem interface without changing the high-level API. This story is conditional work that follows the CPU scalar and SIMD implementation, and exists to measure whether demapping has a worthwhile GPU crossover.\n\n## Background\n\nThe repository already contains a dedicated GPU kernel crate, so there is a natural place for experimental accelerator work. For this epic, GPU support is exploratory rather than mandatory: the primary deliverable is the CPU scalar and SIMD framework, and this story is used to determine whether modem demapping should also have a GPU branch.\n\n## Success Criteria\n\n- [ ] A GPU prototype consumes the same batch demapper input and output shape, LLR ordering, and modem metadata semantics as the CPU fast path.\n- [ ] The prototype does not require a second public modem API or public API divergence from the shared modem surface.\n- [ ] The crossover report records tested hardware, batch sizes, demapper mode, and the resulting ship, experimental, or defer decision.\n\n## Notes\n\nThis story should remain conditional and should not block the core modem framework from shipping.",
+  "documents": [],
+  "done_at": "2026-04-15T06:43:51.302698444Z",
+  "first_ready_at": "2026-04-15T05:14:08.149296003Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T06:43:51.289089754Z"
+      "updated_at": "2026-04-15T05:14:22.064098691Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T06:38:58.394697178Z"
+      "updated_at": "2026-04-15T06:38:58.394697178Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T05:14:22.064098691Z"
+      "updated_at": "2026-04-15T06:43:51.289089754Z",
+      "updated_by": "agent:project-lead"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T05:14:16.997172747Z"
+      "updated_at": "2026-04-15T05:14:16.997172747Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "19069bc1-2010-4a41-804e-316036ec3e11",
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:gpu-demapper-prototype"
+    "story:gpu-demapper-prototype",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:39:51.672221548Z",
-  "updated_at": "2026-07-14T20:49:35.386174142Z",
-  "first_ready_at": "2026-04-15T05:14:08.149296003Z",
-  "claimed_at": "2026-04-15T05:14:17.737227425Z",
-  "done_at": "2026-04-15T06:43:51.302698444Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Prototype a GPU batch demapper backend",
+  "updated_at": "2026-08-07T20:37:43.457442636Z"
 }

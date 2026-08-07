@@ -1,14 +1,16 @@
 {
-  "id": "b3bb774a-5c57-4d95-9ce4-43fbb3b7d0fd",
-  "title": "Replace the placeholder QPSK path with framework-backed adapters",
-  "description": "Retire the bespoke QPSK path used by the SOGRAND-era fading work and move it onto the shared modem framework.\n\n## Success Criteria\n\n- [ ] The existing QPSK path is implemented through the shared modem framework rather than owning unique modem logic.\n- [ ] The current fading-facing QPSK integration no longer bypasses the common modem surface.\n- [ ] No standalone QPSK implementation remains as a competing source of functionality after migration.\n- [ ] Existing behavior needed by current simulations is preserved through the migration.\n\n## Notes\n\nThis task is the main leaf where the placeholder QPSK implementation is actually replaced, so it should reduce the codebase to one modem source of truth rather than multiple QPSK implementations.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T14:23:07.929864177Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.867227108Z",
   "dependencies": [
     "db1dda70-a870-4b52-a4ea-92acee4e3fad",
     "a23646dd-2980-420e-a7ac-c0094c63f55c"
   ],
+  "description": "Retire the bespoke QPSK path used by the SOGRAND-era fading work and move it onto the shared modem framework.\n\n## Success Criteria\n\n- [ ] The existing QPSK path is implemented through the shared modem framework rather than owning unique modem logic.\n- [ ] The current fading-facing QPSK integration no longer bypasses the common modem surface.\n- [ ] No standalone QPSK implementation remains as a competing source of functionality after migration.\n- [ ] Existing behavior needed by current simulations is preserved through the migration.\n\n## Notes\n\nThis task is the main leaf where the placeholder QPSK implementation is actually replaced, so it should reduce the codebase to one modem source of truth rather than multiple QPSK implementations.",
+  "documents": [],
+  "done_at": "2026-04-14T15:24:58.057091323Z",
+  "first_ready_at": "2026-04-14T09:55:36.122813436Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T15:18:01.260163418Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T15:06:34.226068883Z"
+      "updated_at": "2026-04-14T15:06:34.226068883Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T15:18:01.260163418Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T15:24:57.668550350Z"
+      "updated_at": "2026-04-14T15:24:57.668550350Z",
+      "updated_by": "agent:project-lead"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T14:23:07.419651996Z"
+      "updated_at": "2026-04-14T14:23:07.419651996Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "b3bb774a-5c57-4d95-9ce4-43fbb3b7d0fd",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:legacy-modem-surface-migration"
+    "story:legacy-modem-surface-migration",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.867227108Z",
-  "updated_at": "2026-07-12T20:02:55.468289562Z",
-  "first_ready_at": "2026-04-14T09:55:36.122813436Z",
-  "claimed_at": "2026-04-14T14:23:07.929864177Z",
-  "done_at": "2026-04-14T15:24:58.057091323Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Replace the placeholder QPSK path with framework-backed adapters",
+  "updated_at": "2026-08-07T20:40:35.285329392Z"
 }

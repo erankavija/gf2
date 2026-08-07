@@ -1,13 +1,14 @@
 {
-  "id": "3cff65f7-5e7f-410d-8a02-70c64b697854",
-  "title": "FieldPoly Lagrange interpolation (quadratic + fast via tree)",
-  "description": "Two variants of polynomial interpolation on `FieldPoly<F>`.\n\n## API\n\n- `pub fn interpolate(points: &[(F, F)]) -> Result<FieldPoly<F>, InterpolationError>` — standard Lagrange, O(n²). Returns zero polynomial for empty input. `InterpolationError::DuplicatePoint` if any two `x_i` coincide.\n- `pub fn interpolate_fast(points: &[(F, F)]) -> Result<FieldPoly<F>, InterpolationError>` — subproduct-tree-based O(n log² n): build `M(x) = Π(x − x_i)`, compute `M'(x)`, evaluate `M'` at all `x_i` via `batch_evaluate`, then one downward pass.\n- Both routines must reuse `batch_ops::batch_inverse` for the `1 / Π_{j!=i}(x_i − x_j)` weights — cite this dependency explicitly in the module docs (this was the motivating application for the Montgomery-trick dep).\n- Threshold constant selecting naive vs fast, tuned by a bench case.\n\n## Success criteria\n\n- Round-trip proptest: `interpolate(points).evaluate(x_i) == y_i` for all points (verbatim from story spec).\n- Agreement proptest: `interpolate_fast` matches `interpolate` for `n` up to 32.\n- Unit tests: duplicate x detection, empty input, single-point.\n- Bench table in module doc showing fast path beating naive at the threshold crossover.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 3 (subproduct-tree batch evaluation).\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 4.",
-  "state": "rejected",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-19T22:12:25.283003954Z",
+  "context": {},
+  "created_at": "2026-04-18T21:56:29.215150900Z",
   "dependencies": [
     "2e7db385-f7e4-4ba7-a003-3196edf3be5a"
   ],
+  "description": "Two variants of polynomial interpolation on `FieldPoly<F>`.\n\n## API\n\n- `pub fn interpolate(points: &[(F, F)]) -> Result<FieldPoly<F>, InterpolationError>` — standard Lagrange, O(n²). Returns zero polynomial for empty input. `InterpolationError::DuplicatePoint` if any two `x_i` coincide.\n- `pub fn interpolate_fast(points: &[(F, F)]) -> Result<FieldPoly<F>, InterpolationError>` — subproduct-tree-based O(n log² n): build `M(x) = Π(x − x_i)`, compute `M'(x)`, evaluate `M'` at all `x_i` via `batch_evaluate`, then one downward pass.\n- Both routines must reuse `batch_ops::batch_inverse` for the `1 / Π_{j!=i}(x_i − x_j)` weights — cite this dependency explicitly in the module docs (this was the motivating application for the Montgomery-trick dep).\n- Threshold constant selecting naive vs fast, tuned by a bench case.\n\n## Success criteria\n\n- Round-trip proptest: `interpolate(points).evaluate(x_i) == y_i` for all points (verbatim from story spec).\n- Agreement proptest: `interpolate_fast` matches `interpolate` for `n` up to 32.\n- Unit tests: duplicate x detection, empty input, single-point.\n- Bench table in module doc showing fast path beating naive at the threshold crossover.\n- `cargo fmt`/`cargo clippy -- -D warnings`/`cargo test --release` clean.\n\n## Depends on\n\nTask 3 (subproduct-tree batch evaluation).\n\n## Breakdown reference\n\nSee `dev/plans/bdf95060_breakdown.md` Task 4.",
+  "documents": [],
+  "first_ready_at": "2026-04-19T19:48:34.491982306Z",
   "gates_required": [
     "code-review",
     "doc-review",
@@ -16,25 +17,24 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T14:19:05.820684726Z"
+      "updated_at": "2026-04-20T14:19:05.820684726Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T14:19:12.704964976Z"
+      "updated_at": "2026-04-20T14:19:12.704964976Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "3cff65f7-5e7f-410d-8a02-70c64b697854",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:bdf95060"
+    "story:bdf95060",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-18T21:56:29.215150900Z",
-  "updated_at": "2026-07-12T20:02:55.435763509Z",
-  "first_ready_at": "2026-04-19T19:48:34.491982306Z",
-  "claimed_at": "2026-04-19T22:12:25.283003954Z"
+  "priority": "low",
+  "state": "rejected",
+  "title": "FieldPoly Lagrange interpolation (quadratic + fast via tree)",
+  "updated_at": "2026-08-07T20:38:19.786657401Z"
 }

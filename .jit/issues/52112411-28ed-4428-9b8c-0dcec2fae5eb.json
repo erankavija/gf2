@@ -1,14 +1,16 @@
 {
-  "id": "52112411-28ed-4428-9b8c-0dcec2fae5eb",
-  "title": "Implement optimized Gray square-QAM mapper and demapper",
-  "description": "Add the optimized modem path for Gray-coded square QAM, including QPSK, 16-QAM, 64-QAM, and 256-QAM. This story delivers the high-performance path needed for common BICM and DVB-T2 workflows.\n\n## Background\n\nArbitrary-constellation support is necessary for ergonomics, but the common square-QAM family should not pay the full generic cost. The optimized path should exploit Gray-PAM structure, precomputed tables, and batch-friendly memory layout while remaining API-compatible with the generic modem surface.\n\n## Success Criteria\n\n- [ ] Public preset constructors exist for Gray-coded QPSK, 16-QAM, 64-QAM, and 256-QAM and use the same labeling and normalization metadata as the shared modem builder.\n- [ ] The preset-backed modem path selects a specialized Gray square-QAM demapper through the shared modem API rather than through a separate public interface.\n- [ ] The Gray-QAM hot path uses caller-provided output buffers and avoids per-symbol heap allocation in the demapper loop.\n- [ ] Fast-path demapper outputs match the reference modem path for the supported demapper modes on representative AWGN cases, and benchmark coverage reports the relevant throughput-critical loops.\n\n## Notes\n\nThis story is the performance-critical core of the epic and should be designed to support SIMD acceleration cleanly.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T16:30:10.755057384Z",
+  "context": {},
+  "created_at": "2026-04-12T19:39:51.666381904Z",
   "dependencies": [
     "24144d1a-f24a-4f00-a69e-da920f7f7a4d",
     "c5cee991-b410-469c-bd9b-849f717f8f51"
   ],
+  "description": "Add the optimized modem path for Gray-coded square QAM, including QPSK, 16-QAM, 64-QAM, and 256-QAM. This story delivers the high-performance path needed for common BICM and DVB-T2 workflows.\n\n## Background\n\nArbitrary-constellation support is necessary for ergonomics, but the common square-QAM family should not pay the full generic cost. The optimized path should exploit Gray-PAM structure, precomputed tables, and batch-friendly memory layout while remaining API-compatible with the generic modem surface.\n\n## Success Criteria\n\n- [ ] Public preset constructors exist for Gray-coded QPSK, 16-QAM, 64-QAM, and 256-QAM and use the same labeling and normalization metadata as the shared modem builder.\n- [ ] The preset-backed modem path selects a specialized Gray square-QAM demapper through the shared modem API rather than through a separate public interface.\n- [ ] The Gray-QAM hot path uses caller-provided output buffers and avoids per-symbol heap allocation in the demapper loop.\n- [ ] Fast-path demapper outputs match the reference modem path for the supported demapper modes on representative AWGN cases, and benchmark coverage reports the relevant throughput-critical loops.\n\n## Notes\n\nThis story is the performance-critical core of the epic and should be designed to support SIMD acceleration cleanly.",
+  "documents": [],
+  "done_at": "2026-04-14T20:53:05.195756700Z",
+  "first_ready_at": "2026-04-14T16:30:04.648999723Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -16,38 +18,36 @@
     "doc-review"
   ],
   "gates_status": {
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T16:30:05.820917146Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T20:53:04.418497665Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T17:52:55.837485973Z"
+      "updated_at": "2026-04-14T17:52:55.837485973Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T17:54:08.728366397Z"
+      "updated_at": "2026-04-14T17:54:08.728366397Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-14T20:53:04.418497665Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-14T16:30:05.820917146Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "52112411-28ed-4428-9b8c-0dcec2fae5eb",
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:gray-square-qam-fast-path"
+    "story:gray-square-qam-fast-path",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:39:51.666381904Z",
-  "updated_at": "2026-07-14T20:49:35.540869745Z",
-  "first_ready_at": "2026-04-14T16:30:04.648999723Z",
-  "claimed_at": "2026-04-14T16:30:10.755057384Z",
-  "done_at": "2026-04-14T20:53:05.195756700Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement optimized Gray square-QAM mapper and demapper",
+  "updated_at": "2026-08-07T20:38:47.173593956Z"
 }

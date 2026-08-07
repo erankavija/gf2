@@ -1,14 +1,16 @@
 {
-  "id": "1663515c-a17f-4d72-beb0-99c7e8168f80",
-  "title": "Add generic versus fast-path modem benchmarks",
-  "description": "Measure the reference arbitrary-constellation path against the Gray-QAM fast path and capture the main hot loops.\n\n## Success Criteria\n\n- [ ] Benchmarks compare the generic modem path against the optimized Gray-QAM fast path.\n- [ ] The benchmark set captures the main hot loops that matter for future optimization work.\n- [ ] Results are usable as a baseline for later SIMD and accelerator tuning.\n\n## Notes\n\nThis task provides the performance baseline needed by the epic success criteria.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-14T22:13:11.376584570Z",
+  "context": {},
+  "created_at": "2026-04-12T19:41:45.873463053Z",
   "dependencies": [
     "5fd315c0-4713-4744-925f-619de215ba98",
     "c5cee991-b410-469c-bd9b-849f717f8f51"
   ],
+  "description": "Measure the reference arbitrary-constellation path against the Gray-QAM fast path and capture the main hot loops.\n\n## Success Criteria\n\n- [ ] Benchmarks compare the generic modem path against the optimized Gray-QAM fast path.\n- [ ] The benchmark set captures the main hot loops that matter for future optimization work.\n- [ ] Results are usable as a baseline for later SIMD and accelerator tuning.\n\n## Notes\n\nThis task provides the performance baseline needed by the epic success criteria.",
+  "documents": [],
+  "done_at": "2026-04-14T23:17:21.124417955Z",
+  "first_ready_at": "2026-04-14T15:59:32.126622927Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -18,36 +20,34 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:16.150295149Z"
+      "updated_at": "2026-04-14T23:01:16.150295149Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-14T23:01:19.664038494Z"
+      "updated_at": "2026-04-14T23:01:19.664038494Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T23:17:21.110667505Z"
+      "updated_at": "2026-04-14T23:17:21.110667505Z",
+      "updated_by": "agent:project-lead"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-14T22:13:09.093845180Z"
+      "updated_at": "2026-04-14T22:13:09.093845180Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "1663515c-a17f-4d72-beb0-99c7e8168f80",
   "labels": [
     "type:task",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:modem-ergonomics-validation-benchmarks"
+    "story:modem-ergonomics-validation-benchmarks",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:41:45.873463053Z",
-  "updated_at": "2026-07-12T20:02:55.424158250Z",
-  "first_ready_at": "2026-04-14T15:59:32.126622927Z",
-  "claimed_at": "2026-04-14T22:13:11.376584570Z",
-  "done_at": "2026-04-14T23:17:21.124417955Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Add generic versus fast-path modem benchmarks",
+  "updated_at": "2026-08-07T20:37:38.968990012Z"
 }

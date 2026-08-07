@@ -15,10 +15,10 @@
   "labels": [
     "type:epic",
     "component:gf2-coding",
-    "epic:research-neural-aided-belief-propagation-for-ldpc"
+    "epic:neural-bp"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Research neural-aided belief propagation for LDPC",
-  "updated_at": "2026-08-05T12:24:27.577253347Z"
+  "updated_at": "2026-08-07T20:36:48.032802330Z"
 }

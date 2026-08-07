@@ -1,16 +1,18 @@
 {
-  "id": "0884289e-33a4-495b-97a3-9ba5625dd878",
-  "title": "Add modem ergonomics, validation, examples, and benchmarking",
-  "description": "Polish the public modem API and demonstrate that it is both usable and performant. This story covers user-facing builders, examples, validation coverage, and benchmark coverage for the generic and optimized modem paths.\n\n## Background\n\nThe framework is only successful if standard use cases are easy to discover and custom constellations remain approachable. The modem surface also needs benchmark coverage so future optimization work has a stable baseline and regressions are easy to detect.\n\n## Success Criteria\n\n- [ ] Public documentation exposes named constructors for the standard presets and a documented custom-constellation builder workflow.\n- [ ] Compiling examples cover at least one custom constellation, one Gray-QAM preset, and one simulation-harness integration path built from the shared modem surface.\n- [ ] Benchmark coverage includes generic versus Gray-QAM fast-path comparisons and an analysis-disabled baseline for the normal hot path.\n- [ ] Documentation explains the single-source-of-truth modem architecture, the supported demapper semantics, and when users should choose presets versus custom builders.\n\n## Notes\n\nThis story should make the framework pleasant to use for both standard communications work and research experimentation.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-15T04:58:21.156320932Z",
+  "context": {},
+  "created_at": "2026-04-12T19:39:51.671072588Z",
   "dependencies": [
     "46ffe45a-6cc7-47e8-bb15-d406b3a17abc",
     "f80407f8-05a7-464b-b845-1c1c41842196",
     "1663515c-a17f-4d72-beb0-99c7e8168f80",
     "dafb938a-405a-472f-af4b-56ec9955d8b4"
   ],
+  "description": "Polish the public modem API and demonstrate that it is both usable and performant. This story covers user-facing builders, examples, validation coverage, and benchmark coverage for the generic and optimized modem paths.\n\n## Background\n\nThe framework is only successful if standard use cases are easy to discover and custom constellations remain approachable. The modem surface also needs benchmark coverage so future optimization work has a stable baseline and regressions are easy to detect.\n\n## Success Criteria\n\n- [ ] Public documentation exposes named constructors for the standard presets and a documented custom-constellation builder workflow.\n- [ ] Compiling examples cover at least one custom constellation, one Gray-QAM preset, and one simulation-harness integration path built from the shared modem surface.\n- [ ] Benchmark coverage includes generic versus Gray-QAM fast-path comparisons and an analysis-disabled baseline for the normal hot path.\n- [ ] Documentation explains the single-source-of-truth modem architecture, the supported demapper semantics, and when users should choose presets versus custom builders.\n\n## Notes\n\nThis story should make the framework pleasant to use for both standard communications work and research experimentation.",
+  "documents": [],
+  "done_at": "2026-04-15T05:16:49.045723383Z",
+  "first_ready_at": "2026-04-15T04:46:35.540360795Z",
   "gates_required": [
     "tdd-reminder",
     "cargo-ci",
@@ -20,36 +22,34 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T05:11:04.811146754Z"
+      "updated_at": "2026-04-15T05:11:04.811146754Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-15T05:11:05.920335170Z"
-    },
-    "tdd-reminder": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T04:58:20.893618141Z"
+      "updated_at": "2026-04-15T05:11:05.920335170Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-15T05:16:49.033390284Z"
+      "updated_at": "2026-04-15T05:16:49.033390284Z",
+      "updated_by": "agent:project-lead"
+    },
+    "tdd-reminder": {
+      "status": "passed",
+      "updated_at": "2026-04-15T04:58:20.893618141Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "0884289e-33a4-495b-97a3-9ba5625dd878",
   "labels": [
     "type:story",
     "component:gf2-coding",
-    "epic:d4851c3d",
-    "story:modem-ergonomics-validation-benchmarks"
+    "story:modem-ergonomics-validation-benchmarks",
+    "epic:modem-framework"
   ],
-  "created_at": "2026-04-12T19:39:51.671072588Z",
-  "updated_at": "2026-07-14T20:49:35.325986909Z",
-  "first_ready_at": "2026-04-15T04:46:35.540360795Z",
-  "claimed_at": "2026-04-15T04:58:21.156320932Z",
-  "done_at": "2026-04-15T05:16:49.045723383Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Add modem ergonomics, validation, examples, and benchmarking",
+  "updated_at": "2026-08-07T20:37:11.690380022Z"
 }

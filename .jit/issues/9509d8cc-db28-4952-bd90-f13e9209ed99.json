@@ -66,11 +66,11 @@
   "labels": [
     "type:story",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:9509d8cc"
+    "story:9509d8cc",
+    "epic:gfpm-arithmetic"
   ],
   "priority": "normal",
   "state": "done",
   "title": "Formal verification of field arithmetic (Aeneas + Kani)",
-  "updated_at": "2026-08-05T12:08:00.578747348Z"
+  "updated_at": "2026-08-07T20:39:32.581704712Z"
 }

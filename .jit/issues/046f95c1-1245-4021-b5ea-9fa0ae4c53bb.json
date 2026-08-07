@@ -1,46 +1,46 @@
 {
-  "id": "046f95c1-1245-4021-b5ea-9fa0ae4c53bb",
-  "title": "Lagrange fast-path re-enablement — drop SUBPRODUCT_THRESHOLD via div_rem_auto",
-  "description": "With the preceding `div_rem_auto` primitive landed (issue `ae0c7e1f`), `batch_evaluate_subproduct` and `interpolate_fast` can finally realise their `O(n log² n)` asymptote. This close-out task drops `SUBPRODUCT_THRESHOLD` below `usize::MAX`, re-benches the Lagrange paths, and refreshes the module-docstring tables.\n\n## Background\n\nThe `interpolate_fast` + `batch_evaluate_subproduct` machinery already ships (closed in session 3 via `2e7db385` + work-in-tree from `3cff65f7`). The blocker was `FieldPoly::div_rem` being schoolbook `O((n−m)·m)`; the subproduct-tree reduction phase invokes it repeatedly. With `ae0c7e1f` adding `div_rem_fast` + `div_rem_auto`, the tree reduction is now `O(M(n) log n)` in aggregate. Tuning `SUBPRODUCT_THRESHOLD` below `usize::MAX` activates the public `FieldPoly::batch_evaluate` dispatcher's fast lane.\n\n## Scope\n\n### 1. Route the subproduct tree through `div_rem_auto`\n\nIn `batch_evaluate_subproduct` (`crates/gf2-core/src/field/poly.rs` around line 990–1050), replace `FieldPoly::div_rem` calls with `FieldPoly::div_rem_auto` so the reduction phase uses the fast path above the tuned threshold. Where the tree helper generic-dispatches over arbitrary `F: FiniteField` (not `TwoAdicField`), keep the schoolbook fallback; specialise with `F: TwoAdicField` where that's required.\n\n### 2. Tune `SUBPRODUCT_THRESHOLD`\n\nLower from `usize::MAX` at `poly.rs:1776` to the empirical crossover point discovered by rerunning the `field_poly_batch_evaluate_fp65537` bench group after step 1. Plausible target: 32–128.\n\n### 3. Tune `INTERPOLATE_THRESHOLD`\n\nCurrently `16` at `poly_interpolate.rs:92` (kept as a conservative pre-enablement margin). Re-check against the refreshed benchmark; adjust if the new crossover has shifted.\n\n### 4. Regenerate benchmark snapshot tables\n\nUpdate the \"Benchmark snapshot\" section in the `poly.rs` module docstring with fresh numbers for:\n- `batch_evaluate` (now measures the dispatcher's actual fast-path behaviour above the threshold)\n- `interpolate_fast` vs `interpolate`\nKeep the existing `subproduct` and `naive` columns for baseline continuity.\n\n### 5. Refresh `dev/plans/field_poly_module_overview.md`\n\nRemove the \"Known gaps and future work — `SUBPRODUCT_THRESHOLD = usize::MAX`\" paragraph that said the fast path was unrealised. Replace with a short note that records the tuned threshold and the landing commits (`ae0c7e1f` for fast div, this task for threshold tuning).\n\n### 6. Proptest coverage\n\nAdd (or uplift) a proptest that runs `batch_evaluate` across input sizes that straddle the new `SUBPRODUCT_THRESHOLD` and asserts agreement with a naive Horner sweep on ≥ 500 random inputs over `Fp<65537>`. Covers the dispatcher both below and above the new threshold.\n\n## Success criteria\n\n- `cargo fmt --all` clean\n- `cargo clippy --workspace --all-targets --all-features --release -- -D warnings` clean\n- `cargo test --workspace --all-features --release` passes, release test execution ≤ 60 s\n- `batch_evaluate` achieves measured sub-quadratic slope at `n, k ≥ 2·SUBPRODUCT_THRESHOLD` on `Fp<65537>` (bench table in docs is the evidence)\n- `SUBPRODUCT_THRESHOLD` and `INTERPOLATE_THRESHOLD` values tuned from data and documented in the module docstring + overview doc\n- No residual \"fast path unrealised\" language in docs\n\n## Dependencies\n\n- `ae0c7e1f` (fast FieldPoly div_rem + `div_rem_auto` dispatcher)\n- `e0b6f940` (NTT mul) — done\n- `224a7d9e` (module docstring + bench scaffold) — done",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-20T19:36:15.011213160Z",
+  "context": {},
+  "created_at": "2026-04-20T17:26:47.475690551Z",
   "dependencies": [
     "ae0c7e1f-9e4a-41ac-b032-ad2fd81b55a1"
   ],
+  "description": "With the preceding `div_rem_auto` primitive landed (issue `ae0c7e1f`), `batch_evaluate_subproduct` and `interpolate_fast` can finally realise their `O(n log² n)` asymptote. This close-out task drops `SUBPRODUCT_THRESHOLD` below `usize::MAX`, re-benches the Lagrange paths, and refreshes the module-docstring tables.\n\n## Background\n\nThe `interpolate_fast` + `batch_evaluate_subproduct` machinery already ships (closed in session 3 via `2e7db385` + work-in-tree from `3cff65f7`). The blocker was `FieldPoly::div_rem` being schoolbook `O((n−m)·m)`; the subproduct-tree reduction phase invokes it repeatedly. With `ae0c7e1f` adding `div_rem_fast` + `div_rem_auto`, the tree reduction is now `O(M(n) log n)` in aggregate. Tuning `SUBPRODUCT_THRESHOLD` below `usize::MAX` activates the public `FieldPoly::batch_evaluate` dispatcher's fast lane.\n\n## Scope\n\n### 1. Route the subproduct tree through `div_rem_auto`\n\nIn `batch_evaluate_subproduct` (`crates/gf2-core/src/field/poly.rs` around line 990–1050), replace `FieldPoly::div_rem` calls with `FieldPoly::div_rem_auto` so the reduction phase uses the fast path above the tuned threshold. Where the tree helper generic-dispatches over arbitrary `F: FiniteField` (not `TwoAdicField`), keep the schoolbook fallback; specialise with `F: TwoAdicField` where that's required.\n\n### 2. Tune `SUBPRODUCT_THRESHOLD`\n\nLower from `usize::MAX` at `poly.rs:1776` to the empirical crossover point discovered by rerunning the `field_poly_batch_evaluate_fp65537` bench group after step 1. Plausible target: 32–128.\n\n### 3. Tune `INTERPOLATE_THRESHOLD`\n\nCurrently `16` at `poly_interpolate.rs:92` (kept as a conservative pre-enablement margin). Re-check against the refreshed benchmark; adjust if the new crossover has shifted.\n\n### 4. Regenerate benchmark snapshot tables\n\nUpdate the \"Benchmark snapshot\" section in the `poly.rs` module docstring with fresh numbers for:\n- `batch_evaluate` (now measures the dispatcher's actual fast-path behaviour above the threshold)\n- `interpolate_fast` vs `interpolate`\nKeep the existing `subproduct` and `naive` columns for baseline continuity.\n\n### 5. Refresh `dev/plans/field_poly_module_overview.md`\n\nRemove the \"Known gaps and future work — `SUBPRODUCT_THRESHOLD = usize::MAX`\" paragraph that said the fast path was unrealised. Replace with a short note that records the tuned threshold and the landing commits (`ae0c7e1f` for fast div, this task for threshold tuning).\n\n### 6. Proptest coverage\n\nAdd (or uplift) a proptest that runs `batch_evaluate` across input sizes that straddle the new `SUBPRODUCT_THRESHOLD` and asserts agreement with a naive Horner sweep on ≥ 500 random inputs over `Fp<65537>`. Covers the dispatcher both below and above the new threshold.\n\n## Success criteria\n\n- `cargo fmt --all` clean\n- `cargo clippy --workspace --all-targets --all-features --release -- -D warnings` clean\n- `cargo test --workspace --all-features --release` passes, release test execution ≤ 60 s\n- `batch_evaluate` achieves measured sub-quadratic slope at `n, k ≥ 2·SUBPRODUCT_THRESHOLD` on `Fp<65537>` (bench table in docs is the evidence)\n- `SUBPRODUCT_THRESHOLD` and `INTERPOLATE_THRESHOLD` values tuned from data and documented in the module docstring + overview doc\n- No residual \"fast path unrealised\" language in docs\n\n## Dependencies\n\n- `ae0c7e1f` (fast FieldPoly div_rem + `div_rem_auto` dispatcher)\n- `e0b6f940` (NTT mul) — done\n- `224a7d9e` (module docstring + bench scaffold) — done",
+  "documents": [],
+  "done_at": "2026-04-20T21:17:04.556229678Z",
+  "first_ready_at": "2026-04-20T19:36:14.257961334Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-20T20:13:18.185898065Z"
+      "updated_at": "2026-04-20T21:09:12.093641286Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T21:11:22.132332050Z"
+      "updated_at": "2026-04-20T21:11:22.132332050Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-20T21:09:12.093641286Z"
+      "updated_at": "2026-04-20T20:13:18.185898065Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [],
+  "id": "046f95c1-1245-4021-b5ea-9fa0ae4c53bb",
   "labels": [
     "type:task",
     "component:gf2-core",
-    "epic:e095a100",
-    "story:bdf95060"
+    "story:bdf95060",
+    "epic:gfpm-arithmetic"
   ],
-  "created_at": "2026-04-20T17:26:47.475690551Z",
-  "updated_at": "2026-07-12T20:02:55.418997546Z",
-  "first_ready_at": "2026-04-20T19:36:14.257961334Z",
-  "claimed_at": "2026-04-20T19:36:15.011213160Z",
-  "done_at": "2026-04-20T21:17:04.556229678Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Lagrange fast-path re-enablement — drop SUBPRODUCT_THRESHOLD via div_rem_auto",
+  "updated_at": "2026-08-07T20:37:07.095705488Z"
 }

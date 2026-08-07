@@ -16,10 +16,10 @@
     "type:epic",
     "component:gf2-coding",
     "component:gf2-kernels-simd",
-    "epic:investigate-fpga-feasibility-for-ultra-low-latency-fec"
+    "epic:fpga-feasibility"
   ],
   "priority": "low",
   "state": "ready",
   "title": "Investigate FPGA feasibility for ultra-low latency FEC",
-  "updated_at": "2026-08-05T12:24:43.273485198Z"
+  "updated_at": "2026-08-07T20:40:17.267037475Z"
 }
