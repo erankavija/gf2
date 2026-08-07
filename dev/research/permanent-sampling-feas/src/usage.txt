@@ -1,0 +1,40 @@
+permanent_sampling_feas — feasibility measurements for the permanent-zero-fraction
+campaign (JIT issue b488f02c).
+
+SUBCOMMANDS
+  equivalence  Compare per-matrix permanent values across every backend on shared
+               inputs. Exits non-zero on any mismatch. Run this before `grid`;
+               a throughput number from a disagreeing backend is not evidence.
+                 --out PATH        output CSV (default equivalence.csv)
+                 --matrices N      matrices per (q, n) cell (default 512)
+
+  grid         Time the composite campaign hot path over q in {3,5,7} and
+               n in {12,16,20,24,28} on every backend. Requires an idle host.
+                 --out PATH        output CSV (default throughput.csv)
+                 --only CLAUSES    comma-separated q=,n=,backend= filter; clauses
+                                   combine with AND
+                 --resume          append to an existing --out CSV, skipping the
+                                   cells it already records. Sound because the
+                                   cell schedule and per-cell seed streams are a
+                                   pure function of the root seed.
+
+  sustained    Stream the composite hot path for a fixed window per backend, to
+               confirm the short-cell projections survive thermal steady state.
+                 --out PATH        output CSV (default sustained.csv)
+                 --seconds S       window per run (default 300)
+
+  envelope     Derive required sample counts and wall-clock from a throughput CSV.
+                 --throughput PATH input CSV from `grid` (required)
+                 --out PATH        output CSV (default envelope.csv)
+                 --budget-hours H  campaign budget per cell (default 12)
+
+  zerofrac     Pool the zero counts the timing runs produced into a preliminary
+               Pr[per = 0] per (q, n) with a 95 % Wilson interval. Sample sizes
+               follow the timing protocol, so these are a by-product rather than
+               a campaign result.
+                 --throughput PATH throughput CSV to pool
+                 --sustained PATH  sustained CSV to pool
+                 --out PATH        output CSV (default zero-fraction.csv)
+
+The GPU backend needs `--features hip`; without it its cells are recorded as
+unsupported rather than skipped.

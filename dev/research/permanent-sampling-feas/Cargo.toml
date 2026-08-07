@@ -1,0 +1,60 @@
+[package]
+name = "permanent-sampling-feas"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+publish = false
+description = "Measurement harness for the permanent-zero-fraction campaign feasibility study (JIT issue b488f02c). Standalone non-workspace prototype."
+
+# This crate is intentionally excluded from the root workspace so it does not
+# slow the default `cargo nextest` build, matching the perm_uniformity /
+# permanent_gpu_crossover precedents. Canonical build invocations:
+#
+#   cargo build --manifest-path dev/research/permanent-sampling-feas/Cargo.toml \
+#       --release
+#   cargo build --manifest-path dev/research/permanent-sampling-feas/Cargo.toml \
+#       --release --features hip
+#
+# Without --features hip the GPU backend reports itself unavailable and the
+# CPU subcommands still run, keeping the crate buildable on non-ROCm hosts.
+
+[lib]
+name = "permanent_sampling_feas"
+path = "src/lib.rs"
+
+[[bin]]
+name = "permanent_sampling_feas"
+path = "src/main.rs"
+
+[features]
+default = []
+hip = ["gf2-algebra/hip"]
+
+[dependencies]
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = [
+    "simd",
+    "parallel",
+    "f5",
+    "f7",
+] }
+gf2-core = { path = "../../../crates/gf2-core" }
+# Needed to force the AVX2 single-word permanent path explicitly: the public
+# `permanent_bipedal3` dispatcher selects it implicitly, but the study has to
+# time the scalar and AVX2 paths as separate cells.
+gf2-kernels-simd = { path = "../../../crates/gf2-kernels-simd" }
+rayon = "1.10"
+# ChaCha20 is the named, versioned campaign RNG. `rand_chacha` 0.9 is already
+# used elsewhere in the repository (crates/gf2-kernels-hip dev-dependencies).
+rand_chacha = "0.9"
+rand_core = "0.9"
+# `sched_setaffinity` for per-thread core pinning of the single-thread cells.
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+# This standalone research prototype is intentionally not a workspace member.
+[workspace]
