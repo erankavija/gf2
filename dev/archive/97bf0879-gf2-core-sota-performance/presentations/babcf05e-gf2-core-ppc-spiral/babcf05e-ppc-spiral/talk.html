@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>gf2-core PPC Spiral Performance Sweep</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- reveal.js core only (no reveal theme — base.css + the theme token file own all appearance) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+
+<!-- KaTeX (synchronous math; deterministic heights for the fit-checker) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<!-- Theme system: structure is theme-agnostic; swap the #theme link to retheme -->
+<link rel="stylesheet" id="theme" href="themes/rust.css">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- ── TITLE ───────────────────────────────────────────────────────────── -->
+<section class="title">
+  <h1>gf2-core PPC Spiral Performance Sweep</h1>
+  <p class="tagline">Epic babcf05e: measure, inspect, optimize, and document every scalar performance gap in gf2-core.</p>
+  <p>
+    <span class="badge blue">Rust 1.95</span>
+    <span class="badge blue">AMD Ryzen 9 5900X evidence host</span>
+    <span class="badge blue">safe high-level APIs</span>
+    <span class="badge blue">SIMD isolated in kernel crates</span>
+  </p>
+</section>
+
+<!-- ── WHAT CHANGED ─────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 2 / 14</span></span>
+  <h2>What changed</h2>
+  <div class="two-col">
+    <div>
+      <h3>Dispatch</h3>
+      <p>Scalar callers now route through existing SIMD dispatch where the evidence showed clear wins.</p>
+      <p class="small muted">OnceLock runtime dispatch remains the single pattern for CPU feature selection.</p>
+    </div>
+    <div>
+      <h3>Dense kernels</h3>
+      <p>Transpose and M4RM paths gained SIMD-aware and register-reuse tuning, with assembly artifacts and criterion evidence.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHAT CHANGED (cont.) ─────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 3 / 14</span></span>
+  <h2>What changed (cont.)</h2>
+  <div class="two-col">
+    <div>
+      <h3>Field batches</h3>
+      <p>GF(2^m), GF(p), and extension-field SoA paths now expose batched product-sum kernels to production callers.</p>
+    </div>
+    <div>
+      <h3>Evidence</h3>
+      <p>Negative benchmark results were recorded where the spiral said "do not dispatch this yet".</p>
+      <p class="small muted">Strassen and dense multithread are deliberately no-go production paths today.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── EPIC COMPLETION MAP ───────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Overview <span class="num">· 4 / 14</span></span>
+  <h2>Epic completion map</h2>
+  <table>
+    <thead>
+      <tr><th>Story</th><th>Status</th><th>Outcome</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>d76f6931</td><td><span class="badge green">done</span></td><td>Route scalar callers through SIMD dispatch.</td></tr>
+      <tr><td>211102c6</td><td><span class="badge green">done</span></td><td>Dense bit-matrix SIMD kernels and evidence.</td></tr>
+      <tr><td>2c866544</td><td><span class="badge green">done</span></td><td>Field batch kernels, including GF(p) and extension fields.</td></tr>
+      <tr><td>01afbd6d</td><td><span class="badge green">done</span></td><td>Sparse layout and prefetch scaffolds with measured outcomes.</td></tr>
+      <tr><td>afc80980</td><td><span class="badge green">done</span></td><td>SoA rayon scaling delivered; dense threading rejected by preflight.</td></tr>
+      <tr><td>3abb755e</td><td><span class="badge green">done</span></td><td>Algorithmic benchmark gaps mapped and closed with evidence.</td></tr>
+      <tr><td>cd356d0b</td><td><span class="badge green">done</span></td><td>Full verify-lean extraction restored.</td></tr>
+      <tr><td>e555c46d</td><td><span class="badge green">done</span></td><td>CLMUL wrapper spill fixed by target-feature correction.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── GF(2) DENSE MATRIX RESULTS ──────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 5 / 14</span></span>
+  <h2>GF(2) dense matrix results</h2>
+  <div class="two-col">
+    <div>
+      <h3>M4RM production path</h3>
+      <p>Tier-A/B improvements moved the current 4096 square multiply baseline from the pinned 2026-04-26 result of <strong>125.756 ms</strong> to <strong>35.667 ms</strong>.</p>
+      <p class="small muted">Throughput improved from 1,092.904 Gop/s to 1,927 Gop/s in the Strassen crossover evidence.</p>
+    </div>
+    <div>
+      <h3>Strassen policy</h3>
+      <p>Forced one-level Strassen was still slower than M4RM through n=8192, so production dispatch remains M4RM-only.</p>
+      <p class="small muted">This is a measured no-go, not an unimplemented branch.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── GF(2) DENSE MATRIX RESULTS (cont.) ───────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 6 / 14</span></span>
+  <h2>GF(2) dense matrix results (cont.)</h2>
+  <table>
+    <thead><tr><th>n</th><th>M4RM mean</th><th>Forced Strassen mean</th><th>Forced / M4RM</th><th>Policy</th></tr></thead>
+    <tbody>
+      <tr><td>2048</td><td>5.241 ms</td><td>6.278 ms</td><td>0.83x</td><td>M4RM</td></tr>
+      <tr><td>4096</td><td>35.900 ms</td><td>41.820 ms</td><td>0.86x</td><td>M4RM</td></tr>
+      <tr><td>8192</td><td>256.700 ms</td><td>290.310 ms</td><td>0.88x</td><td>M4RM</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── GF(2^m) FieldMatrix GEMM ─────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 7 / 14</span></span>
+  <h2>GF(2^m) FieldMatrix GEMM</h2>
+  <p class="muted small">Production FieldMatrix::gemm now routes supported single-word GF(2^m) dot products through the batched carry-less multiply hook.</p>
+  <table>
+    <thead><tr><th>Workload</th><th>Speedup</th></tr></thead>
+    <tbody>
+      <tr><td>GF(2^8) 64^3</td><td>7.61x</td></tr>
+      <tr><td>GF(2^8) 128x32x128</td><td>13.36x</td></tr>
+      <tr><td>GF(2^16) 64^3</td><td>17.41x</td></tr>
+      <tr><td>GF(2^32) 64^3</td><td>17.65x</td></tr>
+    </tbody>
+  </table>
+  <p class="caption">Evidence: dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md</p>
+</section>
+
+<!-- ── GF(p) FieldMatrix GEMM ───────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 8 / 14</span></span>
+  <h2>GF(p) FieldMatrix GEMM</h2>
+  <p class="muted small">Delayed reduction produced broad gf2-side speedups, but small-prime fflas parity remains future work.</p>
+  <table>
+    <thead><tr><th>Field</th><th>Shape</th><th>Published gf2</th><th>Post-epic gf2</th><th>Speedup</th><th>gf2 / pinned fflas</th></tr></thead>
+    <tbody>
+      <tr><td>GF(7)</td><td>256^3</td><td>0.528</td><td>3.708</td><td>7.02x</td><td>0.073x</td></tr>
+      <tr><td>GF(251)</td><td>256^3</td><td>0.593</td><td>3.704</td><td>6.25x</td><td>0.029x</td></tr>
+      <tr><td>GF(65521)</td><td>256^3</td><td>0.590</td><td>3.695</td><td>6.27x</td><td>0.117x</td></tr>
+      <tr><td>GF(2^31-1)</td><td>1024^3</td><td>0.590</td><td>3.822</td><td>6.48x</td><td>1.633x</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">Throughput is GEMM Gop/s. Within-10x fflas is met for GF(65521) at 256^3 and for GF(2^31-1) at 256^3/1024^3.</p>
+</section>
+
+<!-- ── EXTENSION-FIELD SoA RAYON SCALING ────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 9 / 14</span></span>
+  <h2>Extension-field SoA rayon scaling</h2>
+  <div class="two-col">
+    <div>
+      <h3>Pre-flight</h3>
+      <p>Fq2 and Fq3 design workloads both measured <strong>0.181%</strong> cache-misses / instructions.</p>
+      <p class="small muted">Below the 1% memory-bound abort threshold, so V10 threading was allowed.</p>
+    </div>
+    <div>
+      <h3>4-thread result</h3>
+      <p><strong>Fq2:</strong> 9.3433 ms to 2.9548 ms, <span class="badge green">3.16x</span>.</p>
+      <p><strong>Fq3:</strong> 15.509 ms to 2.3810 ms, <span class="badge green">6.51x</span>.</p>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Workload</th><th>1 thread</th><th>4 threads</th><th>Speedup</th><th>Efficiency</th></tr></thead>
+    <tbody>
+      <tr><td>Fq2 batch_soa/1,048,576</td><td>9.3433 ms</td><td>2.9548 ms</td><td>3.16x</td><td>79.1%</td></tr>
+      <tr><td>Fq3 batch_soa/1,048,576</td><td>15.509 ms</td><td>2.3810 ms</td><td>6.51x</td><td>163%</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── WHERE THE SPIRAL SAID STOP ───────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Results <span class="num">· 10 / 14</span></span>
+  <h2>Where the spiral said "stop"</h2>
+  <div class="two-col">
+    <div>
+      <h3>Dense multithread</h3>
+      <p>Mandatory pre-flight rejected V10 row-tile rayon for dense transpose and M4RM.</p>
+      <p class="small muted">Cache miss ratios: 2.0071% for transpose/4096 and 1.4102% for m4rm_1024x1024, both above the 1% threshold.</p>
+    </div>
+    <div>
+      <h3>Sparse layout</h3>
+      <p>Block-CSR, RCM, and prefetch scaffolds landed with honest negative/limited benchmark evidence.</p>
+      <p class="small muted">Kept as infrastructure and measurement foundation rather than overstated speedup claims.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── VERIFICATION AND SAFETY ──────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Safety <span class="num">· 11 / 14</span></span>
+  <h2>Verification and safety</h2>
+  <div class="three-col">
+    <div>
+      <h3>0</h3>
+      <p>unsafe leaks into gf2-core high-level code.</p>
+    </div>
+    <div>
+      <h3>1.95</h3>
+      <p>Current user-approved Rust baseline.</p>
+    </div>
+    <div>
+      <h3>pass</h3>
+      <p>Full verify-lean extraction restored after field hook fixes.</p>
+    </div>
+  </div>
+  <p class="small muted">SIMD and target-feature details remain isolated in gf2-kernels-simd; high-level APIs stay safe and composable.</p>
+</section>
+
+<!-- ── FUTURE WORK ───────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Next <span class="num">· 12 / 14</span></span>
+  <h2>Future work</h2>
+  <ul>
+    <li>Design a lower-overhead GF(2) Strassen/Winograd path with view-native M4RM leaves before enabling any production crossover.</li>
+    <li>Extend the fflas reference harness to rectangular GF(p) cells and schedule slow 4096^3 sweeps outside the agent fast lane.</li>
+    <li>Attack small-prime GF(p) GEMM parity, especially GF(7) and GF(251), where fflas remains far ahead.</li>
+  </ul>
+</section>
+
+<!-- ── FUTURE WORK (cont.) ──────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Next <span class="num">· 13 / 14</span></span>
+  <h2>Future work (cont.)</h2>
+  <ul>
+    <li>Batch multiple GF(2^m) FieldMatrix output cells per panel to reduce dot setup/export overhead.</li>
+    <li>Revisit sparse matvec layout after workload-specific matrix corpora and hardware-counter-guided blocking choices are available.</li>
+    <li>Consider GPU offload only after CPU paths are compute-bound and reuse is high enough to amortize transfer costs.</li>
+  </ul>
+</section>
+
+<!-- ── TAKEAWAY ──────────────────────────────────────────────────────────── -->
+<section>
+  <span class="seclabel">Wrap-up <span class="num">· 14 / 14</span></span>
+  <h2>Takeaway</h2>
+  <p>The epic delivered measurable speedups where the PPC spiral found compute-bound work, and it deliberately avoided production dispatch where measurement showed slower or memory-bound paths.</p>
+  <p class="small muted">That leaves gf2-core faster, better instrumented, and clearer about the next research-grade performance problems.</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script>
+  // fitcheck.py waits on these flags before measuring.
+  window.__deckReady = false;
+  window.__mathReady = false;
+
+  function initDeck() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    window.__mathReady = true;
+
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.04,
+      minScale: 0.4,
+      maxScale: 1.2,
+      hash: true,
+      center: false,
+      slideNumber: 'c/t',
+      transition: 'none',
+      backgroundTransition: 'none',
+      plugins: [ RevealHighlight ],
+    }).then(function () {
+      Promise.resolve(document.fonts ? document.fonts.ready : null)
+        .finally(function () { window.__deckReady = true; });
+    });
+  }
+
+  // KaTeX scripts are deferred; run once they (and the DOM) are available.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () {
+      // give deferred KaTeX a tick to attach renderMathInElement
+      setTimeout(initDeck, 0);
+    });
+  } else {
+    setTimeout(initDeck, 0);
+  }
+</script>
+</body>
+</html>
