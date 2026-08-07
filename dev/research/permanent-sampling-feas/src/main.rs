@@ -245,7 +245,7 @@ fn cmd_grid(args: &[String]) {
     // that guarantee a cell with no reference falls back to probing — and at
     // q=7, n=28 on the GPU a single-matrix probe costs 42 minutes. Full
     // randomisation was measured to be affordable only because the earlier,
-    // probe-based rule was wrong; this schedule is the price of the correct
+    // superseded rule was wrong; this schedule is the price of the correct
     // inference. Within-stratum randomisation is retained, the machine is warmed
     // to steady state first, and the sustained runs bound drift over a 180 s
     // window at under 0.6 %, so the residual correlation between n and elapsed
@@ -279,9 +279,11 @@ censored (not attempted; carries NO measured rate)"
             "censoring contract: a censored row's composite_matrices_per_s is NaN. Its \
 projected_matrices_per_s is an ESTIMATE, obtained by scaling the MEASURED rate at \
 projection_reference_n through Ryser's n*2^n work model. No bound on a batched rate is \
-derived from probe_matrix_s, which is a single-matrix LATENCY: W/probe is not an upper \
-bound (at q=3 n=28 it gives 2.85 matrices/s against a measured 8.52 at M=256, because a \
-compute unit hosts several workgroups and a probe carries unamortised launch overhead)"
+derived from probe_matrix_s, which is a single-matrix LATENCY. Neither 1/probe nor \
+W/probe (W = compute units) bounds a batched rate: a compute unit hosts several \
+workgroups at once and a probe pays launch costs a batch amortises. An earlier harness \
+published W/probe as an upper bound and measurements exceeded it; the study records that \
+falsification with the numbers"
         ),
         format!(
             "projection accuracy: the projection runs LOW, so a censored cell's true rate is \
