@@ -1,4 +1,4 @@
-# git_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
+# git_sha: b60e808565c99658f58cc0545e7717168415b33b
 # git_worktree_dirty: true
 # harness_source_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
 # harness_source_dirty: false
@@ -17,9 +17,9 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-07T19:33:42Z
-# invocation: ./target/release/permanent_sampling_feas zerofrac --throughput ../../studies/b488f02c/throughput-2026-08-07.csv --out ../../studies/b488f02c/zero-fraction-2026-08-07.csv
-# pooled from: ../../studies/b488f02c/throughput-2026-08-07.csv
+# timestamp_utc: 2026-08-07T19:43:09Z
+# invocation: ./target/release/permanent_sampling_feas zerofrac --throughput ../../studies/b488f02c/throughput-2026-08-07.csv --sustained ../../studies/b488f02c/sustained-2026-08-07.csv --out ../../studies/b488f02c/zero-fraction-2026-08-07.csv
+# pooled from: ../../studies/b488f02c/throughput-2026-08-07.csv, ../../studies/b488f02c/sustained-2026-08-07.csv
 # these counts are a by-product of the timing protocol; sample sizes are whatever each cell needed, not a designed sampling plan
 # interval: Wilson score, 95 % (z = 1.959964)
 # seed_root: 0xb488f02c00000001
@@ -27,13 +27,13 @@ q,n,matrices,zeros,p_hat,wilson_lo_95,wilson_hi_95,one_over_q,one_over_q_inside_
 3,12,5426442,1809272,0.333418,0.333021,0.333815,0.333333,true,0.333354,true
 3,16,804216,268616,0.334010,0.332980,0.335041,0.333333,true,0.333309,true
 3,20,72992,24377,0.333968,0.330555,0.337398,0.333333,true,0.333389,true
-3,24,10529,3531,0.335359,0.326403,0.344436,0.333333,true,0.333352,true
+3,24,191197,63887,0.334142,0.332031,0.336260,0.333333,true,0.333352,true
 3,28,5807,1955,0.336663,0.324620,0.348922,0.333333,true,0.333743,true
 5,12,582234,116601,0.200265,0.199239,0.201295,0.200000,true,none,n/a
 5,16,33543,6714,0.200161,0.195914,0.204477,0.200000,true,none,n/a
-5,20,7712,1498,0.194243,0.185566,0.203224,0.200000,true,none,n/a
+5,20,58880,11840,0.201087,0.197869,0.204344,0.200000,true,none,n/a
 5,24,490,96,0.195918,0.163198,0.233370,0.200000,true,none,n/a
 5,28,101,15,0.148515,0.092116,0.230671,0.200000,true,none,n/a
 7,12,575753,82926,0.144031,0.143126,0.144940,0.142857,false,none,n/a
-7,16,31225,4337,0.138895,0.135104,0.142775,0.142857,false,none,n/a
-7,20,6400,897,0.140156,0.131867,0.148877,0.142857,true,none,n/a
+7,16,693241,98591,0.142217,0.141397,0.143042,0.142857,true,none,n/a
+7,20,17664,2584,0.146286,0.141152,0.151575,0.142857,true,none,n/a

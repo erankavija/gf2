@@ -112,7 +112,14 @@ pub const PINNED_CORE: usize = 0;
 pub const WARMUP_STREAM_OFFSET: u64 = 50_000;
 /// First stream index used by `sustained`, offset per run so that two runs at
 /// the same `(q, n)` never draw the same matrices.
-pub const SUSTAINED_STREAM_BASE: u64 = 1_000_000;
+///
+/// Chosen far above the grid's reserved space rather than merely beside it. The
+/// grid hands cell `i` the range `1 + i * STREAMS_PER_CELL`, so with a base of
+/// `1_000_000` the two allocations were commensurate and collided in index
+/// space; they stayed disjoint in practice only because no colliding pair
+/// shared a `(q, n)`. Disjointness by construction is worth more than
+/// disjointness by audit.
+pub const SUSTAINED_STREAM_BASE: u64 = 1_000_000_000;
 /// Stream indices reserved to each sustained run.
 pub const SUSTAINED_STREAMS_PER_RUN: u64 = 100_000;
 
