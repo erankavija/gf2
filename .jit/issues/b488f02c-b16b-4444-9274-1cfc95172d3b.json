@@ -10,8 +10,57 @@
       "commit": null,
       "doc_type": "study",
       "format": "markdown",
-      "label": "Feasibility Study (initialized)",
+      "label": "Feasibility Study (complete)",
       "path": "dev/studies/b488f02c/feasibility-study.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: throughput 2026-08-07",
+      "path": "dev/studies/b488f02c/throughput-2026-08-07.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: envelope 2026-08-07",
+      "path": "dev/studies/b488f02c/envelope-2026-08-07.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: equivalence 2026-08-07",
+      "path": "dev/studies/b488f02c/equivalence-2026-08-07.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: sustained 2026-08-07",
+      "path": "dev/studies/b488f02c/sustained-2026-08-07.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: zero-fraction 2026-08-07",
+      "path": "dev/studies/b488f02c/zero-fraction-2026-08-07.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Provenance: resolved dependency graph",
+      "path": "dev/studies/b488f02c/cargo-tree-2026-08-07.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: GPU hang observation (superseded run)",
+      "path": "dev/studies/b488f02c/gpu-hang-2026-08-07.log"
     }
   ],
   "first_ready_at": "2026-08-07T12:32:25.499859632Z",
@@ -42,5 +91,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T16:21:31.739649990Z"
+  "updated_at": "2026-08-07T17:50:31.514567001Z"
 }
