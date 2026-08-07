@@ -172,12 +172,18 @@ the code in those commits, and `binary_sha256` names the executable itself. An e
 receipts recorded a whole-repo SHA that predated the harness entirely and was
 discarded rather than reinterpreted.
 
-No commit post-dates this receipt set: every artifact here was produced by the
-binary built at `d37d2f81`, which is the tip of the harness at the time of
-writing. Two earlier receipt sets were discarded rather than reinterpreted —
-one recorded a whole-repo SHA predating the harness, and one predated the
-stream-disjointness and warm-up-determinism fixes that §4.7 shows were
-load-bearing. The claim that the harness reproduces its own measurements is
+Every artifact here was produced by the binary built at `d37d2f81`, named by
+`binary_sha256` in each preamble. One commit post-dates them: it raises
+`SUSTAINED_STREAM_BASE` so that the sustained and grid stream allocations are
+disjoint *by construction* rather than by the arithmetic coincidence §4.7
+documents. That change cannot alter these receipts — it affects only which
+stream indices a future run selects, and the disjointness of the committed
+samples was verified directly, cell by cell — but it does mean the harness tip
+no longer reproduces these exact stream indices, and a reproduction must build
+at `d37d2f81`. Two earlier receipt sets were discarded rather than
+reinterpreted: one recorded a whole-repo SHA predating the harness, and one
+predated the stream-disjointness and warm-up-determinism fixes that §4.7 shows
+were load-bearing. The claim that the harness reproduces its own measurements is
 supported by `binary_sha256` in every preamble: the receipts name the exact
 executable, so a reproduction attempt can confirm it is running the same one
 rather than trusting a source SHA. The receipts deliberately name the commit
@@ -554,24 +560,30 @@ pooled samples are independent — in `zero-fraction-2026-08-07.csv`:
 
 | $q$ | $n$ | matrices | $\hat p$ | 95 % Wilson | $z$ vs $1/q$ |
 |---|---|---|---|---|---|
-| 3 | 12 | 5 426 442 | 0.33342 | [0.33302, 0.33382] | $+0.42$ |
+| 3 | 12 | 5 426 442 | 0.33342 | [0.33302, 0.33381] | $+0.42$ |
 | 3 | 16 | 804 216 | 0.33401 | [0.33298, 0.33504] | $+1.29$ |
-| 3 | 20 | 72 992 | 0.33397 | [0.33056, 0.33740] | $+0.36$ |
-| 3 | 24 | 10 529 | 0.33536 | [0.32640, 0.34444] | $+0.44$ |
+| 3 | 20 | 72 992 | 0.33397 | [0.33055, 0.33740] | $+0.36$ |
+| 3 | 24 | 191 197 | 0.33414 | [0.33203, 0.33626] | $+0.75$ |
 | 3 | 28 | 5 807 | 0.33666 | [0.32462, 0.34892] | $+0.54$ |
 | 5 | 12 | 582 234 | 0.20026 | [0.19924, 0.20130] | $+0.51$ |
 | 5 | 16 | 33 543 | 0.20016 | [0.19591, 0.20448] | $+0.07$ |
-| 5 | 20 | 7 712 | 0.19424 | [0.18557, 0.20322] | $-1.26$ |
+| 5 | 20 | 58 880 | 0.20109 | [0.19787, 0.20434] | $+0.66$ |
 | 5 | 24 | 490 | 0.19592 | [0.16320, 0.23337] | $-0.23$ |
 | 5 | 28 | 101 | 0.14852 | [0.09212, 0.23067] | $-1.29$ |
 | 7 | 12 | 575 753 | 0.14403 | [0.14313, 0.14494] | $+2.55$ |
-| 7 | 16 | 31 225 | 0.13889 | [0.13510, 0.14278] | $-2.00$ |
-| 7 | 20 | 6 400 | 0.14016 | [0.13187, 0.14888] | $-0.62$ |
+| 7 | 16 | 693 241 | 0.14222 | [0.14140, 0.14304] | $-1.52$ |
+| 7 | 20 | 17 664 | 0.14629 | [0.14115, 0.15157] | $+1.30$ |
 
-Only grid cells are pooled. Sustained runs are excluded even though they draw
-far more matrices, because a defect found in review made them unpoolable — see
-below — and pooling only provably disjoint sources is worth more than sample
-size here.
+Grid and sustained samples are both pooled. Sustained runs reserve disjoint
+stream ranges — recorded per run in the CSV's `stream_first` column — so their
+zero counts are independent of one another and poolable, which was *not* true of
+the superseded harness (see the retraction below). Disjointness from the *grid*
+streams was verified cell by cell rather than assumed: no grid cell's reserved
+range overlaps a sustained run's range at the same $(q, n)$. That check passes,
+but it passes by arithmetic coincidence rather than by construction — the two
+base offsets are commensurate, so a different cell ordering could collide — and
+§7.3 accordingly requires the campaign to allocate shard streams from a
+structurally disjoint space rather than relying on the same luck.
 
 **A proved lower bound decides how to read this table.** [HKS2026] Theorem 1.3
 (arXiv:2603.15856v1, p. 2, eq. 1.2), read first-hand rather than through a
@@ -582,14 +594,12 @@ $\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for all $n \ge 3$ (eq. 1.4). So a
 measurement above $1/q$ is expected, and one whose interval lies strictly below
 $1/q$ contradicts a theorem and indicts this pipeline rather than the theorem.
 
-**Twelve of thirteen intervals contain $1/q$.** The exception is $q{=}7$,
-$n{=}16$, whose Wilson upper limit is 0.14278 against $1/7 = 0.142857$ — it
-misses by $8 \times 10^{-5}$, at $z = -2.00$. Against 13 cells, $0.59$
-exceedances beyond $2\sigma$ are expected and 2 are observed ($q{=}7$, $n{=}12$
-at $+2.55$ being the other). That is an unremarkable outcome, and the one
-below-$1/q$ interval is a $2\sigma$ near-miss rather than a standing
-contradiction. Every positive excess is also comfortably inside eq. 1.4's
-$C/q^3$ envelope, implying $C \le 0.41$ across all cells.
+**Every one of the thirteen intervals satisfies the bound**; none lies strictly
+below $1/q$. The largest deviation in either direction is $q{=}7$, $n{=}12$ at
+$z = +2.55$, on the side the theorem requires, and one excursion past
+$2.5\sigma$ in 13 cells is close to the $0.16$ expected. Every positive excess
+sits comfortably inside eq. 1.4's $C/q^3$ envelope, implying $C \le 0.41$ across
+all cells. The pipeline passes its own acceptance test at every measured size.
 
 **An earlier anomaly did not reproduce, and the reason is instructive.** A
 superseded run of this study reported three cells beyond $2.9\sigma$ from
@@ -906,7 +916,19 @@ it would contradict [GGK2025]'s conjecture in the regime actually measured.
 ChaCha20 (`rand_chacha` 0.9), seeded from a 32-byte block of four little-endian
 `u64` words: campaign root, $q$, $n$, and stream index. Shard $s$ of cell
 $(q, n)$ uses stream $\mathrm{base}(q,n) + s$; stream 0 is reserved for
-validation. Three properties follow, and all three matter operationally: any
+validation.
+
+**Stream allocation must be structurally disjoint, not coincidentally so.**
+This study's own receipts make the point: the grid reserves
+$1 + i \times 10^5$ per cell and the sustained runs reserve
+$10^6 + j \times 10^5$, which are commensurate — the ranges collide in index
+space, and §4.7's pooled counts are valid only because no colliding pair
+happened to share a $(q, n)$. That was verified, not designed. A campaign
+running for twelve hours per cell cannot audit its way out of this: allocate
+each $(q, n, \text{purpose})$ a range from a partition that cannot overlap by
+construction — distinct high-order bits, or a per-purpose salt folded into
+`derive_seed` alongside the stream index — so that reusing a matrix is
+impossible rather than merely unobserved. Three properties follow, and all three matter operationally: any
 shard is reproducible from its tuple alone, a lost or corrupted shard is redrawn
 without touching its neighbours, and shards can be produced in any order or
 concurrently without coordinating a shared generator state. The matrix layout
