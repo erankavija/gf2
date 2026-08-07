@@ -1,43 +1,43 @@
 {
-  "id": "dfe297f0-eb91-4aff-869d-5cc05e2850a7",
-  "title": "Pin GPU prototype baselines",
-  "description": "Pin baseline measurements for the GPU prototype wave before implementation issues claim speedups.\n\n## Background\n\nGPU speedups must compare against stable baselines and the best current production CPU path. The baseline manifest should cover existing BCJR HIP behavior and CPU comparators for LDPC BP and BCH syndrome evaluation.\n\n## Success Criteria\n\n- [hard] Baseline artifacts record commit hash, CPU model, GPU model, ROCm version, `hipcc` path/version, thread count, and benchmark commands.\n- [hard] LDPC BP baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] BCH syndrome baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] Existing BCJR HIP baseline captures direct/default-stream submission behavior for scheduler comparisons.\n- [hard] Baseline manifest paths are documented for downstream LDPC, BCH, and scheduler tasks.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-30T23:22:18.074435160Z",
+  "context": {},
+  "created_at": "2026-04-29T22:50:01.750966187Z",
   "dependencies": [],
+  "description": "Pin baseline measurements for the GPU prototype wave before implementation issues claim speedups.\n\n## Background\n\nGPU speedups must compare against stable baselines and the best current production CPU path. The baseline manifest should cover existing BCJR HIP behavior and CPU comparators for LDPC BP and BCH syndrome evaluation.\n\n## Success Criteria\n\n- [hard] Baseline artifacts record commit hash, CPU model, GPU model, ROCm version, `hipcc` path/version, thread count, and benchmark commands.\n- [hard] LDPC BP baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] BCH syndrome baseline identifies the best existing production CPU comparator for the selected design workload, including rayon if production uses rayon.\n- [hard] Existing BCJR HIP baseline captures direct/default-stream submission behavior for scheduler comparisons.\n- [hard] Baseline manifest paths are documented for downstream LDPC, BCH, and scheduler tasks.\n\n## Notes\n\nPart of story `dc32270e` and spec `dev/plans/hip_gpu_prototype_wave.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "GPU prototype baseline manifest (CPU comparators, design workloads, HIP submission model)",
+      "path": "dev/bench_results/dfe297f0/2026-05-31-dfe297f0-gpu-baseline-manifest.md"
+    }
+  ],
+  "done_at": "2026-05-30T23:37:02.068340212Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": null,
-      "updated_at": "2026-05-30T23:37:02.048478447Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-30T23:32:21.681667143Z"
+      "updated_at": "2026-05-30T23:32:21.681667143Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-30T23:32:34.441984974Z"
+      "updated_at": "2026-05-30T23:32:34.441984974Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-30T23:37:02.048478447Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-31-dfe297f0-gpu-baseline-manifest.md",
-      "commit": null,
-      "label": "GPU prototype baseline manifest (CPU comparators, design workloads, HIP submission model)",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "dfe297f0-eb91-4aff-869d-5cc05e2850a7",
   "labels": [
     "type:task",
     "epic:hip-gpu-prototype",
@@ -45,8 +45,8 @@
     "component:gf2-coding",
     "component:gf2-kernels-hip"
   ],
-  "created_at": "2026-04-29T22:50:01.750966187Z",
-  "updated_at": "2026-07-12T20:02:55.479019790Z",
-  "claimed_at": "2026-05-30T23:22:18.074435160Z",
-  "done_at": "2026-05-30T23:37:02.068340212Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Pin GPU prototype baselines",
+  "updated_at": "2026-08-07T21:15:12.587968363Z"
 }

@@ -1,54 +1,54 @@
 {
-  "id": "73ec5da3-96a0-4282-b66f-5fc305f54ec5",
-  "title": "Tune PLE and TRSM block integration",
-  "description": "Tune block-recursive PLE/TRSM integration around optimized GEMM kernels.\n\n## Success Criteria\n\n- [hard] Block sizes and dispatch thresholds are empirically selected.\n- [hard] Target PLE/TRSM rows improve or meet the 1.5x threshold.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T21:28:08.536533297Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.807131980Z",
   "dependencies": [
     "3b762764-aa71-49c1-a32c-01c52d9ba746"
   ],
+  "description": "Tune block-recursive PLE/TRSM integration around optimized GEMM kernels.\n\n## Success Criteria\n\n- [hard] Block sizes and dispatch thresholds are empirically selected.\n- [hard] Target PLE/TRSM rows improve or meet the 1.5x threshold.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "PLE/TRSM block tuning evidence",
+      "path": "dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md"
+    }
+  ],
+  "done_at": "2026-05-07T02:27:15.086896995Z",
+  "first_ready_at": "2026-05-04T14:52:54.786538769Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T02:27:14.681370129Z"
+      "updated_at": "2026-05-07T02:06:57.788074233Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T02:25:33.162170624Z"
+      "updated_at": "2026-05-07T02:25:33.162170624Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T02:06:57.788074233Z"
+      "updated_at": "2026-05-07T02:27:14.681370129Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md",
-      "commit": null,
-      "label": "PLE/TRSM block tuning evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "73ec5da3-96a0-4282-b66f-5fc305f54ec5",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.807131980Z",
-  "updated_at": "2026-07-12T20:02:55.450961840Z",
-  "first_ready_at": "2026-05-04T14:52:54.786538769Z",
-  "claimed_at": "2026-05-06T21:28:08.536533297Z",
-  "done_at": "2026-05-07T02:27:15.086896995Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Tune PLE and TRSM block integration",
+  "updated_at": "2026-08-07T21:15:05.289187857Z"
 }

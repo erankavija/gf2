@@ -1,78 +1,78 @@
 {
-  "id": "662f7a15-2a49-4055-aeb0-3be1e613d05d",
-  "title": "Implement small-prime GEMM kernels",
-  "description": "Implement the selected small-prime GF(p) GEMM improvements per the design at `dev/plans/small_prime_kernel_strategy.md` (Candidate C — AVX2 16-bit-lane SIMD with Barrett reduction).\n\n## Amendment — 2026-05-06 (user-approved post-Wave-6B-rework)\n\n### Amendment A — n=64 cells [hard]→[aspirational] for GF(7)/GF(31)\n\nThe GF(7) and GF(31) `[hard]` 1.5×-of-fflas criterion at **n=64³** is amended to `[aspirational]` based on empirical evidence (`dev/bench_results/2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv`):\n\n- **GF(7) at n=64**: gf2 (Candidate C) = 19.36 Gop/s vs. fflas-ffpack 36.55 Gop/s. Ratio 1.89×, 21% below the 1.5× hard target (24.4 Gop/s).\n- **GF(31) at n=64**: gf2 (Candidate C) = 16.82 Gop/s vs. fflas-ffpack 36.15 Gop/s. Ratio 2.15×, 30% below the 1.5× hard target (24.1 Gop/s).\n\n**Architectural cause**: per-call constant overhead (panel-pack allocation, OnceLock dispatch lookup, `try_simd_gemm_classical` dispatch tree, kernel prologue) dominates over arithmetic at n=64. At n=64 the matrix is 64³ = 262k ops ≈ 14 µs of inner work; the per-call overhead is plausibly 5–8 µs (≥1/3 of wall time). The gap to fflas closes monotonically as n grows: 53% of fflas at n=64, 67% at n=256, 70% at n=1024, 80% at n=4096. fflas-ffpack has specialised small-matrix paths (register-blocked fixed-size kernels, no per-call allocation, simpler dispatch tree) that pay much lower per-call overhead. Closing the n=64 gap requires structural rework (per-thread arena allocation, inline dispatch tree, special-case n≤128 kernel) — see follow-up issue.\n\nThe remaining 7 `[hard]` cells (GF(7)/GF(31) at n ∈ {256, 1024}, all multi-trial PASSing under Candidate C) and the GF(251) `[aspirational]` cells all PASS at the multi-trial 5-trial CCX1-pinned median (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`):\n- GF(7)/n=256: C=34.46 Gop/s, ratio 1.49× → PASS [hard] (target 1.5×)\n- GF(7)/n=1024: C=68.17 Gop/s, ratio 1.44× → PASS [hard]\n- GF(31)/n=256: C=53.74 Gop/s, ratio 0.94× → PASS [hard] (faster than fflas!)\n- GF(31)/n=1024: C=68.98 Gop/s, ratio 1.37× → PASS [hard]\n- GF(251)/n=256: C=58.98 Gop/s, ratio 2.22× → PASS [aspirational] soft 3.2× (cleared 40 Gop/s soft floor)\n- GF(251)/n=1024: C=70.89 Gop/s, ratio 1.99× → PASS [aspirational] soft 3.2×\n\nPer `CLAUDE.md` § *Success-criterion maturity markers* and Wave-6A precedent (`5cacaec5` GF(251) `[hard]→[aspirational]`) and Wave-6B precedent (`9e12659b` GF(32749)/n=64 `[hard]→[aspirational]`), the amendment permits 662f7a15 to ship with the n=64 deficit while a follow-up issue tracks the structural small-n optimization.\n\n### Amendment B — measured GF(251) review-time recording\n\nPer the original `[aspirational]` clause: \"At review time: `662f7a15` records the measured GF(251) ratio.\" Recorded:\n- **GF(251) at n=64** (single-trial): 17.42 Gop/s vs. 64.27 Gop/s fflas. Ratio 3.69× of fflas. **Above the 3.2× soft floor would be 20.1 Gop/s** — n=64 misses soft floor (covered by Amendment A above for n=64).\n- **GF(251) at n=256** (5-trial median CCX1-pinned): 58.98 Gop/s vs. 130.80 Gop/s fflas. Ratio 2.22× — **PASS soft 3.2× threshold** (cleared 40 Gop/s soft floor by 47%).\n- **GF(251) at n=1024** (5-trial median CCX1-pinned): 70.89 Gop/s vs. 140.90 Gop/s fflas. Ratio 1.99× — **PASS soft 3.2× threshold**, also clears 1.5× absolute target by ~5% in the soft sense (3.2× / 1.99 = 1.61, still well below the original [hard] target of 1.5× but above the [aspirational] soft floor).\n\nThe aggregate contract (Candidate C unifies GF(7), GF(31), GF(251) under one dispatch with no per-prime regressions) holds. Mersenne31 and Fp<65537> non-regression criterion #4: empirically passes — Mersenne31 stays at ~3.7 Gop/s (unchanged baseline), Fp<65537> bench now exists in `crates/gf2-core/benches/fieldmatrix_gemm.rs::bench_gemm_fp_65537` (sibling of `fp_65521`).\n\n### Amendment C — Candidate F status\n\nCandidate F (in-Rust AVX2+FMA3 f32-cascade per b9aed0d8) is **fully implemented and tested** but **never selected at runtime** on this host. `N_THRESH_PRIME = 252` in `crates/gf2-core/src/gfp/simd_ops.rs` causes `select_f32_path::<P>` to return false for all `P ≤ 251`, routing every in-scope cell to Candidate C.\n\nEmpirical justification (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv` and `dev/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md`): 5-trial CCX1-pinned bench at GF(7)..GF(251) at n ∈ {256, 1024} (22 cells total) shows **Candidate C beats Candidate F at every cell by 5–10%**. Lead-direct verification at GF(31)/n=1024 with F forced on confirms F=63.70 Gop/s (range 1.05) vs. C=68.98 Gop/s. Three independent harnesses (criterion-pinned, criterion-unpinned, bench_csv_emitter) converge on the same F median.\n\nThe earlier F-r2 single-trial reading of 82.95 Gop/s at GF(31)/n=1024 (recorded in `2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv` column `F_opt_r2_gops`) was a system-state artifact (specific boost-clock/allocator/cache state) that does not reproduce under any controlled methodology.\n\nCandidate F remains compiled in as the no-FMA3 runtime fallback (theoretical path; the entire AVX2-deployment surface has FMA3 in practice, so this path is unreachable today). It also retains forward-compat value for future hosts (Zen-4+ with AVX-VNNI / AVX-512) where the f32-FMA-cascade may pull ahead.\n\n## Success Criteria\n\n- [hard for n ∈ {256, 1024}; [aspirational] for n=64 per Amendment A] GF(7) and GF(31) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster, measured on the pinned bench host (AMD Ryzen 9 5900X, Zen-3, AVX2; no AVX-512).\n- [aspirational] GF(251) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster on the same pinned host.\n  * **Empirical amendment basis (recorded at design time per `CLAUDE.md` § Success-criterion maturity markers):** fflas's GF(251) `n = 256³` cell hits 128 Gop/s via Modular<float> + OpenBLAS sgemm (Candidate D in the design); the 1.5× target is therefore 85.3 Gop/s. The AVX2 16-bit-MAC peak at 5 GHz on the pinned host is 80 Gop/s — reaching 85.3 Gop/s requires 107 % of theoretical peak, which AVX2-only integer SIMD cannot deliver. See `dev/plans/small_prime_kernel_strategy.md` § 6 #2 for the throughput-envelope derivation. The `[aspirational]` marker permits the implementation to ship with the best AVX2-feasible GF(251) number and have it reviewed against the empirical envelope rather than the (unattainable) 1.5× absolute target. The aggregate contract — Candidate C unifies GF(7), GF(31), GF(251) under one dispatch with no per-prime regressions — still holds.\n  * **At review time:** measured ratios recorded in Amendment B above. n=256 / n=1024 cells PASS the 3.2× soft threshold; n=64 cell amended via Amendment A.\n- [hard] Correctness is covered by property and reference tests at `WORD_BOUNDARY_LENS = [0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]` for each new prime, asserting the SIMD path matches the scalar element-wise path bit-exactly. The new tests slot into `crates/gf2-core/src/gfp/simd_ops.rs::tests::generic_simd_matches_scalar_for_proof_suite_primes` per the design § 7 step 1.\n- [hard] Mersenne31 and Fp<65537> existing dispatch paths do not regress — `cargo bench -p gf2-core --bench fieldmatrix_gemm -- --filter mersenne` and `--filter fp65537` show throughput delta ≤ 5 % vs. the pre-implementation baseline. Fp<65537> bench added in `crates/gf2-core/benches/fieldmatrix_gemm.rs::bench_gemm_fp_65537`.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude-wt-662f7a15",
+  "claimed_at": "2026-05-05T14:02:23.297942944Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.712458303Z",
   "dependencies": [
     "5cacaec5-9676-41f7-adb1-e47b832876bb",
     "b9aed0d8-0a2a-4273-be7c-cf14a1d262b8"
   ],
+  "description": "Implement the selected small-prime GF(p) GEMM improvements per the design at `dev/plans/small_prime_kernel_strategy.md` (Candidate C — AVX2 16-bit-lane SIMD with Barrett reduction).\n\n## Amendment — 2026-05-06 (user-approved post-Wave-6B-rework)\n\n### Amendment A — n=64 cells [hard]→[aspirational] for GF(7)/GF(31)\n\nThe GF(7) and GF(31) `[hard]` 1.5×-of-fflas criterion at **n=64³** is amended to `[aspirational]` based on empirical evidence (`dev/bench_results/2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv`):\n\n- **GF(7) at n=64**: gf2 (Candidate C) = 19.36 Gop/s vs. fflas-ffpack 36.55 Gop/s. Ratio 1.89×, 21% below the 1.5× hard target (24.4 Gop/s).\n- **GF(31) at n=64**: gf2 (Candidate C) = 16.82 Gop/s vs. fflas-ffpack 36.15 Gop/s. Ratio 2.15×, 30% below the 1.5× hard target (24.1 Gop/s).\n\n**Architectural cause**: per-call constant overhead (panel-pack allocation, OnceLock dispatch lookup, `try_simd_gemm_classical` dispatch tree, kernel prologue) dominates over arithmetic at n=64. At n=64 the matrix is 64³ = 262k ops ≈ 14 µs of inner work; the per-call overhead is plausibly 5–8 µs (≥1/3 of wall time). The gap to fflas closes monotonically as n grows: 53% of fflas at n=64, 67% at n=256, 70% at n=1024, 80% at n=4096. fflas-ffpack has specialised small-matrix paths (register-blocked fixed-size kernels, no per-call allocation, simpler dispatch tree) that pay much lower per-call overhead. Closing the n=64 gap requires structural rework (per-thread arena allocation, inline dispatch tree, special-case n≤128 kernel) — see follow-up issue.\n\nThe remaining 7 `[hard]` cells (GF(7)/GF(31) at n ∈ {256, 1024}, all multi-trial PASSing under Candidate C) and the GF(251) `[aspirational]` cells all PASS at the multi-trial 5-trial CCX1-pinned median (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv`):\n- GF(7)/n=256: C=34.46 Gop/s, ratio 1.49× → PASS [hard] (target 1.5×)\n- GF(7)/n=1024: C=68.17 Gop/s, ratio 1.44× → PASS [hard]\n- GF(31)/n=256: C=53.74 Gop/s, ratio 0.94× → PASS [hard] (faster than fflas!)\n- GF(31)/n=1024: C=68.98 Gop/s, ratio 1.37× → PASS [hard]\n- GF(251)/n=256: C=58.98 Gop/s, ratio 2.22× → PASS [aspirational] soft 3.2× (cleared 40 Gop/s soft floor)\n- GF(251)/n=1024: C=70.89 Gop/s, ratio 1.99× → PASS [aspirational] soft 3.2×\n\nPer `CLAUDE.md` § *Success-criterion maturity markers* and Wave-6A precedent (`5cacaec5` GF(251) `[hard]→[aspirational]`) and Wave-6B precedent (`9e12659b` GF(32749)/n=64 `[hard]→[aspirational]`), the amendment permits 662f7a15 to ship with the n=64 deficit while a follow-up issue tracks the structural small-n optimization.\n\n### Amendment B — measured GF(251) review-time recording\n\nPer the original `[aspirational]` clause: \"At review time: `662f7a15` records the measured GF(251) ratio.\" Recorded:\n- **GF(251) at n=64** (single-trial): 17.42 Gop/s vs. 64.27 Gop/s fflas. Ratio 3.69× of fflas. **Above the 3.2× soft floor would be 20.1 Gop/s** — n=64 misses soft floor (covered by Amendment A above for n=64).\n- **GF(251) at n=256** (5-trial median CCX1-pinned): 58.98 Gop/s vs. 130.80 Gop/s fflas. Ratio 2.22× — **PASS soft 3.2× threshold** (cleared 40 Gop/s soft floor by 47%).\n- **GF(251) at n=1024** (5-trial median CCX1-pinned): 70.89 Gop/s vs. 140.90 Gop/s fflas. Ratio 1.99× — **PASS soft 3.2× threshold**, also clears 1.5× absolute target by ~5% in the soft sense (3.2× / 1.99 = 1.61, still well below the original [hard] target of 1.5× but above the [aspirational] soft floor).\n\nThe aggregate contract (Candidate C unifies GF(7), GF(31), GF(251) under one dispatch with no per-prime regressions) holds. Mersenne31 and Fp<65537> non-regression criterion #4: empirically passes — Mersenne31 stays at ~3.7 Gop/s (unchanged baseline), Fp<65537> bench now exists in `crates/gf2-core/benches/fieldmatrix_gemm.rs::bench_gemm_fp_65537` (sibling of `fp_65521`).\n\n### Amendment C — Candidate F status\n\nCandidate F (in-Rust AVX2+FMA3 f32-cascade per b9aed0d8) is **fully implemented and tested** but **never selected at runtime** on this host. `N_THRESH_PRIME = 252` in `crates/gf2-core/src/gfp/simd_ops.rs` causes `select_f32_path::<P>` to return false for all `P ≤ 251`, routing every in-scope cell to Candidate C.\n\nEmpirical justification (`dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv` and `dev/bench_results/2026-05-06-662f7a15-f-vs-c-verification.md`): 5-trial CCX1-pinned bench at GF(7)..GF(251) at n ∈ {256, 1024} (22 cells total) shows **Candidate C beats Candidate F at every cell by 5–10%**. Lead-direct verification at GF(31)/n=1024 with F forced on confirms F=63.70 Gop/s (range 1.05) vs. C=68.98 Gop/s. Three independent harnesses (criterion-pinned, criterion-unpinned, bench_csv_emitter) converge on the same F median.\n\nThe earlier F-r2 single-trial reading of 82.95 Gop/s at GF(31)/n=1024 (recorded in `2026-05-06-662f7a15-rework2-perf-spiral-comparison.csv` column `F_opt_r2_gops`) was a system-state artifact (specific boost-clock/allocator/cache state) that does not reproduce under any controlled methodology.\n\nCandidate F remains compiled in as the no-FMA3 runtime fallback (theoretical path; the entire AVX2-deployment surface has FMA3 in practice, so this path is unreachable today). It also retains forward-compat value for future hosts (Zen-4+ with AVX-VNNI / AVX-512) where the f32-FMA-cascade may pull ahead.\n\n## Success Criteria\n\n- [hard for n ∈ {256, 1024}; [aspirational] for n=64 per Amendment A] GF(7) and GF(31) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster, measured on the pinned bench host (AMD Ryzen 9 5900X, Zen-3, AVX2; no AVX-512).\n- [aspirational] GF(251) small-prime GEMM target rows at $n \\in \\{64, 256, 1024\\}^3$ are within 1.5× of fflas-ffpack 2.5.0 or faster on the same pinned host.\n  * **Empirical amendment basis (recorded at design time per `CLAUDE.md` § Success-criterion maturity markers):** fflas's GF(251) `n = 256³` cell hits 128 Gop/s via Modular<float> + OpenBLAS sgemm (Candidate D in the design); the 1.5× target is therefore 85.3 Gop/s. The AVX2 16-bit-MAC peak at 5 GHz on the pinned host is 80 Gop/s — reaching 85.3 Gop/s requires 107 % of theoretical peak, which AVX2-only integer SIMD cannot deliver. See `dev/plans/small_prime_kernel_strategy.md` § 6 #2 for the throughput-envelope derivation. The `[aspirational]` marker permits the implementation to ship with the best AVX2-feasible GF(251) number and have it reviewed against the empirical envelope rather than the (unattainable) 1.5× absolute target. The aggregate contract — Candidate C unifies GF(7), GF(31), GF(251) under one dispatch with no per-prime regressions — still holds.\n  * **At review time:** measured ratios recorded in Amendment B above. n=256 / n=1024 cells PASS the 3.2× soft threshold; n=64 cell amended via Amendment A.\n- [hard] Correctness is covered by property and reference tests at `WORD_BOUNDARY_LENS = [0, 1, 63, 64, 65, 127, 128, 129, 255, 256, 257]` for each new prime, asserting the SIMD path matches the scalar element-wise path bit-exactly. The new tests slot into `crates/gf2-core/src/gfp/simd_ops.rs::tests::generic_simd_matches_scalar_for_proof_suite_primes` per the design § 7 step 1.\n- [hard] Mersenne31 and Fp<65537> existing dispatch paths do not regress — `cargo bench -p gf2-core --bench fieldmatrix_gemm -- --filter mersenne` and `--filter fp65537` show throughput delta ≤ 5 % vs. the pre-implementation baseline. Fp<65537> bench added in `crates/gf2-core/benches/fieldmatrix_gemm.rs::bench_gemm_fp_65537`.",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null
+        }
+      ],
+      "commit": "3f62600",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment) — implementation contract",
+      "path": "dev/plans/small_prime_kernel_strategy.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Mersenne+Fp65537 non-regression (same-session pre/post)",
+      "path": "dev/bench_results/662f7a15/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Small-prime sweep aggregate (5-trial median, 22 cells)",
+      "path": "dev/bench_results/662f7a15/2026-05-06-662f7a15-prime-sweep-aggregate.csv"
+    }
+  ],
+  "done_at": "2026-05-06T10:43:00.288973082Z",
+  "first_ready_at": "2026-05-05T13:53:56.913365216Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-06T09:13:03.320422607Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T10:36:19.081983176Z"
+      "updated_at": "2026-05-06T10:36:19.081983176Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T10:42:52.750662965Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T09:13:03.320422607Z"
+      "updated_at": "2026-05-06T10:42:52.750662965Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/small_prime_kernel_strategy.md",
-      "commit": "3f62600",
-      "label": "Small-prime kernel strategy (Cand C + Cand F amendment) — implementation contract",
-      "doc_type": "design",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-06-662f7a15-prime-sweep-aggregate.csv",
-      "commit": "482acdc",
-      "label": "Small-prime sweep aggregate (5-trial median, 22 cells)",
-      "doc_type": "evidence"
-    },
-    {
-      "path": "dev/bench_results/2026-05-06-662f7a15-non-regression-fp65537-mersenne.md",
-      "commit": "482acdc",
-      "label": "Mersenne+Fp65537 non-regression (same-session pre/post)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "662f7a15-2a49-4055-aeb0-3be1e613d05d",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gfp-fflas"
   ],
-  "created_at": "2026-04-30T06:43:02.712458303Z",
-  "updated_at": "2026-07-12T20:02:55.447405967Z",
-  "first_ready_at": "2026-05-05T13:53:56.913365216Z",
-  "claimed_at": "2026-05-05T14:02:23.297942944Z",
-  "done_at": "2026-05-06T10:43:00.288973082Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement small-prime GEMM kernels",
+  "updated_at": "2026-08-07T21:15:01.762578001Z"
 }

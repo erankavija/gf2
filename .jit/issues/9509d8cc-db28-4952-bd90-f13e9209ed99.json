@@ -17,7 +17,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Formal verification design plan (Aeneas + Kani)",
-      "path": "dev/plans/formal_verification.md"
+      "path": "dev/plans/9509d8cc-9509d8cc/formal_verification.md"
     }
   ],
   "done_at": "2026-03-11T21:25:36.093288816Z",
@@ -72,5 +72,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Formal verification of field arithmetic (Aeneas + Kani)",
-  "updated_at": "2026-08-07T20:39:32.581704712Z"
+  "updated_at": "2026-08-07T21:14:50.260054890Z"
 }

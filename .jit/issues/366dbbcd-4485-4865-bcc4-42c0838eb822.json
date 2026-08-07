@@ -1,54 +1,54 @@
 {
-  "id": "366dbbcd-4485-4865-bcc4-42c0838eb822",
-  "title": "Close GF(2) echelon and rank rows",
-  "description": "Measure and optimize GF(2) echelon/rank rows required by the target matrix.\n\n## Success Criteria\n\n- [hard] GF(2) echelon/rank target rows are within threshold or have approved scope notes.\n- [hard] The benchmark report covers full-rank and rank-deficient regimes where applicable.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T15:26:09.877941311Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.674297332Z",
   "dependencies": [
     "8e305c21-1a25-42af-a208-3126d3eb6206"
   ],
+  "description": "Measure and optimize GF(2) echelon/rank rows required by the target matrix.\n\n## Success Criteria\n\n- [hard] GF(2) echelon/rank target rows are within threshold or have approved scope notes.\n- [hard] The benchmark report covers full-rank and rank-deficient regimes where applicable.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2) echelon/rank target closure evidence",
+      "path": "dev/bench_results/366dbbcd/2026-05-06-366dbbcd-gf2-echelon-rank.md"
+    }
+  ],
+  "done_at": "2026-05-06T16:49:33.172234755Z",
+  "first_ready_at": "2026-05-06T15:24:29.047245453Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T16:49:16.284018543Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T16:30:55.545951039Z"
+      "updated_at": "2026-05-06T16:30:55.545951039Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T16:31:02.116767399Z"
+      "updated_at": "2026-05-06T16:31:02.116767399Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-06T16:49:16.284018543Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-06-366dbbcd-gf2-echelon-rank.md",
-      "commit": "0deccd9",
-      "label": "GF(2) echelon/rank target closure evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "366dbbcd-4485-4865-bcc4-42c0838eb822",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gf2-m4ri"
   ],
-  "created_at": "2026-04-30T06:43:02.674297332Z",
-  "updated_at": "2026-07-12T20:02:55.434389628Z",
-  "first_ready_at": "2026-05-06T15:24:29.047245453Z",
-  "claimed_at": "2026-05-06T15:26:09.877941311Z",
-  "done_at": "2026-05-06T16:49:33.172234755Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Close GF(2) echelon and rank rows",
+  "updated_at": "2026-08-07T21:15:01.075445855Z"
 }

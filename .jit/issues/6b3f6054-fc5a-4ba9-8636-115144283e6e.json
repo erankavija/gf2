@@ -1,57 +1,58 @@
 {
-  "id": "6b3f6054-fc5a-4ba9-8636-115144283e6e",
-  "title": "Research best-effort F_5 packed encoding",
-  "description": "Prototype 2–4 candidate $\\mathbb{F}_5$ packed encodings, measure cycles/op for each, and produce a decision document selecting the winning candidate that the implementation phase will instantiate.\n\n## Background\n\n⚠ **User approval required** before selecting the winning encoding — this is the input contract for the $\\mathbb{F}_5$ implementation work.\n\nThe bipedal $\\mathbb{F}_3$ encoding minimises bitwise op counts (2 ops/mul, 6 ops/add) by using a 4-state alphabet with one redundant codeword. $\\mathbb{F}_5$ has 5 elements; the simplest baseline is 3-bit-per-element packed (one redundant codeword in 8 states, 16 elements per `u64`) with a $2^{16}$-entry table-LUT for mul. Better encodings may exist by exploiting the multiplicative structure ($\\mathbb{F}_5^*$ is cyclic of order 4 — log/sign split is plausible).\n\nThis issue prototypes 2–4 candidate encodings in `dev/research/f5_packing/` (mirroring `dev/research/rns_prototype/`), measures cycles/op for each on synthetic workloads, and produces a decision document selecting the winning candidate.\n\nHard fallback if no novel encoding beats the LUT baseline by $\\ge 1.5\\times$: select the 3-bit + LUT baseline. The fallback is acceptable; document it as the chosen encoding in the decision doc.\n\n## Success Criteria\n\n- [ ] [hard] `dev/research/f5_packing/` exists and builds with `cargo build -p f5-packing-prototype --release`.\n- [ ] [hard] At least 2 candidate encodings are implemented and benchmarked.\n- [ ] [hard] `dev/plans/r1_f5_encoding_decision.md` exists and is attached via `jit doc add`, naming the winning candidate with measured cycles/op.\n- [ ] [hard] The decision doc documents the bitwise op counts for `add`, `sub`, `mul`, `div` on the chosen encoding.\n- [ ] [hard] The user has signed off on the chosen encoding (recorded as a comment) before transitioning to `done`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-opus-4-7",
+  "claimed_at": "2026-05-02T21:49:50.420703314Z",
+  "context": {},
+  "created_at": "2026-04-30T21:40:00.171785957Z",
   "dependencies": [],
+  "description": "Prototype 2–4 candidate $\\mathbb{F}_5$ packed encodings, measure cycles/op for each, and produce a decision document selecting the winning candidate that the implementation phase will instantiate.\n\n## Background\n\n⚠ **User approval required** before selecting the winning encoding — this is the input contract for the $\\mathbb{F}_5$ implementation work.\n\nThe bipedal $\\mathbb{F}_3$ encoding minimises bitwise op counts (2 ops/mul, 6 ops/add) by using a 4-state alphabet with one redundant codeword. $\\mathbb{F}_5$ has 5 elements; the simplest baseline is 3-bit-per-element packed (one redundant codeword in 8 states, 16 elements per `u64`) with a $2^{16}$-entry table-LUT for mul. Better encodings may exist by exploiting the multiplicative structure ($\\mathbb{F}_5^*$ is cyclic of order 4 — log/sign split is plausible).\n\nThis issue prototypes 2–4 candidate encodings in `dev/research/f5_packing/` (mirroring `dev/research/rns_prototype/`), measures cycles/op for each on synthetic workloads, and produces a decision document selecting the winning candidate.\n\nHard fallback if no novel encoding beats the LUT baseline by $\\ge 1.5\\times$: select the 3-bit + LUT baseline. The fallback is acceptable; document it as the chosen encoding in the decision doc.\n\n## Success Criteria\n\n- [ ] [hard] `dev/research/f5_packing/` exists and builds with `cargo build -p f5-packing-prototype --release`.\n- [ ] [hard] At least 2 candidate encodings are implemented and benchmarked.\n- [ ] [hard] `dev/plans/r1_f5_encoding_decision.md` exists and is attached via `jit doc add`, naming the winning candidate with measured cycles/op.\n- [ ] [hard] The decision doc documents the bitwise op counts for `add`, `sub`, `mul`, `div` on the chosen encoding.\n- [ ] [hard] The user has signed off on the chosen encoding (recorded as a comment) before transitioning to `done`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Cross-prime packed-encoding generalizations",
+      "path": "dev/plans/r2_packed_encoding_generalizations.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "F_3/F_5/F_7 cross-prime comparison",
+      "path": "dev/plans/r2_f3_f5_f7_cross_prime_comparison.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "decision",
+      "format": "markdown",
+      "label": "R1 F_5 encoding decision",
+      "path": "dev/plans/6b3f6054/r1_f5_encoding_decision.md"
+    }
+  ],
+  "done_at": "2026-05-03T00:47:23.330694536Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-03T00:46:14.546608556Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-03T00:46:05.280853755Z"
+      "updated_at": "2026-05-03T00:46:05.280853755Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-03T00:46:14.546608556Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/r1_f5_encoding_decision.md",
-      "commit": null,
-      "label": "R1 F_5 encoding decision",
-      "doc_type": "decision"
-    },
-    {
-      "path": "dev/plans/r2_packed_encoding_generalizations.md",
-      "commit": null,
-      "label": "Cross-prime packed-encoding generalizations",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/r2_f3_f5_f7_cross_prime_comparison.md",
-      "commit": null,
-      "label": "F_3/F_5/F_7 cross-prime comparison",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "6b3f6054-fc5a-4ba9-8636-115144283e6e",
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-04-30T21:40:00.171785957Z",
-  "updated_at": "2026-07-12T20:02:55.448892148Z",
-  "claimed_at": "2026-05-02T21:49:50.420703314Z",
-  "done_at": "2026-05-03T00:47:23.330694536Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Research best-effort F_5 packed encoding",
+  "updated_at": "2026-08-07T21:14:53.483151177Z"
 }

@@ -3,7 +3,7 @@
 //! ## Algorithm
 //!
 //! This module implements the R3 cache-blocking design from
-//! `dev/plans/r3_multi_word_streaming.md`. The algorithm evaluates Ryser's
+//! `dev/plans/60c30e2d/r3_multi_word_streaming.md`. The algorithm evaluates Ryser's
 //! inclusion-exclusion formula in binary-reflected Gray-code subset order:
 //!
 //! ```text
@@ -49,7 +49,7 @@ use crate::packed::PackedField;
 
 /// Maximum supported `n` for the multi-word streaming path.
 ///
-/// Per R3 `dev/plans/r3_multi_word_streaming.md` §1 and §5:
+/// Per R3 `dev/plans/60c30e2d/r3_multi_word_streaming.md` §1 and §5:
 /// above `n = 255` single-thread time is dominated by the `2^n` outer
 /// enumeration regardless of cache behaviour. That regime belongs to
 /// `W3-T15` (rayon parallel) and `W5` (HIP/ROCm GPU).
@@ -540,7 +540,7 @@ mod tests {
     // debug and release builds.
     //
     // Per the in-session amendment recorded in
-    // `dev/active/a7886bd8-amendments-2026-05-11.md` (criterion 3, option
+    // `dev/active/a7886bd8/a7886bd8-amendments-2026-05-11.md` (criterion 3, option
     // "Block-decomposable cross-check"). 850 trials total spans n ∈
     // {2, 5, 8, 16, 20}; the larger n ∈ {24, 32, 48, 60} cases live in
     // the slow tier via `#[ignore = "slow: ..."]`.

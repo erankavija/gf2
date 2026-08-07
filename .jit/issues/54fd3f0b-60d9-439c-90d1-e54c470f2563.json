@@ -1,106 +1,106 @@
 {
-  "id": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
-  "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
-  "description": "Define and close sparse FieldMatrix SpMV/SpMM performance gaps.\n\n## Background\n\nSparse PPC work produced scaffolds and negative/no-go evidence, but sparse SOTA parity needs a target corpus, comparable references, and hardware-counter-driven layout work.\n\n## Success Criteria\n\n- [hard] A sparse benchmark corpus and reference set are defined for finite-field SpMV/SpMM.\n- [hard] CPU sparse target rows are within 1.5x of accepted references where feasible.\n- [hard] Any remaining sparse gap has an explicit CPU no-go analysis and, if needed, a user-approved GPU follow-up dependency.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-07T08:34:37.295812880Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.522262388Z",
   "dependencies": [
     "1726270d-d495-4aae-bdb4-d8e69b954eee",
     "cbecfced-d91e-404f-a1f9-b2e960f5b55f"
   ],
+  "description": "Define and close sparse FieldMatrix SpMV/SpMM performance gaps.\n\n## Background\n\nSparse PPC work produced scaffolds and negative/no-go evidence, but sparse SOTA parity needs a target corpus, comparable references, and hardware-counter-driven layout work.\n\n## Success Criteria\n\n- [hard] A sparse benchmark corpus and reference set are defined for finite-field SpMV/SpMM.\n- [hard] CPU sparse target rows are within 1.5x of accepted references where feasible.\n- [hard] Any remaining sparse gap has an explicit CPU no-go analysis and, if needed, a user-approved GPU follow-up dependency.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Sparse benchmark corpus + references (ingested by a3412e15)",
+      "path": "dev/plans/sparse_benchmark_corpus.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/plans/sparse_cpu_vs_gpu_handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-1726270d-sparse-parity-evidence.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-a.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-sparse-layout.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": null,
+      "path": "dev/bench_results/54fd3f0b-sota-sparse-fieldmatrix/2026-05-07-3a37e0f6-spmv-path-a.csv"
+    }
+  ],
+  "done_at": "2026-05-07T10:06:57.477206638Z",
+  "first_ready_at": "2026-05-07T08:33:46.266182560Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-07T09:57:59.790663395Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T10:01:51.826779691Z"
+      "updated_at": "2026-05-07T10:01:51.826779691Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T10:06:53.928812463Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T09:57:59.790663395Z"
+      "updated_at": "2026-05-07T10:06:53.928812463Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/sparse_benchmark_corpus.md",
-      "commit": null,
-      "label": "Sparse benchmark corpus + references (ingested by a3412e15)",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-1726270d-sparse-parity-evidence.md",
-      "commit": null,
-      "label": null,
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse-reference.csv",
-      "commit": null,
-      "label": null,
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-47698404-sparse.csv",
-      "commit": null,
-      "label": null,
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-layout.md",
-      "commit": null,
-      "label": null,
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/sparse_cpu_vs_gpu_handoff.md",
-      "commit": null,
-      "label": null,
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-a.csv",
-      "commit": null,
-      "label": null,
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-3a37e0f6-spmv-path-a.csv",
-      "commit": null,
-      "label": null,
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-07-3a37e0f6-sparse-dense-path-b-final.csv",
-      "commit": null,
-      "label": null,
-      "doc_type": null
-    }
-  ],
+  "id": "54fd3f0b-60d9-439c-90d1-e54c470f2563",
   "labels": [
     "type:story",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-sparse-fieldmatrix"
   ],
-  "created_at": "2026-04-30T06:43:02.522262388Z",
-  "updated_at": "2026-07-12T20:02:55.443576664Z",
-  "first_ready_at": "2026-05-07T08:33:46.266182560Z",
-  "claimed_at": "2026-05-07T08:34:37.295812880Z",
-  "done_at": "2026-05-07T10:06:57.477206638Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Close sparse FieldMatrix SpMV and SpMM gaps",
+  "updated_at": "2026-08-07T21:15:04.799461629Z"
 }

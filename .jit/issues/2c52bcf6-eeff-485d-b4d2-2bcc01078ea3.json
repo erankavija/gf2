@@ -1,13 +1,23 @@
 {
-  "id": "2c52bcf6-eeff-485d-b4d2-2bcc01078ea3",
-  "title": "Optimize rank-deficient dense paths",
-  "description": "Address rank-deficient performance separately from full-rank paths.\n\n## Success Criteria\n\n- [hard] Rank-deficient benchmark rows are measured and analyzed.\n- [hard] Optimized paths preserve correctness of rank, nullspace, and solve behavior.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T21:28:08.818541298Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.815962202Z",
   "dependencies": [
     "3b762764-aa71-49c1-a32c-01c52d9ba746"
   ],
+  "description": "Address rank-deficient performance separately from full-rank paths.\n\n## Success Criteria\n\n- [hard] Rank-deficient benchmark rows are measured and analyzed.\n- [hard] Optimized paths preserve correctness of rank, nullspace, and solve behavior.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Rank-deficient dense paths evidence",
+      "path": "dev/bench_results/2c52bcf6/2026-05-07-2c52bcf6-rank-deficient-dense.md"
+    }
+  ],
+  "done_at": "2026-05-07T00:08:22.324301913Z",
+  "first_ready_at": "2026-05-04T14:52:54.604616127Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -16,39 +26,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T23:38:18.662108172Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-07T00:08:21.829270432Z"
+      "updated_at": "2026-05-06T23:38:18.662108172Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-07T00:03:12.378800707Z"
+      "updated_at": "2026-05-07T00:03:12.378800707Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-07T00:08:21.829270432Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-07-2c52bcf6-rank-deficient-dense.md",
-      "commit": null,
-      "label": "Rank-deficient dense paths evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "2c52bcf6-eeff-485d-b4d2-2bcc01078ea3",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.815962202Z",
-  "updated_at": "2026-07-12T20:02:55.431280855Z",
-  "first_ready_at": "2026-05-04T14:52:54.604616127Z",
-  "claimed_at": "2026-05-06T21:28:08.818541298Z",
-  "done_at": "2026-05-07T00:08:22.324301913Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Optimize rank-deficient dense paths",
+  "updated_at": "2026-08-07T21:15:03.868138650Z"
 }

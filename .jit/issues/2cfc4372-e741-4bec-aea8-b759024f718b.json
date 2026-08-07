@@ -1,61 +1,61 @@
 {
-  "id": "2cfc4372-e741-4bec-aea8-b759024f718b",
-  "title": "Render final SOTA markdown scorecard",
-  "description": "Produce the authoritative final markdown report.\n\n## Success Criteria\n\n- [hard] Every in-scope cell has reference owner, gf2 number, reference number, ratio, and closure status.\n- [hard] The report cites all source evidence docs.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-07T22:05:29.486101459Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.946758140Z",
   "dependencies": [
     "dece4e73-eafb-4519-b68a-e6b3f6580487"
   ],
+  "description": "Produce the authoritative final markdown report.\n\n## Success Criteria\n\n- [hard] Every in-scope cell has reference owner, gf2 number, reference number, ratio, and closure status.\n- [hard] The report cites all source evidence docs.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Final SOTA scorecard",
+      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Self-canonical sparse-elim × GF(2^m) one-shot bench evidence",
+      "path": "dev/bench_results/2cfc4372/2026-05-08-2cfc4372-sparse-elim-gf2m.md"
+    }
+  ],
+  "done_at": "2026-05-08T15:55:24.366678017Z",
+  "first_ready_at": "2026-05-07T22:05:29.172339009Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T16:52:25.021428643Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T15:50:30.097151415Z"
+      "updated_at": "2026-05-08T15:50:30.097151415Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T15:50:36.618377081Z"
+      "updated_at": "2026-05-08T15:50:36.618377081Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-08T16:52:25.021428643Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
-      "commit": null,
-      "label": "Final SOTA scorecard",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sparse-elim-gf2m.md",
-      "commit": null,
-      "label": "Self-canonical sparse-elim × GF(2^m) one-shot bench evidence",
-      "doc_type": null,
-      "format": "markdown"
-    }
-  ],
+  "id": "2cfc4372-e741-4bec-aea8-b759024f718b",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-final-scorecard"
   ],
-  "created_at": "2026-04-30T06:43:02.946758140Z",
-  "updated_at": "2026-07-12T20:02:55.431913846Z",
-  "first_ready_at": "2026-05-07T22:05:29.172339009Z",
-  "claimed_at": "2026-05-07T22:05:29.486101459Z",
-  "done_at": "2026-05-08T15:55:24.366678017Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Render final SOTA markdown scorecard",
+  "updated_at": "2026-08-07T21:15:05.990497745Z"
 }

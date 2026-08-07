@@ -26,37 +26,6 @@
       "path": "dev/plans/fflas_ffpack_analysis.md"
     },
     {
-      "commit": null,
-      "doc_type": "design",
-      "format": "markdown",
-      "label": "Dumas–Pernet paper takeaways (arXiv:1204.3735)",
-      "path": "dev/plans/dumas_pernet_takeaways.md"
-    },
-    {
-      "assets": [
-        {
-          "asset_type": "external",
-          "content_hash": null,
-          "is_shared": false,
-          "mime_type": null,
-          "original_path": "https://arma.sourceforge.net/",
-          "resolved_path": null
-        }
-      ],
-      "commit": null,
-      "doc_type": "design",
-      "format": "markdown",
-      "label": "Armadillo → FieldMatrix UX mapping",
-      "path": "dev/plans/armadillo_ux_mapping.md"
-    },
-    {
-      "commit": null,
-      "doc_type": "report",
-      "format": "markdown",
-      "label": "FieldMatrix epic completion report",
-      "path": "dev/active/bb85c68a-completion-report.md"
-    },
-    {
       "assets": [
         {
           "asset_type": "external",
@@ -160,6 +129,86 @@
       "format": "html",
       "label": "FieldMatrix showcase presentation",
       "path": "docs/presentations/bb85c68a-fieldmatrix/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "FieldMatrix epic completion report",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-completion-report.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 2",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 3",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 4",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff-4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 5",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 6",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff-6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Container progress record",
+      "path": "dev/active/bb85c68a-field-linear-algebra/bb85c68a-progress.json"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://arma.sourceforge.net/",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Armadillo → FieldMatrix UX mapping",
+      "path": "dev/plans/bb85c68a-field-linear-algebra/armadillo_ux_mapping.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Dumas–Pernet paper takeaways (arXiv:1204.3735)",
+      "path": "dev/plans/bb85c68a-field-linear-algebra/dumas_pernet_takeaways.md"
     }
   ],
   "done_at": "2026-04-30T08:53:07.347027106Z",
@@ -195,5 +244,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Implement generic finite field linear algebra (FieldMatrix)",
-  "updated_at": "2026-08-07T20:40:48.689630284Z"
+  "updated_at": "2026-08-07T21:14:49.792650808Z"
 }

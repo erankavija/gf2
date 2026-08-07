@@ -1,13 +1,23 @@
 {
-  "id": "615db3b9-9dbf-44b6-a9e4-7f60d6009a09",
-  "title": "Pursue fflas-like GF(251) GEMM performance",
-  "description": "Follow-up research and planning work for the GF(251) cells amended to aspirational during `cc5de315` closure. This issue is now the planning and dispatch point for a broader finite-field dense linear algebra SOTA catch-up effort across GF(p), GF(2), GF(2^m), extension fields, and downstream dense LA.\n\n## Background\n\nStory `cc5de315` closed the current GF(p) parity contract with a user-approved amendment: GF(251) remains below the 1.5x-of-fflas hard threshold because fflas-ffpack routes GF(251) through an OpenBLAS-backed float-modular cascade, while gf2-core currently uses a pure AVX2 hand-written packed-byte kernel. The amendment does not mean the gap is uninteresting; it means it is non-blocking for `cc5de315` closure.\n\nThe intended scope is broader than GF(251): gf2 should catch up with fflas-ffpack where fflas is strong, exceed it where gf2 has domain-specific leverage, and preserve clean composable Rust APIs over dense finite-field linear algebra.\n\n## Success Criteria\n\n- [hard] A design document is attached to this issue and identifies the highest-leverage route toward fflas-like GF(251) performance at n in {256, 1024}, comparing at least: in-Rust f32/FMA cascade, optional BLAS-backed cascade, Goto/BLIS-style panelized integer micro-kernel, AVX-512/VNNI follow-up, and \"external BLAS dependency out of default build\" as an explicit policy option.\n- [hard] The design records what gf2 already implements for dense finite-field linear algebra, with file paths and evidence docs for GF(p), GF(2), GF(2^m), GF(p^n), and downstream operations.\n- [hard] The design references the local fflas-ffpack checkout under `/home/vkaskivuo/Projects/fflas-ffpack` and identifies the relevant source files for delayed bounds, fgemm, igemm, SIMD modular reductions, and RNS/CRT.\n- [hard] The design and all child implementation issues preserve gf2's MIT licensing: fflas-ffpack source may be used only as a behavioral/performance reference, not copied, translated, linked into the default build, or used as a source-code template.\n- [hard] The design includes reproducible GF(251) benchmark evidence at n in {256, 1024} using the same pinned/reference methodology as `cc5de315`, and identifies any fresh measurements still needed before implementation.\n- [hard] The design expands the SOTA catch-up scope beyond GF(251) into actionable workstreams for GF(p) prime families, GF(2), GF(2^m), extension fields, and downstream dense LA operations that inherit GEMM improvements.\n- [hard] The plan defines a proposed JIT breakdown with dependency order, expected gates, benchmark criteria, and non-regression requirements.\n- [hard] Any production implementation spawned from this plan preserves correctness for GF(7), GF(31), GF(251), Mersenne31, Fp<65537>, the medium-prime band, and selected GF(2^m) fields, and does not regress already-passing GF(p) cells by more than 5% under same-session measurement.\n\n## Notes\n\nPlanning document: `dev/active/615db3b9-finite-field-la-sota-plan.md`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:copilot",
+  "claimed_at": "2026-05-06T19:19:04.987984021Z",
+  "context": {},
+  "created_at": "2026-05-06T12:18:36.365886606Z",
   "dependencies": [
     "cc5de315-109f-4178-999c-a47460a571c2"
   ],
+  "description": "Follow-up research and planning work for the GF(251) cells amended to aspirational during `cc5de315` closure. This issue is now the planning and dispatch point for a broader finite-field dense linear algebra SOTA catch-up effort across GF(p), GF(2), GF(2^m), extension fields, and downstream dense LA.\n\n## Background\n\nStory `cc5de315` closed the current GF(p) parity contract with a user-approved amendment: GF(251) remains below the 1.5x-of-fflas hard threshold because fflas-ffpack routes GF(251) through an OpenBLAS-backed float-modular cascade, while gf2-core currently uses a pure AVX2 hand-written packed-byte kernel. The amendment does not mean the gap is uninteresting; it means it is non-blocking for `cc5de315` closure.\n\nThe intended scope is broader than GF(251): gf2 should catch up with fflas-ffpack where fflas is strong, exceed it where gf2 has domain-specific leverage, and preserve clean composable Rust APIs over dense finite-field linear algebra.\n\n## Success Criteria\n\n- [hard] A design document is attached to this issue and identifies the highest-leverage route toward fflas-like GF(251) performance at n in {256, 1024}, comparing at least: in-Rust f32/FMA cascade, optional BLAS-backed cascade, Goto/BLIS-style panelized integer micro-kernel, AVX-512/VNNI follow-up, and \"external BLAS dependency out of default build\" as an explicit policy option.\n- [hard] The design records what gf2 already implements for dense finite-field linear algebra, with file paths and evidence docs for GF(p), GF(2), GF(2^m), GF(p^n), and downstream operations.\n- [hard] The design references the local fflas-ffpack checkout under `/home/vkaskivuo/Projects/fflas-ffpack` and identifies the relevant source files for delayed bounds, fgemm, igemm, SIMD modular reductions, and RNS/CRT.\n- [hard] The design and all child implementation issues preserve gf2's MIT licensing: fflas-ffpack source may be used only as a behavioral/performance reference, not copied, translated, linked into the default build, or used as a source-code template.\n- [hard] The design includes reproducible GF(251) benchmark evidence at n in {256, 1024} using the same pinned/reference methodology as `cc5de315`, and identifies any fresh measurements still needed before implementation.\n- [hard] The design expands the SOTA catch-up scope beyond GF(251) into actionable workstreams for GF(p) prime families, GF(2), GF(2^m), extension fields, and downstream dense LA operations that inherit GEMM improvements.\n- [hard] The plan defines a proposed JIT breakdown with dependency order, expected gates, benchmark criteria, and non-regression requirements.\n- [hard] Any production implementation spawned from this plan preserves correctness for GF(7), GF(31), GF(251), Mersenne31, Fp<65537>, the medium-prime band, and selected GF(2^m) fields, and does not regress already-passing GF(p) cells by more than 5% under same-session measurement.\n\n## Notes\n\nPlanning document: `dev/active/615db3b9-finite-field-la-sota-plan.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Finite-field dense linear algebra SOTA catch-up plan",
+      "path": "dev/active/615db3b9/615db3b9-finite-field-la-sota-plan.md"
+    }
+  ],
+  "done_at": "2026-05-24T00:30:11.830495866Z",
+  "first_ready_at": "2026-05-06T12:29:43.463748335Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -16,39 +26,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T00:16:07.114962861Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-24T00:30:07.146807576Z"
+      "updated_at": "2026-05-24T00:16:07.114962861Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-24T00:28:14.354448326Z"
+      "updated_at": "2026-05-24T00:28:14.354448326Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-24T00:30:07.146807576Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/615db3b9-finite-field-la-sota-plan.md",
-      "commit": null,
-      "label": "Finite-field dense linear algebra SOTA catch-up plan",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "615db3b9-9dbf-44b6-a9e4-7f60d6009a09",
   "labels": [
     "type:task",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-06T12:18:36.365886606Z",
-  "updated_at": "2026-07-14T20:51:39.144190056Z",
-  "first_ready_at": "2026-05-06T12:29:43.463748335Z",
-  "claimed_at": "2026-05-06T19:19:04.987984021Z",
-  "done_at": "2026-05-24T00:30:11.830495866Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Pursue fflas-like GF(251) GEMM performance",
+  "updated_at": "2026-08-07T21:14:32.792569569Z"
 }

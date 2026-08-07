@@ -110,14 +110,14 @@ hip = ["dep:gf2-kernels-hip", "gf2-kernels-hip/hip"]
 
 # F_5 packed permanent. Default-on as of W4 closing edit; the W4
 # implementation landed `packed5::Packed5` (jit:6917eb85) per R1
-# outcome in dev/plans/r1_f5_encoding_decision.md. Opt out via
+# outcome in dev/plans/6b3f6054/r1_f5_encoding_decision.md. Opt out via
 # `--no-default-features` (or by selecting features explicitly without
 # `f5`) if the F_5 surface is unwanted.
 f5 = []
 
 # F_7 packed permanent. Default-on as of W4 closing edit; the W4
 # implementation landed `packed7::Packed7` (jit:56c5dabc) per R2
-# outcome in dev/plans/r2_f7_encoding_decision.md. Same opt-out
+# outcome in dev/plans/f10152f6/r2_f7_encoding_decision.md. Same opt-out
 # semantics as `f5`.
 f7 = []
 

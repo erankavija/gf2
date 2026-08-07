@@ -26,17 +26,17 @@
     },
     {
       "commit": null,
-      "doc_type": "design",
-      "format": "markdown",
-      "label": "Benchmark-gap strategy",
-      "path": "dev/active/085cbd0b-benchmark-gap-strategy.md"
-    },
-    {
-      "commit": null,
       "doc_type": "evidence",
       "format": "markdown",
       "label": "Benchmark gap closure",
       "path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Benchmark-gap strategy",
+      "path": "dev/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
     }
   ],
   "done_at": "2026-04-29T22:38:36.778666275Z",
@@ -73,5 +73,5 @@
   "priority": "high",
   "state": "done",
   "title": "Close algorithmic benchmark gaps from 64c88ae4",
-  "updated_at": "2026-08-05T12:07:52.740238393Z"
+  "updated_at": "2026-08-07T21:16:29.735772789Z"
 }

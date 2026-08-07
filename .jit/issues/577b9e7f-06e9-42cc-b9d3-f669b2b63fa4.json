@@ -1,69 +1,69 @@
 {
-  "id": "577b9e7f-06e9-42cc-b9d3-f669b2b63fa4",
-  "title": "Wire GF(2^m) batch kernels into FieldMatrix multiply",
-  "description": "Add a batch/PCLMUL-aware FieldMatrix multiplication path for GF(2^m), avoiding scalar per-element multiplication in the inner matrix-multiply loops.\n\n## Background\n\n`64c88ae4` shows GF(2^m) matrix multiplication runs at roughly tens of Mops/s and has no reference-side comparison populated yet, but the intended project target is to exceed fflas-ffpack by using direct carry-less multiplication. The existing Tier C tasks add element/batch kernels; this task wires those gains into matrix multiplication so FieldMatrix workloads see them.\n\n## Success Criteria\n\n- [hard] FieldMatrix multiplication over GF(2^m) uses a batched or tiled PCLMUL-aware path for m in the benchmarked set {8, 16, 32} where the Tier-C kernels are available, with scalar fallback preserved.\n- [hard] Correctness is covered against the scalar path for multiple matrix shapes, including rectangular shapes from `64c88ae4` and boundary sizes around the selected tile/crossover.\n- [hard] Benchmarks compare pre/post GF(2^m) fgemm throughput and record whether the change is compute-bound or memory-bound.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] GF(2^m) fgemm throughput improves by at least 2x over the `64c88ae4` published gf2-side baseline for one of m in {8, 16, 32}.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude-wt-577b9e7f",
+  "claimed_at": "2026-04-29T16:06:22.978786622Z",
+  "context": {},
+  "created_at": "2026-04-27T21:07:47.106637229Z",
   "dependencies": [
     "ec286cee-48af-4dec-8190-424f6ffbfab7"
   ],
+  "description": "Add a batch/PCLMUL-aware FieldMatrix multiplication path for GF(2^m), avoiding scalar per-element multiplication in the inner matrix-multiply loops.\n\n## Background\n\n`64c88ae4` shows GF(2^m) matrix multiplication runs at roughly tens of Mops/s and has no reference-side comparison populated yet, but the intended project target is to exceed fflas-ffpack by using direct carry-less multiplication. The existing Tier C tasks add element/batch kernels; this task wires those gains into matrix multiplication so FieldMatrix workloads see them.\n\n## Success Criteria\n\n- [hard] FieldMatrix multiplication over GF(2^m) uses a batched or tiled PCLMUL-aware path for m in the benchmarked set {8, 16, 32} where the Tier-C kernels are available, with scalar fallback preserved.\n- [hard] Correctness is covered against the scalar path for multiple matrix shapes, including rectangular shapes from `64c88ae4` and boundary sizes around the selected tile/crossover.\n- [hard] Benchmarks compare pre/post GF(2^m) fgemm throughput and record whether the change is compute-bound or memory-bound.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] GF(2^m) fgemm throughput improves by at least 2x over the `64c88ae4` published gf2-side baseline for one of m in {8, 16, 32}.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "64c88ae4 benchmark report",
+      "path": "dev/bench_results/2026-04-26.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Uncompetitiveness profile",
+      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2^m) FieldMatrix batch GEMM evidence",
+      "path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Benchmark-gap strategy",
+      "path": "dev/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
+    }
+  ],
+  "done_at": "2026-04-29T18:41:59.709586192Z",
+  "first_ready_at": "2026-04-29T04:25:12.605942536Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T18:26:48.701172660Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T18:23:05.008180701Z"
+      "updated_at": "2026-04-29T18:23:05.008180701Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-04-29T18:26:48.701172660Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-04-26.md",
-      "commit": null,
-      "label": "64c88ae4 benchmark report",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
-      "commit": null,
-      "label": "Uncompetitiveness profile",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/active/085cbd0b-benchmark-gap-strategy.md",
-      "commit": null,
-      "label": "Benchmark-gap strategy",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-      "commit": null,
-      "label": "GF(2^m) FieldMatrix batch GEMM evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "577b9e7f-06e9-42cc-b9d3-f669b2b63fa4",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-ppc-spiral",
     "story:ppc-benchmark-gap"
   ],
-  "created_at": "2026-04-27T21:07:47.106637229Z",
-  "updated_at": "2026-07-12T20:02:55.444198285Z",
-  "first_ready_at": "2026-04-29T04:25:12.605942536Z",
-  "claimed_at": "2026-04-29T16:06:22.978786622Z",
-  "done_at": "2026-04-29T18:41:59.709586192Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Wire GF(2^m) batch kernels into FieldMatrix multiply",
+  "updated_at": "2026-08-07T21:16:29.092431463Z"
 }

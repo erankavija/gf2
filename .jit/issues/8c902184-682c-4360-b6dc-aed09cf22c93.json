@@ -1,42 +1,42 @@
 {
-  "id": "8c902184-682c-4360-b6dc-aed09cf22c93",
-  "title": "Freeze gf2-algebra public API surface for verification",
-  "description": "Lock the `gf2-algebra` public API surface against changes by recording an explicit api-freeze checkpoint, gating the W6 Lean verification work on a stable signature set.\n\n## Background\n\nW6 verification (V1, V2, V3) consumes the Charon/Aeneas pipeline against the `gf2-algebra` public surface. Per the verification-work conventions in CLAUDE.md, proof code is brittle to API drift — a Charon regeneration after a signature change can invalidate hours of Lean proof work. This issue records an explicit freeze: the public API of `gf2-algebra::packed::*`, `gf2-algebra::permanent::*`, and the dispatch surface in `gf2-algebra::gpu` (where applicable) is locked against breaking changes for the duration of W6.\n\nThis is not a code-changing issue. It produces a written sign-off doc that lists the locked symbols, references the W6 Lean issues that consume them, and establishes the change-control protocol (subsequent breaking changes require explicit user approval and re-verification of impacted V1/V2 proofs).\n\n## Success Criteria\n\n- [x] [hard] `dev/plans/gf_api_freeze_w6.md` exists and is attached via `jit doc add`, listing every public symbol locked under the freeze.\n- [x] [hard] The doc names the W1-W5 issues (T13, T15, T18, T20, T26) whose surfaces become frozen.\n- [x] [hard] The doc establishes a change-control rule: post-freeze breaking changes require explicit user approval AND a corresponding update to V1/V2/V3 if they consume the changed symbol.\n- [x] [hard] User has signed off on the freeze checkpoint (recorded as an `## Approval` section in the doc and in this issue's description).\n\n## Approval\n\nApproved by: vesa.kaskivuo@iki.fi\nDate: 2026-05-14\nMechanism: AskUserQuestion confirmation, session 8 of epic `ae82bd73`, option \\\"Approve as-is\\\" of the four-option freeze sign-off menu.\n\nLocked-symbol list, W6-consumer mapping, and change-control protocol live in the design doc `dev/plans/gf_api_freeze_w6.md`. The attached commit pin is rolled forward on each correction; current pin: `7c634620` (2026-05-15 session 9 — canonical-path fix for `packed::packed7::LANES` and explicit out-of-scope section for the cfg-gated placeholder modules `parallel`, `gpu`, `testutil`). The GPU dispatch surface freeze is explicitly deferred until `2fbbdfa5` (host dispatcher) lands; W6 Lean work does not consume the GPU surface, so this deferral is non-blocking for W6.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-14T19:38:30.516443551Z",
+  "context": {},
+  "created_at": "2026-05-09T09:47:57.770038638Z",
   "dependencies": [
     "686ee1b5-6ac8-4547-9b66-d472b2753676",
     "05250df5-495a-462e-bd04-aacd6bfb4505"
   ],
+  "description": "Lock the `gf2-algebra` public API surface against changes by recording an explicit api-freeze checkpoint, gating the W6 Lean verification work on a stable signature set.\n\n## Background\n\nW6 verification (V1, V2, V3) consumes the Charon/Aeneas pipeline against the `gf2-algebra` public surface. Per the verification-work conventions in CLAUDE.md, proof code is brittle to API drift — a Charon regeneration after a signature change can invalidate hours of Lean proof work. This issue records an explicit freeze: the public API of `gf2-algebra::packed::*`, `gf2-algebra::permanent::*`, and the dispatch surface in `gf2-algebra::gpu` (where applicable) is locked against breaking changes for the duration of W6.\n\nThis is not a code-changing issue. It produces a written sign-off doc that lists the locked symbols, references the W6 Lean issues that consume them, and establishes the change-control protocol (subsequent breaking changes require explicit user approval and re-verification of impacted V1/V2 proofs).\n\n## Success Criteria\n\n- [x] [hard] `dev/plans/gf_api_freeze_w6.md` exists and is attached via `jit doc add`, listing every public symbol locked under the freeze.\n- [x] [hard] The doc names the W1-W5 issues (T13, T15, T18, T20, T26) whose surfaces become frozen.\n- [x] [hard] The doc establishes a change-control rule: post-freeze breaking changes require explicit user approval AND a corresponding update to V1/V2/V3 if they consume the changed symbol.\n- [x] [hard] User has signed off on the freeze checkpoint (recorded as an `## Approval` section in the doc and in this issue's description).\n\n## Approval\n\nApproved by: vesa.kaskivuo@iki.fi\nDate: 2026-05-14\nMechanism: AskUserQuestion confirmation, session 8 of epic `ae82bd73`, option \\\"Approve as-is\\\" of the four-option freeze sign-off menu.\n\nLocked-symbol list, W6-consumer mapping, and change-control protocol live in the design doc `dev/plans/gf_api_freeze_w6.md`. The attached commit pin is rolled forward on each correction; current pin: `7c634620` (2026-05-15 session 9 — canonical-path fix for `packed::packed7::LANES` and explicit out-of-scope section for the cfg-gated placeholder modules `parallel`, `gpu`, `testutil`). The GPU dispatch surface freeze is explicitly deferred until `2fbbdfa5` (host dispatcher) lands; W6 Lean work does not consume the GPU surface, so this deferral is non-blocking for W6.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "gf2-algebra public-API freeze for W6 Lean verification",
+      "path": "dev/plans/8c902184/gf_api_freeze_w6.md"
+    }
+  ],
+  "done_at": "2026-05-14T21:33:24.361844695Z",
+  "first_ready_at": "2026-05-11T20:05:40.163211523Z",
   "gates_required": [
     "code-review"
   ],
   "gates_status": {
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-14T21:29:04.324714418Z"
+      "updated_at": "2026-05-14T21:29:04.324714418Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/gf_api_freeze_w6.md",
-      "commit": "7c63462018b7bf194b001fb502a7551711a9bb5b",
-      "label": "gf2-algebra public-API freeze for W6 Lean verification",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "8c902184-682c-4360-b6dc-aed09cf22c93",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-05-09T09:47:57.770038638Z",
-  "updated_at": "2026-07-12T20:02:55.455784773Z",
-  "first_ready_at": "2026-05-11T20:05:40.163211523Z",
-  "claimed_at": "2026-05-14T19:38:30.516443551Z",
-  "done_at": "2026-05-14T21:33:24.361844695Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Freeze gf2-algebra public API surface for verification",
+  "updated_at": "2026-08-07T21:14:51.176510575Z"
 }

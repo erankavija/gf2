@@ -1,11 +1,20 @@
 {
-  "id": "a2026f8c-06be-44ee-82e9-36bd187532ea",
-  "title": "Incremental simulation logging and per-point result persistence",
-  "description": "## Problem\n\nSimulation campaigns run for hours (3.5+ hours observed for moderate-mode Phase 1/3). Currently:\n- Results are written only after ALL SNR points for a curve complete\n- Progress is only visible via ephemeral stderr prints with no timestamps or ETA\n- If a long run crashes at the last SNR point, all prior results are lost\n- The custom `run_product_sim` loop in `grand_phase1_sims.rs` duplicates `SimulationRunner` logic because `TurboDecoder` doesn't implement `IterativeSoftDecoder`\n\n## Changes\n\n### 1. Incremental CSV append\nWrite each completed SNR point to the output CSV immediately via `OpenOptions::append`. Final `write_to` at end overwrites with clean complete file.\n\n### 2. JSONL progress log\nWrite `.progress.jsonl` alongside CSV with adaptive wall-clock updates (10s first, then 60s). Per-point completion entries. Enables monitoring from external tools.\n\n### 3. Resumable runs\nOn startup, parse existing CSV. Skip SNR points that already have ≥ `min_errors` frame errors. Print `RESUMED` to stderr.\n\n### 4. Closure-based simulation runner\nNew `SimulationRunner::run_with_decoder(encoder, decode_fn: FnMut, channel, config)` that accepts any decoder via closure. Eliminates the duplicate `run_product_sim` loop. Requires `impl From<TurboDecoderResult> for DecoderResult`.\n\n### 5. Improved stderr progress\nPer-point: `[3.0 dB] DONE: BLER=2.64e-3 (100 errors / 37892 frames) in 4m23s — ETA 12m for 2 remaining`\nIntra-point (adaptive): `[3.5 dB] progress: 8432/~100K frames, 12 errors, ~47m remaining`\n\n### 6. Update example runners\nRemove custom product sim loop from `grand_phase1_sims.rs`. Set `output_path` on all configs.\n\n## Success Criteria\n\n- [ ] Each SNR point appended to CSV immediately on completion\n- [ ] JSONL progress file written with adaptive wall-clock entries\n- [ ] Resumable: re-running with existing CSV skips completed points\n- [ ] `run_with_decoder` closure API replaces custom `run_product_sim` loop\n- [ ] `run_product_sim` removed from `grand_phase1_sims.rs`\n- [ ] Stderr shows wall-clock elapsed and ETA per point\n- [ ] All existing tests pass unchanged\n- [ ] New tests: incremental CSV, resume, JSONL, closure runner equivalence\n\n## Files\n\n- `crates/gf2-coding/src/simulation.rs` — core changes\n- `crates/gf2-coding/src/product/mod.rs` — `From<TurboDecoderResult> for DecoderResult`\n- `crates/gf2-coding/examples/grand_phase1_sims.rs` — use closure runner\n- `crates/gf2-coding/examples/grand_phase3_sim.rs` — ensure output_path set",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-08T17:32:06.429784534Z",
+  "context": {},
+  "created_at": "2026-04-08T16:24:24.205375421Z",
   "dependencies": [],
+  "description": "## Problem\n\nSimulation campaigns run for hours (3.5+ hours observed for moderate-mode Phase 1/3). Currently:\n- Results are written only after ALL SNR points for a curve complete\n- Progress is only visible via ephemeral stderr prints with no timestamps or ETA\n- If a long run crashes at the last SNR point, all prior results are lost\n- The custom `run_product_sim` loop in `grand_phase1_sims.rs` duplicates `SimulationRunner` logic because `TurboDecoder` doesn't implement `IterativeSoftDecoder`\n\n## Changes\n\n### 1. Incremental CSV append\nWrite each completed SNR point to the output CSV immediately via `OpenOptions::append`. Final `write_to` at end overwrites with clean complete file.\n\n### 2. JSONL progress log\nWrite `.progress.jsonl` alongside CSV with adaptive wall-clock updates (10s first, then 60s). Per-point completion entries. Enables monitoring from external tools.\n\n### 3. Resumable runs\nOn startup, parse existing CSV. Skip SNR points that already have ≥ `min_errors` frame errors. Print `RESUMED` to stderr.\n\n### 4. Closure-based simulation runner\nNew `SimulationRunner::run_with_decoder(encoder, decode_fn: FnMut, channel, config)` that accepts any decoder via closure. Eliminates the duplicate `run_product_sim` loop. Requires `impl From<TurboDecoderResult> for DecoderResult`.\n\n### 5. Improved stderr progress\nPer-point: `[3.0 dB] DONE: BLER=2.64e-3 (100 errors / 37892 frames) in 4m23s — ETA 12m for 2 remaining`\nIntra-point (adaptive): `[3.5 dB] progress: 8432/~100K frames, 12 errors, ~47m remaining`\n\n### 6. Update example runners\nRemove custom product sim loop from `grand_phase1_sims.rs`. Set `output_path` on all configs.\n\n## Success Criteria\n\n- [ ] Each SNR point appended to CSV immediately on completion\n- [ ] JSONL progress file written with adaptive wall-clock entries\n- [ ] Resumable: re-running with existing CSV skips completed points\n- [ ] `run_with_decoder` closure API replaces custom `run_product_sim` loop\n- [ ] `run_product_sim` removed from `grand_phase1_sims.rs`\n- [ ] Stderr shows wall-clock elapsed and ETA per point\n- [ ] All existing tests pass unchanged\n- [ ] New tests: incremental CSV, resume, JSONL, closure runner equivalence\n\n## Files\n\n- `crates/gf2-coding/src/simulation.rs` — core changes\n- `crates/gf2-coding/src/product/mod.rs` — `From<TurboDecoderResult> for DecoderResult`\n- `crates/gf2-coding/examples/grand_phase1_sims.rs` — use closure runner\n- `crates/gf2-coding/examples/grand_phase3_sim.rs` — ensure output_path set",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Implementation plan",
+      "path": "dev/active/a2026f8c/a2026f8c-incremental-logging-plan.md"
+    }
+  ],
+  "done_at": "2026-04-08T22:42:24.855589389Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -13,32 +22,23 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-08T22:40:00.835482951Z"
+      "updated_at": "2026-04-08T22:40:00.835482951Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-08T22:40:54.224360914Z"
+      "updated_at": "2026-04-08T22:40:54.224360914Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/a2026f8c-incremental-logging-plan.md",
-      "commit": null,
-      "label": "Implementation plan",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "a2026f8c-06be-44ee-82e9-36bd187532ea",
   "labels": [
     "type:task",
     "component:gf2-coding",
     "story:run-phase-2-awgn-simulations-figs-4-6-additional-product-code-dimensions"
   ],
-  "created_at": "2026-04-08T16:24:24.205375421Z",
-  "updated_at": "2026-07-14T20:51:30.049148422Z",
-  "claimed_at": "2026-04-08T17:32:06.429784534Z",
-  "done_at": "2026-04-08T22:42:24.855589389Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Incremental simulation logging and per-point result persistence",
+  "updated_at": "2026-08-07T21:14:37.243101452Z"
 }

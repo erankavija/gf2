@@ -1,10 +1,7 @@
 {
-  "id": "2928ccce-700a-46ff-88c7-6998915f9fdf",
-  "title": "DVB-T2 AWGN simulation campaign — Normal frame, rates 1/2 / 2/3 / 3/4",
-  "description": "## Goal\n\nProduce reference-validated FER-vs-SNR curves for the DVB-T2\nBCH(outer) + LDPC(inner) + BICM chain over an AWGN channel for three\ncanonical operating points: Normal frame (N=64800), code rates 1/2,\n2/3, 3/4, modulations 16-QAM and 64-QAM Gray-mapped. Six (rate ×\nmodulation) curves total.\n\nBefore any campaign-grade simulation is run, the shared simulation\nharness (`crates/gf2-coding/src/simulation.rs`) must be made observable\nand resumable so that multi-hour runs survive crashes and can be tailed\nlive without modifying the binary.\n\n## Context\n\nDVB-T2 BCH outer (`crates/gf2-coding/src/bch/dvb_t2/`) covers all 12\nETSI configurations and is verified by unit tests. DVB-T2 LDPC inner\n(`crates/gf2-coding/src/ldpc/dvb_t2/`) has all 12 parity-check tables\npopulated as Rust constants and the TP04 → TP05 → TP06 portion of the\nETSI test-vector chain (VV001-CR35, 202/202 blocks) is verified end to\nend.\n\nWhat is missing for closure of the AWGN slice of milestone f0448e55:\n\n1. The column-row bit interleaver from EN 302 755 §6.1.3 (only a\n   random-seed-based interleaver exists today in\n   `crates/gf2-coding/src/fading.rs`).\n2. Concatenation glue that drives BCH then LDPC then BICM in one path.\n3. Validation up to TP07a (post-interleaver).\n4. A campaign runner binary that produces the actual curves and plots.\n5. Logging / progress / checkpoint-resume infrastructure in\n   `SimulationRunner` so 10⁶-frame runs are safe to launch unattended.\n6. The 11 missing LDPC parity-table source files in `.txt` form (Rust\n   constants are present but not the ETSI tables they derive from),\n   for auditability.\n\nThis epic delivers items 1-6 in dependency order. The integration\nmilestone (f0448e55) closes when this epic plus the GNU Radio OOT\nstory (b8baca8a) are both done. The SDR hardware demo (fcb09e6f) is\nexplicitly out of scope.\n\n## Configurations covered\n\n| Frame  | Code rate | N (LDPC) | k (LDPC) | k_bch  | Modulations    |\n|--------|-----------|----------|----------|--------|----------------|\n| Normal | 1/2       | 64 800   | 32 400   | 32 208 | 16-QAM, 64-QAM |\n| Normal | 2/3       | 64 800   | 43 200   | 43 040 | 16-QAM, 64-QAM |\n| Normal | 3/4       | 64 800   | 48 600   | 48 408 | 16-QAM, 64-QAM |\n\n## Reference for validation\n\nETSI TS 102 831 v1.2.1 (2012-08), \"Implementation guidelines for a\nsecond generation digital terrestrial television broadcasting system\n(DVB-T2)\". The implementation-guidelines document contains AWGN\nsimulation curves for each MODCOD; those are the comparison baseline.\nThe hand-extracted reference points are checked in by task NEW-2\nunder `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`.\n\n## Success criteria\n\n- [hard] For each of the 6 (rate × modulation) curves, the simulated\n  FER matches the ETSI TS 102 831 reference at FER = 10⁻⁴ within\n  **0.5 dB** of Es/N₀ for the three 16-QAM curves and **0.65 dB** for\n  the three 64-QAM curves.\n  AMENDMENT 2026-06-13 (user-approved via project-lead escalation;\n  see child e4849f07 for the full record): the ETSI TS 102 831\n  Table 44 anchors assume \"Genie-Aided\" demapping, which the spec\n  (§14.2, above Table 44) states is \"optimistic ... for high-order\n  constellations.\" The in-scope single-pass ExactLogMap BICM is\n  below the genie bound, so the gap grows with constellation order.\n  Observed gaps: 16-QAM {1/2: 0.167, 2/3: 0.117, 3/4: 0.224} dB;\n  64-QAM {1/2: 0.606, 2/3: 0.585, 3/4: 0.514} dB. All six curves\n  meet the amended criterion.\n- [aspirational] Tighter gap of **0.3 dB** at FER = 10⁻⁴ on each curve,\n  recorded per curve in the closure note where met.\n- [hard] The full TP04 → TP05 → TP06 → TP07a ETSI test-vector chain is\n  bit-exact (satisfied transitively via 4cdaf1c5).\n- [hard] The deepest plotted SNR point on each curve has ≥ 10⁶\n  simulated frames, and the SNR point bracketing FER = 10⁻⁴ from\n  above (FER ≥ 10⁻⁴) has ≥ 100 frame errors.\n  AMENDMENT 2026-06-13 (user-approved via project-lead escalation;\n  see child e4849f07 for the full record): the original wording\n  (\"at every measured SNR point bracketing FER = 10⁻⁴, ≥ 100 frame\n  errors\") is replaced by its own operative parenthetical\n  (\"≥ 10⁶ frames at the deepest SNR plotted\"). The N=64800\n  waterfall is a near-vertical cliff (~1 decade per 0.045 dB), so\n  the measured point just below 10⁻⁴ sits at FER ~ 10⁻⁵ where\n  ≥ 100 errors would need 5–24 × 10⁶ frames/curve. The data meets\n  the amended bar: 1.2 × 10⁶ frames at every deepest plotted point\n  and ≥ 100 errors at each above-cliff bracketing point.\n- [hard] Campaign artefacts are checked in under\n  `dev/benchmarks/dvb_t2_awgn/`:\n  - one CSV per (rate × modulation) curve,\n  - one PNG overlay per (rate × modulation) showing simulated vs\n    ETSI TS 102 831 reference (produced by the operator-run plotting\n    script in `dev/benchmarks/dvb_t2_awgn/`, not the binary itself),\n  - one JSON tracing log per campaign run,\n  - `README.md` recording invocation, RNG seed, host info, wall-clock.\n- [hard] A campaign run interrupted by SIGINT or process kill after at\n  least one SNR point has completed resumes from the next unfinished\n  SNR point on restart, without recomputing finished work. Validated\n  by an integration test that kills the runner mid-campaign and\n  verifies the resumed CSV is bit-identical to an uninterrupted\n  reference run with the same seed.\n- [hard] All campaign progress is emitted as structured `tracing`\n  events to a JSON file (one record per SNR point completion plus\n  configurable per-N-frames heartbeats), tailable with `jq` during the\n  run. No live TUI or progress bar.\n- [hard] A CLI binary reproduces every published curve via a single\n  invocation per config.\n\n## Out of scope (explicit)\n\n- SDR / hardware reception (fcb09e6f).\n- GNU Radio OOT decoder blocks (b8baca8a).\n- Fading channels (TU6 / Rayleigh / Rician).\n- Time interleaver, frequency interleaver, frame builder above the\n  bit-interleaver layer.\n- LDPC decoder algorithm changes — use the existing belief-propagation\n  decoder. Tuning parameters (max iterations, schedule) allowed if\n  needed to hit the gap target.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "context": {},
+  "created_at": "2026-05-25T21:46:35.686241688Z",
   "dependencies": [
     "548a8563-8e67-4956-8e1f-d44803eca4d1",
     "9d34359c-1c7f-4459-9a48-2002680b8138",
@@ -12,38 +9,61 @@
     "a7b1bb21-834c-434f-8d61-17b829f5592d",
     "7bdaf999-e051-4ed0-ab28-5f42cc9de7fc"
   ],
+  "description": "## Goal\n\nProduce reference-validated FER-vs-SNR curves for the DVB-T2\nBCH(outer) + LDPC(inner) + BICM chain over an AWGN channel for three\ncanonical operating points: Normal frame (N=64800), code rates 1/2,\n2/3, 3/4, modulations 16-QAM and 64-QAM Gray-mapped. Six (rate ×\nmodulation) curves total.\n\nBefore any campaign-grade simulation is run, the shared simulation\nharness (`crates/gf2-coding/src/simulation.rs`) must be made observable\nand resumable so that multi-hour runs survive crashes and can be tailed\nlive without modifying the binary.\n\n## Context\n\nDVB-T2 BCH outer (`crates/gf2-coding/src/bch/dvb_t2/`) covers all 12\nETSI configurations and is verified by unit tests. DVB-T2 LDPC inner\n(`crates/gf2-coding/src/ldpc/dvb_t2/`) has all 12 parity-check tables\npopulated as Rust constants and the TP04 → TP05 → TP06 portion of the\nETSI test-vector chain (VV001-CR35, 202/202 blocks) is verified end to\nend.\n\nWhat is missing for closure of the AWGN slice of milestone f0448e55:\n\n1. The column-row bit interleaver from EN 302 755 §6.1.3 (only a\n   random-seed-based interleaver exists today in\n   `crates/gf2-coding/src/fading.rs`).\n2. Concatenation glue that drives BCH then LDPC then BICM in one path.\n3. Validation up to TP07a (post-interleaver).\n4. A campaign runner binary that produces the actual curves and plots.\n5. Logging / progress / checkpoint-resume infrastructure in\n   `SimulationRunner` so 10⁶-frame runs are safe to launch unattended.\n6. The 11 missing LDPC parity-table source files in `.txt` form (Rust\n   constants are present but not the ETSI tables they derive from),\n   for auditability.\n\nThis epic delivers items 1-6 in dependency order. The integration\nmilestone (f0448e55) closes when this epic plus the GNU Radio OOT\nstory (b8baca8a) are both done. The SDR hardware demo (fcb09e6f) is\nexplicitly out of scope.\n\n## Configurations covered\n\n| Frame  | Code rate | N (LDPC) | k (LDPC) | k_bch  | Modulations    |\n|--------|-----------|----------|----------|--------|----------------|\n| Normal | 1/2       | 64 800   | 32 400   | 32 208 | 16-QAM, 64-QAM |\n| Normal | 2/3       | 64 800   | 43 200   | 43 040 | 16-QAM, 64-QAM |\n| Normal | 3/4       | 64 800   | 48 600   | 48 408 | 16-QAM, 64-QAM |\n\n## Reference for validation\n\nETSI TS 102 831 v1.2.1 (2012-08), \"Implementation guidelines for a\nsecond generation digital terrestrial television broadcasting system\n(DVB-T2)\". The implementation-guidelines document contains AWGN\nsimulation curves for each MODCOD; those are the comparison baseline.\nThe hand-extracted reference points are checked in by task NEW-2\nunder `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`.\n\n## Success criteria\n\n- [hard] For each of the 6 (rate × modulation) curves, the simulated\n  FER matches the ETSI TS 102 831 reference at FER = 10⁻⁴ within\n  **0.5 dB** of Es/N₀ for the three 16-QAM curves and **0.65 dB** for\n  the three 64-QAM curves.\n  AMENDMENT 2026-06-13 (user-approved via project-lead escalation;\n  see child e4849f07 for the full record): the ETSI TS 102 831\n  Table 44 anchors assume \"Genie-Aided\" demapping, which the spec\n  (§14.2, above Table 44) states is \"optimistic ... for high-order\n  constellations.\" The in-scope single-pass ExactLogMap BICM is\n  below the genie bound, so the gap grows with constellation order.\n  Observed gaps: 16-QAM {1/2: 0.167, 2/3: 0.117, 3/4: 0.224} dB;\n  64-QAM {1/2: 0.606, 2/3: 0.585, 3/4: 0.514} dB. All six curves\n  meet the amended criterion.\n- [aspirational] Tighter gap of **0.3 dB** at FER = 10⁻⁴ on each curve,\n  recorded per curve in the closure note where met.\n- [hard] The full TP04 → TP05 → TP06 → TP07a ETSI test-vector chain is\n  bit-exact (satisfied transitively via 4cdaf1c5).\n- [hard] The deepest plotted SNR point on each curve has ≥ 10⁶\n  simulated frames, and the SNR point bracketing FER = 10⁻⁴ from\n  above (FER ≥ 10⁻⁴) has ≥ 100 frame errors.\n  AMENDMENT 2026-06-13 (user-approved via project-lead escalation;\n  see child e4849f07 for the full record): the original wording\n  (\"at every measured SNR point bracketing FER = 10⁻⁴, ≥ 100 frame\n  errors\") is replaced by its own operative parenthetical\n  (\"≥ 10⁶ frames at the deepest SNR plotted\"). The N=64800\n  waterfall is a near-vertical cliff (~1 decade per 0.045 dB), so\n  the measured point just below 10⁻⁴ sits at FER ~ 10⁻⁵ where\n  ≥ 100 errors would need 5–24 × 10⁶ frames/curve. The data meets\n  the amended bar: 1.2 × 10⁶ frames at every deepest plotted point\n  and ≥ 100 errors at each above-cliff bracketing point.\n- [hard] Campaign artefacts are checked in under\n  `dev/benchmarks/dvb_t2_awgn/`:\n  - one CSV per (rate × modulation) curve,\n  - one PNG overlay per (rate × modulation) showing simulated vs\n    ETSI TS 102 831 reference (produced by the operator-run plotting\n    script in `dev/benchmarks/dvb_t2_awgn/`, not the binary itself),\n  - one JSON tracing log per campaign run,\n  - `README.md` recording invocation, RNG seed, host info, wall-clock.\n- [hard] A campaign run interrupted by SIGINT or process kill after at\n  least one SNR point has completed resumes from the next unfinished\n  SNR point on restart, without recomputing finished work. Validated\n  by an integration test that kills the runner mid-campaign and\n  verifies the resumed CSV is bit-identical to an uninterrupted\n  reference run with the same seed.\n- [hard] All campaign progress is emitted as structured `tracing`\n  events to a JSON file (one record per SNR point completion plus\n  configurable per-N-frames heartbeats), tailable with `jq` during the\n  run. No live TUI or progress bar.\n- [hard] A CLI binary reproduces every published curve via a single\n  invocation per config.\n\n## Out of scope (explicit)\n\n- SDR / hardware reception (fcb09e6f).\n- GNU Radio OOT decoder blocks (b8baca8a).\n- Fading channels (TU6 / Rayleigh / Rician).\n- Time interleaver, frequency interleaver, frame builder above the\n  bit-interleaver layer.\n- LDPC decoder algorithm changes — use the existing belief-propagation\n  decoder. Tuning parameters (max iterations, schedule) allowed if\n  needed to hit the gap target.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/benchmarks/dvb_t2_awgn/CLOSURE.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Completion report",
+      "path": "dev/active/2928ccce-dvb-t2-awgn-campaign/2928ccce-completion-report.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff",
+      "path": "dev/active/2928ccce-dvb-t2-awgn-campaign/2928ccce-handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Container progress record",
+      "path": "dev/active/2928ccce-dvb-t2-awgn-campaign/2928ccce-progress.json"
+    }
+  ],
+  "done_at": "2026-06-13T20:24:27.831580597Z",
   "gates_required": [
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-13T20:24:27.731926748Z"
-    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-13T20:22:03.082096563Z"
+      "updated_at": "2026-06-13T20:22:03.082096563Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-06-13T20:24:27.731926748Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/benchmarks/dvb_t2_awgn/CLOSURE.md",
-      "commit": null,
-      "label": null,
-      "doc_type": null,
-      "format": "markdown"
-    }
-  ],
+  "id": "2928ccce-700a-46ff-88c7-6998915f9fdf",
   "labels": [
     "type:epic",
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign"
   ],
-  "created_at": "2026-05-25T21:46:35.686241688Z",
-  "updated_at": "2026-07-14T20:51:30.230011734Z",
-  "done_at": "2026-06-13T20:24:27.831580597Z"
+  "priority": "high",
+  "state": "done",
+  "title": "DVB-T2 AWGN simulation campaign — Normal frame, rates 1/2 / 2/3 / 3/4",
+  "updated_at": "2026-08-07T21:14:31.199505185Z"
 }

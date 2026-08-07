@@ -35,7 +35,7 @@ row links to its source-of-truth evidence document:
 - [`2026-04-26-uncompetitiveness-profile.md`](2026-04-26-uncompetitiveness-profile.md)
   — root-cause profile of the original `LogicalFns` dispatch overhead
   and missing `[profile.release]` block, motivating the PPC spiral.
-- [`2026-04-26-profile-release-delta.md`](2026-04-26-profile-release-delta.md)
+- [`c7791a20/2026-04-26-profile-release-delta.md`](c7791a20/2026-04-26-profile-release-delta.md)
   — workspace-`[profile.release]` (thin LTO + `codegen-units = 1`)
   micro-delta on GF(2) matmul.
 - [`2026-04-27-asm-audit.md`](2026-04-27-asm-audit.md)
@@ -44,7 +44,7 @@ row links to its source-of-truth evidence document:
 - [`2026-04-29-7c954fb5-criterion.txt`](2026-04-29-7c954fb5-criterion.txt)
   — criterion summary for the GF(2^m) wide-clmul kernel
   (`gf2m_wide9_m571`); 16.99× full mul+Barrett, 117.26× raw clmul.
-- [`../active/babcf05e-handoff-5.md`](../active/babcf05e-handoff-5.md)
+- [`../active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md`](../active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md)
   — final session handoff from the PPC epic listing C1/B1/C3/B2 outcomes.
 
 ## Status legend
@@ -98,7 +98,7 @@ Notes:
   production dispatch therefore stays on M4RM at every measured n.
   The gf2-side delta for the n=1024 / n=4096 cells is therefore
   attributable to the M4RM-leaf improvements (workspace `[profile.release]`
-  thin LTO + `codegen-units = 1` per [`2026-04-26-profile-release-delta.md`](2026-04-26-profile-release-delta.md)
+  thin LTO + `codegen-units = 1` per [`c7791a20/2026-04-26-profile-release-delta.md`](c7791a20/2026-04-26-profile-release-delta.md)
   plus the upstream Tier-A/B kernel work landed under `babcf05e`),
   not to a Strassen layer.
 - `M4RI reference` is the throughput value already published in
@@ -245,14 +245,14 @@ Notes:
   — root-cause profile motivating the PPC spiral; cited
   for the `LogicalFns` / missing-`[profile.release]` analysis
   that the post-PPC numbers improve on.
-- `[E6]` [`2026-04-26-profile-release-delta.md`](2026-04-26-profile-release-delta.md)
+- `[E6]` [`c7791a20/2026-04-26-profile-release-delta.md`](c7791a20/2026-04-26-profile-release-delta.md)
   — `[profile.release]` thin-LTO + `codegen-units = 1` micro-delta;
   cited as one component of the GF(2) post-PPC delta.
 - `[E7]` [`2026-04-29-7c954fb5-criterion.txt`](2026-04-29-7c954fb5-criterion.txt)
   — kernel-level GF(2^571) clmul criterion summary; full-multiply
   16.99× and raw-clmul 117.26× scalar-vs-`avx2+vpclmulqdq-ymm`
   speedups.
-- `[E8]` [`../active/babcf05e-handoff-5.md`](../active/babcf05e-handoff-5.md)
+- `[E8]` [`../active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md`](../active/babcf05e-gf2-core-ppc-spiral/babcf05e-handoff-5.md)
   — final PPC-epic session handoff; cited for the C1 batch geomean
   `5.131× over pclmulqdq_barrett_loop_v0`, the B1 transpose ≥10×
   criterion-gate result and worker-reported ~65× at n=4096, and the

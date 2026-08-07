@@ -1,54 +1,54 @@
 {
-  "id": "9e12659b-5e26-4ce4-9461-853c25b51ba6",
-  "title": "Implement generic-prime panelized GEMM improvements",
-  "description": "Improve non-Mersenne medium-prime GEMM where delayed reduction is insufficient.\n\n## Amendment — 2026-05-06 (user-approved post-R3)\n\nCriterion #1 is amended for the **GF(32749) at n=64³** cell only: marker `[hard] → [aspirational]`. Empirical basis (`dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md` § R3 stable bench): GF(32749) at n=64 measures **10.909 Gop/s** (5-trial median, IQR 0.250) vs **10.927 Gop/s** target (1.5× of fflas-ffpack 7.285 Gop/s). Shortfall: **0.18%** — below the cell's own 2% measurement-precision floor (CI half-width). Architectural cause: K_PANEL=2 for GF(32749) in the `madd_epi16` path forces a u32→u64 drain every 2 chunks (because (32748)² × 2 ≈ 2^31 saturates the u32 accumulator), making ~50% of inner-loop instructions drain rather than MAC; n=64 has no panel headroom to amortize the drain cost.\n\nThe remaining 11 in-scope cells (GF(257), GF(8191), GF(32749), GF(65521) at the other n) all PASS [hard] with robust IQR (Q1 above target). Per `CLAUDE.md` § *Success-criterion maturity markers* and Wave-6A precedent (`5cacaec5` GF(251) `[hard]→[aspirational]`), the amendment permits the implementation to ship with the 0.18% shortfall on the single cell.\n\n## Success Criteria\n\n- [hard for 11/12 cells; [aspirational] for GF(32749) at n=64³ per amendment above] GF(65521) and other medium-prime rows meet the 1.5x threshold.\n- [hard] The implementation preserves existing Mersenne fast paths.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude-wt-9e12659b",
+  "claimed_at": "2026-05-05T14:02:23.736647600Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.721974345Z",
   "dependencies": [
     "5cacaec5-9676-41f7-adb1-e47b832876bb"
   ],
+  "description": "Improve non-Mersenne medium-prime GEMM where delayed reduction is insufficient.\n\n## Amendment — 2026-05-06 (user-approved post-R3)\n\nCriterion #1 is amended for the **GF(32749) at n=64³** cell only: marker `[hard] → [aspirational]`. Empirical basis (`dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md` § R3 stable bench): GF(32749) at n=64 measures **10.909 Gop/s** (5-trial median, IQR 0.250) vs **10.927 Gop/s** target (1.5× of fflas-ffpack 7.285 Gop/s). Shortfall: **0.18%** — below the cell's own 2% measurement-precision floor (CI half-width). Architectural cause: K_PANEL=2 for GF(32749) in the `madd_epi16` path forces a u32→u64 drain every 2 chunks (because (32748)² × 2 ≈ 2^31 saturates the u32 accumulator), making ~50% of inner-loop instructions drain rather than MAC; n=64 has no panel headroom to amortize the drain cost.\n\nThe remaining 11 in-scope cells (GF(257), GF(8191), GF(32749), GF(65521) at the other n) all PASS [hard] with robust IQR (Q1 above target). Per `CLAUDE.md` § *Success-criterion maturity markers* and Wave-6A precedent (`5cacaec5` GF(251) `[hard]→[aspirational]`), the amendment permits the implementation to ship with the 0.18% shortfall on the single cell.\n\n## Success Criteria\n\n- [hard for 11/12 cells; [aspirational] for GF(32749) at n=64³ per amendment above] GF(65521) and other medium-prime rows meet the 1.5x threshold.\n- [hard] The implementation preserves existing Mersenne fast paths.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Medium-prime AVX2 GEMM evidence (R3 stable bench + amendment)",
+      "path": "dev/bench_results/9e12659b/2026-05-05-9e12659b-medium-prime-gemm.md"
+    }
+  ],
+  "done_at": "2026-05-06T01:25:23.892546713Z",
+  "first_ready_at": "2026-05-05T13:53:57.048817415Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T01:25:19.289478316Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-05T22:35:54.541594279Z"
+      "updated_at": "2026-05-05T22:35:54.541594279Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T01:18:13.836577553Z"
+      "updated_at": "2026-05-06T01:18:13.836577553Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-06T01:25:19.289478316Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-05-9e12659b-medium-prime-gemm.md",
-      "commit": "80c7cc4",
-      "label": "Medium-prime AVX2 GEMM evidence (R3 stable bench + amendment)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "9e12659b-5e26-4ce4-9461-853c25b51ba6",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gfp-fflas"
   ],
-  "created_at": "2026-04-30T06:43:02.721974345Z",
-  "updated_at": "2026-07-12T20:02:55.460676197Z",
-  "first_ready_at": "2026-05-05T13:53:57.048817415Z",
-  "claimed_at": "2026-05-05T14:02:23.736647600Z",
-  "done_at": "2026-05-06T01:25:23.892546713Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Implement generic-prime panelized GEMM improvements",
+  "updated_at": "2026-08-07T21:15:00.612992581Z"
 }

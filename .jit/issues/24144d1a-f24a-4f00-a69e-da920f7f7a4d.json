@@ -13,7 +13,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Modem framework design (story-level)",
-      "path": "dev/active/d4851c3d-modem-framework-design.md"
+      "path": "dev/active/d4851c3d-modem-framework/d4851c3d-modem-framework-design.md"
     }
   ],
   "done_at": "2026-04-14T16:30:04.535742411Z",
@@ -56,5 +56,5 @@
   "priority": "high",
   "state": "done",
   "title": "Design the general modem core API",
-  "updated_at": "2026-08-07T20:38:06.179160442Z"
+  "updated_at": "2026-08-07T21:16:31.758567364Z"
 }

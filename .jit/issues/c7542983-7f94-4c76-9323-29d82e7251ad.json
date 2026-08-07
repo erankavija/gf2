@@ -1,47 +1,47 @@
 {
-  "id": "c7542983-7f94-4c76-9323-29d82e7251ad",
-  "title": "SIMD batching strategy: generic framework vs per-prime kernels",
-  "description": "Microbenchmark per-prime hand-rolled bipedal SIMD kernels against a generic `BatchedBipedalLike<P>` framework on the dev host (AVX2 path), and produce a decision document selecting the winning strategy.\n\n## Background\n\nThe bipedal SIMD kernel can be either (a) per-prime hand-rolled (one `bipedal3_kernel.rs`, one `bipedal5_kernel.rs`, one `bipedal7_kernel.rs` with specialised AVX2/AVX-512 functions) or (b) a generic `BatchedBipedalLike<P, MagLanes, SgnLanes>` framework instantiated three times. (a) gives maximum perf-per-prime but more code; (b) gives less code but may sacrifice constant factor.\n\nThis issue measures both via a microbench in `dev/research/simd_batching_bench/` and produces a decision document. The winning strategy is the input contract for the $\\mathbb{F}_3$ kernel work and the $\\mathbb{F}_5$/$\\mathbb{F}_7$ kernel work.\n\n## Success Criteria\n\n- [ ] [hard] `dev/research/simd_batching_bench/` exists and contains both per-prime and generic-framework prototypes for $\\mathbb{F}_3$ (the $\\mathbb{F}_3$ case is enough to make the decision).\n- [ ] [hard] The microbench measures cycles/op for `add`, `sub`, `mul` on lane batches of 64, 256, and 1024 $\\mathbb{F}_3$ elements via both strategies on the dev host (AVX2 path).\n- [ ] [hard] `dev/plans/r4_simd_batching_decision.md` exists and is attached via `jit doc add`, naming the winning strategy with measured numbers.\n- [ ] [hard] If the gap is $< 1.2\\times$ either way, the doc recommends the generic framework as the tie-break (less code).",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-opus-4-7",
+  "claimed_at": "2026-05-09T09:07:47.683959807Z",
+  "context": {},
+  "created_at": "2026-04-30T21:40:26.758204503Z",
   "dependencies": [
     "9fe275d3-0b8d-49ed-99bf-42142d63d5d9"
   ],
+  "description": "Microbenchmark per-prime hand-rolled bipedal SIMD kernels against a generic `BatchedBipedalLike<P>` framework on the dev host (AVX2 path), and produce a decision document selecting the winning strategy.\n\n## Background\n\nThe bipedal SIMD kernel can be either (a) per-prime hand-rolled (one `bipedal3_kernel.rs`, one `bipedal5_kernel.rs`, one `bipedal7_kernel.rs` with specialised AVX2/AVX-512 functions) or (b) a generic `BatchedBipedalLike<P, MagLanes, SgnLanes>` framework instantiated three times. (a) gives maximum perf-per-prime but more code; (b) gives less code but may sacrifice constant factor.\n\nThis issue measures both via a microbench in `dev/research/simd_batching_bench/` and produces a decision document. The winning strategy is the input contract for the $\\mathbb{F}_3$ kernel work and the $\\mathbb{F}_5$/$\\mathbb{F}_7$ kernel work.\n\n## Success Criteria\n\n- [ ] [hard] `dev/research/simd_batching_bench/` exists and contains both per-prime and generic-framework prototypes for $\\mathbb{F}_3$ (the $\\mathbb{F}_3$ case is enough to make the decision).\n- [ ] [hard] The microbench measures cycles/op for `add`, `sub`, `mul` on lane batches of 64, 256, and 1024 $\\mathbb{F}_3$ elements via both strategies on the dev host (AVX2 path).\n- [ ] [hard] `dev/plans/r4_simd_batching_decision.md` exists and is attached via `jit doc add`, naming the winning strategy with measured numbers.\n- [ ] [hard] If the gap is $< 1.2\\times$ either way, the doc recommends the generic framework as the tie-break (less code).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "R4: SIMD batching strategy decision",
+      "path": "dev/plans/c7542983/r4_simd_batching_decision.md"
+    }
+  ],
+  "done_at": "2026-05-09T09:52:04.773849276Z",
+  "first_ready_at": "2026-05-09T09:06:45.787828048Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T09:36:06.977957748Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T09:35:58.453655090Z"
+      "updated_at": "2026-05-09T09:35:58.453655090Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-09T09:36:06.977957748Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/r4_simd_batching_decision.md",
-      "commit": null,
-      "label": "R4: SIMD batching strategy decision",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "c7542983-7f94-4c76-9323-29d82e7251ad",
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-kernels-simd"
   ],
-  "created_at": "2026-04-30T21:40:26.758204503Z",
-  "updated_at": "2026-07-12T20:02:55.472915216Z",
-  "first_ready_at": "2026-05-09T09:06:45.787828048Z",
-  "claimed_at": "2026-05-09T09:07:47.683959807Z",
-  "done_at": "2026-05-09T09:52:04.773849276Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "SIMD batching strategy: generic framework vs per-prime kernels",
+  "updated_at": "2026-08-07T21:14:54.673055342Z"
 }

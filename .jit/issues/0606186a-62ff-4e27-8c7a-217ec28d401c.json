@@ -1,67 +1,81 @@
 {
-  "id": "0606186a-62ff-4e27-8c7a-217ec28d401c",
-  "title": "Lean proof — Ryser bounded n less equal 63 per D3 sketch",
-  "description": "Implement the Lean4 proof of Ryser's permanent formula correctness on the project's `FiniteField` trait, scoped to bounded $n \\le 63$, per the approved D3 proof sketch.\n\n## Background\n\nD3's approved proof sketch (`4aaa6e4d`) bounds $n \\le 63$ to fit within the single-`u64` subset enumeration regime; this avoids formalising arbitrary-arity sums (per the epic non-goal). The proof shows Ryser's permanent formula matches the standard (Mathlib) permanent definition, with the Gray-code walk traversing the subset lattice.\n\nSame pipeline as V1; same verification-work conventions. **Final landing is the lead-approved Option 3 (Amendments §2, user-approved 2026-05-17): the abstract bounded-n Ryser correctness contract. Two consecutive gated extraction spikes empirically falsified binding the headline to extracted Rust on the pinned toolchain (evidence: `dev/active/0606186a-impl-handoff.md`); the extracted-Rust binding is descoped here and is instead delivered for the epic by V1 (`f05ffbe1`, closed — a [hard] Charon/Aeneas-extracted formal-verification deliverable).**\n\n## Success Criteria\n\n- [ ] [hard] `proofs/Gf2Algebra/Proofs/RyserBounded.lean` exists with the bounded-$n$ **abstract** Ryser correctness theorem — `ryser_permanent_bounded` ($\\operatorname{ryserRHS}(\\operatorname{matrixOfSlice} n\\,M) = (\\operatorname{matrixOfSlice} n\\,M).\\operatorname{permanent}$ over `ZMod 3`, carrying an explicit `n ≤ 63` hypothesis), built on `ryser_eq_permanent_zmod` (the Ryser identity over any `CommRing`) — and the proved Gray-code traversal-correctness lemmas (`subsetOfBits_bijective`, `gray_succ_xor`, `flipBit_lt`) establishing the Gray-walk ↔ powerset correspondence. (Amended 2026-05-17 from \"the bounded-n Ryser correctness theorem and the Gray-code-walk loop invariant\"; the *extracted-Rust* loop-invariant binding is descoped — see Amendments §2.)\n- [ ] [hard] `cd proofs && lake build` succeeds with no `sorry` in the new file.\n- [ ] [hard] V2's formal content is the abstract Ryser identity above (over `ZMod 3` / any `CommRing`, explicit `n ≤ 63`); the extracted-Rust binding to a monomorphised/generic `permanent_ryser` is **descoped** (twice-falsified at the Charon extraction layer — generic non-monomorphisation, then foreign-crate gfp-body skip; `dev/active/0606186a-impl-handoff.md`). The epic's [hard] Charon/Aeneas extracted-Rust formal-verification deliverable is provided by V1 `f05ffbe1` (closed). The now-purposeless V2 extraction scaffold `crates/gf2-algebra/src/permanent/ryser_fp3.rs` (a duplicate of generic `ryser.rs` with no production consumer) is removed to keep V2 SSOT-clean. (Amended 2026-05-17 from the prior \"F_3 monomorphisation, test-certified bit-identical to generic T7\" wording, itself amended from \"targets the generic `permanent_ryser` (T7), not a copied stub\"; see Amendments §2.)\n- [ ] [hard] Bound $n \\le 63$ is explicit in the theorem statement (`ryser_permanent_bounded`'s `(h_n : n ≤ 63)` hypothesis).\n- [ ] [hard] `scripts/verify-lean.sh` regenerates LLBC + Lean from current Rust successfully (with the `ryser_fp3` extraction root removed; the committed `proofs/` tree is reproducible from current Rust).\n- [ ] [hard] `lake-build` gate passes.\n\n## Amendments (user-approved via project-lead escalation)\n\n1. **(2026-05-17) Criterion 3 reworded** (first revision). From \"targets the Rust production `permanent_ryser` (T7) generic over `FiniteField`, not a copied stub\" → \"targets the F_3 monomorphisation `permanent_ryser_fp3`, test-certified bit-identical to generic `permanent_ryser::<Fp<3>>`\". **Reason:** the lead-approved Path-1 sketch §2 option-(b) (thin delegation so Charon monomorphises the generic) was empirically falsified by the gated extraction spike — Charon `1ec8d4bb` does not monomorphise a generic from a non-generic `--start-from` root; Aeneas emits `sorry` into the proof target's signature (`type_var_id … ExtractBase.Item`, `ryser.rs:152-163`). *(Superseded by §2.)*\n\n2. **(2026-05-17) Criteria 1 & 3 amended to the abstract-only contract (Option 3, user-selected).** The second gated spike (Option-2 / C3) showed the *transparent-gfp prerequisite itself* is infeasible on the pinned toolchain: in the gf2_algebra Charon leg, `gf2-core` is a foreign dependency crate and Charon skips foreign-method bodies by default; `--opaque`/`--start-from` do not override this, and the only flag that would (`--extract-opaque-bodies`, global) fatally panics rustc on std/core. So the `Fp<3>` arithmetic is uninterpreted in that leg regardless of flags — no path to the extracted-Rust headline without a shared-infrastructure Charon change. The user selected Option 3: land V2 on the proved sorry-free abstract Ryser contract (`ryser_permanent_bounded`, explicit `n ≤ 63`), descope the extracted-Rust binding, and remove the now-purposeless `ryser_fp3.rs` extraction scaffold (no production consumer; duplicated `ryser.rs` — its removal resolves the prior code-review SSOT finding). V1 `f05ffbe1` (closed) remains the epic's [hard] extracted-Rust formal-verification deliverable. Selected by the user over (1) a 5th shared-infra Charon patch, (2) a third-leg gf2-core import with TypesExternal-collision merge, and (4) pausing for user-led Charon investigation. Full mechanism-level evidence: `dev/active/0606186a-impl-handoff.md`.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-wt-0606186a",
+  "claimed_at": "2026-05-15T14:00:49.980194888Z",
+  "context": {},
+  "created_at": "2026-05-09T09:48:15.886764151Z",
   "dependencies": [
     "8c902184-682c-4360-b6dc-aed09cf22c93"
   ],
+  "description": "Implement the Lean4 proof of Ryser's permanent formula correctness on the project's `FiniteField` trait, scoped to bounded $n \\le 63$, per the approved D3 proof sketch.\n\n## Background\n\nD3's approved proof sketch (`4aaa6e4d`) bounds $n \\le 63$ to fit within the single-`u64` subset enumeration regime; this avoids formalising arbitrary-arity sums (per the epic non-goal). The proof shows Ryser's permanent formula matches the standard (Mathlib) permanent definition, with the Gray-code walk traversing the subset lattice.\n\nSame pipeline as V1; same verification-work conventions. **Final landing is the lead-approved Option 3 (Amendments §2, user-approved 2026-05-17): the abstract bounded-n Ryser correctness contract. Two consecutive gated extraction spikes empirically falsified binding the headline to extracted Rust on the pinned toolchain (evidence: `dev/active/0606186a-impl-handoff.md`); the extracted-Rust binding is descoped here and is instead delivered for the epic by V1 (`f05ffbe1`, closed — a [hard] Charon/Aeneas-extracted formal-verification deliverable).**\n\n## Success Criteria\n\n- [ ] [hard] `proofs/Gf2Algebra/Proofs/RyserBounded.lean` exists with the bounded-$n$ **abstract** Ryser correctness theorem — `ryser_permanent_bounded` ($\\operatorname{ryserRHS}(\\operatorname{matrixOfSlice} n\\,M) = (\\operatorname{matrixOfSlice} n\\,M).\\operatorname{permanent}$ over `ZMod 3`, carrying an explicit `n ≤ 63` hypothesis), built on `ryser_eq_permanent_zmod` (the Ryser identity over any `CommRing`) — and the proved Gray-code traversal-correctness lemmas (`subsetOfBits_bijective`, `gray_succ_xor`, `flipBit_lt`) establishing the Gray-walk ↔ powerset correspondence. (Amended 2026-05-17 from \"the bounded-n Ryser correctness theorem and the Gray-code-walk loop invariant\"; the *extracted-Rust* loop-invariant binding is descoped — see Amendments §2.)\n- [ ] [hard] `cd proofs && lake build` succeeds with no `sorry` in the new file.\n- [ ] [hard] V2's formal content is the abstract Ryser identity above (over `ZMod 3` / any `CommRing`, explicit `n ≤ 63`); the extracted-Rust binding to a monomorphised/generic `permanent_ryser` is **descoped** (twice-falsified at the Charon extraction layer — generic non-monomorphisation, then foreign-crate gfp-body skip; `dev/active/0606186a-impl-handoff.md`). The epic's [hard] Charon/Aeneas extracted-Rust formal-verification deliverable is provided by V1 `f05ffbe1` (closed). The now-purposeless V2 extraction scaffold `crates/gf2-algebra/src/permanent/ryser_fp3.rs` (a duplicate of generic `ryser.rs` with no production consumer) is removed to keep V2 SSOT-clean. (Amended 2026-05-17 from the prior \"F_3 monomorphisation, test-certified bit-identical to generic T7\" wording, itself amended from \"targets the generic `permanent_ryser` (T7), not a copied stub\"; see Amendments §2.)\n- [ ] [hard] Bound $n \\le 63$ is explicit in the theorem statement (`ryser_permanent_bounded`'s `(h_n : n ≤ 63)` hypothesis).\n- [ ] [hard] `scripts/verify-lean.sh` regenerates LLBC + Lean from current Rust successfully (with the `ryser_fp3` extraction root removed; the committed `proofs/` tree is reproducible from current Rust).\n- [ ] [hard] `lake-build` gate passes.\n\n## Amendments (user-approved via project-lead escalation)\n\n1. **(2026-05-17) Criterion 3 reworded** (first revision). From \"targets the Rust production `permanent_ryser` (T7) generic over `FiniteField`, not a copied stub\" → \"targets the F_3 monomorphisation `permanent_ryser_fp3`, test-certified bit-identical to generic `permanent_ryser::<Fp<3>>`\". **Reason:** the lead-approved Path-1 sketch §2 option-(b) (thin delegation so Charon monomorphises the generic) was empirically falsified by the gated extraction spike — Charon `1ec8d4bb` does not monomorphise a generic from a non-generic `--start-from` root; Aeneas emits `sorry` into the proof target's signature (`type_var_id … ExtractBase.Item`, `ryser.rs:152-163`). *(Superseded by §2.)*\n\n2. **(2026-05-17) Criteria 1 & 3 amended to the abstract-only contract (Option 3, user-selected).** The second gated spike (Option-2 / C3) showed the *transparent-gfp prerequisite itself* is infeasible on the pinned toolchain: in the gf2_algebra Charon leg, `gf2-core` is a foreign dependency crate and Charon skips foreign-method bodies by default; `--opaque`/`--start-from` do not override this, and the only flag that would (`--extract-opaque-bodies`, global) fatally panics rustc on std/core. So the `Fp<3>` arithmetic is uninterpreted in that leg regardless of flags — no path to the extracted-Rust headline without a shared-infrastructure Charon change. The user selected Option 3: land V2 on the proved sorry-free abstract Ryser contract (`ryser_permanent_bounded`, explicit `n ≤ 63`), descope the extracted-Rust binding, and remove the now-purposeless `ryser_fp3.rs` extraction scaffold (no production consumer; duplicated `ryser.rs` — its removal resolves the prior code-review SSOT finding). V1 `f05ffbe1` (closed) remains the epic's [hard] extracted-Rust formal-verification deliverable. Selected by the user over (1) a 5th shared-infra Charon patch, (2) a third-leg gf2-core import with TypesExternal-collision merge, and (4) pausing for user-led Charon investigation. Full mechanism-level evidence: `dev/active/0606186a-impl-handoff.md`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "D3 Lean Ryser proof sketch (user-approved per CLAUDE.md §Verification work)",
+      "path": "dev/plans/d3_lean_ryser_sketch.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "V2 Lean proof — final Option-3 abstract-only landing (ryser_permanent_bounded n≤63 + Gray-code lemmas, sorry-free)",
+      "path": "proofs/Gf2Algebra/Proofs/RyserBounded.lean"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Impl handoff",
+      "path": "dev/active/0606186a/0606186a-impl-handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Path1 spike changes",
+      "path": "dev/active/0606186a/0606186a-path1-spike-changes.patch"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "V2 Path-1 sketch + §9 Option-3 addendum (Path-1 §2 falsified; final landing = abstract-only, user-approved)",
+      "path": "dev/plans/0606186a/d3_v2_path1_sketch.md"
+    }
+  ],
+  "done_at": "2026-05-16T23:04:31.286259027Z",
+  "first_ready_at": "2026-05-14T21:33:24.410074809Z",
   "gates_required": [
     "lake-build",
     "code-review",
     "verify-lean"
   ],
   "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-16T23:03:17.075603885Z",
+      "updated_by": "auto:executor"
+    },
     "lake-build": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T22:26:13.013000256Z"
+      "updated_at": "2026-05-16T22:26:13.013000256Z",
+      "updated_by": "auto:executor"
     },
     "verify-lean": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T23:02:51.978662155Z"
-    },
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-16T23:03:17.075603885Z"
+      "updated_at": "2026-05-16T23:02:51.978662155Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/d3_lean_ryser_sketch.md",
-      "commit": null,
-      "label": "D3 Lean Ryser proof sketch (user-approved per CLAUDE.md §Verification work)",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "proofs/Gf2Algebra/Proofs/RyserBounded.lean",
-      "commit": null,
-      "label": "V2 Lean proof — final Option-3 abstract-only landing (ryser_permanent_bounded n≤63 + Gray-code lemmas, sorry-free)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/d3_v2_path1_sketch.md",
-      "commit": null,
-      "label": "V2 Path-1 sketch + §9 Option-3 addendum (Path-1 §2 falsified; final landing = abstract-only, user-approved)",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "0606186a-62ff-4e27-8c7a-217ec28d401c",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:proofs"
   ],
-  "created_at": "2026-05-09T09:48:15.886764151Z",
-  "updated_at": "2026-07-12T20:02:55.419588847Z",
-  "first_ready_at": "2026-05-14T21:33:24.410074809Z",
-  "claimed_at": "2026-05-15T14:00:49.980194888Z",
-  "done_at": "2026-05-16T23:04:31.286259027Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Lean proof — Ryser bounded n less equal 63 per D3 sketch",
+  "updated_at": "2026-08-07T21:14:48.846268085Z"
 }

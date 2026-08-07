@@ -20,7 +20,7 @@
 //! # LANES choice
 //!
 //! `LANES = 64` matches the bipedal3 lane count fixed in the parent
-//! epic design (`dev/plans/gf2_algebra_permanent.md` §7.1) and the
+//! epic design (`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §7.1) and the
 //! D1b §4 stub conformance walk-through. Choosing the same width
 //! makes a 1:1 cross-check loop trivially writable: a test routes the
 //! same 64-lane input through both [`ScalarPackedFp3`] and the
@@ -50,7 +50,7 @@ use super::{PackedField, PackedFieldVec};
 /// not against this type.
 ///
 /// `LANES = 64` is fixed to match the `Bipedal3` lane count from the
-/// parent epic design (`dev/plans/gf2_algebra_permanent.md` §7.1) and
+/// parent epic design (`dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §7.1) and
 /// the D1b §4 conformance walk-through. The choice makes per-lane
 /// cross-checks 1:1 with no resampling logic.
 ///

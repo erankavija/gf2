@@ -1,13 +1,23 @@
 {
-  "id": "c98ed603-2eb3-443b-9905-a6a7a5337168",
-  "title": "50x single-thread speedup vs reference at n=36",
-  "description": "Measure single-thread `permanent_bipedal3` (SIMD path, T13) against `permanent_mod3_reference` (T8) at $n=36$ on the dev host. The CPU SIMD measurement records the Rust-vs-Rust ratio; the 50× headline target moves to a GPU follow-up (`S1g`, depends on `ad55b777`).\n\n## Background\n\nThis is the CPU portion of the epic's headline perf claim (CLAUDE.md success criterion 3 + the epic's success criterion 3). The in-tree reference (T8 — faithful Julia port) provides the per-machine baseline; the SIMD-dispatched bipedal3 path (T13) is the CPU contender.\n\nThe aspirational comparison vs the paper's published Julia number on a Zen 4/5 host is `[aspirational]` because the paper's hardware is different and the Julia toolchain version drifts. The paper's 86.9× and the original 50× criterion both reflect a Julia baseline (which has JIT/GC overhead that the Rust port does not), so they do not translate to a Rust-vs-Rust comparison; the GPU follow-up S1g re-tests the 50× target against the in-tree Rust reference using the W5 HIP F_3 kernel.\n\n## Success Criteria\n\n- [ ] [hard] Dedicated S1 Criterion benchmark at `crates/gf2-algebra/benches/s1_n36_speedup.rs` runs `permanent_mod3_reference` AND `permanent_bipedal3` (SIMD path) at $n \\in \\{24, 28, 32, 36\\}$ with the same seeded inputs.\n- [ ] [hard] Measured speedup $\\frac{T_{\\text{reference}}}{T_{\\text{bipedal3-simd}}}$ at $n=36$ on the dev host is recorded in the CSV. Amended 2026-05-12: the original target $\\ge 50\\times$ assumed a Julia baseline; the measured Rust-vs-Rust ratio is 10.643× (ref 9030.7 s, bipedal3-simd 848.5 s). The amended hard target is $\\ge 10\\times$ for the CPU SIMD path at $n=36$ (achieved). The $\\ge 50\\times$ target is delegated to the GPU follow-up issue `S1g` (which depends on `ad55b777`).\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s1_speedup-YYYY-MM-DD.csv` records mean wall-clock and ratio at $n \\in \\{24, 28, 32, 36\\}$ for both implementations.\n- [ ] [hard] Hardware fingerprint and seed are recorded in the CSV header.\n- [ ] [hard] Writeup at `dev/plans/s1_speedup_results.md` exists, attached via `jit doc add`.\n- [ ] [aspirational] Same comparison vs the paper's published Julia number ($86.9\\times$ from a 4.20 GHz desktop) — not directly comparable across runtime stacks, recorded for context only.\n\n## Amendment history (2026-05-12)\n\n- Criterion 1 (2026-05-12, in-session approval): rewritten from \"Criterion benchmark in T10 includes ... at n=36\" to \"Dedicated S1 Criterion benchmark at `crates/gf2-algebra/benches/s1_n36_speedup.rs` ...\". T10's bench file dropped n=36 from its sweep on runtime grounds (single sample ~150 s; 10-sample Criterion minimum makes n=36 ref alone 25 min/cell).\n- Criterion 2 (2026-05-12, in-session approval): target $\\ge 50\\times$ reduced to $\\ge 10\\times$ for the CPU SIMD path; the $\\ge 50\\times$ figure moves to a new GPU follow-up issue. Empirical evidence: 10.643× measured at n=36; the trend across n=24/28/32/36 (6.888 → 8.013 → 9.423 → 10.643) confirms the bipedal-3 CPU speedup is a slow-growing constant factor, far short of 50× without GPU. The 50× and the paper's 86.9× both compare a bipedal kernel against a Julia reference; the Rust reference here is itself ~5–8× faster than the Julia reference by virtue of no JIT/GC overhead.\n- Gate criterion-1.5x (2026-05-12, in-session approval): removed. The gate's checker is hardwired to the PPC kernel subsystem (`scripts/criterion-1.5x.sh` expects a `ppc-kernel:<id>` label and a row in `dev/benchmarks/ppc-baselines.json`); S1 is a permanent-benchmark issue and is not a PPC kernel. The gate's spirit (≥1.5× contender vs baseline) is trivially met by the recorded ratios 6.888× / 8.013× / 9.423× / 10.643× — verifiable in `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` — and is enforced by criterion 2's explicit ratio gate at the issue level.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-11T21:58:16.808204804Z",
+  "context": {},
+  "created_at": "2026-05-09T09:45:15.047337692Z",
   "dependencies": [
     "686ee1b5-6ac8-4547-9b66-d472b2753676"
   ],
+  "description": "Measure single-thread `permanent_bipedal3` (SIMD path, T13) against `permanent_mod3_reference` (T8) at $n=36$ on the dev host. The CPU SIMD measurement records the Rust-vs-Rust ratio; the 50× headline target moves to a GPU follow-up (`S1g`, depends on `ad55b777`).\n\n## Background\n\nThis is the CPU portion of the epic's headline perf claim (CLAUDE.md success criterion 3 + the epic's success criterion 3). The in-tree reference (T8 — faithful Julia port) provides the per-machine baseline; the SIMD-dispatched bipedal3 path (T13) is the CPU contender.\n\nThe aspirational comparison vs the paper's published Julia number on a Zen 4/5 host is `[aspirational]` because the paper's hardware is different and the Julia toolchain version drifts. The paper's 86.9× and the original 50× criterion both reflect a Julia baseline (which has JIT/GC overhead that the Rust port does not), so they do not translate to a Rust-vs-Rust comparison; the GPU follow-up S1g re-tests the 50× target against the in-tree Rust reference using the W5 HIP F_3 kernel.\n\n## Success Criteria\n\n- [ ] [hard] Dedicated S1 Criterion benchmark at `crates/gf2-algebra/benches/s1_n36_speedup.rs` runs `permanent_mod3_reference` AND `permanent_bipedal3` (SIMD path) at $n \\in \\{24, 28, 32, 36\\}$ with the same seeded inputs.\n- [ ] [hard] Measured speedup $\\frac{T_{\\text{reference}}}{T_{\\text{bipedal3-simd}}}$ at $n=36$ on the dev host is recorded in the CSV. Amended 2026-05-12: the original target $\\ge 50\\times$ assumed a Julia baseline; the measured Rust-vs-Rust ratio is 10.643× (ref 9030.7 s, bipedal3-simd 848.5 s). The amended hard target is $\\ge 10\\times$ for the CPU SIMD path at $n=36$ (achieved). The $\\ge 50\\times$ target is delegated to the GPU follow-up issue `S1g` (which depends on `ad55b777`).\n- [ ] [hard] CSV at `dev/benchmarks/gf2_algebra_permanent/s1_speedup-YYYY-MM-DD.csv` records mean wall-clock and ratio at $n \\in \\{24, 28, 32, 36\\}$ for both implementations.\n- [ ] [hard] Hardware fingerprint and seed are recorded in the CSV header.\n- [ ] [hard] Writeup at `dev/plans/s1_speedup_results.md` exists, attached via `jit doc add`.\n- [ ] [aspirational] Same comparison vs the paper's published Julia number ($86.9\\times$ from a 4.20 GHz desktop) — not directly comparable across runtime stacks, recorded for context only.\n\n## Amendment history (2026-05-12)\n\n- Criterion 1 (2026-05-12, in-session approval): rewritten from \"Criterion benchmark in T10 includes ... at n=36\" to \"Dedicated S1 Criterion benchmark at `crates/gf2-algebra/benches/s1_n36_speedup.rs` ...\". T10's bench file dropped n=36 from its sweep on runtime grounds (single sample ~150 s; 10-sample Criterion minimum makes n=36 ref alone 25 min/cell).\n- Criterion 2 (2026-05-12, in-session approval): target $\\ge 50\\times$ reduced to $\\ge 10\\times$ for the CPU SIMD path; the $\\ge 50\\times$ figure moves to a new GPU follow-up issue. Empirical evidence: 10.643× measured at n=36; the trend across n=24/28/32/36 (6.888 → 8.013 → 9.423 → 10.643) confirms the bipedal-3 CPU speedup is a slow-growing constant factor, far short of 50× without GPU. The 50× and the paper's 86.9× both compare a bipedal kernel against a Julia reference; the Rust reference here is itself ~5–8× faster than the Julia reference by virtue of no JIT/GC overhead.\n- Gate criterion-1.5x (2026-05-12, in-session approval): removed. The gate's checker is hardwired to the PPC kernel subsystem (`scripts/criterion-1.5x.sh` expects a `ppc-kernel:<id>` label and a row in `dev/benchmarks/ppc-baselines.json`); S1 is a permanent-benchmark issue and is not a PPC kernel. The gate's spirit (≥1.5× contender vs baseline) is trivially met by the recorded ratios 6.888× / 8.013× / 9.423× / 10.643× — verifiable in `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` — and is enforced by criterion 2's explicit ratio gate at the issue level.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "S1 speedup results and escalation",
+      "path": "dev/plans/c98ed603/s1_speedup_results.md"
+    }
+  ],
+  "done_at": "2026-05-12T05:52:39.876249321Z",
+  "first_ready_at": "2026-05-11T20:05:40.340254313Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -15,33 +25,23 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-12T05:34:51.999097339Z"
+      "updated_at": "2026-05-12T05:34:51.999097339Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-12T05:39:53.295286040Z"
+      "updated_at": "2026-05-12T05:39:53.295286040Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/s1_speedup_results.md",
-      "commit": null,
-      "label": "S1 speedup results and escalation",
-      "doc_type": "implementation",
-      "format": "markdown"
-    }
-  ],
+  "id": "c98ed603-2eb3-443b-9905-a6a7a5337168",
   "labels": [
     "type:simulation",
     "epic:gf2-algebra-permanent",
     "component:gf2-algebra"
   ],
-  "created_at": "2026-05-09T09:45:15.047337692Z",
-  "updated_at": "2026-07-12T20:02:55.473666146Z",
-  "first_ready_at": "2026-05-11T20:05:40.340254313Z",
-  "claimed_at": "2026-05-11T21:58:16.808204804Z",
-  "done_at": "2026-05-12T05:52:39.876249321Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "50x single-thread speedup vs reference at n=36",
+  "updated_at": "2026-08-07T21:14:54.907659550Z"
 }

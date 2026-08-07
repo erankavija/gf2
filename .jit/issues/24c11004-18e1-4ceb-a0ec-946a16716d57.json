@@ -1,45 +1,46 @@
 {
-  "id": "24c11004-18e1-4ceb-a0ec-946a16716d57",
-  "title": "Write GPU prototype feasibility decision report",
-  "description": "Write the final feasibility report for the HIP/ROCm GPU prototype wave.\n\n## Background\n\nEpic `806eb14e` ends at prototype evidence and a go/investigate/abandon decision. Production backend rollout remains downstream. The final report must synthesize scheduler, LDPC BP, and BCH syndrome evidence instead of treating the older Vulkan benchmark path as the active plan.\n\n## Success Criteria\n\n- [hard] The report maps every epic success criterion to child issues and artifacts.\n- [hard] The report includes baseline IDs, commit hashes, hardware metadata, ROCm version, benchmark commands, and raw result paths.\n- [hard] The report states whether LDPC BP met the >=3x threshold versus the best production CPU path and explains the result.\n- [hard] The report states whether BCH syndrome evaluation met the >=5x threshold versus the best production CPU path and explains the result.\n- [hard] The report states whether the shared scheduler measurably improved end-to-end GPU throughput versus direct per-thread/default-stream submission.\n- [hard] The report recommends go, investigate, or abandon for LDPC BP and BCH syndrome evaluation, and identifies downstream production work without making it part of this epic.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`. This task depends on completion of scheduler, LDPC, BCH, and legacy-cleanup work.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-06-17T05:42:15.802379021Z",
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.817771984Z",
   "dependencies": [
     "46fe1108-3b33-4596-92d9-33e1364fa00d"
   ],
+  "description": "Write the final feasibility report for the HIP/ROCm GPU prototype wave.\n\n## Background\n\nEpic `806eb14e` ends at prototype evidence and a go/investigate/abandon decision. Production backend rollout remains downstream. The final report must synthesize scheduler, LDPC BP, and BCH syndrome evidence instead of treating the older Vulkan benchmark path as the active plan.\n\n## Success Criteria\n\n- [hard] The report maps every epic success criterion to child issues and artifacts.\n- [hard] The report includes baseline IDs, commit hashes, hardware metadata, ROCm version, benchmark commands, and raw result paths.\n- [hard] The report states whether LDPC BP met the >=3x threshold versus the best production CPU path and explains the result.\n- [hard] The report states whether BCH syndrome evaluation met the >=5x threshold versus the best production CPU path and explains the result.\n- [hard] The report states whether the shared scheduler measurably improved end-to-end GPU throughput versus direct per-thread/default-stream submission.\n- [hard] The report recommends go, investigate, or abandon for LDPC BP and BCH syndrome evaluation, and identifies downstream production work without making it part of this epic.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`. This task depends on completion of scheduler, LDPC, BCH, and legacy-cleanup work.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "GPU prototype feasibility decision report",
+      "path": "dev/active/806eb14e-hip-gpu-prototype/806eb14e-feasibility-report.md"
+    }
+  ],
+  "done_at": "2026-06-17T05:49:04.003651008Z",
+  "first_ready_at": "2026-06-17T05:41:39.784343786Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-17T05:47:43.539197007Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-17T05:42:28.569236993Z"
+      "updated_at": "2026-06-17T05:42:28.569236993Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-06-17T05:47:43.539197007Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-17T05:49:03.981063681Z"
+      "updated_at": "2026-06-17T05:49:03.981063681Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/806eb14e-feasibility-report.md",
-      "commit": "f3e502af",
-      "label": "GPU prototype feasibility decision report",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "24c11004-18e1-4ceb-a0ec-946a16716d57",
   "labels": [
     "type:task",
     "component:gf2-coding",
@@ -47,9 +48,8 @@
     "story:gpu-feasibility-decision",
     "component:gf2-kernels-hip"
   ],
-  "created_at": "2026-02-21T19:35:51.817771984Z",
-  "updated_at": "2026-07-12T20:02:55.430342075Z",
-  "first_ready_at": "2026-06-17T05:41:39.784343786Z",
-  "claimed_at": "2026-06-17T05:42:15.802379021Z",
-  "done_at": "2026-06-17T05:49:04.003651008Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Write GPU prototype feasibility decision report",
+  "updated_at": "2026-08-07T21:16:32.092428401Z"
 }

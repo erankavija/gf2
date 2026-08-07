@@ -2486,7 +2486,7 @@ impl<F: FiniteField + fmt::Display> fmt::Display for FieldMatrix<F> {
 // NOTE: The eager `Add`/`Sub`/`Neg` operator overloads that T1 (issue
 // `91c06222`) provided here have been moved to the expression-template
 // layer in `crate::field::expr` (story `d48a3cfd/T2`, issue `7e6183bb`).
-// See `dev/plans/expression_templates_design.md` §4.5 for the migration
+// See `dev/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md` §4.5 for the migration
 // rationale.
 //
 // The new impls return proxy types (`Sum`, `NegProxy`, `FusedProductPlus`,
@@ -3316,7 +3316,7 @@ pub(crate) fn unit_diag_view<F: FiniteField, M: MatrixLike<F> + ?Sized>(
 
 // NOTE: The eager `Mul` operator overloads that T1 (`91c06222`) provided
 // here have been moved to the expression-template layer in
-// `crate::field::expr`. See `dev/plans/expression_templates_design.md` §4.5.
+// `crate::field::expr`. See `dev/plans/cdcebf6a-design-fieldmatrix-expression-template-algebra-p/expression_templates_design.md` §4.5.
 //
 // `&a * &b` now returns `Product<&M, &M>`, a lazy proxy; pipe it through
 // `.into()` to materialise, or compose it with `+` to reach a canonical
@@ -3731,7 +3731,7 @@ mod tests {
 
     // Right-scalar multiplication must stay generic for runtime-context
     // fields that are deliberately **not** `ConstField`, such as
-    // `Gf2mElement`. The design note (§8 of `dev/active/ab791e27-design.md`)
+    // `Gf2mElement`. The design note (§8 of `dev/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md`)
     // promises both `&M * F` and `M * F` for any `FiniteField`; left-scalar
     // `F * M` is not required here because `Gf2mElement` is not a
     // `ConstField` and the orphan rule blocks a single generic impl.

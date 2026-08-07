@@ -1,50 +1,50 @@
 {
-  "id": "bdf60780-1130-40f4-a474-d0f17657bf15",
-  "title": "Close matmul GF(2) small-n (n=64, n=256) to M4RI parity",
-  "description": "Close the last two bare-FAIL cells in the 026fc832 SOTA scorecard: matmul GF(2) (BitMatrix × BitMatrix) at n=64 and n=256, which sit above the 1.5× M4RI threshold (A8 rows 4-5).\n\n## Background\n\nAnnex A8 of the predecessor scorecard (`97bf0879`) routed matmul GF(2) n=64,256 to story `974a85bd` (\"Close GF(2) BitMatrix gaps to M4RI\"). But `974a85bd`'s parity report (`dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md`) only dispositioned the matmul **target rows** n=1024 (1.18× PASS) and n=4096 (1.50× PASS); it did NOT cover n=64,256, which sit below the M4RM (Method-of-4-Russians) crossover where M4RI's optimized small-n path wins. The 026fc832 final scorecard (`b0fa00af`) surfaced these as the sole unresolved bare-FAIL cells. Per user decision 2026-05-28, this successor task is filed to **close them** (not amend/exclude).\n\nCurrent production matmul dispatch (per `974a85bd` § 2.1) uses a \"Narrow\" tier (stride_words < 16, 64 KiB table budget, k ≤ 8) for n < 1024. The small-n schedule has not been tuned against M4RI at n=64,256.\n\n## Scope\n\nEngineer the small-n GF(2) M4RM matmul path (n=64, n=256) to within 1.5× of M4RI on the pinned reference, following the PPC optimization spiral (measure -> inspect asm -> tune k-block / table budget / memory layout / consider a direct word-level kernel for n<=64). Update production dispatch (the narrow-tier schedule selection in `gf2-core/src/alg/` M4RM, plus any `gf2-kernels-simd` kernel) as needed. Unsafe stays in `gf2-kernels-simd`; `gf2-core` stays `#![deny(unsafe_code)]`.\n\n## Success Criteria\n\n- [hard] matmul GF(2) at n=64 and n=256 (uniform regime): Ratio = gf2 wall / M4RI wall <= 1.5x on a 5-trial CCX1-pinned bench on the 5900X reference host. M4RI baseline (pinned `dev/bench_results/2026-04-26-reference.csv`): n=64 uniform = 3474 ns, n=256 uniform = 29808 ns. Targets: gf2 n=64 <= 5211 ns, gf2 n=256 <= 44712 ns.\n- [hard] No regression on the matmul GF(2) cells already PASSing at n=1024 (1.18x) and n=4096 (1.50x) -- delta <= 5% vs the `8e305c21` / `974a85bd` production baseline.\n- [hard] Bit-exact correctness preserved: proptests for matmul GF(2) at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} plus n=64,256 against a scalar/naive reference.\n- [hard] No unsafe leaks outside `gf2-kernels-simd`; `gf2-core` stays `#![deny(unsafe_code)]`.\n- [hard] Evidence doc records pre/post numbers, the M4RI baseline + source, non-regression sweep, and reproducibility commands; attached via `jit doc add`.\n- If closure to <= 1.5x proves structurally infeasible after a genuine PPC-spiral engineering attempt, document the cause with measured evidence (asm, schedule sweep) and escalate to the lead -- do NOT silently amend or exclude. The [aspirational]/EXCLUDED path is available only with explicit user approval backed by infeasibility evidence.\n\n## Out of scope\n\n- matmul GF(2) n >= 1024 (already PASS via `974a85bd`).\n- AVX-512 (epic `7f809931`).\n- BLAS / external dependencies.\n- Other GF(2) operations (echelon, invert, solve, pluq) -- dispositioned elsewhere.\n\n## Notes\n\n- Filed 2026-05-28 per user escalation decision (option B: file successor) on epic 026fc832's `b0fa00af` blocker.\n- Disposition target for `b0fa00af` A8 rows 4-5. `b0fa00af` depends on this issue; the scorecard's rows 4-5 update to PASS (or, only with user approval + evidence, AMENDED) once this lands.\n- Reference host: AMD Ryzen 9 5900X (Zen 3), AVX2+FMA, no AVX-512.\n- M4RM kernel lives in `crates/gf2-core/src/alg/`; production schedule selection per `974a85bd` § 2.1 (narrow/mid/wide/wider tiers).",
-  "state": "done",
-  "priority": "normal",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-05-28T18:05:47.497153286Z",
   "dependencies": [],
+  "description": "Close the last two bare-FAIL cells in the 026fc832 SOTA scorecard: matmul GF(2) (BitMatrix × BitMatrix) at n=64 and n=256, which sit above the 1.5× M4RI threshold (A8 rows 4-5).\n\n## Background\n\nAnnex A8 of the predecessor scorecard (`97bf0879`) routed matmul GF(2) n=64,256 to story `974a85bd` (\"Close GF(2) BitMatrix gaps to M4RI\"). But `974a85bd`'s parity report (`dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md`) only dispositioned the matmul **target rows** n=1024 (1.18× PASS) and n=4096 (1.50× PASS); it did NOT cover n=64,256, which sit below the M4RM (Method-of-4-Russians) crossover where M4RI's optimized small-n path wins. The 026fc832 final scorecard (`b0fa00af`) surfaced these as the sole unresolved bare-FAIL cells. Per user decision 2026-05-28, this successor task is filed to **close them** (not amend/exclude).\n\nCurrent production matmul dispatch (per `974a85bd` § 2.1) uses a \"Narrow\" tier (stride_words < 16, 64 KiB table budget, k ≤ 8) for n < 1024. The small-n schedule has not been tuned against M4RI at n=64,256.\n\n## Scope\n\nEngineer the small-n GF(2) M4RM matmul path (n=64, n=256) to within 1.5× of M4RI on the pinned reference, following the PPC optimization spiral (measure -> inspect asm -> tune k-block / table budget / memory layout / consider a direct word-level kernel for n<=64). Update production dispatch (the narrow-tier schedule selection in `gf2-core/src/alg/` M4RM, plus any `gf2-kernels-simd` kernel) as needed. Unsafe stays in `gf2-kernels-simd`; `gf2-core` stays `#![deny(unsafe_code)]`.\n\n## Success Criteria\n\n- [hard] matmul GF(2) at n=64 and n=256 (uniform regime): Ratio = gf2 wall / M4RI wall <= 1.5x on a 5-trial CCX1-pinned bench on the 5900X reference host. M4RI baseline (pinned `dev/bench_results/2026-04-26-reference.csv`): n=64 uniform = 3474 ns, n=256 uniform = 29808 ns. Targets: gf2 n=64 <= 5211 ns, gf2 n=256 <= 44712 ns.\n- [hard] No regression on the matmul GF(2) cells already PASSing at n=1024 (1.18x) and n=4096 (1.50x) -- delta <= 5% vs the `8e305c21` / `974a85bd` production baseline.\n- [hard] Bit-exact correctness preserved: proptests for matmul GF(2) at boundary lengths {0, 1, 15, 16, 17, 63, 64, 65} plus n=64,256 against a scalar/naive reference.\n- [hard] No unsafe leaks outside `gf2-kernels-simd`; `gf2-core` stays `#![deny(unsafe_code)]`.\n- [hard] Evidence doc records pre/post numbers, the M4RI baseline + source, non-regression sweep, and reproducibility commands; attached via `jit doc add`.\n- If closure to <= 1.5x proves structurally infeasible after a genuine PPC-spiral engineering attempt, document the cause with measured evidence (asm, schedule sweep) and escalate to the lead -- do NOT silently amend or exclude. The [aspirational]/EXCLUDED path is available only with explicit user approval backed by infeasibility evidence.\n\n## Out of scope\n\n- matmul GF(2) n >= 1024 (already PASS via `974a85bd`).\n- AVX-512 (epic `7f809931`).\n- BLAS / external dependencies.\n- Other GF(2) operations (echelon, invert, solve, pluq) -- dispositioned elsewhere.\n\n## Notes\n\n- Filed 2026-05-28 per user escalation decision (option B: file successor) on epic 026fc832's `b0fa00af` blocker.\n- Disposition target for `b0fa00af` A8 rows 4-5. `b0fa00af` depends on this issue; the scorecard's rows 4-5 update to PASS (or, only with user approval + evidence, AMENDED) once this lands.\n- Reference host: AMD Ryzen 9 5900X (Zen 3), AVX2+FMA, no AVX-512.\n- M4RM kernel lives in `crates/gf2-core/src/alg/`; production schedule selection per `974a85bd` § 2.1 (narrow/mid/wide/wider tiers).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "matmul GF(2) small-n M4RI parity — n=64 1.213x, n=256 1.070x PASS (from 2.73x/2.54x)",
+      "path": "dev/bench_results/bdf60780/2026-05-28-bdf60780-matmul-gf2-smalln.md"
+    }
+  ],
+  "done_at": "2026-05-28T19:46:27.483639849Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T19:37:39.460900301Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T19:22:45.364508558Z"
+      "updated_at": "2026-05-28T19:22:45.364508558Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-28T19:37:39.460900301Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-28T19:46:19.470924627Z"
+      "updated_at": "2026-05-28T19:46:19.470924627Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-28-bdf60780-matmul-gf2-smalln.md",
-      "commit": null,
-      "label": "matmul GF(2) small-n M4RI parity — n=64 1.213x, n=256 1.070x PASS (from 2.73x/2.54x)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    }
-  ],
+  "id": "bdf60780-1130-40f4-a474-d0f17657bf15",
   "labels": [
     "type:task",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-28T18:05:47.497153286Z",
-  "updated_at": "2026-07-12T20:02:55.470660134Z",
-  "done_at": "2026-05-28T19:46:27.483639849Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Close matmul GF(2) small-n (n=64, n=256) to M4RI parity",
+  "updated_at": "2026-08-07T21:15:12.355900559Z"
 }

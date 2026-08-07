@@ -62,7 +62,7 @@ RUSTUP_TOOLCHAIN=nightly-2026-02-22 cargo install --path charon
   pair we build); no Aeneas source modifications.
 - **Note**: this upgrade (5fc8fdf2 → 0f99a049) made the scalar ops
   `overflowing_sub`/`wrapping_*` pure (consumed via `lift`) and renamed the
-  `progress` tactic to `step`; see issue 150d7d79 / `dev/active/150d7d79-toolchain-upgrade.md`.
+  `progress` tactic to `step`; see issue 150d7d79 / `dev/active/150d7d79/150d7d79-toolchain-upgrade.md`.
 
 ### Lean4
 

@@ -61,7 +61,7 @@
   `permanent_ryser_fp3_correct` to extracted Rust was attempted and
   **twice empirically falsified at the Charon extraction layer**
   (gated spikes, 2026-05-17; mechanism-level evidence in
-  `dev/active/0606186a-impl-handoff.md`):
+  `dev/active/0606186a/0606186a-impl-handoff.md`):
 
   1. Charon does not monomorphise a generic `permanent_ryser<F>` from
      a non-generic `--start-from` root (Aeneas `sorry`-poisons the
@@ -107,8 +107,8 @@
   ## Reference
 
   * Abstract sketch: `dev/plans/d3_lean_ryser_sketch.md`
-  * Path-1 sketch + Option-3 addendum: `dev/plans/d3_v2_path1_sketch.md` §9
-  * Extraction-falsification evidence: `dev/active/0606186a-impl-handoff.md`
+  * Path-1 sketch + Option-3 addendum: `dev/plans/0606186a/d3_v2_path1_sketch.md` §9
+  * Extraction-falsification evidence: `dev/active/0606186a/0606186a-impl-handoff.md`
   * Issue: `0606186a` (epic `ae82bd73`), Amendments §2
 -/
 import Aeneas
@@ -961,7 +961,7 @@ not as a pending gap.
 Binding the headline to extracted Rust was attempted and **twice
 empirically falsified at the Charon extraction layer** (gated spikes,
 2026-05-17; mechanism-level evidence in
-`dev/active/0606186a-impl-handoff.md`): (1) Charon does not
+`dev/active/0606186a/0606186a-impl-handoff.md`): (1) Charon does not
 monomorphise the generic `permanent_ryser<F>` from a non-generic
 `--start-from` root (Aeneas `sorry`-poisons the target signature);
 and (2) in the `gf2_algebra` leg `gf2-core` is a *foreign dependency

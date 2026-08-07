@@ -11,16 +11,115 @@
   "documents": [
     {
       "commit": null,
-      "doc_type": "presentation",
-      "label": "Epic showcase presentation (reveal.js, 18 slides)",
-      "path": "dev/presentations/gf2-sim-showcase/talk.html"
-    },
-    {
-      "commit": null,
       "doc_type": "plan",
       "format": "markdown",
       "label": "Project plan — gf2-sim run-book (archived)",
       "path": "dev/archive/epics/f9717e7e-project-plan.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "base.css",
+          "resolved_path": "dev/presentations/f9717e7e-gf2-sim/base.css"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "themes/rust.css",
+          "resolved_path": "dev/presentations/f9717e7e-gf2-sim/themes/rust.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "Epic showcase presentation (reveal.js, 18 slides)",
+      "path": "dev/presentations/f9717e7e-gf2-sim/talk.html"
     }
   ],
   "done_at": "2026-06-12T16:31:15.248679896Z",
@@ -36,5 +135,5 @@
   "priority": "high",
   "state": "done",
   "title": "Research-grade CPU+GPU FEC simulation pipeline (gf2-sim)",
-  "updated_at": "2026-08-05T12:08:04.493027827Z"
+  "updated_at": "2026-08-07T21:18:43.743835441Z"
 }

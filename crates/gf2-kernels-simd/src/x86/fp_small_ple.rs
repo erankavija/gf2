@@ -1,7 +1,7 @@
 //! AVX2 panelized PLE base-case kernel for small `Fp<P>` (`P <= 251`).
 //!
 //! Implements the panel-base path of the recursive PLE algorithm
-//! described in design `dev/active/2e8c5a29-panelized-ple-design.md`
+//! described in design `dev/active/2e8c5a29/2e8c5a29-panelized-ple-design.md`
 //! and issue `6823c8a0`. Performs an in-place rank-revealing PLE
 //! decomposition on a column-window panel of canonical-byte storage,
 //! with a row-major axpy-style Schur update that uses the SSOT

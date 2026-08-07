@@ -386,7 +386,7 @@ impl Bipedal3 {
     // divergence between the inherent and trait paths — the inherent body
     // is a single tail call into the trait method, which Rust inlines away.
     //
-    // Per `dev/plans/d2_lean_bipedal3_sketch.md` §5, the Lean proof file
+    // Per `dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md` §5, the Lean proof file
     // `proofs/Gf2Algebra/Proofs/Bipedal3Correctness.lean` targets these
     // inherent methods (Option A in the dispatch prompt).
     // -----------------------------------------------------------------------
@@ -2844,7 +2844,7 @@ mod vec_tests {
 /// Storing each column as a contiguous [`Bipedal3Vec`] allows those
 /// algorithms to `column(j)` without scatter-gather, matching the access
 /// pattern of the R3 multi-word streaming design
-/// (`dev/plans/r3_multi_word_streaming.md` §2.1).
+/// (`dev/plans/60c30e2d/r3_multi_word_streaming.md` §2.1).
 ///
 /// # Mask-tail invariant
 ///

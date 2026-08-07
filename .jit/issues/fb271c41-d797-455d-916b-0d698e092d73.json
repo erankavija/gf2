@@ -1,54 +1,54 @@
 {
-  "id": "fb271c41-d797-455d-916b-0d698e092d73",
-  "title": "Evaluate GFNI and AVX-512 follow-on routing",
-  "description": "Decide whether GFNI/AVX-512 backlog work is required for SOTA closure.\n\n## Success Criteria\n\n- [hard] The decision cites benchmark or feasibility evidence.\n- [hard] Required platform work is wired under this epic; non-required work remains outside.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T18:46:30.116744908Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.777617191Z",
   "dependencies": [
     "a1172cea-cf5b-4527-9343-d81872382859"
   ],
+  "description": "Decide whether GFNI/AVX-512 backlog work is required for SOTA closure.\n\n## Success Criteria\n\n- [hard] The decision cites benchmark or feasibility evidence.\n- [hard] Required platform work is wired under this epic; non-required work remains outside.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "GFNI/AVX-512 evaluation decision (fb271c41)",
+      "path": "dev/plans/fb271c41/gf2m_avx512_gfni_evaluation.md"
+    }
+  ],
+  "done_at": "2026-05-06T19:01:27.173209098Z",
+  "first_ready_at": "2026-05-06T18:45:36.881963647Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T19:01:26.955354455Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T18:54:39.390592770Z"
+      "updated_at": "2026-05-06T18:54:39.390592770Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T18:54:50.296176460Z"
+      "updated_at": "2026-05-06T18:54:50.296176460Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-06T19:01:26.955354455Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/gf2m_avx512_gfni_evaluation.md",
-      "commit": null,
-      "label": "GFNI/AVX-512 evaluation decision (fb271c41)",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "fb271c41-d797-455d-916b-0d698e092d73",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gf2m-reference"
   ],
-  "created_at": "2026-04-30T06:43:02.777617191Z",
-  "updated_at": "2026-07-12T20:02:55.484420244Z",
-  "first_ready_at": "2026-05-06T18:45:36.881963647Z",
-  "claimed_at": "2026-05-06T18:46:30.116744908Z",
-  "done_at": "2026-05-06T19:01:27.173209098Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Evaluate GFNI and AVX-512 follow-on routing",
+  "updated_at": "2026-08-07T21:14:50.944299431Z"
 }

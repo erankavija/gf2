@@ -13,7 +13,7 @@
       "doc_type": "decision",
       "format": "markdown",
       "label": "GPU crossover decision (keep-experimental)",
-      "path": "dev/active/9c37ec8c-gpu-crossover-decision.md"
+      "path": "dev/active/9c37ec8c/9c37ec8c-gpu-crossover-decision.md"
     }
   ],
   "done_at": "2026-04-15T05:14:08.123323964Z",
@@ -56,5 +56,5 @@
   "priority": "normal",
   "state": "done",
   "title": "Measure GPU crossover and document the decision",
-  "updated_at": "2026-08-07T20:39:41.522438790Z"
+  "updated_at": "2026-08-07T21:14:37.010553347Z"
 }

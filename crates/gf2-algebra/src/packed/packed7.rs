@@ -32,7 +32,7 @@
 //! # Status
 //!
 //! W4 — F_7 packed type + ops per R2 Candidate A decision
-//! (`dev/plans/r2_f7_encoding_decision.md`). Transliterated from
+//! (`dev/plans/f10152f6/r2_f7_encoding_decision.md`). Transliterated from
 //! `dev/research/f7_packing/src/cand_a.rs`.
 
 use core::fmt;
@@ -491,7 +491,7 @@ impl Packed7 {
 // divergence between the inherent and trait paths — the inherent body is a
 // single tail call into the trait method, which Rust inlines away.
 //
-// Per `dev/plans/d6_lean_packed7_sketch.md` §4, the Lean proof file
+// Per `dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §4, the Lean proof file
 // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` targets these inherent
 // methods (verbatim adaptation of the `packed5.rs:326-401` pattern, itself
 // adapted from `bipedal3.rs`).
@@ -1697,7 +1697,7 @@ mod tests {
     //
     // `proofs/Gf2Algebra/Proofs/Packed7Correctness.lean` axiomatises the
     // contents of `ADD_LUT` / `SUB_LUT` / `MUL_LUT` (Path B,
-    // `dev/plans/d6_lean_packed7_sketch.md` §4.3). Per sketch §6 R4, those
+    // `dev/plans/30e98ef1/d6_lean_packed7_sketch.md` §4.3). Per sketch §6 R4, those
     // axioms are *trusted because exhaustively tested in Rust*: each Lean
     // axiom states exactly the contract checked below over every one of the
     // 65536 keys, so axiom ⟺ tested-Rust-contract is mechanically checkable.

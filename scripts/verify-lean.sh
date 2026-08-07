@@ -140,11 +140,11 @@ echo ""
 echo "=== Step 1b: Charon extraction (gf2-algebra) ==="
 #
 # Extract gf2-algebra::packed::bipedal3 for the D2 bipedal F_3 correctness
-# proof (JIT issue f05ffbe1; sketch at dev/plans/d2_lean_bipedal3_sketch.md),
+# proof (JIT issue f05ffbe1; sketch at dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md),
 # gf2-algebra::packed::packed5 for the D5 F_5 correctness proof (JIT issue
-# 30e98ef1; sketch at dev/plans/d5_lean_packed5_sketch.md), and
+# 30e98ef1; sketch at dev/plans/30e98ef1/d5_lean_packed5_sketch.md), and
 # gf2-algebra::packed::packed7 for the D6 F_7 correctness proof (JIT issue
-# 30e98ef1; sketch at dev/plans/d6_lean_packed7_sketch.md). The `f5` and
+# 30e98ef1; sketch at dev/plans/30e98ef1/d6_lean_packed7_sketch.md). The `f5` and
 # `f7` features are enabled so the `#[cfg(feature = "f5")]`-gated packed5 and
 # `#[cfg(feature = "f7")]`-gated packed7 modules are compiled into the LLBC.
 # Everything else in the crate is opaque — the proofs target only the

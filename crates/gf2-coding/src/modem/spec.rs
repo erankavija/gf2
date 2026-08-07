@@ -7,7 +7,7 @@
 //! [`super::ModemSpecBuilder`] entry point for custom constellations.
 //!
 //! Invariants enforced at construction are listed in
-//! `dev/active/c87c5043-constellation-data-model-plan.md` §5. Violations
+//! `dev/active/c87c5043/c87c5043-constellation-data-model-plan.md` §5. Violations
 //! panic with a descriptive message per design decision D8.
 
 use super::builder::ModemSpecBuilder;

@@ -1,81 +1,81 @@
 {
-  "id": "3b762764-aa71-49c1-a32c-01c52d9ba746",
-  "title": "Re-run dense LA post-GEMM scorecard",
-  "description": "Measure dense factorization and solve rows after GEMM parity work.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes.\n- [hard] The report identifies operations still outside 1.5x.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-05-04T11:04:23.019566282Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.797812087Z",
   "dependencies": [],
+  "description": "Measure dense factorization and solve rows after GEMM parity work.\n\n## Success Criteria\n\n- [hard] PLE/echelon/invert/solve rows cover full-rank and rank-deficient regimes.\n- [hard] The report identifies operations still outside 1.5x.",
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
+          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense LA post-GEMM scorecard (3b762764)",
+      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Fresh post-PPC dense-LA bench-day rows (3b762764)",
+      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-fresh.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "3b762764 worktree host capture",
+      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-host.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Dense LA aggregated reference CSV (3b762764)",
+      "path": "dev/bench_results/3b762764/2026-05-04-3b762764-dense-la-reference.csv"
+    }
+  ],
+  "done_at": "2026-05-04T14:52:54.508944229Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "cargo-ci": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-04T14:52:39.490261962Z"
+      "updated_at": "2026-05-04T10:48:23.898310705Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T14:50:36.422351362Z"
+      "updated_at": "2026-05-04T14:50:36.422351362Z",
+      "updated_by": "auto:executor"
     },
-    "cargo-ci": {
+    "doc-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-04T10:48:23.898310705Z"
+      "updated_at": "2026-05-04T14:52:39.490261962Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-post-gemm.md",
-      "commit": null,
-      "label": "Dense LA post-GEMM scorecard (3b762764)",
-      "doc_type": "evidence",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "2026-04-30-post-ppc-delta-appendix.md",
-          "resolved_path": "dev/bench_results/2026-04-30-post-ppc-delta-appendix.md",
-          "asset_type": "local",
-          "mime_type": "text/markdown",
-          "content_hash": "81df3f98a7ad3a9318e2a8e03f85435b0af524c347eff6e509435941b4981ec4",
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-host.txt",
-      "commit": null,
-      "label": "3b762764 worktree host capture",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-reference.csv",
-      "commit": null,
-      "label": "Dense LA aggregated reference CSV (3b762764)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-04-3b762764-dense-la-fresh.csv",
-      "commit": null,
-      "label": "Fresh post-PPC dense-LA bench-day rows (3b762764)",
-      "doc_type": "evidence"
-    }
-  ],
+  "id": "3b762764-aa71-49c1-a32c-01c52d9ba746",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-dense-la"
   ],
-  "created_at": "2026-04-30T06:43:02.797812087Z",
-  "updated_at": "2026-07-12T20:02:55.435431748Z",
-  "claimed_at": "2026-05-04T11:04:23.019566282Z",
-  "done_at": "2026-05-04T14:52:54.508944229Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Re-run dense LA post-GEMM scorecard",
+  "updated_at": "2026-08-07T21:14:58.299697498Z"
 }

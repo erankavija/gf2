@@ -1,53 +1,53 @@
 {
-  "id": "98336ab4-21c3-49b4-97c7-466263574c7f",
-  "title": "Extend GF(p) fgemm benchmarks + dispatch to n=4096 (026fc832 Phase 6)",
-  "description": "Phase 6 independent task under epic `026fc832`. Extends the existing GF(p) fgemm benchmarks and dispatch to cover n=4096 cells.\n\nParent epic: `026fc832`. Predecessor: `41096af5` (route-A wire-in at n≥512).\n\n## Background\n\nA8 rows 1-3 (fgemm GF(7/31/65521) at n=4096) currently FAIL at 1.70-2.52× vs fflas. The existing fp_small SIMD path scales to n=4096 but has not been benchmarked there since 027fc832 began. Likely closes with the existing infrastructure (route-A for GF(251), Candidate C for others). If not, scoping note in evidence doc.\n\n## Success Criteria\n\n- [hard] 5-trial CCX1-pinned benchmarks at GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at n=4096 on the 5900X reference host, recorded as CSV + evidence doc.\n- [hard] For every (prime, n=4096) cell measured, the post-bench evidence doc records the ratio vs fflas-ffpack and either marks PASS (≤ 1.5×) or escalates with the gap.\n- [hard] No regression on existing (prime, n) cells PASSing post-`41096af5` (delta ≤ 5%).\n- [hard] If route-A is found to be the optimal path for any (prime, n=4096) cell, the `select_f32_path` dispatch is updated to route accordingly (with the same testing rigor as `41096af5`).\n- [hard] Bit-exact correctness preserved (proptest sweep extended to n=4096 for at least GF(251); other primes covered by inheritance from the dispatch logic verified at smaller n).\n\n## Out of scope\n\n- Other phases (PLE, echelon, invert, solve).\n- AVX-512 (epic `7f809931`).\n\n## Notes\n\nIndependent of the dense-LA design/impl track. Can run in parallel with the design tasks. Light implementation: existing kernels should scale; the work is benchmark + optional dispatch refinement.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-25T12:12:43.597203041Z",
+  "context": {},
+  "created_at": "2026-05-25T12:10:31.705488697Z",
   "dependencies": [
     "0749dbad-4c15-4f63-9e15-7a4c7121ad1c"
   ],
+  "description": "Phase 6 independent task under epic `026fc832`. Extends the existing GF(p) fgemm benchmarks and dispatch to cover n=4096 cells.\n\nParent epic: `026fc832`. Predecessor: `41096af5` (route-A wire-in at n≥512).\n\n## Background\n\nA8 rows 1-3 (fgemm GF(7/31/65521) at n=4096) currently FAIL at 1.70-2.52× vs fflas. The existing fp_small SIMD path scales to n=4096 but has not been benchmarked there since 027fc832 began. Likely closes with the existing infrastructure (route-A for GF(251), Candidate C for others). If not, scoping note in evidence doc.\n\n## Success Criteria\n\n- [hard] 5-trial CCX1-pinned benchmarks at GF(7), GF(31), GF(127), GF(241), GF(251), GF(65521) at n=4096 on the 5900X reference host, recorded as CSV + evidence doc.\n- [hard] For every (prime, n=4096) cell measured, the post-bench evidence doc records the ratio vs fflas-ffpack and either marks PASS (≤ 1.5×) or escalates with the gap.\n- [hard] No regression on existing (prime, n) cells PASSing post-`41096af5` (delta ≤ 5%).\n- [hard] If route-A is found to be the optimal path for any (prime, n=4096) cell, the `select_f32_path` dispatch is updated to route accordingly (with the same testing rigor as `41096af5`).\n- [hard] Bit-exact correctness preserved (proptest sweep extended to n=4096 for at least GF(251); other primes covered by inheritance from the dispatch logic verified at smaller n).\n\n## Out of scope\n\n- Other phases (PLE, echelon, invert, solve).\n- AVX-512 (epic `7f809931`).\n\n## Notes\n\nIndependent of the dense-LA design/impl track. Can run in parallel with the design tasks. Light implementation: existing kernels should scale; the work is benchmark + optional dispatch refinement.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "implementation",
+      "format": "markdown",
+      "label": "n=4096 fgemm consolidated re-bench — all 6 primes PASS (GF251 1.490× isolated)",
+      "path": "dev/bench_results/98336ab4/2026-05-28-98336ab4-fgemm-n4096.md"
+    }
+  ],
+  "done_at": "2026-05-28T15:32:58.351711213Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "code-review": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T15:25:31.580778661Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T15:25:22.406851576Z"
+      "updated_at": "2026-05-28T15:25:22.406851576Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-05-28T15:25:31.580778661Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-28T15:32:51.613147945Z"
+      "updated_at": "2026-05-28T15:32:51.613147945Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-28-98336ab4-fgemm-n4096.md",
-      "commit": null,
-      "label": "n=4096 fgemm consolidated re-bench — all 6 primes PASS (GF251 1.490× isolated)",
-      "doc_type": "implementation",
-      "format": "markdown"
-    }
-  ],
+  "id": "98336ab4-21c3-49b4-97c7-466263574c7f",
   "labels": [
     "type:task",
     "component:gf2-core",
     "component:gf2-kernels-simd",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-25T12:10:31.705488697Z",
-  "updated_at": "2026-07-12T20:02:55.459442476Z",
-  "claimed_at": "2026-05-25T12:12:43.597203041Z",
-  "done_at": "2026-05-28T15:32:58.351711213Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Extend GF(p) fgemm benchmarks + dispatch to n=4096 (026fc832 Phase 6)",
+  "updated_at": "2026-08-07T21:15:12.123523905Z"
 }

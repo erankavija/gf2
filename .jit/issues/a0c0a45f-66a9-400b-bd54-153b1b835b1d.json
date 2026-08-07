@@ -1,11 +1,20 @@
 {
-  "id": "a0c0a45f-66a9-400b-bd54-153b1b835b1d",
-  "title": "Lean4 proof sketch: bipedal F_3 arithmetic vs canonical prime field",
-  "description": "Lean4 proof sketch for the bipedal $\\mathbb{F}_3$ arithmetic correctness theorem, naming every lemma, its tactic strategy, and the exact Rust path Charon/Aeneas will extract.\n\n## Background\n\n⚠ **User approval required before this issue can close** — per CLAUDE.md §Verification work, all Lean4 proof sketches must be approved before implementation work is dispatched. This sketch governs the V1 implementation issue in the verification phase.\n\nStatement to be proved (informal): for all pairs $(m_1, s_1), (m_2, s_2) \\in \\mathbb{F}_2^{64} \\times \\mathbb{F}_2^{64}$, the bipedal `add`/`sub`/`mul`/`div` formulas (paper Theorem 2.1) applied to the pair, then decoded via $\\psi$, equal canonical `Fp<3>` add/sub/mul/div on the decoded scalars, lane-wise.\n\nThe sketch must follow the format in CLAUDE.md §Verification work:\n\n1. Lemmas to be proved (statement form only; no proofs).\n2. Intended proof strategy per lemma (one line: tactic shape — `bv_decide`, `decide`, `scalar_tac`, etc.).\n3. Exact production code path each Charon extraction targets (`Bipedal3::{add, sub, mul, div}` in `crates/gf2-algebra/src/packed/bipedal3.rs` or wherever the boundary decision places it).\n4. Expected Aeneas-generated def names.\n\nOutput: `dev/plans/d2_lean_bipedal3_sketch.md`, attached to this issue.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/d2_lean_bipedal3_sketch.md` exists and is attached via `jit doc add`.\n- [ ] [hard] The sketch enumerates lemmas for all four operations (`add`, `sub`, `mul`, `div`), plus auxiliary lemmas for the decoder $\\psi$.\n- [ ] [hard] Each lemma carries a one-line tactic strategy.\n- [ ] [hard] The sketch identifies the exact Rust function signatures to be Charon-extracted.\n- [ ] [hard] The user has signed off on the sketch (recorded as a comment / approval note) before transitioning to `done`.\n\n## Approval\n\nUser approved the sketch on 2026-05-09 via the project-lead session-1 escalation (recommended option: \"Approve\"). Approval covers the 20-lemma plan in `dev/plans/d2_lean_bipedal3_sketch.md`, with the extraction target pinned to `crates/gf2-algebra/src/packed/bipedal3.rs::Bipedal3::{add, sub, mul, div}` per D1a §2. The reviewer's separate temporal concern (gf2-algebra crate doesn't exist locally yet — lands in W1-T1) is noted but does not block sketch approval; the path is a contract that W1-T1 must honour.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude-opus-4-7",
+  "claimed_at": "2026-05-08T22:21:21.757700157Z",
+  "context": {},
+  "created_at": "2026-04-30T21:39:25.730707963Z",
   "dependencies": [],
+  "description": "Lean4 proof sketch for the bipedal $\\mathbb{F}_3$ arithmetic correctness theorem, naming every lemma, its tactic strategy, and the exact Rust path Charon/Aeneas will extract.\n\n## Background\n\n⚠ **User approval required before this issue can close** — per CLAUDE.md §Verification work, all Lean4 proof sketches must be approved before implementation work is dispatched. This sketch governs the V1 implementation issue in the verification phase.\n\nStatement to be proved (informal): for all pairs $(m_1, s_1), (m_2, s_2) \\in \\mathbb{F}_2^{64} \\times \\mathbb{F}_2^{64}$, the bipedal `add`/`sub`/`mul`/`div` formulas (paper Theorem 2.1) applied to the pair, then decoded via $\\psi$, equal canonical `Fp<3>` add/sub/mul/div on the decoded scalars, lane-wise.\n\nThe sketch must follow the format in CLAUDE.md §Verification work:\n\n1. Lemmas to be proved (statement form only; no proofs).\n2. Intended proof strategy per lemma (one line: tactic shape — `bv_decide`, `decide`, `scalar_tac`, etc.).\n3. Exact production code path each Charon extraction targets (`Bipedal3::{add, sub, mul, div}` in `crates/gf2-algebra/src/packed/bipedal3.rs` or wherever the boundary decision places it).\n4. Expected Aeneas-generated def names.\n\nOutput: `dev/plans/d2_lean_bipedal3_sketch.md`, attached to this issue.\n\n## Success Criteria\n\n- [ ] [hard] `dev/plans/d2_lean_bipedal3_sketch.md` exists and is attached via `jit doc add`.\n- [ ] [hard] The sketch enumerates lemmas for all four operations (`add`, `sub`, `mul`, `div`), plus auxiliary lemmas for the decoder $\\psi$.\n- [ ] [hard] Each lemma carries a one-line tactic strategy.\n- [ ] [hard] The sketch identifies the exact Rust function signatures to be Charon-extracted.\n- [ ] [hard] The user has signed off on the sketch (recorded as a comment / approval note) before transitioning to `done`.\n\n## Approval\n\nUser approved the sketch on 2026-05-09 via the project-lead session-1 escalation (recommended option: \"Approve\"). Approval covers the 20-lemma plan in `dev/plans/d2_lean_bipedal3_sketch.md`, with the extraction target pinned to `crates/gf2-algebra/src/packed/bipedal3.rs::Bipedal3::{add, sub, mul, div}` per D1a §2. The reviewer's separate temporal concern (gf2-algebra crate doesn't exist locally yet — lands in W1-T1) is noted but does not block sketch approval; the path is a contract that W1-T1 must honour.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "D2: Lean F_3 bipedal correctness sketch",
+      "path": "dev/plans/a0c0a45f/d2_lean_bipedal3_sketch.md"
+    }
+  ],
+  "done_at": "2026-05-09T07:15:32.980283553Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -13,32 +22,23 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T07:03:30.461330449Z"
+      "updated_at": "2026-05-09T07:03:30.461330449Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-09T07:12:01.485166554Z"
+      "updated_at": "2026-05-09T07:12:01.485166554Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/d2_lean_bipedal3_sketch.md",
-      "commit": null,
-      "label": "D2: Lean F_3 bipedal correctness sketch",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "a0c0a45f-66a9-400b-bd54-153b1b835b1d",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:proofs"
   ],
-  "created_at": "2026-04-30T21:39:25.730707963Z",
-  "updated_at": "2026-07-12T20:02:55.461875678Z",
-  "claimed_at": "2026-05-08T22:21:21.757700157Z",
-  "done_at": "2026-05-09T07:15:32.980283553Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Lean4 proof sketch: bipedal F_3 arithmetic vs canonical prime field",
+  "updated_at": "2026-08-07T21:14:48.611097636Z"
 }

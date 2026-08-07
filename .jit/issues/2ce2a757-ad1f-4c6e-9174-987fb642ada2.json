@@ -1,54 +1,54 @@
 {
-  "id": "2ce2a757-ad1f-4c6e-9174-987fb642ada2",
-  "title": "Karatsuba vs naive cross-verification with property-based tests",
-  "description": "Property-based tests confirming Karatsuba (QuadraticExt, 3M) and Karatsuba-style (CubicExt, 6M) multiplication produce identical results to naive schoolbook polynomial multiplication.\n\n## Deliverable\n\nA single integration test file `crates/gf2-core/tests/karatsuba_cross_verify.rs` containing:\n\n- Standalone naive reference implementations (4M schoolbook for quadratic, 9M schoolbook for cubic) that are visibly independent of the optimized code.\n- Proptest-based cross-verification with 10000 random element pairs per configuration.\n- Multiple field sizes and non-residue choices:\n  - QuadraticExt: Fp<7>/β=−1, Fp<7>/β=3, Fp<101>/β=−2, Fp<65537>/β=3\n  - CubicExt: Fp<7>/β=3, Fp<31>/β=11, Fp<101>/β=2\n- Squaring consistency: `a.square() == naive_mul(a, a)` for each config.\n\nNo library code changes. Operation counts documented on existing `mul` impls.\n\nSee design plan: `dev/plans/karatsuba_cross_verification.md`\n\n## Success criteria\n\n- 10000+ proptest cases per configuration, all passing.\n- Both QuadraticExt and CubicExt covered across multiple primes and non-residues.\n- Naive implementations use schoolbook (4M / 9M), not Karatsuba.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-04-18T17:55:22.268539774Z",
+  "context": {},
+  "created_at": "2026-02-26T00:09:07.544270603Z",
   "dependencies": [
     "8d2863e6-9e38-424f-918a-55d3c2fda5ee",
     "3f3d6c23-d75d-44a6-99cf-5b93db609acd"
   ],
+  "description": "Property-based tests confirming Karatsuba (QuadraticExt, 3M) and Karatsuba-style (CubicExt, 6M) multiplication produce identical results to naive schoolbook polynomial multiplication.\n\n## Deliverable\n\nA single integration test file `crates/gf2-core/tests/karatsuba_cross_verify.rs` containing:\n\n- Standalone naive reference implementations (4M schoolbook for quadratic, 9M schoolbook for cubic) that are visibly independent of the optimized code.\n- Proptest-based cross-verification with 10000 random element pairs per configuration.\n- Multiple field sizes and non-residue choices:\n  - QuadraticExt: Fp<7>/β=−1, Fp<7>/β=3, Fp<101>/β=−2, Fp<65537>/β=3\n  - CubicExt: Fp<7>/β=3, Fp<31>/β=11, Fp<101>/β=2\n- Squaring consistency: `a.square() == naive_mul(a, a)` for each config.\n\nNo library code changes. Operation counts documented on existing `mul` impls.\n\nSee design plan: `dev/plans/karatsuba_cross_verification.md`\n\n## Success criteria\n\n- 10000+ proptest cases per configuration, all passing.\n- Both QuadraticExt and CubicExt covered across multiple primes and non-residues.\n- Naive implementations use schoolbook (4M / 9M), not Karatsuba.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Karatsuba cross-verification design plan",
+      "path": "dev/plans/2ce2a757/karatsuba_cross_verification.md"
+    }
+  ],
+  "done_at": "2026-04-18T20:34:32.425452725Z",
+  "first_ready_at": "2026-03-06T23:25:07.415322963Z",
   "gates_required": [
     "code-review",
     "doc-review",
     "cargo-ci"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-04-18T20:34:28.669675321Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-18T19:56:21.318729575Z"
+      "updated_at": "2026-04-18T19:56:21.318729575Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-18T20:16:15.141769910Z"
+      "updated_at": "2026-04-18T20:16:15.141769910Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-04-18T20:34:28.669675321Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/karatsuba_cross_verification.md",
-      "commit": null,
-      "label": "Karatsuba cross-verification design plan",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "2ce2a757-ad1f-4c6e-9174-987fb642ada2",
   "labels": [
     "component:gf2-core",
     "type:task",
     "story:implement-tower-extension-field-architecture-for-gf-p-n"
   ],
-  "created_at": "2026-02-26T00:09:07.544270603Z",
-  "updated_at": "2026-07-14T20:51:29.906241089Z",
-  "first_ready_at": "2026-03-06T23:25:07.415322963Z",
-  "claimed_at": "2026-04-18T17:55:22.268539774Z",
-  "done_at": "2026-04-18T20:34:32.425452725Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Karatsuba vs naive cross-verification with property-based tests",
+  "updated_at": "2026-08-07T21:14:52.558467289Z"
 }

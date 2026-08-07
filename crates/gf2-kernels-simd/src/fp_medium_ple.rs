@@ -13,7 +13,7 @@
 //!
 //! # Algorithm summary
 //!
-//! See `dev/active/2e8c5a29-panelized-ple-design.md` § 9 for the
+//! See `dev/active/2e8c5a29/2e8c5a29-panelized-ple-design.md` § 9 for the
 //! design context (the original design declined a u16 base case;
 //! issue `68db401b` reverses that decision based on the R0 evidence
 //! that GF(65521) PLE cells did not close to ≤ 1.5× via the Schur

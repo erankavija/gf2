@@ -6,7 +6,7 @@
 //! cascade for `P ≤ 251`) at f64 lane density, sized for medium primes
 //! where the canonical residue range `[0, p)` no longer fits in a byte
 //! lane. The design rationale and post-mortem evidence live at
-//! `dev/bench_results/2026-05-26-695350fd-fp-medium-blis.md` § 9.
+//! `dev/bench_results/695350fd/2026-05-26-695350fd-fp-medium-blis.md` § 9.
 //!
 //! # Algorithm
 //!

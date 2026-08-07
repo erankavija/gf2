@@ -1,49 +1,50 @@
 {
-  "id": "feb15da9-4645-440c-ae9c-f40bfcff654e",
-  "title": "Design blocked GF(p) invert via PLE (026fc832 Phase 6)",
-  "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a blocked GF(p) invert that uses the panelized PLE (sibling task) followed by two GEMM-based triangular solves on the identity matrix.\n\nParent epic: `026fc832`. Predecessor: panelized PLE design (sibling).\n\n## Background\n\nA8 rows 34-43 (invert GF(7/251/65521) at all n/regimes), row 74 (GF(31) invert). Current `FieldMatrix::inverse` does scalar PLE then forward/back substitution. Replacing with a panelized PLE followed by GEMM-based triangular solves on `I` is the standard blocked-inverse algorithm (Higham, \"Accuracy and Stability of Numerical Algorithms\", § 14.1).\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the blocked invert algorithm (PLE → triangular solves on I) and its dependency on the panelized PLE design.\n- [hard] Test surface specified (proptest A*A⁻¹ = I correctness; rank-deficient inputs → error/panic per existing API).\n- [hard] Benchmark cells listed (matching A8 rows 34-43, 74).\n- [hard] The design names the SSOT helpers it reuses (panelized PLE; `fp_small_try_gemm_classical`).\n- [hard] No production code — design only.\n- [hard] The design lists the single implementation child needed.\n\n## Out of scope\n\n- Implementation.\n- PLE, echelon, solve designs — siblings.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-25T12:12:42.538373998Z",
+  "context": {},
+  "created_at": "2026-05-25T12:10:19.347713541Z",
   "dependencies": [],
+  "description": "Phase 6 design task under epic `026fc832`. Designs (NOT implements) a blocked GF(p) invert that uses the panelized PLE (sibling task) followed by two GEMM-based triangular solves on the identity matrix.\n\nParent epic: `026fc832`. Predecessor: panelized PLE design (sibling).\n\n## Background\n\nA8 rows 34-43 (invert GF(7/251/65521) at all n/regimes), row 74 (GF(31) invert). Current `FieldMatrix::inverse` does scalar PLE then forward/back substitution. Replacing with a panelized PLE followed by GEMM-based triangular solves on `I` is the standard blocked-inverse algorithm (Higham, \"Accuracy and Stability of Numerical Algorithms\", § 14.1).\n\n## Success Criteria\n\n- [hard] A design document attached via `jit doc add` describing the blocked invert algorithm (PLE → triangular solves on I) and its dependency on the panelized PLE design.\n- [hard] Test surface specified (proptest A*A⁻¹ = I correctness; rank-deficient inputs → error/panic per existing API).\n- [hard] Benchmark cells listed (matching A8 rows 34-43, 74).\n- [hard] The design names the SSOT helpers it reuses (panelized PLE; `fp_small_try_gemm_classical`).\n- [hard] No production code — design only.\n- [hard] The design lists the single implementation child needed.\n\n## Out of scope\n\n- Implementation.\n- PLE, echelon, solve designs — siblings.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Blocked invert design",
+      "path": "dev/active/feb15da9/feb15da9-blocked-invert-design.md"
+    }
+  ],
+  "done_at": "2026-05-25T20:45:12.862009444Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-25T20:45:07.339009104Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T20:44:51.962203965Z"
+      "updated_at": "2026-05-25T20:44:51.962203965Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-25T20:43:24.595231729Z"
+      "updated_at": "2026-05-25T20:43:24.595231729Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-25T20:45:07.339009104Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/feb15da9-blocked-invert-design.md",
-      "commit": null,
-      "label": "Blocked invert design",
-      "doc_type": "design"
-    }
-  ],
+  "id": "feb15da9-4645-440c-ae9c-f40bfcff654e",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-stretch"
   ],
-  "created_at": "2026-05-25T12:10:19.347713541Z",
-  "updated_at": "2026-07-12T20:02:55.485067364Z",
-  "claimed_at": "2026-05-25T12:12:42.538373998Z",
-  "done_at": "2026-05-25T20:45:12.862009444Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Design blocked GF(p) invert via PLE (026fc832 Phase 6)",
+  "updated_at": "2026-08-07T21:14:45.865176667Z"
 }

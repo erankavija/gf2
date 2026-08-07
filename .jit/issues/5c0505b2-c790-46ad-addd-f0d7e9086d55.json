@@ -1,13 +1,23 @@
 {
-  "id": "5c0505b2-c790-46ad-addd-f0d7e9086d55",
-  "title": "F_7 HIP device kernel",
-  "description": "Implement the F_7 HIP device kernel mirroring T23/T24, using the F_7 packed encoding chosen by R2.\n\n## Background\n\nSame shape as T23/T24. The F_7 mul-via-LUT (per R2's outcome) lives in `__constant__` device memory; the LUT initialiser is identical to the host-side static const.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, kernel output bit-identical to CPU `permanent_bipedal7` on 100 random matrices for $n \\in \\{8, 12\\}$.\n- [ ] [hard] LUT in `__constant__` memory is populated identically to the host static const (verified by a runtime checksum on the CPU/GPU pair).\n- [ ] [hard] Tests gated `#[cfg(feature = \\\"hip\\\")]` and `#[ignore = \\\"external: gfx1030 device required\\\"]`.\n- [ ] [hard] `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release` succeeds (the HIP crate is workspace-excluded; the `--manifest-path` invocation is the correct way to build it). **See Amendment 2026-05-15 (build-invocation).**\n\n## Amendment 2026-05-15 (build-invocation) — criterion 5 wording\n\nThe original criterion 5 read `cargo build -p gf2-kernels-hip --release --features hip succeeds`. Because the `gf2-kernels-hip` crate is excluded from the workspace (root `Cargo.toml`), `cargo` rejects this invocation with `error: cannot specify features for packages outside of workspace`. The correct invocation is `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release`. The criterion now uses the correct invocation; intent is unchanged (HIP crate must build clean on a ROCm host with the `hip` feature).",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-15T08:26:33.846750224Z",
+  "context": {},
+  "created_at": "2026-05-09T09:47:22.088994039Z",
   "dependencies": [
     "b62c86d8-8b46-4219-abdf-4b665243c4fa"
   ],
+  "description": "Implement the F_7 HIP device kernel mirroring T23/T24, using the F_7 packed encoding chosen by R2.\n\n## Background\n\nSame shape as T23/T24. The F_7 mul-via-LUT (per R2's outcome) lives in `__constant__` device memory; the LUT initialiser is identical to the host-side static const.\n\n## Success Criteria\n\n- [ ] [hard] `crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip` exists with the device kernel.\n- [ ] [hard] On gfx1030, kernel output bit-identical to CPU `permanent_bipedal7` on 100 random matrices for $n \\in \\{8, 12\\}$.\n- [ ] [hard] LUT in `__constant__` memory is populated identically to the host static const (verified by a runtime checksum on the CPU/GPU pair).\n- [ ] [hard] Tests gated `#[cfg(feature = \\\"hip\\\")]` and `#[ignore = \\\"external: gfx1030 device required\\\"]`.\n- [ ] [hard] `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release` succeeds (the HIP crate is workspace-excluded; the `--manifest-path` invocation is the correct way to build it). **See Amendment 2026-05-15 (build-invocation).**\n\n## Amendment 2026-05-15 (build-invocation) — criterion 5 wording\n\nThe original criterion 5 read `cargo build -p gf2-kernels-hip --release --features hip succeeds`. Because the `gf2-kernels-hip` crate is excluded from the workspace (root `Cargo.toml`), `cargo` rejects this invocation with `error: cannot specify features for packages outside of workspace`. The correct invocation is `cargo build --manifest-path crates/gf2-kernels-hip/Cargo.toml --features hip --release`. The criterion now uses the correct invocation; intent is unchanged (HIP crate must build clean on a ROCm host with the `hip` feature).",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "verification",
+      "format": "markdown",
+      "label": "gfx1030 GPU run evidence + init state machine unit tests for W5",
+      "path": "dev/active/ae82bd73-gf2-algebra-permanent/ae82bd73-w5-gpu-verification.md"
+    }
+  ],
+  "done_at": "2026-05-15T09:23:39.195555084Z",
+  "first_ready_at": "2026-05-14T21:33:24.993668826Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -15,33 +25,23 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T09:08:54.120907342Z"
+      "updated_at": "2026-05-15T09:08:54.120907342Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-15T09:21:36.589184756Z"
+      "updated_at": "2026-05-15T09:21:36.589184756Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/ae82bd73-w5-gpu-verification.md",
-      "commit": "6cb4b163a59cb313aef66cbd5426359ae49541f2",
-      "label": "gfx1030 GPU run evidence + init state machine unit tests for W5",
-      "doc_type": "verification",
-      "format": "markdown"
-    }
-  ],
+  "id": "5c0505b2-c790-46ad-addd-f0d7e9086d55",
   "labels": [
     "type:task",
     "epic:gf2-algebra-permanent",
     "component:gf2-kernels-hip"
   ],
-  "created_at": "2026-05-09T09:47:22.088994039Z",
-  "updated_at": "2026-07-12T20:02:55.444646495Z",
-  "first_ready_at": "2026-05-14T21:33:24.993668826Z",
-  "claimed_at": "2026-05-15T08:26:33.846750224Z",
-  "done_at": "2026-05-15T09:23:39.195555084Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "F_7 HIP device kernel",
+  "updated_at": "2026-08-07T21:16:28.100893848Z"
 }

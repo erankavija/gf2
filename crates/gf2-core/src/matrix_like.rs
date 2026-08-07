@@ -16,7 +16,7 @@
 //!
 //! The split means that an immutable `MatView<'_, F>` can implement the
 //! read-only trait without having to `panic!("read-only")` on the mutators.
-//! See `dev/active/ab791e27-design.md` for the design rationale.
+//! See `dev/active/ab791e27-design-fieldmatrix-f-finitefield-dense-matrix-ty/ab791e27-design.md` for the design rationale.
 //!
 //! # Owned transpose
 //!

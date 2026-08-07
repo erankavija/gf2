@@ -1,13 +1,44 @@
 {
-  "id": "59c487c3-ff73-4b29-837a-748c53c5b7fa",
-  "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply",
-  "description": "Add a Strassen-family layer above the existing GF(2) M4RM matrix multiplication path, with benchmark-driven production dispatch when a winning crossover exists.\n\n## Background\n\n`64c88ae4` and `dev/bench_results/2026-04-26-uncompetitiveness-profile.md` show GF(2) matrix multiplication at n=1024..4096 is only about 0.13-0.21x of M4RI. M4RI switches to Strassen-Winograd at large sizes; gf2-core previously used pure schoolbook/M4RM. SIMD routing helps but cannot close the algorithmic exponent gap by itself.\n\n## Amendment Note\n\nUser-approved scope amendment after the focused implementation and scratch/view rework measured no winning Strassen crossover through n=8192: accept the correctness/test-support Strassen-family scaffold and keep production `BitMatrix` multiplication on M4RM-only dispatch until a future task demonstrates an empirical crossover. Evidence is recorded in `dev/bench_results/2026-04-29-strassen-matmul-crossover.md`.\n\n## Success Criteria\n\n- [hard] A Strassen-family multiplication path exists for square GF(2) `BitMatrix` multiplication as a correctness/test-support and benchmark-forcing scaffold, while production `BitMatrix` multiplication remains on the existing M4RM/scalar fallback path until a future empirical crossover demonstrates a win.\n- [hard] Correctness is covered by deterministic edge tests and property tests against the existing `BitMatrix::mul` semantics, including n in {0, 1, 63, 64, 65, 127, 128, 129, 256, 512} and at least one larger release-only benchmark validation size.\n- [hard] The implementation preserves tail masking and introduces no `unsafe` outside `gf2-kernels-simd`.\n- [hard] Benchmark evidence records that no production crossover was selected after measurements through n=8192, compares the forced scaffold against the M4RM production path, and relates the result to the pinned gf2 baseline and the `64c88ae4` M4RI ratios where available.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] GF(2) matmul at n>=1024 closes at least half of the residual gap to M4RI after the Tier-A/B kernel work lands; current evidence shows this remains future work because no winning Strassen crossover was found.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude-wt-59c487c3",
+  "claimed_at": "2026-04-29T09:44:55.756324277Z",
+  "context": {},
+  "created_at": "2026-04-27T21:07:47.099043297Z",
   "dependencies": [
     "19bc3199-e140-405f-9d16-d7722d7b7927"
   ],
+  "description": "Add a Strassen-family layer above the existing GF(2) M4RM matrix multiplication path, with benchmark-driven production dispatch when a winning crossover exists.\n\n## Background\n\n`64c88ae4` and `dev/bench_results/2026-04-26-uncompetitiveness-profile.md` show GF(2) matrix multiplication at n=1024..4096 is only about 0.13-0.21x of M4RI. M4RI switches to Strassen-Winograd at large sizes; gf2-core previously used pure schoolbook/M4RM. SIMD routing helps but cannot close the algorithmic exponent gap by itself.\n\n## Amendment Note\n\nUser-approved scope amendment after the focused implementation and scratch/view rework measured no winning Strassen crossover through n=8192: accept the correctness/test-support Strassen-family scaffold and keep production `BitMatrix` multiplication on M4RM-only dispatch until a future task demonstrates an empirical crossover. Evidence is recorded in `dev/bench_results/2026-04-29-strassen-matmul-crossover.md`.\n\n## Success Criteria\n\n- [hard] A Strassen-family multiplication path exists for square GF(2) `BitMatrix` multiplication as a correctness/test-support and benchmark-forcing scaffold, while production `BitMatrix` multiplication remains on the existing M4RM/scalar fallback path until a future empirical crossover demonstrates a win.\n- [hard] Correctness is covered by deterministic edge tests and property tests against the existing `BitMatrix::mul` semantics, including n in {0, 1, 63, 64, 65, 127, 128, 129, 256, 512} and at least one larger release-only benchmark validation size.\n- [hard] The implementation preserves tail masking and introduces no `unsafe` outside `gf2-kernels-simd`.\n- [hard] Benchmark evidence records that no production crossover was selected after measurements through n=8192, compares the forced scaffold against the M4RM production path, and relates the result to the pinned gf2 baseline and the `64c88ae4` M4RI ratios where available.\n- [hard] `cargo-ci` and `code-review` gates pass.\n- [aspirational] GF(2) matmul at n>=1024 closes at least half of the residual gap to M4RI after the Tier-A/B kernel work lands; current evidence shows this remains future work because no winning Strassen crossover was found.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "64c88ae4 benchmark report",
+      "path": "dev/bench_results/2026-04-26.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Uncompetitiveness profile",
+      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Strassen crossover rework evidence",
+      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Benchmark-gap strategy",
+      "path": "dev/active/085cbd0b/085cbd0b-benchmark-gap-strategy.md"
+    }
+  ],
+  "done_at": "2026-04-29T13:03:24.413263251Z",
+  "first_ready_at": "2026-04-29T09:00:14.544418897Z",
   "gates_required": [
     "code-review",
     "cargo-ci"
@@ -15,55 +46,24 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:56:02.311697084Z"
+      "updated_at": "2026-04-29T12:56:02.311697084Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-04-29T12:56:11.187256544Z"
+      "updated_at": "2026-04-29T12:56:11.187256544Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-04-26.md",
-      "commit": null,
-      "label": "64c88ae4 benchmark report",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-26-uncompetitiveness-profile.md",
-      "commit": null,
-      "label": "Uncompetitiveness profile",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/active/085cbd0b-benchmark-gap-strategy.md",
-      "commit": null,
-      "label": "Benchmark-gap strategy",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-      "commit": null,
-      "label": "Strassen crossover rework evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "59c487c3-ff73-4b29-837a-748c53c5b7fa",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-ppc-spiral",
     "story:ppc-benchmark-gap"
   ],
-  "created_at": "2026-04-27T21:07:47.099043297Z",
-  "updated_at": "2026-07-12T20:02:55.444346995Z",
-  "first_ready_at": "2026-04-29T09:00:14.544418897Z",
-  "claimed_at": "2026-04-29T09:44:55.756324277Z",
-  "done_at": "2026-04-29T13:03:24.413263251Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Add Strassen-Winograd layer for GF(2) BitMatrix multiply",
+  "updated_at": "2026-08-07T21:16:29.418126057Z"
 }

@@ -1675,7 +1675,7 @@ mod tests {
         // over candidate values {4, 8, 16, 32, 64}; see the
         // `TRI_BASE_THRESHOLD` doc comment in `field/traits.rs` and the
         // sweep table in
-        // `dev/bench_results/2026-05-07-73ec5da3-ple-trsm-tuning.md`.
+        // `dev/bench_results/73ec5da3/2026-05-07-73ec5da3-ple-trsm-tuning.md`.
         assert_eq!(<Fp<7> as FiniteField>::TRI_BASE_THRESHOLD, 8);
         assert_eq!(<Fp<MERSENNE_31> as FiniteField>::TRI_BASE_THRESHOLD, 8);
         assert_eq!(<TriGf2m8 as FiniteField>::TRI_BASE_THRESHOLD, 8);

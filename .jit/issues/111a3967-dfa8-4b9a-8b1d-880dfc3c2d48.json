@@ -1,13 +1,23 @@
 {
-  "id": "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
-  "title": "Publish GF(2) parity evidence",
-  "description": "Publish the final GF(2) parity evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Production dispatch policy is documented.",
-  "state": "done",
-  "priority": "normal",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T17:34:07.335918589Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.683744974Z",
   "dependencies": [
     "366dbbcd-4485-4865-bcc4-42c0838eb822"
   ],
+  "description": "Publish the final GF(2) parity evidence.\n\n## Success Criteria\n\n- [hard] Raw CSVs and ratio tables are linked to the story.\n- [hard] Production dispatch policy is documented.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2) parity evidence (story 974a85bd closure)",
+      "path": "dev/bench_results/111a3967/2026-05-06-111a3967-gf2-parity-evidence.md"
+    }
+  ],
+  "done_at": "2026-05-06T17:44:51.072178753Z",
+  "first_ready_at": "2026-05-06T16:49:33.220541298Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
@@ -16,39 +26,29 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T17:39:18.336324547Z"
-    },
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T17:44:39.652098216Z"
+      "updated_at": "2026-05-06T17:39:18.336324547Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T17:39:27.296409900Z"
+      "updated_at": "2026-05-06T17:39:27.296409900Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-05-06T17:44:39.652098216Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-06-111a3967-gf2-parity-evidence.md",
-      "commit": null,
-      "label": "GF(2) parity evidence (story 974a85bd closure)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "111a3967-dfa8-4b9a-8b1d-880dfc3c2d48",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gf2-m4ri"
   ],
-  "created_at": "2026-04-30T06:43:02.683744974Z",
-  "updated_at": "2026-07-12T20:02:55.422632129Z",
-  "first_ready_at": "2026-05-06T16:49:33.220541298Z",
-  "claimed_at": "2026-05-06T17:34:07.335918589Z",
-  "done_at": "2026-05-06T17:44:51.072178753Z"
+  "priority": "normal",
+  "state": "done",
+  "title": "Publish GF(2) parity evidence",
+  "updated_at": "2026-08-07T21:15:00.844934945Z"
 }

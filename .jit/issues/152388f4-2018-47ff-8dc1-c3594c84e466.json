@@ -1,54 +1,54 @@
 {
-  "id": "152388f4-2018-47ff-8dc1-c3594c84e466",
-  "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
-  "description": "## Goal\n\nA reusable CLI binary that runs the full DVB-T2 BICM AWGN simulation\nfor one (rate, modulation) configuration, producing a CSV curve, a\nJSON tracing log, and an optional calibration smoke sweep. Six\ninvocations (3 rates × 2 modulations) reproduce every curve required\nby the epic. PNG overlays vs the ETSI TR 102 831 reference are\nproduced by a separate plotting script, not by the binary itself.\n\n## Context\n\nThis task is the consumer of:\n\n- NEW-INFRA: resumable, observable `SimulationRunner`,\n- NEW-1: DVB-T2 BCH+LDPC concatenated codec,\n- 87a2402f: column-row bit interleaver,\n- existing Gray-QAM mapper / demapper in\n  `crates/gf2-coding/src/modem/`.\n\nThe TP07a vector validation (4cdaf1c5) is a hard prereq so we know\nthe BICM chain matches the standard bit-exactly before throwing CPU\nhours at FER curves.\n\nPlotting is intentionally emitted-data-only: the binary writes CSV\nand a separate script consumes that CSV plus the reference TOML to\nproduce the PNG overlay.\n\nSpec doc:\n[`dev/active/152388f4-campaign-runner.md`](dev/active/152388f4-campaign-runner.md).\n\n## Deliverables\n\n1. New binary: `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`.\n2. CLI accepts at minimum: `--rate`, `--modulation`, `--esn0-range`,\n   `--target-errors`, `--max-frames`, `--seed`, `--output-dir`,\n   `--resume`, `--gpu`, `--calibrate`, `--calibrate-frames`,\n   `--calibrate-bracket` (see spec doc for semantics).\n3. Output layout under `<output-dir>/`:\n   - `curve_<rate>_<mod>.csv` — columns: es_n0_db, fer, ber, frames,\n     errors, mean_iters, wall_seconds (one row per SNR point).\n   - `tracing.jsonl` — structured `tracing` log via NEW-INFRA.\n   - `README.md` — invocation, RNG seed, host info, total wall-clock.\n   - `checkpoints/` — per-SNR JSON files (NEW-INFRA format).\n   - `calibration/calibration_<rate>_<mod>.csv` (only when\n     `--calibrate`).\n4. Plotting script in `dev/benchmarks/dvb_t2_awgn/`.\n5. ETSI reference points in\n   `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`.\n6. `--resume` propagates through to NEW-INFRA's checkpoint behaviour.\n\n## Success criteria\n\n- [hard] Binary builds without warnings under\n  `cargo build --workspace --all-features --release`.\n- [hard] A smoke campaign (3 SNR points, small frame budget) completes\n  end-to-end and produces the CSV, JSONL, README, and checkpoints.\n- [hard] `--calibrate` produces a calibration CSV under\n  `<output-dir>/calibration/calibration_<rate>_<mod>.csv` for the\n  selected (rate, modulation) using `--calibrate-frames` frames per\n  point.\n- [hard] Killing the binary with SIGINT mid-run and re-invoking with\n  `--resume` results in a final CSV whose **deterministic columns\n  (es_n0_db, fer, frames, errors, mean_iters) are byte-identical** to\n  an uninterrupted reference run with the same seed (integration\n  test). **Amended 2026-05-28 per user approval**: `wall_seconds`\n  (wall-clock, inherently run-duration-dependent) and `ber` (the\n  LDPC min-sum decoder's AVX2 horizontal reduction is f32\n  non-associative, so the bit-error *count* within failed frames is\n  not bit-reproducible across separate process invocations even at a\n  fixed RNG seed) are excluded from the byte-identity assertion. The\n  criterion's intent — that the deterministic simulation results\n  survive an interrupt+resume unchanged — is met: FER and the\n  frame/error counts that define each curve are byte-identical. The\n  integration test normalizes the two excluded columns before\n  comparing.\n- [hard] Plotting script produces a PNG overlay (simulated vs ETSI\n  reference) from the campaign CSV and the reference TOML via a single\n  non-interactive invocation; documented in the binary's rustdoc.\n- [hard] CLAUDE.md updated to list the new binary, the plotting\n  script, and the reference data file.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n\n## Non-goals\n\n- No interactive UI.\n- No Rust-side plotting backend.\n- No production GPU integration. `--gpu` is a CLI-surface reservation.\n- No new channel model (AWGN only).\n- This task does NOT execute the production campaigns — that is\n  `e4849f07`.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-27T22:35:13.722913387Z",
+  "context": {},
+  "created_at": "2026-05-25T21:46:57.676876440Z",
   "dependencies": [
     "fd73e8a8-c0a2-41bf-b2cd-3b6622620c0e",
     "4cdaf1c5-0d93-4320-bc41-7485e18f94a3"
   ],
+  "description": "## Goal\n\nA reusable CLI binary that runs the full DVB-T2 BICM AWGN simulation\nfor one (rate, modulation) configuration, producing a CSV curve, a\nJSON tracing log, and an optional calibration smoke sweep. Six\ninvocations (3 rates × 2 modulations) reproduce every curve required\nby the epic. PNG overlays vs the ETSI TR 102 831 reference are\nproduced by a separate plotting script, not by the binary itself.\n\n## Context\n\nThis task is the consumer of:\n\n- NEW-INFRA: resumable, observable `SimulationRunner`,\n- NEW-1: DVB-T2 BCH+LDPC concatenated codec,\n- 87a2402f: column-row bit interleaver,\n- existing Gray-QAM mapper / demapper in\n  `crates/gf2-coding/src/modem/`.\n\nThe TP07a vector validation (4cdaf1c5) is a hard prereq so we know\nthe BICM chain matches the standard bit-exactly before throwing CPU\nhours at FER curves.\n\nPlotting is intentionally emitted-data-only: the binary writes CSV\nand a separate script consumes that CSV plus the reference TOML to\nproduce the PNG overlay.\n\nSpec doc:\n[`dev/active/152388f4-campaign-runner.md`](dev/active/152388f4-campaign-runner.md).\n\n## Deliverables\n\n1. New binary: `crates/gf2-coding/src/bin/dvb_t2_awgn_campaign.rs`.\n2. CLI accepts at minimum: `--rate`, `--modulation`, `--esn0-range`,\n   `--target-errors`, `--max-frames`, `--seed`, `--output-dir`,\n   `--resume`, `--gpu`, `--calibrate`, `--calibrate-frames`,\n   `--calibrate-bracket` (see spec doc for semantics).\n3. Output layout under `<output-dir>/`:\n   - `curve_<rate>_<mod>.csv` — columns: es_n0_db, fer, ber, frames,\n     errors, mean_iters, wall_seconds (one row per SNR point).\n   - `tracing.jsonl` — structured `tracing` log via NEW-INFRA.\n   - `README.md` — invocation, RNG seed, host info, total wall-clock.\n   - `checkpoints/` — per-SNR JSON files (NEW-INFRA format).\n   - `calibration/calibration_<rate>_<mod>.csv` (only when\n     `--calibrate`).\n4. Plotting script in `dev/benchmarks/dvb_t2_awgn/`.\n5. ETSI reference points in\n   `crates/gf2-coding/data/dvb_t2_tr102831_reference.toml`.\n6. `--resume` propagates through to NEW-INFRA's checkpoint behaviour.\n\n## Success criteria\n\n- [hard] Binary builds without warnings under\n  `cargo build --workspace --all-features --release`.\n- [hard] A smoke campaign (3 SNR points, small frame budget) completes\n  end-to-end and produces the CSV, JSONL, README, and checkpoints.\n- [hard] `--calibrate` produces a calibration CSV under\n  `<output-dir>/calibration/calibration_<rate>_<mod>.csv` for the\n  selected (rate, modulation) using `--calibrate-frames` frames per\n  point.\n- [hard] Killing the binary with SIGINT mid-run and re-invoking with\n  `--resume` results in a final CSV whose **deterministic columns\n  (es_n0_db, fer, frames, errors, mean_iters) are byte-identical** to\n  an uninterrupted reference run with the same seed (integration\n  test). **Amended 2026-05-28 per user approval**: `wall_seconds`\n  (wall-clock, inherently run-duration-dependent) and `ber` (the\n  LDPC min-sum decoder's AVX2 horizontal reduction is f32\n  non-associative, so the bit-error *count* within failed frames is\n  not bit-reproducible across separate process invocations even at a\n  fixed RNG seed) are excluded from the byte-identity assertion. The\n  criterion's intent — that the deterministic simulation results\n  survive an interrupt+resume unchanged — is met: FER and the\n  frame/error counts that define each curve are byte-identical. The\n  integration test normalizes the two excluded columns before\n  comparing.\n- [hard] Plotting script produces a PNG overlay (simulated vs ETSI\n  reference) from the campaign CSV and the reference TOML via a single\n  non-interactive invocation; documented in the binary's rustdoc.\n- [hard] CLAUDE.md updated to list the new binary, the plotting\n  script, and the reference data file.\n- [hard] No new `unsafe`; satisfies `#![deny(unsafe_code)]`.\n\n## Non-goals\n\n- No interactive UI.\n- No Rust-side plotting backend.\n- No production GPU integration. `--gpu` is a CLI-surface reservation.\n- No new channel model (AWGN only).\n- This task does NOT execute the production campaigns — that is\n  `e4849f07`.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Design doc — DVB-T2 BICM AWGN campaign runner",
+      "path": "dev/active/152388f4/152388f4-campaign-runner.md"
+    }
+  ],
+  "done_at": "2026-05-28T12:06:48.504087682Z",
+  "first_ready_at": "2026-05-27T22:35:03.478116066Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-28T07:45:09.348298239Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T12:02:50.629129266Z"
+      "updated_at": "2026-05-28T12:02:50.629129266Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-28T12:06:48.088293483Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-28T07:45:09.348298239Z"
+      "updated_at": "2026-05-28T12:06:48.088293483Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/152388f4-campaign-runner.md",
-      "commit": null,
-      "label": "Design doc — DVB-T2 BICM AWGN campaign runner",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "152388f4-2018-47ff-8dc1-c3594c84e466",
   "labels": [
     "type:task",
     "component:gf2-coding",
     "epic:dvb-t2-awgn-campaign"
   ],
-  "created_at": "2026-05-25T21:46:57.676876440Z",
-  "updated_at": "2026-07-12T20:02:55.423860610Z",
-  "first_ready_at": "2026-05-27T22:35:03.478116066Z",
-  "claimed_at": "2026-05-27T22:35:13.722913387Z",
-  "done_at": "2026-05-28T12:06:48.504087682Z"
+  "priority": "high",
+  "state": "done",
+  "title": "DVB-T2 BICM AWGN campaign runner (binary + plot + reference data)",
+  "updated_at": "2026-08-07T21:14:30.626828914Z"
 }

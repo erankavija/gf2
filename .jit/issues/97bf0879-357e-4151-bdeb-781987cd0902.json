@@ -1,482 +1,565 @@
 {
-  "id": "97bf0879-357e-4151-bdeb-781987cd0902",
-  "title": "Close gf2-core SOTA performance gaps",
-  "description": "Close the measured `gf2-core` finite-field and linear-algebra performance gaps against reproducible state-of-the-art references. The epic starts from the post-PPC scorecard, promotes only reproducible references into the hard comparison matrix, then drives optimization work until every in-scope benchmark cell is within 1.5x of the best available reference or faster.\n\n## Background\n\n`64c88ae4` established the initial `FieldMatrix` comparison infrastructure and `babcf05e` delivered the first PPC-spiral optimization wave. The post-PPC evidence shows large improvements but not full parity: GF(2) matmul remains behind M4RI, small-prime GF(p) remains far behind fflas-ffpack, GF(2^m) improved internally but lacks a comparable external reference, and several higher-level linear algebra operations still need post-PPC scorecarding.\n\nThis epic is scoped to `gf2-core` finite-field and linear-algebra performance. gf2-coding decoder throughput and AFF3CT/IT++ comparisons are out of scope.\n\n## Success Criteria\n\n- [hard] A reproducible SOTA target matrix exists and names the best available reference per operation/field family, with fflas-ffpack and M4RI as primary references and M4RIE/LinBox/NTL/FLINT included only where the survey proves they are reproducible and performance-relevant.\n- [hard] The post-PPC benchmark report supersedes `64c88ae4`'s stale publication state and clearly classifies each cell as measured, out-of-scope, slow/nightly, harness-scope gap, or optimization gap.\n- [hard] Every in-scope benchmark cell is within 1.5x of the best available reproducible reference, faster, OR covered by a user-approved scope amendment per SC#4. (Amendment 2026-05-08 — Wave-12 close-cascade: the SC#3 / SC#4 conjunction is the real epic contract; the strict-reading-of-SC#3-alone is not what the user approved at epic intake. The umbrella amendment A8 in `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` Annex A8 satisfies this conjunction for all 70 cells that miss the 1.5x threshold; per-cell routing to named follow-up JIT issues is documented there.)\n- [hard] Any cell not within 1.5x has a completed optimization child issue or an explicit user-approved scope amendment explaining why the reference is not applicable or the cell is no longer in scope.\n- [hard] GF(2), GF(p), GF(2^m), dense factorization/solve, characteristic/minimal polynomial, and sparse matrix-vector/matrix-matrix surfaces each have a final scorecard section with raw numbers and ratio-to-reference.\n- [hard] No `unsafe` leaks outside `gf2-kernels-simd` / `gf2-kernels-hip`; high-level `gf2-core` remains safe.\n- [hard] A final presentation attached to the epic summarizes achieved ratios, remaining non-goal boundaries, and future research directions.\n\n## Notes\n\nMagma and Sage are correctness/context references only unless a later user-approved amendment promotes a specific reproducible Magma/Sage benchmark to hard target status. GPU acceleration is optional and should only be wired when the CPU target matrix shows a gap that cannot plausibly close on CPU.\n\n## Intake from `64c88ae4` baseline\n\nUser-approved on 2026-04-30: the `64c88ae4` baseline report explicitly hands off missing `GF(31)` and `GF(2^32)` benchmark coverage to this epic. The SOTA target-matrix story must mention both rows and decide whether each remains an in-scope benchmark cell, is replaced by a documented representative field row, or requires a new gf2/reference harness before final scorecarding. The same intake includes the measured GF(p), GF(2), and GF(2^m) performance gaps recorded in `dev/bench_results/2026-04-26.md`.\n\n## Amendments\n\n### A8 (2026-05-08) — Wave-12 close-cascade umbrella amendment\n\nUser-approved 2026-05-08 in chat. SC#4 requires that every cell not within 1.5× has a completed optimization child issue OR an explicit user-approved scope amendment. After all prior amendments (A1–A7), 70 FAIL cells remained without individual amendment records. This umbrella amendment provides the explicit user-approved routing for all 70 cells and thereby satisfies SC#4 for the epic close.\n\nCoverage: All 70 FAIL cells are routed to named follow-up JIT issues:\n- `615db3b9` (52 cells) — finite-field dense LA SOTA catch-up plan, covering non-Mersenne GF(p) pluq/echelon/invert/solve + large-n fgemm + Mersenne echelon deficient residuals.\n- `52cce970` (2 cells) — GF(251) charpoly+minpoly AVX2 kernel; also covered by A1.\n- `974a85bd` (2 cells) — GF(2) matmul n<1024 open residual documented in that closed story.\n- `aaa847cf` (3 cells, filed 2026-05-08) — M4RI-style invert path for BitMatrix; covers GF(2) invert at n=64,256,1024.\n- `5ce13bae` (10 cells, filed 2026-05-08) — Markowitz-degree pivot selection for sparse RREF; covers sparse-elim × {GF(2), GF(7), GF(251), GF(65521), GF(2^31-1)} at n=256,1024.\n\nThe Wave-12 close brief originally cited `4c0d0202` as the sparse-elim follow-up but that issue is unrelated (\"Publish SOTA target matrix design doc [Done]\"); `5ce13bae` is the correctly-scoped replacement filed 2026-05-08. Zero uncovered cells remain. Full per-cell routing table is in `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` Annex A8.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "claimed_at": "2026-04-30T14:15:19.006890937Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.414572597Z",
   "dependencies": [
     "01ae4c20-aae4-4940-9889-ea7070bd4377"
   ],
+  "description": "Close the measured `gf2-core` finite-field and linear-algebra performance gaps against reproducible state-of-the-art references. The epic starts from the post-PPC scorecard, promotes only reproducible references into the hard comparison matrix, then drives optimization work until every in-scope benchmark cell is within 1.5x of the best available reference or faster.\n\n## Background\n\n`64c88ae4` established the initial `FieldMatrix` comparison infrastructure and `babcf05e` delivered the first PPC-spiral optimization wave. The post-PPC evidence shows large improvements but not full parity: GF(2) matmul remains behind M4RI, small-prime GF(p) remains far behind fflas-ffpack, GF(2^m) improved internally but lacks a comparable external reference, and several higher-level linear algebra operations still need post-PPC scorecarding.\n\nThis epic is scoped to `gf2-core` finite-field and linear-algebra performance. gf2-coding decoder throughput and AFF3CT/IT++ comparisons are out of scope.\n\n## Success Criteria\n\n- [hard] A reproducible SOTA target matrix exists and names the best available reference per operation/field family, with fflas-ffpack and M4RI as primary references and M4RIE/LinBox/NTL/FLINT included only where the survey proves they are reproducible and performance-relevant.\n- [hard] The post-PPC benchmark report supersedes `64c88ae4`'s stale publication state and clearly classifies each cell as measured, out-of-scope, slow/nightly, harness-scope gap, or optimization gap.\n- [hard] Every in-scope benchmark cell is within 1.5x of the best available reproducible reference, faster, OR covered by a user-approved scope amendment per SC#4. (Amendment 2026-05-08 — Wave-12 close-cascade: the SC#3 / SC#4 conjunction is the real epic contract; the strict-reading-of-SC#3-alone is not what the user approved at epic intake. The umbrella amendment A8 in `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` Annex A8 satisfies this conjunction for all 70 cells that miss the 1.5x threshold; per-cell routing to named follow-up JIT issues is documented there.)\n- [hard] Any cell not within 1.5x has a completed optimization child issue or an explicit user-approved scope amendment explaining why the reference is not applicable or the cell is no longer in scope.\n- [hard] GF(2), GF(p), GF(2^m), dense factorization/solve, characteristic/minimal polynomial, and sparse matrix-vector/matrix-matrix surfaces each have a final scorecard section with raw numbers and ratio-to-reference.\n- [hard] No `unsafe` leaks outside `gf2-kernels-simd` / `gf2-kernels-hip`; high-level `gf2-core` remains safe.\n- [hard] A final presentation attached to the epic summarizes achieved ratios, remaining non-goal boundaries, and future research directions.\n\n## Notes\n\nMagma and Sage are correctness/context references only unless a later user-approved amendment promotes a specific reproducible Magma/Sage benchmark to hard target status. GPU acceleration is optional and should only be wired when the CPU target matrix shows a gap that cannot plausibly close on CPU.\n\n## Intake from `64c88ae4` baseline\n\nUser-approved on 2026-04-30: the `64c88ae4` baseline report explicitly hands off missing `GF(31)` and `GF(2^32)` benchmark coverage to this epic. The SOTA target-matrix story must mention both rows and decide whether each remains an in-scope benchmark cell, is replaced by a documented representative field row, or requires a new gf2/reference harness before final scorecarding. The same intake includes the measured GF(p), GF(2), and GF(2^m) performance gaps recorded in `dev/bench_results/2026-04-26.md`.\n\n## Amendments\n\n### A8 (2026-05-08) — Wave-12 close-cascade umbrella amendment\n\nUser-approved 2026-05-08 in chat. SC#4 requires that every cell not within 1.5× has a completed optimization child issue OR an explicit user-approved scope amendment. After all prior amendments (A1–A7), 70 FAIL cells remained without individual amendment records. This umbrella amendment provides the explicit user-approved routing for all 70 cells and thereby satisfies SC#4 for the epic close.\n\nCoverage: All 70 FAIL cells are routed to named follow-up JIT issues:\n- `615db3b9` (52 cells) — finite-field dense LA SOTA catch-up plan, covering non-Mersenne GF(p) pluq/echelon/invert/solve + large-n fgemm + Mersenne echelon deficient residuals.\n- `52cce970` (2 cells) — GF(251) charpoly+minpoly AVX2 kernel; also covered by A1.\n- `974a85bd` (2 cells) — GF(2) matmul n<1024 open residual documented in that closed story.\n- `aaa847cf` (3 cells, filed 2026-05-08) — M4RI-style invert path for BitMatrix; covers GF(2) invert at n=64,256,1024.\n- `5ce13bae` (10 cells, filed 2026-05-08) — Markowitz-degree pivot selection for sparse RREF; covers sparse-elim × {GF(2), GF(7), GF(251), GF(65521), GF(2^31-1)} at n=256,1024.\n\nThe Wave-12 close brief originally cited `4c0d0202` as the sparse-elim follow-up but that issue is unrelated (\"Publish SOTA target matrix design doc [Done]\"); `5ce13bae` is the correctly-scoped replacement filed 2026-05-08. Zero uncovered cells remain. Full per-cell routing table is in `dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md` Annex A8.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "PPC benchmark-gap closure evidence",
+      "path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2) Strassen/M4RI crossover evidence",
+      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(p) fflas-comparable sweep",
+      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(2^m) batch GEMM evidence",
+      "path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "FieldMatrix baseline handoff from 64c88ae4",
+      "path": "dev/bench_results/2026-04-26.md"
+    },
+    {
+      "commit": "47e4525",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "SOTA target matrix",
+      "path": "dev/plans/sota_target_matrix.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
+          "resolved_path": null
+        }
+      ],
+      "commit": "3f62600",
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
+      "path": "dev/plans/small_prime_kernel_strategy.md"
+    },
+    {
+      "commit": "11be30f",
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "GF(p) parity evidence (story cc5de315 closure)",
+      "path": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Final SOTA scorecard (16-cell summary across 4 matrix families)",
+      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Final SOTA aggregate gf2 measurements (243 rows)",
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Final SOTA aggregate reference measurements (335 rows)",
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Aggregate CSV schema + supersession rules",
+      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Polynomial parity publication (16-cell scorecard)",
+      "path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "base.css",
+          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "themes/rust.css",
+          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "Final SOTA closure Reveal.js deck (28 slides)",
+      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 10",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-10.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 11",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-11.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 2",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-2.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 3",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-3.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 4",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-4.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 5",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-5.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 6",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-6.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 7",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-7.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 8",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-8.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff 9",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff-9.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "session",
+      "format": "markdown",
+      "label": "Session handoff",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Container progress record",
+      "path": "dev/active/97bf0879-gf2-core-sota-performance/97bf0879-progress.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "meta",
+      "format": "markdown",
+      "label": "project-lead skill improvements (deferred from 47698404 post-mortem)",
+      "path": "dev/plans/97bf0879-gf2-core-sota-performance/project_lead_skill_improvements.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "themes/rust.css",
+          "resolved_path": "dev/bench_results/97bf0879-gf2-core-sota-performance/themes/rust.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "base.css",
+          "resolved_path": "dev/bench_results/97bf0879-gf2-core-sota-performance/base.css"
+        }
+      ],
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "SOTA journey Reveal.js deck (43 slides — narrative arc)",
+      "path": "dev/bench_results/97bf0879-gf2-core-sota-performance/talk.html"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "format": "markdown",
+      "label": "Wave-12 bench extension: GF(31) dense-LA PENDING cell measurements",
+      "path": "dev/bench_results/97bf0879-gf2-core-sota-performance/2026-05-08-pending-cell-measurement.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "base.css",
+          "resolved_path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/base.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.googleapis.com",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "themes/rust.css",
+          "resolved_path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/themes/rust.css"
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
+          "resolved_path": null
+        },
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://fonts.gstatic.com",
+          "resolved_path": null
+        }
+      ],
+      "commit": null,
+      "doc_type": "presentation",
+      "format": "html",
+      "label": "PPC epic Reveal.js completion deck",
+      "path": "dev/presentations/babcf05e-gf2-core-ppc-spiral/babcf05e-ppc-spiral/talk.html"
+    }
+  ],
+  "done_at": "2026-05-08T21:52:26.258919417Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-08T19:21:15.499367783Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T21:46:52.920103608Z"
+      "updated_at": "2026-05-08T21:46:52.920103608Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-08T19:21:21.825535803Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-08T19:21:15.499367783Z"
+      "updated_at": "2026-05-08T19:21:21.825535803Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-04-29-3abb755e-benchmark-gap-closure.md",
-      "commit": null,
-      "label": "PPC benchmark-gap closure evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-strassen-matmul-crossover.md",
-      "commit": null,
-      "label": "GF(2) Strassen/M4RI crossover evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-2598b981-fieldmatrix-gemm-fflas-sweep.md",
-      "commit": null,
-      "label": "GF(p) fflas-comparable sweep",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-29-gf2m-batch-fieldmatrix-gemm.md",
-      "commit": null,
-      "label": "GF(2^m) batch GEMM evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-04-26.md",
-      "commit": null,
-      "label": "FieldMatrix baseline handoff from 64c88ae4",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/project_lead_skill_improvements.md",
-      "commit": null,
-      "label": "project-lead skill improvements (deferred from 47698404 post-mortem)",
-      "doc_type": "meta",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/sota_target_matrix.md",
-      "commit": "47e4525",
-      "label": "SOTA target matrix",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/plans/small_prime_kernel_strategy.md",
-      "commit": "3f62600",
-      "label": "Small-prime kernel strategy (Cand C + Cand F amendment)",
-      "doc_type": "design",
-      "format": "markdown",
-      "assets": [
-        {
-          "original_path": "https://github.com/flame/blis/blob/master/docs/KernelsHowTo.md",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-06-7a106fe4-gfp-parity-evidence.md",
-      "commit": "11be30f",
-      "label": "GF(p) parity evidence (story cc5de315 closure)",
-      "doc_type": "evidence",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-2cfc4372-sota-scorecard.md",
-      "commit": null,
-      "label": "Final SOTA scorecard (16-cell summary across 4 matrix families)",
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-gf2.csv",
-      "commit": null,
-      "label": "Final SOTA aggregate gf2 measurements (243 rows)",
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-reference.csv",
-      "commit": null,
-      "label": "Final SOTA aggregate reference measurements (335 rows)",
-      "doc_type": null
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-dece4e73-sota-aggregate-schema.md",
-      "commit": null,
-      "label": "Aggregate CSV schema + supersession rules",
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-8ccc1751-polynomial-parity-publish.md",
-      "commit": null,
-      "label": "Polynomial parity publication (16-cell scorecard)",
-      "doc_type": null,
-      "format": "markdown"
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-pending-cell-measurement.md",
-      "commit": null,
-      "label": "Wave-12 bench extension: GF(31) dense-LA PENDING cell measurements",
-      "doc_type": "notes",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/presentations/babcf05e-ppc-spiral/talk.html",
-      "commit": null,
-      "label": "PPC epic Reveal.js completion deck",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/presentations/babcf05e-ppc-spiral/themes/rust.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false
-        },
-        {
-          "original_path": "base.css",
-          "resolved_path": "dev/presentations/babcf05e-ppc-spiral/base.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-97bf0879-sota-journey-deck/talk.html",
-      "commit": null,
-      "label": "SOTA journey Reveal.js deck (43 slides — narrative arc)",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "base.css",
-          "resolved_path": "dev/bench_results/2026-05-08-97bf0879-sota-journey-deck/base.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/bench_results/2026-05-08-97bf0879-sota-journey-deck/themes/rust.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    },
-    {
-      "path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/talk.html",
-      "commit": null,
-      "label": "Final SOTA closure Reveal.js deck (28 slides)",
-      "doc_type": "presentation",
-      "format": "html",
-      "assets": [
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "base.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/base.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "e964dd787590ea2c2eb5784b5362674504e66d2e4626bca1b1e8abff071f7059",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.googleapis.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "themes/rust.css",
-          "resolved_path": "dev/bench_results/2026-05-08-f00fd873-sota-closure-deck/themes/rust.css",
-          "asset_type": "local",
-          "mime_type": null,
-          "content_hash": "7ba057c88a30dc41c8564b549d0b76bb6fa98413c3a50b66fd6a3f80a4783cbe",
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        },
-        {
-          "original_path": "https://fonts.gstatic.com",
-          "resolved_path": null,
-          "asset_type": "external",
-          "mime_type": null,
-          "content_hash": null,
-          "is_shared": false
-        }
-      ]
-    }
-  ],
+  "id": "97bf0879-357e-4151-bdeb-781987cd0902",
   "labels": [
     "type:epic",
     "component:gf2-core",
@@ -484,8 +567,8 @@
     "milestone:gf2-core-perf",
     "epic:gf2-core-sota-performance"
   ],
-  "created_at": "2026-04-30T06:43:02.414572597Z",
-  "updated_at": "2026-07-12T20:02:55.459272456Z",
-  "claimed_at": "2026-04-30T14:15:19.006890937Z",
-  "done_at": "2026-05-08T21:52:26.258919417Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Close gf2-core SOTA performance gaps",
+  "updated_at": "2026-08-07T21:18:43.613325551Z"
 }

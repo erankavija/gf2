@@ -1,7 +1,7 @@
 //! The [`Pipeline`] — a built, runnable graph of stages.
 //!
 //! Lifts the §1 "`Pipeline` and `BatchHandle`" block of the Phase 0 design doc
-//! (`dev/active/ec530af9-pipeline-design.md`) into a Phase A skeleton. The
+//! (`dev/active/ec530af9/ec530af9-pipeline-design.md`) into a Phase A skeleton. The
 //! batch-submission and run methods (`submit`, `collect`, `run_with_decoder`,
 //! `run_parallel`) land with the graph (`c09d3e95`), parallel (`3fcb7025`),
 //! and migration (`bbf6b6ee`) waves; only the owning data structure and the

@@ -1,13 +1,23 @@
 {
-  "id": "0203bebd-2d60-45af-9ce0-6c99a9be0f8c",
-  "title": "Design non-residue specification pattern for tower extensions",
-  "description": "Define how `QuadraticExt` and `CubicExt` know which irreducible polynomial to use at each tower level.\n\n## Decision\n\nUse a **config trait** (arkworks-style). A zero-sized marker type per extension level specifies `BaseField` and `NON_RESIDUE`. This is zero-cost, handles nested towers naturally, and is the industry standard.\n\nRejected: const-generic (dead end for nested towers where β is an extension field element) and runtime (per-element overhead, breaks `ConstField`).\n\n## Deliverable\n\n`crates/gf2-core/src/gfpn/ext_config.rs` containing:\n\n- `ExtConfig` trait with `type BaseField: ConstField`, `const NON_RESIDUE: Self::BaseField`, and `fn mul_by_non_residue()` with default impl.\n- Unit tests verifying a concrete config compiles and `mul_by_non_residue` works for a simple `Fp<P>` base field.\n\nSee design plan: `dev/plans/non_residue_config_trait.md`\n\n## Success criteria\n\n- `ExtConfig` trait compiles and can be implemented for `Fp<7>` with β = -1.\n- `mul_by_non_residue` default impl matches manual multiplication.\n- A nested config (where `BaseField` is itself an extension type) compiles — verified once `QuadraticExt` exists (tracked in 8d2863e6), but the trait definition must not preclude it.\n- No runtime overhead: config types are zero-sized.",
-  "state": "done",
-  "priority": "low",
   "assignee": "agent:claude",
+  "claimed_at": "2026-03-05T20:54:31.366116394Z",
+  "context": {},
+  "created_at": "2026-02-26T00:09:06.971401251Z",
   "dependencies": [
     "8ce6f8aa-9252-4ae6-ab5c-e702e961d460"
   ],
+  "description": "Define how `QuadraticExt` and `CubicExt` know which irreducible polynomial to use at each tower level.\n\n## Decision\n\nUse a **config trait** (arkworks-style). A zero-sized marker type per extension level specifies `BaseField` and `NON_RESIDUE`. This is zero-cost, handles nested towers naturally, and is the industry standard.\n\nRejected: const-generic (dead end for nested towers where β is an extension field element) and runtime (per-element overhead, breaks `ConstField`).\n\n## Deliverable\n\n`crates/gf2-core/src/gfpn/ext_config.rs` containing:\n\n- `ExtConfig` trait with `type BaseField: ConstField`, `const NON_RESIDUE: Self::BaseField`, and `fn mul_by_non_residue()` with default impl.\n- Unit tests verifying a concrete config compiles and `mul_by_non_residue` works for a simple `Fp<P>` base field.\n\nSee design plan: `dev/plans/non_residue_config_trait.md`\n\n## Success criteria\n\n- `ExtConfig` trait compiles and can be implemented for `Fp<7>` with β = -1.\n- `mul_by_non_residue` default impl matches manual multiplication.\n- A nested config (where `BaseField` is itself an extension type) compiles — verified once `QuadraticExt` exists (tracked in 8d2863e6), but the trait definition must not preclude it.\n- No runtime overhead: config types are zero-sized.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Non-residue config trait design plan",
+      "path": "dev/plans/0203bebd/non_residue_config_trait.md"
+    }
+  ],
+  "done_at": "2026-03-05T22:39:20.867762087Z",
+  "first_ready_at": "2026-03-03T17:59:03.364898387Z",
   "gates_required": [
     "tdd-reminder",
     "tests",
@@ -17,55 +27,45 @@
     "doc-review"
   ],
   "gates_status": {
-    "fmt": {
+    "clippy": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:46:37.267261297Z"
+      "updated_at": "2026-03-05T21:46:35.652459027Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:57:56.582367892Z"
-    },
-    "clippy": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:46:35.652459027Z"
-    },
-    "tests": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-03-05T21:46:24.922914900Z"
+      "updated_at": "2026-03-05T21:57:56.582367892Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-05T22:39:16.688932485Z"
+      "updated_at": "2026-03-05T22:39:16.688932485Z",
+      "updated_by": "agent:claude"
+    },
+    "fmt": {
+      "status": "passed",
+      "updated_at": "2026-03-05T21:46:37.267261297Z",
+      "updated_by": "auto:executor"
     },
     "tdd-reminder": {
       "status": "passed",
-      "updated_by": "agent:claude",
-      "updated_at": "2026-03-05T20:54:31.346668997Z"
+      "updated_at": "2026-03-05T20:54:31.346668997Z",
+      "updated_by": "agent:claude"
+    },
+    "tests": {
+      "status": "passed",
+      "updated_at": "2026-03-05T21:46:24.922914900Z",
+      "updated_by": "auto:executor"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/non_residue_config_trait.md",
-      "commit": null,
-      "label": "Non-residue config trait design plan",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "0203bebd-2d60-45af-9ce0-6c99a9be0f8c",
   "labels": [
     "component:gf2-core",
     "type:task",
     "story:implement-tower-extension-field-architecture-for-gf-p-n"
   ],
-  "created_at": "2026-02-26T00:09:06.971401251Z",
-  "updated_at": "2026-07-14T20:51:29.829409883Z",
-  "first_ready_at": "2026-03-03T17:59:03.364898387Z",
-  "claimed_at": "2026-03-05T20:54:31.366116394Z",
-  "done_at": "2026-03-05T22:39:20.867762087Z"
+  "priority": "low",
+  "state": "done",
+  "title": "Design non-residue specification pattern for tower extensions",
+  "updated_at": "2026-08-07T21:14:52.783199441Z"
 }

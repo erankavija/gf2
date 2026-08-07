@@ -159,7 +159,7 @@
 //!   `BPSK` preset for the `ChannelModel` consumers of the simulation
 //!   harness.
 //!
-//! See `dev/active/c87c5043-constellation-data-model-plan.md` for the
+//! See `dev/active/c87c5043/c87c5043-constellation-data-model-plan.md` for the
 //! locked design decisions behind this surface.
 //!
 //! # Noise and normalization contract

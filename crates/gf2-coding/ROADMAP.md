@@ -257,7 +257,7 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 > infrastructure (batch BCJR, LDPC BP `ldpc_bp.hip`, Gray-QAM demap, multi-arch
 > `build.rs --offload-arch=gfx1030`); CUDA and a production multi-backend
 > selection layer are explicitly out of scope for the prototype wave. Wave plan:
-> [`dev/plans/hip_gpu_prototype_wave.md`](../../dev/plans/hip_gpu_prototype_wave.md).
+> [`dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md`](../../dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md).
 > The go/investigate/abandon decision is tracked in epic `806eb14e`.
 
 **Goal**: Validate GPU acceleration feasibility for LDPC
@@ -270,7 +270,7 @@ See [docs/PARALLELIZATION.md](docs/PARALLELIZATION.md) for detailed design and i
 **Milestone 2: LDPC GPU kernel** (GLSL plan superseded — done in HIP):
 - [x] LDPC belief-propagation kernel in HIP (`gf2-kernels-hip/hip/ldpc_bp.hip`),
       not GLSL. Delivered via the gf2-sim GPU pipeline (jit `a930be7f`); design:
-      [`dev/active/gpu-batch-ldpc-bp-plan.md`](../../dev/active/gpu-batch-ldpc-bp-plan.md).
+      [`dev/active/37e0b235/gpu-batch-ldpc-bp-plan.md`](../../dev/active/37e0b235/gpu-batch-ldpc-bp-plan.md).
 - [x] Check-node / variable-node update kernels (normalized min-sum / sum-product)
 - [x] Pipeline: Upload → Compute → Download (H2D → kernel → D2H, stream-ordered)
 

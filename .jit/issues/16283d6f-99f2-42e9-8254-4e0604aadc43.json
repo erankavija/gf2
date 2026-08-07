@@ -12,7 +12,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "GPU FieldMatrix sketch (HIP, pre-filed)",
-      "path": "dev/plans/gpu_fieldmatrix_sketch.md"
+      "path": "dev/plans/16283d6f-fieldmatrix-gpu/gpu_fieldmatrix_sketch.md"
     }
   ],
   "first_ready_at": "2026-04-30T08:53:07.431638520Z",
@@ -34,5 +34,5 @@
   "priority": "low",
   "state": "ready",
   "title": "GPU-accelerated FieldMatrix (HIP, dense matmul + SpMV)",
-  "updated_at": "2026-08-07T20:37:34.495386583Z"
+  "updated_at": "2026-08-07T21:14:51.875254659Z"
 }

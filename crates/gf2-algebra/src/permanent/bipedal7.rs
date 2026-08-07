@@ -34,7 +34,7 @@
 //!
 //! # Algorithm reference
 //!
-//! `dev/plans/gf2_algebra_permanent.md` §6 (F_7 packed permanent).
+//! `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §6 (F_7 packed permanent).
 //! Mirrors the F_3 path in `crate::permanent::bipedal3`.
 
 use gf2_core::gfp::Fp;

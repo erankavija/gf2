@@ -2,7 +2,7 @@
   Gf2Algebra.Proofs.Packed5Correctness — D5 packed F_5 correctness
 
   Implements the 23 lemmas of the D5 proof sketch
-  (`dev/plans/d5_lean_packed5_sketch.md`) for JIT issue 30e98ef1.
+  (`dev/plans/30e98ef1/d5_lean_packed5_sketch.md`) for JIT issue 30e98ef1.
 
   Proof target (sketch §4): the four inherent wrappers
   `Packed5.{add,sub,mul,neg}_inherent` defined in

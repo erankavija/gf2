@@ -1,10 +1,7 @@
 {
-  "id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
-  "title": "Prototype GPU acceleration for belief propagation",
-  "description": "Prototype a HIP/ROCm GPU acceleration wave for coding workloads and decide, from measured evidence, whether LDPC BP and BCH syndrome evaluation should move toward production GPU backends.\n\n## Background\n\nThe current epic mixes newer HIP/ROCm work with older Vulkan/GLSL tasks and a downstream production-backend epic. The confirmed direction for this epic is HIP/ROCm only, using the existing `gf2-kernels-hip` unsafe-isolation pattern. The epic covers a prototype and feasibility decision, not production backend rollout.\n\nThe target evidence environment is AMD RX 6950 XT / `gfx1030` with ROCm 7.2 and `hipcc` at `/opt/rocm/bin/hipcc`. GPU performance claims compare against the best existing production CPU path at the same batch or campaign shape, including rayon where production uses rayon.\n\n## Success Criteria\n\n- [hard] The epic uses HIP/ROCm as the only GPU backend direction; Vulkan/GLSL children are rewritten or closed as superseded.\n- [hard] LDPC BP has a HIP prototype with CPU/GPU correctness evidence and at least 3x speedup versus the best production CPU path at the selected design workload.\n- [hard] BCH syndrome evaluation has a HIP prototype with exact CPU/GPU syndrome equivalence and at least 5x speedup versus the best production CPU path at the selected design workload.\n- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and characterizes the result. Observed (gf2-sim hybrid `75c22fa8`, gfx1030): 100% CPU-prep∥GPU-decode overlap; throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps) — no measurable improvement at the single-consumer config; overlap converts to a speedup only under CPU-prep contention / multi-stream saturation.\n- [hard] The final feasibility report states go/investigate/abandon for LDPC BP and BCH syndrome evaluation, with raw evidence paths and downstream production recommendations.\n- [hard] Default workspace CI remains green without ROCm installed; HIP-only checks are isolated to the `gf2-kernels-hip` crate or `gf2-coding --features hip` on ROCm hosts.\n- [hard] No unsafe code leaks outside `gf2-kernels-hip`.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`.\n\nNon-goals: Vulkan/GLSL, CUDA, production multi-backend selection, and production GPU backend rollout for all code types. Production work remains downstream of this prototype epic's final decision.\n\nAMENDMENT 2026-06-18 (user-approved, measurements-not-guesses): criterion 4 reworded from \"demonstrates measurable end-to-end throughput improvement\" to \"characterizes the result\", recording the observed measurement — 100% CPU/GPU overlap and throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps, gf2-sim hybrid `75c22fa8`). The \"improvement\" wording was written before evidence existed. The shared scheduler is already adopted in `gf2-sim` for its overlap + CPU-fallback architecture; the throughput-neutral result is the genuine feasibility finding (the default-stream path is already async/stream-capable), not an implementation gap. Evidence: `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`, `parallelism-receipts.md`; report `dev/active/806eb14e-feasibility-report.md` §4.3.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:project-lead",
+  "context": {},
+  "created_at": "2026-02-21T19:35:51.589062719Z",
   "dependencies": [
     "bfd1aa89-e0d8-4fdc-8750-0d1b6b294df9",
     "dc32270e-cb5a-4b98-8efc-06eb343ae847",
@@ -12,53 +9,69 @@
     "719fb8de-5620-4496-b0b6-dc0fbd163e60",
     "aeab2ee4-e860-418a-a3eb-9a55ff204a3f"
   ],
+  "description": "Prototype a HIP/ROCm GPU acceleration wave for coding workloads and decide, from measured evidence, whether LDPC BP and BCH syndrome evaluation should move toward production GPU backends.\n\n## Background\n\nThe current epic mixes newer HIP/ROCm work with older Vulkan/GLSL tasks and a downstream production-backend epic. The confirmed direction for this epic is HIP/ROCm only, using the existing `gf2-kernels-hip` unsafe-isolation pattern. The epic covers a prototype and feasibility decision, not production backend rollout.\n\nThe target evidence environment is AMD RX 6950 XT / `gfx1030` with ROCm 7.2 and `hipcc` at `/opt/rocm/bin/hipcc`. GPU performance claims compare against the best existing production CPU path at the same batch or campaign shape, including rayon where production uses rayon.\n\n## Success Criteria\n\n- [hard] The epic uses HIP/ROCm as the only GPU backend direction; Vulkan/GLSL children are rewritten or closed as superseded.\n- [hard] LDPC BP has a HIP prototype with CPU/GPU correctness evidence and at least 3x speedup versus the best production CPU path at the selected design workload.\n- [hard] BCH syndrome evaluation has a HIP prototype with exact CPU/GPU syndrome equivalence and at least 5x speedup versus the best production CPU path at the selected design workload.\n- [hard] Shared HIP scheduling work quantifies direct per-thread/default-stream submission versus a shared scheduler and characterizes the result. Observed (gf2-sim hybrid `75c22fa8`, gfx1030): 100% CPU-prep∥GPU-decode overlap; throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps) — no measurable improvement at the single-consumer config; overlap converts to a speedup only under CPU-prep contention / multi-stream saturation.\n- [hard] The final feasibility report states go/investigate/abandon for LDPC BP and BCH syndrome evaluation, with raw evidence paths and downstream production recommendations.\n- [hard] Default workspace CI remains green without ROCm installed; HIP-only checks are isolated to the `gf2-kernels-hip` crate or `gf2-coding --features hip` on ROCm hosts.\n- [hard] No unsafe code leaks outside `gf2-kernels-hip`.\n\n## Notes\n\nSpec doc: `dev/plans/hip_gpu_prototype_wave.md`.\n\nNon-goals: Vulkan/GLSL, CUDA, production multi-backend selection, and production GPU backend rollout for all code types. Production work remains downstream of this prototype epic's final decision.\n\nAMENDMENT 2026-06-18 (user-approved, measurements-not-guesses): criterion 4 reworded from \"demonstrates measurable end-to-end throughput improvement\" to \"characterizes the result\", recording the observed measurement — 100% CPU/GPU overlap and throughput-neutral vs direct default-stream submission (123.03 vs 123.25 fps, gf2-sim hybrid `75c22fa8`). The \"improvement\" wording was written before evidence existed. The shared scheduler is already adopted in `gf2-sim` for its overlap + CPU-fallback architecture; the throughput-neutral result is the genuine feasibility finding (the default-stream path is already async/stream-capable), not an implementation gap. Evidence: `dev/benchmarks/gf2-sim/hybrid-executor-receipts.md`, `parallelism-receipts.md`; report `dev/active/806eb14e-feasibility-report.md` §4.3.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Epic completion report",
+      "path": "dev/active/806eb14e-hip-gpu-prototype/806eb14e-completion-report.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "GPU prototype feasibility decision report",
+      "path": "dev/active/806eb14e-hip-gpu-prototype/806eb14e-feasibility-report.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "notes",
+      "label": "Container progress record",
+      "path": "dev/active/806eb14e-hip-gpu-prototype/806eb14e-progress.json"
+    },
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "HIP/ROCm GPU prototype wave plan",
+      "path": "dev/plans/806eb14e-hip-gpu-prototype/hip_gpu_prototype_wave.md"
+    }
+  ],
+  "done_at": "2026-06-17T23:10:51.461782890Z",
+  "first_ready_at": "2026-02-21T19:49:04.461936356Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
-      "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-06-17T23:10:51.373651855Z"
-    },
     "cargo-ci": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-17T23:06:40.758541573Z"
+      "updated_at": "2026-06-17T23:06:40.758541573Z",
+      "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-06-17T23:07:43.966451137Z"
+      "updated_at": "2026-06-17T23:07:43.966451137Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-06-17T23:10:51.373651855Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/plans/hip_gpu_prototype_wave.md",
-      "commit": null,
-      "label": "HIP/ROCm GPU prototype wave plan",
-      "doc_type": "design",
-      "format": "markdown"
-    },
-    {
-      "path": "dev/active/806eb14e-completion-report.md",
-      "commit": "b148f81b",
-      "label": "Epic completion report",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "806eb14e-dc3d-4a1c-b4bf-5f30b9cfa923",
   "labels": [
     "type:epic",
     "component:gf2-coding",
     "component:gf2-kernels-hip",
     "epic:hip-gpu-prototype"
   ],
-  "created_at": "2026-02-21T19:35:51.589062719Z",
-  "updated_at": "2026-07-12T20:02:55.452923461Z",
-  "first_ready_at": "2026-02-21T19:49:04.461936356Z",
-  "done_at": "2026-06-17T23:10:51.461782890Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Prototype GPU acceleration for belief propagation",
+  "updated_at": "2026-08-07T21:14:52.329565351Z"
 }

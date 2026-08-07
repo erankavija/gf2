@@ -12,7 +12,7 @@
 //!   OpenBLAS sgemm cascade. Closed; SHORTFALL at both cells.
 //! - **Route C** (this kernel, jit:fc182ed5) — pure-integer
 //!   Goto/BLIS panelized micro-kernel. See
-//!   `dev/active/fc182ed5-route-c-design.md` for the panel
+//!   `dev/active/fc182ed5/fc182ed5-route-c-design.md` for the panel
 //!   dimension derivation (`MR × NR × KC = 4 × 24 × 256`) and the
 //!   `_mm256_madd_epi16` inner-loop structure.
 //!

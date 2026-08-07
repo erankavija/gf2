@@ -1,7 +1,7 @@
 /-
   Gf2Algebra.Proofs.Packed7Correctness — D6 packed F_7 correctness (Path B)
 
-  Implements the D6 proof sketch (`dev/plans/d6_lean_packed7_sketch.md`)
+  Implements the D6 proof sketch (`dev/plans/30e98ef1/d6_lean_packed7_sketch.md`)
   for JIT issue 30e98ef1, on the user-chosen **Path B** (axiomatise the
   three LUTs with a source-faithful characterisation cross-validated by
   the exhaustive Rust tests; prove `binary_op_word` + the four

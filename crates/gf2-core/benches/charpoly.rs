@@ -264,7 +264,7 @@ fn bench_dispatch_arms<const P: u64>(
 ///
 /// Post-Wave-9 measurement (2026-05-07): cubic is ~148x faster than KG
 /// at `n = 256` (37.1ms vs 5.51s) and the ratio grows monotonically
-/// with `n` (see `dev/bench_results/2026-05-07-4a59d1f9-keller-gehrig-crossover.md`
+/// with `n` (see `dev/bench_results/4a59d1f9/2026-05-07-4a59d1f9-keller-gehrig-crossover.md`
 /// and `crates/gf2-core/src/field/charpoly.rs` module docs); public
 /// [`FieldMatrix::charpoly`] therefore always selects cubic under
 /// default dispatch (`KG_DISPATCH_MIN_N == usize::MAX`). The

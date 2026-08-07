@@ -1,54 +1,54 @@
 {
-  "id": "380e041a-7931-4bfc-8f95-982f103c51bf",
-  "title": "Prototype M4RI-style table scheduling",
-  "description": "Prototype or benchmark M4RI-style Gray-code table scheduling for BitMatrix matmul.\n\n## Success Criteria\n\n- [hard] The prototype is bit-exact against existing BitMatrix multiplication.\n- [hard] Benchmark evidence shows whether the approach can close the 1.5x gap.",
-  "state": "done",
-  "priority": "high",
   "assignee": "agent:claude",
+  "claimed_at": "2026-05-06T12:31:27.971795984Z",
+  "context": {},
+  "created_at": "2026-04-30T06:43:02.655809466Z",
   "dependencies": [
     "0fd48627-ae6a-43af-89c2-49e49d17de46"
   ],
+  "description": "Prototype or benchmark M4RI-style Gray-code table scheduling for BitMatrix matmul.\n\n## Success Criteria\n\n- [hard] The prototype is bit-exact against existing BitMatrix multiplication.\n- [hard] Benchmark evidence shows whether the approach can close the 1.5x gap.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "M4RI-style Gray-table schedule benchmark evidence",
+      "path": "dev/bench_results/380e041a/2026-05-06-380e041a-m4ri-gray-schedule.md"
+    }
+  ],
+  "done_at": "2026-05-06T13:46:36.626471561Z",
+  "first_ready_at": "2026-05-04T13:54:21.686990043Z",
   "gates_required": [
     "code-review",
     "cargo-ci",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-05-06T13:35:47.903324319Z",
+      "updated_by": "auto:executor"
+    },
     "code-review": {
       "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T13:39:51.845593932Z"
+      "updated_at": "2026-05-06T13:39:51.845593932Z",
+      "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_by": "agent:project-lead",
-      "updated_at": "2026-05-06T13:46:10.200738630Z"
-    },
-    "cargo-ci": {
-      "status": "passed",
-      "updated_by": "auto:executor",
-      "updated_at": "2026-05-06T13:35:47.903324319Z"
+      "updated_at": "2026-05-06T13:46:10.200738630Z",
+      "updated_by": "agent:project-lead"
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/bench_results/2026-05-06-380e041a-m4ri-gray-schedule.md",
-      "commit": "fc8ffdd",
-      "label": "M4RI-style Gray-table schedule benchmark evidence",
-      "doc_type": "evidence",
-      "format": "markdown"
-    }
-  ],
+  "id": "380e041a-7931-4bfc-8f95-982f103c51bf",
   "labels": [
     "type:task",
     "component:gf2-core",
     "epic:gf2-core-sota-performance",
     "story:sota-gf2-m4ri"
   ],
-  "created_at": "2026-04-30T06:43:02.655809466Z",
-  "updated_at": "2026-07-12T20:02:55.434721778Z",
-  "first_ready_at": "2026-05-04T13:54:21.686990043Z",
-  "claimed_at": "2026-05-06T12:31:27.971795984Z",
-  "done_at": "2026-05-06T13:46:36.626471561Z"
+  "priority": "high",
+  "state": "done",
+  "title": "Prototype M4RI-style table scheduling",
+  "updated_at": "2026-08-07T21:15:01.304015233Z"
 }

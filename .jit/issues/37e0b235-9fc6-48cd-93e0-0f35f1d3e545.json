@@ -1,43 +1,42 @@
 {
-  "id": "37e0b235-9fc6-48cd-93e0-0f35f1d3e545",
-  "title": "HIP/ROCm GPU-accelerated batch LDPC BP decoder",
-  "description": "Implement and evaluate a HIP/ROCm batch LDPC normalized min-sum belief-propagation prototype.\n\n## Background\n\nLDPC BP dominates decoding time in coded simulation campaigns. The prototype batches frames on GPU while preserving CPU/GPU correctness and comparing against the best current production CPU path at the same workload shape, including rayon where production uses rayon.\n\nExisting design doc: `dev/active/gpu-batch-ldpc-bp-plan.md`. Epic spec: `dev/plans/hip_gpu_prototype_wave.md`.\n\n## Success Criteria\n\n- [hard] `GpuLdpcGraph` correctly represents CPU sparse parity-check structure, including edge counts, check/variable offsets, and mate indices consistent with CPU row/column iterators.\n- [hard] HIP kernels implement check-node normalized min-sum, variable-node update, and syndrome or early-termination support with deterministic host-side orchestration.\n- [hard] Safe Rust wrappers in `gf2-kernels-hip` and feature-gated `gf2-coding` integration compile only behind the `hip` feature; default workspace builds succeed without ROCm installed.\n- [hard] CPU/GPU correctness fixtures cover Hamming, 5G NR BG2, and DVB-T2 short Rate1/2; hard decisions match exactly where specified and LLR/belief differences stay within documented tolerances.\n- [hard] Batch correctness covers the selected design workload and at least one smaller fixture; GPU batch output matches CPU serial/batch comparator semantics.\n- [hard] Early termination converges before `max_iterations` on high-SNR noiseless inputs and matches CPU convergence behavior where the CPU path exposes the same criterion.\n- [hard] Performance evidence records hardware metadata, ROCm version, benchmark command, raw result paths, batch-size sweep, and phase timing where practical.\n- [hard] GPU LDPC BP is at least 3x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nTarget environment: AMD RX 6950 XT / `gfx1030`, ROCm 7.2, `/opt/rocm/bin/hipcc`. Do not compare only against an artificially serial CPU loop unless the best production CPU path is also reported and used for the hard speed criterion.",
-  "state": "rejected",
-  "priority": "high",
   "assignee": null,
+  "context": {},
+  "created_at": "2026-04-11T15:33:19.416265735Z",
   "dependencies": [],
+  "description": "Implement and evaluate a HIP/ROCm batch LDPC normalized min-sum belief-propagation prototype.\n\n## Background\n\nLDPC BP dominates decoding time in coded simulation campaigns. The prototype batches frames on GPU while preserving CPU/GPU correctness and comparing against the best current production CPU path at the same workload shape, including rayon where production uses rayon.\n\nExisting design doc: `dev/active/gpu-batch-ldpc-bp-plan.md`. Epic spec: `dev/plans/hip_gpu_prototype_wave.md`.\n\n## Success Criteria\n\n- [hard] `GpuLdpcGraph` correctly represents CPU sparse parity-check structure, including edge counts, check/variable offsets, and mate indices consistent with CPU row/column iterators.\n- [hard] HIP kernels implement check-node normalized min-sum, variable-node update, and syndrome or early-termination support with deterministic host-side orchestration.\n- [hard] Safe Rust wrappers in `gf2-kernels-hip` and feature-gated `gf2-coding` integration compile only behind the `hip` feature; default workspace builds succeed without ROCm installed.\n- [hard] CPU/GPU correctness fixtures cover Hamming, 5G NR BG2, and DVB-T2 short Rate1/2; hard decisions match exactly where specified and LLR/belief differences stay within documented tolerances.\n- [hard] Batch correctness covers the selected design workload and at least one smaller fixture; GPU batch output matches CPU serial/batch comparator semantics.\n- [hard] Early termination converges before `max_iterations` on high-SNR noiseless inputs and matches CPU convergence behavior where the CPU path exposes the same criterion.\n- [hard] Performance evidence records hardware metadata, ROCm version, benchmark command, raw result paths, batch-size sweep, and phase timing where practical.\n- [hard] GPU LDPC BP is at least 3x faster than the best existing production CPU path at the selected design workload.\n\n## Notes\n\nTarget environment: AMD RX 6950 XT / `gfx1030`, ROCm 7.2, `/opt/rocm/bin/hipcc`. Do not compare only against an artificially serial CPU loop unless the best production CPU path is also reported and used for the hard speed criterion.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "GPU batch LDPC BP design plan",
+      "path": "dev/active/37e0b235/gpu-batch-ldpc-bp-plan.md"
+    }
+  ],
+  "first_ready_at": "2026-04-29T22:56:56.123754770Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-04-11T15:33:49.667704513Z",
+      "updated_by": null
+    },
     "code-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-11T15:33:49.667740583Z"
+      "updated_at": "2026-04-11T15:33:49.667740583Z",
+      "updated_by": null
     },
     "doc-review": {
       "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-29T22:50:44.665111455Z"
-    },
-    "cargo-ci": {
-      "status": "pending",
-      "updated_by": null,
-      "updated_at": "2026-04-11T15:33:49.667704513Z"
+      "updated_at": "2026-04-29T22:50:44.665111455Z",
+      "updated_by": null
     }
   },
-  "context": {},
-  "documents": [
-    {
-      "path": "dev/active/gpu-batch-ldpc-bp-plan.md",
-      "commit": null,
-      "label": "GPU batch LDPC BP design plan",
-      "doc_type": "design",
-      "format": "markdown"
-    }
-  ],
+  "id": "37e0b235-9fc6-48cd-93e0-0f35f1d3e545",
   "labels": [
     "type:task",
     "component:gf2-kernels-hip",
@@ -46,7 +45,8 @@
     "story:gpu-ldpc-bp",
     "resolution:superseded-by-gf2-sim-a930be7f"
   ],
-  "created_at": "2026-04-11T15:33:19.416265735Z",
-  "updated_at": "2026-07-12T20:02:55.434574778Z",
-  "first_ready_at": "2026-04-29T22:56:56.123754770Z"
+  "priority": "high",
+  "state": "rejected",
+  "title": "HIP/ROCm GPU-accelerated batch LDPC BP decoder",
+  "updated_at": "2026-08-07T21:14:46.325894859Z"
 }
