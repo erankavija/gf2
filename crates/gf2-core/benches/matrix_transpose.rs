@@ -6,7 +6,7 @@
 //! Delight scalar fallback. Per the Tier-B "PPC walk" rule, this bench
 //! exists as the V0 baseline so subsequent SIMD edits can be measured
 //! against a pinned criterion baseline (see
-//! `dev/benchmarks/ppc-baselines.json` entry `B1`).
+//! `dev/scripts/ppc-baselines.json` entry `B1`).
 //!
 //! Sizes follow the manifest's `design_size_class` (1024, 4096) and
 //! extend down to 64/256 to capture the pure register-tile regime where
@@ -32,7 +32,7 @@ use gf2_core::BitMatrix;
 fn bench_transpose(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_transpose");
 
-    // Tier B1 design sizes per dev/benchmarks/ppc-baselines.json.
+    // Tier B1 design sizes per dev/scripts/ppc-baselines.json.
     // 64 and 256 are below the manifest size class but kept so the bench
     // also covers the register-tile / single-quadrant regimes where the
     // PSHUFB path is expected to dominate. The 1024 and 4096 leaves are

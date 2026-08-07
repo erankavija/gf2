@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ppc-compare.sh — PPC-spiral baseline-vs-current speedup checker.
 #
-# Reads a kernel→bench mapping from dev/benchmarks/ppc-baselines.json,
+# Reads a kernel→bench mapping from dev/scripts/ppc-baselines.json,
 # parses criterion estimates.json files for each design size, and reports
 # the geomean speedup (baseline_ns / new_ns). Exits 0 iff geomean >= 1.5.
 # Most kernels compare a pinned saved baseline against the current `new/`
@@ -9,11 +9,11 @@
 # instead set `baseline_bench_target` to compare two current leaves.
 #
 # Usage:
-#   ./dev/benchmarks/ppc-compare.sh <kernel-id> [--manifest path]
+#   ./dev/scripts/ppc-compare.sh <kernel-id> [--manifest path]
 #                                               [--criterion-dir path]
 #
 # Defaults:
-#   --manifest        dev/benchmarks/ppc-baselines.json
+#   --manifest        dev/scripts/ppc-baselines.json
 #   --criterion-dir   target/criterion
 #
 # Exit codes:
@@ -42,7 +42,7 @@ Usage: ppc-compare.sh <kernel-id> [--manifest <path>] [--criterion-dir <path>]
 
 Compares criterion benchmark results for a PPC-spiral kernel against its
 pinned baseline. Reads kernel→bench mappings from
-dev/benchmarks/ppc-baselines.json (override with --manifest).
+dev/scripts/ppc-baselines.json (override with --manifest).
 
 Exits 0 iff geomean(baseline_ns / new_ns) across the kernel's design
 sizes is >= 1.5x.
@@ -89,7 +89,7 @@ if [[ -z "$KERNEL_ID" ]]; then
   exit 2
 fi
 
-MANIFEST="${MANIFEST:-dev/benchmarks/ppc-baselines.json}"
+MANIFEST="${MANIFEST:-dev/scripts/ppc-baselines.json}"
 CRITERION_DIR="${CRITERION_DIR:-target/criterion}"
 
 # --- tooling sanity ---------------------------------------------------------

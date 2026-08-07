@@ -64,12 +64,12 @@ A–D kernel is expected to emit.
 A second JIT post-check gate (`scripts/criterion-1.5x.sh`) enforces that
 the geomean speedup of the kernel under test against its pinned criterion
 baseline is at least 1.5×. The harness behind it
-(`dev/benchmarks/ppc-compare.sh`) is kernel-id-positional, so the wrapper
+(`dev/scripts/ppc-compare.sh`) is kernel-id-positional, so the wrapper
 extracts the kernel-id from the JIT issue's labels at gate time.
 
 Convention: every issue gated on `criterion-1.5x` must carry exactly one
 `ppc-kernel:<id>` label, where `<id>` is one of the keys in
-`dev/benchmarks/ppc-baselines.json` (currently `A1, A2, A3, B1, B2, B3,
+`dev/scripts/ppc-baselines.json` (currently `A1, A2, A3, B1, B2, B3,
 C1, C2, C3, C4, C5, D1, D2`). Lead applies the label when defining or
 dispatching the issue:
 

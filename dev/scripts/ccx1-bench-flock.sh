@@ -2,7 +2,7 @@
 # CCX1 flock-guarded benchmark wrapper.
 #
 # Usage:
-#   ./dev/benchmarks/ccx1-bench-flock.sh <args>
+#   ./dev/scripts/ccx1-bench-flock.sh <args>
 #
 # Holds the /tmp/gf2-ccx1.lock mutex for the duration of the child
 # command, then pins to CCX1 cores (6-11) with nice -n -5 (best-effort;

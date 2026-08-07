@@ -55,7 +55,7 @@ Aeneas gives us universal algebraic guarantees (field axioms hold for *any* prim
 
 **HRTB (resolved)**: Three Charon patches fix HRTB-related extraction failures for `gfpn/`.
 Patches exported to `patches/charon-hrtb-assoc-types.patch` and applied in CI.
-See `dev/lean4-verification-pipeline.md` for details.
+See `docs/lean4-verification-pipeline.md` for details.
 
 **Duplicate field name workaround**: Aeneas generates duplicate field names when traits
 have bounds on multiple associated types. Fixed by `scripts/fix-aeneas-dupes.py` (includes

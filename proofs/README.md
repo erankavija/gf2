@@ -89,7 +89,7 @@ Commit regenerated files when Rust source under `gfp/`, `gfpn/`, or `gf2m/` chan
    cp /tmp/aeneas/bin/aeneas ~/.cargo/bin/
    ```
 
-See `dev/lean4-verification-pipeline.md` for the full rebuild procedure and the Charon patches.
+See `docs/lean4-verification-pipeline.md` for the full rebuild procedure and the Charon patches.
 
 ## Status
 

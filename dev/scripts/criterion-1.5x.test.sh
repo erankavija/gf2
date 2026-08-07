@@ -6,7 +6,7 @@
 # (where it matters) substrings in the wrapper output.
 #
 # Usage:
-#   ./dev/benchmarks/criterion-1.5x.test.sh
+#   ./dev/scripts/criterion-1.5x.test.sh
 #
 # Exit codes:
 #   0 — all tests passed

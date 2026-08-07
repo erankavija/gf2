@@ -95,7 +95,7 @@ Profile before optimizing. A performance, crossover, or scalability claim must
 name a reproducible benchmark protocol and cite its committed receipt from a
 suitable uncontended host. Machine-dependent assertions are benchmark gates,
 not ordinary tests. Use `GF2_BENCH=1` only on a prepared benchmark host and use
-the applicable lock wrapper under `dev/benchmarks/`.
+the applicable lock wrapper under `dev/scripts/`.
 
 Keep permanent documentation under `README.md`, crate-level rustdoc, or `docs/`.
 Keep active designs, experiments, plans, presentations, and benchmark receipts

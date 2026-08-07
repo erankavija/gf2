@@ -6,7 +6,7 @@
 # and (where it matters) a substring in the harness output.
 #
 # Usage:
-#   ./dev/benchmarks/ppc-compare.test.sh
+#   ./dev/scripts/ppc-compare.test.sh
 #
 # Exit codes:
 #   0 — all 9 tests passed
