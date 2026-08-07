@@ -103,6 +103,18 @@ pub const MAX_BATCH: usize = 65_536;
 pub const MATRICES_PER_WORKER: usize = 4;
 /// Physical core the single-thread cells are pinned to.
 pub const PINNED_CORE: usize = 0;
+/// Offset into a cell's reserved stream range at which warm-up draws begin.
+///
+/// Warm-up runs for a wall-clock duration, so its repetition count varies with
+/// machine speed. Giving it its own sub-range keeps the timed sub-range —
+/// which starts at the cell's base stream — independent of that variation, so
+/// a recorded seed regenerates exactly the recorded sample.
+pub const WARMUP_STREAM_OFFSET: u64 = 50_000;
+/// First stream index used by `sustained`, offset per run so that two runs at
+/// the same `(q, n)` never draw the same matrices.
+pub const SUSTAINED_STREAM_BASE: u64 = 1_000_000;
+/// Stream indices reserved to each sustained run.
+pub const SUSTAINED_STREAMS_PER_RUN: u64 = 100_000;
 
 /// How a cell finished.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -153,6 +165,10 @@ pub struct CellResult {
     pub projected_rate: f64,
     /// The `n` whose measured rate the projection came from, or 0 if none.
     pub projection_reference_n: usize,
+    /// First stream index of the *timed* repetitions. Warm-up uses a disjoint
+    /// sub-range, so this is `seed_stream + 1` for every measured cell and the
+    /// timed sample regenerates from it without knowing the warm-up count.
+    pub timed_stream_first: u64,
     /// `matrices / eval_s`: the kernel-only rate, for attribution only.
     pub eval_rate: f64,
     pub rep_min_s: f64,
@@ -173,7 +189,7 @@ pub struct CellResult {
 /// CSV header for [`CellResult::to_csv_row`].
 pub const CELL_CSV_HEADER: &str = "q,n,backend,outcome,batch_size,reps,matrices,zeros,\
 total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,\
-probe_matrix_s,projected_matrices_per_s,projection_reference_n,\
+probe_matrix_s,projected_matrices_per_s,projection_reference_n,timed_stream_first,\
 rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_stream_first,\
 cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note";
 
@@ -184,7 +200,7 @@ impl CellResult {
         let _ = write!(
             s,
             "{},{},{},{},{},{},{},{},{:.6},{:.6},{:.6},{:.6},{:.6},{:.4},{:.4},\
-{:.6},{:.6},{},{:.6},{:.6},{:.6},{},{},0x{:016x},{},{:.1},{:.1},{:.1},{},{}",
+{:.6},{:.6},{},{},{:.6},{:.6},{:.6},{},{},0x{:016x},{},{:.1},{:.1},{:.1},{},{}",
             self.q,
             self.n,
             self.backend,
@@ -203,6 +219,7 @@ impl CellResult {
             self.probe_matrix_s,
             self.projected_rate,
             self.projection_reference_n,
+            self.timed_stream_first,
             self.rep_min_s,
             self.rep_max_s,
             self.rep_sd_s,
@@ -471,6 +488,7 @@ pub fn run_cell(
         probe_matrix_s: f64::NAN,
         projected_rate: f64::NAN,
         projection_reference_n: 0,
+        timed_stream_first: 0,
         rep_min_s: f64::NAN,
         rep_max_s: f64::NAN,
         rep_sd_s: f64::NAN,
@@ -593,16 +611,26 @@ from it, and the cell carries no rate"
     });
     result.batch_size = m;
 
-    // Warm-up: untimed, same work, at least WARMUP_SECONDS.
+    // Warm-up draws from a sub-range reserved for it, disjoint from the timed
+    // sub-range. The number of warm-up repetitions depends on wall-clock, so if
+    // warm-up and timed work shared one running counter the first timed stream
+    // would depend on how fast the machine happened to be — and the recorded
+    // seed would not regenerate the recorded sample. Reserving the ranges makes
+    // the timed sequence a pure function of the cell's base stream.
+    let warmup_base = seed_stream + WARMUP_STREAM_OFFSET;
+    let mut warm_stream = warmup_base;
     let warm = Instant::now();
     loop {
-        stream += 1;
-        let mut s = MatrixSampler::new(seed_root, q, n, stream);
-        let _ = one_rep(q, n, m, backend, &mut s, stream, &mut devnull);
+        let mut s = MatrixSampler::new(seed_root, q, n, warm_stream);
+        let _ = one_rep(q, n, m, backend, &mut s, warm_stream, &mut devnull);
+        warm_stream += 1;
         if warm.elapsed().as_secs_f64() >= WARMUP_SECONDS {
             break;
         }
     }
+    // Timed repetitions always start here, whatever the warm-up did.
+    stream = seed_stream;
+    result.timed_stream_first = stream + 1;
 
     let thermal = ThermalSample::probe();
     result.cpu_mhz_mean = thermal.cpu_mhz_mean;
@@ -695,18 +723,21 @@ pub struct SustainedResult {
     pub cpu_temp_end_c: f64,
     pub gpu_temp_end_c: f64,
     pub seed_root: u64,
+    /// First stream index this run drew from. Runs reserve disjoint ranges, so
+    /// two runs at the same `(q, n)` produce independent samples.
+    pub stream_first: u64,
 }
 
 /// CSV header for [`SustainedResult::to_csv_row`].
 pub const SUSTAINED_CSV_HEADER: &str = "q,n,backend,batch_size,shards,matrices,zeros,wall_s,\
 sustained_matrices_per_s,first_quarter_matrices_per_s,last_quarter_matrices_per_s,\
-cpu_mhz_start,cpu_mhz_end,cpu_temp_start_c,cpu_temp_end_c,gpu_temp_end_c,seed_root";
+cpu_mhz_start,cpu_mhz_end,cpu_temp_start_c,cpu_temp_end_c,gpu_temp_end_c,seed_root,stream_first";
 
 impl SustainedResult {
     #[must_use]
     pub fn to_csv_row(&self) -> String {
         format!(
-            "{},{},{},{},{},{},{},{:.3},{:.4},{:.4},{:.4},{:.1},{:.1},{:.1},{:.1},{:.1},0x{:016x}",
+            "{},{},{},{},{},{},{},{:.3},{:.4},{:.4},{:.4},{:.1},{:.1},{:.1},{:.1},{:.1},0x{:016x},{}",
             self.q,
             self.n,
             self.backend,
@@ -724,20 +755,39 @@ impl SustainedResult {
             self.cpu_temp_end_c,
             self.gpu_temp_end_c,
             self.seed_root,
+            self.stream_first,
         )
     }
 }
 
 /// Run the composite hot path continuously for `seconds`.
-pub fn run_sustained(
-    q: u64,
-    n: usize,
-    backend: Backend,
-    batch_size: usize,
-    seconds: f64,
-    seed_root: u64,
-    sink: &mut dyn std::io::Write,
-) -> SustainedResult {
+/// Configuration for one sustained streaming run.
+pub struct SustainedSpec {
+    pub q: u64,
+    pub n: usize,
+    pub backend: Backend,
+    pub batch_size: usize,
+    pub seconds: f64,
+    pub seed_root: u64,
+    /// Selects a reserved stream range, so two runs at the same `(q, n)` never
+    /// draw the same matrices. Without it every run started at the same stream
+    /// and two runs at one `(q, n)` produced overlapping samples whose zero
+    /// counts could not be pooled — the shorter run's matrices were a prefix of
+    /// the longer one's.
+    pub run_index: u64,
+}
+
+/// Stream the composite hot path for a fixed window.
+pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> SustainedResult {
+    let SustainedSpec {
+        q,
+        n,
+        backend,
+        batch_size,
+        seconds,
+        seed_root,
+        run_index,
+    } = *spec;
     pin_thread(if backend.is_multithreaded() {
         None
     } else {
@@ -748,7 +798,8 @@ pub fn run_sustained(
     let mut shard_times: Vec<f64> = Vec::new();
     let mut matrices = 0u64;
     let mut zeros = 0u64;
-    let mut stream = 1_000_000u64;
+    let stream_base = SUSTAINED_STREAM_BASE + run_index * SUSTAINED_STREAMS_PER_RUN;
+    let mut stream = stream_base;
 
     let start = Instant::now();
     while start.elapsed().as_secs_f64() < seconds {
@@ -785,6 +836,7 @@ pub fn run_sustained(
         cpu_temp_end_c: end_thermal.cpu_temp_c,
         gpu_temp_end_c: end_thermal.gpu_temp_c,
         seed_root,
+        stream_first: stream_base + 1,
     }
 }
 

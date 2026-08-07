@@ -59,6 +59,18 @@ pub struct HostInfo {
     /// with `harness_dirty: true` does not identify a reproducible source state
     /// and must not be published as evidence.
     pub harness_dirty: bool,
+    /// SHA of the most recent commit touching `crates/`, the path dependencies
+    /// the harness links. The harness SHA alone does not pin behaviour: the
+    /// kernels under measurement live there, so a change under `crates/` moves
+    /// the numbers without moving `harness_sha`.
+    pub deps_sha: String,
+    /// Whether `crates/` has uncommitted changes.
+    pub deps_dirty: bool,
+    /// SHA-256 of the running executable. This is the one field that pins the
+    /// measured artifact outright: it covers the harness, every path
+    /// dependency, the toolchain, and the feature set actually compiled in,
+    /// without relying on any of them being separately recorded.
+    pub binary_sha256: String,
     pub rustc: String,
     pub cargo: String,
     pub cpu_model: String,
@@ -85,11 +97,17 @@ impl HostInfo {
         // This crate's own directory, resolved at build time.
         let crate_dir = env!("CARGO_MANIFEST_DIR");
         let harness_status = capture("git", &["status", "--porcelain", "--", crate_dir]);
+        // Path dependencies: the workspace crates this harness links.
+        let deps_dir = format!("{crate_dir}/../../../crates");
+        let deps_status = capture("git", &["status", "--porcelain", "--", &deps_dir]);
         Self {
             git_sha: capture("git", &["rev-parse", "HEAD"]),
             git_dirty: git_status != "unavailable" && !git_status.is_empty(),
             harness_sha: capture("git", &["log", "-1", "--format=%H", "--", crate_dir]),
             harness_dirty: harness_status != "unavailable" && !harness_status.is_empty(),
+            deps_sha: capture("git", &["log", "-1", "--format=%H", "--", &deps_dir]),
+            deps_dirty: deps_status != "unavailable" && !deps_status.is_empty(),
+            binary_sha256: binary_sha256(),
             rustc: capture("rustc", &["--version"]),
             cargo: capture("cargo", &["--version"]),
             cpu_model: cpuinfo("model name"),
@@ -115,11 +133,16 @@ impl HostInfo {
         let _ = writeln!(s, "# git_worktree_dirty: {}", self.git_dirty);
         let _ = writeln!(s, "# harness_source_sha: {}", self.harness_sha);
         let _ = writeln!(s, "# harness_source_dirty: {}", self.harness_dirty);
+        let _ = writeln!(s, "# deps_source_sha: {}", self.deps_sha);
+        let _ = writeln!(s, "# deps_source_dirty: {}", self.deps_dirty);
+        let _ = writeln!(s, "# binary_sha256: {}", self.binary_sha256);
         let _ = writeln!(
             s,
-            "# note: git_worktree_dirty covers the whole repository, including \
-.jit/ workflow state other agents own; harness_source_* pin the state of the \
-crate that produced these numbers, which is what makes the run reproducible"
+            "# note: git_worktree_dirty covers the whole repository, including .jit/ \
+workflow state other agents own. harness_source_* pin this crate; deps_source_* pin \
+crates/, where the measured kernels live and whose changes would move the numbers \
+without moving harness_source_sha. binary_sha256 pins the executable outright, \
+covering harness, path dependencies, toolchain and compiled feature set together."
         );
         let _ = writeln!(s, "# rustc: {}", self.rustc);
         let _ = writeln!(s, "# cargo: {}", self.cargo);
@@ -136,6 +159,18 @@ crate that produced these numbers, which is what makes the run reproducible"
         let _ = writeln!(s, "# invocation: {}", self.invocation);
         s
     }
+}
+
+/// SHA-256 of the running executable, via `sha256sum`.
+fn binary_sha256() -> String {
+    let Ok(exe) = std::env::current_exe() else {
+        return "unavailable".to_string();
+    };
+    let out = capture("sha256sum", &[&exe.to_string_lossy()]);
+    out.split_whitespace()
+        .next()
+        .unwrap_or("unavailable")
+        .to_string()
 }
 
 fn gpu_model() -> String {
