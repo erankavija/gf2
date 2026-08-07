@@ -237,8 +237,21 @@ fn cmd_grid(args: &[String]) {
     }
 
     // Randomise execution order so boost and thermal drift decorrelate from the
-    // grid axes, then assign each cell its own reserved stream range.
+    // grid axes, then restore ascending n as the outer key.
+    //
+    // The stable sort leaves each n-stratum in random order while guaranteeing
+    // that every cell runs after a smaller n on the same (q, backend, batch
+    // size). Censoring projects from a *measured rate* at another n, so without
+    // that guarantee a cell with no reference falls back to probing — and at
+    // q=7, n=28 on the GPU a single-matrix probe costs 42 minutes. Full
+    // randomisation was measured to be affordable only because the earlier,
+    // probe-based rule was wrong; this schedule is the price of the correct
+    // inference. Within-stratum randomisation is retained, the machine is warmed
+    // to steady state first, and the sustained runs bound drift over a 180 s
+    // window at under 0.6 %, so the residual correlation between n and elapsed
+    // time is small and is recorded here rather than hidden.
     shuffle(&mut specs, SEED_ROOT);
+    specs.sort_by_key(|s| s.n);
     for (i, spec) in specs.iter_mut().enumerate() {
         spec.order_index = i;
         spec.seed_stream = 1 + (i as u64) * STREAMS_PER_CELL;
@@ -253,11 +266,27 @@ fn cmd_grid(args: &[String]) {
         format!(
             "rates are summed matrices over summed time; per-repetition rates are never averaged"
         ),
-        format!("cell order randomised with seed 0x{SEED_ROOT:016x}; see order_index"),
         format!(
-            "outcomes: measured | unsupported (a kernel bound forbids the cell) | censored \
-(the one-matrix probe exceeded the threshold, so the cell was not attempted at its batch \
-size and carries no rate; probe_matrix_s holds the evidence)"
+            "schedule: randomised with seed 0x{SEED_ROOT:016x} then stably sorted by ascending n, \
+so each n-stratum is randomised and every cell has a smaller-n reference on its own \
+(q, backend, batch size); see order_index"
+        ),
+        format!(
+            "outcomes: measured | unsupported (a kernel bound forbids the cell, named in note) | \
+censored (not attempted; carries NO measured rate)"
+        ),
+        format!(
+            "censoring contract: a censored row's composite_matrices_per_s is NaN. Its \
+projected_matrices_per_s is an ESTIMATE, obtained by scaling the MEASURED rate at \
+projection_reference_n through Ryser's n*2^n work model. No bound on a batched rate is \
+derived from probe_matrix_s, which is a single-matrix LATENCY: W/probe is not an upper \
+bound (at q=3 n=28 it gives 2.85 matrices/s against a measured 8.52 at M=256, because a \
+compute unit hosts several workgroups and a probe carries unamortised launch overhead)"
+        ),
+        format!(
+            "projection accuracy: validated on the q=3 GPU M=256 chain, the projection runs \
+17-21% LOW (20->24 projects 110.7 vs 133.7 measured; 24->28 projects 7.16 vs 8.52), so a \
+censored cell's true rate is somewhat higher than its projection"
         ),
         format!(
             "seed_root: 0x{SEED_ROOT:016x}; each cell owns {STREAMS_PER_CELL} ChaCha20 streams"
@@ -291,22 +320,18 @@ size and carries no rate; probe_matrix_s holds the evidence)"
     let shard_path = std::env::temp_dir().join("permanent_sampling_feas_shards.csv");
     let mut sink = BufWriter::new(File::create(&shard_path).expect("create shard sink"));
 
-    // Seed the probe cache from any rows already on disk, so a resumed run can
-    // decline a hopeless cell using a probe measured in the earlier session
-    // instead of paying for it again.
+    // Seed both caches from any rows already on disk, so a resumed run reuses
+    // probes and rate references measured in the earlier session.
     let mut probes: permanent_sampling_feas::protocol::ProbeCache = Default::default();
+    let mut rates: permanent_sampling_feas::protocol::RateCache = Default::default();
     if resume {
         for row in read_rows(&path) {
-            let (Ok(q), Ok(n), Ok(probe)) = (
+            let (Ok(q), Ok(n)) = (
                 field(&row, "q").parse::<u64>(),
                 field(&row, "n").parse::<usize>(),
-                field(&row, "probe_matrix_s").parse::<f64>(),
             ) else {
                 continue;
             };
-            if !probe.is_finite() {
-                continue;
-            }
             let Some(name) = Backend::ALL
                 .iter()
                 .map(|b| b.name())
@@ -314,11 +339,40 @@ size and carries no rate; probe_matrix_s holds the evidence)"
             else {
                 continue;
             };
-            probes.insert((q, name, n), probe);
+            if let Ok(probe) = field(&row, "probe_matrix_s").parse::<f64>() {
+                if probe.is_finite() {
+                    probes.insert((q, name, n), probe);
+                }
+            }
+            if field(&row, "outcome") == "measured" {
+                if let (Ok(rate), Ok(batch)) = (
+                    field(&row, "composite_matrices_per_s").parse::<f64>(),
+                    field(&row, "batch_size").parse::<usize>(),
+                ) {
+                    // Only the fixed-batch backend keys on M; the adaptive ones
+                    // key on 0, matching `CellSpec::batch_size.unwrap_or(0)`.
+                    let key = if name == Backend::Gpu.name() {
+                        batch
+                    } else {
+                        0
+                    };
+                    if rate.is_finite() && rate > 0.0 {
+                        rates
+                            .entry((q, name, key))
+                            .and_modify(|e| {
+                                if n > e.0 {
+                                    *e = (n, rate);
+                                }
+                            })
+                            .or_insert((n, rate));
+                    }
+                }
+            }
         }
         eprintln!(
-            "seeded {} probe references from the existing CSV",
-            probes.len()
+            "seeded {} probe and {} rate references from the existing CSV",
+            probes.len(),
+            rates.len()
         );
     }
 
@@ -346,7 +400,7 @@ size and carries no rate; probe_matrix_s holds the evidence)"
             spec.n,
             spec.backend.name()
         );
-        let r = run_cell(spec, &mut sink, &mut probes);
+        let r = run_cell(spec, &mut sink, &mut probes, &mut rates);
         match r.outcome {
             Outcome::Measured => eprintln!(
                 "    {:.3} matrices/s composite ({:.3} eval-only), M={}, reps={}, sd={:.3} s",
