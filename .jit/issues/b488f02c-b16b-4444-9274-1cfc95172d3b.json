@@ -61,6 +61,13 @@
       "format": "markdown",
       "label": "Receipt: GPU hang observation (superseded run)",
       "path": "dev/studies/b488f02c/gpu-hang-2026-08-07.log"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Session handoff 2026-08-07 (resume contract)",
+      "path": "dev/sessions/2026-08-07-research-frontier-handoff.md"
     }
   ],
   "first_ready_at": "2026-08-07T12:32:25.499859632Z",
@@ -70,8 +77,8 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "passed",
-      "updated_at": "2026-08-07T17:59:35.652177844Z",
+      "status": "failed",
+      "updated_at": "2026-08-07T19:48:45.363079753Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -91,5 +98,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T18:10:47.051008672Z"
+  "updated_at": "2026-08-07T20:03:47.050508540Z"
 }
