@@ -284,9 +284,10 @@ bound (at q=3 n=28 it gives 2.85 matrices/s against a measured 8.52 at M=256, be
 compute unit hosts several workgroups and a probe carries unamortised launch overhead)"
         ),
         format!(
-            "projection accuracy: validated on the q=3 GPU M=256 chain, the projection runs \
-17-21% LOW (20->24 projects 110.7 vs 133.7 measured; 24->28 projects 7.16 vs 8.52), so a \
-censored cell's true rate is somewhat higher than its projection"
+            "projection accuracy: the projection runs LOW, so a censored cell's true rate is \
+somewhat higher than its projection. The magnitude is re-derived from THIS file's own q=3 \
+GPU chain in the study's section 4.3 rather than quoted here, so that a stale figure cannot \
+survive a re-measurement"
         ),
         format!(
             "seed_root: 0x{SEED_ROOT:016x}; each cell owns {STREAMS_PER_CELL} ChaCha20 streams"
@@ -460,6 +461,9 @@ fn cmd_sustained(args: &[String]) {
 and hung the device (kernel time past hang detection), so the ceiling is a watchdog \
 limit rather than a memory or occupancy one"
             .to_string(),
+        "each run reserves a disjoint stream range (stream_first column), so two runs at one \
+(q, n) draw independent samples and their zero counts may be pooled"
+            .to_string(),
     ];
     let resume = args.iter().any(|a| a == "--resume") && path.exists();
     let done: std::collections::HashSet<(u64, usize, String, usize)> = if resume {
@@ -487,7 +491,7 @@ limit rather than a memory or occupancy one"
     let shard_path = std::env::temp_dir().join("permanent_sampling_feas_sustained.csv");
     let mut sink = BufWriter::new(File::create(&shard_path).expect("create shard sink"));
 
-    for (q, n, backend, m) in runs {
+    for (run_index, (q, n, backend, m)) in runs.into_iter().enumerate() {
         if let permanent_sampling_feas::backend::Support::Unsupported(reason) =
             permanent_sampling_feas::backend::support(backend, q, n)
         {
@@ -498,7 +502,18 @@ limit rather than a memory or occupancy one"
             continue;
         }
         eprintln!("sustained q={q} n={n} {} M={m} ...", backend.name());
-        let r = run_sustained(q, n, backend, m, seconds, SEED_ROOT, &mut sink);
+        let r = run_sustained(
+            &permanent_sampling_feas::protocol::SustainedSpec {
+                q,
+                n,
+                backend,
+                batch_size: m,
+                seconds,
+                seed_root: SEED_ROOT,
+                run_index: run_index as u64,
+            },
+            &mut sink,
+        );
         eprintln!(
             "    {:.3} matrices/s over {:.0} s ({} shards); first quarter {:.3}, last {:.3}",
             r.sustained_rate, r.wall_s, r.shards, r.first_quarter_rate, r.last_quarter_rate
