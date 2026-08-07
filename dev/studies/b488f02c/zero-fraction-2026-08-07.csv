@@ -1,8 +1,11 @@
-# git_sha: c2c4a48378ed61352d26c5d0c6f7e145d5c6fc1c
+# git_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
 # git_worktree_dirty: true
-# harness_source_sha: 5f195e84cc08d7200669aaa056c9e5a871b43f4f
+# harness_source_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
 # harness_source_dirty: false
-# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own; harness_source_* pin the state of the crate that produced these numbers, which is what makes the run reproducible
+# deps_source_sha: cccbc4e5103eced840d611e8e511a2fcb74fc60d
+# deps_source_dirty: false
+# binary_sha256: 22900ff10bc4c369ad77671ea73dbbe1c107cbc2627abe9619f410845622d425
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
@@ -14,23 +17,23 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-07T17:42:03Z
-# invocation: ./target/release/permanent_sampling_feas zerofrac --throughput /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv --sustained /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/zero-fraction-2026-08-07.csv
-# pooled from: /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv, /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv
+# timestamp_utc: 2026-08-07T19:33:42Z
+# invocation: ./target/release/permanent_sampling_feas zerofrac --throughput ../../studies/b488f02c/throughput-2026-08-07.csv --out ../../studies/b488f02c/zero-fraction-2026-08-07.csv
+# pooled from: ../../studies/b488f02c/throughput-2026-08-07.csv
 # these counts are a by-product of the timing protocol; sample sizes are whatever each cell needed, not a designed sampling plan
 # interval: Wilson score, 95 % (z = 1.959964)
 # seed_root: 0xb488f02c00000001
 q,n,matrices,zeros,p_hat,wilson_lo_95,wilson_hi_95,one_over_q,one_over_q_inside_interval,scheinerman2024_p,scheinerman2024_inside_interval
-3,12,5445320,1814760,0.333270,0.332874,0.333666,0.333333,true,0.333354,true
-3,16,814601,271910,0.333795,0.332772,0.334820,0.333333,true,0.333309,true
-3,20,73602,24352,0.330861,0.327470,0.334269,0.333333,true,0.333389,true
-3,24,189680,63313,0.333788,0.331670,0.335914,0.333333,true,0.333352,true
-3,28,5807,1923,0.331152,0.319163,0.343365,0.333333,true,0.333743,true
-5,12,549857,109972,0.200001,0.198946,0.201060,0.200000,true,none,n/a
-5,16,31931,6166,0.193104,0.188811,0.197470,0.200000,false,none,n/a
-5,20,55328,10787,0.194965,0.191685,0.198287,0.200000,false,none,n/a
-5,24,490,87,0.177551,0.146263,0.213856,0.200000,true,none,n/a
-5,28,101,16,0.158416,0.099928,0.241936,0.200000,true,none,n/a
-7,12,574181,83006,0.144564,0.143657,0.145476,0.142857,false,none,n/a
-7,16,692667,99293,0.143349,0.142526,0.144176,0.142857,true,none,n/a
-7,20,17664,2578,0.145947,0.140817,0.151230,0.142857,true,none,n/a
+3,12,5426442,1809272,0.333418,0.333021,0.333815,0.333333,true,0.333354,true
+3,16,804216,268616,0.334010,0.332980,0.335041,0.333333,true,0.333309,true
+3,20,72992,24377,0.333968,0.330555,0.337398,0.333333,true,0.333389,true
+3,24,10529,3531,0.335359,0.326403,0.344436,0.333333,true,0.333352,true
+3,28,5807,1955,0.336663,0.324620,0.348922,0.333333,true,0.333743,true
+5,12,582234,116601,0.200265,0.199239,0.201295,0.200000,true,none,n/a
+5,16,33543,6714,0.200161,0.195914,0.204477,0.200000,true,none,n/a
+5,20,7712,1498,0.194243,0.185566,0.203224,0.200000,true,none,n/a
+5,24,490,96,0.195918,0.163198,0.233370,0.200000,true,none,n/a
+5,28,101,15,0.148515,0.092116,0.230671,0.200000,true,none,n/a
+7,12,575753,82926,0.144031,0.143126,0.144940,0.142857,false,none,n/a
+7,16,31225,4337,0.138895,0.135104,0.142775,0.142857,false,none,n/a
+7,20,6400,897,0.140156,0.131867,0.148877,0.142857,true,none,n/a

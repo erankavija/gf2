@@ -1,8 +1,11 @@
-# git_sha: c2c4a48378ed61352d26c5d0c6f7e145d5c6fc1c
+# git_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
 # git_worktree_dirty: true
-# harness_source_sha: 5f195e84cc08d7200669aaa056c9e5a871b43f4f
+# harness_source_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
 # harness_source_dirty: false
-# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own; harness_source_* pin the state of the crate that produced these numbers, which is what makes the run reproducible
+# deps_source_sha: cccbc4e5103eced840d611e8e511a2fcb74fc60d
+# deps_source_dirty: false
+# binary_sha256: 22900ff10bc4c369ad77671ea73dbbe1c107cbc2627abe9619f410845622d425
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
@@ -14,20 +17,21 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-07T17:10:38Z
+# timestamp_utc: 2026-08-07T18:52:37Z
 # invocation: ./target/release/permanent_sampling_feas sustained --seconds 180 --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv
 # sustained window: 180 s per run, composite hot path throughout
 # first/last quarter rates expose boost decay within the window
 # seed_root: 0xb488f02c00000001, streams from 1_000_001
 # gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried first and hung the device (kernel time past hang detection), so the ceiling is a watchdog limit rather than a memory or occupancy one
-q,n,backend,batch_size,shards,matrices,zeros,wall_s,sustained_matrices_per_s,first_quarter_matrices_per_s,last_quarter_matrices_per_s,cpu_mhz_start,cpu_mhz_end,cpu_temp_start_c,cpu_temp_end_c,gpu_temp_end_c,seed_root
-3,24,cpu_scalar,8,335,2680,862,180.269,14.8667,14.8811,14.7920,2385.8,1858.0,53.4,71.4,55.0,0xb488f02c00000001
-3,24,cpu_avx2,4,210,840,286,180.293,4.6591,4.6623,4.6524,2331.2,2583.5,71.4,68.6,56.0,0xb488f02c00000001
-3,24,cpu_rayon_batch_scalar,96,295,28320,9527,180.293,157.0779,157.7676,157.0586,2408.4,2714.2,69.1,77.4,56.0,0xb488f02c00000001
-3,24,cpu_rayon_intra_matrix,24,2186,52464,17413,180.036,291.4079,291.5698,291.3087,2629.1,4214.3,77.6,78.0,56.0,0xb488f02c00000001
-3,24,gpu_hip,1024,55,56320,18843,181.763,309.8548,310.6957,309.1110,2023.3,2408.2,78.1,72.4,72.0,0xb488f02c00000001
-3,24,gpu_hip,2048,19,38912,13052,187.340,207.7079,207.7177,207.5887,1856.9,1939.9,73.8,75.6,76.0,0xb488f02c00000001
-5,20,cpu_rayon_batch_scalar,96,369,35424,6921,180.412,196.3504,195.6433,196.4715,2183.1,4244.8,77.1,81.0,54.0,0xb488f02c00000001
-5,20,gpu_hip,1024,12,12288,2398,192.708,63.7648,63.8664,63.7321,1937.2,1855.9,81.5,74.4,68.0,0xb488f02c00000001
-7,16,cpu_rayon_batch_scalar,512,1292,661504,94861,180.032,3674.3601,3669.7705,3676.7838,2027.1,4360.1,75.9,80.4,52.0,0xb488f02c00000001
-7,20,gpu_hip,1024,11,11264,1651,194.901,57.7934,57.9420,57.7587,2024.8,1857.6,80.9,72.6,67.0,0xb488f02c00000001
+# each run reserves a disjoint stream range (stream_first column), so two runs at one (q, n) draw independent samples and their zero counts may be pooled
+q,n,backend,batch_size,shards,matrices,zeros,wall_s,sustained_matrices_per_s,first_quarter_matrices_per_s,last_quarter_matrices_per_s,cpu_mhz_start,cpu_mhz_end,cpu_temp_start_c,cpu_temp_end_c,gpu_temp_end_c,seed_root,stream_first
+3,24,cpu_scalar,8,323,2584,835,180.099,14.3476,14.3189,14.3866,2349.7,1858.0,81.0,71.8,52.0,0xb488f02c00000001,1000001
+3,24,cpu_avx2,4,205,820,280,180.249,4.5493,4.5487,4.5520,2589.7,1859.5,71.6,67.4,50.0,0xb488f02c00000001,1100001
+3,24,cpu_rayon_batch_scalar,96,295,28320,9562,180.502,156.8958,157.5892,156.3672,2034.0,4242.9,67.9,77.0,48.0,0xb488f02c00000001,1200001
+3,24,cpu_rayon_intra_matrix,24,2238,53712,17905,180.051,298.3151,298.2286,298.4719,2030.7,4218.9,77.2,77.2,46.0,0xb488f02c00000001,1300001
+3,24,gpu_hip,1024,55,56320,18850,180.751,311.5893,312.0311,311.2375,1943.1,1944.8,77.5,70.0,70.0,0xb488f02c00000001,1400001
+3,24,gpu_hip,2048,19,38912,12924,185.442,209.8336,210.0111,209.5893,1856.9,1941.1,71.1,72.6,74.0,0xb488f02c00000001,1500001
+5,20,cpu_rayon_batch_scalar,96,405,38880,7903,180.395,215.5270,215.0619,215.8550,1941.2,2604.5,74.4,80.4,52.0,0xb488f02c00000001,1600001
+5,20,gpu_hip,1024,12,12288,2439,193.462,63.5162,63.9290,63.7301,2032.0,2020.7,80.9,71.9,66.0,0xb488f02c00000001,1700001
+7,16,cpu_rayon_batch_scalar,512,1293,662016,94254,180.062,3676.6079,3674.9769,3682.9174,1856.9,4358.6,73.5,79.2,53.0,0xb488f02c00000001,1800001
+7,20,gpu_hip,1024,11,11264,1687,194.934,57.7838,57.9313,57.7599,1856.5,1943.4,79.6,71.8,65.0,0xb488f02c00000001,1900001
