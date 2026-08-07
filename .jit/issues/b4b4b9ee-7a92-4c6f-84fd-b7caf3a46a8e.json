@@ -22,7 +22,7 @@
       "doc_type": "design",
       "format": "markdown",
       "label": "Tech Debt Assessment Report (2026-06-30)",
-      "path": "dev/active/tech-debt-assessment-2026-06-30.md"
+      "path": "dev/active/b4b4b9ee-tech-debt-2026-06-30/b4b4b9ee-assessment-report.md"
     }
   ],
   "gates_required": [
@@ -39,5 +39,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Technical debt assessment remediation (2026-06-30)",
-  "updated_at": "2026-08-07T12:00:01.518586689Z"
+  "updated_at": "2026-08-07T12:53:04.779112443Z"
 }

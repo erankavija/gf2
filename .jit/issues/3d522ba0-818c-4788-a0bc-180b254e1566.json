@@ -13,7 +13,15 @@
     "b9539134-d320-44f0-abf9-a5c27243a1ec"
   ],
   "description": "**Dimension: test-conventions · 13 findings (10 medium, 3 low)** — see report §test-conventions (the high SimulationRunner item is filed separately).\n\nMedium:\n- `gf2-core/src/field/axiom_tests.rs:1027` — bare `#[ignore]` → `#[ignore = \"slow: gf2m_wide_256 axiom stress\"]`.\n- `gf2-kernels-hip/tests/throughput_bench.rs:13` — rename `bench_gpu_vs_cpu_batch64`→`test_gpu_cpu_batch64_throughput` + add `#[ignore=\"slow: ...\"]`.\n- `gf2-coding/` 9 test files — 20+ bare `#[ignore]` → tagged `slow:`/`external:`; convert `bcjr/mod.rs:968` inline `// ~38s:` comment to a reason string.\n- `gf2-coding/tests/ldpc_cache_io.rs` — six `\"Slow:\"` → lowercase `\"slow:\"`.\n- `gf2-coding/src/bch/core.rs` — add `mod proptests`: encode/decode roundtrip with <= t errors + syndrome-zero for valid codewords.\n- `gf2-sim/src/bin/dvb_t2_awgn_campaign.rs` — 18 `#[test]` fns lack `test_` prefix; rename.\n- `gf2-kernels-simd/` 9 kernel files — ~14 `#[test]` fns lack `test_` prefix; rename.\n- `gf2-kernels-hip/tests/gpu_cpu_crosscheck.rs:272` — two proptest GPU tests need `#[ignore=\"external: gfx1030 device required\"]` + `#[cfg(feature=\"hip\")]`.\n- `gf2-kernels-hip/src/lib.rs:1227` — three in-module GPU tests + `test_demap_on_stream...` need `#[ignore=\"external: ...\"]`.\n- `gf2-core/src/bitvec.rs` — add `proptest!` for: tail-bits-zero after mutation, double-inverse, shift roundtrip, push/pop roundtrip, polar_transform self-inverse.\n\nLow:\n- `gf2-core/src/bitvec.rs:1705` — `test_new/zeros/ones/clear` (+ gfpn quadratic/cubic) lack `_<scenario>` suffix.\n- `gf2-algebra/src/packed/{packed5,packed7}.rs` — add direct algebraic-invariant proptests (commutativity/distributivity/neg-involution).\n- `gf2-kernels-simd/` 7 kernel modules — add proptest field-axiom + SIMD-vs-scalar suites (pattern in bipedal3.rs:623-680).\n\n## Success Criteria\n\n- [hard] REQ-01: All bare/mis-cased `#[ignore]` annotations carry a lowercase tagged reason string (`slow:`/`sim:`/`external:`).\n- [hard] REQ-02: All `#[test]` fns named `test_<operation>_<scenario>`.\n- [hard] REQ-03: New proptest coverage added for BCH, BitVec invariants, and the packed/kernel modules listed; slow variants `#[ignore]`.\n- [hard] REQ-04: Fast tier (`cargo nextest --profile ci`) stays within the 60 s / 5 s-per-test budget; clippy + fmt pass.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "design",
+      "format": "markdown",
+      "label": "Test-Conventions Breakdown Manifest",
+      "path": "dev/active/3d522ba0/3d522ba0-test-conventions-breakdown.json"
+    }
+  ],
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -40,5 +48,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Fix test-convention violations and add missing proptest coverage",
-  "updated_at": "2026-08-07T12:22:31.168879952Z"
+  "updated_at": "2026-08-07T12:53:04.999156867Z"
 }
