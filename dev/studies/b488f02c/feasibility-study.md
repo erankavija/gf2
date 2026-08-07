@@ -269,12 +269,20 @@ each projected from its own measured rate at $n = 20$:
 | $q{=}7$, $n{=}28$, $M{=}256$ | 0.0779 | 3285 s | far over |
 | $q{=}7$, $n{=}28$, $M{=}1024$ | 0.161 | 6354 s | far over |
 
-Rates are matrices/second and are **estimates**. Applying the measured 14–19 %
-pessimism does not rescue any of them: the closest, $q{=}5$ at $n{=}24$ and
-$M{=}256$, would still need about 128 s against a 120 s cap. The $n = 24$ cells
-are marginal and the $n = 28$ cells miss by one to two orders of magnitude.
-Note that censoring a GPU cell at $q \in \{5, 7\}$ costs the envelope nothing:
-the CPU batch-rayon path is measured and faster at every one of those sizes.
+Rates are matrices/second and are **estimates**. Applying the pessimism §4.3
+measures does not rescue any of them: the closest, $q{=}5$ at $n{=}24$ and
+$M{=}256$, would still miss the 120 s cap. The $n = 24$ cells are marginal and
+the $n = 28$ cells miss by one to two orders of magnitude.
+
+**What censoring costs differs sharply between the two fields.** At $q = 5$ it
+costs the envelope nothing: CPU batch rayon is measured at every one of those
+sizes and is the faster path anyway, so the GPU cell was never going to be
+selected. At $q = 7$ it costs everything. `permanent_bipedal7` stops at
+$n \le 16$, so $q{=}7$ at $n \in \{24, 28\}$ has **no supported CPU path at
+all**, and with both GPU batch sizes censored those two cells carry no rate from
+any backend — which is why §4.6 lists them as "no rate" rather than assigning
+one. They are the only cells in the grid with no measured throughput on any
+path, and the reason the $q = 7$ arm's frontier stops at $n = 20$.
 
 *Unsupported* cells cite the kernel bound that forbids them: F_7 above $n = 16$
 (`permanent_bipedal7` asserts $n \le$ `Packed7::LANES`), and the AVX2 and
@@ -374,8 +382,8 @@ margin collapses at the top of the range: 1.05x over intra-matrix rayon at
 $n = 24$ (308.2 vs 297.0) and **0.997x at $n = 28$** (19.27 vs 19.34) — at the
 top of the range the two are indistinguishable, and which one leads is inside
 the run-to-run dispersion. For $q = 5$ and $q = 7$ the CPU batch-rayon
-path wins wherever both are supported, by 3.1x at $q{=}5$, $n{=}16$ and 3.4x at
-$q{=}7$, $n{=}16$. The F_7 GPU kernel is the weakest of the three: its LUT-based
+path wins wherever both are supported, by roughly a factor of three at
+$n = 16$ in both fields (rates in the table above). The F_7 GPU kernel is the weakest of the three: its LUT-based
 arithmetic leaves it censored above $n = 20$.
 
 An earlier revision of this study reported the opposite at $n = 28$ — that
@@ -755,13 +763,14 @@ the driver, which needs no field-specific kernel and works for all three fields.
 
 The measurements then contradict the obvious expectation that batching across
 matrices is the better choice, and the campaign should follow the data rather
-than the intuition. At $q=3$, $n=24$ the in-tree **intra-matrix** path sustains
-293.9 matrices/s against batch rayon's 160.2 (§4.5), and at $n=28$ it leads
-19.23 to 10.04 in the grid. Batch rayon wins decisively only at small $n$, where
-each matrix is short enough that per-matrix scheduling overhead dominates. The
-plausible mechanism is working-set size: 24 concurrent Gray walks each carry
-their own column-sum state and column table, while one cooperatively-walked
-matrix shares them.
+than the intuition. At $q = 3$ the in-tree **intra-matrix** path overtakes batch
+rayon from $n = 20$ upward and leads it by roughly a factor of two at $n = 24$
+and $n = 28$; the rates are in §4.4's table and §4.5's sustained table and are
+not restated here. Batch rayon wins decisively only at small $n$, where each
+matrix is short enough that per-matrix scheduling overhead dominates. The
+plausible mechanism is working-set size: two dozen concurrent Gray walks each
+carry their own column-sum state and column table, while one cooperatively
+walked matrix shares them.
 
 So the campaign driver needs **both**, selected per $(q, n)$ from measurement,
 and F_5/F_7 have no intra-matrix path at all — which converts the "parallel
