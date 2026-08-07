@@ -1,6 +1,6 @@
 # gf2-algebra
 
-Packed finite-field abstractions and high-performance matrix permanent algorithms over small prime fields (F_3, F_5, F_7), built on [`gf2-core`](../gf2-core/).
+Packed finite-field abstractions and high-performance matrix permanent algorithms over small prime fields (F_3, F_5, F_7), built on [`gf2-core`](../gf2-core/README.md).
 
 `gf2-algebra` is the workspace home for the **bipedal encoding** of F_3 / F_5 / F_7 elements into parallel `u64` bit-planes, and the `permanent_bipedal*` algorithm family that evaluates the matrix permanent via Ryser's inclusion-exclusion formula in Gray-code order. It sits on top of `gf2-core` (for `FiniteField`, `Fp<P>`, `BitVec`) and is `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip` crates, in keeping with the project's unsafe-isolation invariant.
 
