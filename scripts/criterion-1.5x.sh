@@ -2,16 +2,16 @@
 # JIT gate runner: criterion-1.5x.
 #
 # Thin wrapper that bridges JIT's --pass-context envelope to the
-# kernel-id-positional `dev/benchmarks/ppc-compare.sh` harness.
+# kernel-id-positional `dev/scripts/ppc-compare.sh` harness.
 #
 # The PPC-spiral (epic:gf2-core-ppc-spiral) per-kernel issues each carry a
 # `ppc-kernel:<id>` label (e.g., `ppc-kernel:A1`) identifying which row of
-# `dev/benchmarks/ppc-baselines.json` they belong to. JIT, when invoking a
+# `dev/scripts/ppc-baselines.json` they belong to. JIT, when invoking a
 # `--pass-context` gate, writes the issue's full JSON (labels included) to
 # the path in $JIT_CONTEXT_FILE. This wrapper reads that file, extracts the
 # `ppc-kernel:<id>` label, and forwards to the harness.
 #
-# Convention (mirrored in dev/benchmarks/ppc-baselines.json `comment` field
+# Convention (mirrored in dev/scripts/ppc-baselines.json `comment` field
 # and in crates/gf2-kernels-simd/README.md):
 #
 #   Every issue that should be gated on "geomean speedup >= 1.5x for kernel
@@ -44,7 +44,7 @@ set -euo pipefail
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$repo_root"
 
-HARNESS="${PPC_COMPARE_SCRIPT:-./dev/benchmarks/ppc-compare.sh}"
+HARNESS="${PPC_COMPARE_SCRIPT:-./dev/scripts/ppc-compare.sh}"
 
 if [[ -z "${JIT_CONTEXT_FILE:-}" ]]; then
     echo "ERROR: JIT_CONTEXT_FILE not set. The criterion-1.5x gate requires --pass-context." >&2
@@ -80,7 +80,7 @@ if [[ -z "$KERNEL_ID" ]]; then
         echo
         echo "Add a \`ppc-kernel:<id>\` label to this issue per the criterion-1.5x"
         echo "gate convention (see scripts/criterion-1.5x.sh and"
-        echo "dev/benchmarks/ppc-baselines.json's comment field for the kernel-id"
+        echo "dev/scripts/ppc-baselines.json's comment field for the kernel-id"
         echo "values: A1, A2, A3, B1, B2, B3, C1, C2, C3, C4, C5, D1, D2)."
         echo
         echo "Example:"

@@ -57,7 +57,7 @@ The `gfpn/` module (`QuadraticExt`, `CubicExt`) is now fully extracted and
 verified. This required three patches to our local Charon build (HRTB erase,
 SelfClause/Local unification, implied clause constraint propagation) and the
 post-processing workarounds described above. See
-`dev/lean4-verification-pipeline.md` for full details.
+`docs/lean4-verification-pipeline.md` for full details.
 
 Charon emits 13 benign "Type error after transformations" warnings about
 mismatched generic arg counts for `CubicExt`/`QuadraticExt` (expected 4, got 7).

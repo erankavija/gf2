@@ -188,7 +188,7 @@ fn transpose_64x64_scalar_safe(input: &[u64; 64], output: &mut [u64; 64]) {
 /// # Complexity
 ///
 /// O(64 · log₂ 64) = O(384) word operations. Bench numbers under
-/// `dev/benchmarks/ppc-baselines.json` entry `B1`.
+/// `dev/scripts/ppc-baselines.json` entry `B1`.
 pub fn transpose_64x64_scalar(input: &[u64; 64], output: &mut [u64; 64]) {
     // Copy input into a scratch buffer; we mutate it in place.
     let mut buf: [u64; 64] = *input;

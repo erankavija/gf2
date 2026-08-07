@@ -849,7 +849,7 @@ fn bench_pclmulqdq_barrett(c: &mut Criterion) {
 // the per-element `pclmulqdq_barrett` strategy, plus a per-element
 // `pclmulqdq_barrett_loop_v0` baseline that calls the existing single-shot
 // kernel inside a tight loop. The two leaves are wired to the criterion-1.5x
-// gate via the C1 entry in `dev/benchmarks/ppc-baselines.json`.
+// gate via the C1 entry in `dev/scripts/ppc-baselines.json`.
 //
 // The batch sizes ≥ 256 reflect the [aspirational] success criterion — the
 // kernel is designed for batched dispatch, not single multiplications. Each

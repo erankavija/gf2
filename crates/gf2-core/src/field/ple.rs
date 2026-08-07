@@ -2966,7 +2966,7 @@ mod tests {
     ///
     /// To capture the output, run with the CCX1 flock wrapper:
     /// ```bash
-    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    /// ./dev/scripts/ccx1-bench-flock.sh \
     ///   cargo test -p gf2-core --release --all-features --lib -- \
     ///     --ignored --nocapture --test-threads 1 \
     ///     'test_ple_panelized_wall_time_full_sweep'
@@ -3097,7 +3097,7 @@ mod tests {
     ///
     /// Run via:
     /// ```bash
-    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    /// ./dev/scripts/ccx1-bench-flock.sh \
     ///   cargo test -p gf2-core --release --all-features --lib \
     ///   -- --nocapture --ignored field::ple::tests::test_echelon_wall_time_full_sweep \
     ///   2>&1 | grep -E 'echelon|BEGIN|END'
@@ -3289,7 +3289,7 @@ mod tests {
     ///
     /// Run via (CCX1 flock guard required):
     /// ```bash
-    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    /// ./dev/scripts/ccx1-bench-flock.sh \
     ///   cargo test -p gf2-core --release --all-features --lib \
     ///   -- --nocapture --ignored field::ple::tests::test_rref_non_regression_wall_time \
     ///   2>&1 | grep -E 'rref|BEGIN|END'

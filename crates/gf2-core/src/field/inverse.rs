@@ -2471,7 +2471,7 @@ mod tests {
     ///
     /// Run via:
     /// ```bash
-    /// ./dev/benchmarks/ccx1-bench-flock.sh \
+    /// ./dev/scripts/ccx1-bench-flock.sh \
     ///   cargo test -p gf2-core --release --all-features --lib \
     ///   -- --nocapture --ignored \
     ///   field::inverse::tests::test_gf251_n64_borderline_cost_decomposition \
