@@ -1,0 +1,75 @@
+# git_sha: 00bed053f011026bbeee4427510699e08c1e6f9b
+# git_worktree_dirty: true
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# cpu: AMD Ryzen 9 5900X 12-Core Processor
+# logical_cpus: 24
+# rayon_threads: 24
+# avx2: true, avx512f: false
+# cpu_governor: powersave
+# gpu: card0,AMD Radeon RX 6950 XT,0x73a5,Advanced Micro Devices Inc. [AMD/ATI],D4124100,0x0e3a,0xc0,1,42338,gfx1030
+# rocm: 7.2.4
+# hip_feature: true
+# kernel: 7.1.3-arch1-3
+# timestamp_utc: 2026-08-07T13:23:52Z
+# invocation: ./target/release/permanent_sampling_feas equivalence --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/equivalence-2026-08-07.csv --matrices 512
+# check: per-matrix permanent values against the scalar single-word kernel
+# matrices_per_cell: 512
+# seed_root: 0xb488f02c00000001, stream: 0 (reserved for this check)
+# sizes: n in {8, 12, 16} for every q; n = 20 additionally for q in {3, 5}
+q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status
+3,8,cpu_scalar,cpu_avx2,512,0,166,166,identical
+3,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,166,166,identical
+3,8,cpu_scalar,cpu_rayon_batch_avx2,512,0,166,166,identical
+3,8,cpu_scalar,cpu_rayon_intra_matrix,512,0,166,166,identical
+3,8,cpu_scalar,gpu_hip,512,0,166,166,identical
+3,12,cpu_scalar,cpu_avx2,512,0,164,164,identical
+3,12,cpu_scalar,cpu_rayon_batch_scalar,512,0,164,164,identical
+3,12,cpu_scalar,cpu_rayon_batch_avx2,512,0,164,164,identical
+3,12,cpu_scalar,cpu_rayon_intra_matrix,512,0,164,164,identical
+3,12,cpu_scalar,gpu_hip,512,0,164,164,identical
+3,16,cpu_scalar,cpu_avx2,512,0,168,168,identical
+3,16,cpu_scalar,cpu_rayon_batch_scalar,512,0,168,168,identical
+3,16,cpu_scalar,cpu_rayon_batch_avx2,512,0,168,168,identical
+3,16,cpu_scalar,cpu_rayon_intra_matrix,512,0,168,168,identical
+3,16,cpu_scalar,gpu_hip,512,0,168,168,identical
+3,20,cpu_scalar,cpu_avx2,512,0,157,157,identical
+3,20,cpu_scalar,cpu_rayon_batch_scalar,512,0,157,157,identical
+3,20,cpu_scalar,cpu_rayon_batch_avx2,512,0,157,157,identical
+3,20,cpu_scalar,cpu_rayon_intra_matrix,512,0,157,157,identical
+3,20,cpu_scalar,gpu_hip,512,0,157,157,identical
+5,8,cpu_scalar,cpu_avx2,0,0,85,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,85,85,identical
+5,8,cpu_scalar,cpu_rayon_batch_avx2,0,0,85,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,8,cpu_scalar,cpu_rayon_intra_matrix,0,0,85,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,8,cpu_scalar,gpu_hip,512,0,85,85,identical
+5,12,cpu_scalar,cpu_avx2,0,0,109,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,12,cpu_scalar,cpu_rayon_batch_scalar,512,0,109,109,identical
+5,12,cpu_scalar,cpu_rayon_batch_avx2,0,0,109,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,12,cpu_scalar,cpu_rayon_intra_matrix,0,0,109,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,12,cpu_scalar,gpu_hip,512,0,109,109,identical
+5,16,cpu_scalar,cpu_avx2,0,0,116,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,16,cpu_scalar,cpu_rayon_batch_scalar,512,0,116,116,identical
+5,16,cpu_scalar,cpu_rayon_batch_avx2,0,0,116,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,16,cpu_scalar,cpu_rayon_intra_matrix,0,0,116,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,16,cpu_scalar,gpu_hip,512,0,116,116,identical
+5,20,cpu_scalar,cpu_avx2,0,0,97,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,20,cpu_scalar,cpu_rayon_batch_scalar,512,0,97,97,identical
+5,20,cpu_scalar,cpu_rayon_batch_avx2,0,0,97,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,20,cpu_scalar,cpu_rayon_intra_matrix,0,0,97,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,20,cpu_scalar,gpu_hip,512,0,97,97,identical
+7,8,cpu_scalar,cpu_avx2,0,0,82,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,82,82,identical
+7,8,cpu_scalar,cpu_rayon_batch_avx2,0,0,82,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,8,cpu_scalar,cpu_rayon_intra_matrix,0,0,82,0,unsupported: gf2-algebra exposes no rayon permanent path for F_7
+7,8,cpu_scalar,gpu_hip,512,0,82,82,identical
+7,12,cpu_scalar,cpu_avx2,0,0,82,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,12,cpu_scalar,cpu_rayon_batch_scalar,512,0,82,82,identical
+7,12,cpu_scalar,cpu_rayon_batch_avx2,0,0,82,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,12,cpu_scalar,cpu_rayon_intra_matrix,0,0,82,0,unsupported: gf2-algebra exposes no rayon permanent path for F_7
+7,12,cpu_scalar,gpu_hip,512,0,82,82,identical
+7,16,cpu_scalar,cpu_avx2,0,0,86,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,16,cpu_scalar,cpu_rayon_batch_scalar,512,0,86,86,identical
+7,16,cpu_scalar,cpu_rayon_batch_avx2,0,0,86,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,16,cpu_scalar,cpu_rayon_intra_matrix,0,0,86,0,unsupported: gf2-algebra exposes no rayon permanent path for F_7
+7,16,cpu_scalar,gpu_hip,512,0,86,86,identical

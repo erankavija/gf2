@@ -1,0 +1,237 @@
+# Resolved dependency graph for the b488f02c feasibility harness.
+# The crate gitignores Cargo.lock (research-prototype convention), so this file
+# is the committed provenance record of what was actually linked.
+# generated: 2026-08-07T16:08:03Z
+# git_sha: 7bb371cb0478fbc3cd49175c8e02dc533cb9cb57
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# invocation: cargo tree --features hip --edges all
+
+permanent-sampling-feas v0.1.0 (/home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas)
+├── gf2-algebra feature "default"
+│   ├── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra)
+│   │   ├── gf2-core feature "default"
+│   │   │   ├── gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core)
+│   │   │   │   ├── gf2-kernels-simd feature "default"
+│   │   │   │   │   └── gf2-kernels-simd v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-simd)
+│   │   │   │   ├── rand feature "default"
+│   │   │   │   │   ├── rand v0.8.7
+│   │   │   │   │   │   ├── libc v0.2.189
+│   │   │   │   │   │   ├── rand_chacha v0.3.1
+│   │   │   │   │   │   │   ├── ppv-lite86 feature "simd"
+│   │   │   │   │   │   │   │   └── ppv-lite86 v0.2.21
+│   │   │   │   │   │   │   │       ├── zerocopy feature "default"
+│   │   │   │   │   │   │   │       │   └── zerocopy v0.8.56
+│   │   │   │   │   │   │   │       └── zerocopy feature "simd"
+│   │   │   │   │   │   │   │           └── zerocopy v0.8.56
+│   │   │   │   │   │   │   └── rand_core feature "default"
+│   │   │   │   │   │   │       └── rand_core v0.6.4
+│   │   │   │   │   │   │           └── getrandom feature "default"
+│   │   │   │   │   │   │               └── getrandom v0.2.17
+│   │   │   │   │   │   │                   ├── libc v0.2.189
+│   │   │   │   │   │   │                   └── cfg-if feature "default"
+│   │   │   │   │   │   │                       └── cfg-if v1.0.4
+│   │   │   │   │   │   └── rand_core feature "default" (*)
+│   │   │   │   │   ├── rand feature "std"
+│   │   │   │   │   │   ├── rand v0.8.7 (*)
+│   │   │   │   │   │   ├── rand feature "alloc"
+│   │   │   │   │   │   │   ├── rand v0.8.7 (*)
+│   │   │   │   │   │   │   └── rand_core feature "alloc"
+│   │   │   │   │   │   │       └── rand_core v0.6.4 (*)
+│   │   │   │   │   │   ├── rand feature "getrandom"
+│   │   │   │   │   │   │   ├── rand v0.8.7 (*)
+│   │   │   │   │   │   │   └── rand_core feature "getrandom"
+│   │   │   │   │   │   │       └── rand_core v0.6.4 (*)
+│   │   │   │   │   │   ├── rand feature "libc"
+│   │   │   │   │   │   │   └── rand v0.8.7 (*)
+│   │   │   │   │   │   ├── rand feature "rand_chacha"
+│   │   │   │   │   │   │   └── rand v0.8.7 (*)
+│   │   │   │   │   │   ├── rand_chacha feature "std"
+│   │   │   │   │   │   │   ├── rand_chacha v0.3.1 (*)
+│   │   │   │   │   │   │   └── ppv-lite86 feature "std"
+│   │   │   │   │   │   │       └── ppv-lite86 v0.2.21 (*)
+│   │   │   │   │   │   └── rand_core feature "std"
+│   │   │   │   │   │       ├── rand_core v0.6.4 (*)
+│   │   │   │   │   │       ├── rand_core feature "alloc" (*)
+│   │   │   │   │   │       ├── rand_core feature "getrandom" (*)
+│   │   │   │   │   │       └── getrandom feature "std"
+│   │   │   │   │   │           └── getrandom v0.2.17 (*)
+│   │   │   │   │   └── rand feature "std_rng"
+│   │   │   │   │       ├── rand v0.8.7 (*)
+│   │   │   │   │       └── rand feature "rand_chacha" (*)
+│   │   │   │   ├── rayon feature "default"
+│   │   │   │   │   └── rayon v1.12.0
+│   │   │   │   │       ├── either v1.17.0
+│   │   │   │   │       └── rayon-core feature "default"
+│   │   │   │   │           └── rayon-core v1.13.0
+│   │   │   │   │               ├── crossbeam-deque feature "default"
+│   │   │   │   │               │   ├── crossbeam-deque v0.8.7
+│   │   │   │   │               │   │   ├── crossbeam-epoch v0.9.20
+│   │   │   │   │               │   │   │   └── crossbeam-utils v0.8.22
+│   │   │   │   │               │   │   └── crossbeam-utils v0.8.22
+│   │   │   │   │               │   └── crossbeam-deque feature "std"
+│   │   │   │   │               │       ├── crossbeam-deque v0.8.7 (*)
+│   │   │   │   │               │       ├── crossbeam-epoch feature "std"
+│   │   │   │   │               │       │   ├── crossbeam-epoch v0.9.20 (*)
+│   │   │   │   │               │       │   ├── crossbeam-epoch feature "alloc"
+│   │   │   │   │               │       │   │   └── crossbeam-epoch v0.9.20 (*)
+│   │   │   │   │               │       │   └── crossbeam-utils feature "std"
+│   │   │   │   │               │       │       └── crossbeam-utils v0.8.22
+│   │   │   │   │               │       └── crossbeam-utils feature "std" (*)
+│   │   │   │   │               └── crossbeam-utils feature "default"
+│   │   │   │   │                   ├── crossbeam-utils v0.8.22
+│   │   │   │   │                   └── crossbeam-utils feature "std" (*)
+│   │   │   │   ├── serde feature "default"
+│   │   │   │   │   ├── serde v1.0.229
+│   │   │   │   │   │   ├── serde_core feature "result"
+│   │   │   │   │   │   │   └── serde_core v1.0.229
+│   │   │   │   │   │   └── serde_derive feature "default"
+│   │   │   │   │   │       └── serde_derive v1.0.229 (proc-macro)
+│   │   │   │   │   │           ├── proc-macro2 feature "proc-macro"
+│   │   │   │   │   │           │   └── proc-macro2 v1.0.107
+│   │   │   │   │   │           │       └── unicode-ident feature "default"
+│   │   │   │   │   │           │           └── unicode-ident v1.0.24
+│   │   │   │   │   │           ├── quote feature "proc-macro"
+│   │   │   │   │   │           │   ├── quote v1.0.47
+│   │   │   │   │   │           │   │   └── proc-macro2 v1.0.107 (*)
+│   │   │   │   │   │           │   └── proc-macro2 feature "proc-macro" (*)
+│   │   │   │   │   │           ├── syn feature "clone-impls"
+│   │   │   │   │   │           │   └── syn v3.0.3
+│   │   │   │   │   │           │       ├── proc-macro2 v1.0.107 (*)
+│   │   │   │   │   │           │       ├── quote v1.0.47 (*)
+│   │   │   │   │   │           │       └── unicode-ident feature "default" (*)
+│   │   │   │   │   │           ├── syn feature "derive"
+│   │   │   │   │   │           │   └── syn v3.0.3 (*)
+│   │   │   │   │   │           ├── syn feature "parsing"
+│   │   │   │   │   │           │   └── syn v3.0.3 (*)
+│   │   │   │   │   │           ├── syn feature "printing"
+│   │   │   │   │   │           │   └── syn v3.0.3 (*)
+│   │   │   │   │   │           └── syn feature "proc-macro"
+│   │   │   │   │   │               ├── syn v3.0.3 (*)
+│   │   │   │   │   │               ├── proc-macro2 feature "proc-macro" (*)
+│   │   │   │   │   │               └── quote feature "proc-macro" (*)
+│   │   │   │   │   └── serde feature "std"
+│   │   │   │   │       ├── serde v1.0.229 (*)
+│   │   │   │   │       └── serde_core feature "std"
+│   │   │   │   │           └── serde_core v1.0.229
+│   │   │   │   ├── serde feature "derive"
+│   │   │   │   │   ├── serde v1.0.229 (*)
+│   │   │   │   │   └── serde feature "serde_derive"
+│   │   │   │   │       └── serde v1.0.229 (*)
+│   │   │   │   └── serde_json feature "default"
+│   │   │   │       ├── serde_json v1.0.151
+│   │   │   │       │   ├── memchr v2.8.3
+│   │   │   │       │   ├── serde_core v1.0.229
+│   │   │   │       │   ├── itoa feature "default"
+│   │   │   │       │   │   └── itoa v1.0.18
+│   │   │   │       │   └── zmij feature "default"
+│   │   │   │       │       └── zmij v1.0.23
+│   │   │   │       └── serde_json feature "std"
+│   │   │   │           ├── serde_json v1.0.151 (*)
+│   │   │   │           ├── serde_core feature "std" (*)
+│   │   │   │           └── memchr feature "std"
+│   │   │   │               ├── memchr v2.8.3
+│   │   │   │               └── memchr feature "alloc"
+│   │   │   │                   └── memchr v2.8.3
+│   │   │   ├── gf2-core feature "io"
+│   │   │   │   └── gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core) (*)
+│   │   │   └── gf2-core feature "rand"
+│   │   │       └── gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core) (*)
+│   │   ├── gf2-kernels-simd feature "default" (*)
+│   │   ├── rayon feature "default" (*)
+│   │   └── gf2-kernels-hip feature "default"
+│   │       └── gf2-kernels-hip v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip)
+│   │           ├── gf2-core feature "default" (*)
+│   │           └── tracing feature "default"
+│   │               ├── tracing v0.1.44
+│   │               │   ├── tracing-core v0.1.36
+│   │               │   │   └── once_cell feature "default"
+│   │               │   │       ├── once_cell v1.21.4
+│   │               │   │       └── once_cell feature "std"
+│   │               │   │           ├── once_cell v1.21.4
+│   │               │   │           └── once_cell feature "alloc"
+│   │               │   │               ├── once_cell v1.21.4
+│   │               │   │               └── once_cell feature "race"
+│   │               │   │                   └── once_cell v1.21.4
+│   │               │   ├── pin-project-lite feature "default"
+│   │               │   │   └── pin-project-lite v0.2.17
+│   │               │   └── tracing-attributes feature "default"
+│   │               │       └── tracing-attributes v0.1.31 (proc-macro)
+│   │               │           ├── proc-macro2 feature "default"
+│   │               │           │   ├── proc-macro2 v1.0.107 (*)
+│   │               │           │   └── proc-macro2 feature "proc-macro" (*)
+│   │               │           ├── quote feature "default"
+│   │               │           │   ├── quote v1.0.47 (*)
+│   │               │           │   └── quote feature "proc-macro" (*)
+│   │               │           ├── syn feature "clone-impls"
+│   │               │           │   └── syn v2.0.119
+│   │               │           │       ├── proc-macro2 v1.0.107 (*)
+│   │               │           │       ├── quote v1.0.47 (*)
+│   │               │           │       └── unicode-ident feature "default" (*)
+│   │               │           ├── syn feature "extra-traits"
+│   │               │           │   └── syn v2.0.119 (*)
+│   │               │           ├── syn feature "full"
+│   │               │           │   └── syn v2.0.119 (*)
+│   │               │           ├── syn feature "parsing"
+│   │               │           │   └── syn v2.0.119 (*)
+│   │               │           ├── syn feature "printing"
+│   │               │           │   └── syn v2.0.119 (*)
+│   │               │           ├── syn feature "proc-macro"
+│   │               │           │   ├── syn v2.0.119 (*)
+│   │               │           │   ├── proc-macro2 feature "proc-macro" (*)
+│   │               │           │   └── quote feature "proc-macro" (*)
+│   │               │           └── syn feature "visit-mut"
+│   │               │               └── syn v2.0.119 (*)
+│   │               ├── tracing feature "attributes"
+│   │               │   ├── tracing v0.1.44 (*)
+│   │               │   └── tracing feature "tracing-attributes"
+│   │               │       └── tracing v0.1.44 (*)
+│   │               └── tracing feature "std"
+│   │                   ├── tracing v0.1.44 (*)
+│   │                   └── tracing-core feature "std"
+│   │                       ├── tracing-core v0.1.36 (*)
+│   │                       └── tracing-core feature "once_cell"
+│   │                           └── tracing-core v0.1.36 (*)
+│   │           [build-dependencies]
+│   │           └── cc feature "default"
+│   │               └── cc v1.4.1
+│   │                   ├── find-msvc-tools feature "default"
+│   │                   │   └── find-msvc-tools v0.1.10
+│   │                   └── shlex feature "default"
+│   │                       ├── shlex v2.0.1
+│   │                       └── shlex feature "std"
+│   │                           └── shlex v2.0.1
+│   ├── gf2-algebra feature "f5"
+│   │   └── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra) (*)
+│   ├── gf2-algebra feature "f7"
+│   │   └── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra) (*)
+│   ├── gf2-algebra feature "parallel"
+│   │   ├── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra) (*)
+│   │   └── gf2-core feature "parallel"
+│   │       └── gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core) (*)
+│   └── gf2-algebra feature "simd"
+│       ├── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra) (*)
+│       └── gf2-core feature "simd"
+│           └── gf2-core v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-core) (*)
+├── gf2-algebra feature "f5" (*)
+├── gf2-algebra feature "f7" (*)
+├── gf2-algebra feature "parallel" (*)
+├── gf2-algebra feature "simd" (*)
+├── gf2-core feature "default" (*)
+├── gf2-kernels-simd feature "default" (*)
+├── libc feature "default"
+│   ├── libc v0.2.189
+│   └── libc feature "std"
+│       └── libc v0.2.189
+├── rayon feature "default" (*)
+├── rand_chacha feature "default"
+│   ├── rand_chacha v0.9.0
+│   │   ├── ppv-lite86 feature "simd" (*)
+│   │   └── rand_core feature "default"
+│   │       └── rand_core v0.9.5
+│   └── rand_chacha feature "std"
+│       ├── rand_chacha v0.9.0 (*)
+│       ├── ppv-lite86 feature "std" (*)
+│       └── rand_core feature "std"
+│           └── rand_core v0.9.5
+└── rand_core feature "default" (*)
