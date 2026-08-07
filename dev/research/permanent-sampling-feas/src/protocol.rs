@@ -20,53 +20,51 @@
 //! # Repetition and censoring policy
 //!
 //! Every cell first runs an untimed warm-up of at least [`WARMUP_SECONDS`], to
-//! let boost clocks and the GPU settle. It then repeats until it has both at
-//! least [`MIN_REPS`] repetitions and at least [`MIN_TIMED_SECONDS`] of timed
-//! work, stopping early only at [`MAX_CELL_SECONDS`].
+//! let boost clocks and the GPU settle, drawing from a stream sub-range
+//! reserved for it so the timed sample stays independent of how many warm-up
+//! repetitions the machine happened to fit. It then repeats until it has both
+//! at least [`MIN_REPS`] repetitions and at least [`MIN_TIMED_SECONDS`] of timed
+//! work, stopping at [`MAX_CELL_SECONDS`].
 //!
-//! Before that, every cell runs a single-matrix **probe**, which sizes the
-//! batch for the adaptive backends and decides whether the cell is affordable
-//! at all. A probe exceeding [`CENSOR_MATRIX_SECONDS`] censors the cell.
-//!
-//! Three outcomes are therefore distinguishable in the CSV: `measured`,
-//! `unsupported` (a kernel bound forbids the cell), and `censored` (the cell
-//! was not attempted at its batch size because it was projected too slow).
+//! Three outcomes are distinguishable in the CSV: `measured`, `unsupported`
+//! (a kernel bound forbids the cell), and `censored` (not attempted).
 //!
 //! # The censoring contract
 //!
 //! This is the single normative statement of what a censored row means; the
 //! study and the CSV preamble restate it and must not diverge from it.
 //!
-//! A censored row carries **no measured rate**. `composite_matrices_per_s` is
-//! `NaN`. What it does carry is `projected_matrices_per_s`: an **estimate**
-//! obtained by scaling a *measured batched rate* from another `n` on the same
+//! A censored row carries **no measured rate**: `composite_matrices_per_s` is
+//! `NaN`. What it carries is `projected_matrices_per_s`, an **estimate** formed
+//! by scaling a *measured batched rate* from another `n` on the same
 //! `(q, backend, batch size)` through Ryser's exact `n * 2^n` work model, with
-//! the reference size recorded in `projection_reference_n`.
+//! the reference size in `projection_reference_n`.
 //!
-//! ## Two inferences that do not work, and why
+//! A cell is censored when that projection implies a repetition longer than
+//! [`MAX_CELL_SECONDS`] — `M / rate` for a fixed-batch cell, `1 / rate` for an
+//! adaptive one, which sizes its own batch and so can only be defeated by a
+//! single unaffordable matrix. A cell with no projection reference falls back
+//! to a single-matrix probe and is censored only if that one matrix already
+//! exceeds the cap.
 //!
-//! Neither reciprocal of the single-matrix probe is a valid bound on a batched
-//! rate, and the committed measurements disprove both:
+//! ## Why no bound is derived from the probe
 //!
-//! - `1 / probe` is not a *lower* bound in any useful sense and badly
-//!   understates the device: one matrix occupies one compute unit.
-//! - `W / probe`, with `W` the compute-unit count, is **not an upper bound**.
-//!   At `q = 3, n = 28` the probe is 28.04 s and `W = 80`, giving 2.85
-//!   matrices/s, yet the same grid measures **8.52 matrices/s** at `M = 256`.
-//!   The model fails because a compute unit hosts more than one workgroup at a
-//!   time, and because the probe carries the whole per-launch overhead —
-//!   allocation, transfers, synchronisation — that a real batch amortises.
+//! [`CellResult::probe_matrix_s`] is a single-matrix **latency**, and no bound
+//! on a batched rate follows from it in either direction. `1 / probe`
+//! understates the device by orders of magnitude, since one matrix occupies one
+//! compute unit. `W / probe`, with `W` the compute-unit count, is **not an
+//! upper bound either**: a compute unit hosts several workgroups at once, and
+//! the probe pays per-launch costs that a real batch amortises. An earlier
+//! version of this harness published `W / probe` as an upper bound and the
+//! grid's own measurements exceeded it. The study records that falsification
+//! with the numbers.
 //!
 //! ## What the projection is worth
 //!
 //! Scaling a measured batched rate by the work ratio is empirically sound and
-//! slightly **pessimistic** on this hardware: validated along the `q = 3` GPU
-//! chain at `M = 256`, projecting 20 -> 24 gives 110.7 against a measured
-//! 133.7, and 24 -> 28 gives 7.16 against a measured 8.52 — the projection
-//! lands 17-21 % low both times, because longer kernels amortise per-launch
-//! overhead better. A cell whose *projected* rate already misses the budget by
-//! an order of magnitude is therefore confidently infeasible; a cell that
-//! misses it by 20 % is not, and is attempted rather than censored.
+//! mildly **pessimistic** on this hardware. The magnitude is re-derived from
+//! each grid's own `q = 3` GPU chain in the study rather than quoted here, so
+//! that a re-measurement cannot leave a stale percentage behind in the code.
 
 use std::fmt::Write as _;
 use std::time::Instant;
@@ -87,13 +85,6 @@ pub const MIN_REPS: usize = 5;
 pub const MIN_TIMED_SECONDS: f64 = 5.0;
 /// Timed wall-clock after which a cell stops accepting further repetitions.
 pub const MAX_CELL_SECONDS: f64 = 120.0;
-/// Per-matrix cost above which a cell is censored instead of measured.
-pub const CENSOR_MATRIX_SECONDS: f64 = 150.0;
-/// Compute units on the GPU, used to project a batch's wall-clock from a
-/// single-matrix probe: the kernel runs one block per matrix, so at most this
-/// many matrices are resident at once. Read from `rocminfo` on the benchmark
-/// host (AMD Radeon RX 6950 XT, gfx1030).
-pub const GPU_COMPUTE_UNITS: usize = 80;
 /// Batch wall-clock each cell's `M` is calibrated to hit.
 pub const TARGET_REP_SECONDS: f64 = 2.0;
 /// Ceiling on `M`, to bound a cell's resident matrix memory.
@@ -359,32 +350,6 @@ pub fn ryser_work(n: usize) -> f64 {
     n as f64 * (n as f64).exp2()
 }
 
-/// Project a cell's single-matrix cost from a measured probe at another `n` on
-/// the same `(q, backend)`, using Ryser's exact `n * 2^n` work model.
-///
-/// Used only to decline a cell before paying for its probe. The projection and
-/// its basis are recorded in the row's note, and it is labelled an estimate.
-#[must_use]
-pub fn project_probe(reference_n: usize, reference_probe_s: f64, target_n: usize) -> f64 {
-    reference_probe_s * ryser_work(target_n) / ryser_work(reference_n)
-}
-
-/// The parallel width a backend applies to a batch: how many matrices are in
-/// flight at once. One for a pinned single thread, the pool size for rayon
-/// across matrices, and the compute-unit count for the GPU's one-block-per-
-/// matrix kernels.
-#[must_use]
-pub fn parallel_width(backend: Backend) -> usize {
-    match backend {
-        Backend::Scalar | Backend::Avx2 => 1,
-        Backend::Rayon | Backend::RayonAvx2 => rayon::current_num_threads(),
-        // The intra-matrix path parallelises inside one matrix, so matrices are
-        // still consumed one at a time.
-        Backend::RayonIntra => 1,
-        Backend::Gpu => GPU_COMPUTE_UNITS,
-    }
-}
-
 /// Measured single-matrix probes, keyed by `(q, backend, n)`.
 ///
 /// A cell whose exact `(q, backend, n)` was already probed reuses that number
@@ -561,8 +526,9 @@ pub fn run_cell(
                 "not attempted: the measured rate at n={ref_n} projects to {projected:.4} \
 matrices/s at n={n} under Ryser's n*2^n work model, so one repetition would take \
 {projected_rep_s:.0} s against the {MAX_CELL_SECONDS:.0} s cap. The projection is an \
-ESTIMATE and runs 17-21% LOW on this hardware, so the true rate is somewhat higher; \
-the cell carries no measured rate"
+ESTIMATE and runs mildly LOW on this hardware, so the true rate is somewhat higher; \
+the magnitude is re-derived from this file's own q=3 GPU chain in the study. The cell \
+carries no measured rate"
             );
             return result;
         }
