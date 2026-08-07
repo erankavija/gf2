@@ -191,7 +191,7 @@ Test-suite wall-clock budget is 60 seconds. If it takes longer, something is wro
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the workspace guide in [CLAUDE.md](CLAUDE.md). TDD is expected: write the test first, implement minimally, add property tests for mathematical invariants, and cover word-boundary edge cases (0, 1, 63, 64, 65 bits). Public APIs need doc examples that compile under `cargo test --doc`.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the workspace guide in [CLAUDE.md](CLAUDE.md). TDD is expected: write the test first, implement minimally, add property tests for mathematical invariants, and cover word-boundary edge cases (0, 1, 63, 64, 65 bits). Public APIs need rustdoc; add a doc example where it clarifies non-obvious behavior, and it must compile under `cargo test --doc`.
 
 Good first areas: SIMD kernels (NEON, AVX-512 extensions), new code families, soft-decoding algorithms, Lean proof polish, and fuzzing harnesses.
 

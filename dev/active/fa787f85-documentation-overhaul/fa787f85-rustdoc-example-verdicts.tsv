@@ -1,0 +1,1405 @@
+verdict	location	item	reason
+EARNED	crates/gf2-algebra/benches/s1_n36_speedup.rs:243	main	shows the supported benchmark workflows
+EARNED	crates/gf2-algebra/src/gpu.rs:231	permanent_batch_bipedal3	teaches the feature-gated GPU batch workflow
+EARNED	crates/gf2-algebra/src/gpu.rs:329	permanent_batch_bipedal5	teaches the feature-gated GPU batch workflow
+EARNED	crates/gf2-algebra/src/gpu.rs:433	permanent_batch_bipedal7	teaches the feature-gated GPU batch workflow
+EARNED	crates/gf2-algebra/src/gray.rs:29	gray_code_index_to_subset	demonstrates Gray-code bitmask mapping
+EARNED	crates/gf2-algebra/src/gray.rs:82	gray_code_iter	traces subset enumeration and parity changes
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:110	PartialEq::eq	demonstrates alternative-zero canonical equality
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1490	Bipedal3Vec	teaches variable-length packed storage and zero-tail behavior
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:149	Debug::fmt	shows decoded lane-oriented formatting rather than raw words
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1558	Bipedal3Vec::fold_mul	teaches empty-product identity and padding treatment
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1636	Bipedal3Vec::neg_assign	teaches in-place vector negation
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1673	Bipedal3Vec::raw_mag	clarifies the packed magnitude bit-plane representation
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1703	Bipedal3Vec::raw_sgn	clarifies the packed sign bit-plane representation
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1740	PartialEq::eq	clarifies canonical equality and length semantics
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1780	Debug::fmt	shows decoded vector formatting rather than packed storage
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:1975	PackedFieldVec::add_assign	illustrates in-place modulo-three vector arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2024	PackedFieldVec::sub_assign	illustrates in-place modulo-three vector arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2072	PackedFieldVec::mul_assign	illustrates in-place modulo-three vector arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2855	Bipedal3Matrix	teaches row-major input over column-major packed storage
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2893	PartialEq::eq	clarifies shape-sensitive canonical matrix equality
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2925	Debug::fmt	shows row-oriented output despite column-major storage
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:2979	Bipedal3Matrix::from_row_major	clarifies row-major indexing and shape validation
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:3029	Bipedal3Matrix::to_row_major	teaches the inverse row-major conversion workflow
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:3116	Bipedal3Matrix::column	clarifies column-major access semantics
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:3159	Bipedal3Matrix::row	teaches row reconstruction from column storage
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:322	Bipedal3::fold_mul_first_n	teaches bounded lane reduction and multiplicative padding
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:3249	Bipedal3Matrix::transpose	teaches dimension and index transposition
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:566	PackedField::add	illustrates modulo-three lane arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:605	PackedField::sub	illustrates modulo-three lane arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:638	PackedField::neg	illustrates the F_3 additive-inverse mapping
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:665	PackedField::mul	illustrates modulo-three lane arithmetic
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:67	Bipedal3	shows the packed F_3 encoding and lane-wise arithmetic workflow
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:700	PackedField::lane	demonstrates canonical decoding at both lane endpoints
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:751	PackedField::with_lane	demonstrates canonical indexed writes while preserving another lane
+EARNED	crates/gf2-algebra/src/packed/bipedal3.rs:792	PackedField::all_zero	demonstrates the alternative-zero invariant
+EARNED	crates/gf2-algebra/src/packed/mod.rs:363	PackedFieldVec	shows vector construction and indexed access
+EARNED	crates/gf2-algebra/src/packed/mod.rs:77	PackedField	shows lane-wise construction and arithmetic
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:1010	PackedFieldVec::from_field_slice	the example demonstrates canonical encoding and tail masking
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:1305	Packed5::fold_mul_first_n	the active-lane identity and zero semantics are non-obvious
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:1378	Packed5Matrix	type-level walkthrough explains column-major storage and padding
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:1464	Packed5Matrix::from_row_major	the row-major-to-column-major mapping is material
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:190	Packed5	type-level walkthrough of packed F5 encoding and arithmetic
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:231	Packed5::eq	canonical-decode equality is a material representation contract
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:772	Packed5Vec	type-level walkthrough introduces the tail-padding invariant
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:903	Packed5Vec::eq	canonical equality and logical-length behavior are material contracts
+EARNED	crates/gf2-algebra/src/packed/packed5.rs:977	PackedFieldVec::zeros	the 65-lane example exercises a word-boundary invariant
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:1003	PartialEq::eq (Packed7Vec)	clarifies that logical length participates in equality
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:1327	Packed7Matrix	type-level walkthrough of column-major storage
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:1359	PartialEq::eq (Packed7Matrix)	clarifies that matrix shape participates in equality
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:1430	Packed7Matrix::from_row_major	clarifies row-major input to column-major storage
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:1560	Packed7Matrix::column	clarifies zero-copy column-major access
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:194	Packed7	type-level walkthrough of packed F_7 lane encoding
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:450	Packed7::fold_mul_first_n	clarifies prefix multiplication and identity semantics
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:850	Packed7Vec	type-level walkthrough of the tail-padding invariant
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:941	Packed7Vec::neg_assign	clarifies lane-wise inversion and tail preservation
+EARNED	crates/gf2-algebra/src/packed/packed7.rs:972	Packed7Vec::raw_words	clarifies packed slot ordering and zero tail padding
+EARNED	crates/gf2-algebra/src/packed/scalar.rs:185	ScalarPackedFp3Vec	type-level walkthrough of variable-length oracle mapping
+EARNED	crates/gf2-algebra/src/packed/scalar.rs:57	ScalarPackedFp3	type-level walkthrough of scalar lane-wise arithmetic
+EARNED	crates/gf2-algebra/src/permanent/bipedal3_multiword.rs:115	permanent_bipedal3_multiword	clarifies the infeasible n=65 workflow and size constraints
+EARNED	crates/gf2-algebra/src/permanent/bipedal3.rs:132	permanent_bipedal3	multi-step matrix construction and permanent workflow
+EARNED	crates/gf2-algebra/src/permanent/bipedal3.rs:220	permanent_bipedal3_singleword	the bounded single-word permanent workflow is non-obvious
+EARNED	crates/gf2-algebra/src/permanent/bipedal3.rs:364	permanent_bipedal3_singleword_simd	the example clarifies AVX2 detection and scalar fallback
+EARNED	crates/gf2-algebra/src/permanent/bipedal5.rs:149	permanent_bipedal5_singleword	teaches the single-word permanent workflow
+EARNED	crates/gf2-algebra/src/permanent/bipedal5.rs:71	permanent_bipedal5	teaches packed Ryser permanent evaluation
+EARNED	crates/gf2-algebra/src/permanent/bipedal7.rs:73	permanent_bipedal7	teaches packed-matrix construction and size-bound behavior
+EARNED	crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:126	permanent_bipedal3_parallel_with_chunk	clarifies the chunk-size contract
+EARNED	crates/gf2-algebra/src/permanent/parallel_bipedal3.rs:70	permanent_bipedal3_parallel	demonstrates permanent computation and field-specific results
+EARNED	crates/gf2-algebra/src/permanent/reference.rs:46	permanent_mod3_reference	teaches reference permanent evaluation across matrix sizes
+EARNED	crates/gf2-algebra/src/permanent/ryser.rs:43	permanent_ryser	clarifies flat row-major matrices and generic-field use
+EARNED	crates/gf2-algebra/src/testutil.rs:121	today_yyyy_mm_dd	clarifies reproducible environment override behavior
+EARNED	crates/gf2-algebra/src/testutil.rs:24	random_matrix	teaches deterministic seeded matrix generation
+EARNED	crates/gf2-algebra/src/testutil.rs:54	random_matrix_with_rng	materializes reproducible sequential RNG usage
+EARNED	crates/gf2-algebra/src/testutil.rs:87	unix_secs_to_ymd	clarifies UTC and leap-day conversion edge cases
+EARNED	crates/gf2-algebra/tests/cas_cross_validation.rs:115	cas_cross_validation_f5	the example documents the standards-validation test workflow
+EARNED	crates/gf2-algebra/tests/cas_cross_validation.rs:167	cas_cross_validation_f7	the example documents the standards-validation test workflow
+EARNED	crates/gf2-coding/src/bch/core.rs:164	BchCode::from_generator	clarifies supplying a standard generator polynomial
+EARNED	crates/gf2-coding/src/bch/core.rs:27	bch module	module-level BCH encode-error-decode workflow
+EARNED	crates/gf2-coding/src/bch/core.rs:370	BchEncoder::encode_batch	teaches batch encoding workflow
+EARNED	crates/gf2-coding/src/bch/core.rs:515	BchDecoder::decode_batch	teaches batch decoding workflow
+EARNED	crates/gf2-coding/src/bch/core.rs:648	BchDecoder::pack_coeff_stream	clarifies the GPU coefficient bit ordering
+EARNED	crates/gf2-coding/src/bch/core.rs:741	BchDecoder::compute_syndromes_batch_gpu	teaches the GPU syndrome workflow and failure contract
+EARNED	crates/gf2-coding/src/bch/core.rs:74	BchCode	type-level BCH code construction walkthrough
+EARNED	crates/gf2-coding/src/bch/core.rs:881	BchDecoder::decode_batch_gpu	teaches GPU syndrome plus CPU decode composition
+EARNED	crates/gf2-coding/src/bch/dvb_t2/generators.rs:56	product_of_generators	teaches constructing a BCH generator from standard polynomials
+EARNED	crates/gf2-coding/src/bch/dvb_t2/mod.rs:74	BchCode::dvb_t2	the example conveys DVB-T2 BCH frame and parity dimensions
+EARNED	crates/gf2-coding/src/bch/dvb_t2/params.rs:42	DvbBchParams::for_code	clarifies standards-derived parameter mapping
+EARNED	crates/gf2-coding/src/bch/extended.rs:30	extended BCH module	teaches extended-code construction and parity invariants
+EARNED	crates/gf2-coding/src/bch/extended.rs:63	ExtendedBchCode	teaches the encode-and-check workflow
+EARNED	crates/gf2-coding/src/bch/extended.rs:91	ExtendedBchCode::from_bch	teaches extending a base BCH code
+EARNED	crates/gf2-coding/src/bch/mod.rs:11	BCH module	teaches the encode–error–decode workflow
+EARNED	crates/gf2-coding/src/bcjr/mod.rs:216	BcjrDecoder::decode_siso	teaches soft decoding and APP-LLR interpretation
+EARNED	crates/gf2-coding/src/bcjr/mod.rs:30	BCJR module	teaches constructing and using the SISO decoder
+EARNED	crates/gf2-coding/src/bcjr/mod.rs:72	BcjrDecoder	teaches a complete decoder workflow
+EARNED	crates/gf2-coding/src/channel.rs:87	AwgnChannel::from_eb_n0_db	clarifies the Eb/N0, rate, and BPSK noise convention
+EARNED	crates/gf2-coding/src/convolutional.rs:109	ConvolutionalDecoder	teaches a multi-step Viterbi encode/decode workflow
+EARNED	crates/gf2-coding/src/convolutional.rs:18	ConvolutionalEncoder	teaches the streaming encoder workflow
+EARNED	crates/gf2-coding/src/crc.rs:38	crc module	teaches the CRC construction-and-encoding workflow
+EARNED	crates/gf2-coding/src/drm.rs:160	DrmCode::extended_rm	clarifies deterministic extended-code construction
+EARNED	crates/gf2-coding/src/drm.rs:193	DrmCode::drm_32_21	teaches constructing and encoding the standard code
+EARNED	crates/gf2-coding/src/drm.rs:32	drm module	provides the module-level encoding walkthrough
+EARNED	crates/gf2-coding/src/drm.rs:61	DrmCode	provides the type-level encoding walkthrough
+EARNED	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:323	BicmAwgnChannel::transmit_and_demodulate_with_noise	teaches the complete interleave-map-noise-demap workflow
+EARNED	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:46	esn0_to_ebn0	clarifies the Es/N0 to Eb/N0 unit conversion
+EARNED	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:493	parse_baseline_csv	teaches CSV-to-typed-result parsing
+EARNED	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:67	ebn0_to_esn0	clarifies the Eb/N0 to Es/N0 unit conversion
+EARNED	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:99	box_muller_cos	clarifies the deterministic Box-Muller numerical contract
+EARNED	crates/gf2-coding/src/fading.rs:103	Complex::norm	clarifies the magnitude numerical contract
+EARNED	crates/gf2-coding/src/fading.rs:1173	QpskRicianChannelModel	clarifies end-to-end frame-length and noise conventions
+EARNED	crates/gf2-coding/src/fading.rs:365	RicianChannel::sample_coefficient	teaches stochastic channel-coefficient sampling
+EARNED	crates/gf2-coding/src/fading.rs:403	RicianChannel::generate_frame_gains	teaches coherence-block gain generation
+EARNED	crates/gf2-coding/src/fading.rs:445	RicianChannel::transmit	clarifies channel, noise-variance, and length contracts
+EARNED	crates/gf2-coding/src/fading.rs:587	BitInterleaver::interleave	clarifies permutation-based bit ordering
+EARNED	crates/gf2-coding/src/fading.rs:628	BitInterleaver::deinterleave	teaches the inverse-permutation workflow
+EARNED	crates/gf2-coding/src/fading.rs:668	BitInterleaver::interleave_llrs	clarifies applying the bit permutation to LLRs
+EARNED	crates/gf2-coding/src/fading.rs:708	BitInterleaver::deinterleave_llrs	teaches LLR round-trip recovery
+EARNED	crates/gf2-coding/src/fading.rs:89	Complex::norm_sq	clarifies the squared-magnitude numerical contract
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:287	extended_bch_component	teaches extended component-code construction
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:31	GLDPC module	teaches QC-GLDPC construction and encoding
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:371	QcGldpcCode	teaches QC-GLDPC construction and encoding
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:455	QcGldpcCode::lentmaier_1024	clarifies the non-obvious actual dimension of the large construction
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:641	QcGldpcCode::systematic_positions	clarifies the encoding information-position contract
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:663	QcGldpcCode::check_variables	clarifies check-node connectivity and degree
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:699	QcGldpcCode::is_valid_codeword	teaches validating an encoded GLDPC codeword
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:850	QcGldpcCode::encode	teaches message-to-codeword encoding
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:924	GldpcDecoderConfig	clarifies damping and LLR-saturation configuration
+EARNED	crates/gf2-coding/src/gldpc/mod.rs:975	GldpcDecoder	teaches the iterative soft-decoding workflow
+EARNED	crates/gf2-coding/src/grand/orbgrand.rs:387	OrbGrand	shows decoder construction with a parity-check matrix
+EARNED	crates/gf2-coding/src/grand/orbgrand.rs:38	orbgrand module	shows the ORBGRAND decoding workflow
+EARNED	crates/gf2-coding/src/grand/orbgrand.rs:518	OrbGrand::decode	shows the soft-input decoding workflow
+EARNED	crates/gf2-coding/src/grand/orbgrand.rs:72	OrbGrandConfig	demonstrates decoder configuration choices
+EARNED	crates/gf2-coding/src/grand/sogrand.rs:120	SoGrand	teaches constructing and using the decoder
+EARNED	crates/gf2-coding/src/grand/sogrand.rs:258	SoGrand::decode_siso	teaches APP and extrinsic LLR usage
+EARNED	crates/gf2-coding/src/grand/sogrand.rs:28	SOGRAND module	teaches configuring and running soft-output GRAND
+EARNED	crates/gf2-coding/src/info_theory.rs:29	shannon_capacity	clarifies the numerical capacity contract
+EARNED	crates/gf2-coding/src/info_theory.rs:62	shannon_limit	clarifies the rate and Shannon-limit numerical contract
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1033	LdpcDecoder::decode_batch	the example teaches batch decoding
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1066	LdpcDecoder::decode_batch_with_config	the example teaches configured batch decoding
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1508	LdpcEncoder	type-level encode-and-validate workflow
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1564	LdpcEncoder::new	the example clarifies automatic IRA dispatch
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1660	LdpcEncoder::with_cache	the example teaches cache reuse across encoders
+EARNED	crates/gf2-coding/src/ldpc/core.rs:1698	LdpcEncoder::encode_batch	the example teaches batch encoding
+EARNED	crates/gf2-coding/src/ldpc/core.rs:172	LdpcCode::from_quasi_cyclic	the example demonstrates QC expansion into an LDPC code
+EARNED	crates/gf2-coding/src/ldpc/core.rs:200	LdpcCode::dvb_t2_short	the standards-specific frame dimensions are material
+EARNED	crates/gf2-coding/src/ldpc/core.rs:239	LdpcCode::dvb_t2_normal	the standards-specific frame dimensions are material
+EARNED	crates/gf2-coding/src/ldpc/core.rs:27	ldpc module	multi-step LDPC construction and decoding workflow
+EARNED	crates/gf2-coding/src/ldpc/core.rs:467	CirculantMatrix	type-level walkthrough explains circulant shifts
+EARNED	crates/gf2-coding/src/ldpc/core.rs:563	QuasiCyclicLdpc	type-level walkthrough explains base-matrix expansion
+EARNED	crates/gf2-coding/src/ldpc/core.rs:604	QuasiCyclicLdpc::new	the constructor’s validation invariants are material
+EARNED	crates/gf2-coding/src/ldpc/core.rs:733	DecoderAlgorithm	the example introduces the algorithm choices and parameters
+EARNED	crates/gf2-coding/src/ldpc/core.rs:776	DecoderConfig	type-level walkthrough explains configuration behavior
+EARNED	crates/gf2-coding/src/ldpc/core.rs:810	DecoderConfig::new	the should-panic cases document valid parameter ranges
+EARNED	crates/gf2-coding/src/ldpc/core.rs:85	LdpcCode::from_edges	the COO edge representation and code dimensions are material
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:503	DvbT2BitInterleaver::deinterleave	demonstrates the inverse round trip
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:31	concat module	teaches the DVB-T2 codec configuration workflow
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:468	DvbT2Concat::set_decoder_config	teaches selecting a non-default decoder configuration
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:515	DvbT2Concat::encode	teaches the BCH-to-LDPC encoding workflow
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:583	DvbT2Concat::decode_soft	teaches the LLR-based LDPC-to-BCH decoding workflow
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:721	DvbT2Concat::decode_bch_from_ldpc_codeword	clarifies the systematic outer-decode tail
+EARNED	crates/gf2-coding/src/ldpc/dvb_t2/params.rs:45	DvbParams::for_code	shows a standards-backed parameter mapping
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:122	EncodingCache	shows cache population and encoder reuse
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:171	EncodingCache::get	demonstrates the cache-miss contract
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:239	EncodingCache::precompute_dvb_t2	shows startup precomputation
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:330	EncodingCache::save_to_directory	shows cache persistence
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:374	EncodingCache::from_directory	shows cache restoration
+EARNED	crates/gf2-coding/src/ldpc/encoding/cache.rs:457	EncodingCache::precompute_and_save_dvb_t2	shows end-to-end cache generation
+EARNED	crates/gf2-coding/src/ldpc/encoding/ira.rs:47	IraEncoder	type-level IRA encoding workflow
+EARNED	crates/gf2-coding/src/ldpc/encoding/richardson_urbanke.rs:111	RuEncodingMatrices::preprocess	teaches preprocessing before repeated systematic encoding
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/bg1.rs:42	bg1_base_matrix	clarifies lifting-set selection and modular shift reduction
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/bg2.rs:43	bg2_base_matrix	clarifies standards-based lifting and matrix dimensions
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:122	inverse_interleaver	clarifies inverse permutation semantics
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:166	interleave_bits	clarifies spec bit ordering through a worked example
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:216	deinterleave_llrs	clarifies LLR-domain inverse ordering
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/interleaver.rs:72	output_interleaver	clarifies the TS 38.212 permutation mapping
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:51	lifting_set_index	illustrates valid set membership and invalid inputs
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:77	all_lifting_sizes	illustrates the sorted standards-defined registry
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1152	Nr5gRateMatchedCode::prepare_llrs	clarifies filler and punctured-position LLR mapping
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:115	shift_table	teaches standards-table selection for both base graphs
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1225	Nr5gRateMatchedCode::extract_message	clarifies full-codeword to message extraction
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1304	Nr5gRateMatchedDecoder	provides the type-level decoding workflow
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:203	kb_for_z_selection	clarifies the BG2 size-band contract
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:281	max_payload_for_lifting	teaches the exact-lifting payload workflow
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:360	QuasiCyclicLdpc::nr_5g	clarifies base-graph and lifting-factor dimensions
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:440	QuasiCyclicLdpc::nr_5g_rate_matched	teaches the 3GPP rate-matching construction
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:581	NrRateMatchParams	provides the type-level rate-matching walkthrough
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:628	NrRateMatchParams::effective_rate	clarifies the numerical rate contract
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:648	NrRateMatchParams::active_systematic_bits	clarifies retained systematic-bit accounting
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:666	NrRateMatchParams::transmitted_parity_bits	clarifies transmitted parity accounting
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:68	nr_5g module	provides the module-level 5G NR construction walkthrough
+EARNED	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:964	Nr5gRateMatchedCode	provides the type-level rate-matched encoding walkthrough
+EARNED	crates/gf2-coding/src/lib.rs	coding module	multi-step Hamming encode/decode workflow
+EARNED	crates/gf2-coding/src/linear.rs:17	LinearBlockCode	teaches constructing and encoding with a Hamming code
+EARNED	crates/gf2-coding/src/linear.rs:216	LinearBlockCode::hamming	clarifies parameterized code dimensions
+EARNED	crates/gf2-coding/src/linear.rs:361	SyndromeTableDecoder	teaches encode-corrupt-decode correction
+EARNED	crates/gf2-coding/src/linear.rs:64	LinearBlockCode::new_systematic	clarifies generator and parity-check matrix construction
+EARNED	crates/gf2-coding/src/llr.rs:146	Llr::boxplus	the numerical box-plus contract is material
+EARNED	crates/gf2-coding/src/llr.rs:170	Llr::boxplus_minsum	the sign and minimum-magnitude contract is material
+EARNED	crates/gf2-coding/src/llr.rs:210	Llr::boxplus_n	the multi-operand numerical workflow and empty-input panic matter
+EARNED	crates/gf2-coding/src/llr.rs:246	Llr::boxplus_minsum_n	the multi-operand sign/minimum contract is material
+EARNED	crates/gf2-coding/src/llr.rs:366	Llr::boxplus_normalized_minsum_n	the normalization factor is a numerical contract
+EARNED	crates/gf2-coding/src/llr.rs:403	Llr::boxplus_offset_minsum_n	the offset correction and zero floor are material
+EARNED	crates/gf2-coding/src/llr.rs:452	Llr::safe_boxplus	the non-finite fallback behavior is material
+EARNED	crates/gf2-coding/src/llr.rs:64	Llr::hard_decision	the tie-at-zero decision contract is material
+EARNED	crates/gf2-coding/src/modem/analysis_capture.rs:106	AnalysisCapture::with_method	clarifies demapper-method provenance
+EARNED	crates/gf2-coding/src/modem/analysis_capture.rs:240	AnalysisCapture::accumulate_slice	clarifies the batch-length and layout contract
+EARNED	crates/gf2-coding/src/modem/analysis_capture.rs:28	modem::analysis_capture module	provides the module-level capture workflow
+EARNED	crates/gf2-coding/src/modem/analysis_capture.rs:291	AnalysisCapture::accumulate_bitvec	teaches the packed-truth convenience workflow
+EARNED	crates/gf2-coding/src/modem/analysis_capture.rs:60	AnalysisCapture	provides the type-level borrow-lifetime walkthrough
+EARNED	crates/gf2-coding/src/modem/analysis.rs:1041	PerBitLlrStats::with_histogram	clarifies the optional histogram configuration
+EARNED	crates/gf2-coding/src/modem/analysis.rs:112	RunningStats	provides the type-level statistics walkthrough
+EARNED	crates/gf2-coding/src/modem/analysis.rs:1135	PerBitLlrStats::set_demap_method_once	clarifies idempotence and mismatch behavior
+EARNED	crates/gf2-coding/src/modem/analysis.rs:1183	PerBitLlrStats::accumulate	clarifies canonical layout and length requirements
+EARNED	crates/gf2-coding/src/modem/analysis.rs:1250	PerBitLlrStats::merge	teaches the multi-accumulator merge workflow
+EARNED	crates/gf2-coding/src/modem/analysis.rs:174	RunningStats::push	clarifies that non-finite samples are dropped
+EARNED	crates/gf2-coding/src/modem/analysis.rs:355	Histogram	provides the type-level histogram walkthrough
+EARNED	crates/gf2-coding/src/modem/analysis.rs:436	Histogram::push	clarifies bin-edge and tail handling
+EARNED	crates/gf2-coding/src/modem/analysis.rs:475	Histogram::total	clarifies that overflow contributes to the total
+EARNED	crates/gf2-coding/src/modem/analysis.rs:560	Histogram::bin_edges	clarifies the half-open bin interval contract
+EARNED	crates/gf2-coding/src/modem/analysis.rs:594	HistogramConfig	provides the type-level histogram configuration walkthrough
+EARNED	crates/gf2-coding/src/modem/analysis.rs:626	PerBitChannelStats	clarifies the conditional-LLR symmetry contract
+EARNED	crates/gf2-coding/src/modem/analysis.rs:801	per_bit_mi_histogram_bits	teaches conditional-histogram MI estimation
+EARNED	crates/gf2-coding/src/modem/analysis.rs:889	gmi_bits	teaches accumulating per-bit MI into GMI
+EARNED	crates/gf2-coding/src/modem/analysis.rs:948	PerBitLlrStats	provides the type-level accumulation workflow
+EARNED	crates/gf2-coding/src/modem/awgn_link.rs:105	unit_energy_n0_from_eb_n0_db	clarifies total complex noise power
+EARNED	crates/gf2-coding/src/modem/awgn_link.rs:146	ModemAwgnChannel	teaches the bits-to-LLRs AWGN pipeline
+EARNED	crates/gf2-coding/src/modem/awgn_link.rs:289	ModemAwgnChannel::transmit_and_demap	teaches the map-noise-demap call workflow
+EARNED	crates/gf2-coding/src/modem/awgn_link.rs:418	ModemChannelAdapter	teaches adapting a modem to the ChannelModel interface
+EARNED	crates/gf2-coding/src/modem/awgn_link.rs:64	unit_energy_sigma_sq_from_eb_n0_db	clarifies Eb/N0 scaling into per-axis variance
+EARNED	crates/gf2-coding/src/modem/builder.rs:100	ModemSpecBuilder	type-level builder walkthrough
+EARNED	crates/gf2-coding/src/modem/builder.rs:22	modem builder module	multi-step custom-constellation construction workflow
+EARNED	crates/gf2-coding/src/modem/builder.rs:331	ModemSpecBuilder::build	the example demonstrates final validation and construction
+EARNED	crates/gf2-coding/src/modem/demapper.rs:277	BatchSoftDemapper	shows the generic soft-demapping workflow
+EARNED	crates/gf2-coding/src/modem/demapper.rs:366	BatchHardDemapper	shows the generic hard-demapping workflow
+EARNED	crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs:159	FastGrayQamDemapper::new	clarifies validated Gray-QAM construction invariants
+EARNED	crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs:196	FastGrayQamDemapper::new_with_scalar_kernel	clarifies the benchmark-only scalar-dispatch contract
+EARNED	crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs:250	FastGrayQamDemapper::pam_levels	clarifies Gray-label indexing and axis-level layout
+EARNED	crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs:75	FastGrayQamDemapper	teaches the demapper input and LLR workflow
+EARNED	crates/gf2-coding/src/modem/gpu_demapper.rs:63	GpuGrayQamSoftDemapper	teaches the GPU demapping workflow
+EARNED	crates/gf2-coding/src/modem/gray_qam_mapper.rs:26	GrayQamMapper	teaches MSB-first Gray-QAM bit mapping
+EARNED	crates/gf2-coding/src/modem/mapper.rs:41	BatchMapper	shows the generic mapping workflow
+EARNED	crates/gf2-coding/src/modem/mod.rs:180	modem module	clarifies MSB-first bit ordering and modem-spec usage
+EARNED	crates/gf2-coding/src/modem/ref_demapper.rs:36	ReferenceSoftDemapper	type-level soft-demapping workflow
+EARNED	crates/gf2-coding/src/modem/ref_mapper.rs:33	ReferenceMapper	teaches arbitrary-constellation bit mapping
+EARNED	crates/gf2-coding/src/modem/scalar.rs:23	ModemScalar	teaches generic arithmetic across the sealed scalar types
+EARNED	crates/gf2-coding/src/modem/spec.rs:192	ModemSpec::builder	teaches the custom-constellation builder workflow
+EARNED	crates/gf2-coding/src/modem/spec.rs:26	ModemSpec	serves as the type-level validated-spec walkthrough
+EARNED	crates/gf2-coding/src/modem/spec.rs:387	ModemSpec::preferred_mapper	teaches backend-selection through the shared factory
+EARNED	crates/gf2-coding/src/modem/spec.rs:430	ModemSpec::preferred_soft_demapper	teaches backend-selection through the shared factory
+EARNED	crates/gf2-coding/src/modem/test_oracle.rs:104	label_stream	clarifies bounded seeded-label generation
+EARNED	crates/gf2-coding/src/modem/test_oracle.rs:33	permutation	clarifies deterministic permutation and permutation invariants
+EARNED	crates/gf2-coding/src/modem/types.rs:158	LabelWord::bit	clarifies MSB-first bit extraction
+EARNED	crates/gf2-coding/src/modem/types.rs:16	SymbolPoint	type-level walkthrough including the energy contract
+EARNED	crates/gf2-coding/src/modem/types.rs:90	LabelWord	type-level walkthrough of MSB-first ordering
+EARNED	crates/gf2-coding/src/modem/view.rs:16	ModemView	type-level view-construction walkthrough
+EARNED	crates/gf2-coding/src/modem/view.rs:185	ModemView::bit_channel	clarifies QAM axis semantic ordering
+EARNED	crates/gf2-coding/src/modem/view.rs:256	ModemView::bit_channel_analysis	clarifies the 16-QAM independence flag
+EARNED	crates/gf2-coding/src/product/chase_pyndiah.rs:109	ChasePyndiahConfig::default	demonstrates the numerical default schedules
+EARNED	crates/gf2-coding/src/product/chase_pyndiah.rs:140	ChasePyndiahDecoder	shows decoder construction and use
+EARNED	crates/gf2-coding/src/product/chase_pyndiah.rs:264	ChasePyndiahDecoder::decode	shows iterative product-code decoding
+EARNED	crates/gf2-coding/src/product/chase_pyndiah.rs:31	chase_pyndiah module	shows the iterative decoder workflow
+EARNED	crates/gf2-coding/src/product/mod.rs:1061	TurboDecoder::decode	teaches the channel-LLR decoding workflow
+EARNED	crates/gf2-coding/src/product/mod.rs:1314	TurboDecoder::sogrand	clarifies the configured SOGRAND backend contract
+EARNED	crates/gf2-coding/src/product/mod.rs:1337	TurboDecoder::bcjr	clarifies the configured BCJR backend contract
+EARNED	crates/gf2-coding/src/product/mod.rs:155	ProductComponent	serves as the trait-level component-code walkthrough
+EARNED	crates/gf2-coding/src/product/mod.rs:289	ProductCode	teaches product-code construction and encoding
+EARNED	crates/gf2-coding/src/product/mod.rs:33	product module	teaches product-code construction and encoding
+EARNED	crates/gf2-coding/src/product/mod.rs:414	ProductCode::encode_product	teaches the multi-stage row-and-column encoding workflow
+EARNED	crates/gf2-coding/src/product/mod.rs:497	ProductCode::is_valid_codeword	teaches row-and-column product-code validation
+EARNED	crates/gf2-coding/src/product/mod.rs:658	ProductCode::extract_message	clarifies systematic message extraction
+EARNED	crates/gf2-coding/src/product/mod.rs:930	TurboDecoder	teaches iterative product-code decoding
+EARNED	crates/gf2-coding/src/simulation.rs:1020	SimulationResult::to_json	clarifies JSON serialization output
+EARNED	crates/gf2-coding/src/simulation.rs:1073	SimulationResults	type-level aggregate-results walkthrough
+EARNED	crates/gf2-coding/src/simulation.rs:1094	SimulationResults::to_csv	teaches aggregate CSV export
+EARNED	crates/gf2-coding/src/simulation.rs:1128	SimulationResults::to_json	teaches aggregate JSON export
+EARNED	crates/gf2-coding/src/simulation.rs:1163	SimulationResults::write_to	teaches extension-based file-format selection
+EARNED	crates/gf2-coding/src/simulation.rs:1523	SimulationRunner::run_uncoded_ber	teaches an uncoded Monte Carlo workflow
+EARNED	crates/gf2-coding/src/simulation.rs:1613	SimulationRunner::run_uncoded_ber_with_channel	teaches channel-injected simulation
+EARNED	crates/gf2-coding/src/simulation.rs:1708	SimulationRunner::run_uncoded_ber_with_analysis	clarifies capture configuration and method matching
+EARNED	crates/gf2-coding/src/simulation.rs:1761	SimulationRunner::results_to_csv	teaches simulation result export
+EARNED	crates/gf2-coding/src/simulation.rs:2129	try_load_existing_results	clarifies graceful resume-file handling
+EARNED	crates/gf2-coding/src/simulation.rs:3270	SimulationRunner::run_coded	teaches coded simulation composition
+EARNED	crates/gf2-coding/src/simulation.rs:3329	SimulationRunner::run_coded_iterative	teaches mutable iterative decoder composition
+EARNED	crates/gf2-coding/src/simulation.rs:3412	SimulationRunner::run_coded_iterative_parallel	teaches per-SNR parallel decoder construction
+EARNED	crates/gf2-coding/src/simulation.rs:3822	SimulationRunner::run_with_decoder	teaches closure-based decoding integration
+EARNED	crates/gf2-coding/src/simulation.rs:471	ChannelModel	type-level channel transmission workflow
+EARNED	crates/gf2-coding/src/simulation.rs:562	BpskAwgnChannel	type-level BPSK/AWGN LLR workflow
+EARNED	crates/gf2-coding/src/simulation.rs:649	SimulationConfig	type-level simulation configuration walkthrough
+EARNED	crates/gf2-coding/src/simulation.rs:804	SimulationResult	type-level result construction walkthrough
+EARNED	crates/gf2-coding/src/simulation.rs:886	SimulationResult::to_csv_row	clarifies the CSV serialization contract
+EARNED	crates/gf2-coding/src/simulation.rs:930	SimulationResult::from_csv_row	teaches CSV serialization round-tripping
+EARNED	crates/gf2-coding/src/simulation.rs:986	SimulationResult::append_csv_row_to	teaches append-mode file output and header behavior
+EARNED	crates/gf2-coding/src/traits.rs:277	SoftDecoder::decode_soft	teaches converting received symbols into LLRs before decoding
+EARNED	crates/gf2-coding/src/traits.rs:36	GeneratorMatrixAccess	serves as the trait-level generator-matrix walkthrough
+EARNED	crates/gf2-core/src/alg/gauss.rs:101	invert_scalar	clarifies singular-input behavior
+EARNED	crates/gf2-core/src/alg/gauss.rs:202	invert_m4ri	clarifies inversion verification and singular behavior
+EARNED	crates/gf2-core/src/alg/gauss.rs:50	invert	teaches matrix inversion and its result contract
+EARNED	crates/gf2-core/src/alg/m4rm.rs:550	multiply	shows GF(2) matrix multiplication
+EARNED	crates/gf2-core/src/alg/rref.rs:56	rref	teaches RREF construction and pivot-result inspection
+EARNED	crates/gf2-core/src/bench_seed.rs:103	derive_seed	clarifies reproducible benchmark seed derivation
+EARNED	crates/gf2-core/src/bench_seed.rs:73	splitmix64	clarifies pinned deterministic reference outputs
+EARNED	crates/gf2-core/src/bitvec.rs:1002	BitVec::to_bytes_le	clarifies little-endian serialization
+EARNED	crates/gf2-core/src/bitvec.rs:1162	BitVec::random_seeded	demonstrates deterministic seeded generation
+EARNED	crates/gf2-core/src/bitvec.rs:1387	BitVec::bit_reversed	demonstrates bit-reversal permutation
+EARNED	crates/gf2-core/src/bitvec.rs:1479	BitVec::polar_transform	demonstrates the GF(2) polar transform
+EARNED	crates/gf2-core/src/bitvec.rs:1577	BitVec::polar_transform_inverse	demonstrates recovery through the inverse transform
+EARNED	crates/gf2-core/src/bitvec.rs:193	BitVec::from_words	clarifies packed little-endian indexing
+EARNED	crates/gf2-core/src/bitvec.rs:48	BitVec	shows the basic bit-vector workflow
+EARNED	crates/gf2-core/src/bitvec.rs:697	BitVec::rank	clarifies inclusive rank semantics
+EARNED	crates/gf2-core/src/bitvec.rs:750	BitVec::select	clarifies zero-based selection and absence
+EARNED	crates/gf2-core/src/bitvec.rs:8	reverse_bits	demonstrates non-obvious bit reversal
+EARNED	crates/gf2-core/src/bitvec.rs:971	BitVec::from_bytes_le	clarifies little-endian bit ordering
+EARNED	crates/gf2-core/src/compute/backend.rs:20	compute::backend module	provides the module-level backend workflow
+EARNED	crates/gf2-core/src/compute/cpu.rs:19	CpuBackend	teaches CPU matrix multiplication through the backend
+EARNED	crates/gf2-core/src/compute/mod.rs:34	compute module	teaches the compute-backend layering workflow
+EARNED	crates/gf2-core/src/field/axiom_tests.rs:133	test_field_axioms_with_cases	the configurable stress-test workflow is material
+EARNED	crates/gf2-core/src/field/axiom_tests.rs:215	test_const_field_axioms	the example demonstrates the extended const-field conformance harness
+EARNED	crates/gf2-core/src/field/axiom_tests.rs:796	fp_strategy	the example teaches composing a sampling strategy with the axiom harness
+EARNED	crates/gf2-core/src/field/axiom_tests.rs:917	gf2m_wide_strategy	the example clarifies strategy construction for a multi-word field
+EARNED	crates/gf2-core/src/field/axiom_tests.rs:93	test_field_axioms	the example teaches how to run the shared field-law harness
+EARNED	crates/gf2-core/src/field/batch_ops.rs:135	batch_inverse_in_place	clarifies in-place inversion semantics
+EARNED	crates/gf2-core/src/field/batch_ops.rs:191	batch_inverse_with_scratch	teaches allocation-free scratch-buffer usage
+EARNED	crates/gf2-core/src/field/batch_ops.rs:249	batch_inverse_skip_zeros	clarifies zero-preserving inversion semantics
+EARNED	crates/gf2-core/src/field/batch_ops.rs:287	batch_inverse_skip_zeros_in_place	clarifies in-place zero-preserving behavior
+EARNED	crates/gf2-core/src/field/batch_ops.rs:81	batch_inverse	teaches batch inversion and zero-failure behavior
+EARNED	crates/gf2-core/src/field/charpoly.rs:2107	FieldMatrix::charpoly	clarifies characteristic-polynomial coefficients over a finite field
+EARNED	crates/gf2-core/src/field/charpoly.rs:2165	FieldMatrix::charpoly_cubic	verifies equivalence between the explicit and dispatched paths
+EARNED	crates/gf2-core/src/field/charpoly.rs:2357	FieldMatrix::minpoly	clarifies the minimal-polynomial contract
+EARNED	crates/gf2-core/src/field/charpoly.rs:2441	FieldMatrix::frobenius_form	teaches verifying the conjugation invariant
+EARNED	crates/gf2-core/src/field/expr.rs:167	kernel_counts	clarifies fused-kernel counting semantics
+EARNED	crates/gf2-core/src/field/expr.rs:1810	FieldMatrix::eval	teaches lazy expression evaluation into an owned matrix
+EARNED	crates/gf2-core/src/field/expr.rs:669	Product	teaches lazy matrix-product materialization
+EARNED	crates/gf2-core/src/field/expr.rs:703	Sum	teaches lazy matrix-sum materialization
+EARNED	crates/gf2-core/src/field/expr.rs:736	Scale	teaches lazy scalar-matrix materialization
+EARNED	crates/gf2-core/src/field/expr.rs:767	NegProxy	teaches lazy negation materialization
+EARNED	crates/gf2-core/src/field/expr.rs:799	FusedProductPlus	teaches canonical product-plus fusion
+EARNED	crates/gf2-core/src/field/expr.rs:836	FusedProductPlusScaled	teaches scaled product-plus fusion
+EARNED	crates/gf2-core/src/field/expr.rs:871	FusedLinear	teaches fused linear combination
+EARNED	crates/gf2-core/src/field/expr.rs:904	TransposedProduct	teaches fused transposed multiplication
+EARNED	crates/gf2-core/src/field/expr.rs:941	ScaledTransposedProduct	teaches scaled transposed fusion
+EARNED	crates/gf2-core/src/field/inverse.rs:135	FieldMatrix::inv	teaches inversion verification over a finite field
+EARNED	crates/gf2-core/src/field/inverse.rs:269	FieldMatrix::solve	teaches solving and verifying a linear system
+EARNED	crates/gf2-core/src/field/inverse.rs:364	FieldMatrix::solve_batch	teaches batched linear-system solving
+EARNED	crates/gf2-core/src/field/inverse.rs:480	FieldMatrix::det	clarifies the finite-field determinant contract
+EARNED	crates/gf2-core/src/field/matrix.rs:1137	FieldMatrix::axpy_row	clarifies the finite-field fused multiply-add contract
+EARNED	crates/gf2-core/src/field/matrix.rs:1199	FieldMatrix::find_pivot_row	clarifies first-nonzero pivot selection and the no-pivot case
+EARNED	crates/gf2-core/src/field/matrix.rs:1228	FieldMatrix::transpose	clarifies row-column remapping
+EARNED	crates/gf2-core/src/field/matrix.rs:1272	FieldMatrix::to_sparse	teaches dense-to-CSR conversion and nonzero counting
+EARNED	crates/gf2-core/src/field/matrix.rs:1411	FieldMatrix::matvec	teaches matrix-vector multiplication and dimension use
+EARNED	crates/gf2-core/src/field/matrix.rs:1497	FieldMatrix::matvec_transpose	teaches transposed matrix-vector multiplication
+EARNED	crates/gf2-core/src/field/matrix.rs:1602	MatView	clarifies zero-copy submatrix coordinates
+EARNED	crates/gf2-core/src/field/matrix.rs:1715	MatView::to_owned	clarifies materialization and ownership
+EARNED	crates/gf2-core/src/field/matrix.rs:1758	MatView::submat	clarifies nested borrowed-view construction
+EARNED	crates/gf2-core/src/field/matrix.rs:1819	MatViewMut	clarifies exclusive mutation and untouched parent cells
+EARNED	crates/gf2-core/src/field/matrix.rs:2031	MatViewMut::to_owned	clarifies materialization from a mutable view
+EARNED	crates/gf2-core/src/field/matrix.rs:2076	MatViewMut::submat_mut	clarifies nested mutable-view borrowing
+EARNED	crates/gf2-core/src/field/matrix.rs:2113	MatViewMut::submat	clarifies retaining a read-only nested view
+EARNED	crates/gf2-core/src/field/matrix.rs:2184	MatViewMut::split_rows_mut	clarifies disjoint mutable slices and aliasing
+EARNED	crates/gf2-core/src/field/matrix.rs:2232	MatViewMut::reborrow	clarifies the shorter-lifetime mutable borrow
+EARNED	crates/gf2-core/src/field/matrix.rs:231	Transposed	clarifies the lazy transpose proxy's shape contract
+EARNED	crates/gf2-core/src/field/matrix.rs:2326	ColView	clarifies strided column indexing
+EARNED	crates/gf2-core/src/field/matrix.rs:2444	FieldMatrix::fmt	clarifies the Unicode matrix-rendering contract
+EARNED	crates/gf2-core/src/field/matrix.rs:2562	gemm	teaches dimensioned finite-field matrix multiplication
+EARNED	crates/gf2-core/src/field/matrix.rs:290	FieldMatrix	clarifies row-major storage and indexing
+EARNED	crates/gf2-core/src/field/matrix.rs:475	FieldMatrix::with_capacity	clarifies that this name still produces zero-filled storage
+EARNED	crates/gf2-core/src/field/matrix.rs:605	FieldMatrix::random_seeded	clarifies reproducibility for a fixed seed
+EARNED	crates/gf2-core/src/field/matrix.rs:942	FieldMatrix::submat	clarifies range-based zero-copy view construction
+EARNED	crates/gf2-core/src/field/matrix.rs:978	FieldMatrix::submat_mut	clarifies mutation through a bounded subview
+EARNED	crates/gf2-core/src/field/ntt.rs:79	ntt_inplace	clarifies the required inverse scaling for round trips
+EARNED	crates/gf2-core/src/field/ple.rs:1142	FieldMatrix::ple	teaches the PLE decomposition workflow
+EARNED	crates/gf2-core/src/field/ple.rs:1221	FieldMatrix::row_echelon	teaches the transform-and-echelon workflow
+EARNED	crates/gf2-core/src/field/ple.rs:1326	FieldMatrix::rref	teaches the reduced-echelon workflow
+EARNED	crates/gf2-core/src/field/ple.rs:1429	FieldMatrix::rank	clarifies the numerical rank contract
+EARNED	crates/gf2-core/src/field/ple.rs:1480	FieldMatrix::nullspace	teaches constructing a null-space basis
+EARNED	crates/gf2-core/src/field/ple.rs:152	Permutation	provides the type-level permutation-convention walkthrough
+EARNED	crates/gf2-core/src/field/ple.rs:1583	FieldMatrix::lu	teaches the full-rank LU workflow
+EARNED	crates/gf2-core/src/field/ple.rs:303	Permutation::inverse	clarifies destination-to-source inversion
+EARNED	crates/gf2-core/src/field/ple.rs:337	Permutation::apply	clarifies the row-reordering contract
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:128	interpolate_auto	the example demonstrates interpolation and evaluation
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:193	interpolate_auto_two_adic	the example clarifies the specialized dispatcher workflow
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:237	InterpolationError	the duplicate-point error contract is material
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:296	formal_derivative	the characteristic-dependent derivative contract is material
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:400	interpolate	the empty and single-point interpolation behavior is material
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:558	interpolate_fast	the subproduct-tree interpolation workflow is non-obvious
+EARNED	crates/gf2-core/src/field/poly_interpolate.rs:638	interpolate_fast_auto	the specialized fast-dispatch workflow is non-obvious
+EARNED	crates/gf2-core/src/field/poly.rs:1023	FieldPoly::mul_scalar	clarifies scalar multiplication and zero collapse
+EARNED	crates/gf2-core/src/field/poly.rs:1109	FieldPoly::eval	clarifies Horner evaluation and zero-polynomial behavior
+EARNED	crates/gf2-core/src/field/poly.rs:1160	FieldPoly::eval_batch	teaches ordered multi-point evaluation
+EARNED	crates/gf2-core/src/field/poly.rs:1204	FieldPoly::eval_at_matrix	teaches polynomial evaluation on matrices
+EARNED	crates/gf2-core/src/field/poly.rs:1336	FieldPoly::batch_evaluate	clarifies subproduct-tree evaluation and fallback equivalence
+EARNED	crates/gf2-core/src/field/poly.rs:1424	FieldPoly::from_roots	teaches constructing and checking a root polynomial
+EARNED	crates/gf2-core/src/field/poly.rs:1526	FieldPoly::batch_mul	clarifies balanced product-tree multiplication
+EARNED	crates/gf2-core/src/field/poly.rs:1616	FieldPoly::batch_mul_with_field	clarifies the empty-slice identity contract
+EARNED	crates/gf2-core/src/field/poly.rs:1666	FieldPoly::batch_gcd	teaches shared-factor and monic-GCD behavior
+EARNED	crates/gf2-core/src/field/poly.rs:1747	FieldPoly::div_rem	clarifies quotient-remainder identity
+EARNED	crates/gf2-core/src/field/poly.rs:1838	FieldPoly::gcd	teaches Euclidean GCD usage and monic normalization
+EARNED	crates/gf2-core/src/field/poly.rs:2217	build_subproduct_tree	clarifies tree layout and odd-node handling
+EARNED	crates/gf2-core/src/field/poly.rs:2302	batch_evaluate_subproduct	teaches explicit subproduct-tree evaluation
+EARNED	crates/gf2-core/src/field/poly.rs:2368	batch_evaluate_subproduct_auto	clarifies specialized fast-division dispatch
+EARNED	crates/gf2-core/src/field/poly.rs:2732	FieldPoly::mul_ntt	clarifies NTT multiplication and transform-size limits
+EARNED	crates/gf2-core/src/field/poly.rs:2845	mul_fast	clarifies threshold-based multiplication dispatch
+EARNED	crates/gf2-core/src/field/poly.rs:2941	FieldPoly::invert_series	teaches formal-power-series inversion
+EARNED	crates/gf2-core/src/field/poly.rs:3071	FieldPoly::div_rem_fast	clarifies Newton-iteration division
+EARNED	crates/gf2-core/src/field/poly.rs:3186	FieldPoly::div_rem_auto	clarifies division backend equivalence
+EARNED	crates/gf2-core/src/field/poly.rs:3236	FieldPoly::batch_evaluate_auto	clarifies specialized batch-evaluation dispatch
+EARNED	crates/gf2-core/src/field/poly.rs:428	FieldPoly	teaches coefficient ordering and normalization
+EARNED	crates/gf2-core/src/field/poly.rs:577	FieldPoly::zero_like	clarifies runtime field-context handling
+EARNED	crates/gf2-core/src/field/poly.rs:604	FieldPoly::one_like	clarifies field-context identity construction
+EARNED	crates/gf2-core/src/field/poly.rs:634	FieldPoly::constant	clarifies zero normalization behavior
+EARNED	crates/gf2-core/src/field/poly.rs:670	FieldPoly::monomial	clarifies degree placement and zero edge behavior
+EARNED	crates/gf2-core/src/field/poly.rs:770	FieldPoly::try_coeff	clarifies total out-of-range and zero-polynomial behavior
+EARNED	crates/gf2-core/src/field/poly.rs:817	FieldPoly::coeff	clarifies zero fallback and panic-sensitive access
+EARNED	crates/gf2-core/src/field/poly.rs:868	FieldPoly::coeff_or_zero	clarifies total access with an explicit field sample
+EARNED	crates/gf2-core/src/field/poly.rs:985	FieldPoly::mul	clarifies polynomial multiplication and dispatch
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:104	sparse_matrix module	provides the module-level sparse-matrix workflow
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:1128	SparseFieldMatrix::transpose	clarifies dense-transpose materialization
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:1187	SparseFieldMatrix::matmul	teaches canonical sparse-times-sparse multiplication
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:1346	SparseFieldMatrix::rref	teaches sparse reduced-echelon computation
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:142	SparseFieldMatrix	provides the CSR type-level walkthrough
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:1743	SparseFieldMatrixCsc::col_iter	clarifies sorted CSC iteration
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:1777	SparseFieldMatrixCsc::to_csr	teaches CSC-to-CSR conversion
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:181	SparseFieldMatrixCsc	provides the CSC conversion walkthrough
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:374	SparseFieldMatrix::get	clarifies absent-entry zero semantics
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:420	SparseFieldMatrix::row_iter	clarifies sorted CSR iteration
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:493	SparseFieldMatrix::from_triplets	clarifies duplicate summation and zero dropping
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:577	SparseFieldMatrix::from_dense	teaches dense-to-CSR conversion
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:632	SparseFieldMatrix::to_dense	teaches sparse-to-dense materialization
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:675	SparseFieldMatrix::to_csc	teaches CSR-to-CSC conversion
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:782	SparseFieldMatrix::matvec	teaches sparse field matrix-vector multiplication
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:895	SparseFieldMatrix::matvec_transpose	teaches transposed sparse multiplication
+EARNED	crates/gf2-core/src/field/sparse_matrix.rs:958	SparseFieldMatrix::matmat	teaches sparse-times-dense multiplication
+EARNED	crates/gf2-core/src/field/test_random_matrix.rs:199	dense_random_fp_sparse	the density and seed contract are material
+EARNED	crates/gf2-core/src/field/test_random_matrix.rs:242	direct_rref_oracle_fp	the example teaches the reference-RREF workflow
+EARNED	crates/gf2-core/src/field/test_random_matrix.rs:97	random_fp_rank_deficient	the example demonstrates deterministic rank-deficient matrix generation
+EARNED	crates/gf2-core/src/field/traits.rs:1022	ConstField::order_log2	clarifies safe field-width probing
+EARNED	crates/gf2-core/src/field/traits.rs:103	FiniteField::inv	clarifies the inverse contract
+EARNED	crates/gf2-core/src/field/traits.rs:1063	FiniteFieldExt::pow	clarifies exponentiation semantics
+EARNED	crates/gf2-core/src/field/traits.rs:1109	FiniteFieldExt::frobenius	clarifies the p-power numerical contract
+EARNED	crates/gf2-core/src/field/traits.rs:134	FiniteField::zero_hint	clarifies compile-time versus runtime field identity availability
+EARNED	crates/gf2-core/src/field/traits.rs:167	FiniteField::cardinality_log2_hint	clarifies static versus runtime cardinality availability
+EARNED	crates/gf2-core/src/field/traits.rs:190	FiniteField::to_wide	clarifies wide representation and reduction
+EARNED	crates/gf2-core/src/field/traits.rs:226	FiniteField::mul_to_wide	teaches delayed product accumulation
+EARNED	crates/gf2-core/src/field/traits.rs:283	FiniteField::reduce_wide	teaches reducing accumulated products
+EARNED	crates/gf2-core/src/field/traits.rs:28	FiniteField	serves as the field-arithmetic trait walkthrough
+EARNED	crates/gf2-core/src/field/traits.rs:736	FiniteField::max_unreduced_additions	clarifies the numerical overflow bound
+EARNED	crates/gf2-core/src/field/traits.rs:790	FiniteField::theorem_4_operand_bound	clarifies the recursion safety bound
+EARNED	crates/gf2-core/src/field/triangular.rs:277	trsm_upper	shows upper-triangular solving over a finite field
+EARNED	crates/gf2-core/src/field/triangular.rs:340	trsm_lower	shows lower-triangular solving over a finite field
+EARNED	crates/gf2-core/src/field/triangular.rs:411	trsm_upper_blocked	shows blocked triangular solving
+EARNED	crates/gf2-core/src/field/triangular.rs:476	trsm_lower_blocked	shows blocked triangular solving
+EARNED	crates/gf2-core/src/field/triangular.rs:541	trmm_upper	shows upper-triangular multiplication
+EARNED	crates/gf2-core/src/field/triangular.rs:599	trmm_lower	shows lower-triangular multiplication
+EARNED	crates/gf2-core/src/field/triangular.rs:660	trtri_upper	shows triangular inversion and identity checking
+EARNED	crates/gf2-core/src/field/triangular.rs:713	trtri_lower	shows triangular inversion and identity checking
+EARNED	crates/gf2-core/src/field/triangular.rs:787	trtrm	shows the compressed unit-lower storage convention
+EARNED	crates/gf2-core/src/field/two_adic.rs:129	TwoAdicField	type-level root-of-unity workflow
+EARNED	crates/gf2-core/src/field/two_adic.rs:193	TwoAdicField::two_adic_generator	clarifies generator primitivity
+EARNED	crates/gf2-core/src/field/two_adic.rs:232	TwoAdicField::two_adic_root_of_unity	clarifies the k=0 and k=1 edge conventions
+EARNED	crates/gf2-core/src/field/two_adic.rs:288	ProthTwoAdicity	type-level compile-time extraction walkthrough
+EARNED	crates/gf2-core/src/field/two_adic.rs:327	ProthTwoAdicity::TWO_ADICITY	clarifies Proth and non-Proth behavior
+EARNED	crates/gf2-core/src/field/two_adic.rs:65	two_adic module	module-level root-of-unity workflow
+EARNED	crates/gf2-core/src/field/vec.rs:18	FieldVec	teaches constructing and using a finite-field vector
+EARNED	crates/gf2-core/src/field/vec.rs:391	FieldVec::dot_product	clarifies delayed reduction and field-specific arithmetic
+EARNED	crates/gf2-core/src/field/vec.rs:675	FieldVec::sub_vec	clarifies characteristic-two subtraction equivalence
+EARNED	crates/gf2-core/src/field/vec.rs:870	StridedIter	teaches fixed-stride column traversal
+EARNED	crates/gf2-core/src/field/vec.rs:973	FieldVec::simd_dot_product	clarifies equivalence with the scalar fallback
+EARNED	crates/gf2-core/src/field/winograd.rs:142	gemm_winograd	clarifies accelerated matrix multiplication equivalence
+EARNED	crates/gf2-core/src/field/winograd.rs:195	gemm_winograd_with_threshold	clarifies explicit threshold behavior
+EARNED	crates/gf2-core/src/field/winograd.rs:587	theorem_4_bound	clarifies a numerical overflow bound
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:144	BarrettReducer	type-level reduction workflow
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:253	BarrettReducer::reduce	clarifies polynomial reduction semantics
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:317	BarrettReducer::reduce_with_clmul	clarifies injected hardware multiplication workflow
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:428	naive_reduce	clarifies reference polynomial reduction
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:604	BarrettReducerWide	type-level multiword reduction walkthrough
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:667	BarrettReducerWide::new	clarifies implicit-leading-bit word storage
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:732	BarrettReducerWide::reduce	clarifies const-generic product sizing and reduction
+EARNED	crates/gf2-core/src/gf2m/barrett.rs:80	clmul	clarifies carry-less polynomial multiplication
+EARNED	crates/gf2-core/src/gf2m/batch.rs:156	batch_square	clarifies equivalence with batched multiplication
+EARNED	crates/gf2-core/src/gf2m/batch.rs:31	batch module	teaches the batched field-operation workflow and backend behavior
+EARNED	crates/gf2-core/src/gf2m/batch.rs:72	batch_mul	clarifies in-place batch output and scalar equivalence
+EARNED	crates/gf2-core/src/gf2m/field.rs:2208	Gf2mPoly_	type-level polynomial construction walkthrough
+EARNED	crates/gf2-core/src/gf2m/field.rs:393	with_tables	demonstrates enabling and verifying precomputed tables
+EARNED	crates/gf2-core/src/gf2m/field.rs:521	Gf2mField::exp_table	the table length and exponent convention are material
+EARNED	crates/gf2-core/src/gf2m/field.rs:549	Gf2mField::log_table	the table length and logarithm convention are material
+EARNED	crates/gf2-core/src/gf2m/field.rs:682	Gf2mField::verify_primitive	the primitive-polynomial validation contract is material
+EARNED	crates/gf2-core/src/gf2m/field.rs:917	inverse	demonstrates the multiplicative-inverse contract
+EARNED	crates/gf2-core/src/gf2m/field.rs:999	minimal_polynomial	demonstrates computing and validating a minimal polynomial
+EARNED	crates/gf2-core/src/gf2m/generation.rs:117	PrimitiveGenerator::find_all	teaches selecting exhaustive search and collecting all results
+EARNED	crates/gf2-core/src/gf2m/generation.rs:14	generation module	teaches the primitive-polynomial search workflow
+EARNED	crates/gf2-core/src/gf2m/generation.rs:51	PrimitiveGenerator	serves as the type-level generator walkthrough
+EARNED	crates/gf2-core/src/gf2m/generation.rs:91	PrimitiveGenerator::find_first	clarifies the primitive-polynomial result
+EARNED	crates/gf2-core/src/gf2m/mul_raw.rs:105	gf2m_pow_raw	clarifies finite-field exponentiation
+EARNED	crates/gf2-core/src/gf2m/mul_raw.rs:150	gf2m_inverse_raw	clarifies the multiplicative-inverse contract
+EARNED	crates/gf2-core/src/gf2m/mul_raw.rs:21	gf2m_mul_raw	clarifies finite-field multiplication and polynomial reduction
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:126	FieldPoly::to_bitvec_minimal	clarifies minimal polynomial representation
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:157	FieldPoly::from_bitvec_reversed	clarifies reversed coefficient ordering
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:202	FieldPoly::to_bitvec_reversed	clarifies reversed coefficient ordering
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:250	FieldPoly::from_exponents	clarifies duplicate-exponent cancellation
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:45	FieldPoly::from_bitvec	clarifies ascending coefficient indexing
+EARNED	crates/gf2-core/src/gf2m/poly_helpers.rs:92	FieldPoly::to_bitvec	clarifies coefficient extraction and requested length
+EARNED	crates/gf2-core/src/gf2m/wide_config.rs:25	Gf2mWideConfig module	serves as the module-level packed-modulus walkthrough
+EARNED	crates/gf2-core/src/gf2m/wide_config.rs:79	Gf2mWideConfig	clarifies implicit high-bit and little-endian constants
+EARNED	crates/gf2-core/src/gf2m/wide.rs:174	Display::fmt	clarifies the externally visible little-endian word format
+EARNED	crates/gf2-core/src/gf2m/wide.rs:1878	ConstField::order	clarifies the u128 representability boundary
+EARNED	crates/gf2-core/src/gf2m/wide.rs:1920	ConstField::order_log2	clarifies safe size reporting for M beyond u128
+EARNED	crates/gf2-core/src/gf2m/wide.rs:1988	clmul_wide	teaches unreduced polynomial multiplication and doubled storage
+EARNED	crates/gf2-core/src/gf2m/wide.rs:2040	clmul_wide_slice	clarifies XOR-accumulating output-buffer semantics
+EARNED	crates/gf2-core/src/gf2m/wide.rs:479	Gf2mWide::bit	clarifies canonical bit indexing
+EARNED	crates/gf2-core/src/gf2m/wide.rs:92	Gf2mWide	teaches construction, XOR addition, and characteristic-two behavior
+EARNED	crates/gf2-core/src/gf2m/wide.rs:969	Gf2mWide::inverse	teaches zero handling and inverse verification
+EARNED	crates/gf2-core/src/gfp/mod.rs:114	Fp	type-level prime-field arithmetic walkthrough
+EARNED	crates/gf2-core/src/gfp/mod.rs:30	prime-field module	multi-step finite-field arithmetic walkthrough
+EARNED	crates/gf2-core/src/gfpn/batch.rs:1097	SimdKaratsubaHook::try_simd_karatsuba	teaches explicit SoA hook invocation and fallback-capable dispatch
+EARNED	crates/gf2-core/src/gfpn/batch.rs:1152	SimdKaratsubaHook::try_simd_cubic_karatsuba	teaches explicit cubic SoA hook invocation and fallback-capable dispatch
+EARNED	crates/gf2-core/src/gfpn/batch.rs:165	BatchExtField	serves as the type-level SoA layout walkthrough
+EARNED	crates/gf2-core/src/gfpn/batch.rs:238	BatchExtField::zeros	clarifies zero construction from a runtime field witness
+EARNED	crates/gf2-core/src/gfpn/batch.rs:483	BatchExtField::from_quadratic	teaches the AoS-to-SoA quadratic conversion
+EARNED	crates/gf2-core/src/gfpn/batch.rs:525	BatchExtField::to_quadratic	teaches the inverse quadratic conversion workflow
+EARNED	crates/gf2-core/src/gfpn/batch.rs:603	BatchExtField::batch_mul_quadratic	teaches the convert-multiply-convert workflow
+EARNED	crates/gf2-core/src/gfpn/batch.rs:666	BatchExtField::batch_square_quadratic	teaches the distinct batched squaring workflow
+EARNED	crates/gf2-core/src/gfpn/batch.rs:718	BatchExtField::from_cubic	teaches the AoS-to-SoA cubic conversion
+EARNED	crates/gf2-core/src/gfpn/batch.rs:759	BatchExtField::to_cubic	teaches the inverse cubic conversion workflow
+EARNED	crates/gf2-core/src/gfpn/batch.rs:812	BatchExtField::batch_mul_cubic	teaches the convert-multiply-convert workflow for cubic extensions
+EARNED	crates/gf2-core/src/gfpn/batch.rs:872	BatchExtField::batch_square_cubic	teaches the distinct batched cubic squaring workflow
+EARNED	crates/gf2-core/src/gfpn/batch.rs:92	batch module	teaches the AoS-to-SoA batch multiplication workflow
+EARNED	crates/gf2-core/src/gfpn/cubic.rs:226	CubicExt	teaches cubic-extension arithmetic and field laws
+EARNED	crates/gf2-core/src/gfpn/cubic.rs:31	cubic extension module	teaches extension-field construction and field laws
+EARNED	crates/gf2-core/src/gfpn/cubic.rs:335	CubicExt::norm	clarifies the extension-field norm contract
+EARNED	crates/gf2-core/src/gfpn/cubic.rs:80	CubicExtWide	teaches wide accumulation and reduction
+EARNED	crates/gf2-core/src/gfpn/ext_config.rs:14	gfpn::ext_config module	provides the extension-configuration walkthrough
+EARNED	crates/gf2-core/src/gfpn/mod.rs:34	extension-field module	the example demonstrates defining and using an extension configuration
+EARNED	crates/gf2-core/src/gfpn/quadratic.rs:206	QuadraticExt	serves as the type-level extension-field walkthrough
+EARNED	crates/gf2-core/src/gfpn/quadratic.rs:25	quadratic module	teaches extension-field construction and field-law checks
+EARNED	crates/gf2-core/src/gfpn/quadratic.rs:303	QuadraticExt::conjugate	clarifies finite-field negation of the coefficient
+EARNED	crates/gf2-core/src/gfpn/quadratic.rs:328	QuadraticExt::norm	clarifies the norm formula and numerical result
+EARNED	crates/gf2-core/src/gfpn/quadratic.rs:74	QuadraticExtWide	teaches accumulation followed by one wide reduction
+EARNED	crates/gf2-core/src/gfp/simd_ops.rs:45	SimdVecOps	clarifies runtime SIMD selection and scalar fallback
+EARNED	crates/gf2-core/src/gfp/simd_ops.rs:611	set_route_a_gf251_enabled	teaches enabling and restoring the process-wide route override
+EARNED	crates/gf2-core/src/gfp/simd_ops.rs:674	set_route_c_gf251_enabled	teaches enabling and restoring the process-wide route override
+EARNED	crates/gf2-core/src/gfp/specialized.rs:130	is_mersenne_prime	clarifies the non-obvious minimum-exponent contract
+EARNED	crates/gf2-core/src/gfp/specialized.rs:158	is_proth_prime	clarifies the non-obvious Proth threshold contract
+EARNED	crates/gf2-core/src/gfp/specialized.rs:204	classify	teaches mapping moduli to reduction categories
+EARNED	crates/gf2-core/src/gfp/specialized.rs:569	batch_mul_mersenne31	clarifies SIMD/scalar equivalence and slice contracts
+EARNED	crates/gf2-core/src/gfp/specialized.rs:622	batch_mul_add_mersenne31	clarifies modular accumulation semantics
+EARNED	crates/gf2-core/src/gfp/specialized.rs:684	batch_dot_mersenne31	clarifies modular dot-product behavior
+EARNED	crates/gf2-core/src/gfp/specialized.rs:765	GoldilocksFp	teaches fixed-modulus arithmetic and inversion
+EARNED	crates/gf2-core/src/gfp/specialized.rs:77	specialized reduction module	teaches prime-shape classification and storage choices
+EARNED	crates/gf2-core/src/gfp/specialized.rs:792	GoldilocksFp::new	clarifies canonical reduction at the modulus boundary
+EARNED	crates/gf2-core/src/kernels/ops.rs:39	resolve_xor_inplace	teaches resolving and invoking the backend function pointer
+EARNED	crates/gf2-core/src/lib.rs:19	gf2-core crate	teaches canonical bit storage and tail-padding invariants
+EARNED	crates/gf2-core/src/matrix_like.rs:110	MatrixLikeMut	trait-level mutation workflow
+EARNED	crates/gf2-core/src/matrix_like.rs:45	MatrixLike	trait-level read-only matrix workflow
+EARNED	crates/gf2-core/src/matrix.rs:1046	BitMatrix::transpose	demonstrates coordinate transposition
+EARNED	crates/gf2-core/src/matrix.rs:1298	BitMatrix::matvec	shows GF(2) matrix-vector multiplication
+EARNED	crates/gf2-core/src/matrix.rs:1414	BitMatrix::matvec_transpose	shows transposed matrix-vector multiplication
+EARNED	crates/gf2-core/src/matrix.rs:1622	BitMatrix::save_image	shows the file-output workflow
+EARNED	crates/gf2-core/src/matrix.rs:26	BitMatrix	clarifies row-major packed storage
+EARNED	crates/gf2-core/src/matrix.rs:281	BitMatrix::random_seeded	demonstrates deterministic seeded generation
+EARNED	crates/gf2-core/src/matrix.rs:561	BitMatrix::row_words	clarifies word-level row storage
+EARNED	crates/gf2-core/src/matrix.rs:590	BitMatrix::row_words_mut	clarifies mutable word-level storage
+EARNED	crates/gf2-core/src/matrix.rs:747	BitMatrix::cols_as_u32_masks	clarifies column bitmask encoding
+EARNED	crates/gf2-core/src/primitive_polys.rs:144	PrimitivePolynomialDatabase::trinomials	clarifies primitive trinomial values
+EARNED	crates/gf2-core/src/primitive_polys.rs:179	PrimitivePolynomialDatabase::verify	shows match and conflict outcomes
+EARNED	crates/gf2-core/src/primitive_polys.rs:230	PrimitivePolynomialDatabase::standard_u128	clarifies irreducibility versus primitivity
+EARNED	crates/gf2-core/src/primitive_polys.rs:348	PrimitivePolynomialDatabase::verify_u128	shows extended-database verification
+EARNED	crates/gf2-core/src/primitive_polys.rs:65	PrimitivePolynomialDatabase::standard	shows standards-backed polynomial values
+EARNED	crates/gf2-core/src/sparse.rs:1258	SpBitMatrix::to_block_csr	the representation-conversion workflow is non-obvious
+EARNED	crates/gf2-core/src/sparse.rs:1317	SpBitMatrix::reorder_rcm	the permutation-aware reordered matvec workflow is material
+EARNED	crates/gf2-core/src/sparse.rs:13	sparse module	multi-step COO construction and matrix-vector workflow
+EARNED	crates/gf2-core/src/sparse.rs:1415	SpBitMatrix::matmul	the GF(2) matrix-product workflow is non-trivial
+EARNED	crates/gf2-core/src/sparse.rs:1536	SpBitMatrix::matmat	the sparse-to-dense matrix-product contract is material
+EARNED	crates/gf2-core/src/sparse.rs:1602	SpBitMatrixDual	type-level CSR/CSC dual-representation walkthrough
+EARNED	crates/gf2-core/src/sparse.rs:1654	SpBitMatrixDual::from_coo_deduplicated	the dual constructor’s deduplication contract is material
+EARNED	crates/gf2-core/src/sparse.rs:1732	SpBitMatrixDual::rref	the dual representation’s coherent RREF workflow is material
+EARNED	crates/gf2-core/src/sparse.rs:1951	SpBitMatrix::save_image	the example teaches fallible image-output usage
+EARNED	crates/gf2-core/src/sparse.rs:2007	SpBitMatrixDual::save_image	the example teaches fallible image-output usage
+EARNED	crates/gf2-core/src/sparse.rs:218	RowPermutation::apply_rows	the row-order transformation contract is material
+EARNED	crates/gf2-core/src/sparse.rs:247	RowPermutation::unapply_rows	the inverse row-order transformation contract is material
+EARNED	crates/gf2-core/src/sparse.rs:279	RowPermutation::apply_cols	the column-order transformation contract is material
+EARNED	crates/gf2-core/src/sparse.rs:306	RowPermutation::unapply_cols	the inverse column-order transformation contract is material
+EARNED	crates/gf2-core/src/sparse.rs:505	block_csr_from_csr	the blocked representation and 65-column boundary are material
+EARNED	crates/gf2-core/src/sparse.rs:56	SpBitMatrix	type-level CSR storage and iteration walkthrough
+EARNED	crates/gf2-core/src/sparse.rs:645	SpBitMatrixBlockCsr::matvec_with_prefetch_distance	the backend-equivalence result is material
+EARNED	crates/gf2-core/src/sparse.rs:782	SpBitMatrix::from_coo	duplicate XOR cancellation is a material GF(2) contract
+EARNED	crates/gf2-core/src/sparse.rs:842	SpBitMatrix::from_coo_deduplicated	deduplication versus XOR semantics is material
+EARNED	crates/gf2-core/src/sparse.rs:93	RowPermutation	the permutation-direction contract is material
+EARNED	crates/gf2-core/src/sparse.rs:965	SpBitMatrix::rref	the example demonstrates a non-trivial algebraic transformation
+EARNED	crates/gf2-core/tests/simd_equiv/mod.rs:187	unaligned_slice	clarifies alignment-class test setup
+EARNED	crates/gf2-core/tests/simd_equiv/mod.rs:95	assert_simd_matches_scalar	teaches scalar/SIMD property-test usage
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:278	DeviceBuffer::new_with_fallback	teaches recoverable GPU OOM handling
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:28	device_mem_info	teaches querying device-memory byte counts
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:411	DeviceBuffer::copy_from_host	teaches the host-to-device/device-to-host transfer workflow
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:513	DeviceBuffer::copy_from_pinned_async	teaches asynchronous transfer lifetime and synchronization
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:572	DeviceBuffer::copy_to_pinned_async	teaches asynchronous destination validity after synchronization
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:670	PinnedHostBuffer::new	clarifies zero-initialized pinned allocation
+EARNED	crates/gf2-kernels-hip/src/host/alloc.rs:72	device_mem_info_for	teaches querying a selected device in a multi-GPU workflow
+EARNED	crates/gf2-kernels-hip/src/host/arch.rs:116	GfxTarget::from_arch_name	clarifies suffix stripping and unsupported targets
+EARNED	crates/gf2-kernels-hip/src/host/arch.rs:144	GfxTarget::detect	clarifies GPU detection errors and fallback
+EARNED	crates/gf2-kernels-hip/src/host/arch.rs:174	GfxTarget::detect_device	teaches device-specific detection workflow
+EARNED	crates/gf2-kernels-hip/src/host/arch.rs:301	GfxTarget::has_compiled_blob	clarifies build-manifest capability behavior
+EARNED	crates/gf2-kernels-hip/src/host/arch.rs:325	GfxTarget::load_blob	teaches typed blob-loading failure handling
+EARNED	crates/gf2-kernels-hip/src/host/launch.rs:109	LaunchDims::explicit	demonstrates bespoke launch geometry and thread count
+EARNED	crates/gf2-kernels-hip/src/host/launch.rs:63	LaunchDims::for_batch	demonstrates deterministic grid rounding and the zero case
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:114	HipStream::is_idle	clarifies idle, busy, and error outcomes
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:225	HipStreamPool::new	teaches device-bound pool construction and stream ownership
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:318	HipStreamPool::acquire	clarifies round-robin acquisition semantics
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:359	HipStreamPool::get	clarifies deterministic indexed worker ownership
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:38	HipStream::new	teaches HIP stream creation and lifetime use
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:390	HipStreamPool::acquire_idle	teaches idle probing and busy-stream fallback
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:432	HipStreamPool::synchronize_all	teaches pool-wide checkpoint draining
+EARNED	crates/gf2-kernels-hip/src/host/streams.rs:87	HipStream::synchronize	clarifies per-stream synchronization semantics
+EARNED	crates/gf2-kernels-hip/src/launch_bch_syndrome.rs:152	GpuBchSyndrome	type-level GPU syndrome workflow
+EARNED	crates/gf2-kernels-hip/src/launch_bch_syndrome.rs:412	gf_mul_device_batch	clarifies GPU batch multiplication and field-table semantics
+EARNED	crates/gf2-kernels-hip/src/launch_bch_syndrome.rs:57	BchFieldTables	type-level field-table invariant walkthrough
+EARNED	crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:117	AwgnStreamScratch	teaches stream-ordered pinned staging
+EARNED	crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:156	GpuChaChaAwgn	teaches raw-word and noise-sample generation
+EARNED	crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:68	chacha20_key_from_seed	clarifies deterministic host-device key derivation
+EARNED	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:154	LdpcGraphLayout	teaches the double-CSR Tanner-graph representation
+EARNED	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:233	LdpcStreamScratch	teaches pinned staging for stream-ordered decoding
+EARNED	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:289	GpuLdpcBp	teaches GPU decoder construction and batch decoding
+EARNED	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:69	GpuBpAlgorithm	clarifies algorithm selectors and correction parameters
+EARNED	crates/gf2-kernels-hip/src/lib.rs:12	gf2-kernels-hip module	teaches GPU BCJR batch setup and decoding
+EARNED	crates/gf2-kernels-hip/src/lib.rs:153	HipError::code	clarifies typed HIP error sentinel mapping
+EARNED	crates/gf2-kernels-hip/src/lib.rs:250	extract_h_cols	clarifies matrix-column bitmask encoding
+EARNED	crates/gf2-kernels-hip/src/lib.rs:368	GpuBcjrBatch::new	clarifies GPU state-limit and batch allocation setup
+EARNED	crates/gf2-kernels-hip/src/lib.rs:450	GpuBcjrBatch::decode_batch	teaches batch GPU decoding
+EARNED	crates/gf2-kernels-hip/src/lib.rs:615	GpuGrayQamDemapper	teaches GPU demapper setup and output sizing
+EARNED	crates/gf2-kernels-hip/src/lib.rs:666	DemapStreamScratch	clarifies per-worker stream scratch ownership
+EARNED	crates/gf2-kernels-hip/src/lib.rs:845	GpuGrayQamDemapper::demap_batch	teaches batched demapping inputs and output layout
+EARNED	crates/gf2-kernels-hip/src/lib.rs:887	GpuGrayQamDemapper::new_stream_scratch	clarifies stream scratch allocation and ownership
+EARNED	crates/gf2-kernels-hip/src/lib.rs:943	GpuGrayQamDemapper::demap_batch_on_stream	teaches stream-ordered demapping
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:1024	permanent_gf5_batch_dispatch	teaches host serialization and GPU dispatch
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:1126	permanent_gf7_batch_dispatch	teaches LUT initialization and GPU dispatch
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:281	compute_permanent_gf3	clarifies unsafe device-pointer preconditions
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:339	compute_permanent_gf3_batch	clarifies unsafe batch-buffer preconditions
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:397	compute_permanent_gf5	clarifies unsafe device-pointer preconditions
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:456	compute_permanent_gf5_batch	clarifies unsafe batch-buffer preconditions
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:524	init_permanent_gf7	clarifies unsafe LUT-pointer preconditions
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:631	compute_permanent_gf7	clarifies LUT initialization and unsafe pointers
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:706	compute_permanent_gf7_batch	clarifies LUT initialization and unsafe batch pointers
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:788	compute_lut_checksum_gpu	clarifies the initialized-device checksum workflow
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:843	init_permanent_gf7_from_slices	clarifies the safe typed-LUT wrapper
+EARNED	crates/gf2-kernels-hip/src/permanent/mod.rs:925	permanent_gf3_batch_dispatch	teaches host serialization and GPU dispatch
+EARNED	crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:69	Config3	clarifies the field prime and lane-width type contract
+EARNED	crates/gf2-kernels-simd/src/bipedal/lanes.rs:110	Avx2Lane	clarifies feature detection and unsafe load preconditions
+EARNED	crates/gf2-kernels-simd/src/bipedal/mod.rs:257	detect_avx2	shows runtime capability detection and fallback
+EARNED	crates/gf2-kernels-simd/src/bipedal/mod.rs:88	bipedal::avx2 module	shows runtime-gated unsafe batch use
+EARNED	crates/gf2-kernels-simd/src/bipedal/packed5.rs:386	F5AvxFns	type-level optional AVX2 bundle acquisition
+EARNED	crates/gf2-kernels-simd/src/bipedal/packed7.rs:300	F7AvxFns	clarifies runtime-selected safe AVX2 function bundles
+EARNED	crates/gf2-kernels-simd/src/bipedal/packed7.rs:326	detect_avx2_f7	clarifies optional AVX2 detection and scalar fallback
+EARNED	crates/gf2-kernels-simd/src/clmul_scalar.rs:12	clmul_u64_scalar	clarifies carry-less GF(2) multiplication
+EARNED	crates/gf2-kernels-simd/src/fp65537.rs:127	Fp65537Fns	shows runtime-selected batch dispatch
+EARNED	crates/gf2-kernels-simd/src/fp65537.rs:162	fp65537::detect	shows AVX2 detection and scalar fallback
+EARNED	crates/gf2-kernels-simd/src/fp65537.rs:88	Fp65537BatchCubicKaratsubaFn	shows fused extension-field batch use
+EARNED	crates/gf2-kernels-simd/src/fp_medium_f64.rs:101	fp_medium_f64::detect	teaches optional SIMD GEMM use and numerical output
+EARNED	crates/gf2-kernels-simd/src/fp_medium_ple.rs:91	detect	teaches runtime kernel detection and panel invocation
+EARNED	crates/gf2-kernels-simd/src/fp_medium.rs:22	barrett_m32	clarifies the Barrett magic-constant contract
+EARNED	crates/gf2-kernels-simd/src/fp_medium.rs:81	MediumPrimeFns	teaches runtime SIMD detection and function-pointer use
+EARNED	crates/gf2-kernels-simd/src/fp_small_f32.rs:193	fp_small_f32::detect	clarifies runtime feature detection and row-major GEMM layout
+EARNED	crates/gf2-kernels-simd/src/fp_small_panel.rs:109	detect	clarifies capability detection and fallback
+EARNED	crates/gf2-kernels-simd/src/fp_small_ple.rs:85	fp_small_ple::detect	the example clarifies runtime detection and scalar fallback
+EARNED	crates/gf2-kernels-simd/src/fp_small.rs:204	fp_small::detect	clarifies optional SIMD dispatch and scalar fallback
+EARNED	crates/gf2-kernels-simd/src/fp_small.rs:308	barrett_mu_u16	clarifies the precomputed Barrett constant
+EARNED	crates/gf2-kernels-simd/src/modem.rs:341	detect_f32	clarifies runtime SIMD selection with a portable fallback
+EARNED	crates/gf2-kernels-simd/src/modem.rs:90	GrayPamDistanceFnsF32	teaches the kernel bundle invocation contract
+EARNED	crates/gf2-kernels-simd/src/transpose.rs:174	transpose_64x64_scalar	teaches the non-obvious bit-matrix transpose operation
+EARNED	crates/gf2-kernels-simd/src/transpose.rs:60	detect	teaches selecting a transpose implementation and its bit orientation
+EARNED	crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs:59	run_add_batch	clarifies AVX2 and slice-shape safety preconditions
+EARNED	crates/gf2-sim/src/batch.rs:162	LlrBatch	teaches the LLR batch representation and sign convention
+EARNED	crates/gf2-sim/src/batch.rs:213	HardDecisionBatch	teaches the distinct decoded-frame batch type
+EARNED	crates/gf2-sim/src/batch.rs:37	BitPackedBatch	teaches the bit-packed frame batch representation
+EARNED	crates/gf2-sim/src/batch.rs:87	SymbolBatch	teaches the parallel I/Q structure-of-arrays representation
+EARNED	crates/gf2-sim/src/channels/awgn.rs:107	Awgn	type-level numerical noise model walkthrough
+EARNED	crates/gf2-sim/src/channels/awgn.rs:68	ChannelScratch	clarifies the Send plus Sync scratch contract
+EARNED	crates/gf2-sim/src/channels/mod.rs:158	es_n0_db_to_n0	clarifies the total complex-noise-variance units and rounding contract
+EARNED	crates/gf2-sim/src/channels/rayleigh.rs:58	Rayleigh	clarifies the Es/N0-to-noise calculation
+EARNED	crates/gf2-sim/src/channels/rician.rs:72	Rician	type-level K-factor normalization walkthrough
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:220	config_hash	demonstrates hash exclusion of path-dependent fields
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:271	checkpoint_path	clarifies zero-padded checkpoint naming
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:294	CheckpointWriter	shows checkpoint writer setup
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:430	CheckpointReader	shows validated checkpoint loading
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:571	request_interrupt	shows interrupt flag lifecycle
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:706	run_snr_point_checkpointed	shows heartbeat checkpointing and resume
+EARNED	crates/gf2-sim/src/checkpoint/mod.rs:953	run_sweep_checkpointed	shows full sweep checkpointing
+EARNED	crates/gf2-sim/src/config.rs:22	PipelineConfig	teaches assembling a complete simulation configuration
+EARNED	crates/gf2-sim/src/connector.rs:17	Connector	provides the type-level typed-connector walkthrough
+EARNED	crates/gf2-sim/src/executor/drain.rs:136	StreamInFlight	provides the type-level in-flight tally workflow
+EARNED	crates/gf2-sim/src/executor/drain.rs:232	CheckpointedSweep	clarifies checkpoint interruption semantics
+EARNED	crates/gf2-sim/src/executor/drain.rs:292	Scheduler::drain_for_checkpoint	clarifies the no-partial-batches drain contract
+EARNED	crates/gf2-sim/src/executor/drain.rs:419	Scheduler::run_sweep_checkpointed	teaches checkpointed sweep and resume
+EARNED	crates/gf2-sim/src/executor/failure.rs:266	default_dump_dir	clarifies the relative diagnostic-dump path contract
+EARNED	crates/gf2-sim/src/executor/failure.rs:334	dispatch_with_fallback	teaches recoverable-error fallback behavior
+EARNED	crates/gf2-sim/src/executor/results.rs:22	SnrPointResult	clarifies derived SNR result semantics from counters
+EARNED	crates/gf2-sim/src/executor/scheduler.rs:129	OverlapTimeline::gpu_overlap_fraction	the interval-overlap metric is a material numerical contract
+EARNED	crates/gf2-sim/src/executor/topology.rs:1237	TopologyExecutor::run_dvb_t2_snr_point	the example teaches the full DVB-T2 simulation workflow
+EARNED	crates/gf2-sim/src/executor/topology.rs:162	DagOutputs	type-level compiled-DAG output workflow
+EARNED	crates/gf2-sim/src/executor/topology.rs:865	TopologyExecutor::validate	the example demonstrates pipeline lineage validation
+EARNED	crates/gf2-sim/src/frame_sim.rs:80	DvbT2BicmFrameSim	teaches per-worker simulator cloning and frame execution
+EARNED	crates/gf2-sim/src/gpu/awgn.rs:111	GpuAwgn	type-level lazy GPU construction and fallback walkthrough
+EARNED	crates/gf2-sim/src/gpu/awgn.rs:184	GpuAwgn::with_seek	clarifies deterministic per-frame seek parameters
+EARNED	crates/gf2-sim/src/gpu/awgn.rs:72	GpuAwgnScratch	type-level host-buffer walkthrough
+EARNED	crates/gf2-sim/src/gpu/demap.rs:194	GpuGrayQamDemapper	clarifies lazy device construction and CPU fallback semantics
+EARNED	crates/gf2-sim/src/gpu/ldpc_bp.rs:272	GpuLdpcBp	provides the type-level GPU-stage construction walkthrough
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:309	GpuNr5gDecoder::build_decoder	teaches per-worker device decoder construction
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:346	GpuNr5gDecoder::prepare_llrs	clarifies rate-matching LLR expansion
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:396	GpuNr5gDecoder::decode_batch	teaches the batch GPU decode workflow
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:459	GpuNr5gDecoder::extract_message	clarifies natural-order prefix extraction
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:507	GpuNr5gDecoder::cpu_reference_message	teaches the CPU oracle workflow
+EARNED	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:73	GpuNr5gDecoder	teaches construction and the rate-matched GPU decoder workflow
+EARNED	crates/gf2-sim/src/graph/mod.rs:214	Chain::with_config	teaches attaching a full pipeline configuration
+EARNED	crates/gf2-sim/src/graph/mod.rs:309	Chain::connect	clarifies runtime type mismatch handling
+EARNED	crates/gf2-sim/src/graph/mod.rs:394	Chain::register_fallback	teaches GPU-to-CPU fallback registration and graph exclusion
+EARNED	crates/gf2-sim/src/graph/mod.rs:497	Chain::build	teaches topology compilation and fallback validation
+EARNED	crates/gf2-sim/src/graph/mod.rs:55	Chain	teaches adding, connecting, and building a typed stage graph
+EARNED	crates/gf2-sim/src/observability.rs:64	install_campaign_subscriber	clarifies the no-op tracing configuration
+EARNED	crates/gf2-sim/src/parallel/mod.rs:133	worker_offset	clarifies the multi-level word-offset formula
+EARNED	crates/gf2-sim/src/parallel/mod.rs:171	WorkerCounters	shows per-worker recording and ordered reduction
+EARNED	crates/gf2-sim/src/parallel/mod.rs:292	WorkerCtx	demonstrates deterministic reseeked randomness
+EARNED	crates/gf2-sim/src/parallel/mod.rs:512	run_snr_point	demonstrates worker-count-independent execution
+EARNED	crates/gf2-sim/src/parallel/mod.rs:573	SnrPointRangeOutcome	shows range dispatch and per-worker counts
+EARNED	crates/gf2-sim/src/parallel/mod.rs:639	run_snr_point_range	demonstrates chunking-independent results
+EARNED	crates/gf2-sim/src/parallel/mod.rs:738	run_snr_point_stateless	demonstrates stateless parallel execution
+EARNED	crates/gf2-sim/src/pipeline.rs:103	Pipeline::stages	the topological-stage ordering contract is material
+EARNED	crates/gf2-sim/src/pipeline.rs:187	Pipeline::run	the example teaches configured simulation execution
+EARNED	crates/gf2-sim/src/pipeline.rs:274	Pipeline::run_checkpointed	the checkpoint/resume workflow is material
+EARNED	crates/gf2-sim/src/presets/dvb_t2.rs:124	Modcod::validate	the error payload and rejected-domain contract are material
+EARNED	crates/gf2-sim/src/presets/dvb_t2.rs:36	DVB-T2 preset module	the example teaches the required typestate builder workflow
+EARNED	crates/gf2-sim/src/presets/dvb_t2.rs:509	Builder::with_gpu	the CPU fallback behavior is a material contract
+EARNED	crates/gf2-sim/src/presets/dvb_t2.rs:582	Builder::build	the example demonstrates full validation and construction
+EARNED	crates/gf2-sim/src/presets/dvb_t2.rs:768	Pipeline::dvb_t2	the example teaches the complete builder workflow
+EARNED	crates/gf2-sim/src/presets/nr_5g.rs:499	Builder::base_graph	clarifies the typestate builder transition
+EARNED	crates/gf2-sim/src/presets/nr_5g.rs:526	Builder::lifting_set	clarifies the standards-defined lifting-set contract
+EARNED	crates/gf2-sim/src/presets/nr_5g.rs:702	Builder::build	teaches the complete validated NR pipeline construction
+EARNED	crates/gf2-sim/src/presets/nr_5g.rs:962	Pipeline::nr_5g	teaches the end-to-end 5G NR simulation workflow
+EARNED	crates/gf2-sim/src/stage.rs:34	Stage	serves as the trait-level stage implementation walkthrough
+EARNED	crates/gf2-sim/src/stage.rs:472	erase	teaches making a concrete stage pipeline-ready
+EARNED	crates/gf2-sim/src/stages/mod.rs:246	DvbT2Encode	teaches the encode-stage workflow and frame dimensions
+EARNED	crates/gf2-sim/src/stages/mod.rs:335	BitInterleave	teaches constructing and running the interleave stage
+EARNED	crates/gf2-sim/src/stages/mod.rs:396	BitDeinterleave	teaches constructing and running the inverse receive stage
+EARNED	crates/gf2-sim/src/stages/mod.rs:457	GrayQamMap	teaches the bits-to-IQ stage workflow
+EARNED	crates/gf2-sim/src/stages/mod.rs:517	GrayQamDemap	teaches the IQ-to-LLR stage workflow and method selection
+EARNED	crates/gf2-sim/src/stages/mod.rs:616	DecodeScratch	clarifies the per-frame iteration side channel
+EARNED	crates/gf2-sim/src/stages/mod.rs:645	DvbT2Decode	teaches decoding with iteration-count scratch
+EARNED	crates/gf2-sim/src/stages/mod.rs:741	DvbT2BchTail	teaches the split BCH outer-decode stage workflow
+EARNED	crates/gf2-sim/src/stages/mod.rs:864	dvb_t2_bicm_stages	teaches assembling the ordered BICM stage chains
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:163	Nr5gBitInterleave	teaches constructing and running the standards-defined interleaver
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:219	Nr5gLlrDeinterleave	teaches constructing and running the receive-path inverse
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:278	NrGrayQamMap	teaches the NR bits-to-IQ workflow
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:337	NrGrayQamDemap	teaches the NR IQ-to-LLR workflow
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:428	Nr5gDecodeScratch	clarifies the per-frame iteration side channel
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:456	Nr5gDecode	teaches decoding with scratch iteration reporting
+EARNED	crates/gf2-sim/src/stages/nr_5g.rs:54	Nr5gEncode	teaches the 5G NR encode-stage workflow
+EARNED	crates/gf2-sim/src/testutil.rs:105	ComparisonCode::build	teaches selecting and building the canonical comparison code
+EARNED	crates/gf2-sim/src/testutil.rs:143	AwgnLlrSource	teaches deterministic AWGN LLR generation
+EARNED	crates/gf2-sim/src/testutil.rs:236	AwgnLlrSource::frame_all_zero	clarifies deterministic draws and AWGN units
+EARNED	crates/gf2-sim/src/testutil.rs:263	AwgnLlrSource::frame_for_codeword	clarifies BPSK mapping and LLR generation
+EARNED	crates/gf2-sim/src/testutil.rs:50	ComparisonCode	teaches shared comparison-code construction
+EARNED	crates/gf2-sim/src/testutil.rs:81	ComparisonCode::parse	clarifies accepted CLI vocabulary and errors
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:1825	PackedFieldVec::zeros	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:1858	PackedFieldVec::from_field_slice	demonstrates direct construction from supplied values
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:1901	PackedFieldVec::len	demonstrates a direct accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:1929	PackedFieldVec::get	demonstrates a direct indexed accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:197	Bipedal3::from_raw	demonstrates a raw-word constructor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:2109	PackedFieldVec::all_zero	demonstrates a straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:224	Bipedal3::mag	demonstrates a direct raw-word accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:250	Bipedal3::sgn	demonstrates a direct raw-word accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:285	Bipedal3::splat_raw	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:3056	Bipedal3Matrix::rows	demonstrates a direct accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:3080	Bipedal3Matrix::cols	demonstrates a direct accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:3202	Bipedal3Matrix::get	demonstrates a direct matrix accessor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:399	Bipedal3::add_inherent	repeats the delegated arithmetic signature
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:418	Bipedal3::sub_inherent	repeats the delegated arithmetic signature
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:437	Bipedal3::mul_inherent	repeats the delegated arithmetic signature
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:456	Bipedal3::neg_inherent	repeats the delegated arithmetic signature
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:479	PackedField::LANES	demonstrates a constant value
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:490	PackedField::zero	demonstrates a straightforward identity constructor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:511	PackedField::one	demonstrates a straightforward identity constructor
+OBVIOUS	crates/gf2-algebra/src/packed/bipedal3.rs:538	PackedField::splat	demonstrates straightforward broadcasting
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:113	PackedField::zero	checks the zero constructor
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:130	PackedField::one	reads back a constructed constant
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:152	PackedField::splat	reads back a broadcast scalar
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:176	PackedField::add	repeats pointwise addition
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:198	PackedField::sub	repeats pointwise subtraction
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:216	PackedField::neg	repeats additive negation
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:237	PackedField::mul	repeats pointwise multiplication
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:263	PackedField::lane	reads back a selected lane
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:289	PackedField::with_lane	reads back the value just written
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:313	PackedField::all_zero	checks a straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:396	PackedFieldVec::zeros	checks the zero constructor
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:420	PackedFieldVec::from_field_slice	reads back copied elements
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:439	PackedFieldVec::len	checks the reported length
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:453	PackedFieldVec::is_empty	checks a straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:478	PackedFieldVec::get	reads back an indexed value
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:507	PackedFieldVec::add_assign	repeats pointwise addition
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:537	PackedFieldVec::sub_assign	repeats pointwise subtraction
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:566	PackedFieldVec::mul_assign	repeats pointwise multiplication
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:591	PackedFieldVec::all_zero	checks a straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/mod.rs:97	PackedField::LANES	asserts the associated constant
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1058	PackedFieldVec::len	accessor example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1085	PackedFieldVec::get	accessor example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1128	PackedFieldVec::add_assign	near-identical vector arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1171	PackedFieldVec::sub_assign	near-identical vector arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1213	PackedFieldVec::mul_assign	near-identical vector arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1253	PackedFieldVec::all_zero	predicate example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1508	Packed5Matrix::rows	accessor example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1528	Packed5Matrix::cols	accessor example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1559	Packed5Matrix::column	direct column access example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:1599	Packed5Matrix::get	direct element mapping example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:293	Packed5::fmt	formatting smoke test only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:332	Packed5::add_inherent	forwarding wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:351	Packed5::sub_inherent	forwarding wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:370	Packed5::mul_inherent	forwarding wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:389	Packed5::neg_inherent	forwarding wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:412	PackedField::LANES	constant assertion only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:423	PackedField::zero	straightforward zero constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:448	PackedField::one	straightforward one constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:477	PackedField::splat	straightforward broadcast constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:510	PackedField::add	near-identical per-operation arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:542	PackedField::sub	near-identical per-operation arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:573	PackedField::neg	near-identical per-operation arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:606	PackedField::mul	near-identical per-operation arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:644	PackedField::lane	accessor example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:689	PackedField::with_lane	direct lane mapping example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:731	PackedField::all_zero	predicate example only
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:832	Packed5Vec::neg_assign	near-identical vector arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed5.rs:948	Packed5Vec::fmt	formatting smoke test only
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1030	Debug::fmt (Packed7Vec)	straightforward formatting example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1065	PackedFieldVec<Fp<7>>::zeros	straightforward constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1093	PackedFieldVec<Fp<7>>::from_field_slice	straightforward direct mapping
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1128	PackedFieldVec<Fp<7>>::len	straightforward accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1155	PackedFieldVec<Fp<7>>::get	repetitive accessor example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1180	PackedFieldVec<Fp<7>>::add_assign	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1214	PackedFieldVec<Fp<7>>::sub_assign	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1248	PackedFieldVec<Fp<7>>::mul_assign	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1279	PackedFieldVec<Fp<7>>::all_zero	straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1383	Debug::fmt (Packed7Matrix)	straightforward formatting example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1472	Packed7Matrix::rows	straightforward accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1492	Packed7Matrix::cols	straightforward accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:1521	Packed7Matrix::get	straightforward matrix accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:225	Packed7::pack	straightforward constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:260	Packed7::lane	straightforward lane accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:286	Packed7::to_array	straightforward decoding accessor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:307	Packed7::zero	straightforward constant constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:322	Packed7::one	straightforward constant constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:348	Packed7::splat	straightforward broadcast constructor
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:382	Packed7::with_lane	straightforward lane setter
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:412	Packed7::all_zero	straightforward predicate
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:506	Packed7::add_inherent	repetitive wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:525	Packed7::sub_inherent	repetitive wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:544	Packed7::mul_inherent	repetitive wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:563	Packed7::neg_inherent	repetitive wrapper example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:586	PackedField<Fp<7>>::LANES	straightforward associated constant
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:597	PackedField<Fp<7>>::zero	repetitive constant example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:618	PackedField<Fp<7>>::one	repetitive constant example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:642	PackedField<Fp<7>>::splat	repetitive broadcast example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:662	PackedField<Fp<7>>::add	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:685	PackedField<Fp<7>>::sub	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:710	PackedField<Fp<7>>::neg	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:732	PackedField<Fp<7>>::mul	repetitive arithmetic example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:763	PackedField<Fp<7>>::lane	repetitive accessor example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:793	PackedField<Fp<7>>::with_lane	repetitive setter example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:815	PackedField<Fp<7>>::all_zero	repetitive predicate example
+OBVIOUS	crates/gf2-algebra/src/packed/packed7.rs:910	Packed7Vec::get	straightforward vector accessor
+OBVIOUS	crates/gf2-algebra/src/permanent/bipedal7.rs:140	permanent_bipedal7_singleword	duplicates the outer function's straightforward identity example
+OBVIOUS	crates/gf2-coding/src/bch/core.rs:115	BchCode::new	straightforward constructor example
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:178	ExtendedBchCode::n	is a straightforward dimension accessor
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:191	ExtendedBchCode::k	is a straightforward dimension accessor
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:207	ExtendedBchCode::inner	is a direct inner-value accessor
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:225	ExtendedBchCode::is_even	is a straightforward predicate
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:239	ExtendedBchCode::base_t	is a straightforward parameter accessor
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:255	ExtendedBchCode::ebch_16_11	is one of several near-identical named constructors
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:280	ExtendedBchCode::ebch_16_7	is one of several near-identical named constructors
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:305	ExtendedBchCode::ebch_32_26	is one of several near-identical named constructors
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:330	ExtendedBchCode::ebch_64_57	is one of several near-identical named constructors
+OBVIOUS	crates/gf2-coding/src/bch/extended.rs:353	ExtendedBchCode::parity_check	is a direct matrix accessor
+OBVIOUS	crates/gf2-coding/src/bcjr/mod.rs:120	BcjrDecoder::new	only constructs the decoder and checks dimensions
+OBVIOUS	crates/gf2-coding/src/bcjr/mod.rs:162	BcjrDecoder::n	accessor example restates the returned field
+OBVIOUS	crates/gf2-coding/src/bcjr/mod.rs:181	BcjrDecoder::k	accessor example restates the returned field
+OBVIOUS	crates/gf2-coding/src/channel.rs:108	AwgnChannel::transmit	simple single-symbol sampling example
+OBVIOUS	crates/gf2-coding/src/channel.rs:124	AwgnChannel::transmit_symbols	simple batch wrapper example
+OBVIOUS	crates/gf2-coding/src/channel.rs:51	AwgnChannel::from_variance	constructor example only builds a valid value
+OBVIOUS	crates/gf2-coding/src/convolutional.rs:46	ConvolutionalEncoder::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/crc.rs:186	CrcCode::n	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/crc.rs:199	CrcCode::k	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/crc.rs:216	CrcCode::poly	direct field mapping
+OBVIOUS	crates/gf2-coding/src/crc.rs:235	CrcCode::crc_25_15	straightforward named constructor
+OBVIOUS	crates/gf2-coding/src/crc.rs:259	CrcCode::parity_check	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/crc.rs:280	CrcCode::is_even	straightforward predicate with a tautological assertion
+OBVIOUS	crates/gf2-coding/src/crc.rs:309	CrcCode::inner	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/crc.rs:64	CrcCode	duplicates the module-level encoding walkthrough
+OBVIOUS	crates/gf2-coding/src/crc.rs:98	CrcCode::new	only demonstrates constructing and querying the value
+OBVIOUS	crates/gf2-coding/src/drm.rs:220	DrmCode::drm_32_21_dynamic	repeats an alias with the same construction and assertions
+OBVIOUS	crates/gf2-coding/src/drm.rs:241	DrmCode::n	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/drm.rs:254	DrmCode::k	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/drm.rs:267	DrmCode::parity_check	documents a direct matrix accessor
+OBVIOUS	crates/gf2-coding/src/drm.rs:288	DrmCode::is_even	documents a straightforward predicate
+OBVIOUS	crates/gf2-coding/src/drm.rs:314	DrmCode::inner	documents a direct field accessor
+OBVIOUS	crates/gf2-coding/src/drm.rs:92	DrmCode::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:122	rate_f64	demonstrates a direct enum-to-number mapping
+OBVIOUS	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:144	rate_display	demonstrates a direct enum-to-string mapping
+OBVIOUS	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:166	rate_underscore	demonstrates a direct enum-to-string mapping
+OBVIOUS	crates/gf2-coding/src/dvb_t2_bicm_harness.rs:188	mod_str	demonstrates a direct enum-to-string mapping
+OBVIOUS	crates/gf2-coding/src/fading.rs:117	Complex::scale	is a straightforward scalar operation
+OBVIOUS	crates/gf2-coding/src/fading.rs:1194	QpskRicianChannelModel::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/fading.rs:172	RicianConfig::fig8	is one of several near-identical configuration constructors
+OBVIOUS	crates/gf2-coding/src/fading.rs:193	RicianConfig::fig9	is one of several near-identical configuration constructors
+OBVIOUS	crates/gf2-coding/src/fading.rs:214	RicianConfig::fig10	is one of several near-identical configuration constructors
+OBVIOUS	crates/gf2-coding/src/fading.rs:233	RicianConfig::frame_bits	is a direct derived-value accessor
+OBVIOUS	crates/gf2-coding/src/fading.rs:247	RicianConfig::frame_symbols	is a direct derived-value accessor
+OBVIOUS	crates/gf2-coding/src/fading.rs:296	RicianChannel::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/fading.rs:336	RicianChannel::config	is a direct configuration accessor
+OBVIOUS	crates/gf2-coding/src/fading.rs:535	BitInterleaver::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/fading.rs:554	BitInterleaver::len	is a direct length accessor
+OBVIOUS	crates/gf2-coding/src/fading.rs:56	Complex::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/fading.rs:71	Complex::conj	is a straightforward component transformation
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:1037	GldpcDecoder::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:1081	GldpcDecoder::with_sogrand_config	is one of several near-identical constructors
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:1110	GldpcDecoder::with_config	is one of several near-identical constructors
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:151	BchComponentCode::n	is a direct dimension accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:165	BchComponentCode::k	is a direct dimension accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:179	BchComponentCode::t	is a direct parameter accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:193	BchComponentCode::num_checks	is a direct derived-value accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:219	BchComponentCode::is_valid_codeword	is a straightforward predicate example
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:251	BchComponentCode::h_matrix	is a basic matrix-access example
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:421	QcGldpcCode::lentmaier	is a straightforward named constructor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:480	QcGldpcCode::from_component	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:581	QcGldpcCode::code_n	is a direct length accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:595	QcGldpcCode::code_k	is a direct dimension accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:609	QcGldpcCode::num_check_nodes	is a direct count accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:623	QcGldpcCode::component	is a direct component accessor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:88	BchComponentCode::new	is a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/gldpc/mod.rs:901	QcGldpcCode::generator_matrix	is a basic derived-matrix accessor
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:209	ScoredCodeword	shows direct field construction
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:243	ScoredCodeword::noise_probability	verifies the documented conversion
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:267	OrbGrandResult	shows direct field construction
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:333	OrbGrandResult::success	checks a straightforward predicate
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:355	OrbGrandResult::best_codeword	reads back the first optional value
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:436	OrbGrand::new	repeats decoder construction
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:465	OrbGrand::n	reads back the codeword length
+OBVIOUS	crates/gf2-coding/src/grand/orbgrand.rs:484	OrbGrand::k	reads back the message length
+OBVIOUS	crates/gf2-coding/src/grand/sogrand.rs:163	SoGrand::new	constructor repeats the type-level setup
+OBVIOUS	crates/gf2-coding/src/grand/sogrand.rs:182	SoGrand::n	accessor example restates the returned dimension
+OBVIOUS	crates/gf2-coding/src/grand/sogrand.rs:201	SoGrand::k	accessor example restates the returned dimension
+OBVIOUS	crates/gf2-coding/src/grand/sogrand.rs:220	SoGrand::orbgrand	accessor example restates the wrapped value
+OBVIOUS	crates/gf2-coding/src/grand/sogrand.rs:71	SisoResult	direct field construction and length check
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:147	LdpcCode::parity_check_matrix	accessor example only
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:1536	LdpcEncoder::is_ira	predicate example only
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:500	CirculantMatrix::new	constructor plus direct accessor assertions
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:658	QuasiCyclicLdpc::base_matrix	accessor example only
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:941	LdpcDecoder::new	near-identical constructor example
+OBVIOUS	crates/gf2-coding/src/ldpc/core.rs:961	LdpcDecoder::with_config	near-identical constructor example
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:321	DvbT2BitInterleaver::new	repeats interleaver construction
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:449	DvbT2BitInterleaver::interleave	checks output length after a direct call
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/bit_interleaver.rs:562	DvbT2BitInterleaver::deinterleave_llrs	checks output length after a direct call
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:203	DvbT2Concat::new	only demonstrates constructing a valid configuration
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:276	DvbT2Concat::k_bch	straightforward dimension accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:311	DvbT2Concat::k_ldpc	straightforward dimension accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:345	DvbT2Concat::n_ldpc	straightforward dimension accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:377	DvbT2Concat::ldpc_code	direct clone-and-query accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:408	DvbT2Concat::set_max_ldpc_iterations	only demonstrates a direct setter call
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:433	DvbT2Concat::max_ldpc_iterations	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:638	DvbT2Concat::decode_soft_counted	repeats the documented decode_soft workflow
+OBVIOUS	crates/gf2-coding/src/ldpc/dvb_t2/concat.rs:63	ConcatError	does not demonstrate either error variant
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/lifting.rs:106	is_valid_lifting_size	predicate example directly restates the result
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1010	Nr5gRateMatchedCode::k	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1028	Nr5gRateMatchedCode::params	documents a direct parameter accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1049	Nr5gRateMatchedCode::mother_code	documents a direct field accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1332	Nr5gRateMatchedDecoder::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1393	Nr5gRateMatchedDecoder::n	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1413	Nr5gRateMatchedDecoder::k	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1433	Nr5gRateMatchedDecoder::params	documents a direct parameter accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:1454	Nr5gRateMatchedDecoder::code	documents a direct field accessor
+OBVIOUS	crates/gf2-coding/src/ldpc/nr_5g/mod.rs:992	Nr5gRateMatchedCode::n	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/llr.rs:121	Llr::saturate	near-identical range-clamping example
+OBVIOUS	crates/gf2-coding/src/llr.rs:305	Llr::saturate_batch	near-identical batch wrapper example
+OBVIOUS	crates/gf2-coding/src/llr.rs:328	Llr::hard_decision_batch	near-identical batch wrapper example
+OBVIOUS	crates/gf2-coding/src/llr.rs:434	Llr::is_finite	predicate example only
+OBVIOUS	crates/gf2-coding/src/llr.rs:46	Llr::new	straightforward constructor example
+OBVIOUS	crates/gf2-coding/src/llr.rs:79	Llr::magnitude	straightforward accessor transformation
+OBVIOUS	crates/gf2-coding/src/modem/analysis_capture.rs:133	AnalysisCapture::new	documents a straightforward legacy constructor
+OBVIOUS	crates/gf2-coding/src/modem/analysis_capture.rs:155	AnalysisCapture::demap_method	documents a direct accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis_capture.rs:176	AnalysisCapture::bits_per_symbol	documents a direct accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis_capture.rs:200	AnalysisCapture::stats	documents a direct accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:1072	PerBitLlrStats::bits_per_symbol	documents a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:1097	PerBitLlrStats::demap_method	documents a direct provenance accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:1312	PerBitLlrStats::report	repeats the type-level accumulation walkthrough
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:140	RunningStats::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:208	RunningStats::count	repeats a straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:227	RunningStats::mean	repeats a per-method statistics accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:249	RunningStats::m2	repeats a per-method statistics accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:270	RunningStats::variance	repeats a per-method statistics accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:295	RunningStats::min	repeats a per-method statistics accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:316	RunningStats::max	repeats a per-method statistics accessor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:393	Histogram::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:733	GmiMethod	documents a straightforward enum value
+OBVIOUS	crates/gf2-coding/src/modem/analysis.rs:997	PerBitLlrStats::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/awgn_link.rs:193	ModemAwgnChannel::new	demonstrates straightforward component construction
+OBVIOUS	crates/gf2-coding/src/modem/awgn_link.rs:465	ModemChannelAdapter::new	demonstrates straightforward adapter construction
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:129	ModemSpecBuilder::new	straightforward constructor example
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:161	ModemSpecBuilder::bits_per_symbol	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:185	ModemSpecBuilder::points	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:213	ModemSpecBuilder::labels	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:241	ModemSpecBuilder::bit_channels	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:268	ModemSpecBuilder::normalization	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/builder.rs:295	ModemSpecBuilder::capabilities	setter only repeats the signature
+OBVIOUS	crates/gf2-coding/src/modem/demapper.rs:52	DemapInput	shows direct field construction
+OBVIOUS	crates/gf2-coding/src/modem/fast_gray_qam_demapper.rs:269	FastGrayQamDemapper::spec_ref	is a direct specification accessor
+OBVIOUS	crates/gf2-coding/src/modem/gpu_demapper.rs:131	GpuGrayQamSoftDemapper::new	constructor repeats the type-level setup
+OBVIOUS	crates/gf2-coding/src/modem/gray_qam_mapper.rs:108	GrayQamMapper::from_preset_order_with_scalar	demonstrates a straightforward scalar-generic constructor
+OBVIOUS	crates/gf2-coding/src/modem/gray_qam_mapper.rs:154	GrayQamMapper::from_spec	demonstrates a straightforward validated constructor
+OBVIOUS	crates/gf2-coding/src/modem/gray_qam_mapper.rs:206	GrayQamMapper::pam_levels	demonstrates a direct table accessor
+OBVIOUS	crates/gf2-coding/src/modem/gray_qam_mapper.rs:77	GrayQamMapper::from_preset_order	demonstrates a straightforward preset constructor
+OBVIOUS	crates/gf2-coding/src/modem/mapper.rs:66	BatchMapper::spec	reads back a straightforward view property
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:171	gray_pam_levels	placeholder for an internal helper
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:257	is_valid_gray_square_qam_spec	placeholder for an internal predicate
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:507	ModemSpec::bpsk	straightforward preset constructor
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:541	ModemSpec::gray_square_qam	straightforward preset constructor
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:566	ModemSpec::bpsk_with_scalar	straightforward generic constructor
+OBVIOUS	crates/gf2-coding/src/modem/presets.rs:592	ModemSpec::gray_square_qam_with_scalar	straightforward generic constructor
+OBVIOUS	crates/gf2-coding/src/modem/ref_demapper.rs:75	ReferenceSoftDemapper::new	straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/ref_demapper.rs:93	ReferenceSoftDemapper::spec_ref	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/ref_mapper.rs:101	ReferenceMapper::spec_ref	demonstrates a direct accessor
+OBVIOUS	crates/gf2-coding/src/modem/ref_mapper.rs:67	ReferenceMapper::new	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:218	ModemSpec::view	straightforward view accessor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:246	ModemSpec::bits_per_symbol	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:265	ModemSpec::num_symbols	straightforward derived accessor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:283	ModemSpec::normalization	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:305	ModemSpec::normalization_scale	direct field mapping
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:324	ModemSpec::capabilities	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/spec.rs:354	ModemSpec::is_gray_square_qam_preset	straightforward predicate
+OBVIOUS	crates/gf2-coding/src/modem/test_oracle.rs:70	bit_stream	only checks the generated length
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:122	LabelWord::new	straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:189	BitChannelId	direct field mapping
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:208	BitChannelSemantics	direct enum variant mapping
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:235	Normalization	direct enum variant mapping
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:255	DemapMethod	direct enum comparison
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:280	BitChannelAnalysis	direct field mapping
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:335	ModemCapabilities	direct field mapping
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:42	SymbolPoint::new	straightforward constructor
+OBVIOUS	crates/gf2-coding/src/modem/types.rs:62	SymbolPoint::energy	directly demonstrates the documented formula
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:101	ModemView::bit_channels	straightforward slice accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:129	ModemView::point	straightforward indexed accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:157	ModemView::label	straightforward indexed accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:213	ModemView::bit_channel_id	direct field mapping
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:297	ModemView::num_symbols	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:315	ModemView::bits_per_symbol	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:333	ModemView::normalization	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:352	ModemView::normalization_scale	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:370	ModemView::capabilities	straightforward accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:63	ModemView::points	straightforward slice accessor
+OBVIOUS	crates/gf2-coding/src/modem/view.rs:82	ModemView::labels	straightforward slice accessor
+OBVIOUS	crates/gf2-coding/src/product/chase_pyndiah.rs:198	ChasePyndiahDecoder::new	repeats decoder construction
+OBVIOUS	crates/gf2-coding/src/product/chase_pyndiah.rs:60	ChasePyndiahConfig	shows direct default configuration access
+OBVIOUS	crates/gf2-coding/src/product/chase_pyndiah.rs:612	ChasePyndiahDecoder::config	reads back the stored configuration
+OBVIOUS	crates/gf2-coding/src/product/chase_pyndiah.rs:628	ChasePyndiahDecoder::component	reads back the stored component
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:1357	TurboDecoder::config	demonstrates a direct configuration accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:169	ProductComponent::comp_n	demonstrates a direct accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:182	ProductComponent::comp_k	demonstrates a direct accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:198	ProductComponent::comp_is_even	demonstrates a direct predicate
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:213	ProductComponent::comp_parity_check	demonstrates a direct matrix accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:324	ProductCode::new	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:350	ProductCode::n	demonstrates a direct dimension accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:365	ProductCode::k	demonstrates a direct dimension accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:380	ProductCode::component	demonstrates a direct component accessor
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:564	ProductCode::flat_to_matrix	demonstrates a direct shape conversion
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:613	ProductCode::matrix_to_flat	demonstrates a direct shape conversion
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:712	TurboDecoderConfig	demonstrates direct configuration field values
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:845	TurboDecoderResult	demonstrates direct result field mapping
+OBVIOUS	crates/gf2-coding/src/product/mod.rs:983	TurboDecoder::new	demonstrates straightforward decoder construction
+OBVIOUS	crates/gf2-coding/src/simulation.rs:734	SimulationConfig::quick_test	straightforward preset constructor
+OBVIOUS	crates/gf2-coding/src/simulation.rs:763	SimulationConfig::high_precision	straightforward preset constructor
+OBVIOUS	crates/gf2-coding/src/simulation.rs:864	SimulationResult::is_complete	straightforward predicate
+OBVIOUS	crates/gf2-coding/src/traits.rs:142	DecoderResult::new	only demonstrates passing constructor arguments through
+OBVIOUS	crates/gf2-coding/src/traits.rs:63	GeneratorMatrixAccess::generator_matrix	repeats the trait-level dimension walkthrough
+OBVIOUS	crates/gf2-coding/src/traits.rs:83	GeneratorMatrixAccess::is_systematic	straightforward predicate
+OBVIOUS	crates/gf2-core/src/bitvec.rs:107	BitVec::with_capacity	checks capacity construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1116	BitVec::random	shows straightforward random construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1200	BitVec::random_with_probability	shows straightforward probabilistic construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:126	BitVec::zeros	checks zero construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1270	BitVec::fill_random	shows direct random filling
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1298	BitVec::clear	shows direct clearing
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1315	BitVec::resize	shows direct resizing
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1423	BitVec::bit_reverse_into	repeats the bit-reversal result in place
+OBVIOUS	crates/gf2-core/src/bitvec.rs:149	BitVec::ones	checks one construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1515	BitVec::polar_transform_into	repeats the forward transform in place
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1612	BitVec::polar_transform_inverse_into	repeats inverse recovery in place
+OBVIOUS	crates/gf2-core/src/bitvec.rs:1672	BitVec::fmt	shows straightforward display formatting
+OBVIOUS	crates/gf2-core/src/bitvec.rs:222	BitVec::words	reads back underlying storage
+OBVIOUS	crates/gf2-core/src/bitvec.rs:239	BitVec::len	reads back the length
+OBVIOUS	crates/gf2-core/src/bitvec.rs:256	BitVec::is_empty	checks a straightforward predicate
+OBVIOUS	crates/gf2-core/src/bitvec.rs:273	BitVec::push_bit	repeats appending supplied values
+OBVIOUS	crates/gf2-core/src/bitvec.rs:300	BitVec::pop_bit	repeats the documented empty case
+OBVIOUS	crates/gf2-core/src/bitvec.rs:338	BitVec::get	reads back supplied bit values
+OBVIOUS	crates/gf2-core/src/bitvec.rs:363	BitVec::set	reads back the value just written
+OBVIOUS	crates/gf2-core/src/bitvec.rs:391	BitVec::bit_and_into	repeats a direct bitwise operation
+OBVIOUS	crates/gf2-core/src/bitvec.rs:412	BitVec::bit_or_into	repeats a direct bitwise operation
+OBVIOUS	crates/gf2-core/src/bitvec.rs:433	BitVec::bit_xor_into	repeats a direct bitwise operation
+OBVIOUS	crates/gf2-core/src/bitvec.rs:450	BitVec::not_into	repeats a direct bitwise operation
+OBVIOUS	crates/gf2-core/src/bitvec.rs:466	BitVec::shift_left	repeats straightforward shift semantics
+OBVIOUS	crates/gf2-core/src/bitvec.rs:527	BitVec::shift_right	repeats straightforward shift semantics
+OBVIOUS	crates/gf2-core/src/bitvec.rs:590	BitVec::count_ones	reads back a straightforward count
+OBVIOUS	crates/gf2-core/src/bitvec.rs:610	BitVec::parity	repeats the documented parity rule
+OBVIOUS	crates/gf2-core/src/bitvec.rs:836	BitVec::find_first_set	checks a straightforward search
+OBVIOUS	crates/gf2-core/src/bitvec.rs:862	BitVec::find_last_set	checks a straightforward search
+OBVIOUS	crates/gf2-core/src/bitvec.rs:88	BitVec::new	checks empty construction
+OBVIOUS	crates/gf2-core/src/bitvec.rs:892	BitVec::find_first_one	repeats first-set search semantics
+OBVIOUS	crates/gf2-core/src/bitvec.rs:932	BitVec::find_first_zero	repeats first-clear search semantics
+OBVIOUS	crates/gf2-core/src/compute/backend.rs:111	ComputeBackend::rref	repeats a per-method backend example
+OBVIOUS	crates/gf2-core/src/compute/backend.rs:176	ComputeBackend::batch_matvec	repeats a per-method backend example
+OBVIOUS	crates/gf2-core/src/compute/backend.rs:48	ComputeBackend::name	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/compute/backend.rs:82	ComputeBackend::matmul	repeats a per-method backend example
+OBVIOUS	crates/gf2-core/src/compute/cpu.rs:48	CpuBackend::new	demonstrates straightforward backend construction
+OBVIOUS	crates/gf2-core/src/field/charpoly.rs:2635	charpoly	duplicates the inherent-method example
+OBVIOUS	crates/gf2-core/src/field/charpoly.rs:2670	minpoly	duplicates the inherent-method example
+OBVIOUS	crates/gf2-core/src/field/charpoly.rs:2710	frobenius_form	duplicates the inherent-method example
+OBVIOUS	crates/gf2-core/src/field/expr.rs:1020	Sum::new	demonstrates a straightforward shape-checked constructor
+OBVIOUS	crates/gf2-core/src/field/expr.rs:1066	TransposedProduct::new	demonstrates a straightforward shape-checked constructor
+OBVIOUS	crates/gf2-core/src/field/expr.rs:976	Product::new	demonstrates a straightforward shape-checked constructor
+OBVIOUS	crates/gf2-core/src/field/inverse.rs:542	inv	documents a straightforward alias
+OBVIOUS	crates/gf2-core/src/field/inverse.rs:558	solve	documents a straightforward alias
+OBVIOUS	crates/gf2-core/src/field/inverse.rs:576	det	documents a straightforward alias
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1009	FieldMatrix::row_range	straightforward convenience wrapper
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1024	FieldMatrix::col_range	straightforward convenience wrapper
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1051	FieldMatrix::swap_rows	straightforward row mutation
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1097	FieldMatrix::scale_row	straightforward row mutation
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1294	FieldMatrix::t	duplicates the Transposed walkthrough
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1316	FieldMatrix::diag	straightforward derived accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1344	FieldMatrix::trace	straightforward diagonal reduction
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1369	FieldMatrix::is_symmetric	straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1628	MatView::rows	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1645	MatView::cols	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1666	MatView::get	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1845	MatViewMut::rows	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1862	MatViewMut::cols	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1883	MatViewMut::get	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1907	MatViewMut::set	only asserts back the value just assigned
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1935	MatViewMut::fill	straightforward bulk mutation
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1965	MatViewMut::assign	straightforward shape-matched copy
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:1998	MatViewMut::swap_rows	straightforward row mutation
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:2145	MatViewMut::as_view	straightforward immutable-view conversion
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:2351	ColView::len	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:2367	ColView::is_empty	straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:2387	ColView::get	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:2404	ColView::iter	straightforward iterator accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:249	Transposed::rows	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:266	Transposed::cols	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:323	FieldMatrix::new	straightforward fill constructor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:369	FieldMatrix::as_data_slice	the example only demonstrates straightforward matrix construction
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:414	FieldMatrix::from_rows	straightforward rectangular construction
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:496	FieldMatrix::zeros	straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:520	FieldMatrix::ones	straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:539	FieldMatrix::identity	straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:579	FieldMatrix::random	straightforward random constructor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:629	FieldMatrix::rows	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:645	FieldMatrix::cols	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:661	FieldMatrix::shape	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:677	FieldMatrix::is_square	straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:695	FieldMatrix::is_empty	straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:717	FieldMatrix::get	straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:753	FieldMatrix::set	only asserts back the value just assigned
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:790	FieldMatrix::get_unchecked	valid access is a straightforward accessor demonstration
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:815	FieldMatrix::row	straightforward row accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:844	FieldMatrix::row_mut	straightforward mutable accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:876	FieldMatrix::col	straightforward column-view accessor
+OBVIOUS	crates/gf2-core/src/field/matrix.rs:909	FieldMatrix::col_iter	straightforward iterator accessor
+OBVIOUS	crates/gf2-core/src/field/ple.rs:179	Permutation::identity	documents a straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/ple.rs:212	Permutation::from_indices	repeats the supplied permutation vector
+OBVIOUS	crates/gf2-core/src/field/ple.rs:247	Permutation::indices	documents a direct accessor
+OBVIOUS	crates/gf2-core/src/field/ple.rs:265	Permutation::len	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/ple.rs:282	Permutation::is_empty	documents a straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/poly.rs:1061	FieldPoly::scale	is a near-identical in-place scalar-operation example
+OBVIOUS	crates/gf2-core/src/field/poly.rs:1471	FieldPoly::product	is a near-identical product-operation example
+OBVIOUS	crates/gf2-core/src/field/poly.rs:488	FieldPoly::new	is a constructor example despite normalization
+OBVIOUS	crates/gf2-core/src/field/poly.rs:533	FieldPoly::from_coeffs_trimmed	is a duplicate constructor example
+OBVIOUS	crates/gf2-core/src/field/poly.rs:712	FieldPoly::degree	is a straightforward query
+OBVIOUS	crates/gf2-core/src/field/poly.rs:738	FieldPoly::is_zero	is a straightforward predicate
+OBVIOUS	crates/gf2-core/src/field/poly.rs:898	FieldPoly::leading_coeff	is a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/poly.rs:921	FieldPoly::len	is a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/poly.rs:947	FieldPoly::iter	is a straightforward iterator accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1607	SparseFieldMatrixCsc::zeros	documents a straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1629	SparseFieldMatrixCsc::rows	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1644	SparseFieldMatrixCsc::cols	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1659	SparseFieldMatrixCsc::shape	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1674	SparseFieldMatrixCsc::nnz	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1699	SparseFieldMatrixCsc::get	repeats the CSR accessor semantics
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1836	SparseFieldMatrixCsc::to_dense	repeats the dense-materialization workflow
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:1856	SparseFieldMatrixCsc::as_raw_parts	documents a direct representation accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:262	SparseFieldMatrix::zeros	documents a straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:284	SparseFieldMatrix::rows	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:300	SparseFieldMatrix::cols	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:316	SparseFieldMatrix::shape	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:335	SparseFieldMatrix::nnz	documents a straightforward accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:454	SparseFieldMatrix::as_raw_parts	documents a direct representation accessor
+OBVIOUS	crates/gf2-core/src/field/sparse_matrix.rs:743	SparseFieldMatrix::identity	documents a straightforward constructor
+OBVIOUS	crates/gf2-core/src/field/traits.rs:1042	FiniteFieldExt::square	demonstrates a direct arithmetic convenience method
+OBVIOUS	crates/gf2-core/src/field/traits.rs:74	FiniteField::characteristic	demonstrates a direct field property accessor
+OBVIOUS	crates/gf2-core/src/field/two_adic.rs:164	TwoAdicField::TWO_ADICITY	straightforward associated constant
+OBVIOUS	crates/gf2-core/src/field/two_adic.rs:414	BABYBEAR_P	straightforward constant example
+OBVIOUS	crates/gf2-core/src/field/two_adic.rs:444	KOALABEAR_P	straightforward constant example
+OBVIOUS	crates/gf2-core/src/field/vec.rs:116	FieldVec::zeros	constructor example only checks zero initialization
+OBVIOUS	crates/gf2-core/src/field/vec.rs:154	FieldVec::get	accessor example restates the indexed value
+OBVIOUS	crates/gf2-core/src/field/vec.rs:179	FieldVec::set	mutator example only reads back the assigned value
+OBVIOUS	crates/gf2-core/src/field/vec.rs:200	FieldVec::push	mutator example only reads back the pushed value
+OBVIOUS	crates/gf2-core/src/field/vec.rs:218	FieldVec::as_slice	accessor example only checks slice length
+OBVIOUS	crates/gf2-core/src/field/vec.rs:234	FieldVec::as_mut_slice	accessor example only reads back the assignment
+OBVIOUS	crates/gf2-core/src/field/vec.rs:251	FieldVec::len	accessor example restates the length
+OBVIOUS	crates/gf2-core/src/field/vec.rs:265	FieldVec::is_empty	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/field/vec.rs:293	FieldVec::iter	accessor example only counts elements
+OBVIOUS	crates/gf2-core/src/field/vec.rs:309	FieldVec::iter_mut	iterator example only demonstrates direct mutation
+OBVIOUS	crates/gf2-core/src/field/vec.rs:39	FieldVec::new	constructor example only builds an empty value
+OBVIOUS	crates/gf2-core/src/field/vec.rs:547	FieldVec::scale	operation example only checks each direct product
+OBVIOUS	crates/gf2-core/src/field/vec.rs:580	FieldVec::axpy	operation example directly restates the documented formula
+OBVIOUS	crates/gf2-core/src/field/vec.rs:629	FieldVec::add_vec	element-wise operation example directly restates the contract
+OBVIOUS	crates/gf2-core/src/field/vec.rs:62	FieldVec::zeros_from	constructor example only checks length and zero values
+OBVIOUS	crates/gf2-core/src/field/vec.rs:725	FieldVec::mul_vec	element-wise operation example directly restates the contract
+OBVIOUS	crates/gf2-core/src/field/vec.rs:773	FieldVec::map	combinator example only applies and checks a simple closure
+OBVIOUS	crates/gf2-core/src/field/vec.rs:798	FieldVec::fold	combinator example only demonstrates a direct reduction
+OBVIOUS	crates/gf2-core/src/field/vec.rs:828	FieldVec::zip_with	combinator example directly restates pairwise addition
+OBVIOUS	crates/gf2-core/src/field/vec.rs:85	FieldVec::with_capacity	constructor example only checks empty length
+OBVIOUS	crates/gf2-core/src/field/vec.rs:905	StridedIter::new	constructor example only checks yielded values
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:191	BarrettReducer::new	straightforward constructor example
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:373	BarrettReducer::mu	straightforward derived-value accessor
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:391	BarrettReducer::degree	straightforward accessor
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:405	BarrettReducer::modulus	straightforward accessor
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:774	BarrettReducerWide::reduce_slice	repetitive zero-reduction example
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:842	BarrettReducerWide::mu	straightforward derived-value accessor
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:858	BarrettReducerWide::degree	straightforward accessor
+OBVIOUS	crates/gf2-core/src/gf2m/barrett.rs:874	BarrettReducerWide::modulus	straightforward accessor
+OBVIOUS	crates/gf2-core/src/gf2m/field.rs:241	new	straightforward field constructor
+OBVIOUS	crates/gf2-core/src/gf2m/field.rs:352	element	constructs an element and reads back its value
+OBVIOUS	crates/gf2-core/src/gf2m/field.rs:841	gf256	standard preset constructor
+OBVIOUS	crates/gf2-core/src/gf2m/field.rs:855	gf65536	standard preset constructor
+OBVIOUS	crates/gf2-core/src/gf2m/mul_raw.rs:73	gf2m_add_raw	documents the direct XOR mapping
+OBVIOUS	crates/gf2-core/src/gf2m/poly_helpers.rs:292	FieldPoly::x	documents a straightforward polynomial constructor
+OBVIOUS	crates/gf2-core/src/gf2m/poly_helpers.rs:327	FieldPoly::zero	documents a straightforward legacy shim
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1065	Mul::mul (&Gf2mWide, &Gf2mWide)	repeated operator-overload example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1092	Mul::mul (Gf2mWide, Gf2mWide)	repeated operator-overload example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1119	Mul::mul (Gf2mWide, &Gf2mWide)	repeated operator-overload example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1146	Mul::mul (&Gf2mWide, Gf2mWide)	repeated operator-overload example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1171	MulAssign::mul_assign	repeated in-place operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1198	MulAssign<&Gf2mWide>::mul_assign	repeated in-place operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1235	Div::div (&Gf2mWide, &Gf2mWide)	repeated division operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1267	Div::div (Gf2mWide, Gf2mWide)	repeated division operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1298	Div::div (Gf2mWide, &Gf2mWide)	repeated division operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1329	Div::div (&Gf2mWide, Gf2mWide)	repeated division operator example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1365	FiniteField::characteristic	direct trait mapping example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1386	FiniteField::extension_degree	direct trait mapping example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1407	FiniteField::is_zero	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1428	FiniteField::is_one	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1449	FiniteField::inv	repeated inverse behavior on the trait mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1472	FiniteField::zero_like	direct identity-constructor mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1493	FiniteField::one_like	direct identity-constructor mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1531	FiniteField::to_wide	direct identity mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1554	FiniteField::mul_to_wide	direct multiplication mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1579	FiniteField::reduce_wide	direct identity mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1603	FiniteField::max_unreduced_additions	constant-like trait mapping
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1821	ConstField::zero	duplicate identity constructor example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:1841	ConstField::one	duplicate identity constructor example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:261	Gf2mWide::from_words	constructor example only supplies valid words and reads them back
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:309	Gf2mWide::new	constructor example does not demonstrate tail masking
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:343	Gf2mWide::zero	constant-like constructor example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:378	Gf2mWide::one	constant-like constructor example
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:416	Gf2mWide::from_u64	constructor example only checks direct word placement
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:450	Gf2mWide::words	accessor directly exposes the documented representation
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:513	Gf2mWide::is_zero	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:539	Gf2mWide::is_one	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:813	get_reducer	example only exercises the private helper indirectly
+OBVIOUS	crates/gf2-core/src/gf2m/wide.rs:881	Gf2mWide::mul_ref	identity check directly restates multiplication
+OBVIOUS	crates/gf2-core/src/gfp/mod.rs:158	Fp::new	constructor example only
+OBVIOUS	crates/gf2-core/src/gfp/mod.rs:182	Fp::value	accessor example only
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:198	BatchExtField::new	straightforward equal-length construction
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:259	BatchExtField::len	straightforward accessor
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:281	BatchExtField::is_empty	straightforward predicate
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:308	BatchExtField::coeff	straightforward lane accessor
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:331	BatchExtField::is_valid	straightforward invariant predicate
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:376	BatchExtField::batch_add	near-identical per-method arithmetic example
+OBVIOUS	crates/gf2-core/src/gfpn/batch.rs:428	BatchExtField::batch_sub	near-identical per-method arithmetic example
+OBVIOUS	crates/gf2-core/src/gfpn/cubic.rs:120	CubicExtWide::new	is a straightforward constructor
+OBVIOUS	crates/gf2-core/src/gfpn/cubic.rs:294	CubicExt::new	is a straightforward constructor
+OBVIOUS	crates/gf2-core/src/gfpn/cubic.rs:368	CubicExt::from_base	is a direct embedding constructor
+OBVIOUS	crates/gf2-core/src/gfpn/quadratic.rs:112	QuadraticExtWide::new	only demonstrates passing and reading constructor fields
+OBVIOUS	crates/gf2-core/src/gfpn/quadratic.rs:270	QuadraticExt::new	straightforward component constructor
+OBVIOUS	crates/gf2-core/src/gfpn/quadratic.rs:356	QuadraticExt::from_base	straightforward base-to-extension embedding
+OBVIOUS	crates/gf2-core/src/gfp/simd_ops.rs:2620	PackedFpChainPolys	empty internal placeholder does not teach a usable API
+OBVIOUS	crates/gf2-core/src/gfp/specialized.rs:177	is_goldilocks_prime	is a straightforward predicate
+OBVIOUS	crates/gf2-core/src/gfp/specialized.rs:818	GoldilocksFp::value	is a direct representative accessor
+OBVIOUS	crates/gf2-core/src/kernels/ops.rs:82	xor_inplace	documents a direct XOR operation
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:105	masked_merge	straightforward bit-selection example
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:136	is_power_of_2	predicate example directly restates the result
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:163	next_power_of_2	straightforward utility behavior example
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:21	parity	straightforward bit-count result example
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:48	trailing_zeros	straightforward utility behavior example
+OBVIOUS	crates/gf2-core/src/kernels/scalar/primitives.rs:77	leading_zeros	straightforward utility behavior example
+OBVIOUS	crates/gf2-core/src/matrix.rs:1239	BitMatrix::to_sparse	shows direct dense-to-sparse conversion
+OBVIOUS	crates/gf2-core/src/matrix.rs:136	BitMatrix::zeros	checks zero construction
+OBVIOUS	crates/gf2-core/src/matrix.rs:1480	BitMatrix::fmt	shows straightforward display formatting
+OBVIOUS	crates/gf2-core/src/matrix.rs:1571	BitMatrix::mul	repeats identity multiplication
+OBVIOUS	crates/gf2-core/src/matrix.rs:162	BitMatrix::identity	checks identity construction
+OBVIOUS	crates/gf2-core/src/matrix.rs:187	BitMatrix::ones	checks one construction
+OBVIOUS	crates/gf2-core/src/matrix.rs:242	BitMatrix::random	shows straightforward random construction
+OBVIOUS	crates/gf2-core/src/matrix.rs:320	BitMatrix::random_with_probability	shows straightforward probabilistic construction
+OBVIOUS	crates/gf2-core/src/matrix.rs:391	BitMatrix::fill_random	shows direct random filling
+OBVIOUS	crates/gf2-core/src/matrix.rs:441	BitMatrix::get	reads back selected bits
+OBVIOUS	crates/gf2-core/src/matrix.rs:476	BitMatrix::set	reads back the value just written
+OBVIOUS	crates/gf2-core/src/matrix.rs:655	BitMatrix::row_as_bitvec	shows direct row conversion
+OBVIOUS	crates/gf2-core/src/matrix.rs:702	BitMatrix::col_as_bitvec	shows direct column conversion
+OBVIOUS	crates/gf2-core/src/matrix.rs:788	BitMatrix::swap_rows	shows direct row swapping
+OBVIOUS	crates/gf2-core/src/matrix.rs:841	BitMatrix::row_xor	shows direct GF(2) row operation
+OBVIOUS	crates/gf2-core/src/primitive_polys.rs:376	PrimitivePolynomialDatabase::standard_u128_irreducibility_note	reads back a constant message
+OBVIOUS	crates/gf2-core/src/rng.rs:102	Lcg::next_unit_f32	near-identical range example
+OBVIOUS	crates/gf2-core/src/rng.rs:124	Lcg::next_unit_f64	near-identical range example
+OBVIOUS	crates/gf2-core/src/rng.rs:151	Lcg::next_positive_f32	near-identical range example
+OBVIOUS	crates/gf2-core/src/rng.rs:179	Lcg::next_positive_f64	near-identical range example
+OBVIOUS	crates/gf2-core/src/rng.rs:207	Lcg::next_bounded_usize	near-identical bounded-output example
+OBVIOUS	crates/gf2-core/src/rng.rs:38	Lcg::new	straightforward constructor example
+OBVIOUS	crates/gf2-core/src/rng.rs:57	Lcg::next_u64	single-call output example
+OBVIOUS	crates/gf2-core/src/rng.rs:80	Lcg::next_u32	single-call output example
+OBVIOUS	crates/gf2-core/src/sparse.rs:1283	SpBitMatrix::to_default_block_csr	thin default-setting wrapper example
+OBVIOUS	crates/gf2-core/src/sparse.rs:1825	SpBitMatrix::fmt	formatting smoke test only
+OBVIOUS	crates/gf2-core/src/sparse.rs:1872	SpBitMatrixBlockCsr::fmt	formatting smoke test only
+OBVIOUS	crates/gf2-core/src/sparse.rs:1919	SpBitMatrixDual::fmt	formatting smoke test only
+OBVIOUS	crates/gf2-core/src/sparse.rs:705	SpBitMatrix::zeros	straightforward constructor example
+OBVIOUS	crates/gf2-core/src/sparse.rs:730	SpBitMatrix::row_iter	accessor/iterator example only
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:184	DeviceBuffer::new	constructor example only builds a normal allocation
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:320	DeviceBuffer::len	accessor example restates the length
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:334	DeviceBuffer::is_empty	predicate example directly restates the result
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:349	DeviceBuffer::size_bytes	direct size mapping example
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:363	DeviceBuffer::device_id	direct field mapping example
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:377	DeviceBuffer::as_ptr	raw pointer accessor example
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:392	DeviceBuffer::as_mut_ptr	raw pointer accessor example
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:459	DeviceBuffer::copy_to_host	repeats the transfer workflow already shown
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:724	PinnedHostBuffer::len	accessor example restates the length
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:738	PinnedHostBuffer::is_empty	predicate example directly restates the result
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:752	PinnedHostBuffer::as_slice	accessor example only checks slice length
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:771	PinnedHostBuffer::as_mut_slice	accessor example only reads back a direct mutation
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:791	PinnedHostBuffer::as_ptr	raw pointer accessor example
+OBVIOUS	crates/gf2-kernels-hip/src/host/alloc.rs:806	PinnedHostBuffer::as_mut_ptr	raw pointer accessor example
+OBVIOUS	crates/gf2-kernels-hip/src/host/arch.rs:271	GfxTarget::blob_dir	straightforward path mapping
+OBVIOUS	crates/gf2-kernels-hip/src/host/arch.rs:80	GfxTarget::as_str	straightforward direct mapping
+OBVIOUS	crates/gf2-kernels-hip/src/host/launch.rs:132	LaunchDims::is_empty	checks a straightforward predicate
+OBVIOUS	crates/gf2-kernels-hip/src/host/launch.rs:147	LaunchDims::total_threads	checks straightforward arithmetic
+OBVIOUS	crates/gf2-kernels-hip/src/host/streams.rs:267	HipStreamPool::device_id	demonstrates a direct accessor
+OBVIOUS	crates/gf2-kernels-hip/src/host/streams.rs:281	HipStreamPool::len	demonstrates a direct accessor
+OBVIOUS	crates/gf2-kernels-hip/src/host/streams.rs:296	HipStreamPool::is_empty	demonstrates a direct predicate
+OBVIOUS	crates/gf2-kernels-hip/src/host/streams.rs:68	HipStream::as_raw	demonstrates a direct handle accessor
+OBVIOUS	crates/gf2-kernels-hip/src/launch_bch_syndrome.rs:92	BchFieldTables::new	references the type-level example
+OBVIOUS	crates/gf2-kernels-hip/src/launch_chacha20_awgn.rs:412	GpuChaChaAwgn::new_stream_scratch	demonstrates a straightforward staging allocation
+OBVIOUS	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:195	LdpcGraphLayout::edges	demonstrates a direct edge-count accessor
+OBVIOUS	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:469	GpuLdpcBp::new_stream_scratch	demonstrates a straightforward staging allocation
+OBVIOUS	crates/gf2-kernels-hip/src/launch_ldpc_bp.rs:92	GpuBpAlgorithm::code	demonstrates a direct enum-to-code mapping
+OBVIOUS	crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:170	Bipedal3x4	type-alias example only names the alias
+OBVIOUS	crates/gf2-kernels-simd/src/bipedal/packed5.rs:412	detect_avx2_f5	only demonstrates calling and discarding the result
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:129	GrayPamDistanceFnsF64	is a near-identical precision-variant example
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:174	scalar_pam_sq_distances_f32	is a repetitive scalar-kernel invocation example
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:239	scalar_pam_sq_distances_f64	is a repetitive precision-variant kernel example
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:291	scalar_fns_f32	is a repetitive bundle-construction example
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:313	scalar_fns_f64	is a repetitive precision-variant bundle example
+OBVIOUS	crates/gf2-kernels-simd/src/modem.rs:374	detect_f64	is a near-identical precision-variant dispatch example
+OBVIOUS	crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs:133	run_sub_batch	near-identical AVX2 batch example
+OBVIOUS	crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs:205	run_mul_batch	near-identical AVX2 batch example
+OBVIOUS	crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs:278	run_neg_batch	near-identical AVX2 batch example
+OBVIOUS	crates/gf2-sim/src/batch.rs:119	SymbolBatch::new	constructor example only supplies valid matching lanes
+OBVIOUS	crates/gf2-sim/src/batch.rs:185	LlrBatch::new	constructor example only wraps supplied frames
+OBVIOUS	crates/gf2-sim/src/batch.rs:236	HardDecisionBatch::new	constructor example only wraps supplied frames
+OBVIOUS	crates/gf2-sim/src/batch.rs:60	BitPackedBatch::new	constructor example only wraps supplied frames
+OBVIOUS	crates/gf2-sim/src/channels/awgn.rs:136	Awgn::new	straightforward constructor example
+OBVIOUS	crates/gf2-sim/src/channels/rayleigh.rs:87	Rayleigh::new	repeats channel construction
+OBVIOUS	crates/gf2-sim/src/channels/rician.rs:113	Rician::new	straightforward constructor example
+OBVIOUS	crates/gf2-sim/src/checkpoint/mod.rs:1059	SweepError	shows direct error matching
+OBVIOUS	crates/gf2-sim/src/checkpoint/mod.rs:113	CheckpointV2	shows direct schema field construction
+OBVIOUS	crates/gf2-sim/src/checkpoint/mod.rs:625	CheckpointedRun	shows direct result construction
+OBVIOUS	crates/gf2-sim/src/checkpoint/mod.rs:82	WorkerState	shows direct schema field construction
+OBVIOUS	crates/gf2-sim/src/checkpoint/mod.rs:870	SweepRun	shows direct result construction
+OBVIOUS	crates/gf2-sim/src/executor/failure.rs:110	FaultContext	demonstrates direct public field mapping
+OBVIOUS	crates/gf2-sim/src/executor/results.rs:94	SimulationResults	demonstrates direct aggregate field construction
+OBVIOUS	crates/gf2-sim/src/executor/topology.rs:955	TopologyExecutor::run	only redirects to the shared complete example
+OBVIOUS	crates/gf2-sim/src/gpu/awgn.rs:151	GpuAwgn::new	straightforward constructor example
+OBVIOUS	crates/gf2-sim/src/gpu/awgn.rs:202	GpuAwgn::on_device	straightforward builder setter
+OBVIOUS	crates/gf2-sim/src/gpu/awgn.rs:89	GpuAwgnScratch::host_buf	straightforward accessor
+OBVIOUS	crates/gf2-sim/src/gpu/demap.rs:238	GpuGrayQamDemapper::new	straightforward supported-modulation constructor
+OBVIOUS	crates/gf2-sim/src/gpu/demap.rs:281	GpuGrayQamDemapper::on_device	straightforward builder-style device setter
+OBVIOUS	crates/gf2-sim/src/gpu/ldpc_bp.rs:310	GpuLdpcBp::new	documents a straightforward constructor
+OBVIOUS	crates/gf2-sim/src/gpu/ldpc_bp.rs:336	GpuLdpcBp::on_device	repeats the supplied device selection
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:119	GpuNr5gDecoder::new	constructor repeats the type-level setup
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:155	GpuNr5gDecoder::target_k	accessor example restates the target length
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:179	GpuNr5gDecoder::target_n	accessor example restates the transmitted length
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:203	GpuNr5gDecoder::full_n	accessor example restates the mother-code length
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:227	GpuNr5gDecoder::max_iterations	accessor example restates the iteration cap
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:251	GpuNr5gDecoder::config	accessor example only retrieves the configuration
+OBVIOUS	crates/gf2-sim/src/gpu/nr_5g_ldpc.rs:275	GpuNr5gDecoder::gpu	accessor example only retrieves the wrapped stage
+OBVIOUS	crates/gf2-sim/src/graph/mod.rs:190	Chain::new	straightforward empty-chain constructor
+OBVIOUS	crates/gf2-sim/src/graph/mod.rs:258	Chain::add	only demonstrates adding one stage and receiving its identifier
+OBVIOUS	crates/gf2-sim/src/parallel/mod.rs:431	FrameOutcome	shows direct field construction
+OBVIOUS	crates/gf2-sim/src/presets/dvb_t2.rs:207	Channel::awgn	straightforward channel constructor example
+OBVIOUS	crates/gf2-sim/src/presets/dvb_t2.rs:386	Builder::modcod	setter example only repeats the typestate signature
+OBVIOUS	crates/gf2-sim/src/presets/nr_5g.rs:172	NrModulation::bits_per_symbol	demonstrates a direct enum-to-value mapping
+OBVIOUS	crates/gf2-sim/src/presets/nr_5g.rs:227	Nr5gDecoderConfig::new	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-sim/src/presets/nr_5g.rs:251	Nr5gDecoderConfig::normalized_min_sum	demonstrates a straightforward preset constructor
+OBVIOUS	crates/gf2-sim/src/presets/nr_5g.rs:317	Channel::awgn	demonstrates a straightforward constructor
+OBVIOUS	crates/gf2-sim/src/presets/nr_5g.rs:98	BaseGraph::number	demonstrates a direct enum-to-number mapping
+OBVIOUS	crates/gf2-sim/src/stages/mod.rs:284	DvbT2Encode::k_bch	accessor example restates the codec dimension
+OBVIOUS	crates/gf2-sim/src/stages/nr_5g.rs:113	Nr5gEncode::n	accessor example restates the codeword length
+OBVIOUS	crates/gf2-sim/src/stages/nr_5g.rs:388	NrGrayQamDemap::noise_var	accessor example restates the configured value
+OBVIOUS	crates/gf2-sim/src/stages/nr_5g.rs:520	Nr5gDecode::k	accessor example restates the message length
+OBVIOUS	crates/gf2-sim/src/stages/nr_5g.rs:89	Nr5gEncode::k	accessor example restates the message length
+OBVIOUS	crates/gf2-sim/src/testutil.rs:173	AwgnLlrSource::new	is a straightforward seeded constructor
