@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:31:51.055908761Z",
+  "dependencies": [],
+  "description": "Add finite-blocklength reference bounds (normal approximation, RCU, metaconverse) so measured BLER curves can be positioned against the standard short-code benchmarks.\n\n## Background\n\nThe library computes Shannon capacity and the asymptotic rate limit only, which cannot position an $(n, k)$ BLER curve in the short-blocklength regime. The short-code literature reads every curve against the normal approximation and the RCU/metaconverse bounds of [PPV2010]: comparative decoder studies such as [Yue2022] and decoder-specific finite-blocklength analyses such as [LiZhang2026] all report gaps to these bounds, and the standing benchmark target is the gap to the normal approximation at $(128, 64)$, BLER $10^{-3}$. The normal approximation is a closed-form dispersion expression,\n\n$$\nP_e \\approx Q\\!\\left(\\frac{n(C - R) + \\tfrac{1}{2}\\log_2 n}{\\sqrt{nV}}\\right),\n$$\n\nwith $C$ the channel capacity and $V$ the channel dispersion; RCU and metaconverse require modest numerical integration. This is a small, self-contained addition that every simulation-facing benchmark in the workspace can consume.\n\n## Success Criteria\n\n- [hard] REQ-01: Computes the normal-approximation BLER estimate for the BI-AWGN channel for any $(n, k, E_b/N_0)$ using the channel dispersion $V$.\n- [hard] REQ-02: Computes the RCU and metaconverse bounds for BI-AWGN numerically, with validation against published $(128, 64)$ curves documented.\n- [hard] REQ-03: Simulation outputs can overlay bound curves with measured BLER curves in a single artifact (CSV columns and/or plot).\n- [aspirational] REQ-04: Saddlepoint approximation of the RCU bound for fast evaluation at large $n$.\n\n## References\n\n- [PPV2010] Polyanskiy, Poor, Verdú — Channel Coding Rate in the Finite Blocklength Regime. IEEE Trans. Inf. Theory 56(5):2307–2359, 2010.\n- [Yue2022] Yue, Miloslavskaya, Shirvanimoghaddam, Vucetic, Li — Efficient Decoders for Short Block Length Codes in 6G URLLC. arXiv:2206.09572.\n- [LiZhang2026] Li, Zhang — A Finite-Blocklength Analysis for ORBGRAND. arXiv:2603.07526.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:31:51.055908761Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "aed96ef9-2247-4d8a-94f2-681a277a7acd",
+  "labels": [
+    "type:epic",
+    "epic:finite-blocklength-bounds",
+    "component:gf2-coding",
+    "cites:PPV2010",
+    "cites:Yue2022",
+    "cites:LiZhang2026"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Finite-blocklength bounds for short-code benchmarking",
+  "updated_at": "2026-08-07T12:31:51.055908761Z"
+}

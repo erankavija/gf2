@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:33:46.047657760Z",
+  "dependencies": [],
+  "description": "Produce the design study that fixes the additive-NTT implementation approach: basis choice, tower-field integration, API placement, and benchmark methodology.\n\n## Background\n\nThe additive NTT evaluates polynomials over an $\\mathbb{F}_2$-linear subspace in $O(n \\log n)$ field operations using the novel polynomial basis [Lch2014]. Implementations differ in basis convention (Cantor basis versus the novel basis as used by binary-tower proof systems [DiamondPosen2023]), in how twiddle-like constants are precomputed, and in how the transform composes with tower-field arithmetic. These choices are hard to reverse after kernels are written, so they are fixed in a design study before implementation.\n\n## Success Criteria\n\n- [hard] REQ-01: A design document selects the polynomial basis and subspace convention with rationale, including compatibility with the existing GF($2^m$) and tower-extension representations.\n- [hard] REQ-02: The document specifies the API surface (crate placement, types, precomputation lifecycle) and at least four placement options are weighed before the recommendation.\n- [hard] REQ-03: The document defines the benchmark methodology for the crossover-versus-Karatsuba measurement and the external-baseline comparison, naming datasets, sizes, and metrics.\n- [hard] REQ-04: Open risks (numerical conventions, licensing of comparison baselines, SIMD portability) are enumerated with mitigations.\n\n## References\n\n- [Lch2014] Lin, Chung, Han — Novel Polynomial Basis and Its Application to Reed–Solomon Erasure Codes. FOCS 2014. arXiv:1404.3458.\n- [DiamondPosen2023] Diamond, Posen — Succinct Arguments over Towers of Binary Fields (Binius). IACR eprint 2023/1784; EUROCRYPT 2025.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:33:46.047657760Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "24701af9-138e-4c45-85a9-60debe9458d0",
+  "labels": [
+    "type:task",
+    "epic:additive-ntt",
+    "component:gf2-core",
+    "cites:Lch2014",
+    "cites:DiamondPosen2023"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Design study for the additive NTT: basis, tower integration, API, benchmarks",
+  "updated_at": "2026-08-07T12:33:46.047657760Z"
+}

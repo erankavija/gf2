@@ -63,6 +63,11 @@ description = "Enforcement link: names an invariant, rule, or gate item that the
 examples = ["enforces:@/invariant/<self-id>", "enforces:@/rule/label-format", "enforces:@/gate/<self-id>"]
 unique = false
 
+[namespaces.cites]
+description = "Literature citation link: names a bibliography entry (citekey) in .jit/references.toml that the labeled issue builds on or reproduces."
+examples = ["cites:GGK2025", "cites:Fossorier1995"]
+unique = false
+
 [namespaces.epic]
 description = "Epic membership."
 examples = ["epic:gf2-sim", "epic:coverage-90"]
@@ -131,6 +136,16 @@ markers = []
 scope = "project"
 section = "success_criteria"
 source = { id-field = "name", table = "rules", text-field = "description", toml = ".jit/rules.toml" }
+source-of-truth = "registry-first"
+
+[item_kinds.citation]
+aliases = ["ref"]
+id-pattern = "[A-Z][A-Za-z]*[0-9]{4}[a-z]?"
+link-namespaces = ["cites"]
+markers = []
+scope = "project"
+section = "references"
+source = { id-field = "key", table = "references", text-field = "citation", toml = ".jit/references.toml" }
 source-of-truth = "registry-first"
 
 [item_kinds.gate]

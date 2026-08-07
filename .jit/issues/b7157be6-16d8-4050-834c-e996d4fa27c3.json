@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:31:54.967767596Z",
+  "dependencies": [],
+  "description": "Implement ordered-statistics decoding (OSD) — the near-ML baseline every short-code and GRAND paper is measured against, and the post-processing half of BP+OSD used across LDPC-family decoding.\n\n## Background\n\nOSD [Fossorier1995] decodes by most-reliable-basis reprocessing: sort received reliabilities, Gaussian-eliminate the generator matrix onto the most reliable independent positions, and test error patterns up to order $m$ over the resulting information set. Order-$m$ OSD approaches ML performance on short codes and is the reference baseline in short-blocklength decoder comparisons [Yue2022]. Combined with belief propagation it is also the accuracy workhorse of quantum-LDPC decoding [Roffe2020], so one implementation serves both the classical benchmark role and BP post-processing. The workspace has no OSD; existing GRAND results cannot currently be positioned against near-ML performance. The required primitives — dense GF(2) elimination with column pivoting, generator-matrix access, LLR handling — all exist.\n\n## Success Criteria\n\n- [hard] REQ-01: Order-$m$ OSD decodes any linear block code exposing a generator matrix, producing hard decisions from soft input (LLRs), with $m$ configurable.\n- [hard] REQ-02: Reproduces the documented near-ML performance of OSD on a reference short code (e.g. extended BCH $(128, 64)$) within simulation confidence intervals of published curves.\n- [hard] REQ-03: Syndrome-guided OSD runs as a post-processor on belief-propagation failure, and the combined BP+OSD decoder is exercised on an LDPC code in tests.\n- [aspirational] REQ-04: Complexity-reduction variants (pattern segmentation, discarding thresholds) with measured elimination/pattern counts.\n\n## References\n\n- [Fossorier1995] Fossorier, Lin — Soft-Decision Decoding of Linear Block Codes Based on Ordered Statistics. IEEE Trans. Inf. Theory 41(5):1379–1396, 1995.\n- [Yue2022] Yue, Miloslavskaya, Shirvanimoghaddam, Vucetic, Li — Efficient Decoders for Short Block Length Codes in 6G URLLC. arXiv:2206.09572.\n- [Roffe2020] Roffe, White, Burton, Campbell — Decoding across the quantum low-density parity-check code landscape. Phys. Rev. Research 2:043423 (2020). arXiv:2005.07016.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T12:31:54.967767596Z",
+  "gates_required": [
+    "repo-validate",
+    "doc-review",
+    "holistic-review"
+  ],
+  "gates_status": {},
+  "id": "b7157be6-16d8-4050-834c-e996d4fa27c3",
+  "labels": [
+    "type:epic",
+    "epic:osd",
+    "component:gf2-coding",
+    "cites:Fossorier1995",
+    "cites:Yue2022",
+    "cites:Roffe2020"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Ordered-statistics decoding as the universal soft-decision baseline",
+  "updated_at": "2026-08-07T12:31:54.967767596Z"
+}

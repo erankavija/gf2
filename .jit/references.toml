@@ -1,0 +1,137 @@
+# Project bibliography — registry for the `citation` item kind.
+#
+# Each entry is addressable as an item (`jit item show <key>`) and linkable from
+# issues via `cites:<key>` labels. `citation` is the canonical one-line reference;
+# identifier fields (arxiv / eprint / doi / url / refdb) are advisory metadata.
+# Citekey format: AuthorYYYY[a] matching the configured id-pattern.
+
+[[references]]
+key = "PPV2010"
+citation = "Polyanskiy, Poor, Verdú — Channel Coding Rate in the Finite Blocklength Regime. IEEE Trans. Inf. Theory 56(5):2307–2359, 2010."
+doi = "10.1109/TIT.2010.2043769"
+
+[[references]]
+key = "Yue2022"
+citation = "Yue, Miloslavskaya, Shirvanimoghaddam, Vucetic, Li — Efficient Decoders for Short Block Length Codes in 6G URLLC. arXiv:2206.09572."
+arxiv = "2206.09572"
+
+[[references]]
+key = "LiZhang2025"
+citation = "Li, Zhang — ORBGRAND Is Exactly Capacity-achieving via Rank Companding. arXiv:2512.00347 (2025)."
+arxiv = "2512.00347"
+refdb = "orbgrand-capacity-rank-companding"
+
+[[references]]
+key = "LiZhang2026"
+citation = "Li, Zhang — A Finite-Blocklength Analysis for ORBGRAND. arXiv:2603.07526 (2026)."
+arxiv = "2603.07526"
+
+[[references]]
+key = "WanZhang2026"
+citation = "Wan, Zhang — Reducing ORBGRAND Latency via Partial Gaussian Elimination. arXiv:2602.01174 (2026)."
+arxiv = "2602.01174"
+
+[[references]]
+key = "Fossorier1995"
+citation = "Fossorier, Lin — Soft-Decision Decoding of Linear Block Codes Based on Ordered Statistics. IEEE Trans. Inf. Theory 41(5):1379–1396, 1995."
+doi = "10.1109/18.412683"
+
+[[references]]
+key = "Rowshan2024"
+citation = "Rowshan, Qiu, Xie, Gu, Yuan — Channel Coding Toward 6G: Technical Overview and Outlook. arXiv:2405.07547."
+arxiv = "2405.07547"
+
+[[references]]
+key = "Bravyi2024"
+citation = "Bravyi, Cross, Gambetta, Maslov, Rall, Yoder — High-threshold and low-overhead fault-tolerant quantum memory. Nature 627:778–782 (2024). arXiv:2308.07915."
+arxiv = "2308.07915"
+refdb = "bivariate-bicycle-codes"
+
+[[references]]
+key = "Roffe2020"
+citation = "Roffe, White, Burton, Campbell — Decoding across the quantum low-density parity-check code landscape. Phys. Rev. Research 2:043423 (2020). arXiv:2005.07016."
+arxiv = "2005.07016"
+
+[[references]]
+key = "Muller2025"
+citation = "Müller et al. (IBM) — Improved belief propagation is sufficient for real-time decoding of quantum memory (Relay-BP). arXiv:2506.01779 (2025)."
+arxiv = "2506.01779"
+refdb = "relay-bp-qldpc"
+
+[[references]]
+key = "Hillmann2024"
+citation = "Hillmann, Berent, Quintavalle, Eisert, Wille, Roffe — Localized statistics decoding: a parallel decoding algorithm for quantum LDPC codes (BP+LSD). arXiv:2406.18655."
+arxiv = "2406.18655"
+
+[[references]]
+key = "Gidney2021"
+citation = "Gidney — Stim: a fast stabilizer circuit simulator. Quantum 5:497 (2021). arXiv:2103.02202."
+arxiv = "2103.02202"
+
+[[references]]
+key = "Arikan2019"
+citation = "Arıkan — From Sequential Decoding to Channel Polarization and Back Again (PAC codes). arXiv:1908.09594."
+arxiv = "1908.09594"
+
+[[references]]
+key = "Yao2020"
+citation = "Yao, Fazeli, Vardy — List Decoding of Arıkan's PAC Codes. arXiv:2002.06805."
+arxiv = "2002.06805"
+
+[[references]]
+key = "Aed2024"
+citation = "Shortened Polar Codes under Automorphism Ensemble Decoding. arXiv:2403.00622."
+arxiv = "2403.00622"
+
+[[references]]
+key = "Rcaed2023"
+citation = "Rate-Compatible Polar Codes for Automorphism Ensemble Decoding. arXiv:2305.01214."
+arxiv = "2305.01214"
+
+[[references]]
+key = "PacScl2024"
+citation = "Simplified Successive-Cancellation List Decoding of PAC Codes. arXiv:2401.13922."
+arxiv = "2401.13922"
+
+[[references]]
+key = "Lch2014"
+citation = "Lin, Chung, Han — Novel Polynomial Basis and Its Application to Reed–Solomon Erasure Codes. FOCS 2014. arXiv:1404.3458."
+arxiv = "1404.3458"
+
+[[references]]
+key = "DiamondPosen2023"
+citation = "Diamond, Posen — Succinct Arguments over Towers of Binary Fields (Binius). IACR eprint 2023/1784; EUROCRYPT 2025."
+url = "https://eprint.iacr.org/2023/1784"
+
+[[references]]
+key = "DiamondPosen2024"
+citation = "Diamond, Posen — Polylogarithmic Proofs for Multilinears over Binary Towers (ring switching / FRI-Binius). IACR eprint 2024/504."
+url = "https://eprint.iacr.org/2024/504"
+
+[[references]]
+key = "Blaze2024"
+citation = "Brehm, Chen, Fisch, Resch, Rothblum, Zeilberger — Blaze: fast SNARKs from interleaved RAA codes over binary fields. IACR eprint 2024/1609; EUROCRYPT 2025."
+url = "https://eprint.iacr.org/2024/1609"
+
+[[references]]
+key = "Jang2026"
+citation = "Jang et al. — Optimized GF(2)[x] multiplication via VPCLMULQDQ/PMULL with 17–32% cycle reduction on HQC. J. Cryptographic Engineering (2026), doi:10.1007/s13389-026-00392-0."
+doi = "10.1007/s13389-026-00392-0"
+
+[[references]]
+key = "GGK2025"
+citation = "Ghasemi, Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random Matrices over Finite Fields. APPROX/RANDOM 2025. arXiv:2512.03221; ECCC TR25-206."
+arxiv = "2512.03221"
+refdb = "permanental-vs-determinantal-rank-ggk"
+
+[[references]]
+key = "HKS2026"
+citation = "Hunter, Kwan, Sauermann — Permanents of Random Matrices over Finite Fields. arXiv:2603.15856 (2026)."
+arxiv = "2603.15856"
+refdb = "permanents-of-random-matrices-over-finite-fields"
+
+[[references]]
+key = "Scheinerman2024"
+citation = "Scheinerman — Fast Computation of Permanents over F_3 via F_2 Arithmetic. arXiv:2407.20205."
+arxiv = "2407.20205"
+refdb = "fast-computation-of-permanents-over-mathbb-f-3-via-mathbb-f-2-arithmetic"

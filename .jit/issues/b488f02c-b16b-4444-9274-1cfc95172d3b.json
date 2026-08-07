@@ -1,0 +1,33 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T12:32:25.499859632Z",
+  "dependencies": [],
+  "description": "Complete the feasibility study and gap analysis for the permanent-zero-fraction sampling campaign: measure kernel throughput, quantify the attainable $(q, n, \\text{samples})$ envelope, inventory infrastructure gaps, and recommend a campaign design.\n\n## Background\n\nThe campaign targets the open conjecture $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ for uniform random square matrices over $\\mathbb{F}_q$ [GGK2025]. Permanent evaluation via Ryser's formula costs $\\Theta(2^n n)$ per matrix, so scientific reach — how far in $n$ the shape of the $o(1)$ term can be traced at usable confidence — is determined by measured throughput of the existing bipedal kernels ([Scheinerman2024] reproduction; CPU scalar/AVX2/rayon and HIP/ROCm GPU batch paths) and by the hardware budget. An initialized study document with the capability inventory, gap list, scaling analysis skeleton, and open questions is attached to this issue; completing its measurement and recommendation sections is this task.\n\n## Success Criteria\n\n- [hard] REQ-01: Measured throughput (matrices/second) for batched permanent evaluation at representative $n$ for $q = 3, 5, 7$ on CPU (scalar, AVX2, rayon) and GPU paths, recorded with hardware and version metadata.\n- [hard] REQ-02: An attainable-envelope table derived from the measurements: for target standard errors on $\\Pr[\\mathrm{per} = 0]$, the feasible $(q, n, \\text{samples})$ combinations under stated wall-clock budgets.\n- [hard] REQ-03: A gap analysis enumerating missing infrastructure (uniform $\\mathbb{F}_q$ matrix sampling, streaming statistics with confidence intervals, campaign-runner integration, dataset format and storage) with effort estimates.\n- [hard] REQ-04: A go/no-go recommendation and, on go, a campaign design (sampling plan, seeding scheme, storage layout, analysis method) ready for breakdown into implementation issues.\n\n## References\n\n- [GGK2025] Ghasemi, Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random Matrices over Finite Fields. APPROX/RANDOM 2025. arXiv:2512.03221; ECCC TR25-206.\n- [Scheinerman2024] Scheinerman — Fast Computation of Permanents over F_3 via F_2 Arithmetic. arXiv:2407.20205.",
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "study",
+      "format": "markdown",
+      "label": "Feasibility Study (initialized)",
+      "path": "dev/studies/b488f02c/feasibility-study.md"
+    }
+  ],
+  "first_ready_at": "2026-08-07T12:32:25.499859632Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "b488f02c-b16b-4444-9274-1cfc95172d3b",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-algebra",
+    "cites:GGK2025",
+    "cites:Scheinerman2024"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
+  "updated_at": "2026-08-07T12:34:52.103948445Z"
+}
