@@ -1,5 +1,8 @@
-# git_sha: 7bb371cb0478fbc3cd49175c8e02dc533cb9cb57
+# git_sha: c2c4a48378ed61352d26c5d0c6f7e145d5c6fc1c
 # git_worktree_dirty: true
+# harness_source_sha: 5f195e84cc08d7200669aaa056c9e5a871b43f4f
+# harness_source_dirty: false
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own; harness_source_* pin the state of the crate that produced these numbers, which is what makes the run reproducible
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
 # cpu: AMD Ryzen 9 5900X 12-Core Processor
@@ -11,23 +14,23 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-07T16:07:20Z
+# timestamp_utc: 2026-08-07T17:42:03Z
 # invocation: ./target/release/permanent_sampling_feas zerofrac --throughput /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv --sustained /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/zero-fraction-2026-08-07.csv
 # pooled from: /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv, /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv
 # these counts are a by-product of the timing protocol; sample sizes are whatever each cell needed, not a designed sampling plan
 # interval: Wilson score, 95 % (z = 1.959964)
 # seed_root: 0xb488f02c00000001
 q,n,matrices,zeros,p_hat,wilson_lo_95,wilson_hi_95,one_over_q,one_over_q_inside_interval,scheinerman2024_p,scheinerman2024_inside_interval
-3,12,5368086,1792184,0.333859,0.333460,0.334258,0.333333,false,0.333354,false
-3,16,786720,261990,0.333016,0.331975,0.334058,0.333333,true,0.333309,true
-3,20,78675,26423,0.335850,0.332558,0.339158,0.333333,true,0.333389,true
-3,24,190919,63757,0.333948,0.331836,0.336067,0.333333,true,0.333352,true
-3,28,1735,562,0.323919,0.302309,0.346307,0.333333,true,0.333743,true
-5,12,560018,112128,0.200222,0.199176,0.201272,0.200000,true,none,n/a
-5,16,31285,6148,0.196516,0.192150,0.200956,0.200000,true,none,n/a
-5,20,55301,10830,0.195837,0.192551,0.199166,0.200000,false,none,n/a
-5,24,130,22,0.169231,0.114496,0.242953,0.200000,true,none,n/a
-5,28,77,14,0.181818,0.111513,0.282363,0.200000,true,none,n/a
-7,12,574175,81888,0.142619,0.141716,0.143525,0.142857,true,none,n/a
-7,16,692925,99300,0.143306,0.142483,0.144133,0.142857,true,none,n/a
-7,20,17664,2527,0.143059,0.137974,0.148300,0.142857,true,none,n/a
+3,12,5445320,1814760,0.333270,0.332874,0.333666,0.333333,true,0.333354,true
+3,16,814601,271910,0.333795,0.332772,0.334820,0.333333,true,0.333309,true
+3,20,73602,24352,0.330861,0.327470,0.334269,0.333333,true,0.333389,true
+3,24,189680,63313,0.333788,0.331670,0.335914,0.333333,true,0.333352,true
+3,28,5807,1923,0.331152,0.319163,0.343365,0.333333,true,0.333743,true
+5,12,549857,109972,0.200001,0.198946,0.201060,0.200000,true,none,n/a
+5,16,31931,6166,0.193104,0.188811,0.197470,0.200000,false,none,n/a
+5,20,55328,10787,0.194965,0.191685,0.198287,0.200000,false,none,n/a
+5,24,490,87,0.177551,0.146263,0.213856,0.200000,true,none,n/a
+5,28,101,16,0.158416,0.099928,0.241936,0.200000,true,none,n/a
+7,12,574181,83006,0.144564,0.143657,0.145476,0.142857,false,none,n/a
+7,16,692667,99293,0.143349,0.142526,0.144176,0.142857,true,none,n/a
+7,20,17664,2578,0.145947,0.140817,0.151230,0.142857,true,none,n/a
