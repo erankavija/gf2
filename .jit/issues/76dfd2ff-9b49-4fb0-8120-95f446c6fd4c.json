@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-07T18:12:02.868361446Z",
+  "dependencies": [],
+  "description": "The 2026-05 S3 (cross-CPU) and S5 (GPU crossover) benchmark receipts under the gf2-algebra permanent campaign lack immutable measurement-source provenance (no committed harness SHA identifying the executable state), so they cannot serve as authoritative evidence under current standards.\n\n## Background\n\nAn external research-methodology review of the 2026-08-07 feasibility study flagged the historical receipts as pre-existing debt: they corroborate newer measurements but their provenance cannot be reconstructed. The feasibility study already treats them as corroboration-only; the durable record should say so where the receipts live.\n\n## Success Criteria\n\n- [hard] REQ-01: The provenance record accompanying the S3/S5 receipt CSVs states that the receipts lack immutable measurement-source provenance and are corroboration-only, citing the 2026-08-07 review finding.\n- [hard] REQ-02: Any in-tree prose citing S3/S5 numbers as authoritative evidence is swept and requalified in the same change.",
+  "documents": [],
+  "first_ready_at": "2026-08-07T18:12:02.868361446Z",
+  "gates_required": [
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-algebra"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Mark historical S3/S5 permanent-benchmark receipts as non-authoritative",
+  "updated_at": "2026-08-07T18:12:02.868361446Z"
+}

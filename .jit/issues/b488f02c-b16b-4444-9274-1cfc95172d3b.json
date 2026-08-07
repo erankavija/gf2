@@ -70,14 +70,14 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-07T17:53:34.925658289Z",
+      "status": "passed",
+      "updated_at": "2026-08-07T17:59:35.652177844Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "pending",
-      "updated_at": "2026-08-07T12:59:20.503839815Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-07T18:10:47.051008672Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "b488f02c-b16b-4444-9274-1cfc95172d3b",
@@ -91,5 +91,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T17:55:13.471299861Z"
+  "updated_at": "2026-08-07T18:10:47.051008672Z"
 }
