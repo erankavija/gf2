@@ -1,7 +1,11 @@
 # Feasibility study: permanent-zero-fraction sampling campaign
 
-> **Status:** complete. Measurements taken 2026-08-07 on the project benchmark
-> host; every number in §4 traces to a committed CSV in this directory.
+> **Status:** complete. Every number in §4 traces to a committed CSV in this
+> directory. The receipt files keep the `2026-08-07` names they were given when
+> the set was first produced; the measurements committed here were re-taken on
+> **2026-08-08 UTC**, and each receipt's `timestamp_utc` header gives its own
+> time. Where the two disagree, the header is authoritative — the filename is a
+> stable identifier, not a date of measurement.
 
 ## 1. Objective
 
@@ -61,7 +65,8 @@ is stated at that strength in §7.6.
 
 ## 2. Capability inventory (verified in-tree)
 
-Every claim in this section was checked against the source on 2026-08-07. Line
+Every claim in this section was checked against the source, and each citation
+re-verified against it on 2026-08-08. Line
 references are to the state of `crates/` recorded as `deps_source_sha` in every
 receipt (`195f8254`), alongside the harness commit `7189d66f` that produced the
 measurements.
@@ -149,8 +154,15 @@ before any campaign data is drawn.
 
 ## 4. Measurements (REQ-01, REQ-02)
 
-All measurements were taken on 2026-08-07 on the project benchmark host, which
-was otherwise idle. Artifacts in this directory, each carrying a preamble with
+All measurements were taken on the project benchmark host, which was otherwise
+idle, and the committed set was produced on 2026-08-08 UTC between 03:07 and
+04:25 — equivalence, then the grid, then the sustained runs, then the two
+derived stages, each stamped in its own `timestamp_utc`. The filenames retain
+the `2026-08-07` stem of the original set and are not evidence of when a
+measurement ran; §4's provenance list records why the set was regenerated. The
+one artifact whose date is its content is `gpu-hang-2026-08-07.log`, which
+observes a fault that genuinely happened on 2026-08-07. Artifacts in this
+directory, each carrying a preamble with
 git SHA, rustc and ROCm versions, CPU and GPU model, governor, thread count, and
 the exact invocation:
 
