@@ -2,6 +2,14 @@
 
 Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
 
+> **Status update 2026-08-08.** Resume step 1 is **done**: all five receipts were
+> regenerated from one binary and the results folded into the study
+> (`754755d5`), and the harness comment that the new sustained numbers falsified
+> was reworded (`8e3a7e27`). Steps 2–3 — the gate cycle and issue completion —
+> are in progress with the lead. The state described below is the state at the
+> pause and is kept as written; where it and this note disagree, this note is
+> current.
+
 ## Where things stand
 
 ### Issue b488f02c (feasibility study, claimed by agent:opus-feasibility)
