@@ -98,4 +98,12 @@ Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
   `~/Projects/forum-poc/forum.sh`, codex listens as `agent:codex`
   (FORUM_DIR default /tmp/jit-forum; stale queued messages possible on first
   recv).
-- GPU: batch M=4096 hangs gfx1030 (recovers); M=1024 is the practical optimum.
+- GPU: batch M=4096 was tried once on gfx1030 and the device faulted, then
+  recovered on its own. That is a single unretried event and its cause was never
+  established — a watchdog timeout is one hypothesis, not a finding. M=1024 is
+  the fastest of the batch sizes tested ({256, 1024, 2048} at q=3, n=24); sizes
+  above 2048 are untested. Keep avoiding 4096 on the strength of what a fault
+  costs, not of a known threshold. *(Requalified 2026-08-08 to match
+  `dev/studies/b488f02c/feasibility-study.md` §4.5 and
+  `gpu-hang-2026-08-07.log`, which record what was and was not captured; the
+  original line asserted a watchdog limit and an unscoped optimum.)*
