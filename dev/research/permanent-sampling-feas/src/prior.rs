@@ -180,8 +180,15 @@ impl PriorComparison {
 
 /// Compare an attainable standard error against the published one at `(q, n)`.
 ///
-/// "Matches" is a +/-10 % band on the standard error, which is well inside the
-/// run-to-run variation of the throughput that produced it.
+/// "Matches" is a +/-10 % band on the standard error. It is deliberately much
+/// wider than run-to-run variation, not a bound on it: the committed sustained
+/// runs put the disagreement between two independent measurements of one
+/// configuration at 1.8 % or less. The band is a coarse comparability class -
+/// "this campaign and the prior work resolve the same cell to about the same
+/// precision" - chosen wide so that a cell is separated only when the
+/// difference is far larger than measurement noise could explain. A band tight
+/// enough to track run-to-run variation would classify cells by which afternoon
+/// they were measured on.
 #[must_use]
 pub fn compare_precision(q: u64, n: usize, attainable_se: f64) -> PriorComparison {
     if q != 3 {

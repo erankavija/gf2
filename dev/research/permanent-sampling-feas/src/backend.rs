@@ -22,6 +22,8 @@ use gf2_algebra::permanent::bipedal3::permanent_bipedal3_singleword;
 use gf2_algebra::permanent::bipedal5::permanent_bipedal5;
 use gf2_algebra::permanent::bipedal7::permanent_bipedal7;
 use gf2_algebra::permanent::permanent_bipedal3_parallel;
+use gf2_algebra::permanent::permanent_ryser;
+use gf2_core::gfp::Fp;
 use rayon::prelude::*;
 
 /// The measured evaluation paths.
@@ -40,17 +42,29 @@ pub enum Backend {
     RayonIntra,
     /// HIP/ROCm batch dispatcher.
     Gpu,
+    /// The generic `permanent_ryser<F: FiniteField>` over unpacked `Fp<q>`
+    /// elements: single thread, no packing, no field-specific kernel.
+    ///
+    /// Included because it is an *applicable* in-tree path for every field at
+    /// every `n <= 63`, which the packed kernels are not — `permanent_bipedal7`
+    /// stops at `n = 16`, so this is the only CPU path that evaluates an
+    /// F_7 permanent above that size. Its rustdoc describes it as intended for
+    /// cross-checks, but that is a statement about intent: the function is a
+    /// complete Ryser evaluation and returns the same value the packed kernels
+    /// do, which the equivalence check verifies.
+    RyserGeneric,
 }
 
 impl Backend {
     /// Every backend, in the order the grid enumerates them.
-    pub const ALL: [Backend; 6] = [
+    pub const ALL: [Backend; 7] = [
         Backend::Scalar,
         Backend::Avx2,
         Backend::Rayon,
         Backend::RayonAvx2,
         Backend::RayonIntra,
         Backend::Gpu,
+        Backend::RyserGeneric,
     ];
 
     /// Stable identifier used in the CSV `backend` column.
@@ -63,6 +77,7 @@ impl Backend {
             Backend::RayonAvx2 => "cpu_rayon_batch_avx2",
             Backend::RayonIntra => "cpu_rayon_intra_matrix",
             Backend::Gpu => "gpu_hip",
+            Backend::RyserGeneric => "cpu_ryser_generic",
         }
     }
 
@@ -142,6 +157,15 @@ pub fn support(backend: Backend, q: u64, n: usize) -> Support {
                 ))
             }
         }
+        Backend::RyserGeneric => {
+            if !matches!(q, 3 | 5 | 7) {
+                unsupported(format!("no Fp<{q}> sampler for the generic path"))
+            } else if n <= 63 {
+                Support::Supported
+            } else {
+                unsupported(format!("permanent_ryser asserts n <= 63; n = {n}"))
+            }
+        }
         Backend::Gpu => {
             if !cfg!(feature = "hip") {
                 unsupported("built without the `hip` feature".to_string())
@@ -161,6 +185,13 @@ pub enum Batch {
     F3(Vec<Bipedal3Matrix>),
     F5(Vec<Packed5Matrix>),
     F7(Vec<Packed7Matrix>),
+    /// Unpacked row-major matrices for [`Backend::RyserGeneric`], carrying `n`
+    /// because the generic kernel takes it as an argument. These are what the
+    /// sampler emits before any packed constructor runs, so a cell on this
+    /// backend is not charged for packing it never uses.
+    RawF3(usize, Vec<Vec<Fp<3>>>),
+    RawF5(usize, Vec<Vec<Fp<5>>>),
+    RawF7(usize, Vec<Vec<Fp<7>>>),
 }
 
 impl Batch {
@@ -170,6 +201,9 @@ impl Batch {
             Batch::F3(v) => v.len(),
             Batch::F5(v) => v.len(),
             Batch::F7(v) => v.len(),
+            Batch::RawF3(_, v) => v.len(),
+            Batch::RawF5(_, v) => v.len(),
+            Batch::RawF7(_, v) => v.len(),
         }
     }
 
@@ -245,6 +279,16 @@ pub fn evaluate(backend: Backend, batch: &Batch) -> Vec<u64> {
             .iter()
             .map(|m| permanent_bipedal3_parallel(m).value())
             .collect(),
+
+        (Backend::RyserGeneric, Batch::RawF3(n, v)) => {
+            v.iter().map(|m| permanent_ryser(m, *n).value()).collect()
+        }
+        (Backend::RyserGeneric, Batch::RawF5(n, v)) => {
+            v.iter().map(|m| permanent_ryser(m, *n).value()).collect()
+        }
+        (Backend::RyserGeneric, Batch::RawF7(n, v)) => {
+            v.iter().map(|m| permanent_ryser(m, *n).value()).collect()
+        }
 
         #[cfg(feature = "hip")]
         (Backend::Gpu, Batch::F3(v)) => gf2_algebra::gpu::permanent_batch_bipedal3(v)

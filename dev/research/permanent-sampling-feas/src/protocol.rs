@@ -243,8 +243,23 @@ impl CellResult {
     }
 }
 
-/// Build `m` packed matrices of order `n` over `F_q` from `sampler`.
-fn generate(q: u64, n: usize, m: usize, sampler: &mut MatrixSampler) -> Batch {
+/// Build `m` matrices of order `n` over `F_q` from `sampler`, in the
+/// representation `backend` consumes.
+///
+/// [`Backend::RyserGeneric`] takes the sampler's row-major `Fp` output
+/// directly; every other backend takes a packed matrix, and the packing is
+/// charged to this generation phase because those kernels cannot run without
+/// it. Both forms draw the same entries from the same stream, so a cell's
+/// sample does not depend on which backend measures it.
+fn generate(backend: Backend, q: u64, n: usize, m: usize, sampler: &mut MatrixSampler) -> Batch {
+    if backend == Backend::RyserGeneric {
+        return match q {
+            3 => Batch::RawF3(n, (0..m).map(|_| sampler.next_matrix::<3>(n)).collect()),
+            5 => Batch::RawF5(n, (0..m).map(|_| sampler.next_matrix::<5>(n)).collect()),
+            7 => Batch::RawF7(n, (0..m).map(|_| sampler.next_matrix::<7>(n)).collect()),
+            _ => panic!("generate: unsupported q = {q}"),
+        };
+    }
     match q {
         3 => Batch::F3(
             (0..m)
@@ -307,7 +322,7 @@ fn one_rep(
     sink: &mut dyn std::io::Write,
 ) -> (RepTimes, u64) {
     let t0 = Instant::now();
-    let batch = generate(q, n, m, sampler);
+    let batch = generate(backend, q, n, m, sampler);
     let gen_s = t0.elapsed().as_secs_f64();
 
     let t1 = Instant::now();
@@ -581,9 +596,10 @@ from it, and the cell carries no rate"
         let target = (TARGET_REP_SECONDS / per_matrix_s.max(1e-9)).ceil() as usize;
         // A rayon batch is floored at several matrices per worker, not at one:
         // with a batch barely larger than the pool, the tail of every batch
-        // leaves most workers idle. The 2026-08-07 sustained runs measured that
-        // penalty at 21-25 % against `MATRICES_PER_WORKER = 4`, so the floor
-        // exists to keep the grid and a real campaign on the same footing.
+        // leaves most workers idle. The floor keeps the grid and a real campaign
+        // on the same footing. No committed receipt measures the size of that
+        // penalty — the sweep that once did belongs to a discarded receipt set —
+        // so no magnitude is quoted here.
         let floor = if backend.is_multithreaded() {
             MATRICES_PER_WORKER * rayon::current_num_threads()
         } else {
@@ -677,7 +693,7 @@ pub fn warm_machine(seconds: f64, seed_root: u64) {
     while start.elapsed().as_secs_f64() < seconds {
         stream += 1;
         let mut s = MatrixSampler::new(seed_root, 3, 22, stream);
-        let batch = generate(3, 22, rayon::current_num_threads(), &mut s);
+        let batch = generate(Backend::Rayon, 3, 22, rayon::current_num_threads(), &mut s);
         let _ = evaluate(Backend::Rayon, &batch);
     }
 }
@@ -796,9 +812,31 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
     let wall_s = start.elapsed().as_secs_f64();
     let end_thermal = ThermalSample::probe();
 
-    let quarter = (shard_times.len() / 4).max(1);
-    let first: f64 = shard_times.iter().take(quarter).sum();
-    let last: f64 = shard_times.iter().rev().take(quarter).sum();
+    // First and last quarter of ELAPSED TIME, not of the shard count: shard
+    // durations vary, so a count-based split does not partition the window and
+    // would misreport drift whenever the two differ. Each side takes whole
+    // shards until their accumulated time reaches a quarter of the timed total,
+    // and always at least one shard.
+    let timed_total: f64 = shard_times.iter().sum();
+    let cut = timed_total / 4.0;
+    let mut first = 0.0;
+    let mut first_shards = 0usize;
+    for &t in &shard_times {
+        first += t;
+        first_shards += 1;
+        if first >= cut {
+            break;
+        }
+    }
+    let mut last = 0.0;
+    let mut last_shards = 0usize;
+    for &t in shard_times.iter().rev() {
+        last += t;
+        last_shards += 1;
+        if last >= cut {
+            break;
+        }
+    }
 
     SustainedResult {
         q,
@@ -810,8 +848,8 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
         zeros,
         wall_s,
         sustained_rate: matrices as f64 / wall_s,
-        first_quarter_rate: (quarter * batch_size) as f64 / first,
-        last_quarter_rate: (quarter * batch_size) as f64 / last,
+        first_quarter_rate: (first_shards * batch_size) as f64 / first,
+        last_quarter_rate: (last_shards * batch_size) as f64 / last,
         cpu_mhz_start: start_thermal.cpu_mhz_mean,
         cpu_mhz_end: end_thermal.cpu_mhz_mean,
         cpu_temp_start_c: start_thermal.cpu_temp_c,

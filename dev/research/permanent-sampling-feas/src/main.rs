@@ -188,13 +188,11 @@ fn cmd_grid(args: &[String]) {
     let mut specs: Vec<CellSpec> = Vec::new();
     for q in QS {
         for n in NS {
-            for backend in [
-                Backend::Scalar,
-                Backend::Avx2,
-                Backend::Rayon,
-                Backend::RayonAvx2,
-                Backend::RayonIntra,
-            ] {
+            // Driven from Backend::ALL rather than a second hand-written list,
+            // so a backend added to the enum cannot silently miss the grid.
+            // Gpu is the one exception: it is enumerated below, once per batch
+            // size in GPU_BATCHES.
+            for backend in Backend::ALL.into_iter().filter(|b| *b != Backend::Gpu) {
                 specs.push(CellSpec {
                     q,
                     n,
@@ -467,8 +465,10 @@ fn cmd_sustained(args: &[String]) {
 
     let notes = vec![
         format!("sustained window: {seconds:.0} s per run, composite hot path throughout"),
-        "first/last quarter rates bound drift within the window; the split measures \
-drift, it does not attribute it to a cause"
+        "first/last quarter rates cover the whole shards falling in the first and last \
+quarter of ELAPSED TIME within the window, not the first and last quarter of the shard \
+count; each is that group's matrices over that group's time. The split measures drift, \
+it does not attribute it to a cause"
             .to_string(),
         format!(
             "seed_root: 0x{SEED_ROOT:016x}, streams from {}; run j reserves the \
