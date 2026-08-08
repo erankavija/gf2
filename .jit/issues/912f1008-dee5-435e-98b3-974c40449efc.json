@@ -1,0 +1,36 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-08T23:13:30.313825629Z",
+  "dependencies": [
+    "0de41c82-fb20-4adb-ba6e-30061a83c301",
+    "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
+    "ae82bd73-741d-4007-811f-914dac00bae8",
+    "b488f02c-b16b-4444-9274-1cfc95172d3b"
+  ],
+  "description": "Plan Empirical permanent statistics of random matrices over small prime fields (b8206228) against every hard success criterion, write the concise design at dev/active/b8206228-permanent-statistics/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.",
+  "documents": [],
+  "gates_required": [
+    "plan-review"
+  ],
+  "gates_status": {
+    "plan-review": {
+      "status": "pending",
+      "updated_at": "2026-08-08T23:13:30.313825629Z",
+      "updated_by": null
+    }
+  },
+  "id": "912f1008-dee5-435e-98b3-974c40449efc",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-algebra",
+    "cites:GGK2025",
+    "cites:HKS2026",
+    "cites:Scheinerman2024",
+    "type:planning"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "planning: Empirical permanent statistics of random matrices over small prime fields",
+  "updated_at": "2026-08-08T23:13:30.313825629Z"
+}
