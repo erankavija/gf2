@@ -1,10 +1,10 @@
-# git_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
+# git_sha: b47b9404a1f6f7c35e07906176af0212b7e92fe1
 # git_worktree_dirty: true
-# harness_source_sha: d37d2f8193295755a2696cba02eaa4cb3a263817
+# harness_source_sha: 12bb1e3bbc5fdcc2b6419ebd05a989e920e4cb7f
 # harness_source_dirty: false
-# deps_source_sha: cccbc4e5103eced840d611e8e511a2fcb74fc60d
+# deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
 # deps_source_dirty: false
-# binary_sha256: 22900ff10bc4c369ad77671ea73dbbe1c107cbc2627abe9619f410845622d425
+# binary_sha256: e951b9ccee00531bd501433a49cbda8321fb05e61af294c2c15d68bd384edd33
 # note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
@@ -17,9 +17,9 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-07T19:35:37Z
-# invocation: ./target/release/permanent_sampling_feas envelope --throughput ../../studies/b488f02c/throughput-2026-08-07.csv --budget-hours 12 --out ../../studies/b488f02c/envelope-2026-08-07.csv
-# derived from: ../../studies/b488f02c/throughput-2026-08-07.csv
+# timestamp_utc: 2026-08-08T00:22:01Z
+# invocation: /home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas envelope --throughput /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv --budget-hours 12 --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/envelope-2026-08-07.csv
+# derived from: /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv
 # budget: 12 h wall clock per (q, n) cell
 # operational reserve: 15% of the budget is withheld for checkpointing, dataset compaction, restart after a failed shard, and residual throttling
 # required N = ceil(p (1 - p) / SE^2); planning p = 1/q, conservative p = 1/2
@@ -27,29 +27,29 @@
 # scheinerman2024_* columns are the prior art for q=3 only (arXiv:2407.20205v2 Table 4); comparison is on achieved PRECISION (standard error), not raw trial count
 # precision_comparison: exceeds/matches/below_prior_precision (matches = within 10% on SE), prior_exact where the published value is a full enumeration, no_prior for q in {5,7}
 q,n,target_se,best_backend,best_composite_matrices_per_s,required_n_p_1_over_q,required_n_p_half,hours_p_1_over_q,hours_p_half,feasible_12h,attainable_n_12h,attainable_se_12h,scheinerman2024_trials,scheinerman2024_se,scheinerman2024_wilson_half_width,precision_ratio_vs_scheinerman2024,precision_comparison
-3,12,1e-3,gpu_hip,313992.3081,222223,250000,0.0002,0.0002,true,11529797553,4.390e-6,10000000000,4.714e-6,9.240e-6,1.074,matches_prior_precision
-3,12,1e-4,gpu_hip,313992.3081,22222223,25000000,0.0197,0.0221,true,11529797553,4.390e-6,10000000000,4.714e-6,9.240e-6,1.074,matches_prior_precision
-3,16,1e-3,gpu_hip,61158.3921,222223,250000,0.0010,0.0011,true,2245736157,9.948e-6,1000000000,1.491e-5,2.922e-5,1.499,exceeds_prior_precision
-3,16,1e-4,gpu_hip,61158.3921,22222223,25000000,0.1009,0.1135,true,2245736157,9.948e-6,1000000000,1.491e-5,2.922e-5,1.499,exceeds_prior_precision
-3,20,1e-3,gpu_hip,4861.2021,222223,250000,0.0127,0.0143,true,178503341,3.528e-5,100000000,4.714e-5,9.240e-5,1.336,exceeds_prior_precision
-3,20,1e-4,gpu_hip,4861.2021,22222223,25000000,1.2698,1.4285,true,178503341,3.528e-5,100000000,4.714e-5,9.240e-5,1.336,exceeds_prior_precision
-3,24,1e-3,gpu_hip,308.1572,222223,250000,0.2003,0.2254,true,11315532,1.401e-4,10000000,1.491e-4,2.922e-4,1.064,matches_prior_precision
-3,24,1e-4,gpu_hip,308.1572,22222223,25000000,20.0315,22.5354,false,11315532,1.401e-4,10000000,1.491e-4,2.922e-4,1.064,matches_prior_precision
-3,28,1e-3,cpu_rayon_intra_matrix,19.3400,222223,250000,3.1918,3.5907,true,710164,5.594e-4,1000000,4.715e-4,9.242e-4,0.843,below_prior_precision
-3,28,1e-4,cpu_rayon_intra_matrix,19.3400,22222223,25000000,319.1748,359.0716,false,710164,5.594e-4,1000000,4.715e-4,9.242e-4,0.843,below_prior_precision
-5,12,1e-3,cpu_rayon_batch_scalar,72778.2726,160000,250000,0.0006,0.0010,true,2672418169,7.738e-6,none,none,none,none,no_prior
-5,12,1e-4,cpu_rayon_batch_scalar,72778.2726,16000000,25000000,0.0611,0.0954,true,2672418169,7.738e-6,none,none,none,none,no_prior
-5,16,1e-3,cpu_rayon_batch_scalar,4158.9633,160000,250000,0.0107,0.0167,true,152717132,3.237e-5,none,none,none,none,no_prior
-5,16,1e-4,cpu_rayon_batch_scalar,4158.9633,16000000,25000000,1.0686,1.6698,true,152717132,3.237e-5,none,none,none,none,no_prior
-5,20,1e-3,cpu_rayon_batch_scalar,217.5610,160000,250000,0.2043,0.3192,true,7988839,1.415e-4,none,none,none,none,no_prior
-5,20,1e-4,cpu_rayon_batch_scalar,217.5610,16000000,25000000,20.4285,31.9195,false,7988839,1.415e-4,none,none,none,none,no_prior
-5,24,1e-3,cpu_rayon_batch_scalar,11.8551,160000,250000,3.7490,5.8578,true,435319,6.063e-4,none,none,none,none,no_prior
-5,24,1e-4,cpu_rayon_batch_scalar,11.8551,16000000,25000000,374.8973,585.7770,false,435319,6.063e-4,none,none,none,none,no_prior
-5,28,1e-3,cpu_rayon_batch_scalar,0.6484,160000,250000,68.5448,107.1012,false,23809,2.592e-3,none,none,none,none,no_prior
-5,28,1e-4,cpu_rayon_batch_scalar,0.6484,16000000,25000000,6854.4794,10710.1241,false,23809,2.592e-3,none,none,none,none,no_prior
-7,12,1e-3,cpu_rayon_batch_scalar,72286.9909,122449,250000,0.0005,0.0010,true,2654378305,6.792e-6,none,none,none,none,no_prior
-7,12,1e-4,cpu_rayon_batch_scalar,72286.9909,12244898,25000000,0.0471,0.0961,true,2654378305,6.792e-6,none,none,none,none,no_prior
-7,16,1e-3,cpu_rayon_batch_scalar,3729.3536,122449,250000,0.0091,0.0186,true,136941864,2.990e-5,none,none,none,none,no_prior
-7,16,1e-4,cpu_rayon_batch_scalar,3729.3536,12244898,25000000,0.9121,1.8621,true,136941864,2.990e-5,none,none,none,none,no_prior
-7,20,1e-3,gpu_hip,57.8021,122449,250000,0.5884,1.2014,true,2122493,2.402e-4,none,none,none,none,no_prior
-7,20,1e-4,gpu_hip,57.8021,12244898,25000000,58.8449,120.1417,false,2122493,2.402e-4,none,none,none,none,no_prior
+3,12,1e-3,gpu_hip,314494.4837,222223,250000,0.0002,0.0002,true,11548237441,4.387e-6,10000000000,4.714e-6,9.240e-6,1.075,matches_prior_precision
+3,12,1e-4,gpu_hip,314494.4837,22222223,25000000,0.0196,0.0221,true,11548237441,4.387e-6,10000000000,4.714e-6,9.240e-6,1.075,matches_prior_precision
+3,16,1e-3,gpu_hip,61256.3118,222223,250000,0.0010,0.0011,true,2249331769,9.940e-6,1000000000,1.491e-5,2.922e-5,1.500,exceeds_prior_precision
+3,16,1e-4,gpu_hip,61256.3118,22222223,25000000,0.1008,0.1134,true,2249331769,9.940e-6,1000000000,1.491e-5,2.922e-5,1.500,exceeds_prior_precision
+3,20,1e-3,gpu_hip,4867.3767,222223,250000,0.0127,0.0143,true,178730072,3.526e-5,100000000,4.714e-5,9.240e-5,1.337,exceeds_prior_precision
+3,20,1e-4,gpu_hip,4867.3767,22222223,25000000,1.2682,1.4267,true,178730072,3.526e-5,100000000,4.714e-5,9.240e-5,1.337,exceeds_prior_precision
+3,24,1e-3,gpu_hip,308.4926,222223,250000,0.2001,0.2251,true,11327848,1.401e-4,10000000,1.491e-4,2.922e-4,1.064,matches_prior_precision
+3,24,1e-4,gpu_hip,308.4926,22222223,25000000,20.0097,22.5109,false,11327848,1.401e-4,10000000,1.491e-4,2.922e-4,1.064,matches_prior_precision
+3,28,1e-3,cpu_rayon_intra_matrix,19.3349,222223,250000,3.1926,3.5917,true,709977,5.595e-4,1000000,4.715e-4,9.242e-4,0.843,below_prior_precision
+3,28,1e-4,cpu_rayon_intra_matrix,19.3349,22222223,25000000,319.2589,359.1663,false,709977,5.595e-4,1000000,4.715e-4,9.242e-4,0.843,below_prior_precision
+5,12,1e-3,cpu_rayon_batch_scalar,73039.8585,160000,250000,0.0006,0.0010,true,2682023604,7.724e-6,none,none,none,none,no_prior
+5,12,1e-4,cpu_rayon_batch_scalar,73039.8585,16000000,25000000,0.0608,0.0951,true,2682023604,7.724e-6,none,none,none,none,no_prior
+5,16,1e-3,cpu_rayon_batch_scalar,4162.6825,160000,250000,0.0107,0.0167,true,152853701,3.235e-5,none,none,none,none,no_prior
+5,16,1e-4,cpu_rayon_batch_scalar,4162.6825,16000000,25000000,1.0677,1.6683,true,152853701,3.235e-5,none,none,none,none,no_prior
+5,20,1e-3,cpu_rayon_batch_scalar,218.2596,160000,250000,0.2036,0.3182,true,8014492,1.413e-4,none,none,none,none,no_prior
+5,20,1e-4,cpu_rayon_batch_scalar,218.2596,16000000,25000000,20.3631,31.8174,false,8014492,1.413e-4,none,none,none,none,no_prior
+5,24,1e-3,cpu_rayon_batch_scalar,11.8507,160000,250000,3.7504,5.8599,true,435157,6.064e-4,none,none,none,none,no_prior
+5,24,1e-4,cpu_rayon_batch_scalar,11.8507,16000000,25000000,375.0364,585.9945,false,435157,6.064e-4,none,none,none,none,no_prior
+5,28,1e-3,cpu_rayon_batch_scalar,0.6478,160000,250000,68.6083,107.2004,false,23787,2.594e-3,none,none,none,none,no_prior
+5,28,1e-4,cpu_rayon_batch_scalar,0.6478,16000000,25000000,6860.8281,10720.0439,false,23787,2.594e-3,none,none,none,none,no_prior
+7,12,1e-3,cpu_rayon_batch_scalar,72482.1214,122449,250000,0.0005,0.0010,true,2661543497,6.783e-6,none,none,none,none,no_prior
+7,12,1e-4,cpu_rayon_batch_scalar,72482.1214,12244898,25000000,0.0469,0.0958,true,2661543497,6.783e-6,none,none,none,none,no_prior
+7,16,1e-3,cpu_rayon_batch_scalar,3745.3973,122449,250000,0.0091,0.0185,true,137530988,2.984e-5,none,none,none,none,no_prior
+7,16,1e-4,cpu_rayon_batch_scalar,3745.3973,12244898,25000000,0.9081,1.8541,true,137530988,2.984e-5,none,none,none,none,no_prior
+7,20,1e-3,gpu_hip,57.9372,122449,250000,0.5871,1.1986,true,2127453,2.399e-4,none,none,none,none,no_prior
+7,20,1e-4,gpu_hip,57.9372,12244898,25000000,58.7077,119.8616,false,2127453,2.399e-4,none,none,none,none,no_prior
