@@ -1,0 +1,45 @@
+# Determinant anchor validation for the b488f02c feasibility study.
+# Checks Pr[det = 0] = 1 - prod_{i=1..n}(1 - q^-i) by exhaustive
+# enumeration of all q^(n^2) matrices over F_q.
+# script: determinant-anchor-check.py
+# script_sha256: d207791fb7e01e636cb6fca9ad2d27ecc3f0a8954c8f559d6337beddb51454e9
+# invocation: python3 determinant-anchor-check.py
+# inputs: none (exhaustive enumeration; no sampling, no RNG, no seed)
+# python: 3.14.6 (CPython)
+# platform: Linux-7.1.3-arch1-3-x86_64-with-glibc2.44
+
+## Exhaustive enumeration against the closed form
+
+q  n  matrices    singular    brute_force      closed_form      agree
+3  1  3           1           1/3              1/3              yes
+3  2  81          33          11/27            11/27            yes
+3  3  19683       8451        313/729          313/729          yes
+5  2  625         145         29/125           29/125           yes
+5  3  1953125     465125      3721/15625       3721/15625       yes
+7  2  2401        385         55/343           55/343           yes
+
+all_cases_agree: yes
+
+## Why the n -> infinity limit cannot serve as the anchor
+
+# alpha_q is the limit; the gap is what a limit-based test would treat
+# as a deviation even from a perfect pipeline.
+
+q  alpha_q         n   exact            limit_minus_exact
+3  0.4398739221    2   0.4074074074     3.247e-02
+3  0.4398739221    3   0.4293552812     1.052e-02
+3  0.4398739221    4   0.4364002777     3.474e-03
+3  0.4398739221    6   0.4394895501     3.844e-04
+3  0.4398739221    8   0.4398312336     4.269e-05
+3  0.4398739221    12  0.4398733951     5.270e-07
+3  0.4398739221    16  0.4398739156     6.506e-09
+5  0.2396672041    2   0.2320000000     7.667e-03
+5  0.2396672041    3   0.2381440000     1.523e-03
+5  0.2396672041    4   0.2393629696     3.042e-04
+5  0.2396672041    6   0.2396550386     1.217e-05
+5  0.2396672041    8   0.2396667175     4.866e-07
+7  0.1632045929    2   0.1603498542     2.855e-03
+7  0.1632045929    3   0.1627978138     4.068e-04
+7  0.1632045929    4   0.1631465028     5.809e-05
+7  0.1632045929    6   0.1632034075     1.185e-06
+7  0.1632045929    8   0.1632045687     2.419e-08

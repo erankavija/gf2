@@ -43,8 +43,8 @@
 #     captured that would separate them.
 #
 # The committed measurements all postdate this fault and were taken with binary
-# 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc, built at harness
-# source commit 7189d66f, after a full equivalence re-check passed. The study's section
+# b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c, built at harness
+# source commit 0e0b0aec, after a full equivalence re-check passed. The study's section
 # 4.5 states what this observation does and does not support.
 
 sustained q=3 n=24 gpu_hip M=1024 ...
@@ -55,3 +55,13 @@ HW Exception by GPU node-1 (Agent handle: 0x563ba2657af0) reason :GPU Hang
 # GPU state after the fault (rocm-smi), showing the device recovered on its own:
 device,Temperature (Sensor edge) (C),Temperature (Sensor junction) (C),Temperature (Sensor memory) (C),GPU use (%)
 card0,55.0,59.0,60.0,0
+
+# --- APPENDED 2026-08-08 (history preserved above; nothing edited) ---
+# The rate line recorded above, 310.956 matrices/s at q=3 n=24 M=1024, is
+# SUPERSEDED by sustained-2026-08-07.csv, which measures that configuration
+# under the committed protocol at a pinned binary. Do not cite this file for a
+# rate: it was produced by uncommitted code with no provenance header, and the
+# study takes its q=3 n=24 GPU number from the sustained receipt instead.
+# This file supports NO claim in the study. It is retained as the only record
+# that the fault occurred at all, which is a fact about this session's history
+# rather than evidence about the device.

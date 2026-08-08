@@ -71,7 +71,7 @@ is stated at that strength in §7.6.
 Every claim in this section was checked against the source, and each citation
 re-verified against it on 2026-08-08. Line
 references are to the state of `crates/` recorded as `deps_source_sha` in every
-receipt (`195f8254`), alongside the harness commit `7189d66f` that produced the
+receipt (`195f8254`), alongside the harness commit `0e0b0aec` that produced the
 measurements.
 
 - **F_3**: `permanent_bipedal3` (`permanent/bipedal3.rs:165`) dispatches to a
@@ -85,6 +85,13 @@ measurements.
   asserts $n \le \texttt{Packed7::LANES} = 16$.
 - **GPU**: `gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}` (`gpu.rs`), behind
   the `hip` feature, assert $1 \le n \le 63$ for all three fields.
+- **Generic**: `permanent_ryser<F: FiniteField>` (`permanent/ryser.rs:89`) is a
+  complete Ryser evaluation over unpacked field elements, asserting only
+  $n \le 63$. It is field-agnostic, so it applies to $q \in \{3,5,7\}$ at every
+  $n$ the study measures — including the sizes where the packed $\mathbb{F}_7$
+  kernel does not exist. Its rustdoc describes it as a driver for cross-checks;
+  that is a statement of intent, and §4.1 confirms it returns the same value as
+  every packed kernel at every comparable cell.
 - **Correctness**: bipedal $\mathbb{F}_3$ add/sub/mul/neg are Lean4-verified
   against `Fp<3>` semantics (`proofs/Gf2Algebra`); bounded Ryser correctness
   proof in progress.
@@ -104,9 +111,15 @@ read, and are recorded here rather than silently corrected:
    [GGK2025]'s rectangular event is permanental-rank deficiency, which decomposes
    into square $k \times k$ permanents; see gap G5 for why an earlier reading of
    this study got that wrong in both directions.
-3. `permanent_bipedal7`'s $n \le 16$ bound means **$q = 7$ has no CPU path at all
-   for $n > 16$**, so the campaign's $q = 7$ arm above $n = 16$ depends on a
-   single backend.
+3. `permanent_bipedal7`'s $n \le 16$ bound means **$q = 7$ has no *packed* CPU
+   kernel for $n > 16$**. An earlier revision of this study concluded from that
+   that $q = 7$ has no CPU path at all above $n = 16$, and that the $n \in
+   \{24, 28\}$ cells therefore carry no rate from any backend. **Both were
+   wrong**, and the error was in this document rather than in the code: the
+   generic `permanent_ryser` has always applied there, and §4.4 now measures it
+   at 0.798 matrices/s at $n = 24$ and 0.0426 at $n = 28$. The rates are far too
+   slow for the campaign, so no frontier moves, but "no path exists" and "too
+   slow to use" are different findings and only the second is true.
 
 **Randomness (gap G1, confirmed missing).** No uniform $\mathbb{F}_q$ matrix
 sampler suitable for a published statistic exists in-tree.
@@ -172,13 +185,15 @@ the exact invocation:
 | Artifact | Contents |
 |---|---|
 | `equivalence-2026-08-07.csv` | cross-backend per-matrix agreement |
-| `throughput-2026-08-07.csv` | the `(q, n, backend)` grid, 105 cells |
+| `throughput-2026-08-07.csv` | the `(q, n, backend)` grid, 120 cells |
 | `sustained-2026-08-07.csv` | minutes-scale streaming runs per backend |
 | `envelope-2026-08-07.csv` | REQ-02 envelope, incl. the prior-art comparison |
 | `zero-fraction-2026-08-07.csv` | pooled zero fractions with Wilson intervals |
 | `cargo-tree-2026-08-07.txt` | resolved dependency graph (the harness gitignores `Cargo.lock`) |
 | `gpu-hang-2026-08-07.log` | preserved history of one device fault; supports no claim (§4.5) |
 | `literature-search-2026-08-08.md` | recorded search behind §7.6's novelty claim |
+| `determinant-anchor-check.py` | executable check of §6's exact singular probability |
+| `determinant-anchor-2026-08-08.txt` | that check's committed output |
 
 Every CSV preamble records `harness_source_sha` and `harness_source_dirty`
 alongside the repository SHA. The harness SHA is the one that matters: the
@@ -186,8 +201,8 @@ repository carries `.jit/` workflow state that other agents commit
 independently, so a whole-repo dirty flag says nothing about whether the
 measured code was committed. **All five receipts were produced by one
 executable, `binary_sha256`
-`1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc`, built at
-harness source commit `7189d66f` — the harness tip — with
+`b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c`, built at
+harness source commit `0e0b0aec` — the harness tip — with
 `harness_source_dirty: false`, `deps_source_sha: 195f8254` and
 `deps_source_dirty: false`.** No commit post-dates the harness state that
 produced them, so a reproduction builds at the tip and draws these exact stream
@@ -233,6 +248,14 @@ preamble figures are now formatted from the constants they describe:
    the censoring contract no longer promises numbers a current grid does not
    carry, and `no_prior` is described as this harness's own missing baseline
    rather than as a statement about the literature.
+6. One measured six backends where seven applied. The grid enumerated its CPU
+   paths from a hand-written list beside `Backend::ALL`, so the generic
+   `permanent_ryser` — applicable to every field at every $n \le 63$ — was never
+   scheduled, and REQ-01's "every applicable in-tree path" went unmet with no
+   receipt showing a gap. `0e0b0aec` adds the backend and drives the grid from
+   `Backend::ALL`, so a path added to the enum cannot miss the schedule again.
+   It also fixes the sustained quarter statistic, which split by shard count
+   while the receipt called it a split by elapsed time.
 
 That set is superseded by the present one, which was regenerated end to end —
 equivalence, grid, sustained, envelope, zero fractions — from the single binary
@@ -247,9 +270,10 @@ Radeon RX 6950 XT (gfx1030, 80 compute units), rustc 1.97.0, ROCm/HIP 7.2.
 
 ### 4.1 Backend equivalence (precondition)
 
-Before any timing counted as evidence, all six backends were compared per matrix
-on shared inputs drawn from a reserved seed stream. **Every backend returned
-byte-identical permanents for every matrix**, for $q \in \{3,5,7\}$ at
+Before any timing counted as evidence, all seven backends were compared per
+matrix on shared inputs drawn from a reserved seed stream. **Every backend
+returned byte-identical permanents for every matrix** — 45 comparisons agreeing
+and 21 recorded unsupported with a reason — for $q \in \{3,5,7\}$ at
 $n \in \{8, 12, 16, 20\}$ (F_7 to $n = 16$, its kernel bound), 512 matrices per
 cell. Backends without a kernel for a given field are recorded with the reason
 rather than dropped. This satisfies `@/inv/backend-behavioral-equivalence` for
@@ -287,13 +311,13 @@ mean of reciprocals is not the reciprocal of the mean.
   this protocol: the machine is warmed to steady state before cell 0 and
   within-stratum order is randomised, but **$n$ remains confounded with elapsed
   time across the grid**. §4.5's sustained runs bound drift *within* a 180 s
-  window below 1 % on every path; they say nothing about drift across the
+  window below 1.2 % on every path; they say nothing about drift across the
   multi-hour span of the whole grid, so a slow monotone trend over that span
   would be absorbed into the $n$ trend rather than detected. Settling it needs a
   reference cell re-measured at intervals through the run, which this study did
   not do. The conclusions drawn here are robust to it only because the rates
-  span four orders of magnitude across $n$ while any plausible thermal or clock
-  drift is a few per cent.
+  span six orders of magnitude across the grid while any plausible thermal or
+  clock drift is a few per cent.
 - Matrices are drawn by exact rejection from ChaCha20 with per-cell
   domain-separated streams (§2, G1); each cell owns $10^5$ stream indices.
 
@@ -312,17 +336,20 @@ store phases.
 
 ### 4.3 Cell outcomes
 
-Of 105 cells: **61 measured, 36 unsupported, 8 censored.** No cell was silently
-skipped.
+Of 120 cells: **76 measured, 36 unsupported, 8 censored.** No cell was silently
+skipped. The grid gained 15 cells this round, one per $(q, n)$, when the generic
+`permanent_ryser` path was added as a measured backend (§2); every one is
+measured, including the two at $q = 7$, $n \in \{24, 28\}$ that earlier
+revisions recorded as having no path at all.
 
 All eight censored cells are GPU cells at $(q, n) \in \{5, 7\} \times \{24, 28\}$,
 each projected from its own measured rate at $n = 20$:
 
 | cell | projected rate | implied repetition | verdict |
 |---|---|---|---|
-| $q{=}5$, $n{=}24$, $M{=}256$ | 1.686 | 152 s | over the 120 s cap |
+| $q{=}5$, $n{=}24$, $M{=}256$ | 1.687 | 152 s | over the 120 s cap |
 | $q{=}5$, $n{=}24$, $M{=}1024$ | 3.330 | 308 s | over |
-| $q{=}5$, $n{=}28$, $M{=}256$ | 0.0903 | 2834 s | far over |
+| $q{=}5$, $n{=}28$, $M{=}256$ | 0.0904 | 2833 s | far over |
 | $q{=}5$, $n{=}28$, $M{=}1024$ | 0.1784 | 5741 s | far over |
 | $q{=}7$, $n{=}24$, $M{=}256$ | 1.457 | 176 s | over |
 | $q{=}7$, $n{=}24$, $M{=}1024$ | 3.017 | 339 s | over |
@@ -339,11 +366,13 @@ marginal and the $n = 28$ cells miss by one to two orders of magnitude.
 costs the envelope nothing: CPU batch rayon is measured at every one of those
 sizes and is the faster path anyway, so the GPU cell was never going to be
 selected. At $q = 7$ it costs everything. `permanent_bipedal7` stops at
-$n \le 16$, so $q{=}7$ at $n \in \{24, 28\}$ has **no supported CPU path at
-all**, and with both GPU batch sizes censored those two cells carry no rate from
-any backend — which is why §4.6 lists them as "no rate" rather than assigning
-one. They are the only cells in the grid with no measured throughput on any
-path, and the reason the $q = 7$ arm's frontier stops at $n = 20$.
+$n \le 16$, so $q{=}7$ at $n \in \{24, 28\}$ has **no supported packed CPU
+kernel**, and both GPU batch sizes are censored there. What remains is the
+generic `permanent_ryser`, which measures those two cells at 0.798 and 0.0426
+matrices/s — the slowest measured cells in the grid by two orders of magnitude,
+and the reason the $q = 7$ arm's frontier still stops at $n = 20$. Earlier
+revisions of this study called them unmeasurable; they are merely unaffordable,
+and §4.6 now carries their rates instead of a dash.
 
 *Unsupported* cells cite the kernel bound that forbids them: F_7 above $n = 16$
 (`permanent_bipedal7` asserts $n \le$ `Packed7::LANES`), and the AVX2 and
@@ -372,7 +401,7 @@ the probe half of the comparison is quoted from the superseded receipt and is
 not re-derivable from the committed file. That is a consequence of fixing the
 rule rather than a gap in the evidence: a probe is now taken only where a cell
 has no projection reference — the smallest $n$ on each
-$(q, \text{backend}, M)$ chain, 45 of the 105 cells — and the large-$n$ GPU
+$(q, \text{backend}, M)$ chain, 60 of the 120 cells — and the large-$n$ GPU
 cells that motivated the false bound are precisely the ones that no longer pay
 for one. The model fails for two compounding
 reasons — a compute unit hosts more than one workgroup concurrently, so the
@@ -389,45 +418,69 @@ $M = 256$:
 
 | $M$ | projection | predicted | measured | error |
 |---|---|---|---|---|
-| 256 | $n = 20 \rightarrow 24$ | 111.27 | 136.42 | $-18.4\%$ |
+| 256 | $n = 20 \rightarrow 24$ | 111.26 | 136.41 | $-18.4\%$ |
 | 256 | $n = 24 \rightarrow 28$ | 7.308 | 8.533 | $-14.4\%$ |
-| 1024 | $n = 20 \rightarrow 24$ | 253.24 | 308.46 | $-17.9\%$ |
-| 1024 | $n = 24 \rightarrow 28$ | 16.525 | 19.258 | $-14.2\%$ |
+| 1024 | $n = 20 \rightarrow 24$ | 253.26 | 310.38 | $-18.4\%$ |
+| 1024 | $n = 24 \rightarrow 28$ | 16.627 | 19.268 | $-13.7\%$ |
 
 The projection is consistently **low**, by 14–18 % across both batch sizes and
 both steps, because longer kernels amortise per-launch overhead better than the
 reference does. This is the figure the CSV preamble defers to rather than
 quoting, so a re-measurement cannot leave a stale percentage behind.
 
-**That validation covers $q = 3$ on the GPU and nothing else, and the censored
-cells are not $q = 3$.** The check above is possible only where both ends of a
-projection are measured, which in this schedule is the $q = 3$ GPU chain — and
-the eight censored cells are all $q \in \{5, 7\}$. The two kernel families do
-not share a cost structure, so the measured magnitude cannot be carried across:
+**A $q = 3$ chain cannot validate a $q \in \{5,7\}$ projection, so each field
+validates its own.** The kernels do not share a cost structure:
 `permanent_bipedal3.hip` keeps its column sums bit-sliced in a single
 `(sum_m, sum_s)` word pair and updates them in **O(1)** work per Gray step,
 while `permanent_bipedal5.hip` and `permanent_bipedal7.hip` run an explicit
 `for (i = 0; i < n; i++)` over the column-sum array at every step, costing
 **O(n)**. Ryser's $n \cdot 2^n$ model therefore *overstates* how the $q = 3$
-kernel grows — which is one reason its projections read low — and *matches* the
-$q \in \{5,7\}$ kernels much more closely. Applying a 14–18 % correction to
-them would be transferring a number from the field where the model fits worst
-to the fields where it fits best.
+kernel grows — one reason its projections read low — and *matches* the
+$q \in \{5,7\}$ kernels far better, so a 14–18 % correction carried across
+would be a number from the field where the model fits worst applied where it
+fits best.
 
-What survives the transfer is a direction, argued rather than measured: a
-projection from smaller $n$ omits per-launch cost that a longer kernel amortises,
-and that mechanism is field-independent, so $q \in \{5,7\}$ projections are
-*expected* low too. Even that is not guaranteed — the per-element kernels carry a
-working set growing as $n^2$ and, at $q = 7$, LUT traffic to device global
-memory, either of which could make true cost grow faster than the model and push
-a projection high. **So: bias direction argued, magnitude unvalidated, for every
-censored cell in this study.**
+The grid supports the check per field without any extra measurement: within each
+$(q, \text{backend})$ chain, project every measured $n$ from the preceding
+measured $n$ and compare against what was measured. The censored cells are all
+GPU cells at $q \in \{5,7\}$, so that is the chain that governs them:
+
+| chain | step | projection error |
+|---|---|---|
+| $q{=}5$ GPU $M{=}256$ | $12 \rightarrow 16$ | $-13.2\%$ |
+| $q{=}5$ GPU $M{=}256$ | $16 \rightarrow 20$ | $-4.7\%$ |
+| $q{=}5$ GPU $M{=}1024$ | $12 \rightarrow 16$ | $-11.1\%$ |
+| $q{=}5$ GPU $M{=}1024$ | $16 \rightarrow 20$ | $-4.3\%$ |
+| $q{=}7$ GPU $M{=}256$ | $12 \rightarrow 16$ | $-12.4\%$ |
+| $q{=}7$ GPU $M{=}256$ | $16 \rightarrow 20$ | $-4.2\%$ |
+| $q{=}7$ GPU $M{=}1024$ | $12 \rightarrow 16$ | $-8.7\%$ |
+| $q{=}7$ GPU $M{=}1024$ | $16 \rightarrow 20$ | $-4.3\%$ |
+
+**All eight steps run low, in the fields the censored cells belong to.** The
+bias direction is therefore empirically validated where it is applied, not
+merely argued: a projection understates the rate, so a censored cell's true rate
+is at least as high as its projection. The magnitude is 4–13 % and **shrinks as
+$n$ grows** — every $16 \rightarrow 20$ step is near $-4.3\%$ against $-9$ to
+$-13\%$ one step earlier — which is what the per-launch-amortisation mechanism
+predicts, since a longer kernel has proportionally less launch overhead left to
+absorb. The censored cells project from $n = 20$, one step beyond the last
+validated step, where the trend points to a bias smaller still.
+
+Two limits on that validation are worth stating. It is bounded by the largest
+$n$ where both ends are measured, so nothing here validates the *size* of the
+correction at $n \ge 24$ on these kernels, only its direction and its downward
+trend. And the direction is not universal across backends: the generic Ryser
+path, whose per-step cost genuinely is $O(n)$ and so matches the model, projects
+**high** at every step in all three fields ($+0.4\%$ to $+8.6\%$). A projection's
+bias follows the kernel's cost structure, which is exactly why it is validated
+per chain rather than once.
 
 None of that changes a verdict, because the censoring margins are not close. To
 rescue the nearest censored cell — $q{=}5$, $n{=}24$ at $M{=}256$ — the true
-rate would have to exceed its projection by **27 %**, more than any bias measured
-anywhere in this study; the other $n = 24$ cells need 46 % to 183 %, and the
-$n = 28$ cells need factors of 24 to 53. The conclusions rest on those margins
+rate would have to exceed its projection by **26 %**, twice the largest bias
+measured on its own field's chain and six times the bias at the step nearest it;
+the other $n = 24$ cells need 46 % to 183 %, and the $n = 28$ cells need factors
+of 24 to 53. The conclusions rest on those margins
 rather than on a transferred correction. The projection is used the same way
 throughout: a cell whose projected rate misses the budget by an order of
 magnitude is confidently infeasible, while one that misses by 20 % is not, and
@@ -447,28 +500,28 @@ carrying no rate.
 Composite matrices/second, best backend per $(q, n)$ shown in bold in the
 per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 
-| $q$ | $n$ | scalar | AVX2 | rayon batch | rayon intra | GPU $M{=}256$ | GPU $M{=}1024$ |
-|---|---|---|---|---|---|---|---|
-| 3 | 12 | 50 940 | 18 240 | 288 060 | 37 690 | 217 360 | **314 710** |
-| 3 | 16 | 3 638 | 1 192 | 36 140 | 4 406 | 30 230 | **61 240** |
-| 3 | 20 | 229.2 | 74.87 | 2 498 | 2 981 | 2 136 | **4 862** |
-| 3 | 24 | 14.35 | 4.643 | 156.5 | 296.5 | 136.4 | **308.5** |
-| 3 | 28 | 0.896 | 0.290 | 9.851 | **19.31** | 8.533 | 19.26 |
-| 5 | 12 | 6 822 | — | **72 880** | — | 11 450 | 23 190 |
-| 5 | 16 | 327.4 | — | **4 166** | — | 618.9 | 1 222 |
-| 5 | 20 | 16.40 | — | **215.0** | — | 32.38 | 63.93 |
-| 5 | 24 | 0.848 | — | **11.85** | — | censored | censored |
-| 5 | 28 | 0.0462 | — | **0.648** | — | censored | censored |
-| 7 | 12 | 6 497 | — | **72 580** | — | 10 050 | 21 530 |
-| 7 | 16 | 313.4 | — | **3 739** | — | 536.6 | 1 109 |
-| 7 | 20 | unsupported | — | unsupported | — | 27.98 | **57.93** |
-| 7 | 24 | unsupported | — | unsupported | — | censored | censored |
-| 7 | 28 | unsupported | — | unsupported | — | censored | censored |
+| $q$ | $n$ | scalar | AVX2 | rayon batch | rayon intra | Ryser generic | GPU $M{=}256$ | GPU $M{=}1024$ |
+|---|---|---|---|---|---|---|---|---|
+| 3 | 12 | 50 846 | 18 182 | **280 056** | 38 462 | 6 902 | 218 275 | 247 646 |
+| 3 | 16 | 3 638 | 1 196 | 36 311 | 4 439 | 307.8 | 30 210 | **61 306** |
+| 3 | 20 | 229.9 | 74.82 | 2 500 | 2 982 | 15.18 | 2 136 | **4 863** |
+| 3 | 24 | 14.35 | 4.650 | 155.4 | 296.6 | 0.777 | 136.4 | **310.4** |
+| 3 | 28 | 0.903 | 0.289 | 9.986 | **19.58** | 0.0419 | 8.532 | 19.27 |
+| 5 | 12 | 6 787 | — | **72 323** | — | 6 906 | 11 440 | 23 210 |
+| 5 | 16 | 327.0 | — | **4 164** | — | 306.9 | 617.5 | 1 224 |
+| 5 | 20 | 16.42 | — | **213.7** | — | 15.08 | 32.39 | 63.92 |
+| 5 | 24 | 0.855 | — | **11.83** | — | 0.777 | censored | censored |
+| 5 | 28 | 0.0461 | — | **0.648** | — | 0.0417 | censored | censored |
+| 7 | 12 | 6 496 | — | **72 556** | — | 7 285 | 10 016 | 21 596 |
+| 7 | 16 | 313.9 | — | **3 741** | — | 314.6 | 536.2 | 1 108 |
+| 7 | 20 | unsupported | — | unsupported | — | 15.42 | 27.98 | **57.93** |
+| 7 | 24 | unsupported | — | unsupported | — | **0.798** | censored | censored |
+| 7 | 28 | unsupported | — | unsupported | — | **0.0426** | censored | censored |
 
 Four results carry consequences beyond the envelope.
 
 **The public F_3 dispatcher selects the slower path (gap G6).** The scalar
-single-word kernel beats the AVX2 single-word kernel by **2.79x-3.09x** at every
+single-word kernel beats the AVX2 single-word kernel by **2.80x-3.12x** at every
 $n$ measured — the ratio is smallest at $n=12$ and rises monotonically with $n$,
 and the two rates are in the table above — yet `permanent_bipedal3` prefers AVX2
 whenever the CPU supports it. The cause is documented in the kernel itself: the
@@ -489,32 +542,33 @@ above $n = 20$.
 **Whether the GPU or intra-matrix rayon leads at $n = 28$ is not resolved by
 these measurements, and the receipts bound that quantitatively.** Each rate is
 one cell execution, so the two are point comparisons rather than replicated
-ones, and the gap between them is **0.30 %**. Two things in the receipts bound
-what a gap that size means, and they disagree in an informative way:
+ones, and the gap between them is **1.6 %**, intra-matrix rayon ahead. Two
+things in the receipts bound what a gap that size means:
 
 - *Within* a single cell execution the repetitions are very stable: `rep_sd_s`
-  is 0.176 % of a repetition for intra-matrix rayon and 0.151 % for the GPU,
-  both under 0.30 %. On that evidence alone the gap would look real.
-- *Across* independent executions of the same configuration it is not. The
-  sustained runs re-measure nine grid configurations end to end; at identical
-  batch size the three GPU pairs disagree with their grid cells by 1.02 %,
-  0.03 % and 0.05 %, and over all nine pairs the disagreement reaches 1.79 %
-  with a median of 0.31 %. A 0.30 % gap sits inside that spread.
+  is 0.12 % of a repetition for intra-matrix rayon and 0.16 % for the GPU, an
+  order of magnitude under the gap.
+- *Across* independent executions of the same configuration the spread is
+  wider. The sustained runs re-measure nine grid configurations end to end; at
+  identical batch size the three GPU pairs disagree with their grid cells by
+  0.57 %, 0.02 % and 0.02 %, while over all nine pairs the disagreement reaches
+  1.80 % with a median of 0.84 %.
 
-Repetition-level stability therefore understates run-to-run reproducibility by
-roughly an order of magnitude, and reproducibility is the relevant scale when
-two configurations are each measured once. **No ordering is claimed at
-$n = 28$**: the table reports both rates, and a campaign choosing that cell's
-backend should re-measure rather than read a winner here. Those nine pairs are
-themselves a loose bound rather than a variance estimate — six of them differ in
-batch size as well as in run.
+So the gap is larger than anything a re-measured GPU configuration moved, and
+comparable to the widest disagreement across all nine pairs. The evidence leans
+toward intra-matrix rayon at $n = 28$, and **no ordering is asserted**: one
+execution of each cannot settle 1.6 % when independent re-measurement of a
+single configuration has moved 1.8 %, and those nine pairs are a loose bound
+rather than a variance estimate, six of them differing in batch size as well as
+in run. The table reports both rates; a campaign choosing that cell's backend
+should re-measure.
 
 An earlier revision of this study reported the opposite at $n = 28$ — that
 intra-matrix rayon beat the GPU by 2.3x. **That was an artifact of the
 superseded censoring rule**, which declined the $q{=}3$, $n{=}28$, $M{=}1024$
 cell and left only $M{=}256$ to compare against. With the corrected rule that
-cell is measured, and the two rates come within 0.30 % of each other — a gap
-the preceding paragraph shows these measurements cannot resolve, rather than a
+cell is measured, and the two rates come within 1.6 % of each other — a gap the
+preceding paragraph shows one execution of each cannot settle, rather than a
 2.3x lead for either. Recorded per
 `@/inv/falsification-preserved`; it is the clearest illustration of why a
 censoring rule that hides affordable cells is a correctness problem and not a
@@ -523,7 +577,7 @@ scheduling convenience.
 **This qualifies the 2026-05-15 GPU crossover receipt.** That receipt reports
 the GPU beating "CPU SIMD" by 28.65x at $n=24$ and 30.32x at $n=28$ for $q=3$,
 both at $M=256$. Those ratios reproduce here — GPU $M{=}256$ over `cpu_avx2`
-gives 29.4x at $n=24$ and 29.5x at $n=28$ — but the baseline is the AVX2
+gives 29.3x at $n=24$ and 29.5x at $n=28$ — but the baseline is the AVX2
 single-thread path, which §4.4 has just shown to be the *slower* of the two
 single-thread CPU paths, and unparallelised besides. Restated against the best
 CPU path measured here, the same $M{=}256$ configuration is **0.46x at $n=24$**
@@ -552,16 +606,16 @@ averaged away.
 
 | $q$ | $n$ | backend | $M$ | sustained | grid cell | ratio | first→last quarter |
 |---|---|---|---|---|---|---|---|
-| 3 | 24 | scalar | 8 | 14.396 | 14.352 | 1.003 | 14.356 → 14.416 |
-| 3 | 24 | AVX2 | 4 | 4.695 | 4.643 | 1.011 | 4.692 → 4.699 |
-| 3 | 24 | rayon batch | 96 | 156.862 | 156.454 | 1.003 | 157.643 → 156.213 |
-| 3 | 24 | rayon intra | 24 | 298.735 | 296.455 | 1.008 | 298.723 → 298.766 |
-| 3 | 24 | GPU | 1024 | 311.602 | 308.463 | 1.010 | 312.100 → 310.727 |
-| 3 | 24 | GPU | 2048 | 207.797 | — | — | 207.678 → 207.643 |
-| 5 | 20 | rayon batch | 96 | 215.060 | 214.976 | 1.000 | 213.980 → 215.748 |
-| 5 | 20 | GPU | 1024 | 63.948 | 63.930 | 1.000 | 63.969 → 63.943 |
-| 7 | 16 | rayon batch | 512 | 3671.794 | 3738.640 | 0.982 | 3667.405 → 3678.380 |
-| 7 | 20 | GPU | 1024 | 57.960 | 57.931 | 1.000 | 57.983 → 57.958 |
+| 3 | 24 | scalar | 8 | 14.508 | 14.346 | 1.011 | 14.500 → 14.511 |
+| 3 | 24 | AVX2 | 4 | 4.595 | 4.650 | 0.988 | 4.603 → 4.589 |
+| 3 | 24 | rayon batch | 96 | 157.837 | 155.359 | 1.016 | 158.233 → 157.607 |
+| 3 | 24 | rayon intra | 24 | 299.146 | 296.643 | 1.008 | 299.207 → 299.118 |
+| 3 | 24 | GPU | 1024 | 312.135 | 310.378 | 1.006 | 312.440 → 311.602 |
+| 3 | 24 | GPU | 2048 | 209.756 | — | — | 209.853 → 209.718 |
+| 5 | 20 | rayon batch | 96 | 214.603 | 213.712 | 1.004 | 213.136 → 215.656 |
+| 5 | 20 | GPU | 1024 | 63.935 | 63.919 | 1.000 | 63.949 → 63.924 |
+| 7 | 16 | rayon batch | 512 | 3673.828 | 3741.104 | 0.982 | 3674.235 → 3676.730 |
+| 7 | 20 | GPU | 1024 | 57.944 | 57.934 | 1.000 | 57.954 → 57.938 |
 
 Rates are matrices/second; "grid cell" is the same $(q, n, \text{backend})$ cell
 from §4.4. The batch sizes coincide only on the GPU rows, where $M$ is fixed by
@@ -572,8 +626,11 @@ reserved stream range, recorded in the CSV's `stream_first` column, so no two
 runs share matrices. Two conclusions.
 
 **The short-cell protocol holds.** Every run lands within 2 % of its grid cell,
-and boost decay across a 180 s window never reaches 1 % (largest
-first-to-last-quarter drift: 0.907 % on batch rayon). The five-second cells are
+and boost decay across a 180 s window stays under 1.2 % (largest
+first-to-last-quarter drift: 1.18 % on batch rayon at $q{=}5$). Those quarters
+are quarters of *elapsed time*, not of the shard count: the harness split them
+by count until `0e0b0aec`, which is a different statistic whenever shard
+durations vary. The five-second cells are
 not riding a boost window, so the envelope built on them is sound.
 
 **$M = 1024$ is the best batch size tested, and the question is open above
@@ -610,12 +667,16 @@ measured rates** rather than from that incident:
    not the binding resource at any $M$ in reach; time-in-kernel is what a batch
    size actually buys or spends, and §4.5's own $M = 2048$ row shows it can be
    spent for nothing.
-2. **Per-launch time grows sharply with $n$.** It scales as
-   $M \cdot n \cdot 2^n / W$, so a shard size chosen at $n = 20$ costs roughly
-   twice the per-launch time at $n = 24$. A campaign should therefore pick $M$
-   per $(q, n)$ from the measured per-matrix cost and cap per-launch time rather
-   than fixing a batch size across the grid — which is what the storage layout
-   in §7.4 assumes, and which is prudent whether or not any ceiling exists.
+2. **Per-launch time grows steeply with $n$.** It scales as
+   $M \cdot n \cdot 2^n / W$, so holding $M$ fixed from $n = 20$ to $n = 24$
+   multiplies per-launch time by $24 \cdot 2^{24} / (20 \cdot 2^{20})$, which is
+   **19.2x**, and each further step of 4 in $n$ costs about another 19x. A batch
+   size that occupies the device for a comfortable fraction of a second at
+   $n = 20$ therefore occupies it for seconds at $n = 24$. A campaign should
+   pick $M$ per $(q, n)$ from the measured per-matrix cost and cap per-launch
+   time rather than fixing a batch size across the grid — which is what the
+   storage layout in §7.4 assumes, and which is prudent whether or not any
+   ceiling exists.
 
 ### 4.6 Attainable envelope (REQ-02)
 
@@ -629,27 +690,32 @@ the conservative $p = 1/2$ column is in the CSV.
 
 | $q$ | $n$ | best path | rate | $N$ for SE $10^{-3}$ | hours | $N$ for SE $10^{-4}$ | hours |
 |---|---|---|---|---|---|---|---|
-| 3 | 12 | GPU $M{=}1024$ | 314 710 | 222 223 | 0.00 | 22 222 223 | 0.02 |
-| 3 | 16 | GPU $M{=}1024$ | 61 240 | 222 223 | 0.00 | 22 222 223 | 0.10 |
-| 3 | 20 | GPU $M{=}1024$ | 4 862 | 222 223 | 0.01 | 22 222 223 | 1.27 |
-| 3 | 24 | GPU $M{=}1024$ | 308.5 | 222 223 | 0.20 | 22 222 223 | 20.01 (x) |
-| 3 | 28 | rayon intra | 19.31 | 222 223 | 3.20 | 22 222 223 | 319.6 (x) |
-| 5 | 12 | rayon batch | 72 880 | 160 000 | 0.00 | 16 000 000 | 0.06 |
-| 5 | 16 | rayon batch | 4 166 | 160 000 | 0.01 | 16 000 000 | 1.07 |
-| 5 | 20 | rayon batch | 215.0 | 160 000 | 0.21 | 16 000 000 | 20.67 (x) |
-| 5 | 24 | rayon batch | 11.85 | 160 000 | 3.75 | 16 000 000 | 375.1 (x) |
-| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.58 (x) | 16 000 000 | 6858 (x) |
-| 7 | 12 | rayon batch | 72 580 | 122 449 | 0.00 | 12 244 898 | 0.05 |
-| 7 | 16 | rayon batch | 3 739 | 122 449 | 0.01 | 12 244 898 | 0.91 |
+| 3 | 12 | rayon batch | 280 056 | 222 223 | 0.00 | 22 222 223 | 0.02 |
+| 3 | 16 | GPU $M{=}1024$ | 61 306 | 222 223 | 0.00 | 22 222 223 | 0.10 |
+| 3 | 20 | GPU $M{=}1024$ | 4 863 | 222 223 | 0.01 | 22 222 223 | 1.27 |
+| 3 | 24 | GPU $M{=}1024$ | 310.4 | 222 223 | 0.20 | 22 222 223 | 19.89 (x) |
+| 3 | 28 | rayon intra | 19.58 | 222 223 | 3.15 | 22 222 223 | 315.3 (x) |
+| 5 | 12 | rayon batch | 72 323 | 160 000 | 0.00 | 16 000 000 | 0.06 |
+| 5 | 16 | rayon batch | 4 164 | 160 000 | 0.01 | 16 000 000 | 1.07 |
+| 5 | 20 | rayon batch | 213.7 | 160 000 | 0.21 | 16 000 000 | 20.80 (x) |
+| 5 | 24 | rayon batch | 11.83 | 160 000 | 3.76 | 16 000 000 | 375.7 (x) |
+| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.60 (x) | 16 000 000 | 6 860 (x) |
+| 7 | 12 | rayon batch | 72 556 | 122 449 | 0.00 | 12 244 898 | 0.05 |
+| 7 | 16 | rayon batch | 3 741 | 122 449 | 0.01 | 12 244 898 | 0.91 |
 | 7 | 20 | GPU $M{=}1024$ | 57.93 | 122 449 | 0.59 | 12 244 898 | 58.71 (x) |
-| 7 | 24 | — | no rate | — | — | — | — |
-| 7 | 28 | — | no rate | — | — | — | — |
+| 7 | 24 | Ryser generic | 0.798 | 122 449 | 42.61 (x) | 12 244 898 | 4 261 (x) |
+| 7 | 28 | Ryser generic | 0.0426 | 122 449 | 798.4 (x) | 12 244 898 | 79 844 (x) |
 
 "(x)" marks a cell that does not fit the 12 h budget. **Feasible frontier at
 SE $= 10^{-3}$: $q{=}3$ to $n = 28$, $q{=}5$ to $n = 24$, $q{=}7$ to $n = 20$.
 At SE $= 10^{-4}$: $q{=}3$ to $n = 20$, $q{=}5$ to $n = 16$, $q{=}7$ to
-$n = 16$.** The $q = 7$ cells at $n \in \{24, 28\}$ carry no rate (§4.3); their
-projections put them one to two orders of magnitude outside the budget.
+$n = 16$.** The $q = 7$ cells at $n \in \{24, 28\}$ now carry a measured rate
+rather than none — the generic Ryser path reaches them where the packed
+$\mathbb{F}_7$ kernel does not (§2) — but at 42.6 h and 798 h for a single cell
+at SE $= 10^{-3}$ they are four to eighty times the whole budget, so the $q = 7$
+frontier is unchanged at $n = 20$. The difference this makes is to the record,
+not the plan: an earlier revision reported those cells as having no path at all,
+which was a fact about this study's backend list rather than about the tree.
 
 One qualification the SE $= 10^{-3}$ column deserves: it is not the interesting
 target. At $n = 28$, $q = 3$ a standard error of $10^{-3}$ cannot resolve a
@@ -663,11 +729,11 @@ ratio and a classification:
 
 | $n$ | prior SE | prior trials | this budget's SE | ratio | verdict |
 |---|---|---|---|---|---|
-| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.385\times10^{-6}$ | 1.07 | matches |
-| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.941\times10^{-6}$ | 1.50 | **exceeds** |
+| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.649\times10^{-6}$ | 1.01 | matches |
+| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.936\times10^{-6}$ | 1.50 | **exceeds** |
 | 20 | $4.714\times10^{-5}$ | $10^{8}$ | $3.528\times10^{-5}$ | 1.34 | **exceeds** |
-| 24 | $1.491\times10^{-4}$ | $10^{7}$ | $1.401\times10^{-4}$ | 1.06 | matches |
-| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.598\times10^{-4}$ | 0.84 | below |
+| 24 | $1.491\times10^{-4}$ | $10^{7}$ | $1.396\times10^{-4}$ | 1.07 | matches |
+| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.560\times10^{-4}$ | 0.85 | below |
 
 A 12 h budget on this host beats the published precision at $n = 16$ and
 $n = 20$, matches it at $n = 12$ and $n = 24$, and falls short at $n = 28$.
@@ -695,27 +761,28 @@ pooled samples are independent — in `zero-fraction-2026-08-07.csv`:
 
 | $q$ | $n$ | matrices | $\hat p$ | 95 % Wilson | $z$ vs $1/q$ |
 |---|---|---|---|---|---|
-| 3 | 12 | 5 429 105 | 0.33337 | [0.33297, 0.33377] | $+0.18$ |
-| 3 | 16 | 810 322 | 0.33387 | [0.33285, 0.33490] | $+1.03$ |
-| 3 | 20 | 73 907 | 0.33370 | [0.33031, 0.33711] | $+0.21$ |
-| 3 | 24 | 191 465 | 0.33454 | [0.33243, 0.33666] | $+1.12$ |
-| 3 | 28 | 5 807 | 0.33666 | [0.32462, 0.34892] | $+0.54$ |
-| 5 | 12 | 582 850 | 0.20026 | [0.19923, 0.20129] | $+0.49$ |
-| 5 | 16 | 33 713 | 0.20013 | [0.19589, 0.20444] | $+0.06$ |
-| 5 | 20 | 58 789 | 0.19980 | [0.19659, 0.20305] | $-0.12$ |
-| 5 | 24 | 490 | 0.19592 | [0.16320, 0.23337] | $-0.23$ |
-| 5 | 28 | 101 | 0.14852 | [0.09212, 0.23067] | $-1.29$ |
-| 7 | 12 | 577 226 | 0.14404 | [0.14314, 0.14495] | $+2.57$ |
-| 7 | 16 | 692 160 | 0.14319 | [0.14236, 0.14401] | $+0.78$ |
-| 7 | 20 | 17 664 | 0.13779 | [0.13279, 0.14296] | $-1.92$ |
-
+| 3 | 12 | 5 102 485 | 0.33337 | [0.33296, 0.33378] | $+0.18$ |
+| 3 | 16 | 813 201 | 0.33272 | [0.33170, 0.33374] | $-1.18$ |
+| 3 | 20 | 74 090 | 0.33266 | [0.32928, 0.33606] | $-0.39$ |
+| 3 | 24 | 191 567 | 0.33468 | [0.33257, 0.33679] | $+1.25$ |
+| 3 | 28 | 5 812 | 0.34308 | [0.33098, 0.35539] | $+1.58$ |
+| 5 | 12 | 649 559 | 0.20018 | [0.19921, 0.20116] | $+0.37$ |
+| 5 | 16 | 36 572 | 0.19840 | [0.19435, 0.20252] | $-0.76$ |
+| 5 | 20 | 58 848 | 0.20016 | [0.19695, 0.20341] | $+0.10$ |
+| 5 | 24 | 500 | 0.17000 | [0.13962, 0.20541] | $-1.68$ |
+| 5 | 28 | 106 | 0.24528 | [0.17324, 0.33515] | $+1.17$ |
+| 7 | 12 | 646 742 | 0.14252 | [0.14167, 0.14337] | $-0.78$ |
+| 7 | 16 | 695 955 | 0.14328 | [0.14246, 0.14411] | $+1.01$ |
+| 7 | 20 | 17 819 | 0.13682 | [0.13185, 0.14194] | $-2.30$ |
+| 7 | 24 | 10 | 0.10000 | [0.01788, 0.40415] | $-0.39$ |
+| 7 | 28 | 5 | 0.00000 | [0.00000, 0.43448] | $-0.91$ |
 Grid and sustained samples are both pooled. Sustained runs reserve disjoint
 stream ranges — recorded per run in the CSV's `stream_first` column — so their
 zero counts are independent of one another and poolable, which was *not* true of
 the superseded harness (see the retraction below). Disjointness from the *grid*
 streams now holds by construction rather than by audit: the grid hands cell $i$
-the range $1 + i \times 10^5$ and so cannot reach past $1.05 \times 10^7$ across
-its 105 cells, while `SUSTAINED_STREAM_BASE` places the sustained runs at
+the range $1 + i \times 10^5$ and so cannot reach past $1.2 \times 10^7$ across
+its 120 cells, while `SUSTAINED_STREAM_BASE` places the sustained runs at
 $10^9 + j \times 10^5$, two orders of magnitude clear. An earlier harness based
 the sustained runs at $10^6$, which is commensurate with the grid's allocation:
 those ranges collided in index space and stayed disjoint in practice only
@@ -732,11 +799,25 @@ $\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for all $n \ge 3$ (eq. 1.4). So a
 measurement above $1/q$ is expected, and one whose interval lies strictly below
 $1/q$ contradicts a theorem and indicts this pipeline rather than the theorem.
 
-**Every one of the thirteen intervals satisfies the bound**; none lies strictly
-below $1/q$. One cell excludes $1/q$ outright — $q{=}7$, $n{=}12$, whose
-interval lies wholly *above* $1/7$ — which is the direction the theorem permits,
-not a failure. It is also the largest deviation in either direction at
-$z = +2.57$.
+**One of the fifteen intervals now lies strictly below $1/q$, and it is worth
+being precise about what that does and does not mean.** At $q{=}7$, $n{=}20$ the
+95 % Wilson interval is $[0.13185, 0.14194]$, entirely under $1/7 = 0.142857$,
+at $z = -2.30$. Read against a nominal 95 % interval per cell — the rule an
+earlier revision of this study proposed — that is a halt-the-campaign event: an
+interval below a proved lower bound.
+
+**Read against the rule §7.2 actually adopts, it is not.** That rule controls the
+family-wise error rate across the preregistered cell set, and its per-cell
+critical value is $z = 3.16$, which $-2.30$ does not reach. Nor should it: these
+fifteen cells are read together, and under a correct pipeline the expected number
+falling beyond $2.30\sigma$ on the low side is $15 \times 0.0107 = 0.16$, so one
+is unremarkable. **This is the first cell in this study to trip the unadjusted
+rule, and it is a live demonstration of why §7.2 does not use it** — the
+multiplicity correction was derived before this receipt existed, and the first
+sample drawn after it produced exactly the false alarm it predicts.
+
+No cell trips the adjusted rule, in either direction. The largest deviation is
+this one; the largest positive is $q{=}7$, $n{=}16$ at $z = +1.01$.
 
 **No numeric bound on $C$ follows from these cells, and an earlier revision of
 this study wrongly claimed one.** [HKS2026] eq. 1.4 reads
@@ -751,24 +832,26 @@ Theorem 1.3 in both directions**, the lower bound $\Pr \ge 1/q$ and the upper
 bound at the constant the authors leave unfixed. Recorded per
 `@/inv/falsification-preserved`.
 
-The multiplicity arithmetic is worth stating precisely, because §7.2 turns it
-into a campaign rule. One excursion past $2.5\sigma$ in 13 cells sits close to
-the 0.16 such excursions expected under a correct pipeline — but that is a
-**post-hoc calculation on samples that were never a designed experiment**: the
-13 cells are timing by-products with no pre-registered $N$, and the $2.5\sigma$
-threshold was chosen after seeing which cell was extreme. It is reported as an
-order-of-magnitude sanity check, not as a test the pipeline passed.
+The multiplicity arithmetic above is a **post-hoc calculation on samples that
+were never a designed experiment**, and is reported as an order-of-magnitude
+sanity check rather than as a test the pipeline passed: the fifteen cells are
+timing by-products with no pre-registered $N$, and the threshold compared
+against is the one the extreme cell happened to sit at. What it is good for is
+sizing the false-alarm rate that §7.2's rule has to survive, which is the use
+made of it there.
 
-The cell that comes closest to contradicting the theorem is $q{=}7$, $n{=}20$ at
-$z = -1.92$: its interval still covers $1/7$, but only just, clearing the bound
-by about $10^{-4}$ at its upper edge. It is a by-product sample of 17 664
-matrices, the deviation is under $2\sigma$, and the same $(q, n)$ read $z = +1.30$
-on the superseded receipts — a swing that independent stream ranges at this
-sample size produce routinely. Nothing is inferred from it either way; it is
-named because a single cell drifting below $1/q$ is the signature the standing
-acceptance test in §7.2 exists to catch, and the campaign will resample this
-point under a pre-registered $N$. The pipeline passes its acceptance test at
-every measured size.
+Two things keep the $q{=}7$, $n{=}20$ cell from being read as a finding. It is a
+by-product sample of 17 819 matrices with no pre-registered $N$, drawn as the timing
+protocol happened to need that many; and the $2.30\sigma$ it exceeds is a
+threshold the data chose rather than one fixed in advance. **The campaign should
+resample $q{=}7$, $n{=}20$ first**, under a pre-registered $N$ and the adjusted
+rule, which is the only way to learn whether anything is there. The pipeline
+passes its acceptance test as §7.2 states it, at every measured size.
+
+The two smallest cells deserve the opposite caution: $q{=}7$ at $n = 24$ and
+$n = 28$ carry 10 and 5 matrices, the whole output of the generic Ryser path
+inside its 120 s cap. Their intervals span most of the unit interval, and they
+are listed for completeness rather than for reading.
 
 **An earlier anomaly did not reproduce, and the reason is instructive.** A
 superseded run of this study reported three cells beyond $2.9\sigma$ from
@@ -787,7 +870,7 @@ independent defects were behind that, both found by review and both now fixed:
    speed and the recorded seed did not regenerate the recorded sample.
 
 With disjoint streams and a deterministic timed start, independent
-re-measurement puts $q{=}5$, $n{=}16$ at $0.20013$ ($z = +0.06$) where it had
+re-measurement puts $q{=}5$, $n{=}16$ at $0.19840$ ($z = -0.76$) where it had
 read $0.19310$ ($z = -3.08$). **The apparent signal was measurement artefact and
 sampling fluctuation, not structure.** Recorded rather than quietly dropped, per
 `@/inv/falsification-preserved`: the earlier reading is what the study said, and
@@ -954,8 +1037,11 @@ tidiness item into a throughput gap worth an estimate. *0.5 d for the driver-sid
 batch path; a further 1.5 d (est.) to port the intra-matrix Gray-code split to
 F_5 and F_7, which is where the large-$n$ headroom for those fields is.*
 
-**G8 — $q = 7$ above $n = 16$.** `Packed7` fits 16 lanes in a `u64`, so the CPU
-kernel stops at $n = 16$ and the GPU is the only path beyond it. A multi-word
+**G8 — $q = 7$ above $n = 16$.** `Packed7` fits 16 lanes in a `u64`, so the
+*packed* CPU kernel stops at $n = 16$. Two paths remain beyond it: the GPU, and
+the generic `permanent_ryser`, which §4.4 measures at 0.798 matrices/s at
+$n = 24$ and 0.0426 at $n = 28$ — correct, and three to four orders of magnitude
+too slow to matter for a campaign. A multi-word
 `Packed7` accumulator would restore a CPU fallback and remove the
 single-backend dependency, but it is not required for the campaign to proceed.
 *4.0 d, optional.*
@@ -1009,6 +1095,10 @@ $$
 This was checked against brute-force enumeration over all $q^{n^2}$ matrices for
 $(q,n) \in \{(3,1),(3,2),(3,3),(5,2),(5,3),(7,2)\}$ and agrees exactly as a
 rational — for instance $11/27$ at $q{=}3$, $n{=}2$ and $313/729$ at $n{=}3$.
+The check is committed as `determinant-anchor-check.py` with its output in
+`determinant-anchor-2026-08-08.txt`, so the agreement is re-runnable rather than
+asserted here; it enumerates exhaustively and takes no seed, so its output is a
+function of the case list alone.
 Its $n \to \infty$ limit is $\alpha_q = 1 - \prod_{i \ge 1}(1 - q^{-i})$,
 which is [HKS2026] Fact 1.1 and the value §1 quotes.
 
@@ -1018,7 +1108,8 @@ campaign's samples are largest and its intervals tightest. The limit overstates
 the exact value by $3.5 \times 10^{-3}$ at $q{=}3$, $n{=}4$, by
 $3.0 \times 10^{-4}$ at $q{=}5$, $n{=}4$, and by $3.8 \times 10^{-4}$ at
 $q{=}3$, $n{=}6$ — deviations tens to hundreds of standard errors wide at cells
-that cost minutes to sample. The gap falls below $10^{-6}$ only from about
+that cost minutes to sample; the artifact tabulates the full gap. The gap falls
+below $10^{-6}$ only from about
 $n = 12$ at $q = 3$ and earlier for larger $q$, so a limit-based check is
 harmless exactly where it is uninformative and wrong exactly where it would fire.
 
@@ -1286,10 +1377,10 @@ adds, and where it does not:
    reproduction.
 2. **Extension beyond $n = 30$: not available here, by a margin that depends on
    the target.** His table already reaches $n = 30$. Projecting this study's
-   fastest measured $q = 3$ path at $n = 28$ — intra-matrix rayon, 19.31
+   fastest measured $q = 3$ path at $n = 28$ — intra-matrix rayon, 19.58
    matrices/s — through Ryser's $n \cdot 2^n$ work model gives an **estimated**
-   4.51 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.49 from
-   19.26. **These are projections, not measurements**, formed by the same
+   4.57 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.50 from
+   19.27. **These are projections, not measurements**, formed by the same
    machinery as §4.3's censored cells and from the reference measurements named
    here. Their bias is only partly validated: §4.3's 14-18 % low reading comes
    from the $q = 3$ GPU chain, so it transfers to the GPU-based estimate here —
@@ -1298,9 +1389,9 @@ adds, and where it does not:
    no per-launch cost for a longer kernel to amortise. Treat the direction as
    argued and the magnitude as loose. Against the 12 h budget's
    $3.672 \times 10^4$ productive seconds, SE $= 10^{-3}$ at $n = 30$ needs an
-   estimated 13.7 h — over budget by about a third, a gap a 14-18 % correction
+   estimated 13.5 h — over budget by about a third, a gap a 14-18 % correction
    would not close even if it applied — and SE $= 10^{-4}$ needs an estimated
-   1370 h, over by two orders of magnitude. So $n = 30$ is out of reach at both
+   1350 h, over by two orders of magnitude. So $n = 30$ is out of reach at both
    targets, but only the $10^{-4}$ figure deserves the phrase "by orders of
    magnitude"; at
    $10^{-3}$ it is a near miss that a larger budget would reach. This campaign
