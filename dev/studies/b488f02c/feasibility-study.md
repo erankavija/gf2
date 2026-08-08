@@ -171,10 +171,11 @@ before any campaign data is drawn.
 ## 4. Measurements (REQ-01, REQ-02)
 
 All measurements were taken on the project benchmark host, which was otherwise
-idle, and the committed set was produced on 2026-08-08 UTC between 03:07 and
-04:25 — equivalence, then the grid, then the sustained runs, then the two
-derived stages, each stamped in its own `timestamp_utc`. The filenames retain
-the `2026-08-07` stem of the original set and are not evidence of when a
+idle, and the committed set was produced on 2026-08-08 UTC between 05:45 and
+07:24 — equivalence at 05:45, the grid at 05:47, the sustained runs at 06:48,
+and the two derived stages at 07:23, each stamped in its own `timestamp_utc`.
+The filenames retain the `2026-08-07` stem of the original set and are not
+evidence of when a
 measurement ran; §4's provenance list records why the set was regenerated. The
 one artifact whose date is its content is `gpu-hang-2026-08-07.log`, which
 records a fault that genuinely happened on 2026-08-07. Artifacts in this
@@ -202,11 +203,13 @@ independently, so a whole-repo dirty flag says nothing about whether the
 measured code was committed. **All five receipts were produced by one
 executable, `binary_sha256`
 `b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c`, built at
-harness source commit `0e0b0aec` — the harness tip — with
+harness source commit `0e0b0aec` with
 `harness_source_dirty: false`, `deps_source_sha: 195f8254` and
-`deps_source_dirty: false`.** No commit post-dates the harness state that
-produced them, so a reproduction builds at the tip and draws these exact stream
-indices.
+`deps_source_dirty: false`.** One harness commit post-dates them, `b96f9550`,
+which rewords a rustdoc paragraph and changes nothing else; a forced recompile
+at it produces the byte-identical executable, checked with `cmp` against the
+binary that wrote these receipts. The pin therefore still covers the harness
+tip, and a reproduction built there draws these exact stream indices.
 
 `binary_sha256` is what makes the reproduction claim checkable, and it is
 load-bearing rather than decorative: a source SHA describes the checkout, while
@@ -369,8 +372,10 @@ selected. At $q = 7$ it costs everything. `permanent_bipedal7` stops at
 $n \le 16$, so $q{=}7$ at $n \in \{24, 28\}$ has **no supported packed CPU
 kernel**, and both GPU batch sizes are censored there. What remains is the
 generic `permanent_ryser`, which measures those two cells at 0.798 and 0.0426
-matrices/s — the slowest measured cells in the grid by two orders of magnitude,
-and the reason the $q = 7$ arm's frontier still stops at $n = 20$. Earlier
+matrices/s. The $n = 28$ cell is among the slowest in the whole grid — the
+generic path at $n = 28$ measures 0.0417 to 0.0426 matrices/s across all three
+fields, and nothing else runs slower — and it is why the $q = 7$ arm's frontier
+still stops at $n = 20$. Earlier
 revisions of this study called them unmeasurable; they are merely unaffordable,
 and §4.6 now carries their rates instead of a dash.
 
@@ -471,9 +476,14 @@ $n$ where both ends are measured, so nothing here validates the *size* of the
 correction at $n \ge 24$ on these kernels, only its direction and its downward
 trend. And the direction is not universal across backends: the generic Ryser
 path, whose per-step cost genuinely is $O(n)$ and so matches the model, projects
-**high** at every step in all three fields ($+0.4\%$ to $+8.6\%$). A projection's
-bias follows the kernel's cost structure, which is exactly why it is validated
-per chain rather than once.
+**high on 10 of its 12 steps**, from $+8.6\%$ at $12 \rightarrow 16$ down to
+$+0.4\%$ at $24 \rightarrow 28$. The two exceptions are the $24 \rightarrow 28$
+steps at $q = 3$ and $q = 5$, at $-0.68\%$ and $-0.21\%$ — both within a percent
+of zero, which is where the whole chain is heading: the bias is largest at small
+$n$ and decays toward zero as $n$ grows, because the model's $n \cdot 2^n$ is
+this kernel's true cost and only the small-$n$ overheads it omits keep the two
+apart. A projection's bias follows the kernel's cost structure, which is exactly
+why it is validated per chain rather than once.
 
 **The throughput receipt's own prose is more conservative than this, and that is
 recorded rather than reconciled.** Its `projection accuracy` preamble and its
@@ -544,11 +554,13 @@ of four lanes carry no data. This reproduces the ratio already visible in
 **The GPU leads at $q=3$ up to $n = 24$, and loses at $q \in \{5,7\}$
 throughout.** For $q = 3$ the GPU at $M = 1024$ is the fastest path through
 $n = 24$, but its margin over intra-matrix rayon collapses across the top of the
-range: 1.63x at $n = 20$, 1.04x at $n = 24$, and **0.997x at $n = 28$**. For
+range: 1.63x at $n = 20$, 1.05x at $n = 24$, and **0.984x at $n = 28$**, where
+intra-matrix rayon is ahead. For
 $q = 5$ and $q = 7$ the CPU batch-rayon path wins wherever both are supported,
 by roughly a factor of three at every shared $n$ in both fields. The F_7 GPU
-kernel is the weakest of the three: its LUT-based arithmetic leaves it censored
-above $n = 20$.
+kernel is the weakest of the three: its LUT-based arithmetic makes it the
+slowest GPU path at every shared $n$, and like the $\mathbb{F}_5$ kernel it is
+censored above $n = 20$.
 
 **Whether the GPU or intra-matrix rayon leads at $n = 28$ is not resolved by
 these measurements, and the receipts bound that quantitatively.** Each rate is
@@ -755,7 +767,8 @@ processors) against this budget's $\approx 288$ thread-hours, and to attribute
 the difference to the kernels. That attribution is not available: the paper
 reports a processor *count* and no hardware — no model, clock, or year — so the
 per-processor throughput is unknown, and the comparison would in any case pit a
-CPU-only run against a budget whose best $q=3$ path is a GPU at every $n$. Two
+CPU-only run against a budget whose best $q=3$ path is a GPU at $n = 16$
+through $24$ but a CPU at $n = 12$ and $n = 28$. Two
 unknowns (their hardware, our CPU/GPU split) sit between the numbers and any
 statement about kernel quality. What the table supports is the narrow claim
 made: **at these sizes, this budget reaches comparable or better precision**,
@@ -827,8 +840,9 @@ rule, and it is a live demonstration of why §7.2 does not use it** — the
 multiplicity correction was derived before this receipt existed, and the first
 sample drawn after it produced exactly the false alarm it predicts.
 
-No cell trips the adjusted rule, in either direction. The largest deviation is
-this one; the largest positive is $q{=}7$, $n{=}16$ at $z = +1.01$.
+No cell trips the adjusted rule, in either direction. This cell is the largest
+deviation in the table either way; the largest positive is $q{=}3$, $n{=}28$ at
+$z = +1.58$, on a sample of 5 812 matrices.
 
 **No numeric bound on $C$ follows from these cells, and an earlier revision of
 this study wrongly claimed one.** [HKS2026] eq. 1.4 reads
@@ -889,8 +903,9 @@ this is what independent re-measurement returned.
 
 **What still holds.** These remain by-product samples with no pre-registered $N$
 or stopping rule, so no inference rests on them either way, and the smallest
-cells are tiny: $q{=}5$ at $n \ge 24$ carries a few hundred matrices, $q{=}3$ at
-$n = 28$ a few thousand.
+cells are very small indeed: $q{=}7$ at $n = 24$ and $n = 28$ carry 10 and 5
+matrices, $q{=}5$ at $n \ge 24$ a few hundred, and $q{=}3$ at $n = 28$ a few
+thousand.
 Four correctness anchors continue to pass and are the reason the table can be
 read at all: the $q = 3$ arm agrees with [Scheinerman2024] at every $n$; the
 kernels match an independent six-term permanent over all $q^9$ order-3 matrices,
@@ -1051,8 +1066,13 @@ F_5 and F_7, which is where the large-$n$ headroom for those fields is.*
 **G8 — $q = 7$ above $n = 16$.** `Packed7` fits 16 lanes in a `u64`, so the
 *packed* CPU kernel stops at $n = 16$. Two paths remain beyond it: the GPU, and
 the generic `permanent_ryser`, which §4.4 measures at 0.798 matrices/s at
-$n = 24$ and 0.0426 at $n = 28$ — correct, and three to four orders of magnitude
-too slow to matter for a campaign. A multi-word
+$n = 24$ and 0.0426 at $n = 28$. Correct, and too slow — but by a factor worth
+naming rather than waving at. Against the SE $= 10^{-3}$ target, which needs
+$122\,449$ samples inside the 12 h budget's $3.672 \times 10^4$ productive
+seconds and so demands **3.34 matrices/s**, the measured rates fall short by
+**4.2x at $n = 24$** and **78x at $n = 28$**. Against SE $= 10^{-4}$ the same
+comparison is 418x and 7 800x. So $n = 24$ is within an order of magnitude of
+the cheaper target and only the harder target is hopeless there. A multi-word
 `Packed7` accumulator would restore a CPU fallback and remove the
 single-backend dependency, but it is not required for the campaign to proceed.
 *4.0 d, optional.*
