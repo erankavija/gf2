@@ -185,7 +185,7 @@ the exact invocation:
 
 | Artifact | Contents |
 |---|---|
-| `equivalence-2026-08-07.csv` | cross-backend per-matrix agreement |
+| `equivalence-2026-08-07.csv` | cross-backend per-matrix agreement (newer pin; §4) |
 | `throughput-2026-08-07.csv` | the `(q, n, backend)` grid, 120 cells |
 | `sustained-2026-08-07.csv` | minutes-scale streaming runs per backend |
 | `envelope-2026-08-07.csv` | REQ-02 envelope, incl. the prior-art comparison |
@@ -210,6 +210,20 @@ which rewords a rustdoc paragraph and changes nothing else; a forced recompile
 at it produces the byte-identical executable, checked with `cmp` against the
 binary that wrote these receipts. The pin therefore still covers the harness
 tip, and a reproduction built there draws these exact stream indices.
+
+**The equivalence receipt carries a newer pin than the other four, and the
+difference is bounded.** It was regenerated at `2bea03a4`, binary
+`77b52ddb43e59c722adf2c311b79336e78ce7407a3f261fcfa79cf87350dad02`, to add the
+$q = 7$, $n = 20$ cell described in §4.1; the four measurement receipts stay at
+`0e0b0aec` and `b1fe566f` under **DEC-01**, which fixes that set. Two commits
+separate the two binaries. `b96f9550` changes only comments — its `protocol.rs`
+diff contains no non-comment line — and `2bea03a4` touches `equivalence.rs` and
+the two preamble strings and removed size skip inside `cmd_equivalence`.
+`backend.rs`, `sampler.rs`, `protocol.rs`'s code, `stats.rs`, `prior.rs` and
+`env.rs` are untouched across both, so every path the grid, sustained, envelope
+and zero-fraction stages execute is identical in the two builds. The kernels,
+the sampler and the timing protocol that produced the measurements are the same
+code either binary would run.
 
 `binary_sha256` is what makes the reproduction claim checkable, and it is
 load-bearing rather than decorative: a source SHA describes the checkout, while
@@ -275,12 +289,25 @@ Radeon RX 6950 XT (gfx1030, 80 compute units), rustc 1.97.0, ROCm/HIP 7.2.
 
 Before any timing counted as evidence, all seven backends were compared per
 matrix on shared inputs drawn from a reserved seed stream. **Every backend
-returned byte-identical permanents for every matrix** — 45 comparisons agreeing
-and 21 recorded unsupported with a reason — for $q \in \{3,5,7\}$ at
-$n \in \{8, 12, 16, 20\}$ (F_7 to $n = 16$, its kernel bound), 512 matrices per
-cell. Backends without a kernel for a given field are recorded with the reason
-rather than dropped. This satisfies `@/inv/backend-behavioral-equivalence` for
-the paths the campaign would use.
+returned byte-identical permanents for every matrix** — 46 comparisons agreeing
+and 26 recorded unsupported with a reason — for $q \in \{3,5,7\}$ at
+$n \in \{8, 12, 16, 20\}$, 512 matrices per cell.
+
+**The $q = 7$, $n = 20$ cell is checked, and that matters more than the rest of
+the table.** An earlier schedule skipped $q = 7$ above $n = 16$ because the
+reference kernel stops there, which left the one $(q, n)$ carrying this study's
+most extreme zero-fraction reading (§4.7, $z = -2.30$) with no cross-backend
+check at all — the samples came from the GPU, and nothing independent had ever
+reproduced them. The check now falls back to the generic `permanent_ryser` as
+its reference wherever the packed kernel is absent, and the CSV's `reference`
+column records which kernel each row was compared against (66 rows against the
+scalar kernel, 6 against the generic one). At $q = 7$, $n = 20$ the GPU returns
+**byte-identical permanents to the generic path over all 512 matrices**, both
+counting 69 zeros. The backend that produced the anomalous cell agrees with an
+independent implementation, so §4.7's reading is a statement about the sample
+rather than about the kernel. Backends without a kernel for a given field are
+recorded with the reason rather than dropped. This satisfies
+`@/inv/backend-behavioral-equivalence` for the paths the campaign would use.
 
 ### 4.2 Protocol
 
@@ -865,8 +892,14 @@ against is the one the extreme cell happened to sit at. What it is good for is
 sizing the false-alarm rate that §7.2's rule has to survive, which is the use
 made of it there.
 
-Two things keep the $q{=}7$, $n{=}20$ cell from being read as a finding. It is a
-by-product sample of 17 819 matrices with no pre-registered $N$, drawn as the timing
+**The kernel behind that cell is not in question.** §4.1's extended equivalence
+check compares the GPU — the backend that drew most of this cell's matrices —
+against the generic `permanent_ryser` at exactly $q = 7$, $n = 20$, and they
+return byte-identical permanents over 512 matrices. Whatever the cell is, it is
+not a wrong kernel.
+
+Two things keep it from being read as a finding. It is a by-product sample of
+17 819 matrices with no pre-registered $N$, drawn as the timing
 protocol happened to need that many; and the $2.30\sigma$ it exceeds is a
 threshold the data chose rather than one fixed in advance. **The campaign should
 resample $q{=}7$, $n{=}20$ first**, under a pre-registered $N$ and the adjusted

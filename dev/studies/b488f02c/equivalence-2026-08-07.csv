@@ -1,10 +1,10 @@
-# git_sha: 0e0b0aecbdf5e239c22006574dc553527c1a0162
+# git_sha: 2bea03a482bd51376b844edc22d2a108472b0dcf
 # git_worktree_dirty: true
-# harness_source_sha: 0e0b0aecbdf5e239c22006574dc553527c1a0162
+# harness_source_sha: 2bea03a482bd51376b844edc22d2a108472b0dcf
 # harness_source_dirty: false
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
 # deps_source_dirty: false
-# binary_sha256: b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c
+# binary_sha256: 77b52ddb43e59c722adf2c311b79336e78ce7407a3f261fcfa79cf87350dad02
 # note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
@@ -17,12 +17,12 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-08T05:45:02Z
+# timestamp_utc: 2026-08-08T09:07:29Z
 # invocation: /home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas equivalence --matrices 512 --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/equivalence-2026-08-07.csv
-# check: per-matrix permanent values against the scalar single-word kernel
+# check: per-matrix permanent values against a reference kernel, named per row in the reference column. The scalar single-word kernel is the reference wherever it exists; at q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic permanent_ryser is the reference there
 # matrices_per_cell: 512
 # seed_root: 0xb488f02c00000001, stream: 0 (reserved for this check)
-# sizes: n in {8, 12, 16} for every q; n = 20 additionally for q in {3, 5}
+# sizes: n in {8, 12, 16, 20} for every q. At q=7, n=20 the packed CPU kernels are recorded unsupported and the comparison runs between the GPU and the generic path
 q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status
 3,8,cpu_scalar,cpu_avx2,512,0,166,166,identical
 3,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,166,166,identical
@@ -90,3 +90,9 @@ q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status
 7,16,cpu_scalar,cpu_rayon_intra_matrix,0,0,86,0,unsupported: gf2-algebra exposes no rayon permanent path for F_7
 7,16,cpu_scalar,gpu_hip,512,0,86,86,identical
 7,16,cpu_scalar,cpu_ryser_generic,512,0,86,86,identical
+7,20,cpu_ryser_generic,cpu_scalar,0,0,69,0,unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+7,20,cpu_ryser_generic,cpu_avx2,0,0,69,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,20,cpu_ryser_generic,cpu_rayon_batch_scalar,0,0,69,0,unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+7,20,cpu_ryser_generic,cpu_rayon_batch_avx2,0,0,69,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+7,20,cpu_ryser_generic,cpu_rayon_intra_matrix,0,0,69,0,unsupported: gf2-algebra exposes no rayon permanent path for F_7
+7,20,cpu_ryser_generic,gpu_hip,512,0,69,69,identical
