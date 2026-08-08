@@ -1,10 +1,10 @@
-# git_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
+# git_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
 # git_worktree_dirty: true
-# harness_source_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
+# harness_source_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
 # harness_source_dirty: false
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
 # deps_source_dirty: false
-# binary_sha256: 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff
+# binary_sha256: 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc
 # note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
@@ -17,7 +17,7 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-08T01:03:42Z
+# timestamp_utc: 2026-08-08T03:07:36Z
 # invocation: /home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas equivalence --matrices 512 --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/equivalence-2026-08-07.csv
 # check: per-matrix permanent values against the scalar single-word kernel
 # matrices_per_cell: 512

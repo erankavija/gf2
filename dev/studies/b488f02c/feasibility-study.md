@@ -63,7 +63,7 @@ is stated at that strength in §7.6.
 
 Every claim in this section was checked against the source on 2026-08-07. Line
 references are to the state of `crates/` recorded as `deps_source_sha` in every
-receipt (`195f8254`), alongside the harness commit `12f6e81a` that produced the
+receipt (`195f8254`), alongside the harness commit `7189d66f` that produced the
 measurements.
 
 - **F_3**: `permanent_bipedal3` (`permanent/bipedal3.rs:165`) dispatches to a
@@ -171,8 +171,8 @@ repository carries `.jit/` workflow state that other agents commit
 independently, so a whole-repo dirty flag says nothing about whether the
 measured code was committed. **All five receipts were produced by one
 executable, `binary_sha256`
-`87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff`, built at
-harness source commit `12f6e81a` — the harness tip — with
+`1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc`, built at
+harness source commit `7189d66f` — the harness tip — with
 `harness_source_dirty: false`, `deps_source_sha: 195f8254` and
 `deps_source_dirty: false`.** No commit post-dates the harness state that
 produced them, so a reproduction builds at the tip and draws these exact stream
@@ -207,6 +207,17 @@ preamble figures are now formatted from the constants they describe:
    contradicted itself on the disjointness that makes its samples poolable
    (§4.7). The emitted note is now formatted from the constants themselves
    (`12f6e81a`), and the receipts below it were regenerated.
+5. One asserted in its own preamble that the GPU batch ceiling "is a watchdog
+   limit rather than a memory or occupancy one" — a cause this study had already
+   retracted, since the fault occurred once and nothing captured identifies its
+   mechanism (§4.5). The emitted note now records the observation and names the
+   log as its only receipt (`7189d66f`). That sweep also restated four other
+   emitted claims that outran their evidence: drift is measured rather than
+   attributed to boost decay, the projection's low bias is marked as an
+   extrapolation from the $q = 3$ GPU chain to fields it was never checked on,
+   the censoring contract no longer promises numbers a current grid does not
+   carry, and `no_prior` is described as this harness's own missing baseline
+   rather than as a statement about the literature.
 
 That set is superseded by the present one, which was regenerated end to end —
 equivalence, grid, sustained, envelope, zero fractions — from the single binary
@@ -294,9 +305,9 @@ each projected from its own measured rate at $n = 20$:
 
 | cell | projected rate | implied repetition | verdict |
 |---|---|---|---|
-| $q{=}5$, $n{=}24$, $M{=}256$ | 1.687 | 152 s | over the 120 s cap |
+| $q{=}5$, $n{=}24$, $M{=}256$ | 1.686 | 152 s | over the 120 s cap |
 | $q{=}5$, $n{=}24$, $M{=}1024$ | 3.330 | 308 s | over |
-| $q{=}5$, $n{=}28$, $M{=}256$ | 0.0904 | 2832 s | far over |
+| $q{=}5$, $n{=}28$, $M{=}256$ | 0.0903 | 2834 s | far over |
 | $q{=}5$, $n{=}28$, $M{=}1024$ | 0.1784 | 5741 s | far over |
 | $q{=}7$, $n{=}24$, $M{=}256$ | 1.457 | 176 s | over |
 | $q{=}7$, $n{=}24$, $M{=}1024$ | 3.017 | 339 s | over |
@@ -362,10 +373,10 @@ $M = 256$:
 
 | $M$ | projection | predicted | measured | error |
 |---|---|---|---|---|
-| 256 | $n = 20 \rightarrow 24$ | 111.26 | 136.41 | $-18.4\%$ |
+| 256 | $n = 20 \rightarrow 24$ | 111.27 | 136.42 | $-18.4\%$ |
 | 256 | $n = 24 \rightarrow 28$ | 7.308 | 8.533 | $-14.4\%$ |
-| 1024 | $n = 20 \rightarrow 24$ | 253.07 | 308.48 | $-18.0\%$ |
-| 1024 | $n = 24 \rightarrow 28$ | 16.526 | 19.221 | $-14.0\%$ |
+| 1024 | $n = 20 \rightarrow 24$ | 253.24 | 308.46 | $-17.9\%$ |
+| 1024 | $n = 24 \rightarrow 28$ | 16.525 | 19.258 | $-14.2\%$ |
 
 The projection is consistently **low**, by 14–18 % across both batch sizes and
 both steps, because longer kernels amortise per-launch overhead better than the
@@ -391,18 +402,18 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 
 | $q$ | $n$ | scalar | AVX2 | rayon batch | rayon intra | GPU $M{=}256$ | GPU $M{=}1024$ |
 |---|---|---|---|---|---|---|---|
-| 3 | 12 | 50 840 | 17 970 | 311 920 | 38 270 | 217 510 | **315 660** |
-| 3 | 16 | 3 638 | 1 165 | 36 180 | 4 398 | 30 180 | **61 150** |
-| 3 | 20 | 229.3 | 72.97 | 2 497 | 3 000 | 2 136 | **4 859** |
-| 3 | 24 | 14.33 | 4.541 | 155.1 | 297.2 | 136.4 | **308.5** |
-| 3 | 28 | 0.897 | 0.283 | 9.852 | **19.35** | 8.533 | 19.22 |
-| 5 | 12 | 6 811 | — | **73 710** | — | 11 420 | 23 190 |
-| 5 | 16 | 327.3 | — | **4 167** | — | 617.4 | 1 223 |
-| 5 | 20 | 16.41 | — | **218.3** | — | 32.40 | 63.93 |
-| 5 | 24 | 0.852 | — | **11.85** | — | censored | censored |
+| 3 | 12 | 50 940 | 18 240 | 288 060 | 37 690 | 217 360 | **314 710** |
+| 3 | 16 | 3 638 | 1 192 | 36 140 | 4 406 | 30 230 | **61 240** |
+| 3 | 20 | 229.2 | 74.87 | 2 498 | 2 981 | 2 136 | **4 862** |
+| 3 | 24 | 14.35 | 4.643 | 156.5 | 296.5 | 136.4 | **308.5** |
+| 3 | 28 | 0.896 | 0.290 | 9.851 | **19.31** | 8.533 | 19.26 |
+| 5 | 12 | 6 822 | — | **72 880** | — | 11 450 | 23 190 |
+| 5 | 16 | 327.4 | — | **4 166** | — | 618.9 | 1 222 |
+| 5 | 20 | 16.40 | — | **215.0** | — | 32.38 | 63.93 |
+| 5 | 24 | 0.848 | — | **11.85** | — | censored | censored |
 | 5 | 28 | 0.0462 | — | **0.648** | — | censored | censored |
-| 7 | 12 | 6 484 | — | **72 840** | — | 10 020 | 21 490 |
-| 7 | 16 | 313.1 | — | **3 740** | — | 536.3 | 1 109 |
+| 7 | 12 | 6 497 | — | **72 580** | — | 10 050 | 21 530 |
+| 7 | 16 | 313.4 | — | **3 739** | — | 536.6 | 1 109 |
 | 7 | 20 | unsupported | — | unsupported | — | 27.98 | **57.93** |
 | 7 | 24 | unsupported | — | unsupported | — | censored | censored |
 | 7 | 28 | unsupported | — | unsupported | — | censored | censored |
@@ -410,7 +421,7 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 Four results carry consequences beyond the envelope.
 
 **The public F_3 dispatcher selects the slower path (gap G6).** The scalar
-single-word kernel beats the AVX2 single-word kernel by **2.83x-3.18x** at every
+single-word kernel beats the AVX2 single-word kernel by **2.79x-3.09x** at every
 $n$ measured — the ratio is smallest at $n=12$ and rises monotonically with $n$,
 and the two rates are in the table above — yet `permanent_bipedal3` prefers AVX2
 whenever the CPU supports it. The cause is documented in the kernel itself: the
@@ -422,7 +433,7 @@ of four lanes carry no data. This reproduces the ratio already visible in
 **The GPU leads at $q=3$ up to $n = 24$, and loses at $q \in \{5,7\}$
 throughout.** For $q = 3$ the GPU at $M = 1024$ is the fastest path through
 $n = 24$, but its margin over intra-matrix rayon collapses across the top of the
-range: 1.62x at $n = 20$, 1.04x at $n = 24$, and **0.993x at $n = 28$**. For
+range: 1.63x at $n = 20$, 1.04x at $n = 24$, and **0.997x at $n = 28$**. For
 $q = 5$ and $q = 7$ the CPU batch-rayon path wins wherever both are supported,
 by roughly a factor of three at every shared $n$ in both fields. The F_7 GPU
 kernel is the weakest of the three: its LUT-based arithmetic leaves it censored
@@ -431,17 +442,17 @@ above $n = 20$.
 **Whether the GPU or intra-matrix rayon leads at $n = 28$ is not resolved by
 these measurements, and the receipts bound that quantitatively.** Each rate is
 one cell execution, so the two are point comparisons rather than replicated
-ones, and the gap between them is **0.65 %**. Two things in the receipts bound
+ones, and the gap between them is **0.30 %**. Two things in the receipts bound
 what a gap that size means, and they disagree in an informative way:
 
 - *Within* a single cell execution the repetitions are very stable: `rep_sd_s`
-  is 0.076 % of a repetition for intra-matrix rayon and 0.152 % for the GPU,
-  both well under 0.65 %. On that evidence alone the gap would look real.
+  is 0.176 % of a repetition for intra-matrix rayon and 0.151 % for the GPU,
+  both under 0.30 %. On that evidence alone the gap would look real.
 - *Across* independent executions of the same configuration it is not. The
   sustained runs re-measure nine grid configurations end to end; at identical
-  batch size the three GPU pairs disagree with their grid cells by 1.08 %,
-  0.01 % and 0.03 %, and over all nine pairs the disagreement reaches 1.77 %
-  with a median of 0.80 %. A 0.65 % gap sits inside that spread.
+  batch size the three GPU pairs disagree with their grid cells by 1.02 %,
+  0.03 % and 0.05 %, and over all nine pairs the disagreement reaches 1.79 %
+  with a median of 0.31 %. A 0.30 % gap sits inside that spread.
 
 Repetition-level stability therefore understates run-to-run reproducibility by
 roughly an order of magnitude, and reproducibility is the relevant scale when
@@ -455,7 +466,7 @@ An earlier revision of this study reported the opposite at $n = 28$ — that
 intra-matrix rayon beat the GPU by 2.3x. **That was an artifact of the
 superseded censoring rule**, which declined the $q{=}3$, $n{=}28$, $M{=}1024$
 cell and left only $M{=}256$ to compare against. With the corrected rule that
-cell is measured, and the two rates come within 0.65 % of each other — a gap
+cell is measured, and the two rates come within 0.30 % of each other — a gap
 the preceding paragraph shows these measurements cannot resolve, rather than a
 2.3x lead for either. Recorded per
 `@/inv/falsification-preserved`; it is the clearest illustration of why a
@@ -465,7 +476,7 @@ scheduling convenience.
 **This qualifies the 2026-05-15 GPU crossover receipt.** That receipt reports
 the GPU beating "CPU SIMD" by 28.65x at $n=24$ and 30.32x at $n=28$ for $q=3$,
 both at $M=256$. Those ratios reproduce here — GPU $M{=}256$ over `cpu_avx2`
-gives 30.0x at $n=24$ and 30.2x at $n=28$ — but the baseline is the AVX2
+gives 29.4x at $n=24$ and 29.5x at $n=28$ — but the baseline is the AVX2
 single-thread path, which §4.4 has just shown to be the *slower* of the two
 single-thread CPU paths, and unparallelised besides. Restated against the best
 CPU path measured here, the same $M{=}256$ configuration is **0.46x at $n=24$**
@@ -494,16 +505,16 @@ averaged away.
 
 | $q$ | $n$ | backend | $M$ | sustained | grid cell | ratio | first→last quarter |
 |---|---|---|---|---|---|---|---|
-| 3 | 24 | scalar | 8 | 14.447 | 14.332 | 1.008 | 14.429 → 14.453 |
-| 3 | 24 | AVX2 | 4 | 4.572 | 4.541 | 1.007 | 4.572 → 4.572 |
-| 3 | 24 | rayon batch | 96 | 157.166 | 155.075 | 1.013 | 157.849 → 156.393 |
-| 3 | 24 | rayon intra | 24 | 298.986 | 297.229 | 1.006 | 298.869 → 299.102 |
-| 3 | 24 | GPU | 1024 | 311.799 | 308.482 | 1.011 | 312.230 → 310.805 |
-| 3 | 24 | GPU | 2048 | 207.808 | — | — | 207.686 → 207.653 |
-| 5 | 20 | rayon batch | 96 | 215.100 | 218.290 | 0.985 | 213.589 → 215.717 |
-| 5 | 20 | GPU | 1024 | 63.937 | 63.928 | 1.000 | 63.963 → 63.925 |
-| 7 | 16 | rayon batch | 512 | 3673.487 | 3739.644 | 0.982 | 3670.061 → 3675.817 |
-| 7 | 20 | GPU | 1024 | 57.951 | 57.931 | 1.000 | 57.978 → 57.950 |
+| 3 | 24 | scalar | 8 | 14.396 | 14.352 | 1.003 | 14.356 → 14.416 |
+| 3 | 24 | AVX2 | 4 | 4.695 | 4.643 | 1.011 | 4.692 → 4.699 |
+| 3 | 24 | rayon batch | 96 | 156.862 | 156.454 | 1.003 | 157.643 → 156.213 |
+| 3 | 24 | rayon intra | 24 | 298.735 | 296.455 | 1.008 | 298.723 → 298.766 |
+| 3 | 24 | GPU | 1024 | 311.602 | 308.463 | 1.010 | 312.100 → 310.727 |
+| 3 | 24 | GPU | 2048 | 207.797 | — | — | 207.678 → 207.643 |
+| 5 | 20 | rayon batch | 96 | 215.060 | 214.976 | 1.000 | 213.980 → 215.748 |
+| 5 | 20 | GPU | 1024 | 63.948 | 63.930 | 1.000 | 63.969 → 63.943 |
+| 7 | 16 | rayon batch | 512 | 3671.794 | 3738.640 | 0.982 | 3667.405 → 3678.380 |
+| 7 | 20 | GPU | 1024 | 57.960 | 57.931 | 1.000 | 57.983 → 57.958 |
 
 Rates are matrices/second; "grid cell" is the same $(q, n, \text{backend})$ cell
 from §4.4. The batch sizes coincide only on the GPU rows, where $M$ is fixed by
@@ -515,7 +526,7 @@ runs share matrices. Two conclusions.
 
 **The short-cell protocol holds.** Every run lands within 2 % of its grid cell,
 and boost decay across a 180 s window never reaches 1 % (largest
-first-to-last-quarter drift: 0.996 % on batch rayon). The five-second cells are
+first-to-last-quarter drift: 0.907 % on batch rayon). The five-second cells are
 not riding a boost window, so the envelope built on them is sound.
 
 **$M = 1024$ is the best batch size tested, and the question is open above
@@ -546,7 +557,7 @@ captured and separates it explicitly from what is reconstructed and what is
 unrecoverable. Two things follow: the observation is **not reproducible from a
 committed CSV row** and is reported as an operational observation rather than a
 measurement; and every committed number postdates it, taken at harness source
-commit `12f6e81a` after a full cross-backend equivalence re-check passed on all
+commit `7189d66f` after a full cross-backend equivalence re-check passed on all
 six backends (`equivalence-2026-08-07.csv`, itself generated after the fault).
 The $M = 2048$ row in the sustained table is the surviving in-band probe.
 
@@ -581,18 +592,18 @@ the conservative $p = 1/2$ column is in the CSV.
 
 | $q$ | $n$ | best path | rate | $N$ for SE $10^{-3}$ | hours | $N$ for SE $10^{-4}$ | hours |
 |---|---|---|---|---|---|---|---|
-| 3 | 12 | GPU $M{=}1024$ | 315 660 | 222 223 | 0.00 | 22 222 223 | 0.02 |
-| 3 | 16 | GPU $M{=}1024$ | 61 150 | 222 223 | 0.00 | 22 222 223 | 0.10 |
-| 3 | 20 | GPU $M{=}1024$ | 4 859 | 222 223 | 0.01 | 22 222 223 | 1.27 |
+| 3 | 12 | GPU $M{=}1024$ | 314 710 | 222 223 | 0.00 | 22 222 223 | 0.02 |
+| 3 | 16 | GPU $M{=}1024$ | 61 240 | 222 223 | 0.00 | 22 222 223 | 0.10 |
+| 3 | 20 | GPU $M{=}1024$ | 4 862 | 222 223 | 0.01 | 22 222 223 | 1.27 |
 | 3 | 24 | GPU $M{=}1024$ | 308.5 | 222 223 | 0.20 | 22 222 223 | 20.01 (x) |
-| 3 | 28 | rayon intra | 19.35 | 222 223 | 3.19 | 22 222 223 | 319.1 (x) |
-| 5 | 12 | rayon batch | 73 710 | 160 000 | 0.00 | 16 000 000 | 0.06 |
-| 5 | 16 | rayon batch | 4 167 | 160 000 | 0.01 | 16 000 000 | 1.07 |
-| 5 | 20 | rayon batch | 218.3 | 160 000 | 0.20 | 16 000 000 | 20.36 (x) |
-| 5 | 24 | rayon batch | 11.85 | 160 000 | 3.75 | 16 000 000 | 375.0 (x) |
-| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.59 (x) | 16 000 000 | 6859 (x) |
-| 7 | 12 | rayon batch | 72 840 | 122 449 | 0.00 | 12 244 898 | 0.05 |
-| 7 | 16 | rayon batch | 3 740 | 122 449 | 0.01 | 12 244 898 | 0.91 |
+| 3 | 28 | rayon intra | 19.31 | 222 223 | 3.20 | 22 222 223 | 319.6 (x) |
+| 5 | 12 | rayon batch | 72 880 | 160 000 | 0.00 | 16 000 000 | 0.06 |
+| 5 | 16 | rayon batch | 4 166 | 160 000 | 0.01 | 16 000 000 | 1.07 |
+| 5 | 20 | rayon batch | 215.0 | 160 000 | 0.21 | 16 000 000 | 20.67 (x) |
+| 5 | 24 | rayon batch | 11.85 | 160 000 | 3.75 | 16 000 000 | 375.1 (x) |
+| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.58 (x) | 16 000 000 | 6858 (x) |
+| 7 | 12 | rayon batch | 72 580 | 122 449 | 0.00 | 12 244 898 | 0.05 |
+| 7 | 16 | rayon batch | 3 739 | 122 449 | 0.01 | 12 244 898 | 0.91 |
 | 7 | 20 | GPU $M{=}1024$ | 57.93 | 122 449 | 0.59 | 12 244 898 | 58.71 (x) |
 | 7 | 24 | — | no rate | — | — | — | — |
 | 7 | 28 | — | no rate | — | — | — | — |
@@ -615,11 +626,11 @@ ratio and a classification:
 
 | $n$ | prior SE | prior trials | this budget's SE | ratio | verdict |
 |---|---|---|---|---|---|
-| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.379\times10^{-6}$ | 1.08 | matches |
-| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.948\times10^{-6}$ | 1.50 | **exceeds** |
-| 20 | $4.714\times10^{-5}$ | $10^{8}$ | $3.529\times10^{-5}$ | 1.34 | **exceeds** |
+| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.385\times10^{-6}$ | 1.07 | matches |
+| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.941\times10^{-6}$ | 1.50 | **exceeds** |
+| 20 | $4.714\times10^{-5}$ | $10^{8}$ | $3.528\times10^{-5}$ | 1.34 | **exceeds** |
 | 24 | $1.491\times10^{-4}$ | $10^{7}$ | $1.401\times10^{-4}$ | 1.06 | matches |
-| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.593\times10^{-4}$ | 0.84 | below |
+| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.598\times10^{-4}$ | 0.84 | below |
 
 A 12 h budget on this host beats the published precision at $n = 16$ and
 $n = 20$, matches it at $n = 12$ and $n = 24$, and falls short at $n = 28$.
@@ -647,18 +658,18 @@ pooled samples are independent — in `zero-fraction-2026-08-07.csv`:
 
 | $q$ | $n$ | matrices | $\hat p$ | 95 % Wilson | $z$ vs $1/q$ |
 |---|---|---|---|---|---|
-| 3 | 12 | 5 637 652 | 0.33346 | [0.33307, 0.33385] | $+0.65$ |
-| 3 | 16 | 816 002 | 0.33385 | [0.33282, 0.33487] | $+0.98$ |
-| 3 | 20 | 73 497 | 0.33386 | [0.33046, 0.33728] | $+0.31$ |
-| 3 | 24 | 191 405 | 0.33453 | [0.33242, 0.33665] | $+1.11$ |
+| 3 | 12 | 5 429 105 | 0.33337 | [0.33297, 0.33377] | $+0.18$ |
+| 3 | 16 | 810 322 | 0.33387 | [0.33285, 0.33490] | $+1.03$ |
+| 3 | 20 | 73 907 | 0.33370 | [0.33031, 0.33711] | $+0.21$ |
+| 3 | 24 | 191 465 | 0.33454 | [0.33243, 0.33666] | $+1.12$ |
 | 3 | 28 | 5 807 | 0.33666 | [0.32462, 0.34892] | $+0.54$ |
-| 5 | 12 | 591 072 | 0.20035 | [0.19933, 0.20137] | $+0.67$ |
-| 5 | 16 | 33 680 | 0.20018 | [0.19594, 0.20449] | $+0.08$ |
-| 5 | 20 | 58 784 | 0.19982 | [0.19660, 0.20307] | $-0.11$ |
+| 5 | 12 | 582 850 | 0.20026 | [0.19923, 0.20129] | $+0.49$ |
+| 5 | 16 | 33 713 | 0.20013 | [0.19589, 0.20444] | $+0.06$ |
+| 5 | 20 | 58 789 | 0.19980 | [0.19659, 0.20305] | $-0.12$ |
 | 5 | 24 | 490 | 0.19592 | [0.16320, 0.23337] | $-0.23$ |
 | 5 | 28 | 101 | 0.14852 | [0.09212, 0.23067] | $-1.29$ |
-| 7 | 12 | 577 736 | 0.14402 | [0.14312, 0.14493] | $+2.53$ |
-| 7 | 16 | 692 729 | 0.14317 | [0.14235, 0.14400] | $+0.74$ |
+| 7 | 12 | 577 226 | 0.14404 | [0.14314, 0.14495] | $+2.57$ |
+| 7 | 16 | 692 160 | 0.14319 | [0.14236, 0.14401] | $+0.78$ |
 | 7 | 20 | 17 664 | 0.13779 | [0.13279, 0.14296] | $-1.92$ |
 
 Grid and sustained samples are both pooled. Sustained runs reserve disjoint
@@ -688,7 +699,7 @@ $1/q$ contradicts a theorem and indicts this pipeline rather than the theorem.
 below $1/q$. One cell excludes $1/q$ outright — $q{=}7$, $n{=}12$, whose
 interval lies wholly *above* $1/7$ — which is the direction the theorem permits,
 not a failure. It is also the largest deviation in either direction at
-$z = +2.53$.
+$z = +2.57$.
 
 **No numeric bound on $C$ follows from these cells, and an earlier revision of
 this study wrongly claimed one.** [HKS2026] eq. 1.4 reads
@@ -739,7 +750,7 @@ independent defects were behind that, both found by review and both now fixed:
    speed and the recorded seed did not regenerate the recorded sample.
 
 With disjoint streams and a deterministic timed start, independent
-re-measurement puts $q{=}5$, $n{=}16$ at $0.20018$ ($z = +0.08$) where it had
+re-measurement puts $q{=}5$, $n{=}16$ at $0.20013$ ($z = +0.06$) where it had
 read $0.19310$ ($z = -3.08$). **The apparent signal was measurement artefact and
 sampling fluctuation, not structure.** Recorded rather than quietly dropped, per
 `@/inv/falsification-preserved`: the earlier reading is what the study said, and
@@ -1197,10 +1208,10 @@ adds, and where it does not:
    reproduction.
 2. **Extension beyond $n = 30$: not available here, by a margin that depends on
    the target.** His table already reaches $n = 30$. Projecting this study's
-   fastest measured $q = 3$ path at $n = 28$ — intra-matrix rayon, 19.35
+   fastest measured $q = 3$ path at $n = 28$ — intra-matrix rayon, 19.31
    matrices/s — through Ryser's $n \cdot 2^n$ work model gives an **estimated**
    4.51 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.49 from
-   19.22. **These are projections, not measurements**, formed by the same
+   19.26. **These are projections, not measurements**, formed by the same
    machinery as §4.3's censored cells, from the reference measurements named
    here, and §4.3 shows that machinery runs 14-18 % **low** on this hardware, so
    the true rates are likely somewhat higher. Against the 12 h budget's

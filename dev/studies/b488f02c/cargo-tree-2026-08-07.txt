@@ -1,14 +1,14 @@
 # Resolved dependency graph for the b488f02c feasibility harness.
 # The crate gitignores Cargo.lock, so this file is the committed provenance
 # record of what was actually linked.
-# generated: 2026-08-08T02:29:08Z
-# harness_source_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
+# generated: 2026-08-08T04:28:04Z
+# harness_source_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
-# binary_sha256: 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff
+# binary_sha256: 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # invocation: cargo tree --features hip --edges all
 # harness_source_sha and binary_sha256 are the build state of the five
-# receipts committed beside this file, and 12f6e81a is the harness tip.
+# receipts committed beside this file, and 7189d66f is the harness tip.
 # The dependency graph below is unchanged from the previously committed
 # revision of this file, verified by diff of the tree body; only the
 # provenance header moved.
