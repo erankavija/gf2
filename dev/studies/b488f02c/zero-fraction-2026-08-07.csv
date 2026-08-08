@@ -1,10 +1,10 @@
-# git_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
+# git_sha: f2a7d1061fc2cd3f280c95f291b2fe5e70da3037
 # git_worktree_dirty: true
-# harness_source_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
+# harness_source_sha: 0e0b0aecbdf5e239c22006574dc553527c1a0162
 # harness_source_dirty: false
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
 # deps_source_dirty: false
-# binary_sha256: 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc
+# binary_sha256: b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c
 # note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
@@ -17,23 +17,25 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-08T04:24:43Z
+# timestamp_utc: 2026-08-08T07:23:02Z
 # invocation: /home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas zerofrac --throughput /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv --sustained /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/zero-fraction-2026-08-07.csv
 # pooled from: /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/throughput-2026-08-07.csv, /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv
 # these counts are a by-product of the timing protocol; sample sizes are whatever each cell needed, not a designed sampling plan
 # interval: Wilson score, 95 % (z = 1.959964)
 # seed_root: 0xb488f02c00000001
 q,n,matrices,zeros,p_hat,wilson_lo_95,wilson_hi_95,one_over_q,one_over_q_inside_interval,scheinerman2024_p,scheinerman2024_inside_interval
-3,12,5429105,1809898,0.333369,0.332973,0.333766,0.333333,true,0.333354,true
-3,16,810322,270545,0.333873,0.332847,0.334901,0.333333,true,0.333309,true
-3,20,73907,24663,0.333703,0.330312,0.337111,0.333333,true,0.333389,true
-3,24,191465,64053,0.334542,0.332431,0.336658,0.333333,true,0.333352,true
-3,28,5807,1955,0.336663,0.324620,0.348922,0.333333,true,0.333743,true
-5,12,582850,116720,0.200257,0.199232,0.201287,0.200000,true,none,n/a
-5,16,33713,6747,0.200131,0.195894,0.204435,0.200000,true,none,n/a
-5,20,58789,11746,0.199799,0.196587,0.203051,0.200000,true,none,n/a
-5,24,490,96,0.195918,0.163198,0.233370,0.200000,true,none,n/a
-5,28,101,15,0.148515,0.092116,0.230671,0.200000,true,none,n/a
-7,12,577226,83143,0.144039,0.143135,0.144947,0.142857,false,none,n/a
-7,16,692160,99107,0.143185,0.142362,0.144012,0.142857,true,none,n/a
-7,20,17664,2434,0.137794,0.132790,0.142956,0.142857,true,none,n/a
+3,12,5102485,1701017,0.333370,0.332961,0.333779,0.333333,true,0.333354,true
+3,16,813201,270567,0.332718,0.331695,0.333743,0.333333,true,0.333309,true
+3,20,74090,24647,0.332663,0.329279,0.336064,0.333333,true,0.333389,true
+3,24,191567,64113,0.334677,0.332567,0.336793,0.333333,true,0.333352,true
+3,28,5812,1994,0.343083,0.330985,0.355388,0.333333,true,0.333743,true
+5,12,649559,130030,0.200182,0.199211,0.201157,0.200000,true,none,n/a
+5,16,36572,7256,0.198403,0.194348,0.202522,0.200000,true,none,n/a
+5,20,58848,11779,0.200160,0.196947,0.203412,0.200000,true,none,n/a
+5,24,500,85,0.170000,0.139620,0.205412,0.200000,true,none,n/a
+5,28,106,26,0.245283,0.173238,0.335145,0.200000,true,none,n/a
+7,12,646742,92173,0.142519,0.141669,0.143373,0.142857,true,none,n/a
+7,16,695955,99718,0.143282,0.142461,0.144107,0.142857,true,none,n/a
+7,20,17819,2438,0.136820,0.131853,0.141944,0.142857,false,none,n/a
+7,24,10,1,0.100000,0.017876,0.404150,0.142857,true,none,n/a
+7,28,5,0,0.000000,0.000000,0.434482,0.142857,true,none,n/a
