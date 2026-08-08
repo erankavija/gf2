@@ -247,9 +247,9 @@ fn cmd_grid(args: &[String]) {
     // randomisation was measured to be affordable only because the earlier,
     // superseded rule was wrong; this schedule is the price of the correct
     // inference. Within-stratum randomisation is retained, the machine is warmed
-    // to steady state first, and the sustained runs bound drift over a 180 s
-    // window at under 0.6 %, so the residual correlation between n and elapsed
-    // time is small and is recorded here rather than hidden.
+    // to steady state first, and the sustained runs bound drift over the 180 s
+    // window (magnitude: see the sustained receipt and the study), so the
+    // residual correlation between n and elapsed time is small, recorded here.
     shuffle(&mut specs, SEED_ROOT);
     specs.sort_by_key(|s| s.n);
     for (i, spec) in specs.iter_mut().enumerate() {
