@@ -1,0 +1,30 @@
+[package]
+name = "anchor-report"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+description = "Reports the observed side of the b488f02c order-3 sampling anchor. Standalone non-workspace receipt generator."
+
+# Standalone, outside the root workspace, like the harness it links. It exists
+# only to print what the harness's own anchor assertion checks but does not
+# emit: a passing `assert!` produces no numbers, and adding a `println!` to the
+# harness would move `harness_source_sha` and stale the pinned receipts
+# (DEC-01, DEC-02). Linking the harness as a library instead exercises the
+# campaign's compiled sampler and kernels while changing no pinned binary.
+#
+#   cargo run --manifest-path dev/studies/b488f02c/anchor-report/Cargo.toml --release
+
+[dependencies]
+permanent-sampling-feas = { path = "../../../research/permanent-sampling-feas" }
+gf2-algebra = { path = "../../../../crates/gf2-algebra", features = [
+    "simd",
+    "parallel",
+    "f5",
+    "f7",
+] }
+
+[profile.release]
+opt-level = 3
+
+[workspace]

@@ -2,13 +2,17 @@
 
 Paused mid-gate-cycle on issue `b488f02c`. This note is the resume contract.
 
-> **Status update 2026-08-08.** Resume step 1 is **done**: all five receipts were
-> regenerated from one binary and the results folded into the study
-> (`754755d5`), and the harness comment that the new sustained numbers falsified
-> was reworded (`8e3a7e27`). Steps 2–3 — the gate cycle and issue completion —
-> are in progress with the lead. The state described below is the state at the
-> pause and is kept as written; where it and this note disagree, this note is
-> current.
+> **Status update 2026-08-08.** Resume step 1 is **done**, though it took more
+> than the one regeneration this note anticipated: the receipts were rebuilt
+> several times as review found harness defects, and the end state is the
+> two-binary provenance recorded as **DEC-02**. The four measurement receipts
+> (throughput, sustained, envelope, zero-fraction) come from binary
+> `b1fe566f…` at harness commit `0e0b0aec`; the equivalence receipt was
+> regenerated later at `2bea03a4`, binary `77b52ddb…`, to add the $q = 7$,
+> $n = 20$ cell. **DEC-01** fixes the measurement set: no further regeneration.
+> Steps 2–3 — the gate cycle and issue completion — are in progress with the
+> lead. The state described below is the state at the pause and is kept as
+> written; where it and this note disagree, this note is current.
 
 ## Where things stand
 

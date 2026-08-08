@@ -200,6 +200,7 @@ the exact invocation:
 | `determinant-anchor-check.py` | executable check of §6's exact singular probability |
 | `determinant-anchor-2026-08-08.txt` | that check's committed output |
 | `order3-anchor-check.py` | executable receipt for §4.7's order-3 sampling anchor |
+| `anchor-report/` | standalone crate printing that anchor's observed draw |
 | `order3-anchor-2026-08-08.txt` | that check's committed output |
 
 Every CSV preamble records `harness_source_sha` and `harness_source_dirty`
@@ -1006,11 +1007,11 @@ exact order-3 zero fraction within $4\sigma$ over $4 \times 10^5$ draws per
 field, receipted in `order3-anchor-2026-08-08.txt` from
 `order3-anchor-check.py`, which enumerates the exact fractions independently in
 Python — $907/2187$, $17581/78125$ and $126295/823543$, reproducing
-[Scheinerman2024]'s $z(3) = 8163$ — and then runs the harness's own anchor over
-the campaign sampler at seed root `0xB488_F02C`, stream 12 345. A passing
-assertion emits no point estimate, so that receipt records the verdict and the
-anchor's parameters rather than an observed fraction; and no deviation localises
-to a single backend.
+[Scheinerman2024]'s $z(3) = 8163$ — and then reproduces the anchor's draw
+through the harness's own sampler and kernels, at seed root `0xB488_F02C`,
+stream 12 345. The observed estimates are $0.413127$, $0.224820$ and $0.153390$
+against exact values of $0.414723$, $0.225037$ and $0.153356$, at
+$z = -2.05, -0.33, +0.06$; and no deviation localises to a single backend.
 
 **The design gain survives the retraction.** [HKS2026] Theorem 1.3 gives the
 campaign a free, sharp, per-cell acceptance test — $\Pr \ge 1/q$ must hold at
@@ -1349,9 +1350,9 @@ $q = 3, 5, 7$ — but not a useful one at these field orders: each ceiling sits
 $0.03$ to $0.41$ above $1/q$, while the deviation the campaign measures is of
 order $10^{-3}$ or smaller (§4.7). So it is **not** established that the
 finite-$n$ value sits *numerically close* to $1/q$ in any sense the campaign
-cares about; what is established is a floor at $1/q$, a ceiling three or more
-ceiling whose allowed excess over $1/q$ runs from 32 to 4 100 times the
-campaign's target standard error — $407\times$ and $4\,074\times$ the
+cares about; what is established is a floor at $1/q$, a ceiling whose allowed
+excess over $1/q$ runs from 32 to 4 100 times the campaign's target standard
+error — $407\times$ and $4\,074\times$ the
 $10^{-3}$ and $10^{-4}$ targets at $q = 3$, $88\times$ and $880\times$ at
 $q = 5$, $32\times$ and $321\times$ at $q = 7$ — so between one and a half and
 three and a half orders of magnitude too loose to constrain $\delta(n)$, and an

@@ -21,10 +21,18 @@ This script does two things and keeps them separate.
    the thing under test, so the check must run its code rather than a
    reimplementation: a Python re-draw would validate Python.
 
-Known limitation, stated rather than worked around: a passing Rust assertion
-emits no numbers, so this receipt records the verdict and the test's parameters,
-not the observed point estimate. Printing the estimate would require editing the
-harness, which the receipt set's provenance decisions (DEC-01, DEC-02) forbid.
+3. It runs `anchor-report`, a standalone crate beside this script that links the
+   harness as a library and reproduces the same draw, so the observed counts,
+   estimates, Wilson intervals and z values appear here as numbers rather than
+   as a pass verdict. A passing Rust assertion emits nothing, and adding a
+   `println!` to the harness would move `harness_source_sha` and stale the
+   pinned receipts (DEC-01, DEC-02); linking it instead exercises the same
+   compiled sampler and kernels while changing no pinned binary.
+
+The anchor's three parameters are literals inside the harness test rather than
+exported constants, so `anchor-report` transcribes them. This script parses them
+out of the test source and checks the transcription, which is what keeps the two
+from drifting apart.
 
 Usage:
     python3 order3-anchor-check.py > order3-anchor-2026-08-08.txt
@@ -113,6 +121,47 @@ def main() -> int:
     print(f"scheinerman2024_table3_agrees: {'yes' if ok_scheinerman else 'NO'}")
     print()
 
+    print("## Observed draw, via the anchor-report crate")
+    print()
+    ar = pathlib.Path(__file__).resolve().parent / "anchor-report"
+    build = subprocess.run(
+        ["cargo", "build", "--release", "--quiet"], cwd=ar, capture_output=True, text=True
+    )
+    if build.returncode != 0:
+        print("anchor_report_build: FAILED")
+        print(build.stderr.strip()[:2000])
+        return 1
+    rustc = subprocess.run(["rustc", "--version"], capture_output=True, text=True).stdout.strip()
+    cargo = subprocess.run(["cargo", "--version"], capture_output=True, text=True).stdout.strip()
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ar, capture_output=True, text=True
+    ).stdout.strip()
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain", "--", "."], cwd=ar, capture_output=True, text=True
+    ).stdout.strip()
+    print(f"crate: {ar.name} (standalone, outside the root workspace)")
+    print(f"invocation: cargo run --manifest-path {ar}/Cargo.toml --release")
+    print(f"rustc: {rustc}")
+    print(f"cargo: {cargo}")
+    print(f"repo_head_at_run: {head}")
+    print(f"crate_dir_dirty: {'yes' if dirty else 'no'}")
+    run = subprocess.run([str(ar / "target" / "release" / "anchor-report")],
+                         capture_output=True, text=True)
+    print()
+    print(run.stdout.rstrip())
+    observed_ok = run.returncode == 0
+    print()
+    # The transcription check: the crate's parameters must match the test source.
+    used = re.search(r"anchor_parameters_used: seed_root=0x([0-9A-Fa-f]+) stream=(\d+) draws_per_field=(\d+)", run.stdout)
+    match = (
+        used is not None
+        and used.group(1).lower() == params["sampler_seed_root"].replace("0x", "").replace("_", "").lower()
+        and used.group(2) == params["sampler_stream"]
+        and used.group(3) == params["draws_per_field"]
+    )
+    print(f"parameters_match_harness_test: {'yes' if match else 'NO'}")
+    print()
+
     print("## Harness anchor test")
     print()
     cmd = [
@@ -129,12 +178,11 @@ def main() -> int:
     print(f"exit_code: {proc.returncode}")
     print(f"anchor_passes: {'yes' if passed else 'NO'}")
     print()
-    print("# A passing Rust assertion prints nothing, so no point estimate or")
-    print("# interval appears above: what the harness reports on success is the")
-    print("# verdict that |z| < the threshold shown in the parameters. On failure")
-    print("# the assertion message carries the observed fraction and its z.")
+    print("# The assertion above prints nothing on success; the observed numbers")
+    print("# come from the anchor-report section, which reproduces the same draw")
+    print("# against the same library code.")
 
-    return 0 if (ok_scheinerman and passed) else 1
+    return 0 if (ok_scheinerman and passed and observed_ok and match) else 1
 
 
 if __name__ == "__main__":

@@ -1,17 +1,23 @@
 # Resolved dependency graph for the b488f02c feasibility harness.
 # The crate gitignores Cargo.lock, so this file is the committed provenance
 # record of what was actually linked.
-# generated: 2026-08-08T07:36:32Z
-# harness_source_sha: 0e0b0aecbdf5e239c22006574dc553527c1a0162
-# deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
-# binary_sha256: b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c
+# generated: 2026-08-08T10:15:23Z
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # invocation: cargo tree --features hip --edges all
-# harness_source_sha and binary_sha256 are the build state of the five
-# receipts committed beside this file, and 0e0b0aec is the harness tip.
-# The dependency graph below is unchanged from the previously committed
-# revision of this file, verified by diff of the tree body; only the
-# provenance header moved.
+#
+# Two binaries produced the committed receipts, per DEC-02:
+#   four measurement receipts (throughput, sustained, envelope, zero-fraction)
+#     harness_source_sha: 0e0b0aecbdf5e239c22006574dc553527c1a0162
+#     binary_sha256: b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c
+#   equivalence receipt
+#     harness_source_sha: 2bea03a482bd51376b844edc22d2a108472b0dcf
+#     binary_sha256: 77b52ddb43e59c722adf2c311b79336e78ce7407a3f261fcfa79cf87350dad02
+# deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
+#
+# The graph below is identical for both. It was captured at 2bea03a4, the
+# later of the two, and diffed against the revision committed at 0e0b0aec:
+# the tree bodies are byte-identical, so this one file describes what both
+# binaries linked. Only the provenance header above distinguishes them.
 permanent-sampling-feas v0.1.0 (/home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas)
 ├── gf2-algebra feature "default"
 │   ├── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra)
