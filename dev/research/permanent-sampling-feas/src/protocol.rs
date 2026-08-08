@@ -19,8 +19,10 @@
 //!
 //! # Repetition and censoring policy
 //!
-//! Every cell first runs an untimed warm-up of at least [`WARMUP_SECONDS`], to
-//! let boost clocks and the GPU settle, drawing from a stream sub-range
+//! Every cell first runs an untimed warm-up of at least [`WARMUP_SECONDS`], on
+//! the assumption that clocks and the GPU reach steady state within it - an
+//! assumption the sustained runs bound rather than verify - drawing from a
+//! stream sub-range
 //! reserved for it so the timed sample stays independent of how many warm-up
 //! repetitions the machine happened to fit. It then repeats until it has both
 //! at least [`MIN_REPS`] repetitions and at least [`MIN_TIMED_SECONDS`] of timed
@@ -56,15 +58,21 @@
 //! upper bound either**: a compute unit hosts several workgroups at once, and
 //! the probe pays per-launch costs that a real batch amortises. An earlier
 //! version of this harness published `W / probe` as an upper bound and the
-//! grid's own measurements exceeded it. The study records that falsification
-//! with the numbers.
+//! grid's own measurements exceeded it. The study's section 4.3 records that
+//! falsification and states which of its numbers a current grid still carries:
+//! a cell with a projection reference records no probe, so the probe side of
+//! that comparison survives only in the superseded receipt it came from.
 //!
 //! ## What the projection is worth
 //!
-//! Scaling a measured batched rate by the work ratio is empirically sound and
-//! mildly **pessimistic** on this hardware. The magnitude is re-derived from
-//! each grid's own `q = 3` GPU chain in the study rather than quoted here, so
-//! that a re-measurement cannot leave a stale percentage behind in the code.
+//! Scaling a measured batched rate by the work ratio can be checked only where
+//! both ends are measured, which in this schedule is the `q = 3` GPU chain.
+//! There it is mildly **pessimistic** at every step. Applying that to the
+//! censored cells, which are `q` in `{5, 7}`, extrapolates across fields and
+//! kernels: it is the best available evidence, not a measured property of the
+//! cells it is applied to. The magnitude is re-derived from each grid's own
+//! `q = 3` chain in the study rather than quoted here, so that a re-measurement
+//! cannot leave a stale percentage behind in the code.
 
 use std::fmt::Write as _;
 use std::time::Instant;
@@ -526,9 +534,10 @@ pub fn run_cell(
                 "not attempted: the measured rate at n={ref_n} projects to {projected:.4} \
 matrices/s at n={n} under Ryser's n*2^n work model, so one repetition would take \
 {projected_rep_s:.0} s against the {MAX_CELL_SECONDS:.0} s cap. The projection is an \
-ESTIMATE and runs mildly LOW on this hardware, so the true rate is somewhat higher; \
-the magnitude is re-derived from this file's own q=3 GPU chain in the study. The cell \
-carries no measured rate"
+ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands \
+LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from \
+that chain, not a measurement of this cell. The magnitude is re-derived from this file's \
+own q=3 chain in the study. The cell carries no measured rate"
             );
             return result;
         }

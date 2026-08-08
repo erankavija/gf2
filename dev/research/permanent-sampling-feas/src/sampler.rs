@@ -3,10 +3,16 @@
 //! # Why rejection
 //!
 //! This sampler consumes bytes, and `256 % 7 = 4`, so a bare `byte % 7` would
-//! over-represent the residues `0..4` by a factor `37/36` — a 2.8 % bias, three
-//! orders of magnitude larger than the $10^{-3}$–$10^{-4}$ effect the campaign
-//! is trying to resolve. Bytes at or above [`accept_bound`] are therefore
-//! discarded and redrawn.
+//! give the residues `0..4` probability `37/256` and the rest `36/256` — the
+//! worst class off uniform by 1.56 %, and 2.78 % between the most and least
+//! likely. Against the campaign's tightest target, a standard error of
+//! $10^{-4}$ on a probability near $1/7$, which is 0.07 % of the same
+//! reference, that is about 22 times the resolution being aimed at. Bytes at or
+//! above [`accept_bound`] are therefore discarded and redrawn.
+//!
+//! An earlier revision of this note put the ratio at three orders of magnitude,
+//! comparing a relative imbalance against an absolute standard error. Both
+//! figures above are relative to $1/7$; the conclusion is unchanged.
 //!
 //! # In-tree alternative and why it is not used
 //!
