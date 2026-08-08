@@ -169,11 +169,13 @@ independently, so a whole-repo dirty flag says nothing about whether the
 measured code was committed. **All five receipts were produced by one
 executable, `binary_sha256`
 `e951b9ccee00531bd501433a49cbda8321fb05e61af294c2c15d68bd384edd33`, built at
-harness source commit `12bb1e3b` — the harness tip — with
-`harness_source_dirty: false`, `deps_source_sha: 195f8254` and
-`deps_source_dirty: false`.** No commit post-dates the harness state that
-produced them, so a reproduction builds at the tip and reproduces these exact
-stream indices.
+harness source commit `12bb1e3b` with `harness_source_dirty: false`,
+`deps_source_sha: 195f8254` and `deps_source_dirty: false`.** One commit
+post-dates that state — `8e3a7e27`, which rewords a comment in `src/main.rs`
+and changes nothing else — and a forced recompile at it produces the
+byte-identical executable, checked with `cmp` against the binary that produced
+these receipts. The pin therefore covers the harness tip, and a reproduction
+built there reproduces these exact stream indices.
 
 `binary_sha256` is what makes the reproduction claim checkable, and it is
 load-bearing rather than decorative: a source SHA describes the checkout, while
