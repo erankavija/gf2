@@ -61,7 +61,7 @@ published numerics are known to us for $q \in \{5, 7\}$.
 
 Every claim in this section was checked against the source on 2026-08-07. Line
 references are to the state of `crates/` recorded as `deps_source_sha` in every
-receipt (`195f8254`), alongside the harness commit `12bb1e3b` that produced the
+receipt (`195f8254`), alongside the harness commit `12f6e81a` that produced the
 measurements.
 
 - **F_3**: `permanent_bipedal3` (`permanent/bipedal3.rs:165`) dispatches to a
@@ -168,14 +168,12 @@ repository carries `.jit/` workflow state that other agents commit
 independently, so a whole-repo dirty flag says nothing about whether the
 measured code was committed. **All five receipts were produced by one
 executable, `binary_sha256`
-`e951b9ccee00531bd501433a49cbda8321fb05e61af294c2c15d68bd384edd33`, built at
-harness source commit `12bb1e3b` with `harness_source_dirty: false`,
-`deps_source_sha: 195f8254` and `deps_source_dirty: false`.** One commit
-post-dates that state — `8e3a7e27`, which rewords a comment in `src/main.rs`
-and changes nothing else — and a forced recompile at it produces the
-byte-identical executable, checked with `cmp` against the binary that produced
-these receipts. The pin therefore covers the harness tip, and a reproduction
-built there reproduces these exact stream indices.
+`87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff`, built at
+harness source commit `12f6e81a` — the harness tip — with
+`harness_source_dirty: false`, `deps_source_sha: 195f8254` and
+`deps_source_dirty: false`.** No commit post-dates the harness state that
+produced them, so a reproduction builds at the tip and draws these exact stream
+indices.
 
 `binary_sha256` is what makes the reproduction claim checkable, and it is
 load-bearing rather than decorative: a source SHA describes the checkout, while
@@ -183,8 +181,9 @@ the hash is taken over the executable that actually ran. The two can disagree �
 a checkout advances the moment a commit lands, an executable only when it is
 rebuilt — and in this study's own history they did.
 
-Three earlier receipt sets were discarded rather than reinterpreted, and the
-last of the three is the reason `binary_sha256` is quoted here:
+Four earlier receipt sets were discarded rather than reinterpreted. The third
+is the reason `binary_sha256` is quoted here, and the fourth is the reason the
+preamble figures are now formatted from the constants they describe:
 
 1. One recorded a whole-repo SHA that predated the harness entirely.
 2. One predated the stream-disjointness and warm-up-determinism fixes that §4.7
@@ -199,6 +198,12 @@ last of the three is the reason `binary_sha256` is quoted here:
    50 of the 105 cells from an interrupted grid, and its envelope and
    zero-fraction files were derived from a throughput file other than the one
    committed beside them.
+4. One announced `streams from 1_000_001` in the sustained preamble while every
+   row it described began at `1_000_000_001`. The note predated the rise of
+   `SUSTAINED_STREAM_BASE` to $10^9$ and was never updated, so the receipt
+   contradicted itself on the disjointness that makes its samples poolable
+   (§4.7). The emitted note is now formatted from the constants themselves
+   (`12f6e81a`), and the receipts below it were regenerated.
 
 That set is superseded by the present one, which was regenerated end to end —
 equivalence, grid, sustained, envelope, zero fractions — from the single binary
@@ -249,10 +254,17 @@ mean of reciprocals is not the reciprocal of the mean.
   $(q, \text{backend}, M)$, so a cell must not run before its reference exists,
   and without the ordering a cell with no reference falls back to probing — at
   $q{=}7$, $n{=}28$ that probe alone costs 42 minutes. The residual risk is
-  bounded rather than assumed away: the machine is warmed to steady state before
-  cell 0, within-stratum order is randomised, and §4.5's sustained runs bound
-  drift across a 180 s window below 1 % on every path, so a slow monotone
-  trend cannot masquerade as an $n$ effect at the magnitudes here.
+  mitigated rather than eliminated, and the residue is a stated limitation of
+  this protocol: the machine is warmed to steady state before cell 0 and
+  within-stratum order is randomised, but **$n$ remains confounded with elapsed
+  time across the grid**. §4.5's sustained runs bound drift *within* a 180 s
+  window below 1 % on every path; they say nothing about drift across the
+  multi-hour span of the whole grid, so a slow monotone trend over that span
+  would be absorbed into the $n$ trend rather than detected. Settling it needs a
+  reference cell re-measured at intervals through the run, which this study did
+  not do. The conclusions drawn here are robust to it only because the rates
+  span four orders of magnitude across $n$ while any plausible thermal or clock
+  drift is a few per cent.
 - Matrices are drawn by exact rejection from ChaCha20 with per-cell
   domain-separated streams (§2, G1); each cell owns $10^5$ stream indices.
 
@@ -280,13 +292,13 @@ each projected from its own measured rate at $n = 20$:
 | cell | projected rate | implied repetition | verdict |
 |---|---|---|---|
 | $q{=}5$, $n{=}24$, $M{=}256$ | 1.687 | 152 s | over the 120 s cap |
-| $q{=}5$, $n{=}24$, $M{=}1024$ | 3.329 | 308 s | over |
+| $q{=}5$, $n{=}24$, $M{=}1024$ | 3.330 | 308 s | over |
 | $q{=}5$, $n{=}28$, $M{=}256$ | 0.0904 | 2832 s | far over |
 | $q{=}5$, $n{=}28$, $M{=}1024$ | 0.1784 | 5741 s | far over |
 | $q{=}7$, $n{=}24$, $M{=}256$ | 1.457 | 176 s | over |
-| $q{=}7$, $n{=}24$, $M{=}1024$ | 3.018 | 339 s | over |
+| $q{=}7$, $n{=}24$, $M{=}1024$ | 3.017 | 339 s | over |
 | $q{=}7$, $n{=}28$, $M{=}256$ | 0.0781 | 3279 s | far over |
-| $q{=}7$, $n{=}28$, $M{=}1024$ | 0.1617 | 6334 s | far over |
+| $q{=}7$, $n{=}28$, $M{=}1024$ | 0.1616 | 6335 s | far over |
 
 Rates are matrices/second and are **estimates**. Applying the pessimism §4.3
 measures does not rescue any of them: the closest, $q{=}5$ at $n{=}24$ and
@@ -347,10 +359,10 @@ $M = 256$:
 
 | $M$ | projection | predicted | measured | error |
 |---|---|---|---|---|
-| 256 | $n = 20 \rightarrow 24$ | 111.28 | 136.42 | $-18.4\%$ |
+| 256 | $n = 20 \rightarrow 24$ | 111.26 | 136.41 | $-18.4\%$ |
 | 256 | $n = 24 \rightarrow 28$ | 7.308 | 8.533 | $-14.4\%$ |
-| 1024 | $n = 20 \rightarrow 24$ | 253.51 | 308.49 | $-17.8\%$ |
-| 1024 | $n = 24 \rightarrow 28$ | 16.526 | 19.271 | $-14.2\%$ |
+| 1024 | $n = 20 \rightarrow 24$ | 253.07 | 308.48 | $-18.0\%$ |
+| 1024 | $n = 24 \rightarrow 28$ | 16.526 | 19.221 | $-14.0\%$ |
 
 The projection is consistently **low**, by 14–18 % across both batch sizes and
 both steps, because longer kernels amortise per-launch overhead better than the
@@ -376,38 +388,38 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 
 | $q$ | $n$ | scalar | AVX2 | rayon batch | rayon intra | GPU $M{=}256$ | GPU $M{=}1024$ |
 |---|---|---|---|---|---|---|---|
-| 3 | 12 | 51 030 | 18 340 | 289 970 | 37 540 | 217 400 | **314 490** |
-| 3 | 16 | 3 643 | 1 193 | 36 310 | 4 409 | 30 180 | **61 260** |
-| 3 | 20 | 229.2 | 74.76 | 2 498 | 2 988 | 2 137 | **4 867** |
-| 3 | 24 | 14.35 | 4.639 | 155.8 | 297.6 | 136.4 | **308.5** |
-| 3 | 28 | 0.897 | 0.289 | 9.847 | **19.33** | 8.533 | 19.27 |
-| 5 | 12 | 6 823 | — | **73 040** | — | 11 430 | 23 290 |
-| 5 | 16 | 327.9 | — | **4 163** | — | 617.6 | 1 223 |
-| 5 | 20 | 16.42 | — | **218.3** | — | 32.40 | 63.92 |
+| 3 | 12 | 50 840 | 17 970 | 311 920 | 38 270 | 217 510 | **315 660** |
+| 3 | 16 | 3 638 | 1 165 | 36 180 | 4 398 | 30 180 | **61 150** |
+| 3 | 20 | 229.3 | 72.97 | 2 497 | 3 000 | 2 136 | **4 859** |
+| 3 | 24 | 14.33 | 4.541 | 155.1 | 297.2 | 136.4 | **308.5** |
+| 3 | 28 | 0.897 | 0.283 | 9.852 | **19.35** | 8.533 | 19.22 |
+| 5 | 12 | 6 811 | — | **73 710** | — | 11 420 | 23 190 |
+| 5 | 16 | 327.3 | — | **4 167** | — | 617.4 | 1 223 |
+| 5 | 20 | 16.41 | — | **218.3** | — | 32.40 | 63.93 |
 | 5 | 24 | 0.852 | — | **11.85** | — | censored | censored |
-| 5 | 28 | 0.0461 | — | **0.648** | — | censored | censored |
-| 7 | 12 | 6 502 | — | **72 480** | — | 10 050 | 21 570 |
-| 7 | 16 | 313.1 | — | **3 745** | — | 536.3 | 1 109 |
-| 7 | 20 | unsupported | — | unsupported | — | 27.98 | **57.94** |
+| 5 | 28 | 0.0462 | — | **0.648** | — | censored | censored |
+| 7 | 12 | 6 484 | — | **72 840** | — | 10 020 | 21 490 |
+| 7 | 16 | 313.1 | — | **3 740** | — | 536.3 | 1 109 |
+| 7 | 20 | unsupported | — | unsupported | — | 27.98 | **57.93** |
 | 7 | 24 | unsupported | — | unsupported | — | censored | censored |
 | 7 | 28 | unsupported | — | unsupported | — | censored | censored |
 
 Four results carry consequences beyond the envelope.
 
 **The public F_3 dispatcher selects the slower path (gap G6).** The scalar
-single-word kernel beats the AVX2 single-word kernel by **2.78x-3.10x** at every
+single-word kernel beats the AVX2 single-word kernel by **2.83x-3.18x** at every
 $n$ measured — the ratio is smallest at $n=12$ and rises monotonically with $n$,
 and the two rates are in the table above — yet `permanent_bipedal3` prefers AVX2
-whenever the CPU supports it. The cause is documented in the kernel itself: the SIMD path
-zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three of four
-lanes carry no data. This reproduces the ratio already visible in
+whenever the CPU supports it. The cause is documented in the kernel itself: the
+SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
+of four lanes carry no data. This reproduces the ratio already visible in
 `dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv` (scalar at
 0.317-0.319 of the AVX2 time), now on an independent harness and RNG.
 
 **The GPU leads at $q=3$ up to $n = 24$, and loses at $q \in \{5,7\}$
 throughout.** For $q = 3$ the GPU at $M = 1024$ is the fastest path through
 $n = 24$, but its margin over intra-matrix rayon collapses across the top of the
-range: 1.63x at $n = 20$, 1.04x at $n = 24$, and **0.997x at $n = 28$**, where
+range: 1.62x at $n = 20$, 1.04x at $n = 24$, and **0.993x at $n = 28$**, where
 the two are indistinguishable and which one leads is inside the run-to-run
 dispersion. For $q = 5$ and $q = 7$ the CPU batch-rayon path wins wherever both
 are supported, by roughly a factor of three at every shared $n$ in both fields.
@@ -427,7 +439,7 @@ scheduling convenience.
 **This qualifies the 2026-05-15 GPU crossover receipt.** That receipt reports
 the GPU beating "CPU SIMD" by 28.65x at $n=24$ and 30.32x at $n=28$ for $q=3$,
 both at $M=256$. Those ratios reproduce here — GPU $M{=}256$ over `cpu_avx2`
-gives 29.4x at $n=24$ and 29.5x at $n=28$ — but the baseline is the AVX2
+gives 30.0x at $n=24$ and 30.2x at $n=28$ — but the baseline is the AVX2
 single-thread path, which §4.4 has just shown to be the *slower* of the two
 single-thread CPU paths, and unparallelised besides. Restated against the best
 CPU path measured here, the same $M{=}256$ configuration is **0.46x at $n=24$**
@@ -455,16 +467,16 @@ averaged away.
 
 | $q$ | $n$ | backend | $M$ | sustained | grid cell | ratio | first→last quarter |
 |---|---|---|---|---|---|---|---|
-| 3 | 24 | scalar | 8 | 14.412 | 14.345 | 1.005 | 14.408 → 14.418 |
-| 3 | 24 | AVX2 | 4 | 4.701 | 4.639 | 1.014 | 4.700 → 4.702 |
-| 3 | 24 | rayon batch | 96 | 157.103 | 155.787 | 1.008 | 157.814 → 156.684 |
-| 3 | 24 | rayon intra | 24 | 298.853 | 297.604 | 1.004 | 298.521 → 299.041 |
-| 3 | 24 | GPU | 1024 | 311.188 | 308.493 | 1.009 | 311.671 → 310.272 |
-| 3 | 24 | GPU | 2048 | 208.474 | — | — | 208.265 → 208.361 |
-| 5 | 20 | rayon batch | 96 | 215.230 | 218.260 | 0.986 | 214.198 → 215.969 |
-| 5 | 20 | GPU | 1024 | 63.947 | 63.924 | 1.000 | 63.976 → 63.936 |
-| 7 | 16 | rayon batch | 512 | 3671.692 | 3745.397 | 0.980 | 3665.113 → 3678.551 |
-| 7 | 20 | GPU | 1024 | 57.949 | 57.937 | 1.000 | 57.974 → 57.943 |
+| 3 | 24 | scalar | 8 | 14.447 | 14.332 | 1.008 | 14.429 → 14.453 |
+| 3 | 24 | AVX2 | 4 | 4.572 | 4.541 | 1.007 | 4.572 → 4.572 |
+| 3 | 24 | rayon batch | 96 | 157.166 | 155.075 | 1.013 | 157.849 → 156.393 |
+| 3 | 24 | rayon intra | 24 | 298.986 | 297.229 | 1.006 | 298.869 → 299.102 |
+| 3 | 24 | GPU | 1024 | 311.799 | 308.482 | 1.011 | 312.230 → 310.805 |
+| 3 | 24 | GPU | 2048 | 207.808 | — | — | 207.686 → 207.653 |
+| 5 | 20 | rayon batch | 96 | 215.100 | 218.290 | 0.985 | 213.589 → 215.717 |
+| 5 | 20 | GPU | 1024 | 63.937 | 63.928 | 1.000 | 63.963 → 63.925 |
+| 7 | 16 | rayon batch | 512 | 3673.487 | 3739.644 | 0.982 | 3670.061 → 3675.817 |
+| 7 | 20 | GPU | 1024 | 57.951 | 57.931 | 1.000 | 57.978 → 57.950 |
 
 Rates are matrices/second; "grid cell" is the same $(q, n, \text{backend})$ cell
 from §4.4. The batch sizes coincide only on the GPU rows, where $M$ is fixed by
@@ -475,8 +487,8 @@ reserved stream range, recorded in the CSV's `stream_first` column, so no two
 runs share matrices. Two conclusions.
 
 **The short-cell protocol holds.** Every run lands within 2 % of its grid cell,
-and boost decay across a 180 s window never exceeds 0.9 % (largest
-first-to-last-quarter drift: 0.83 % on batch rayon). The five-second cells are
+and boost decay across a 180 s window never reaches 1 % (largest
+first-to-last-quarter drift: 0.996 % on batch rayon). The five-second cells are
 not riding a boost window, so the envelope built on them is sound.
 
 **$M = 1024$ is the GPU optimum, not a starting point.** At $q{=}3$, $n{=}24$
@@ -499,7 +511,7 @@ the log lines and the post-fault `rocm-smi` state showing the device recovered
 on its own. Two things follow for the trustworthiness of everything else here:
 the observation is **not reproducible from a committed CSV row**, and is
 reported as an operational observation rather than as a measurement; and every
-committed number postdates it, taken at harness source commit `12bb1e3b` after
+committed number postdates it, taken at harness source commit `12f6e81a` after
 a full cross-backend equivalence re-check passed on all six backends
 (`equivalence-2026-08-07.csv`, itself generated after the fault). The
 $M = 2048$ row in the sustained table is the surviving in-band probe of the
@@ -533,19 +545,19 @@ the conservative $p = 1/2$ column is in the CSV.
 
 | $q$ | $n$ | best path | rate | $N$ for SE $10^{-3}$ | hours | $N$ for SE $10^{-4}$ | hours |
 |---|---|---|---|---|---|---|---|
-| 3 | 12 | GPU $M{=}1024$ | 314 490 | 222 223 | 0.00 | 22 222 223 | 0.02 |
-| 3 | 16 | GPU $M{=}1024$ | 61 260 | 222 223 | 0.00 | 22 222 223 | 0.10 |
-| 3 | 20 | GPU $M{=}1024$ | 4 867 | 222 223 | 0.01 | 22 222 223 | 1.27 |
+| 3 | 12 | GPU $M{=}1024$ | 315 660 | 222 223 | 0.00 | 22 222 223 | 0.02 |
+| 3 | 16 | GPU $M{=}1024$ | 61 150 | 222 223 | 0.00 | 22 222 223 | 0.10 |
+| 3 | 20 | GPU $M{=}1024$ | 4 859 | 222 223 | 0.01 | 22 222 223 | 1.27 |
 | 3 | 24 | GPU $M{=}1024$ | 308.5 | 222 223 | 0.20 | 22 222 223 | 20.01 (x) |
-| 3 | 28 | rayon intra | 19.33 | 222 223 | 3.19 | 22 222 223 | 319.3 (x) |
-| 5 | 12 | rayon batch | 73 040 | 160 000 | 0.00 | 16 000 000 | 0.06 |
-| 5 | 16 | rayon batch | 4 163 | 160 000 | 0.01 | 16 000 000 | 1.07 |
+| 3 | 28 | rayon intra | 19.35 | 222 223 | 3.19 | 22 222 223 | 319.1 (x) |
+| 5 | 12 | rayon batch | 73 710 | 160 000 | 0.00 | 16 000 000 | 0.06 |
+| 5 | 16 | rayon batch | 4 167 | 160 000 | 0.01 | 16 000 000 | 1.07 |
 | 5 | 20 | rayon batch | 218.3 | 160 000 | 0.20 | 16 000 000 | 20.36 (x) |
 | 5 | 24 | rayon batch | 11.85 | 160 000 | 3.75 | 16 000 000 | 375.0 (x) |
-| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.61 (x) | 16 000 000 | 6861 (x) |
-| 7 | 12 | rayon batch | 72 480 | 122 449 | 0.00 | 12 244 898 | 0.05 |
-| 7 | 16 | rayon batch | 3 745 | 122 449 | 0.01 | 12 244 898 | 0.91 |
-| 7 | 20 | GPU $M{=}1024$ | 57.94 | 122 449 | 0.59 | 12 244 898 | 58.71 (x) |
+| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.59 (x) | 16 000 000 | 6859 (x) |
+| 7 | 12 | rayon batch | 72 840 | 122 449 | 0.00 | 12 244 898 | 0.05 |
+| 7 | 16 | rayon batch | 3 740 | 122 449 | 0.01 | 12 244 898 | 0.91 |
+| 7 | 20 | GPU $M{=}1024$ | 57.93 | 122 449 | 0.59 | 12 244 898 | 58.71 (x) |
 | 7 | 24 | — | no rate | — | — | — | — |
 | 7 | 28 | — | no rate | — | — | — | — |
 
@@ -567,11 +579,11 @@ ratio and a classification:
 
 | $n$ | prior SE | prior trials | this budget's SE | ratio | verdict |
 |---|---|---|---|---|---|
-| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.387\times10^{-6}$ | 1.07 | matches |
-| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.940\times10^{-6}$ | 1.50 | **exceeds** |
-| 20 | $4.714\times10^{-5}$ | $10^{8}$ | $3.526\times10^{-5}$ | 1.34 | **exceeds** |
+| 12 | $4.714\times10^{-6}$ | $10^{10}$ | $4.379\times10^{-6}$ | 1.08 | matches |
+| 16 | $1.491\times10^{-5}$ | $10^{9}$ | $9.948\times10^{-6}$ | 1.50 | **exceeds** |
+| 20 | $4.714\times10^{-5}$ | $10^{8}$ | $3.529\times10^{-5}$ | 1.34 | **exceeds** |
 | 24 | $1.491\times10^{-4}$ | $10^{7}$ | $1.401\times10^{-4}$ | 1.06 | matches |
-| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.595\times10^{-4}$ | 0.84 | below |
+| 28 | $4.715\times10^{-4}$ | $10^{6}$ | $5.593\times10^{-4}$ | 0.84 | below |
 
 A 12 h budget on this host beats the published precision at $n = 16$ and
 $n = 20$, matches it at $n = 12$ and $n = 24$, and falls short at $n = 28$.
@@ -599,18 +611,18 @@ pooled samples are independent — in `zero-fraction-2026-08-07.csv`:
 
 | $q$ | $n$ | matrices | $\hat p$ | 95 % Wilson | $z$ vs $1/q$ |
 |---|---|---|---|---|---|
-| 3 | 12 | 5 451 883 | 0.33339 | [0.33300, 0.33379] | $+0.29$ |
-| 3 | 16 | 813 084 | 0.33400 | [0.33297, 0.33502] | $+1.27$ |
-| 3 | 20 | 72 740 | 0.33354 | [0.33013, 0.33698] | $+0.12$ |
-| 3 | 24 | 191 437 | 0.33455 | [0.33244, 0.33667] | $+1.13$ |
+| 3 | 12 | 5 637 652 | 0.33346 | [0.33307, 0.33385] | $+0.65$ |
+| 3 | 16 | 816 002 | 0.33385 | [0.33282, 0.33487] | $+0.98$ |
+| 3 | 20 | 73 497 | 0.33386 | [0.33046, 0.33728] | $+0.31$ |
+| 3 | 24 | 191 405 | 0.33453 | [0.33242, 0.33665] | $+1.11$ |
 | 3 | 28 | 5 807 | 0.33666 | [0.32462, 0.34892] | $+0.54$ |
-| 5 | 12 | 583 035 | 0.20014 | [0.19911, 0.20117] | $+0.27$ |
-| 5 | 16 | 33 817 | 0.20020 | [0.19597, 0.20449] | $+0.09$ |
+| 5 | 12 | 591 072 | 0.20035 | [0.19933, 0.20137] | $+0.67$ |
+| 5 | 16 | 33 680 | 0.20018 | [0.19594, 0.20449] | $+0.08$ |
 | 5 | 20 | 58 784 | 0.19982 | [0.19660, 0.20307] | $-0.11$ |
 | 5 | 24 | 490 | 0.19592 | [0.16320, 0.23337] | $-0.23$ |
 | 5 | 28 | 101 | 0.14852 | [0.09212, 0.23067] | $-1.29$ |
-| 7 | 12 | 581 713 | 0.14401 | [0.14311, 0.14491] | $+2.51$ |
-| 7 | 16 | 692 258 | 0.14318 | [0.14236, 0.14400] | $+0.76$ |
+| 7 | 12 | 577 736 | 0.14402 | [0.14312, 0.14493] | $+2.53$ |
+| 7 | 16 | 692 729 | 0.14317 | [0.14235, 0.14400] | $+0.74$ |
 | 7 | 20 | 17 664 | 0.13779 | [0.13279, 0.14296] | $-1.92$ |
 
 Grid and sustained samples are both pooled. Sustained runs reserve disjoint
@@ -638,11 +650,30 @@ $1/q$ contradicts a theorem and indicts this pipeline rather than the theorem.
 
 **Every one of the thirteen intervals satisfies the bound**; none lies strictly
 below $1/q$. One cell excludes $1/q$ outright — $q{=}7$, $n{=}12$, whose
-interval lies wholly *above* $1/7$ — which is the direction the theorem permits
-and the upper bound constrains, not a failure. It is also the largest deviation
-in either direction at $z = +2.51$, and one excursion past $2.5\sigma$ in 13
-cells is close to the $0.16$ expected. Every positive excess sits inside
-eq. 1.4's $C/q^3$ envelope, implying $C \le 0.40$ across all cells.
+interval lies wholly *above* $1/7$ — which is the direction the theorem permits,
+not a failure. It is also the largest deviation in either direction at
+$z = +2.53$.
+
+**No numeric bound on $C$ follows from these cells, and an earlier revision of
+this study wrongly claimed one.** [HKS2026] eq. 1.4 reads
+$\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for $n \ge 3$, with $C$ an
+unspecified universal constant. An observed excess $\delta$ at field order $q$
+is consistent with that statement whenever $C \ge \delta q^3$, so a measurement
+constrains $C$ from *below* if at all, and a larger $C$ only weakens the
+published bound. The previous text inverted this and reported the largest
+observed excess as an upper bound on $C$. What the data support is the weaker
+and correct statement: **every measured cell is consistent with [HKS2026]
+Theorem 1.3 in both directions**, the lower bound $\Pr \ge 1/q$ and the upper
+bound at the constant the authors leave unfixed. Recorded per
+`@/inv/falsification-preserved`.
+
+The multiplicity arithmetic is worth stating precisely, because §7.2 turns it
+into a campaign rule. One excursion past $2.5\sigma$ in 13 cells sits close to
+the 0.16 such excursions expected under a correct pipeline — but that is a
+**post-hoc calculation on samples that were never a designed experiment**: the
+13 cells are timing by-products with no pre-registered $N$, and the $2.5\sigma$
+threshold was chosen after seeing which cell was extreme. It is reported as an
+order-of-magnitude sanity check, not as a test the pipeline passed.
 
 The cell that comes closest to contradicting the theorem is $q{=}7$, $n{=}20$ at
 $z = -1.92$: its interval still covers $1/7$, but only just, clearing the bound
@@ -672,7 +703,7 @@ independent defects were behind that, both found by review and both now fixed:
    speed and the recorded seed did not regenerate the recorded sample.
 
 With disjoint streams and a deterministic timed start, independent
-re-measurement puts $q{=}5$, $n{=}16$ at $0.20020$ ($z = +0.09$) where it had
+re-measurement puts $q{=}5$, $n{=}16$ at $0.20018$ ($z = +0.08$) where it had
 read $0.19310$ ($z = -3.08$). **The apparent signal was measurement artefact and
 sampling fluctuation, not structure.** Recorded rather than quietly dropped, per
 `@/inv/falsification-preserved`: the earlier reading is what the study said, and
@@ -855,10 +886,17 @@ measures. §7 states the analysis method and the honest limit: two families can 
 told apart only while $|\delta(n)| = |p(n) - 1/q|$ exceeds a few standard errors
 at several $n$, which the envelope in §4 bounds.
 
-**Is a determinantal companion curve worth the marginal cost?** **Yes.**
-Gaussian elimination is $O(n^3)$ against the permanent's $\Theta(n 2^n)$, so on
-the same sampled matrices the determinant is free to within measurement noise at
-every $n$ in the envelope. It also supplies a pipeline validation the permanent
+**Is a determinantal companion curve worth the marginal cost?** **Yes, on an
+estimate that the campaign should confirm before relying on it.** Gaussian
+elimination is $O(n^3)$ per matrix against the permanent's $\Theta(n 2^n)$, so
+the work ratio goes as $n^2 / 2^n$: roughly $4 \times 10^{-4}$ at $n = 20$ and
+$3 \times 10^{-6}$ at $n = 28$. **That is arithmetic on the complexity
+expressions, not a measurement** — no determinant path was benchmarked for this
+study, and the constant factors, which differ between a bit-sliced Gray-code
+walk and an elimination over $\mathbb{F}_q$, are unknown. It is enough to say
+the companion is cheap at the sizes in the envelope and not enough to call it
+free; the campaign should time one determinant cell against its permanent cell
+before adopting the assumption. It also supplies a pipeline validation the permanent
 cannot: $\Pr[\det = 0]$ has a known limit $1 - \prod_{i \ge 1}(1 - q^{-i})$, so a
 measured determinant curve that misses its own limit falsifies the pipeline
 before any permanent conclusion is drawn.
@@ -879,13 +917,16 @@ the composite hot path.
 Four findings shape what the campaign should be, and they are the substance of
 this recommendation rather than caveats on it.
 
-1. **Adopt [HKS2026] Theorem 1.3 as a standing acceptance test.** The theorem
-   proves $\Pr[\mathrm{per} = 0] \ge 1/q$ for every $n$ at odd characteristic,
-   so any cell whose interval lies strictly below $1/q$ indicts the pipeline
-   rather than the theorem, and a below-$1/q$ result can never be reported as a
-   finding. Run it on every cell for the campaign's life: it costs nothing to
-   evaluate and is sharper than the order-3 enumeration anchors, which say
-   nothing at the sizes the campaign cares about. §4.7 is the argument for it —
+1. **Adopt [HKS2026] Theorem 1.3 as a standing acceptance test, at a controlled
+   family-wise error rate.** The theorem proves $\Pr[\mathrm{per} = 0] \ge 1/q$
+   for every $n$ at odd characteristic, so a cell that sits significantly below
+   $1/q$ indicts the pipeline rather than the theorem, and a below-$1/q$ result
+   can never be reported as a finding. Run it on every cell for the campaign's
+   life: it costs nothing to evaluate and is sharper than the order-3
+   enumeration anchors, which say nothing at the sizes the campaign cares about.
+   Run it at §7.2's Bonferroni-adjusted level rather than at a nominal 95 %
+   interval per cell — unadjusted, the grid's 63 cells would halt a correct
+   pipeline about four runs in five. §4.7 is the argument for it —
    an earlier revision of this study spent its top recommendation on chasing an
    apparent below-$1/q$ signal that turned out to be two measurement defects
    plus fluctuation, and this test would have classified it correctly on sight.
@@ -954,13 +995,38 @@ it would contradict [GGK2025]'s conjecture in the regime actually measured.
   ($5^9 \approx 2.0 \times 10^6$, $7^9 \approx 4.0 \times 10^7$). These give
   ground truth against which the sampler and the estimator are validated before
   any estimated cell is believed.
-- **Standing acceptance test.** Every cell is checked against
-  $\Pr[\mathrm{per} = 0] \ge 1/q$, proved for all $n$ at odd characteristic by
-  [HKS2026] Theorem 1.3, and against the companion upper bound
-  $\Pr \le 1/q + C/q^3$ for $n \ge 3$. A cell whose interval falls strictly
-  below $1/q$ halts the campaign for pipeline investigation rather than being
-  reported. This costs nothing to evaluate and applies at every $n$, unlike the
-  order-3 enumeration anchors.
+- **Standing acceptance test, with its false-alarm rate controlled.** Every cell
+  is checked against $\Pr[\mathrm{per} = 0] \ge 1/q$, proved for all $n$ at odd
+  characteristic by [HKS2026] Theorem 1.3. A cell that fails halts the campaign
+  for pipeline investigation rather than being reported.
+
+  The test must be built so that a *correct* pipeline almost never trips it,
+  which the naive form does not achieve. A 95 % interval misses its parameter
+  5 % of the time, and only the lower excursion can trip this one-sided test, so
+  a single cell whose true value sits at $1/q$ — the worst case the theorem
+  allows — flags with probability up to 2.5 %. Across the preregistered grid
+  above ($n$ from 4 to the per-$q$ frontier: 25 cells at $q=3$, 21 at $q=5$, 17
+  at $q=7$, so $K = 63$) that compounds to a **79 % chance of at least one false
+  alarm**, which would halt a healthy campaign nearly every time it ran.
+
+  The rule is therefore stated with an explicit family-wise error rate.
+  Bonferroni across the $K$ preregistered cells at a family-wise
+  $\alpha = 0.05$ puts each cell's one-sided level at $\alpha / K = 7.9 \times
+  10^{-4}$, a critical $z$ of **3.16**, and a family-wise false-alarm
+  probability under a correct pipeline of **at most 4.9 %**. A cell halts the
+  campaign when $\hat p$ lies below $1/q$ by more than $3.16$ standard errors —
+  equivalently, when the Bonferroni-adjusted one-sided interval excludes $1/q$ —
+  not when the nominal 95 % interval does.
+
+  Three consequences are accepted rather than argued away. $K$ is fixed by
+  pre-registration, so cells added later require restating the adjustment rather
+  than reusing this one. The adjustment costs sensitivity: a real defect must be
+  larger to trip a single cell, which is tolerable because a defect that matters
+  is systematic and will show across many cells at once, and the campaign should
+  read the *pattern* of deviations, not only the extreme cell. And the
+  companion upper bound $\Pr \le 1/q + C/q^3$ is **not** part of the test, since
+  [HKS2026] leaves $C$ unfixed and no finite observation can contradict it
+  (§4.7).
 - **Determinant companion** on the same matrices, per §6.
 - **Rectangular validation** (epic REQ-04) once G5 lands, framed as the
   three-part pipeline check described there rather than as a test of

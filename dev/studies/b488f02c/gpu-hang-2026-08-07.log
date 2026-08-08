@@ -2,8 +2,8 @@
 # Preserved because the run died before it could write a CSV row, so this log is the
 # only receipt for the observation. It comes from a SUPERSEDED harness state (before
 # the censoring rework); the committed measurements all postdate it and were taken with
-# binary e951b9ccee00531bd501433a49cbda8321fb05e61af294c2c15d68bd384edd33, built at
-# harness source commit 12bb1e3b, after a full equivalence re-check passed.
+# binary 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff, built at
+# harness source commit 12f6e81a, after a full equivalence re-check passed.
 # Sequence: the sustained runner streamed q=3 n=24 on the GPU at M=1024 successfully,
 # then attempted M=4096 and the device faulted, killing the process.
 
