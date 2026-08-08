@@ -52,6 +52,18 @@ impl EquivalenceRow {
     }
 }
 
+/// Build the same `m` matrices as [`shared_batch`], unpacked, for the generic
+/// Ryser path.
+fn shared_raw_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
+    let mut s = MatrixSampler::new(seed_root, q, n, 0);
+    match q {
+        3 => Batch::RawF3(n, (0..m).map(|_| s.next_matrix::<3>(n)).collect()),
+        5 => Batch::RawF5(n, (0..m).map(|_| s.next_matrix::<5>(n)).collect()),
+        7 => Batch::RawF7(n, (0..m).map(|_| s.next_matrix::<7>(n)).collect()),
+        _ => panic!("shared_raw_batch: unsupported q = {q}"),
+    }
+}
+
 /// Build `m` matrices for `(q, n)` from the equivalence-check stream.
 fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
     // Stream index 0 is reserved for the equivalence check, so its inputs never
@@ -104,12 +116,19 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
     let reference = evaluate(Backend::Scalar, &batch);
     let zeros_reference = crate::backend::count_zeros(&reference);
 
+    // The generic path consumes unpacked matrices, so it needs its own batch.
+    // Built from the same (seed_root, q, n, stream 0) tuple as `batch`, and the
+    // sampler is deterministic, so both hold the same matrices in the same
+    // order - which is what makes the per-matrix comparison meaningful.
+    let raw = shared_raw_batch(q, n, m, seed_root);
+
     for backend in [
         Backend::Avx2,
         Backend::Rayon,
         Backend::RayonAvx2,
         Backend::RayonIntra,
         Backend::Gpu,
+        Backend::RyserGeneric,
     ] {
         let mut row = EquivalenceRow {
             q,
@@ -134,7 +153,14 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
                     row.matrices = 0;
                     row.status = "unsupported: AVX2 not detected at runtime".to_string();
                 } else {
-                    let got = evaluate(backend, &batch);
+                    let got = evaluate(
+                        backend,
+                        if backend == Backend::RyserGeneric {
+                            &raw
+                        } else {
+                            &batch
+                        },
+                    );
                     row.mismatches = reference
                         .iter()
                         .zip(got.iter())
