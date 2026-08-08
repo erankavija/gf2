@@ -65,14 +65,14 @@
 //!
 //! ## What the projection is worth
 //!
-//! Scaling a measured batched rate by the work ratio can be checked only where
-//! both ends are measured, which in this schedule is the `q = 3` GPU chain.
-//! There it is mildly **pessimistic** at every step. Applying that to the
-//! censored cells, which are `q` in `{5, 7}`, extrapolates across fields and
-//! kernels: it is the best available evidence, not a measured property of the
-//! cells it is applied to. The magnitude is re-derived from each grid's own
-//! `q = 3` chain in the study rather than quoted here, so that a re-measurement
-//! cannot leave a stale percentage behind in the code.
+//! Scaling a measured batched rate by the work ratio is checkable on any chain
+//! with both ends measured, which includes the `q = 3` GPU chain and, for the
+//! fields the censored cells belong to, the `q` in `{5, 7}` GPU steps up to
+//! `n = 20`. Every one of those steps runs **pessimistic**, so a censored
+//! cell's true rate is at least its projection. The magnitude beyond `n = 20`
+//! is not validated, and the sign is kernel-specific: the generic Ryser path,
+//! whose per-step cost matches the model, projects high. Magnitudes are
+//! re-derived from each grid's own chains in the study, never quoted here.
 
 use std::fmt::Write as _;
 use std::time::Instant;

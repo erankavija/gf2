@@ -475,6 +475,17 @@ path, whose per-step cost genuinely is $O(n)$ and so matches the model, projects
 bias follows the kernel's cost structure, which is exactly why it is validated
 per chain rather than once.
 
+**The throughput receipt's own prose is more conservative than this, and that is
+recorded rather than reconciled.** Its `projection accuracy` preamble and its
+censored-row notes say the check is possible on the $q = 3$ GPU chain and call
+the step to $q \in \{5,7\}$ an extrapolation. That wording was written before
+the same-field validation above, which is derived from rows in that very file
+and needed no new measurement. Per **DEC-01** the derivation is authoritative
+where a receipt's rows support a stronger result than its emitted text, and the
+emitted text stands as a conservative point-in-time statement: a supersession on
+the record, not a contradiction between two claims. The receipt set is final at
+`243886e2`; nothing above re-measures anything.
+
 None of that changes a verdict, because the censoring margins are not close. To
 rescue the nearest censored cell — $q{=}5$, $n{=}24$ at $M{=}256$ — the true
 rate would have to exceed its projection by **26 %**, twice the largest bias
