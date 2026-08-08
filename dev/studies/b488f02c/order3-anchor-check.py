@@ -131,22 +131,36 @@ def main() -> int:
         print("anchor_report_build: FAILED")
         print(build.stderr.strip()[:2000])
         return 1
+    exe = ar / "target" / "release" / "anchor-report"
     rustc = subprocess.run(["rustc", "--version"], capture_output=True, text=True).stdout.strip()
     cargo = subprocess.run(["cargo", "--version"], capture_output=True, text=True).stdout.strip()
-    head = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=ar, capture_output=True, text=True
-    ).stdout.strip()
-    dirty = subprocess.run(
-        ["git", "status", "--porcelain", "--", "."], cwd=ar, capture_output=True, text=True
-    ).stdout.strip()
+    git = lambda *a: subprocess.run(["git", *a], cwd=ar, capture_output=True, text=True).stdout.strip()
+    head = git("rev-parse", "HEAD")
+    crate_dirty = git("status", "--porcelain", "--", ".")
+    crate_commit = git("log", "-1", "--format=%H", "--", ".")
+    cpu = "unknown"
+    try:
+        for line in pathlib.Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                cpu = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        pass
+
+    print("# Source identity: the crate is committed and unmodified, so the sha")
+    print("# below names exactly the code that was built. Binary identity: the")
+    print("# executable is hashed after the build, so the run is attributable")
+    print("# without trusting the source path.")
     print(f"crate: {ar.name} (standalone, outside the root workspace)")
     print(f"invocation: cargo run --manifest-path {ar}/Cargo.toml --release")
+    print(f"repo_head_at_run: {head}")
+    print(f"crate_last_commit: {crate_commit}")
+    print(f"crate_dir_dirty: {'yes' if crate_dirty else 'no'}")
+    print(f"anchor_report_sha256: {hashlib.sha256(exe.read_bytes()).hexdigest()}")
     print(f"rustc: {rustc}")
     print(f"cargo: {cargo}")
-    print(f"repo_head_at_run: {head}")
-    print(f"crate_dir_dirty: {'yes' if dirty else 'no'}")
-    run = subprocess.run([str(ar / "target" / "release" / "anchor-report")],
-                         capture_output=True, text=True)
+    print(f"cpu: {cpu}")
+    run = subprocess.run([str(exe)], capture_output=True, text=True)
     print()
     print(run.stdout.rstrip())
     observed_ok = run.returncode == 0
