@@ -1,21 +1,17 @@
 # Resolved dependency graph for the b488f02c feasibility harness.
 # The crate gitignores Cargo.lock, so this file is the committed provenance
 # record of what was actually linked.
-# generated: 2026-08-08T00:45:38Z
-# harness_source_sha: 12bb1e3bbc5fdcc2b6419ebd05a989e920e4cb7f
+# generated: 2026-08-08T02:29:08Z
+# harness_source_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
-# binary_sha256: e951b9ccee00531bd501433a49cbda8321fb05e61af294c2c15d68bd384edd33
+# binary_sha256: 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # invocation: cargo tree --features hip --edges all
-# harness_source_sha names the build state of the five committed receipts. The
-# crate tip is 8e3a7e27, one commit later, which rewords a comment in
-# src/main.rs and changes nothing else; a forced recompile at the tip yields
-# the byte-identical executable named above, verified by cmp against the
-# binary that produced the receipts. The pin therefore covers both commits.
+# harness_source_sha and binary_sha256 are the build state of the five
+# receipts committed beside this file, and 12f6e81a is the harness tip.
 # The dependency graph below is unchanged from the previously committed
 # revision of this file, verified by diff of the tree body; only the
 # provenance header moved.
-
 permanent-sampling-feas v0.1.0 (/home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas)
 ├── gf2-algebra feature "default"
 │   ├── gf2-algebra v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-algebra)
