@@ -33,39 +33,55 @@ scanned, not a count of matching documents in any corpus.
 
 ## Relevant hits examined
 
-| Work | What it contains | Overlap with $q \in \{5,7\}$ numerics |
-|---|---|---|
-| [Scheinerman2024] arXiv:2407.20205, *Fast computation of permanents over $\mathbb{F}_3$ via $\mathbb{F}_2$ arithmetic* | Exact counts for $n \le 5$ and Monte Carlo for $6 \le n \le 30$ | **None.** $\mathbb{F}_3$ only; the method is specific to representing $\mathbb{F}_3$ in pairs of $\mathbb{F}_2$ words |
-| [HKS2026] arXiv:2603.15856, Hunter–Kwan–Sauermann | Purely theoretical: Theorem 1.3 and Theorem 1.4, no tables or simulations (full text retrieved and checked) | None |
-| [GGK2025] arXiv:2512.03221, Ghasemi–Gross–Kopparty | Theoretical; permanental vs determinantal rank. Abstract states results asymptotically, no numerics surfaced | None found (see Limitations) |
-| Budrevich, *The number of matrices with nonzero permanent over a finite field*, J. Math. Sci. 232(6):752–759, 2018 | Method for **lower bounds** on the count of nonzero-permanent matrices | Bounds, not measured or enumerated zero fractions. Full text not accessed |
-| Budrevich & Guterman, *Permanent has less zeros than determinant over finite fields*, Contemp. Math. 579, AMS 2011 | Proves the zero-permanent probability is strictly below the zero-determinant probability for odd characteristic, $n \ge 3$ | An inequality between two probabilities, not an estimate of either. Full text not accessed |
-| Kogan, *Computing permanents over fields of characteristic 3*; Tarin, polynomial-time permanent in $\mathrm{GF}(3^q)$ | Algorithms for characteristic 3 | Algorithmic, characteristic 3, no distributional numerics |
-| *On the Pólya permanent problem over finite fields*, arXiv:1003.1984 | Pólya convertibility | Different question; no zero-fraction estimates |
-| SUperman (arXiv:2502.16577), *A New Fast Computation of a Permanent* (arXiv:1908.06371) | Permanent computation performance | Algorithms over other domains; no $\mathbb{F}_q$ zero-fraction statistics |
+Every work characterized here is registered in `.jit/references.toml` and cited
+by its key. **Reading depth** is stated per work, because most of these
+characterizations rest on abstracts rather than full texts, and a characterization
+from an abstract can be wrong about what a paper's tables contain.
+
+| Work | Reading depth | What it contains | Overlap with $q \in \{5,7\}$ numerics |
+|---|---|---|---|
+| `@/citation/Scheinerman2024` | **full text** | Exact counts for $n \le 5$, Monte Carlo for $6 \le n \le 30$ | **None.** $\mathbb{F}_3$ only; the method encodes $\mathbb{F}_3$ in pairs of $\mathbb{F}_2$ words |
+| `@/citation/HKS2026` | **full text** (retrieved and read) | Theory only: Theorem 1.3 (eqs. 1.2–1.4), Theorem 1.4. No tables, no simulations | None |
+| `@/citation/GGK2025` | **abstract and landing page only** | Theory: permanental vs determinantal rank | None found; an appendix of numerics was not ruled out |
+| `@/citation/Budrevich2018` | **abstract only** | A method for **lower bounds** on the count of nonzero-permanent matrices | Bounds, not estimated or enumerated zero fractions. **Closest unexamined candidate for exact small-$n$ counts** |
+| `@/citation/BudrevichGuterman2012` | **not read**; characterized from `@/citation/HKS2026`'s summary of it | Proves the zero-permanent probability is strictly below the zero-determinant probability at odd characteristic, $n \ge 3$ | An inequality between two probabilities, not an estimate of either |
+| `@/citation/Bassalygo2013` | **not read**; found via the same thread | Counting nonzero permanents at odd characteristic | Same class as the two above: counting and bounds |
+| `@/citation/Kogan1996` | **abstract only** | Why permanents are hard over characteristic 3 | Complexity, not distributional numerics |
+| `@/citation/Tarin2007` | **abstract only** | Claims a polynomial-time permanent in $\mathrm{GF}(3^q)$, and draws a complexity conclusion large enough that the claim should be treated as unverified here | Algorithmic, characteristic 3, no numerics |
+| `@/citation/Dolinar2011` | **abstract only** | The Pólya permanent problem over finite fields | Convertibility, a different question; no zero-fraction estimates |
+| `@/citation/Elbek2025` | **abstract only** | GPU permanent computation, real/complex/binary matrices | Not $\mathbb{F}_q$; no zero-fraction statistics |
+| `@/citation/Niu2019` | **abstract only**; **withdrawn by its authors in 2020** | A general permanent algorithm | Not $\mathbb{F}_q$-distributional; withdrawn, so carries no weight either way |
 
 ## Corroboration from the literature itself
 
-[HKS2026] §1 makes the negative statement directly, and its authors are domain
-specialists reviewing this exact literature:
+`@/citation/HKS2026` §1 makes the negative statement directly, and its authors
+are domain specialists reviewing this exact literature:
 
 > "Permanents of random matrices over finite fields have received quite some
 > interest in the computer science community […] due to a phenomenon called
 > random self-reducibility, but surprisingly we were not able to find any study
 > of the asymptotic distribution of $\mathrm{per}(A)$ in this literature."
 
-The only computational evidence [HKS2026] cites for Conjecture 1.2 is
-[Scheinerman2024], described as "backed by quite convincing computational
-evidence" — and that evidence is $\mathbb{F}_3$ only.
+The only computational evidence `@/citation/HKS2026` cites for Conjecture 1.2 is
+`@/citation/Scheinerman2024`, described as "backed by quite convincing
+computational evidence" — and that evidence is $\mathbb{F}_3$ only. Note the
+limit of that corroboration: it is a statement about the *asymptotic
+distribution* literature as those authors surveyed it, not a guarantee that no
+table of finite-$n$ counts exists in a counting paper they had no reason to
+cite.
 
 ## Limitations
 
-1. No paywalled full text was read. The two Budrevich items are the closest
-   candidates for exact small-$n$ counts at $q \in \{5, 7\}$, and neither was
-   accessible; both are described by their abstracts and by [HKS2026]'s summary
-   as bounding or comparing probabilities rather than estimating them.
-2. [GGK2025]'s full text was not exhaustively checked for an appendix of
-   numerics; only the abstract and landing page were retrieved.
+1. No paywalled full text was read. `@/citation/Budrevich2018`,
+   `@/citation/BudrevichGuterman2012` and `@/citation/Bassalygo2013` are the
+   closest candidates for exact small-$n$ counts at $q \in \{5, 7\}$, and none
+   was accessible; all three are characterized from abstracts or from
+   `@/citation/HKS2026`'s summary as bounding or comparing probabilities rather
+   than estimating them. A counting paper is exactly the kind of work that might
+   carry a small table without advertising it in an abstract, so this is the
+   likeliest place for this search to be wrong.
+2. `@/citation/GGK2025`'s full text was not exhaustively checked for an
+   appendix of numerics; only the abstract and landing page were retrieved.
 3. A general web index is not a systematic bibliographic search. MathSciNet and
    zbMATH subject searches would strengthen this, and neither was run.
 4. Absence of evidence over ten queries is weak evidence of absence. The claim
@@ -76,8 +92,14 @@ evidence" — and that evidence is $\mathbb{F}_3$ only.
 
 This search found no published numerical estimates of
 $\Pr[\mathrm{per}(A) = 0]$ over $\mathbb{F}_5$ or $\mathbb{F}_7$, exact or
-Monte Carlo. Combined with [HKS2026]'s own statement that its authors found no
-study of the asymptotic distribution of $\mathrm{per}(A)$ in this literature,
-that supports the campaign's $q \in \{5, 7\}$ arms being unmeasured ground as
-far as a documented search reaches. It does not establish priority, and §7.6
-states the claim at that strength.
+Monte Carlo. Combined with `@/citation/HKS2026`'s statement that its authors
+found no study of the asymptotic distribution of $\mathrm{per}(A)$ in this
+literature, that is consistent with the campaign's $q \in \{5, 7\}$ arms being
+unmeasured ground.
+
+**What this does and does not license.** It licenses "a search recorded here
+found no prior numerics, subject to the limits above". It does not license
+"none exist", "every measured cell is new", or any claim of priority: three of
+the closest candidate works were never read, and one general web index is not a
+systematic bibliographic search. §7.6 states the claim at the first strength and
+not the others.

@@ -1,9 +1,10 @@
 # Feasibility study: permanent-zero-fraction sampling campaign
 
-> **Status:** complete. Every number in §4 traces to a committed receipt in this
-> directory — a CSV for every measured quantity, and for the single $M = 4096$
-> fault, which died before it could write a CSV row, the committed hang log
-> (§4.5). The receipt files keep the `2026-08-07` names they were given when
+> **Status:** complete. Every number in §4 traces to a committed CSV in this
+> directory. One artifact is not evidence for anything and is committed as
+> preserved history: `gpu-hang-2026-08-07.log`, whose single unreproduced device
+> fault supports no claim here (§4.5). The receipt files keep the `2026-08-07`
+> names they were given when
 > the set was first produced; the measurements committed here were re-taken on
 > **2026-08-08 UTC**, and each receipt's `timestamp_utc` header gives its own
 > time. Where the two disagree, the header is authoritative — the filename is a
@@ -163,7 +164,7 @@ derived stages, each stamped in its own `timestamp_utc`. The filenames retain
 the `2026-08-07` stem of the original set and are not evidence of when a
 measurement ran; §4's provenance list records why the set was regenerated. The
 one artifact whose date is its content is `gpu-hang-2026-08-07.log`, which
-observes a fault that genuinely happened on 2026-08-07. Artifacts in this
+records a fault that genuinely happened on 2026-08-07. Artifacts in this
 directory, each carrying a preamble with
 git SHA, rustc and ROCm versions, CPU and GPU model, governor, thread count, and
 the exact invocation:
@@ -176,7 +177,7 @@ the exact invocation:
 | `envelope-2026-08-07.csv` | REQ-02 envelope, incl. the prior-art comparison |
 | `zero-fraction-2026-08-07.csv` | pooled zero fractions with Wilson intervals |
 | `cargo-tree-2026-08-07.txt` | resolved dependency graph (the harness gitignores `Cargo.lock`) |
-| `gpu-hang-2026-08-07.log` | receipt for the GPU fault at $M = 4096$ (§4.5) |
+| `gpu-hang-2026-08-07.log` | preserved history of one device fault; supports no claim (§4.5) |
 | `literature-search-2026-08-08.md` | recorded search behind §7.6's novelty claim |
 
 Every CSV preamble records `harness_source_sha` and `harness_source_dirty`
@@ -328,10 +329,11 @@ each projected from its own measured rate at $n = 20$:
 | $q{=}7$, $n{=}28$, $M{=}256$ | 0.0781 | 3279 s | far over |
 | $q{=}7$, $n{=}28$, $M{=}1024$ | 0.1616 | 6335 s | far over |
 
-Rates are matrices/second and are **estimates**. Applying the pessimism §4.3
-measures does not rescue any of them: the closest, $q{=}5$ at $n{=}24$ and
-$M{=}256$, would still miss the 120 s cap. The $n = 24$ cells are marginal and
-the $n = 28$ cells miss by one to two orders of magnitude.
+Rates are matrices/second and are **estimates** whose bias magnitude is
+unvalidated at these field orders (below). None is rescued by any plausible
+correction: the closest, $q{=}5$ at $n{=}24$ and $M{=}256$, would need its true
+rate to beat the projection by 27 % to fit the 120 s cap. The $n = 24$ cells are
+marginal and the $n = 28$ cells miss by one to two orders of magnitude.
 
 **What censoring costs differs sharply between the two fields.** At $q = 5$ it
 costs the envelope nothing: CPU batch rayon is measured at every one of those
@@ -395,10 +397,41 @@ $M = 256$:
 The projection is consistently **low**, by 14–18 % across both batch sizes and
 both steps, because longer kernels amortise per-launch overhead better than the
 reference does. This is the figure the CSV preamble defers to rather than
-quoting, so a re-measurement cannot leave a stale percentage behind. It is
-therefore mildly pessimistic: a cell whose projected rate misses the budget by
-an order of magnitude is confidently infeasible, while one that misses by 20 %
-is not, and is attempted rather than censored.
+quoting, so a re-measurement cannot leave a stale percentage behind.
+
+**That validation covers $q = 3$ on the GPU and nothing else, and the censored
+cells are not $q = 3$.** The check above is possible only where both ends of a
+projection are measured, which in this schedule is the $q = 3$ GPU chain — and
+the eight censored cells are all $q \in \{5, 7\}$. The two kernel families do
+not share a cost structure, so the measured magnitude cannot be carried across:
+`permanent_bipedal3.hip` keeps its column sums bit-sliced in a single
+`(sum_m, sum_s)` word pair and updates them in **O(1)** work per Gray step,
+while `permanent_bipedal5.hip` and `permanent_bipedal7.hip` run an explicit
+`for (i = 0; i < n; i++)` over the column-sum array at every step, costing
+**O(n)**. Ryser's $n \cdot 2^n$ model therefore *overstates* how the $q = 3$
+kernel grows — which is one reason its projections read low — and *matches* the
+$q \in \{5,7\}$ kernels much more closely. Applying a 14–18 % correction to
+them would be transferring a number from the field where the model fits worst
+to the fields where it fits best.
+
+What survives the transfer is a direction, argued rather than measured: a
+projection from smaller $n$ omits per-launch cost that a longer kernel amortises,
+and that mechanism is field-independent, so $q \in \{5,7\}$ projections are
+*expected* low too. Even that is not guaranteed — the per-element kernels carry a
+working set growing as $n^2$ and, at $q = 7$, LUT traffic to device global
+memory, either of which could make true cost grow faster than the model and push
+a projection high. **So: bias direction argued, magnitude unvalidated, for every
+censored cell in this study.**
+
+None of that changes a verdict, because the censoring margins are not close. To
+rescue the nearest censored cell — $q{=}5$, $n{=}24$ at $M{=}256$ — the true
+rate would have to exceed its projection by **27 %**, more than any bias measured
+anywhere in this study; the other $n = 24$ cells need 46 % to 183 %, and the
+$n = 28$ cells need factors of 24 to 53. The conclusions rest on those margins
+rather than on a transferred correction. The projection is used the same way
+throughout: a cell whose projected rate misses the budget by an order of
+magnitude is confidently infeasible, while one that misses by 20 % is not, and
+is attempted rather than censored.
 
 **The rule.** A cell is censored when its projected rate implies a repetition
 longer than the 120 s per-cell cap — for a fixed-batch cell, $M / \hat R$; for
@@ -551,48 +584,38 @@ tried, one of them once and fatally, so "optimum" here means best-of-tested at
 one $(q, n)$ on one device — not a characterised curve, and not a claim about
 sizes between or beyond those tried.
 
-**A single hang was observed at $M = 4096$, with the cause unattributed.** The
-task names $M \in \{256, 1024\}$ as starting points, so larger batches were
-streamed to test whether they are the ceiling. At $M = 4096$, $q=3$, $n=24$ the
-device **hung** — `HW Exception by GPU node-1 … reason :GPU Hang` — and took the
-process down with it. A watchdog timeout is the natural hypothesis: at
-$M = 1024$ one launch occupies the device for about 3.3 s, so $M = 4096$ asks
-for roughly 13 s of uninterrupted kernel time on a display-attached card. **That
-remains a hypothesis.** No diagnostic was captured that separates it from a
-driver defect, memory pressure, or a transient, and the runtime's `GPU Hang`
-string names a symptom rather than a cause. The event happened **once** and was
-never retried, so it has no reproduction and no error bar.
+**Sizes above 2048 were not scheduled, and that is a scheduling decision rather
+than a measured ceiling.** The task names $M \in \{256, 1024\}$ as starting
+points; $M = 2048$ was added to test whether they are the top, and it is slower,
+so the measured set $\{256, 1024, 2048\}$ brackets an interior optimum. Nothing
+above 2048 was measured, and this study makes **no claim about what happens
+there** — not that it is unsafe, not that it is slower, not that a ceiling
+exists.
 
-The fault also predates the harness's own version control: it occurred about
-twenty minutes before the crate's first commit, so the code that hung has no
-SHA, and the provenance pinning that every other artifact here carries was added
-afterwards partly in response. `gpu-hang-2026-08-07.log` records what was
-captured and separates it explicitly from what is reconstructed and what is
-unrecoverable. Two things follow: the observation is **not reproducible from a
-committed CSV row** and is reported as an operational observation rather than a
-measurement; and every committed number postdates it, taken at harness source
-commit `7189d66f` after a full cross-backend equivalence re-check passed on all
-six backends (`equivalence-2026-08-07.csv`, itself generated after the fault).
-The $M = 2048$ row in the sustained table is the surviving in-band probe.
+The decision not to schedule larger sizes was informed by an incident:
+`gpu-hang-2026-08-07.log` records a device fault during a single $M = 4096$
+attempt on 2026-08-07. That record is committed as **preserved history, and no
+claim in this study rests on it**. It cannot bear evidentiary weight: it happened
+once, was never retried, produced no CSV row, and predates the harness's first
+commit — so the code that ran has no SHA, and the log itself separates what was
+captured from what is reconstructed and what is unrecoverable. A single
+unreproduced event with no attributable cause supports a precaution, not a
+conclusion.
 
-Three consequences for the campaign, stated at the strength the evidence
-supports:
+Two consequences for the campaign, both derived from the **cost model and the
+measured rates** rather than from that incident:
 
-1. **Per-launch wall-clock is the constraint worth managing**, whatever the
-   fault's cause was. $M \times n \times n$ bytes is trivial at these sizes, so
-   memory is not the binding resource; the quantity that grew between the batch
-   that worked and the one that died is time-in-kernel.
-2. **Whatever the safe ceiling is, it tightens with $n$.** Per-launch time
-   scales as $M \cdot n \cdot 2^n / W$, so a shard size validated at $n = 20$
-   buys roughly half the margin at $n = 24$. This follows from the cost model
-   rather than from the hang.
-3. **The campaign should cap per-launch time, not batch size**, and pick $M$ per
-   $(q, n)$ from the measured per-matrix cost, with a margin — the margin
-   justified by the *consequence* of a hang (the whole in-flight shard and, on
-   this host, the process) rather than by a known threshold, since no threshold
-   was established. This argues for the modest shard sizes the storage layout in
-   §7.4 assumes, and against the intuition that bigger batches are always
-   better.
+1. **Per-launch wall-clock is the quantity worth managing.**
+   $M \times n \times n$ bytes is trivial at these sizes, so device memory is
+   not the binding resource at any $M$ in reach; time-in-kernel is what a batch
+   size actually buys or spends, and §4.5's own $M = 2048$ row shows it can be
+   spent for nothing.
+2. **Per-launch time grows sharply with $n$.** It scales as
+   $M \cdot n \cdot 2^n / W$, so a shard size chosen at $n = 20$ costs roughly
+   twice the per-launch time at $n = 24$. A campaign should therefore pick $M$
+   per $(q, n)$ from the measured per-matrix cost and cap per-launch time rather
+   than fixing a batch size across the grid — which is what the storage layout
+   in §7.4 assumes, and which is prudent whether or not any ceiling exists.
 
 ### 4.6 Attainable envelope (REQ-02)
 
@@ -970,10 +993,46 @@ study, and the constant factors, which differ between a bit-sliced Gray-code
 walk and an elimination over $\mathbb{F}_q$, are unknown. It is enough to say
 the companion is cheap at the sizes in the envelope and not enough to call it
 free; the campaign should time one determinant cell against its permanent cell
-before adopting the assumption. It also supplies a pipeline validation the permanent
-cannot: $\Pr[\det = 0]$ has a known limit $1 - \prod_{i \ge 1}(1 - q^{-i})$, so a
-measured determinant curve that misses its own limit falsifies the pipeline
-before any permanent conclusion is drawn.
+before adopting the assumption.
+
+**It also supplies a pipeline validation the permanent cannot — but the
+comparison must be against the exact value at each $n$, not against the limit.**
+The count of invertible $n \times n$ matrices over $\mathbb{F}_q$ is
+$\prod_{k=0}^{n-1}(q^n - q^k)$, since row $k$ may be any vector outside the span
+of the $k$ already chosen. Dividing by $q^{n^2}$ and substituting $i = n - k$
+gives the exact singular probability at every finite $n$:
+
+$$
+\Pr[\det(A) = 0] \;=\; 1 - \prod_{i=1}^{n}\left(1 - q^{-i}\right).
+$$
+
+This was checked against brute-force enumeration over all $q^{n^2}$ matrices for
+$(q,n) \in \{(3,1),(3,2),(3,3),(5,2),(5,3),(7,2)\}$ and agrees exactly as a
+rational — for instance $11/27$ at $q{=}3$, $n{=}2$ and $313/729$ at $n{=}3$.
+Its $n \to \infty$ limit is $\alpha_q = 1 - \prod_{i \ge 1}(1 - q^{-i})$,
+which is [HKS2026] Fact 1.1 and the value §1 quotes.
+
+**An earlier revision of this study proposed testing the measured curve against
+that limit. That would have manufactured failures at small $n$**, where the
+campaign's samples are largest and its intervals tightest. The limit overstates
+the exact value by $3.5 \times 10^{-3}$ at $q{=}3$, $n{=}4$, by
+$3.0 \times 10^{-4}$ at $q{=}5$, $n{=}4$, and by $3.8 \times 10^{-4}$ at
+$q{=}3$, $n{=}6$ — deviations tens to hundreds of standard errors wide at cells
+that cost minutes to sample. The gap falls below $10^{-6}$ only from about
+$n = 12$ at $q = 3$ and earlier for larger $q$, so a limit-based check is
+harmless exactly where it is uninformative and wrong exactly where it would fire.
+
+The acceptance test is therefore stated against the exact finite-$n$ value and
+carries the same error control as §7.2's permanent test: a determinant cell
+fails when its measured $\hat p_{\det}(n)$ lies more than the Bonferroni-adjusted
+critical $z$ from $1 - \prod_{i=1}^{n}(1 - q^{-i})$, with the level split across
+the same preregistered cell set. This one is **two-sided** — unlike
+$\Pr[\mathrm{per} = 0] \ge 1/q$, which is a one-sided bound, the determinant's
+value is pinned exactly, so a deviation in either direction indicts the pipeline
+— which puts each cell at $\alpha / 2K$ and a critical $z$ of $3.36$ at
+$\alpha = 0.05$, $K = 63$. A determinant curve that misses its own exact values
+falsifies the pipeline before any permanent conclusion is drawn, and unlike the
+order-3 permanent anchors it does so at every $n$ the campaign measures.
 
 ## 7. Recommendation (REQ-04)
 
@@ -1128,7 +1187,12 @@ only be consistent with. Every conclusion must be phrased at the measured sizes.
   companion upper bound $\Pr \le 1/q + C/q^3$ is **not** part of the test, since
   [HKS2026] leaves $C$ unfixed and no finite observation can contradict it
   (§4.7).
-- **Determinant companion** on the same matrices, per §6.
+- **Determinant companion** on the same matrices, per §6, checked against the
+  **exact** finite-$n$ singular probability $1 - \prod_{i=1}^{n}(1 - q^{-i})$ —
+  never against its $n \to \infty$ limit, which differs from it by far more than
+  a campaign standard error at small $n$ — at a two-sided Bonferroni level
+  ($\alpha / 2K$, critical $z = 3.36$) matching the permanent test's error
+  control.
 - **Rectangular validation** (epic REQ-04) once G5 lands, framed as the
   three-part pipeline check described there rather than as a test of
   [GGK2025] Theorem 2.1 in its proven regime.
@@ -1226,14 +1290,19 @@ adds, and where it does not:
    matrices/s — through Ryser's $n \cdot 2^n$ work model gives an **estimated**
    4.51 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.49 from
    19.26. **These are projections, not measurements**, formed by the same
-   machinery as §4.3's censored cells, from the reference measurements named
-   here, and §4.3 shows that machinery runs 14-18 % **low** on this hardware, so
-   the true rates are likely somewhat higher. Against the 12 h budget's
+   machinery as §4.3's censored cells and from the reference measurements named
+   here. Their bias is only partly validated: §4.3's 14-18 % low reading comes
+   from the $q = 3$ GPU chain, so it transfers to the GPU-based estimate here —
+   one step further along the same field, kernel and batch size — but not to the
+   intra-matrix rayon estimate, whose backend was never checked and which pays
+   no per-launch cost for a longer kernel to amortise. Treat the direction as
+   argued and the magnitude as loose. Against the 12 h budget's
    $3.672 \times 10^4$ productive seconds, SE $= 10^{-3}$ at $n = 30$ needs an
-   estimated 13.7 h — over budget by about a third, which the projection's known
-   low bias does not close — and SE $= 10^{-4}$ needs an estimated 1370 h, over
-   by two orders of magnitude. So $n = 30$ is out of reach at both targets, but
-   only the $10^{-4}$ figure deserves the phrase "by orders of magnitude"; at
+   estimated 13.7 h — over budget by about a third, a gap a 14-18 % correction
+   would not close even if it applied — and SE $= 10^{-4}$ needs an estimated
+   1370 h, over by two orders of magnitude. So $n = 30$ is out of reach at both
+   targets, but only the $10^{-4}$ figure deserves the phrase "by orders of
+   magnitude"; at
    $10^{-3}$ it is a near miss that a larger budget would reach. This campaign
    does **not** extend the $q = 3$ curve in $n$, and no wording in the final
    report should imply otherwise.
@@ -1256,15 +1325,22 @@ adds, and where it does not:
    `@/inv/falsification-preserved`.
 
 The $q \in \{5, 7\}$ arms have no published baseline that a documented search
-found — the queries, engines, dates and examined hits are recorded in
-`literature-search-2026-08-08.md`, which also states that search's limits, the
-chief one being that no paywalled full text was read. Corroborating it,
-[HKS2026] §1 reports that its own authors "were not able to find any study of
-the asymptotic distribution of $\mathrm{per}(A)$" in this literature, and cites
-only [Scheinerman2024]'s $\mathbb{F}_3$ work as computational evidence. On that
-basis every
-measured cell there is new; that is a statement about the literature as we found
-it, not a claim of priority.
+found. The queries, engines, dates, examined works and reading depth per work
+are recorded in `literature-search-2026-08-08.md`, together with that search's
+limits: it ran one general web index rather than a bibliographic database, and
+three of the closest candidate works — `@/citation/Budrevich2018`,
+`@/citation/BudrevichGuterman2012` and `@/citation/Bassalygo2013`, all counting
+papers of the kind that might carry a small table without advertising it — were
+never read. Corroborating it, [HKS2026] §1 reports that its own authors "were
+not able to find any study of the asymptotic distribution of
+$\mathrm{per}(A)$" in this literature, and cites only [Scheinerman2024]'s
+$\mathbb{F}_3$ work as computational evidence.
+
+The claim this supports is **conditional on that search**: a recorded search
+found no prior numerics at $q \in \{5, 7\}$, subject to the limits it states.
+It is not a claim that none exist, that every measured cell is new, or that this
+campaign has priority. Reports should say what was searched and what it
+returned, and leave the coverage for a reader to judge.
 
 ## References
 

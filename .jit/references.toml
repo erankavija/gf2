@@ -135,3 +135,42 @@ key = "Scheinerman2024"
 citation = "Scheinerman — Fast Computation of Permanents over F_3 via F_2 Arithmetic. arXiv:2407.20205."
 arxiv = "2407.20205"
 refdb = "fast-computation-of-permanents-over-mathbb-f-3-via-mathbb-f-2-arithmetic"
+
+[[references]]
+key = "Bassalygo2013"
+citation = "Bassalygo — On the number of nonzero permanents over a finite field of odd characteristic. Probl. Inf. Transm. 49(4):382–383, 2013."
+doi = "10.1134/S003294601304008X"
+
+[[references]]
+key = "BudrevichGuterman2012"
+citation = "Budrevich, Guterman — Permanent has less zeros than determinant over finite fields. Theory and Applications of Finite Fields, Contemp. Math. 579, Amer. Math. Soc., 2012, pp. 33–42."
+
+[[references]]
+key = "Budrevich2018"
+citation = "Budrevich — The Number of Matrices with Nonzero Permanent Over a Finite Field. J. Math. Sci. 232(6):752–759, 2018."
+doi = "10.1007/s10958-018-3904-z"
+
+[[references]]
+key = "Dolinar2011"
+citation = "Dolinar, Guterman, Kuzma, Orel — On the Pólya permanent problem over finite fields. European J. Combin. 32(1):116–132, 2011."
+arxiv = "1003.1984"
+
+[[references]]
+key = "Kogan1996"
+citation = "Kogan — Computing permanents over fields of characteristic 3: where and why it becomes difficult. FOCS 1996, pp. 108–114."
+doi = "10.1109/SFCS.1996.548469"
+
+[[references]]
+key = "Tarin2007"
+citation = "Tarin — A Polynomial-time Algorithm for Computing the Permanent in GF(3^q). arXiv:0708.3568 (2007)."
+arxiv = "0708.3568"
+
+[[references]]
+key = "Elbek2025"
+citation = "Elbek, Taşyaran, Uçar, Kaya — SUperman: Efficient Permanent Computation on GPUs. arXiv:2502.16577 (2025); Comput. Phys. Commun. 321, 2026."
+arxiv = "2502.16577"
+
+[[references]]
+key = "Niu2019"
+citation = "Niu, Su, Zheng, Lü — A New Fast Computation of a Permanent. arXiv:1908.06371 (2019); withdrawn by the authors in 2020."
+arxiv = "1908.06371"
