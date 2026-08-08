@@ -5,6 +5,7 @@
 //! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...]
 //! permanent_sampling_feas sustained   --out PATH [--seconds 300]
 //! permanent_sampling_feas envelope    --throughput PATH --out PATH [--budget-hours 12]
+//! permanent_sampling_feas zerofrac    --throughput PATH --sustained PATH --out PATH
 //! ```
 //!
 //! Every subcommand writes a CSV whose preamble records the git SHA, toolchain,
@@ -21,9 +22,10 @@ use permanent_sampling_feas::env::HostInfo;
 use permanent_sampling_feas::equivalence::{check, EQUIVALENCE_CSV_HEADER};
 use permanent_sampling_feas::protocol::{
     run_cell, run_sustained, shuffle, warm_machine, CellSpec, Outcome, CELL_CSV_HEADER,
-    SUSTAINED_CSV_HEADER,
+    MAX_CELL_SECONDS, MIN_REPS, MIN_TIMED_SECONDS, PINNED_CORE, SUSTAINED_CSV_HEADER,
+    SUSTAINED_STREAMS_PER_RUN, SUSTAINED_STREAM_BASE, WARMUP_SECONDS,
 };
-use permanent_sampling_feas::stats::{envelope_row, ENVELOPE_CSV_HEADER};
+use permanent_sampling_feas::stats::{envelope_row, ENVELOPE_CSV_HEADER, Z_95};
 
 /// Campaign root seed. Every stream in every subcommand derives from it, so a
 /// rerun with this constant reproduces the exact matrix sequence.
@@ -258,7 +260,10 @@ fn cmd_grid(args: &[String]) {
     }
 
     let notes = vec![
-        format!("protocol: warmup >= 3 s, then >= 5 reps and >= 5 s timed, cap 120 s per cell"),
+        format!(
+            "protocol: warmup >= {WARMUP_SECONDS:.0} s, then >= {MIN_REPS} reps and \
+>= {MIN_TIMED_SECONDS:.0} s timed, cap {MAX_CELL_SECONDS:.0} s per cell"
+        ),
         format!("composite = generate + evaluate + reduce + store, all timed per repetition"),
         format!(
             "store: one shard record per batch appended and fsync-free flushed to a scratch file"
@@ -301,7 +306,9 @@ survive a re-measurement"
             "gpu timing includes host serialisation, hipMalloc, H2D, launch, sync, D2H and free \
 (all inside gf2_algebra::gpu::permanent_batch_*), plus zero counting and shard I/O"
         ),
-        format!("single-thread cells pinned to core 0; rayon cells use all logical CPUs"),
+        format!(
+            "single-thread cells pinned to core {PINNED_CORE}; rayon cells use all logical CPUs"
+        ),
     ];
     let resume = args.iter().any(|a| a == "--resume") && path.exists();
     let done = if resume {
@@ -458,7 +465,14 @@ fn cmd_sustained(args: &[String]) {
     let notes = vec![
         format!("sustained window: {seconds:.0} s per run, composite hot path throughout"),
         "first/last quarter rates expose boost decay within the window".to_string(),
-        format!("seed_root: 0x{SEED_ROOT:016x}, streams from 1_000_001"),
+        format!(
+            "seed_root: 0x{SEED_ROOT:016x}, streams from {}; run j reserves the \
+{SUSTAINED_STREAMS_PER_RUN} indices after {} + j*{SUSTAINED_STREAMS_PER_RUN}, which the \
+grid's 1 + i*{STREAMS_PER_CELL} per cell cannot reach. Both figures are formatted from \
+the constants they describe, so neither can drift from the rows below",
+            SUSTAINED_STREAM_BASE + 1,
+            SUSTAINED_STREAM_BASE
+        ),
         "gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried first \
 and hung the device (kernel time past hang detection), so the ceiling is a watchdog \
 limit rather than a memory or occupancy one"
@@ -709,7 +723,7 @@ fn cmd_zerofrac(args: &[String]) {
         "these counts are a by-product of the timing protocol; sample sizes are \
 whatever each cell needed, not a designed sampling plan"
             .to_string(),
-        "interval: Wilson score, 95 % (z = 1.959964)".to_string(),
+        format!("interval: Wilson score, 95 % (z = {Z_95:.6})"),
         format!("seed_root: 0x{SEED_ROOT:016x}"),
     ];
     let mut w = open_csv(
