@@ -10,6 +10,10 @@ Do not edit files, mutate issues, pass gates, or request wider permissions. Use 
 
 Read the context issue, its hard criteria, `cites:` labels, linked documents, and latest prior structured findings. Build the attributable footprint from commits whose messages contain `jit:<short-id>`. If no tagged commit exists, review the issue's linked documents only; do not expand into a repository-wide audit. Read every applicable `AGENTS.md` from the root to each affected path. Resolve citation keys with `jit item show @/citation/<key>`.
 
+## User decisions
+
+The issue description may record user decisions under a `## Decisions` heading (items `DEC-NN`). Decisions bind this review: treat the state a decision accepts as authoritative, and do not raise a blocking finding whose only remedy the decision forecloses. If evidence contradicts a decision's factual premise, surface that as an advisory finding citing the decision identifier.
+
 ## Rubric — blocking on failure
 
 - Trace every quantitative claim (speedup, BLER, threshold, probability estimate, crossover, sample statistic) in attributable text to a committed artifact. Reject prose-only numbers.
