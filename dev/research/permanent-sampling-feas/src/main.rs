@@ -139,19 +139,23 @@ fn cmd_equivalence(args: &[String]) {
         .unwrap_or(512);
 
     let notes = vec![
-        format!("check: per-matrix permanent values against the scalar single-word kernel"),
+        format!(
+            "check: per-matrix permanent values against a reference kernel, named per row in \
+the reference column. The scalar single-word kernel is the reference wherever it exists; at \
+q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic \
+permanent_ryser is the reference there"
+        ),
         format!("matrices_per_cell: {matrices}"),
         format!("seed_root: 0x{SEED_ROOT:016x}, stream: 0 (reserved for this check)"),
-        "sizes: n in {8, 12, 16} for every q; n = 20 additionally for q in {3, 5}".to_string(),
+        "sizes: n in {8, 12, 16, 20} for every q. At q=7, n=20 the packed CPU kernels are \
+recorded unsupported and the comparison runs between the GPU and the generic path"
+            .to_string(),
     ];
     let mut w = open_csv(&path, &host, EQUIVALENCE_CSV_HEADER, &notes);
 
     let mut mismatches = 0usize;
     for q in QS {
         for n in [8usize, 12, 16, 20] {
-            if q == 7 && n > 16 {
-                continue;
-            }
             for row in check(q, n, matrices, SEED_ROOT) {
                 mismatches += row.mismatches;
                 println!(
