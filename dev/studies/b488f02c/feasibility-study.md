@@ -1,7 +1,9 @@
 # Feasibility study: permanent-zero-fraction sampling campaign
 
-> **Status:** complete. Every number in §4 traces to a committed CSV in this
-> directory. The receipt files keep the `2026-08-07` names they were given when
+> **Status:** complete. Every number in §4 traces to a committed receipt in this
+> directory — a CSV for every measured quantity, and for the single $M = 4096$
+> fault, which died before it could write a CSV row, the committed hang log
+> (§4.5). The receipt files keep the `2026-08-07` names they were given when
 > the set was first produced; the measurements committed here were re-taken on
 > **2026-08-08 UTC**, and each receipt's `timestamp_utc` header gives its own
 > time. Where the two disagree, the header is authoritative — the filename is a
