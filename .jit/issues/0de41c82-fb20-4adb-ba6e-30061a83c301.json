@@ -13,14 +13,14 @@
   "gates_status": {},
   "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
   "labels": [
-    "epic:gf2-algebra-permanent",
     "component:gf2-algebra",
     "component:gf2-kernels-hip",
     "cites:Scheinerman2024",
-    "type:simulation"
+    "type:simulation",
+    "epic:permanent-statistics"
   ],
   "priority": "high",
   "state": "ready",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-07T22:43:35.681967553Z"
+  "updated_at": "2026-08-08T07:18:05.495206838Z"
 }

@@ -7308,3 +7308,6 @@
 {"fields":["documents"],"id":"03885238-cd3c-43e3-a742-0d516cd8f833","issue_id":"974a85bd-cb5d-48d2-94a4-7a15364ea2a0","timestamp":"2026-08-07T21:35:11.186920735Z","type":"issue_updated","updated_by":"doc-update"}
 {"id":"cd9a6e42-fbdb-45eb-ac4a-ae95d5883090","issue_id":"0de41c82-fb20-4adb-ba6e-30061a83c301","priority":"high","timestamp":"2026-08-07T22:43:35.681967553Z","title":"Evaluate wave-parallel GPU kernels for finite-field permanents","type":"issue_created"}
 {"fields":["dependencies"],"id":"3aeb247b-3265-44f6-9822-540d119d9246","issue_id":"ae82bd73-741d-4007-811f-914dac00bae8","timestamp":"2026-08-07T22:43:47.219745551Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["dependencies"],"id":"f3d183fc-a56c-4fa7-b95c-1a5924633d50","issue_id":"ae82bd73-741d-4007-811f-914dac00bae8","timestamp":"2026-08-08T07:17:42.736058391Z","type":"issue_updated","updated_by":"dependency-remove"}
+{"fields":["dependencies"],"id":"bedb39e6-67ad-49ed-9896-d7c8ca167e74","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-08T07:17:53.811222085Z","type":"issue_updated","updated_by":"dependency-add"}
+{"fields":["labels"],"id":"fd120f7a-ccef-4434-b0ac-76b1be468522","issue_id":"0de41c82-fb20-4adb-ba6e-30061a83c301","timestamp":"2026-08-08T07:18:05.495206838Z","type":"issue_updated","updated_by":"issue-update"}
