@@ -287,14 +287,16 @@ projection_reference_n through Ryser's n*2^n work model. No bound on a batched r
 derived from probe_matrix_s, which is a single-matrix LATENCY. Neither 1/probe nor \
 W/probe (W = compute units) bounds a batched rate: a compute unit hosts several \
 workgroups at once and a probe pays launch costs a batch amortises. An earlier harness \
-published W/probe as an upper bound and measurements exceeded it; the study records that \
-falsification with the numbers"
+published W/probe as an upper bound and measurements exceeded it; the study's section 4.3 \
+records that falsification and says which of its numbers survive in this file"
         ),
         format!(
-            "projection accuracy: the projection runs LOW, so a censored cell's true rate is \
-somewhat higher than its projection. The magnitude is re-derived from THIS file's own q=3 \
-GPU chain in the study's section 4.3 rather than quoted here, so that a stale figure cannot \
-survive a re-measurement"
+            "projection accuracy: on the q=3 GPU chain, where the projection can be checked \
+against a measurement, it lands LOW at every step. Censored cells' true rates are therefore \
+expected to run somewhat higher than their projections - an extrapolation from that one \
+chain to the others, not a measured property of them. The magnitude is re-derived from THIS \
+file's own q=3 chain in the study's section 4.3 rather than quoted here, so that a stale \
+figure cannot survive a re-measurement"
         ),
         format!(
             "seed_root: 0x{SEED_ROOT:016x}; each cell owns {STREAMS_PER_CELL} ChaCha20 streams"
@@ -442,13 +444,14 @@ fn cmd_sustained(args: &[String]) {
     // plus a GPU batch above the 256/1024 starting points to test whether they
     // are the ceiling.
     //
-    // GPU M=4096 at q=3, n=24 was attempted on 2026-08-07 and **hung the
-    // device** ("HW Exception by GPU node-1 ... reason :GPU Hang"), killing the
-    // process. At M=1024 one launch takes about 3.3 s, so M=4096 projects to
-    // roughly 13 s of uninterrupted kernel time, past this display-attached
-    // card's hang detection. The probe is therefore lowered to M=2048
-    // (about 6.6 s projected) to bracket the ceiling from below without a
-    // second device reset. See the study's section 4.5.
+    // GPU M=4096 at q=3, n=24 was attempted on 2026-08-07 and the device
+    // faulted ("HW Exception by GPU node-1 ... reason :GPU Hang"), killing the
+    // process. That happened once and was never retried, and nothing was
+    // captured that identifies the cause; a watchdog timeout is one hypothesis
+    // among several, not a finding. The probe is lowered to M=2048 to approach
+    // the untested region from below without risking a second device reset -
+    // a precaution justified by the cost of a fault, not by a known threshold.
+    // See the study's section 4.5 and gpu-hang-2026-08-07.log.
     let runs: Vec<(u64, usize, Backend, usize)> = vec![
         (3, 24, Backend::Scalar, 8),
         (3, 24, Backend::Avx2, 4),
@@ -464,7 +467,9 @@ fn cmd_sustained(args: &[String]) {
 
     let notes = vec![
         format!("sustained window: {seconds:.0} s per run, composite hot path throughout"),
-        "first/last quarter rates expose boost decay within the window".to_string(),
+        "first/last quarter rates bound drift within the window; the split measures \
+drift, it does not attribute it to a cause"
+            .to_string(),
         format!(
             "seed_root: 0x{SEED_ROOT:016x}, streams from {}; run j reserves the \
 {SUSTAINED_STREAMS_PER_RUN} indices after {} + j*{SUSTAINED_STREAMS_PER_RUN}, which the \
@@ -473,9 +478,10 @@ the constants they describe, so neither can drift from the rows below",
             SUSTAINED_STREAM_BASE + 1,
             SUSTAINED_STREAM_BASE
         ),
-        "gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried first \
-and hung the device (kernel time past hang detection), so the ceiling is a watchdog \
-limit rather than a memory or occupancy one"
+        "gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried once \
+and the device faulted, ending that run. The fault is a single unretried event and its \
+cause is NOT established here: gpu-hang-2026-08-07.log is its only receipt and records \
+what was and was not captured. No ceiling mechanism is asserted from it"
             .to_string(),
         "each run reserves a disjoint stream range (stream_first column), so two runs at one \
 (q, n) draw independent samples and their zero counts may be pooled"
@@ -623,7 +629,9 @@ compaction, restart after a failed shard, and residual throttling",
 comparison is on achieved PRECISION (standard error), not raw trial count"
             .to_string(),
         "precision_comparison: exceeds/matches/below_prior_precision (matches = within 10% on SE), \
-prior_exact where the published value is a full enumeration, no_prior for q in {5,7}"
+prior_exact where the published value is a full enumeration. no_prior means this harness \
+carries no baseline for that (q, n) - for q in {5,7} none is tabulated here; whether any \
+exists in the literature is a separate question the study addresses"
             .to_string(),
     ];
     let mut w = open_csv(&path, &host, ENVELOPE_CSV_HEADER, &notes);
