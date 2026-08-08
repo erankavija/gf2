@@ -178,7 +178,11 @@ The filenames retain the `2026-08-07` stem of the original set and are not
 evidence of when a
 measurement ran; §4's provenance list records why the set was regenerated. The
 one artifact whose date is its content is `gpu-hang-2026-08-07.log`, which
-records a fault that genuinely happened on 2026-08-07. Artifacts in this
+records a fault that genuinely happened on 2026-08-07. One known limitation of
+the CSVs: preamble note text is emitted unquoted, so a note containing a comma
+splits across fields for a naive reader — the `#` prefix marks those lines as
+preamble, and fixing the emitter would mean regenerating the set, which DEC-01
+forecloses. Artifacts in this
 directory, each carrying a preamble with
 git SHA, rustc and ROCm versions, CPU and GPU model, governor, thread count, and
 the exact invocation:
@@ -200,16 +204,16 @@ Every CSV preamble records `harness_source_sha` and `harness_source_dirty`
 alongside the repository SHA. The harness SHA is the one that matters: the
 repository carries `.jit/` workflow state that other agents commit
 independently, so a whole-repo dirty flag says nothing about whether the
-measured code was committed. **All five receipts were produced by one
-executable, `binary_sha256`
+measured code was committed. **The four measurement receipts were produced by
+one executable, `binary_sha256`
 `b1fe566fe1d133f2cbd298d35ca5290707830b71e3670f891b9e86aa8978698c`, built at
 harness source commit `0e0b0aec` with
 `harness_source_dirty: false`, `deps_source_sha: 195f8254` and
-`deps_source_dirty: false`.** One harness commit post-dates them, `b96f9550`,
-which rewords a rustdoc paragraph and changes nothing else; a forced recompile
-at it produces the byte-identical executable, checked with `cmp` against the
-binary that wrote these receipts. The pin therefore still covers the harness
-tip, and a reproduction built there draws these exact stream indices.
+`deps_source_dirty: false`.** Two harness commits post-date them, and the next
+paragraph bounds what they change; the first, `b96f9550`, rewords a rustdoc
+paragraph and nothing else, and a forced recompile at it produces the
+byte-identical executable, checked with `cmp` against the binary that wrote
+these receipts.
 
 **The equivalence receipt carries a newer pin than the other four, and the
 difference is bounded.** It was regenerated at `2bea03a4`, binary
@@ -287,8 +291,16 @@ Radeon RX 6950 XT (gfx1030, 80 compute units), rustc 1.97.0, ROCm/HIP 7.2.
 
 ### 4.1 Backend equivalence (precondition)
 
-Before any timing counted as evidence, all seven backends were compared per
-matrix on shared inputs drawn from a reserved seed stream. **Every backend
+Equivalence ran twice, and the order matters. The original schedule ran **before
+any timing counted as evidence**, across all seven backends, and the timing
+measurements were taken only after it passed. The schedule-extended re-run
+**postdates those measurements**: it re-verified the whole suite and added the
+$q = 7$, $n = 20$ cell, under the user-approved extension recorded as
+**DEC-02**, which also fixes the resulting two-binary provenance as final. So
+the precondition was met in the original order, and the extra cell is a later
+addition to the same check rather than something the timing rested on. Both runs
+compared backends per matrix on shared inputs drawn from a reserved seed
+stream. **Every backend
 returned byte-identical permanents for every matrix** — 46 comparisons agreeing
 and 26 recorded unsupported with a reason — for $q \in \{3,5,7\}$ at
 $n \in \{8, 12, 16, 20\}$, 512 matrices per cell.
@@ -578,11 +590,14 @@ of four lanes carry no data. This reproduces the ratio already visible in
 `dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv` (scalar at
 0.317-0.319 of the AVX2 time), now on an independent harness and RNG.
 
-**The GPU leads at $q=3$ up to $n = 24$, and loses at $q \in \{5,7\}$
-throughout.** For $q = 3$ the GPU at $M = 1024$ is the fastest path through
-$n = 24$, but its margin over intra-matrix rayon collapses across the top of the
-range: 1.63x at $n = 20$, 1.05x at $n = 24$, and **0.984x at $n = 28$**, where
-intra-matrix rayon is ahead. For
+**At $q = 3$ the GPU leads only in the middle of the range, and loses at
+$q \in \{5,7\}$ throughout.** The $q = 3$ crossover has a shape rather than a
+threshold: batch rayon takes $n = 12$, the GPU at $M = 1024$ takes $n = 16$
+through $n = 24$, and intra-matrix rayon takes $n = 28$. At the bottom the
+composite is dominated by generating and packing a 65 536-matrix batch rather
+than by the kernel, which is what costs the GPU that cell; at the top its margin
+over intra-matrix rayon decays — 1.63x at $n = 20$, 1.05x at $n = 24$, and
+**0.984x at $n = 28$**, where intra-matrix rayon is ahead. For
 $q = 5$ and $q = 7$ the CPU batch-rayon path wins wherever both are supported,
 by roughly a factor of three at every shared $n$ in both fields. The F_7 GPU
 kernel is the weakest of the three: its LUT-based arithmetic makes it the
@@ -632,7 +647,7 @@ single-thread path, which §4.4 has just shown to be the *slower* of the two
 single-thread CPU paths, and unparallelised besides. Restated against the best
 CPU path measured here, the same $M{=}256$ configuration is **0.46x at $n=24$**
 and **0.44x at $n=28$**, and the honest headline is the $M{=}1024$ comparison
-above: a 1.04x edge at $n=24$ and an unresolved ordering at $n=28$, not 30x.
+above: a 1.05x edge at $n=24$ and an unresolved ordering at $n=28$, not 30x.
 This study's
 $q=3$, $n=28$, $M=256$ rate agrees with the receipt's 8.490 matrices/s to within
 0.5 %, so the two measurements agree where they measure the same thing; the
@@ -871,18 +886,45 @@ No cell trips the adjusted rule, in either direction. This cell is the largest
 deviation in the table either way; the largest positive is $q{=}3$, $n{=}28$ at
 $z = +1.58$, on a sample of 5 812 matrices.
 
-**No numeric bound on $C$ follows from these cells, and an earlier revision of
-this study wrongly claimed one.** [HKS2026] eq. 1.4 reads
-$\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for $n \ge 3$, with $C$ an
-unspecified universal constant. An observed excess $\delta$ at field order $q$
-is consistent with that statement whenever $C \ge \delta q^3$, so a measurement
-constrains $C$ from *below* if at all, and a larger $C$ only weakens the
-published bound. The previous text inverted this and reported the largest
-observed excess as an upper bound on $C$. What the data support is the weaker
-and correct statement: **every measured cell is consistent with [HKS2026]
-Theorem 1.3 in both directions**, the lower bound $\Pr \ge 1/q$ and the upper
-bound at the constant the authors leave unfixed. Recorded per
-`@/inv/falsification-preserved`.
+**The upper bound is numeric, and two earlier revisions of this study got it
+wrong in opposite directions.** [HKS2026] eq. 1.4 reads
+$\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for $n \ge 3$. The theorem statement
+says "for some absolute constant $C$", but the proof evaluates it: the proof of
+Theorem 1.3 derives
+$\Pr[\mathrm{per}(A) \ne 0] \ge (1 - q^{-1})(1 - 11q^{-3})$, i.e.
+$\Pr \le 1/q + 11/q^3$ — so **$C = 11$** — and Theorem 1.4's proof reaches $11$
+independently for its eq. 1.6. So the ceiling is a number at every field order:
+
+| $q$ | ceiling $1/q + 11/q^3$ | allowed excess over $1/q$ | measured $\hat p$ |
+|---|---|---|---|
+| 3 | $20/27 = 0.7407$ | $0.4074$ | $\approx 0.333$ |
+| 5 | $36/125 = 0.2880$ | $0.0880$ | $\approx 0.200$ |
+| 7 | $60/343 = 0.1749$ | $0.0321$ | $\approx 0.143$ |
+
+**Every measured cell satisfies it, and none of them tests it.** Among the
+well-sampled cells the closest approach to a ceiling is $q{=}7$, $n{=}12$, which
+sits **74 standard errors** below its own, and the $q = 3$ cells sit hundreds to
+thousands of standard errors below theirs. Two cells come nearer in standard
+errors — $q{=}7$ at $n = 24$ and $n = 28$, about one — but only because they
+hold 10 and 5 matrices, so their standard errors are enormous rather than their
+values high; their point estimates sit *below* $1/q$, not near the ceiling. At
+$q = 3$ the bound is not merely slack but weaker than eq. 1.3, since $0.7407$ is
+far above $\alpha_3 \approx 0.4399$; it binds most tightly at $q = 7$ and even
+there leaves 23 % headroom in relative terms. **No campaign at any feasible $N$
+could contradict eq. 1.4 at these field orders** — doing so at $q = 7$ would
+require the true value to exceed $1/q$ by $0.032$, two orders of magnitude
+larger than the deviations the campaign is designed to resolve.
+
+Both earlier readings are recorded rather than quietly replaced, per
+`@/inv/falsification-preserved`. The first reported the largest observed excess
+as an upper bound on $C$, which inverts the inequality: an observed excess
+$\delta$ is consistent with the theorem whenever $C \ge \delta q^3$, so a
+measurement constrains $C$ from *below* if at all. The second, correcting that,
+overshot by calling $C$ unevaluated and concluding the ceiling pins no number —
+true of the theorem's statement, false of its proof. What the data support is
+that **every measured cell is consistent with [HKS2026] Theorem 1.3 in both
+directions**, against a floor of $1/q$ and a ceiling that is numeric, satisfied,
+and far too loose here to be informative.
 
 The multiplicity arithmetic above is a **post-hoc calculation on samples that
 were never a designed experiment**, and is reported as an order-of-magnitude
@@ -1233,12 +1275,13 @@ this recommendation rather than caveats on it.
    the envelope reaches $n = 24$ and $n = 20$
    respectively at SE $= 10^{-3}$. Note what [HKS2026] leaves open and what it
    does not (§7.1): the floor $\Pr \ge 1/q$ is proved at every $n$, and the
-   ceiling $\Pr \le 1/q + C/q^3$ is proved for $n \ge 3$ but with $C$
-   unevaluated, so *how close* the finite-$n$ value sits to $1/q$ at these field
-   orders is exactly what is not settled. That is the campaign's quantity:
-   the sign and size of $\delta(n) = \Pr - 1/q$ where no number is currently
-   pinned. Framing a $q \in \{5,7\}$ result as "confirming the limit is $1/q$"
-   would claim credit for a conjecture nobody has proved.
+   ceiling $\Pr \le 1/q + 11/q^3$ is proved for $n \ge 3$ — a real number, but
+   $0.03$ to $0.41$ above the floor, so *how close* the finite-$n$ value sits to
+   $1/q$ at these field orders is exactly what is not settled. That is the
+   campaign's quantity: the sign and size of $\delta(n) = \Pr - 1/q$, which no
+   proved bound pins to better than two orders of magnitude. Framing a
+   $q \in \{5,7\}$ result as "confirming the limit is $1/q$" would claim
+   credit for a conjecture nobody has proved.
 4. **The scientific reach is bounded by resolution, not by $n$.**
    [Scheinerman2024] reports that his measured proportions stop being
    distinguishable from $1/3$ beyond $n = 13$, and this budget's per-cell sample
@@ -1270,18 +1313,22 @@ one, in their published directions:
 
 - $\Pr[\mathrm{per}(A) = 0] \ge 1/q$ for **all** $n$ (eq. 1.2) — a hard floor,
   and the only one of the three that the campaign can check per cell;
-- $\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for all $n \ge 3$ (eq. 1.4), **for
-  some absolute constant $C$** the paper does not evaluate;
+- $\Pr[\mathrm{per}(A) = 0] \le 1/q + C/q^3$ for all $n \ge 3$ (eq. 1.4), with
+  **$C = 11$** derived in the proof though the statement says only "some
+  absolute constant";
 - $\limsup_{n} \Pr[\mathrm{per}(A) = 0] < \alpha_q$ (eq. 1.3), where $\alpha_q$
   is the determinant's limiting zero probability — an asymptotic separation from
   the determinant, not a statement about proximity to $1/q$.
 
-Because $C$ is unquantified, eq. 1.4 pins no number at $q \in \{3,5,7\}$: for a
-large enough $C$ the interval $[1/q,\ 1/q + C/q^3]$ is vacuous at these field
-orders. So it is **not** established that the finite-$n$ value sits numerically
-close to $1/q$; what is established is a floor at $1/q$, a ceiling of unevaluated
-width, and an asymptotic gap from $\alpha_q$. Conjecture 1.2 — that the limit is
-exactly $1/q$ — is explicitly stated by [HKS2026] as unproved.
+Eq. 1.4 therefore does pin a number — $0.7407$, $0.2880$ and $0.1749$ at
+$q = 3, 5, 7$ — but not a useful one at these field orders: each ceiling sits
+$0.03$ to $0.41$ above $1/q$, while the deviation the campaign measures is of
+order $10^{-3}$ or smaller (§4.7). So it is **not** established that the
+finite-$n$ value sits *numerically close* to $1/q$ in any sense the campaign
+cares about; what is established is a floor at $1/q$, a ceiling three or more
+orders of magnitude too loose to constrain $\delta(n)$, and an asymptotic gap
+from $\alpha_q$. Conjecture 1.2 — that the limit is exactly $1/q$ — is
+explicitly stated by [HKS2026] as unproved.
 
 **The campaign's target is therefore the shape of the finite-$n$ correction**,
 $\delta(n) = \Pr[\mathrm{per}(A) = 0] - 1/q$, over the range it can measure: its
@@ -1339,9 +1386,10 @@ only be consistent with. Every conclusion must be phrased at the measured sizes.
   larger to trip a single cell, which is tolerable because a defect that matters
   is systematic and will show across many cells at once, and the campaign should
   read the *pattern* of deviations, not only the extreme cell. And the
-  companion upper bound $\Pr \le 1/q + C/q^3$ is **not** part of the test, since
-  [HKS2026] leaves $C$ unfixed and no finite observation can contradict it
-  (§4.7).
+  companion upper bound $\Pr \le 1/q + 11/q^3$ is **not** part of the test. It
+  is a real ceiling — $0.1749$ at $q = 7$, the tightest of the three — but the
+  campaign's cells sit tens to thousands of standard errors below it, so
+  checking it would never fire and would never inform (§4.7).
 - **Determinant companion** on the same matrices, per §6, checked against the
   **exact** finite-$n$ singular probability $1 - \prod_{i=1}^{n}(1 - q^{-i})$ —
   never against its $n \to \infty$ limit, which differs from it by far more than
