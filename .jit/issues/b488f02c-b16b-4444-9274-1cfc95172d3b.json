@@ -115,10 +115,11 @@
     "epic:permanent-statistics",
     "component:gf2-algebra",
     "cites:GGK2025",
-    "cites:Scheinerman2024"
+    "cites:Scheinerman2024",
+    "satisfies:REQ-01"
   ],
   "priority": "high",
   "state": "done",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-08T10:51:37.478505085Z"
+  "updated_at": "2026-08-08T23:35:43.527567044Z"
 }

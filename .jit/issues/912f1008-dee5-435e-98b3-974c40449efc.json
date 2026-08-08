@@ -1,15 +1,21 @@
 {
-  "assignee": null,
+  "assignee": "agent:claude",
+  "claimed_at": "2026-08-08T23:14:54.177814223Z",
   "context": {},
   "created_at": "2026-08-08T23:13:30.313825629Z",
   "dependencies": [
-    "0de41c82-fb20-4adb-ba6e-30061a83c301",
-    "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
-    "ae82bd73-741d-4007-811f-914dac00bae8",
-    "b488f02c-b16b-4444-9274-1cfc95172d3b"
+    "ae82bd73-741d-4007-811f-914dac00bae8"
   ],
   "description": "Plan Empirical permanent statistics of random matrices over small prime fields (b8206228) against every hard success criterion, write the concise design at dev/active/b8206228-permanent-statistics/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Investigation: permanent-statistics campaign (b8206228)",
+      "path": "dev/active/b8206228-permanent-statistics/investigation.md"
+    }
+  ],
   "gates_required": [
     "plan-review"
   ],
@@ -30,7 +36,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "in_progress",
   "title": "planning: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-08T23:13:30.313825629Z"
+  "updated_at": "2026-08-08T23:40:02.481405922Z"
 }
