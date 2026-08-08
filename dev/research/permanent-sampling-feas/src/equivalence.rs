@@ -89,7 +89,14 @@ fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
     }
 }
 
-/// Check every backend against the scalar single-word kernel at `(q, n)`.
+/// Check every backend against a reference kernel at `(q, n)`.
+///
+/// The reference is the scalar single-word kernel wherever it is supported. At
+/// `q = 7, n > 16` that kernel does not exist — `permanent_bipedal7` asserts
+/// `n <= Packed7::LANES` — so the generic `permanent_ryser` becomes the
+/// reference instead, which is why those cells can be checked at all rather
+/// than skipped for want of something to compare against. The `reference`
+/// column records which one was used per row.
 ///
 /// Returns one row per non-reference backend. Unsupported backends are
 /// reported with their reason rather than dropped.
@@ -97,43 +104,50 @@ fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
 pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> {
     let mut rows = Vec::new();
 
-    if let Support::Unsupported(reason) = support(Backend::Scalar, q, n) {
-        rows.push(EquivalenceRow {
-            q,
-            n,
-            reference: Backend::Scalar.name(),
-            backend: "all",
-            matrices: 0,
-            mismatches: 0,
-            zeros_reference: 0,
-            zeros_backend: 0,
-            status: format!("skipped: reference unsupported ({reason})"),
-        });
-        return rows;
-    }
+    let reference_backend = match support(Backend::Scalar, q, n) {
+        Support::Supported => Backend::Scalar,
+        Support::Unsupported(scalar_reason) => match support(Backend::RyserGeneric, q, n) {
+            Support::Supported => Backend::RyserGeneric,
+            Support::Unsupported(generic_reason) => {
+                rows.push(EquivalenceRow {
+                    q,
+                    n,
+                    reference: Backend::Scalar.name(),
+                    backend: "all",
+                    matrices: 0,
+                    mismatches: 0,
+                    zeros_reference: 0,
+                    zeros_backend: 0,
+                    status: format!("skipped: no reference ({scalar_reason}; {generic_reason})"),
+                });
+                return rows;
+            }
+        },
+    };
 
     let batch = shared_batch(q, n, m, seed_root);
-    let reference = evaluate(Backend::Scalar, &batch);
+    let raw_ref = shared_raw_batch(q, n, m, seed_root);
+    let reference = evaluate(
+        reference_backend,
+        if reference_backend == Backend::RyserGeneric {
+            &raw_ref
+        } else {
+            &batch
+        },
+    );
     let zeros_reference = crate::backend::count_zeros(&reference);
 
     // The generic path consumes unpacked matrices, so it needs its own batch.
     // Built from the same (seed_root, q, n, stream 0) tuple as `batch`, and the
     // sampler is deterministic, so both hold the same matrices in the same
     // order - which is what makes the per-matrix comparison meaningful.
-    let raw = shared_raw_batch(q, n, m, seed_root);
+    let raw = raw_ref;
 
-    for backend in [
-        Backend::Avx2,
-        Backend::Rayon,
-        Backend::RayonAvx2,
-        Backend::RayonIntra,
-        Backend::Gpu,
-        Backend::RyserGeneric,
-    ] {
+    for backend in Backend::ALL.into_iter().filter(|b| *b != reference_backend) {
         let mut row = EquivalenceRow {
             q,
             n,
-            reference: Backend::Scalar.name(),
+            reference: reference_backend.name(),
             backend: backend.name(),
             matrices: m,
             mismatches: 0,
