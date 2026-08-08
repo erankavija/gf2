@@ -199,6 +199,8 @@ the exact invocation:
 | `literature-search-2026-08-08.md` | recorded search behind §7.6's novelty claim |
 | `determinant-anchor-check.py` | executable check of §6's exact singular probability |
 | `determinant-anchor-2026-08-08.txt` | that check's committed output |
+| `order3-anchor-check.py` | executable receipt for §4.7's order-3 sampling anchor |
+| `order3-anchor-2026-08-08.txt` | that check's committed output |
 
 Every CSV preamble records `harness_source_sha` and `harness_source_dirty`
 alongside the repository SHA. The harness SHA is the one that matters: the
@@ -278,13 +280,15 @@ preamble figures are now formatted from the constants they describe:
    It also fixes the sustained quarter statistic, which split by shard count
    while the receipt called it a split by elapsed time.
 
-That set is superseded by the present one, which was regenerated end to end —
-equivalence, grid, sustained, envelope, zero fractions — from the single binary
-named above, with each derived stage reading the throughput and sustained files
-committed here. The harness stamps provenance faithfully; nothing in it checks
-that the executable it is running was built from the source SHA it reports, so
-the guard against that failure is regenerating every receipt from one build,
-which is what these five are.
+That set is superseded by the present one, whose four measurement receipts were
+regenerated end to end — grid, sustained, envelope, zero fractions — from the
+single binary named above, with each derived stage reading the throughput and
+sustained files committed here; equivalence was regenerated separately and later
+at the pin the next paragraph gives. The harness stamps provenance faithfully;
+nothing in it checks that the executable it is running was built from the source
+SHA it reports, so
+the guard against that failure is regenerating a receipt set from one build,
+which is what the four measurement receipts are.
 
 Host: AMD Ryzen 9 5900X (12 cores / 24 threads, `powersave` governor), AMD
 Radeon RX 6950 XT (gfx1030, 80 compute units), rustc 1.97.0, ROCm/HIP 7.2.
@@ -624,9 +628,9 @@ comparable to the widest disagreement across all nine pairs. The evidence leans
 toward intra-matrix rayon at $n = 28$, and **no ordering is asserted**: one
 execution of each cannot settle 1.6 % when independent re-measurement of a
 single configuration has moved 1.8 %, and those nine pairs are a loose bound
-rather than a variance estimate, six of them differing in batch size as well as
-in run. The table reports both rates; a campaign choosing that cell's backend
-should re-measure.
+rather than a variance estimate, four of the nine differing in batch size as
+well as in run. The table reports both rates; a campaign choosing that cell's
+backend should re-measure.
 
 An earlier revision of this study reported the opposite at $n = 28$ — that
 intra-matrix rayon beat the GPU by 2.3x. **That was an artifact of the
@@ -903,11 +907,24 @@ independently for its eq. 1.6. So the ceiling is a number at every field order:
 
 **Every measured cell satisfies it, and none of them tests it.** Among the
 well-sampled cells the closest approach to a ceiling is $q{=}7$, $n{=}12$, which
-sits **74 standard errors** below its own, and the $q = 3$ cells sit hundreds to
-thousands of standard errors below theirs. Two cells come nearer in standard
-errors — $q{=}7$ at $n = 24$ and $n = 28$, about one — but only because they
-hold 10 and 5 matrices, so their standard errors are enormous rather than their
-values high; their point estimates sit *below* $1/q$, not near the ceiling. At
+sits **74 standard errors** below its own, and the $q = 3$ cells sit 64 to
+1 952 standard errors below theirs. Exactly three cells come within two standard
+errors of a ceiling, and all three are tiny:
+
+| cell | matrices | $\hat p$ vs $1/q$ | distance below ceiling |
+|---|---|---|---|
+| $q{=}7$, $n{=}24$ | 10 | $0.100$ vs $0.143$ | $0.7\sigma$ |
+| $q{=}5$, $n{=}28$ | 106 | $0.245$ vs $0.200$ | $1.1\sigma$ |
+| $q{=}7$, $n{=}28$ | 5 | $0.000$ vs $0.143$ | $1.1\sigma$ |
+
+Their proximity is a statement about their standard errors, not their values.
+Two of the three have point estimates *below* $1/q$, so they sit nowhere near
+the ceiling in absolute terms and are near it only because a 5- or 10-matrix
+sample admits almost anything. The third, $q{=}5$ at $n = 28$, is the only cell
+whose estimate sits meaningfully above its field's $1/q$ — by $0.045$ on 106
+matrices, against an allowed excess of $0.088$ — and even it is $1.1\sigma$
+short of the ceiling, on a sample too small to carry an inference (§4.7's
+by-product caveat applies to all three). At
 $q = 3$ the bound is not merely slack but weaker than eq. 1.3, since $0.7407$ is
 far above $\alpha_3 \approx 0.4399$; it binds most tightly at $q = 7$ and even
 there leaves 23 % headroom in relative terms. **No campaign at any feasible $N$
@@ -984,9 +1001,16 @@ thousand.
 Four correctness anchors continue to pass and are the reason the table can be
 read at all: the $q = 3$ arm agrees with [Scheinerman2024] at every $n$; the
 kernels match an independent six-term permanent over all $q^9$ order-3 matrices,
-with F_3 reproducing $z(3) = 8163$; sampler and kernel together recover the exact
-order-3 zero fraction within $4\sigma$ over $4\times10^5$ draws; and no
-deviation localises to a single backend.
+with F_3 reproducing $z(3) = 8163$; sampler and kernel together recover the
+exact order-3 zero fraction within $4\sigma$ over $4 \times 10^5$ draws per
+field, receipted in `order3-anchor-2026-08-08.txt` from
+`order3-anchor-check.py`, which enumerates the exact fractions independently in
+Python — $907/2187$, $17581/78125$ and $126295/823543$, reproducing
+[Scheinerman2024]'s $z(3) = 8163$ — and then runs the harness's own anchor over
+the campaign sampler at seed root `0xB488_F02C`, stream 12 345. A passing
+assertion emits no point estimate, so that receipt records the verdict and the
+anchor's parameters rather than an observed fraction; and no deviation localises
+to a single backend.
 
 **The design gain survives the retraction.** [HKS2026] Theorem 1.3 gives the
 campaign a free, sharp, per-cell acceptance test — $\Pr \ge 1/q$ must hold at
@@ -1326,9 +1350,13 @@ $0.03$ to $0.41$ above $1/q$, while the deviation the campaign measures is of
 order $10^{-3}$ or smaller (§4.7). So it is **not** established that the
 finite-$n$ value sits *numerically close* to $1/q$ in any sense the campaign
 cares about; what is established is a floor at $1/q$, a ceiling three or more
-orders of magnitude too loose to constrain $\delta(n)$, and an asymptotic gap
-from $\alpha_q$. Conjecture 1.2 — that the limit is exactly $1/q$ — is
-explicitly stated by [HKS2026] as unproved.
+ceiling whose allowed excess over $1/q$ runs from 32 to 4 100 times the
+campaign's target standard error — $407\times$ and $4\,074\times$ the
+$10^{-3}$ and $10^{-4}$ targets at $q = 3$, $88\times$ and $880\times$ at
+$q = 5$, $32\times$ and $321\times$ at $q = 7$ — so between one and a half and
+three and a half orders of magnitude too loose to constrain $\delta(n)$, and an
+asymptotic gap from $\alpha_q$. Conjecture 1.2 — that the limit is exactly
+$1/q$ — is explicitly stated by [HKS2026] as unproved.
 
 **The campaign's target is therefore the shape of the finite-$n$ correction**,
 $\delta(n) = \Pr[\mathrm{per}(A) = 0] - 1/q$, over the range it can measure: its

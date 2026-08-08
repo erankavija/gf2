@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Receipt for the order-3 sampling anchor cited in the feasibility study §4.7.
+
+The anchor answers a gap the other checks leave open. Cross-backend equivalence
+compares backends against each other, and every backend draws from the same
+sampler, so neither can detect a sampler that biases the statistic under study.
+The anchor closes it by estimating a quantity whose exact value is known:
+Pr[per(A) = 0] for a uniform 3x3 matrix over F_q, which is computable by
+enumerating all q^9 matrices.
+
+This script does two things and keeps them separate.
+
+1. It derives the exact value itself, by enumeration in Python, independently of
+   the harness and of gf2-algebra. That is the ground truth the anchor is
+   measured against, and it is checkable here without trusting any Rust code.
+   For q = 3 it must reproduce [Scheinerman2024] Table 3's z(3) = 8163.
+
+2. It runs the harness's own anchor test, which draws 400 000 order-3 matrices
+   per field through the campaign's ChaCha20 sampler and its packed kernels and
+   asserts the estimate lands within 4 sigma of the exact value. The harness is
+   the thing under test, so the check must run its code rather than a
+   reimplementation: a Python re-draw would validate Python.
+
+Known limitation, stated rather than worked around: a passing Rust assertion
+emits no numbers, so this receipt records the verdict and the test's parameters,
+not the observed point estimate. Printing the estimate would require editing the
+harness, which the receipt set's provenance decisions (DEC-01, DEC-02) forbid.
+
+Usage:
+    python3 order3-anchor-check.py > order3-anchor-2026-08-08.txt
+"""
+
+from __future__ import annotations
+
+import hashlib
+import itertools
+import pathlib
+import platform
+import re
+import subprocess
+import sys
+from fractions import Fraction
+
+QS = (3, 5, 7)
+HARNESS = pathlib.Path(__file__).resolve().parents[2] / "research" / "permanent-sampling-feas"
+TEST = "equivalence::tests::sampled_zero_fraction_recovers_the_exact_value_at_order_3"
+
+
+def permanent_3x3(m: tuple[int, ...], q: int) -> int:
+    """The six-term permanent of a 3x3 matrix, independent of any kernel."""
+    a, b, c, d, e, f, g, h, i = m
+    return (a * e * i + a * f * h + b * d * i + b * f * g + c * d * h + c * e * g) % q
+
+
+def exact_zero_fraction(q: int) -> tuple[int, int, Fraction]:
+    total = q**9
+    zeros = sum(
+        1 for m in itertools.product(range(q), repeat=9) if permanent_3x3(m, q) == 0
+    )
+    return zeros, total, Fraction(zeros, total)
+
+
+def read_test_parameters() -> dict[str, str]:
+    """Read the anchor's constants out of the harness source, so the receipt
+    cannot drift from the test it describes."""
+    src = (HARNESS / "src" / "equivalence.rs").read_text()
+    body = src[src.index("fn sampled_zero_fraction_recovers_the_exact_value_at_order_3") :]
+    body = body[: body.index("\n    }")]
+    grab = lambda pat, default: (re.search(pat, body).group(1) if re.search(pat, body) else default)
+    return {
+        "draws_per_field": grab(r"let draws = ([0-9_]+)usize", "?").replace("_", ""),
+        "sampler_seed_root": grab(r"MatrixSampler::new\((0x[0-9A-Fa-f_]+)", "?"),
+        "sampler_stream": grab(r"MatrixSampler::new\([^,]+,\s*q,\s*3,\s*([0-9_]+)\)", "?").replace("_", ""),
+        "threshold_sigma": grab(r"z\.abs\(\) < ([0-9.]+)", "?"),
+        "rng": "ChaCha20 via the harness MatrixSampler (rand_chacha)",
+    }
+
+
+def main() -> int:
+    script = pathlib.Path(__file__).resolve()
+    digest = hashlib.sha256(script.read_bytes()).hexdigest()
+    params = read_test_parameters()
+
+    print("# Order-3 sampling anchor for the b488f02c feasibility study.")
+    print("# Checks that the campaign's sampler and kernels together recover a")
+    print("# zero fraction whose exact value is known by enumeration.")
+    print(f"# script: {script.name}")
+    print(f"# script_sha256: {digest}")
+    print(f"# invocation: python3 {script.name}")
+    print(f"# python: {platform.python_version()} ({platform.python_implementation()})")
+    print(f"# platform: {platform.platform()}")
+    print("#")
+    print("# Anchor parameters, read from the harness source at run time:")
+    for k, v in params.items():
+        print(f"#   {k}: {v}")
+    print("#")
+    print("# The exact values below are enumerated by THIS script in Python, so the")
+    print("# ground-truth side of the comparison does not depend on the code under")
+    print("# test. The sampled side is produced by the harness's own test.")
+    print()
+
+    print("## Exact order-3 zero fractions, by enumeration of all q^9 matrices")
+    print()
+    print("q  matrices   zeros      exact fraction     decimal")
+    for q in QS:
+        zeros, total, frac = exact_zero_fraction(q)
+        print(f"{q}  {total:<9d}  {zeros:<9d}  {str(frac):<17s}  {float(frac):.8f}")
+    print()
+    z3, t3, f3 = exact_zero_fraction(3)
+    ok_scheinerman = z3 == 8163
+    print(f"scheinerman2024_table3_z3_expected: 8163")
+    print(f"scheinerman2024_table3_z3_observed: {z3}")
+    print(f"scheinerman2024_table3_agrees: {'yes' if ok_scheinerman else 'NO'}")
+    print()
+
+    print("## Harness anchor test")
+    print()
+    cmd = [
+        "cargo", "test", "--release", "--features", "hip",
+        "--", "--exact", "--nocapture", TEST,
+    ]
+    print(f"command: {' '.join(cmd)}")
+    print(f"cwd: {HARNESS}")
+    proc = subprocess.run(cmd, cwd=HARNESS, capture_output=True, text=True)
+    passed = proc.returncode == 0 and "1 passed" in proc.stdout
+    for line in proc.stdout.splitlines():
+        if "test result:" in line and "filtered out" in line and "1 passed" in line:
+            print(f"result_line: {line.strip()}")
+    print(f"exit_code: {proc.returncode}")
+    print(f"anchor_passes: {'yes' if passed else 'NO'}")
+    print()
+    print("# A passing Rust assertion prints nothing, so no point estimate or")
+    print("# interval appears above: what the harness reports on success is the")
+    print("# verdict that |z| < the threshold shown in the parameters. On failure")
+    print("# the assertion message carries the observed fraction and its z.")
+
+    return 0 if (ok_scheinerman and passed) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
