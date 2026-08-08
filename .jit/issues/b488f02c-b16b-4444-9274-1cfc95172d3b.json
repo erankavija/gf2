@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-08-07T12:32:25.499859632Z",
   "dependencies": [],
-  "description": "Complete the feasibility study and gap analysis for the permanent-zero-fraction sampling campaign: measure kernel throughput, quantify the attainable $(q, n, \\text{samples})$ envelope, inventory infrastructure gaps, and recommend a campaign design.\n\n## Background\n\nThe campaign targets the open conjecture $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ for uniform random square matrices over $\\mathbb{F}_q$ [GGK2025]. Permanent evaluation via Ryser's formula costs $\\Theta(2^n n)$ per matrix, so scientific reach — how far in $n$ the shape of the $o(1)$ term can be traced at usable confidence — is determined by measured throughput of the existing bipedal kernels ([Scheinerman2024] reproduction; per-field CPU coverage is uneven — see the study's capability inventory — plus HIP/ROCm GPU batch paths) and by the hardware budget. An initialized study document with the capability inventory, gap list, scaling analysis skeleton, and open questions is attached to this issue; completing its measurement and recommendation sections is this task.\n\n## Success Criteria\n\n- [hard] REQ-01: Measured throughput (matrices/second) for batched permanent evaluation at representative $n$ for $q = 3, 5, 7$ on every applicable in-tree CPU and GPU path, recorded with hardware and version metadata; paths that do not exist for a field are recorded as unsupported with code evidence, and cells censored by the preregistered stopping rule report a derived projection labeled as an estimate, stating its derivation, its reference measurement, and its empirically validated bias direction.\n- [hard] REQ-02: An attainable-envelope table derived from the measurements: for target standard errors on $\\Pr[\\mathrm{per} = 0]$, the feasible $(q, n, \\text{samples})$ combinations under stated wall-clock budgets.\n- [hard] REQ-03: A gap analysis enumerating missing infrastructure (uniform $\\mathbb{F}_q$ matrix sampling, streaming statistics with confidence intervals, campaign-runner integration, dataset format and storage) with effort estimates.\n- [hard] REQ-04: A go/no-go recommendation and, on go, a campaign design (sampling plan, seeding scheme, storage layout, analysis method) ready for breakdown into implementation issues.\n\n## References\n\n- [GGK2025] Ghasemi, Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random Matrices over Finite Fields. APPROX/RANDOM 2025. arXiv:2512.03221; ECCC TR25-206.\n- [Scheinerman2024] Scheinerman — Fast Computation of Permanents over F_3 via F_2 Arithmetic. arXiv:2407.20205.",
+  "description": "Complete the feasibility study and gap analysis for the permanent-zero-fraction sampling campaign: measure kernel throughput, quantify the attainable $(q, n, \\text{samples})$ envelope, inventory infrastructure gaps, and recommend a campaign design.\n\n## Background\n\nThe campaign targets the open conjecture $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ for uniform random square matrices over $\\mathbb{F}_q$ [GGK2025]. Permanent evaluation via Ryser's formula costs $\\Theta(2^n n)$ per matrix, so scientific reach — how far in $n$ the shape of the $o(1)$ term can be traced at usable confidence — is determined by measured throughput of the existing bipedal kernels ([Scheinerman2024] reproduction; per-field CPU coverage is uneven — see the study's capability inventory — plus HIP/ROCm GPU batch paths) and by the hardware budget. An initialized study document with the capability inventory, gap list, scaling analysis skeleton, and open questions is attached to this issue; completing its measurement and recommendation sections is this task.\n\n## Success Criteria\n\n- [hard] REQ-01: Measured throughput (matrices/second) for batched permanent evaluation at representative $n$ for $q = 3, 5, 7$ on every applicable in-tree CPU and GPU path, recorded with hardware and version metadata; paths that do not exist for a field are recorded as unsupported with code evidence, and cells censored by the preregistered stopping rule report a derived projection labeled as an estimate, stating its derivation, its reference measurement, and its empirically validated bias direction.\n- [hard] REQ-02: An attainable-envelope table derived from the measurements: for target standard errors on $\\Pr[\\mathrm{per} = 0]$, the feasible $(q, n, \\text{samples})$ combinations under stated wall-clock budgets.\n- [hard] REQ-03: A gap analysis enumerating missing infrastructure (uniform $\\mathbb{F}_q$ matrix sampling, streaming statistics with confidence intervals, campaign-runner integration, dataset format and storage) with effort estimates.\n- [hard] REQ-04: A go/no-go recommendation and, on go, a campaign design (sampling plan, seeding scheme, storage layout, analysis method) ready for breakdown into implementation issues.\n\n## References\n\n- [GGK2025] Ghasemi, Gross, Kopparty — Permanental Rank versus Determinantal Rank of Random Matrices over Finite Fields. APPROX/RANDOM 2025. arXiv:2512.03221; ECCC TR25-206.\n- [Scheinerman2024] Scheinerman — Fast Computation of Permanents over F_3 via F_2 Arithmetic. arXiv:2407.20205.\n\n## Decisions\n\n- DEC-01 (2026-08-08, user): The measurement campaign for this study is closed. The receipt set regenerated at harness commit 0e0b0aec and committed in 243886e2 is final; review may not require re-measurement or receipt regeneration to resolve findings against this issue. Prose emitted into a receipt by the harness records the generator's understanding at build time. Where the study derives a stronger or more specific result from a receipt's own recorded rows — in particular the same-field projection-bias validation in study §4.3, derived from the throughput receipt's measured 16→20 chains at q ∈ {5, 7} — the study's derivation is authoritative and the receipt's emitted characterization stands as a conservative point-in-time statement; the pair is a recorded supersession, not a contradiction.\n\n\n- DEC-02 (2026-08-08, user): The equivalence suite's q=7, n=20 coverage gap (research-review round-6 F1) is resolved by a user-approved, equivalence-only extension: commit 2bea03a4 extends the schedule and the equivalence receipt is regenerated at that harness state. The four measurement receipts remain those of DEC-01. The resulting two-binary state — measurement receipts pinned at 0e0b0aec, equivalence receipt at 2bea03a4, separated only by a comment-only commit and the equivalence-schedule change — is the accepted final provenance for this issue.\n",
   "documents": [
     {
       "commit": null,
@@ -68,8 +68,30 @@
       "format": "markdown",
       "label": "Session handoff 2026-08-07 (resume contract)",
       "path": "dev/sessions/2026-08-07-research-frontier-handoff.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: literature search 2026-08-08 (q=5,7 novelty)",
+      "path": "dev/studies/b488f02c/literature-search-2026-08-08.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: order-3 anchor validation 2026-08-08",
+      "path": "dev/studies/b488f02c/order3-anchor-2026-08-08.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Receipt: determinant anchor validation 2026-08-08",
+      "path": "dev/studies/b488f02c/determinant-anchor-2026-08-08.txt"
     }
   ],
+  "done_at": "2026-08-08T10:51:37.478505085Z",
   "first_ready_at": "2026-08-07T12:32:25.499859632Z",
   "gates_required": [
     "doc-review",
@@ -77,13 +99,13 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-07T19:48:45.363079753Z",
+      "status": "passed",
+      "updated_at": "2026-08-08T10:35:20.507833584Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-07T18:10:47.051008672Z",
+      "status": "passed",
+      "updated_at": "2026-08-08T10:51:05.423302078Z",
       "updated_by": "auto:executor"
     }
   },
@@ -96,7 +118,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Feasibility study and gap analysis for the permanent-statistics campaign",
-  "updated_at": "2026-08-07T20:03:47.050508540Z"
+  "updated_at": "2026-08-08T10:51:37.478505085Z"
 }
