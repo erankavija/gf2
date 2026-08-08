@@ -43,8 +43,8 @@
 #     captured that would separate them.
 #
 # The committed measurements all postdate this fault and were taken with binary
-# 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff, built at harness
-# source commit 12f6e81a, after a full equivalence re-check passed. The study's section
+# 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc, built at harness
+# source commit 7189d66f, after a full equivalence re-check passed. The study's section
 # 4.5 states what this observation does and does not support.
 
 sustained q=3 n=24 gpu_hip M=1024 ...

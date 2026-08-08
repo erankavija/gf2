@@ -1,10 +1,10 @@
-# git_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
+# git_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
 # git_worktree_dirty: true
-# harness_source_sha: 12f6e81af5c033ce644047c35e4b226ca366f0c7
+# harness_source_sha: 7189d66fdc82e085f41b655995aa4af3258d396a
 # harness_source_dirty: false
 # deps_source_sha: 195f8254f0d5f618f3d76d0fa187835a40858be8
 # deps_source_dirty: false
-# binary_sha256: 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff
+# binary_sha256: 1016472332dad7bf6217c3a51a37a5373cdb4c8603d781eb923ab083cb1f74cc
 # note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
 # rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
 # cargo: cargo 1.97.0 (c980f4866 2026-06-30)
@@ -17,21 +17,21 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.3-arch1-3
-# timestamp_utc: 2026-08-08T01:45:39Z
+# timestamp_utc: 2026-08-08T03:44:40Z
 # invocation: /home/vkaskivuo/Projects/gf2/dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas sustained --seconds 180 --out /home/vkaskivuo/Projects/gf2/dev/studies/b488f02c/sustained-2026-08-07.csv
 # sustained window: 180 s per run, composite hot path throughout
-# first/last quarter rates expose boost decay within the window
+# first/last quarter rates bound drift within the window; the split measures drift, it does not attribute it to a cause
 # seed_root: 0xb488f02c00000001, streams from 1000000001; run j reserves the 100000 indices after 1000000000 + j*100000, which the grid's 1 + i*100000 per cell cannot reach. Both figures are formatted from the constants they describe, so neither can drift from the rows below
-# gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried first and hung the device (kernel time past hang detection), so the ceiling is a watchdog limit rather than a memory or occupancy one
+# gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried once and the device faulted, ending that run. The fault is a single unretried event and its cause is NOT established here: gpu-hang-2026-08-07.log is its only receipt and records what was and was not captured. No ceiling mechanism is asserted from it
 # each run reserves a disjoint stream range (stream_first column), so two runs at one (q, n) draw independent samples and their zero counts may be pooled
 q,n,backend,batch_size,shards,matrices,zeros,wall_s,sustained_matrices_per_s,first_quarter_matrices_per_s,last_quarter_matrices_per_s,cpu_mhz_start,cpu_mhz_end,cpu_temp_start_c,cpu_temp_end_c,gpu_temp_end_c,seed_root,stream_first
-3,24,cpu_scalar,8,326,2608,893,180.519,14.4473,14.4286,14.4526,2302.2,1946.7,50.1,69.6,48.0,0xb488f02c00000001,1000000001
-3,24,cpu_avx2,4,206,824,267,180.241,4.5717,4.5725,4.5721,1936.6,1937.8,69.6,66.1,46.0,0xb488f02c00000001,1000100001
-3,24,cpu_rayon_batch_scalar,96,295,28320,9525,180.192,157.1659,157.8491,156.3932,1860.0,3316.0,66.6,76.9,45.0,0xb488f02c00000001,1000200001
-3,24,cpu_rayon_intra_matrix,24,2243,53832,17917,180.048,298.9863,298.8687,299.1021,1856.6,4225.2,77.1,77.0,44.0,0xb488f02c00000001,1000300001
-3,24,gpu_hip,1024,55,56320,18764,180.629,311.7994,312.2297,310.8050,2580.2,1858.5,77.1,69.8,70.0,0xb488f02c00000001,1000400001
-3,24,gpu_hip,2048,19,38912,13113,187.250,207.8079,207.6865,207.6534,1858.0,1856.9,70.9,72.5,74.0,0xb488f02c00000001,1000500001
-5,20,cpu_rayon_batch_scalar,96,404,38784,7774,180.307,215.1003,213.5891,215.7172,1942.9,2382.6,74.4,80.0,53.0,0xb488f02c00000001,1000600001
-5,20,gpu_hip,1024,12,12288,2474,192.188,63.9374,63.9632,63.9249,1856.9,1856.9,80.5,72.0,66.0,0xb488f02c00000001,1000700001
-7,16,cpu_rayon_batch_scalar,512,1292,661504,94840,180.075,3673.4872,3670.0609,3675.8166,1856.9,4397.1,73.6,79.5,53.0,0xb488f02c00000001,1000800001
-7,20,gpu_hip,1024,11,11264,1537,194.370,57.9513,57.9783,57.9495,1856.9,1933.3,79.9,71.9,66.0,0xb488f02c00000001,1000900001
+3,24,cpu_scalar,8,324,2592,888,180.045,14.3964,14.3560,14.4163,2243.9,1944.4,54.9,70.9,51.0,0xb488f02c00000001,1000000001
+3,24,cpu_avx2,4,212,848,275,180.626,4.6948,4.6918,4.6990,1942.9,1859.0,70.9,67.2,49.0,0xb488f02c00000001,1000100001
+3,24,cpu_rayon_batch_scalar,96,295,28320,9525,180.541,156.8623,157.6435,156.2131,2074.3,4242.7,67.6,77.0,47.0,0xb488f02c00000001,1000200001
+3,24,cpu_rayon_intra_matrix,24,2241,53784,17902,180.039,298.7350,298.7225,298.7658,1934.6,4226.1,77.2,77.4,46.0,0xb488f02c00000001,1000300001
+3,24,gpu_hip,1024,55,56320,18764,180.743,311.6020,312.1000,310.7267,1940.8,2032.2,77.6,70.0,70.0,0xb488f02c00000001,1000400001
+3,24,gpu_hip,2048,19,38912,13113,187.260,207.7965,207.6780,207.6428,1942.9,1857.9,71.1,72.6,74.0,0xb488f02c00000001,1000500001
+5,20,cpu_rayon_batch_scalar,96,404,38784,7774,180.340,215.0600,213.9796,215.7482,2103.0,4380.0,74.5,80.2,53.0,0xb488f02c00000001,1000600001
+5,20,gpu_hip,1024,12,12288,2474,192.155,63.9483,63.9692,63.9428,1854.5,1943.4,80.8,72.1,67.0,0xb488f02c00000001,1000700001
+7,16,cpu_rayon_batch_scalar,512,1291,660992,94775,180.019,3671.7935,3667.4051,3678.3797,2020.6,4330.9,73.8,79.5,54.0,0xb488f02c00000001,1000800001
+7,20,gpu_hip,1024,11,11264,1537,194.342,57.9597,57.9829,57.9579,2173.6,1945.1,79.9,71.9,66.0,0xb488f02c00000001,1000900001
