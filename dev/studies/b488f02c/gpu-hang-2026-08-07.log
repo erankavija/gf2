@@ -1,11 +1,51 @@
 # GPU hang observed while probing the batch-size ceiling, 2026-08-07 ~18:49 UTC+3.
-# Preserved because the run died before it could write a CSV row, so this log is the
-# only receipt for the observation. It comes from a SUPERSEDED harness state (before
-# the censoring rework); the committed measurements all postdate it and were taken with
-# binary 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff, built at
-# harness source commit 12f6e81a, after a full equivalence re-check passed.
-# Sequence: the sustained runner streamed q=3 n=24 on the GPU at M=1024 successfully,
-# then attempted M=4096 and the device faulted, killing the process.
+#
+# This file is an OPERATIONAL OBSERVATION, not a measurement. The run died before it
+# could write a CSV row, so no provenance header was ever emitted for it. What follows
+# separates what was recorded, what is reconstructed from git history and the host, and
+# what is unrecoverable. Nothing here should be read as pinned to a source state.
+#
+# --- RECORDED (captured in this file at the time, verbatim below) ---
+#   * the preceding successful run's console line: q=3 n=24 gpu_hip M=1024,
+#     310.956 matrices/s over 181 s, 55 shards, first quarter 311.298, last 310.738;
+#   * the fault line emitted by the ROCm runtime;
+#   * the ordering: M=1024 completed, then M=4096 was attempted and the process died;
+#   * the post-fault rocm-smi row showing the device idle and cool again.
+#
+# --- RECONSTRUCTED (inferred after the fact; each with its basis) ---
+#   * Source state: NONE EXISTS. The harness crate's first commit is 7540a821
+#     (2026-08-07 19:09:46 +0300), about twenty minutes AFTER this fault, so the code
+#     that hung was uncommitted working tree with no SHA to name. This is also why the
+#     run has no header: source pinning was added later, in 5f195e84 (19:31:36), and
+#     binary pinning later still, in d37d2f81 (21:16:41) - both introduced precisely
+#     because runs like this one could not be tied to the code that produced them.
+#   * Host: the same physical machine as every committed receipt, an AMD Ryzen 9 5900X
+#     with an AMD Radeon RX 6950 XT (gfx1030). The CPU and GPU models are time-invariant
+#     properties of the machine and can be asserted; the toolchain and driver versions
+#     recorded in the committed receipts (rustc 1.97.0, ROCm 7.2.4, kernel 7.1.3-arch1-3)
+#     were sampled hours later and are NOT evidence of what was installed at 18:49,
+#     though no upgrade is known to have happened that day.
+#   * Invocation: the `sustained` subcommand, from the console lines' shape. The 181 s
+#     window is consistent with --seconds 180, but the flag itself was not logged, so
+#     this is inference from the output, not a record of the command line.
+#   * Seed: SEED_ROOT was a compile-time constant, 0xb488f02c00000001, unchanged across
+#     the crate's history. The stream index the hung run drew from is NOT recoverable:
+#     the pre-d37d2f81 allocator started every sustained run at the same base, and the
+#     working-tree state that ran cannot be reproduced.
+#
+# --- UNKNOWN (unrecoverable; do not assert) ---
+#   * binary_sha256 - the executable was never hashed and no longer exists;
+#     harness_source_sha, deps_source_sha and the dirty flags - never captured;
+#     the exact command line; the exact matrices drawn; rustc/ROCm/kernel at that moment;
+#     the cause of the fault beyond the runtime's own "GPU Hang" string. In particular
+#     nothing here attributes the hang to a watchdog timeout: that is one hypothesis
+#     among others (driver defect, memory pressure, a transient), and no diagnostic was
+#     captured that would separate them.
+#
+# The committed measurements all postdate this fault and were taken with binary
+# 87f0048d52815d452feeae94c206319b8ba4b2a477a4d1a6fe62336e17335bff, built at harness
+# source commit 12f6e81a, after a full equivalence re-check passed. The study's section
+# 4.5 states what this observation does and does not support.
 
 sustained q=3 n=24 gpu_hip M=1024 ...
     310.956 matrices/s over 181 s (55 shards); first quarter 311.298, last 310.738
@@ -15,4 +55,3 @@ HW Exception by GPU node-1 (Agent handle: 0x563ba2657af0) reason :GPU Hang
 # GPU state after the fault (rocm-smi), showing the device recovered on its own:
 device,Temperature (Sensor edge) (C),Temperature (Sensor junction) (C),Temperature (Sensor memory) (C),GPU use (%)
 card0,55.0,59.0,60.0,0
-
