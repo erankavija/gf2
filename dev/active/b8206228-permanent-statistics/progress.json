@@ -116,8 +116,10 @@
     {
       "issue": "240b7618",
       "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
-      "status": "open",
+      "status": "approved",
       "requested_at": "2026-08-09T22:12:00Z",
+      "resolved_at": "2026-08-09T22:31:00Z",
+      "decision": "Owner approved amending REQ-05 on the grounds that the breakdown manifest is a historical artefact. REQ-05 now excludes historical material, defined as the development archive together with the frozen manifest, and requires the recorded search to state that exclusion. The Notes section carries the justification: the manifest is a verbatim copy of the .jit/ issue descriptions, so editing an entry would make the copy disagree with the issue it produced.",
       "options": [
         "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
         "Amend REQ-05 to name the frozen-manifest exclusion.",
