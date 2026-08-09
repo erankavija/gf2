@@ -34,6 +34,7 @@
       "path": "dev/active/b8206228-permanent-statistics/README.md"
     }
   ],
+  "done_at": "2026-08-09T23:10:55.642944419Z",
   "first_ready_at": "2026-08-09T14:32:28.635403025Z",
   "gates_required": [
     "cargo-ci",
@@ -47,13 +48,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-09T22:54:00.746557725Z",
+      "status": "passed",
+      "updated_at": "2026-08-09T23:08:23.676517701Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-09T22:57:48.825595808Z",
+      "status": "passed",
+      "updated_at": "2026-08-09T23:10:30.580222988Z",
       "updated_by": "auto:executor"
     }
   },
@@ -64,7 +65,7 @@
     "component:gf2-algebra"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-  "updated_at": "2026-08-09T23:03:59.291829520Z"
+  "updated_at": "2026-08-09T23:10:55.642944419Z"
 }
