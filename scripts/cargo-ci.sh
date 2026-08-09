@@ -65,6 +65,24 @@ ensure_real_cargo() {
 
 ensure_real_cargo
 
+# Compilation cache. sccache caches rustc invocations content-addressed, so a
+# build reuses codegen produced by any other checkout on this host instead of
+# starting from zero. That is the dominant cost here: every dispatched agent
+# worktree begins with an empty target directory, and a cold run of this script
+# was measured at 13+ minutes against ~35-90 s warm. Unlike a shared target
+# directory it does not thrash when branches diverge, because each variant is
+# cached under its own hash.
+#
+# Guarded exactly like the nice/ionice prefixes below: a host without sccache
+# runs unchanged. An RUSTC_WRAPPER the caller already set is left alone.
+# CARGO_CI_NO_SCCACHE=1 disables. Cache location and size come from sccache's
+# own config (see ~/.config/sccache/config), not from this script, so the
+# repository carries no host-specific path.
+if [ -z "${CARGO_CI_NO_SCCACHE:-}" ] && [ -z "${RUSTC_WRAPPER:-}" ] &&
+   command -v sccache >/dev/null 2>&1; then
+  export RUSTC_WRAPPER=sccache
+fi
+
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -114,10 +132,16 @@ summarize_fail() {
   local name="$1"
   case "$name" in
     test)
-      # Show failure details from nextest output
+      # Show failure details from nextest output.
+      #
+      # These patterns must not anchor at column zero: nextest indents its
+      # per-test result lines ("        FAIL [   0.005s] ..."), so an `^FAIL`
+      # anchor matches nothing and a failing gate records an exit code with no
+      # diagnostic at all. Observed on a run whose seven TIMEOUT lines were
+      # invisible in the gate record.
       echo "--- $name failures ---"
-      grep -E "^(FAIL|TIMEOUT|  ×)" "$TMPDIR/$name.out" || true
-      grep -A 20 "^--- STDOUT:" "$TMPDIR/$name.out" | head -60 || true
+      grep -E "^[[:space:]]*(FAIL|TIMEOUT|SIGSEGV|SIGABRT|LEAK|×)" "$TMPDIR/$name.out" || true
+      grep -A 20 -E "^[[:space:]]*--- (STDOUT|STDERR):" "$TMPDIR/$name.out" | head -60 || true
       ;;
     clippy)
       echo "--- $name diagnostics ---"
