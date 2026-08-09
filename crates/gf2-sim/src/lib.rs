@@ -91,6 +91,7 @@
 //! | [`error`] | [`StageError`], [`RecoverableError`], [`FatalError`], [`BuildError`] |
 //! | [`config`] | [`PipelineConfig`] (with `From<&SimulationConfig>`) |
 //! | [`observability`] | tracing setup, [`observability::install_campaign_subscriber`] |
+//! | [`permanent_campaign`] | permanent-zero-fraction dataset schemas and layout |
 //! | [`parallel`] | per-worker dispatch + ChaCha20 seek + counter reduction (owned by `3fcb7025`) |
 //! | [`frame_sim`] | reusable DVB-T2 BICM-AWGN single-frame simulation kernel (owned by `3fcb7025`) |
 //! | [`presets`] | typestate preset builders (owned by `81d05bab`) |
@@ -121,6 +122,7 @@ pub mod gpu;
 pub mod graph;
 pub mod observability;
 pub mod parallel;
+pub mod permanent_campaign;
 pub mod pipeline;
 pub mod presets;
 pub mod stage;
