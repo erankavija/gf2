@@ -106,7 +106,7 @@ fn assert_exhaustive_agreement<const Q: u64>(n: usize, k: usize) {
                 // Every matrix was visited exactly once.
                 assert_eq!(
                     examined,
-                    (Q as u64).pow(cells as u32),
+                    Q.pow(cells as u32),
                     "q={Q} n={n} k={k}: enumerated {examined} matrices, expected q^(n*k)"
                 );
                 // A deficient matrix exists at every shape tested here (the
