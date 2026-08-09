@@ -63,6 +63,13 @@ impl fmt::Display for BuildRevision {
 /// A build made outside a git checkout, or without `git` on `PATH`, records no
 /// revision and yields [`BuildRevision::Unavailable`]; emission then refuses
 /// rather than publishing numbers whose source cannot be named.
+///
+/// The build script does not follow `HEAD` unless `GF2_SIM_TRACK_HEAD` is set
+/// to a value other than `0`, so after a later commit this value is stale and
+/// [`approve_emission`] refuses with a revision mismatch. That refusal is the
+/// fail-closed direction — a stale binary cannot publish under a source it was
+/// not built from — and a publisher's build sets the variable. The build
+/// script documents the trade-off it protects.
 pub fn build_revision() -> BuildRevision {
     match BUILD_GIT_REVISION.parse() {
         Ok(revision) => BuildRevision::Recorded(revision),
@@ -1058,6 +1065,13 @@ mod tests {
     }
 
     /// REQ-01: the embedded revision exists and is what the build recorded.
+    ///
+    /// This asserts that the build recorded a revision, not that the recorded
+    /// revision is current. The build script follows `HEAD` only under
+    /// `GF2_SIM_TRACK_HEAD`, so an ordinary build carries the revision it was
+    /// compiled at and goes stale; equality with `HEAD` is the guard's job, and
+    /// `emission_requires_the_built_revision_to_equal_head` drives both sides
+    /// of it against a throwaway repository.
     #[test]
     fn build_revision_is_recorded_when_the_crate_is_built_from_a_checkout() {
         let built_from_checkout = Command::new("git")

@@ -187,6 +187,16 @@ directory refuses the emission, and the refusal names every path that differs.
 Untracked paths never refuse. The source a binary was compiled from is fixed by
 `HEAD`, and a file git does not track is not part of it.
 
+A build follows `HEAD` only when asked to. By default the embedded revision is
+fixed when `gf2-sim` is compiled and a later commit does not refresh it, so
+landing a commit does not recompile the workspace's heaviest crate. The guard
+then refuses with a revision mismatch until the crate is rebuilt, which is the
+safe direction: a stale binary cannot publish under a source it was not built
+from. A publisher exports `GF2_SIM_TRACK_HEAD=1` for the build that will emit,
+and that build follows `HEAD` commit by commit. Setting or clearing the
+variable re-runs the build script, so switching it on is itself enough to
+refresh a stale binary.
+
 ## Integrity file
 
 `checksums.sha256` uses the coreutils check-file format, one line per covered
