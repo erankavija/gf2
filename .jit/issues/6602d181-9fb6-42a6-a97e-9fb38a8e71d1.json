@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-09T12:25:36.293502147Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -21,7 +22,7 @@
     "component:gf2-sim"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Generic checkpoint payload mechanism",
-  "updated_at": "2026-08-09T12:03:41.706988441Z"
+  "updated_at": "2026-08-09T12:25:36.293502147Z"
 }
