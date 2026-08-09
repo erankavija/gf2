@@ -7780,3 +7780,4 @@
 {"id":"32d36c91-3888-44dc-885c-151c06bb59a0","issue_id":"d36810e7-d000-4514-b18f-9a63a1403ba9","timestamp":"2026-08-09T22:49:48.169271792Z","type":"issue_completed"}
 {"gate_key":"code-review","id":"7d38490e-d179-49b5-a772-e3bc0020012c","issue_id":"240b7618-f24f-4fc1-b708-ac349b3b3286","timestamp":"2026-08-09T22:54:00.746557725Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"60d8e1dd-7926-48b1-a14c-03decf6de9ac","issue_id":"240b7618-f24f-4fc1-b708-ac349b3b3286","timestamp":"2026-08-09T22:57:48.825595808Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"879bd307-9203-41af-a3d5-cac7846839d0","issue_id":"240b7618-f24f-4fc1-b708-ac349b3b3286","timestamp":"2026-08-09T23:03:59.291829520Z","type":"issue_updated","updated_by":"issue-update"}
