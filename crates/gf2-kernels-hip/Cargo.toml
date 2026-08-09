@@ -30,8 +30,11 @@ criterion = "0.5"
 # GPU byte-identity + 1-ulp regression lives in `gf2-sim`'s `gpu::awgn` tests,
 # where it can call the real `gf2_sim::parallel::worker_offset` rather than
 # duplicating the seek scheme — this crate is upstream of `gf2-sim`.)
+# This crate is excluded from the workspace because it requires ROCm/hipcc, so
+# it cannot inherit the workspace's rand 0.9 dependency pins.
 rand = "0.9"
 rand_chacha = "0.9"
+rand_core = "0.9"
 
 [[bench]]
 name = "gpu_vs_cpu_gray_qam"
