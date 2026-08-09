@@ -39,11 +39,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
-use gf2_sim::checkpoint::{
+use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
+use gf2_sim::snr_checkpoint::{
     clear_interrupt, config_hash, run_snr_point_checkpointed, CheckpointReader, CheckpointV2,
     CheckpointWriter,
 };
-use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
 use gf2_sim::PipelineConfig;
 
 // ---------------------------------------------------------------------------
@@ -61,6 +61,11 @@ fn tempdir(tag: &str) -> PathBuf {
     ));
     std::fs::create_dir_all(&p).unwrap();
     p
+}
+
+fn checkpoint_payload(bytes: &[u8]) -> serde_json::Result<CheckpointV2> {
+    let envelope: serde_json::Value = serde_json::from_slice(bytes)?;
+    serde_json::from_value(envelope["payload"].clone())
 }
 
 /// A tempdir under Cargo's `CARGO_TARGET_TMPDIR` (inside `target/`), which lives
@@ -289,6 +294,35 @@ fn test_v2_resume_nonzero_errors_present() {
     );
 }
 
+#[test]
+fn test_snr_checkpoint_uses_generic_envelope() {
+    let c = cfg(1, 1, 1);
+    let h = config_hash(&c);
+    let dir = tempdir("generic-envelope");
+    let writer = CheckpointWriter::new(&dir).unwrap();
+    let ch = Awgn::new(0.0, 1);
+    run_snr_point_checkpointed(
+        &c,
+        0,
+        6.25,
+        &writer,
+        &h,
+        None,
+        || (),
+        awgn_frame(&ch),
+        |_, _| {},
+    )
+    .unwrap();
+
+    let stored: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
+    assert_eq!(
+        stored["payload_identity"],
+        serde_json::json!("gf2-sim/snr-checkpoint-v2")
+    );
+    assert!(stored["payload"].is_object());
+}
+
 // ---------------------------------------------------------------------------
 // Subprocess SNR-sweep SIGINT + --resume byte-identity (criterion 1, deliv. 2)
 // ---------------------------------------------------------------------------
@@ -296,8 +330,8 @@ fn test_v2_resume_nonzero_errors_present() {
 /// Reads every `snr_NNNN.json` in `dir` (skipping `.tmp`) and returns them
 /// sorted by `snr_index`, with the volatile `drain_committed_at_us_since_epoch`
 /// zeroed so two runs are comparable byte-for-byte.
-fn load_all_normalized(dir: &Path) -> Vec<gf2_sim::checkpoint::CheckpointV2> {
-    let mut v: Vec<gf2_sim::checkpoint::CheckpointV2> = std::fs::read_dir(dir)
+fn load_all_normalized(dir: &Path) -> Vec<gf2_sim::snr_checkpoint::CheckpointV2> {
+    let mut v: Vec<gf2_sim::snr_checkpoint::CheckpointV2> = std::fs::read_dir(dir)
         .unwrap()
         .filter_map(|e| e.ok())
         .map(|e| e.path())
@@ -307,8 +341,8 @@ fn load_all_normalized(dir: &Path) -> Vec<gf2_sim::checkpoint::CheckpointV2> {
                 .is_some_and(|n| n.starts_with("snr_") && n.ends_with(".json"))
         })
         .map(|p| {
-            let mut c: gf2_sim::checkpoint::CheckpointV2 =
-                serde_json::from_slice(&std::fs::read(&p).unwrap()).unwrap();
+            let mut c: gf2_sim::snr_checkpoint::CheckpointV2 =
+                checkpoint_payload(&std::fs::read(&p).unwrap()).unwrap();
             c.drain_committed_at_us_since_epoch = 0;
             c
         })
@@ -606,7 +640,7 @@ fn assert_canonical_complete_or_absent(dir: &Path, ctx: &str) -> bool {
         return false;
     }
     let bytes = std::fs::read(&canon).unwrap();
-    let parsed: Result<CheckpointV2, _> = serde_json::from_slice(&bytes);
+    let parsed = checkpoint_payload(&bytes);
     assert!(
         parsed.is_ok(),
         "{ctx}: canonical snr_0000.json is torn/partial: {:?}",
@@ -693,7 +727,7 @@ fn test_kill_during_fsync_deterministic() {
             // The prior complete state (<=2 worker_states) must survive — the
             // interrupted large write (700k worker_states) never renamed.
             let c: CheckpointV2 =
-                serde_json::from_slice(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
+                checkpoint_payload(&std::fs::read(dir.join("snr_0000.json")).unwrap()).unwrap();
             if c.worker_states.len() <= 2 {
                 prior_state_survived += 1;
             }
