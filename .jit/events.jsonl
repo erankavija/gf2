@@ -7723,3 +7723,4 @@
 {"gate_key":"doc-review","id":"22c500e0-ffd2-4f7a-800c-4ba99978485d","issue_id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","timestamp":"2026-08-09T19:04:05.252819973Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"682813b8-5bae-4a04-8b5f-e6cb3293621e","issue_id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","timestamp":"2026-08-09T19:07:34.204408705Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"5f6df7f6-231e-4e15-b000-01e033711ed5","issue_id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","timestamp":"2026-08-09T19:10:35.823723036Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"research-review","id":"df472fbc-c8f7-4b7c-86e5-efe26a7b6d83","issue_id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","timestamp":"2026-08-09T19:17:32.441913412Z","type":"gate_failed","updated_by":"auto:executor"}
