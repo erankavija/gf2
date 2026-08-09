@@ -25,6 +25,8 @@ resolver = "2"
 criterion = "0.5"
 proptest = "1.0"
 rand = "0.8"
+rand_chacha = "0.9"
+rand_core = "0.9"
 rayon = "1.10"
 trybuild = "1"
 
