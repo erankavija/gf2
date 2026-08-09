@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 2,
+  "current_wave": 3,
   "waves": [
     {
       "wave_number": 1,
@@ -112,7 +112,7 @@
           "short_id": "240b7618",
           "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
           "classification": "documentation",
-          "status": "in_progress"
+          "status": "completed"
         },
         {
           "id": "7a816262-1eed-492c-a58b-6752fdf50636",
@@ -464,8 +464,8 @@
   "rework_counts": {
     "175972df": 2,
     "18dec119": 2,
-    "240b7618": 3,
-    "d36810e7": 1,
+    "240b7618": 5,
+    "d36810e7": 2,
     "296a41c9": 2,
     "531695da": 1,
     "5758790d": 2,
