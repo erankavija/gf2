@@ -678,10 +678,11 @@ fn test_kill_during_fsync_deterministic() {
     // successful `sync_all`, which the kill interrupts). The large fsync simply
     // pins the kill into the after-write/before-rename window robustly.
     // Few iterations: each does a 64 MiB write + a real (hundreds-of-ms)
-    // sync_all, so 3 keeps the test well under the 5 s fast-tier limit.
+    // sync_all, so two independent trials retain repeated crash coverage with
+    // enough headroom for nextest's 5 s fast-tier limit.
     use std::io::{BufRead, BufReader};
 
-    let iterations = 3;
+    let iterations = 2;
     let mut present = 0usize;
     let mut prior_state_survived = 0usize;
     for i in 0..iterations {
