@@ -16,7 +16,7 @@
       {"id":"c1b253cb-babf-45ef-8898-27d743eaafac","short_id":"c1b253cb","title":"Named exception record for the rand 0.8 holdout","classification":"documentation","status":"completed"},
       {"id":"2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0","short_id":"2d315f69","title":"Existing pipeline migrated onto the generic checkpoint","classification":"implementation","status":"in_progress"},
       {"id":"d36810e7-d000-4514-b18f-9a63a1403ba9","short_id":"d36810e7","title":"Source identity and integrity for published datasets","classification":"implementation","status":"pending"},
-      {"id":"18dec119-c2d9-48f7-b383-3c73f66e49f3","short_id":"18dec119","title":"Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path","classification":"implementation","status":"in_progress"},
+      {"id":"18dec119-c2d9-48f7-b383-3c73f66e49f3","short_id":"18dec119","title":"Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path","classification":"implementation","status":"completed"},
       {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"pending"}
     ]},
     {"wave_number": 3, "issues": [
