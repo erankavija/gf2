@@ -165,6 +165,7 @@ fn next_value(iter: &mut impl Iterator<Item = String>, flag: &str) -> Result<Str
 }
 
 fn open_output(path: &Path, append: bool) -> io::Result<File> {
+    let path = resolve_output_path(path);
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             fs::create_dir_all(parent)?;
@@ -176,6 +177,16 @@ fn open_output(path: &Path, append: bool) -> io::Result<File> {
         .append(append)
         .truncate(!append)
         .open(path)
+}
+
+fn resolve_output_path(path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_owned()
+    } else {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(path)
+    }
 }
 
 fn cell_seed(q: u64, n: usize) -> u64 {
@@ -518,6 +529,15 @@ fn self_check() -> Result<(), Box<dyn std::error::Error>> {
     assert!(CELLS.contains(&(3, 28)));
     assert!(CELLS.contains(&(5, 24)));
     assert!(CELLS.contains(&(7, 20)));
+    assert_eq!(
+        resolve_output_path(Path::new("dev/receipt.csv")),
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join("dev/receipt.csv"),
+        "relative receipt paths must resolve from the workspace root"
+    );
+    let absolute = Path::new("/tmp/determinant-companion-self-check.csv");
+    assert_eq!(resolve_output_path(absolute), absolute);
 
     let f3 = fixtures_f3(4);
     let f5 = fixtures_f5(4);
