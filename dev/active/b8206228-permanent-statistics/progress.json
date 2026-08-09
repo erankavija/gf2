@@ -7,7 +7,7 @@
       {"id":"b494fec8-579f-4a2d-8579-4fa58d50e3b1","short_id":"b494fec8","title":"Workspace convergence of the rand 0.9 ecosystem","classification":"implementation","status":"completed"},
       {"id":"6602d181-9fb6-42a6-a97e-9fb38a8e71d1","short_id":"6602d181","title":"Generic checkpoint payload mechanism","classification":"implementation","status":"completed"},
       {"id":"5758790d-421b-47d2-a6f0-c40d1c5dc465","short_id":"5758790d","title":"Versioned dataset layout and record schemas","classification":"implementation","status":"pending"},
-      {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"pending"},
+      {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"completed"},
       {"id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","short_id":"8cb4def5","title":"Timing receipt for the determinant companion at campaign sizes","classification":"research","status":"pending"},
       {"id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","short_id":"296a41c9","title":"Re-measurement of contested backend orderings before the freeze","classification":"research","status":"pending"},
       {"id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","short_id":"9c5b26fb","title":"Scientific preregistration protocol for the campaign","classification":"documentation","status":"pending"}
@@ -92,7 +92,8 @@
   "rework_counts": {},
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
-    "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf."
+    "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
+    "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence."
   ],
   "started_at": "2026-08-09T12:20:30Z"
 }
