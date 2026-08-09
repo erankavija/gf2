@@ -4,7 +4,9 @@
 //! unknown fields are rejected, and every document carries
 //! [`SCHEMA_VERSION`]. The pooled summary is deliberately a flat CSV whose
 //! exact header is [`SUMMARY_CSV_FIELDS`]. [`conform_dataset`] is the one
-//! reader-side conformance entry point for the complete raw dataset.
+//! reader-side conformance entry point for the complete raw dataset; the
+//! cryptographic half of reading a dataset lives in
+//! [`provenance`](super::provenance).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -296,16 +298,19 @@ impl FromStr for Sha256Digest {
     type Err = Sha256DigestError;
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
-        if value.len() == 64
-            && value
-                .bytes()
-                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
-        {
+        if is_lowercase_hex(value, 64) {
             Ok(Self(value.to_owned()))
         } else {
             Err(Sha256DigestError(value.to_owned()))
         }
     }
+}
+
+fn is_lowercase_hex(value: &str, length: usize) -> bool {
+    value.len() == length
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
 impl fmt::Display for Sha256Digest {
@@ -336,6 +341,64 @@ impl fmt::Display for Sha256DigestError {
 }
 
 impl std::error::Error for Sha256DigestError {}
+
+/// A canonical full-length git revision.
+///
+/// The recorded value is the complete 40-character lowercase hexadecimal
+/// object name. An abbreviation is rejected because it resolves only against
+/// the repository that produced it, while a published dataset is read
+/// elsewhere and must still name exactly one commit.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct GitRevision(String);
+
+impl GitRevision {
+    /// Returns the 40-character lowercase hexadecimal object name.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl FromStr for GitRevision {
+    type Err = GitRevisionError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if is_lowercase_hex(value, 40) {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(GitRevisionError(value.to_owned()))
+        }
+    }
+}
+
+impl fmt::Display for GitRevision {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<'de> Deserialize<'de> for GitRevision {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        value.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Error returned for a revision that is not a full object name.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GitRevisionError(String);
+
+impl fmt::Display for GitRevisionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "git revision {:?} must contain exactly 40 lowercase hexadecimal characters",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for GitRevisionError {}
 
 /// Content identity for a committed mechanical artifact.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -489,7 +552,7 @@ pub enum RngAlgorithm {
 #[serde(deny_unknown_fields)]
 pub struct Provenance {
     /// Full source git revision embedded by the producing build.
-    pub git_revision: String,
+    pub git_revision: GitRevision,
     /// Complete compiler version string.
     pub compiler_version: String,
     /// Closed RNG algorithm identity.
@@ -984,7 +1047,6 @@ impl SchemaDocument for CampaignManifest {
     }
 
     fn validate(&self) -> Result<(), String> {
-        validate_nonempty("git_revision", &self.provenance.git_revision)?;
         validate_nonempty("compiler_version", &self.provenance.compiler_version)?;
         validate_nonempty("rng_version", &self.provenance.rng_version)?;
         if self.provenance.rng_version.contains('\0') {
@@ -1240,14 +1302,24 @@ fn validate_estimate(estimate: ProportionEstimate) -> Result<(), String> {
     Ok(())
 }
 
+/// Strictly reads and validates the root manifest of a dataset directory.
+///
+/// The manifest declares the dataset's file layout and its recorded source
+/// revision, both of which the integrity layer needs before the remaining
+/// files can be checked. It is therefore readable on its own, without the
+/// whole-dataset cross-document conformance [`conform_dataset`] performs.
+pub fn read_manifest(root: &Path) -> Result<CampaignManifest, SchemaError> {
+    read_json(&root.join(MANIFEST_FILE))
+}
+
 /// Strictly reads and validates every required raw document in a dataset.
 ///
 /// The function performs schema and cross-document conformance. Cryptographic
-/// checksum verification belongs to the integrity layer and is intentionally
-/// separate from this shape check.
+/// checksum verification is intentionally separate from this shape check and
+/// belongs to [`verify_dataset`](super::provenance::verify_dataset).
 pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     let manifest_path = root.join(MANIFEST_FILE);
-    let manifest: CampaignManifest = read_json(&manifest_path)?;
+    let manifest = read_manifest(root)?;
     if root.file_name().and_then(|name| name.to_str()) != Some(manifest.campaign_id.0.as_str()) {
         return invalid_value(
             &manifest_path,
@@ -1854,238 +1926,14 @@ impl FromStr for HaltReason {
 mod tests {
     use std::collections::BTreeSet;
     use std::fs;
-    use std::path::{Path, PathBuf};
-    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::path::Path;
 
     use serde_json::{json, Value};
 
+    use super::super::fixture::{
+        manifest, shard, summary_row, write_fixture, write_multifield_fixture, TestDir,
+    };
     use super::*;
-
-    static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
-
-    struct TestDir(PathBuf, PathBuf);
-
-    impl TestDir {
-        fn new() -> Self {
-            let id = NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed);
-            let parent = std::env::temp_dir().join(format!(
-                "gf2-sim-dataset-schema-{}-{id}",
-                std::process::id()
-            ));
-            let root = parent.join("campaign-2026-08-09");
-            fs::create_dir(&parent).expect("create isolated schema fixture parent");
-            fs::create_dir(&root).expect("create canonical campaign directory");
-            Self(root, parent)
-        }
-    }
-
-    impl Drop for TestDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.1);
-        }
-    }
-
-    fn manifest() -> CampaignManifest {
-        CampaignManifest {
-            schema_version: SCHEMA_VERSION,
-            campaign_id: "campaign-2026-08-09".parse().unwrap(),
-            root_seed: 0x5758_790d,
-            stream_purposes: vec![StreamPurpose {
-                name: "campaign-cells".parse().unwrap(),
-                tag: 3,
-            }],
-            cells: vec![CellSpec {
-                q: 3,
-                n: 4,
-                matrix_count: 20,
-                shard_size: 10,
-                shards: vec![
-                    ShardSpec {
-                        shard_id: 0,
-                        stream_index: 100,
-                    },
-                    ShardSpec {
-                        shard_id: 1,
-                        stream_index: 101,
-                    },
-                ],
-                backend: Backend::Scalar,
-                backend_receipt: ArtifactIdentity {
-                    path: "dev/benchmarks/permanent-backend-selection/test-receipt.json"
-                        .parse()
-                        .unwrap(),
-                    sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-                        .parse()
-                        .unwrap(),
-                },
-                determinant_companion: DeterminantPlan::NotEvaluated,
-            }],
-            provenance: Provenance {
-                git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766".to_owned(),
-                compiler_version: "rustc 1.95.0".to_owned(),
-                rng_algorithm: RngAlgorithm::ChaCha20,
-                rng_version: "rand_chacha 0.9.0".to_owned(),
-                invocation: vec![
-                    "gf2-permanent-campaign".to_owned(),
-                    "--manifest".to_owned(),
-                    "manifest.json".to_owned(),
-                ],
-                accelerator_runtime: Availability::NotPresent,
-                cpu_model: "Test CPU".to_owned(),
-                gpu_model: Availability::NotPresent,
-            },
-        }
-    }
-
-    fn shard(shard_id: u64, stream_index: u64) -> ShardRecord {
-        ShardRecord {
-            schema_version: SCHEMA_VERSION,
-            shard_id,
-            stream_address: StreamAddress {
-                root_seed: 0x5758_790d,
-                q: 3,
-                n: 4,
-                purpose_tag: 3,
-                stream_index,
-            },
-            matrix_count: 10,
-            permanent_zero_count: 3,
-            permanent_histogram: vec![3, 4, 3],
-            determinant: DeterminantCount::NotEvaluated,
-        }
-    }
-
-    fn summary_row() -> SummaryRow {
-        SummaryRow {
-            schema_version: SCHEMA_VERSION,
-            q: 3,
-            n: 4,
-            matrix_count: 20,
-            permanent_zero_count: 6,
-            determinant: DeterminantCount::NotEvaluated,
-            terminal_state: CellTerminalState::Completed {
-                permanent_estimate: ProportionEstimate {
-                    point: 0.3,
-                    interval: Interval {
-                        lower: 0.145,
-                        upper: 0.519,
-                    },
-                },
-                permanent_verdict: AcceptanceVerdict::Accepted,
-                determinant_estimate: DeterminantEstimate::NotEvaluated,
-            },
-        }
-    }
-
-    fn write_fixture(root: &Path) {
-        let campaign = manifest();
-        fs::write(
-            root.join(MANIFEST_FILE),
-            serde_json::to_vec_pretty(&campaign).unwrap(),
-        )
-        .unwrap();
-
-        let shard_dir = root.join("shards/q3/n04");
-        fs::create_dir_all(&shard_dir).unwrap();
-        for (id, stream) in [(0, 100), (1, 101)] {
-            fs::write(
-                shard_dir.join(format!("shard-{id:06}.json")),
-                serde_json::to_vec_pretty(&shard(id, stream)).unwrap(),
-            )
-            .unwrap();
-        }
-
-        let summary_dir = root.join("summaries");
-        fs::create_dir(&summary_dir).unwrap();
-        let field_summary = FieldSummary {
-            schema_version: SCHEMA_VERSION,
-            q: 3,
-            rows: vec![summary_row()],
-        };
-        fs::write(
-            summary_dir.join("q3.json"),
-            serde_json::to_vec_pretty(&field_summary).unwrap(),
-        )
-        .unwrap();
-        fs::write(
-            root.join(POOLED_SUMMARY_FILE),
-            encode_summary_csv(&field_summary.rows),
-        )
-        .unwrap();
-        fs::write(
-            root.join(INTEGRITY_FILE),
-            b"fixture checksums land in the next issue\n",
-        )
-        .unwrap();
-    }
-
-    fn write_multifield_fixture(root: &Path) {
-        write_fixture(root);
-
-        let mut campaign = manifest();
-        let backend_receipt = campaign.cells[0].backend_receipt.clone();
-        campaign.cells.push(CellSpec {
-            q: 5,
-            n: 4,
-            matrix_count: 10,
-            shard_size: 10,
-            shards: vec![ShardSpec {
-                shard_id: 0,
-                stream_index: 200,
-            }],
-            backend: Backend::Scalar,
-            backend_receipt,
-            determinant_companion: DeterminantPlan::NotEvaluated,
-        });
-        fs::write(
-            root.join(MANIFEST_FILE),
-            serde_json::to_vec_pretty(&campaign).unwrap(),
-        )
-        .unwrap();
-
-        let mut q5_shard = shard(0, 200);
-        q5_shard.stream_address.q = 5;
-        q5_shard.permanent_zero_count = 2;
-        q5_shard.permanent_histogram = vec![2; 5];
-        let shard_dir = root.join("shards/q5/n04");
-        fs::create_dir_all(&shard_dir).unwrap();
-        fs::write(
-            shard_dir.join("shard-000000.json"),
-            serde_json::to_vec_pretty(&q5_shard).unwrap(),
-        )
-        .unwrap();
-
-        let mut q5_row = summary_row();
-        q5_row.q = 5;
-        q5_row.matrix_count = 10;
-        q5_row.permanent_zero_count = 2;
-        q5_row.terminal_state = CellTerminalState::Completed {
-            permanent_estimate: ProportionEstimate {
-                point: 0.2,
-                interval: Interval {
-                    lower: 0.05,
-                    upper: 0.45,
-                },
-            },
-            permanent_verdict: AcceptanceVerdict::Accepted,
-            determinant_estimate: DeterminantEstimate::NotEvaluated,
-        };
-        let q5_summary = FieldSummary {
-            schema_version: SCHEMA_VERSION,
-            q: 5,
-            rows: vec![q5_row.clone()],
-        };
-        fs::write(
-            root.join("summaries/q5.json"),
-            serde_json::to_vec_pretty(&q5_summary).unwrap(),
-        )
-        .unwrap();
-        fs::write(
-            root.join(POOLED_SUMMARY_FILE),
-            encode_summary_csv(&[summary_row(), q5_row]),
-        )
-        .unwrap();
-    }
 
     fn read_field_summary(root: &Path) -> FieldSummary {
         serde_json::from_slice(&fs::read(root.join("summaries/q3.json")).unwrap()).unwrap()
@@ -2234,9 +2082,9 @@ mod tests {
     #[test]
     fn well_formed_dataset_conforms_and_has_one_writer_per_raw_path() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
+        write_fixture(fixture.root());
 
-        let dataset = conform_dataset(&fixture.0).expect("well-formed fixture must conform");
+        let dataset = conform_dataset(fixture.root()).expect("well-formed fixture must conform");
         assert_eq!(dataset.manifest, manifest());
 
         let required_files = dataset.layout.required_files();
@@ -2270,13 +2118,13 @@ mod tests {
     #[test]
     fn conformance_binds_campaign_id_to_directory_basename() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
-        let manifest_path = fixture.0.join(MANIFEST_FILE);
+        write_fixture(fixture.root());
+        let manifest_path = fixture.root().join(MANIFEST_FILE);
         let mut value: Value = serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
         value["campaign_id"] = json!("different-campaign");
         fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
-        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        let error = conform_dataset(fixture.root()).unwrap_err().to_string();
         assert!(
             error.contains("dataset directory name differs from campaign_id"),
             "unexpected campaign directory identity error: {error}"
@@ -2286,17 +2134,17 @@ mod tests {
     #[test]
     fn conformance_rejects_field_summary_files_swapped_between_fields() {
         let fixture = TestDir::new();
-        write_multifield_fixture(&fixture.0);
-        conform_dataset(&fixture.0).expect("well-formed multi-field fixture must conform");
+        write_multifield_fixture(fixture.root());
+        conform_dataset(fixture.root()).expect("well-formed multi-field fixture must conform");
 
-        let q3_path = fixture.0.join("summaries/q3.json");
-        let q5_path = fixture.0.join("summaries/q5.json");
+        let q3_path = fixture.root().join("summaries/q3.json");
+        let q5_path = fixture.root().join("summaries/q5.json");
         let q3_bytes = fs::read(&q3_path).unwrap();
         let q5_bytes = fs::read(&q5_path).unwrap();
         fs::write(&q3_path, q5_bytes).unwrap();
         fs::write(&q5_path, q3_bytes).unwrap();
 
-        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        let error = conform_dataset(fixture.root()).unwrap_err().to_string();
         assert!(
             error.contains("field summary identity differs from its path"),
             "unexpected swapped field-summary error: {error}"
@@ -2306,16 +2154,16 @@ mod tests {
     #[test]
     fn conformance_rejects_field_summary_rows_swapped_between_fields() {
         let fixture = TestDir::new();
-        write_multifield_fixture(&fixture.0);
-        let q3_path = fixture.0.join("summaries/q3.json");
-        let q5_path = fixture.0.join("summaries/q5.json");
+        write_multifield_fixture(fixture.root());
+        let q3_path = fixture.root().join("summaries/q3.json");
+        let q5_path = fixture.root().join("summaries/q5.json");
         let mut q3: FieldSummary = serde_json::from_slice(&fs::read(&q3_path).unwrap()).unwrap();
         let mut q5: FieldSummary = serde_json::from_slice(&fs::read(&q5_path).unwrap()).unwrap();
         std::mem::swap(&mut q3.rows, &mut q5.rows);
         fs::write(&q3_path, serde_json::to_vec_pretty(&q3).unwrap()).unwrap();
         fs::write(&q5_path, serde_json::to_vec_pretty(&q5).unwrap()).unwrap();
 
-        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        let error = conform_dataset(fixture.root()).unwrap_err().to_string();
         assert!(
             error.contains("differs from field summary"),
             "unexpected swapped field-summary row error: {error}"
@@ -2325,17 +2173,17 @@ mod tests {
     #[test]
     fn halted_partial_cell_preserves_counts_without_completed_metrics() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
-        fs::remove_file(fixture.0.join("shards/q3/n04/shard-000001.json")).unwrap();
+        write_fixture(fixture.root());
+        fs::remove_file(fixture.root().join("shards/q3/n04/shard-000001.json")).unwrap();
         write_halted_summary(
-            &fixture.0,
+            fixture.root(),
             10,
             3,
             DeterminantCount::NotEvaluated,
             HaltReason::ExecutionFailure,
         );
 
-        let dataset = conform_dataset(&fixture.0).expect("halted partial cell must conform");
+        let dataset = conform_dataset(fixture.root()).expect("halted partial cell must conform");
         assert_eq!(dataset.pooled_summary[0].matrix_count, 10);
         assert_eq!(dataset.pooled_summary[0].permanent_zero_count, 3);
         assert!(dataset
@@ -2348,18 +2196,18 @@ mod tests {
     #[test]
     fn propagated_acceptance_failure_can_halt_before_any_shard_executes() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
-        set_manifest_determinant_plan(&fixture.0, DeterminantPlan::Evaluate);
+        write_fixture(fixture.root());
+        set_manifest_determinant_plan(fixture.root(), DeterminantPlan::Evaluate);
         for shard_id in 0..2 {
             fs::remove_file(
                 fixture
-                    .0
+                    .root()
                     .join(format!("shards/q3/n04/shard-{shard_id:06}.json")),
             )
             .unwrap();
         }
         write_halted_summary(
-            &fixture.0,
+            fixture.root(),
             0,
             0,
             DeterminantCount::Evaluated {
@@ -2369,7 +2217,8 @@ mod tests {
             HaltReason::AcceptanceFailure,
         );
 
-        let dataset = conform_dataset(&fixture.0).expect("zero-shard propagated halt must conform");
+        let dataset =
+            conform_dataset(fixture.root()).expect("zero-shard propagated halt must conform");
         assert!(dataset
             .layout
             .required_files()
@@ -2380,17 +2229,18 @@ mod tests {
     #[test]
     fn halted_cell_accepts_any_manifested_shard_subset() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
-        fs::remove_file(fixture.0.join("shards/q3/n04/shard-000000.json")).unwrap();
+        write_fixture(fixture.root());
+        fs::remove_file(fixture.root().join("shards/q3/n04/shard-000000.json")).unwrap();
         write_halted_summary(
-            &fixture.0,
+            fixture.root(),
             10,
             3,
             DeterminantCount::NotEvaluated,
             HaltReason::ExecutionFailure,
         );
 
-        let dataset = conform_dataset(&fixture.0).expect("halted shards need not form a prefix");
+        let dataset =
+            conform_dataset(fixture.root()).expect("halted shards need not form a prefix");
         assert!(dataset
             .layout
             .required_files()
@@ -2401,30 +2251,30 @@ mod tests {
     #[test]
     fn conformance_rejects_silent_or_completed_partial_cells() {
         let silent = TestDir::new();
-        write_fixture(&silent.0);
-        let path = silent.0.join("summaries/q3.json");
+        write_fixture(silent.root());
+        let path = silent.root().join("summaries/q3.json");
         let mut summary: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         summary["rows"] = json!([]);
         fs::write(&path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
-        assert!(conform_dataset(&silent.0).is_err());
+        assert!(conform_dataset(silent.root()).is_err());
 
         let partial = TestDir::new();
-        write_fixture(&partial.0);
-        fs::remove_file(partial.0.join("shards/q3/n04/shard-000001.json")).unwrap();
-        assert!(conform_dataset(&partial.0).is_err());
+        write_fixture(partial.root());
+        fs::remove_file(partial.root().join("shards/q3/n04/shard-000001.json")).unwrap();
+        assert!(conform_dataset(partial.root()).is_err());
     }
 
     #[test]
     fn conformance_rejects_unmanifested_shard_paths() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
+        write_fixture(fixture.root());
         fs::copy(
-            fixture.0.join("shards/q3/n04/shard-000000.json"),
-            fixture.0.join("shards/q3/n04/shard-999999.json"),
+            fixture.root().join("shards/q3/n04/shard-000000.json"),
+            fixture.root().join("shards/q3/n04/shard-999999.json"),
         )
         .unwrap();
 
-        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        let error = conform_dataset(fixture.root()).unwrap_err().to_string();
         assert!(
             error.contains("unmanifested shard path"),
             "unexpected unmanifested shard error: {error}"
@@ -2435,8 +2285,8 @@ mod tests {
     fn conformance_rejects_missing_unknown_and_wrong_version_fields() {
         for mutation in ["missing", "unknown", "version"] {
             let fixture = TestDir::new();
-            write_fixture(&fixture.0);
-            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            write_fixture(fixture.root());
+            let manifest_path = fixture.root().join(MANIFEST_FILE);
             let mut value: Value =
                 serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
             match mutation {
@@ -2452,7 +2302,7 @@ mod tests {
             fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
             assert!(
-                conform_dataset(&fixture.0).is_err(),
+                conform_dataset(fixture.root()).is_err(),
                 "{mutation} manifest mutation must be rejected"
             );
         }
@@ -2467,8 +2317,8 @@ mod tests {
             "invocation",
         ] {
             let fixture = TestDir::new();
-            write_fixture(&fixture.0);
-            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            write_fixture(fixture.root());
+            let manifest_path = fixture.root().join(MANIFEST_FILE);
             let mut value: Value =
                 serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
             let object = if missing_field == "backend_receipt" {
@@ -2480,7 +2330,7 @@ mod tests {
             fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
             assert!(
-                conform_dataset(&fixture.0).is_err(),
+                conform_dataset(fixture.root()).is_err(),
                 "manifest without {missing_field} must be rejected"
             );
         }
@@ -2497,8 +2347,8 @@ mod tests {
             "unknown",
         ] {
             let fixture = TestDir::new();
-            write_fixture(&fixture.0);
-            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            write_fixture(fixture.root());
+            let manifest_path = fixture.root().join(MANIFEST_FILE);
             let mut value: Value =
                 serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
             let receipt = &mut value["cells"][0]["backend_receipt"];
@@ -2521,7 +2371,7 @@ mod tests {
             fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
             assert!(
-                conform_dataset(&fixture.0).is_err(),
+                conform_dataset(fixture.root()).is_err(),
                 "{mutation} backend receipt identity must be rejected"
             );
         }
@@ -2536,8 +2386,8 @@ mod tests {
             "unknown_rng",
         ] {
             let fixture = TestDir::new();
-            write_fixture(&fixture.0);
-            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            write_fixture(fixture.root());
+            let manifest_path = fixture.root().join(MANIFEST_FILE);
             let mut value: Value =
                 serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
             match mutation {
@@ -2552,7 +2402,7 @@ mod tests {
             fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
 
             assert!(
-                conform_dataset(&fixture.0).is_err(),
+                conform_dataset(fixture.root()).is_err(),
                 "{mutation} RNG provenance must be rejected"
             );
         }
@@ -2561,12 +2411,12 @@ mod tests {
     #[test]
     fn conformance_rejects_summary_permanent_zeros_not_pooled_from_shards() {
         let fixture = TestDir::new();
-        write_fixture(&fixture.0);
-        let mut summary = read_field_summary(&fixture.0);
+        write_fixture(fixture.root());
+        let mut summary = read_field_summary(fixture.root());
         summary.rows[0].permanent_zero_count += 1;
-        write_field_and_pooled_summaries(&fixture.0, &summary);
+        write_field_and_pooled_summaries(fixture.root(), &summary);
 
-        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        let error = conform_dataset(fixture.root()).unwrap_err().to_string();
         assert!(
             error.contains("permanent_zero_count differs from pooled shards"),
             "unexpected conformance error: {error}"
@@ -2577,10 +2427,10 @@ mod tests {
     fn conformance_rejects_numeric_determinants_for_not_evaluated_plan() {
         for surface in ["shard", "summary"] {
             let fixture = TestDir::new();
-            write_fixture(&fixture.0);
+            write_fixture(fixture.root());
             if surface == "shard" {
                 set_shard_determinant(
-                    &fixture.0,
+                    fixture.root(),
                     0,
                     DeterminantCount::Evaluated {
                         sample_count: 10,
@@ -2588,7 +2438,7 @@ mod tests {
                     },
                 );
             } else {
-                let mut summary = read_field_summary(&fixture.0);
+                let mut summary = read_field_summary(fixture.root());
                 summary.rows[0].determinant = DeterminantCount::Evaluated {
                     sample_count: 20,
                     zero_count: 0,
@@ -2613,10 +2463,10 @@ mod tests {
                         verdict: AcceptanceVerdict::Accepted,
                     },
                 };
-                write_field_and_pooled_summaries(&fixture.0, &summary);
+                write_field_and_pooled_summaries(fixture.root(), &summary);
             }
 
-            let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+            let error = conform_dataset(fixture.root()).unwrap_err().to_string();
             assert!(
                 error.contains("not_evaluated determinant plan"),
                 "{surface} mismatch returned unexpected error: {error}"
@@ -2627,30 +2477,32 @@ mod tests {
     #[test]
     fn conformance_rejects_evaluated_plan_state_and_pooled_count_mismatches() {
         let missing_state = TestDir::new();
-        write_fixture(&missing_state.0);
-        set_manifest_determinant_plan(&missing_state.0, DeterminantPlan::Evaluate);
-        let error = conform_dataset(&missing_state.0).unwrap_err().to_string();
+        write_fixture(missing_state.root());
+        set_manifest_determinant_plan(missing_state.root(), DeterminantPlan::Evaluate);
+        let error = conform_dataset(missing_state.root())
+            .unwrap_err()
+            .to_string();
         assert!(
             error.contains("evaluate determinant plan"),
             "unexpected evaluated-plan state error: {error}"
         );
 
         let coherent = TestDir::new();
-        write_fixture(&coherent.0);
-        set_coherent_evaluated_determinants(&coherent.0);
-        conform_dataset(&coherent.0).expect("coherently pooled evaluated plan must conform");
+        write_fixture(coherent.root());
+        set_coherent_evaluated_determinants(coherent.root());
+        conform_dataset(coherent.root()).expect("coherently pooled evaluated plan must conform");
 
         let wrong_pool = TestDir::new();
-        write_fixture(&wrong_pool.0);
-        set_coherent_evaluated_determinants(&wrong_pool.0);
-        let mut summary = read_field_summary(&wrong_pool.0);
+        write_fixture(wrong_pool.root());
+        set_coherent_evaluated_determinants(wrong_pool.root());
+        let mut summary = read_field_summary(wrong_pool.root());
         summary.rows[0].determinant = DeterminantCount::Evaluated {
             sample_count: 20,
             zero_count: 7,
         };
-        write_field_and_pooled_summaries(&wrong_pool.0, &summary);
+        write_field_and_pooled_summaries(wrong_pool.root(), &summary);
 
-        let error = conform_dataset(&wrong_pool.0).unwrap_err().to_string();
+        let error = conform_dataset(wrong_pool.root()).unwrap_err().to_string();
         assert!(
             error.contains("determinant counts differ from pooled shards"),
             "unexpected determinant pooling error: {error}"
