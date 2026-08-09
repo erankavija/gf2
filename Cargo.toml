@@ -2,6 +2,7 @@
 members = [
 	"crates/gf2-core",
 	"crates/gf2-coding",
+	"crates/gf2-stats",
 	"crates/gf2-algebra",
 	"crates/gf2-kernels-simd",
 	"crates/gf2-sim",

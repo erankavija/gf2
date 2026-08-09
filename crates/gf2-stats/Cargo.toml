@@ -1,0 +1,15 @@
+[package]
+name = "gf2-stats"
+version = "0.1.0"
+edition = "2021"
+authors = ["Vesa Kaskivuo <vesa.kaskivuo@iki.fi>"]
+description = "Statistics primitives for reproducible finite-field campaigns"
+license = "MIT"
+keywords = ["statistics", "finite-field", "coding-theory", "gf2"]
+categories = ["algorithms", "mathematics"]
+rust-version = "1.95"
+
+[dependencies]
+gf2-core = { path = "../gf2-core" }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
