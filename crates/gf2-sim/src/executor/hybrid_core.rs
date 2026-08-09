@@ -20,7 +20,7 @@
 //!    (the deliberate failure-semantics divergence — see below);
 //! 2. **stop-after-batch** ([`BatchHooks::stop_after_batch`]) — the scheduler
 //!    runs every batch; the checkpointed loop checks
-//!    [`is_interrupted`](crate::checkpoint::is_interrupted) at each batch
+//!    [`is_interrupted`](crate::snr_checkpoint::is_interrupted) at each batch
 //!    boundary so a SIGINT stops at a batch-aligned point.
 //!
 //! The **instrumentation** (the `tracing` `pipeline_stage` spans + the
@@ -147,7 +147,7 @@ pub(crate) trait BatchHooks {
 
     /// Whether the worker should stop after recording `batch_idx` (a SIGINT
     /// landed at a batch boundary). The scheduler returns `false` always; the
-    /// checkpointed loop returns [`is_interrupted`](crate::checkpoint::is_interrupted).
+    /// checkpointed loop returns [`is_interrupted`](crate::snr_checkpoint::is_interrupted).
     fn stop_after_batch(&self, batch_idx: usize) -> bool;
 }
 

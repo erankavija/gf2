@@ -4,7 +4,7 @@
 //! Runs a serial sweep over `--snr-points` Es/N0 points, each simulated with a
 //! per-frame closure driven by one of the [`gf2_sim::channels`] models
 //! (`awgn` / `rayleigh` / `rician`), checkpointing per heartbeat / SNR boundary
-//! / SIGINT via [`gf2_sim::checkpoint::run_sweep_checkpointed`]. On SIGINT the
+//! / SIGINT via [`gf2_sim::snr_checkpoint::run_sweep_checkpointed`]. On SIGINT the
 //! library runner flushes the in-progress checkpoint; this binary then prints a
 //! diagnostic and **exits with a non-zero status (130 = 128 + SIGINT)** — the
 //! `exit non-zero` half of deliverable 2 that must NOT live in a library fn.
@@ -37,11 +37,11 @@ use std::process::ExitCode;
 
 use gf2_sim::batch::SymbolBatch;
 use gf2_sim::channels::{Awgn, Rayleigh, Rician};
-use gf2_sim::checkpoint::{
+use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
+use gf2_sim::snr_checkpoint::{
     config_hash, is_interrupted, run_sweep_checkpointed, CheckpointV2, CheckpointWriter,
     SweepError, WorkerState, SCHEMA_VERSION,
 };
-use gf2_sim::parallel::{FrameOutcome, WorkerCtx};
 use gf2_sim::PipelineConfig;
 
 /// Process exit code on SIGINT (128 + signal number; SIGINT = 2).
@@ -227,7 +227,7 @@ fn verdict(batch: &SymbolBatch) -> FrameOutcome {
 /// `point_delay_ms`.
 fn point_marker(
     point_delay_ms: u64,
-) -> impl FnMut(usize, f64, &gf2_sim::checkpoint::CheckpointedRun) {
+) -> impl FnMut(usize, f64, &gf2_sim::snr_checkpoint::CheckpointedRun) {
     use std::io::Write as _;
     move |idx, _esn0, _run| {
         println!("SNR_{idx}_FLUSHED");
