@@ -1,11 +1,21 @@
 //! Inspect, checksum, and verify a published permanent-zero-fraction dataset.
 //!
 //! This is the reader- and finalization-side tool for the dataset described in
-//! `dev/simulation_results/permanent-zero-fraction/README.md`. It is not the
-//! campaign driver: it draws no matrices and writes no dataset file. It exists
-//! so the source-identity guard and the integrity layer are runnable by hand,
-//! and so the revision `gf2-sim` embeds at build time is carried by a real
-//! binary rather than only by the library.
+//! `dev/simulation_results/permanent-zero-fraction/README.md`. It exists so the
+//! source-identity guard and the integrity layer are runnable by hand, and so
+//! the revision `gf2-sim` embeds at build time is carried by a real executable
+//! rather than only by the library that any executable links.
+//!
+//! It is not the campaign driver, which is separate work. A driver enumerates
+//! the frozen manifest's work items, derives stream addresses, draws matrices,
+//! evaluates permanents and the determinant companion, accumulates shard
+//! records, and writes the dataset. This binary has no sampler, no backend
+//! selection, and no accumulator, and it never creates or mutates a dataset
+//! file: `checksums` prints to standard output rather than writing
+//! `checksums.sha256`, so the executable has no write path into a dataset at
+//! all. What it shares with the future driver is the two library entry points
+//! the driver will also call — the guard before writing, and the integrity
+//! generator at finalization.
 //!
 //! ```console
 //! $ permanent_dataset revision
