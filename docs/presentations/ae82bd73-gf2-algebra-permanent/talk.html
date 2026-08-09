@@ -106,13 +106,20 @@
   <table>
     <thead><tr><th>comparison</th><th>\(n = 24\)</th><th>\(n = 28\)</th><th>\(n = 36\)</th></tr></thead>
     <tbody>
-      <tr><td>GPU vs CPU-SIMD, batch \(M=256\)</td><td>28.65×</td><td>30.32×</td><td>—</td></tr>
+      <tr><td>GPU vs sequential AVX2, batch \(M=256\)</td><td>28.65×</td><td>30.32×</td><td>—</td></tr>
+      <tr><td>GPU vs best measured CPU, same \(M=256\)</td><td>0.46×</td><td>0.44×</td><td>—</td></tr>
       <tr><td>GPU vs paper-faithful reference</td><td>66.5×</td><td>78.2×</td><td><span class="badge green">100.2×</span></td></tr>
     </tbody>
   </table>
   <p>gfx1030 device kernels batch independent matrices; the \(\ge 50\times\)
   headline target is delivered on the GPU path — 100.2× over the reference
   at \(n=36\).</p>
+  <p class="caption">The M=256 ratios depend on the CPU baseline: 28.65× / 30.32×
+  is the historical sequential-AVX2 comparison, while the
+  <a href="../../../dev/studies/b488f02c/feasibility-study.md#44-measured-throughput">feasibility study</a>
+  gives 0.46× / 0.44× against the best measured CPU path. The
+  <a href="../../../dev/benchmarks/permanent_campaign/backend-ordering.md">replicated receipt</a>
+  preserves both; its new n=28 GPU timing used M=1024, not M=256.</p>
 </section>
 
 <!-- ── CAPABILITY 4 — LEAN ─────────────────────────────────────────────── -->
@@ -167,7 +174,7 @@
     <tbody>
       <tr><td>CPU AVX2 speedup at \(n=36\) vs reference</td><td><span class="badge blue">10.64×</span></td></tr>
       <tr><td>GPU speedup at \(n=36\) vs reference</td><td><span class="badge green">100.2×</span></td></tr>
-      <tr><td>GPU vs CPU-SIMD batch (\(M=256\))</td><td>28–30×</td></tr>
+      <tr><td>M=256 GPU baseline dependence (\(n=24/28\))</td><td>28.65× / 30.32× vs sequential AVX2;<br>0.46× / 0.44× vs best measured CPU</td></tr>
       <tr><td>parallel scaling per core (\(n \ge 28\))</td><td>\(\ge 0.883\times\)</td></tr>
       <tr><td>Lean4 proofs, sorry-free</td><td>2 / 2</td></tr>
       <tr><td>epic issues delivered</td><td>54 / 54</td></tr>
