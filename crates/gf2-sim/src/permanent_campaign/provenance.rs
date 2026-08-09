@@ -435,9 +435,9 @@ impl std::error::Error for IntegrityFormatError {}
 /// A dataset file that disagrees with its integrity file.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IntegrityFault {
-    /// A recorded path is absent from the dataset.
+    /// A path the dataset should hold is absent from it.
     Missing {
-        /// Recorded path.
+        /// Absent path.
         path: ArtifactPath,
     },
     /// A recorded path is present with different content.
@@ -848,12 +848,12 @@ fn manifest_fault(
     recorded: &BTreeMap<ArtifactPath, Sha256Digest>,
 ) -> Result<Option<IntegrityFault>, IntegrityError> {
     let path = dataset_path(root, MANIFEST_FILE)?;
-    let Some(digest) = recorded.get(&path) else {
-        return Ok(Some(IntegrityFault::Uncovered { path }));
-    };
     if !root.join(MANIFEST_FILE).is_file() {
         return Ok(Some(IntegrityFault::Missing { path }));
     }
+    let Some(digest) = recorded.get(&path) else {
+        return Ok(Some(IntegrityFault::Uncovered { path }));
+    };
     let actual = manifest_content_hash(root)?;
     Ok((&actual != digest).then(|| IntegrityFault::Changed {
         path,
