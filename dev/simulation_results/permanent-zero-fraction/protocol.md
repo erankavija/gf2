@@ -1,11 +1,13 @@
 # Permanent-zero-fraction campaign preregistration
 
 **Status:** frozen protocol, committed before any campaign-purpose matrix draw.
-This document governs the first permanent-zero-fraction campaign whose root
-manifest records this path and content hash. The manifest may copy these fixed
-values for machine readability, but it may not change them. A changed protocol,
-cell, sample size, test, or exclusion rule defines a new campaign id and requires
-a new preregistration before that campaign's first draw.
+This document governs the first permanent-zero-fraction campaign whose
+committed pre-draw execution receipt records this repository-relative path,
+content SHA-256, and corresponding root-manifest identity. The manifest may
+encode these fixed values for machine readability, but it may not change them.
+A changed protocol, cell, sample size, test, or exclusion rule defines a new
+campaign id and requires a new preregistration before that campaign's first
+draw.
 
 The measured envelope and prior by-product counts remain evidence, not campaign
 data. This protocol authorizes no draw by itself.
@@ -212,19 +214,40 @@ not rewrite them into supporting evidence.
 ## Backend freeze
 
 Before the first campaign draw, every core cell receives one backend in the
-hashed root manifest. Selection proceeds in this order:
+hashed root manifest. Its `CellSpec.backend_receipt` is an `ArtifactIdentity`
+containing the repository-relative path and lowercase SHA-256 of the exact
+committed selection receipt for that cell. The hash must verify against the
+file at the manifest's git revision; a floating path, directory identity, or
+unhashed prose reference is not a receipt binding.
+
+A selection receipt identifies every raw timing receipt it considered by its
+own repository-relative path and SHA-256. It records the chosen backend and the
+following provenance for every candidate: physical host identity; CPU and GPU
+model as applicable; accelerator runtime and driver; source revision; compiler;
+build profile, features, and binary hash; worker count; frequency/governor or
+equivalent power policy; $(q,n)$ workload and batch size; warm-up policy; and
+timed repetition count. Candidates may be ranked only within one comparison
+cohort for which those hardware, build, workload, and timing conditions match.
+Receipts from different hosts, builds, workload shapes, or timing protocols are
+not ranked against one another. If the available receipts do not form a
+comparable cohort, the manifest cannot freeze until a same-cohort remeasurement
+is committed and bound by the selection receipt.
+
+Within that cohort, selection proceeds in this order:
 
 1. Exclude a backend unless it passes the shared per-matrix behavioural suite
    against the generic reference, including the validation anchors.
 2. Exclude it unless the intended host and build satisfy its documented safety,
    capability, launch-duration, and resource conditions.
-3. Exclude it unless a committed, cell-applicable receipt measures composite
-   draw-pack-evaluate-count throughput. Rank the remaining backends by that
-   measured composite throughput and use the greater measured mean. An exact
-   tie is broken by the lower documented worst-case launch duration and then the
-   lower documented resource demand, both safety properties; if those also tie,
-   the manifest cannot freeze until another preregistered timing replication
-   resolves the ordering.
+3. Exclude it unless one of the selection receipt's hashed raw receipts measures
+   cell-applicable composite draw-pack-evaluate-count throughput. Rank the
+   remaining backends by that measured composite throughput and use the greater
+   measured mean. An exact tie is broken by the lower documented worst-case
+   launch duration and then the lower documented resource demand, both safety
+   properties; if those also tie, the manifest cannot freeze until another
+   preregistered timing replication resolves the ordering. If only one backend
+   remains eligible, the selection receipt records the exclusions rather than
+   implying a timing comparison that did not occur.
 
 Timing fixtures use their own stream purpose. Permanent or determinant values,
 zero counts, zero fractions, intervals, or test outcomes never enter backend
@@ -234,12 +257,35 @@ halts the cell; the driver does not silently substitute another backend. This
 campaign-specific rule preserves the frozen selection and does not alter safe
 fallbacks in the production libraries.
 
+## Reproducibility identity
+
+The root provenance names `rng_algorithm` as the token `chacha20`, records
+`rng_version` as the exact implementation and crate version, and stores
+`invocation` as the exact argument vector rather than shell prose. These fields
+are mandatory for this campaign. Together with the manifest's root seed,
+purpose tags, stream addresses, git revision, build and toolchain provenance,
+they bind the sampler that maps an address to matrices. A manifest missing any
+of them cannot freeze.
+
+This claim is deliberately limited: the argument vector records how the driver
+was invoked, while the source revision and dependency lock resolve the RNG
+implementation. Neither an unrecorded local default nor a prose command is
+treated as sampler identity. Bit-for-bit regeneration additionally requires the
+same manifest and stream address; backend-result reproduction requires the
+manifest-selected backend and its bound build/receipt provenance.
+
 ## Shard validity, quarantine, retry, and halt rules
 
-A shard is valid only if all of these mechanically checkable conditions hold:
+A candidate shard is validated by joining its path and content to the frozen
+manifest's matching `CellSpec` and `ShardSpec` and to the committed execution
+receipt. It is valid only if all of these mechanically checkable conditions
+hold:
 
-- its campaign id, protocol hash, manifest hash, $(q,n)$, stream purpose,
-  stream index, backend, and expected matrix count match the frozen manifest;
+- its content/path $(q,n)$ and stream purpose tag/index match the manifest, and
+  its recorded matrix count equals the joined `ShardSpec` expectation;
+- the execution receipt's campaign id and manifest hash identify that manifest,
+  its protocol path/hash identify this file, and its reported backend equals the
+  joined `CellSpec` selection;
 - its address is unique among accepted shards and its draw range overlaps no
   other accepted range;
 - the write completed atomically and its schema, checksum, histogram sum,
@@ -249,19 +295,23 @@ A shard is valid only if all of these mechanically checkable conditions hold:
 
 An incomplete write, crash, checksum or schema failure, address mismatch or
 overlap, count inconsistency, backend error, or safety/conformance failure
-quarantines the shard. Quarantine preserves the bytes, logs, observed counts if
-any, failure reason, and attempt number under a non-pooling path. Nothing is
-deleted or overwritten. A statistically surprising but mechanically valid
-shard is not quarantined.
+quarantines the shard. It is excluded from the raw dataset and pooling. The
+runner preserves its bytes, logs, observed counts if any, failure reason, and
+attempt number until they are content-addressed in a committed campaign
+execution receipt. That receipt is evidence rather than a raw-schema shard;
+finalization refuses a campaign with quarantine evidence that has not been
+receipted. Nothing is deleted or overwritten. A statistically surprising but
+mechanically valid shard is not quarantined.
 
 Each shard permits at most two executions: the initial attempt and one recovery
-attempt. Recovery must use the identical stream address, backend, binary,
-manifest, and configuration, so it redraws the identical matrices. It is
-allowed only after a predeclared mechanical quarantine and never because of an
-observed zero fraction or test result. Because the replacement is the same
-observation rather than a fresh sample or second test, it spends no additional
-error budget. Only the valid replacement enters the pooled count; all attempts
-remain preserved.
+attempt. Recovery must use the identical stream address, manifest-selected
+backend, root seed and purpose tag, RNG algorithm and version, source revision,
+build/toolchain provenance, and invocation, so it redraws the identical
+matrices. It is allowed only after a predeclared mechanical quarantine and
+never because of an observed zero fraction or test result. Because the
+replacement is the same observation rather than a fresh sample or second test,
+it spends no additional error budget. Only the valid replacement enters the
+pooled count; all attempts remain preserved in the execution receipt.
 
 A second failure, inability to retry within the twelve-hour cell ceiling, or a
 frozen backend becoming unavailable halts the cell. A fresh stream would be a
@@ -284,30 +334,51 @@ Every manifest cell has exactly one terminal state:
   pass/reject verdicts are recorded. A rejecting executed cell triggers the
   campaign-wide halt rule but remains executed with its rejection intact.
 - **Halted:** the cell did not reach a valid verdict because a named rule above
-  fired. The record carries the cause, attempt and quarantine history, accepted
-  partial-shard count, and the triggering cell when the halt is propagated.
-  Partial counts are preserved but are not published as a completed campaign
-  estimate.
+  fired. `CellTerminalState::Halted` records only its canonical `reason`:
+  `acceptance_failure` for a propagated exact-test rejection,
+  `backend_unavailable` when the frozen backend cannot run safely, or
+  `execution_failure` for an exhausted mechanical retry or time ceiling. Raw
+  partial data and quarantined attempts remain preserved in the committed
+  execution receipt, but are not fields of this terminal-state value and are
+  not published as a completed campaign estimate.
 
 When one cell triggers a campaign-wide halt, every not-yet-executed manifest
-cell receives the terminal cause `upstream_acceptance_halt`; it is not silently
-omitted. A cell that is neither executed nor halted makes the campaign
-incomplete. Finalization must refuse such a dataset.
+cell receives the terminal reason `acceptance_failure`; it is not silently
+omitted. The terminal state does not claim to encode a triggering-cell pointer
+or execution history. A cell that is neither executed nor halted makes the
+campaign incomplete. Finalization must refuse such a dataset.
 
 ## The $q=3$ arm is a reproduction
 
 `@/citation/Scheinerman2024` reports exact zero counts through $n=5$ and Monte
 Carlo counts through $n=30$. This campaign stops at $n=28$, so it does not extend
-the published $q=3$ curve in $n$. Every $q=3$ result is reported as an
-independent reproduction and precision comparison: published and campaign
-counts, sample sizes, point estimates, and intervals are placed side by side,
-with each cell labelled as higher, comparable, or lower achieved precision.
-No blanket improvement claim is preregistered.
+the published $q=3$ curve in $n$. The versioned
+[reproduction target table](./scheinerman2024-q3-targets-v1.csv) transcribes the
+source zero count and $N$ for every core $q=3$ cell, $n=4\ldots28$, and derives
+the comparison point estimate from those counts. Table 3 rows are exact
+enumerations and therefore have zero sampling error. For Table 4 rows the
+reference precision is the plug-in binomial standard error
+$s_{\mathrm{ref}}=\sqrt{\widehat p(1-\widehat p)/N}$; this is explicitly a
+derived precision because the source publishes no confidence interval. The
+table also records the source's rounded-estimate, power-of-ten-trial-count, and
+reproducibility limitations and is baseline evidence, never campaign data.
 
-Agreement supports both pipelines. If a campaign interval excludes a published
-point estimate, the discrepancy, both source records, and the investigation are
-preserved under `@/inv/falsification-preserved`; the result is not adjusted to
-manufacture agreement.
+Every $q=3$ result is reported as an independent reproduction and precision
+comparison. Source and campaign counts, sample sizes, point estimates, and
+precision are placed side by side. Exact source rows are labelled
+`prior_exact`. At Monte Carlo rows, compute the campaign plug-in standard error
+$s_{\mathrm{campaign}}$ and label it `exceeds_prior_precision` when
+$s_{\mathrm{campaign}}<0.9s_{\mathrm{ref}}$,
+`matches_prior_precision` when
+$0.9s_{\mathrm{ref}}\leq s_{\mathrm{campaign}}\leq1.1s_{\mathrm{ref}}$, and
+`below_prior_precision` otherwise. The campaign's 95% Wilson interval is also
+reported, but is not misattributed to the source. No blanket improvement claim
+is preregistered.
+
+Agreement supports both pipelines. If a campaign interval excludes the target
+table's count-derived point estimate, the discrepancy, both source records, and
+the investigation are preserved under `@/inv/falsification-preserved`; the
+result is not adjusted to manufacture agreement.
 
 ## Preregistered convergence-shape comparison
 
@@ -318,16 +389,26 @@ fitting a selected subset.
 For each $q$ separately, compare these two finite-$n$ candidate families:
 
 $$
-p_{\mathrm{geo},q}(n)=\frac1q+c_q q^{-a_q n},
-\qquad c_q\geq0,\ a_q>0,
+p_{\mathrm{geo},q}(n)=\frac1q+A_q q^{-a_q(n-4)},
 $$
 
 $$
-p_{\mathrm{poly},q}(n)=\frac1q+d_q n^{-b_q},
-\qquad d_q\geq0,\ b_q>0,
+p_{\mathrm{poly},q}(n)=\frac1q+B_q (n/4)^{-b_q}.
 $$
 
-with parameters constrained so every fitted probability lies in $[1/q,1]$.
+These are the numerically anchored forms of
+$1/q+c_q q^{-a_qn}$ and $1/q+d_qn^{-b_q}$. The closed search domains are
+
+$$
+0\leq A_q,B_q\leq1-1/q,
+\qquad 0\leq a_q,b_q\leq64.
+$$
+
+They keep every fitted probability in $[1/q,1]$ on the measured grid and make
+the boundary cases part of the declared optimization rather than an implicit
+optimizer limit. A maximum on the exponent cap is reported as cap-truncated;
+it is not extrapolated beyond 64.
+
 For model $M$, maximize the observed-count binomial log likelihood
 
 $$
@@ -340,10 +421,28 @@ $$
 where the omitted binomial coefficient is common to both candidates. Weighted
 least squares on $\widehat p$ is not the preregistered comparison.
 
-Report the maximized log likelihood, fitted parameters with profile-likelihood
-intervals, and $\mathrm{AIC}_M=2k_M-2\ell_M$ for the full measured range. Also
-repeat the identical fit for every nested prefix $n=4,\ldots,m$ with at least
-six cells ($m\geq9$). For each prefix report
+For each fit, form the asymptotic 95% joint two-parameter profile-likelihood
+region
+
+$$
+\left\{\theta:2[\ell_M(\widehat\theta)-\ell_M(\theta)]
+\leq\chi^2_{2,0.95}\right\},
+\qquad \chi^2_{2,0.95}=5.991465,
+$$
+
+over the closed domains above. Parameter intervals are the coordinate
+projections of that joint region, not one-parameter intervals with a different
+cutoff. If the region includes amplitude zero, the exponent is unidentified
+there and its reported interval is the full domain $[0,64]$; at an
+amplitude-zero maximum, no exponent point estimate is reported. Any projection
+touching a search bound is labelled boundary-truncated. These likelihood
+regions use the stated asymptotic chi-square calibration and are not described
+as exact finite-sample coverage.
+
+Report the maximized log likelihood, fitted parameters and those intervals,
+and $\mathrm{AIC}_M=2k_M-2\ell_M$ with $k_M=2$, including boundary fits, for the
+full measured range. Also repeat the identical fit for every nested prefix
+$n=4,\ldots,m$ with at least six cells ($m\geq9$). For each prefix report
 $\Delta\mathrm{AIC}=\mathrm{AIC}_{\mathrm{poly}}-
 \mathrm{AIC}_{\mathrm{geo}}$. The operational report calls the candidates
 distinguishable on a prefix only when $|\Delta\mathrm{AIC}|\geq2$ and names the
@@ -392,7 +491,8 @@ for a different question and supplies no zero-fraction cell to this campaign.
 | Exact floor and determinant rules | [Feasibility study §7.2](/dev/studies/b488f02c/feasibility-study.md#72-sampling-plan), revised here by the reviewed global-budget decision |
 | Enumeration and sampler anchors | [Order-three anchor receipt](/dev/studies/b488f02c/order3-anchor-2026-08-08.txt) and [determinant anchor receipt](/dev/studies/b488f02c/determinant-anchor-2026-08-08.txt) |
 | First $q=7,n=20$ resample and preserved reading | [Raw by-product receipt](/dev/studies/b488f02c/zero-fraction-2026-08-07.csv) and [study §4.7](/dev/studies/b488f02c/feasibility-study.md#47-zero-fractions-observed-in-passing) |
-| $q=3$ reproduction boundary | [Study §1.1](/dev/studies/b488f02c/feasibility-study.md#11-prior-numerics-exist-for-q--3) and `@/citation/Scheinerman2024` |
+| $q=3$ reproduction boundary and complete target values | [Versioned target table](./scheinerman2024-q3-targets-v1.csv), [Study §1.1](/dev/studies/b488f02c/feasibility-study.md#11-prior-numerics-exist-for-q--3), and `@/citation/Scheinerman2024` |
+| Backend selection and sampler identity | Manifest `CellSpec.backend_receipt` plus root `rng_algorithm`, `rng_version`, and `invocation` provenance, as bound by [Backend freeze](#backend-freeze) and [Reproducibility identity](#reproducibility-identity) |
 | Likelihood rather than weighted-least-squares comparison | Reviewed [campaign plan](/dev/active/b8206228-permanent-statistics/plan.md#material-risks-and-owner-decisions) |
 | Conditional $q\in\{5,7\}$ novelty wording | [Recorded literature search](/dev/studies/b488f02c/literature-search-2026-08-08.md) and registry-resolving citations above |
 
