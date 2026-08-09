@@ -1031,7 +1031,7 @@ agent working with review, and assume the harness in
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
 | G3 | Campaign runner | Missing; design decided below | 2.0 d |
 | G4 | Versioned dataset format | Missing | 0.5 d |
-| G5 | Permanental-rank predicate for the rectangular check | Missing; **no new kernel needed** | 1.0 d |
+| G5 | Permanental-rank predicate for the rectangular check | Landed as [`permanent::permanental_rank_status`](../../../crates/gf2-algebra/src/permanent/rank.rs); **no new kernel needed** | 1.0 d (historical) |
 | G6 | `permanent_bipedal3` selects the slower path | Defect, confirmed by measurement | 0.5 d |
 | G7 | No batch-parallel path for any field | Missing | 0.5 d |
 | G8 | $q=7$ CPU ceiling at $n = 16$ | Structural limit | 4.0 d (optional) |
@@ -1106,11 +1106,20 @@ so the predicate is a conjunction over the $\binom{n}{k}$ row subsets. A single
 scalar "rectangular permanent" is not the quantity at all: it can vanish through
 cancellation while some $k \times k$ submatrix has nonzero permanent, and it can
 be nonzero while the rank condition is what one wants to test. Testing the event
-therefore needs **no new kernel** — it enumerates row subsets and batches the
-existing square $k \times k$ kernels, exiting early at the first nonzero
+therefore needs **no new kernel** — it enumerates row subsets and calls the
+existing square $k \times k$ kernel on each, returning at the first nonzero
 permanent (which is the overwhelmingly common case, so the expected work per
 matrix is a small constant number of $k \times k$ permanents rather than
-$\binom{n}{k}$ of them). *1.0 d, in the campaign driver.*
+$\binom{n}{k}$ of them). *1.0 d.*
+
+This landed as
+[`permanent::permanental_rank_status`](../../../crates/gf2-algebra/src/permanent/rank.rs)
+in `gf2-algebra`, not in the campaign driver as this section first projected.
+The predicate decides one matrix and carries no dependency on sampling or
+statistics, so it belongs beside the square permanent kernels it calls; the
+driver consumes it. Its cross-check oracle is
+`gf2_algebra::testutil::permanental_rank_bruteforce`, which shares no code path
+with it.
 
 **The theorem's regime is not reachable by direct sampling, and the study says
 so.** [GGK2025] Theorem 2.1 requires $k \le 0.1\sqrt{n}$, so even $k = 3$ needs
@@ -1121,7 +1130,9 @@ a **pipeline correctness check**, not a test of Theorem 2.1 in its proven range:
 
 1. exact enumeration of the rank predicate on tiny $(n, k, q)$, and
    cross-implementation agreement against an independent brute-force
-   permanental-rank routine;
+   permanental-rank routine — **done**, over every matrix at
+   $(q,n,k) \in \{(3,3,1),(3,3,2),(3,4,2),(5,3,2),(7,3,2)\}$, in
+   `crates/gf2-algebra/tests/permanental_rank.rs`;
 2. estimation of $\Pr[\mathrm{per\text{-}rank} < k]$ at small $(n,k)$ where the
    event is observable — for $k=1$ the event is an all-zero column with
    probability exactly $q^{-n}$, giving $\approx 169$ events per $10^7$ samples
@@ -1427,9 +1438,11 @@ only be consistent with. Every conclusion must be phrased at the measured sizes.
   a campaign standard error at small $n$ — at a two-sided Bonferroni level
   ($\alpha / 2K$, critical $z = 3.36$) matching the permanent test's error
   control.
-- **Rectangular validation** (epic REQ-04) once G5 lands, framed as the
-  three-part pipeline check described there rather than as a test of
-  [GGK2025] Theorem 2.1 in its proven regime.
+- **Rectangular validation** (epic REQ-04) on the landed G5 predicate, framed as
+  the three-part pipeline check described there rather than as a test of
+  [GGK2025] Theorem 2.1 in its proven regime. Part 1 of that check — exhaustive
+  enumeration and oracle agreement — is already committed with the predicate;
+  parts 2 and 3 remain campaign work.
 - **Comparison against [Scheinerman2024] Table 4 at $q = 3$** as a first-class
   output, per §7.6.
 
