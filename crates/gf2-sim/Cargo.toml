@@ -15,7 +15,8 @@ gf2-core = { path = "../gf2-core" }
 gf2-coding = { path = "../gf2-coding" }
 gf2-kernels-hip = { path = "../gf2-kernels-hip", optional = true }
 rayon = "1"
-rand_chacha = "0.9" # Q1 decision: future-aligned
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
 rand = "0.9"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json"] }
