@@ -14,7 +14,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T14:48:51.414282030Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-09T14:51:14.855923649Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T14:53:33.116248526Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "531695da-f7a4-45e7-b982-cbe27bd41745",
   "labels": [
     "type:task",
@@ -25,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Empty gf2-stats workspace member crate",
-  "updated_at": "2026-08-09T13:50:26.148048756Z"
+  "updated_at": "2026-08-09T14:53:33.116248526Z"
 }

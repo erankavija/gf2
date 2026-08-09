@@ -90,7 +90,8 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "18dec119": 2
+    "18dec119": 2,
+    "531695da": 1
   },
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
