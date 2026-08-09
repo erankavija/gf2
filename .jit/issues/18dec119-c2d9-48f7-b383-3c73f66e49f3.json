@@ -7,6 +7,7 @@
   ],
   "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured at roughly three times the scalar cost. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThe module's own documentation describes the current preference as intended, and `@/inv/single-source-prose` puts that correction in the same change as the code it describes: a reader of `bipedal3.rs` must not find a rustdoc comment contradicting the selection three lines below it. Prose living in other files — examples, benchmark labels, crate-level status text — is a separate sweep, because it is a different set of files with a different reviewer and no risk of contradicting the code beside it.\n\n## Success Criteria\n\n- [hard] REQ-01: `permanent_bipedal3` selects the scalar single-word kernel for a single matrix, so a default build on an AVX2 host no longer pays the single-word SIMD penalty; the committed cross-CPU receipt putting scalar at $0.317$-$0.319$ of the AVX2 time is the measurement the selection rests on.\n- [hard] REQ-02: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-03: The rustdoc inside every file this change edits agrees with the selection it leaves in place, including the bipedal module documentation and the dispatcher's own documentation comment.\n- [hard] REQ-04: A doctest or unit test pins the selection, so a later change that reintroduces the SIMD preference for a single matrix fails rather than passing quietly.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
   "documents": [],
+  "first_ready_at": "2026-08-09T13:33:12.317247844Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "component:gf2-kernels-simd"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-09T13:33:12.317247844Z"
 }
