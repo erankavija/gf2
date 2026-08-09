@@ -1141,6 +1141,46 @@ impl Drop for InstrumentedPermanentDispatch<'_> {
     }
 }
 
+/// Drains a stream before locally owned asynchronous-dispatch storage drops.
+///
+/// Construction code arms this guard immediately before the first async copy.
+/// Any later error return drops it before the local pinned and device buffers
+/// (which were declared first), keeping those allocations alive until HIP no
+/// longer references them. The fully constructed dispatch owns the same
+/// lifetime responsibility, so the guard is disarmed only after that ownership
+/// transfer succeeds.
+struct StreamDrainOnError<'a> {
+    stream: &'a HipStream,
+    armed: bool,
+}
+
+impl<'a> StreamDrainOnError<'a> {
+    fn new(stream: &'a HipStream) -> Self {
+        Self {
+            stream,
+            armed: false,
+        }
+    }
+
+    fn arm(&mut self) {
+        self.armed = true;
+    }
+
+    fn disarm(&mut self) {
+        self.armed = false;
+    }
+}
+
+impl Drop for StreamDrainOnError<'_> {
+    fn drop(&mut self) {
+        if self.armed {
+            // A stream-local wait establishes the lifetime condition documented
+            // by the async-copy APIs before Rust drops the local allocations.
+            let _ = self.stream.synchronize();
+        }
+    }
+}
+
 /// Starts a full H2D/kernel/D2H permanent dispatch with event timing.
 ///
 /// Input and output staging are pinned and owned by the returned handle, so
@@ -1183,9 +1223,17 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
     let mut output_staging = PinnedHostBuffer::<u64>::new(m, device_id)?;
     let matrices = DeviceBuffer::<u8>::new(host_matrices.len(), device_id)?;
     let output = DeviceBuffer::<u64>::new(m, device_id)?;
+    // Declared after the storage it protects, so its Drop runs first on every
+    // post-arm error path and drains the caller stream before these allocations
+    // can be released.
+    let mut drain_on_error = StreamDrainOnError::new(stream);
 
     let h2d = HipEventSpan::new()?;
     h2d.record_start(stream)?;
+    // Arm before the HIP submission: even an unusual runtime error reported by
+    // the async-copy call itself cannot leave queued work referring to storage
+    // that is subsequently dropped on this error path.
+    drain_on_error.arm();
     matrices.copy_from_pinned_async(&input_staging, stream)?;
     h2d.record_stop(stream)?;
 
@@ -1209,7 +1257,7 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
     output.copy_to_pinned_async(&mut output_staging, stream)?;
     d2h.record_stop(stream)?;
 
-    Ok(InstrumentedPermanentDispatch {
+    let dispatch = InstrumentedPermanentDispatch {
         stream,
         _matrices: matrices,
         _output: output,
@@ -1218,7 +1266,11 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
         h2d,
         launch,
         d2h,
-    })
+    };
+    // The handle now owns every allocation and drains its stream on Drop, so
+    // this construction-only guard must not perform a second cleanup wait.
+    drain_on_error.disarm();
+    Ok(dispatch)
 }
 
 /// Run the F_3 permanent GPU kernel on a batch of pre-serialised matrices
