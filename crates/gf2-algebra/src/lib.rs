@@ -39,11 +39,14 @@
 //!   faithful Rust port of Scheinerman 2024 Algorithm 1 / Listing 1, serving
 //!   as the 50× speedup denominator and fast oracle for large-n cross-checks.
 //! - [`permanent::bipedal3::permanent_bipedal3`] is landed (W2-T9);
-//!   single-word `n ≤ 63` fast path with bipedal-multiplication-tree
-//!   horizontal fold. Per-n cross-checks: 1000 matrices for each `n ∈ 1..=12`
-//!   (default tier) and `n ∈ 13..=16` (slow tier); 100 matrices for `n ∈
-//!   {20, 24}` (slow tier, split sub-tests). F_5/F_7 single-word analogues —
-//!   `permanent_bipedal5` and `permanent_bipedal7` — landed in W4-T18/T20.
+//!   it selects the scalar single-word `n ≤ 63` fast path with a
+//!   bipedal-multiplication-tree horizontal fold, then the multi-word path for
+//!   larger matrices. Direct single-matrix AVX2 conformance and four-matrix
+//!   AVX2 batch entry points are available separately. Per-n cross-checks:
+//!   1000 matrices for each `n ∈ 1..=12` (default tier) and `n ∈ 13..=16`
+//!   (slow tier); 100 matrices for `n ∈ {20, 24}` (slow tier, split
+//!   sub-tests). F_5/F_7 single-word analogues — `permanent_bipedal5` and
+//!   `permanent_bipedal7` — landed in W4-T18/T20.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/plans/6e20133d/d1a_gf2_algebra_boundary.md)
