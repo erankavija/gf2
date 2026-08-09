@@ -22,7 +22,12 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-09T15:44:52.077950233Z",
+      "updated_at": "2026-08-09T20:38:12.853983844Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T20:40:52.035534587Z",
       "updated_by": "auto:executor"
     }
   },
@@ -35,5 +40,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-  "updated_at": "2026-08-09T20:32:28.784979956Z"
+  "updated_at": "2026-08-09T20:40:52.035534587Z"
 }
