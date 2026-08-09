@@ -30,9 +30,10 @@ use std::process::Command;
 use sha2::{Digest, Sha256};
 
 use super::schema::{
-    read_manifest, ArtifactPath, ArtifactPathError, CampaignManifest, DatasetFileClass,
-    DatasetLayout, GitRevision, GitRevisionError, SchemaError, Sha256Digest, Sha256DigestError,
-    INTEGRITY_FILE, MANIFEST_FILE,
+    field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
+    ArtifactPathError, CampaignManifest, CellTerminalState, DatasetFileClass, DatasetLayout,
+    GitRevision, GitRevisionError, SchemaError, Sha256Digest, Sha256DigestError, INTEGRITY_FILE,
+    MANIFEST_FILE,
 };
 
 /// Source revision recorded into this build of `gf2-sim` by its build script.
@@ -638,13 +639,16 @@ impl From<SchemaError> for IntegrityError {
 ///
 /// # Errors
 ///
-/// Returns [`IntegrityError::MissingRawFile`] when a non-shard raw path the
-/// manifest requires is absent, and [`IntegrityError::Io`] when a file cannot
-/// be read.
+/// Returns [`IntegrityError::MissingRawFile`] when a raw path the manifest
+/// requires is absent without a halted cell to account for it,
+/// [`IntegrityError::Schema`] when a field summary cannot be read — an
+/// undecidable halt state exempts nothing — and [`IntegrityError::Io`] when a
+/// file cannot be read.
 pub fn generate_integrity_file(
     root: &Path,
     manifest: &CampaignManifest,
 ) -> Result<String, IntegrityError> {
+    let unexecuted = unexecuted_shard_paths(root, manifest)?;
     let mut covered = BTreeMap::new();
     for file in DatasetLayout::from_manifest(manifest).required_files() {
         if file.class != DatasetFileClass::RawData {
@@ -652,9 +656,7 @@ pub fn generate_integrity_file(
         }
         let path = root.join(&file.relative_path);
         if !path.is_file() {
-            // A halted cell legitimately never wrote some of its planned
-            // shards; every other raw path is required.
-            if file.relative_path.starts_with("shards/") {
+            if unexecuted.contains(&file.relative_path) {
                 continue;
             }
             return Err(IntegrityError::MissingRawFile { path });
@@ -669,6 +671,48 @@ pub fn generate_integrity_file(
         .map(|(path, sha256)| IntegrityEntry { path, sha256 })
         .collect();
     Ok(encode_integrity_file(&entries))
+}
+
+/// Returns the shard paths a halted cell may legitimately never have written.
+///
+/// What makes an absent shard legitimate is not its path but its cell's
+/// recorded terminal state: a halted cell may hold any subset of its planned
+/// shards, while a completed cell requires every one of them. The set is
+/// therefore derived from the field summaries the manifest declares, and it
+/// names exact paths rather than a prefix, so a lost shard of a completed cell
+/// can never fall through it.
+///
+/// Every declared field summary must be present and readable. An unreadable
+/// summary decides nothing about which shards are legitimately absent, and
+/// treating it as an exemption would reopen the same hole through a wider
+/// door, so this fails closed.
+fn unexecuted_shard_paths(
+    root: &Path,
+    manifest: &CampaignManifest,
+) -> Result<BTreeSet<String>, IntegrityError> {
+    let fields: BTreeSet<_> = manifest.cells.iter().map(|cell| cell.q).collect();
+    let mut halted = BTreeSet::new();
+    for q in fields {
+        let path = root.join(field_summary_file(q));
+        if !path.is_file() {
+            return Err(IntegrityError::MissingRawFile { path });
+        }
+        for row in read_field_summary(root, q)?.rows {
+            if matches!(row.terminal_state, CellTerminalState::Halted { .. }) {
+                halted.insert((row.q, row.n));
+            }
+        }
+    }
+    Ok(manifest
+        .cells
+        .iter()
+        .filter(|cell| halted.contains(&(cell.q, cell.n)))
+        .flat_map(|cell| {
+            cell.shards
+                .iter()
+                .map(|shard| shard_record_file(cell.q, cell.n, shard.shard_id))
+        })
+        .collect())
 }
 
 /// Renders integrity entries in the `sha256sum` check-file format.
@@ -825,9 +869,21 @@ pub fn verify_dataset(root: &Path) -> Result<DatasetVerdict, IntegrityError> {
             });
         }
     }
+    // A path the manifest declares but the integrity file never lists is a
+    // fault in its own right, whether or not it is still on disk. Without this
+    // a sidecar that simply omitted a lost shard would verify clean. An
+    // undecidable halt state exempts nothing, so a summary that cannot be read
+    // — which is itself reported above as a changed or missing raw file —
+    // leaves every absent shard reported rather than excused.
+    let unexecuted = unexecuted_shard_paths(root, &manifest).unwrap_or_default();
     for path in &raw {
-        if !recorded.contains_key(path) && root.join(path.as_str()).is_file() {
+        if recorded.contains_key(path) {
+            continue;
+        }
+        if root.join(path.as_str()).is_file() {
             faults.push(IntegrityFault::Uncovered { path: path.clone() });
+        } else if !unexecuted.contains(path.as_str()) {
+            faults.push(IntegrityFault::Missing { path: path.clone() });
         }
     }
     faults.sort_by(|left, right| fault_path(left).cmp(fault_path(right)));
@@ -961,8 +1017,8 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::super::fixture::{
-        manifest_at_revision, unique_temp_dir, write_fixture_at_revision, TestDir,
-        FIXTURE_CAMPAIGN_ID,
+        manifest_at_revision, unique_temp_dir, write_fixture_at_revision, write_halted_fixture,
+        TestDir, FIXTURE_CAMPAIGN_ID,
     };
     use super::super::schema::POOLED_SUMMARY_FILE;
     use super::*;
@@ -1382,6 +1438,80 @@ mod tests {
             }),
             "an integrity file that covers itself cannot close: {verdict}"
         );
+    }
+
+    /// REQ-05, REQ-06: a completed cell's shard cannot leave coverage quietly.
+    #[test]
+    fn a_lost_shard_of_a_completed_cell_refuses_generation_and_fails_verification() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        fs::remove_file(campaign.join(SECOND_SHARD)).unwrap();
+
+        let error = generate_integrity_file(&campaign, &manifest_at_revision(&repo.head()))
+            .expect_err("a completed cell's shard must exist to be covered");
+        assert!(
+            matches!(&error, IntegrityError::MissingRawFile { path } if path.ends_with(SECOND_SHARD)),
+            "{error}"
+        );
+
+        // A sidecar that simply omits the lost shard must not verify clean
+        // either, which is what a regenerated file would have looked like.
+        let text = fs::read_to_string(campaign.join(INTEGRITY_FILE)).unwrap();
+        let entries: Vec<_> = decode_integrity_file(&text)
+            .expect("the generated file parses")
+            .into_iter()
+            .filter(|entry| entry.path.as_str() != SECOND_SHARD)
+            .collect();
+        fs::write(
+            campaign.join(INTEGRITY_FILE),
+            encode_integrity_file(&entries),
+        )
+        .unwrap();
+
+        let verdict = verify_dataset(&campaign).expect("verification reaches a verdict");
+        let DatasetVerdict::Failed { faults } = &verdict else {
+            panic!("a dataset missing published data must not verify: {verdict}");
+        };
+        assert_eq!(
+            faults,
+            &[IntegrityFault::Missing {
+                path: SECOND_SHARD.parse().unwrap()
+            }],
+            "{verdict}"
+        );
+    }
+
+    /// REQ-05, REQ-06: a halted cell's unexecuted shards stay legitimately absent.
+    #[test]
+    fn a_halted_cell_omits_its_unexecuted_shards_and_still_verifies() {
+        let repo = TestRepo::new();
+        let campaign = repo.campaign_root();
+        fs::create_dir_all(&campaign).unwrap();
+        write_halted_fixture(&campaign, &repo.head());
+        assert!(!campaign.join(SECOND_SHARD).exists());
+
+        let text = generate_integrity_file(&campaign, &manifest_at_revision(&repo.head()))
+            .expect("a halted cell's unexecuted shard is legitimately absent");
+        assert!(text.contains(FIRST_SHARD), "{text}");
+        assert!(!text.contains(SECOND_SHARD), "{text}");
+
+        assert_eq!(
+            verify_dataset(&campaign).expect("verification reaches a verdict"),
+            DatasetVerdict::Verified
+        );
+    }
+
+    /// REQ-05: an undecidable halt state exempts nothing.
+    #[test]
+    fn generation_refuses_when_a_field_summary_cannot_decide_the_halt_state() {
+        let repo = TestRepo::new();
+        let campaign = repo.write_dataset();
+        fs::remove_file(campaign.join(SECOND_SHARD)).unwrap();
+        fs::write(campaign.join("summaries/q3.json"), b"{}\n").unwrap();
+
+        let error = generate_integrity_file(&campaign, &manifest_at_revision(&repo.head()))
+            .expect_err("an unreadable summary cannot excuse an absent shard");
+        assert!(matches!(error, IntegrityError::Schema(_)), "{error}");
     }
 
     /// REQ-07: a revision absent from the repository does not pass silently.

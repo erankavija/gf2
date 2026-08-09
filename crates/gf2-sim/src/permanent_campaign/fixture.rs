@@ -11,13 +11,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use serde_json::{json, Value};
+
 use super::provenance::generate_integrity_file;
 use super::schema::{
-    encode_summary_csv, AcceptanceVerdict, ArtifactIdentity, Availability, Backend,
-    CampaignManifest, CellSpec, CellTerminalState, DeterminantCount, DeterminantEstimate,
-    DeterminantPlan, FieldSummary, GitRevision, Interval, ProportionEstimate, Provenance,
-    RngAlgorithm, ShardRecord, ShardSpec, StreamAddress, StreamPurpose, SummaryRow, INTEGRITY_FILE,
-    MANIFEST_FILE, POOLED_SUMMARY_FILE, SCHEMA_VERSION,
+    encode_summary_csv, field_summary_file, shard_record_file, AcceptanceVerdict, ArtifactIdentity,
+    Availability, Backend, CampaignManifest, CellSpec, CellTerminalState, DeterminantCount,
+    DeterminantEstimate, DeterminantPlan, FieldSummary, GitRevision, HaltReason, Interval,
+    ProportionEstimate, Provenance, RngAlgorithm, ShardRecord, ShardSpec, StreamAddress,
+    StreamPurpose, SummaryRow, INTEGRITY_FILE, MANIFEST_FILE, POOLED_SUMMARY_FILE, SCHEMA_VERSION,
+    SUMMARY_CSV_FIELDS,
 };
 
 /// Directory name every fixture dataset uses, matching its `campaign_id`.
@@ -279,6 +282,111 @@ pub(crate) fn write_multifield_fixture(root: &Path) {
     .unwrap();
 
     write_integrity_file(root, &campaign);
+}
+
+/// Rewrites the field and pooled summaries as one halted cell.
+///
+/// The counts are supplied rather than derived because a halted cell pools
+/// exactly the shard subset it executed, which the caller chooses by removing
+/// shard files. This does not regenerate the integrity file: schema
+/// conformance never consults it, and a caller that needs it consistent
+/// finishes with [`write_integrity_file`].
+pub(crate) fn write_halted_summary(
+    root: &Path,
+    matrix_count: u64,
+    permanent_zero_count: u64,
+    determinant: DeterminantCount,
+    reason: HaltReason,
+) {
+    let path = root.join(field_summary_file(3));
+    let mut summary: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let row = summary["rows"][0].as_object_mut().unwrap();
+    row.insert("matrix_count".to_owned(), json!(matrix_count));
+    row.insert(
+        "permanent_zero_count".to_owned(),
+        json!(permanent_zero_count),
+    );
+    row.remove("permanent_estimate");
+    row.remove("permanent_verdict");
+    row.insert(
+        "determinant".to_owned(),
+        serde_json::to_value(&determinant).unwrap(),
+    );
+    row.insert(
+        "terminal_state".to_owned(),
+        json!({"state": "halted", "reason": halt_reason_token(reason)}),
+    );
+    fs::write(&path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
+
+    let (determinant_state, determinant_sample_count, determinant_zero_count) = match determinant {
+        DeterminantCount::NotEvaluated => {
+            ("not_evaluated".to_owned(), String::new(), String::new())
+        }
+        DeterminantCount::Evaluated {
+            sample_count,
+            zero_count,
+        } => (
+            "evaluated".to_owned(),
+            sample_count.to_string(),
+            zero_count.to_string(),
+        ),
+    };
+    let csv_fields = [
+        SCHEMA_VERSION.to_string(),
+        "3".to_owned(),
+        "4".to_owned(),
+        matrix_count.to_string(),
+        permanent_zero_count.to_string(),
+        String::new(),
+        String::new(),
+        String::new(),
+        String::new(),
+        determinant_state,
+        determinant_sample_count,
+        determinant_zero_count,
+        String::new(),
+        String::new(),
+        String::new(),
+        String::new(),
+        "halted".to_owned(),
+        halt_reason_token(reason).to_owned(),
+    ];
+    fs::write(
+        root.join(POOLED_SUMMARY_FILE),
+        format!(
+            "{}\n{}\n",
+            SUMMARY_CSV_FIELDS.join(","),
+            csv_fields.join(",")
+        ),
+    )
+    .unwrap();
+}
+
+/// Returns the pooled-CSV token for a halt reason, via its own serialization.
+fn halt_reason_token(reason: HaltReason) -> &'static str {
+    match reason {
+        HaltReason::AcceptanceFailure => "acceptance_failure",
+        HaltReason::BackendUnavailable => "backend_unavailable",
+        HaltReason::ExecutionFailure => "execution_failure",
+    }
+}
+
+/// Writes a dataset whose only cell halted after one of its two shards.
+///
+/// The second shard is legitimately absent: the cell never executed it. This
+/// is the case that must stay coverable, so the integrity file it leaves
+/// behind omits that shard and still verifies.
+pub(crate) fn write_halted_fixture(root: &Path, revision: &GitRevision) {
+    write_fixture_at_revision(root, revision);
+    fs::remove_file(root.join(shard_record_file(3, 4, 1))).unwrap();
+    write_halted_summary(
+        root,
+        10,
+        3,
+        DeterminantCount::NotEvaluated,
+        HaltReason::ExecutionFailure,
+    );
+    write_integrity_file(root, &manifest_at_revision(revision));
 }
 
 /// Regenerates the integrity file covering the dataset currently in `root`.
