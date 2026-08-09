@@ -82,13 +82,17 @@ use crate::permanent::bipedal3_multiword;
 #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
 #[inline]
 fn maybe_bipedal_avx2() -> Option<gf2_kernels_simd::bipedal::BipedalAvx2Fns> {
+    #[cfg(test)]
+    AVX2_DETECTION_PROBES.with(|probes| probes.set(probes.get() + 1));
     gf2_kernels_simd::bipedal::detect_avx2()
 }
 
 type Permanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
-type SingleMatrixKernelFn = fn(&Bipedal3Matrix) -> Fp<3>;
 
-const SINGLE_MATRIX_KERNEL: SingleMatrixKernelFn = permanent_bipedal3_singleword;
+#[cfg(test)]
+std::thread_local! {
+    static AVX2_DETECTION_PROBES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
 
 // ---------------------------------------------------------------------------
 // Test-only scalar/SIMD cross-check note.
@@ -183,7 +187,7 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         n
     );
     if n <= 63 {
-        SINGLE_MATRIX_KERNEL(mat)
+        permanent_bipedal3_singleword(mat)
     } else {
         bipedal3_multiword::permanent_bipedal3_multiword(mat)
     }
@@ -664,14 +668,27 @@ mod tests {
         matrices.iter().map(permanent_bipedal3).collect()
     }
 
-    /// The host-independent function-pointer check pins the public
-    /// single-matrix policy without relying on whether this test CPU has AVX2.
+    fn avx2_detection_probes_during<T>(f: impl FnOnce() -> T) -> (T, usize) {
+        let previous = AVX2_DETECTION_PROBES.with(|probes| probes.replace(0));
+        let result = f();
+        let observed = AVX2_DETECTION_PROBES.with(|probes| probes.replace(previous));
+        (result, observed)
+    }
+
+    /// Calling the public dispatcher for one matrix must neither probe for
+    /// AVX2 nor select the slower single-matrix SIMD path. The thread-local
+    /// probe trace is host-independent and cannot race with sibling tests.
     #[test]
     fn test_public_dispatch_selects_scalar_singleword_kernel() {
-        assert!(std::ptr::fn_addr_eq(
-            SINGLE_MATRIX_KERNEL,
-            permanent_bipedal3_singleword as SingleMatrixKernelFn
-        ));
+        let entries = vec![Fp::<3>::new(1); 4];
+        let matrix = Bipedal3Matrix::from_row_major(&entries, 2, 2);
+        let (actual, avx2_probes) = avx2_detection_probes_during(|| permanent_bipedal3(&matrix));
+
+        assert_eq!(actual, Fp::<3>::new(2));
+        assert_eq!(
+            avx2_probes, 0,
+            "single-matrix public dispatch must not probe/select AVX2"
+        );
     }
 
     #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
