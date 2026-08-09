@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:jit-execution-lead",
+  "claimed_at": "2026-08-09T12:20:30.844090937Z",
   "context": {},
   "created_at": "2026-08-07T12:32:21.572267461Z",
   "dependencies": [
@@ -48,5 +49,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-09T12:11:11.394079987Z"
+  "updated_at": "2026-08-09T12:20:30.844090937Z"
 }
