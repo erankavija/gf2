@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:48:32.447640650Z",
+  "dependencies": [
+    "047b62ed-5184-4295-b4bd-d31263411b53",
+    "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
+    "91605d4d-8c30-43d6-b1bd-26f277b31120"
+  ],
+  "description": "A bounded qualification receipt across the study's retained GPU permanent paths: wave utilization, the occupancy-limiting resource, transfer and launch overhead, sustained-kernel duration, and watchdog-safe per-launch work bounds re-derived by measurement.\n\n## Background\n\nA go decision needs to know not only how fast a kernel runs but what the device is doing while it runs, and how long a single launch may safely last. Neither has been measured for any permanent kernel in this repository: no occupancy, register-count, spill, or profiler record for these kernels exists anywhere in the tree.\n\nThe watchdog record is contested and has to be treated as such. A prior calibration placed a hang boundary at roughly $190$–$200$ s per launch and derived per-field work budgets on $\\text{sub\\_batch} \\cdot 2^n$ of $4.0 \\times 10^9$ at $q = 3$, $1.3 \\times 10^9$ at $q = 5$, and $3.5 \\times 10^8$ at $q = 7$, with a $400$ ms host cooldown, and recorded that the $\\mathbb{F}_3$ kernel never tripped it even on a $2300$ s single launch at $n = 32$. A later observation recorded one device hang and explicitly retracted the attribution of that hang to a watchdog timeout, because no diagnostic separated the possible causes. The safe launch bound reported here therefore comes from this study's own measurement, citing the earlier calibration as a prior rather than as an established device property.\n\nPer-kernel resource figures are produced by each field's own measurement campaign, which reports them against the per-lane register budget and per-block shared-memory allocation that kernel's design predicted. This qualification consumes those committed figures rather than re-measuring them, and adds what no single field can settle: whether that register and shared-memory budget is what limits occupancy across the study's kernels, or whether instruction scheduling, the scattered shared-memory read of the column table, or something else dominates. That is the study's central occupancy hypothesis, and this is where it is answered device-wide.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports, for each retained GPU permanent path, the wave utilization achieved by its execution mapping, expressed as the share of wavefront lanes performing useful work.\n- [hard] REQ-02: The receipt reports the occupancy-limiting resource for each retained path, together with registers per thread, private scratch memory per thread, shared memory per block, and spill counts; figures already committed by a field's own measurement campaign are cited to their receipt rather than re-measured, and the citation names the file.\n- [hard] REQ-03: Achieved occupancy for each retained path comes from observed runtime evidence — profiler counters taken during a measured run — and compiler resource-usage output never substitutes for it. Where the profiler is unavailable on the target host, achieved occupancy is recorded as not measured with the reason, and no computed figure is presented as achieved.\n- [hard] REQ-04: The receipt states, across the study's kernels, whether the per-lane register budget and per-block shared-memory allocation of the lane-owns-interval mapping is what limits occupancy, naming the resource that does limit it where the answer is no, and citing the measurement behind the verdict.\n- [hard] REQ-05: The receipt reports host-to-device transfer time, device-to-host transfer time, and launch overhead, each separate from kernel execution time, citing the per-phase columns the field campaigns committed rather than re-measuring them.\n- [hard] REQ-06: The receipt reports sustained-kernel duration as a function of matrix order and per-launch work, measured on the target device.\n- [hard] REQ-07: A watchdog-safe per-launch work bound is derived from this study's own measurements for each field, stated together with the measurement that supports it, and reconciled against the earlier calibration figures and the retracted hang attribution described in the background.\n- [hard] REQ-08: A measurement that contradicts the earlier calibration, or the register and shared-memory budget the mapping predicted, is recorded together with the contradiction rather than replacing it silently.\n- [hard] REQ-09: The qualification is reproducible from committed commands on the prepared benchmark host, under the repository's benchmark lock.\n\n## Notes\n\nScope is device-wide runtime qualification. The architecture-scope statement and its compile evidence are a separate deliverable, and this qualification makes no claim about architectures beyond the one it measured on.\n\nCommitted evidence belongs in the issue's resolved study directory and is attached to the issue as a document rather than referenced by an inline path from another description.\n",
+  "documents": [],
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
+  "labels": [
+    "type:simulation",
+    "epic:permanent-statistics",
+    "story:gpu-wave-permanents",
+    "component:gf2-kernels-hip",
+    "satisfies:REQ-04"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Runtime qualification of wave utilization and launch duration",
+  "updated_at": "2026-08-09T11:48:32.447640650Z"
+}

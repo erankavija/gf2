@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:48:32.447640650Z",
+  "dependencies": [
+    "a2b00bd6-8944-4e91-b27b-5a39bb44e69a"
+  ],
+  "description": "A bounded, injective seed-address encoding for the measurement harness, so each measurement purpose addresses the sampler through a distinct region of the seed input space instead of through a hand-chosen numeric base.\n\n## Background\n\nThe harness derives a ChaCha20 seed from four little-endian `u64` words — campaign root, field order $q$, matrix order $n$, and a stream index — so distinct tuples address distinct generator states, and a debug assertion already catches a caller sampling one field from another field's stream label.\n\nWhat the tuple does not encode is *purpose*. Which stream index belongs to which measurement activity is decided by hand-chosen numeric bases: the grid hands cell $i$ the range $1 + i \\times 10^5$, and the sustained runs sit at $10^9 + j \\times 10^5$. An earlier revision based the sustained runs at $10^6$, commensurate with the grid's allocation; the ranges overlapped in index space and the pooled counts were valid only because no colliding pair happened to share a $(q, n)$ — verified after the fact rather than designed. Two defects of that family corrupted a superseded result set: every sustained run started at the same stream index, so two runs at one $(q, n)$ drew overlapping matrices; and warm-up shared a stream counter with the timed repetitions, so which matrices a cell timed depended on machine speed and the recorded seed did not regenerate the recorded sample.\n\nThe study adds several measurement purposes. Minting another base for each by the same arithmetic is how that defect recurs, so the address space is partitioned by construction instead: a purpose tag occupies a fixed high-bit field of the stream word and the stream index occupies the remaining low bits, with both bounds asserted so the two fields cannot overlap.\n\n```mermaid\nflowchart LR\n    A[campaign root] --> S[32-byte seed]\n    B[field order q] --> S\n    C[matrix order n] --> S\n    D[purpose tag in high bits] --> W[stream word]\n    E[bounded stream index in low bits] --> W\n    W --> S\n```\n\n## Success Criteria\n\n- [hard] REQ-01: The seed derivation accepts a purpose tag alongside the existing campaign root, field order, matrix order, and stream index, and encodes that tag in a fixed high-bit field of one seed word with the stream index in the remaining low bits of the same word.\n- [hard] REQ-02: The encoding asserts both bounds at the call site: a purpose tag at or above the tag field's capacity, or a stream index at or above the index field's capacity, fails loudly rather than aliasing into another purpose's address region.\n- [hard] REQ-03: A test establishes that the encoding is injective over the enumerated purpose set and a bounded index range — distinct $(\\text{purpose}, \\text{index})$ pairs produce distinct seed inputs — so no two purposes can address the same generator state through this API.\n- [hard] REQ-04: A committed table of golden derivation vectors fixes the mapping from a stated $(\\text{root}, q, n, \\text{purpose}, \\text{index})$ tuple to its derived seed bytes and to the leading output bytes of the generator opened on that seed, so a change to the encoding fails the test instead of silently re-addressing already-committed receipts.\n- [hard] REQ-05: Every measurement purpose the study runs is a named member of one enumerated purpose set, and warm-up is a distinct purpose from the timed repetitions of the same cell, so a recorded seed regenerates exactly the timed sample.\n- [hard] REQ-06: Introducing a measurement purpose without giving it a tag fails the purpose-set test rather than defaulting into an existing purpose's address region.\n- [hard] REQ-07: Every call site in the harness that previously computed a stream base arithmetically addresses the sampler through this encoding instead, leaving no hand-chosen numeric base in the measurement path.\n- [hard] REQ-08: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nThe guarantee established here is over **seed inputs**: distinct purposes and indices encode to distinct addresses, and the golden vectors pin that mapping. It is not a claim that the resulting ChaCha20 output streams are disjoint as sequences — that is a property of the cipher's construction, and no test in this work establishes it. The criteria are worded to keep those two statements apart.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-09T11:48:32.447640650Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "ddac2d5d-095d-4d0f-8935-f714256c4c64",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "story:gpu-wave-permanents",
+    "component:gf2-algebra",
+    "satisfies:REQ-03"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Purpose-domain stream address allocator",
+  "updated_at": "2026-08-09T11:53:44.319245187Z"
+}

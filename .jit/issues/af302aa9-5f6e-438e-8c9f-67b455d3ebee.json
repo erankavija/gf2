@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:48:32.447640650Z",
+  "dependencies": [
+    "9798835a-c5d1-495d-bdef-eb78f8580b46"
+  ],
+  "description": "A harness mode that times one dependency-chained packed add or subtract on a single accumulator, isolated from the surrounding Ryser loop.\n\n## Background\n\nThe study must isolate three nested measurement shapes for each arithmetic representation it measures: one dependency-chained packed add or subtract on the same accumulator; zero-mask detection plus the complete nonzero horizontal reduction; and the full Ryser loop including matrix preparation, Gray initialization, update, product, partial-sum reduction, launch overhead, and transfer overhead. The harness times the third shape and, through its per-phase event columns, separates the device spans inside it. The first two shapes have no measurement path at all.\n\n```mermaid\nflowchart LR\n    A[Gray update micro-measurement] --> B[Horizontal product micro-measurement]\n    B --> C[End-to-end Ryser cell]\n    C --> D[Per-phase device spans inside the cell]\n```\n\nThis matters because a representation decision made on bulk independent-operator throughput does not transfer to the permanent: the shipped row-packed loop performs one packed add or subtract per Gray step followed by a horizontal product over the row lanes, and it is the dependency chain through the accumulator that a permanent-shaped measurement has to expose.\n\nThis mode covers the first shape. Its defining property is the dependency chain: each packed add or subtract reads the accumulator the previous one wrote, so the measurement exposes latency rather than the throughput an independent-vector benchmark would report.\n\n## Success Criteria\n\n- [hard] REQ-01: A harness mode times one dependency-chained packed add or subtract on a single accumulator, with each operation reading the accumulator the previous one wrote.\n- [hard] REQ-02: The reported duration excludes surrounding loop overhead, and the method by which that overhead is excluded is stated in the mode's output.\n- [hard] REQ-03: The mode reuses the committed warm-up, repetition-count, timed-duration, and censoring policy of the harness protocol module instead of defining a private timing policy, and a censored row states its censoring reason.\n- [hard] REQ-04: For a GPU path the mode reports an event-measured kernel duration rather than a wall-clock span.\n- [hard] REQ-05: The mode addresses the sampler through a named purpose tag drawn from the harness's enumerated purpose set, with no numeric stream base computed in the mode's own code.\n- [hard] REQ-06: The mode reaches candidates through the harness's registry-derived schedule, so it covers a registered path without a schedule edit.\n- [hard] REQ-07: The harness usage text describes the mode together with its arguments.\n- [hard] REQ-08: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nScope is this one mode. No campaign receipt is produced here.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "af302aa9-5f6e-438e-8c9f-67b455d3ebee",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "story:gpu-wave-permanents",
+    "component:gf2-kernels-hip",
+    "satisfies:REQ-09"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Dependency-chained Gray update micro-measurement mode",
+  "updated_at": "2026-08-09T11:48:32.447640650Z"
+}
