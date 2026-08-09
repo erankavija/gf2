@@ -29,6 +29,20 @@ pub const POOLED_SUMMARY_FILE: &str = "summary.csv";
 /// Campaign-scoped raw-data integrity file name.
 pub const INTEGRITY_FILE: &str = "checksums.sha256";
 
+/// Returns the campaign-relative path of one shard record.
+///
+/// This is the one place the shard path grammar is written; the layout, the
+/// conformance reader, and the integrity layer all derive their paths here so
+/// a path built for one purpose cannot drift from a path built for another.
+pub fn shard_record_file(q: u8, n: u16, shard_id: u64) -> String {
+    format!("shards/q{q}/n{n:02}/shard-{shard_id:06}.json")
+}
+
+/// Returns the campaign-relative path of one field arm's summary.
+pub fn field_summary_file(q: u8) -> String {
+    format!("summaries/q{q}.json")
+}
+
 /// Canonical pooled-summary CSV header.
 pub const SUMMARY_CSV_FIELDS: &[&str] = &[
     "schema_version",
@@ -896,10 +910,7 @@ impl DatasetLayout {
             fields.insert(cell.q);
             for shard in &cell.shards {
                 required_files.push(DatasetFile {
-                    relative_path: format!(
-                        "shards/q{}/n{:02}/shard-{:06}.json",
-                        cell.q, cell.n, shard.shard_id
-                    ),
+                    relative_path: shard_record_file(cell.q, cell.n, shard.shard_id),
                     writer: WriterRole::FieldExecution { q: cell.q },
                     class: DatasetFileClass::RawData,
                 });
@@ -907,7 +918,7 @@ impl DatasetLayout {
         }
         for q in fields {
             required_files.push(DatasetFile {
-                relative_path: format!("summaries/q{q}.json"),
+                relative_path: field_summary_file(q),
                 writer: WriterRole::FieldExecution { q },
                 class: DatasetFileClass::RawData,
             });
@@ -1312,6 +1323,16 @@ pub fn read_manifest(root: &Path) -> Result<CampaignManifest, SchemaError> {
     read_json(&root.join(MANIFEST_FILE))
 }
 
+/// Strictly reads and validates one field arm's summary.
+///
+/// The integrity layer needs each cell's recorded terminal state to tell a
+/// shard a halted cell never executed from one that has been lost, and that
+/// state lives here. Like [`read_manifest`], this reads one document without
+/// the whole-dataset conformance [`conform_dataset`] performs.
+pub fn read_field_summary(root: &Path, q: u8) -> Result<FieldSummary, SchemaError> {
+    read_json(&root.join(field_summary_file(q)))
+}
+
 /// Strictly reads and validates every required raw document in a dataset.
 ///
 /// The function performs schema and cross-document conformance. Cryptographic
@@ -1341,7 +1362,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     let mut field_summaries = BTreeMap::new();
     let mut field_rows = BTreeMap::new();
     for q in fields {
-        let path = root.join(format!("summaries/q{q}.json"));
+        let path = root.join(field_summary_file(q));
         let summary: FieldSummary = read_json(&path)?;
         if summary.q != q {
             return invalid_value(&path, "field summary identity differs from its path");
@@ -1380,10 +1401,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         let mut determinant_sample_count = 0_u64;
         let mut determinant_zero_count = 0_u64;
         for (ordinal, shard_spec) in cell.shards.iter().enumerate() {
-            let relative_path = format!(
-                "shards/q{}/n{:02}/shard-{:06}.json",
-                cell.q, cell.n, shard_spec.shard_id
-            );
+            let relative_path = shard_record_file(cell.q, cell.n, shard_spec.shard_id);
             let path = root.join(&relative_path);
             if !path.is_file() {
                 if completed {
@@ -1480,7 +1498,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 zero_count: determinant_zero_count,
             },
         };
-        let path = root.join(format!("summaries/q{}.json", cell.q));
+        let path = root.join(field_summary_file(cell.q));
         validate_summary_aggregate(
             &path,
             row,
@@ -1931,7 +1949,8 @@ mod tests {
     use serde_json::{json, Value};
 
     use super::super::fixture::{
-        manifest, shard, summary_row, write_fixture, write_multifield_fixture, TestDir,
+        manifest, shard, summary_row, write_fixture, write_halted_summary,
+        write_multifield_fixture, TestDir,
     };
     use super::*;
 
@@ -1948,78 +1967,6 @@ mod tests {
         fs::write(
             root.join(POOLED_SUMMARY_FILE),
             encode_summary_csv(&summary.rows),
-        )
-        .unwrap();
-    }
-
-    fn write_halted_summary(
-        root: &Path,
-        matrix_count: u64,
-        permanent_zero_count: u64,
-        determinant: DeterminantCount,
-        reason: HaltReason,
-    ) {
-        let path = root.join("summaries/q3.json");
-        let mut summary: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
-        let row = summary["rows"][0].as_object_mut().unwrap();
-        row.insert("matrix_count".to_owned(), json!(matrix_count));
-        row.insert(
-            "permanent_zero_count".to_owned(),
-            json!(permanent_zero_count),
-        );
-        row.remove("permanent_estimate");
-        row.remove("permanent_verdict");
-        row.insert(
-            "determinant".to_owned(),
-            serde_json::to_value(&determinant).unwrap(),
-        );
-        row.insert(
-            "terminal_state".to_owned(),
-            json!({"state": "halted", "reason": reason.as_str()}),
-        );
-        fs::write(&path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
-
-        let (determinant_state, determinant_sample_count, determinant_zero_count) =
-            match determinant {
-                DeterminantCount::NotEvaluated => {
-                    ("not_evaluated".to_owned(), String::new(), String::new())
-                }
-                DeterminantCount::Evaluated {
-                    sample_count,
-                    zero_count,
-                } => (
-                    "evaluated".to_owned(),
-                    sample_count.to_string(),
-                    zero_count.to_string(),
-                ),
-            };
-        let csv_fields = [
-            SCHEMA_VERSION.to_string(),
-            "3".to_owned(),
-            "4".to_owned(),
-            matrix_count.to_string(),
-            permanent_zero_count.to_string(),
-            String::new(),
-            String::new(),
-            String::new(),
-            String::new(),
-            determinant_state,
-            determinant_sample_count,
-            determinant_zero_count,
-            String::new(),
-            String::new(),
-            String::new(),
-            String::new(),
-            "halted".to_owned(),
-            reason.as_str().to_owned(),
-        ];
-        fs::write(
-            root.join(POOLED_SUMMARY_FILE),
-            format!(
-                "{}\n{}\n",
-                SUMMARY_CSV_FIELDS.join(","),
-                csv_fields.join(",")
-            ),
         )
         .unwrap();
     }
