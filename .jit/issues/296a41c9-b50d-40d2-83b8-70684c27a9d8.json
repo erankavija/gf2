@@ -43,6 +43,16 @@
       "status": "passed",
       "updated_at": "2026-08-09T18:23:14.793619871Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-09T18:53:54.515352730Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T18:55:57.917007955Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "296a41c9-b50d-40d2-83b8-70684c27a9d8",
@@ -55,5 +65,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-measurement of contested backend orderings before the freeze",
-  "updated_at": "2026-08-09T18:23:14.793619871Z"
+  "updated_at": "2026-08-09T18:55:57.917007955Z"
 }
