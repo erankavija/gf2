@@ -127,57 +127,35 @@ All are square-only. The decomposition argument in the study
 (`feasibility-study.md:1096-1111`) needs no new kernel and is unaffected by
 anything in the current tree.
 
-### C6 — `permanent_bipedal3` prefers the slower AVX2 single-word kernel
+### C6 — scalar single-matrix selection and separate AVX2 APIs
 
-**Valid, still present, and better-evidenced in-tree than the study reports.**
+**Resolved in the current tree, with the original measurement preserved.**
 
-The dispatcher is `crates/gf2-algebra/src/permanent/bipedal3.rs:165`; the
-preference is at `:190-193`:
+The public `permanent_bipedal3` dispatcher now calls
+`permanent_bipedal3_singleword` directly for `n <= 63`, so enabling the default
+`simd` feature does not change the single-matrix selection. The AVX2 paths are
+separate APIs: `permanent_bipedal3_singleword_simd` remains directly available
+for kernel conformance, while `permanent_bipedal3_batch` evaluates one to four
+matrices together through `Bipedal3x4` when AVX2 is available and otherwise
+falls back safely to scalar evaluation.
 
-```rust
-#[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
-if let Some(fns) = maybe_bipedal_avx2() {
-    return permanent_bipedal3_singleword_simd(mat, &fns);
-}
+The current selection rests on the evidence that motivated the original
+finding:
 
-permanent_bipedal3_singleword(mat)
-```
+- `crates/gf2-algebra/src/permanent/bipedal3.rs` documents and implements the
+  scalar public single-matrix route and the separate direct and batched AVX2
+  entry points.
+- `crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs` measures the direct
+  kernels and records that the single-matrix AVX2 kernel is about three times
+  slower than scalar for `n in {16, 20, 24}`.
+- `dev/benchmarks/gf2_algebra_permanent/csvs/s3_cross_cpu.csv` preserves the
+  measured scalar-to-AVX2 ratios of 0.317–0.319.
 
-`simd` is default-on (`crates/gf2-algebra/Cargo.toml`, `default = ["simd",
-"parallel", "f5", "f7"]`), so every default build on an AVX2 host takes the
-slower path. Three in-tree sources already say so, predating the feasibility
-study:
-
-- `crates/gf2-algebra/src/permanent/bipedal3.rs:26` — "At W=1 the SIMD path does
-  not outperform scalar, but it exercises the dispatch wiring and kernel
-  correctness on real hardware, satisfying the T13 correctness criterion. The
-  batched multi-matrix path (T16) is the performance-oriented user."
-- `crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs:12-17` — AVX2
-  singleword is "actually *slower* than scalar (~3× slower)".
-- `dev/benchmarks/gf2_algebra_permanent/csvs/s3_cross_cpu.csv:13-16` — "scalar is
-  faster than AVX2 at small n (W=1 word)", ratios 0.317–0.319.
-
-**A finding the plan should absorb.** The rustdoc's stated design is that the
-AVX2 single-word kernel exists for dispatch-wiring coverage and that the
-*performance* user is a "batched multi-matrix path (T16)". That path does not
-exist. T16 in the originating plan is "Generic `BatchedBipedalLike<P>` framework"
-(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md:411`),
-which landed as a 4-lane batched **arithmetic** type in the kernel crate —
-`Bipedal3x4 = BatchedBipedalLike<Config3>`
-(`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:183`) — and nothing in
-`gf2-algebra` evaluates four matrices' permanents through it. So the G6 fix has
-two shapes, and the plan should choose deliberately:
-
-- *(a)* flip the preference to scalar for `W == 1` and sweep the module rustdoc
-  at `bipedal3.rs:26` and `:349` plus the example header, which otherwise become
-  stale narrative the moment the selection changes; or
-- *(b)* build the missing 4-matrix batched single-word path so the AVX2 lanes
-  carry four matrices instead of one zero-padded word — which is precisely the
-  campaign's batch-parallel need (G7) and would make the AVX2 kernel pay.
-
-Option (a) is 0.5 d as the study estimates; option (b) subsumes part of G7. Both
-must sweep the same prose — `@/inv/single-source-prose` and the standing
-post-amendment-sweep discipline.
+The plan absorbed both parts of the finding: the public dispatcher was moved to
+the faster scalar kernel, and the four-matrix SIMD entry point was built as the
+throughput-oriented user of the existing `Bipedal3x4` arithmetic type. This
+keeps the measured selection, direct conformance API, and batched SIMD API
+distinct in both code and prose, as required by `@/inv/single-source-prose`.
 
 ### C7 — no batch-parallel path for any field; intra-matrix rayon only for F_3
 
