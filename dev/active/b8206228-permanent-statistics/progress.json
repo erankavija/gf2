@@ -108,9 +108,10 @@
     {
       "issue": "9c5b26fb",
       "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
-      "status": "requested",
+      "status": "approved",
       "requested_at": "2026-08-09T19:55:35Z",
-      "decision": "Requested one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
+      "resolved_at": "2026-08-09T19:58:15Z",
+      "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
     }
   ],
   "rework_counts": {
@@ -120,7 +121,7 @@
     "531695da": 1,
     "5758790d": 2,
     "6ae9f4ac": 1,
-    "9c5b26fb": 3
+    "9c5b26fb": 4
   },
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
