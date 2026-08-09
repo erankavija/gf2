@@ -10,7 +10,7 @@
       {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"completed"},
       {"id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","short_id":"8cb4def5","title":"Timing receipt for the determinant companion at campaign sizes","classification":"research","status":"completed"},
       {"id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","short_id":"296a41c9","title":"Re-measurement of contested backend orderings before the freeze","classification":"research","status":"completed"},
-      {"id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","short_id":"9c5b26fb","title":"Scientific preregistration protocol for the campaign","classification":"documentation","status":"in_progress"}
+      {"id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","short_id":"9c5b26fb","title":"Scientific preregistration protocol for the campaign","classification":"documentation","status":"completed"}
     ]},
     {"wave_number": 2, "issues": [
       {"id":"c1b253cb-babf-45ef-8898-27d743eaafac","short_id":"c1b253cb","title":"Named exception record for the rand 0.8 holdout","classification":"documentation","status":"completed"},
