@@ -31,9 +31,9 @@ use sha2::{Digest, Sha256};
 
 use super::schema::{
     field_summary_file, read_field_summary, read_manifest, shard_record_file, ArtifactPath,
-    ArtifactPathError, CampaignManifest, CellTerminalState, DatasetFileClass, DatasetLayout,
-    GitRevision, GitRevisionError, SchemaError, Sha256Digest, Sha256DigestError, INTEGRITY_FILE,
-    MANIFEST_FILE,
+    ArtifactPathError, CampaignId, CampaignManifest, CellTerminalState, DatasetFileClass,
+    DatasetLayout, GitRevision, GitRevisionError, SchemaError, Sha256Digest, Sha256DigestError,
+    DATASET_HOME, INTEGRITY_FILE, MANIFEST_FILE,
 };
 
 /// Source revision recorded into this build of `gf2-sim` by its build script.
@@ -125,6 +125,50 @@ impl fmt::Display for SourceChangeKind {
     }
 }
 
+/// Why a path inside the repository is not one campaign's directory.
+///
+/// The guard exempts everything below the campaign root from the
+/// source-identity check, so accepting a root that is not a campaign directory
+/// would exempt whatever that root happens to contain — at the repository root,
+/// the entire workspace. The accepted shape is therefore exactly
+/// `<repository>/<DATASET_HOME>/<campaign-id>`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CampaignPathFault {
+    /// The path is not under the dataset home at all.
+    OutsideDatasetHome,
+    /// The path is the dataset home itself, or an ancestor of it, so it
+    /// contains campaigns rather than being one.
+    AboveCampaignDirectory,
+    /// The path lies deeper than the one campaign-id level below the home.
+    BelowCampaignDirectory,
+    /// The one component below the home is not a valid campaign id.
+    InvalidCampaignId,
+}
+
+impl fmt::Display for CampaignPathFault {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OutsideDatasetHome => {
+                write!(
+                    f,
+                    "a campaign lives under {DATASET_HOME}, and this does not"
+                )
+            }
+            Self::AboveCampaignDirectory => write!(
+                f,
+                "{DATASET_HOME} and its ancestors contain campaigns rather than being one"
+            ),
+            Self::BelowCampaignDirectory => write!(
+                f,
+                "a campaign is one directory below {DATASET_HOME}, and this is deeper"
+            ),
+            Self::InvalidCampaignId => {
+                f.write_str("the directory name below the dataset home is not a campaign id")
+            }
+        }
+    }
+}
+
 /// One tracked file that differs from the built revision.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceChange {
@@ -166,6 +210,13 @@ pub enum EmissionRefusal {
         /// Campaign directory that was requested.
         path: PathBuf,
     },
+    /// The path is inside the repository but is not one campaign's directory.
+    NotACampaignDirectory {
+        /// Campaign directory that was requested.
+        path: PathBuf,
+        /// What disqualifies it.
+        fault: CampaignPathFault,
+    },
     /// A `git` invocation could not be run or reported failure.
     Git {
         /// Arguments passed to `git`.
@@ -205,6 +256,9 @@ impl fmt::Display for EmissionRefusal {
                 "campaign directory {} is outside the repository being checked",
                 path.display()
             ),
+            Self::NotACampaignDirectory { path, fault } => {
+                write!(f, "{} is not a campaign directory: {fault}", path.display())
+            }
             Self::Git { command, message } => {
                 write!(f, "`git {command}` failed: {message}")
             }
@@ -233,8 +287,12 @@ impl std::error::Error for EmissionRefusal {
 /// refuse; the compiled source is fixed by `HEAD`, and a file git does not track
 /// is not part of it.
 ///
-/// `campaign_root` may name a directory that does not exist yet, provided its
-/// parent does; the first emission of a campaign creates it.
+/// `campaign_root` must be one campaign's directory: exactly one
+/// [`CampaignId`] level below [`DATASET_HOME`] inside the repository. A root
+/// that is merely somewhere inside the repository is refused, because the
+/// subtree exemption would otherwise excuse whatever that root contains. It may
+/// name a directory that does not exist yet, provided its parent does; the
+/// first emission of a campaign creates it.
 ///
 /// # Errors
 ///
@@ -331,6 +389,13 @@ pub fn approve_emission_from(
 }
 
 /// Returns the campaign subtree as a repository-relative `/`-terminated prefix.
+///
+/// Being somewhere inside the repository is not enough. Everything below the
+/// returned prefix is exempt from the source-identity check, so a root that is
+/// not one campaign's directory would exempt whatever it contains — the whole
+/// workspace, at the repository root. The path must therefore be exactly one
+/// [`CampaignId`] directory below [`DATASET_HOME`]; anything else refuses and
+/// names which of those conditions it broke.
 fn campaign_prefix(
     anchor: &Path,
     campaign_root: &Path,
@@ -344,14 +409,43 @@ fn campaign_prefix(
         campaign.push(campaign_root.file_name().ok_or_else(outside)?);
     }
     let relative = campaign.strip_prefix(repository).map_err(|_| outside())?;
-    let mut prefix = String::new();
+
+    let mut components = Vec::new();
     for component in relative.components() {
         let Component::Normal(name) = component else {
             return Err(outside());
         };
-        prefix.push_str(name.to_str().ok_or_else(outside)?);
-        prefix.push('/');
+        components.push(name.to_str().ok_or_else(outside)?);
     }
+
+    let home: Vec<&str> = DATASET_HOME.split('/').collect();
+    let reject = |fault| {
+        Err(EmissionRefusal::NotACampaignDirectory {
+            path: campaign_root.to_owned(),
+            fault,
+        })
+    };
+    if components.len() <= home.len() {
+        // An ancestor of the home, or the home itself, contains campaigns
+        // rather than being one; anything else short is simply elsewhere.
+        return if home.starts_with(&components) {
+            reject(CampaignPathFault::AboveCampaignDirectory)
+        } else {
+            reject(CampaignPathFault::OutsideDatasetHome)
+        };
+    }
+    if !components.starts_with(&home) {
+        return reject(CampaignPathFault::OutsideDatasetHome);
+    }
+    if components.len() > home.len() + 1 {
+        return reject(CampaignPathFault::BelowCampaignDirectory);
+    }
+    if components[home.len()].parse::<CampaignId>().is_err() {
+        return reject(CampaignPathFault::InvalidCampaignId);
+    }
+
+    let mut prefix = components.join("/");
+    prefix.push('/');
     Ok(prefix)
 }
 
@@ -1023,12 +1117,16 @@ mod tests {
     use super::super::schema::POOLED_SUMMARY_FILE;
     use super::*;
 
-    const CAMPAIGN_AREA: &str = "dev/simulation_results/permanent-zero-fraction";
     const SOURCE_FILE: &str = "crates/gf2-sim/src/permanent_campaign/schema.rs";
     const DEPENDENCY_MANIFEST: &str = "crates/gf2-sim/Cargo.toml";
-    const PROTOCOL_DOCUMENT: &str = "dev/simulation_results/permanent-zero-fraction/protocol.md";
     const FIRST_SHARD: &str = "shards/q3/n04/shard-000000.json";
     const SECOND_SHARD: &str = "shards/q3/n04/shard-000001.json";
+    const DERIVED_REPORT: &str = "derived/report.md";
+
+    /// Returns the frozen protocol's path, derived from the one dataset home.
+    fn protocol_document() -> String {
+        format!("{DATASET_HOME}/protocol.md")
+    }
 
     /// A throwaway repository with the shape the guard reasons about.
     ///
@@ -1047,7 +1145,7 @@ mod tests {
             repo.git(&["init", "--quiet", "--initial-branch=main"]);
             repo.write(SOURCE_FILE, "pub fn permanent() {}\n");
             repo.write(DEPENDENCY_MANIFEST, "[package]\nname = \"gf2-sim\"\n");
-            repo.write(PROTOCOL_DOCUMENT, "# frozen preregistration\n");
+            repo.write(&protocol_document(), "# frozen preregistration\n");
             repo.commit_all("seed the throwaway repository");
             repo
         }
@@ -1098,7 +1196,7 @@ mod tests {
         }
 
         fn campaign_root(&self) -> PathBuf {
-            self.path(&format!("{CAMPAIGN_AREA}/{FIXTURE_CAMPAIGN_ID}"))
+            self.path(&format!("{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}"))
         }
 
         /// Writes the conforming fixture dataset under the campaign area.
@@ -1175,30 +1273,99 @@ mod tests {
     }
 
     /// REQ-02, REQ-03: the campaign's own output never refuses its own writer.
+    ///
+    /// The criterion exempts expected raw *and derived* files under the frozen
+    /// campaign id, so the derived report is committed first and then changed:
+    /// a tracked modification exercises the subtree exemption itself, where an
+    /// untracked file would only exercise the weaker untracked rule.
     #[test]
     fn emission_admits_a_tree_dirtied_only_by_campaign_outputs() {
         let repo = TestRepo::new();
         let campaign = repo.write_dataset();
+        fs::create_dir_all(campaign.join("derived")).unwrap();
+        fs::write(campaign.join(DERIVED_REPORT), b"# derived\n").unwrap();
         repo.commit_all("publish the first dataset files");
 
         fs::write(campaign.join(SECOND_SHARD), b"{}\n").unwrap();
-        fs::create_dir_all(campaign.join("derived")).unwrap();
-        fs::write(campaign.join("derived/report.md"), b"# derived\n").unwrap();
+        fs::write(campaign.join(DERIVED_REPORT), b"# derived, revised\n").unwrap();
         fs::write(campaign.join("shards/q3/n04/shard-000002.json"), b"{}\n").unwrap();
 
         approve(&repo, &campaign).expect("a tree dirtied only by campaign output emits");
     }
 
+    /// REQ-02: only one campaign's own directory may be emitted into.
+    ///
+    /// A tracked source file is modified throughout, so a root that wrongly
+    /// exempted the tree around it would approve rather than refuse — the test
+    /// fails if the exemption hole reopens, not merely if a path check moves.
+    #[test]
+    fn emission_refuses_a_root_that_is_not_a_campaign_directory() {
+        let repo = TestRepo::new();
+        repo.write_dataset();
+        repo.commit_all("publish the dataset");
+        repo.write(SOURCE_FILE, "changed after the build\n");
+
+        let campaign = format!("{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}");
+        let rejected = [
+            (String::new(), CampaignPathFault::AboveCampaignDirectory),
+            ("dev".to_owned(), CampaignPathFault::AboveCampaignDirectory),
+            (
+                "dev/simulation_results".to_owned(),
+                CampaignPathFault::AboveCampaignDirectory,
+            ),
+            (
+                DATASET_HOME.to_owned(),
+                CampaignPathFault::AboveCampaignDirectory,
+            ),
+            (
+                "crates/gf2-sim".to_owned(),
+                CampaignPathFault::OutsideDatasetHome,
+            ),
+            (
+                format!("{campaign}/shards"),
+                CampaignPathFault::BelowCampaignDirectory,
+            ),
+            (
+                format!("{DATASET_HOME}/Not_A_Campaign"),
+                CampaignPathFault::InvalidCampaignId,
+            ),
+        ];
+
+        for (relative, expected) in rejected {
+            let root = repo.path(&relative);
+            let refusal =
+                approve(&repo, &root).expect_err(&format!("{relative:?} must not be emitted into"));
+            match refusal {
+                EmissionRefusal::NotACampaignDirectory { ref path, fault } => {
+                    assert_eq!(fault, expected, "{relative:?}: {refusal}");
+                    assert_eq!(path, &root, "the refusal must name the path: {refusal}");
+                }
+                other => panic!("{relative:?} must refuse as a path fault: {other}"),
+            }
+        }
+
+        // The legitimate root still approves, once its own output is the only
+        // thing dirtying the tree.
+        repo.git(&["checkout", "--", SOURCE_FILE]);
+        let root = repo.path(&campaign);
+        fs::write(root.join(SECOND_SHARD), b"{}\n").unwrap();
+        approve(&repo, &root).expect("one campaign's own directory emits");
+    }
+
     /// REQ-02, REQ-03: changed source, build metadata, or protocol refuses.
     #[test]
     fn emission_refuses_a_changed_source_dependency_or_protocol_file() {
-        for changed in [SOURCE_FILE, DEPENDENCY_MANIFEST, PROTOCOL_DOCUMENT] {
+        for changed in [
+            SOURCE_FILE.to_owned(),
+            DEPENDENCY_MANIFEST.to_owned(),
+            protocol_document(),
+        ] {
             let repo = TestRepo::new();
             let campaign = repo.write_dataset();
             repo.commit_all("publish the dataset");
 
             fs::write(campaign.join(FIRST_SHARD), b"{}\n").unwrap();
-            repo.write(changed, "changed after the build\n");
+            repo.write(&changed, "changed after the build\n");
 
             let refusal = approve(&repo, &campaign)
                 .expect_err("a changed tracked file outside the campaign must refuse");
@@ -1208,13 +1375,13 @@ mod tests {
             assert_eq!(
                 changes,
                 &[SourceChange {
-                    path: PathBuf::from(changed),
+                    path: PathBuf::from(&changed),
                     kind: SourceChangeKind::Modified,
                 }],
                 "only {changed} differs outside the campaign subtree"
             );
             assert!(
-                refusal.to_string().contains(changed),
+                refusal.to_string().contains(&changed),
                 "the refusal must name what changed: {refusal}"
             );
         }
@@ -1236,7 +1403,7 @@ mod tests {
             changes,
             &[SourceChange {
                 path: PathBuf::from(format!(
-                    "{CAMPAIGN_AREA}/{FIXTURE_CAMPAIGN_ID}/{MANIFEST_FILE}"
+                    "{DATASET_HOME}/{FIXTURE_CAMPAIGN_ID}/{MANIFEST_FILE}"
                 )),
                 kind: SourceChangeKind::Modified,
             }]

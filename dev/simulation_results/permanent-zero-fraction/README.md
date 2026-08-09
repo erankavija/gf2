@@ -187,6 +187,15 @@ directory refuses the emission, and the refusal names every path that differs.
 Untracked paths never refuse. The source a binary was compiled from is fixed by
 `HEAD`, and a file git does not track is not part of it.
 
+The guard accepts only one campaign's own directory as the root it is emitting
+into: exactly one campaign id below this home, inside the repository. Being
+somewhere in the repository is not enough, because everything below that root
+is exempt — a root at the repository itself would excuse the whole workspace,
+and one at this home would excuse every campaign and the protocol beside them.
+A root that is an ancestor of this home, the home itself, deeper than one
+campaign id below it, elsewhere in the tree, or named by something that is not
+a campaign id refuses, and the refusal says which of those it was.
+
 A build follows `HEAD` only when asked to. By default the embedded revision is
 fixed when `gf2-sim` is compiled and a later commit does not refresh it, so
 landing a commit does not recompile the workspace's heaviest crate. The guard
