@@ -15,7 +15,7 @@
 //! not the evaluation of a single number. [`permanental_rank_status`] walks
 //! those subsets and stops at the first nonzero `k × k` permanent.
 //!
-//! # A vanishing rectangular permanent is a different quantity
+//! # A vanishing rectangular permanent is a different, strictly weaker condition
 //!
 //! The scalar "rectangular permanent" of an `n × k` matrix — the sum over all
 //! injections from the `k` columns into the `n` rows — is **not** the quantity
@@ -26,9 +26,16 @@
 //! ```
 //!
 //! a sum of exactly the `C(n, k)` submatrix permanents whose *individual*
-//! vanishing the rank condition asks about. A sum can vanish through
-//! cancellation while every summand is nonzero, so `rect-per(A) = 0` neither
-//! implies nor is implied by `per-rank(A) < k`. Over `F_3`,
+//! vanishing the rank condition asks about. That identity makes the
+//! relationship a one-way implication:
+//!
+//! ```text
+//! per-rank(A) < k  implies         rect-per(A) = 0   (every summand vanishes)
+//! rect-per(A) = 0  does not imply  per-rank(A) < k   (the sum can cancel)
+//! ```
+//!
+//! Deficiency zeroes every summand and therefore zeroes the sum. The converse
+//! fails because a sum of nonzero terms can still cancel. Over `F_3`,
 //!
 //! ```text
 //! A = [[1, 0],
@@ -38,8 +45,11 @@
 //!
 //! has all three `2 × 2` row-submatrix permanents equal to `1`, so
 //! `per-rank(A) = 2` is full, while `rect-per(A) = 1 + 1 + 1 = 0 mod 3`.
-//! The integration test `test_rectangular_permanent_vanishes_but_submatrix_does_not`
-//! in `tests/permanental_rank.rs` pins both quantities on this matrix.
+//! Testing `rect-per(A) = 0` in place of the rank condition therefore
+//! over-reports deficiency: it accepts every deficient matrix and some
+//! full-rank ones besides. The integration test
+//! `test_rectangular_permanent_vanishes_but_submatrix_does_not` in
+//! `tests/permanental_rank.rs` pins both quantities on this matrix.
 //!
 //! # Scope of validation
 //!
