@@ -2,7 +2,7 @@
 
 Packed finite-field abstractions and high-performance matrix permanent algorithms over small prime fields (F_3, F_5, F_7), built on [`gf2-core`](../gf2-core/README.md).
 
-`gf2-algebra` is the workspace home for the **bipedal encoding** of F_3 / F_5 / F_7 elements into parallel `u64` bit-planes, and the `permanent_bipedal*` algorithm family that evaluates the matrix permanent via Ryser's inclusion-exclusion formula in Gray-code order. It sits on top of `gf2-core` (for `FiniteField`, `Fp<P>`, `BitVec`) and is `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip` crates, in keeping with the project's unsafe-isolation invariant.
+`gf2-algebra` is the workspace home for the **bipedal encoding** of F_3 / F_5 / F_7 elements into parallel `u64` bit-planes, the `permanent_bipedal*` algorithm family that evaluates the matrix permanent via Ryser's inclusion-exclusion formula in Gray-code order, and the rectangular permanental-rank predicate built on top of them. It sits on top of `gf2-core` (for `FiniteField`, `Fp<P>`, `BitVec`) and is `#![deny(unsafe_code)]` — every SIMD or GPU path it dispatches through lives in the dedicated `gf2-kernels-simd` and `gf2-kernels-hip` crates, in keeping with the project's unsafe-isolation invariant.
 
 Epic design doc: [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`](../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md).
 
@@ -82,6 +82,35 @@ for i in 0..3 { id[i * 3 + i] = Fp::<7>::new(1); }
 assert_eq!(permanent_ryser::<Fp<7>>(&id, 3), Fp::<7>::new(1));
 ```
 
+### Permanental rank deficiency of a rectangular matrix
+
+```rust
+use gf2_algebra::permanent::{permanental_rank_status, PermanentalRank};
+use gf2_core::gfp::Fp;
+
+// 3x2 over F_3. Every 2x2 row-submatrix permanent is 1, so the rank is full.
+let a: Vec<Fp<3>> = [1, 0, 0, 1, 1, 1].iter().map(|&v| Fp::<3>::new(v)).collect();
+assert_eq!(permanental_rank_status::<Fp<3>>(&a, 3, 2), PermanentalRank::Full);
+```
+
+For an `n x k` matrix `A` with `k <= n`, `per-rank(A) < k` holds exactly when
+**every** `k x k` row submatrix of `A` has zero permanent, so the decision is a
+conjunction over the `C(n, k)` row subsets and needs no new numeric kernel —
+`permanental_rank_status` calls `permanent_ryser` on each submatrix and returns
+at the first nonzero permanent.
+
+A vanishing **scalar rectangular permanent** is a different quantity: it is the
+sum of those same `C(n, k)` submatrix permanents, and a sum can vanish while
+every summand is nonzero. The matrix above is exactly such a case — its three
+submatrix permanents are all `1`, yet `1 + 1 + 1 = 0 mod 3` — so testing the
+rectangular permanent would report deficiency here and be wrong.
+
+The predicate is a correctness instrument, not a probe of the theorem that
+motivates the event: every `(n, k)` a sampling campaign can reach lies outside
+the `k <= 0.1 * sqrt(n)` hypothesis of `@/citation/GGK2025`. The
+`permanent::rank` module documentation carries the full statement of both
+points.
+
 ### Packed F_5 and F_7
 
 ```rust
@@ -117,11 +146,11 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 | Module       | Purpose                                                                              |
 |--------------|--------------------------------------------------------------------------------------|
 | `packed`     | `PackedField` / `PackedFieldVec` traits and per-prime impls: `Bipedal3` (F_3, 64 lanes), `Packed5` (F_5, 64 lanes), `Packed7` (F_7, 16 lanes). Also `*Matrix` types for each. |
-| `permanent`  | `permanent_ryser` (field-generic oracle), `permanent_mod3_reference` (paper baseline), `permanent_bipedal{3,5,7}` fast paths, parallel and multi-word variants. |
+| `permanent`  | `permanent_ryser` (field-generic oracle), `permanent_mod3_reference` (paper baseline), `permanent_bipedal{3,5,7}` fast paths, parallel and multi-word variants, and `permanental_rank_status` (rectangular permanental rank deficiency). |
 | `gray`       | Gray-code subset enumerator used by Ryser's formula and all bipedal kernels.         |
 | `parallel`   | Rayon-based work-stealing dispatch (feature = "parallel", default on).               |
 | `gpu`        | HIP/ROCm host-side batch dispatcher (feature = "hip", default off).                 |
-| `testutil`   | Deterministic random matrix generators (feature = "test-support" or `cfg(test)`).    |
+| `testutil`   | Deterministic random matrix generators and brute-force oracles (feature = "test-support" or `cfg(test)`). |
 
 ## Features
 
@@ -133,7 +162,7 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 | `f7`           | yes     | Enable `Packed7`, `Packed7Vec`, `Packed7Matrix`, and `permanent_bipedal7`. |
 | `hip`          | no      | Enable `gf2_algebra::gpu` (requires ROCm / hipcc; AMD gfx1030+). |
 | `serde`        | no      | Serde `Serialize` / `Deserialize` on packed types. |
-| `test-support` | no      | Expose `testutil::random_matrix` / `random_matrix_with_rng` to downstream crates and benchmarks. |
+| `test-support` | no      | Expose `testutil::random_matrix` / `random_matrix_with_rng` / `permanental_rank_bruteforce` to downstream crates and benchmarks. |
 
 ## Acceleration
 

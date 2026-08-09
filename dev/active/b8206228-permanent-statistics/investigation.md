@@ -127,6 +127,13 @@ All are square-only. The decomposition argument in the study
 (`feasibility-study.md:1096-1111`) needs no new kernel and is unaffected by
 anything in the current tree.
 
+**Closed by jit issue `175972df`.** The finding above records the tree as it
+stood at investigation time and is kept as written. Since then
+`permanent::permanental_rank_status` and its brute-force oracle
+`testutil::permanental_rank_bruteforce` landed in `gf2-algebra`, confirming the
+decomposition argument: the predicate adds no numeric kernel and calls
+`permanent_ryser` on each $k \times k$ row submatrix.
+
 ### C6 — scalar single-matrix selection and separate AVX2 APIs
 
 **Resolved in the current tree, with the original measurement preserved.**
