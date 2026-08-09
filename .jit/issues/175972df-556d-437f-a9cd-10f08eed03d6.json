@@ -19,6 +19,16 @@
       "status": "passed",
       "updated_at": "2026-08-09T21:39:33.848958085Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-09T22:00:40.843728825Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T22:02:32.277940967Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "175972df-556d-437f-a9cd-10f08eed03d6",
@@ -32,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Permanental rank-deficiency predicate with exact validation",
-  "updated_at": "2026-08-09T21:39:33.848958085Z"
+  "updated_at": "2026-08-09T22:02:32.277940967Z"
 }
