@@ -225,13 +225,12 @@ rg -n -i \
 ```
 
 The pattern escapes one character per literal token so the command text does not
-match itself. Two of the exclusions are historical material, left as written:
-`dev/archive/` is development history, and `breakdown.json` is a frozen
-pre-execution copy of issue descriptions whose live counterpart is the `.jit/`
-store, for the reasons its
+match itself. `dev/archive/` is development history and is left as written.
+`breakdown.json` is excluded by a decision recorded in issue `240b7618`
+(`jit issue show 240b7618`), which its
 [directory README](../../dev/active/b8206228-permanent-statistics/README.md)
-sets out. The rest — `target/`, the agent worktree roots and `.jit/gate-runs/` —
-are build and tooling noise.
+also states. The rest — `target/`, the agent worktree roots and
+`.jit/gate-runs/` — are build and tooling noise.
 
 ## Documentation
 

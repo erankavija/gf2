@@ -3,89 +3,407 @@
   "epic_short_id": "b8206228",
   "current_wave": 2,
   "waves": [
-    {"wave_number": 1, "issues": [
-      {"id":"b494fec8-579f-4a2d-8579-4fa58d50e3b1","short_id":"b494fec8","title":"Workspace convergence of the rand 0.9 ecosystem","classification":"implementation","status":"completed"},
-      {"id":"6602d181-9fb6-42a6-a97e-9fb38a8e71d1","short_id":"6602d181","title":"Generic checkpoint payload mechanism","classification":"implementation","status":"completed"},
-      {"id":"5758790d-421b-47d2-a6f0-c40d1c5dc465","short_id":"5758790d","title":"Versioned dataset layout and record schemas","classification":"implementation","status":"completed"},
-      {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"completed"},
-      {"id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","short_id":"8cb4def5","title":"Timing receipt for the determinant companion at campaign sizes","classification":"research","status":"completed"},
-      {"id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","short_id":"296a41c9","title":"Re-measurement of contested backend orderings before the freeze","classification":"research","status":"completed"},
-      {"id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","short_id":"9c5b26fb","title":"Scientific preregistration protocol for the campaign","classification":"documentation","status":"completed"}
-    ]},
-    {"wave_number": 2, "issues": [
-      {"id":"c1b253cb-babf-45ef-8898-27d743eaafac","short_id":"c1b253cb","title":"Named exception record for the rand 0.8 holdout","classification":"documentation","status":"completed"},
-      {"id":"2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0","short_id":"2d315f69","title":"Existing pipeline migrated onto the generic checkpoint","classification":"implementation","status":"completed"},
-      {"id":"d36810e7-d000-4514-b18f-9a63a1403ba9","short_id":"d36810e7","title":"Source identity and integrity for published datasets","classification":"implementation","status":"completed"},
-      {"id":"18dec119-c2d9-48f7-b383-3c73f66e49f3","short_id":"18dec119","title":"Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path","classification":"implementation","status":"completed"},
-      {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"completed"}
-    ]},
-    {"wave_number": 3, "issues": [
-      {"id":"531695da-f7a4-45e7-b982-cbe27bd41745","short_id":"531695da","title":"Empty gf2-stats workspace member crate","classification":"implementation","status":"completed"},
-      {"id":"240b7618-f24f-4fc1-b708-ac349b3b3286","short_id":"240b7618","title":"Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection","classification":"documentation","status":"in_progress"},
-      {"id":"7a816262-1eed-492c-a58b-6752fdf50636","short_id":"7a816262","title":"Frozen root manifest for the campaign","classification":"documentation","status":"pending"}
-    ]},
-    {"wave_number": 4, "issues": [
-      {"id":"6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f","short_id":"6ae9f4ac","title":"Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams","classification":"implementation","status":"completed"},
-      {"id":"ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79","short_id":"ddd0c6ee","title":"Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path","classification":"research","status":"pending"},
-      {"id":"3f664839-fb97-4bb5-8141-7c39026325fe","short_id":"3f664839","title":"Preregistered rare-event estimator design","classification":"design","status":"pending"}
-    ]},
-    {"wave_number": 5, "issues": [
-      {"id":"49cbb131-cae2-4e8e-97d4-759ecbb11297","short_id":"49cbb131","title":"Wilson score interval estimator","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 6, "issues": [
-      {"id":"d1b6a182-ffcd-4efb-b4da-73331c63a699","short_id":"d1b6a182","title":"Clopper-Pearson interval estimator with coverage demonstration","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 7, "issues": [
-      {"id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","short_id":"4058e0ac","title":"Preregistered exact binomial tests for campaign cells","classification":"implementation","status":"pending"},
-      {"id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","short_id":"44534b2f","title":"Exact enumeration anchors for the smallest cells","classification":"implementation","status":"pending"},
-      {"id":"c31671ea-8da0-4c11-adfa-bc4ec5cdc49b","short_id":"c31671ea","title":"Curve and table generation pipeline","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 8, "issues": [
-      {"id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","short_id":"22c7a3cd","title":"Checkpointable streaming shard accumulator","classification":"implementation","status":"pending"},
-      {"id":"e0251af3-25c3-4914-8018-c3b66dd9561a","short_id":"e0251af3","title":"Observable-event rate estimates for permanental rank deficiency","classification":"research","status":"pending"}
-    ]},
-    {"wave_number": 9, "issues": [
-      {"id":"41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d","short_id":"41c3d91d","title":"Campaign driver scheduling and shard emission","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 10, "issues": [
-      {"id":"51498b90-ae91-449f-bcc2-0f209bd16284","short_id":"51498b90","title":"Checkpointed resume, determinism, and quarantine for the campaign driver","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 11, "issues": [
-      {"id":"4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b","short_id":"4a6bdcff","title":"Determinant companion evaluated on the campaign's matrices","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 12, "issues": [
-      {"id":"eb8825c8-058c-43af-bb46-e79759c7e90d","short_id":"eb8825c8","title":"Batch-parallel processor path for campaign shards","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 13, "issues": [
-      {"id":"032cc754-c88c-4e1b-b56d-6511d0a70c3c","short_id":"032cc754","title":"Processor backend selection for campaign cells","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 14, "issues": [
-      {"id":"a39bb161-0746-4f24-9057-32c9c2fa09fd","short_id":"a39bb161","title":"Accelerator execution for campaign cells","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 15, "issues": [
-      {"id":"1947125e-33eb-4442-b717-24442cc35ca1","short_id":"1947125e","title":"Shared behavioural conformance suite across campaign backends","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 16, "issues": [
-      {"id":"73317b2e-8f01-472e-b04f-05ff9ef2b8be","short_id":"73317b2e","title":"Standing acceptance tests for campaign cells","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 17, "issues": [
-      {"id":"1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48","short_id":"1d0b3ec4","title":"Campaign arm for $q = 5$","classification":"research","status":"pending"},
-      {"id":"ed494117-4245-4e92-855b-3c54e207697d","short_id":"ed494117","title":"Campaign arm for $q = 7$","classification":"research","status":"pending"},
-      {"id":"90a61cd4-c48d-4097-ae2c-e628163a754a","short_id":"90a61cd4","title":"Campaign arm for $q = 3$ as reproduction","classification":"research","status":"pending"}
-    ]},
-    {"wave_number": 18, "issues": [
-      {"id":"f27150a5-8713-4bce-b404-9e477937d498","short_id":"f27150a5","title":"Deterministic finalization of a completed campaign dataset","classification":"implementation","status":"pending"}
-    ]},
-    {"wave_number": 19, "issues": [
-      {"id":"f74e327d-688d-4ffe-880f-a01b471e33d8","short_id":"f74e327d","title":"Published zero-fraction curves and tables for the three fields","classification":"research","status":"pending"},
-      {"id":"53d8e438-7bbe-4397-b43c-c9e100e145b1","short_id":"53d8e438","title":"Convergence-shape model comparison for the deviation term","classification":"research","status":"pending"},
-      {"id":"6639435f-8be8-4408-b6ab-759fe0099bd2","short_id":"6639435f","title":"Rare-event estimator with demonstrated unbiasedness and coverage","classification":"research","status":"pending"}
-    ]},
-    {"wave_number": 20, "issues": [
-      {"id":"b5d45bcd-05b8-42cd-a418-b73b47a15dac","short_id":"b5d45bcd","title":"Analysis report on the measured zero-fraction curves","classification":"research","status":"pending"},
-      {"id":"0665e7be-6150-45a0-94bc-1ce11c61bd2b","short_id":"0665e7be","title":"Permanental against determinantal zero-fraction comparison figure","classification":"research","status":"pending"},
-      {"id":"b05c908b-690d-4caa-9e2d-46d0f9ae0acc","short_id":"b05c908b","title":"Preregistered rare-event estimate beyond direct sampling","classification":"research","status":"pending"}
-    ]}
+    {
+      "wave_number": 1,
+      "issues": [
+        {
+          "id": "b494fec8-579f-4a2d-8579-4fa58d50e3b1",
+          "short_id": "b494fec8",
+          "title": "Workspace convergence of the rand 0.9 ecosystem",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "6602d181-9fb6-42a6-a97e-9fb38a8e71d1",
+          "short_id": "6602d181",
+          "title": "Generic checkpoint payload mechanism",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "5758790d-421b-47d2-a6f0-c40d1c5dc465",
+          "short_id": "5758790d",
+          "title": "Versioned dataset layout and record schemas",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "83eedd07-9710-4109-98a3-2b839f3cee98",
+          "short_id": "83eedd07",
+          "title": "Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "8cb4def5-0c95-4eb2-a2a2-04445390cc4c",
+          "short_id": "8cb4def5",
+          "title": "Timing receipt for the determinant companion at campaign sizes",
+          "classification": "research",
+          "status": "completed"
+        },
+        {
+          "id": "296a41c9-b50d-40d2-83b8-70684c27a9d8",
+          "short_id": "296a41c9",
+          "title": "Re-measurement of contested backend orderings before the freeze",
+          "classification": "research",
+          "status": "completed"
+        },
+        {
+          "id": "9c5b26fb-a505-492e-8e9f-d8d520496ad0",
+          "short_id": "9c5b26fb",
+          "title": "Scientific preregistration protocol for the campaign",
+          "classification": "documentation",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "wave_number": 2,
+      "issues": [
+        {
+          "id": "c1b253cb-babf-45ef-8898-27d743eaafac",
+          "short_id": "c1b253cb",
+          "title": "Named exception record for the rand 0.8 holdout",
+          "classification": "documentation",
+          "status": "completed"
+        },
+        {
+          "id": "2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0",
+          "short_id": "2d315f69",
+          "title": "Existing pipeline migrated onto the generic checkpoint",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "d36810e7-d000-4514-b18f-9a63a1403ba9",
+          "short_id": "d36810e7",
+          "title": "Source identity and integrity for published datasets",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "18dec119-c2d9-48f7-b383-3c73f66e49f3",
+          "short_id": "18dec119",
+          "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "175972df-556d-437f-a9cd-10f08eed03d6",
+          "short_id": "175972df",
+          "title": "Permanental rank-deficiency predicate with exact validation",
+          "classification": "implementation",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "wave_number": 3,
+      "issues": [
+        {
+          "id": "531695da-f7a4-45e7-b982-cbe27bd41745",
+          "short_id": "531695da",
+          "title": "Empty gf2-stats workspace member crate",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "240b7618-f24f-4fc1-b708-ac349b3b3286",
+          "short_id": "240b7618",
+          "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
+          "classification": "documentation",
+          "status": "in_progress"
+        },
+        {
+          "id": "7a816262-1eed-492c-a58b-6752fdf50636",
+          "short_id": "7a816262",
+          "title": "Frozen root manifest for the campaign",
+          "classification": "documentation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 4,
+      "issues": [
+        {
+          "id": "6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f",
+          "short_id": "6ae9f4ac",
+          "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
+          "classification": "implementation",
+          "status": "completed"
+        },
+        {
+          "id": "ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79",
+          "short_id": "ddd0c6ee",
+          "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
+          "short_id": "3f664839",
+          "title": "Preregistered rare-event estimator design",
+          "classification": "design",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 5,
+      "issues": [
+        {
+          "id": "49cbb131-cae2-4e8e-97d4-759ecbb11297",
+          "short_id": "49cbb131",
+          "title": "Wilson score interval estimator",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 6,
+      "issues": [
+        {
+          "id": "d1b6a182-ffcd-4efb-b4da-73331c63a699",
+          "short_id": "d1b6a182",
+          "title": "Clopper-Pearson interval estimator with coverage demonstration",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 7,
+      "issues": [
+        {
+          "id": "4058e0ac-8405-4266-9ec2-05f2e0430ae9",
+          "short_id": "4058e0ac",
+          "title": "Preregistered exact binomial tests for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "44534b2f-b92a-4758-9e78-3a93ce4a209c",
+          "short_id": "44534b2f",
+          "title": "Exact enumeration anchors for the smallest cells",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "c31671ea-8da0-4c11-adfa-bc4ec5cdc49b",
+          "short_id": "c31671ea",
+          "title": "Curve and table generation pipeline",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 8,
+      "issues": [
+        {
+          "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
+          "short_id": "22c7a3cd",
+          "title": "Checkpointable streaming shard accumulator",
+          "classification": "implementation",
+          "status": "pending"
+        },
+        {
+          "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
+          "short_id": "e0251af3",
+          "title": "Observable-event rate estimates for permanental rank deficiency",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 9,
+      "issues": [
+        {
+          "id": "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
+          "short_id": "41c3d91d",
+          "title": "Campaign driver scheduling and shard emission",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 10,
+      "issues": [
+        {
+          "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
+          "short_id": "51498b90",
+          "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 11,
+      "issues": [
+        {
+          "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
+          "short_id": "4a6bdcff",
+          "title": "Determinant companion evaluated on the campaign's matrices",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 12,
+      "issues": [
+        {
+          "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
+          "short_id": "eb8825c8",
+          "title": "Batch-parallel processor path for campaign shards",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 13,
+      "issues": [
+        {
+          "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
+          "short_id": "032cc754",
+          "title": "Processor backend selection for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 14,
+      "issues": [
+        {
+          "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
+          "short_id": "a39bb161",
+          "title": "Accelerator execution for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 15,
+      "issues": [
+        {
+          "id": "1947125e-33eb-4442-b717-24442cc35ca1",
+          "short_id": "1947125e",
+          "title": "Shared behavioural conformance suite across campaign backends",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 16,
+      "issues": [
+        {
+          "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
+          "short_id": "73317b2e",
+          "title": "Standing acceptance tests for campaign cells",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 17,
+      "issues": [
+        {
+          "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
+          "short_id": "1d0b3ec4",
+          "title": "Campaign arm for $q = 5$",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "ed494117-4245-4e92-855b-3c54e207697d",
+          "short_id": "ed494117",
+          "title": "Campaign arm for $q = 7$",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
+          "short_id": "90a61cd4",
+          "title": "Campaign arm for $q = 3$ as reproduction",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 18,
+      "issues": [
+        {
+          "id": "f27150a5-8713-4bce-b404-9e477937d498",
+          "short_id": "f27150a5",
+          "title": "Deterministic finalization of a completed campaign dataset",
+          "classification": "implementation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 19,
+      "issues": [
+        {
+          "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
+          "short_id": "f74e327d",
+          "title": "Published zero-fraction curves and tables for the three fields",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
+          "short_id": "53d8e438",
+          "title": "Convergence-shape model comparison for the deviation term",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
+          "short_id": "6639435f",
+          "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "wave_number": 20,
+      "issues": [
+        {
+          "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
+          "short_id": "b5d45bcd",
+          "title": "Analysis report on the measured zero-fraction curves",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
+          "short_id": "0665e7be",
+          "title": "Permanental against determinantal zero-fraction comparison figure",
+          "classification": "research",
+          "status": "pending"
+        },
+        {
+          "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
+          "short_id": "b05c908b",
+          "title": "Preregistered rare-event estimate beyond direct sampling",
+          "classification": "research",
+          "status": "pending"
+        }
+      ]
+    }
   ],
   "created_during_execution": [],
   "escalations": [
@@ -131,14 +449,16 @@
     {
       "issue": "240b7618",
       "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
-      "status": "open",
+      "status": "approved",
       "requested_at": "2026-08-09T22:58:00Z",
       "options": [
         "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
         "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
         "Keep iterating in place against successive objections."
       ],
-      "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement."
+      "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
+      "resolved_at": "2026-08-09T23:05:00Z",
+      "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision — the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
     }
   ],
   "rework_counts": {
@@ -159,7 +479,7 @@
     "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
     "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
     "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
-    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and both reviewers initially read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Two rework rounds were spent editing entries to match the code, which only made the copy disagree with the issues it created. Resolved on the owner's decision by freezing it: dev/active/b8206228-permanent-statistics/README.md declares it a pre-execution snapshot, the edited entries were restored to the issue text, all 43 entries were verified byte-identical to their issues, and live-prose audits exclude it by path. Never hand-edit an entry; resynchronise from the store instead.",
+    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it — frozen, historical, faithful to the store, snapshotted at a revision — became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
     "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
     "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
     "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
