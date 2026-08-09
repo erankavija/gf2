@@ -15,7 +15,7 @@
     {"wave_number": 2, "issues": [
       {"id":"c1b253cb-babf-45ef-8898-27d743eaafac","short_id":"c1b253cb","title":"Named exception record for the rand 0.8 holdout","classification":"documentation","status":"completed"},
       {"id":"2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0","short_id":"2d315f69","title":"Existing pipeline migrated onto the generic checkpoint","classification":"implementation","status":"completed"},
-      {"id":"d36810e7-d000-4514-b18f-9a63a1403ba9","short_id":"d36810e7","title":"Source identity and integrity for published datasets","classification":"implementation","status":"in_progress"},
+      {"id":"d36810e7-d000-4514-b18f-9a63a1403ba9","short_id":"d36810e7","title":"Source identity and integrity for published datasets","classification":"implementation","status":"completed"},
       {"id":"18dec119-c2d9-48f7-b383-3c73f66e49f3","short_id":"18dec119","title":"Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path","classification":"implementation","status":"completed"},
       {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"completed"}
     ]},
@@ -127,6 +127,18 @@
         "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
       ],
       "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
+    },
+    {
+      "issue": "240b7618",
+      "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
+      "status": "open",
+      "requested_at": "2026-08-09T22:58:00Z",
+      "options": [
+        "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
+        "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
+        "Keep iterating in place against successive objections."
+      ],
+      "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement."
     }
   ],
   "rework_counts": {
