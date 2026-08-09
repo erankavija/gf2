@@ -181,27 +181,27 @@ cargo clippy -p gf2-algebra --all-targets --all-features -- -D warnings
 Always use `--release`: debug mode is 10-100x slower on the packed arithmetic and the benchmark suite has a 5 s per-test wall-clock limit.
 
 To repeat the live narrative audit for superseded single-matrix AVX2 dispatch
-framing, run this from the repository root. It covers the whole working tree,
-including hidden directories, and returns nothing while the prose agrees with
-the dispatcher:
+framing, run this from the repository root. It searches the whole repository and
+returns nothing while the prose agrees with the dispatcher:
 
 ```bash
-rg -n -i --hidden \
-  --glob '!.git/**' --glob '!.jit/**' --glob '!dev/archive/**' \
+rg -n -i \
+  --glob '!dev/archive/**' \
   --glob '!**/target/**' \
   --glob '!.agents/worktrees/**' --glob '!.claude/worktrees/**' \
+  --glob '!.jit/gate-runs/**' \
+  --glob '!dev/active/b8206228-permanent-statistics/breakdown.json' \
   'dispatch wiring and kernel correctne\x73s|batched multi-matrix path.*performance-oriented u\x73er|CPU ana\x6cogue|in later wave\x73|(permanent_bipedal\x33|public (entry point|di\x73patcher)|F_3 di\x73patcher)[^\n]{0,60}(pre\x66ers|sele\x63ts)[^\n]{0,40}AVX\x32|(sele\x63ts|pre\x66ers) the \x73lower path|\x73hould also be fixed at its \x73ource|one-line \x73election bug' \
   .
 ```
 
 The pattern escapes one character per literal token so the command text does not
-match itself. Three exclusions are deliberate: `dev/archive/` is development
-history and is left as written; `.git/`, `target/` and the agent worktree roots
-are build and VCS noise; `.jit/` is the issue tracker's own store, whose issue
-descriptions record each task as it was framed when created and are maintained
-through the tracker rather than as live prose. The same background text is kept
-current in [`dev/active/b8206228-permanent-statistics/breakdown.json`](../../dev/active/b8206228-permanent-statistics/breakdown.json),
-which the audit does cover.
+match itself. `dev/archive/` is development history and is left as written;
+`target/`, the agent worktree roots and `.jit/gate-runs/` are build and tooling
+noise; `breakdown.json` is a frozen copy of issue descriptions rather than live
+prose, for the reasons its
+[directory README](../../dev/active/b8206228-permanent-statistics/README.md)
+sets out.
 
 ## Documentation
 
