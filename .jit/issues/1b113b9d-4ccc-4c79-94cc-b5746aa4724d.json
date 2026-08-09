@@ -12,6 +12,54 @@
       "format": "markdown",
       "label": "Investigation: wave-parallel GPU kernels (0de41c82)",
       "path": "dev/active/0de41c82/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "926051cdd017ca00d2fc05a79be9f6fcb3416326d38f566e3e5412d55b411ff8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/0de41c82/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c0dd046901b2ad942af4c6d4c65ae572fbe84728917e3f01f58b2b21cb2d2190",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/0de41c82/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "05f4a9190ff76ca63033466b86a7a696754e2dbfbdd958df66720e53bb5dd59b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../studies/b488f02c/feasibility-study.md",
+          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f92c2c9d087d2d335d3c882e0c65dbd4f89ae3e1e8eb9f368f73a384b617dc3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "bipedal-f5-f7-representation-study.md",
+          "resolved_path": "dev/active/0de41c82/bipedal-f5-f7-representation-study.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Plan: wave-parallel GPU kernels (0de41c82)",
+      "path": "dev/active/0de41c82/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Breakdown manifest: wave-parallel GPU kernels (0de41c82)",
+      "path": "dev/active/0de41c82/breakdown.json"
     }
   ],
   "first_ready_at": "2026-08-08T23:13:18.938497955Z",
@@ -36,5 +84,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-08T23:29:32.666099550Z"
+  "updated_at": "2026-08-08T23:56:23.590144759Z"
 }

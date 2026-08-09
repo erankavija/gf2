@@ -14,6 +14,38 @@
       "format": "markdown",
       "label": "Investigation: permanent-statistics campaign (b8206228)",
       "path": "dev/active/b8206228-permanent-statistics/investigation.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "47c9b1ce6e3fce2a712f87743bd499861d7278b1e5fa45b5712543c8b07e4e4b",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "e79f323e75b88ff3f6a099851f7eb141157ac5979a879fd6a7295a0464a72837",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/b8206228-permanent-statistics/breakdown.json"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Plan: permanent-statistics campaign (b8206228)",
+      "path": "dev/active/b8206228-permanent-statistics/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Breakdown manifest: permanent-statistics campaign (b8206228)",
+      "path": "dev/active/b8206228-permanent-statistics/breakdown.json"
     }
   ],
   "gates_required": [
@@ -38,5 +70,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "planning: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-08T23:40:02.481405922Z"
+  "updated_at": "2026-08-09T00:05:41.750693680Z"
 }
