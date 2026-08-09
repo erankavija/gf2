@@ -21,11 +21,11 @@
     ]},
     {"wave_number": 3, "issues": [
       {"id":"531695da-f7a4-45e7-b982-cbe27bd41745","short_id":"531695da","title":"Empty gf2-stats workspace member crate","classification":"implementation","status":"completed"},
-      {"id":"240b7618-f24f-4fc1-b708-ac349b3b3286","short_id":"240b7618","title":"Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection","classification":"documentation","status":"pending"},
+      {"id":"240b7618-f24f-4fc1-b708-ac349b3b3286","short_id":"240b7618","title":"Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection","classification":"documentation","status":"in_progress"},
       {"id":"7a816262-1eed-492c-a58b-6752fdf50636","short_id":"7a816262","title":"Frozen root manifest for the campaign","classification":"documentation","status":"pending"}
     ]},
     {"wave_number": 4, "issues": [
-      {"id":"6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f","short_id":"6ae9f4ac","title":"Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams","classification":"implementation","status":"pending"},
+      {"id":"6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f","short_id":"6ae9f4ac","title":"Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams","classification":"implementation","status":"in_progress"},
       {"id":"ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79","short_id":"ddd0c6ee","title":"Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path","classification":"research","status":"pending"},
       {"id":"3f664839-fb97-4bb5-8141-7c39026325fe","short_id":"3f664839","title":"Preregistered rare-event estimator design","classification":"design","status":"pending"}
     ]},
