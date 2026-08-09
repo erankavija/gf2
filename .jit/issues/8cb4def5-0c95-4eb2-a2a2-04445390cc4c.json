@@ -22,6 +22,7 @@
       "path": "dev/benchmarks/permanent_campaign/determinant-cost.csv"
     }
   ],
+  "done_at": "2026-08-09T19:21:09.467753643Z",
   "first_ready_at": "2026-08-09T11:54:10.417169574Z",
   "gates_required": [
     "cargo-ci",
@@ -53,7 +54,7 @@
     "component:gf2-algebra"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Timing receipt for the determinant companion at campaign sizes",
-  "updated_at": "2026-08-09T19:04:05.252819973Z"
+  "updated_at": "2026-08-09T19:21:09.467753643Z"
 }

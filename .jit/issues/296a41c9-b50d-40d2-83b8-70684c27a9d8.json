@@ -32,6 +32,7 @@
       "path": "dev/benchmarks/permanent_campaign/backend-ordering.csv"
     }
   ],
+  "done_at": "2026-08-09T19:21:21.755378289Z",
   "first_ready_at": "2026-08-09T11:54:10.417169574Z",
   "gates_required": [
     "cargo-ci",
@@ -63,7 +64,7 @@
     "component:gf2-sim"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Re-measurement of contested backend orderings before the freeze",
-  "updated_at": "2026-08-09T19:19:39.460968702Z"
+  "updated_at": "2026-08-09T19:21:21.755378289Z"
 }

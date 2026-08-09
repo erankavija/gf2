@@ -26,6 +26,7 @@
       "path": "dev/simulation_results/permanent-zero-fraction/README.md"
     }
   ],
+  "done_at": "2026-08-09T19:20:37.938072503Z",
   "first_ready_at": "2026-08-09T11:54:10.417169574Z",
   "gates_required": [
     "cargo-ci",
@@ -57,7 +58,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Versioned dataset layout and record schemas",
-  "updated_at": "2026-08-09T18:30:02.025036561Z"
+  "updated_at": "2026-08-09T19:20:37.938072503Z"
 }
