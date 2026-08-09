@@ -153,7 +153,15 @@ fn rectangular_permanent<const P: u64>(values: &[Fp<P>], n: usize, k: usize) -> 
                 continue;
             }
             used.push(row);
-            total = total + recurse::<P>(values, n, k, column + 1, used, product * values[row * k + column]);
+            total = total
+                + recurse::<P>(
+                    values,
+                    n,
+                    k,
+                    column + 1,
+                    used,
+                    product * values[row * k + column],
+                );
             used.pop();
         }
         total
@@ -260,14 +268,26 @@ fn test_boundary_zero_column_is_deficient() {
 /// themselves, so deficiency is exactly "the single column is zero".
 #[test]
 fn test_boundary_k_equals_one_all_zero_is_deficient() {
-    assert_both::<7>("4x1 all zero", &[0, 0, 0, 0], 4, 1, PermanentalRank::Deficient);
+    assert_both::<7>(
+        "4x1 all zero",
+        &[0, 0, 0, 0],
+        4,
+        1,
+        PermanentalRank::Deficient,
+    );
 }
 
 /// `k = 1`, one nonzero entry anywhere in the column: that entry is a `1 × 1`
 /// submatrix with nonzero permanent, so the rank is full.
 #[test]
 fn test_boundary_k_equals_one_single_nonzero_is_full() {
-    assert_both::<7>("4x1 nonzero last", &[0, 0, 0, 5], 4, 1, PermanentalRank::Full);
+    assert_both::<7>(
+        "4x1 nonzero last",
+        &[0, 0, 0, 5],
+        4,
+        1,
+        PermanentalRank::Full,
+    );
 }
 
 /// `k = n`: exactly one submatrix exists, so the predicate reduces to
