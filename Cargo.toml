@@ -25,6 +25,9 @@ resolver = "2"
 criterion = "0.5"
 proptest = "1.0"
 rand = "0.8"
+# `gf2-coding`'s optional `rand_chacha = "0.3"` is the sole exception: it
+# remains in the `rand` 0.8 ecosystem and migrates when `gf2-coding` moves to
+# `rand` 0.9.
 rand_chacha = "0.9"
 rand_core = "0.9"
 rayon = "1.10"
