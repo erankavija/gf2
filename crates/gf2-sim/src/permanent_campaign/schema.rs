@@ -85,6 +85,7 @@ const JSON_FIELDS: &[&str] = &[
     "permanent_zero_count",
     "permanent_histogram",
     "determinant",
+    "determinant_estimate",
     "sample_count",
     "zero_count",
     "rows",
@@ -618,13 +619,9 @@ pub struct SummaryRow {
     pub matrix_count: u64,
     /// Pooled permanent-zero count.
     pub permanent_zero_count: u64,
-    /// Permanent-zero point estimate and interval.
-    pub permanent_estimate: ProportionEstimate,
-    /// Preregistered permanent acceptance verdict.
-    pub permanent_verdict: AcceptanceVerdict,
-    /// Determinant counts, estimate, interval, and verdict or explicit absence.
-    pub determinant: DeterminantSummary,
-    /// Recorded terminal state for the cell.
+    /// Pooled determinant counts or explicit absence.
+    pub determinant: DeterminantCount,
+    /// Executed-to-completion statistics or a mechanical halt reason.
     pub terminal_state: CellTerminalState,
 }
 
@@ -658,18 +655,14 @@ pub enum AcceptanceVerdict {
     Rejected,
 }
 
-/// Determinant portion of a pooled summary row.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+/// Determinant estimate and verdict for a completed summary row.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
-pub enum DeterminantSummary {
-    /// The companion was not evaluated; no numeric count or estimate exists.
+pub enum DeterminantEstimate {
+    /// The companion was not evaluated; no estimate exists.
     NotEvaluated,
-    /// The companion was evaluated and checked.
+    /// The evaluated companion reached a completed estimate and verdict.
     Evaluated {
-        /// Matrices included in the determinant sample.
-        sample_count: u64,
-        /// Sample matrices whose determinant was zero.
-        zero_count: u64,
         /// Determinant-zero point estimate and interval.
         estimate: ProportionEstimate,
         /// Preregistered determinant acceptance verdict.
@@ -679,53 +672,43 @@ pub enum DeterminantSummary {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct DeterminantSummaryWire {
+struct DeterminantEstimateWire {
     state: DeterminantState,
-    sample_count: Option<u64>,
-    zero_count: Option<u64>,
     estimate: Option<ProportionEstimate>,
     verdict: Option<AcceptanceVerdict>,
 }
 
-impl<'de> Deserialize<'de> for DeterminantSummary {
+impl<'de> Deserialize<'de> for DeterminantEstimate {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let wire = DeterminantSummaryWire::deserialize(deserializer)?;
-        match (
-            wire.state,
-            wire.sample_count,
-            wire.zero_count,
-            wire.estimate,
-            wire.verdict,
-        ) {
-            (DeterminantState::NotEvaluated, None, None, None, None) => Ok(Self::NotEvaluated),
-            (
-                DeterminantState::Evaluated,
-                Some(sample_count),
-                Some(zero_count),
-                Some(estimate),
-                Some(verdict),
-            ) => Ok(Self::Evaluated {
-                sample_count,
-                zero_count,
-                estimate,
-                verdict,
-            }),
-            (DeterminantState::NotEvaluated, _, _, _, _) => Err(serde::de::Error::custom(
-                "not_evaluated determinant forbids counts, estimate, and verdict",
+        let wire = DeterminantEstimateWire::deserialize(deserializer)?;
+        match (wire.state, wire.estimate, wire.verdict) {
+            (DeterminantState::NotEvaluated, None, None) => Ok(Self::NotEvaluated),
+            (DeterminantState::Evaluated, Some(estimate), Some(verdict)) => {
+                Ok(Self::Evaluated { estimate, verdict })
+            }
+            (DeterminantState::NotEvaluated, _, _) => Err(serde::de::Error::custom(
+                "not_evaluated determinant estimate forbids estimate and verdict",
             )),
-            (DeterminantState::Evaluated, _, _, _, _) => Err(serde::de::Error::custom(
-                "evaluated determinant requires counts, estimate, and verdict",
+            (DeterminantState::Evaluated, _, _) => Err(serde::de::Error::custom(
+                "evaluated determinant estimate requires estimate and verdict",
             )),
         }
     }
 }
 
-/// Recorded terminal state of a frozen campaign cell.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+/// Typed completed-versus-halted outcome of a frozen campaign cell.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum CellTerminalState {
-    /// The cell reached its preregistered sample count.
-    Completed,
+    /// The cell reached its preregistered sample count and final statistics.
+    Completed {
+        /// Permanent-zero point estimate and interval.
+        permanent_estimate: ProportionEstimate,
+        /// Preregistered permanent acceptance verdict.
+        permanent_verdict: AcceptanceVerdict,
+        /// Determinant estimate and verdict or explicit non-evaluation.
+        determinant_estimate: DeterminantEstimate,
+    },
     /// Execution halted under the preregistered protocol.
     Halted {
         /// Mechanical halt category.
@@ -738,6 +721,9 @@ pub enum CellTerminalState {
 struct CellTerminalStateWire {
     state: CellTerminalStateTag,
     reason: Option<HaltReason>,
+    permanent_estimate: Option<ProportionEstimate>,
+    permanent_verdict: Option<AcceptanceVerdict>,
+    determinant_estimate: Option<DeterminantEstimate>,
 }
 
 #[derive(Deserialize)]
@@ -750,15 +736,33 @@ enum CellTerminalStateTag {
 impl<'de> Deserialize<'de> for CellTerminalState {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let wire = CellTerminalStateWire::deserialize(deserializer)?;
-        match (wire.state, wire.reason) {
-            (CellTerminalStateTag::Completed, None) => Ok(Self::Completed),
-            (CellTerminalStateTag::Halted, Some(reason)) => Ok(Self::Halted { reason }),
-            (CellTerminalStateTag::Completed, Some(_)) => {
-                Err(serde::de::Error::custom("completed state forbids reason"))
+        match (
+            wire.state,
+            wire.reason,
+            wire.permanent_estimate,
+            wire.permanent_verdict,
+            wire.determinant_estimate,
+        ) {
+            (
+                CellTerminalStateTag::Completed,
+                None,
+                Some(permanent_estimate),
+                Some(permanent_verdict),
+                Some(determinant_estimate),
+            ) => Ok(Self::Completed {
+                permanent_estimate,
+                permanent_verdict,
+                determinant_estimate,
+            }),
+            (CellTerminalStateTag::Halted, Some(reason), None, None, None) => {
+                Ok(Self::Halted { reason })
             }
-            (CellTerminalStateTag::Halted, None) => {
-                Err(serde::de::Error::custom("halted state requires reason"))
-            }
+            (CellTerminalStateTag::Completed, _, _, _, _) => Err(serde::de::Error::custom(
+                "completed state requires final statistics and forbids a halt reason",
+            )),
+            (CellTerminalStateTag::Halted, _, _, _, _) => Err(serde::de::Error::custom(
+                "halted state requires a reason and forbids final statistics",
+            )),
         }
     }
 }
@@ -807,14 +811,17 @@ pub struct DatasetFile {
     pub class: DatasetFileClass,
 }
 
-/// Canonical required-file layout derived from a root manifest.
+/// Canonical required-file layout for a planned or conformed campaign.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DatasetLayout {
     required_files: Vec<DatasetFile>,
 }
 
 impl DatasetLayout {
-    /// Derives every required path, its class, and its single writer role.
+    /// Derives every planned path, its class, and its single writer role.
+    ///
+    /// [`conform_dataset`] removes unexecuted shard paths from this plan when
+    /// it accepts a halted cell.
     pub fn from_manifest(manifest: &CampaignManifest) -> Self {
         let mut required_files = vec![DatasetFile {
             relative_path: MANIFEST_FILE.to_owned(),
@@ -872,7 +879,7 @@ pub struct ConformedDataset {
     pub field_summaries: BTreeMap<u8, FieldSummary>,
     /// Strictly parsed campaign-scoped pooled summary.
     pub pooled_summary: Vec<SummaryRow>,
-    /// Required dataset paths, classes, and writer ownership.
+    /// Present required paths, classes, and writer ownership.
     pub layout: DatasetLayout,
 }
 
@@ -1135,24 +1142,48 @@ impl SummaryRow {
             ));
         }
         validate_field(self.q)?;
-        if self.n == 0 || self.matrix_count == 0 {
-            return Err("summary row n and matrix_count must be non-zero".to_owned());
+        if self.n == 0 {
+            return Err("summary row n must be non-zero".to_owned());
         }
         if self.permanent_zero_count > self.matrix_count {
             return Err("permanent_zero_count exceeds matrix_count".to_owned());
         }
-        validate_estimate(self.permanent_estimate)?;
-        match self.determinant {
-            DeterminantSummary::NotEvaluated => {}
-            DeterminantSummary::Evaluated {
+        match &self.determinant {
+            DeterminantCount::NotEvaluated => {}
+            DeterminantCount::Evaluated {
                 sample_count,
                 zero_count,
-                estimate,
-                ..
             } => {
-                validate_counts(sample_count, zero_count, self.matrix_count)?;
-                validate_estimate(estimate)?;
+                validate_counts(*sample_count, *zero_count, self.matrix_count)?;
             }
+        }
+        match (&self.terminal_state, &self.determinant) {
+            (
+                CellTerminalState::Completed {
+                    permanent_estimate,
+                    determinant_estimate,
+                    ..
+                },
+                determinant_counts,
+            ) => {
+                if self.matrix_count == 0 {
+                    return Err("completed summary row matrix_count must be non-zero".to_owned());
+                }
+                validate_estimate(*permanent_estimate)?;
+                match (determinant_counts, determinant_estimate) {
+                    (DeterminantCount::NotEvaluated, DeterminantEstimate::NotEvaluated) => {}
+                    (
+                        DeterminantCount::Evaluated { .. },
+                        DeterminantEstimate::Evaluated { estimate, .. },
+                    ) => validate_estimate(*estimate)?,
+                    _ => {
+                        return Err(
+                            "completed determinant counts and estimate states differ".to_owned()
+                        );
+                    }
+                }
+            }
+            (CellTerminalState::Halted { .. }, _) => {}
         }
         Ok(())
     }
@@ -1217,12 +1248,48 @@ fn validate_estimate(estimate: ProportionEstimate) -> Result<(), String> {
 pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     let manifest_path = root.join(MANIFEST_FILE);
     let manifest: CampaignManifest = read_json(&manifest_path)?;
-    let layout = DatasetLayout::from_manifest(&manifest);
+    if root.file_name().and_then(|name| name.to_str()) != Some(manifest.campaign_id.0.as_str()) {
+        return invalid_value(
+            &manifest_path,
+            "dataset directory name differs from campaign_id",
+        );
+    }
+    let mut layout = DatasetLayout::from_manifest(&manifest);
     for required_file in layout.required_files() {
+        if required_file.relative_path.starts_with("shards/") {
+            continue;
+        }
         let path = root.join(&required_file.relative_path);
         if !path.is_file() {
             return Err(SchemaError::MissingFile { path });
         }
+    }
+
+    let fields: BTreeSet<_> = manifest.cells.iter().map(|cell| cell.q).collect();
+    let mut field_summaries = BTreeMap::new();
+    let mut field_rows = BTreeMap::new();
+    for q in fields {
+        let path = root.join(format!("summaries/q{q}.json"));
+        let summary: FieldSummary = read_json(&path)?;
+        if summary.q != q {
+            return invalid_value(&path, "field summary identity differs from its path");
+        }
+        for row in &summary.rows {
+            let key = (row.q, row.n);
+            if !manifest.cells.iter().any(|cell| (cell.q, cell.n) == key) {
+                return invalid_value(&path, "summary row does not name a manifest cell");
+            }
+            if field_rows.insert(key, row.clone()).is_some() {
+                return invalid_value(&path, "duplicate cell across field summaries");
+            }
+        }
+        field_summaries.insert(q, summary);
+    }
+    if field_rows.len() != manifest.cells.len() {
+        return invalid_value(
+            &manifest_path,
+            "not every manifest cell has one field-summary row",
+        );
     }
 
     let purpose_tags: BTreeSet<_> = manifest
@@ -1230,8 +1297,12 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         .iter()
         .map(|purpose| purpose.tag)
         .collect();
-    let mut pooled_cells = BTreeMap::new();
+    let mut observed_shard_paths = BTreeSet::new();
     for cell in &manifest.cells {
+        let row = field_rows
+            .get(&(cell.q, cell.n))
+            .expect("field-summary coverage checked above");
+        let completed = matches!(row.terminal_state, CellTerminalState::Completed { .. });
         let mut cell_count = 0_u64;
         let mut permanent_zero_count = 0_u64;
         let mut determinant_sample_count = 0_u64;
@@ -1241,7 +1312,14 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 "shards/q{}/n{:02}/shard-{:06}.json",
                 cell.q, cell.n, shard_spec.shard_id
             );
-            let path = root.join(relative_path);
+            let path = root.join(&relative_path);
+            if !path.is_file() {
+                if completed {
+                    return Err(SchemaError::MissingFile { path });
+                }
+                continue;
+            }
+            observed_shard_paths.insert(PathBuf::from(&relative_path));
             let record: ShardRecord = read_json(&path)?;
             if record.shard_id != shard_spec.shard_id
                 || record.stream_address.root_seed != manifest.root_seed
@@ -1317,10 +1395,10 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 }
             }
         }
-        if cell_count != cell.matrix_count {
+        if completed && cell_count != cell.matrix_count {
             return invalid_value(
                 &manifest_path,
-                "pooled shard count differs from manifest cell count",
+                "completed pooled shard count differs from manifest cell count",
             );
         }
         let determinant = match cell.determinant_companion {
@@ -1330,40 +1408,26 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 zero_count: determinant_zero_count,
             },
         };
-        pooled_cells.insert(
-            (cell.q, cell.n),
+        let path = root.join(format!("summaries/q{}.json", cell.q));
+        validate_summary_aggregate(
+            &path,
+            row,
             CellAggregate {
                 matrix_count: cell_count,
                 permanent_zero_count,
                 determinant,
             },
-        );
+        )?;
     }
 
-    let fields: BTreeSet<_> = manifest.cells.iter().map(|cell| cell.q).collect();
-    let mut field_summaries = BTreeMap::new();
-    let mut field_rows = BTreeMap::new();
-    for q in fields {
-        let path = root.join(format!("summaries/q{q}.json"));
-        let summary: FieldSummary = read_json(&path)?;
-        for row in &summary.rows {
-            let key = (row.q, row.n);
-            match pooled_cells.get(&key) {
-                Some(aggregate) => validate_summary_aggregate(&path, row, *aggregate)?,
-                None => return invalid_value(&path, "summary row does not name a manifest cell"),
-            }
-            if field_rows.insert(key, row.clone()).is_some() {
-                return invalid_value(&path, "duplicate cell across field summaries");
-            }
-        }
-        field_summaries.insert(q, summary);
+    let actual_shard_paths = collect_shard_files(root)?;
+    if let Some(path) = actual_shard_paths.difference(&observed_shard_paths).next() {
+        return invalid_value(&root.join(path), "unmanifested shard path");
     }
-    if field_rows.len() != pooled_cells.len() {
-        return invalid_value(
-            &manifest_path,
-            "not every manifest cell has one field-summary row",
-        );
-    }
+    layout.required_files.retain(|required_file| {
+        !required_file.relative_path.starts_with("shards/")
+            || observed_shard_paths.contains(Path::new(&required_file.relative_path))
+    });
 
     let pooled_path = root.join(POOLED_SUMMARY_FILE);
     let pooled_summary = decode_summary_csv(&pooled_path)?;
@@ -1387,6 +1451,53 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
     })
 }
 
+fn collect_shard_files(root: &Path) -> Result<BTreeSet<PathBuf>, SchemaError> {
+    let shard_root = root.join("shards");
+    if !shard_root.exists() {
+        return Ok(BTreeSet::new());
+    }
+    if !shard_root.is_dir() {
+        return invalid_value(&shard_root, "shards path must be a directory");
+    }
+    let mut files = BTreeSet::new();
+    collect_files_below(root, &shard_root, &mut files)?;
+    Ok(files)
+}
+
+fn collect_files_below(
+    root: &Path,
+    directory: &Path,
+    files: &mut BTreeSet<PathBuf>,
+) -> Result<(), SchemaError> {
+    let entries = fs::read_dir(directory).map_err(|source| SchemaError::Io {
+        path: directory.to_owned(),
+        source,
+    })?;
+    for entry in entries {
+        let entry = entry.map_err(|source| SchemaError::Io {
+            path: directory.to_owned(),
+            source,
+        })?;
+        let path = entry.path();
+        let file_type = entry.file_type().map_err(|source| SchemaError::Io {
+            path: path.clone(),
+            source,
+        })?;
+        if file_type.is_dir() {
+            collect_files_below(root, &path, files)?;
+        } else {
+            let relative = path
+                .strip_prefix(root)
+                .map_err(|_| SchemaError::InvalidValue {
+                    path: path.clone(),
+                    message: "shard path is outside the dataset root".to_owned(),
+                })?;
+            files.insert(relative.to_owned());
+        }
+    }
+    Ok(())
+}
+
 fn validate_summary_aggregate(
     path: &Path,
     row: &SummaryRow,
@@ -1402,33 +1513,28 @@ fn validate_summary_aggregate(
         );
     }
     match (aggregate.determinant, &row.determinant) {
-        (DeterminantAggregate::NotEvaluated, DeterminantSummary::NotEvaluated) => Ok(()),
-        (DeterminantAggregate::NotEvaluated, DeterminantSummary::Evaluated { .. }) => {
-            invalid_value(
-                path,
-                "summary determinant state contradicts not_evaluated determinant plan",
-            )
-        }
+        (DeterminantAggregate::NotEvaluated, DeterminantCount::NotEvaluated) => Ok(()),
+        (DeterminantAggregate::NotEvaluated, DeterminantCount::Evaluated { .. }) => invalid_value(
+            path,
+            "summary determinant state contradicts not_evaluated determinant plan",
+        ),
         (
             DeterminantAggregate::Evaluated {
                 sample_count: pooled_samples,
                 zero_count: pooled_zeros,
             },
-            DeterminantSummary::Evaluated {
+            DeterminantCount::Evaluated {
                 sample_count,
                 zero_count,
-                ..
             },
         ) if *sample_count == pooled_samples && *zero_count == pooled_zeros => Ok(()),
-        (DeterminantAggregate::Evaluated { .. }, DeterminantSummary::Evaluated { .. }) => {
+        (DeterminantAggregate::Evaluated { .. }, DeterminantCount::Evaluated { .. }) => {
             invalid_value(path, "summary determinant counts differ from pooled shards")
         }
-        (DeterminantAggregate::Evaluated { .. }, DeterminantSummary::NotEvaluated) => {
-            invalid_value(
-                path,
-                "summary determinant state contradicts evaluate determinant plan",
-            )
-        }
+        (DeterminantAggregate::Evaluated { .. }, DeterminantCount::NotEvaluated) => invalid_value(
+            path,
+            "summary determinant state contradicts evaluate determinant plan",
+        ),
     }
 }
 
@@ -1477,35 +1583,72 @@ pub fn encode_summary_csv(rows: &[SummaryRow]) -> String {
     output.push_str(&SUMMARY_CSV_FIELDS.join(","));
     output.push('\n');
     for row in rows {
-        let (det_state, det_sample, det_zero, det_point, det_lower, det_upper, det_verdict) =
-            match row.determinant {
-                DeterminantSummary::NotEvaluated => (
-                    "not_evaluated".to_owned(),
-                    String::new(),
-                    String::new(),
-                    String::new(),
-                    String::new(),
-                    String::new(),
-                    String::new(),
-                ),
-                DeterminantSummary::Evaluated {
-                    sample_count,
-                    zero_count,
-                    estimate,
-                    verdict,
-                } => (
-                    "evaluated".to_owned(),
-                    sample_count.to_string(),
-                    zero_count.to_string(),
-                    estimate.point.to_string(),
-                    estimate.interval.lower.to_string(),
-                    estimate.interval.upper.to_string(),
-                    verdict.as_str().to_owned(),
-                ),
-            };
-        let (terminal_state, halt_reason) = match row.terminal_state {
-            CellTerminalState::Completed => ("completed", ""),
-            CellTerminalState::Halted { reason } => ("halted", reason.as_str()),
+        let (det_state, det_sample, det_zero) = match &row.determinant {
+            DeterminantCount::NotEvaluated => {
+                ("not_evaluated".to_owned(), String::new(), String::new())
+            }
+            DeterminantCount::Evaluated {
+                sample_count,
+                zero_count,
+            } => (
+                "evaluated".to_owned(),
+                sample_count.to_string(),
+                zero_count.to_string(),
+            ),
+        };
+        let (
+            permanent_point,
+            permanent_lower,
+            permanent_upper,
+            permanent_verdict,
+            det_point,
+            det_lower,
+            det_upper,
+            det_verdict,
+            terminal_state,
+            halt_reason,
+        ) = match row.terminal_state {
+            CellTerminalState::Completed {
+                permanent_estimate,
+                permanent_verdict,
+                determinant_estimate,
+            } => {
+                let (det_point, det_lower, det_upper, det_verdict) = match determinant_estimate {
+                    DeterminantEstimate::NotEvaluated => {
+                        (String::new(), String::new(), String::new(), String::new())
+                    }
+                    DeterminantEstimate::Evaluated { estimate, verdict } => (
+                        estimate.point.to_string(),
+                        estimate.interval.lower.to_string(),
+                        estimate.interval.upper.to_string(),
+                        verdict.as_str().to_owned(),
+                    ),
+                };
+                (
+                    permanent_estimate.point.to_string(),
+                    permanent_estimate.interval.lower.to_string(),
+                    permanent_estimate.interval.upper.to_string(),
+                    permanent_verdict.as_str().to_owned(),
+                    det_point,
+                    det_lower,
+                    det_upper,
+                    det_verdict,
+                    "completed",
+                    "",
+                )
+            }
+            CellTerminalState::Halted { reason } => (
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                String::new(),
+                "halted",
+                reason.as_str(),
+            ),
         };
         let fields = [
             row.schema_version.to_string(),
@@ -1513,10 +1656,10 @@ pub fn encode_summary_csv(rows: &[SummaryRow]) -> String {
             row.n.to_string(),
             row.matrix_count.to_string(),
             row.permanent_zero_count.to_string(),
-            row.permanent_estimate.point.to_string(),
-            row.permanent_estimate.interval.lower.to_string(),
-            row.permanent_estimate.interval.upper.to_string(),
-            row.permanent_verdict.as_str().to_owned(),
+            permanent_point,
+            permanent_lower,
+            permanent_upper,
+            permanent_verdict,
             det_state,
             det_sample,
             det_zero,
@@ -1585,30 +1728,61 @@ fn decode_summary_csv(path: &Path) -> Result<Vec<SummaryRow>, SchemaError> {
 fn parse_summary_row(fields: &[&str]) -> Result<SummaryRow, String> {
     let determinant = match fields[9] {
         "not_evaluated" => {
-            if fields[10..16].iter().any(|field| !field.is_empty()) {
-                return Err("not_evaluated determinant has numeric or verdict fields".to_owned());
+            if fields[10..12].iter().any(|field| !field.is_empty()) {
+                return Err("not_evaluated determinant has numeric count fields".to_owned());
             }
-            DeterminantSummary::NotEvaluated
+            DeterminantCount::NotEvaluated
         }
-        "evaluated" => DeterminantSummary::Evaluated {
+        "evaluated" => DeterminantCount::Evaluated {
             sample_count: parse_field(fields, 10)?,
             zero_count: parse_field(fields, 11)?,
-            estimate: ProportionEstimate {
-                point: parse_field(fields, 12)?,
-                interval: Interval {
-                    lower: parse_field(fields, 13)?,
-                    upper: parse_field(fields, 14)?,
-                },
-            },
-            verdict: fields[15].parse()?,
         },
         other => return Err(format!("unknown determinant_state {other:?}")),
     };
     let terminal_state = match fields[16] {
-        "completed" if fields[17].is_empty() => CellTerminalState::Completed,
-        "halted" => CellTerminalState::Halted {
-            reason: fields[17].parse()?,
-        },
+        "completed" if fields[17].is_empty() => {
+            let determinant_estimate = match &determinant {
+                DeterminantCount::NotEvaluated => {
+                    if fields[12..16].iter().any(|field| !field.is_empty()) {
+                        return Err(
+                            "completed not_evaluated determinant has estimate fields".to_owned()
+                        );
+                    }
+                    DeterminantEstimate::NotEvaluated
+                }
+                DeterminantCount::Evaluated { .. } => DeterminantEstimate::Evaluated {
+                    estimate: ProportionEstimate {
+                        point: parse_field(fields, 12)?,
+                        interval: Interval {
+                            lower: parse_field(fields, 13)?,
+                            upper: parse_field(fields, 14)?,
+                        },
+                    },
+                    verdict: fields[15].parse()?,
+                },
+            };
+            CellTerminalState::Completed {
+                permanent_estimate: ProportionEstimate {
+                    point: parse_field(fields, 5)?,
+                    interval: Interval {
+                        lower: parse_field(fields, 6)?,
+                        upper: parse_field(fields, 7)?,
+                    },
+                },
+                permanent_verdict: fields[8].parse()?,
+                determinant_estimate,
+            }
+        }
+        "halted" => {
+            if fields[5..9].iter().any(|field| !field.is_empty())
+                || fields[12..16].iter().any(|field| !field.is_empty())
+            {
+                return Err("halted row has completed estimate or verdict fields".to_owned());
+            }
+            CellTerminalState::Halted {
+                reason: fields[17].parse()?,
+            }
+        }
         "completed" => return Err("completed row has a halt_reason".to_owned()),
         other => return Err(format!("unknown terminal_state {other:?}")),
     };
@@ -1618,14 +1792,6 @@ fn parse_summary_row(fields: &[&str]) -> Result<SummaryRow, String> {
         n: parse_field(fields, 2)?,
         matrix_count: parse_field(fields, 3)?,
         permanent_zero_count: parse_field(fields, 4)?,
-        permanent_estimate: ProportionEstimate {
-            point: parse_field(fields, 5)?,
-            interval: Interval {
-                lower: parse_field(fields, 6)?,
-                upper: parse_field(fields, 7)?,
-            },
-        },
-        permanent_verdict: fields[8].parse()?,
         determinant,
         terminal_state,
     })
@@ -1697,23 +1863,25 @@ mod tests {
 
     static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(0);
 
-    struct TestDir(PathBuf);
+    struct TestDir(PathBuf, PathBuf);
 
     impl TestDir {
         fn new() -> Self {
             let id = NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!(
+            let parent = std::env::temp_dir().join(format!(
                 "gf2-sim-dataset-schema-{}-{id}",
                 std::process::id()
             ));
-            fs::create_dir(&path).expect("create isolated schema fixture directory");
-            Self(path)
+            let root = parent.join("campaign-2026-08-09");
+            fs::create_dir(&parent).expect("create isolated schema fixture parent");
+            fs::create_dir(&root).expect("create canonical campaign directory");
+            Self(root, parent)
         }
     }
 
     impl Drop for TestDir {
         fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
+            let _ = fs::remove_dir_all(&self.1);
         }
     }
 
@@ -1794,16 +1962,18 @@ mod tests {
             n: 4,
             matrix_count: 20,
             permanent_zero_count: 6,
-            permanent_estimate: ProportionEstimate {
-                point: 0.3,
-                interval: Interval {
-                    lower: 0.145,
-                    upper: 0.519,
+            determinant: DeterminantCount::NotEvaluated,
+            terminal_state: CellTerminalState::Completed {
+                permanent_estimate: ProportionEstimate {
+                    point: 0.3,
+                    interval: Interval {
+                        lower: 0.145,
+                        upper: 0.519,
+                    },
                 },
+                permanent_verdict: AcceptanceVerdict::Accepted,
+                determinant_estimate: DeterminantEstimate::NotEvaluated,
             },
-            permanent_verdict: AcceptanceVerdict::Accepted,
-            determinant: DeterminantSummary::NotEvaluated,
-            terminal_state: CellTerminalState::Completed,
         }
     }
 
@@ -1849,6 +2019,74 @@ mod tests {
         .unwrap();
     }
 
+    fn write_multifield_fixture(root: &Path) {
+        write_fixture(root);
+
+        let mut campaign = manifest();
+        let backend_receipt = campaign.cells[0].backend_receipt.clone();
+        campaign.cells.push(CellSpec {
+            q: 5,
+            n: 4,
+            matrix_count: 10,
+            shard_size: 10,
+            shards: vec![ShardSpec {
+                shard_id: 0,
+                stream_index: 200,
+            }],
+            backend: Backend::Scalar,
+            backend_receipt,
+            determinant_companion: DeterminantPlan::NotEvaluated,
+        });
+        fs::write(
+            root.join(MANIFEST_FILE),
+            serde_json::to_vec_pretty(&campaign).unwrap(),
+        )
+        .unwrap();
+
+        let mut q5_shard = shard(0, 200);
+        q5_shard.stream_address.q = 5;
+        q5_shard.permanent_zero_count = 2;
+        q5_shard.permanent_histogram = vec![2; 5];
+        let shard_dir = root.join("shards/q5/n04");
+        fs::create_dir_all(&shard_dir).unwrap();
+        fs::write(
+            shard_dir.join("shard-000000.json"),
+            serde_json::to_vec_pretty(&q5_shard).unwrap(),
+        )
+        .unwrap();
+
+        let mut q5_row = summary_row();
+        q5_row.q = 5;
+        q5_row.matrix_count = 10;
+        q5_row.permanent_zero_count = 2;
+        q5_row.terminal_state = CellTerminalState::Completed {
+            permanent_estimate: ProportionEstimate {
+                point: 0.2,
+                interval: Interval {
+                    lower: 0.05,
+                    upper: 0.45,
+                },
+            },
+            permanent_verdict: AcceptanceVerdict::Accepted,
+            determinant_estimate: DeterminantEstimate::NotEvaluated,
+        };
+        let q5_summary = FieldSummary {
+            schema_version: SCHEMA_VERSION,
+            q: 5,
+            rows: vec![q5_row.clone()],
+        };
+        fs::write(
+            root.join("summaries/q5.json"),
+            serde_json::to_vec_pretty(&q5_summary).unwrap(),
+        )
+        .unwrap();
+        fs::write(
+            root.join(POOLED_SUMMARY_FILE),
+            encode_summary_csv(&[summary_row(), q5_row]),
+        )
+        .unwrap();
+    }
+
     fn read_field_summary(root: &Path) -> FieldSummary {
         serde_json::from_slice(&fs::read(root.join("summaries/q3.json")).unwrap()).unwrap()
     }
@@ -1862,6 +2100,78 @@ mod tests {
         fs::write(
             root.join(POOLED_SUMMARY_FILE),
             encode_summary_csv(&summary.rows),
+        )
+        .unwrap();
+    }
+
+    fn write_halted_summary(
+        root: &Path,
+        matrix_count: u64,
+        permanent_zero_count: u64,
+        determinant: DeterminantCount,
+        reason: HaltReason,
+    ) {
+        let path = root.join("summaries/q3.json");
+        let mut summary: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        let row = summary["rows"][0].as_object_mut().unwrap();
+        row.insert("matrix_count".to_owned(), json!(matrix_count));
+        row.insert(
+            "permanent_zero_count".to_owned(),
+            json!(permanent_zero_count),
+        );
+        row.remove("permanent_estimate");
+        row.remove("permanent_verdict");
+        row.insert(
+            "determinant".to_owned(),
+            serde_json::to_value(&determinant).unwrap(),
+        );
+        row.insert(
+            "terminal_state".to_owned(),
+            json!({"state": "halted", "reason": reason.as_str()}),
+        );
+        fs::write(&path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
+
+        let (determinant_state, determinant_sample_count, determinant_zero_count) =
+            match determinant {
+                DeterminantCount::NotEvaluated => {
+                    ("not_evaluated".to_owned(), String::new(), String::new())
+                }
+                DeterminantCount::Evaluated {
+                    sample_count,
+                    zero_count,
+                } => (
+                    "evaluated".to_owned(),
+                    sample_count.to_string(),
+                    zero_count.to_string(),
+                ),
+            };
+        let csv_fields = [
+            SCHEMA_VERSION.to_string(),
+            "3".to_owned(),
+            "4".to_owned(),
+            matrix_count.to_string(),
+            permanent_zero_count.to_string(),
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            determinant_state,
+            determinant_sample_count,
+            determinant_zero_count,
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            "halted".to_owned(),
+            reason.as_str().to_owned(),
+        ];
+        fs::write(
+            root.join(POOLED_SUMMARY_FILE),
+            format!(
+                "{}\n{}\n",
+                SUMMARY_CSV_FIELDS.join(","),
+                csv_fields.join(",")
+            ),
         )
         .unwrap();
     }
@@ -1894,17 +2204,29 @@ mod tests {
             );
         }
         let mut summary = read_field_summary(root);
-        summary.rows[0].determinant = DeterminantSummary::Evaluated {
+        summary.rows[0].determinant = DeterminantCount::Evaluated {
             sample_count: 20,
             zero_count: 8,
-            estimate: ProportionEstimate {
-                point: 0.4,
+        };
+        summary.rows[0].terminal_state = CellTerminalState::Completed {
+            permanent_estimate: ProportionEstimate {
+                point: 0.3,
                 interval: Interval {
-                    lower: 0.2,
-                    upper: 0.6,
+                    lower: 0.145,
+                    upper: 0.519,
                 },
             },
-            verdict: AcceptanceVerdict::Accepted,
+            permanent_verdict: AcceptanceVerdict::Accepted,
+            determinant_estimate: DeterminantEstimate::Evaluated {
+                estimate: ProportionEstimate {
+                    point: 0.4,
+                    interval: Interval {
+                        lower: 0.2,
+                        upper: 0.6,
+                    },
+                },
+                verdict: AcceptanceVerdict::Accepted,
+            },
         };
         write_field_and_pooled_summaries(root, &summary);
     }
@@ -1943,6 +2265,170 @@ mod tests {
                 )
             }
         }));
+    }
+
+    #[test]
+    fn conformance_binds_campaign_id_to_directory_basename() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        let manifest_path = fixture.0.join(MANIFEST_FILE);
+        let mut value: Value = serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        value["campaign_id"] = json!("different-campaign");
+        fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        assert!(
+            error.contains("dataset directory name differs from campaign_id"),
+            "unexpected campaign directory identity error: {error}"
+        );
+    }
+
+    #[test]
+    fn conformance_rejects_field_summary_files_swapped_between_fields() {
+        let fixture = TestDir::new();
+        write_multifield_fixture(&fixture.0);
+        conform_dataset(&fixture.0).expect("well-formed multi-field fixture must conform");
+
+        let q3_path = fixture.0.join("summaries/q3.json");
+        let q5_path = fixture.0.join("summaries/q5.json");
+        let q3_bytes = fs::read(&q3_path).unwrap();
+        let q5_bytes = fs::read(&q5_path).unwrap();
+        fs::write(&q3_path, q5_bytes).unwrap();
+        fs::write(&q5_path, q3_bytes).unwrap();
+
+        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        assert!(
+            error.contains("field summary identity differs from its path"),
+            "unexpected swapped field-summary error: {error}"
+        );
+    }
+
+    #[test]
+    fn conformance_rejects_field_summary_rows_swapped_between_fields() {
+        let fixture = TestDir::new();
+        write_multifield_fixture(&fixture.0);
+        let q3_path = fixture.0.join("summaries/q3.json");
+        let q5_path = fixture.0.join("summaries/q5.json");
+        let mut q3: FieldSummary = serde_json::from_slice(&fs::read(&q3_path).unwrap()).unwrap();
+        let mut q5: FieldSummary = serde_json::from_slice(&fs::read(&q5_path).unwrap()).unwrap();
+        std::mem::swap(&mut q3.rows, &mut q5.rows);
+        fs::write(&q3_path, serde_json::to_vec_pretty(&q3).unwrap()).unwrap();
+        fs::write(&q5_path, serde_json::to_vec_pretty(&q5).unwrap()).unwrap();
+
+        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        assert!(
+            error.contains("differs from field summary"),
+            "unexpected swapped field-summary row error: {error}"
+        );
+    }
+
+    #[test]
+    fn halted_partial_cell_preserves_counts_without_completed_metrics() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        fs::remove_file(fixture.0.join("shards/q3/n04/shard-000001.json")).unwrap();
+        write_halted_summary(
+            &fixture.0,
+            10,
+            3,
+            DeterminantCount::NotEvaluated,
+            HaltReason::ExecutionFailure,
+        );
+
+        let dataset = conform_dataset(&fixture.0).expect("halted partial cell must conform");
+        assert_eq!(dataset.pooled_summary[0].matrix_count, 10);
+        assert_eq!(dataset.pooled_summary[0].permanent_zero_count, 3);
+        assert!(dataset
+            .layout
+            .required_files()
+            .iter()
+            .all(|file| { file.relative_path != "shards/q3/n04/shard-000001.json" }));
+    }
+
+    #[test]
+    fn propagated_acceptance_failure_can_halt_before_any_shard_executes() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        set_manifest_determinant_plan(&fixture.0, DeterminantPlan::Evaluate);
+        for shard_id in 0..2 {
+            fs::remove_file(
+                fixture
+                    .0
+                    .join(format!("shards/q3/n04/shard-{shard_id:06}.json")),
+            )
+            .unwrap();
+        }
+        write_halted_summary(
+            &fixture.0,
+            0,
+            0,
+            DeterminantCount::Evaluated {
+                sample_count: 0,
+                zero_count: 0,
+            },
+            HaltReason::AcceptanceFailure,
+        );
+
+        let dataset = conform_dataset(&fixture.0).expect("zero-shard propagated halt must conform");
+        assert!(dataset
+            .layout
+            .required_files()
+            .iter()
+            .all(|file| !file.relative_path.starts_with("shards/")));
+    }
+
+    #[test]
+    fn halted_cell_accepts_any_manifested_shard_subset() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        fs::remove_file(fixture.0.join("shards/q3/n04/shard-000000.json")).unwrap();
+        write_halted_summary(
+            &fixture.0,
+            10,
+            3,
+            DeterminantCount::NotEvaluated,
+            HaltReason::ExecutionFailure,
+        );
+
+        let dataset = conform_dataset(&fixture.0).expect("halted shards need not form a prefix");
+        assert!(dataset
+            .layout
+            .required_files()
+            .iter()
+            .any(|file| { file.relative_path == "shards/q3/n04/shard-000001.json" }));
+    }
+
+    #[test]
+    fn conformance_rejects_silent_or_completed_partial_cells() {
+        let silent = TestDir::new();
+        write_fixture(&silent.0);
+        let path = silent.0.join("summaries/q3.json");
+        let mut summary: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        summary["rows"] = json!([]);
+        fs::write(&path, serde_json::to_vec_pretty(&summary).unwrap()).unwrap();
+        assert!(conform_dataset(&silent.0).is_err());
+
+        let partial = TestDir::new();
+        write_fixture(&partial.0);
+        fs::remove_file(partial.0.join("shards/q3/n04/shard-000001.json")).unwrap();
+        assert!(conform_dataset(&partial.0).is_err());
+    }
+
+    #[test]
+    fn conformance_rejects_unmanifested_shard_paths() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        fs::copy(
+            fixture.0.join("shards/q3/n04/shard-000000.json"),
+            fixture.0.join("shards/q3/n04/shard-999999.json"),
+        )
+        .unwrap();
+
+        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        assert!(
+            error.contains("unmanifested shard path"),
+            "unexpected unmanifested shard error: {error}"
+        );
     }
 
     #[test]
@@ -2078,7 +2564,6 @@ mod tests {
         write_fixture(&fixture.0);
         let mut summary = read_field_summary(&fixture.0);
         summary.rows[0].permanent_zero_count += 1;
-        summary.rows[0].permanent_estimate.point = 0.35;
         write_field_and_pooled_summaries(&fixture.0, &summary);
 
         let error = conform_dataset(&fixture.0).unwrap_err().to_string();
@@ -2104,17 +2589,29 @@ mod tests {
                 );
             } else {
                 let mut summary = read_field_summary(&fixture.0);
-                summary.rows[0].determinant = DeterminantSummary::Evaluated {
+                summary.rows[0].determinant = DeterminantCount::Evaluated {
                     sample_count: 20,
                     zero_count: 0,
-                    estimate: ProportionEstimate {
-                        point: 0.0,
+                };
+                summary.rows[0].terminal_state = CellTerminalState::Completed {
+                    permanent_estimate: ProportionEstimate {
+                        point: 0.3,
                         interval: Interval {
-                            lower: 0.0,
-                            upper: 0.2,
+                            lower: 0.145,
+                            upper: 0.519,
                         },
                     },
-                    verdict: AcceptanceVerdict::Accepted,
+                    permanent_verdict: AcceptanceVerdict::Accepted,
+                    determinant_estimate: DeterminantEstimate::Evaluated {
+                        estimate: ProportionEstimate {
+                            point: 0.0,
+                            interval: Interval {
+                                lower: 0.0,
+                                upper: 0.2,
+                            },
+                        },
+                        verdict: AcceptanceVerdict::Accepted,
+                    },
                 };
                 write_field_and_pooled_summaries(&fixture.0, &summary);
             }
@@ -2147,17 +2644,9 @@ mod tests {
         write_fixture(&wrong_pool.0);
         set_coherent_evaluated_determinants(&wrong_pool.0);
         let mut summary = read_field_summary(&wrong_pool.0);
-        summary.rows[0].determinant = DeterminantSummary::Evaluated {
+        summary.rows[0].determinant = DeterminantCount::Evaluated {
             sample_count: 20,
             zero_count: 7,
-            estimate: ProportionEstimate {
-                point: 0.35,
-                interval: Interval {
-                    lower: 0.15,
-                    upper: 0.55,
-                },
-            },
-            verdict: AcceptanceVerdict::Accepted,
         };
         write_field_and_pooled_summaries(&wrong_pool.0, &summary);
 
@@ -2199,6 +2688,21 @@ mod tests {
     }
 
     #[test]
+    fn halted_terminal_outcome_forbids_completed_metrics() {
+        let halted = CellTerminalState::Halted {
+            reason: HaltReason::ExecutionFailure,
+        };
+        let mut value = serde_json::to_value(halted).unwrap();
+        let object = value.as_object().unwrap();
+        assert!(!object.contains_key("permanent_estimate"));
+        assert!(!object.contains_key("permanent_verdict"));
+        assert!(!object.contains_key("determinant_estimate"));
+
+        value["permanent_verdict"] = json!("rejected");
+        assert!(serde_json::from_value::<CellTerminalState>(value).is_err());
+    }
+
+    #[test]
     fn schema_field_names_admit_only_data_and_mechanical_provenance() {
         let banned = [
             "claim",
@@ -2221,9 +2725,7 @@ mod tests {
                 rows: vec![summary_row()],
             })
             .unwrap(),
-            serde_json::to_value(DeterminantSummary::Evaluated {
-                sample_count: 10,
-                zero_count: 0,
+            serde_json::to_value(DeterminantEstimate::Evaluated {
                 estimate: ProportionEstimate {
                     point: 0.0,
                     interval: Interval {

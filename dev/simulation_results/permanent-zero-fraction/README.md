@@ -114,21 +114,28 @@ Each `summaries/q<q>.json` file is a `FieldSummary` containing
 and `summary.csv`; per $(q,n)$ it contains:
 
 - pooled `matrix_count` and `permanent_zero_count`;
-- `permanent_estimate` with `point` and interval `lower`/`upper` endpoints;
-- `permanent_verdict`, either `accepted` or `rejected`;
-- the determinant summary state;
-- `terminal_state`.
+- determinant counts or the explicit not-evaluated state;
+- one typed `terminal_state` outcome.
 
-An evaluated determinant summary contains `sample_count`, `zero_count`, its own
-point estimate and interval, and its acceptance verdict. A not-evaluated
-determinant summary is exactly `{"state":"not_evaluated"}` and carries no
-numeric fields. The pooled CSV expresses the same distinction with
-`determinant_state=not_evaluated` and empty determinant count, estimate,
-interval, and verdict columns.
+An evaluated determinant count contains `sample_count` and `zero_count`. A
+not-evaluated determinant is exactly `{"state":"not_evaluated"}` and carries
+no numeric fields. Counts are independent of terminal outcome so a halted cell
+preserves every accepted shard count.
 
-A terminal state is either `completed` or `halted` with one mechanical reason
-code: `acceptance_failure`, `backend_unavailable`, or `execution_failure`.
-Halted cells remain in the raw dataset; omission is not a terminal state.
+The completed terminal outcome contains the permanent point estimate,
+interval, and acceptance verdict plus a determinant estimate/verdict or
+explicit non-evaluation. The halted terminal outcome carries only one
+mechanical reason code: `acceptance_failure`, `backend_unavailable`, or
+`execution_failure`; it forbids completed estimates and verdicts. A halted cell
+may contain any unique subset of its manifest-planned shard paths, including no
+shards, and its counts pool exactly that subset. A completed cell requires all
+planned shards and the full preregistered count. Halted cells remain in the raw
+dataset; omission is not a terminal state.
+
+The pooled CSV expresses the same typed outcome through its flat stable header.
+Completed rows fill the permanent estimate/verdict columns and the applicable
+determinant estimate/verdict columns. Halted rows leave all estimate and verdict
+columns empty while retaining permanent and determinant count columns.
 
 `summary.csv` uses the exact header exported as `SUMMARY_CSV_FIELDS`. Columns
 are numeric values or closed-vocabulary tokens, so the format admits no
@@ -141,9 +148,13 @@ artefacts.
 
 `conform_dataset(<campaign-id-directory>)` checks the complete raw shape. It
 rejects an absent required path, malformed JSON or CSV, a missing or unknown
-field, a wrong schema version, invalid count relationships, a shard address
-that differs from the manifest, a field summary that differs from pooled
-shards, and a pooled summary that differs from the field summaries.
+field, a wrong schema version, a campaign id that differs from the dataset
+directory name, invalid count relationships, a shard address that differs from
+the manifest, a field-summary or row field identity that differs from its path,
+an unmanifested shard path, a completed cell missing a planned shard, a field
+summary that differs from its executed shard subset, and a pooled summary that
+differs from the field summaries. The returned layout contains only executed
+shard paths for halted cells and preserves their field-writer ownership.
 
 Cryptographic checksum generation and verification are a separate integrity
 layer. Schema conformance establishes the file shapes and cross-file count
