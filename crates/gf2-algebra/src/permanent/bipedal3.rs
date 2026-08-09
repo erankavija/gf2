@@ -14,19 +14,17 @@
 //! a horizontal fold via `Bipedal3::fold_mul_first_n` — the bipedal
 //! multiplication tree halving lives once in that method.
 //!
-//! ## SIMD dispatch (single-word, `n ≤ 63`)
+//! ## Single-matrix and batched SIMD paths (`n ≤ 63`)
 //!
-//! When the `simd` Cargo feature is active AND the runtime CPU supports AVX2,
-//! the single-word path delegates the per-step add/sub to the AVX2 batch
-//! kernel from `gf2-kernels-simd`. Each column-sum word is zero-padded to a
-//! 4-element `u64` buffer (one full AVX2 lane), the batch kernel is called
-//! to compute the operation on all 4 words simultaneously (of which only
-//! word 0 carries meaningful data), and word 0 of the output is read back.
+//! The public single-matrix dispatcher selects the scalar single-word kernel.
+//! Cross-CPU measurements put its time at 0.317–0.319 of the AVX2
+//! single-matrix kernel's time because the latter zero-pads one meaningful
+//! word into a four-lane register. The committed receipt is
+//! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/363556e6/s3_cross_cpu_portability.md`.
 //!
-//! At W=1 the SIMD path does not outperform scalar, but it exercises the
-//! dispatch wiring and kernel correctness on real hardware, satisfying the
-//! T13 correctness criterion. The batched multi-matrix path (T16) is the
-//! performance-oriented user.
+//! The single-matrix AVX2 function remains directly available for kernel
+//! conformance checks. The batched entry point uses AVX2 when available to
+//! evaluate up to four matrices together, with one matrix in each lane.
 //!
 //! ## Multi-word path (`n > 63`)
 //!
@@ -37,10 +35,10 @@
 //!
 //! ## Dispatcher
 //!
-//! The public `permanent_bipedal3` function dispatches to the appropriate
-//! path based on `n`.  The single-word path is also exposed as
-//! `permanent_bipedal3_singleword` for callers that need the single-word
-//! path directly (e.g., multi-word boundary cross-checks).
+//! The public `permanent_bipedal3` function dispatches by `n`: it selects the
+//! scalar `permanent_bipedal3_singleword` kernel through `n = 63` and the
+//! multi-word path above that boundary. The single-word kernel is also exposed
+//! directly for callers such as multi-word boundary cross-checks.
 //!
 //! This module is the **headline single-thread fast path** of the
 //! permanent epic; the 50× speedup target is measured against
@@ -65,8 +63,8 @@ use crate::permanent::bipedal3_multiword;
 // `maybe_bipedal_avx2()` follows the project's `gf2_core::simd::maybe_simd`
 // OnceLock SSOT pattern (CLAUDE.md §Architecture, point 3).  It wraps
 // `gf2_kernels_simd::bipedal::detect_avx2()` — the upstream OnceLock that
-// performs CPUID.  On non-x86 targets, or when the `simd` feature is off,
-// the symbol simply does not exist and all call sites are elided at
+// performs CPUID. On non-x86 targets, or when the `simd` feature is off,
+// the symbol simply does not exist and its call sites are elided at
 // compile time.
 // ---------------------------------------------------------------------------
 
@@ -75,8 +73,7 @@ use crate::permanent::bipedal3_multiword;
 ///
 /// This is the `gf2-algebra`-local shim over
 /// [`gf2_kernels_simd::bipedal::detect_avx2`]; it re-uses that crate's
-/// own `OnceLock` so CPUID is queried at most once per process across both
-/// call sites.
+/// own `OnceLock` so CPUID is queried at most once per process across callers.
 ///
 /// # Complexity
 ///
@@ -89,6 +86,9 @@ fn maybe_bipedal_avx2() -> Option<gf2_kernels_simd::bipedal::BipedalAvx2Fns> {
 }
 
 type Permanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
+type SingleMatrixKernelFn = fn(&Bipedal3Matrix) -> Fp<3>;
+
+const SINGLE_MATRIX_KERNEL: SingleMatrixKernelFn = permanent_bipedal3_singleword;
 
 // ---------------------------------------------------------------------------
 // Test-only scalar/SIMD cross-check note.
@@ -108,10 +108,13 @@ type Permanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
 /// for `64 ≤ n ≤ N_MAX_MULTIWORD`.
 ///
 /// This is the unified public entrypoint. For callers that always have
-/// `n ≤ 63`, use [`permanent_bipedal3_singleword`] directly. The
-/// `n ≤ 63` upper bound on the single-word path was narrowed from the
-/// pre-2026-05-15 `n ≤ 64` for CPU/GPU consistency; see the module-level
-/// doc for the wallclock rationale.
+/// `n ≤ 63`, use [`permanent_bipedal3_singleword`] directly. For those
+/// dimensions this dispatcher deliberately selects that scalar kernel even
+/// when AVX2 is available; committed cross-CPU measurements show it is faster
+/// than padding a single word into the four-lane AVX2 kernel. The `n ≤ 63`
+/// upper bound on the single-word path was narrowed from the pre-2026-05-15
+/// `n ≤ 64` for CPU/GPU consistency; see the module-level documentation
+/// for the measurement and bound rationales.
 ///
 /// The permanent of an `n × n` matrix `A` over `F_3` is:
 ///
@@ -180,21 +183,7 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
         n
     );
     if n <= 63 {
-        // Choose SIMD or scalar for the single-word path:
-        //   1. If the `simd` feature is active AND AVX2 is detected at
-        //      runtime → SIMD singleword path.
-        //   2. Otherwise → pure-Rust scalar path.
-        //
-        // Tests that need to cross-check SIMD vs scalar on the same host
-        // call `permanent_bipedal3_singleword` and
-        // `permanent_bipedal3_singleword_simd` directly — both are `pub`,
-        // so no global override knob is needed (or present).
-        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
-        if let Some(fns) = maybe_bipedal_avx2() {
-            return permanent_bipedal3_singleword_simd(mat, &fns);
-        }
-
-        permanent_bipedal3_singleword(mat)
+        SINGLE_MATRIX_KERNEL(mat)
     } else {
         bipedal3_multiword::permanent_bipedal3_multiword(mat)
     }
@@ -500,8 +489,9 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 /// add/sub step is delegated to the SIMD kernel.  At W=1 the kernel
 /// processes 4 `u64` words of which 3 carry no data (always zero); for
 /// production throughput the batched multi-matrix path (T16) is the
-/// intended SIMD consumer.  This function exists to wire and exercise the
-/// dispatch path, satisfying T13 criterion 1.
+/// intended SIMD consumer. This direct function remains available to exercise
+/// and cross-check the single-matrix kernel; the public single-matrix
+/// dispatcher selects the measured-faster scalar kernel.
 ///
 /// # Arguments
 ///
@@ -524,9 +514,9 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
 /// use gf2_core::gfp::Fp;
 /// use gf2_kernels_simd::bipedal::detect_avx2;
 ///
-/// // 2x2 identity over F_3: permanent = 1. On non-AVX2 hosts the call is
-/// // skipped (the public dispatcher `permanent_bipedal3` falls back to the
-/// // scalar path when `detect_avx2()` returns `None`).
+/// // 2x2 identity over F_3: permanent = 1. On non-AVX2 hosts this direct
+/// // kernel call is skipped; `permanent_bipedal3` selects scalar on every
+/// // host for a single matrix.
 /// if let Some(fns) = detect_avx2() {
 ///     let id: Vec<Fp<3>> = vec![
 ///         Fp::<3>::new(1), Fp::<3>::new(0),
@@ -672,6 +662,16 @@ mod tests {
 
     fn dispatcher_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
         matrices.iter().map(permanent_bipedal3).collect()
+    }
+
+    /// The host-independent function-pointer check pins the public
+    /// single-matrix policy without relying on whether this test CPU has AVX2.
+    #[test]
+    fn test_public_dispatch_selects_scalar_singleword_kernel() {
+        assert!(std::ptr::fn_addr_eq(
+            SINGLE_MATRIX_KERNEL,
+            permanent_bipedal3_singleword as SingleMatrixKernelFn
+        ));
     }
 
     #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
@@ -898,7 +898,7 @@ mod tests {
     // -----------------------------------------------------------------------
     // T13 SIMD-vs-scalar cross-checks.
     //
-    // These tests verify that the SIMD dispatch path produces the same output
+    // These tests verify that the direct SIMD kernel produces the same output
     // as the pure-Rust scalar path. They call the two pub entry points
     // (`permanent_bipedal3_singleword_simd` and `permanent_bipedal3_singleword`)
     // directly, side-by-side on the same matrix, and assert raw equality.
