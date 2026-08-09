@@ -434,8 +434,7 @@ fn record_repetitions<T>(
     mut call: impl FnMut(usize) -> T,
 ) -> io::Result<()> {
     for repetition in 1..=args.repetitions {
-        let fixture_start =
-            recorded_fixture_start(args.execution, repetition, args.repetitions);
+        let fixture_start = recorded_fixture_start(args.execution, repetition, args.repetitions);
         let elapsed = run_calls_from(
             |index| {
                 black_box(call(index));
