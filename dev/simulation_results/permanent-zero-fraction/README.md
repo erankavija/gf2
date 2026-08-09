@@ -50,20 +50,28 @@ close if it also covers reports or figures that quote its value.
 | `campaign_id` | constrained token | Immutable directory identity |
 | `root_seed` | unsigned integer | Campaign root seed |
 | `stream_purposes` | array of `{name, tag}` | Complete purpose namespace and each purpose's 8-bit domain-separation tag |
-| `cells` | array of cell specifications | Frozen $(q,n)$ grid |
-| `provenance` | provenance record | Git, compiler, runtime, and hardware identity |
+| `cells` | array of cell specifications | Frozen $(q,n)$ grid, backend, and backend-selection receipt identity |
+| `provenance` | provenance record | Git, compiler, RNG, invocation, runtime, and hardware identity |
 
 Each cell specification carries `q`, `n`, the preregistered `matrix_count`
 ($N$), `shard_size`, the ordered `{shard_id, stream_index}` identities, the
 selected `backend`, and `determinant_companion`. The supported backend tokens
 are `scalar`, `batch_parallel`, `intra_matrix_parallel`, `generic_ryser`, and
-`accelerator`. The determinant plan is `evaluate` or `not_evaluated`.
+`accelerator`. Each cell's `backend_receipt` is an `ArtifactIdentity` containing
+the committed selection receipt's normalized repository-relative `path` and
+lowercase hexadecimal `sha256`. The identity binds the selected backend to the
+exact measurements and deterministic selection record used for that cell,
+without assigning an artifact subtype. The determinant plan is `evaluate` or
+`not_evaluated`.
 
 The provenance record requires the full `git_revision`, `compiler_version`,
-`cpu_model`, `accelerator_runtime`, and `gpu_model`. Accelerator runtime and GPU
-model use a tagged availability value: either `{"state":"present","value":...}`
-or `{"state":"not_present"}`. Absence is therefore explicit rather than an
-empty or overloaded string.
+`rng_algorithm`, `rng_version`, tokenized `invocation`, `cpu_model`,
+`accelerator_runtime`, and `gpu_model`. The RNG algorithm is the closed token
+`chacha20`; `rng_version` records the exact crate or implementation version,
+and `invocation` stores the producer's argv tokens without shell quoting.
+Accelerator runtime and GPU model use a tagged availability value: either
+`{"state":"present","value":...}` or `{"state":"not_present"}`. Absence is
+therefore explicit rather than an empty or overloaded string.
 
 Purpose names are constrained serialization-boundary labels. The tag is the
 domain-separation identity consumed by the stream address. The statistical
