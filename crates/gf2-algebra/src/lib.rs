@@ -47,6 +47,12 @@
 //!   (slow tier); 100 matrices for `n ∈ {20, 24}` (slow tier, split
 //!   sub-tests). F_5/F_7 single-word analogues — `permanent_bipedal5` and
 //!   `permanent_bipedal7` — landed in W4-T18/T20.
+//! - [`permanent::rank::permanental_rank_status`] decides permanental rank
+//!   deficiency for a rectangular `n × k` matrix (`k ≤ n`) as the conjunction
+//!   over its `k × k` row submatrices. It adds no numeric kernel — it
+//!   enumerates row subsets and calls `permanent_ryser` on each, exiting at
+//!   the first nonzero permanent — and it decides one matrix without touching
+//!   sampling or statistics.
 //!
 //! The full type → crate map this crate satisfies on completion is in
 //! [`dev/plans/6e20133d/d1a_gf2_algebra_boundary.md`](../../../dev/plans/6e20133d/d1a_gf2_algebra_boundary.md)
@@ -57,7 +63,7 @@
 //! | Module       | Purpose                                                                           |
 //! |--------------|-----------------------------------------------------------------------------------|
 //! | [`packed`]   | `PackedField` / `PackedFieldVec` traits and `Bipedal3` (F_3) / `Packed5` (F_5) / `Packed7` (F_7) impls. |
-//! | [`permanent`]| `Permanent` trait, `permanent_ryser`, and per-prime `permanent_bipedal*` family.  |
+//! | [`permanent`]| `Permanent` trait, `permanent_ryser`, the per-prime `permanent_bipedal*` family, and the rectangular `permanental_rank_status` predicate. |
 //! | [`gray`]     | Gray-code subset enumerator used by Ryser's formula and the bipedal kernels.      |
 //! | `parallel`   | Rayon-based work-stealing dispatch (cfg `feature = "parallel"`, default on).      |
 //! | `gpu`        | HIP/ROCm host-side dispatcher (cfg `feature = "hip"`, default off).               |

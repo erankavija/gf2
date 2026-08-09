@@ -1,8 +1,10 @@
 //! Permanent algorithms over small prime fields.
 //!
 //! Hosts the `Permanent` trait, the generic `permanent_ryser<F>` driver,
-//! the `permanent_mod3_reference` cross-check, and the per-prime
-//! `permanent_bipedal{3,5,7}` fast paths. See the epic design at
+//! the `permanent_mod3_reference` cross-check, the per-prime
+//! `permanent_bipedal{3,5,7}` fast paths, and the rectangular
+//! [`permanental_rank_status`] predicate that decides permanental rank
+//! deficiency by conjunction over row submatrices. See the epic design at
 //! `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §6 / §7.3 / §9 for the algorithm
 //! family, and `dev/plans/9fe275d3/d1b_packed_field_api.md` for the trait surface
 //! frozen at W6.
@@ -15,6 +17,11 @@
 //! landed in W4-T18/T20 (single-word path; F_5 covers `n ≤ Packed5::LANES = 64`,
 //! F_7 covers `n ≤ Packed7::LANES = 16`).
 //!
+//! The square surface is joined by [`rank`], whose
+//! [`permanental_rank_status`] decides `per-rank(A) < k` for a rectangular
+//! `n × k` matrix. It adds no numeric kernel: it enumerates row subsets and
+//! calls [`permanent_ryser`] on each `k × k` submatrix.
+//!
 //! # Re-exports
 //!
 //! [`gray`] is re-exported from [`crate::gray`] so callers can use the
@@ -25,6 +32,7 @@
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;
+pub mod rank;
 pub mod reference;
 pub mod ryser;
 
@@ -32,6 +40,7 @@ pub use bipedal3::permanent_bipedal3;
 pub use bipedal3::permanent_bipedal3_batch;
 pub use bipedal3::permanent_bipedal3_singleword;
 pub use bipedal3_multiword::permanent_bipedal3_multiword;
+pub use rank::{permanental_rank_status, PermanentalRank};
 pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
 
