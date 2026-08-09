@@ -17,7 +17,7 @@
       {"id":"2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0","short_id":"2d315f69","title":"Existing pipeline migrated onto the generic checkpoint","classification":"implementation","status":"completed"},
       {"id":"d36810e7-d000-4514-b18f-9a63a1403ba9","short_id":"d36810e7","title":"Source identity and integrity for published datasets","classification":"implementation","status":"in_progress"},
       {"id":"18dec119-c2d9-48f7-b383-3c73f66e49f3","short_id":"18dec119","title":"Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path","classification":"implementation","status":"completed"},
-      {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"in_progress"}
+      {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"completed"}
     ]},
     {"wave_number": 3, "issues": [
       {"id":"531695da-f7a4-45e7-b982-cbe27bd41745","short_id":"531695da","title":"Empty gf2-stats workspace member crate","classification":"implementation","status":"completed"},
@@ -112,11 +112,26 @@
       "requested_at": "2026-08-09T19:55:35Z",
       "resolved_at": "2026-08-09T19:58:15Z",
       "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
+    },
+    {
+      "issue": "240b7618",
+      "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
+      "status": "open",
+      "requested_at": "2026-08-09T22:12:00Z",
+      "options": [
+        "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
+        "Amend REQ-05 to name the frozen-manifest exclusion.",
+        "Revert to editing manifest entries to past tense, abandoning the freeze.",
+        "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
+      ],
+      "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
     }
   ],
   "rework_counts": {
+    "175972df": 2,
     "18dec119": 2,
-    "240b7618": 2,
+    "240b7618": 3,
+    "d36810e7": 1,
     "296a41c9": 2,
     "531695da": 1,
     "5758790d": 2,
