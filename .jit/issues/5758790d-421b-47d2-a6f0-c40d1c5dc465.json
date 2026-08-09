@@ -14,7 +14,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T15:05:48.176432868Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T15:09:15.952229933Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5758790d-421b-47d2-a6f0-c40d1c5dc465",
   "labels": [
     "type:task",
@@ -25,5 +36,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Versioned dataset layout and record schemas",
-  "updated_at": "2026-08-09T14:01:59.013438126Z"
+  "updated_at": "2026-08-09T15:09:15.952229933Z"
 }
