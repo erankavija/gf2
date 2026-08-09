@@ -104,6 +104,13 @@
       "requested_at": "2026-08-09T19:22:02Z",
       "resolved_at": "2026-08-09T19:31:03Z",
       "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
+    },
+    {
+      "issue": "9c5b26fb",
+      "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
+      "status": "requested",
+      "requested_at": "2026-08-09T19:55:35Z",
+      "decision": "Requested one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
     }
   ],
   "rework_counts": {
