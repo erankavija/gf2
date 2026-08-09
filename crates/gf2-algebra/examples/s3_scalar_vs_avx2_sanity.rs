@@ -1,4 +1,4 @@
-//! S3 (jit:363556e6) scalar-vs-AVX2 sanity sweep for `permanent_bipedal3`.
+//! S3 (jit:363556e6) scalar-vs-AVX2 sanity sweep for the single-word kernels.
 //!
 //! Measures wall-clock time of both the scalar path (`permanent_bipedal3_singleword`)
 //! and the AVX2-forced path (`permanent_bipedal3_singleword_simd`) across
@@ -6,7 +6,7 @@
 //! per (n, impl) and checking that the two paths produce bit-identical `Fp<3>`
 //! results for all matrices.
 //!
-//! Two indicators confirm that the AVX2 dispatch path is actually being
+//! Two indicators confirm that the direct AVX2 kernel is actually being
 //! exercised (not silently falling back to scalar):
 //!
 //! 1. The two paths produce measurably different timing distributions — they
@@ -15,9 +15,9 @@
 //!    `permanent_bipedal3_singleword_simd` zero-pads to a 4-element AVX2 lane
 //!    and the call overhead dominates at single-word work. This is the
 //!    documented expected behaviour for the W=1 case (see `bipedal3.rs`
-//!    module-level comment). AVX2's actual speedup over the reference shows
-//!    up at larger n via the batched multi-matrix path; S1 measures
-//!    6.9×–10.6× at n ∈ {24, 28, 32, 36}.
+//!    module-level comment). It is also why the public single-matrix
+//!    `permanent_bipedal3` dispatcher selects scalar. S1 measures that public
+//!    scalar route; four-matrix AVX2 throughput is a separate benchmark.
 //! 2. The two paths produce bit-identical `Fp<3>` output on every seeded
 //!    matrix (asserted with panic-on-mismatch in the timing loop). The
 //!    timings differ; the outputs match. Both code paths are running.
@@ -81,7 +81,7 @@ fn main() {
     #[cfg(not(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64"))))]
     let avx2_fns: Option<()> = None;
 
-    println!("S3 (jit:363556e6) — scalar-vs-AVX2 sanity sweep");
+    println!("S3 (jit:363556e6) — direct scalar-vs-AVX2 single-word sanity sweep");
     println!("Host: {HW_FINGERPRINT}");
     println!("date: {date}");
     println!("seed_base: {SEED_BASE:#018x}");
@@ -91,19 +91,23 @@ fn main() {
     #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
     {
         if avx2_fns.is_none() {
-            eprintln!("WARNING: AVX2 not detected at runtime — SIMD path will not be measured.");
+            eprintln!(
+                "WARNING: AVX2 not detected at runtime — direct kernel will not be measured."
+            );
             eprintln!("         Sanity ratio will be 1.000 (scalar-vs-scalar).");
         }
     }
 
     // CSV header (to stdout; caller pipes or redirects).
-    println!("# S3 (jit:363556e6) scalar-vs-AVX2 sanity sweep — fresh measurements");
+    println!(
+        "# S3 (jit:363556e6) direct scalar-vs-AVX2 single-word sanity sweep — fresh measurements"
+    );
     println!("# date: {date}");
     println!("# host: AMD Ryzen 9 5900X 12-Core Processor");
     println!("# arch: Zen 3");
     println!("# avx2: yes, avx512: no");
     println!("# seed_base: {SEED_BASE:#018x}");
-    println!("# scope: sanity rows only (n in {{16, 20, 24}}); AVX2 throughput at n in {{24,28,32,36}} re-used from s1_speedup-2026-05-11.csv");
+    println!("# scope: direct scalar and single-matrix AVX2 kernels at n in {{16, 20, 24}}; public dispatch and four-matrix batching are not timed");
     println!("# samples: {SAMPLES} per cell");
     println!("n,impl,mean_us,std_us,samples,ratio_vs_avx2,hardware_fingerprint");
 
@@ -113,7 +117,7 @@ fn main() {
     for &n in N_VALUES {
         writeln!(
             progress,
-            "=== n={n}: measuring scalar and AVX2 ({SAMPLES} samples each) ==="
+            "=== n={n}: measuring direct scalar and AVX2 ({SAMPLES} samples each) ==="
         )
         .unwrap();
 
@@ -147,7 +151,7 @@ fn main() {
         )
         .unwrap();
 
-        // ── AVX2 path timing ──
+        // ── Direct AVX2 path timing ──
         let (avx2_mean, avx2_std) = measure_avx2(
             &matrices,
             &scalar_results,
@@ -159,7 +163,7 @@ fn main() {
 
         writeln!(
             progress,
-            "  AVX2:   mean={avx2_mean:.1} us, std={avx2_std:.1} us"
+            "  direct AVX2: mean={avx2_mean:.1} us, std={avx2_std:.1} us"
         )
         .unwrap();
 
@@ -186,7 +190,7 @@ fn main() {
 
     writeln!(
         progress,
-        "Done. AVX2 rows at n in {{24,28,32,36}} are re-used from s1_speedup-2026-05-11.csv."
+        "Done. Rows compare direct scalar and single-matrix AVX2 kernels; S1 separately measures the public scalar dispatcher."
     )
     .unwrap();
 }
@@ -199,8 +203,8 @@ fn stddev(samples: &[f64], mean: f64) -> f64 {
     var.sqrt()
 }
 
-/// Measure the AVX2 path on `matrices`, asserting bit-identical results against
-/// `scalar_results`. Returns `(mean_us, std_us)`.
+/// Measure the direct AVX2 path on `matrices`, asserting bit-identical results
+/// against `scalar_results`. Returns `(mean_us, std_us)`.
 ///
 /// On non-x86 targets or without the `simd` feature, falls back to running the
 /// scalar path again (ratio will be 1.000, which is a no-op sanity result).
