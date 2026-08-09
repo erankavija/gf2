@@ -4,7 +4,7 @@
   "current_wave": 1,
   "waves": [
     {"wave_number": 1, "issues": [
-      {"id":"b494fec8-579f-4a2d-8579-4fa58d50e3b1","short_id":"b494fec8","title":"Workspace convergence of the rand 0.9 ecosystem","classification":"implementation","status":"pending"},
+      {"id":"b494fec8-579f-4a2d-8579-4fa58d50e3b1","short_id":"b494fec8","title":"Workspace convergence of the rand 0.9 ecosystem","classification":"implementation","status":"completed"},
       {"id":"6602d181-9fb6-42a6-a97e-9fb38a8e71d1","short_id":"6602d181","title":"Generic checkpoint payload mechanism","classification":"implementation","status":"pending"},
       {"id":"5758790d-421b-47d2-a6f0-c40d1c5dc465","short_id":"5758790d","title":"Versioned dataset layout and record schemas","classification":"implementation","status":"pending"},
       {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"pending"},
@@ -90,5 +90,8 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {},
+  "surfaced_pitfalls": [
+    "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority."
+  ],
   "started_at": "2026-08-09T12:20:30Z"
 }

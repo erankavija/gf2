@@ -7,6 +7,7 @@
   ],
   "description": "`gf2-coding`'s optional `rand_chacha = \"0.3\"` is recorded as a named exception to the workspace's converged `rand` 0.9 ecosystem, with a tracked convergence condition, so the divergence is a cited decision rather than an unremarked drift.\n\n## Background\n\n`@/inv/convention-convergence` treats a parallel variant of a shared convention as a defect unless it is a named, cited exception with a tracked convergence condition. After the workspace converges on `rand_chacha` 0.9, `gf2-coding`'s optional `rand_chacha = \"0.3\"` (`crates/gf2-coding/Cargo.toml:23`) is exactly such a variant: it belongs to the `rand` 0.8 ecosystem the crate still builds against, and migrating it is out of scope for this campaign.\n\nThe repository tracks such exceptions in place rather than in a central registry, so the record lands beside the two declarations it concerns: the workspace `[workspace.dependencies]` block and the `gf2-coding` pin itself.\n\n## Success Criteria\n\n- [hard] REQ-01: A comment beside the `[workspace.dependencies]` `rand_chacha` declaration names `gf2-coding`'s optional `rand_chacha = \"0.3\"` as the one exception, states that it belongs to the `rand` 0.8 ecosystem, and states the tracked convergence condition that it migrates when `gf2-coding` moves to `rand` 0.9.\n- [hard] REQ-02: A comment beside the `gf2-coding` pin cites `@/inv/convention-convergence` and points at the workspace declaration as the converged form.\n- [hard] REQ-03: The workspace builds unchanged; the change is documentation only.\n\n## Notes\n\nScope is the exception record alone; no dependency version changes here.\n",
   "documents": [],
+  "first_ready_at": "2026-08-09T13:08:15.790096435Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -20,7 +21,7 @@
     "component:gf2-coding"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Named exception record for the rand 0.8 holdout",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-09T13:08:15.790096435Z"
 }
