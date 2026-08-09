@@ -38,28 +38,17 @@ Two consequences follow.
   history under [`dev/archive/`](../../archive/) is. The narrative audit
   recorded in [`crates/gf2-algebra/README.md`](../../../crates/gf2-algebra/README.md)
   excludes it by path.
-- A correction to an issue's description belongs in the issue, through
-  `jit issue update`. This file follows the store when it is resynchronised —
-  commits `7901430a` and `95e16b81` mirrored one such pass for the protocol
-  bracket back into it — and is never hand-edited into disagreeing with it.
+- A correction to an issue belongs in the issue, through `jit issue update`, and
+  never here. The snapshot is not resynchronised afterwards: an issue amended
+  during execution is *expected* to read differently from its entry, because the
+  entry records what was applied and the issue records what the work became.
+  Where the two differ, the `.jit/` store is authoritative and the entry is
+  history.
 
-To verify that fidelity, compare each entry against the issue of the same title:
+This is why the file carries no fidelity check against the live store. A check
+demanding the two agree would contradict the snapshot's purpose — it would make
+every legitimate amendment look like a defect, and the only way to satisfy it
+would be to edit the snapshot, which is precisely what freezing it forbids.
 
-```bash
-python3 - <<'EOF'
-import glob, json
-manifest = json.load(open('dev/active/b8206228-permanent-statistics/breakdown.json'))
-issues = {}
-for path in glob.glob('.jit/issues/*.json'):
-    record = json.load(open(path))
-    issues[record.get('title')] = (record.get('description') or '').rstrip()
-for entry in manifest:
-    live = issues.get(entry['title'])
-    if live is None:
-        print('NO ISSUE ', entry['key'])
-    elif live != entry['description'].rstrip():
-        print('DIVERGED ', entry['key'])
-EOF
-```
-
-It prints nothing while the manifest is faithful.
+The entries are, therefore, evidence of what was planned, not a description of
+what now exists. Read them beside `jit issue show <id>`, not instead of it.
