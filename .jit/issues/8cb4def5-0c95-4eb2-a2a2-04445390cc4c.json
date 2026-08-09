@@ -28,7 +28,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T18:23:51.931195587Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "8cb4def5-0c95-4eb2-a2a2-04445390cc4c",
   "labels": [
     "type:task",
@@ -39,5 +45,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Timing receipt for the determinant companion at campaign sizes",
-  "updated_at": "2026-08-09T18:18:33.114540572Z"
+  "updated_at": "2026-08-09T18:23:51.931195587Z"
 }

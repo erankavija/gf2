@@ -38,7 +38,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T18:23:14.793619871Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "296a41c9-b50d-40d2-83b8-70684c27a9d8",
   "labels": [
     "type:task",
@@ -49,5 +55,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-measurement of contested backend orderings before the freeze",
-  "updated_at": "2026-08-09T18:18:26.284153948Z"
+  "updated_at": "2026-08-09T18:23:14.793619871Z"
 }
