@@ -96,6 +96,13 @@
       "requested_at": "2026-08-09T16:21:42Z",
       "resolved_at": "2026-08-09T16:59:46Z",
       "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
+    },
+    {
+      "issue": "9c5b26fb",
+      "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
+      "status": "requested",
+      "requested_at": "2026-08-09T19:22:02Z",
+      "decision": "Requested one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
     }
   ],
   "rework_counts": {
