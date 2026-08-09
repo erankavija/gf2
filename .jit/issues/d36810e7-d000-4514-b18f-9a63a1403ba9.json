@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "5758790d-421b-47d2-a6f0-c40d1c5dc465"
+  ],
+  "description": "The rules that make a published dataset traceable to the source that produced it and verifiable by a reader: a build-state guard on the emitting binary, a source-identity rule that survives a dataset living inside the repository, and an integrity file over the raw data with a manifest hash that is not self-referential.\n\n## Background\n\nA self-hash recorded by a binary with no build-state guard proves nothing about the source that produced the numbers: it says only that the binary hashed itself. An earlier review cycle in this problem family recorded that specific defect. So the emitting binary embeds the revision it was built from and checks it before writing.\n\nThat check has to be stated carefully, because the dataset lives inside the repository. A rule demanding a wholly clean working tree would deadlock immediately: the first shard written dirties the tree, so the second emission would refuse. What the rule protects is the identity of the *source* behind the numbers, not the absence of output.\n\nThe manifest hash needs the same care. A hash stored inside the structure it covers cannot be recomputed by a reader, because recomputing it requires knowing it. Omitting the hash field from the canonical serialisation, or keeping the hash in a sidecar, makes verification a mechanical operation rather than a claim.\n\n## Success Criteria\n\n- [hard] REQ-01: The emitting binary embeds the source revision it was built from, and emits only when that embedded revision equals the current `HEAD`.\n- [hard] REQ-02: Emission additionally requires that no tracked file differs outside the active campaign's output subtree. Expected raw and derived files under the frozen campaign id are permitted, while a changed source file, a changed build or dependency manifest, a changed protocol document, or a changed root manifest refuses the emission and names what changed.\n- [hard] REQ-03: A test drives the rule through both outcomes: a tree dirtied only by the campaign's own outputs under its campaign id emits, and a tree with a modified source file, dependency manifest, or protocol document refuses.\n- [hard] REQ-04: The root manifest's content hash is computed over a canonical serialisation from which the hash field itself is omitted, or is held in a sidecar file, and a test confirms a reader recomputes the recorded value from the manifest alone.\n- [hard] REQ-05: `checksums.sha256` covers exactly the raw data set and no derived artefact, and its format is documented well enough to verify with standard tooling outside this repository.\n- [hard] REQ-06: A verification path re-checks a dataset against its integrity file and reports pass, or the failing paths, distinguishing a missing file from a changed one.\n- [hard] REQ-07: A dataset whose recorded git revision names a commit absent from the repository is reported as unverifiable rather than passing silently.\n\n## Notes\n\nThe source-identity rule protects the provenance of numbers, not the tidiness of the tree; a campaign in progress is expected to have written output, and that is exactly what the subtree exemption covers.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "d36810e7-d000-4514-b18f-9a63a1403ba9",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-03"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Source identity and integrity for published datasets",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

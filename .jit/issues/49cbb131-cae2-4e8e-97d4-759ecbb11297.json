@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f"
+  ],
+  "description": "The campaign's working confidence interval: a Wilson score interval over a count out of $N$, validated against an independent computation of its own definition and well-formed at the campaign's largest sample size.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype (`dev/research/permanent-sampling-feas/src/stats.rs:38`); the production statistics crate has none. Wilson is the campaign's working interval at large counts, where it is accurate and short; the conservative small-count estimator is separate work behind this leaf on a dependency edge, in the same module.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: The estimator returns a well-formed interval at the campaign's largest planned sample size, $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-03: The entry point takes counts, not samples, so it is usable both online against a running accumulator and offline against a published dataset.\n\n## Notes\n\nScope is the Wilson estimator alone; the Clopper-Pearson estimator, the coverage demonstration, and the which-regime documentation follow in the dependent leaf.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "49cbb131-cae2-4e8e-97d4-759ecbb11297",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-stats",
+    "satisfies:REQ-02"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Wilson score interval estimator",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

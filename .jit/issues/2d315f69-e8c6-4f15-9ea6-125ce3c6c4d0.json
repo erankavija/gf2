@@ -1,0 +1,25 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "6602d181-9fb6-42a6-a97e-9fb38a8e71d1"
+  ],
+  "description": "The existing simulation pipeline uses the generic checkpoint form, with its recorded crash-safety behaviour demonstrated unchanged.\n\n## Background\n\nThe checkpoint mechanism's behaviour is pinned by two tests: a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test. Genericising the writer and reader must not disturb the one caller that exists — the modulation campaign binary — and the demonstration that it does not is this leaf's deliverable: the caller moves onto the generic form and both pinned tests pass with their assertions unchanged.\n\nMigration is separate from the foundation because the two are independently reviewable: the foundation's fresh-payload round-trip shows the mechanism has one form, and this migration shows the existing consumer kept its behaviour.\n\n## Success Criteria\n\n- [hard] REQ-01: The existing simulation pipeline uses the generic checkpoint form, with the previously hard-coded payload as one instantiation and no campaign-specific code left in the checkpoint module.\n- [hard] REQ-02: The resume-versus-uninterrupted counter-equality test and the signal-and-resume byte-identity subprocess test pass with their assertions unchanged.\n\n## Notes\n\nScope is the caller migration and its regression demonstration alone; the generic mechanism lands ahead of this leaf on its dependency edge.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Existing pipeline migrated onto the generic checkpoint",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

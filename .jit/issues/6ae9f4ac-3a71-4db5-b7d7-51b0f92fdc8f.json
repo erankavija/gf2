@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "531695da-f7a4-45e7-b982-cbe27bd41745"
+  ],
+  "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `dev/research/permanent-sampling-feas/src/sampler.rs`; it is the reference to lift from.\n\nThe ground this module stands on is laid by prerequisite leaves: `rand_chacha` and `rand_core` 0.9 are declared once at workspace level, and the `gf2-stats` member crate exists with `gf2-core` as its only in-workspace dependency. This leaf registers the sampler module in that crate and implements it.\n\n## Success Criteria\n\n- [hard] REQ-01: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-02: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-03: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-04: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-05: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-06: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-07: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-08: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-stats",
+    "satisfies:REQ-02"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

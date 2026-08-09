@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "032cc754-c88c-4e1b-b56d-6511d0a70c3c"
+  ],
+  "description": "The accelerator half of the campaign's execution layer — launches sized from measured per-matrix cost, exclusive device access, and defined behaviour when the device is absent.\n\n## Background\n\nAccelerator launch sizing is a wall-clock question rather than a memory question. Device memory is not the binding resource at any batch size in reach, while per-launch time scales as $M \\cdot n \\cdot 2^n / W$, so holding a batch size fixed while $n$ rises from $20$ to $24$ multiplies per-launch occupancy by $19.2$, and each further step of $4$ in $n$ costs about another factor of $19$. A batch size that occupies the device for a comfortable fraction of a second at one size occupies it for many seconds at the next. The best batch size measured is $M = 1024$; doubling to $M = 2048$ cost a $33\\%$ loss in sustained rate at $q{=}3$, $n{=}24$, so the optimum within the tested set is interior.\n\nConcurrency matters because a campaign runs three fields. Two executions contending for one device produce timings that describe the contention rather than the kernel, and the repository already provides a host lock wrapper for exactly this.\n\n## Success Criteria\n\n- [hard] REQ-01: Accelerator execution splits a shard into launches sized from measured per-matrix cost so each launch's wall-clock stays under a configured cap, rather than from one batch size held fixed across the grid.\n- [hard] REQ-02: The launch-sizing rule is exercised by a test at two sizes whose per-matrix costs differ by more than an order of magnitude, confirming the chosen launch counts differ accordingly.\n- [hard] REQ-03: Accelerator work and timed host work run under the repository's benchmark host lock wrapper (`dev/scripts/ccx1-bench-flock.sh`), so two concurrent field executions never contend for one device.\n- [hard] REQ-04: A cell whose manifest names an accelerator backend on a host without the device halts that cell with an error naming the cell and the missing device, and never silently falls back to a processor path, since a substituted backend would break the frozen selection the dataset records.\n- [hard] REQ-05: A build without accelerator support compiles and runs the processor-only campaign, with accelerator cells refusing rather than failing to build.\n- [hard] REQ-06: The simulation crate's `hip` feature forwards to the algebra crate's `hip` feature, so the accelerator batch entry points in `crates/gf2-algebra/src/gpu.rs` are compiled in exactly when the feature is on; today `gf2-sim`'s `hip` feature enables only `gf2-kernels-hip` and `gf2-coding/hip`, and the algebra accelerator API is unreachable from the campaign.\n\n## Notes\n\nThe shared cross-backend conformance suite is separate work behind this leaf on a dependency edge; this leaf's tests cover the accelerator path alone.\n\nThe accelerator reaches the campaign only through the algebra crate's batch entry points, so the driver never touches the kernel crate directly and `@/inv/unsafe-kernel-isolation` is unaffected.\n\nHalting a cell whose manifest names an absent accelerator is the explicit-failure arm of `@/inv/accelerator-safe-fallback`, not a breach of it: the invariant's tested-safe-fallback rule governs library capability dispatch, which is unchanged, while a preregistered cell naming an absent backend is not a recoverable resource failure — a substituted backend would corrupt the frozen selection the dataset records.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Accelerator execution for campaign cells",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

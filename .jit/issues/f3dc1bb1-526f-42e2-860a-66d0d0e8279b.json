@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:claude",
+  "claimed_at": "2026-08-09T11:54:01.204532518Z",
   "context": {},
   "created_at": "2026-08-08T23:13:30.313825629Z",
   "dependencies": [
@@ -7,6 +8,7 @@
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Empirical permanent statistics of random matrices over small prime fields (b8206228) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, external re-homed edges recorded in the plan are attached, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
   "documents": [],
+  "done_at": "2026-08-09T12:03:06.268882812Z",
   "first_ready_at": "2026-08-09T11:01:46.178382510Z",
   "gates_required": [
     "coverage-preview",
@@ -14,14 +16,14 @@
   ],
   "gates_status": {
     "breakdown-review": {
-      "status": "pending",
-      "updated_at": "2026-08-08T23:13:30.313825629Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-09T12:02:40.237253824Z",
+      "updated_by": "auto:executor"
     },
     "coverage-preview": {
-      "status": "pending",
-      "updated_at": "2026-08-08T23:13:30.313825629Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-09T11:57:21.665460610Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "f3dc1bb1-526f-42e2-860a-66d0d0e8279b",
@@ -35,7 +37,7 @@
     "brackets:b8206228"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "done",
   "title": "breakdown: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-09T11:44:30.967210882Z"
+  "updated_at": "2026-08-09T12:03:06.268882812Z"
 }

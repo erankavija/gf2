@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "a39bb161-0746-4f24-9057-32c9c2fa09fd"
+  ],
+  "description": "One standing behavioural suite asserts that each of the five campaign backends computes the same permanents as the generic reference routine, so no execution path certifies its own correctness privately.\n\n## Background\n\nThis leaf lands last in the execution layer, which is what lets it exist: the five backends the campaign can select — scalar, batch-parallel, intra-matrix, generic Ryser, and accelerator — exists by then, so one suite can assert they agree rather than each path asserting its own correctness in its own tests. That is what `@/inv/backend-behavioral-equivalence` asks for and what a one-off equivalence run does not provide.\n\nThe suite is a standing test rather than a script, because the property it guards — per-matrix agreement across paths — must keep holding as the paths evolve, and a script that was run once proves nothing about the tree as it stands.\n\n## Success Criteria\n\n- [hard] REQ-01: One shared behavioural suite asserts per-matrix agreement across the five campaign backends — scalar, batch-parallel, intra-matrix, generic Ryser, and accelerator — against the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-02: The suite runs as a standing test rather than a one-off script, with accelerator cases skipped and reported as skipped on hosts without the device.\n- [hard] REQ-03: The common matrix set is drawn through a fixed seed recorded in the test, so a failure reproduces from the test alone.\n\n## Notes\n\nThe backend set the suite covers is the campaign-selectable set as the execution layer defines it; a backend added later joins the suite in the change that adds it, which is what keeps the suite the single certification point.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "1947125e-33eb-4442-b717-24442cc35ca1",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "component:gf2-algebra",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Shared behavioural conformance suite across campaign backends",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

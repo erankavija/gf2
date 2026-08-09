@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "f3dc1bb1-526f-42e2-860a-66d0d0e8279b"
+  ],
+  "description": "The crash-safe checkpoint writer and reader in the simulation crate become generic over a serialisable payload and a configuration-hash provider, so a second campaign reuses the mechanism instead of copying it.\n\n## Background\n\n`crates/gf2-sim/src/checkpoint/mod.rs` implements a mature and tested crash-safe checkpoint mechanism: a PID-tagged temporary file, fsync, rename, and directory fsync, guarded by a blake3 hash over the serialised configuration so a resume against a different configuration is a hard error, with a reader that rejects a wrong schema version or a hash mismatch rather than silently accepting it. Its behaviour is pinned by a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test.\n\nWhat is not reusable is the schema: the payload type is fixed to a fielded record of coding-domain quantities, and the writer is typed to that record rather than to a payload. A second campaign with different axes therefore cannot use the writer as it stands. The repository's convention rule holds that a shared mechanism has one form and that a private helper duplicating a shared mechanism is a defect unless it is a named, tracked exception; \"write a checkpoint crash-safely and refuse to resume against a different configuration\" is that shared mechanism, whatever the payload. Changing it at its source is the resolution taken here.\n\n## Success Criteria\n\n- [hard] REQ-01: The checkpoint writer and reader are generic over a serialisable payload type and a configuration-hash provider, with the previously hard-coded payload becoming one instantiation.\n- [hard] REQ-02: The atomic write path is behaviourally unchanged: PID-tagged temporary file, fsync, rename, directory fsync, and crash safety under a signal delivered during the write.\n- [hard] REQ-03: A reader refuses a checkpoint whose schema version, payload identity, or configuration hash disagrees with the caller's, and treats an absent file as fresh work.\n- [hard] REQ-04: A second, unrelated payload type round-trips through the same writer and reader in a test, demonstrating the mechanism has one form.\n- [hard] REQ-05: Module documentation describes the payload contract a new caller must satisfy, and no documentation still describes the writer as specific to one campaign's record.\n\n## Notes\n\nScope is the generic mechanism alone, demonstrated by a fresh payload round-trip. Migrating the existing simulation pipeline onto the generic form, with its regression tests, is separate work behind this leaf on a dependency edge.\n\nDeterministic resume in the existing implementation works by storing each worker's absolute generator word position; the generic payload contract must leave that pattern expressible rather than assume a particular resume key.",
+  "documents": [],
+  "first_ready_at": "2026-08-09T11:54:10.417169574Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6602d181-9fb6-42a6-a97e-9fb38a8e71d1",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Generic checkpoint payload mechanism",
+  "updated_at": "2026-08-09T12:03:41.706988441Z"
+}

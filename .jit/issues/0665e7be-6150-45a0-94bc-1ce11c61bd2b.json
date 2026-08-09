@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "f74e327d-688d-4ffe-880f-a01b471e33d8"
+  ],
+  "description": "A figure per field placing the measured permanent zero fraction beside the measured determinant zero fraction computed on the same drawn matrices, with the exact finite-size singular probability overlaid.\n\n## Background\n\nThe contrast is the point of the whole question. The determinant's zero probability is pinned exactly at every finite size by $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ and tends to a limit around $0.4399$ at $q = 3$, while the permanent's is conjectured to tend to $1/q$ — for $q = 3$ a separation between roughly $0.44$ and $0.33$ that a single figure makes visible in a way a table does not.\n\nTwo framings must not be confused. This figure compares zero fractions, which is what the campaign measures; a whole-distribution uniformity comparison between permanent and determinant values is a different question belonging to separate prior work in this repository.\n\nThe determinant curve is drawn against its exact finite-size values rather than its limit, since the limit overstates the exact value by more than a campaign standard error at the smallest sizes.\n\n## Success Criteria\n\n- [aspirational] REQ-01: A figure per field plots the measured $\\Pr[\\mathrm{per}(A) = 0]$ and $\\Pr[\\det(A) = 0]$ against $n$, both with interval error bars, from the counts the campaign recorded on the same drawn matrices.\n- [aspirational] REQ-02: The exact finite-size singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ is overlaid, and any asymptotic limit shown is drawn as a distinct asymptote that no measured point is compared against.\n- [aspirational] REQ-03: The figure is generated from the finalized dataset by the committed analysis pipeline, with no hand-entered value.\n- [aspirational] REQ-04: The caption states the sample count per point and the interval level.\n- [aspirational] REQ-05: Cells where the campaign ran without the determinant companion are absent from the determinant series rather than shown as zero.\n- [aspirational] REQ-06: The figure and its caption present a zero-fraction comparison, distinct from a whole-distribution uniformity comparison.\n\n## Notes\n\nEvery criterion here is aspirational: the figure's value depends on the cells the campaign completes for both quantities. It is a derived artefact and sits outside the dataset's raw checksum set.",
+  "documents": [],
+  "gates_required": [
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "satisfies:REQ-05",
+    "cites:HKS2026"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Permanental against determinantal zero-fraction comparison figure",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

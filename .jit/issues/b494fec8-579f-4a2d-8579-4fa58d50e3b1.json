@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "f3dc1bb1-526f-42e2-860a-66d0d0e8279b"
+  ],
+  "description": "`rand_chacha` and `rand_core` 0.9 are declared once in `[workspace.dependencies]`, with `gf2-sim` — the one workspace member consuming them today — inheriting that declaration, so the campaign's random-number source has one version the workspace agrees on.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable; a version that drifts per crate is how a dataset silently stops being regenerable. Three `rand_chacha` majors and two `rand` majors coexist today: the workspace declares `rand = \"0.8\"` and no `rand_chacha` at all (`Cargo.toml:27`); `gf2-sim` pins `rand_chacha = \"0.9\"` with `rand = \"0.9\"` directly (`crates/gf2-sim/Cargo.toml:18-19`); `gf2-kernels-hip` pins the same pair as development dependencies (`crates/gf2-kernels-hip/Cargo.toml:33-34`); `gf2-coding` pins an optional `rand_chacha = \"0.3\"` (`crates/gf2-coding/Cargo.toml:23`), which belongs to the `rand` 0.8 ecosystem; and `gf2-core` uses the workspace `rand = \"0.8\"`. `@/inv/convention-convergence` requires a shared convention to have one form; this change is where that convergence happens for the 0.9 ecosystem.\n\nOne constraint shapes how far the convergence reaches: `gf2-kernels-hip` is excluded from the workspace (`Cargo.toml`, `exclude`) because it needs ROCm to build, so it has no workspace parent to inherit from and cannot use `workspace = true`; it follows the same versions by explicit pin.\n\nThe `gf2-coding` holdout is recorded as a named exception by its own documentation leaf behind this one; nothing in this change migrates the 0.8 ecosystem.\n\n## Success Criteria\n\n- [hard] REQ-01: `rand_chacha` and `rand_core` are declared once in `[workspace.dependencies]` at version 0.9, and `gf2-sim` — the one workspace member consuming them today — consumes them through `workspace = true`, its direct pins replaced in this change.\n- [hard] REQ-02: `gf2-kernels-hip`, which the workspace excludes because it requires ROCm to build and which therefore cannot inherit workspace dependencies, pins the same 0.9 versions explicitly, with a comment naming the exclusion as the reason it cannot inherit.\n- [hard] REQ-03: The workspace builds and its tests pass with no crate resolving two `rand_chacha` 0.9 copies, verifiable from the lockfile.\n\n## Notes\n\nScope is the version migration alone: no new crate, no sampler code, and no exception documentation land here.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-09T11:54:10.417169574Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "b494fec8-579f-4a2d-8579-4fa58d50e3b1",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-stats",
+    "satisfies:REQ-02"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Workspace convergence of the rand 0.9 ecosystem",
+  "updated_at": "2026-08-09T12:04:04.240671798Z"
+}

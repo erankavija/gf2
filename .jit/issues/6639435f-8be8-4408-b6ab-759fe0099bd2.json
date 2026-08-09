@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "3f664839-fb97-4bb5-8141-7c39026325fe",
+    "f27150a5-8713-4bce-b404-9e477937d498"
+  ],
+  "description": "The rare-event estimator built to its preregistered design, with unbiasedness and interval coverage demonstrated against exactly known cases.\n\n## Background\n\nA rare-event estimator's output cannot be checked by looking at it: the events it estimates are ones direct sampling never observes. Its credibility comes entirely from behaving correctly where the answer is known. At $k = 1$ the deficiency probability is exactly $q^{-n}$ at every $n$, and small $(q, n, k)$ are exhaustively enumerable, which gives a ladder of cases with known answers running from trivially small up to the edge of what direct sampling can reach.\n\nCoverage is a separate property from unbiasedness and is demonstrated separately: an estimator can be unbiased while reporting intervals that contain the true value far less often than their nominal level claims, and it is the interval that a reader of the result will rely on.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The estimator implements the preregistered proposal and weighting, and a test asserts the implemented weights match the specification on hand-checked cases.\n- [aspirational] REQ-02: Unbiasedness is demonstrated against cases whose probability is known exactly, with the estimator's mean over repeated independent runs agreeing with the exact value within its own interval.\n- [aspirational] REQ-03: Interval coverage is demonstrated empirically: over repeated runs at a stated nominal level, the fraction of intervals containing the exact value matches the nominal level within its own binomial interval.\n- [aspirational] REQ-04: A deviation from the preregistered design made during implementation is recorded with its reason, and the validation is judged against the design as amended rather than silently against the new behaviour.\n- [aspirational] REQ-05: Draws come from the reserved rare-event stream purpose, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-06: A configuration whose effective sample size falls below the design's usability threshold is reported as unusable rather than as an estimate.\n\n## Notes\n\nEvery criterion here is aspirational. A demonstrated failure to achieve coverage is a recorded result and closes this work honestly; it is not a reason to relax the criterion.\n\nThe estimate at the preregistered beyond-reach target is separate work behind this leaf on a dependency edge, producing its own receipted artefact.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-06",
+    "cites:GGK2025"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

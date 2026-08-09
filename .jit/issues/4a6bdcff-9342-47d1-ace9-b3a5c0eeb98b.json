@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "51498b90-ae91-449f-bcc2-0f209bd16284"
+  ],
+  "description": "The finite-field determinant is evaluated inside the campaign's composite loop on the same drawn matrices as the permanent, producing per-shard and per-cell determinant counts alongside the permanent ones.\n\n## Background\n\nThe determinant companion supplies a pipeline validation the permanent cannot. The count of invertible $n \\times n$ matrices over $\\mathbb{F}_q$ is $\\prod_{k=0}^{n-1}(q^n - q^k)$, so the singular probability is known exactly at every finite size:\n\n$$\n\\Pr[\\det(A) = 0] \\;=\\; 1 - \\prod_{i=1}^{n}\\left(1 - q^{-i}\\right),\n$$\n\nwhich pins a value at every size the campaign measures, unlike the permanent, whose exact value is available only at the smallest sizes. A determinant curve that misses its own exact values falsifies the pipeline before any permanent conclusion is drawn.\n\nThat check only has force if the determinant is computed on the *same* matrices as the permanent. Evaluating it on an independently drawn sample would test a different pipeline than the one producing the published permanent counts, and would leave the shared draw, pack and address path — where this problem family's recorded defects actually occurred — unchecked.\n\nThe routine exists and sits below the algebra layer: `FieldMatrix::det` (`crates/gf2-core/src/field/inverse.rs:494`) is a Dumas–Pernet elimination with an explicit permutation sign, generic over the finite-field trait, returning field zero at rank below $n$, so no reverse dependency is introduced.\n\n## Success Criteria\n\n- [hard] REQ-01: For each drawn matrix the composite loop evaluates both the permanent and the determinant over the same field, from the same drawn entries, without redrawing.\n- [hard] REQ-02: A test asserts the two quantities come from one draw: for a fixed address, the matrices the determinant sees are bit-identical to those the permanent sees.\n- [hard] REQ-03: Each emitted shard record carries the determinant sample count and zero count over the matrices that shard drew, beside the permanent zero count for the same matrices.\n- [hard] REQ-04: Each cell's pooled state carries the determinant sample count and zero count summed over that cell's shards.\n- [hard] REQ-05: The determinant evaluation is switchable per cell from the campaign manifest, and a cell that runs without it records an explicit not-evaluated state rather than a numeric zero count, which would be indistinguishable from a cell that evaluated its matrices and found none singular.\n- [hard] REQ-06: A test at a small $(q,n)$ whose matrices are exhaustively enumerable confirms the count the loop records equals the count obtained by recomputing the determinant matrix by matrix outside the loop over the same addresses.\n- [hard] REQ-07: Adding the companion leaves permanent counts unchanged: a run with the companion enabled and one with it disabled produce identical permanent zero counts for the same addresses.\n- [hard] REQ-08: The per-matrix wall-clock the companion adds is recorded per shard, so its measured cost is visible in the dataset rather than inferred.\n\n## Notes\n\nThis work produces counts. Turning those counts into estimates, intervals and pass-or-fail verdicts is the acceptance layer's concern, and nothing here compares a measured determinant fraction against any reference value.\n\nThe permanent and determinant results are separate quantities pooled through one accumulator, so a cell that runs without the companion pools correctly rather than contributing a spurious zero.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-02"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Determinant companion evaluated on the campaign's matrices",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

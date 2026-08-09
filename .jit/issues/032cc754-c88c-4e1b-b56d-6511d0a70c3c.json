@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "eb8825c8-058c-43af-bb46-e79759c7e90d"
+  ],
+  "description": "The processor half of the campaign's backend selection: each cell reads its backend from the frozen manifest, and the scalar, batch-parallel, intra-matrix-parallel and generic Ryser paths are all reachable from that table.\n\n## Background\n\nBackend ranking in this problem family is measured, not intuited, and the measurements contradict the obvious expectation: from $n = 20$ upward at $q = 3$ the intra-matrix parallel path overtakes batch parallelism and leads by roughly a factor of two at $n = 24$ and $n = 28$. A campaign therefore needs both paths and must choose per $(q, n)$ from measurement, which is why the choice is read from the frozen manifest rather than computed.\n\nAbove the packed $\\mathbb{F}_7$ kernel's $16$-lane ceiling the generic Ryser routine is the only processor path that remains; it is correct but reaches only $0.798$ matrices per second at $n = 24$, far under the rate a campaign cell needs. It stays reachable because a correct slow path is what a cell selects when nothing faster covers its size.\n\n## Success Criteria\n\n- [hard] REQ-01: A cell's backend is read from the campaign manifest's per-$(q,n)$ table, and no code path selects a backend from a value observed during the run.\n- [hard] REQ-02: The scalar single-word path is selectable for $q \\in \\{3,5,7\\}$ where the manifest names it.\n- [hard] REQ-03: The batch-parallel path is selectable for $q \\in \\{3,5,7\\}$ where the manifest names it.\n- [hard] REQ-04: The intra-matrix parallel path is selectable for $\\mathbb{F}_3$ where the manifest names it.\n- [hard] REQ-05: The generic Ryser path is selectable for any $(q,n)$ the packed kernels do not cover, so a cell above the packed $\\mathbb{F}_7$ ceiling has a correct processor path.\n- [hard] REQ-06: A backend the manifest names but the build does not provide halts that cell with an error naming the cell and the missing backend, rather than substituting another backend and continuing.\n\n## Notes\n\nHalting on an unavailable backend is specific to a preregistered campaign and is the explicit-failure arm of `@/inv/accelerator-safe-fallback`, not a breach of it: that invariant's tested-safe-fallback rule governs library capability dispatch, which this change does not touch, while a preregistered cell naming an absent backend is not a recoverable resource failure — a substituted backend would corrupt the frozen selection the dataset records, so the halt is kept explicit and named.\n\nCross-backend behavioural agreement is certified by the shared conformance suite leaf, not re-asserted here.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "component:gf2-algebra",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Processor backend selection for campaign cells",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

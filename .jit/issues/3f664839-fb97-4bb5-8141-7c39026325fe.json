@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "175972df-556d-437f-a9cd-10f08eed03d6",
+    "7a816262-1eed-492c-a58b-6752fdf50636"
+  ],
+  "description": "The design document for a rare-event estimator of the permanental rank-deficiency probability: proposal distribution, weighting, the unbiasedness argument, the validation plan, and the stream purposes it will draw from — written before any estimator code exists.\n\n## Background\n\nDirect sampling cannot reach the regime the cited theorem describes. The proved statement requires $k \\le 0.1\\sqrt{n}$, so even $k = 3$ needs $n \\ge 900$, where the deficiency probability is about $k \\cdot q^{-n}$ — of order $3 \\cdot 3^{-900}$, which no Monte Carlo campaign observes at any budget. Direct estimation is confined to $k = 1$, where the event is an all-zero column with probability exactly $q^{-n}$, and $k = 2$, where the predicted rate is about $2q^{-n}$.\n\nAn importance-sampling or splitting estimator can extend that reach, and the danger it introduces is precisely that its output is unfalsifiable by inspection: a biased estimator or an interval with the wrong coverage produces a confident number about an event nobody can otherwise check. Fixing the estimator and its validation plan before writing it is what makes the later demonstration meaningful rather than a search for a configuration that agrees.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The document specifies the proposal distribution and the weighting, in enough detail that two implementers would produce the same estimator.\n- [aspirational] REQ-02: The unbiasedness argument is stated, identifying the conditions the proposal must satisfy for the weighted estimator to be unbiased.\n- [aspirational] REQ-03: The variance behaviour is discussed, including how effective sample size will be reported and what would count as an unusable configuration.\n- [aspirational] REQ-04: The validation plan names the exactly known cases the estimator will be checked against, the number of repeated runs, the nominal interval level, and the criterion by which coverage will be judged adequate.\n- [aspirational] REQ-05: The target $(q, n, k)$ beyond direct sampling's reach is named in advance, with the reason direct sampling cannot reach it stated numerically.\n- [aspirational] REQ-06: A distinct stream purpose is reserved for rare-event draws, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-07: The document states the gap between the regime the estimator targets and the theorem's $k \\le 0.1\\sqrt{n}$ hypothesis numerically.\n\n## Notes\n\nEvery criterion here is aspirational: whether a usable estimator exists for this event at these field orders is itself an open question, and a design concluding that none is available at this budget is a legitimate outcome.",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "satisfies:REQ-06",
+    "cites:GGK2025"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Preregistered rare-event estimator design",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

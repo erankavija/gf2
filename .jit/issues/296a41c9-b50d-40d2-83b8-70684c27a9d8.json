@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "f3dc1bb1-526f-42e2-860a-66d0d0e8279b"
+  ],
+  "description": "Replicated timing of four named backend configurations — the one comparison the feasibility measurements left unresolved, and each field's frontier-cell selection — producing the receipted ordering a frozen campaign backend table can rest on.\n\n## Background\n\nOne cell's ordering is explicitly open. At $q = 3$, $n = 28$ the accelerator path at $M = 1024$ and the intra-matrix parallel path differ by $1.6\\%$ with the parallel path ahead, but each rate is a single cell execution. Within one execution repetitions are very stable — repetition dispersion is $0.12\\%$ for the parallel path and $0.16\\%$ for the accelerator — while across independent executions of one configuration the spread reaches $1.80\\%$ with a median of $0.84\\%$. The gap is therefore comparable to the widest disagreement measured across re-executions, and no ordering is asserted; the feasibility study states that a campaign choosing that cell's backend should re-measure.\n\nThe rest of the scope is fixed by which cells the campaign's frontier actually rests on. At a standard error of $10^{-3}$ the frontier is $n = 28$ at $q = 3$, $n = 24$ at $q = 5$ and $n = 20$ at $q = 7$, and the envelope's selected paths there are intra-matrix rayon at $19.58$ matrices per second, batch rayon at $11.83$, and the accelerator at $M = 1024$ at $57.93$. Those are the rates every per-cell sample size was derived from, so they are the ones a campaign cannot afford to have wrong.\n\nA published headline elsewhere in the repository is contradicted by newer measurement of the same configurations: an accelerator speedup of $28.65\\times$ at $n = 24$ and $30.32\\times$ at $n = 28$ reproduces only against a single-thread AVX2 baseline, and restating it against the best measured processor path gives $0.46\\times$ and $0.44\\times$.\n\n## Success Criteria\n\n- [hard] REQ-01: Exactly four configurations are measured, and no others: $(q{=}3,\\; n{=}28,\\; \\text{accelerator},\\; M{=}1024)$; $(q{=}3,\\; n{=}28,\\; \\text{intra-matrix rayon})$; $(q{=}5,\\; n{=}24,\\; \\text{batch rayon})$; and $(q{=}7,\\; n{=}20,\\; \\text{accelerator},\\; M{=}1024)$.\n- [hard] REQ-02: Each configuration is executed at least $12$ times, each execution a fresh process on a quiesced host. Taking the recorded worst-case cross-execution disagreement of $1.80\\%$ between two executions as implying a per-execution standard deviation near $1.27\\%$, twelve executions put the standard error of a difference of means near $0.52\\%$, so the contested $1.6\\%$ gap sits about three standard errors out.\n- [hard] REQ-03: Executions are interleaved across configurations rather than run in per-configuration blocks, so thermal drift over the measurement window cannot be confounded with the configuration being compared.\n- [hard] REQ-04: The $q = 3$, $n = 28$ comparison reports a separation verdict: either one configuration leads at the stated confidence, or the receipt states that the two remain unseparated at the replication achieved and the frozen table records the basis on which its choice was nonetheless made.\n- [hard] REQ-05: Each configuration reports within-execution repetition dispersion and across-execution dispersion as separate quantities.\n- [hard] REQ-06: Timed windows run under the repository's benchmark host lock, so no other work shares the device or the cores during a measurement.\n- [hard] REQ-07: Rates are composite rates covering draw, pack, evaluate and count, not kernel-only rates, and each is formed from pooled totals rather than by averaging per-repetition reciprocals.\n- [hard] REQ-08: Each configuration's re-measured rate is reported beside the single-execution rate the envelope used, and a disagreement wider than the measured cross-execution dispersion is recorded as a contradiction rather than silently replacing the earlier figure.\n- [hard] REQ-09: The receipt records seeds, stream addresses, matrix counts per execution, git revision, hardware and toolchain.\n\n## Notes\n\nConfigurations outside this list are out of scope. A backend enters a campaign's selectable set only once a committed measurement covers it at the cells where it would be chosen, whether that measurement comes from here or from a separately receipted accelerator study.",
+  "documents": [],
+  "first_ready_at": "2026-08-09T11:54:10.417169574Z",
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "296a41c9-b50d-40d2-83b8-70684c27a9d8",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-algebra",
+    "component:gf2-sim"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Re-measurement of contested backend orderings before the freeze",
+  "updated_at": "2026-08-09T12:03:30.333454427Z"
+}

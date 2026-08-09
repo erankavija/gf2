@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "6639435f-8be8-4408-b6ab-759fe0099bd2"
+  ],
+  "description": "The validated rare-event estimator produces one estimate at the preregistered target $(q, n, k)$ beyond direct sampling's reach, published as its own receipted artefact.\n\n## Background\n\nThe estimate is the point of the estimator, and it is also the number nobody can check directly — which is why it lands only after the estimator's unbiasedness and coverage are demonstrated, and why the run's own diagnostics travel with it. An estimate that cannot state its variance and effective sample size is a number, not a result.\n\nThe artefact is a derived product: like every derived artefact it sits outside the dataset's raw checksum set and modifies no published raw file.\n\n## Success Criteria\n\n- [aspirational] REQ-01: One estimate is produced at the preregistered target $(q, n, k)$, reporting its variance and effective sample size beside the estimate itself.\n- [aspirational] REQ-02: The artefact records the estimator configuration, the reserved rare-event stream purpose its draws came from, the seeds, the git revision, and the toolchain, so the run is reproducible from the artefact alone.\n- [aspirational] REQ-03: A run whose effective sample size falls below the design's usability threshold is recorded as unusable rather than as an estimate, and that outcome closes this work honestly.\n- [aspirational] REQ-04: The artefact is its own document under the campaign home, outside the raw checksum set, and modifies no other published artefact.\n\n## Notes\n\nEvery criterion here is aspirational: whether the preregistered target is reachable at a usable effective sample size is exactly what the run determines.\n",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-06",
+    "cites:GGK2025"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Preregistered rare-event estimate beyond direct sampling",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

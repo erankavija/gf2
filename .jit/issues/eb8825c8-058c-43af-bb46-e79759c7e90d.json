@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b"
+  ],
+  "description": "A batch-parallel execution path that evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$, using the existing single-matrix kernels with no field-specific parallel code.\n\n## Background\n\nNo batch-parallel path exists in-tree for any field: the only parallel permanent routine splits one matrix's Gray-code walk and exists for $\\mathbb{F}_3$ alone. Batch parallelism is harness-side, needs no field-specific kernel, and works for each of the three fields, which is why it belongs in the campaign's execution layer rather than in any kernel crate.\n\nThe measurements motivating it are recorded: batching across matrices with a work-stealing pool wins decisively at small $n$, where per-matrix scheduling overhead dominates a short kernel; from $n = 20$ upward at $q = 3$ the intra-matrix parallel path overtakes it. A campaign needs both paths and chooses per cell from measurement; the choosing is the selection leaf's work, behind this one.\n\n## Success Criteria\n\n- [hard] REQ-01: A batch-parallel path evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$ without a field-specific kernel.\n- [hard] REQ-02: The path returns per-matrix results in input order, asserted against the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-03: Thread count is taken from configuration rather than probed at run time, so a recorded execution names the parallelism it ran with.\n\n## Notes\n\nScope is the batch-parallel path alone. Backend selection, the manifest table read, and the halt rule are the selection leaf's work behind this one.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Batch-parallel processor path for campaign shards",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

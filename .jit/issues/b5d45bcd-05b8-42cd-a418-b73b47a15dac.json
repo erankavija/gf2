@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
+    "f74e327d-688d-4ffe-880f-a01b471e33d8"
+  ],
+  "description": "The campaign's analysis report: what the measured curves show at the sizes measured, how they sit against the proved floor and the conjectured limit, what is reproduction and what is new, and what the pipeline's own checks returned.\n\n## Background\n\nThe report is where interpretation lives, and it is the only place it lives: emitted datasets and generated figures carry data and mechanical provenance only. That separation exists because the alternative was measured — an earlier review cycle in this problem family regenerated receipts every time a claim's wording changed, and that was its largest single source of rework.\n\nTwo disciplines constrain the wording. Consistency with $1/q + o(1)$ can only be phrased at the measured sizes, because an asymptotic statement is compatible with any finite prefix of the sequence; and novelty for $q \\in \\{5, 7\\}$ can only be stated conditionally on the recorded literature search, which ran one general web index rather than a bibliographic database and left three close candidate counting papers unread.\n\nThe report also inherits a live contradiction to resolve on the record rather than silently: an accelerator speedup headline of roughly $28$ to $30\\times$ published elsewhere in the repository rests on a single-thread AVX2 baseline, and the same configurations restated against the best measured processor path give $0.46\\times$ at $n = 24$ and $0.44\\times$ at $n = 28$.\n\n## Success Criteria\n\n- [hard] REQ-01: The report states, per field, the measured $\\hat p(n)$ with intervals and the sign and magnitude of $\\delta(n) = \\hat p(n) - 1/q$ over the measured range.\n- [hard] REQ-02: Consistency with $1/q + o(1)$ is phrased at the measured sizes only, with the explicit record that no finite grid confirms or contradicts an asymptotic statement.\n- [hard] REQ-03: The $q = 3$ results are presented as reproduction and precision against the published curve, with no wording implying extension in $n$.\n- [hard] REQ-04: Novelty for $q \\in \\{5,7\\}$ is stated conditionally on the recorded literature search, naming what was searched, what it returned, and that search's stated limits.\n- [hard] REQ-05: A cell whose interval excludes a published point estimate is reported together with the contradiction and its investigation, never reconciled away.\n- [hard] REQ-06: Each acceptance-test failure, each halted cell, and each quarantined shard over the campaign's life is reported, including any that a later admitted rerun passed.\n- [hard] REQ-07: The report distinguishes what the campaign measured from what the cited results prove, in particular that the proved ceiling $1/q + 11/q^{3}$ sits far above the deviations measured.\n- [hard] REQ-08: The determinant companion's agreement with its exact finite-size values is reported per cell as the pipeline validation it is, and any disagreement is reported as a pipeline finding.\n- [hard] REQ-09: Every number in the report traces to a committed artefact recording seeds, git revision, hardware and toolchain, and the report is published at the dataset home beside the data it describes.\n- [hard] REQ-10: Where a repository claim about relative backend performance is contradicted by the measurements this campaign rests on, both readings are recorded together with the contradiction.\n\n## Notes\n\nAn inconclusive result is a result: cells that cannot distinguish $\\hat p(n)$ from $1/q$ are reported as such rather than omitted. The report is a derived artefact and sits outside the dataset's raw checksum set.",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "satisfies:REQ-03",
+    "cites:GGK2025",
+    "cites:HKS2026",
+    "cites:Scheinerman2024"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Analysis report on the measured zero-fraction curves",
+  "updated_at": "2026-08-09T11:56:40.182881902Z"
+}

@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "f27150a5-8713-4bce-b404-9e477937d498"
+  ],
+  "description": "A preregistered comparison between candidate shapes for the finite-size deviation $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$, computed as a likelihood on the observed counts and published as its own artefact.\n\n## Background\n\nThe campaign's measurable target is the shape of $\\delta(n)$, and two families were named in advance as candidates: geometric decay $\\delta \\sim c\\,q^{-\\alpha n}$ and polynomial decay $\\delta \\sim c\\,n^{-\\beta}$. What a campaign can falsify is a model of $\\delta(n)$; what it cannot falsify is either the asymptotic conjecture or the proved floor.\n\nThe comparison is computed on counts rather than on point estimates. Each cell is a binomial observation with a known sample size, so the likelihood of a candidate shape is available directly; fitting point estimates by weighted least squares and comparing by an information criterion discards that structure and misstates the uncertainty, particularly at cells whose counts are small relative to their sample size.\n\nThe honest limit is stated with the result: two families can be told apart only while $|\\delta(n)|$ exceeds a few standard errors at several sizes, and the achievable precision means that range is expected to be roughly $n \\lesssim 14$ to $16$.\n\n## Success Criteria\n\n- [aspirational] REQ-01: Candidate families $\\delta(n) \\sim c\\,q^{-\\alpha n}$ and $\\delta(n) \\sim c\\,n^{-\\beta}$ are compared by a likelihood computed on the observed zero counts under their binomial sampling distribution, not by weighted least squares on point estimates.\n- [aspirational] REQ-02: The comparison specification — families, parameterisation, cells included, and comparison statistic — is fixed before the comparison is run against campaign data.\n- [aspirational] REQ-03: The range of $n$ over which $|\\delta(n)|$ exceeds a stated multiple of its standard error is reported, and no model preference is claimed outside that range.\n- [aspirational] REQ-04: Parameter estimates carry intervals, and the result states whether each family's interval excludes the other family's behaviour.\n- [aspirational] REQ-05: The outcome is recorded whatever it is, including an outcome in which the data do not distinguish the families.\n- [aspirational] REQ-06: The comparison runs from the finalized dataset alone, is rerunnable from it, and records the campaign id and dataset checksum it used.\n- [aspirational] REQ-07: The result is published as its own document with its own fit tables, and modifies no other published artefact.\n\n## Notes\n\nEvery criterion here is aspirational: the deliverable is a characterisation whose informativeness is set by the precision the campaign achieves, which is bounded by measurement rather than by effort.\n\nThis artefact stands alone. A campaign report may cite it where it exists, and is complete without it; nothing in the hard contract waits on this comparison. Like every derived product, it sits outside the dataset's raw checksum set.",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "satisfies:REQ-05",
+    "cites:GGK2025",
+    "cites:HKS2026"
+  ],
+  "priority": "low",
+  "state": "backlog",
+  "title": "Convergence-shape model comparison for the deviation term",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

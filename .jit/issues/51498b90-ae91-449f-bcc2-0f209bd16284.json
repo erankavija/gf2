@@ -1,0 +1,28 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
+    "6602d181-9fb6-42a6-a97e-9fb38a8e71d1"
+  ],
+  "description": "The campaign driver survives interruption: it checkpoints its progress through the generic checkpoint mechanism, resumes to results identical to an uninterrupted run, refuses a changed configuration, and quarantines a failing work item instead of losing it.\n\n## Background\n\nA campaign run spans days, so interruption is the normal case rather than the exception, and the recorded defects in this problem family are exactly resume defects: a superseded result set was corrupted by runs whose resumed state did not regenerate the recorded sample. Resume correctness is therefore demonstrated as identity — an interrupted-and-resumed run produces the same shard set and pooled counts as an uninterrupted one — rather than asserted as absence of error.\n\nDeterministic resume works by storing each worker's absolute generator word position through the generic checkpoint payload, which the checkpoint foundation leaf leaves expressible by contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Interrupting the driver and restarting it produces a shard set and pooled counts identical to an uninterrupted run over the same work items.\n- [hard] REQ-02: A fixed campaign root reproduces identical shard contents across worker counts and across a checkpoint boundary.\n- [hard] REQ-03: A resume whose campaign configuration differs from the checkpointed one is refused with an error naming the disagreement, rather than continuing against changed inputs.\n- [hard] REQ-04: A work item whose evaluation fails is quarantined with its identity and error, remaining work continues, and the quarantined item is visible in the dataset rather than absent from it.\n- [hard] REQ-05: Tests cover interruption and resume, including the signal-during-write case the checkpoint mechanism's own tests pin.\n\n## Notes\n\nThe scheduler and emission land ahead of this leaf on its dependency edge; this leaf owns the resume, determinism, and quarantine behaviour layered onto them.\n",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review",
+    "doc-review"
+  ],
+  "gates_status": {},
+  "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim",
+    "satisfies:REQ-02"
+  ],
+  "priority": "normal",
+  "state": "backlog",
+  "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

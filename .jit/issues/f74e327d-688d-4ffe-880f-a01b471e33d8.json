@@ -1,0 +1,27 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "c31671ea-8da0-4c11-adfa-bc4ec5cdc49b",
+    "f27150a5-8713-4bce-b404-9e477937d498"
+  ],
+  "description": "The campaign's published curve and table artefacts: the analysis pipeline run against the finalized dataset to produce, for $q \\in \\{3,5,7\\}$, the empirical zero-fraction curve against matrix size with intervals, and the per-cell tables behind it.\n\n## Background\n\nThe epic's contract is a published dataset *and* published curves with confidence intervals. A dataset and a pipeline that could produce curves are not curves; this is the step that materialises them, so the deliverable exists as committed artefacts a reader can look at rather than as a capability someone could exercise.\n\nMaterialisation is mechanical by construction: the pipeline is tested separately against fixtures, and this work runs it on the finalized dataset and commits what it emits. That separation is what keeps the published artefacts free of hand adjustment — every number in them comes from the dataset through the pipeline.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed curve artefact per field plots $\\hat p(n)$ against $n$ over the cells the campaign executed, with interval error bars on every point.\n- [hard] REQ-02: A committed table per field carries, per $n$, the pooled sample count, $\\hat p$, the interval, the acceptance verdict, and the cell's terminal state.\n- [hard] REQ-03: The $q = 3$ tables carry the prior-art comparison columns, including intervals obtained by reanalysis of the published counts and the precision classification per cell.\n- [hard] REQ-04: Cells that reached a halted terminal state appear in the tables marked as halted rather than being omitted from them.\n- [hard] REQ-05: Every artefact is reproduced byte-identically by rerunning the pipeline against the finalized dataset, with the invocation recorded beside the outputs.\n- [hard] REQ-06: The artefacts carry the campaign id and the dataset checksum they were produced from, so a reader can tie a curve to the data behind it.\n- [hard] REQ-07: The artefacts sit outside the dataset's raw checksum set, as derived products of it.\n\n## Notes\n\nWhere a field's campaign halted before its frontier, the curves show what was measured with the halt visible, which is the campaign's result for that field rather than a shortfall to be hidden.",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "satisfies:REQ-03",
+    "cites:Scheinerman2024"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Published zero-fraction curves and tables for the three fields",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}

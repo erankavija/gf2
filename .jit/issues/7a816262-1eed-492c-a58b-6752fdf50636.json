@@ -1,0 +1,29 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "0de41c82-fb20-4adb-ba6e-30061a83c301",
+    "296a41c9-b50d-40d2-83b8-70684c27a9d8",
+    "8cb4def5-0c95-4eb2-a2a2-04445390cc4c",
+    "9c5b26fb-a505-492e-8e9f-d8d520496ad0",
+    "d36810e7-d000-4514-b18f-9a63a1403ba9"
+  ],
+  "description": "The immutable root manifest instance for one campaign: the complete cell universe, the sample size per cell, the multiplicity count, the stream purpose namespace, the shard identities, and the backend chosen for each cell — committed before the first campaign matrix is drawn.\n\n## Background\n\nPreregistration only binds if it is instantiated. A protocol states the rules; the manifest states the numbers those rules produce for one campaign, and freezing it is what makes the difference between a fixed sample size and a sample size chosen once the data looked interesting.\n\nThe manifest is also the campaign's single addressing authority. Stream allocation must be structurally disjoint rather than coincidentally so: an earlier round in this problem family allocated sustained runs from a base commensurate with the grid's own allocation, so the two ranges collided in index space and the pooled counts were valid only because no colliding pair happened to share a cell. That was verified rather than designed, and a campaign running twelve hours per cell cannot audit its way out of the same mistake.\n\nEvery backend in the table has to be one whose ordering at that cell rests on committed measurement. Two measurement inputs feed the table: a re-measurement of the backends already present in the workspace, and whichever accelerator configurations a separate accelerator study retains and receipts. A configuration with no committed measurement at the cells where it would be chosen does not enter the table, however promising it looks.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed root manifest instance enumerates the complete $(q, n)$ cell universe, $N$ per cell, the cell count entering the multiplicity adjustment, the stream purpose namespace with each purpose's tag, the shard identities per cell, and the backend selected per cell.\n- [hard] REQ-02: The manifest is committed before the first campaign shard exists, evidenced by repository history.\n- [hard] REQ-03: Every backend named in the table is supported at that cell by a committed measurement, whether from the in-tree backend re-measurement or from a separately receipted accelerator configuration, and a cell whose ordering remains unresolved records the basis on which its backend was nonetheless chosen.\n- [hard] REQ-04: The manifest records the error-budget allocation across both test families and the resulting per-cell level, matching the numbers the protocol fixes.\n- [hard] REQ-05: The determinant companion is either enabled per cell with its measured marginal cost recorded, or disabled at named cells with the measurement that excludes it recorded.\n- [hard] REQ-06: The manifest carries a content hash bound to the campaign id, computed over a canonical serialisation from which the hash field itself is omitted or held in a sidecar file, so the hash is recomputable by a reader rather than self-referential, and a later modification is detectable rather than silent.\n- [hard] REQ-07: The manifest states that adding a cell afterwards requires a restated multiplicity adjustment under a new campaign id rather than reuse of this one.\n- [hard] REQ-08: Stream ranges allocated to distinct purposes and distinct cells are disjoint by construction of the address encoding, not by inspection of the allocated values, and the manifest states the construction and the purpose tags it assigns.\n\n## Notes\n\nThe campaign id is chosen at freeze time and names the dataset directory that every later artefact of this campaign lives under.",
+  "documents": [],
+  "gates_required": [
+    "doc-review",
+    "research-review"
+  ],
+  "gates_status": {},
+  "id": "7a816262-1eed-492c-a58b-6752fdf50636",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-sim"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Frozen root manifest for the campaign",
+  "updated_at": "2026-08-09T11:57:48.214856806Z"
+}

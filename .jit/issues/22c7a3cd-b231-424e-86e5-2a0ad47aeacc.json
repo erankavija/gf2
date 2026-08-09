@@ -1,0 +1,26 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-09T11:54:10.417169574Z",
+  "dependencies": [
+    "4058e0ac-8405-4266-9ec2-05f2e0430ae9"
+  ],
+  "description": "A streaming accumulator that pools per-shard permanent and determinant zero counts with atomic commits, duplicate rejection, order-independent pooling, and exact replay after interruption.\n\n## Background\n\nA campaign cell runs for hours and is assembled from many independently addressed shards, produced in arbitrary order and possibly concurrently. Pooling those shards is where a sampling campaign silently corrupts itself: a shard counted twice shrinks the interval around a wrong estimate, and a shard lost to an interrupted write leaves an estimate whose sample count does not match its data. Both failure modes have already occurred in this problem family — a superseded measurement round pooled overlapping streams and reported an apparent below-floor signal that independent re-measurement dissolved.\n\nExisting in-tree statistics code has no accumulator type and no serialisation: the prototype's row type derives only `Clone` and `Debug` and leaves the crate as a formatted CSV line. Restart behaviour is therefore new work rather than a lift.\n\n## Success Criteria\n\n- [hard] REQ-01: A shard's counts enter the pooled state exactly once and as a unit; an interrupted commit leaves the pooled state as if that shard had never been offered, demonstrated by a test that interrupts mid-commit.\n- [hard] REQ-02: Offering a shard whose identity is already committed is rejected and reported to the caller, never silently merged and never double-counted.\n- [hard] REQ-03: Pooling one set of shards yields byte-identical pooled state under any offer order, demonstrated over a shuffled permutation set in a test.\n- [hard] REQ-04: Restoring from a serialised snapshot and continuing reproduces the counts of an uninterrupted run over the same shard set, bit for bit.\n- [hard] REQ-05: Pooled state carries, per cell, the matrix count, the permanent zero count, and the histogram of permanent values over the $q$ residue classes.\n- [hard] REQ-06: Pooled state carries the determinant companion as a sample count with a zero count, or as an explicit not-evaluated state, so a cell that ran without the companion is distinguishable from one that evaluated $N$ matrices and found none singular.\n- [hard] REQ-07: A shard whose production or evaluation failed is retained with its identity and failure reason, excluded from the pooled state until explicitly readmitted, and visible to the caller in that quarantined state.\n- [hard] REQ-08: The accumulator state serialises to a self-describing snapshot carrying a schema version, and a snapshot whose schema version differs from the reader's is refused rather than misread.\n- [hard] REQ-09: Pooled state carries the per-shard identities that produced it, so the sample count behind an estimate is derivable from the state alone.\n\n## Notes\n\nThe snapshot type is plain serialisable data with no dependency on any checkpoint-file mechanism, so persistence policy stays with the orchestration layer that owns crash-safe writing.",
+  "documents": [],
+  "gates_required": [
+    "cargo-ci",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
+  "labels": [
+    "type:task",
+    "epic:permanent-statistics",
+    "component:gf2-stats",
+    "satisfies:REQ-02"
+  ],
+  "priority": "high",
+  "state": "backlog",
+  "title": "Checkpointable streaming shard accumulator",
+  "updated_at": "2026-08-09T11:54:10.417169574Z"
+}
