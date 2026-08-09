@@ -20,14 +20,26 @@ The historical receipt `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-
 | 28 | 27 360 000 µs              | 3 414 600 µs                | 8.0x    |
 | 36 | 9 030 741 000 µs           | 848 484 000 µs              | 10.6x   |
 
-GPU batch processing (from `dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`, AMD Radeon RX 6950 XT / gfx1030):
+Historical M=256 GPU batch processing against the sequential single-thread AVX2
+path (from
+[`s5_gpu_crossover-2026-05-15.csv`](../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv),
+AMD Radeon RX 6950 XT / gfx1030):
 
-| n  | Batch (M) | CPU-SIMD perm/s | GPU perm/s  | GPU / CPU |
-|----|-----------|-----------------|-------------|-----------|
-| 24 | 256       | 4.839           | 137.680     | 28.5x     |
-| 28 | 256       | 0.302           | 8.753       | 29.0x     |
+| n  | Batch (M) | Sequential AVX2 perm/s | GPU perm/s | GPU / sequential AVX2 |
+|----|-----------|-------------------------|------------|------------------------|
+| 24 | 256       | 4.790                   | 137.250    | 28.65x                 |
+| 28 | 256       | 0.280                   | 8.490      | 30.32x                 |
 
-GPU dominates for n <= 28 at large batch sizes (M >= 256); CPU-SIMD is faster for n = 32 at M = 4 (kernel-launch overhead dominates at small batch).
+The GPU dominates that sequential AVX2 comparator at n <= 28 and M=256; this
+is not a claim that it dominates the best measured processor path. The
+[feasibility study](../../dev/studies/b488f02c/feasibility-study.md#44-measured-throughput)
+restates the same M=256 configurations as 0.46x at n=24 and 0.44x at n=28
+against the best measured processor path. The
+[replicated backend-ordering receipt](../../dev/benchmarks/permanent_campaign/backend-ordering.md)
+preserves both readings and their contradiction; its new q=3, n=28 accelerator
+timing used M=1024 and did not remeasure these historical M=256 ratios.
+CPU-SIMD is faster at n=32 and M=4, where kernel-launch overhead dominates the
+small GPU batch.
 
 ## Install
 
