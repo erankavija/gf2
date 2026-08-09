@@ -40,10 +40,14 @@ committed golden vectors. The prototype derivation is
 
 One shard record carries its stream address, the matrix count drawn, the
 permanent zero count, the histogram of permanent values over the $q$ residue
-classes, and the determinant zero count over the same matrices — extending the
-shape the feasibility harness emits
+classes, and the determinant companion expressed as a sample count with a zero
+count or as an explicit not-evaluated state — extending the shape the
+feasibility harness emits
 (`dev/research/permanent-sampling-feas/src/protocol.rs:315-343`) with the
-companion quantity. Matrices are never stored: they are regenerable from the
+companion quantity. The absent state is load-bearing: a numeric zero would be
+indistinguishable from a cell that evaluated every matrix and found none
+singular. Records carry counts and states only; estimates, intervals and
+verdicts are computed by the acceptance layer and land in summaries. Matrices are never stored: they are regenerable from the
 address, so storage stays $O(\text{shards})$ and a whole cell costs tens of
 kilobytes. Records carry mechanical provenance only.
 
@@ -72,6 +76,11 @@ side, and each cell's recorded terminal state. The manifest schema enumerates
 seeds, stream purposes, grid with per-cell $N$, shard identities, per-cell
 backend, git revision, toolchain, accelerator runtime, and hardware, satisfying
 `@/inv/claims-trace-to-artifacts`, which no existing in-tree convention does.
+**Source identity at emission**: the emitting binary's embedded revision equals
+`HEAD` and no tracked file differs outside the active campaign's output subtree;
+expected raw and derived files under the frozen campaign id are permitted, while
+a changed source file, build or dependency manifest, protocol document, or root
+manifest refuses the emission.
 
 ### `acceptance-test-protocol` [implementation-produced] — Preregistered decision rules
 
@@ -88,7 +97,9 @@ The immutable instance of the layout's root manifest for one campaign id: the
 complete $(q,n)$ cell universe, $N$ per cell, the multiplicity count, the stream
 purpose namespace with each purpose's tag, shard identities, whether the
 determinant companion runs at each cell, and the backend selected per cell, bound
-to a content hash so later modification is detectable.
+to a content hash taken over a canonical serialisation with the hash field
+omitted, or kept as a sidecar, so a reader can recompute it and a later
+modification is detectable rather than silent.
 
 ### `finalized-campaign-dataset` [implementation-produced] — Verified campaign instance
 
@@ -105,22 +116,22 @@ analysis can state which dataset checksum it was produced from.
 |---|---|---|---|---|---|---|---|---|
 | stats-sampler | Uniform $\mathbb{F}_q$ matrix sampler with domain-separated streams | task | Production ChaCha20 rejection sampler in a new gf2-stats crate, addressing matrices by campaign root, field, size, purpose and stream | stream-purpose-namespace | REQ-02, G1, C1, INV-4a | creates 5, touches 1 | — | — |
 | stats-intervals | Binomial confidence intervals and exact preregistered tests | task | Wilson and Clopper-Pearson intervals plus exact binomial tests with log-scale results for the permanent floor and the exact determinant value | — | REQ-02, G2, C2 | creates 1, touches 1 | — | stats-sampler |
-| shard-accumulator | Checkpointable streaming shard accumulator | task | Streaming accumulator whose shard commits are atomic, duplicate-rejecting, order-independent when pooled, and exactly replayable after interruption | stream-purpose-namespace, shard-record-format | REQ-02, G2, C2, INV-6 | creates 1, touches 1 | — | stats-sampler |
+| shard-accumulator | Checkpointable streaming shard accumulator | task | Streaming accumulator whose shard commits are atomic, duplicate-rejecting, order-independent when pooled, and exactly replayable after interruption | stream-purpose-namespace, shard-record-format | REQ-02, G2, C2, INV-6 | creates 1, touches 1 | — | stats-intervals |
 | checkpoint-generalization | Generalise the simulation checkpoint writer over its payload | task | Simulation checkpoint writer and reader carry any serialisable payload behind a config-hash provider, with resume behaviour unchanged | — | REQ-02, INV-4b, INV-6, C3 | touches 3 | — | — |
 | dataset-format | Versioned dataset layout for the permanent zero-fraction campaign | task | Versioned dataset home with a root manifest schema, per-shard records, per-field summaries and a raw-data checksum boundary | shard-record-format, stream-purpose-namespace | REQ-03, G4, C4, RC1, RC2, INV-5 | creates 3, touches 1 | — | — |
 | driver-orchestration | Campaign driver scheduling with checkpointed resume | task | Campaign binary in the simulation crate schedules cell and shard work, resumes from checkpoints, and emits field-scoped dataset files | stream-purpose-namespace, shard-record-format, checkpoint-payload-api, campaign-dataset-layout | REQ-02, G3, C3, C9, INV-6 | creates 3, touches 2 | — | shard-accumulator, checkpoint-generalization, dataset-format |
-| determinant-integration | Determinant companion evaluated on the campaign's matrices | task | Determinant of each drawn matrix evaluated in the campaign loop, with per-cell determinant zero counts and exact-test verdicts recorded | shard-record-format, campaign-dataset-layout | REQ-02, REQ-03, C11, INV-6 | creates 1, touches 1 | — | driver-orchestration |
-| driver-backend-policy | Backend selection and execution policy for campaign cells | task | Per-cell backend selection from the frozen manifest, with batch-parallel execution, capped accelerator launches, and exclusive device access | campaign-dataset-layout | REQ-02, G7, G8, C7, C8, INV-6 | creates 1, touches 1 | — | driver-orchestration |
-| acceptance-checks | Standing acceptance tests for campaign cells | task | Per-cell exact binomial floor and determinant tests under one global error budget, halting on failure under a predeclared retry rule | acceptance-test-protocol, campaign-dataset-layout, shard-record-format | REQ-02, INV-6, C11 | creates 1, touches 1 | — | stats-intervals, driver-backend-policy, determinant-integration, protocol-draft |
+| determinant-integration | Determinant companion evaluated on the campaign's matrices | task | Determinant of each drawn matrix evaluated in the campaign loop, with per-shard and per-cell determinant counts or a not-evaluated state | shard-record-format, campaign-dataset-layout | REQ-02, REQ-03, C11, INV-6 | creates 1, touches 1 | — | driver-orchestration |
+| driver-backend-policy | Backend selection and execution policy for campaign cells | task | Per-cell backend selection from the frozen manifest, with batch-parallel execution, capped accelerator launches, and exclusive device access | campaign-dataset-layout | REQ-02, G7, G8, C7, C8, INV-6 | creates 1, touches 1 | — | determinant-integration |
+| acceptance-checks | Standing acceptance tests for campaign cells | task | Per-cell exact binomial floor and determinant tests under one global error budget, halting on failure under a predeclared retry rule | acceptance-test-protocol, campaign-dataset-layout, shard-record-format | REQ-02, INV-6, C11 | creates 1, touches 1 | — | driver-backend-policy, protocol-draft |
 | avx2-batched-impl | Four-matrix batched AVX2 single-word path for $\mathbb{F}_3$ permanents | enhancement | Four matrices per AVX2 register through the batched bipedal type, conforming to the scalar kernel on the shared behavioural suite | — | G6, C6, INV-6 | creates 1, touches 2, uncertain | — | — |
 | avx2-dispatch-migration | Dispatcher routing and prose sweep for the $\mathbb{F}_3$ permanent path | enhancement | Single-matrix callers routed to the measured-faster kernel, with stale prose, benchmark labels and assembly artefacts corrected in the same change | — | G6, C6, RC4, INV-6 | creates 1, touches 5 | — | avx2-batched-impl |
 | determinant-calibration | Timing receipt for the determinant companion at campaign sizes | task | Committed receipt timing the finite-field determinant at campaign sizes against measured permanent cost at the same sizes | — | REQ-02, C11, INV-6 | creates 3, touches 1 | — | — |
-| backend-remeasurement | Re-measurement of contested backend orderings before the freeze | task | Replicated measurements settling the contested q=3 n=28 ordering across the in-tree backend set, receipted for the campaign backend table | — | REQ-02, C12, INV-6 | creates 1, touches 1 | — | — |
+| backend-remeasurement | Re-measurement of contested backend orderings before the freeze | task | Replicated measurements settling the contested q=3 n=28 ordering across the in-tree backend set, receipted for the campaign backend table | — | REQ-02, C12, INV-6 | creates 2 | — | — |
 | protocol-draft | Scientific preregistration protocol for the campaign | task | Preregistration fixing estimands, cell universe, error budget, backend rule, exclusion rules and validation plan before the first campaign draw | stream-purpose-namespace | REQ-02, REQ-03, REQ-05, RC5, INV-6 | creates 1 | — | — |
 | preregistration-freeze | Frozen root manifest for the campaign | task | Immutable root manifest fixing the cell universe, per-cell N, multiplicity, stream purposes, shard identities and backends before the first draw | campaign-dataset-layout, acceptance-test-protocol, stream-purpose-namespace | REQ-03, INV-6, INV-7 | creates 1, uncertain | — | dataset-format, determinant-calibration, backend-remeasurement, protocol-draft |
-| rank-predicate | Permanental rank-deficiency predicate with exact validation | task | Permanental rank-deficiency predicate over row submatrices, agreeing with an independent oracle on exhaustive enumeration | — | REQ-04, G5, C5, RC5 | creates 2, touches 1 | — | — |
-| rank-event-estimation | Observable-event rate estimates for permanental rank deficiency | simulation | Estimated deficiency rates at k=1 and k=2 against their known values, with a measured mean evaluation cost per matrix | stream-purpose-namespace | REQ-04, G5, C5 | creates 2, touches 1 | — | rank-predicate, stats-intervals |
-| exact-anchors | Exact enumeration anchors for the smallest cells | task | Re-runnable exact zero-fraction enumeration for the smallest cells, with sampler and estimator checked against the exact values | stream-purpose-namespace | REQ-04, C10, INV-7, RC5 | creates 3, touches 1 | — | stats-intervals |
+| rank-predicate | Permanental rank-deficiency predicate with exact validation | task | Permanental rank-deficiency predicate over row submatrices, agreeing with an independent oracle on exhaustive enumeration | — | REQ-04, G5, C5, RC5 | creates 2, touches 1 | — | avx2-batched-impl |
+| rank-event-estimation | Observable-event rate estimates for permanental rank deficiency | simulation | Estimated deficiency rates at k=1 and k=2 against their known values, with a measured mean evaluation cost per matrix | stream-purpose-namespace | REQ-04, G5, C5 | creates 2, touches 1 | — | rank-predicate, stats-intervals, determinant-calibration |
+| exact-anchors | Exact enumeration anchors for the smallest cells | task | Re-runnable exact zero-fraction enumeration for the smallest cells, with sampler and estimator checked against the exact values | stream-purpose-namespace | REQ-04, C10, INV-7, RC5 | creates 3, touches 1 | — | stats-intervals, rank-predicate |
 | arm-q5 | Campaign arm for $q = 5$ | simulation | Executes the frozen q=5 cells to a recorded terminal state each, emitting shard records and this field's summary | campaign-root-manifest, acceptance-test-protocol, campaign-dataset-layout, shard-record-format, stream-purpose-namespace, checkpoint-payload-api | REQ-03, INV-6 | creates 2 | — | preregistration-freeze, acceptance-checks, exact-anchors |
 | arm-q7 | Campaign arm for $q = 7$ | simulation | Executes the frozen q=7 cells from the resampled n=20 cell onward, each to a recorded terminal state, with this field's summary | campaign-root-manifest, acceptance-test-protocol, campaign-dataset-layout, shard-record-format, stream-purpose-namespace, checkpoint-payload-api | REQ-03, INV-6 | creates 2 | — | preregistration-freeze, acceptance-checks, exact-anchors |
 | arm-q3-reproduction | Campaign arm for $q = 3$ as reproduction | simulation | Executes the frozen q=3 cells as an independent reproduction, each to a recorded terminal state, with published counterparts recorded | campaign-root-manifest, acceptance-test-protocol, campaign-dataset-layout, shard-record-format, stream-purpose-namespace, checkpoint-payload-api | REQ-03, INV-6 | creates 2 | — | preregistration-freeze, acceptance-checks, exact-anchors |
@@ -131,7 +142,7 @@ analysis can state which dataset checksum it was produced from.
 | model-fit | Convergence-shape model comparison for the deviation term | task | Preregistered likelihood comparison of geometric against polynomial deviation shapes on observed counts, standing as its own artefact | finalized-campaign-dataset, acceptance-test-protocol | REQ-05, INV-6 | creates 2 | — | campaign-finalization |
 | perm-det-figure | Permanental against determinantal zero-fraction comparison figure | task | Figure comparing measured permanent and determinant zero fractions from the same matrices, with exact finite-size values overlaid | finalized-campaign-dataset, campaign-dataset-layout | REQ-05, C11 | creates 1, touches 1 | — | curve-materialization |
 | rare-event-design | Preregistered rare-event estimator design | task | Estimator design fixing proposal distribution, weighting, unbiasedness argument and validation plan before any estimator code exists | campaign-root-manifest, acceptance-test-protocol, stream-purpose-namespace | REQ-06, G5 | creates 1 | — | preregistration-freeze, rank-predicate |
-| rare-event-validation | Rare-event estimator with demonstrated unbiasedness and coverage | task | Estimator built to the preregistered design, with unbiasedness and interval coverage shown against exactly known cases | stream-purpose-namespace, campaign-root-manifest | REQ-06, C5 | creates 1, touches 1 | — | rare-event-design, stats-intervals |
+| rare-event-validation | Rare-event estimator with demonstrated unbiasedness and coverage | task | Estimator built to the preregistered design, with unbiasedness and interval coverage shown against exactly known cases | stream-purpose-namespace, campaign-root-manifest | REQ-06, C5 | creates 1, touches 1 | — | rare-event-design, campaign-finalization |
 
 ```mermaid
 flowchart LR
@@ -165,24 +176,25 @@ flowchart LR
     N27["rare-event-design: Preregistered rare-event estimator design"]
     N28["rare-event-validation: Rare-event estimator with demonstrated unbiasedness and coverage"]
     N0 --> N1
-    N0 --> N2
+    N1 --> N2
     N2 --> N5
     N3 --> N5
     N4 --> N5
     N5 --> N6
-    N5 --> N7
-    N1 --> N8
+    N6 --> N7
     N7 --> N8
-    N6 --> N8
     N13 --> N8
     N9 --> N10
     N4 --> N14
     N11 --> N14
     N12 --> N14
     N13 --> N14
+    N9 --> N15
     N15 --> N16
     N1 --> N16
+    N11 --> N16
     N1 --> N17
+    N15 --> N17
     N14 --> N18
     N8 --> N18
     N17 --> N18
@@ -205,7 +217,7 @@ flowchart LR
     N14 --> N27
     N15 --> N27
     N27 --> N28
-    N1 --> N28
+    N21 --> N28
 ```
 <!-- jit:breakdown-overview:end -->
 
@@ -219,6 +231,9 @@ flowchart LR
 | G6 fix shape (investigation C6) | Owner decision, unchanged: the four-matrix batched AVX2 single-word $\mathbb{F}_3$ path the rustdoc already promises is **built in this epic**, not deferred and not replaced by a bare dispatcher flip. `Bipedal3x4 = BatchedBipedalLike<Config3>` exists at `crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:183` and nothing evaluates four permanents through it. Advisor-review correction: the work is split for sizing into the batched path with its conformance suite, and the dispatcher routing with its receipt, prose sweep (`bipedal3.rs:26`, `:349`, the S3 example header, the `s1_n36_speedup.rs` bench group label per `@/inv/single-source-prose`) and assembly regeneration. Both touch `crates/gf2-kernels-simd/src/x86`, so both carry `asm-artefact-present`. |
 | Whether the batched AVX2 path is a campaign backend candidate | Synthesizer judgment: no, and therefore no dependency edge from the arms or the freeze to it. The batched single-word path helps where one bipedal word suffices, and at those sizes the composite rate is dominated by drawing and packing rather than by the kernel (study §4.4: composite falls to about half of eval-only at $q=3$, $n=12$), while the frontier cells are won by intra-matrix rayon and the accelerator. Making the freeze wait on a new kernel would buy schedule risk for no measured gain. The capability still lands in this epic; it is simply not on the campaign's critical path. |
 | Placement of the permanental rank predicate | Synthesizer judgment: `gf2-algebra`, which owns permanent algorithms, rather than the campaign driver as study §5 G5 suggests — the predicate is a permanent algorithm over existing square kernels and belongs with them under `@/inv/convention-convergence`. After the advisor-review split the predicate itself carries no statistical machinery, so the crate takes no dependency, production or development, on the statistics crate. |
+| Advisor correction — determinant ownership split | The evaluation leaf produces determinant sample counts, zero counts, and an explicit not-evaluated state, and nothing more. Estimates, intervals and exact-test verdicts belong to the acceptance layer, which depends on it, so one code path turns counts into decisions and no leaf claims a deliverable another owns. The not-evaluated state is required rather than optional: a numeric zero for a cell that ran without the companion is indistinguishable from a cell that evaluated its matrices and found none singular, and would silently enter any pooled estimate. |
+| Advisor correction — provenance rule deadlocked after the first shard | A clean-tree requirement at emission cannot hold for a dataset that lives inside the repository: the first shard written dirties the tree, so the second emission would refuse. The rule now protects the identity of the *source* rather than the absence of output — embedded revision equals `HEAD`, and no tracked change outside the active campaign's output subtree — with expected raw and derived files under the frozen campaign id permitted, and changed code, build metadata, protocol, or root manifest still refusing. Separately, the root manifest's content hash is defined over a canonical serialisation omitting the hash field (or as a sidecar), since a hash covering itself is not recomputable. |
+| Advisor correction — concurrent writers on shared files | Footprint overlaps that the DAG already sequences are fine; overlaps between siblings are not, because two workers would edit one file at once. Five were resolved by landing order and one by splitting files. The statistics crate's module registration serialises as sampler, then intervals, then accumulator. The driver's scheduler serialises as orchestration, then determinant evaluation, then backend policy — which makes the acceptance layer's edge to the determinant leaf transitive, so it is dropped. The algebra crate's permanent module registry serialises as batched AVX2 path, then rank predicate, then exact anchors. The rank-event estimation leaf lands after the determinant cost receipt because both add entries to one crate manifest. The rare-event validation leaf moves behind finalization, which removes its concurrency with the driver chain and is the sensible scientific order anyway. The two benchmark receipts each get their own provenance note instead of sharing one README. |
 | Advisor correction — the determinant companion had no producer | The earlier decomposition tested and plotted determinant zero counts that nothing computed. A dedicated leaf now evaluates `FieldMatrix::det` inside the composite loop on the *same* drawn matrices, and the shard record, accumulator, summary and dataset-layout contracts carry the determinant zero count and per-cell verdict. Same-matrix evaluation is the point: an independently drawn determinant sample would leave the shared draw, pack and address path — where this problem family's recorded defects actually occurred — unchecked. Cost measurement stays a separate leaf that changes no evaluation path. |
 | Advisor correction — dataset lifecycle and checksum cycle | Three arms writing one pooled summary made every arm a writer of one file, and a checksum set including reports and figures could never close, since those artefacts quote the checksums. Resolved by per-field summaries written only by that field's execution, a finalizer that is the sole writer of campaign-scoped paths, and an explicit raw-versus-derived boundary in the layout contract. The finalizer also refuses a dataset with a cell in no terminal state, so an incomplete run cannot be published as a complete one. |
 | Advisor correction — the hard curve deliverable was tooling only | REQ-03 asks for published curves, and a pipeline that could produce them is not a curve. The pipeline stays a reusable, fixture-tested leaf with no dependency on any arm, and a separate materialisation leaf runs it against the finalized dataset and commits the per-field curve and table artefacts. The report depends on the materialised artefacts rather than on the tooling. |
@@ -235,7 +250,7 @@ flowchart LR
 | External dependency edges (not expressible in `depends_on`, which takes in-file keys only) | Two edges the lead wires after batch-create: `preregistration-freeze` → `0de41c82` (the accelerator study, a user-directed prerequisite whose retained candidates the backend table may name), and `interpretive-report` → `76dfd2ff` (S3/S5 receipt requalification, which clears the live `ROADMAP.md:86` contradiction the report would otherwise have to explain). |
 | REQ-01 credit | Already applied outside this manifest: `b488f02c` carries `satisfies:REQ-01` and a direct dependency edge from the epic. Investigation C13 found both missing and noted that `coverage-preview` fires on the breakdown node as soon as breakdown starts, so this had to be fixed before the node was worked rather than at epic close. |
 | Aspirational criteria markers | Issues covering the epic's aspirational REQ-05 and REQ-06 carry `[aspirational]` markers on every one of their own criteria and no `satisfies:` label, since `satisfies:` names hard criteria only. Their outcomes are bounded by achievable precision — two deviation-shape families are distinguishable only while $\lvert\delta(n)\rvert$ exceeds a few standard errors, expected around $n \lesssim 14$–$16$ — so an inconclusive result is a recorded result. |
-| Transitive reduction versus stated ordering | Several ordering intentions are carried by implied paths rather than direct edges, because the repository requires a transitively reduced graph and the manifest validator rejects an edge a longer path already implies. The arms reach the dataset layout through the freeze; the report reaches the arms through materialisation and finalization; and the model comparison reaches the protocol through finalization and the freeze, so its direct protocol edge is dropped while the ordering it expresses is unchanged. |
+| Transitive reduction versus stated ordering | Several ordering intentions are carried by implied paths rather than direct edges, because the repository requires a transitively reduced graph and the manifest validator rejects an edge a longer path already implies. The arms reach the dataset layout through the freeze; the report reaches the arms through materialisation and finalization; the model comparison reaches the protocol through finalization and the freeze; and after the serialization above, the acceptance layer reaches both the interval estimators and the determinant evaluation through the driver chain, while rare-event validation reaches the estimators through finalization. Those four direct edges are dropped and the ordering they expressed is unchanged. |
 
 ## Investigation sources
 
