@@ -7,7 +7,21 @@
     "f3dc1bb1-526f-42e2-860a-66d0d0e8279b"
   ],
   "description": "A committed measurement of the finite-field determinant's cost at campaign sizes beside the permanent's cost at the same sizes, so the companion's marginal expense is a measured ratio rather than an argument from complexity expressions.\n\n## Background\n\nThe companion curve's affordability currently rests on arithmetic, not measurement: elimination is $O(n^3)$ per matrix against the permanent's $\\Theta(n 2^n)$, so the work ratio goes as $n^2 / 2^n$ — roughly $4 \\times 10^{-4}$ at $n = 20$ and $3 \\times 10^{-6}$ at $n = 28$. That is arithmetic on the complexity expressions, and the constant factors, which differ between a bit-sliced Gray-code walk and an elimination over $\\mathbb{F}_q$, are unknown.\n\nThe determinant path exists and is usable: `FieldMatrix::det` (`crates/gf2-core/src/field/inverse.rs:494`) is generic over the finite-field trait and sits below the algebra crate. Existing benchmarks for it cover a different field and much larger sizes — $n \\in \\{64, 256, 1024\\}$ over a Mersenne prime field and a binary extension field — so no committed receipt times it over $\\mathbb{F}_3$, $\\mathbb{F}_5$ or $\\mathbb{F}_7$ at the sizes this campaign uses. The repository requires performance claims to rest on committed measurements, so the companion is timed before it is assumed cheap.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports wall-clock per matrix for the finite-field determinant over $\\mathbb{F}_3$, $\\mathbb{F}_5$ and $\\mathbb{F}_7$ at the sizes the campaign grid reaches for each field, spanning at least $n \\in \\{4, 12, 20\\}$ and each field's frontier size.\n- [hard] REQ-02: The same receipt reports measured permanent cost per matrix at the same $(q, n)$ on a campaign-candidate backend, so the companion's marginal cost is stated as a measured ratio.\n- [hard] REQ-03: The receipt records seeds, git revision, hardware and toolchain, and reports repetition counts with dispersion rather than a single timing.\n- [hard] REQ-04: The receipt states, per cell, whether adding the determinant companion fits the campaign's per-cell wall-clock budget, and names the cells where it does not.\n- [hard] REQ-05: Rate ratios are formed from pooled totals rather than by averaging per-repetition reciprocals.\n- [hard] REQ-06: Where the measured ratio contradicts the complexity-based estimate, both are recorded together with the contradiction.\n\n## Notes\n\nThis work measures cost and changes no evaluation path: the determinant routine, its supporting elimination, and the permanent kernels all exist, and how the companion is wired into a campaign run is a separate concern.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": "b815123a",
+      "doc_type": "report",
+      "format": "markdown",
+      "label": "Determinant companion timing receipt",
+      "path": "dev/benchmarks/permanent_campaign/determinant-cost.md"
+    },
+    {
+      "commit": "b815123a",
+      "doc_type": "data",
+      "label": "Determinant companion raw timings",
+      "path": "dev/benchmarks/permanent_campaign/determinant-cost.csv"
+    }
+  ],
   "first_ready_at": "2026-08-09T11:54:10.417169574Z",
   "gates_required": [
     "cargo-ci",
@@ -25,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Timing receipt for the determinant companion at campaign sizes",
-  "updated_at": "2026-08-09T15:55:37.495744829Z"
+  "updated_at": "2026-08-09T18:18:33.114540572Z"
 }
