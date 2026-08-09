@@ -19,6 +19,16 @@
       "status": "passed",
       "updated_at": "2026-08-09T15:41:44.059039351Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-09T15:50:23.821734806Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T15:53:41.450404948Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f",
@@ -31,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
-  "updated_at": "2026-08-09T15:41:44.059039351Z"
+  "updated_at": "2026-08-09T15:53:41.450404948Z"
 }
