@@ -227,12 +227,7 @@ the same value.
 `gf2_sim::permanent_campaign::provenance::verify_dataset` re-checks a dataset
 against its integrity file and reaches one of three verdicts. The manifest is
 authenticated first, since it declares the layout on which every other check
-depends. The `permanent_dataset` binary exposes the same check, and the guard
-and generator beside it, from a shell:
-
-```console
-$ cargo run -p gf2-sim --release --bin permanent_dataset -- verify <campaign-id>
-```
+depends.
 
 | Verdict | Meaning |
 | --- | --- |
@@ -244,3 +239,27 @@ A missing file and a changed file are distinct outcomes rather than one failure
 category. A dataset whose recorded revision cannot be resolved is reported as
 unverifiable rather than as passing: its bytes may be intact, but the source
 that produced them cannot be named.
+
+The `permanent_dataset` binary exposes that check, and the guard and generator
+beside it, from a shell:
+
+```console
+$ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campaign-directory]
+```
+
+| Subcommand | Does |
+| --- | --- |
+| `revision` | Prints the source revision this build embedded; it equals `git rev-parse HEAD` exactly when the binary is current with the checkout |
+| `emission-check <dir>` | Runs the guard a campaign driver must pass before writing, printing the approved revision or naming every path that refuses it |
+| `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
+| `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |
+
+| Exit status | Means |
+| --- | --- |
+| `0` | The subcommand succeeded, and for `verify` the dataset verified |
+| `1` | Emission was refused, the dataset failed, or the command errored |
+| `2` | `verify` reached the unverifiable verdict: provenance is undecided |
+| `64` | The command line was not one of the four forms above |
+
+`verify` therefore separates the three outcomes by exit status alone, without
+parsing its output. The failing paths themselves are named on standard error.
