@@ -177,6 +177,7 @@ flowchart LR
 | No new public packed representation is planned | No task changes `Packed5` or `Packed7` at its source. A public packed representation attracts a Lean proof obligation by convention, and `AGENTS.md:114-116` requires an approved sketch first. If the synthesis chooses that resolution of REQ-11, it is follow-up work behind a new bracket. |
 | Story slug | `story:gpu-wave-permanents`, a descriptive kebab-case bucket. A JIT short id is never a strategic label: short ids are non-descriptive UUID prefixes that break under rename. |
 | Receipts location | Findings and receipts in `dev/active/0de41c82/`, executable prototypes under `dev/research/`. Matches the b488f02c precedent and what `jit doc dir` resolves to. Documents are attached to their issue rather than cross-referenced by inline path. |
+| Plan-review verdict of record | The plan-review PASS recorded on this bracket's planning node is the verdict of record (owner decision, 2026-08-09). Breakdown review judges the created graph against the approved manifest and does not demand a plan-review rerun; scaffold or shared-template repairs made after that pass are state hygiene, amend neither the plan nor the manifest, and do not reopen plan review. |
 
 ## Investigation sources
 

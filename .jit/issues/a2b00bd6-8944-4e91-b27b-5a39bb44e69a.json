@@ -5,7 +5,7 @@
   "dependencies": [
     "1b113b9d-4ccc-4c79-94cc-b5746aa4724d"
   ],
-  "description": "After the plan-review checkpoint passes, decompose the plan for Evaluate wave-parallel GPU kernels for finite-field permanents (0de41c82) into well-ordered implementation issues.",
+  "description": "After the plan-review checkpoint passes, decompose the plan for Evaluate wave-parallel GPU kernels for finite-field permanents (0de41c82) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
   "documents": [],
   "first_ready_at": "2026-08-09T11:01:34.859551672Z",
   "gates_required": [
@@ -36,5 +36,5 @@
   "priority": "high",
   "state": "ready",
   "title": "breakdown: Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-09T11:01:34.859551672Z"
+  "updated_at": "2026-08-09T11:44:25.294789329Z"
 }

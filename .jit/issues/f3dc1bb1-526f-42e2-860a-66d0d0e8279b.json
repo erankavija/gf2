@@ -5,7 +5,7 @@
   "dependencies": [
     "912f1008-dee5-435e-98b3-974c40449efc"
   ],
-  "description": "After the plan-review checkpoint passes, decompose the plan for Empirical permanent statistics of random matrices over small prime fields (b8206228) into well-ordered implementation issues.",
+  "description": "After the plan-review checkpoint passes, decompose the plan for Empirical permanent statistics of random matrices over small prime fields (b8206228) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, external re-homed edges recorded in the plan are attached, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue.",
   "documents": [],
   "first_ready_at": "2026-08-09T11:01:46.178382510Z",
   "gates_required": [
@@ -37,5 +37,5 @@
   "priority": "high",
   "state": "ready",
   "title": "breakdown: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-09T11:01:46.178382510Z"
+  "updated_at": "2026-08-09T11:44:30.967210882Z"
 }

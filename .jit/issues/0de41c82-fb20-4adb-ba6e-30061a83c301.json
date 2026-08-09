@@ -50,10 +50,11 @@
     "component:gf2-kernels-hip",
     "cites:Scheinerman2024",
     "epic:permanent-statistics",
-    "type:story"
+    "type:story",
+    "story:gpu-wave-permanents"
   ],
   "priority": "high",
   "state": "backlog",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-08T23:13:18.938497955Z"
+  "updated_at": "2026-08-09T11:44:36.640297995Z"
 }
