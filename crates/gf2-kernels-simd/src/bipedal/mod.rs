@@ -30,6 +30,7 @@
 //! [`crate::x86::bipedal_avx2`] (F_3, generic over `BipedalLikeConfig`),
 //! [`crate::x86::bipedal_avx2_packed5`] (F_5, dedicated 3-plane shape), and
 //! [`crate::x86::bipedal_avx2_packed7`] (F_7, dedicated 1-plane LUT shape).
+//! The F_3 module also owns the four-matrix single-word permanent Gray walk.
 //! All three trigger the asm-artefact-present gate on source changes.
 //!
 //! ## Adding a new prime
@@ -217,6 +218,14 @@ pub type BipedalBinaryKernelFn = fn(&[u64], &[u64], &[u64], &[u64], &mut [u64], 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub type BipedalUnaryKernelFn = fn(&[u64], &[u64], &mut [u64], &mut [u64]);
 
+/// Four-matrix single-word F_3 permanent kernel.
+///
+/// Each input element is one packed column with one `u64` word per matrix
+/// lane. Both slices have the same length `n <= 63`; results are canonical
+/// residues in matrix-lane order.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+pub type BipedalPermanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
+
 /// Function-pointer bundle for the F_3 bipedal AVX2 batch kernels.
 ///
 /// Mirrors the [`crate::LogicalFns`] / [`crate::fp65537::Fp65537Fns`] pattern:
@@ -225,11 +234,12 @@ pub type BipedalUnaryKernelFn = fn(&[u64], &[u64], &mut [u64], &mut [u64]);
 /// safe to call (the safety preconditions have already been discharged by
 /// the detection).
 ///
-/// All four operations (`add`, `sub`, `mul`, `neg`) take same-length
+/// The four arithmetic operations (`add`, `sub`, `mul`, `neg`) take same-length
 /// `&[u64]` streams (input) and `&mut [u64]` buffers (output) where the
 /// length is divisible by 4 (one AVX2 lane = 4 × u64). `add` / `sub` / `mul`
 /// are 6-tuple arity (two `(mag, sgn)` operands + two outputs);
-/// `neg` is 2-input + 2-output.
+/// `neg` is 2-input + 2-output. `permanent4` instead accepts paired packed
+/// column slices and returns the four canonical residues directly.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Copy, Clone)]
 pub struct BipedalAvx2Fns {
@@ -241,6 +251,8 @@ pub struct BipedalAvx2Fns {
     pub mul_fn: BipedalBinaryKernelFn,
     /// Apply F_3 neg.
     pub neg_fn: BipedalUnaryKernelFn,
+    /// Evaluate four single-word F_3 permanents in one AVX2 Gray walk.
+    pub permanent4_fn: BipedalPermanent4KernelFn,
 }
 
 /// Detect AVX2 at runtime and return a [`BipedalAvx2Fns`] bundle if available.
@@ -283,6 +295,7 @@ fn detect_avx2_uncached() -> Option<BipedalAvx2Fns> {
             sub_fn: sub_safe,
             mul_fn: mul_safe,
             neg_fn: neg_safe,
+            permanent4_fn: permanent4_safe,
         })
     } else {
         None
@@ -311,4 +324,11 @@ fn mul_safe(m1: &[u64], s1: &[u64], m2: &[u64], s2: &[u64], om: &mut [u64], os: 
 fn neg_safe(m: &[u64], s: &[u64], om: &mut [u64], os: &mut [u64]) {
     // SAFETY: `detect_avx2` only returns these pointers when AVX2 is available.
     unsafe { crate::x86::bipedal_avx2::run_neg_batch::<Config3>(m, s, om, os) }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn permanent4_safe(columns_mag: &[[u64; 4]], columns_sgn: &[[u64; 4]]) -> [u64; 4] {
+    // SAFETY: `detect_avx2` only exposes this pointer after runtime AVX2
+    // detection; the kernel checks both slice shape and dimension before load.
+    unsafe { crate::x86::bipedal_avx2::run_permanent4(columns_mag, columns_sgn) }
 }
