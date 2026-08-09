@@ -1,13 +1,14 @@
 //! S1 (jit:c98ed603) — dedicated single-thread speedup benchmark.
 //!
-//! Measures `permanent_bipedal3` (SIMD path, T13) against
+//! Measures the scalar-routed public `permanent_bipedal3` entry point against
 //! `permanent_mod3_reference` (T8) at `n ∈ {24, 28, 32, 36}` on the dev host
 //! (AMD Ryzen 9 5900X, Zen 3, AVX2-only).
 //!
 //! ## Structure
 //!
 //! - **Criterion cells** cover `n ∈ {24, 28}` in two benchmark groups
-//!   (`s1_permanent_mod3_reference` and `s1_permanent_bipedal3`).
+//!   (`s1_permanent_mod3_reference` and
+//!   `s1_permanent_bipedal3_dispatch_scalar`).
 //!   `sample_size(10)` with a 25 s `measurement_time` keeps each cell under
 //!   the criterion-4 60 s/cell budget on the dev host.
 //!
@@ -96,7 +97,7 @@ fn s1_bench_reference(c: &mut Criterion) {
     group.finish();
 }
 
-/// Criterion group: `permanent_bipedal3` (SIMD path) at n ∈ {24, 28}.
+/// Criterion group: scalar-routed public `permanent_bipedal3` at n ∈ {24, 28}.
 ///
 /// Uses the same seed as the reference group (same base + n-offset) so both
 /// implementations receive bit-identical inputs and the speedup ratio is
@@ -106,7 +107,7 @@ fn s1_bench_reference(c: &mut Criterion) {
 ///
 /// * `c` — Criterion context injected by the `criterion_group!` harness.
 fn s1_bench_bipedal3(c: &mut Criterion) {
-    let mut group = c.benchmark_group("s1_permanent_bipedal3");
+    let mut group = c.benchmark_group("s1_permanent_bipedal3_dispatch_scalar");
     group.sample_size(10);
     group.warm_up_time(Duration::from_secs(1));
     group.measurement_time(Duration::from_secs(25));
@@ -143,7 +144,7 @@ criterion_group!(s1_benches, s1_bench_reference, s1_bench_bipedal3);
 /// # Panics
 ///
 /// Panics if `permanent_mod3_reference` and `permanent_bipedal3` disagree on
-/// the same input, indicating a correctness regression in the SIMD path.
+/// the same input, indicating a correctness regression in the public path.
 fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, date: &str) {
     use std::time::Instant;
 
@@ -179,12 +180,12 @@ fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, dat
             ref_result.value()
         );
 
-        println!("n={n}: measuring permanent_bipedal3 (SIMD) ...");
+        println!("n={n}: measuring permanent_bipedal3 (scalar dispatcher) ...");
         let t1 = Instant::now();
         let bip_result = std::hint::black_box(permanent_bipedal3(&mat));
         let bip_us = t1.elapsed().as_secs_f64() * 1_000_000.0;
         println!(
-            "  permanent_bipedal3-simd  : {:.3} s  (result={})",
+            "  permanent_bipedal3-scalar: {:.3} s  (result={})",
             bip_us / 1_000_000.0,
             bip_result.value()
         );
@@ -199,9 +200,9 @@ fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, dat
 
         let ratio = ref_us / bip_us;
         let cpu_verdict = if ratio >= 10.0 {
-            "PASS (>= 10x CPU SIMD)"
+            "PASS (>= 10x CPU scalar dispatcher)"
         } else {
-            "FAIL (< 10x CPU SIMD)"
+            "FAIL (< 10x CPU scalar dispatcher)"
         };
         let aspirational = if ratio >= 50.0 {
             " [also >= 50x — exceeds the GPU-target aspiration]"
@@ -218,7 +219,7 @@ fn run_offline_cells(csv: &mut (impl std::io::Write + ?Sized), max_n: usize, dat
         .expect("write reference CSV row");
         writeln!(
             csv,
-            "{n},permanent_bipedal3_simd,{bip_us:.3},N/A,1,{ratio:.4},{hw_tag}"
+            "{n},permanent_bipedal3_dispatch_scalar,{bip_us:.3},N/A,1,{ratio:.4},{hw_tag}"
         )
         .expect("write bipedal3 CSV row");
     }
@@ -289,7 +290,7 @@ fn main() {
             let mut f = File::create(&csv_path).expect("create CSV");
             writeln!(
                 f,
-                "# S1 (jit:c98ed603) single-thread speedup: permanent_bipedal3-simd vs permanent_mod3_reference"
+                "# S1 (jit:c98ed603) single-thread speedup: permanent_bipedal3_dispatch_scalar vs permanent_mod3_reference"
             )
             .unwrap();
             writeln!(f, "# date: {date}").unwrap();
