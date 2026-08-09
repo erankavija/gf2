@@ -185,7 +185,41 @@ pub fn permanental_rank_status<F: FiniteField>(
         n * k,
     );
 
-    todo!("row-subset enumeration over permanent_ryser lands in the next commit")
+    // The empty submatrix has permanent 1, which is nonzero, so per-rank is 0
+    // and the strict inequality `0 < 0` fails. Returning here also keeps the
+    // loop below free of the degenerate `matrix[0]` bootstrap.
+    if k == 0 {
+        return PermanentalRank::Full;
+    }
+
+    // `rows` holds the current k-subset in strictly increasing order, starting
+    // at the lexicographically first subset {0, 1, ..., k-1}.
+    let mut rows: Vec<usize> = (0..k).collect();
+    let mut submatrix: Vec<F> = Vec::with_capacity(k * k);
+
+    loop {
+        submatrix.clear();
+        for &row in &rows {
+            submatrix.extend_from_slice(&matrix[row * k..(row + 1) * k]);
+        }
+
+        // Early exit: one nonzero k × k permanent already witnesses per-rank k.
+        if !permanent_ryser::<F>(&submatrix, k).is_zero() {
+            return PermanentalRank::Full;
+        }
+
+        // Advance to the next subset in lexicographic order: find the
+        // rightmost position that has not yet reached its ceiling `i + n - k`,
+        // bump it, and repack every position to its right.
+        let Some(pivot) = (0..k).rev().find(|&i| rows[i] != i + n - k) else {
+            // Every subset was exhausted with a zero permanent.
+            return PermanentalRank::Deficient;
+        };
+        rows[pivot] += 1;
+        for i in pivot + 1..k {
+            rows[i] = rows[i - 1] + 1;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
