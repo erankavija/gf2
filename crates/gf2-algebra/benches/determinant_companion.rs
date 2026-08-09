@@ -447,7 +447,7 @@ fn record_repetitions<T>(
         let ns_per_matrix = elapsed_ns as f64 / calls as f64;
         writeln!(
             output,
-            "{},{},{},{},{},{},{},{:#018x},{},{},{},{},{:.6},{},{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{:#018x},{},{},{},{},{:.6},{},{},{},{},{},{},{},{},{}",
             SCHEMA_VERSION,
             args.execution,
             repetition,
