@@ -92,8 +92,10 @@
     {
       "issue": "9c5b26fb",
       "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
-      "status": "awaiting_owner",
-      "requested_at": "2026-08-09T16:21:42Z"
+      "status": "approved",
+      "requested_at": "2026-08-09T16:21:42Z",
+      "resolved_at": "2026-08-09T16:59:46Z",
+      "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
     }
   ],
   "rework_counts": {
@@ -102,7 +104,7 @@
     "531695da": 1,
     "5758790d": 2,
     "6ae9f4ac": 1,
-    "9c5b26fb": 2
+    "9c5b26fb": 1
   },
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
