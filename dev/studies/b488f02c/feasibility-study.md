@@ -585,15 +585,19 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 
 Four results carry consequences beyond the envelope.
 
-**The public F_3 dispatcher selects the slower path (gap G6).** The scalar
-single-word kernel beats the AVX2 single-word kernel by **2.80x-3.12x** at every
-$n$ measured — the ratio is smallest at $n=12$ and rises monotonically with $n$,
-and the two rates are in the table above — yet `permanent_bipedal3` prefers AVX2
-whenever the CPU supports it. The cause is documented in the kernel itself: the
+**The public F_3 dispatcher routed to the slower kernel (gap G6, since fixed).**
+The scalar single-word kernel beats the AVX2 single-word kernel by
+**2.80x-3.12x** at every $n$ measured — the ratio is smallest at $n=12$ and
+rises monotonically with $n$, and the two rates are in the table above — while
+`permanent_bipedal3` handed single matrices to the AVX2 kernel on any host
+supporting it. The cause is documented in the kernel itself: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
 of four lanes carry no data. This reproduces the ratio already visible in
 `dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv` (scalar at
-0.317-0.319 of the AVX2 time), now on an independent harness and RNG.
+0.317-0.319 of the AVX2 time), now on an independent harness and RNG. The
+measurement is what the current routing rests on:
+[`permanent_bipedal3`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)
+now calls the scalar single-word kernel for $n \le 63$.
 
 **At $q = 3$ the GPU leads only in the middle of the range, and loses at
 $q \in \{5,7\}$ throughout.** The $q = 3$ crossover has a shape rather than a
@@ -1032,7 +1036,7 @@ agent working with review, and assume the harness in
 | G3 | Campaign runner | Missing; design decided below | 2.0 d |
 | G4 | Versioned dataset format | Missing | 0.5 d |
 | G5 | Permanental-rank predicate for the rectangular check | Missing; **no new kernel needed** | 1.0 d |
-| G6 | `permanent_bipedal3` selects the slower path | Defect, confirmed by measurement | 0.5 d |
+| G6 | `permanent_bipedal3` routed single matrices to the slower kernel | Defect, confirmed by measurement; fixed in [`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs), measurement retained as historical context | 0.5 d (historical) |
 | G7 | No batch-parallel path for any field | Missing | 0.5 d |
 | G8 | $q=7$ CPU ceiling at $n = 16$ | Structural limit | 4.0 d (optional) |
 
@@ -1132,15 +1136,21 @@ a **pipeline correctness check**, not a test of Theorem 2.1 in its proven range:
 3. in-regime estimation only as a possible rare-event follow-up (importance
    sampling or splitting), which is out of scope here.
 
-**G6 — dispatcher selects the slower path.** `permanent_bipedal3` prefers the
-AVX2 single-word kernel whenever AVX2 is detected, and the AVX2 single-word
-kernel is slower than the scalar one: the SIMD path zero-pads a single
-Bipedal3 word into a 4-element AVX2 lane, so three of four lanes carry no data.
-This was already visible in `s3_cross_cpu-2026-05-12.csv` (scalar at 0.317–0.319
-of the AVX2 time at $n = 16, 20, 24$) and is reconfirmed independently in §4.
-The campaign must call `permanent_bipedal3_singleword` directly; the dispatcher
-should also be fixed at its source, since every other caller of the public API is
-silently paying the penalty. *0.5 d.*
+**G6 — dispatcher routed to the slower kernel; fixed.** `permanent_bipedal3`
+handed single matrices to the AVX2 single-word kernel on any host where AVX2 was
+available, and the AVX2 single-word kernel is slower than the scalar one: the
+SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
+of four lanes carry no data. This was already visible in
+`s3_cross_cpu-2026-05-12.csv` (scalar at 0.317–0.319 of the AVX2 time at
+$n = 16, 20, 24$) and is reconfirmed independently in §4.
+The public entry point now calls `permanent_bipedal3_singleword` for
+$n \le 63$
+([`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)),
+so every caller of the public API gets the measured-faster kernel and the
+campaign's direct call to the same kernel matches what the dispatcher does.
+The AVX2 single-word kernel stays reachable as
+`permanent_bipedal3_singleword_simd` for conformance work.
+*0.5 d (historical).*
 
 **G7 — batch parallelism, and which parallelism to prefer.** No in-tree function
 parallelises across matrices; `permanent_bipedal3_parallel` parallelises within
@@ -1267,9 +1277,10 @@ The campaign is feasible. Under a 12 h budget per cell the measured composite
 rates reach $n = 28$ for $q = 3$, $n = 24$ for $q = 5$, and $n = 20$ for $q = 7$
 at a standard error of $10^{-3}$, and $n = 20 / 16 / 16$ at $10^{-4}$. No new
 numeric kernel is required for the main curve. The infrastructure gaps are
-small: G1-G4 and G6-G7 total about 5 engineering days by §5's estimates, and the
-harness built for this study already implements the sampler, the statistics, and
-the composite hot path.
+small: G1-G4 and G6-G7 totalled about 5 engineering days by §5's estimates, of
+which G1 and G6 have since landed, leaving about 4; and the harness built for
+this study already implements the sampler, the statistics, and the composite hot
+path.
 
 Four findings shape what the campaign should be, and they are the substance of
 this recommendation rather than caveats on it.
@@ -1321,8 +1332,8 @@ this recommendation rather than caveats on it.
 Recommended first breakdown: G1 and G2 (sampler and streaming statistics,
 productionised from this harness, carrying the disjoint-stream and
 deterministic-warm-up properties §4.7 shows are load-bearing), G4 (dataset
-format), G6 (fix the F_3 dispatcher — a one-line selection bug costing every
-caller ~3x), then G3 (campaign driver with the §7.2 acceptance test wired in),
+format), G6 (the one-line F_3 dispatcher routing fix that cost every caller ~3x,
+since landed), then G3 (campaign driver with the §7.2 acceptance test wired in),
 then the $q \in \{5,7\}$ arms at the sizes §4.6 makes feasible, then $q = 3$ as
 reproduction, then G5 and G7 as follow-ups.
 
