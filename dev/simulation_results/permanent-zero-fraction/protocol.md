@@ -510,9 +510,16 @@ projected-gradient infinity norm is at most $10^{-10}$; the finite converged
 candidate with greatest likelihood wins. Likelihoods tied within $10^{-12}$ are
 resolved by the lexicographically smaller (amplitude, exponent) pair. If the
 winning amplitude is zero, the exponent is unidentified and no exponent point
-estimate is reported. The analysis receipt records `shape-fit-v1`, the exact
-optimizer-library version, source revision, executable SHA-256, toolchain, and
-argument vector. The observed and bootstrap fits use these identical starts,
+estimate is reported. The observed-fit analysis receipt records `shape-fit-v1`,
+the exact optimizer-library version, source revision, executable SHA-256,
+toolchain, and argument vector. It also records the analysis-host hardware
+identity observed when the receipt is generated: CPU model and architecture;
+logical and physical CPU topology (or core count when the physical topology is
+unavailable); installed memory capacity; operating-system distribution/version
+and kernel release; and, if an accelerator is used, its model, architecture,
+device count, driver version, and runtime version. These fields identify the
+execution environment; they do not assert that analyses from distinct hosts are
+interchangeable. The observed and bootstrap fits use these identical starts,
 tolerances, limits, snapping, and tie rules; none changes after counts are seen.
 
 Every reported fitted amplitude, fitted exponent, and prefix
@@ -547,8 +554,14 @@ bootstrap is fixed as follows.
    `checksums.sha256` bytes. The versioned `binomial-v1` sampler consumes that
    generator in increasing $n$ order. The bootstrap receipt records the domain
    tag, address tuple, RNG and binomial-sampler versions, both input hashes,
-   source revision, executable hash, toolchain, and exact invocation. A changed
-   version or invocation is a different analysis, not an interchangeable rerun.
+   source revision, executable hash, toolchain, and exact invocation. It also
+   records the analysis-host hardware identity observed when the receipt is
+   generated: CPU model and architecture; logical and physical CPU topology (or
+   core count when the physical topology is unavailable); installed memory
+   capacity; operating-system distribution/version and kernel release; and, if an
+   accelerator is used, its model, architecture, device count, driver version,
+   and runtime version. A changed version or invocation is a different analysis,
+   not an interchangeable rerun.
 3. Refit both models with `shape-fit-v1` on every replicate and every prefix.
    When all $B$ fits for a scalar reported estimate $T$ are finite and regular,
    sort the bootstrap errors $T^{*(b)}-\widehat T$. With one-based order
@@ -575,6 +588,17 @@ bootstrap is fixed as follows.
    it triggers the fallback above. A mechanical re-execution may only regenerate
    the same $(q,b)$ address. It cannot introduce a new replicate index, increase
    $B$, or change an interval after inspecting results.
+6. Before publication, a fresh process regenerates the fixed, preregistered
+   subset $(q,b)$ with every $q\in\{3,5,7\}$ and exactly
+   $b\in\{0,\ldots,31\}$, using the finalized receipt's bound inputs and the
+   same declared analysis identity. For each of these 96 addresses, its
+   canonical serialized record must match the original byte-for-byte and
+   count-for-count: the address, complete per-cell binomial count vector, every
+   model-and-prefix optimizer outcome (including failures and tie outcomes), and
+   every emitted per-replicate fit/output field. The check records that exactly
+   these 32 indices per $q$, and no others, were regenerated. Any mismatch blocks
+   publication. It cannot replace a record, extend the subset or $B$, rerun a
+   different address, or revise an interval or other output after inspection.
 
 Report the maximized log likelihood, fitted parameters, bootstrap intervals,
 and descriptive support ranges, plus
