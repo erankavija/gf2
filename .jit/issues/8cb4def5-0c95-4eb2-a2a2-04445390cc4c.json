@@ -33,6 +33,11 @@
       "status": "passed",
       "updated_at": "2026-08-09T18:23:51.931195587Z",
       "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-09T19:00:18.267609102Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "8cb4def5-0c95-4eb2-a2a2-04445390cc4c",
@@ -45,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Timing receipt for the determinant companion at campaign sizes",
-  "updated_at": "2026-08-09T18:23:51.931195587Z"
+  "updated_at": "2026-08-09T19:00:18.267609102Z"
 }
