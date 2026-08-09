@@ -14,7 +14,13 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T21:56:06.879173893Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "d36810e7-d000-4514-b18f-9a63a1403ba9",
   "labels": [
     "type:task",
@@ -25,5 +31,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Source identity and integrity for published datasets",
-  "updated_at": "2026-08-09T20:32:47.631207317Z"
+  "updated_at": "2026-08-09T21:56:06.879173893Z"
 }
