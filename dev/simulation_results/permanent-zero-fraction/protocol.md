@@ -175,6 +175,17 @@ Every backend eligible for a campaign cell must also agree per matrix with the
 independent oracle on the anchor cases it supports. The determinant evaluator
 must reproduce $p_{\det}(q,n)$ exactly.
 
+Before the statistical sampler check, each of the ten preassigned validation
+addresses undergoes a deterministic regeneration cross-check. Two fresh sampler
+instances regenerate exactly the first $1\,024$ matrices from the same recorded
+address. The first run is serial; the second uses the maximum worker count the
+validation runner supports, or is a second fresh serial run if the sampler
+contract exposes no worker-count choice, which the receipt records. The two
+runs must agree exactly in address order and in every canonical row-major entry
+byte (one residue in $[0,q)$ per byte). Any mismatch blocks all campaign draws.
+These are validation-purpose streams, and this engineering gate publishes no
+scientific estimate and is not a statistical retry.
+
 The sampler check then draws a fixed $400\,000$ matrices at each anchor from its
 preassigned validation address. Its zero count is compared with the enumerated
 probability by the same probability-ordering exact two-sided binomial
@@ -469,25 +480,26 @@ $$
 where the omitted binomial coefficient is common to both candidates. Weighted
 least squares on $\widehat p$ is not the preregistered comparison.
 
-For each fit, form the asymptotic 95% joint two-parameter profile-likelihood
-region
+For each fit, form the **UNCALIBRATED DESCRIPTIVE likelihood-support contour**
 
 $$
 \left\{\theta:2[\ell_M(\widehat\theta)-\ell_M(\theta)]
-\leq\chi^2_{2,0.95}\right\},
-\qquad \chi^2_{2,0.95}=5.991465,
+\leq5.991465\right\},
 $$
 
-over the closed domains above. Parameter intervals are the coordinate
-projections of that joint region, not one-parameter intervals with a different
-cutoff. If the region includes amplitude zero, the exponent is unidentified
-there and its reported interval is the full domain $[0,64]$; at an
-amplitude-zero maximum, no exponent point estimate is reported. Any projection
-touching a search bound is labelled boundary-truncated. These likelihood
-regions use the stated asymptotic chi-square calibration and are not described
-as exact finite-sample coverage.
+over the closed domains above. The fixed likelihood-drop cutoff $5.991465$ is a
+conventional descriptive threshold only. It is not a chi-square calibration;
+the contour is not a confidence region, does not carry a confidence level, is
+not a hypothesis test, and is not a member of the campaign error budget. No
+coverage probability is claimed.
+Support ranges are the coordinate projections of the contour. If the contour
+includes amplitude zero, the exponent is unidentified there and its support
+range is the full domain $[0,64]$; at an amplitude-zero maximum, no exponent
+point estimate is reported. Any support range touching a search bound is
+labelled boundary-truncated, and an exponent optimum on the cap remains labelled
+cap-truncated.
 
-Report the maximized log likelihood, fitted parameters and those intervals,
+Report the maximized log likelihood, fitted parameters and those support ranges,
 and $\mathrm{AIC}_M=2k_M-2\ell_M$ with $k_M=2$, including boundary fits, for the
 full measured range. Also repeat the identical fit for every nested prefix
 $n=4,\ldots,m$ with at least six cells ($m\geq9$). For each prefix report
