@@ -64,11 +64,17 @@ const JSON_FIELDS: &[&str] = &[
     "shard_size",
     "shards",
     "backend",
+    "backend_receipt",
     "determinant_companion",
+    "path",
+    "sha256",
     "shard_id",
     "stream_index",
     "git_revision",
     "compiler_version",
+    "rng_algorithm",
+    "rng_version",
+    "invocation",
     "accelerator_runtime",
     "cpu_model",
     "gpu_model",
@@ -202,6 +208,144 @@ fn validate_token(value: &str, kind: &'static str) -> Result<(), TokenError> {
     }
 }
 
+/// A normalized repository-relative path to a committed artifact.
+///
+/// Paths use forward slashes, contain no empty, `.` or `..` component, and
+/// cannot name an absolute or drive-qualified path.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct ArtifactPath(String);
+
+impl ArtifactPath {
+    /// Returns the validated repository-relative path.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl FromStr for ArtifactPath {
+    type Err = ArtifactPathError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let first_component = value.split('/').next().unwrap_or_default();
+        let drive_qualified = first_component.as_bytes().get(1) == Some(&b':')
+            && first_component
+                .as_bytes()
+                .first()
+                .is_some_and(u8::is_ascii_alphabetic);
+        let valid = !value.is_empty()
+            && !value.starts_with('/')
+            && !value.ends_with('/')
+            && !value.contains('\\')
+            && !drive_qualified
+            && !value.chars().any(char::is_control)
+            && value
+                .split('/')
+                .all(|component| !component.is_empty() && component != "." && component != "..");
+        if valid {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(ArtifactPathError(value.to_owned()))
+        }
+    }
+}
+
+impl fmt::Display for ArtifactPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<'de> Deserialize<'de> for ArtifactPath {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        value.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Error returned for a path outside the canonical artifact-path grammar.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArtifactPathError(String);
+
+impl fmt::Display for ArtifactPathError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "artifact path {:?} must be a normalized repository-relative path",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for ArtifactPathError {}
+
+/// A canonical lowercase hexadecimal SHA-256 digest.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct Sha256Digest(String);
+
+impl Sha256Digest {
+    /// Returns the 64-character lowercase hexadecimal digest.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl FromStr for Sha256Digest {
+    type Err = Sha256DigestError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value.len() == 64
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(Sha256DigestError(value.to_owned()))
+        }
+    }
+}
+
+impl fmt::Display for Sha256Digest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<'de> Deserialize<'de> for Sha256Digest {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        value.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Error returned for a non-canonical SHA-256 digest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sha256DigestError(String);
+
+impl fmt::Display for Sha256DigestError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "SHA-256 digest {:?} must contain exactly 64 lowercase hexadecimal characters",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for Sha256DigestError {}
+
+/// Content identity for a committed mechanical artifact.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtifactIdentity {
+    /// Normalized path from the repository root.
+    pub path: ArtifactPath,
+    /// SHA-256 of the committed artifact bytes.
+    pub sha256: Sha256Digest,
+}
+
 /// Explicit availability state for optional mechanical provenance.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
@@ -289,6 +433,8 @@ pub struct CellSpec {
     pub shards: Vec<ShardSpec>,
     /// Frozen permanent-evaluation backend.
     pub backend: Backend,
+    /// Committed measurement receipt that determined the backend selection.
+    pub backend_receipt: ArtifactIdentity,
     /// Whether determinant evaluation runs on the same matrices.
     pub determinant_companion: DeterminantPlan,
 }
@@ -329,6 +475,14 @@ pub enum DeterminantPlan {
     NotEvaluated,
 }
 
+/// Deterministic random-number generator algorithm used by the campaign.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RngAlgorithm {
+    /// ChaCha20 with the implementation version recorded separately.
+    ChaCha20,
+}
+
 /// Mechanical provenance required to regenerate and audit the dataset.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -337,6 +491,12 @@ pub struct Provenance {
     pub git_revision: String,
     /// Complete compiler version string.
     pub compiler_version: String,
+    /// Closed RNG algorithm identity.
+    pub rng_algorithm: RngAlgorithm,
+    /// Exact RNG crate or implementation version.
+    pub rng_version: String,
+    /// Exact producer invocation as unquoted argument tokens.
+    pub invocation: Vec<String>,
     /// Accelerator runtime version, or an explicit absent state.
     pub accelerator_runtime: Availability<String>,
     /// Processor model.
@@ -716,6 +876,19 @@ pub struct ConformedDataset {
     pub layout: DatasetLayout,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CellAggregate {
+    matrix_count: u64,
+    permanent_zero_count: u64,
+    determinant: DeterminantAggregate,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DeterminantAggregate {
+    NotEvaluated,
+    Evaluated { sample_count: u64, zero_count: u64 },
+}
+
 /// Dataset schema or conformance failure.
 #[derive(Debug)]
 pub enum SchemaError {
@@ -806,6 +979,21 @@ impl SchemaDocument for CampaignManifest {
     fn validate(&self) -> Result<(), String> {
         validate_nonempty("git_revision", &self.provenance.git_revision)?;
         validate_nonempty("compiler_version", &self.provenance.compiler_version)?;
+        validate_nonempty("rng_version", &self.provenance.rng_version)?;
+        if self.provenance.rng_version.contains('\0') {
+            return Err("rng_version must not contain NUL".to_owned());
+        }
+        if self.provenance.invocation.is_empty() || self.provenance.invocation[0].is_empty() {
+            return Err("invocation must include a non-empty executable token".to_owned());
+        }
+        if self
+            .provenance
+            .invocation
+            .iter()
+            .any(|argument| argument.contains('\0'))
+        {
+            return Err("invocation tokens must not contain NUL".to_owned());
+        }
         validate_nonempty("cpu_model", &self.provenance.cpu_model)?;
         validate_availability("accelerator_runtime", &self.provenance.accelerator_runtime)?;
         validate_availability("gpu_model", &self.provenance.gpu_model)?;
@@ -1042,9 +1230,12 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         .iter()
         .map(|purpose| purpose.tag)
         .collect();
-    let mut pooled_counts = BTreeMap::new();
+    let mut pooled_cells = BTreeMap::new();
     for cell in &manifest.cells {
         let mut cell_count = 0_u64;
+        let mut permanent_zero_count = 0_u64;
+        let mut determinant_sample_count = 0_u64;
+        let mut determinant_zero_count = 0_u64;
         for (ordinal, shard_spec) in cell.shards.iter().enumerate() {
             let relative_path = format!(
                 "shards/q{}/n{:02}/shard-{:06}.json",
@@ -1084,6 +1275,47 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                     message: "pooled shard matrix count overflows u64".to_owned(),
                 }
             })?;
+            permanent_zero_count = permanent_zero_count
+                .checked_add(record.permanent_zero_count)
+                .ok_or_else(|| SchemaError::InvalidValue {
+                    path: path.clone(),
+                    message: "pooled shard permanent-zero count overflows u64".to_owned(),
+                })?;
+            match (cell.determinant_companion, &record.determinant) {
+                (DeterminantPlan::NotEvaluated, DeterminantCount::NotEvaluated) => {}
+                (DeterminantPlan::NotEvaluated, DeterminantCount::Evaluated { .. }) => {
+                    return invalid_value(
+                        &path,
+                        "shard determinant state contradicts not_evaluated determinant plan",
+                    );
+                }
+                (
+                    DeterminantPlan::Evaluate,
+                    DeterminantCount::Evaluated {
+                        sample_count,
+                        zero_count,
+                    },
+                ) => {
+                    determinant_sample_count = determinant_sample_count
+                        .checked_add(*sample_count)
+                        .ok_or_else(|| SchemaError::InvalidValue {
+                            path: path.clone(),
+                            message: "pooled determinant sample count overflows u64".to_owned(),
+                        })?;
+                    determinant_zero_count = determinant_zero_count
+                        .checked_add(*zero_count)
+                        .ok_or_else(|| SchemaError::InvalidValue {
+                            path: path.clone(),
+                            message: "pooled determinant zero count overflows u64".to_owned(),
+                        })?;
+                }
+                (DeterminantPlan::Evaluate, DeterminantCount::NotEvaluated) => {
+                    return invalid_value(
+                        &path,
+                        "shard determinant state contradicts evaluate determinant plan",
+                    );
+                }
+            }
         }
         if cell_count != cell.matrix_count {
             return invalid_value(
@@ -1091,7 +1323,21 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
                 "pooled shard count differs from manifest cell count",
             );
         }
-        pooled_counts.insert((cell.q, cell.n), cell_count);
+        let determinant = match cell.determinant_companion {
+            DeterminantPlan::NotEvaluated => DeterminantAggregate::NotEvaluated,
+            DeterminantPlan::Evaluate => DeterminantAggregate::Evaluated {
+                sample_count: determinant_sample_count,
+                zero_count: determinant_zero_count,
+            },
+        };
+        pooled_cells.insert(
+            (cell.q, cell.n),
+            CellAggregate {
+                matrix_count: cell_count,
+                permanent_zero_count,
+                determinant,
+            },
+        );
     }
 
     let fields: BTreeSet<_> = manifest.cells.iter().map(|cell| cell.q).collect();
@@ -1102,11 +1348,8 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         let summary: FieldSummary = read_json(&path)?;
         for row in &summary.rows {
             let key = (row.q, row.n);
-            match pooled_counts.get(&key) {
-                Some(count) if *count == row.matrix_count => {}
-                Some(_) => {
-                    return invalid_value(&path, "summary matrix_count differs from pooled shards")
-                }
+            match pooled_cells.get(&key) {
+                Some(aggregate) => validate_summary_aggregate(&path, row, *aggregate)?,
                 None => return invalid_value(&path, "summary row does not name a manifest cell"),
             }
             if field_rows.insert(key, row.clone()).is_some() {
@@ -1115,7 +1358,7 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         }
         field_summaries.insert(q, summary);
     }
-    if field_rows.len() != pooled_counts.len() {
+    if field_rows.len() != pooled_cells.len() {
         return invalid_value(
             &manifest_path,
             "not every manifest cell has one field-summary row",
@@ -1142,6 +1385,51 @@ pub fn conform_dataset(root: &Path) -> Result<ConformedDataset, SchemaError> {
         pooled_summary,
         layout,
     })
+}
+
+fn validate_summary_aggregate(
+    path: &Path,
+    row: &SummaryRow,
+    aggregate: CellAggregate,
+) -> Result<(), SchemaError> {
+    if row.matrix_count != aggregate.matrix_count {
+        return invalid_value(path, "summary matrix_count differs from pooled shards");
+    }
+    if row.permanent_zero_count != aggregate.permanent_zero_count {
+        return invalid_value(
+            path,
+            "summary permanent_zero_count differs from pooled shards",
+        );
+    }
+    match (aggregate.determinant, &row.determinant) {
+        (DeterminantAggregate::NotEvaluated, DeterminantSummary::NotEvaluated) => Ok(()),
+        (DeterminantAggregate::NotEvaluated, DeterminantSummary::Evaluated { .. }) => {
+            invalid_value(
+                path,
+                "summary determinant state contradicts not_evaluated determinant plan",
+            )
+        }
+        (
+            DeterminantAggregate::Evaluated {
+                sample_count: pooled_samples,
+                zero_count: pooled_zeros,
+            },
+            DeterminantSummary::Evaluated {
+                sample_count,
+                zero_count,
+                ..
+            },
+        ) if *sample_count == pooled_samples && *zero_count == pooled_zeros => Ok(()),
+        (DeterminantAggregate::Evaluated { .. }, DeterminantSummary::Evaluated { .. }) => {
+            invalid_value(path, "summary determinant counts differ from pooled shards")
+        }
+        (DeterminantAggregate::Evaluated { .. }, DeterminantSummary::NotEvaluated) => {
+            invalid_value(
+                path,
+                "summary determinant state contradicts evaluate determinant plan",
+            )
+        }
+    }
 }
 
 fn read_json<T>(path: &Path) -> Result<T, SchemaError>
@@ -1454,11 +1742,26 @@ mod tests {
                     },
                 ],
                 backend: Backend::Scalar,
+                backend_receipt: ArtifactIdentity {
+                    path: "dev/benchmarks/permanent-backend-selection/test-receipt.json"
+                        .parse()
+                        .unwrap(),
+                    sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                        .parse()
+                        .unwrap(),
+                },
                 determinant_companion: DeterminantPlan::NotEvaluated,
             }],
             provenance: Provenance {
                 git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766".to_owned(),
                 compiler_version: "rustc 1.95.0".to_owned(),
+                rng_algorithm: RngAlgorithm::ChaCha20,
+                rng_version: "rand_chacha 0.9.0".to_owned(),
+                invocation: vec![
+                    "gf2-permanent-campaign".to_owned(),
+                    "--manifest".to_owned(),
+                    "manifest.json".to_owned(),
+                ],
                 accelerator_runtime: Availability::NotPresent,
                 cpu_model: "Test CPU".to_owned(),
                 gpu_model: Availability::NotPresent,
@@ -1546,6 +1849,66 @@ mod tests {
         .unwrap();
     }
 
+    fn read_field_summary(root: &Path) -> FieldSummary {
+        serde_json::from_slice(&fs::read(root.join("summaries/q3.json")).unwrap()).unwrap()
+    }
+
+    fn write_field_and_pooled_summaries(root: &Path, summary: &FieldSummary) {
+        fs::write(
+            root.join("summaries/q3.json"),
+            serde_json::to_vec_pretty(summary).unwrap(),
+        )
+        .unwrap();
+        fs::write(
+            root.join(POOLED_SUMMARY_FILE),
+            encode_summary_csv(&summary.rows),
+        )
+        .unwrap();
+    }
+
+    fn set_manifest_determinant_plan(root: &Path, plan: DeterminantPlan) {
+        let path = root.join(MANIFEST_FILE);
+        let mut manifest: CampaignManifest =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        manifest.cells[0].determinant_companion = plan;
+        fs::write(path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
+    }
+
+    fn set_shard_determinant(root: &Path, shard_id: u64, determinant: DeterminantCount) {
+        let path = root.join(format!("shards/q3/n04/shard-{shard_id:06}.json"));
+        let mut shard: ShardRecord = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        shard.determinant = determinant;
+        fs::write(path, serde_json::to_vec_pretty(&shard).unwrap()).unwrap();
+    }
+
+    fn set_coherent_evaluated_determinants(root: &Path) {
+        set_manifest_determinant_plan(root, DeterminantPlan::Evaluate);
+        for shard_id in 0..2 {
+            set_shard_determinant(
+                root,
+                shard_id,
+                DeterminantCount::Evaluated {
+                    sample_count: 10,
+                    zero_count: 4,
+                },
+            );
+        }
+        let mut summary = read_field_summary(root);
+        summary.rows[0].determinant = DeterminantSummary::Evaluated {
+            sample_count: 20,
+            zero_count: 8,
+            estimate: ProportionEstimate {
+                point: 0.4,
+                interval: Interval {
+                    lower: 0.2,
+                    upper: 0.6,
+                },
+            },
+            verdict: AcceptanceVerdict::Accepted,
+        };
+        write_field_and_pooled_summaries(root, &summary);
+    }
+
     #[test]
     fn well_formed_dataset_conforms_and_has_one_writer_per_raw_path() {
         let fixture = TestDir::new();
@@ -1607,6 +1970,202 @@ mod tests {
                 "{mutation} manifest mutation must be rejected"
             );
         }
+    }
+
+    #[test]
+    fn conformance_requires_backend_receipt_and_rng_reproduction_fields() {
+        for missing_field in [
+            "backend_receipt",
+            "rng_algorithm",
+            "rng_version",
+            "invocation",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            let object = if missing_field == "backend_receipt" {
+                value["cells"][0].as_object_mut().unwrap()
+            } else {
+                value["provenance"].as_object_mut().unwrap()
+            };
+            object.remove(missing_field);
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "manifest without {missing_field} must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_noncanonical_backend_receipt_identity() {
+        for mutation in [
+            "missing_path",
+            "missing_digest",
+            "absolute",
+            "traversal",
+            "uppercase_digest",
+            "unknown",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            let receipt = &mut value["cells"][0]["backend_receipt"];
+            match mutation {
+                "missing_path" => {
+                    receipt.as_object_mut().unwrap().remove("path");
+                }
+                "missing_digest" => {
+                    receipt.as_object_mut().unwrap().remove("sha256");
+                }
+                "absolute" => receipt["path"] = json!("/tmp/selection.json"),
+                "traversal" => receipt["path"] = json!("dev/../selection.json"),
+                "uppercase_digest" => {
+                    receipt["sha256"] =
+                        json!("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+                }
+                "unknown" => receipt["media_type"] = json!("application/json"),
+                _ => unreachable!(),
+            }
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "{mutation} backend receipt identity must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_incomplete_rng_reproduction_provenance() {
+        for mutation in [
+            "empty_version",
+            "empty_invocation",
+            "empty_executable",
+            "unknown_rng",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            match mutation {
+                "empty_version" => value["provenance"]["rng_version"] = json!(""),
+                "empty_invocation" => value["provenance"]["invocation"] = json!([]),
+                "empty_executable" => {
+                    value["provenance"]["invocation"] = json!(["", "--manifest", "manifest.json"]);
+                }
+                "unknown_rng" => value["provenance"]["rng_algorithm"] = json!("system_random"),
+                _ => unreachable!(),
+            }
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "{mutation} RNG provenance must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_summary_permanent_zeros_not_pooled_from_shards() {
+        let fixture = TestDir::new();
+        write_fixture(&fixture.0);
+        let mut summary = read_field_summary(&fixture.0);
+        summary.rows[0].permanent_zero_count += 1;
+        summary.rows[0].permanent_estimate.point = 0.35;
+        write_field_and_pooled_summaries(&fixture.0, &summary);
+
+        let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+        assert!(
+            error.contains("permanent_zero_count differs from pooled shards"),
+            "unexpected conformance error: {error}"
+        );
+    }
+
+    #[test]
+    fn conformance_rejects_numeric_determinants_for_not_evaluated_plan() {
+        for surface in ["shard", "summary"] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            if surface == "shard" {
+                set_shard_determinant(
+                    &fixture.0,
+                    0,
+                    DeterminantCount::Evaluated {
+                        sample_count: 10,
+                        zero_count: 0,
+                    },
+                );
+            } else {
+                let mut summary = read_field_summary(&fixture.0);
+                summary.rows[0].determinant = DeterminantSummary::Evaluated {
+                    sample_count: 20,
+                    zero_count: 0,
+                    estimate: ProportionEstimate {
+                        point: 0.0,
+                        interval: Interval {
+                            lower: 0.0,
+                            upper: 0.2,
+                        },
+                    },
+                    verdict: AcceptanceVerdict::Accepted,
+                };
+                write_field_and_pooled_summaries(&fixture.0, &summary);
+            }
+
+            let error = conform_dataset(&fixture.0).unwrap_err().to_string();
+            assert!(
+                error.contains("not_evaluated determinant plan"),
+                "{surface} mismatch returned unexpected error: {error}"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_evaluated_plan_state_and_pooled_count_mismatches() {
+        let missing_state = TestDir::new();
+        write_fixture(&missing_state.0);
+        set_manifest_determinant_plan(&missing_state.0, DeterminantPlan::Evaluate);
+        let error = conform_dataset(&missing_state.0).unwrap_err().to_string();
+        assert!(
+            error.contains("evaluate determinant plan"),
+            "unexpected evaluated-plan state error: {error}"
+        );
+
+        let coherent = TestDir::new();
+        write_fixture(&coherent.0);
+        set_coherent_evaluated_determinants(&coherent.0);
+        conform_dataset(&coherent.0).expect("coherently pooled evaluated plan must conform");
+
+        let wrong_pool = TestDir::new();
+        write_fixture(&wrong_pool.0);
+        set_coherent_evaluated_determinants(&wrong_pool.0);
+        let mut summary = read_field_summary(&wrong_pool.0);
+        summary.rows[0].determinant = DeterminantSummary::Evaluated {
+            sample_count: 20,
+            zero_count: 7,
+            estimate: ProportionEstimate {
+                point: 0.35,
+                interval: Interval {
+                    lower: 0.15,
+                    upper: 0.55,
+                },
+            },
+            verdict: AcceptanceVerdict::Accepted,
+        };
+        write_field_and_pooled_summaries(&wrong_pool.0, &summary);
+
+        let error = conform_dataset(&wrong_pool.0).unwrap_err().to_string();
+        assert!(
+            error.contains("determinant counts differ from pooled shards"),
+            "unexpected determinant pooling error: {error}"
+        );
     }
 
     #[test]
