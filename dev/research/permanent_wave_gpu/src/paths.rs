@@ -30,22 +30,28 @@ pub enum MeasurementPath {
     WaveGf3,
     /// F_3 zero-mask and sign-popcount fold.
     FoldGf3,
-    /// F_5 byte control and three-plane representation comparison.
-    CandidatesGf5,
+    /// F_5 byte-oriented modular arithmetic representation control.
+    F5ByteControl,
+    /// F_5 canonical three-plane accumulator.
+    F5ThreePlane,
     /// F_7 three-plane Mersenne accumulator.
-    ThreePlaneGf7,
-    /// F_7 permanent-shaped wave kernel comparison.
-    WaveGf7,
+    F7ThreePlaneAccumulator,
+    /// F_7 permanent-shaped lookup-table arithmetic representation control.
+    F7LookupTableControl,
+    /// F_7 permanent-shaped three-plane kernel.
+    F7ThreePlanePermanent,
 }
 
 impl MeasurementPath {
     /// Every planned study path, in stable measurement order.
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 7] = [
         Self::WaveGf3,
         Self::FoldGf3,
-        Self::CandidatesGf5,
-        Self::ThreePlaneGf7,
-        Self::WaveGf7,
+        Self::F5ByteControl,
+        Self::F5ThreePlane,
+        Self::F7ThreePlaneAccumulator,
+        Self::F7LookupTableControl,
+        Self::F7ThreePlanePermanent,
     ];
 
     /// Stable registry name used by the measurement driver and receipts.
@@ -54,9 +60,11 @@ impl MeasurementPath {
         match self {
             Self::WaveGf3 => "wave-gf3",
             Self::FoldGf3 => "fold-gf3",
-            Self::CandidatesGf5 => "candidates-gf5",
-            Self::ThreePlaneGf7 => "three-plane-gf7",
-            Self::WaveGf7 => "wave-gf7",
+            Self::F5ByteControl => "f5-byte-control",
+            Self::F5ThreePlane => "f5-three-plane",
+            Self::F7ThreePlaneAccumulator => "f7-three-plane-accumulator",
+            Self::F7LookupTableControl => "f7-lookup-table-control",
+            Self::F7ThreePlanePermanent => "f7-three-plane-permanent",
         }
     }
 
@@ -65,9 +73,11 @@ impl MeasurementPath {
         match self {
             Self::WaveGf3 => wave::run(),
             Self::FoldGf3 => fold_gf3::run(),
-            Self::CandidatesGf5 => f5_candidates::run(),
-            Self::ThreePlaneGf7 => f7_three_plane::run(),
-            Self::WaveGf7 => wave_gf7::run(),
+            Self::F5ByteControl => f5_candidates::byte_control(),
+            Self::F5ThreePlane => f5_candidates::three_plane(),
+            Self::F7ThreePlaneAccumulator => f7_three_plane::run(),
+            Self::F7LookupTableControl => wave_gf7::lookup_table_control(),
+            Self::F7ThreePlanePermanent => wave_gf7::three_plane(),
         }
     }
 }

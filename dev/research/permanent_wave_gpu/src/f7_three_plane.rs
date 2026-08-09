@@ -1,4 +1,4 @@
-//! Stub for the F_7 three-plane Mersenne accumulator candidate.
+//! Stub for the standalone F_7 three-plane Mersenne accumulator candidate.
 
 use crate::{DispatchResult, Unsupported};
 
