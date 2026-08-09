@@ -17,7 +17,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-09T15:41:03.947385685Z",
+      "updated_at": "2026-08-09T20:32:28.784979956Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -35,5 +35,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-  "updated_at": "2026-08-09T15:44:52.077950233Z"
+  "updated_at": "2026-08-09T20:32:28.784979956Z"
 }
