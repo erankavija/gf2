@@ -29,6 +29,13 @@ pub const POOLED_SUMMARY_FILE: &str = "summary.csv";
 /// Campaign-scoped raw-data integrity file name.
 pub const INTEGRITY_FILE: &str = "checksums.sha256";
 
+/// Repository-relative directory holding every published campaign.
+///
+/// One dataset is exactly one directory immediately below this home, named by
+/// its [`CampaignId`]. The home itself holds no dataset: the frozen protocol
+/// and the prior-art targets live beside the campaigns, not inside one.
+pub const DATASET_HOME: &str = "dev/simulation_results/permanent-zero-fraction";
+
 /// Returns the campaign-relative path of one shard record.
 ///
 /// This is the one place the shard path grammar is written; the layout, the
