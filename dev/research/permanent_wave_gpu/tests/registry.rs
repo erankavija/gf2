@@ -5,9 +5,11 @@ fn every_planned_path_is_addressable_and_explicitly_unsupported() {
     let expected = [
         "wave-gf3",
         "fold-gf3",
-        "candidates-gf5",
-        "three-plane-gf7",
-        "wave-gf7",
+        "f5-byte-control",
+        "f5-three-plane",
+        "f7-three-plane-accumulator",
+        "f7-lookup-table-control",
+        "f7-three-plane-permanent",
     ];
     let actual = MeasurementPath::ALL.map(MeasurementPath::name);
     assert_eq!(
