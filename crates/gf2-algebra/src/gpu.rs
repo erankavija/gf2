@@ -17,10 +17,10 @@
 //! **Without `hip`:** the symbols in this module do not exist. Any call site
 //! that references `gf2_algebra::gpu::permanent_batch_bipedal3` (or the other
 //! two) will produce a **compile error** on non-`hip` builds. This is a
-//! deliberate design choice: the CPU per-matrix fallback
+//! deliberate design choice: the processor per-matrix fallback
 //! `matrices.iter().map(permanent_bipedal3).collect()` is already available
 //! and is unambiguous; wrapping it behind a fake GPU name would be misleading.
-//! Callers that need the CPU path should call it directly.
+//! Callers that need the processor path should call it directly.
 //!
 //! # Host requirements
 //!
@@ -38,13 +38,13 @@
 //! `gf2_kernels_hip::permanent::init_permanent_gf7`. Subsequent calls skip the
 //! copy.
 //!
-//! # Relationship to the CPU permanent functions
+//! # Relationship to the processor permanent functions
 //!
-//! | GPU entry point                | CPU analogue                          |
-//! |-------------------------------|---------------------------------------|
-//! | [`permanent_batch_bipedal3`]  | `permanent_bipedal3(&mat)`            |
-//! | [`permanent_batch_bipedal5`]  | `permanent_bipedal5(&mat)`            |
-//! | [`permanent_batch_bipedal7`]  | `permanent_bipedal7(&mat)`            |
+//! | GPU entry point               | Processor equivalent                                      |
+//! |-------------------------------|-----------------------------------------------------------|
+//! | [`permanent_batch_bipedal3`]  | `permanent_bipedal3(&mat)` (scalar for `n <= 63`)          |
+//! | [`permanent_batch_bipedal5`]  | `permanent_bipedal5(&mat)`                                |
+//! | [`permanent_batch_bipedal7`]  | `permanent_bipedal7(&mat)`                                |
 //!
 //! The GPU functions send a whole batch to the device in a single kernel launch
 //! (one block per matrix), so the effective wall-clock cost is
@@ -211,7 +211,7 @@ fn serialise_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usize) {
 /// `O(ceil(M / num_CUs) · n · 2^n)`.
 ///
 /// **Without the `hip` Cargo feature this function does not exist.**
-/// Code referencing it on non-`hip` builds will fail to compile. The CPU
+/// Code referencing it on non-`hip` builds will fail to compile. The processor
 /// fallback is:
 ///
 /// ```rust
@@ -308,7 +308,7 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
 /// Ryser/Gray-code walk with byte-arithmetic F_5 column sums.
 ///
 /// **Without the `hip` Cargo feature this function does not exist.**
-/// The CPU fallback is:
+/// The processor fallback is:
 ///
 /// ```rust
 /// # #[cfg(feature = "f5")] {
@@ -407,12 +407,12 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
 /// MUL_LUT lives in GPU `__constant__` memory (64 KiB, hardware-cached);
 /// ADD_LUT and SUB_LUT live in `__device__` global memory.
 ///
-/// Note: the CPU single-word path [`crate::permanent::permanent_bipedal7`]
+/// Note: the processor single-word path [`crate::permanent::permanent_bipedal7`]
 /// is limited to `n <= 16 = Packed7::LANES`. The GPU path supports up to
 /// `n <= 63`.
 ///
 /// **Without the `hip` Cargo feature this function does not exist.**
-/// The CPU fallback is:
+/// The processor fallback is:
 ///
 /// ```rust
 /// # #[cfg(feature = "f7")] {

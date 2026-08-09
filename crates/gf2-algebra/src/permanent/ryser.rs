@@ -6,10 +6,13 @@
 //! add or subtract per row, matching the pseudocode in
 //! `dev/plans/ae82bd73-gf2-algebra-permanent/gf2_algebra_permanent.md` §6 / §7.3.
 //!
-//! This module is the **correctness oracle** for the fast bipedal kernels
-//! (`permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`) that land
-//! in later waves. Performance is intentionally secondary: no SIMD, no rayon,
-//! no specialisation.
+//! This module is the **correctness oracle** for the public bipedal permanents
+//! (`permanent_bipedal3`, `permanent_bipedal5`, `permanent_bipedal7`) and their
+//! specialised backends. For F_3, the public single-matrix dispatcher selects
+//! its scalar single-word kernel; the direct single-matrix AVX2 kernel and the
+//! four-matrix AVX2 batch entry point remain separate conformance and throughput
+//! paths. Performance here is intentionally secondary: no SIMD, no rayon, no
+//! specialisation.
 
 use gf2_core::field::FiniteField;
 

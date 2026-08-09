@@ -168,6 +168,16 @@ cargo clippy -p gf2-algebra --all-targets --all-features -- -D warnings
 
 Always use `--release`: debug mode is 10-100x slower on the packed arithmetic and the benchmark suite has a 5 s per-test wall-clock limit.
 
+To repeat the live crate-prose audit for superseded single-matrix AVX2 dispatch
+framing (with archived development history excluded), run:
+
+```bash
+rg -n -i \
+  'dispatch wiring and kernel correctne\x73s|batched multi-matrix path.*performance-oriented u\x73er|CPU ana\x6cogue|in later wave\x73|public (entry point|dispatcher).*(selects|prefers).*AVX2' \
+  crates/gf2-algebra \
+  --glob '!dev/archive/**'
+```
+
 ## Documentation
 
 - Epic design: [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`](../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md)
