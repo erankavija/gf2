@@ -6,6 +6,9 @@ is one immutable, versioned dataset:
 
 `dev/simulation_results/permanent-zero-fraction/<campaign-id>/`
 
+The campaign's controlling [scientific preregistration](protocol.md) is stored
+beside those datasets; it is not part of any dataset's raw or derived file set.
+
 A campaign id uses lowercase ASCII letters, digits, and interior hyphens. A
 writer must refuse an id whose directory already exists. Corrections,
 extensions, reruns, and schema migrations always receive a new campaign id;
