@@ -15,7 +15,23 @@
     "doc-review",
     "asm-artefact-present"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "asm-artefact-present": {
+      "status": "passed",
+      "updated_at": "2026-08-09T13:51:39.549062856Z",
+      "updated_by": "auto:executor"
+    },
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T13:55:35.958114863Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-09T13:58:11.788367166Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "18dec119-c2d9-48f7-b383-3c73f66e49f3",
   "labels": [
     "type:enhancement",
@@ -26,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-09T13:37:28.144284157Z"
+  "updated_at": "2026-08-09T13:58:11.788367166Z"
 }
