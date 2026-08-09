@@ -1,25 +1,48 @@
-//! v2 heartbeat-checkpoint schema, atomic writer, v2-only reader, and the
-//! checkpointed SNR-point runner (design doc §4).
+//! Generic crash-safe checkpoint persistence plus the v2 SNR-point runner.
 //!
-//! Owned by `5f12e7ff`. The checkpoint format is **v2-only**: there is a single
-//! schema and no backward-compatibility layer. A loaded file whose
-//! `schema_version` is not `2`, whose `config_hash` does not match the live
-//! config, or which does not parse as v2 JSON, is rejected as a hard load error
-//! ([`FatalError::BuildError`] wrapping [`BuildError::ConfigHashMismatch`]) —
-//! i.e. it is treated as not-a-valid-v2-checkpoint (corruption / wrong config),
-//! never silently accepted.
+//! [`CheckpointWriter`] and [`CheckpointReader`] persist any
+//! [`CheckpointPayload`] behind a caller-supplied [`ConfigHashProvider`]. The
+//! generic on-disk envelope records the payload's stable identity and schema
+//! version alongside the configuration hash. A reader accepts a file only when
+//! all three values match its live caller contract; absence means fresh work,
+//! while a present invalid or mismatched file is a hard [`CheckpointLoadError`].
+//!
+//! # Caller contract
+//!
+//! A new caller must:
+//!
+//! * implement [`CheckpointPayload`] for an owned serde payload, choosing a
+//!   stable, globally unambiguous [`CheckpointPayload::IDENTITY`] and bumping
+//!   [`CheckpointPayload::SCHEMA_VERSION`] whenever the serialized meaning is
+//!   not backward-compatible;
+//! * implement [`ConfigHashProvider`] so its hash covers every configuration
+//!   value that can affect resumed results, using a deterministic canonical
+//!   encoding and excluding only output-location values that cannot affect the
+//!   computation;
+//! * put every value needed for deterministic continuation in the payload. The
+//!   mechanism does not prescribe a resume key: absolute generator positions,
+//!   shard counters, or another caller-owned representation are all valid;
+//! * give one canonical file path to the matching writer and reader and treat
+//!   every [`CheckpointLoadError`] as a refusal to resume, never as fresh work.
+//!
+//! [`CheckpointWriter::for_payload`] creates the parent directory. Each write
+//! uses the same PID-tagged temporary-file, file-fsync, atomic-rename, and
+//! directory-fsync sequence as the established SNR checkpoint path. Concurrent
+//! writers must still be externally coordinated: PID tagging separates
+//! processes, not multiple writers in one process targeting the same file.
 //!
 //! # What this module provides
 //!
-//! * [`CheckpointV2`] / [`WorkerState`] — the v2 schema (`worker_states[]` is
-//!   **required**, `schema_version: 2`).
+//! * [`CheckpointPayload`] / [`ConfigHashProvider`] — the generic caller
+//!   contracts.
+//! * [`CheckpointWriter`] / [`CheckpointReader`] — generic crash-safe storage,
+//!   plus compatibility methods for the existing v2 SNR caller pending its
+//!   isolated migration.
+//! * [`CheckpointV2`] / [`WorkerState`] — the existing v2 SNR payload, which is
+//!   also a [`CheckpointPayload`] instantiation.
 //! * [`config_hash`] — the blake3 hash of the serialised [`PipelineConfig`]
 //!   **excluding** the path-dependent `checkpoint_dir` / `tracing_log_path`
 //!   fields. A loaded checkpoint whose hash differs aborts the resume.
-//! * [`CheckpointWriter`] — atomic per-SNR JSON writer (tmp + fsync + rename +
-//!   directory fsync, crash-safe under SIGINT during the write).
-//! * [`CheckpointReader`] — v2-only loader that restores the per-worker
-//!   `rng_word_pos` and rejects non-v2 / hash-mismatched files.
 //! * [`run_snr_point_checkpointed`] — the executor-facing runner: it dispatches
 //!   heartbeat-sized chunks of frames over [`run_snr_point_range`], settles the
 //!   rayon workers on a frame boundary (the CPU drain), latches the per-worker
@@ -41,11 +64,13 @@
 //! landed with Phase C task `571c11c4` in `executor::drain`; see
 //! [`drain_for_checkpoint`] for how the two halves correspond.
 
+use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::config::PipelineConfig;
@@ -57,6 +82,62 @@ use crate::parallel::{
 /// The fixed schema version this module reads and writes. A loaded checkpoint
 /// with any other value is rejected (design doc §4: v2-only reader).
 pub const SCHEMA_VERSION: u32 = 2;
+
+/// A serializable, owned payload stored by the generic checkpoint mechanism.
+///
+/// `IDENTITY` distinguishes unrelated payload families even when their JSON
+/// happens to have the same shape. It must be stable across compatible program
+/// versions, non-empty, and globally unambiguous within the application (for
+/// example, `"permanent-campaign/shard-progress"`). `SCHEMA_VERSION` describes
+/// the serialized meaning of this payload and must change when an older reader
+/// cannot safely interpret the new representation.
+///
+/// The payload owns its resume semantics. It must contain every state value
+/// needed for deterministic continuation; the persistence layer neither
+/// derives nor interprets generator positions, counters, or completion keys.
+/// Deserialization must not depend on ambient mutable state.
+pub trait CheckpointPayload: Serialize + DeserializeOwned {
+    /// Stable identity written into the checkpoint envelope.
+    const IDENTITY: &'static str;
+    /// Schema version written into the checkpoint envelope.
+    const SCHEMA_VERSION: u32;
+}
+
+/// Supplies the deterministic hash that binds a checkpoint to live config.
+///
+/// Implementations must hash every input that can affect resumed results using
+/// a canonical encoding. Paths and other output-only settings may be excluded
+/// only when they cannot affect computation. The returned string is persisted
+/// verbatim and compared for exact equality; callers should therefore include
+/// an algorithm prefix such as `"blake3:"` and keep the encoding stable.
+pub trait ConfigHashProvider {
+    /// Returns the configuration identity for the current run.
+    fn config_hash(&self) -> String;
+}
+
+impl ConfigHashProvider for String {
+    fn config_hash(&self) -> String {
+        self.clone()
+    }
+}
+
+impl ConfigHashProvider for str {
+    fn config_hash(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl<T: ConfigHashProvider + ?Sized> ConfigHashProvider for &T {
+    fn config_hash(&self) -> String {
+        (*self).config_hash()
+    }
+}
+
+impl ConfigHashProvider for PipelineConfig {
+    fn config_hash(&self) -> String {
+        config_hash(self)
+    }
+}
 
 /// Per-worker resume state recorded in a [`CheckpointV2`] (design doc §4).
 ///
@@ -175,6 +256,11 @@ pub struct CheckpointV2 {
     pub drain_committed_at_us_since_epoch: u128,
 }
 
+impl CheckpointPayload for CheckpointV2 {
+    const IDENTITY: &'static str = "gf2-sim/snr-checkpoint-v2";
+    const SCHEMA_VERSION: u32 = SCHEMA_VERSION;
+}
+
 /// `serde` adaptor (de)serialising a `u128` as a decimal string.
 ///
 /// A `u128` above `2^53` cannot round-trip through a JSON number, so
@@ -282,28 +368,164 @@ pub fn checkpoint_path(dir: &Path, index: usize) -> PathBuf {
     dir.join(format!("snr_{index:04}.json"))
 }
 
-/// Atomic, crash-safe writer for v2 per-SNR checkpoints (design doc §4).
+#[derive(Serialize)]
+struct CheckpointEnvelope<'a, P> {
+    schema_version: u32,
+    payload_identity: &'static str,
+    config_hash: String,
+    payload: &'a P,
+}
+
+#[derive(Deserialize)]
+struct RawCheckpointEnvelope {
+    schema_version: u32,
+    payload_identity: String,
+    config_hash: String,
+    payload: serde_json::Value,
+}
+
+/// A hard refusal to resume from a present generic checkpoint.
 ///
-/// Each [`write`](Self::write) serialises a [`CheckpointV2`] to
-/// `<dir>/snr_<NNNN>.json` via a tmp-file + fsync + rename + directory-fsync
-/// sequence, so a crash (or SIGINT) at any point leaves either the complete
-/// previous checkpoint or no new file — never a partially-written JSON. The
-/// rename is atomic on POSIX; the directory fsync durably persists the rename
-/// itself.
+/// Only file absence is represented as fresh work (`Ok(None)` from
+/// [`CheckpointReader::load_payload`]). Every variant here means a checkpoint
+/// was present but could not be safely associated with the caller's payload
+/// and configuration contract.
+#[derive(Debug)]
+pub enum CheckpointLoadError {
+    /// The checkpoint exists but could not be read.
+    Io(std::io::Error),
+    /// The file is not a structurally valid checkpoint envelope or payload.
+    Invalid(serde_json::Error),
+    /// The envelope's schema version differs from the payload contract.
+    SchemaVersionMismatch {
+        /// Version found on disk.
+        loaded: u32,
+        /// Version required by the payload type.
+        expected: u32,
+    },
+    /// The envelope belongs to a different payload family.
+    PayloadIdentityMismatch {
+        /// Payload identity found on disk.
+        loaded: String,
+        /// Identity required by the payload type.
+        expected: &'static str,
+    },
+    /// The checkpoint was written under a different configuration.
+    ConfigHashMismatch {
+        /// Configuration hash found on disk.
+        loaded: String,
+        /// Hash produced by the live provider.
+        expected: String,
+    },
+}
+
+impl std::fmt::Display for CheckpointLoadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Io(error) => write!(f, "checkpoint read failed: {error}"),
+            Self::Invalid(error) => write!(f, "invalid checkpoint: {error}"),
+            Self::SchemaVersionMismatch { loaded, expected } => write!(
+                f,
+                "checkpoint schema version mismatch: loaded {loaded}, expected {expected}"
+            ),
+            Self::PayloadIdentityMismatch { loaded, expected } => write!(
+                f,
+                "checkpoint payload identity mismatch: loaded {loaded:?}, expected {expected:?}"
+            ),
+            Self::ConfigHashMismatch { loaded, expected } => write!(
+                f,
+                "checkpoint configuration hash mismatch: loaded {loaded:?}, expected {expected:?}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CheckpointLoadError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(error) => Some(error),
+            Self::Invalid(error) => Some(error),
+            Self::SchemaVersionMismatch { .. }
+            | Self::PayloadIdentityMismatch { .. }
+            | Self::ConfigHashMismatch { .. } => None,
+        }
+    }
+}
+
+fn atomic_write_json(path: &Path, json: &[u8], on_pre_fsync: impl FnOnce()) -> std::io::Result<()> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty());
+    let dir = parent.unwrap_or_else(|| Path::new("."));
+    let stem = path.file_stem().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "checkpoint path must name a file",
+        )
+    })?;
+    let tmp = dir.join(format!(
+        "{}.{}.tmp",
+        stem.to_string_lossy(),
+        std::process::id()
+    ));
+
+    {
+        use std::io::Write as _;
+        let mut file = std::fs::File::create(&tmp)?;
+        file.write_all(json)?;
+        on_pre_fsync();
+        file.sync_all()?;
+    }
+
+    std::fs::rename(&tmp, path)?;
+    let directory = std::fs::File::open(dir)?;
+    directory.sync_all()?;
+    Ok(())
+}
+
+/// Atomic, crash-safe writer for a serializable checkpoint payload.
+///
+/// A generic writer is created with [`for_payload`](Self::for_payload) and
+/// serializes the payload inside an identity/version/config-hash envelope.
+/// Every write uses a PID-tagged temporary sibling, file fsync, rename, and
+/// directory fsync, so the canonical path is always absent or a complete old or
+/// new checkpoint, never partially-written JSON. The rename is atomic on POSIX;
+/// directory fsync durably persists the rename itself.
+///
+/// The default type parameters preserve the existing SNR writer construction
+/// until that caller migrates separately. New callers should always select
+/// explicit payload and hash-provider types.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// use gf2_sim::checkpoint::{CheckpointWriter, CheckpointV2};
-/// let writer = CheckpointWriter::new("/tmp/ck").unwrap();
-/// // writer.write(&ckpt)?;  // ckpt: CheckpointV2
+/// use gf2_sim::checkpoint::{CheckpointPayload, CheckpointWriter, ConfigHashProvider};
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct Progress { completed_shards: u64 }
+/// impl CheckpointPayload for Progress {
+///     const IDENTITY: &'static str = "example/shard-progress";
+///     const SCHEMA_VERSION: u32 = 1;
+/// }
+/// struct ConfigHash;
+/// impl ConfigHashProvider for ConfigHash {
+///     fn config_hash(&self) -> String { "blake3:example".to_string() }
+/// }
+/// let writer = CheckpointWriter::<Progress, _>::for_payload(
+///     "/tmp/progress.json",
+///     ConfigHash,
+/// ).unwrap();
+/// writer.write_payload(&Progress { completed_shards: 3 }).unwrap();
 /// ```
 #[derive(Debug, Clone)]
-pub struct CheckpointWriter {
-    dir: PathBuf,
+pub struct CheckpointWriter<P = CheckpointV2, H = ()> {
+    location: PathBuf,
+    hash_provider: H,
+    payload: PhantomData<fn() -> P>,
 }
 
-impl CheckpointWriter {
+impl CheckpointWriter<CheckpointV2, ()> {
     /// Creates a writer for `dir`, creating the directory if it does not exist.
     ///
     /// # Arguments
@@ -317,13 +539,17 @@ impl CheckpointWriter {
     pub fn new(dir: impl Into<PathBuf>) -> std::io::Result<Self> {
         let dir = dir.into();
         std::fs::create_dir_all(&dir)?;
-        Ok(Self { dir })
+        Ok(Self {
+            location: dir,
+            hash_provider: (),
+            payload: PhantomData,
+        })
     }
 
     /// The checkpoint directory this writer targets.
     #[must_use]
     pub fn dir(&self) -> &Path {
-        &self.dir
+        &self.location
     }
 
     /// Atomically writes `ckpt` to `<dir>/snr_<NNNN>.json`.
@@ -379,53 +605,109 @@ impl CheckpointWriter {
         ckpt: &CheckpointV2,
         on_pre_fsync: impl FnOnce(),
     ) -> std::io::Result<()> {
-        let path = checkpoint_path(&self.dir, ckpt.snr_index);
+        let path = checkpoint_path(&self.location, ckpt.snr_index);
         let json = serde_json::to_vec_pretty(ckpt).map_err(std::io::Error::other)?;
-
-        // Unique tmp name (pid-tagged) so concurrent writers for the same SNR
-        // never clobber each other's in-progress file before the rename.
-        let tmp = self.dir.join(format!(
-            "snr_{:04}.{}.tmp",
-            ckpt.snr_index,
-            std::process::id()
-        ));
-
-        // Write the tmp bytes, fire the pre-fsync hook, then fsync the tmp file
-        // before renaming. The hook runs *after* all bytes are on the page cache
-        // but *before* `sync_all`, so an external kill fired from the hook lands
-        // during the fsync.
-        {
-            use std::io::Write as _;
-            let mut f = std::fs::File::create(&tmp)?;
-            f.write_all(&json)?;
-            on_pre_fsync();
-            f.sync_all()?;
-        }
-
-        // Atomic rename over the destination.
-        std::fs::rename(&tmp, &path)?;
-
-        // fsync the directory so the rename itself is durable across a crash.
-        // This is part of the hard tmp+fsync+rename+dir-fsync contract (design
-        // doc §4 step 4): a dir-open or dir-fsync failure is propagated as a
-        // hard `io::Error` from `write`, exactly like the tmp-file fsync above.
-        {
-            let dir = std::fs::File::open(&self.dir)?;
-            dir.sync_all()?;
-        }
-        Ok(())
+        atomic_write_json(&path, &json, on_pre_fsync)
     }
 }
 
-/// v2-only reader for per-SNR checkpoints (design doc §4).
+impl<P, H> CheckpointWriter<P, H>
+where
+    P: CheckpointPayload,
+    H: ConfigHashProvider,
+{
+    /// Creates a generic writer for one canonical checkpoint file.
+    ///
+    /// `path` names the final file, not a directory. Its parent directory is
+    /// created when needed. `hash_provider` is evaluated for every write so a
+    /// caller whose live configuration changes cannot stamp a stale cached
+    /// hash onto a new checkpoint.
+    ///
+    /// # Errors
+    ///
+    /// Returns an I/O error when the parent directory cannot be created or the
+    /// path does not name a file.
+    pub fn for_payload(path: impl Into<PathBuf>, hash_provider: H) -> std::io::Result<Self> {
+        let path = path.into();
+        if path.file_name().is_none() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "checkpoint path must name a file",
+            ));
+        }
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            std::fs::create_dir_all(parent)?;
+        }
+        Ok(Self {
+            location: path,
+            hash_provider,
+            payload: PhantomData,
+        })
+    }
+
+    /// Returns the generic writer's canonical checkpoint path.
+    #[must_use]
+    pub fn payload_path(&self) -> &Path {
+        &self.location
+    }
+
+    /// Atomically writes `payload` in the validated generic envelope.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`std::io::ErrorKind::InvalidInput`] if the payload declares an
+    /// empty identity. A serialization error is wrapped as an I/O error;
+    /// filesystem write, file fsync, rename, open-directory, and
+    /// directory-fsync failures are propagated without weakening the
+    /// durability contract.
+    pub fn write_payload(&self, payload: &P) -> std::io::Result<()> {
+        self.write_payload_with_fsync_hook(payload, || {})
+    }
+
+    /// Generic payload write with the same pre-fsync instrumentation seam as
+    /// the established SNR writer.
+    ///
+    /// The callback runs after all temporary-file bytes have been written and
+    /// immediately before the file fsync. It exists for crash-safety testing;
+    /// production callers use [`write_payload`](Self::write_payload).
+    ///
+    /// # Errors
+    ///
+    /// The same errors as [`write_payload`](Self::write_payload).
+    #[doc(hidden)]
+    pub fn write_payload_with_fsync_hook(
+        &self,
+        payload: &P,
+        on_pre_fsync: impl FnOnce(),
+    ) -> std::io::Result<()> {
+        if P::IDENTITY.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "checkpoint payload identity must not be empty",
+            ));
+        }
+        let envelope = CheckpointEnvelope {
+            schema_version: P::SCHEMA_VERSION,
+            payload_identity: P::IDENTITY,
+            config_hash: self.hash_provider.config_hash(),
+            payload,
+        };
+        let json = serde_json::to_vec_pretty(&envelope).map_err(std::io::Error::other)?;
+        atomic_write_json(&self.location, &json, on_pre_fsync)
+    }
+}
+
+/// Reader for a generic checkpoint payload.
 ///
-/// [`load`](Self::load) deserialises `<dir>/snr_<NNNN>.json` and validates it:
-/// a `schema_version` other than [`SCHEMA_VERSION`] **or** a `config_hash` that
-/// differs from the live config is a hard error
-/// ([`FatalError::BuildError`]`(`[`BuildError::ConfigHashMismatch`]`)`). The
-/// format is v2-only: any file that is not a valid v2 checkpoint (corrupt,
-/// truncated, or written under a different config) is rejected, never silently
-/// accepted.
+/// A generic reader created by [`for_payload`](Self::for_payload) validates the
+/// envelope's schema version, payload identity, and configuration hash before
+/// deserializing the payload. Missing files return `Ok(None)`; present invalid
+/// files return [`CheckpointLoadError`] and must not be treated as fresh work.
+/// The default type parameters retain the existing v2 SNR loader until its
+/// separate caller migration.
 ///
 /// # Examples
 ///
@@ -435,12 +717,13 @@ impl CheckpointWriter {
 /// // let maybe = reader.load(5)?;  // Ok(None) if the file is absent.
 /// ```
 #[derive(Debug, Clone)]
-pub struct CheckpointReader {
-    dir: PathBuf,
-    expected_hash: String,
+pub struct CheckpointReader<P = CheckpointV2, H = String> {
+    location: PathBuf,
+    hash_provider: H,
+    payload: PhantomData<fn() -> P>,
 }
 
-impl CheckpointReader {
+impl CheckpointReader<CheckpointV2, String> {
     /// Creates a reader bound to `dir` that requires `expected_hash`.
     ///
     /// # Arguments
@@ -450,8 +733,9 @@ impl CheckpointReader {
     ///   with a different hash is rejected.
     pub fn new(dir: impl Into<PathBuf>, expected_hash: String) -> Self {
         Self {
-            dir: dir.into(),
-            expected_hash,
+            location: dir.into(),
+            hash_provider: expected_hash,
+            payload: PhantomData,
         }
     }
 
@@ -476,7 +760,7 @@ impl CheckpointReader {
     ///   the file exists but cannot be parsed as v2 JSON (a corrupt or
     ///   truncated file).
     pub fn load(&self, index: usize) -> Result<Option<CheckpointV2>, FatalError> {
-        let path = checkpoint_path(&self.dir, index);
+        let path = checkpoint_path(&self.location, index);
         let bytes = match std::fs::read(&path) {
             Ok(b) => b,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -486,7 +770,7 @@ impl CheckpointReader {
                 // restarting the point.
                 return Err(FatalError::BuildError(BuildError::ConfigHashMismatch {
                     loaded: format!("io-error:{e}"),
-                    expected: self.expected_hash.clone(),
+                    expected: self.hash_provider.clone(),
                 }));
             }
         };
@@ -497,25 +781,96 @@ impl CheckpointReader {
             // it rather than guessing any other layout.
             FatalError::BuildError(BuildError::ConfigHashMismatch {
                 loaded: "schema:not-valid-v2".to_string(),
-                expected: self.expected_hash.clone(),
+                expected: self.hash_provider.clone(),
             })
         })?;
 
         if ckpt.schema_version != SCHEMA_VERSION {
             return Err(FatalError::BuildError(BuildError::ConfigHashMismatch {
                 loaded: format!("schema_version:{}", ckpt.schema_version),
-                expected: self.expected_hash.clone(),
+                expected: self.hash_provider.clone(),
             }));
         }
 
-        if ckpt.config_hash != self.expected_hash {
+        if ckpt.config_hash != self.hash_provider {
             return Err(FatalError::BuildError(BuildError::ConfigHashMismatch {
                 loaded: ckpt.config_hash,
-                expected: self.expected_hash.clone(),
+                expected: self.hash_provider.clone(),
             }));
         }
 
         Ok(Some(ckpt))
+    }
+}
+
+impl<P, H> CheckpointReader<P, H>
+where
+    P: CheckpointPayload,
+    H: ConfigHashProvider,
+{
+    /// Creates a generic reader for one canonical checkpoint file.
+    ///
+    /// Unlike the writer constructor, this does not create the parent
+    /// directory: a missing directory and a missing file both mean fresh work.
+    #[must_use]
+    pub fn for_payload(path: impl Into<PathBuf>, hash_provider: H) -> Self {
+        Self {
+            location: path.into(),
+            hash_provider,
+            payload: PhantomData,
+        }
+    }
+
+    /// Returns the generic reader's canonical checkpoint path.
+    #[must_use]
+    pub fn payload_path(&self) -> &Path {
+        &self.location
+    }
+
+    /// Loads a payload only after all envelope identities match.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(None)` only when the canonical file is absent. A valid matching file
+    /// returns `Ok(Some(payload))`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointLoadError::SchemaVersionMismatch`],
+    /// [`CheckpointLoadError::PayloadIdentityMismatch`], or
+    /// [`CheckpointLoadError::ConfigHashMismatch`] for the corresponding hard
+    /// mismatch. Unreadable files and invalid JSON/envelopes are also hard
+    /// errors. Callers must not convert these errors into fresh work.
+    pub fn load_payload(&self) -> Result<Option<P>, CheckpointLoadError> {
+        let bytes = match std::fs::read(&self.location) {
+            Ok(bytes) => bytes,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(CheckpointLoadError::Io(error)),
+        };
+        let raw: RawCheckpointEnvelope =
+            serde_json::from_slice(&bytes).map_err(CheckpointLoadError::Invalid)?;
+        if raw.schema_version != P::SCHEMA_VERSION {
+            return Err(CheckpointLoadError::SchemaVersionMismatch {
+                loaded: raw.schema_version,
+                expected: P::SCHEMA_VERSION,
+            });
+        }
+        if raw.payload_identity != P::IDENTITY {
+            return Err(CheckpointLoadError::PayloadIdentityMismatch {
+                loaded: raw.payload_identity,
+                expected: P::IDENTITY,
+            });
+        }
+        let expected_hash = self.hash_provider.config_hash();
+        if raw.config_hash != expected_hash {
+            return Err(CheckpointLoadError::ConfigHashMismatch {
+                loaded: raw.config_hash,
+                expected: expected_hash,
+            });
+        }
+        serde_json::from_value(raw.payload)
+            .map(Some)
+            .map_err(CheckpointLoadError::Invalid)
     }
 }
 
@@ -1184,6 +1539,26 @@ mod tests {
     use rand::Rng as _;
     use std::num::NonZeroUsize;
 
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    struct UnrelatedPayload {
+        shard_name: String,
+        samples: u64,
+    }
+
+    impl CheckpointPayload for UnrelatedPayload {
+        const IDENTITY: &'static str = "gf2-sim-test/unrelated-payload";
+        const SCHEMA_VERSION: u32 = 7;
+    }
+
+    #[derive(Debug, Clone)]
+    struct TestConfigHash(&'static str);
+
+    impl ConfigHashProvider for TestConfigHash {
+        fn config_hash(&self) -> String {
+            self.0.to_string()
+        }
+    }
+
     /// Serializes unit tests that touch the process-wide interrupt flag (the
     /// SIGINT path read inside [`run_snr_point_checkpointed`]). Bare `cargo test`
     /// runs a crate's unit tests multi-threaded in **one process**, so without
@@ -1308,6 +1683,114 @@ mod tests {
         // Invariant: per-worker counts sum to frames_completed.
         let sum: u64 = back.worker_states.iter().map(|w| w.frames_in_worker).sum();
         assert_eq!(sum, back.frames_completed);
+    }
+
+    #[test]
+    fn test_generic_checkpoint_round_trips_unrelated_payload() {
+        let dir = tempdir();
+        let path = dir.join("shard-progress.json");
+        let payload = UnrelatedPayload {
+            shard_name: "q5-n12-s003".to_string(),
+            samples: 41_000,
+        };
+
+        let writer = CheckpointWriter::<UnrelatedPayload, _>::for_payload(
+            &path,
+            TestConfigHash("blake3:campaign-a"),
+        )
+        .unwrap();
+        writer.write_payload(&payload).unwrap();
+
+        let reader = CheckpointReader::<UnrelatedPayload, _>::for_payload(
+            &path,
+            TestConfigHash("blake3:campaign-a"),
+        );
+        assert_eq!(reader.load_payload().unwrap(), Some(payload));
+    }
+
+    #[test]
+    fn test_generic_reader_refuses_schema_identity_and_config_mismatches() {
+        let dir = tempdir();
+        let path = dir.join("generic.json");
+        let payload = UnrelatedPayload {
+            shard_name: "q7-n10-s001".to_string(),
+            samples: 13,
+        };
+        CheckpointWriter::<UnrelatedPayload, _>::for_payload(
+            &path,
+            TestConfigHash("blake3:expected"),
+        )
+        .unwrap()
+        .write_payload(&payload)
+        .unwrap();
+
+        let original: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        let reader = || {
+            CheckpointReader::<UnrelatedPayload, _>::for_payload(
+                &path,
+                TestConfigHash("blake3:expected"),
+            )
+        };
+
+        let mut wrong_schema = original.clone();
+        wrong_schema["schema_version"] = serde_json::json!(8);
+        std::fs::write(&path, serde_json::to_vec(&wrong_schema).unwrap()).unwrap();
+        assert!(matches!(
+            reader().load_payload(),
+            Err(CheckpointLoadError::SchemaVersionMismatch { .. })
+        ));
+
+        let mut wrong_identity = original.clone();
+        wrong_identity["payload_identity"] = serde_json::json!("another-campaign/payload");
+        std::fs::write(&path, serde_json::to_vec(&wrong_identity).unwrap()).unwrap();
+        assert!(matches!(
+            reader().load_payload(),
+            Err(CheckpointLoadError::PayloadIdentityMismatch { .. })
+        ));
+
+        let mut wrong_hash = original;
+        wrong_hash["config_hash"] = serde_json::json!("blake3:stale");
+        std::fs::write(&path, serde_json::to_vec(&wrong_hash).unwrap()).unwrap();
+        assert!(matches!(
+            reader().load_payload(),
+            Err(CheckpointLoadError::ConfigHashMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn test_generic_reader_treats_absence_as_fresh_work() {
+        let dir = tempdir();
+        let reader = CheckpointReader::<UnrelatedPayload, _>::for_payload(
+            dir.join("absent.json"),
+            TestConfigHash("blake3:fresh"),
+        );
+        assert_eq!(reader.load_payload().unwrap(), None);
+    }
+
+    #[test]
+    fn test_checkpoint_v2_is_a_generic_payload_instantiation() {
+        let dir = tempdir();
+        let path = dir.join("snr-payload.json");
+        let cfg = test_config(1);
+        let hash = config_hash(&cfg);
+        let payload = build_checkpoint(
+            &cfg,
+            0,
+            6.25,
+            &hash,
+            &WorkerCounters::default(),
+            &[0],
+            false,
+        );
+        CheckpointWriter::<CheckpointV2, _>::for_payload(&path, hash.clone())
+            .unwrap()
+            .write_payload(&payload)
+            .unwrap();
+        let loaded = CheckpointReader::<CheckpointV2, _>::for_payload(&path, hash)
+            .load_payload()
+            .unwrap();
+        assert_eq!(loaded, Some(payload));
     }
 
     #[test]
