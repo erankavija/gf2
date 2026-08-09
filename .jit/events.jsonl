@@ -7769,3 +7769,4 @@
 {"gate_key":"cargo-ci","id":"4663b421-2592-4704-b432-a33e31a781d6","issue_id":"d36810e7-d000-4514-b18f-9a63a1403ba9","timestamp":"2026-08-09T22:20:01.219747861Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"24e66668-7b6c-4430-a864-757ef5a8c8e4","issue_id":"d36810e7-d000-4514-b18f-9a63a1403ba9","timestamp":"2026-08-09T22:24:05.338584664Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"866b0ff1-e063-4ef2-9f65-fa194f682be9","issue_id":"d36810e7-d000-4514-b18f-9a63a1403ba9","timestamp":"2026-08-09T22:26:04.032219153Z","type":"gate_passed","updated_by":"auto:executor"}
+{"fields":["description"],"id":"2588cee9-1d55-47b5-b609-fea7f1cb3aed","issue_id":"240b7618-f24f-4fc1-b708-ac349b3b3286","timestamp":"2026-08-09T22:33:17.508038071Z","type":"issue_updated","updated_by":"issue-update"}
