@@ -8,13 +8,13 @@ Epic design doc: [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_
 
 ## Motivation
 
-The reference paper (Scheinerman 2024, arXiv 2407.20205v2) introduces a "bipedal" map encoding F_3^n as a pair of F_2^n vectors, enabling add/sub/mul in 6/6/2 bitwise ops respectively. Combined with Ryser's formula in Gray-code order this gives O(n * 2^n) field operations where each step is a constant number of 64-bit word ops. The `permanent_bipedal3` implementation in this crate extends that idea with AVX2 SIMD, Rayon parallelism, and HIP/ROCm GPU dispatch.
+The reference paper (Scheinerman 2024, arXiv 2407.20205v2) introduces a "bipedal" map encoding F_3^n as a pair of F_2^n vectors, enabling add/sub/mul in 6/6/2 bitwise ops respectively. Combined with Ryser's formula in Gray-code order this gives O(n * 2^n) field operations where each step is a constant number of 64-bit word ops. This crate extends that idea with scalar single-matrix evaluation, direct and batched AVX2 kernels, Rayon parallelism, and HIP/ROCm GPU dispatch.
 
 ## Headline performance numbers
 
-From `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` (AMD Ryzen 9 5900X, Zen 3, AVX2=yes, single thread):
+The historical receipt `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` predates the current scalar dispatcher selection. On its AMD Ryzen 9 5900X host, the public entry point still selected the single-matrix AVX2 path; these figures record that earlier routing rather than the current dispatcher:
 
-| n  | `permanent_mod3_reference` | `permanent_bipedal3` (AVX2) | Speedup |
+| n  | `permanent_mod3_reference` | Historical AVX2 dispatcher | Speedup |
 |----|----------------------------|-----------------------------|---------|
 | 24 | 1 473 800 µs               | 213 970 µs                  | 6.9x    |
 | 28 | 27 360 000 µs              | 3 414 600 µs                | 8.0x    |
@@ -115,7 +115,7 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 
 | Feature        | Default | Effect |
 |----------------|---------|--------|
-| `simd`         | yes     | Enable AVX2 dispatch for `permanent_bipedal3` via `gf2-kernels-simd`. Falls back to scalar on non-AVX2 hosts. |
+| `simd`         | yes     | Enable the direct and four-matrix AVX2 APIs via `gf2-kernels-simd`; single-matrix `permanent_bipedal3` remains scalar. |
 | `parallel`     | yes     | Rayon-backed `permanent_bipedal3_parallel` with work-stealing Gray-block schedule. |
 | `f5`           | yes     | Enable `Packed5`, `Packed5Vec`, `Packed5Matrix`, and `permanent_bipedal5`. |
 | `f7`           | yes     | Enable `Packed7`, `Packed7Vec`, `Packed7Matrix`, and `permanent_bipedal7`. |
@@ -125,7 +125,7 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 
 ## Acceleration
 
-- **SIMD** (default on): On x86_64 hosts with AVX2, `permanent_bipedal3` dispatches the inner column-sum add/sub through the AVX2 batch kernel in `gf2-kernels-simd`. Runtime detection via `OnceLock` (no `build.rs` magic). Scalar fallback on non-AVX2 and non-x86 hosts.
+- **SIMD** (default on): On x86_64 hosts with AVX2, `permanent_bipedal3_batch` evaluates up to four matrices together through `gf2-kernels-simd`; `permanent_bipedal3_singleword_simd` exposes the single-matrix kernel directly for conformance work. The public single-matrix `permanent_bipedal3` entry point selects its faster scalar kernel on every host. Runtime detection is cached via `OnceLock` (no `build.rs` magic), and the batched API falls back safely when AVX2 is unavailable.
 - **Parallel** (default on): `permanent_bipedal3_parallel` partitions the 2^n Gray-code walk into independent chunks, each dispatched via Rayon work-stealing. Chunk size tunable via the optional `chunk_log2` parameter; default is auto-selected from `dev/archive/ae82bd73-gf2-algebra-permanent/plans/gf2_algebra_permanent.md`.
 - **Multi-word** (built-in): For `n > 63` the column-sum vector spans `ceil(n / 64)` Bipedal3 words, using the R3 cache-blocking design from `dev/plans/60c30e2d/r3_multi_word_streaming.md`. Supported up to `n = 255`.
 - **GPU** (opt-in, `--features hip`): `gf2_algebra::gpu::permanent_batch_bipedal{3,5,7}` sends a whole batch to the device in one kernel launch (one GPU block per matrix). Requires `hipcc` and a ROCm 6.x+ environment; the crate is excluded from the default workspace build.
@@ -148,7 +148,7 @@ run them with `cargo run --release -p gf2-algebra --features test-support --exam
 | `paper_repro_slope`      | Reproduces the paper's Table 2 `O(n * 2^n)` scaling slope at n = 8..24.     |
 | `parallel_chunk_sweep`   | Sweep chunk-size parameter for `permanent_bipedal3_parallel`.                |
 | `parallel_scaling_sweep` | Measure parallel scaling over 1..N_CPUS threads at fixed n.                 |
-| `s3_scalar_vs_avx2_sanity` | Compare scalar vs AVX2 dispatch at n in {16, 20, 24}; confirms both paths produce bit-identical results. |
+| `s3_scalar_vs_avx2_sanity` | Compare the direct scalar and single-matrix AVX2 kernels at n in {16, 20, 24}; confirms bit-identical results. |
 
 ## Testing
 
