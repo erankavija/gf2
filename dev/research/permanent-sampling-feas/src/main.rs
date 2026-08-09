@@ -43,6 +43,13 @@ const GPU_BATCHES: [usize; 2] = [256, 1024];
 const MACHINE_WARM_SECONDS: f64 = 90.0;
 /// Stream indices reserved to each cell, so no two cells share randomness.
 const STREAMS_PER_CELL: u64 = 100_000;
+/// Number of grid specifications in one unfiltered execution.
+///
+/// `Backend::ALL` contains one GPU entry, while the grid expands it to both
+/// configured batch sizes, hence the extra specification per `(q, n)` pair.
+const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len() + 1);
+/// Stream-index space reserved to one fresh grid process.
+const STREAMS_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * STREAMS_PER_CELL;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -65,6 +72,115 @@ fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
         .position(|a| a == name)
         .and_then(|i| args.get(i + 1))
         .map(String::as_str)
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct GridOptions {
+    only: Option<String>,
+    execution_id: u64,
+    skip_machine_warmup: bool,
+}
+
+impl GridOptions {
+    fn parse(args: &[String]) -> Result<Self, String> {
+        let execution_id = flag(args, "--execution-id")
+            .unwrap_or("0")
+            .parse::<u64>()
+            .map_err(|e| format!("invalid --execution-id: {e}"))?;
+        Ok(Self {
+            only: flag(args, "--only").map(str::to_string),
+            execution_id,
+            skip_machine_warmup: args.iter().any(|arg| arg == "--skip-machine-warmup"),
+        })
+    }
+}
+
+fn grid_specs() -> Vec<CellSpec> {
+    let mut specs = Vec::with_capacity(GRID_SPECS_PER_EXECUTION);
+    for q in QS {
+        for n in NS {
+            for backend in Backend::ALL.into_iter().filter(|b| *b != Backend::Gpu) {
+                specs.push(CellSpec {
+                    q,
+                    n,
+                    backend,
+                    batch_size: None,
+                    seed_root: SEED_ROOT,
+                    seed_stream: 0,
+                    order_index: 0,
+                });
+            }
+            for m in GPU_BATCHES {
+                specs.push(CellSpec {
+                    q,
+                    n,
+                    backend: Backend::Gpu,
+                    batch_size: Some(m),
+                    seed_root: SEED_ROOT,
+                    seed_stream: 0,
+                    order_index: 0,
+                });
+            }
+        }
+    }
+    debug_assert_eq!(specs.len(), GRID_SPECS_PER_EXECUTION);
+    specs
+}
+
+fn filter_specs(specs: &mut Vec<CellSpec>, filter: &str) -> Result<(), String> {
+    let clauses = filter
+        .split(',')
+        .map(|clause| {
+            let (key, value) = clause
+                .split_once('=')
+                .ok_or_else(|| format!("invalid --only clause `{clause}`"))?;
+            if !matches!(key, "q" | "n" | "backend" | "batch_size") {
+                return Err(format!("unknown --only key `{key}`"));
+            }
+            Ok((key, value))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    specs.retain(|spec| {
+        clauses.iter().all(|(key, value)| match *key {
+            "q" => spec.q.to_string() == *value,
+            "n" => spec.n.to_string() == *value,
+            "backend" => spec.backend.name() == *value,
+            "batch_size" => spec
+                .batch_size
+                .is_some_and(|batch_size| batch_size.to_string() == *value),
+            _ => unreachable!("filter keys validated above"),
+        })
+    });
+    if specs.is_empty() {
+        return Err(format!("--only {filter} matched no cell in the grid"));
+    }
+    Ok(())
+}
+
+/// Return the first stream index reserved to `order_index` in one fresh grid
+/// process. Each execution owns a full unfiltered-grid block, so filtering
+/// cannot make two execution ids reuse an address.
+fn execution_stream_base(execution_id: u64, order_index: usize) -> Result<u64, String> {
+    if order_index >= GRID_SPECS_PER_EXECUTION {
+        return Err(format!(
+            "order index {order_index} is outside the {GRID_SPECS_PER_EXECUTION}-cell grid"
+        ));
+    }
+    let execution_offset = execution_id
+        .checked_mul(STREAMS_PER_EXECUTION)
+        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+    let cell_offset = (order_index as u64)
+        .checked_mul(STREAMS_PER_CELL)
+        .expect("bounded grid order cannot overflow");
+    let first = execution_offset
+        .checked_add(cell_offset)
+        .and_then(|value| value.checked_add(1))
+        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+    first
+        .checked_add(STREAMS_PER_CELL - 1)
+        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+    Ok(first)
 }
 
 fn out_path(args: &[String], default: &str) -> PathBuf {
@@ -187,57 +303,13 @@ recorded unsupported and the comparison runs between the GPU and the generic pat
 fn cmd_grid(args: &[String]) {
     let host = HostInfo::probe();
     let path = out_path(args, "throughput.csv");
-    let only = flag(args, "--only").map(str::to_string);
+    let options = GridOptions::parse(args).unwrap_or_else(|message| panic!("{message}"));
 
-    let mut specs: Vec<CellSpec> = Vec::new();
-    for q in QS {
-        for n in NS {
-            // Driven from Backend::ALL rather than a second hand-written list,
-            // so a backend added to the enum cannot silently miss the grid.
-            // Gpu is the one exception: it is enumerated below, once per batch
-            // size in GPU_BATCHES.
-            for backend in Backend::ALL.into_iter().filter(|b| *b != Backend::Gpu) {
-                specs.push(CellSpec {
-                    q,
-                    n,
-                    backend,
-                    batch_size: None,
-                    seed_root: SEED_ROOT,
-                    seed_stream: 0,
-                    order_index: 0,
-                });
-            }
-            for m in GPU_BATCHES {
-                specs.push(CellSpec {
-                    q,
-                    n,
-                    backend: Backend::Gpu,
-                    batch_size: Some(m),
-                    seed_root: SEED_ROOT,
-                    seed_stream: 0,
-                    order_index: 0,
-                });
-            }
-        }
-    }
-
-    if let Some(filter) = &only {
-        // Clauses combine with AND, so `q=3,n=28,backend=gpu_hip` selects that
-        // one cell rather than the union of three slices.
-        specs.retain(|s| {
-            filter
-                .split(',')
-                .all(|clause| match clause.split_once('=') {
-                    Some(("q", v)) => s.q.to_string() == v,
-                    Some(("n", v)) => s.n.to_string() == v,
-                    Some(("backend", v)) => s.backend.name() == v,
-                    _ => false,
-                })
-        });
-        assert!(
-            !specs.is_empty(),
-            "--only {filter} matched no cell in the grid"
-        );
+    let mut specs = grid_specs();
+    if let Some(filter) = &options.only {
+        // Clauses combine with AND. In particular, `batch_size=1024` selects
+        // one GPU launch shape rather than both configured GPU batches.
+        filter_specs(&mut specs, filter).unwrap_or_else(|message| panic!("{message}"));
     }
 
     // Randomise execution order so boost and thermal drift decorrelate from the
@@ -258,8 +330,22 @@ fn cmd_grid(args: &[String]) {
     specs.sort_by_key(|s| s.n);
     for (i, spec) in specs.iter_mut().enumerate() {
         spec.order_index = i;
-        spec.seed_stream = 1 + (i as u64) * STREAMS_PER_CELL;
+        spec.seed_stream = execution_stream_base(options.execution_id, i)
+            .unwrap_or_else(|message| panic!("{message}"));
     }
+
+    let execution_stream_first = execution_stream_base(options.execution_id, 0)
+        .unwrap_or_else(|message| panic!("{message}"));
+    let execution_stream_last = execution_stream_base(
+        options.execution_id,
+        GRID_SPECS_PER_EXECUTION - 1,
+    )
+    .and_then(|first| {
+        first
+            .checked_add(STREAMS_PER_CELL - 1)
+            .ok_or_else(|| "execution stream range overflows u64".to_string())
+    })
+    .unwrap_or_else(|message| panic!("{message}"));
 
     let notes = vec![
         format!(
@@ -304,7 +390,20 @@ figure cannot survive a re-measurement"
             "seed_root: 0x{SEED_ROOT:016x}; each cell owns {STREAMS_PER_CELL} ChaCha20 streams"
         ),
         format!(
-            "machine warmed under full rayon load for {MACHINE_WARM_SECONDS:.0} s before cell 0"
+            "execution_id: {}; reserved stream-index block: {}..={} inclusive; full matrix \
+address is (seed_root, q, n, stream_index)",
+            options.execution_id, execution_stream_first, execution_stream_last
+        ),
+        format!(
+            "machine warmup: {}",
+            if options.skip_machine_warmup {
+                "skipped by --skip-machine-warmup; caller must preserve a prior locked warmup"
+                    .to_string()
+            } else {
+                format!(
+                    "full rayon load for {MACHINE_WARM_SECONDS:.0} s before the first timed cell"
+                )
+            }
         ),
         format!(
             "gpu timing includes host serialisation, hipMalloc, H2D, launch, sync, D2H and free \
@@ -390,8 +489,12 @@ figure cannot survive a re-measurement"
         );
     }
 
-    eprintln!("warming the machine for {MACHINE_WARM_SECONDS:.0} s ...");
-    warm_machine(MACHINE_WARM_SECONDS, SEED_ROOT);
+    if options.skip_machine_warmup {
+        eprintln!("skipping machine warmup by request");
+    } else {
+        eprintln!("warming the machine for {MACHINE_WARM_SECONDS:.0} s ...");
+        warm_machine(MACHINE_WARM_SECONDS, SEED_ROOT);
+    }
 
     let total = specs.len();
     for (i, spec) in specs.iter().enumerate() {
@@ -787,4 +890,62 @@ one_over_q_inside_interval,scheinerman2024_p,scheinerman2024_inside_interval",
     }
     w.flush().expect("flush");
     println!("wrote {}", path.display());
+}
+
+#[cfg(test)]
+mod cli_tests {
+    use super::*;
+
+    fn args(items: &[&str]) -> Vec<String> {
+        items.iter().map(|item| (*item).to_string()).collect()
+    }
+
+    #[test]
+    fn grid_cli_parses_exact_batch_execution_and_warmup_controls() {
+        let parsed = GridOptions::parse(&args(&[
+            "permanent_sampling_feas",
+            "grid",
+            "--only",
+            "q=3,n=28,backend=gpu_hip,batch_size=1024",
+            "--execution-id",
+            "47",
+            "--skip-machine-warmup",
+        ]))
+        .expect("valid grid options");
+
+        assert_eq!(parsed.execution_id, 47);
+        assert!(parsed.skip_machine_warmup);
+        assert_eq!(
+            parsed.only.as_deref(),
+            Some("q=3,n=28,backend=gpu_hip,batch_size=1024")
+        );
+    }
+
+    #[test]
+    fn exact_gpu_batch_filter_selects_only_m1024() {
+        let mut specs = grid_specs();
+        filter_specs(
+            &mut specs,
+            "q=3,n=28,backend=gpu_hip,batch_size=1024",
+        )
+        .expect("valid exact filter");
+
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].q, 3);
+        assert_eq!(specs[0].n, 28);
+        assert_eq!(specs[0].backend, Backend::Gpu);
+        assert_eq!(specs[0].batch_size, Some(1024));
+    }
+
+    #[test]
+    fn execution_stream_ranges_are_disjoint_and_checked() {
+        let execution_0_last = execution_stream_base(0, GRID_SPECS_PER_EXECUTION - 1)
+            .expect("last cell in execution zero");
+        let execution_1_first =
+            execution_stream_base(1, 0).expect("first cell in execution one");
+
+        assert_eq!(execution_0_last + STREAMS_PER_CELL, execution_1_first);
+        assert!(execution_stream_base(0, GRID_SPECS_PER_EXECUTION).is_err());
+        assert!(execution_stream_base(u64::MAX, 0).is_err());
+    }
 }

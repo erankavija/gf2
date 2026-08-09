@@ -11,12 +11,17 @@ SUBCOMMANDS
   grid         Time the composite campaign hot path over q in {3,5,7} and
                n in {12,16,20,24,28} on every backend. Requires an idle host.
                  --out PATH        output CSV (default throughput.csv)
-                 --only CLAUSES    comma-separated q=,n=,backend= filter; clauses
-                                   combine with AND
+                 --only CLAUSES    comma-separated q=,n=,backend=,batch_size=
+                                   filter; clauses combine with AND
+                 --execution-id N  reserve a disjoint stream-index block for
+                                   this fresh process (default 0)
+                 --skip-machine-warmup
+                                   skip the 90 s whole-machine warmup when a
+                                   caller holds the host lock across executions
                  --resume          append to an existing --out CSV, skipping the
                                    cells it already records. Sound because the
                                    cell schedule and per-cell seed streams are a
-                                   pure function of the root seed.
+                                   pure function of root seed and execution id.
 
   sustained    Stream the composite hot path for a fixed window per backend, to
                confirm the short-cell projections survive thermal steady state.
