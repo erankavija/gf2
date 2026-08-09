@@ -90,13 +90,14 @@
   "created_during_execution": [],
   "escalations": [],
   "rework_counts": {
-    "18dec119": 1
+    "18dec119": 2
   },
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
     "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
     "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
-    "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable."
+    "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
+    "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible."
   ],
   "started_at": "2026-08-09T12:20:30Z"
 }
