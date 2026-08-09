@@ -238,10 +238,11 @@ __global__ void permanent_bipedal5_kernel(const unsigned char* __restrict__ matr
 //
 // Returns: 0 on success (hipSuccess), non-zero on HIP error.
 // ---------------------------------------------------------------------------
-extern "C" int permanent_bipedal5_hip_batch(const unsigned char* matrices_ptr,
-                                             int n,
-                                             int m,
-                                             unsigned long long* out_ptr) {
+extern "C" int permanent_bipedal5_hip_batch_on_stream(const unsigned char* matrices_ptr,
+                                                       int n,
+                                                       int m,
+                                                       unsigned long long* out_ptr,
+                                                       void* stream) {
     if (m <= 0) return 0; // hipSuccess — nothing to do
     if (n <= 0 || n > 63) return 1; // hipErrorInvalidValue
 
@@ -255,13 +256,23 @@ extern "C" int permanent_bipedal5_hip_batch(const unsigned char* matrices_ptr,
                        grid,
                        block,
                        /*sharedMemBytes=*/0,
-                       /*stream=*/0,
+                       reinterpret_cast<hipStream_t>(stream),
                        matrices_ptr,
                        n,
                        m,
                        out_ptr);
 
     return (int)hipGetLastError();
+}
+
+// Default-stream compatibility entry point. Keep this symbol and its
+// behaviour unchanged for existing Rust and C callers; stream-aware callers
+// use permanent_bipedal5_hip_batch_on_stream directly.
+extern "C" int permanent_bipedal5_hip_batch(const unsigned char* matrices_ptr,
+                                             int n,
+                                             int m,
+                                             unsigned long long* out_ptr) {
+    return permanent_bipedal5_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, nullptr);
 }
 
 // ---------------------------------------------------------------------------
