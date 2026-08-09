@@ -153,15 +153,14 @@ fn rectangular_permanent<const P: u64>(values: &[Fp<P>], n: usize, k: usize) -> 
                 continue;
             }
             used.push(row);
-            total = total
-                + recurse::<P>(
-                    values,
-                    n,
-                    k,
-                    column + 1,
-                    used,
-                    product * values[row * k + column],
-                );
+            total += recurse::<P>(
+                values,
+                n,
+                k,
+                column + 1,
+                used,
+                product * values[row * k + column],
+            );
             used.pop();
         }
         total
