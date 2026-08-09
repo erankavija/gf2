@@ -100,9 +100,10 @@
     {
       "issue": "9c5b26fb",
       "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
-      "status": "requested",
+      "status": "approved",
       "requested_at": "2026-08-09T19:22:02Z",
-      "decision": "Requested one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
+      "resolved_at": "2026-08-09T19:31:03Z",
+      "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
     }
   ],
   "rework_counts": {
@@ -112,7 +113,7 @@
     "531695da": 1,
     "5758790d": 2,
     "6ae9f4ac": 1,
-    "9c5b26fb": 2
+    "9c5b26fb": 3
   },
   "surfaced_pitfalls": [
     "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
