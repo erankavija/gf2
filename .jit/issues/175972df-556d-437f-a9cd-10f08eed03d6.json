@@ -8,6 +8,7 @@
   ],
   "description": "A predicate deciding permanental rank deficiency of a rectangular matrix over $\\mathbb{F}_q$, validated by exhaustive enumeration and by agreement with an independent brute-force routine sharing no code path with it.\n\n## Background\n\nThe rectangular event in the literature is permanental rank deficiency, not the vanishing of a rectangular permanent. For an $n \\times k$ matrix $A$ with $k \\le n$,\n\n$$\n\\mathrm{per\\text{-}rank}(A) < k\n\\iff\n\\text{each } k \\times k \\text{ row submatrix of } A \\text{ has zero permanent},\n$$\n\nso the predicate is a conjunction over the $\\binom{n}{k}$ row subsets. A single scalar \"rectangular permanent\" is not the quantity at all: it can vanish through cancellation while some $k \\times k$ submatrix has nonzero permanent, and it can be nonzero when the rank condition is what one wants to test. Testing the event therefore needs no new numeric kernel — it enumerates row subsets and reuses the existing square kernels, exiting at the first nonzero permanent, which is the overwhelmingly common case.\n\nNo permanental-rank routine exists in the workspace today; the public permanent surface is square-only, exactly seven functions plus three accelerator batch entry points, all taking square matrices.\n\n## Success Criteria\n\n- [hard] REQ-01: A predicate decides, for an $n \\times k$ matrix over $\\mathbb{F}_q$ with $k \\le n$, whether $\\mathrm{per\\text{-}rank}(A) < k$, by testing $k \\times k$ row submatrices and exiting at the first nonzero permanent.\n- [hard] REQ-02: An independent brute-force permanental-rank routine, sharing no code path with the predicate, is available as an oracle.\n- [hard] REQ-03: Exhaustive enumeration over the $q^{nk}$ matrices confirms the predicate and the oracle return the same decision on every matrix for at least $(q,n,k) \\in \\{(3,3,1),(3,3,2),(3,4,2),(5,3,2),(7,3,2)\\}$.\n- [hard] REQ-04: The predicate's decision is correct on hand-constructed matrices covering the boundary cases: a zero row, a zero column, $k = 1$, $k = n$, and a matrix whose scalar rectangular permanent vanishes while a $k \\times k$ submatrix permanent does not.\n- [hard] REQ-05: Documentation states that permanental rank deficiency is the conjunction over row submatrices, and that a vanishing rectangular permanent is a different quantity.\n- [hard] REQ-06: Documentation states that the $(n,k)$ pairs reachable by sampling lie outside the $k \\le 0.1\\sqrt{n}$ hypothesis of the cited theorem, so agreement supports the implementation rather than the theorem in its proven range.\n- [hard] REQ-07: The predicate carries no dependency on statistical machinery: it decides one matrix and reports nothing about rates.\n\n## Notes\n\nThe proved regime is unreachable by direct sampling. The theorem requires $k \\le 0.1\\sqrt{n}$, so even $k = 3$ needs $n \\ge 900$, where the event probability is about $3 \\cdot 3^{-900}$; the predicate's role in the campaign is as a correctness check, not as a test of the theorem.",
   "documents": [],
+  "done_at": "2026-08-09T22:17:29.523067921Z",
   "first_ready_at": "2026-08-09T13:33:06.529041628Z",
   "gates_required": [
     "cargo-ci",
@@ -26,8 +27,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-09T22:02:32.277940967Z",
+      "status": "passed",
+      "updated_at": "2026-08-09T22:16:56.080233643Z",
       "updated_by": "auto:executor"
     }
   },
@@ -40,7 +41,7 @@
     "cites:GGK2025"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Permanental rank-deficiency predicate with exact validation",
-  "updated_at": "2026-08-09T22:02:32.277940967Z"
+  "updated_at": "2026-08-09T22:17:29.523067921Z"
 }
