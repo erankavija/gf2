@@ -1030,7 +1030,7 @@ agent working with review, and assume the harness in
 | G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`gf2_stats::sampler`](../../../crates/gf2-stats/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
 | G3 | Campaign runner | Missing; design decided below | 2.0 d |
-| G4 | Versioned dataset format | Missing | 0.5 d |
+| G4 | Versioned dataset format | Landed as [`gf2_sim::permanent_campaign`](../../../crates/gf2-sim/src/permanent_campaign/), published under [`dev/simulation_results/permanent-zero-fraction/`](../../simulation_results/permanent-zero-fraction/README.md) | 0.5 d (historical) |
 | G5 | Permanental-rank predicate for the rectangular check | Missing; **no new kernel needed** | 1.0 d |
 | G6 | `permanent_bipedal3` selects the slower path | Defect, confirmed by measurement | 0.5 d |
 | G7 | No batch-parallel path for any field | Missing | 0.5 d |
@@ -1084,7 +1084,15 @@ pooled summary, and checksums. Because matrices are regenerable from their full
 `MatrixAddress` (root, $q$, $n$, purpose, and stream index), shards store the
 $q$-bin histogram of permanent values
 rather than the matrices, so storage is $O(\text{shards})$ and a whole cell costs
-tens of kilobytes. *0.5 d.*
+tens of kilobytes.
+
+The delivered form is the typed schema in `gf2_sim::permanent_campaign::schema`
+with its source-identity guard and integrity layer in
+`gf2_sim::permanent_campaign::provenance`; the
+[published dataset README](../../simulation_results/permanent-zero-fraction/README.md)
+is the canonical description of the layout, the `checksums.sha256` format, and
+the verification procedure. The sketch in §7.4 below is the feasibility-time
+proposal and is superseded by it.
 
 **G5 — rectangular validation.** Two successive framings of this gap were wrong,
 and both corrections matter.
@@ -1465,6 +1473,12 @@ row-major, before the packed constructor reorders it into the kernels' storage.
 
 ### 7.4 Storage layout
 
+This section is the feasibility-time proposal. The delivered layout, its file
+names and formats, its raw-versus-derived partition, and its integrity file are
+described once in the
+[published dataset README](../../simulation_results/permanent-zero-fraction/README.md);
+read that rather than this sketch for the shape of an actual dataset.
+
 ```text
 dev/campaigns/permanent-zero-fraction/<campaign-id>/
   manifest.toml          root seed, harness source SHA, rustc/ROCm, hardware,
@@ -1475,12 +1489,14 @@ dev/campaigns/permanent-zero-fraction/<campaign-id>/
   checksums.sha256
 ```
 
-`dev/campaigns` is one of the permanent documentation areas declared in
-`.jit/config.toml` (`[documentation] permanent_paths`), which is why the
-dataset lives there rather than under a newly invented directory: a published
-dataset outlives the issue that produced it, so it does not belong in an
-issue-scoped area like `dev/studies`, and inventing a path outside the
-configured set would put it outside the repository's documentation contract.
+The proposal reasoned that the dataset belongs in one of the permanent
+documentation areas declared in `.jit/config.toml`
+(`[documentation] permanent_paths`) rather than under a newly invented
+directory: a published dataset outlives the issue that produced it, so it does
+not belong in an issue-scoped area like `dev/studies`, and inventing a path
+outside the configured set would put it outside the repository's documentation
+contract. That reasoning held; the area chosen was
+`dev/simulation_results/permanent-zero-fraction/`.
 
 Shards store the histogram of permanent values over the $q$ residue classes
 rather than the matrices: matrices are regenerable from their stream tuple, so

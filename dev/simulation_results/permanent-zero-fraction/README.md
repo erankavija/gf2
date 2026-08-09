@@ -69,7 +69,10 @@ without assigning an artifact subtype. The determinant plan is `evaluate` or
 
 The provenance record requires the full `git_revision`, `compiler_version`,
 `rng_algorithm`, `rng_version`, tokenized `invocation`, `cpu_model`,
-`accelerator_runtime`, and `gpu_model`. The RNG algorithm is the closed token
+`accelerator_runtime`, and `gpu_model`. The revision is the complete
+40-character lowercase hexadecimal object name; an abbreviation resolves only
+against the repository that produced it, so it cannot identify the source of a
+dataset read elsewhere. The RNG algorithm is the closed token
 `chacha20`; `rng_version` records the exact crate or implementation version,
 and `invocation` stores the producer's argv tokens without shell quoting.
 Accelerator runtime and GPU model use a tagged availability value: either
@@ -156,7 +159,88 @@ summary that differs from its executed shard subset, and a pooled summary that
 differs from the field summaries. The returned layout contains only executed
 shard paths for halted cells and preserves their field-writer ownership.
 
-Cryptographic checksum generation and verification are a separate integrity
-layer. Schema conformance establishes the file shapes and cross-file count
-relationships; it does not treat the placeholder existence of
-`checksums.sha256` as proof of content integrity.
+Cryptographic checksum generation and verification are a separate layer,
+described under [Integrity file](#integrity-file). Schema conformance
+establishes the file shapes and cross-file count relationships; the presence of
+`checksums.sha256` is not itself evidence that its digests still match.
+
+## Source identity of an emission
+
+A dataset is only as traceable as the build that wrote it, so an emitting
+binary embeds the revision it was compiled from and checks that revision before
+it writes. `gf2_sim::permanent_campaign::provenance::approve_emission` approves
+a write only when the embedded revision equals the repository's `HEAD` and no
+tracked file differs outside the campaign's own directory. A build that
+recorded no revision — compiled outside a checkout, or on a host without `git` —
+never emits.
+
+The rule is deliberately narrower than "the working tree is clean". This
+dataset lives inside the repository, so a clean-tree rule would refuse the
+second shard of every campaign: the first shard already dirtied the tree. Files
+under `<campaign-id>/`, raw and derived alike, are the campaign's expected
+output and are exempt. `manifest.json` is the one exception inside that
+directory, because it declares the identity the numbers are published under: a
+tracked change to it refuses. A changed source file, build or dependency
+manifest, `protocol.md`, or any other tracked file outside the campaign
+directory refuses the emission, and the refusal names every path that differs.
+
+Untracked paths never refuse. The source a binary was compiled from is fixed by
+`HEAD`, and a file git does not track is not part of it.
+
+## Integrity file
+
+`checksums.sha256` uses the coreutils check-file format, one line per covered
+file:
+
+```text
+<64 lowercase hexadecimal digits><space><space><path>
+```
+
+The path is relative to the campaign directory, uses forward slashes, and
+contains no `.` or `..` component, so a reader verifies a dataset with standard
+tooling and without a checkout of this repository:
+
+```console
+$ cd dev/simulation_results/permanent-zero-fraction/<campaign-id>
+$ sha256sum -c checksums.sha256
+```
+
+The reader in this repository also accepts the equivalent binary-mode
+separator, a space followed by `*`, which coreutils writes for `sha256sum -b`
+and which produces identical digests. Entries are sorted by path, so
+regenerating an unchanged dataset reproduces the file byte for byte.
+
+Coverage is exactly the raw-data rows of the layout table above: the root
+manifest, every executed shard record, every field summary, and the pooled
+summary. Shard paths a halted cell never executed are absent from the dataset
+and from this file. Derived artefacts are excluded, and the file does not cover
+itself.
+
+The root manifest's content hash is consequently a sidecar value: it is this
+file's `manifest.json` entry, and `manifest.json` stores no hash of itself. A
+reader recomputes the hash from the manifest's bytes alone instead of having to
+know it in advance, and an execution receipt that identifies a manifest quotes
+the same value.
+
+## Verifying a published dataset
+
+`gf2_sim::permanent_campaign::provenance::verify_dataset` re-checks a dataset
+against its integrity file and reaches one of three verdicts. The manifest is
+authenticated first, since it declares the layout on which every other check
+depends. The `permanent_dataset` binary exposes the same check, and the guard
+and generator beside it, from a shell:
+
+```console
+$ cargo run -p gf2-sim --release --bin permanent_dataset -- verify <campaign-id>
+```
+
+| Verdict | Meaning |
+| --- | --- |
+| verified | Every covered path matched, coverage equals the raw set, and the recorded revision resolves |
+| failed | The named paths are missing, changed, present but uncovered, or covered without being raw data |
+| unverifiable | The recorded `git_revision` names no commit in the repository holding the dataset, or no repository could be resolved from it |
+
+A missing file and a changed file are distinct outcomes rather than one failure
+category. A dataset whose recorded revision cannot be resolved is reported as
+unverifiable rather than as passing: its bytes may be intact, but the source
+that produced them cannot be named.
