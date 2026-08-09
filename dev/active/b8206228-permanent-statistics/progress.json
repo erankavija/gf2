@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 1,
+  "current_wave": 2,
   "waves": [
     {"wave_number": 1, "issues": [
       {"id":"b494fec8-579f-4a2d-8579-4fa58d50e3b1","short_id":"b494fec8","title":"Workspace convergence of the rand 0.9 ecosystem","classification":"implementation","status":"completed"},
