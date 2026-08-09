@@ -88,7 +88,14 @@
     ]}
   ],
   "created_during_execution": [],
-  "escalations": [],
+  "escalations": [
+    {
+      "issue": "9c5b26fb",
+      "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
+      "status": "awaiting_owner",
+      "requested_at": "2026-08-09T16:21:42Z"
+    }
+  ],
   "rework_counts": {
     "18dec119": 2,
     "240b7618": 1,
