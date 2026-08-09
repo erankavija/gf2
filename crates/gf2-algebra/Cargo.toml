@@ -53,6 +53,12 @@ name = "s1_n36_speedup"
 harness = false
 required-features = ["simd", "test-support"]
 
+# ── Issue `8cb4def5` — determinant companion campaign-cost receipt ──
+[[bench]]
+name = "determinant_companion"
+harness = false
+required-features = ["test-support"]
+
 # ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
 [[example]]
 name = "paper_repro_slope"
