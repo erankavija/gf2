@@ -1027,7 +1027,7 @@ agent working with review, and assume the harness in
 
 | ID | Gap | Status | Effort (est.) |
 |---|---|---|---|
-| G1 | Uniform $\mathbb{F}_q$ matrix sampler | Prototyped, needs productionising | 0.5 d |
+| G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`gf2_stats::sampler`](../../../crates/gf2-stats/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
 | G3 | Campaign runner | Missing; design decided below | 2.0 d |
 | G4 | Versioned dataset format | Missing | 0.5 d |
@@ -1036,10 +1036,11 @@ agent working with review, and assume the harness in
 | G7 | No batch-parallel path for any field | Missing | 0.5 d |
 | G8 | $q=7$ CPU ceiling at $n = 16$ | Structural limit | 4.0 d (optional) |
 
-**G1 — uniform sampler.** The harness implements exact rejection sampling over
-ChaCha20 (`sampler.rs`), with seeds derived from a 32-byte block encoding
-`(root, q, n, stream)` so each cell and shard owns a disjoint, independently
-addressable stream. Rejection is required because the sampler consumes bytes and
+**G1 — uniform sampler.** The feasibility harness implemented exact rejection
+sampling over ChaCha20 (`sampler.rs`). Its production successor is the
+[`gf2_stats::sampler` rustdoc](../../../crates/gf2-stats/src/sampler.rs), which is
+the canonical contract for its `MatrixAddress` and `MatrixSampler` surfaces.
+Rejection is required because the sampler consumes bytes and
 $256 \bmod 7 = 4$: reducing a byte without rejection would give four residues
 probability $37/256$ and three of them $36/256$, against a uniform $1/7$. In
 relative terms the worst class is off by **1.56 %** (the most and least likely
@@ -1055,8 +1056,8 @@ unchanged — the bias dwarfs the effect either way — but the figure was load-
 for the claim that rejection matters, so the correction is recorded rather than
 silently swapped. Both numbers above are now relative to $1/7$.
 
-Productionising means moving it behind a tested API, with the entry-uniformity
-and stream-separation tests the prototype already carries. *0.5 d.*
+The production surface carries the entry-uniformity, stream-separation, and
+reproducibility tests; the prototype remains the historical feasibility source.
 
 **G2 — streaming statistics.** The harness has Wilson score intervals
 (`stats.rs`) and per-shard histogram accumulation. The campaign additionally
@@ -1079,8 +1080,9 @@ CSV conventions, not the campaign type. *2.0 d.*
 
 **G4 — dataset format.** A versioned layout with a manifest (root seed, git SHA,
 toolchain, hardware, grid, per-cell $N$, schema version), per-shard records, a
-pooled summary, and checksums. Because matrices are regenerable from
-`(root, q, n, stream)`, shards store the $q$-bin histogram of permanent values
+pooled summary, and checksums. Because matrices are regenerable from their full
+`MatrixAddress` (root, $q$, $n$, purpose, and stream index), shards store the
+$q$-bin histogram of permanent values
 rather than the matrices, so storage is $O(\text{shards})$ and a whole cell costs
 tens of kilobytes. *0.5 d.*
 
@@ -1433,10 +1435,13 @@ only be consistent with. Every conclusion must be phrased at the measured sizes.
 
 ### 7.3 Seeding scheme
 
-ChaCha20 (`rand_chacha` 0.9), seeded from a 32-byte block of four little-endian
-`u64` words: campaign root, $q$, $n$, and stream index. Shard $s$ of cell
-$(q, n)$ uses stream $\mathrm{base}(q,n) + s$; stream 0 is reserved for
-validation.
+The production [`gf2_stats::sampler` rustdoc](../../../crates/gf2-stats/src/sampler.rs)
+is the source of truth. Its `MatrixAddress` seeds ChaCha20 (`rand_chacha` 0.9)
+from four little-endian `u64` words: campaign root, $q$, $n$, and a final word
+whose high eight bits are a closed `StreamPurpose` tag and whose low 56 bits are
+a validated stream index. A campaign gives each independently generated matrix
+a distinct full address; within one purpose, shards use their own validated
+indices. Validation is a purpose, not a reservation of stream 0.
 
 **Stream allocation must be structurally disjoint, not coincidentally so.**
 This study's own history makes the point: the harness first based its sustained
@@ -1444,17 +1449,17 @@ runs at $10^6 + j \times 10^5$ against a grid reserving $1 + i \times 10^5$ per
 cell, which are commensurate — the ranges collided in index space, and the
 pooled counts of the day were valid only because no colliding pair happened to
 share a $(q, n)$. That was verified, not designed. Raising the sustained base to
-$10^9$ (§4.7) fixed it for these receipts by putting the two allocations two
-orders of magnitude apart, which is the minimum a campaign should inherit rather
-than the whole of it. A campaign running for twelve hours per cell cannot audit
-its way out of this: allocate each $(q, n, \text{purpose})$ a range from a
-partition that cannot overlap by construction — distinct high-order bits, or a
-per-purpose salt folded into `derive_seed` alongside the stream index — so that
-reusing a matrix is impossible rather than merely unobserved. Three properties
-follow, and all three matter operationally: any shard is reproducible from its
-tuple alone, a lost or corrupted shard is redrawn without touching its
-neighbours, and shards can be produced in any order or concurrently without
-coordinating a shared generator state. The matrix layout
+$10^9$ (§4.7) fixed those historical receipts by putting the two allocations two
+orders of magnitude apart; it is not an allocation rule for the production
+sampler. A campaign running for twelve hours per cell cannot audit
+its way out of this: the full address — including the closed purpose tag —
+separates generator-state domains by construction. This guarantees address and
+state separation; it does not make sampled matrix values injective, so distinct
+addresses can validly produce equal matrices. Three properties follow, and all
+three matter operationally: any shard is reproducible from its full address, a
+lost or corrupted shard is redrawn without touching its neighbours, and shards
+can be produced in any order or concurrently without coordinating a shared
+generator state. The matrix layout
 mapping is recorded with the scheme: draw $k$ becomes $A[k / n][k \bmod n]$,
 row-major, before the packed constructor reorders it into the kernels' storage.
 
