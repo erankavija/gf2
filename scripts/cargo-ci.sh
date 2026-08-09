@@ -24,7 +24,13 @@ set -euo pipefail
 # that already owns the machine); CARGO_CI_BUILD_LOCK overrides the lock path —
 # set it to the same value in this and the jit repo to serialize host-wide.
 if [ -z "${CARGO_CI_NO_LOCK:-}" ] && [ -z "${CARGO_CI_LOCKED:-}" ]; then
-  BUILD_LOCK="${CARGO_CI_BUILD_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/gf2-cargo-ci.lock}"
+  # Host-wide by default, not per-repository: the jit checkout runs the same
+  # wrapper, and a repository-scoped lock let the two build concurrently and
+  # oversubscribe the machine. Measured consequence: seven gf2-coding tests
+  # timed out at 5.0-5.3 s against the fast tier's 5 s per-test kill, while the
+  # same twelve pass in ~1.0 s each on an uncontended host. Agreed with the jit
+  # execution lead as the shared default; override for an isolated host.
+  BUILD_LOCK="${CARGO_CI_BUILD_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock}"
   if command -v flock >/dev/null 2>&1; then
     exec env CARGO_CI_LOCKED=1 flock "$BUILD_LOCK" "$0" "$@"
   fi

@@ -108,7 +108,7 @@ version = 1
 
 [[gates]]
 auto = true
-checker = { command = "./scripts/cargo-ci.sh", env = {}, pass_context = false, timeout_seconds = 300, type = "exec" }
+checker = { command = "./scripts/cargo-ci.sh", env = {}, pass_context = false, timeout_seconds = 900, type = "exec" }
 description = "Run the full release-mode Rust workspace CI pipeline: build, tests, clippy, and formatting."
 key = "cargo-ci"
 mode = "auto"
