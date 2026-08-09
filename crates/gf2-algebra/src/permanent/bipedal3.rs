@@ -88,6 +88,8 @@ fn maybe_bipedal_avx2() -> Option<gf2_kernels_simd::bipedal::BipedalAvx2Fns> {
     gf2_kernels_simd::bipedal::detect_avx2()
 }
 
+type Permanent4KernelFn = fn(&[[u64; 4]], &[[u64; 4]]) -> [u64; 4];
+
 // ---------------------------------------------------------------------------
 // Test-only scalar/SIMD cross-check note.
 //
@@ -198,6 +200,161 @@ pub fn permanent_bipedal3(mat: &Bipedal3Matrix) -> Fp<3> {
     }
 }
 
+/// Compute the permanents of one to four equally sized matrices over F_3.
+///
+/// On AVX2 hosts with the `simd` feature enabled, the four matrix words are
+/// packed into the 64-bit lanes of one YMM register and evaluated together by
+/// the [`gf2_kernels_simd::bipedal::Bipedal3x4`] Gray-walk kernel. Missing
+/// lanes in a partial batch are zero-padded and omitted from the returned
+/// vector. On other hosts the function safely evaluates each matrix with
+/// [`permanent_bipedal3_singleword`].
+///
+/// All matrices must be square and have the same dimension `n <= 63`. The
+/// `0 x 0` permanent is supported and equals one for every matrix in the
+/// batch. Results preserve input order.
+///
+/// # Arguments
+///
+/// * `matrices` — a slice containing between one and four equally sized,
+///   square [`Bipedal3Matrix`] values.
+///
+/// # Examples
+///
+/// ```
+/// use gf2_algebra::packed::Bipedal3Matrix;
+/// use gf2_algebra::permanent::bipedal3::permanent_bipedal3_batch;
+/// use gf2_core::gfp::Fp;
+///
+/// let identity = Bipedal3Matrix::from_row_major(
+///     &[
+///         Fp::<3>::new(1), Fp::<3>::new(0),
+///         Fp::<3>::new(0), Fp::<3>::new(1),
+///     ],
+///     2,
+///     2,
+/// );
+/// let ones = Bipedal3Matrix::from_row_major(&[Fp::<3>::new(1); 4], 2, 2);
+/// assert_eq!(
+///     permanent_bipedal3_batch(&[identity, ones]),
+///     vec![Fp::<3>::new(1), Fp::<3>::new(2)],
+/// );
+/// ```
+///
+/// # Panics
+///
+/// Panics if the slice is empty or contains more than four matrices, if a
+/// matrix is not square, if dimensions differ within the batch, or if
+/// `n > 63`.
+///
+/// # Complexity
+///
+/// `O(n * 2^n)` work. AVX2 evaluates up to four matrices in that one walk;
+/// the fallback performs one scalar walk per matrix. Packing uses `O(4n)`
+/// additional words.
+pub fn permanent_bipedal3_batch(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+    let kernel: Option<Permanent4KernelFn> = {
+        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+        {
+            maybe_bipedal_avx2().map(|fns| fns.permanent4_fn)
+        }
+        #[cfg(not(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64"))))]
+        {
+            None
+        }
+    };
+    permanent_bipedal3_batch_with_kernel(matrices, kernel)
+}
+
+fn permanent_bipedal3_batch_with_kernel(
+    matrices: &[Bipedal3Matrix],
+    kernel: Option<Permanent4KernelFn>,
+) -> Vec<Fp<3>> {
+    assert!(
+        !matrices.is_empty(),
+        "permanent_bipedal3_batch: matrices must not be empty"
+    );
+    assert!(
+        matrices.len() <= 4,
+        "permanent_bipedal3_batch: at most four matrices are supported; got {}",
+        matrices.len()
+    );
+    let n = matrices[0].cols();
+    for (index, matrix) in matrices.iter().enumerate() {
+        assert_eq!(
+            matrix.rows(),
+            matrix.cols(),
+            "permanent_bipedal3_batch: matrix[{index}] must be square (rows={}, cols={})",
+            matrix.rows(),
+            matrix.cols()
+        );
+        assert_eq!(
+            matrix.cols(),
+            n,
+            "permanent_bipedal3_batch: matrix[{index}] has dimension {}, expected {n}",
+            matrix.cols()
+        );
+    }
+    assert!(
+        n <= 63,
+        "permanent_bipedal3_batch: single-word path requires n <= 63; got n = {n}"
+    );
+
+    let Some(kernel) = kernel else {
+        return matrices.iter().map(permanent_bipedal3_singleword).collect();
+    };
+
+    // A zero row makes the permanent identically zero. Remove such matrices
+    // before SIMD packing, then scatter the active-lane results back into the
+    // original input order. This also keeps randomized boundary conformance at
+    // large, exponentially infeasible dimensions testable in the fast tier.
+    let active: Vec<_> = matrices
+        .iter()
+        .enumerate()
+        .filter(|(_, matrix)| !has_zero_row(matrix))
+        .collect();
+    let mut results = vec![Fp::<3>::new(0); matrices.len()];
+    if active.is_empty() {
+        return results;
+    }
+
+    let packed: Vec<_> = active
+        .iter()
+        .map(|(_, matrix)| pack_singleword_columns(matrix))
+        .collect();
+    let mut columns_mag = vec![[0u64; 4]; n];
+    let mut columns_sgn = vec![[0u64; 4]; n];
+    for (lane, matrix_columns) in packed.iter().enumerate() {
+        for (column, value) in matrix_columns.iter().copied().enumerate() {
+            columns_mag[column][lane] = value.mag();
+            columns_sgn[column][lane] = value.sgn();
+        }
+    }
+    let lane_results = kernel(&columns_mag, &columns_sgn);
+    for (lane, (input_index, _)) in active.iter().enumerate() {
+        results[*input_index] = Fp::<3>::new(lane_results[lane]);
+    }
+    results
+}
+
+#[inline]
+fn has_zero_row(mat: &Bipedal3Matrix) -> bool {
+    (0..mat.rows()).any(|row| (0..mat.cols()).all(|column| mat.get(row, column).value() == 0))
+}
+
+fn pack_singleword_columns(mat: &Bipedal3Matrix) -> Vec<Bipedal3> {
+    let n = mat.cols();
+    let mut columns = Vec::with_capacity(n);
+    for j in 0..n {
+        let col_vec = mat.column(j);
+        let mut col = Bipedal3::zero();
+        for i in 0..n {
+            col = col.with_lane(i, col_vec.get(i));
+        }
+        columns.push(col);
+    }
+    columns
+}
+
 /// Compute the permanent of an `n × n` matrix over `F_3` using the
 /// single-`u64` Bipedal3 fast path.
 ///
@@ -271,20 +428,16 @@ pub fn permanent_bipedal3_singleword(mat: &Bipedal3Matrix) -> Fp<3> {
         return Fp::<3>::new(1);
     }
 
+    if has_zero_row(mat) {
+        return Fp::<3>::new(0);
+    }
+
     // One-time matrix-prep: extract each column j into a Bipedal3 word.
     // Lane i of columns[j] holds A[i,j] for i in 0..n; lanes n..63 are 0
     // (the additive identity, i.e. (mag=0, sgn=0)).
     //
     // Cost: O(n^2) — dominated by the O(n · 2^n) Gray walk for n ≥ 4.
-    let mut columns: Vec<Bipedal3> = Vec::with_capacity(n);
-    for j in 0..n {
-        let col_vec = mat.column(j);
-        let mut col = Bipedal3::zero();
-        for i in 0..n {
-            col = col.with_lane(i, col_vec.get(i));
-        }
-        columns.push(col);
-    }
+    let columns = pack_singleword_columns(mat);
 
     // Column-sum accumulator as a single Bipedal3 word.
     // Lane i of col_sum holds sum_{j ∈ S} A[i,j] mod 3.
@@ -413,16 +566,12 @@ pub fn permanent_bipedal3_singleword_simd(
         return Fp::<3>::new(1);
     }
 
-    // One-time matrix-prep: identical to the scalar path.
-    let mut columns: Vec<Bipedal3> = Vec::with_capacity(n);
-    for j in 0..n {
-        let col_vec = mat.column(j);
-        let mut col = Bipedal3::zero();
-        for i in 0..n {
-            col = col.with_lane(i, col_vec.get(i));
-        }
-        columns.push(col);
+    if has_zero_row(mat) {
+        return Fp::<3>::new(0);
     }
+
+    // One-time matrix-prep: identical to the scalar path.
+    let columns = pack_singleword_columns(mat);
 
     // Column-sum accumulator as a single Bipedal3 word.
     let mut col_sum = Bipedal3::zero();
@@ -513,6 +662,237 @@ mod tests {
     /// Wrap a row-major `Vec<Fp<3>>` into a `Bipedal3Matrix`.
     fn to_bipedal3_matrix(row_major: &[Fp<3>], n: usize) -> Bipedal3Matrix {
         Bipedal3Matrix::from_row_major(row_major, n, n)
+    }
+
+    type BatchBackend = fn(&[Bipedal3Matrix]) -> Vec<Fp<3>>;
+
+    fn scalar_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        matrices.iter().map(permanent_bipedal3_singleword).collect()
+    }
+
+    fn dispatcher_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        matrices.iter().map(permanent_bipedal3).collect()
+    }
+
+    #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+    fn singleword_simd_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        let Some(fns) = maybe_bipedal_avx2() else {
+            return scalar_batch_backend(matrices);
+        };
+        matrices
+            .iter()
+            .map(|matrix| permanent_bipedal3_singleword_simd(matrix, &fns))
+            .collect()
+    }
+
+    fn reference_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        matrices
+            .iter()
+            .map(|matrix| {
+                let n = matrix.cols();
+                let row_major: Vec<_> = (0..n)
+                    .flat_map(|i| (0..n).map(move |j| matrix.get(i, j)))
+                    .collect();
+                permanent_mod3_reference(&row_major, n)
+            })
+            .collect()
+    }
+
+    fn ryser_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        matrices
+            .iter()
+            .map(|matrix| {
+                let n = matrix.cols();
+                let row_major: Vec<_> = (0..n)
+                    .flat_map(|i| (0..n).map(move |j| matrix.get(i, j)))
+                    .collect();
+                permanent_ryser::<Fp<3>>(&row_major, n)
+            })
+            .collect()
+    }
+
+    #[cfg(feature = "parallel")]
+    fn parallel_batch_backend(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
+        matrices
+            .iter()
+            .map(crate::permanent::parallel_bipedal3::permanent_bipedal3_parallel)
+            .collect()
+    }
+
+    fn shared_permanent_behavioral_suite(name: &str, backend: BatchBackend) {
+        let empty = vec![
+            Bipedal3Matrix::from_row_major(&[], 0, 0),
+            Bipedal3Matrix::from_row_major(&[], 0, 0),
+        ];
+        assert_eq!(backend(&empty), vec![Fp::<3>::new(1); 2], "{name}: 0x0");
+
+        let one_by_one: Vec<_> = [0, 1, 2, 2]
+            .into_iter()
+            .map(|value| Bipedal3Matrix::from_row_major(&[Fp::<3>::new(value)], 1, 1))
+            .collect();
+        assert_eq!(
+            backend(&one_by_one),
+            vec![
+                Fp::<3>::new(0),
+                Fp::<3>::new(1),
+                Fp::<3>::new(2),
+                Fp::<3>::new(2),
+            ],
+            "{name}: 1x1 values"
+        );
+
+        let cases = [
+            ([1, 0, 0, 1], 1),
+            ([1, 1, 1, 1], 2),
+            ([0, 2, 1, 0], 2),
+            ([1, 2, 0, 0], 0),
+        ];
+        let matrices: Vec<_> = cases
+            .iter()
+            .map(|(entries, _)| {
+                let entries: Vec<_> = entries.iter().copied().map(Fp::<3>::new).collect();
+                Bipedal3Matrix::from_row_major(&entries, 2, 2)
+            })
+            .collect();
+        let expected: Vec<_> = cases
+            .iter()
+            .map(|(_, value)| Fp::<3>::new(*value))
+            .collect();
+        assert_eq!(backend(&matrices), expected, "{name}: 2x2 contract");
+    }
+
+    /// Every standing F_3 permanent backend runs the same observable
+    /// empty/identity/all-ones/zero-row contract, including the new batch path.
+    #[test]
+    fn test_shared_permanent_backend_behavioral_suite() {
+        let mut backends: Vec<(&str, BatchBackend)> = vec![
+            ("generic Ryser", ryser_batch_backend),
+            ("paper reference", reference_batch_backend),
+            ("scalar bipedal", scalar_batch_backend),
+            ("public dispatcher", dispatcher_batch_backend),
+            ("four-lane batch", permanent_bipedal3_batch),
+        ];
+        #[cfg(feature = "parallel")]
+        backends.push(("parallel bipedal", parallel_batch_backend));
+        #[cfg(all(feature = "simd", any(target_arch = "x86", target_arch = "x86_64")))]
+        backends.push(("singleword SIMD", singleword_simd_batch_backend));
+
+        for (name, backend) in backends {
+            shared_permanent_behavioral_suite(name, backend);
+        }
+    }
+
+    /// Randomised conformance covers every dimension representable by one
+    /// bipedal word. Dense inputs exercise the full Gray walk through n=16;
+    /// larger exponential dimensions retain random entries but carry a random
+    /// zero row, whose permanent is identically zero and can be checked in the
+    /// fast tier without attempting an infeasible 2^63 walk.
+    #[test]
+    fn test_batched_randomized_conformance_all_singleword_sizes() {
+        for n in 0..=63 {
+            let matrices: Vec<_> = (0..4u64)
+                .map(|lane| {
+                    let seed = 0x83ee_dd07_0000_0000u64
+                        .wrapping_add((n as u64) << 8)
+                        .wrapping_add(lane);
+                    let mut row_major = random_matrix::<3>(n, seed);
+                    if n > 16 {
+                        let zero_row = (seed as usize) % n;
+                        row_major[zero_row * n..(zero_row + 1) * n].fill(Fp::<3>::new(0));
+                    }
+                    to_bipedal3_matrix(&row_major, n)
+                })
+                .collect();
+            let expected = scalar_batch_backend(&matrices);
+            let actual = permanent_bipedal3_batch(&matrices);
+            assert_eq!(actual, expected, "batch/scalar mismatch at n={n}");
+        }
+    }
+
+    /// Widths one through three must preserve the results and order of the
+    /// matrices present rather than exposing results from padded SIMD lanes.
+    #[test]
+    fn test_batched_partial_widths_1_through_3() {
+        let n = 7;
+        let matrices: Vec<_> = (0..4u64)
+            .map(|lane| {
+                let row_major = random_matrix::<3>(n, 0x83ee_dd07_7000 + lane);
+                to_bipedal3_matrix(&row_major, n)
+            })
+            .collect();
+        for width in 1..=3 {
+            assert_eq!(
+                permanent_bipedal3_batch(&matrices[..width]),
+                scalar_batch_backend(&matrices[..width]),
+                "partial batch mismatch at width={width}"
+            );
+        }
+    }
+
+    /// Explicitly removing the detected kernel exercises the same route used
+    /// on non-AVX2 and non-x86 hosts.
+    #[test]
+    fn test_batched_forced_non_avx2_fallback_matches_scalar() {
+        let n = 8;
+        let matrices: Vec<_> = (0..4u64)
+            .map(|lane| {
+                let row_major = random_matrix::<3>(n, 0x83ee_dd07_fa11 + lane);
+                to_bipedal3_matrix(&row_major, n)
+            })
+            .collect();
+        assert_eq!(
+            permanent_bipedal3_batch_with_kernel(&matrices, None),
+            scalar_batch_backend(&matrices)
+        );
+    }
+
+    fn parse_f3_cas_vectors() -> Vec<(usize, Vec<Fp<3>>, Fp<3>)> {
+        include_str!("../../tests/data/cas_permanent_f3_batch.csv")
+            .lines()
+            .filter_map(|line| {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') || line.starts_with("q,") {
+                    return None;
+                }
+                let fields: Vec<_> = line.splitn(4, ',').collect();
+                assert_eq!(fields.len(), 4, "malformed CAS row: {line}");
+                assert_eq!(fields[0], "3", "CAS vector must be over F_3");
+                let n = fields[1].parse::<usize>().expect("valid CAS dimension");
+                let entries: Vec<_> = fields[2]
+                    .split_whitespace()
+                    .filter(|token| *token != "/")
+                    .map(|token| {
+                        Fp::<3>::new(token.parse::<u64>().expect("valid F_3 matrix entry"))
+                    })
+                    .collect();
+                assert_eq!(entries.len(), n * n, "wrong CAS matrix shape at n={n}");
+                let expected =
+                    Fp::<3>::new(fields[3].parse::<u64>().expect("valid CAS permanent value"));
+                Some((n, entries, expected))
+            })
+            .collect()
+    }
+
+    /// Four-lane batches agree with the committed SageMath 10.9 vectors.
+    #[test]
+    fn test_batched_matches_committed_cas_reference_vectors() {
+        let vectors = parse_f3_cas_vectors();
+        assert!(!vectors.is_empty());
+        assert_eq!(vectors.len() % 4, 0, "CAS vectors must form full batches");
+        for chunk in vectors.chunks_exact(4) {
+            let n = chunk[0].0;
+            assert!(chunk.iter().all(|(chunk_n, _, _)| *chunk_n == n));
+            let matrices: Vec<_> = chunk
+                .iter()
+                .map(|(_, entries, _)| to_bipedal3_matrix(entries, n))
+                .collect();
+            let expected: Vec<_> = chunk.iter().map(|(_, _, value)| *value).collect();
+            assert_eq!(
+                permanent_bipedal3_batch(&matrices),
+                expected,
+                "CAS batch mismatch at n={n}"
+            );
+        }
     }
 
     // -----------------------------------------------------------------------
