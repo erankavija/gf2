@@ -21,7 +21,7 @@
     "component:gf2-sim"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Existing pipeline migrated onto the generic checkpoint",
-  "updated_at": "2026-08-09T13:34:57.129786262Z"
+  "updated_at": "2026-08-09T13:37:15.703844788Z"
 }

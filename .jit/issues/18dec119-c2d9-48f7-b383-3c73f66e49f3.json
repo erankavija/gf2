@@ -24,7 +24,7 @@
     "component:gf2-kernels-simd"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-09T13:35:05.208713053Z"
+  "updated_at": "2026-08-09T13:37:28.144284157Z"
 }
