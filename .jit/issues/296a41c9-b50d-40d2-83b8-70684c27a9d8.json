@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave1_backend",
+  "claimed_at": "2026-08-09T15:55:43.357698656Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "component:gf2-sim"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Re-measurement of contested backend orderings before the freeze",
-  "updated_at": "2026-08-09T12:03:30.333454427Z"
+  "updated_at": "2026-08-09T15:55:43.357698656Z"
 }

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave1_detcal",
+  "claimed_at": "2026-08-09T15:55:37.495744829Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "component:gf2-algebra"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Timing receipt for the determinant companion at campaign sizes",
-  "updated_at": "2026-08-09T12:03:52.994215470Z"
+  "updated_at": "2026-08-09T15:55:37.495744829Z"
 }

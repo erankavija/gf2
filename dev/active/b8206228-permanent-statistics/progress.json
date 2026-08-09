@@ -8,8 +8,8 @@
       {"id":"6602d181-9fb6-42a6-a97e-9fb38a8e71d1","short_id":"6602d181","title":"Generic checkpoint payload mechanism","classification":"implementation","status":"completed"},
       {"id":"5758790d-421b-47d2-a6f0-c40d1c5dc465","short_id":"5758790d","title":"Versioned dataset layout and record schemas","classification":"implementation","status":"in_progress"},
       {"id":"83eedd07-9710-4109-98a3-2b839f3cee98","short_id":"83eedd07","title":"Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents","classification":"implementation","status":"completed"},
-      {"id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","short_id":"8cb4def5","title":"Timing receipt for the determinant companion at campaign sizes","classification":"research","status":"pending"},
-      {"id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","short_id":"296a41c9","title":"Re-measurement of contested backend orderings before the freeze","classification":"research","status":"pending"},
+      {"id":"8cb4def5-0c95-4eb2-a2a2-04445390cc4c","short_id":"8cb4def5","title":"Timing receipt for the determinant companion at campaign sizes","classification":"research","status":"in_progress"},
+      {"id":"296a41c9-b50d-40d2-83b8-70684c27a9d8","short_id":"296a41c9","title":"Re-measurement of contested backend orderings before the freeze","classification":"research","status":"in_progress"},
       {"id":"9c5b26fb-a505-492e-8e9f-d8d520496ad0","short_id":"9c5b26fb","title":"Scientific preregistration protocol for the campaign","classification":"documentation","status":"in_progress"}
     ]},
     {"wave_number": 2, "issues": [
