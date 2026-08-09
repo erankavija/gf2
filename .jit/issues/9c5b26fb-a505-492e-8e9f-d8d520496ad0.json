@@ -113,7 +113,7 @@
   "gates_status": {
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-09T19:10:35.823723036Z",
+      "updated_at": "2026-08-09T19:48:04.553422143Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -134,5 +134,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Scientific preregistration protocol for the campaign",
-  "updated_at": "2026-08-09T19:17:32.441913412Z"
+  "updated_at": "2026-08-09T19:48:04.553422143Z"
 }
