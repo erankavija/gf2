@@ -9,11 +9,11 @@
 
 use std::collections::HashMap;
 
-use crate::checkpoint::SweepError;
 use crate::config::PipelineConfig;
 use crate::connector::{Edge, StageId};
 use crate::error::StageError;
 use crate::executor::{CheckpointedSweep, RunPlan, Scheduler, SimulationResults};
+use crate::snr_checkpoint::SweepError;
 use crate::stage::AnyStage;
 
 /// A built, runnable pipeline.

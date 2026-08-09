@@ -55,12 +55,12 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::checkpoint::{
-    clear_interrupt, config_hash, request_interrupt, CheckpointReader, SweepError,
-};
 use gf2_sim::error::{RecoverableError, StageError};
 use gf2_sim::executor::SnrPointResult;
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
+use gf2_sim::snr_checkpoint::{
+    clear_interrupt, config_hash, request_interrupt, CheckpointReader, SweepError,
+};
 use gf2_sim::{Pipeline, Scheduler};
 
 mod common;
@@ -599,7 +599,7 @@ fn hybrid_partial_point_restore() {
 ///    round" requirement 2 names. No injection here (clean baseline).
 /// 2. **Fault on resume.** The point is resumed with
 ///    `inject_gpu_oom_modulus = Some(32)` — excluded from
-///    [`config_hash`](gf2_sim::checkpoint::config_hash), so the same checkpoint
+///    [`config_hash`](gf2_sim::snr_checkpoint::config_hash), so the same checkpoint
 ///    loads. Round 2 = `[32, 34)`; worker 0's round-2 batch starts at global
 ///    frame 32 (`32 % 32 == 0`), so the drain hook injects a recoverable OOM
 ///    and **propagates** it. The sweep returns

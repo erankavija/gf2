@@ -57,13 +57,13 @@ use gf2_coding::ldpc::{DecoderAlgorithm, DecoderConfig};
 use gf2_coding::modem::DemapMethod;
 use gf2_coding::CodeRate;
 
-use gf2_sim::checkpoint::{
-    clear_interrupt, config_hash, request_interrupt, run_snr_point_checkpointed, CheckpointReader,
-    CheckpointWriter,
-};
 use gf2_sim::frame_sim::DvbT2BicmFrameSim;
 use gf2_sim::parallel::{run_snr_point, WorkerCounters};
 use gf2_sim::presets::dvb_t2::{Channel, Modcod};
+use gf2_sim::snr_checkpoint::{
+    clear_interrupt, config_hash, request_interrupt, run_snr_point_checkpointed, CheckpointReader,
+    CheckpointWriter,
+};
 use gf2_sim::{Pipeline, PipelineConfig};
 
 mod common;
