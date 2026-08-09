@@ -10,7 +10,7 @@
 //! still be a defect.
 
 use crate::backend::{evaluate, support, Backend, Batch, Support};
-use crate::sampler::MatrixSampler;
+use crate::sampler::{MatrixSampler, MeasurementPurpose};
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
@@ -55,7 +55,7 @@ impl EquivalenceRow {
 /// Build the same `m` matrices as [`shared_batch`], unpacked, for the generic
 /// Ryser path.
 fn shared_raw_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
-    let mut s = MatrixSampler::new(seed_root, q, n, 0);
+    let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Equivalence, 0);
     match q {
         3 => Batch::RawF3(n, (0..m).map(|_| s.next_matrix::<3>(n)).collect()),
         5 => Batch::RawF5(n, (0..m).map(|_| s.next_matrix::<5>(n)).collect()),
@@ -66,9 +66,8 @@ fn shared_raw_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
 
 /// Build `m` matrices for `(q, n)` from the equivalence-check stream.
 fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
-    // Stream index 0 is reserved for the equivalence check, so its inputs never
-    // coincide with a timing cell's inputs.
-    let mut s = MatrixSampler::new(seed_root, q, n, 0);
+    // This named purpose keeps its inputs separate from timing cells.
+    let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Equivalence, 0);
     match q {
         3 => Batch::F3(
             (0..m)
@@ -138,7 +137,7 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
     let zeros_reference = crate::backend::count_zeros(&reference);
 
     // The generic path consumes unpacked matrices, so it needs its own batch.
-    // Built from the same (seed_root, q, n, stream 0) tuple as `batch`, and the
+    // Built from the same (seed_root, q, n, equivalence, index 0) tuple as `batch`, and the
     // sampler is deterministic, so both hold the same matrices in the same
     // order - which is what makes the per-matrix comparison meaningful.
     let raw = raw_ref;
@@ -286,7 +285,13 @@ mod tests {
             let truth = exact_zeros as f64 / total as f64;
 
             let draws = 400_000usize;
-            let mut sampler = MatrixSampler::new(0xB488_F02C, q, 3, 12_345);
+            let mut sampler = MatrixSampler::new(
+                0xB488_F02C,
+                q,
+                3,
+                MeasurementPurpose::Equivalence,
+                12_345,
+            );
             let mut zeros = 0u64;
             for _ in 0..draws {
                 let value = match q {
