@@ -123,6 +123,7 @@ pub mod observability;
 pub mod parallel;
 pub mod pipeline;
 pub mod presets;
+pub mod snr_checkpoint;
 pub mod stage;
 pub mod stages;
 
@@ -136,11 +137,6 @@ pub mod testutil;
 
 #[doc(inline)]
 pub use batch::{BitPackedBatch, HardDecisionBatch, LlrBatch, SymbolBatch};
-#[doc(inline)]
-pub use checkpoint::{
-    config_hash, run_snr_point_checkpointed, run_sweep_checkpointed, CheckpointReader,
-    CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun, WorkerState,
-};
 #[doc(inline)]
 pub use config::PipelineConfig;
 #[doc(inline)]
@@ -163,6 +159,11 @@ pub use parallel::{
 };
 #[doc(inline)]
 pub use pipeline::{BatchHandle, Pipeline};
+#[doc(inline)]
+pub use snr_checkpoint::{
+    config_hash, run_snr_point_checkpointed, run_sweep_checkpointed, CheckpointReader,
+    CheckpointV2, CheckpointWriter, CheckpointedRun, SweepError, SweepRun, WorkerState,
+};
 #[doc(inline)]
 pub use stage::{
     erase, AnyScratch, AnyStage, BatchSize, ErasedStage, ExecutionClass, FallbackKind, Stage,
