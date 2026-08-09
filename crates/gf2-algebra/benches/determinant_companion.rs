@@ -21,7 +21,7 @@ use gf2_algebra::testutil::random_matrix;
 use gf2_core::field::{matrix::FieldMatrix, FieldVec, FiniteField};
 use gf2_core::gfp::Fp;
 
-const SCHEMA_VERSION: &str = "determinant-companion-v1";
+const SCHEMA_VERSION: &str = "determinant-companion-v2";
 const SEED_ROOT: u64 = 0x8cb4_def5_0000_0000;
 const FIXTURE_COUNT: usize = 32;
 const DEFAULT_REPETITIONS: u32 = 5;
@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         writeln!(
             output,
             "schema_version,execution,repetition,q,n,operation,backend,seed_root,\
-             fixture_count,calls,elapsed_ns,ns_per_matrix,target_ms,timestamp_unix_s,\
+             fixture_count,fixture_start,calls,elapsed_ns,ns_per_matrix,target_ms,timestamp_unix_s,\
              git_revision,source_dirty,rustc,hostname,cpu_model,kernel,governor"
         )?;
     }
@@ -135,6 +135,9 @@ fn parse_args() -> Result<Args, String> {
     }
     if repetitions == 0 {
         return Err("--repetitions must be positive".into());
+    }
+    if execution == 0 {
+        return Err("--execution must be positive for recorded windows".into());
     }
     if target_ms == 0 {
         return Err("--target-ms must be positive".into());
@@ -249,15 +252,30 @@ fn fixtures_f7(n: usize) -> Vec<F7Fixture> {
         .collect()
 }
 
-fn run_calls(mut call: impl FnMut(usize), calls: u64) -> Duration {
+fn run_calls_from(mut call: impl FnMut(usize), calls: u64, fixture_start: usize) -> Duration {
     let start = Instant::now();
     for index in 0..calls {
-        call((index as usize) & (FIXTURE_COUNT - 1));
+        call((fixture_start + index as usize) & (FIXTURE_COUNT - 1));
     }
     start.elapsed()
 }
 
+fn run_calls(call: impl FnMut(usize), calls: u64) -> Duration {
+    run_calls_from(call, calls, 0)
+}
+
+fn recorded_fixture_start(execution: u32, repetition: u32, repetitions: u32) -> usize {
+    debug_assert!(execution >= 1);
+    debug_assert!((1..=repetitions).contains(&repetition));
+    (((execution - 1) as usize * repetitions as usize) + (repetition - 1) as usize)
+        & (FIXTURE_COUNT - 1)
+}
+
 fn calibrated_calls(target: Duration, mut call: impl FnMut(usize)) -> u64 {
+    // Calibration is not receipt evidence: it only selects a call count for
+    // the recorded windows. Starting at fixture zero and cycling the pool is
+    // deterministic and does not consume a recorded execution/repetition
+    // address.
     let probe_target = target.min(Duration::from_millis(20));
     let mut calls = 1_u64;
     loop {
@@ -416,17 +434,20 @@ fn record_repetitions<T>(
     mut call: impl FnMut(usize) -> T,
 ) -> io::Result<()> {
     for repetition in 1..=args.repetitions {
-        let elapsed = run_calls(
+        let fixture_start =
+            recorded_fixture_start(args.execution, repetition, args.repetitions);
+        let elapsed = run_calls_from(
             |index| {
                 black_box(call(index));
             },
             calls,
+            fixture_start,
         );
         let elapsed_ns = elapsed.as_nanos();
         let ns_per_matrix = elapsed_ns as f64 / calls as f64;
         writeln!(
             output,
-            "{},{},{},{},{},{},{},{:#018x},{},{},{},{:.6},{},{},{},{},{},{},{},{},{}",
+            "{},{},{},{},{},{},{},{:#018x},{},{},{},{},{:.6},{},{},{},{},{},{},{},{},{},{}",
             SCHEMA_VERSION,
             args.execution,
             repetition,
@@ -436,6 +457,7 @@ fn record_repetitions<T>(
             backend,
             SEED_ROOT,
             FIXTURE_COUNT,
+            fixture_start,
             calls,
             elapsed_ns,
             ns_per_matrix,
@@ -538,6 +560,17 @@ fn self_check() -> Result<(), Box<dyn std::error::Error>> {
     );
     let absolute = Path::new("/tmp/determinant-companion-self-check.csv");
     assert_eq!(resolve_output_path(absolute), absolute);
+    let mut starts = Vec::new();
+    for execution in 1..=5 {
+        for repetition in 1..=5 {
+            let start = recorded_fixture_start(execution, repetition, 5);
+            assert_eq!(start, starts.len());
+            starts.push(start);
+        }
+    }
+    starts.sort_unstable();
+    starts.dedup();
+    assert_eq!(starts.len(), 25, "canonical frontier starts must be unique");
 
     let f3 = fixtures_f3(4);
     let f5 = fixtures_f5(4);
