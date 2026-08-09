@@ -7,6 +7,7 @@
   ],
   "description": "The new narrow statistics crate exists as an empty workspace member with its identity stated, ready to receive the sampler and the estimators in their own leaves.\n\n## Background\n\nThe campaign's sampler and statistics live in a new narrow workspace crate rather than in `gf2-core`, where interval estimators have no home, or `gf2-algebra`, where a statistics layer strains the crate's stated identity. The crate depends only on `gf2-core` among workspace crates, which keeps `@/inv/crate-dependency-direction` trivially satisfied and keeps the sampler usable from validation harnesses that never touch a permanent kernel.\n\nThe foundation is its own leaf so that the crate's placement, metadata, and identity are reviewable once, and every later statistics leaf registers one module against a crate that already builds.\n\n## Success Criteria\n\n- [hard] REQ-01: A workspace member crate `gf2-stats` builds with `gf2-core` as its only in-workspace dependency.\n- [hard] REQ-02: The crate consumes `rand_chacha` and `rand_core` through `workspace = true`, inheriting the converged 0.9 declarations.\n- [hard] REQ-03: The crate README states the crate's identity as the narrow statistics layer and names the sampler, interval estimators, exact tests, and accumulator as the surfaces that will live in it.\n- [hard] REQ-04: `cargo test -p gf2-stats` passes on the empty crate, so the member wiring is demonstrated before any module lands.\n\n## Notes\n\nScope is the crate skeleton alone. No sampler, estimator, or test-vector code lands here.\n",
   "documents": [],
+  "first_ready_at": "2026-08-09T13:49:35.356323644Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -21,7 +22,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Empty gf2-stats workspace member crate",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-09T13:49:35.356323644Z"
 }
