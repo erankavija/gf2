@@ -7,6 +7,7 @@
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Empirical permanent statistics of random matrices over small prime fields (b8206228) into well-ordered implementation issues.",
   "documents": [],
+  "first_ready_at": "2026-08-09T11:01:46.178382510Z",
   "gates_required": [
     "coverage-preview",
     "breakdown-review"
@@ -34,7 +35,7 @@
     "brackets:b8206228"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "breakdown: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-08T23:13:30.313825629Z"
+  "updated_at": "2026-08-09T11:01:46.178382510Z"
 }

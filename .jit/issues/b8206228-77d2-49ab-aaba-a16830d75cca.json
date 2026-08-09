@@ -3,6 +3,8 @@
   "context": {},
   "created_at": "2026-08-07T12:32:21.572267461Z",
   "dependencies": [
+    "0de41c82-fb20-4adb-ba6e-30061a83c301",
+    "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
     "b488f02c-b16b-4444-9274-1cfc95172d3b",
     "f3dc1bb1-526f-42e2-860a-66d0d0e8279b"
   ],
@@ -35,5 +37,5 @@
   "priority": "high",
   "state": "backlog",
   "title": "Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-08T23:35:54.332844286Z"
+  "updated_at": "2026-08-09T00:48:41.969577536Z"
 }

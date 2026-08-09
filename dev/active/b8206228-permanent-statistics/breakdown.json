@@ -1,8 +1,86 @@
 [
   {
-    "key": "stats-sampler",
-    "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
-    "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `dev/research/permanent-sampling-feas/src/sampler.rs`; it is the reference to lift from.\n\n## Success Criteria\n\n- [hard] REQ-01: A workspace member crate `gf2-stats` builds with `gf2-core` as its only in-workspace dependency, and `rand_chacha` is declared once in `[workspace.dependencies]` at version 0.9 with the crate consuming it through `workspace = true`.\n- [hard] REQ-02: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-03: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-04: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-05: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-06: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-07: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-08: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-09: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
+    "key": "rng-dependency-migration",
+    "title": "Workspace convergence of the rand 0.9 ecosystem",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [],
+    "description": "`rand_chacha` and `rand_core` 0.9 are declared once in `[workspace.dependencies]`, with `gf2-sim` — the one workspace member consuming them today — inheriting that declaration, so the campaign's random-number source has one version the workspace agrees on.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable; a version that drifts per crate is how a dataset silently stops being regenerable. Three `rand_chacha` majors and two `rand` majors coexist today: the workspace declares `rand = \"0.8\"` and no `rand_chacha` at all (`Cargo.toml:27`); `gf2-sim` pins `rand_chacha = \"0.9\"` with `rand = \"0.9\"` directly (`crates/gf2-sim/Cargo.toml:18-19`); `gf2-kernels-hip` pins the same pair as development dependencies (`crates/gf2-kernels-hip/Cargo.toml:33-34`); `gf2-coding` pins an optional `rand_chacha = \"0.3\"` (`crates/gf2-coding/Cargo.toml:23`), which belongs to the `rand` 0.8 ecosystem; and `gf2-core` uses the workspace `rand = \"0.8\"`. `@/inv/convention-convergence` requires a shared convention to have one form; this change is where that convergence happens for the 0.9 ecosystem.\n\nOne constraint shapes how far the convergence reaches: `gf2-kernels-hip` is excluded from the workspace (`Cargo.toml`, `exclude`) because it needs ROCm to build, so it has no workspace parent to inherit from and cannot use `workspace = true`; it follows the same versions by explicit pin.\n\nThe `gf2-coding` holdout is recorded as a named exception by its own documentation leaf behind this one; nothing in this change migrates the 0.8 ecosystem.\n\n## Success Criteria\n\n- [hard] REQ-01: `rand_chacha` and `rand_core` are declared once in `[workspace.dependencies]` at version 0.9, and `gf2-sim` — the one workspace member consuming them today — consumes them through `workspace = true`, its direct pins replaced in this change.\n- [hard] REQ-02: `gf2-kernels-hip`, which the workspace excludes because it requires ROCm to build and which therefore cannot inherit workspace dependencies, pins the same 0.9 versions explicitly, with a comment naming the exclusion as the reason it cannot inherit.\n- [hard] REQ-03: The workspace builds and its tests pass with no crate resolving two `rand_chacha` 0.9 copies, verifiable from the lockfile.\n\n## Notes\n\nScope is the version migration alone: no new crate, no sampler code, and no exception documentation land here.\n",
+    "planning": {
+      "outcome": "rand_chacha/rand_core 0.9 declared once at workspace level, with gf2-sim inheriting and gf2-kernels-hip pinned to match",
+      "contract_refs": [],
+      "produces_contracts": [
+        "workspace-rng-dependency"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "INV-4a"
+      ],
+      "terminal": {
+        "consumer_family": "workspace crates consuming the rand 0.9 ecosystem",
+        "test_boundary": "workspace cargo-ci build with lockfile duplicate check",
+        "worker_sized_reason": "One workspace-dependency promotion across three manifests is a small self-contained cycle.",
+        "footprint": {
+          "touches": [
+            "Cargo.toml",
+            "crates/gf2-sim/Cargo.toml",
+            "crates/gf2-kernels-hip/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rng-exception-record",
+    "title": "Named exception record for the rand 0.8 holdout",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-coding"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "rng-dependency-migration"
+    ],
+    "description": "`gf2-coding`'s optional `rand_chacha = \"0.3\"` is recorded as a named exception to the workspace's converged `rand` 0.9 ecosystem, with a tracked convergence condition, so the divergence is a cited decision rather than an unremarked drift.\n\n## Background\n\n`@/inv/convention-convergence` treats a parallel variant of a shared convention as a defect unless it is a named, cited exception with a tracked convergence condition. After the workspace converges on `rand_chacha` 0.9, `gf2-coding`'s optional `rand_chacha = \"0.3\"` (`crates/gf2-coding/Cargo.toml:23`) is exactly such a variant: it belongs to the `rand` 0.8 ecosystem the crate still builds against, and migrating it is out of scope for this campaign.\n\nThe repository tracks such exceptions in place rather than in a central registry, so the record lands beside the two declarations it concerns: the workspace `[workspace.dependencies]` block and the `gf2-coding` pin itself.\n\n## Success Criteria\n\n- [hard] REQ-01: A comment beside the `[workspace.dependencies]` `rand_chacha` declaration names `gf2-coding`'s optional `rand_chacha = \"0.3\"` as the one exception, states that it belongs to the `rand` 0.8 ecosystem, and states the tracked convergence condition that it migrates when `gf2-coding` moves to `rand` 0.9.\n- [hard] REQ-02: A comment beside the `gf2-coding` pin cites `@/inv/convention-convergence` and points at the workspace declaration as the converged form.\n- [hard] REQ-03: The workspace builds unchanged; the change is documentation only.\n\n## Notes\n\nScope is the exception record alone; no dependency version changes here.\n",
+    "planning": {
+      "outcome": "The gf2-coding rand 0.3 holdout stands as a named, cited exception with a tracked convergence condition",
+      "contract_refs": [
+        "workspace-rng-dependency"
+      ],
+      "source_refs": [
+        "INV-4a"
+      ],
+      "terminal": {
+        "consumer_family": "workspace dependency reviewers",
+        "test_boundary": "doc-review of the exception wording",
+        "worker_sized_reason": "Two located comments recording one exception is a minimal self-contained cycle.",
+        "footprint": {
+          "touches": [
+            "Cargo.toml",
+            "crates/gf2-coding/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stats-crate-foundation",
+    "title": "Empty gf2-stats workspace member crate",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -15,28 +93,27 @@
       "code-review",
       "doc-review"
     ],
-    "depends_on": [],
+    "depends_on": [
+      "rng-exception-record"
+    ],
+    "description": "The new narrow statistics crate exists as an empty workspace member with its identity stated, ready to receive the sampler and the estimators in their own leaves.\n\n## Background\n\nThe campaign's sampler and statistics live in a new narrow workspace crate rather than in `gf2-core`, where interval estimators have no home, or `gf2-algebra`, where a statistics layer strains the crate's stated identity. The crate depends only on `gf2-core` among workspace crates, which keeps `@/inv/crate-dependency-direction` trivially satisfied and keeps the sampler usable from validation harnesses that never touch a permanent kernel.\n\nThe foundation is its own leaf so that the crate's placement, metadata, and identity are reviewable once, and every later statistics leaf registers one module against a crate that already builds.\n\n## Success Criteria\n\n- [hard] REQ-01: A workspace member crate `gf2-stats` builds with `gf2-core` as its only in-workspace dependency.\n- [hard] REQ-02: The crate consumes `rand_chacha` and `rand_core` through `workspace = true`, inheriting the converged 0.9 declarations.\n- [hard] REQ-03: The crate README states the crate's identity as the narrow statistics layer and names the sampler, interval estimators, exact tests, and accumulator as the surfaces that will live in it.\n- [hard] REQ-04: `cargo test -p gf2-stats` passes on the empty crate, so the member wiring is demonstrated before any module lands.\n\n## Notes\n\nScope is the crate skeleton alone. No sampler, estimator, or test-vector code lands here.\n",
     "planning": {
-      "outcome": "Production ChaCha20 rejection sampler in a new gf2-stats crate, addressing matrices by campaign root, field, size, purpose and stream",
+      "outcome": "An empty gf2-stats workspace member builds with gf2-core as its only in-workspace dependency and its identity stated",
       "contract_refs": [
-        "stream-purpose-namespace"
+        "workspace-rng-dependency"
       ],
       "source_refs": [
         "REQ-02",
-        "G1",
-        "C1",
-        "INV-4a"
+        "C1"
       ],
       "terminal": {
-        "consumer_family": "campaign matrix producers",
-        "test_boundary": "gf2-stats sampler unit tests",
-        "worker_sized_reason": "One crate skeleton plus one module lifted from a tested prototype fits one focused cycle.",
+        "consumer_family": "gf2-stats statistics leaves",
+        "test_boundary": "empty-crate cargo test",
+        "worker_sized_reason": "One crate skeleton with member wiring and a README is a minimal self-contained cycle.",
         "footprint": {
           "creates": [
             "crates/gf2-stats/Cargo.toml",
             "crates/gf2-stats/src/lib.rs",
-            "crates/gf2-stats/src/sampler.rs",
-            "crates/gf2-stats/tests/golden_vectors.rs",
             "crates/gf2-stats/README.md"
           ],
           "touches": [
@@ -47,9 +124,135 @@
     }
   },
   {
-    "key": "stats-intervals",
-    "title": "Binomial confidence intervals and exact preregistered tests",
-    "description": "Interval estimators and exact binomial hypothesis tests for zero-fraction cells, correct both at the campaign's large sample sizes and at the small counts of the rectangular validation.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype (`dev/research/permanent-sampling-feas/src/stats.rs:38`); no Clopper–Pearson estimator exists anywhere, and the rectangular validation cells — where the estimated event probability is of order $q^{-n}$ and counts are in the tens — are exactly where the Wilson interval's normal approximation is weakest.\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial tests on a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence that the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered tail probability of order $10^{-4}$ is reached far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: A Clopper–Pearson interval is returned for the same inputs and matches, to a stated tolerance, an independent computation of the same bounds by inversion of the binomial tail or equivalently by beta quantiles, on cases spanning $Z = 0$, $Z = N$, and small counts.\n- [hard] REQ-03: Clopper–Pearson coverage is demonstrated empirically: over repeated simulated draws at stated $(N, p)$ including small $N$ and small $p$, the fraction of intervals containing $p$ is at least the nominal level.\n- [hard] REQ-04: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a $p$-value from the binomial distribution, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-05: A two-sided exact binomial test against a caller-supplied exact probability returns a $p$-value under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-06: The exact-test interface reports its result on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision; a test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero.\n- [hard] REQ-07: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-08: Documentation states that normal-approximation critical values are planning approximations and that acceptance decisions use the exact tests.\n\n## Notes\n\nInterval and test entry points take counts, not samples, so they are usable both online against a running accumulator and offline against a published dataset.",
+    "key": "stats-sampler",
+    "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
+    "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `dev/research/permanent-sampling-feas/src/sampler.rs`; it is the reference to lift from.\n\nThe ground this module stands on is laid by prerequisite leaves: `rand_chacha` and `rand_core` 0.9 are declared once at workspace level, and the `gf2-stats` member crate exists with `gf2-core` as its only in-workspace dependency. This leaf registers the sampler module in that crate and implements it.\n\n## Success Criteria\n\n- [hard] REQ-01: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-02: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-03: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-04: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-05: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-06: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-07: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-08: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "stats-crate-foundation"
+    ],
+    "planning": {
+      "outcome": "Production ChaCha20 rejection sampler in gf2-stats, addressing matrices by campaign root, field, size, purpose and stream",
+      "contract_refs": [
+        "stream-purpose-namespace",
+        "workspace-rng-dependency"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G1",
+        "C1"
+      ],
+      "terminal": {
+        "consumer_family": "campaign matrix producers",
+        "test_boundary": "gf2-stats sampler unit tests",
+        "worker_sized_reason": "One module lifted from a tested prototype plus its golden-vector tests fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-stats/src/sampler.rs",
+            "crates/gf2-stats/tests/golden_vectors.rs"
+          ],
+          "touches": [
+            "crates/gf2-stats/src/lib.rs",
+            "crates/gf2-stats/README.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stats-wilson-interval",
+    "title": "Wilson score interval estimator",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "stats-sampler"
+    ],
+    "description": "The campaign's working confidence interval: a Wilson score interval over a count out of $N$, validated against an independent computation of its own definition and well-formed at the campaign's largest sample size.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype (`dev/research/permanent-sampling-feas/src/stats.rs:38`); the production statistics crate has none. Wilson is the campaign's working interval at large counts, where it is accurate and short; the conservative small-count estimator is separate work behind this leaf on a dependency edge, in the same module.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: The estimator returns a well-formed interval at the campaign's largest planned sample size, $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-03: The entry point takes counts, not samples, so it is usable both online against a running accumulator and offline against a published dataset.\n\n## Notes\n\nScope is the Wilson estimator alone; the Clopper-Pearson estimator, the coverage demonstration, and the which-regime documentation follow in the dependent leaf.\n",
+    "planning": {
+      "outcome": "A Wilson score interval estimator checked against an independent computation of its own definition",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "G2",
+        "C2"
+      ],
+      "terminal": {
+        "consumer_family": "campaign estimate reporting",
+        "test_boundary": "gf2-stats interval unit tests",
+        "worker_sized_reason": "One estimator function with its independent-reference test fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-stats/src/intervals.rs"
+          ],
+          "touches": [
+            "crates/gf2-stats/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stats-clopper-pearson",
+    "title": "Clopper-Pearson interval estimator with coverage demonstration",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "stats-wilson-interval"
+    ],
+    "description": "The conservative small-count interval: a Clopper-Pearson estimator validated against an independent inversion of its own definition, with empirical coverage demonstrated in the regime the rectangular validation lives in.\n\n## Background\n\nNo Clopper-Pearson estimator exists anywhere in-tree, and the rectangular validation cells — where the estimated event probability is of order $q^{-n}$ and counts are in the tens — are exactly where a normal-approximation interval's coverage is weakest. Clopper-Pearson is conservative by construction and keeps its nominal coverage at counts in the tens.\n\nThe two estimators answer different questions. Checking one against the other proves nothing — containment follows from how they are built — so this estimator is validated against an independent computation of its own definition, and its coverage is demonstrated empirically rather than assumed from construction.\n\n## Success Criteria\n\n- [hard] REQ-01: A Clopper-Pearson interval is returned for a count out of $N$ at a caller-supplied level and matches, to a stated tolerance, an independent computation of its own bounds by inversion of the binomial tail or equivalently by beta quantiles, on cases spanning $Z = 0$, $Z = N$, and counts in the tens.\n- [hard] REQ-02: Coverage is demonstrated empirically: over repeated simulated draws at stated $(N, p)$ including small $N$ and small $p$, the fraction of intervals containing $p$ is at least the nominal level.\n- [hard] REQ-03: The estimator returns a well-formed interval at $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-04: Documentation states which estimator suits which regime, so a caller at counts in the tens is not left with the normal-approximation interval by default.\n\n## Notes\n\nEntry points take counts, not samples, matching the Wilson estimator beside it, so both are usable online against a running accumulator and offline against a published dataset.\n",
+    "planning": {
+      "outcome": "A Clopper-Pearson estimator checked by independent inversion, with empirical coverage demonstrated at small counts",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "G2",
+        "C2"
+      ],
+      "terminal": {
+        "consumer_family": "campaign estimate reporting",
+        "test_boundary": "gf2-stats interval unit tests",
+        "worker_sized_reason": "One estimator function with its inversion check and coverage demonstration fits one focused cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-stats/src/intervals.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stats-exact-tests",
+    "title": "Preregistered exact binomial tests for campaign cells",
+    "description": "The two exact binomial tests the campaign's acceptance decisions rest on, with a result interface that stays correct where an exact tail underflows double precision.\n\n## Background\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$, so a test evaluated there is valid against the whole null. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial observations of a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered per-cell level of order $10^{-4}$ sits far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a result from the binomial distribution, matching a brute-force sum over the probability mass function for $N \\le 200$.\n- [hard] REQ-02: A two-sided exact binomial test against a caller-supplied exact probability returns a result under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-03: The result interface reports on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision.\n- [hard] REQ-04: A test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero, for counts on both sides of the threshold.\n- [hard] REQ-05: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-06: Documentation states that normal-approximation critical values are planning approximations for sizing, and that acceptance decisions use these exact tests.\n\n## Notes\n\nThe tests take counts and a null value, so the same entry points serve a running campaign and a later reanalysis of a published dataset.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -63,10 +266,10 @@
       "code-review"
     ],
     "depends_on": [
-      "stats-sampler"
+      "stats-clopper-pearson"
     ],
     "planning": {
-      "outcome": "Wilson and Clopper-Pearson intervals plus exact binomial tests with log-scale results for the permanent floor and the exact determinant value",
+      "outcome": "Exact one-sided floor test and two-sided determinant test with a result interface that stays correct where tails underflow",
       "contract_refs": [],
       "source_refs": [
         "REQ-02",
@@ -75,11 +278,11 @@
       ],
       "terminal": {
         "consumer_family": "campaign acceptance checks",
-        "test_boundary": "gf2-stats interval unit tests",
-        "worker_sized_reason": "Two interval estimators plus two exact tests in one module fits one focused cycle.",
+        "test_boundary": "gf2-stats exact test unit tests",
+        "worker_sized_reason": "Two exact tests with one result interface fits one focused cycle.",
         "footprint": {
           "creates": [
-            "crates/gf2-stats/src/intervals.rs"
+            "crates/gf2-stats/src/exact_tests.rs"
           ],
           "touches": [
             "crates/gf2-stats/src/lib.rs"
@@ -104,7 +307,7 @@
       "code-review"
     ],
     "depends_on": [
-      "stats-intervals"
+      "stats-exact-tests"
     ],
     "planning": {
       "outcome": "Streaming accumulator whose shard commits are atomic, duplicate-rejecting, order-independent when pooled, and exactly replayable after interruption",
@@ -135,8 +338,8 @@
   },
   {
     "key": "checkpoint-generalization",
-    "title": "Generalise the simulation checkpoint writer over its payload",
-    "description": "The crash-safe checkpoint writer and reader in the simulation crate become generic over a serialisable payload and a configuration-hash provider, so a second campaign reuses the mechanism instead of copying it.\n\n## Background\n\n`crates/gf2-sim/src/checkpoint/mod.rs` implements a mature and tested crash-safe checkpoint mechanism: a PID-tagged temporary file, fsync, rename, and directory fsync, guarded by a blake3 hash over the serialised configuration so a resume against a different configuration is a hard error, with a reader that rejects a wrong schema version or a hash mismatch rather than silently accepting it. Its behaviour is pinned by a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test.\n\nWhat is not reusable is the schema: the payload type is fixed to a fielded record of coding-domain quantities, and the writer is typed to that record rather than to a payload. A second campaign with different axes therefore cannot use the writer as it stands. The repository's convention rule holds that a shared mechanism has one form and that a private helper duplicating a shared mechanism is a defect unless it is a named, tracked exception; \"write a checkpoint crash-safely and refuse to resume against a different configuration\" is that shared mechanism, whatever the payload. Changing it at its source is the resolution taken here.\n\n## Success Criteria\n\n- [hard] REQ-01: The checkpoint writer and reader are generic over a serialisable payload type and a configuration-hash provider, with the previously hard-coded payload becoming one instantiation.\n- [hard] REQ-02: The atomic write path is behaviourally unchanged: PID-tagged temporary file, fsync, rename, directory fsync, and crash safety under a signal delivered during the write.\n- [hard] REQ-03: A reader refuses a checkpoint whose schema version, payload identity, or configuration hash disagrees with the caller's, and treats an absent file as fresh work.\n- [hard] REQ-04: The existing simulation pipeline uses the generic form, and the resume-versus-uninterrupted counter-equality test and the signal-and-resume byte-identity test pass with their assertions unchanged.\n- [hard] REQ-05: A second, unrelated payload type round-trips through the same writer and reader in a test, demonstrating the mechanism has one form.\n- [hard] REQ-06: Module documentation describes the payload contract a new caller must satisfy, and no documentation still describes the writer as specific to one campaign's record.\n\n## Notes\n\nDeterministic resume in the existing implementation works by storing each worker's absolute generator word position; the generic payload contract must leave that pattern expressible rather than assume a particular resume key.",
+    "title": "Generic checkpoint payload mechanism",
+    "description": "The crash-safe checkpoint writer and reader in the simulation crate become generic over a serialisable payload and a configuration-hash provider, so a second campaign reuses the mechanism instead of copying it.\n\n## Background\n\n`crates/gf2-sim/src/checkpoint/mod.rs` implements a mature and tested crash-safe checkpoint mechanism: a PID-tagged temporary file, fsync, rename, and directory fsync, guarded by a blake3 hash over the serialised configuration so a resume against a different configuration is a hard error, with a reader that rejects a wrong schema version or a hash mismatch rather than silently accepting it. Its behaviour is pinned by a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test.\n\nWhat is not reusable is the schema: the payload type is fixed to a fielded record of coding-domain quantities, and the writer is typed to that record rather than to a payload. A second campaign with different axes therefore cannot use the writer as it stands. The repository's convention rule holds that a shared mechanism has one form and that a private helper duplicating a shared mechanism is a defect unless it is a named, tracked exception; \"write a checkpoint crash-safely and refuse to resume against a different configuration\" is that shared mechanism, whatever the payload. Changing it at its source is the resolution taken here.\n\n## Success Criteria\n\n- [hard] REQ-01: The checkpoint writer and reader are generic over a serialisable payload type and a configuration-hash provider, with the previously hard-coded payload becoming one instantiation.\n- [hard] REQ-02: The atomic write path is behaviourally unchanged: PID-tagged temporary file, fsync, rename, directory fsync, and crash safety under a signal delivered during the write.\n- [hard] REQ-03: A reader refuses a checkpoint whose schema version, payload identity, or configuration hash disagrees with the caller's, and treats an absent file as fresh work.\n- [hard] REQ-04: A second, unrelated payload type round-trips through the same writer and reader in a test, demonstrating the mechanism has one form.\n- [hard] REQ-05: Module documentation describes the payload contract a new caller must satisfy, and no documentation still describes the writer as specific to one campaign's record.\n\n## Notes\n\nScope is the generic mechanism alone, demonstrated by a fresh payload round-trip. Migrating the existing simulation pipeline onto the generic form, with its regression tests, is separate work behind this leaf on a dependency edge.\n\nDeterministic resume in the existing implementation works by storing each worker's absolute generator word position; the generic payload contract must leave that pattern expressible rather than assume a particular resume key.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -164,10 +367,47 @@
       "terminal": {
         "consumer_family": "simulation campaign binaries",
         "test_boundary": "gf2-sim checkpoint tests",
-        "worker_sized_reason": "One generalisation of one module with its existing tests kept green fits one focused cycle.",
+        "worker_sized_reason": "One genericisation of an existing tested module, demonstrated by a fresh payload round-trip, fits one focused cycle.",
         "footprint": {
           "touches": [
-            "crates/gf2-sim/src/checkpoint/mod.rs",
+            "crates/gf2-sim/src/checkpoint/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "checkpoint-caller-migration",
+    "title": "Existing pipeline migrated onto the generic checkpoint",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "checkpoint-generalization"
+    ],
+    "description": "The existing simulation pipeline uses the generic checkpoint form, with its recorded crash-safety behaviour demonstrated unchanged.\n\n## Background\n\nThe checkpoint mechanism's behaviour is pinned by two tests: a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test. Genericising the writer and reader must not disturb the one caller that exists — the modulation campaign binary — and the demonstration that it does not is this leaf's deliverable: the caller moves onto the generic form and both pinned tests pass with their assertions unchanged.\n\nMigration is separate from the foundation because the two are independently reviewable: the foundation's fresh-payload round-trip shows the mechanism has one form, and this migration shows the existing consumer kept its behaviour.\n\n## Success Criteria\n\n- [hard] REQ-01: The existing simulation pipeline uses the generic checkpoint form, with the previously hard-coded payload as one instantiation and no campaign-specific code left in the checkpoint module.\n- [hard] REQ-02: The resume-versus-uninterrupted counter-equality test and the signal-and-resume byte-identity subprocess test pass with their assertions unchanged.\n\n## Notes\n\nScope is the caller migration and its regression demonstration alone; the generic mechanism lands ahead of this leaf on its dependency edge.\n",
+    "planning": {
+      "outcome": "The modulation campaign binary runs on the generic checkpoint form with both pinned crash-safety tests unchanged",
+      "contract_refs": [
+        "checkpoint-payload-api"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "INV-4b"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-sim campaign binaries",
+        "test_boundary": "checkpoint regression tests",
+        "worker_sized_reason": "One caller moved onto an already-generic API with two existing regression tests fits one focused cycle.",
+        "footprint": {
+          "touches": [
             "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs",
             "crates/gf2-sim/tests/determinism.rs"
           ]
@@ -176,9 +416,9 @@
     }
   },
   {
-    "key": "dataset-format",
-    "title": "Versioned dataset layout for the permanent zero-fraction campaign",
-    "description": "The on-disk form of a published permanent zero-fraction dataset: a versioned campaign home, a root manifest schema, per-shard records, per-field summaries, and a raw-data checksum boundary that derived artefacts sit outside of, emitted by tooling that records provenance and refuses to write from an unidentified build.\n\n## Background\n\nNo manifest or checksum convention exists anywhere in this repository: a search for checksum and manifest files under the documentation tree returns nothing. The closest precedent, a per-curve README generated by an existing campaign binary, records invocation, configuration, host and wall-clock but records no git revision and no toolchain version. The repository requires every published number to trace to a committed artefact recording seeds, git revision, hardware and toolchain, so this schema is new work rather than an adaptation of an existing convention.\n\nThe dataset home is `dev/simulation_results/permanent-zero-fraction/<campaign-id>/`. This is a deliberate divergence from the earlier design sketch, which proposed `dev/campaigns/`: both directories are declared permanent documentation areas, but the development index classifies `dev/campaigns` as simulation campaign *definitions* and `dev/simulation_results` as campaign *outputs*, and today `dev/campaigns` holds only campaign configuration files. A published dataset is an output.\n\nTwo structural rules keep the dataset writable by concurrent producers and checksummable without a cycle. Each field's execution writes only files under its own field paths, including its own field summary, so no two concurrent producers write one file. And the checksum set covers raw data only — manifest, shard records, field summaries, and the pooled summary — while derived artefacts such as reports, figures and fit outputs sit outside it, since a checksum file that covered documents which quote the checksum could never be closed.\n\nTwo failure modes recorded from an earlier review cycle in this problem family shape the schema. Generated receipts that carried interpretive prose had to be regenerated every time a claim's wording changed, which was the single largest source of rework; emitted artefacts therefore carry data and mechanical provenance only. And a self-hash recorded by a binary with no build-state guard proves nothing about the source that produced it, so the emitting binary embeds the revision it was built from and checks it before writing.\n\nThat check has to be stated carefully, because the dataset lives inside the repository. A rule demanding a wholly clean working tree would deadlock immediately: the first shard written dirties the tree, so the second emission would refuse. What the rule protects is the identity of the *source* behind the numbers, not the absence of output. So it compares the embedded revision against `HEAD` and rejects any tracked change outside the campaign's own output subtree, while permitting the outputs the campaign is in the middle of producing.\n\n## Success Criteria\n\n- [hard] REQ-01: A dataset lives at `dev/simulation_results/permanent-zero-fraction/<campaign-id>/` and contains a root manifest, per-shard records under `shards/q<q>/n<nn>/`, one summary per field under `summaries/`, a pooled `summary.csv`, and a `checksums.sha256`.\n- [hard] REQ-02: The root manifest schema carries the campaign root seed; the stream purpose namespace with each purpose's tag; the cell grid with per-cell $N$, shard size and shard identities; the backend selected per cell; the git revision; the compiler and accelerator runtime versions; the CPU and GPU models; and a schema version.\n- [hard] REQ-03: The schema partitions the tree into raw data — manifest, shard records, field summaries, pooled summary — and derived artefacts, with `checksums.sha256` covering the raw set only, so no artefact quoting a checksum is inside the set it quotes.\n- [hard] REQ-04: The schema assigns each file in the raw set exactly one writer role, with field-scoped paths written by that field's execution and campaign-scoped paths written only by finalization, so two concurrent field executions never write one file.\n- [hard] REQ-05: A per-shard record carries its stream address, matrix count, permanent zero count, and the histogram of permanent values over the $q$ residue classes.\n- [hard] REQ-06: A record and a summary row express the determinant companion as a sample count with a zero count, or as an explicit not-evaluated state; a cell that ran without the companion never stores a numeric zero count, which would be indistinguishable from a cell that evaluated its matrices and found none singular.\n- [hard] REQ-07: A summary row carries, per $(q,n)$, the pooled matrix count, permanent zero count, the determinant fields of REQ-06, point estimates with intervals, acceptance verdicts, and the recorded terminal state of that cell.\n- [hard] REQ-08: The emitting binary embeds the source revision it was built from, and emits only when that embedded revision equals the current `HEAD` and the working tree carries no change to a tracked file outside the active campaign's output subtree. Expected raw and derived files under the frozen campaign id are permitted; a changed source file, a changed build or dependency manifest, a changed protocol document, or a changed root manifest refuses the emission and names what changed.\n- [hard] REQ-09: A test drives the source-identity rule through both outcomes: a tree dirtied only by the campaign's own outputs under its campaign id emits, and a tree with a modified source file, manifest, or protocol document refuses.\n- [hard] REQ-10: The root manifest's content hash is computed over a canonical serialisation from which the hash field itself is omitted, or is held in a sidecar file, so the hash is not self-referential and is recomputable by a reader.\n- [hard] REQ-11: Emitted files carry data and mechanical provenance only: no emitted field, header, or comment states an interpretation of what the numbers mean, asserted by a test over the emitter's output.\n- [hard] REQ-12: Re-emitting a dataset from identical inputs produces byte-identical files.\n- [hard] REQ-13: The layout, the manifest schema, the shard and summary record schemas, the raw-versus-derived boundary, the source-identity rule, and the rule that a campaign id is never overwritten in place are documented at the dataset home.\n\n## Notes\n\nStorage stays $O(\\text{shards})$ because matrices are regenerable from their stream address; a whole cell costs tens of kilobytes.",
+    "key": "dataset-schema",
+    "title": "Versioned dataset layout and record schemas",
+    "description": "The published shape of a permanent zero-fraction dataset: a versioned campaign home, the root manifest schema, the per-shard and per-summary record schemas, the writer-role partition, and the documentation that lets a reader navigate it.\n\n## Background\n\nNo manifest convention exists anywhere in this repository: a search for manifest files under the documentation tree returns nothing. The closest precedent, a per-curve README generated by an existing campaign binary, records invocation, configuration, host and wall-clock but records no git revision and no toolchain version. The repository requires every published number to trace to a committed artefact recording seeds, git revision, hardware and toolchain, so this schema is new work rather than an adaptation.\n\nThe dataset home is `dev/simulation_results/permanent-zero-fraction/<campaign-id>/`. This is a deliberate divergence from the earlier design sketch, which proposed `dev/campaigns/`: both directories are declared permanent documentation areas, but the development index classifies `dev/campaigns` as simulation campaign *definitions* and `dev/simulation_results` as campaign *outputs*, and today `dev/campaigns` holds only campaign configuration files. A published dataset is an output.\n\nTwo structural rules travel with the layout. Each file in the raw set has exactly one writer role, so a field's execution owns its own paths and campaign-scoped paths belong to finalization; concurrent field executions then never write one file. And the tree is partitioned into raw data and derived artefacts, because an integrity file covering documents that quote it could never be closed.\n\nAn earlier review cycle in this problem family recorded the cost of mixing interpretation into generated output: receipts carrying interpretive prose had to be regenerated every time a claim's wording changed, which was its largest single source of rework. The schema therefore admits data and mechanical provenance fields only.\n\n## Success Criteria\n\n- [hard] REQ-01: A dataset lives at `dev/simulation_results/permanent-zero-fraction/<campaign-id>/` and contains a root manifest, per-shard records under `shards/q<q>/n<nn>/`, one summary per field under `summaries/`, a pooled `summary.csv`, and an integrity file.\n- [hard] REQ-02: The root manifest schema carries the campaign root seed; the stream purpose namespace with each purpose's tag; the cell grid with per-cell $N$, shard size and shard identities; the backend selected per cell; whether the determinant companion runs at each cell; the git revision; the compiler and accelerator runtime versions; the CPU and GPU models; and a schema version.\n- [hard] REQ-03: A per-shard record schema carries the stream address, matrix count, permanent zero count, and the histogram of permanent values over the $q$ residue classes.\n- [hard] REQ-04: A record and a summary row express the determinant companion as a sample count with a zero count, or as an explicit not-evaluated state; a cell that ran without the companion never stores a numeric zero count, which would be indistinguishable from a cell that evaluated its matrices and found none singular.\n- [hard] REQ-05: A summary row schema carries, per $(q,n)$, the pooled matrix count, permanent zero count, the determinant fields of REQ-04, point estimates with intervals, acceptance verdicts, and the recorded terminal state of that cell.\n- [hard] REQ-06: The schema partitions the tree into raw data — manifest, shard records, field summaries, pooled summary — and derived artefacts, and names which is which.\n- [hard] REQ-07: The schema assigns each file in the raw set exactly one writer role, with field-scoped paths written by that field's execution and campaign-scoped paths written only by finalization.\n- [hard] REQ-08: A schema-conformance check accepts a well-formed dataset and rejects one with a missing required field, an unknown field, or a wrong schema version, exercised in both directions by test.\n- [hard] REQ-09: No schema field admits an interpretive statement about what the numbers mean, asserted by a test over the schema's own field list.\n- [hard] REQ-10: The layout, the manifest schema, the record schemas, the writer-role partition, the raw-versus-derived boundary, and the rule that a campaign id is never overwritten in place are documented at the dataset home.\n\n## Notes\n\nStorage stays $O(\\text{shards})$ because matrices are regenerable from their stream address; a whole cell costs tens of kilobytes.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -193,7 +433,7 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "Versioned dataset home with a root manifest schema, per-shard records, per-field summaries and a raw-data checksum boundary",
+      "outcome": "Versioned dataset home with a root manifest schema, record schemas, a writer-role partition and a raw-versus-derived boundary",
       "contract_refs": [
         "shard-record-format",
         "stream-purpose-namespace"
@@ -206,17 +446,16 @@
         "G4",
         "C4",
         "RC1",
-        "RC2",
         "INV-5"
       ],
       "terminal": {
         "consumer_family": "campaign dataset readers",
-        "test_boundary": "gf2-sim dataset emitter tests",
-        "worker_sized_reason": "One layout schema with one emitter module fits one focused cycle.",
+        "test_boundary": "gf2-sim dataset schema tests",
+        "worker_sized_reason": "One layout with its record schemas and conformance check fits one focused cycle.",
         "footprint": {
           "creates": [
             "crates/gf2-sim/src/permanent_campaign/mod.rs",
-            "crates/gf2-sim/src/permanent_campaign/dataset.rs",
+            "crates/gf2-sim/src/permanent_campaign/schema.rs",
             "dev/simulation_results/permanent-zero-fraction/README.md"
           ],
           "touches": [
@@ -227,9 +466,59 @@
     }
   },
   {
+    "key": "dataset-provenance-integrity",
+    "title": "Source identity and integrity for published datasets",
+    "description": "The rules that make a published dataset traceable to the source that produced it and verifiable by a reader: a build-state guard on the emitting binary, a source-identity rule that survives a dataset living inside the repository, and an integrity file over the raw data with a manifest hash that is not self-referential.\n\n## Background\n\nA self-hash recorded by a binary with no build-state guard proves nothing about the source that produced the numbers: it says only that the binary hashed itself. An earlier review cycle in this problem family recorded that specific defect. So the emitting binary embeds the revision it was built from and checks it before writing.\n\nThat check has to be stated carefully, because the dataset lives inside the repository. A rule demanding a wholly clean working tree would deadlock immediately: the first shard written dirties the tree, so the second emission would refuse. What the rule protects is the identity of the *source* behind the numbers, not the absence of output.\n\nThe manifest hash needs the same care. A hash stored inside the structure it covers cannot be recomputed by a reader, because recomputing it requires knowing it. Omitting the hash field from the canonical serialisation, or keeping the hash in a sidecar, makes verification a mechanical operation rather than a claim.\n\n## Success Criteria\n\n- [hard] REQ-01: The emitting binary embeds the source revision it was built from, and emits only when that embedded revision equals the current `HEAD`.\n- [hard] REQ-02: Emission additionally requires that no tracked file differs outside the active campaign's output subtree. Expected raw and derived files under the frozen campaign id are permitted, while a changed source file, a changed build or dependency manifest, a changed protocol document, or a changed root manifest refuses the emission and names what changed.\n- [hard] REQ-03: A test drives the rule through both outcomes: a tree dirtied only by the campaign's own outputs under its campaign id emits, and a tree with a modified source file, dependency manifest, or protocol document refuses.\n- [hard] REQ-04: The root manifest's content hash is computed over a canonical serialisation from which the hash field itself is omitted, or is held in a sidecar file, and a test confirms a reader recomputes the recorded value from the manifest alone.\n- [hard] REQ-05: `checksums.sha256` covers exactly the raw data set and no derived artefact, and its format is documented well enough to verify with standard tooling outside this repository.\n- [hard] REQ-06: A verification path re-checks a dataset against its integrity file and reports pass, or the failing paths, distinguishing a missing file from a changed one.\n- [hard] REQ-07: A dataset whose recorded git revision names a commit absent from the repository is reported as unverifiable rather than passing silently.\n\n## Notes\n\nThe source-identity rule protects the provenance of numbers, not the tidiness of the tree; a campaign in progress is expected to have written output, and that is exactly what the subtree exemption covers.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "dataset-schema"
+    ],
+    "planning": {
+      "outcome": "Build-state guard, a source-identity rule that survives an in-repository dataset, and an integrity file with a recomputable manifest hash",
+      "contract_refs": [
+        "campaign-dataset-layout"
+      ],
+      "produces_contracts": [
+        "dataset-provenance-rule"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "G4",
+        "C4",
+        "RC2",
+        "INV-5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset readers",
+        "test_boundary": "gf2-sim provenance guard tests",
+        "worker_sized_reason": "One guard with one integrity format fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/provenance.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs",
+            "dev/simulation_results/permanent-zero-fraction/README.md"
+          ]
+        }
+      }
+    }
+  },
+  {
     "key": "driver-orchestration",
-    "title": "Campaign driver scheduling with checkpointed resume",
-    "description": "A campaign binary in the simulation crate that enumerates $(q, n, \\text{shard})$ work items from a campaign manifest, runs the composite draw-pack-evaluate-count loop, checkpoints its progress, and emits shards and its own field summary into the dataset tree.\n\n## Background\n\nThere is no campaign runner for permanent sampling in the workspace. The two existing runners are coding-domain: a configuration-driven forward-error-correction campaign runner in the coding crate, and a modulation-and-coding campaign binary in the simulation crate that writes a per-curve output directory with checkpoints and a structured progress log. The second is the structural precedent — argument-driven, checkpointed, writing a self-describing output directory — while its campaign axes and inner loop share nothing with $(q, n, \\text{shard})$ over permanent evaluations.\n\nThe composite loop this driver needs exists in a research prototype and times four phases in order: generate, evaluate, histogram with zero counting, and shard emission. That prototype module carries no tests at all, unlike the sampler and statistics modules being productionised alongside it, so the driver is test-first work rather than a transcription.\n\nHosting the driver in the simulation crate adds a dependency on the algebra crate. That edge points inward from orchestration to mathematics and is legal under the repository's layering rule; it is taken deliberately so the checkpoint mechanism is reused rather than reimplemented.\n\n## Success Criteria\n\n- [hard] REQ-01: A binary in the simulation crate enumerates $(q, n, \\text{shard})$ work items from a campaign manifest and executes them, with the algebra crate added as a dependency so the permanent kernels are reachable.\n- [hard] REQ-02: Each work item runs the composite loop — draw, pack, evaluate, count — and records per-phase wall-clock alongside its counts.\n- [hard] REQ-03: The scheduling module has no public function that no test exercises, with tests covering work-item enumeration, interruption and resume, and shard emission.\n- [hard] REQ-04: Interrupting the driver and restarting it produces a shard set and pooled counts identical to an uninterrupted run over the same work items.\n- [hard] REQ-05: A fixed campaign root reproduces identical shard contents across worker counts and across a checkpoint boundary.\n- [hard] REQ-06: A resume whose campaign configuration differs from the checkpointed one is refused with an error naming the disagreement, rather than continuing against changed inputs.\n- [hard] REQ-07: A work item whose evaluation fails is quarantined with its identity and error, remaining work continues, and the quarantined item is visible in the dataset rather than absent from it.\n- [hard] REQ-08: A single invocation covers one field and writes only that field's shard paths and that field's summary, so two invocations covering different fields can run concurrently without writing one file, asserted by a test over the paths a run opens for writing.\n- [hard] REQ-09: Emitted records conform to the dataset's shard and summary schemas and land under the campaign id the manifest names.\n\n## Notes\n\nBackend choice per cell, accelerator launch sizing, host locking, and the determinant companion are layered on top of this scheduler rather than built into it.",
+    "title": "Campaign driver scheduling and shard emission",
+    "description": "A campaign binary in the simulation crate that enumerates $(q, n, \\text{shard})$ work items from a campaign manifest, runs the composite draw-pack-evaluate-count loop, and emits shards and its own field summary deterministically into the dataset tree.\n\n## Background\n\nThere is no campaign runner for permanent sampling in the workspace. The two existing runners are coding-domain: a configuration-driven forward-error-correction campaign runner in the coding crate, and a modulation-and-coding campaign binary in the simulation crate that writes a per-curve output directory with checkpoints and a structured progress log. The second is the structural precedent — argument-driven, writing a self-describing output directory — while its campaign axes and inner loop share nothing with $(q, n, \\text{shard})$ over permanent evaluations.\n\nThe composite loop this driver needs exists in a research prototype and times four phases in order: generate, evaluate, histogram with zero counting, and shard emission. That prototype module carries no tests at all, unlike the sampler and statistics modules being productionised alongside it, so the driver is test-first work rather than a transcription.\n\nHosting the driver in the simulation crate adds a dependency on the algebra crate. That edge points inward from orchestration to mathematics and is legal under the repository's layering rule.\n\n## Success Criteria\n\n- [hard] REQ-01: A binary in the simulation crate enumerates $(q, n, \\text{shard})$ work items from a campaign manifest and executes them, with the algebra crate added as a dependency so the permanent kernels are reachable.\n- [hard] REQ-02: Each work item runs the composite loop — draw, pack, evaluate, count — and records per-phase wall-clock alongside its counts.\n- [hard] REQ-03: A single invocation covers one field and writes only that field's shard paths and that field's summary, so two invocations covering different fields can run concurrently without writing one file, asserted by a test over the paths a run opens for writing.\n- [hard] REQ-04: Emitted records conform to the dataset's shard and summary schemas and land under the campaign id the manifest names.\n- [hard] REQ-05: Emission is deterministic: re-emitting from identical inputs produces byte-identical files, so a reader comparing two runs of the same work items sees no spurious difference.\n- [hard] REQ-06: The scheduling module has no public function that no test exercises, with tests covering work-item enumeration and shard emission.\n\n## Notes\n\nCheckpointed resume, run-to-run determinism across worker counts, quarantine, and configuration-mismatch refusal are separate work behind this leaf on a dependency edge. Backend choice per cell, accelerator launch sizing, host locking, and the determinant companion are layered on top of the scheduler rather than built into it.\n",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -244,16 +533,16 @@
     ],
     "depends_on": [
       "shard-accumulator",
-      "checkpoint-generalization",
-      "dataset-format"
+      "dataset-provenance-integrity"
     ],
     "planning": {
-      "outcome": "Campaign binary in the simulation crate schedules cell and shard work, resumes from checkpoints, and emits field-scoped dataset files",
+      "outcome": "Campaign binary enumerates manifest work items, runs the composite loop, and emits schema-conformant shards deterministically",
       "contract_refs": [
         "stream-purpose-namespace",
         "shard-record-format",
-        "checkpoint-payload-api",
-        "campaign-dataset-layout"
+        "campaign-dataset-layout",
+        "dataset-provenance-rule",
+        "workspace-rng-dependency"
       ],
       "source_refs": [
         "REQ-02",
@@ -265,16 +554,64 @@
       "terminal": {
         "consumer_family": "campaign operators",
         "test_boundary": "gf2-sim campaign driver tests",
-        "worker_sized_reason": "One scheduling module with one binary entry point fits one focused cycle.",
+        "worker_sized_reason": "One manifest-driven scheduler with its composite loop and deterministic emission, test-first over a known prototype shape, fits one focused cycle.",
         "footprint": {
           "creates": [
             "crates/gf2-sim/src/permanent_campaign/schedule.rs",
-            "crates/gf2-sim/src/bin/permanent_zero_fraction.rs",
-            "crates/gf2-sim/tests/permanent_campaign_resume.rs"
+            "crates/gf2-sim/src/bin/permanent_zero_fraction.rs"
           ],
           "touches": [
             "crates/gf2-sim/Cargo.toml",
             "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "driver-resume-quarantine",
+    "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "driver-orchestration",
+      "checkpoint-generalization"
+    ],
+    "description": "The campaign driver survives interruption: it checkpoints its progress through the generic checkpoint mechanism, resumes to results identical to an uninterrupted run, refuses a changed configuration, and quarantines a failing work item instead of losing it.\n\n## Background\n\nA campaign run spans days, so interruption is the normal case rather than the exception, and the recorded defects in this problem family are exactly resume defects: a superseded result set was corrupted by runs whose resumed state did not regenerate the recorded sample. Resume correctness is therefore demonstrated as identity — an interrupted-and-resumed run produces the same shard set and pooled counts as an uninterrupted one — rather than asserted as absence of error.\n\nDeterministic resume works by storing each worker's absolute generator word position through the generic checkpoint payload, which the checkpoint foundation leaf leaves expressible by contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Interrupting the driver and restarting it produces a shard set and pooled counts identical to an uninterrupted run over the same work items.\n- [hard] REQ-02: A fixed campaign root reproduces identical shard contents across worker counts and across a checkpoint boundary.\n- [hard] REQ-03: A resume whose campaign configuration differs from the checkpointed one is refused with an error naming the disagreement, rather than continuing against changed inputs.\n- [hard] REQ-04: A work item whose evaluation fails is quarantined with its identity and error, remaining work continues, and the quarantined item is visible in the dataset rather than absent from it.\n- [hard] REQ-05: Tests cover interruption and resume, including the signal-during-write case the checkpoint mechanism's own tests pin.\n\n## Notes\n\nThe scheduler and emission land ahead of this leaf on its dependency edge; this leaf owns the resume, determinism, and quarantine behaviour layered onto them.\n",
+    "planning": {
+      "outcome": "Interrupted campaign runs resume to results identical to uninterrupted ones, with changed configurations refused and failures quarantined",
+      "contract_refs": [
+        "checkpoint-payload-api",
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G3",
+        "C9",
+        "INV-4b",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "campaign resume test suite",
+        "worker_sized_reason": "Resume, determinism, and quarantine over an existing scheduler and a generic checkpoint mechanism fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/tests/permanent_campaign_resume.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/schedule.rs",
+            "crates/gf2-sim/src/bin/permanent_zero_fraction.rs"
           ]
         }
       }
@@ -296,7 +633,7 @@
       "code-review"
     ],
     "depends_on": [
-      "driver-orchestration"
+      "driver-resume-quarantine"
     ],
     "planning": {
       "outcome": "Determinant of each drawn matrix evaluated in the campaign loop, with per-shard and per-cell determinant counts or a not-evaluated state",
@@ -326,9 +663,51 @@
     }
   },
   {
-    "key": "driver-backend-policy",
-    "title": "Backend selection and execution policy for campaign cells",
-    "description": "The execution layer beneath the campaign scheduler: each cell runs on the backend its frozen manifest names, batch-parallel across matrices where that wins, with accelerator launches sized from measured per-matrix cost and the host's device lock held for the duration.\n\n## Background\n\nBackend ranking in this problem family is measured, not intuited, and the measurements contradict the obvious expectation. Batching across matrices with a work-stealing pool wins decisively only at small $n$, where per-matrix scheduling overhead dominates a short kernel; from $n = 20$ upward at $q = 3$ the in-tree intra-matrix parallel path overtakes it and leads by roughly a factor of two at $n = 24$ and $n = 28$. The plausible mechanism is working-set size: many concurrent Gray-code walks each carry their own column-sum state, while one cooperatively walked matrix shares it. A campaign therefore needs both paths and must choose per $(q, n)$ from measurement.\n\nNo batch-parallel path exists in-tree for any field: the only parallel permanent routine splits one matrix's Gray-code walk and exists for $\\mathbb{F}_3$ alone. Batch parallelism is harness-side, needs no field-specific kernel, and works for all three fields, which is why it belongs in this layer.\n\nAccelerator launch sizing is a wall-clock question rather than a memory question. Device memory is not the binding resource at any batch size in reach, while per-launch time scales as $M \\cdot n \\cdot 2^n / W$, so holding a batch size fixed while $n$ rises from $20$ to $24$ multiplies per-launch occupancy by $19.2$ and each further step of $4$ in $n$ costs about another factor of $19$. A batch size that occupies the device for a comfortable fraction of a second at one size occupies it for many seconds at the next.\n\nAbove the packed $\\mathbb{F}_7$ kernel's $16$-lane ceiling the surviving paths are the accelerator and the generic Ryser routine; the generic routine is correct but reaches only $0.798$ matrices per second at $n = 24$ and $0.0426$ at $n = 28$, far under the rate a campaign cell needs.\n\n## Success Criteria\n\n- [hard] REQ-01: A cell's backend is read from the campaign manifest's per-$(q,n)$ table, and no code path selects a backend from a value observed during the run.\n- [hard] REQ-02: A batch-parallel path evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$ without a field-specific kernel.\n- [hard] REQ-03: The intra-matrix parallel path is selectable for $\\mathbb{F}_3$ where the manifest names it.\n- [hard] REQ-04: Accelerator execution splits a shard into launches sized from measured per-matrix cost so each launch's wall-clock stays under a configured cap, rather than from one batch size held fixed across the grid.\n- [hard] REQ-05: Accelerator and timed host work run under the repository's benchmark host lock wrapper (`dev/scripts/ccx1-bench-flock.sh`), so two concurrent field executions never contend for one device.\n- [hard] REQ-06: Every selectable backend passes one shared behavioural suite asserting per-matrix agreement with the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-07: A backend the manifest names but the host cannot provide halts that cell with an error naming the cell and the missing backend, rather than substituting another backend and continuing.\n\n## Notes\n\nHalting on an unavailable backend is specific to a preregistered campaign: substituting a backend would break the frozen selection the dataset records. It is a campaign policy, not a change to any library's fallback behaviour.",
+    "key": "driver-batch-parallel",
+    "title": "Batch-parallel processor path for campaign shards",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "determinant-integration"
+    ],
+    "description": "A batch-parallel execution path that evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$, using the existing single-matrix kernels with no field-specific parallel code.\n\n## Background\n\nNo batch-parallel path exists in-tree for any field: the only parallel permanent routine splits one matrix's Gray-code walk and exists for $\\mathbb{F}_3$ alone. Batch parallelism is harness-side, needs no field-specific kernel, and works for each of the three fields, which is why it belongs in the campaign's execution layer rather than in any kernel crate.\n\nThe measurements motivating it are recorded: batching across matrices with a work-stealing pool wins decisively at small $n$, where per-matrix scheduling overhead dominates a short kernel; from $n = 20$ upward at $q = 3$ the intra-matrix parallel path overtakes it. A campaign needs both paths and chooses per cell from measurement; the choosing is the selection leaf's work, behind this one.\n\n## Success Criteria\n\n- [hard] REQ-01: A batch-parallel path evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$ without a field-specific kernel.\n- [hard] REQ-02: The path returns per-matrix results in input order, asserted against the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-03: Thread count is taken from configuration rather than probed at run time, so a recorded execution names the parallelism it ran with.\n\n## Notes\n\nScope is the batch-parallel path alone. Backend selection, the manifest table read, and the halt rule are the selection leaf's work behind this one.\n",
+    "planning": {
+      "outcome": "A batch-parallel path evaluates a shard's matrices across threads for q in {3,5,7} with input-order results",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "G7",
+        "C7",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "batch-parallel path unit tests",
+        "worker_sized_reason": "One thread-pool evaluation loop over existing kernels with an input-order test fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/batch_parallel.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "driver-cpu-backends",
+    "title": "Processor backend selection for campaign cells",
+    "description": "The processor half of the campaign's backend selection: each cell reads its backend from the frozen manifest, and the scalar, batch-parallel, intra-matrix-parallel and generic Ryser paths are all reachable from that table.\n\n## Background\n\nBackend ranking in this problem family is measured, not intuited, and the measurements contradict the obvious expectation: from $n = 20$ upward at $q = 3$ the intra-matrix parallel path overtakes batch parallelism and leads by roughly a factor of two at $n = 24$ and $n = 28$. A campaign therefore needs both paths and must choose per $(q, n)$ from measurement, which is why the choice is read from the frozen manifest rather than computed.\n\nAbove the packed $\\mathbb{F}_7$ kernel's $16$-lane ceiling the generic Ryser routine is the only processor path that remains; it is correct but reaches only $0.798$ matrices per second at $n = 24$, far under the rate a campaign cell needs. It stays reachable because a correct slow path is what a cell selects when nothing faster covers its size.\n\n## Success Criteria\n\n- [hard] REQ-01: A cell's backend is read from the campaign manifest's per-$(q,n)$ table, and no code path selects a backend from a value observed during the run.\n- [hard] REQ-02: The scalar single-word path is selectable for $q \\in \\{3,5,7\\}$ where the manifest names it.\n- [hard] REQ-03: The batch-parallel path is selectable for $q \\in \\{3,5,7\\}$ where the manifest names it.\n- [hard] REQ-04: The intra-matrix parallel path is selectable for $\\mathbb{F}_3$ where the manifest names it.\n- [hard] REQ-05: The generic Ryser path is selectable for any $(q,n)$ the packed kernels do not cover, so a cell above the packed $\\mathbb{F}_7$ ceiling has a correct processor path.\n- [hard] REQ-06: A backend the manifest names but the build does not provide halts that cell with an error naming the cell and the missing backend, rather than substituting another backend and continuing.\n\n## Notes\n\nHalting on an unavailable backend is specific to a preregistered campaign and is the explicit-failure arm of `@/inv/accelerator-safe-fallback`, not a breach of it: that invariant's tested-safe-fallback rule governs library capability dispatch, which this change does not touch, while a preregistered cell naming an absent backend is not a recoverable resource failure — a substituted backend would corrupt the frozen selection the dataset records, so the halt is kept explicit and named.\n\nCross-backend behavioural agreement is certified by the shared conformance suite leaf, not re-asserted here.\n",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -342,10 +721,10 @@
       "code-review"
     ],
     "depends_on": [
-      "determinant-integration"
+      "driver-batch-parallel"
     ],
     "planning": {
-      "outcome": "Per-cell backend selection from the frozen manifest, with batch-parallel execution, capped accelerator launches, and exclusive device access",
+      "outcome": "Per-cell backend read from the frozen manifest, with scalar, batch-parallel, intra-matrix and generic Ryser paths reachable",
       "contract_refs": [
         "campaign-dataset-layout"
       ],
@@ -353,20 +732,103 @@
         "REQ-02",
         "G7",
         "G8",
-        "C7",
         "C8",
         "INV-6"
       ],
       "terminal": {
         "consumer_family": "campaign driver",
-        "test_boundary": "gf2-sim backend policy tests",
-        "worker_sized_reason": "One selection layer over existing kernels with one shared behavioural suite fits one focused cycle.",
+        "test_boundary": "gf2-sim processor backend tests",
+        "worker_sized_reason": "One manifest-driven selection layer over four existing processor paths fits one focused cycle.",
         "footprint": {
           "creates": [
             "crates/gf2-sim/src/permanent_campaign/backend.rs"
           ],
           "touches": [
             "crates/gf2-sim/src/permanent_campaign/schedule.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "driver-gpu-backend",
+    "title": "Accelerator execution for campaign cells",
+    "description": "The accelerator half of the campaign's execution layer — launches sized from measured per-matrix cost, exclusive device access, and defined behaviour when the device is absent.\n\n## Background\n\nAccelerator launch sizing is a wall-clock question rather than a memory question. Device memory is not the binding resource at any batch size in reach, while per-launch time scales as $M \\cdot n \\cdot 2^n / W$, so holding a batch size fixed while $n$ rises from $20$ to $24$ multiplies per-launch occupancy by $19.2$, and each further step of $4$ in $n$ costs about another factor of $19$. A batch size that occupies the device for a comfortable fraction of a second at one size occupies it for many seconds at the next. The best batch size measured is $M = 1024$; doubling to $M = 2048$ cost a $33\\%$ loss in sustained rate at $q{=}3$, $n{=}24$, so the optimum within the tested set is interior.\n\nConcurrency matters because a campaign runs three fields. Two executions contending for one device produce timings that describe the contention rather than the kernel, and the repository already provides a host lock wrapper for exactly this.\n\n## Success Criteria\n\n- [hard] REQ-01: Accelerator execution splits a shard into launches sized from measured per-matrix cost so each launch's wall-clock stays under a configured cap, rather than from one batch size held fixed across the grid.\n- [hard] REQ-02: The launch-sizing rule is exercised by a test at two sizes whose per-matrix costs differ by more than an order of magnitude, confirming the chosen launch counts differ accordingly.\n- [hard] REQ-03: Accelerator work and timed host work run under the repository's benchmark host lock wrapper (`dev/scripts/ccx1-bench-flock.sh`), so two concurrent field executions never contend for one device.\n- [hard] REQ-04: A cell whose manifest names an accelerator backend on a host without the device halts that cell with an error naming the cell and the missing device, and never silently falls back to a processor path, since a substituted backend would break the frozen selection the dataset records.\n- [hard] REQ-05: A build without accelerator support compiles and runs the processor-only campaign, with accelerator cells refusing rather than failing to build.\n- [hard] REQ-06: The simulation crate's `hip` feature forwards to the algebra crate's `hip` feature, so the accelerator batch entry points in `crates/gf2-algebra/src/gpu.rs` are compiled in exactly when the feature is on; today `gf2-sim`'s `hip` feature enables only `gf2-kernels-hip` and `gf2-coding/hip`, and the algebra accelerator API is unreachable from the campaign.\n\n## Notes\n\nThe shared cross-backend conformance suite is separate work behind this leaf on a dependency edge; this leaf's tests cover the accelerator path alone.\n\nThe accelerator reaches the campaign only through the algebra crate's batch entry points, so the driver never touches the kernel crate directly and `@/inv/unsafe-kernel-isolation` is unaffected.\n\nHalting a cell whose manifest names an absent accelerator is the explicit-failure arm of `@/inv/accelerator-safe-fallback`, not a breach of it: the invariant's tested-safe-fallback rule governs library capability dispatch, which is unchanged, while a preregistered cell naming an absent backend is not a recoverable resource failure — a substituted backend would corrupt the frozen selection the dataset records.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "driver-cpu-backends"
+    ],
+    "planning": {
+      "outcome": "Accelerator launches sized from measured cost under an exclusive host lock, halting cleanly where the device is absent",
+      "contract_refs": [
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G7",
+        "G8",
+        "C8",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "accelerator execution unit tests",
+        "worker_sized_reason": "One accelerator execution path with its sizing and refusal tests fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/gpu_backend.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/backend.rs",
+            "crates/gf2-sim/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "backend-conformance-suite",
+    "title": "Shared behavioural conformance suite across campaign backends",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "component:gf2-algebra",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "driver-gpu-backend"
+    ],
+    "description": "One standing behavioural suite asserts that each of the five campaign backends computes the same permanents as the generic reference routine, so no execution path certifies its own correctness privately.\n\n## Background\n\nThis leaf lands last in the execution layer, which is what lets it exist: the five backends the campaign can select — scalar, batch-parallel, intra-matrix, generic Ryser, and accelerator — exists by then, so one suite can assert they agree rather than each path asserting its own correctness in its own tests. That is what `@/inv/backend-behavioral-equivalence` asks for and what a one-off equivalence run does not provide.\n\nThe suite is a standing test rather than a script, because the property it guards — per-matrix agreement across paths — must keep holding as the paths evolve, and a script that was run once proves nothing about the tree as it stands.\n\n## Success Criteria\n\n- [hard] REQ-01: One shared behavioural suite asserts per-matrix agreement across the five campaign backends — scalar, batch-parallel, intra-matrix, generic Ryser, and accelerator — against the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-02: The suite runs as a standing test rather than a one-off script, with accelerator cases skipped and reported as skipped on hosts without the device.\n- [hard] REQ-03: The common matrix set is drawn through a fixed seed recorded in the test, so a failure reproduces from the test alone.\n\n## Notes\n\nThe backend set the suite covers is the campaign-selectable set as the execution layer defines it; a backend added later joins the suite in the change that adds it, which is what keeps the suite the single certification point.\n",
+    "planning": {
+      "outcome": "One standing suite certifies per-matrix agreement of the five campaign backends against the generic reference routine",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign execution layer",
+        "test_boundary": "shared backend conformance suite",
+        "worker_sized_reason": "One test suite over already-built execution paths fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/tests/permanent_campaign_backends.rs"
           ]
         }
       }
@@ -389,7 +851,7 @@
       "code-review"
     ],
     "depends_on": [
-      "driver-backend-policy",
+      "backend-conformance-suite",
       "protocol-draft"
     ],
     "planning": {
@@ -422,7 +884,7 @@
   {
     "key": "avx2-batched-impl",
     "title": "Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents",
-    "description": "Build the four-matrix batched single-word $\\mathbb{F}_3$ permanent path that the kernel crate's batched arithmetic type was introduced for, and demonstrate it agrees with the scalar kernel matrix for matrix.\n\n## Background\n\nThe AVX2 single-word $\\mathbb{F}_3$ permanent kernel zero-pads one bipedal word into a four-element lane, so three lanes of four carry no data and the kernel runs slower than the scalar one — a committed cross-CPU receipt puts scalar at $0.317$–$0.319$ of the AVX2 time at $n \\in \\{16, 20, 24\\}$.\n\nThe module documentation states the intended resolution explicitly: the AVX2 single-word kernel exists to exercise dispatch wiring and kernel correctness on real hardware, and \"the batched multi-matrix path is the performance-oriented user\". That user does not exist. The batched four-lane arithmetic type it refers to landed in the kernel crate as `Bipedal3x4` (`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:183`), and nothing in the algebra crate evaluates four matrices' permanents through it. Building it makes the AVX2 lanes carry four matrices instead of one, which is what the hardware was there for.\n\n## Success Criteria\n\n- [hard] REQ-01: A public entry point evaluates four $\\mathbb{F}_3$ permanents at once through the batched bipedal type, returning one value per input matrix in input order.\n- [hard] REQ-02: The batched path agrees with the scalar single-word kernel on a randomised conformance set covering each size where one bipedal word suffices, and on the committed computer-algebra reference vectors.\n- [hard] REQ-03: A batch containing fewer than four matrices returns correct values for the matrices present, with a test covering each partial-batch width.\n- [hard] REQ-04: The batched path joins the crate's shared permanent behavioural suite, so it is exercised by the same contract as every other permanent backend rather than by a private test set.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n- [hard] REQ-06: The entry point is reachable on hosts without AVX2 through the crate's existing feature and runtime-detection conventions, with a test asserting the fallback returns the same values.\n\n## Notes\n\nThis change adds a capability and asserts its correctness. Which path the public single-matrix dispatcher selects, and the prose and benchmark labels describing that selection, are a separate concern from whether the batched path exists and is correct.",
+    "description": "Build the four-matrix batched single-word $\\mathbb{F}_3$ permanent path that the kernel crate's batched arithmetic type was introduced for, and demonstrate it agrees with the scalar kernel matrix for matrix.\n\n## Background\n\nThe AVX2 single-word $\\mathbb{F}_3$ permanent kernel zero-pads one bipedal word into a four-element lane, so three lanes of four carry no data and the kernel runs slower than the scalar one — a committed cross-CPU receipt puts scalar at $0.317$–$0.319$ of the AVX2 time at $n \\in \\{16, 20, 24\\}$.\n\nThe module documentation states the intended resolution explicitly: the AVX2 single-word kernel exists to exercise dispatch wiring and kernel correctness on real hardware, and \"the batched multi-matrix path is the performance-oriented user\". That user does not exist. The batched four-lane arithmetic type it refers to landed in the kernel crate as `Bipedal3x4` (`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:183`), and nothing in the algebra crate evaluates four matrices' permanents through it. Building it makes the AVX2 lanes carry four matrices instead of one, which is what the hardware was there for.\n\nThe placement is settled here, not by the implementer: the batched Gray-walk evaluation over `Bipedal3x4` is SIMD `unsafe` and therefore lands in the kernel crate beside the existing AVX2 permanent kernel (`crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs`), per `@/inv/unsafe-kernel-isolation`; the algebra crate adds only the safe public entry point and packing glue over it.\n\n## Success Criteria\n\n- [hard] REQ-01: A public entry point evaluates four $\\mathbb{F}_3$ permanents at once through the batched bipedal type, returning one value per input matrix in input order.\n- [hard] REQ-02: The batched path agrees with the scalar single-word kernel on a randomised conformance set covering each size where one bipedal word suffices, and on the committed computer-algebra reference vectors.\n- [hard] REQ-03: A batch containing fewer than four matrices returns correct values for the matrices present, with a test covering each partial-batch width.\n- [hard] REQ-04: The batched path joins the crate's shared permanent behavioural suite, so it is exercised by the same contract as every other permanent backend rather than by a private test set.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n- [hard] REQ-06: The entry point is reachable on hosts without AVX2 through the crate's existing feature and runtime-detection conventions, with a test asserting the fallback returns the same values.\n\n## Notes\n\nThis change adds a capability and asserts its correctness. Which path the public single-matrix dispatcher selects, and the prose and benchmark labels describing that selection, are a separate concern from whether the batched path exists and is correct.",
     "type": "enhancement",
     "priority": "normal",
     "labels": [
@@ -455,9 +917,10 @@
           ],
           "touches": [
             "crates/gf2-algebra/src/permanent/mod.rs",
-            "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs"
-          ],
-          "uncertainty": "Whether the batched entry point needs new kernel-crate SIMD source or only algebra-crate glue over the existing batched type is settled by the implementer."
+            "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs",
+            "crates/gf2-kernels-simd/src/x86/asm/bipedal_avx2.asm.txt",
+            "crates/gf2-algebra/tests/permanent_vectors.rs"
+          ]
         }
       }
     }
@@ -465,7 +928,7 @@
   {
     "key": "avx2-dispatch-migration",
     "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-    "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured at roughly three times the scalar cost. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThat makes this a repository-hygiene change with a documentation blast radius. Three in-tree sources describe the current selection as intended: the bipedal module and dispatcher documentation, a scalar-versus-AVX2 example header, and a benchmark group labelled as the SIMD path. Changing the selection moves the numbers that benchmark feeds into committed receipts, so leaving the label untouched would leave a receipt describing itself wrongly — the exact failure mode an earlier review cycle in this repository spent rounds correcting.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed benchmark receipt reports per-matrix rates for the scalar kernel, the single-matrix AVX2 kernel, and the batched path at the sizes where one bipedal word suffices, recording seeds, git revision, hardware and toolchain.\n- [hard] REQ-02: `permanent_bipedal3` selects, for a single matrix, the path that receipt measures as faster, so a default build on an AVX2 host no longer pays the single-word SIMD penalty.\n- [hard] REQ-03: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-04: The prose describing the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it appears — the bipedal module and dispatcher documentation, the scalar-versus-AVX2 example header, and the benchmark group label naming the SIMD path — in this change.\n- [hard] REQ-05: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection this change leaves in place.\n- [hard] REQ-06: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
+    "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured at roughly three times the scalar cost. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThe module's own documentation describes the current preference as intended, and `@/inv/single-source-prose` puts that correction in the same change as the code it describes: a reader of `bipedal3.rs` must not find a rustdoc comment contradicting the selection three lines below it. Prose living in other files — examples, benchmark labels, crate-level status text — is a separate sweep, because it is a different set of files with a different reviewer and no risk of contradicting the code beside it.\n\n## Success Criteria\n\n- [hard] REQ-01: `permanent_bipedal3` selects the scalar single-word kernel for a single matrix, so a default build on an AVX2 host no longer pays the single-word SIMD penalty; the committed cross-CPU receipt putting scalar at $0.317$-$0.319$ of the AVX2 time is the measurement the selection rests on.\n- [hard] REQ-02: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-03: The rustdoc inside every file this change edits agrees with the selection it leaves in place, including the bipedal module documentation and the dispatcher's own documentation comment.\n- [hard] REQ-04: A doctest or unit test pins the selection, so a later change that reintroduces the SIMD preference for a single matrix fails rather than passing quietly.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
     "type": "enhancement",
     "priority": "normal",
     "labels": [
@@ -483,7 +946,7 @@
       "avx2-batched-impl"
     ],
     "planning": {
-      "outcome": "Single-matrix callers routed to the measured-faster kernel, with stale prose, benchmark labels and assembly artefacts corrected in the same change",
+      "outcome": "Single-matrix callers routed to the scalar kernel, with same-file rustdoc and assembly artefacts corrected alongside the code",
       "contract_refs": [],
       "source_refs": [
         "G6",
@@ -496,15 +959,96 @@
         "test_boundary": "gf2-algebra dispatcher tests",
         "worker_sized_reason": "One selection decision with its receipt and prose sweep fits one focused cycle.",
         "footprint": {
-          "creates": [
-            "dev/benchmarks/permanent_campaign/f3-dispatch-rates.csv"
-          ],
           "touches": [
             "crates/gf2-algebra/src/permanent/bipedal3.rs",
+            "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "avx2-narrative-sweep",
+    "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
+    "description": "The prose outside the changed source files that the new $\\mathbb{F}_3$ permanent selection makes wrong: the scalar-versus-AVX2 example header, the benchmark group labels naming the SIMD path, and the crate-level status text.\n\n## Background\n\nChanging which kernel the public $\\mathbb{F}_3$ permanent entry point selects invalidates statements spread across the crate that no longer describe it. The scalar-versus-AVX2 example exists to demonstrate that AVX2 single-word is about three times slower than scalar, and its header frames that as a curiosity rather than as the reason for the current selection. A benchmark group is labelled as the SIMD path in `benches/s1_n36_speedup.rs`, and after the selection changes that label names something the group no longer measures — a stale label inside a benchmark that feeds committed receipts is precisely the failure mode an earlier review cycle in this repository spent rounds correcting. The crate README and crate-level status prose describe the entry point's behaviour to readers who never open the dispatcher.\n\n`@/inv/single-source-prose` requires each of these to say one thing. They are gathered here rather than in the code change because they are a different file set with no code beside them to contradict, and because a benchmark label change wants to be reviewed against the benchmark's output rather than against the dispatcher.\n\n## Success Criteria\n\n- [hard] REQ-01: The scalar-versus-AVX2 example header describes the measured relationship as the basis of the current selection rather than as an unexplained anomaly, and the example still builds and runs.\n- [hard] REQ-02: Benchmark group labels in `crates/gf2-algebra/benches/s1_n36_speedup.rs` name the paths those groups actually measure after the selection change.\n- [hard] REQ-03: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection now in place.\n- [hard] REQ-04: The module prose that described the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it survives outside the dispatcher's own files, including the generic Ryser module's framing and the accelerator module's naming of the processor equivalent.\n- [hard] REQ-05: A repository search for the superseded framing returns no live occurrence outside archived material, and the search performed is recorded so a reviewer can repeat it.\n\n## Notes\n\nArchived material under the development archive is history and is left as written; only live prose is swept.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "avx2-dispatch-migration"
+    ],
+    "planning": {
+      "outcome": "Example headers, benchmark group labels and crate status prose brought into agreement with the new single-matrix selection",
+      "contract_refs": [],
+      "source_refs": [
+        "G6",
+        "C6",
+        "RC4",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra documentation readers",
+        "test_boundary": "documentation review of the swept files",
+        "worker_sized_reason": "One sweep over a bounded file set fits one focused cycle.",
+        "footprint": {
+          "touches": [
             "crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs",
             "crates/gf2-algebra/benches/s1_n36_speedup.rs",
             "crates/gf2-algebra/README.md",
-            "crates/gf2-algebra/src/lib.rs"
+            "crates/gf2-algebra/src/lib.rs",
+            "crates/gf2-algebra/src/permanent/ryser.rs",
+            "crates/gf2-algebra/src/gpu.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "avx2-batched-receipt",
+    "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
+    "description": "The committed measurement of what the four-matrix batched AVX2 path is worth: per-matrix rates for the batched path, the scalar kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n\n## Background\n\nThe batched path exists to make AVX2 lanes carry four matrices instead of one zero-padded word, and the single-matrix AVX2 kernel is already measured at roughly three times the scalar cost. Neither fact tells anyone what the batched path actually delivers: lane utilisation is an argument about the hardware, and the repository requires performance claims to rest on committed measurements rather than on arguments of that shape.\n\nThe measurement lands after the dispatcher selection settles, so the receipt describes the code as it will stand rather than a configuration that changed underneath it. That ordering also keeps the benchmark group labels the receipt quotes consistent with the prose sweep that accompanies the selection.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports per-matrix rates for the batched path, the scalar single-word kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n- [hard] REQ-02: The receipt records seeds, git revision, hardware and toolchain, and reports repetition counts with dispersion rather than a single timing.\n- [hard] REQ-03: The batched path's speedup is stated against the scalar kernel as a measured ratio formed from pooled totals, never by averaging per-repetition reciprocals.\n- [hard] REQ-04: The receipt states the sizes over which the batched path leads and the sizes where it does not, rather than a single headline ratio.\n- [hard] REQ-05: Where the measured result contradicts the expectation that four-lane batching pays at these sizes, both the expectation and the measurement are recorded together with the contradiction.\n- [hard] REQ-06: Any in-tree prose quoting a rate for these kernels agrees with this receipt.\n\n## Notes\n\nTimed windows run under the repository's benchmark host lock so no other work shares the cores during a measurement.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "avx2-narrative-sweep"
+    ],
+    "planning": {
+      "outcome": "Committed receipt reporting the batched path's measured per-matrix rate against the scalar and single-matrix AVX2 kernels",
+      "contract_refs": [],
+      "source_refs": [
+        "G6",
+        "C6",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra permanent callers",
+        "test_boundary": "gf2-algebra benchmark harness",
+        "worker_sized_reason": "One benchmark sweep over settled kernels with one committed receipt fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/permanent_campaign/f3-batched-rates.csv",
+            "dev/benchmarks/permanent_campaign/f3-batched-rates.md"
+          ],
+          "touches": [
+            "crates/gf2-algebra/benches/s1_n36_speedup.rs"
           ]
         }
       }
@@ -555,7 +1099,7 @@
   {
     "key": "backend-remeasurement",
     "title": "Re-measurement of contested backend orderings before the freeze",
-    "description": "Replicated timing of the in-tree backend comparisons the feasibility measurements left unresolved, producing the receipted per-$(q,n)$ ordering a frozen campaign backend table can rest on.\n\n## Background\n\nOne cell's ordering is explicitly open. At $q = 3$, $n = 28$ the accelerator path and the intra-matrix parallel path differ by $1.6\\%$ with the parallel path ahead, but each rate is a single cell execution. Within one execution repetitions are very stable — repetition dispersion is $0.12\\%$ for the parallel path and $0.16\\%$ for the accelerator — while across independent executions of one configuration the spread reaches $1.80\\%$ with a median of $0.84\\%$. The gap is therefore comparable to the widest disagreement measured across re-executions, and no ordering is asserted; the feasibility study states that a campaign choosing that cell's backend should re-measure.\n\nA published headline elsewhere in the repository is contradicted by newer measurement of the same configurations: an accelerator speedup of $28.65\\times$ at $n = 24$ and $30.32\\times$ at $n = 28$ reproduces only against a single-thread AVX2 baseline, and restating it against the best measured processor path gives $0.46\\times$ and $0.44\\times$. Any re-measurement touching those configurations records both readings together with the contradiction rather than quietly replacing one with the other.\n\n## Success Criteria\n\n- [hard] REQ-01: The scope is the backends present in the workspace at the time of measurement — scalar, AVX2, batch-parallel, intra-matrix parallel, generic Ryser, and the accelerator batch paths — and the receipt names the set it measured.\n- [hard] REQ-02: The $q = 3$, $n = 28$ comparison between the accelerator path and the intra-matrix parallel path is re-measured over enough independent executions of each configuration to separate a $1.6\\%$ gap from the recorded $1.8\\%$ cross-execution spread, or the receipt states that the two remain unseparated at the replication achieved.\n- [hard] REQ-03: Each measured configuration reports within-execution repetition dispersion and cross-execution dispersion as separate quantities.\n- [hard] REQ-04: Timed windows run under the repository's benchmark host lock, so no other work shares the device or the cores during a measurement.\n- [hard] REQ-05: Rates are composite rates covering draw, pack, evaluate and count, not kernel-only rates, and the receipt says which.\n- [hard] REQ-06: The receipt records seeds, git revision, hardware and toolchain.\n- [hard] REQ-07: The result is stated as a per-$(q,n)$ ordering table over the measured set, with any cell whose ordering remains unresolved marked as unresolved rather than broken by a tie-break the data does not support.\n- [hard] REQ-08: Where a re-measurement contradicts a previously published ordering or speedup, both readings are recorded together with the contradiction.\n\n## Notes\n\nBackends that do not yet exist in the workspace are out of scope here; a backend enters a campaign's selectable set only once a committed measurement covers it at the cells where it would be chosen.",
+    "description": "Replicated timing of four named backend configurations — the one comparison the feasibility measurements left unresolved, and each field's frontier-cell selection — producing the receipted ordering a frozen campaign backend table can rest on.\n\n## Background\n\nOne cell's ordering is explicitly open. At $q = 3$, $n = 28$ the accelerator path at $M = 1024$ and the intra-matrix parallel path differ by $1.6\\%$ with the parallel path ahead, but each rate is a single cell execution. Within one execution repetitions are very stable — repetition dispersion is $0.12\\%$ for the parallel path and $0.16\\%$ for the accelerator — while across independent executions of one configuration the spread reaches $1.80\\%$ with a median of $0.84\\%$. The gap is therefore comparable to the widest disagreement measured across re-executions, and no ordering is asserted; the feasibility study states that a campaign choosing that cell's backend should re-measure.\n\nThe rest of the scope is fixed by which cells the campaign's frontier actually rests on. At a standard error of $10^{-3}$ the frontier is $n = 28$ at $q = 3$, $n = 24$ at $q = 5$ and $n = 20$ at $q = 7$, and the envelope's selected paths there are intra-matrix rayon at $19.58$ matrices per second, batch rayon at $11.83$, and the accelerator at $M = 1024$ at $57.93$. Those are the rates every per-cell sample size was derived from, so they are the ones a campaign cannot afford to have wrong.\n\nA published headline elsewhere in the repository is contradicted by newer measurement of the same configurations: an accelerator speedup of $28.65\\times$ at $n = 24$ and $30.32\\times$ at $n = 28$ reproduces only against a single-thread AVX2 baseline, and restating it against the best measured processor path gives $0.46\\times$ and $0.44\\times$.\n\n## Success Criteria\n\n- [hard] REQ-01: Exactly four configurations are measured, and no others: $(q{=}3,\\; n{=}28,\\; \\text{accelerator},\\; M{=}1024)$; $(q{=}3,\\; n{=}28,\\; \\text{intra-matrix rayon})$; $(q{=}5,\\; n{=}24,\\; \\text{batch rayon})$; and $(q{=}7,\\; n{=}20,\\; \\text{accelerator},\\; M{=}1024)$.\n- [hard] REQ-02: Each configuration is executed at least $12$ times, each execution a fresh process on a quiesced host. Taking the recorded worst-case cross-execution disagreement of $1.80\\%$ between two executions as implying a per-execution standard deviation near $1.27\\%$, twelve executions put the standard error of a difference of means near $0.52\\%$, so the contested $1.6\\%$ gap sits about three standard errors out.\n- [hard] REQ-03: Executions are interleaved across configurations rather than run in per-configuration blocks, so thermal drift over the measurement window cannot be confounded with the configuration being compared.\n- [hard] REQ-04: The $q = 3$, $n = 28$ comparison reports a separation verdict: either one configuration leads at the stated confidence, or the receipt states that the two remain unseparated at the replication achieved and the frozen table records the basis on which its choice was nonetheless made.\n- [hard] REQ-05: Each configuration reports within-execution repetition dispersion and across-execution dispersion as separate quantities.\n- [hard] REQ-06: Timed windows run under the repository's benchmark host lock, so no other work shares the device or the cores during a measurement.\n- [hard] REQ-07: Rates are composite rates covering draw, pack, evaluate and count, not kernel-only rates, and each is formed from pooled totals rather than by averaging per-repetition reciprocals.\n- [hard] REQ-08: Each configuration's re-measured rate is reported beside the single-execution rate the envelope used, and a disagreement wider than the measured cross-execution dispersion is recorded as a contradiction rather than silently replacing the earlier figure.\n- [hard] REQ-09: The receipt records seeds, stream addresses, matrix counts per execution, git revision, hardware and toolchain.\n\n## Notes\n\nConfigurations outside this list are out of scope. A backend enters a campaign's selectable set only once a committed measurement covers it at the cells where it would be chosen, whether that measurement comes from here or from a separately receipted accelerator study.",
     "type": "task",
     "priority": "normal",
     "labels": [
@@ -570,9 +1114,10 @@
     ],
     "depends_on": [],
     "planning": {
-      "outcome": "Replicated measurements settling the contested q=3 n=28 ordering across the in-tree backend set, receipted for the campaign backend table",
+      "outcome": "Twelve replicated executions of four named configurations, settling the contested q=3 n=28 ordering and confirming each frontier rate",
       "contract_refs": [],
       "source_refs": [
+        "REQ-01",
         "REQ-02",
         "C12",
         "INV-6"
@@ -593,11 +1138,12 @@
   {
     "key": "protocol-draft",
     "title": "Scientific preregistration protocol for the campaign",
-    "description": "The preregistration document that fixes what the campaign estimates, on which cells, at what sample sizes, under what error budget, with what failure and exclusion rules — written and committed before any campaign matrix is drawn.\n\n## Background\n\nThe conjecture under study is asymptotic: $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ is a statement about $n \\to \\infty$, and no finite grid of $n$ can confirm or contradict it in either direction, since an asymptotic statement is compatible with any finite prefix of the sequence. What finite data can address is the finite-$n$ correction $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ — its sign, its magnitude, and how it varies with $n$ and $q$ — and the pipeline that measures it.\n\nThe proved results bound that quantity far too loosely to substitute for measurement. The floor $\\Pr \\ge 1/q$ holds for every $n$ at odd characteristic; the ceiling $\\Pr \\le 1/q + 11/q^3$ holds for $n \\ge 3$ but sits $0.03$ to $0.41$ above the floor, between one-and-a-half and three-and-a-half orders of magnitude looser than the deviations a campaign can resolve.\n\nPreregistration is what separates this campaign from the by-product statistics that preceded it. Those cells had no fixed sample size and no stopping rule, and one of them — a $q = 7$, $n = 20$ reading $2.30$ standard errors below the floor — is exactly the shape of result that a post-hoc threshold manufactures. An earlier revision of the feasibility study spent its top recommendation chasing an apparent below-floor signal that proved to be two measurement defects plus fluctuation.\n\n## Success Criteria\n\n- [hard] REQ-01: The estimand is stated as $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ over the measured range, with the explicit record that no finite grid tests an asymptotic statement in either direction.\n- [hard] REQ-02: $N$ per cell is fixed from the measured envelope before any campaign matrix is drawn and is not revised in response to observed values, and no stopping rule is keyed on the observed statistic.\n- [hard] REQ-03: The cell universe names a core processor-feasible grid — all $n$ from $4$ to the per-$q$ frontier, the frontier at a standard error of $10^{-3}$ being $n = 28$ at $q = 3$, $n = 24$ at $q = 5$ and $n = 20$ at $q = 7$, giving $K = 63$ cells — together with any predeclared accelerator-contingent extension cells.\n- [hard] REQ-04: Extension cells either enter the multiplicity accounting with the core grid or are placed in an explicitly gatekept second family whose entry condition is stated before any draw.\n- [hard] REQ-05: A global error budget is allocated numerically across the permanent-floor family and the determinant family, and the per-cell level each family uses follows from that allocation.\n- [hard] REQ-06: Acceptance decisions are specified as exact binomial tests — one-sided against the composite null $\\Pr \\ge 1/q$ evaluated at $p = 1/q$, and two-sided against $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ — with normal-approximation critical values recorded as planning approximations only.\n- [hard] REQ-07: Exclusion and failure rules are predeclared: what halts a cell, what quarantines a shard, what may be rerun, how many attempts are permitted, and how a rerun charges the error budget.\n- [hard] REQ-08: Backend selection is specified as a function of correctness, safety and measured throughput alone, and explicitly never of an observed zero fraction.\n- [hard] REQ-09: The $q = 7$, $n = 20$ cell is committed as the first cell resampled under a preregistered $N$, and the by-product reading motivating that choice stays on the record whatever the resample returns.\n- [hard] REQ-10: The validation plan names the exact enumeration anchors — $q = 3$ up to $n = 4$, $q = 5$ and $q = 7$ up to $n = 3$ — and requires sampler and estimator agreement with them before any estimated cell is believed.\n- [hard] REQ-11: The $q = 3$ arm is framed as reproduction and precision against published numerics, with no wording implying the campaign extends the $q = 3$ curve in $n$.\n- [hard] REQ-12: The convergence-shape comparison is preregistered as a likelihood comparison on observed counts under their binomial sampling distribution, with the range of $n$ over which candidate families are distinguishable reported rather than assumed.\n- [hard] REQ-13: Novelty statements are conditional on the recorded literature search, naming what was searched, what it returned, and that search's stated limits.\n- [hard] REQ-14: The protocol defines a cell's terminal states — executed with a recorded verdict, or halted under the predeclared rule — so a cell that is neither is an incomplete campaign rather than a silent omission.\n\n## Notes\n\nThe protocol is published at the dataset home rather than in an issue-scoped area, since it must outlive the work that produced it and be readable beside the data it governs.",
+    "description": "The preregistration document that fixes what the campaign estimates, on which cells, at what sample sizes, under what error budget, with what failure and exclusion rules — written and committed before any campaign matrix is drawn.\n\n## Background\n\nThe conjecture under study is asymptotic: $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ is a statement about $n \\to \\infty$, and no finite grid of $n$ can confirm or contradict it in either direction, since an asymptotic statement is compatible with any finite prefix of the sequence. What finite data can address is the finite-$n$ correction $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ — its sign, its magnitude, and how it varies with $n$ and $q$ — and the pipeline that measures it.\n\nThe proved results bound that quantity far too loosely to substitute for measurement. The floor $\\Pr \\ge 1/q$ holds for every $n$ at odd characteristic; the ceiling $\\Pr \\le 1/q + 11/q^3$ holds for $n \\ge 3$ but sits $0.03$ to $0.41$ above the floor, between one-and-a-half and three-and-a-half orders of magnitude looser than the deviations a campaign can resolve.\n\nPreregistration is what separates this campaign from the by-product statistics that preceded it. Those cells had no fixed sample size and no stopping rule, and one of them — a $q = 7$, $n = 20$ reading $2.30$ standard errors below the floor — is exactly the shape of result that a post-hoc threshold manufactures. An earlier revision of the feasibility study spent its top recommendation chasing an apparent below-floor signal that proved to be two measurement defects plus fluctuation.\n\n## Success Criteria\n\n- [hard] REQ-01: The estimand is stated as $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ over the measured range, with the explicit record that no finite grid tests an asymptotic statement in either direction.\n- [hard] REQ-02: $N$ per cell is fixed from the measured envelope before any campaign matrix is drawn and is not revised in response to observed values, and no stopping rule is keyed on the observed statistic.\n- [hard] REQ-03: The cell universe names a core processor-feasible grid — all $n$ from $4$ to the per-$q$ frontier, the frontier at a standard error of $10^{-3}$ being $n = 28$ at $q = 3$, $n = 24$ at $q = 5$ and $n = 20$ at $q = 7$, giving $K = 63$ cells — together with any predeclared accelerator-contingent extension cells.\n- [hard] REQ-04: Extension cells either enter the multiplicity accounting with the core grid or are placed in an explicitly gatekept second family whose entry condition is stated before any draw.\n- [hard] REQ-05: A global error budget is allocated numerically across the permanent-floor family and the determinant family, and the per-cell level each family uses follows from that allocation.\n- [hard] REQ-06: Acceptance decisions are specified as exact binomial tests — one-sided against the composite null $\\Pr \\ge 1/q$ evaluated at $p = 1/q$, and two-sided against $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ — with normal-approximation critical values recorded as planning approximations only.\n- [hard] REQ-07: Exclusion and failure rules are predeclared: what halts a cell, what quarantines a shard, what may be rerun, how many attempts are permitted, and how a rerun charges the error budget.\n- [hard] REQ-08: Backend selection is specified as a function of correctness, safety and measured throughput alone, and explicitly never of an observed zero fraction.\n- [hard] REQ-09: The $q = 7$, $n = 20$ cell is committed as the first cell resampled under a preregistered $N$, and the by-product reading motivating that choice stays on the record whatever the resample returns.\n- [hard] REQ-10: The validation plan names the exact enumeration anchors — $q = 3$ up to $n = 4$, $q = 5$ and $q = 7$ up to $n = 3$ — and requires sampler and estimator agreement with them before any estimated cell is believed.\n- [hard] REQ-11: The $q = 3$ arm is framed as reproduction and precision against published numerics, with no wording implying the campaign extends the $q = 3$ curve in $n$.\n- [hard] REQ-12: The convergence-shape comparison is preregistered as a likelihood comparison on observed counts under their binomial sampling distribution, with the range of $n$ over which candidate families are distinguishable reported rather than assumed.\n- [hard] REQ-13: Novelty statements are conditional on the recorded literature search, naming what was searched, what it returned, and that search's stated limits.\n- [hard] REQ-14: The protocol defines a cell's terminal states — executed with a recorded verdict, or halted under the predeclared rule — so a cell that is neither is an incomplete campaign rather than a silent omission.\n\n## Notes\n\nThe protocol is published at the dataset home rather than in an issue-scoped area, since it must outlive the work that produced it and be readable beside the data it governs.\n\nThis document carries forward the campaign-design half of the feasibility study's mandate. The study fixed the attainable envelope and closed with a go recommendation and a campaign design; the design is not a finished artefact until it is stated as a protocol that binds a specific campaign, with its cell universe, sample sizes, error budget and failure rules committed in advance. Delivery of the study itself is credited to the completed study work; this document is the contribution that re-validates its design half against what the campaign will actually run, and revises it where measurement since has moved.",
     "type": "task",
     "priority": "high",
     "labels": [
       "epic:permanent-statistics",
+      "satisfies:REQ-01",
       "cites:GGK2025",
       "cites:HKS2026",
       "cites:Scheinerman2024"
@@ -616,6 +1162,7 @@
         "acceptance-test-protocol"
       ],
       "source_refs": [
+        "REQ-01",
         "REQ-02",
         "REQ-03",
         "REQ-05",
@@ -649,7 +1196,7 @@
       "research-review"
     ],
     "depends_on": [
-      "dataset-format",
+      "dataset-provenance-integrity",
       "determinant-calibration",
       "backend-remeasurement",
       "protocol-draft"
@@ -665,6 +1212,7 @@
         "campaign-root-manifest"
       ],
       "source_refs": [
+        "REQ-01",
         "REQ-03",
         "INV-6",
         "INV-7"
@@ -745,9 +1293,7 @@
       "research-review"
     ],
     "depends_on": [
-      "rank-predicate",
-      "stats-intervals",
-      "determinant-calibration"
+      "exact-anchors"
     ],
     "planning": {
       "outcome": "Estimated deficiency rates at k=1 and k=2 against their known values, with a measured mean evaluation cost per matrix",
@@ -778,7 +1324,7 @@
   {
     "key": "exact-anchors",
     "title": "Exact enumeration anchors for the smallest cells",
-    "description": "Exact ground truth for the smallest cells, computed by exhaustive enumeration and living where a campaign can re-run it, with the sampler and the estimator checked against it before any estimated cell is believed.\n\n## Background\n\nFor the smallest sizes the zero fraction is computable exactly by enumerating all $q^{n^2}$ matrices: $q = 3$ up to $n = 4$ ($3^{16} \\approx 4.3 \\times 10^7$), and $q = 5$ and $q = 7$ up to $n = 3$ ($5^9 \\approx 2.0 \\times 10^6$ and $7^9 \\approx 4.0 \\times 10^7$). These give ground truth against which a sampler and an estimator are validated rather than trusted.\n\nAnchors of this kind exist today, but in the wrong place. The order-3 permanent anchor script, the determinant anchor script, their committed outputs, and a standalone anchor-report crate all live under a study directory in an issue-scoped documentation area, so they are archival candidates attached to work that has closed. A campaign that must re-run its anchors needs them in a permanent home.\n\nThe determinant anchor is worth the same treatment and is stronger than the permanent anchor where it applies: the count of invertible $n \\times n$ matrices over $\\mathbb{F}_q$ is $\\prod_{k=0}^{n-1}(q^n - q^k)$, giving the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ at every finite $n$ — for instance $11/27$ at $q = 3$, $n = 2$ and $313/729$ at $n = 3$. Unlike the order-3 permanent anchors, it pins a value at every size the campaign measures.\n\n## Success Criteria\n\n- [hard] REQ-01: Exhaustive enumeration over the $q^{n^2}$ matrices computes $\\Pr[\\mathrm{per}(A) = 0]$ exactly as a rational for $q = 3$ up to $n = 4$, and for $q = 5$ and $q = 7$ up to $n = 3$.\n- [hard] REQ-02: The enumeration lives outside any issue-scoped documentation area and runs from the workspace, so it stays runnable after the study that first produced comparable numbers is archived.\n- [hard] REQ-03: Enumerated permanent values agree with the previously committed order-3 anchor counts for $q \\in \\{3,5,7\\}$, and any disagreement is recorded with both readings.\n- [hard] REQ-04: Exhaustive enumeration reproduces the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ as a rational for at least $(q,n) \\in \\{(3,1),(3,2),(3,3),(5,2),(5,3),(7,2)\\}$.\n- [hard] REQ-05: A sampled estimate at each anchor cell agrees with its exact value within a stated interval at a stated sample size, drawn from a reserved validation stream purpose rather than from any purpose a campaign cell uses.\n- [hard] REQ-06: The cheap enumerations run inside the workspace's fast automated test tier, with the enumerations too large for that tier reachable through an explicitly invoked slower tier.\n\n## Notes\n\nValidation draws are separated from campaign draws by purpose tag, so a timing or correctness fixture can never contribute a matrix to a published cell.",
+    "description": "Exact ground truth for the smallest cells, computed by exhaustive enumeration and living where a campaign can re-run it, with the sampler and the estimator checked against it before any estimated cell is believed.\n\n## Background\n\nFor the smallest sizes the zero fraction is computable exactly by enumerating all $q^{n^2}$ matrices: $q = 3$ up to $n = 4$ ($3^{16} \\approx 4.3 \\times 10^7$), and $q = 5$ and $q = 7$ up to $n = 3$ ($5^9 \\approx 2.0 \\times 10^6$ and $7^9 \\approx 4.0 \\times 10^7$). These give ground truth against which a sampler and an estimator are validated rather than trusted.\n\nAnchors of this kind exist today, but in the wrong place. The order-3 permanent anchor script, the determinant anchor script, their committed outputs, and a standalone anchor-report crate all live under a study directory in an issue-scoped documentation area, so they are archival candidates attached to work that has closed. A campaign that must re-run its anchors needs them in a permanent home.\n\nThe determinant anchor is worth the same treatment and is stronger than the permanent anchor where it applies: the count of invertible $n \\times n$ matrices over $\\mathbb{F}_q$ is $\\prod_{k=0}^{n-1}(q^n - q^k)$, giving the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ at every finite $n$ — for instance $11/27$ at $q = 3$, $n = 2$ and $313/729$ at $n = 3$. Unlike the order-3 permanent anchors, it pins a value at every size the campaign measures.\n\n## Success Criteria\n\n- [hard] REQ-01: Exhaustive enumeration over the $q^{n^2}$ matrices computes $\\Pr[\\mathrm{per}(A) = 0]$ exactly as a rational for $q = 3$ up to $n = 4$, and for $q = 5$ and $q = 7$ up to $n = 3$.\n- [hard] REQ-02: The enumeration lives outside any issue-scoped documentation area and runs from the workspace, so it stays runnable after the study that first produced comparable numbers is archived.\n- [hard] REQ-03: Enumerated permanent values agree with the previously committed order-3 anchor counts for $q \\in \\{3,5,7\\}$, and any disagreement is recorded with both readings.\n- [hard] REQ-04: Exhaustive enumeration reproduces the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ as a rational for at least $(q,n) \\in \\{(3,1),(3,2),(3,3),(5,2),(5,3),(7,2)\\}$.\n- [hard] REQ-05: A sampled estimate at each anchor cell agrees with its exact value within a stated interval at a stated sample size, drawn from a reserved validation stream purpose rather than from any purpose a campaign cell uses.\n- [hard] REQ-06: The cheap enumerations run inside the workspace's fast automated test tier, with the enumerations too large for that tier reachable through an explicitly invoked slower tier.\n- [hard] REQ-07: The sampled-estimate check drives the production `gf2-stats` sampler and interval estimator through a dev-dependency of the algebra crate; the dependency is dev-only, adding no production edge from the algebra layer, so `@/inv/crate-dependency-direction` is preserved.\n\n## Notes\n\nThe anchor tests are the cross-crate boundary where the statistics crate's production sampler and estimator meet the algebra crate's exact enumeration, and this leaf owns that boundary: the dev-dependency entry in the algebra crate manifest lands here, ordered behind the determinant cost receipt and ahead of the rank-event estimates, which edit the same manifest.\n\nValidation draws are separated from campaign draws by purpose tag, so a timing or correctness fixture can never contribute a matrix to a published cell.",
     "type": "task",
     "priority": "high",
     "labels": [
@@ -793,8 +1339,9 @@
       "doc-review"
     ],
     "depends_on": [
-      "stats-intervals",
-      "rank-predicate"
+      "stats-clopper-pearson",
+      "rank-predicate",
+      "determinant-calibration"
     ],
     "planning": {
       "outcome": "Re-runnable exact zero-fraction enumeration for the smallest cells, with sampler and estimator checked against the exact values",
@@ -818,7 +1365,8 @@
             "dev/benchmarks/permanent_campaign/exact-anchors.csv"
           ],
           "touches": [
-            "crates/gf2-algebra/src/permanent/mod.rs"
+            "crates/gf2-algebra/src/permanent/mod.rs",
+            "crates/gf2-algebra/Cargo.toml"
           ]
         }
       }
@@ -994,6 +1542,7 @@
       "outcome": "Post-arm finalizer pooling field summaries into the campaign summary and checksumming the raw data set deterministically",
       "contract_refs": [
         "campaign-dataset-layout",
+        "dataset-provenance-rule",
         "campaign-root-manifest"
       ],
       "produces_contracts": [
@@ -1038,8 +1587,8 @@
       "doc-review"
     ],
     "depends_on": [
-      "stats-intervals",
-      "dataset-format"
+      "stats-clopper-pearson",
+      "dataset-provenance-integrity"
     ],
     "planning": {
       "outcome": "Reusable pipeline turning any published-format dataset into per-cell estimate tables, interval columns, curves and prior-art comparisons",
@@ -1161,6 +1710,7 @@
     "priority": "low",
     "labels": [
       "epic:permanent-statistics",
+      "satisfies:REQ-05",
       "cites:GGK2025",
       "cites:HKS2026"
     ],
@@ -1202,6 +1752,7 @@
     "priority": "low",
     "labels": [
       "epic:permanent-statistics",
+      "satisfies:REQ-05",
       "cites:HKS2026"
     ],
     "gates": [
@@ -1244,6 +1795,7 @@
     "priority": "low",
     "labels": [
       "epic:permanent-statistics",
+      "satisfies:REQ-06",
       "cites:GGK2025"
     ],
     "gates": [
@@ -1280,12 +1832,13 @@
   {
     "key": "rare-event-validation",
     "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
-    "description": "The rare-event estimator built to its preregistered design, with unbiasedness and interval coverage demonstrated against exactly known cases, and one estimate produced beyond the reach of direct sampling.\n\n## Background\n\nA rare-event estimator's output cannot be checked by looking at it: the events it estimates are ones direct sampling never observes. Its credibility comes entirely from behaving correctly where the answer is known. At $k = 1$ the deficiency probability is exactly $q^{-n}$ at every $n$, and small $(q, n, k)$ are exhaustively enumerable, which gives a ladder of cases with known answers running from trivially small up to the edge of what direct sampling can reach.\n\nCoverage is a separate property from unbiasedness and is demonstrated separately: an estimator can be unbiased while reporting intervals that contain the true value far less often than their nominal level claims, and it is the interval that a reader of the result will rely on.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The estimator implements the preregistered proposal and weighting, and a test asserts the implemented weights match the specification on hand-checked cases.\n- [aspirational] REQ-02: Unbiasedness is demonstrated against cases whose probability is known exactly, with the estimator's mean over repeated independent runs agreeing with the exact value within its own interval.\n- [aspirational] REQ-03: Interval coverage is demonstrated empirically: over repeated runs at a stated nominal level, the fraction of intervals containing the exact value matches the nominal level within its own binomial interval.\n- [aspirational] REQ-04: A deviation from the preregistered design made during implementation is recorded with its reason, and the validation is judged against the design as amended rather than silently against the new behaviour.\n- [aspirational] REQ-05: The estimator produces an estimate at the preregistered target $(q, n, k)$ beyond direct sampling's reach, reporting its variance and effective sample size there.\n- [aspirational] REQ-06: Draws come from the reserved rare-event stream purpose, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-07: A configuration whose effective sample size falls below the design's usability threshold is reported as unusable rather than as an estimate.\n\n## Notes\n\nEvery criterion here is aspirational. A demonstrated failure to achieve coverage is a recorded result and closes this work honestly; it is not a reason to relax the criterion.",
+    "description": "The rare-event estimator built to its preregistered design, with unbiasedness and interval coverage demonstrated against exactly known cases.\n\n## Background\n\nA rare-event estimator's output cannot be checked by looking at it: the events it estimates are ones direct sampling never observes. Its credibility comes entirely from behaving correctly where the answer is known. At $k = 1$ the deficiency probability is exactly $q^{-n}$ at every $n$, and small $(q, n, k)$ are exhaustively enumerable, which gives a ladder of cases with known answers running from trivially small up to the edge of what direct sampling can reach.\n\nCoverage is a separate property from unbiasedness and is demonstrated separately: an estimator can be unbiased while reporting intervals that contain the true value far less often than their nominal level claims, and it is the interval that a reader of the result will rely on.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The estimator implements the preregistered proposal and weighting, and a test asserts the implemented weights match the specification on hand-checked cases.\n- [aspirational] REQ-02: Unbiasedness is demonstrated against cases whose probability is known exactly, with the estimator's mean over repeated independent runs agreeing with the exact value within its own interval.\n- [aspirational] REQ-03: Interval coverage is demonstrated empirically: over repeated runs at a stated nominal level, the fraction of intervals containing the exact value matches the nominal level within its own binomial interval.\n- [aspirational] REQ-04: A deviation from the preregistered design made during implementation is recorded with its reason, and the validation is judged against the design as amended rather than silently against the new behaviour.\n- [aspirational] REQ-05: Draws come from the reserved rare-event stream purpose, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-06: A configuration whose effective sample size falls below the design's usability threshold is reported as unusable rather than as an estimate.\n\n## Notes\n\nEvery criterion here is aspirational. A demonstrated failure to achieve coverage is a recorded result and closes this work honestly; it is not a reason to relax the criterion.\n\nThe estimate at the preregistered beyond-reach target is separate work behind this leaf on a dependency edge, producing its own receipted artefact.",
     "type": "task",
     "priority": "low",
     "labels": [
       "epic:permanent-statistics",
       "component:gf2-sim",
+      "satisfies:REQ-06",
       "cites:GGK2025"
     ],
     "gates": [
@@ -1317,6 +1870,47 @@
           ],
           "touches": [
             "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rare-event-estimate",
+    "title": "Preregistered rare-event estimate beyond direct sampling",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-06",
+      "cites:GGK2025"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "rare-event-validation"
+    ],
+    "description": "The validated rare-event estimator produces one estimate at the preregistered target $(q, n, k)$ beyond direct sampling's reach, published as its own receipted artefact.\n\n## Background\n\nThe estimate is the point of the estimator, and it is also the number nobody can check directly — which is why it lands only after the estimator's unbiasedness and coverage are demonstrated, and why the run's own diagnostics travel with it. An estimate that cannot state its variance and effective sample size is a number, not a result.\n\nThe artefact is a derived product: like every derived artefact it sits outside the dataset's raw checksum set and modifies no published raw file.\n\n## Success Criteria\n\n- [aspirational] REQ-01: One estimate is produced at the preregistered target $(q, n, k)$, reporting its variance and effective sample size beside the estimate itself.\n- [aspirational] REQ-02: The artefact records the estimator configuration, the reserved rare-event stream purpose its draws came from, the seeds, the git revision, and the toolchain, so the run is reproducible from the artefact alone.\n- [aspirational] REQ-03: A run whose effective sample size falls below the design's usability threshold is recorded as unusable rather than as an estimate, and that outcome closes this work honestly.\n- [aspirational] REQ-04: The artefact is its own document under the campaign home, outside the raw checksum set, and modifies no other published artefact.\n\n## Notes\n\nEvery criterion here is aspirational: whether the preregistered target is reachable at a usable effective sample size is exactly what the run determines.\n",
+    "planning": {
+      "outcome": "One receipted estimate at the preregistered beyond-reach target, with variance and effective sample size, or a recorded unusable outcome",
+      "contract_refs": [
+        "stream-purpose-namespace",
+        "campaign-root-manifest"
+      ],
+      "source_refs": [
+        "REQ-06",
+        "C5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign report readers",
+        "test_boundary": "doc-review of the estimate artefact",
+        "worker_sized_reason": "One estimator run at one preregistered target with its receipted artefact fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/rare-event-estimate.md"
           ]
         }
       }

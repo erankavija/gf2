@@ -6,7 +6,7 @@
   "dependencies": [
     "ae82bd73-741d-4007-811f-914dac00bae8"
   ],
-  "description": "Plan Empirical permanent statistics of random matrices over small prime fields (b8206228) against every hard success criterion, write the concise design at dev/active/b8206228-permanent-statistics/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.",
+  "description": "Author and review the plan and authoritative breakdown manifest for epic b8206228 (empirical permanent statistics campaign).\n\n## Success Criteria\n\n- [hard] REQ-01: A concise plan at dev/active/b8206228-permanent-statistics/plan.md and its sibling manifest breakdown.json are linked to this issue, cover every hard container criterion, and pass deterministic manifest validation with warnings denied.\n- [hard] REQ-02: The configured plan review passes on the linked artifacts.",
   "documents": [
     {
       "commit": null,
@@ -48,14 +48,15 @@
       "path": "dev/active/b8206228-permanent-statistics/breakdown.json"
     }
   ],
+  "done_at": "2026-08-09T11:01:40.552988611Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-08-08T23:13:30.313825629Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-09T11:01:13.044464160Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "912f1008-dee5-435e-98b3-974c40449efc",
@@ -68,7 +69,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "in_progress",
-  "title": "planning: Empirical permanent statistics of random matrices over small prime fields",
-  "updated_at": "2026-08-09T00:05:41.750693680Z"
+  "state": "done",
+  "title": "Plan the permanent-statistics campaign breakdown",
+  "updated_at": "2026-08-09T11:01:40.552988611Z"
 }

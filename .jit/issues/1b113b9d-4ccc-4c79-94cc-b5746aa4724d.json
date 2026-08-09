@@ -4,7 +4,7 @@
   "context": {},
   "created_at": "2026-08-08T23:13:18.938497955Z",
   "dependencies": [],
-  "description": "Plan Evaluate wave-parallel GPU kernels for finite-field permanents (0de41c82) against every hard success criterion, write the concise design at dev/active/0de41c82/plan.md and its authoritative sibling breakdown manifest, and link both to this planning issue.",
+  "description": "Author and review the plan and authoritative breakdown manifest for container 0de41c82 (wave-parallel GPU permanent kernels).\n\n## Success Criteria\n\n- [hard] REQ-01: A concise plan at dev/active/0de41c82/plan.md and its sibling manifest breakdown.json are linked to this issue, cover every hard container criterion, and pass deterministic manifest validation with warnings denied.\n- [hard] REQ-02: The configured plan review passes on the linked artifacts.",
   "documents": [
     {
       "commit": null,
@@ -62,15 +62,16 @@
       "path": "dev/active/0de41c82/breakdown.json"
     }
   ],
+  "done_at": "2026-08-09T11:01:29.235506363Z",
   "first_ready_at": "2026-08-08T23:13:18.938497955Z",
   "gates_required": [
     "plan-review"
   ],
   "gates_status": {
     "plan-review": {
-      "status": "pending",
-      "updated_at": "2026-08-08T23:13:18.938497955Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-09T09:33:45.403910409Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "1b113b9d-4ccc-4c79-94cc-b5746aa4724d",
@@ -82,7 +83,7 @@
     "type:planning"
   ],
   "priority": "high",
-  "state": "in_progress",
-  "title": "planning: Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-08T23:56:23.590144759Z"
+  "state": "done",
+  "title": "Plan the wave-parallel GPU kernel evaluation breakdown",
+  "updated_at": "2026-08-09T11:01:29.235506363Z"
 }

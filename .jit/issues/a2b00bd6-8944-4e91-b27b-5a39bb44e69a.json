@@ -7,6 +7,7 @@
   ],
   "description": "After the plan-review checkpoint passes, decompose the plan for Evaluate wave-parallel GPU kernels for finite-field permanents (0de41c82) into well-ordered implementation issues.",
   "documents": [],
+  "first_ready_at": "2026-08-09T11:01:34.859551672Z",
   "gates_required": [
     "coverage-preview",
     "breakdown-review"
@@ -33,7 +34,7 @@
     "brackets:0de41c82"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "breakdown: Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-08T23:13:18.938497955Z"
+  "updated_at": "2026-08-09T11:01:34.859551672Z"
 }
