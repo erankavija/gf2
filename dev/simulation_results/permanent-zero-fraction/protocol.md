@@ -3,11 +3,11 @@
 **Status:** frozen protocol, committed before any campaign-purpose matrix draw.
 This document governs the first permanent-zero-fraction campaign whose
 committed pre-draw execution receipt records this repository-relative path,
-content SHA-256, and corresponding root-manifest identity. The manifest may
-encode these fixed values for machine readability, but it may not change them.
-A changed protocol, cell, sample size, test, or exclusion rule defines a new
-campaign id and requires a new preregistration before that campaign's first
-draw.
+content SHA-256, and corresponding root-manifest identity. Protocol identity
+belongs to execution and selection receipt evidence; the canonical manifest
+and shard schemas do not carry a protocol-hash field. A changed protocol, cell,
+sample size, test, or exclusion rule defines a new campaign id and requires a
+new preregistration before that campaign's first draw.
 
 The measured envelope and prior by-product counts remain evidence, not campaign
 data. This protocol authorizes no draw by itself.
@@ -233,6 +233,29 @@ not ranked against one another. If the available receipts do not form a
 comparable cohort, the manifest cannot freeze until a same-cohort remeasurement
 is committed and bound by the selection receipt.
 
+Every measurement eligible for selection must have its sampling count and
+stopping rule fixed before timing begins. The current remeasurement began before
+this protocol rework; its durable premeasurement contract is the already
+committed campaign [plan](/dev/active/b8206228-permanent-statistics/plan.md#material-risks-and-owner-decisions),
+the criteria `@/issue/296a41c9/requirement/REQ-01` through
+`@/issue/296a41c9/requirement/REQ-03`, and the harness repair at commit
+`414d31f8`. They fix exactly four configurations: $(q,n)=(3,28)$ on the
+accelerator at $M=1024$ and on intra-matrix rayon, $(5,24)$ on batch rayon, and
+$(7,20)$ on the accelerator at $M=1024$. The run comprises exactly twelve fresh
+processes per configuration, $48$ processes total, interleaved across the four
+configurations on a quiesced host under the single canonical benchmark lock.
+
+One initial locked process performs the 90-second whole-machine warm-up. Later
+locked processes skip only that machine warm-up; every process still performs
+at least three seconds of configuration warm-up and then at least five timed
+repetitions and five timed seconds, subject to the fixed 120-second per-process
+cap implemented by `414d31f8`. The run permits no result-dependent extension,
+early stop, or replacement process. A failed process remains in the record and
+does not cause a thirteenth process for that configuration. The selection
+receipt records all $48$ planned process outcomes, including failures, and
+binds this premeasurement evidence rather than implying that this later
+protocol rework preceded the timing.
+
 Within that cohort, selection proceeds in this order:
 
 1. Exclude a backend unless it passes the shared per-matrix behavioural suite
@@ -329,23 +352,37 @@ the rejecting cell and all downstream halted cells preserve their records.
 
 Every manifest cell has exactly one terminal state:
 
-- **Executed:** exactly $N_{q,n}$ valid unique draws are pooled, permanent and
-  determinant counts are present, and both exact $p$-values, thresholds, and
-  pass/reject verdicts are recorded. A rejecting executed cell triggers the
-  campaign-wide halt rule but remains executed with its rejection intact.
+- **Completed (executed):** every manifested shard is present and exactly
+  $N_{q,n}$ valid unique draws are pooled. `SummaryRow` carries the mechanical
+  `matrix_count`, `permanent_zero_count`, and canonical `DeterminantCount`.
+  `CellTerminalState::Completed` carries `permanent_estimate`,
+  `permanent_verdict`, and `determinant_estimate`. A rejecting completed cell
+  triggers the campaign-wide halt rule but remains completed with its rejection
+  intact.
 - **Halted:** the cell did not reach a valid verdict because a named rule above
   fired. `CellTerminalState::Halted` records only its canonical `reason`:
   `acceptance_failure` for a propagated exact-test rejection,
   `backend_unavailable` when the frozen backend cannot run safely, or
-  `execution_failure` for an exhausted mechanical retry or time ceiling. Raw
-  partial data and quarantined attempts remain preserved in the committed
-  execution receipt, but are not fields of this terminal-state value and are
-  not published as a completed campaign estimate.
+  `execution_failure` for an exhausted mechanical retry or time ceiling. It
+  carries no final estimate or verdict.
+
+A halted `SummaryRow` pools the raw counts from every valid manifested atomic
+shard that completed before the halt. Because shard work may complete in
+parallel, the preserved unique subset need not be a prefix of the manifest's
+ordered shard list. Those accepted shard files remain raw dataset members;
+quarantined attempts remain in the committed execution receipt. Conformance
+removes nonexistent future shard paths from the dataset's actual required-file
+layout while still rejecting any unmanifested shard. If a cell whose determinant
+plan is `evaluate` halts before any shard completes, its mechanical counts are
+`matrix_count=0`, `permanent_zero_count=0`, and an evaluated
+`DeterminantCount` with `sample_count=0` and `zero_count=0`; these zero counts do
+not constitute an estimate. Only `Completed` requires the full manifested shard
+set and exact $N_{q,n}$.
 
 When one cell triggers a campaign-wide halt, every not-yet-executed manifest
 cell receives the terminal reason `acceptance_failure`; it is not silently
 omitted. The terminal state does not claim to encode a triggering-cell pointer
-or execution history. A cell that is neither executed nor halted makes the
+or execution history. A cell that is neither completed nor halted makes the
 campaign incomplete. Finalization must refuse such a dataset.
 
 ## The $q=3$ arm is a reproduction
@@ -360,19 +397,30 @@ enumerations and therefore have zero sampling error. For Table 4 rows the
 reference precision is the plug-in binomial standard error
 $s_{\mathrm{ref}}=\sqrt{\widehat p(1-\widehat p)/N}$; this is explicitly a
 derived precision because the source publishes no confidence interval. The
-table also records the source's rounded-estimate, power-of-ten-trial-count, and
-reproducibility limitations and is baseline evidence, never campaign data.
+table additionally derives a 95% Wilson score interval from each published
+Table 4 count and sample size. It identifies that method and level explicitly;
+these intervals are repository-derived comparison metadata, not intervals
+reported by Scheinerman. Exact Table 3 rows instead use a degenerate interval at
+the exact count-derived probability, labelled as having no sampling
+uncertainty and no applicable confidence level. The table also records the
+source's rounded estimate, power-of-ten trial count, and reproducibility
+limitations and is baseline evidence, never campaign data.
 
 Every $q=3$ result is reported as an independent reproduction and precision
-comparison. Source and campaign counts, sample sizes, point estimates, and
-precision are placed side by side. Exact source rows are labelled
-`prior_exact`. At Monte Carlo rows, compute the campaign plug-in standard error
+comparison. Source and campaign counts, sample sizes, point estimates,
+intervals, and precision are placed side by side. The descriptive interval
+relation is `overlap` when the closed campaign and reference intervals intersect
+and `disjoint` otherwise; it is not an acceptance test and does not change the
+campaign's 95% Wilson contract. For an exact source row, the degenerate reference
+interval makes this equivalent to asking whether the campaign interval contains
+the exact source probability. Exact source rows are labelled `prior_exact`. At
+Monte Carlo rows, compute the campaign plug-in standard error
 $s_{\mathrm{campaign}}$ and label it `exceeds_prior_precision` when
 $s_{\mathrm{campaign}}<0.9s_{\mathrm{ref}}$,
 `matches_prior_precision` when
 $0.9s_{\mathrm{ref}}\leq s_{\mathrm{campaign}}\leq1.1s_{\mathrm{ref}}$, and
-`below_prior_precision` otherwise. The campaign's 95% Wilson interval is also
-reported, but is not misattributed to the source. No blanket improvement claim
+`below_prior_precision` otherwise. Neither the reference interval nor the
+campaign interval is misattributed to the source. No blanket improvement claim
 is preregistered.
 
 Agreement supports both pipelines. If a campaign interval excludes the target
@@ -383,7 +431,7 @@ result is not adjusted to manufacture agreement.
 ## Preregistered convergence-shape comparison
 
 The shape analysis runs only on a finalized dataset in which every core cell is
-executed. A halted campaign reports the comparison as unavailable rather than
+completed. A halted campaign reports the comparison as unavailable rather than
 fitting a selected subset.
 
 For each $q$ separately, compare these two finite-$n$ candidate families:

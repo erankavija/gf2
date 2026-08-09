@@ -4,30 +4,32 @@
 # scope: every q=3 core campaign cell, n=4..28
 # p_hat_from_source_counts: source_zero_count/source_n; this is not a separately measured value
 # reference_precision: exact rows have zero sampling error; Monte Carlo rows use the binomial plug-in standard error sqrt(p_hat*(1-p_hat)/source_n), derived here because the source reports no confidence interval
+# reference_interval: exact rows use degenerate exact bounds at the count-derived probability with no applicable confidence level; Monte Carlo rows use a 95% Wilson score interval derived from source_zero_count/source_n with z=1.959963984540054
+# interval_attribution: Scheinerman reports the counts, not these intervals; derived_wilson_score rows are repository-derived comparison metadata and are not attributed to the source
 # limitations: Table 3 point estimates are rounded in the source, so the values below are recomputed from its exact counts; Table 4 trial totals are published as powers of ten; source code and hardware sufficient to reproduce the source simulations are not reported; this transcription is a comparison baseline, not campaign data
-q,n,source_table,source_evidence,source_zero_count,source_n,source_reported_p_hat,p_hat_from_source_counts,source_reported_precision,reference_precision_kind,reference_precision_value
-3,4,Table 3,exact_enumeration,17116353,43046721,0.3976,0.397622690007,exact_enumeration,exact_sampling_error,0
-3,5,Table 3,exact_enumeration,317193401763,847288609443,0.3744,0.374362877334,exact_enumeration,exact_sampling_error,0
-3,6,Table 4,monte_carlo,35456365448,100000000000,not_separately_reported,0.354563654480,not_reported,derived_binomial_standard_error,1.51277317996e-06
-3,7,Table 4,monte_carlo,34209345718,100000000000,not_separately_reported,0.342093457180,not_reported,derived_binomial_standard_error,1.50021839655e-06
-3,8,Table 4,monte_carlo,33623043873,100000000000,not_separately_reported,0.336230438730,not_reported,derived_binomial_standard_error,1.49391944495e-06
-3,9,Table 4,monte_carlo,33417515901,100000000000,not_separately_reported,0.334175159010,not_reported,derived_binomial_standard_error,1.49165050233e-06
-3,10,Table 4,monte_carlo,33358878343,100000000000,not_separately_reported,0.333588783430,not_reported,derived_binomial_standard_error,1.49099734071e-06
-3,11,Table 4,monte_carlo,3334206857,10000000000,not_separately_reported,0.333420685700,not_reported,derived_binomial_standard_error,4.71435395412e-06
-3,12,Table 4,monte_carlo,3333537904,10000000000,not_separately_reported,0.333353790400,not_reported,derived_binomial_standard_error,4.71411752957e-06
-3,13,Table 4,monte_carlo,3333483177,10000000000,not_separately_reported,0.333348317700,not_reported,derived_binomial_standard_error,4.71409818297e-06
-3,14,Table 4,monte_carlo,3333394825,10000000000,not_separately_reported,0.333339482500,not_reported,derived_binomial_standard_error,4.71406694805e-06
-3,15,Table 4,monte_carlo,333332350,1000000000,not_separately_reported,0.333332350000,not_reported,derived_binomial_standard_error,1.49071088560e-05
-3,16,Table 4,monte_carlo,333308622,1000000000,not_separately_reported,0.333308622000,not_reported,derived_binomial_standard_error,1.49068435459e-05
-3,17,Table 4,monte_carlo,333314098,1000000000,not_separately_reported,0.333314098000,not_reported,derived_binomial_standard_error,1.49069047785e-05
-3,18,Table 4,monte_carlo,33331991,100000000,not_separately_reported,0.333319910000,not_reported,derived_binomial_standard_error,4.71399774711e-05
-3,19,Table 4,monte_carlo,33338438,100000000,not_separately_reported,0.333384380000,not_reported,derived_binomial_standard_error,4.71422565404e-05
-3,20,Table 4,monte_carlo,33338902,100000000,not_separately_reported,0.333389020000,not_reported,derived_binomial_standard_error,4.71424205301e-05
-3,21,Table 4,monte_carlo,3332782,10000000,not_separately_reported,0.333278200000,not_reported,derived_binomial_standard_error,1.49065033259e-04
-3,22,Table 4,monte_carlo,3333672,10000000,not_separately_reported,0.333367200000,not_reported,derived_binomial_standard_error,1.49074984476e-04
-3,23,Table 4,monte_carlo,3336968,10000000,not_separately_reported,0.333696800000,not_reported,derived_binomial_standard_error,1.49111785473e-04
-3,24,Table 4,monte_carlo,3333518,10000000,not_separately_reported,0.333351800000,not_reported,derived_binomial_standard_error,1.49073263007e-04
-3,25,Table 4,monte_carlo,3332961,10000000,not_separately_reported,0.333296100000,not_reported,derived_binomial_standard_error,1.49067035164e-04
-3,26,Table 4,monte_carlo,3335524,10000000,not_separately_reported,0.333552400000,not_reported,derived_binomial_standard_error,1.49095672792e-04
-3,27,Table 4,monte_carlo,3332955,10000000,not_separately_reported,0.333295500000,not_reported,derived_binomial_standard_error,1.49066968065e-04
-3,28,Table 4,monte_carlo,333743,1000000,not_separately_reported,0.333743000000,not_reported,derived_binomial_standard_error,4.71549159633e-04
+q,n,source_table,source_evidence,source_zero_count,source_n,source_reported_p_hat,p_hat_from_source_counts,source_reported_precision,reference_precision_kind,reference_precision_value,reference_interval_kind,reference_interval_level,reference_interval_lower,reference_interval_upper
+3,4,Table 3,exact_enumeration,17116353,43046721,0.3976,0.397622690007,exact_enumeration,exact_sampling_error,0,exact_no_sampling_uncertainty,not_applicable,0.397622690007,0.397622690007
+3,5,Table 3,exact_enumeration,317193401763,847288609443,0.3744,0.374362877334,exact_enumeration,exact_sampling_error,0,exact_no_sampling_uncertainty,not_applicable,0.374362877334,0.374362877334
+3,6,Table 4,monte_carlo,35456365448,100000000000,not_separately_reported,0.354563654480,not_reported,derived_binomial_standard_error,1.51277317996e-06,derived_wilson_score,0.95,0.354560689505,0.354566619467
+3,7,Table 4,monte_carlo,34209345718,100000000000,not_separately_reported,0.342093457180,not_reported,derived_binomial_standard_error,1.50021839655e-06,derived_wilson_score,0.95,0.342090516812,0.342096397560
+3,8,Table 4,monte_carlo,33623043873,100000000000,not_separately_reported,0.336230438730,not_reported,derived_binomial_standard_error,1.49391944495e-06,derived_wilson_score,0.95,0.336227510708,0.336233366765
+3,9,Table 4,monte_carlo,33417515901,100000000000,not_separately_reported,0.334175159010,not_reported,derived_binomial_standard_error,1.49165050233e-06,derived_wilson_score,0.95,0.334172235435,0.334178082598
+3,10,Table 4,monte_carlo,33358878343,100000000000,not_separately_reported,0.333588783430,not_reported,derived_binomial_standard_error,1.49099734071e-06,derived_wilson_score,0.95,0.333585861135,0.333591705737
+3,11,Table 4,monte_carlo,3334206857,10000000000,not_separately_reported,0.333420685700,not_reported,derived_binomial_standard_error,4.71435395412e-06,derived_wilson_score,0.95,0.333411445800,0.333429925728
+3,12,Table 4,monte_carlo,3333537904,10000000000,not_separately_reported,0.333353790400,not_reported,derived_binomial_standard_error,4.71411752957e-06,derived_wilson_score,0.95,0.333344550963,0.333363029965
+3,13,Table 4,monte_carlo,3333483177,10000000000,not_separately_reported,0.333348317700,not_reported,derived_binomial_standard_error,4.71409818297e-06,derived_wilson_score,0.95,0.333339078301,0.333357557227
+3,14,Table 4,monte_carlo,3333394825,10000000000,not_separately_reported,0.333339482500,not_reported,derived_binomial_standard_error,4.71406694805e-06,derived_wilson_score,0.95,0.333330243163,0.333348721965
+3,15,Table 4,monte_carlo,333332350,1000000000,not_separately_reported,0.333332350000,not_reported,derived_binomial_standard_error,1.49071088560e-05,derived_wilson_score,0.95,0.333303133244,0.333361568037
+3,16,Table 4,monte_carlo,333308622,1000000000,not_separately_reported,0.333308622000,not_reported,derived_binomial_standard_error,1.49068435459e-05,derived_wilson_score,0.95,0.333279405764,0.333337839517
+3,17,Table 4,monte_carlo,333314098,1000000000,not_separately_reported,0.333314098000,not_reported,derived_binomial_standard_error,1.49069047785e-05,derived_wilson_score,0.95,0.333284881644,0.333343315637
+3,18,Table 4,monte_carlo,33331991,100000000,not_separately_reported,0.333319910000,not_reported,derived_binomial_standard_error,4.71399774711e-05,derived_wilson_score,0.95,0.333227523746,0.333412309059
+3,19,Table 4,monte_carlo,33338438,100000000,not_separately_reported,0.333384380000,not_reported,derived_binomial_standard_error,4.71422565404e-05,derived_wilson_score,0.95,0.333291989277,0.333476783524
+3,20,Table 4,monte_carlo,33338902,100000000,not_separately_reported,0.333389020000,not_reported,derived_binomial_standard_error,4.71424205301e-05,derived_wilson_score,0.95,0.333296628955,0.333481423845
+3,21,Table 4,monte_carlo,3332782,10000000,not_separately_reported,0.333278200000,not_reported,derived_binomial_standard_error,1.49065033259e-04,derived_wilson_score,0.95,0.332986101998,0.333570426093
+3,22,Table 4,monte_carlo,3333672,10000000,not_separately_reported,0.333367200000,not_reported,derived_binomial_standard_error,1.49074984476e-04,derived_wilson_score,0.95,0.333075082460,0.333659445563
+3,23,Table 4,monte_carlo,3336968,10000000,not_separately_reported,0.333696800000,not_reported,derived_binomial_standard_error,1.49111785473e-04,derived_wilson_score,0.95,0.333404610205,0.333989117565
+3,24,Table 4,monte_carlo,3333518,10000000,not_separately_reported,0.333351800000,not_reported,derived_binomial_standard_error,1.49073263007e-04,derived_wilson_score,0.95,0.333059685840,0.333644042195
+3,25,Table 4,monte_carlo,3332961,10000000,not_separately_reported,0.333296100000,not_reported,derived_binomial_standard_error,1.49067035164e-04,derived_wilson_score,0.95,0.333003998067,0.333588330010
+3,26,Table 4,monte_carlo,3335524,10000000,not_separately_reported,0.333552400000,not_reported,derived_binomial_standard_error,1.49095672792e-04,derived_wilson_score,0.95,0.333260241840,0.333844686040
+3,27,Table 4,monte_carlo,3332955,10000000,not_separately_reported,0.333295500000,not_reported,derived_binomial_standard_error,1.49066968065e-04,derived_wilson_score,0.95,0.333003398199,0.333587729878
+3,28,Table 4,monte_carlo,333743,1000000,not_separately_reported,0.333743000000,not_reported,derived_binomial_standard_error,4.71549159633e-04,derived_wilson_score,0.95,0.332819420852,0.334667856482
