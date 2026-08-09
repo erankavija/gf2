@@ -499,20 +499,117 @@ point estimate is reported. Any support range touching a search bound is
 labelled boundary-truncated, and an exponent optimum on the cap remains labelled
 cap-truncated.
 
-Report the maximized log likelihood, fitted parameters and those support ranges,
-and $\mathrm{AIC}_M=2k_M-2\ell_M$ with $k_M=2$, including boundary fits, for the
-full measured range. Also repeat the identical fit for every nested prefix
-$n=4,\ldots,m$ with at least six cells ($m\geq9$). For each prefix report
-$\Delta\mathrm{AIC}=\mathrm{AIC}_{\mathrm{poly}}-
-\mathrm{AIC}_{\mathrm{geo}}$. The operational report calls the candidates
-distinguishable on a prefix only when $|\Delta\mathrm{AIC}|\geq2$ and names the
-favoured family by the sign; otherwise it says indistinguishable. It publishes
-the complete prefix table, including reversals and gaps, rather than assuming a
-range such as $n\lesssim14$--$16$ in advance.
+The point-estimation optimizer is fixed as `shape-fit-v1`. It maximizes the
+likelihood over each closed box with bounded L-BFGS-B in IEEE-754 binary64,
+analytic gradients, and the normalized coordinates amplitude$/ (1-1/q)$ and
+exponent$/64$. Its 25 starts are the Cartesian product
+$\{0,1/4,1/2,3/4,1\}^2$. Bounds are feasible candidates, values within
+$10^{-10}$ of a bound are snapped to it, and every run has a limit of $4\,096$
+iterations and $65\,536$ likelihood evaluations. A run converges only when its
+projected-gradient infinity norm is at most $10^{-10}$; the finite converged
+candidate with greatest likelihood wins. Likelihoods tied within $10^{-12}$ are
+resolved by the lexicographically smaller (amplitude, exponent) pair. If the
+winning amplitude is zero, the exponent is unidentified and no exponent point
+estimate is reported. The analysis receipt records `shape-fit-v1`, the exact
+optimizer-library version, source revision, executable SHA-256, toolchain, and
+argument vector. The observed and bootstrap fits use these identical starts,
+tolerances, limits, snapping, and tie rules; none changes after counts are seen.
 
-This is an aspirational, descriptive model comparison, not a third acceptance
-family and not a test of the asymptotic conjecture. It spends none of the 5%
-pipeline error budget and cannot rescue or overrule an acceptance rejection.
+Every reported fitted amplitude, fitted exponent, and prefix
+$\Delta\mathrm{AIC}$ receives a separate **nominal 95% cellwise binomial
+bootstrap confidence interval**. This is the inferential uncertainty procedure;
+the likelihood-support contour above remains uncalibrated and descriptive. The
+bootstrap is fixed as follows.
+
+1. Use exactly $B=20\,000$ replicate indices $b=0,\ldots,19\,999$, with no
+   result-dependent extension. For every $q$ and measured cell set
+   $n=4,\ldots,n_{\max,q}$, freeze the saturated plug-in probabilities
+   $\widetilde p_{q,n}=Z_{q,n}/N_{q,n}$. Independently over cells, replicate $b$
+   draws
+   $Z^{*(b)}_{q,n}\sim\operatorname{Binomial}(N_{q,n},\widetilde p_{q,n})$.
+   The same replicate's counts are reused for both candidate families and all
+   nested prefixes, so their contrasts are paired and a shorter prefix is
+   literally the corresponding subset of a longer one.
+2. Bootstrap randomness is outside every matrix-sampling purpose. For each
+   $(q,b)$, seed one `rand_chacha 0.9.0` `ChaCha20Rng` at word position zero with
+   the 32-byte digest
+
+   $$
+   \operatorname{SHA256}(D\mathbin\Vert\operatorname{LE64}(s)
+   \mathbin\Vert h_{\mathrm{manifest}}\mathbin\Vert h_{\mathrm{checksums}}
+   \mathbin\Vert\operatorname{LE16}(q)\mathbin\Vert\operatorname{LE64}(b)),
+   $$
+
+   where $D$ is the exact ASCII byte string
+   `gf2-shape-binomial-bootstrap-v1` followed by one zero byte, $s$ is the
+   manifest's campaign root seed, and the two $h$ values are the raw 32-byte
+   SHA-256 digests of the frozen root-manifest bytes and finalized
+   `checksums.sha256` bytes. The versioned `binomial-v1` sampler consumes that
+   generator in increasing $n$ order. The bootstrap receipt records the domain
+   tag, address tuple, RNG and binomial-sampler versions, both input hashes,
+   source revision, executable hash, toolchain, and exact invocation. A changed
+   version or invocation is a different analysis, not an interchangeable rerun.
+3. Refit both models with `shape-fit-v1` on every replicate and every prefix.
+   When all $B$ fits for a scalar reported estimate $T$ are finite and regular,
+   sort the bootstrap errors $T^{*(b)}-\widehat T$. With one-based order
+   statistics, the fixed basic interval is
+   $[\widehat T-e_{(19\,500)},\widehat T-e_{(500)}]$. Parameter intervals must
+   lie inside their declared closed domains; they are not silently clipped.
+   This is a nominal bootstrap calibration, and no exact finite-sample coverage
+   probability is claimed.
+4. Nonregular cases use a deliberately conservative safeguard. If an observed
+   or bootstrap fit fails, has an unidentified exponent, or places either
+   parameter on a snapped boundary, the affected model-prefix reports the full
+   amplitude domain $[0,1-1/q]$ and full exponent domain $[0,64]$ instead of
+   bootstrap parameter intervals. The same fallback applies when a raw basic
+   interval reaches or leaves a parameter domain. If the observed amplitude is
+   zero, its point estimate remains zero, the exponent point estimate is
+   `unidentified`, and its interval is $[0,64]$. For a prefix where either model
+   uses one of these fallbacks, the $\Delta\mathrm{AIC}$ interval is the full
+   real line, rendered `[-inf,+inf]`. These full-domain intervals are
+   conservative containment statements, not claims that an ordinary boundary
+   bootstrap has 95% coverage.
+5. Exactly the $B$ addressed replicate attempts and every optimizer outcome are
+   retained in the bootstrap receipt. A failed fit is neither discarded nor
+   replaced, and quantiles are never computed from a reduced successful subset;
+   it triggers the fallback above. A mechanical re-execution may only regenerate
+   the same $(q,b)$ address. It cannot introduce a new replicate index, increase
+   $B$, or change an interval after inspecting results.
+
+Report the maximized log likelihood, fitted parameters, bootstrap intervals,
+and descriptive support ranges, plus
+$\mathrm{AIC}_M=2k_M-2\ell_M$ with $k_M=2$ including boundary fits, for the full
+measured range. Repeat the identical fit and uncertainty procedure for every
+nested prefix $n=4,\ldots,m$ with at least six cells ($m\geq9$), and publish the
+complete prefix table, including reversals, fallback intervals, and gaps. Every
+row records `q`, `prefix_max_n`, `cell_count`, `matrix_count` $=\sum_{n=4}^m
+N_{q,n}$, and `bootstrap_replicates=20000`. For each family it carries the
+maximized log likelihood and AIC, plus the explicit point-and-interval columns
+`geo_amplitude`, `geo_amplitude_ci95_low`, `geo_amplitude_ci95_high`,
+`geo_exponent`, `geo_exponent_ci95_low`, `geo_exponent_ci95_high`, and the six
+corresponding `poly_*` columns. Separate descriptive `*_support_low` and
+`*_support_high` columns and boundary/unidentified status prevent support ranges
+from being mistaken for confidence intervals. Each row also carries
+
+$$
+\Delta\mathrm{AIC}=\mathrm{AIC}_{\mathrm{poly}}-
+\mathrm{AIC}_{\mathrm{geo}}
+$$
+
+with `delta_aic_ci95_low`, `delta_aic_ci95_high`, and `uncertainty_status`.
+The candidates are called distinguishable on a prefix only when the
+$\Delta\mathrm{AIC}$ interval is not a fallback and lies wholly above $+2$
+(geometric favoured) or wholly below $-2$ (polynomial favoured). Otherwise the
+row says indistinguishable, regardless of the point estimate. Thus the reported
+range of distinguishability is interval-aware rather than selected from
+$|\Delta\mathrm{AIC}|$ alone; no range such as $n\lesssim14$--$16$ is assumed in
+advance.
+
+This is an aspirational model comparison with preregistered uncertainty, not a
+third acceptance family and not a test of the asymptotic conjecture. Bootstrap
+replicates resample finalized counts only: they publish no new campaign estimate,
+consume no campaign or validation stream, spend none of the 5% pipeline error
+budget, and cannot rescue or overrule an acceptance rejection.
 
 ## Conditional novelty statement
 
