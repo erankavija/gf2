@@ -20,7 +20,7 @@
       {"id":"175972df-556d-437f-a9cd-10f08eed03d6","short_id":"175972df","title":"Permanental rank-deficiency predicate with exact validation","classification":"implementation","status":"pending"}
     ]},
     {"wave_number": 3, "issues": [
-      {"id":"531695da-f7a4-45e7-b982-cbe27bd41745","short_id":"531695da","title":"Empty gf2-stats workspace member crate","classification":"implementation","status":"in_progress"},
+      {"id":"531695da-f7a4-45e7-b982-cbe27bd41745","short_id":"531695da","title":"Empty gf2-stats workspace member crate","classification":"implementation","status":"completed"},
       {"id":"240b7618-f24f-4fc1-b708-ac349b3b3286","short_id":"240b7618","title":"Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection","classification":"documentation","status":"pending"},
       {"id":"7a816262-1eed-492c-a58b-6752fdf50636","short_id":"7a816262","title":"Frozen root manifest for the campaign","classification":"documentation","status":"pending"}
     ]},
