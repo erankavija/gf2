@@ -118,7 +118,7 @@
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-08-09T19:17:32.441913412Z",
+      "updated_at": "2026-08-09T19:55:06.339471717Z",
       "updated_by": "auto:executor"
     }
   },
@@ -134,5 +134,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Scientific preregistration protocol for the campaign",
-  "updated_at": "2026-08-09T19:48:04.553422143Z"
+  "updated_at": "2026-08-09T19:55:06.339471717Z"
 }
