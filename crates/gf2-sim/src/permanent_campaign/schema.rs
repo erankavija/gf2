@@ -64,11 +64,17 @@ const JSON_FIELDS: &[&str] = &[
     "shard_size",
     "shards",
     "backend",
+    "backend_receipt",
     "determinant_companion",
+    "path",
+    "sha256",
     "shard_id",
     "stream_index",
     "git_revision",
     "compiler_version",
+    "rng_algorithm",
+    "rng_version",
+    "invocation",
     "accelerator_runtime",
     "cpu_model",
     "gpu_model",
@@ -202,6 +208,144 @@ fn validate_token(value: &str, kind: &'static str) -> Result<(), TokenError> {
     }
 }
 
+/// A normalized repository-relative path to a committed artifact.
+///
+/// Paths use forward slashes, contain no empty, `.` or `..` component, and
+/// cannot name an absolute or drive-qualified path.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct ArtifactPath(String);
+
+impl ArtifactPath {
+    /// Returns the validated repository-relative path.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl FromStr for ArtifactPath {
+    type Err = ArtifactPathError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let first_component = value.split('/').next().unwrap_or_default();
+        let drive_qualified = first_component.as_bytes().get(1) == Some(&b':')
+            && first_component
+                .as_bytes()
+                .first()
+                .is_some_and(u8::is_ascii_alphabetic);
+        let valid = !value.is_empty()
+            && !value.starts_with('/')
+            && !value.ends_with('/')
+            && !value.contains('\\')
+            && !drive_qualified
+            && !value.chars().any(char::is_control)
+            && value
+                .split('/')
+                .all(|component| !component.is_empty() && component != "." && component != "..");
+        if valid {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(ArtifactPathError(value.to_owned()))
+        }
+    }
+}
+
+impl fmt::Display for ArtifactPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<'de> Deserialize<'de> for ArtifactPath {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        value.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Error returned for a path outside the canonical artifact-path grammar.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArtifactPathError(String);
+
+impl fmt::Display for ArtifactPathError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "artifact path {:?} must be a normalized repository-relative path",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for ArtifactPathError {}
+
+/// A canonical lowercase hexadecimal SHA-256 digest.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
+pub struct Sha256Digest(String);
+
+impl Sha256Digest {
+    /// Returns the 64-character lowercase hexadecimal digest.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl FromStr for Sha256Digest {
+    type Err = Sha256DigestError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value.len() == 64
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(Sha256DigestError(value.to_owned()))
+        }
+    }
+}
+
+impl fmt::Display for Sha256Digest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<'de> Deserialize<'de> for Sha256Digest {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        value.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+/// Error returned for a non-canonical SHA-256 digest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sha256DigestError(String);
+
+impl fmt::Display for Sha256DigestError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "SHA-256 digest {:?} must contain exactly 64 lowercase hexadecimal characters",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for Sha256DigestError {}
+
+/// Content identity for a committed mechanical artifact.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtifactIdentity {
+    /// Normalized path from the repository root.
+    pub path: ArtifactPath,
+    /// SHA-256 of the committed artifact bytes.
+    pub sha256: Sha256Digest,
+}
+
 /// Explicit availability state for optional mechanical provenance.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
@@ -289,6 +433,8 @@ pub struct CellSpec {
     pub shards: Vec<ShardSpec>,
     /// Frozen permanent-evaluation backend.
     pub backend: Backend,
+    /// Committed measurement receipt that determined the backend selection.
+    pub backend_receipt: ArtifactIdentity,
     /// Whether determinant evaluation runs on the same matrices.
     pub determinant_companion: DeterminantPlan,
 }
@@ -329,6 +475,14 @@ pub enum DeterminantPlan {
     NotEvaluated,
 }
 
+/// Deterministic random-number generator algorithm used by the campaign.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RngAlgorithm {
+    /// ChaCha20 with the implementation version recorded separately.
+    ChaCha20,
+}
+
 /// Mechanical provenance required to regenerate and audit the dataset.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -337,6 +491,12 @@ pub struct Provenance {
     pub git_revision: String,
     /// Complete compiler version string.
     pub compiler_version: String,
+    /// Closed RNG algorithm identity.
+    pub rng_algorithm: RngAlgorithm,
+    /// Exact RNG crate or implementation version.
+    pub rng_version: String,
+    /// Exact producer invocation as unquoted argument tokens.
+    pub invocation: Vec<String>,
     /// Accelerator runtime version, or an explicit absent state.
     pub accelerator_runtime: Availability<String>,
     /// Processor model.
@@ -819,6 +979,21 @@ impl SchemaDocument for CampaignManifest {
     fn validate(&self) -> Result<(), String> {
         validate_nonempty("git_revision", &self.provenance.git_revision)?;
         validate_nonempty("compiler_version", &self.provenance.compiler_version)?;
+        validate_nonempty("rng_version", &self.provenance.rng_version)?;
+        if self.provenance.rng_version.contains('\0') {
+            return Err("rng_version must not contain NUL".to_owned());
+        }
+        if self.provenance.invocation.is_empty() || self.provenance.invocation[0].is_empty() {
+            return Err("invocation must include a non-empty executable token".to_owned());
+        }
+        if self
+            .provenance
+            .invocation
+            .iter()
+            .any(|argument| argument.contains('\0'))
+        {
+            return Err("invocation tokens must not contain NUL".to_owned());
+        }
         validate_nonempty("cpu_model", &self.provenance.cpu_model)?;
         validate_availability("accelerator_runtime", &self.provenance.accelerator_runtime)?;
         validate_availability("gpu_model", &self.provenance.gpu_model)?;
@@ -1567,11 +1742,26 @@ mod tests {
                     },
                 ],
                 backend: Backend::Scalar,
+                backend_receipt: ArtifactIdentity {
+                    path: "dev/benchmarks/permanent-backend-selection/test-receipt.json"
+                        .parse()
+                        .unwrap(),
+                    sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                        .parse()
+                        .unwrap(),
+                },
                 determinant_companion: DeterminantPlan::NotEvaluated,
             }],
             provenance: Provenance {
                 git_revision: "95ccd9776376b2b060e0dd40785e2effae29e766".to_owned(),
                 compiler_version: "rustc 1.95.0".to_owned(),
+                rng_algorithm: RngAlgorithm::ChaCha20,
+                rng_version: "rand_chacha 0.9.0".to_owned(),
+                invocation: vec![
+                    "gf2-permanent-campaign".to_owned(),
+                    "--manifest".to_owned(),
+                    "manifest.json".to_owned(),
+                ],
                 accelerator_runtime: Availability::NotPresent,
                 cpu_model: "Test CPU".to_owned(),
                 gpu_model: Availability::NotPresent,
@@ -1778,6 +1968,106 @@ mod tests {
             assert!(
                 conform_dataset(&fixture.0).is_err(),
                 "{mutation} manifest mutation must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_requires_backend_receipt_and_rng_reproduction_fields() {
+        for missing_field in [
+            "backend_receipt",
+            "rng_algorithm",
+            "rng_version",
+            "invocation",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            let object = if missing_field == "backend_receipt" {
+                value["cells"][0].as_object_mut().unwrap()
+            } else {
+                value["provenance"].as_object_mut().unwrap()
+            };
+            object.remove(missing_field);
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "manifest without {missing_field} must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_noncanonical_backend_receipt_identity() {
+        for mutation in [
+            "missing_path",
+            "missing_digest",
+            "absolute",
+            "traversal",
+            "uppercase_digest",
+            "unknown",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            let receipt = &mut value["cells"][0]["backend_receipt"];
+            match mutation {
+                "missing_path" => {
+                    receipt.as_object_mut().unwrap().remove("path");
+                }
+                "missing_digest" => {
+                    receipt.as_object_mut().unwrap().remove("sha256");
+                }
+                "absolute" => receipt["path"] = json!("/tmp/selection.json"),
+                "traversal" => receipt["path"] = json!("dev/../selection.json"),
+                "uppercase_digest" => {
+                    receipt["sha256"] =
+                        json!("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+                }
+                "unknown" => receipt["media_type"] = json!("application/json"),
+                _ => unreachable!(),
+            }
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "{mutation} backend receipt identity must be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn conformance_rejects_incomplete_rng_reproduction_provenance() {
+        for mutation in [
+            "empty_version",
+            "empty_invocation",
+            "empty_executable",
+            "unknown_rng",
+        ] {
+            let fixture = TestDir::new();
+            write_fixture(&fixture.0);
+            let manifest_path = fixture.0.join(MANIFEST_FILE);
+            let mut value: Value =
+                serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+            match mutation {
+                "empty_version" => value["provenance"]["rng_version"] = json!(""),
+                "empty_invocation" => value["provenance"]["invocation"] = json!([]),
+                "empty_executable" => {
+                    value["provenance"]["invocation"] = json!(["", "--manifest", "manifest.json"]);
+                }
+                "unknown_rng" => value["provenance"]["rng_algorithm"] = json!("system_random"),
+                _ => unreachable!(),
+            }
+            fs::write(&manifest_path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+
+            assert!(
+                conform_dataset(&fixture.0).is_err(),
+                "{mutation} RNG provenance must be rejected"
             );
         }
     }
