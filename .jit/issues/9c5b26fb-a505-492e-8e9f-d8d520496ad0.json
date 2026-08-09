@@ -105,6 +105,7 @@
       "path": "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv"
     }
   ],
+  "done_at": "2026-08-09T20:15:20.620102865Z",
   "first_ready_at": "2026-08-09T11:54:10.417169574Z",
   "gates_required": [
     "doc-review",
@@ -132,7 +133,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Scientific preregistration protocol for the campaign",
-  "updated_at": "2026-08-09T20:15:00.010464749Z"
+  "updated_at": "2026-08-09T20:15:20.620102865Z"
 }
