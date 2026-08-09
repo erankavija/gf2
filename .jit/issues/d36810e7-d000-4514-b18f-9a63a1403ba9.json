@@ -17,17 +17,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-09T21:56:06.879173893Z",
+      "updated_at": "2026-08-09T22:20:01.219747861Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-09T22:07:36.992755146Z",
+      "updated_at": "2026-08-09T22:24:05.338584664Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-09T22:09:54.268996281Z",
+      "updated_at": "2026-08-09T22:26:04.032219153Z",
       "updated_by": "auto:executor"
     }
   },
@@ -41,5 +41,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Source identity and integrity for published datasets",
-  "updated_at": "2026-08-09T22:09:54.268996281Z"
+  "updated_at": "2026-08-09T22:26:04.032219153Z"
 }
