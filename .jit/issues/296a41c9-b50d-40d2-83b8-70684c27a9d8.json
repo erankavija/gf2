@@ -50,8 +50,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-09T19:07:34.204408705Z",
+      "status": "passed",
+      "updated_at": "2026-08-09T19:19:39.460968702Z",
       "updated_by": "auto:executor"
     }
   },
@@ -65,5 +65,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Re-measurement of contested backend orderings before the freeze",
-  "updated_at": "2026-08-09T19:07:34.204408705Z"
+  "updated_at": "2026-08-09T19:19:39.460968702Z"
 }
