@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-09T14:01:59.013438126Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Versioned dataset layout and record schemas",
-  "updated_at": "2026-08-09T12:03:36.077244720Z"
+  "updated_at": "2026-08-09T14:01:59.013438126Z"
 }
