@@ -1,0 +1,169 @@
+# Plan: Evaluate wave-parallel GPU kernels for finite-field permanents (0de41c82)
+
+> Planning node: 1b113b9d. Authoritative graph:
+> [breakdown.json](breakdown.json).
+
+## Outcome and criterion approach
+
+| Criterion | Approach | Evidence / open gap |
+|---|---|---|
+| REQ-01 | Give each lane a contiguous Gray-code interval of one matrix and its own complete packed accumulator in registers; reduce only the partial Ryser sums across the wave, in lane-index order. $\mathbb{F}_3$ goes first because its packed state needs no arithmetic change, so the mapping is studied unconfounded. | `parallel_bipedal3.rs:237` chunk model is the only structural prior art; investigation §7 fact 1 records that no wave-cooperative permanent kernel exists in the tree |
+| REQ-02 | Build the boundary fixture corpus once, ahead of any candidate, and route every candidate through one element-wise oracle comparison against `permanent_ryser`. | Investigation §4c: nothing in the tree constructs boundary matrices or boundary Gray indices today |
+| REQ-03 | Add the HIP event API to the crate that owns device resources, then feed a kernel-only column from it; extend the harness's preregistered protocol and provenance preamble rather than replacing them. | `protocol.rs:89-99`, `env.rs:130`; investigation §7 fact 7 records no HIP event use anywhere in the crate |
+| REQ-04 | Split the two halves: measure wave utilization, occupancy limits, and the launch-duration envelope on the target host, testing each kernel's predicted register and shared-memory budget against what the device reports and treating the archived $\approx 190$–$200$ s calibration as a prior; state architecture scope separately, only where compile evidence exists. | `r4_gpu_uniformity_resample.md` §2.5 against `gpu-hang-2026-08-07.log:36-43`; `build.rs:43` compiles gfx1030 alone |
+| REQ-05 | State $\mathbb{F}_3$'s two algebraic gifts ($3 = 2^2 - 1$ and $\lvert\mathbb{F}_3^*\rvert = 2$) explicitly in the synthesis; implement two arithmetic paths per field under one held-fixed execution mapping so arithmetic is never confounded with mapping. | Representation study, "Why $\mathbb{F}_3$ is exceptional" |
+| REQ-06 | Name the existing `host::{DeviceBuffer, HipStreamPool, LaunchDims}` types in the production design, and close the fallback gap the current dispatcher leaves open by asserting on every device return code. | `host/mod.rs:28-31`; `permanent/mod.rs:973-983` |
+| REQ-07 | Aspirational: each field's receipt campaign reports the measured ratio of its best prototype against the best applicable CPU path at its best operating point, together with the launch duration there. No child is gated on the $1.5\times$ target. | Prior measurement puts batch rayon roughly $3\times$ ahead at every shared order (feasibility study §4.4) |
+| REQ-08 | One implementation task per field pairs the current arithmetic control with the canonical bit-plane candidate under one mapping; a loser stays compiled and tested beside its falsifying evidence. | Representation study, "Arithmetic candidates" |
+| REQ-09 | Add micro-measurement modes for the dependency-chained Gray update and the horizontal product that reuse the protocol's warm-up and censoring policy; each field's receipt campaign runs all three nested shapes against both mappings. | Investigation §4a: the harness reports four composite phases with no sub-evaluate decomposition |
+| REQ-10 | Fold the boundary classes and $n \in \{16, 20, 24\}$ into the corpus at construction time; every field's receipt campaign reports observed zero-fast-path frequency beside $\left(\frac{q-1}{q}\right)^n$. | Representation study table ($q = 7$: $8.489\%$, $4.582\%$, $2.473\%$ nonzero slow path) |
+| REQ-11 | Prove exactness at $n = 20$ and $n = 24$ at the accumulator level, assemble it into a permanent-shaped kernel, measure the register, spill, occupancy, and bit-plane preparation consequences in the $\mathbb{F}_7$ campaign, then settle the public-versus-internal boundary in the synthesis with a named exception plus a tracked convergence condition. | `packed7.rs:216` `LANES = 16`; `@/inv/convention-convergence` |
+
+## Shared architectural contracts
+
+### `prototype-crate-layout` [implementation-produced] — Prototype crate shape
+
+All study prototypes live in one new standalone crate, `dev/research/permanent_wave_gpu/`, outside the default Cargo workspace, carrying a `.gitignore` of exactly `target/` and `Cargo.lock`. It exposes one adapter entry point per planned measurement path, each reporting itself unsupported with a stated reason until its implementation lands, which is how the harness already records a backend it cannot run (`equivalence.rs:158-162`). Build and test evidence is always an explicit `cargo … --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release` invocation, because `scripts/cargo-ci.sh` runs over the default workspace and compiles neither `dev/research` crates nor `crates/gf2-kernels-hip` (investigation §6, gate implications). Rejected candidates stay compiled and tested in the crate beside their falsifying evidence, as `dev/research/f7_packing` already does for its four.
+
+### `fixture-corpus` [implementation-produced] — Deterministic boundary fixtures and the oracle comparator
+
+One seeded corpus plus one element-wise comparator against `gf2_algebra::permanent::permanent_ryser`, covering empty and singleton cases where supported, Gray-interval boundary indices, both transition directions, active-lane masking, zero-containing products, each nonzero exponent class, and $n \in \{16, 20, 24\}$ for $\mathbb{F}_7$. Nothing of this shape exists in the tree (investigation §4c), and every candidate is admitted through it.
+
+### `wave-decomposition-interface` [implementation-produced] — Lane-owns-interval Ryser decomposition
+
+One matrix's Gray-code walk over $[0, 2^n)$ is partitioned into contiguous, disjoint intervals, one per active lane, covering the walk exactly once. Each lane owns its complete packed row-sum accumulator in registers for the whole of its interval and initializes it from the column subset encoded by its interval start index, using `gray_code_index_to_subset(start)` semantics rather than replaying from zero. Each lane applies one packed add or subtract per Gray step and computes its own horizontal row product locally, as a reduction over the row lanes inside its own packed words, with no cross-lane exchange in the product path. **Only the partial Ryser sums cross the wave**, combined in lane-index order so the reduction is scheduling-independent (`@/inv/deterministic-seeded-execution`); $(-1)^n$ is applied once afterwards. Grid and block dimensions are a pure function of matrix order, batch size, and the range partition, with no runtime occupancy probe (`host/launch.rs:3-19`). This is `parallel_bipedal3.rs`'s chunk model with lanes in place of rayon workers.
+
+Giving every lane a full accumulator is what the mapping spends to buy wave utilization, so the per-lane register state and the shared column table are budgeted quantities. Beyond its packed accumulator each lane carries three scalar `u64` words — Gray cursor, interval end bound, partial Ryser sum — so the live per-lane state is the packed word count plus three:
+
+| Path | Packed accumulator | Live per-lane state | Shared column table per block |
+|---|---|---|---|
+| $\mathbb{F}_3$ two-plane | $2 \times$ `u64` | $5 \times$ `u64` (10 32-bit registers) | $16n$ B — $384$ B at $n{=}24$ |
+| $\mathbb{F}_5$ / $\mathbb{F}_7$ three-plane | $3 \times$ `u64` | $6 \times$ `u64` (12 32-bit registers) | $24n$ B — $576$ B at $n{=}24$ |
+| $\mathbb{F}_5$ byte control | $n$ bytes | $n + 24$ bytes, growing with order | $n^2$ B — $576$ B at $n{=}24$, $3969$ B at $n{=}63$ |
+| $\mathbb{F}_7$ nibble control | $\lceil n/16 \rceil \times$ `u64` | $4$–$5 \times$ `u64` | $8n\lceil n/16 \rceil$ B — $384$ B at $n{=}24$ |
+
+The column table is staged once per block from global memory by a cooperative strided copy followed by one barrier, then read-only. Its steady-state access is **not** a broadcast: at each Gray step a lane reads the bundle indexed by its own flip index, and flip indices differ across lanes, so bank behaviour under that scattered read is a measured quantity. The $\mathbb{F}_7$ nibble control additionally reaches three 64 KiB multiplication tables that are far too large for shared memory and stay in constant and global memory, as they do in the shipped kernel.
+
+**This budget is the study's central occupancy hypothesis.** A packed accumulator is constant in $n$ where a byte-oriented one grows and reaches scratch; the three-plane fields cost one more `u64` per lane than $\mathbb{F}_3$, and the $\mathbb{F}_7$ bit-sliced path costs one more than its own nibble control at $n = 24$ while removing that control's table working set. Whether any of that, instruction scheduling, or the scattered shared-memory read is what limits occupancy is settled by the per-field receipt campaigns, each of which reports measured registers, scratch, shared memory, and spills against the budget its kernels predicted, and device-wide by the runtime qualification.
+
+### `hip-event-api` [implementation-produced] — Device event timing primitive
+
+A HIP event type in `crates/gf2-kernels-hip/src/host/` that acquires an event on construction, releases it on drop, records a start and stop pair on a caller-supplied stream, and returns the elapsed device time — with an explicit safety contract on each FFI boundary. It sits beside the existing public `DeviceBuffer`, `PinnedHostBuffer`, `HipStream`, `HipStreamPool`, and `LaunchDims` (`host/mod.rs:28-31`), because a private event helper in a research crate would duplicate a shared device-resource mechanism.
+
+### `micro-timing-interface` [implementation-produced] — Kernel-only and sub-evaluate timing
+
+Harness modes that time one dependency-chained packed add or subtract on a single accumulator, and zero-mask detection with the complete nonzero reduction, both reusing the protocol module's warm-up, repetition, and censoring policy; plus a kernel-only device duration column beside the existing wall-clock one. No sub-evaluate decomposition and no kernel-only timer exist today (investigation §7 fact 7).
+
+### `study-stream-allocation` [implementation-produced] — Purpose-tagged seed address space
+
+A purpose tag occupies a fixed high-bit field of one seed word and the stream index occupies the remaining low bits, with both bounds asserted at the call site so the fields cannot overlap. The encoding is injective over the enumerated purpose set and a bounded index range, a committed table of golden derivation vectors pins the mapping from $(\text{root}, q, n, \text{purpose}, \text{index})$ to seed bytes and to leading generator output, and warm-up is a distinct purpose from its cell's timed repetitions. This is the design the feasibility study §7.3 prescribes after its own history: the harness first based sustained runs at $10^6 + j \times 10^5$ against a grid reserving $1 + i \times 10^5$, the ranges overlapped in index space, and the pooled counts were valid only because no colliding pair happened to share a $(q, n)$ — "verified, not designed". Two defects of that family corrupted a superseded result set (§4.7).
+
+The guarantee is over **seed inputs**: distinct purposes and indices encode to distinct addresses, and the golden vectors pin that mapping. It is not a claim that the resulting ChaCha20 output streams are disjoint as sequences — that follows from the cipher's construction, and nothing in this study establishes it. The contract and its criteria keep those two statements apart.
+
+### `receipt-provenance-format` [plan-fixed] — What the committed harness already provides
+
+The harness supplies, today and unchanged by this study: the protocol constants and their censoring contract (`protocol.rs:89-99`, `protocol.rs:34-50`) — warm-up $\ge 3$ s, repetitions until $\ge 5$ repetitions and $\ge 5$ s of timed work, a $120$ s cap that censors rather than truncates, per-cell batch calibration targeting a $2$ s repetition capped at $65\,536$; the CSV header constants; exact-rejection ChaCha20 sampling with disjoint streams per `(root, q, n, stream)` tuple and a `q`-label guard (`sampler.rs:95-190`); the generated provenance preamble carrying binary hash, CPU model, GPU model, and ROCm version (`env.rs:130`); and single-list backend scheduling through `Backend::ALL` (`backend.rs:60-68`) so a registered path cannot silently miss a cell. It does **not** supply structural purpose-domain separation of stream indices — that is `study-stream-allocation`'s job.
+
+## Generated decomposition overview
+
+<!-- jit:breakdown-overview:begin -->
+| Key | Title | Type | Outcome | Contracts | Sources | Footprint | Landing | Depends on |
+|---|---|---|---|---|---|---|---|---|
+| equivalence-fixture-suite | Deterministic fixture corpus with CPU-oracle equivalence checking | task | A seeded fixture corpus in a new prototype crate reproduces exact CPU-oracle permanents across the study's boundary classes for three fields. | — | REQ-02, REQ-10, INV-FACT-06, INV-ORACLE, INV-EQUIV-CHECK, INV-CRATE-PLACEMENT, INV-GATE-SCOPE, STUDY-FOLD | creates 8 | — | — |
+| hip-event-timing | HIP event timing API for device-side kernel spans | task | A HIP event wrapper in the kernels crate returns elapsed device time for a kernel span, with a safety contract on each unsafe boundary. | — | REQ-03, INV-FACT-07, INV-CONVERGENCE, INV-HIP-TESTS, INV-GATE-SCOPE | creates 2, touches 1 | — | — |
+| study-stream-allocation | Purpose-domain stream address allocator | task | Each measurement purpose addresses the sampler through a bounded, injective seed encoding, with golden vectors pinning the mapping. | receipt-provenance-format | REQ-03, BASELINE-STREAM-ALLOCATION, BASELINE-PROTOCOL, INV-HARNESS | creates 1, touches 2 | — | — |
+| harness-micro-modes | Harness micro-measurement modes for Gray update and horizontal product | task | The measurement harness times one dependency-chained Gray step, the horizontal product, and a kernel-only span, each under a named purpose tag. | hip-event-api, study-stream-allocation, receipt-provenance-format, prototype-crate-layout, fixture-corpus | REQ-03, REQ-09, INV-FACT-07, INV-HARNESS, INV-BEHAVIORAL-EQUIV, STUDY-SHAPES, BASELINE-PROTOCOL | creates 1, touches 6 | — | hip-event-timing, equivalence-fixture-suite, study-stream-allocation |
+| f3-wave-prototype | Wave-cooperative intra-matrix Ryser prototype for F_3 | task | Each lane walks its own Gray-code interval and only partial Ryser sums cross the wave, matching the CPU oracle over F_3. | fixture-corpus, prototype-crate-layout | REQ-01, REQ-02, INV-FACT-01, INV-CPU-CHUNKED, INV-LAUNCH-PURITY, INV-DETERMINISM, INV-HIP-TESTS, STUDY-SHAPES, DECISION-LANE-MAPPING | creates 4, touches 3 | — | equivalence-fixture-suite |
+| f3-fold-candidates | F_3 zero-mask sign-popcount fold candidate beside the halving control | task | Both F_3 horizontal folds run under one execution mapping and agree exactly with the CPU oracle on the fixture corpus. | wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-02, REQ-08, STUDY-CANDIDATES, STUDY-FOLD, INV-FACT-04, INV-FALSIFICATION, DECISION-LANE-MAPPING, DECISION-RECEIPT-OWNERSHIP | creates 3, touches 2 | — | f3-wave-prototype |
+| f5-representation-prototype | F_5 three-plane accumulator prototype beside the byte-arithmetic control | task | Two F_5 arithmetic paths run under one execution mapping and agree exactly with the CPU oracle on the fixture corpus. | wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-02, REQ-05, REQ-08, STUDY-FOLD, STUDY-CANDIDATES, INV-PACKED5-COST, INV-PACKED-LIMITS, INV-FACT-04, DECISION-LANE-MAPPING, DECISION-RECEIPT-OWNERSHIP | creates 3, touches 2 | — | f3-wave-prototype |
+| f7-three-plane-exactness | F_7 three-plane Mersenne accumulator exact above the sixteen-lane bound | task | A three-plane Mersenne accumulator computes exact F_7 permanents at orders 16, 20, and 24, past the sixteen-lane packed bound. | fixture-corpus, prototype-crate-layout | REQ-02, REQ-05, REQ-08, REQ-10, REQ-11, STUDY-FOLD, STUDY-CANDIDATES, INV-FACT-03, INV-PACKED-LIMITS, INV-FALSIFICATION | creates 3, touches 1 | — | equivalence-fixture-suite |
+| f7-kernel-integration | F_7 permanent-shaped kernels for the three-plane state and the table control | task | Two F_7 permanent kernels run under one execution mapping and agree exactly with the CPU oracle at orders 16, 20, and 24. | wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-02, REQ-08, REQ-11, STUDY-BOUNDARY, INV-PACKED-LIMITS, INV-FALLBACK-GAP, DECISION-LANE-MAPPING, DECISION-RECEIPT-OWNERSHIP | creates 3, touches 2 | — | f3-wave-prototype, f7-three-plane-exactness |
+| f3-receipts | F_3 preregistered receipt campaign | simulation | Committed F_3 receipts compare the current GPU path, the prototypes that execute, and the best CPU path under one protocol. | receipt-provenance-format, micro-timing-interface, study-stream-allocation, hip-event-api, wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-03, REQ-07, REQ-09, REQ-10, BASELINE-PROTOCOL, BASELINE-CROSSOVER, BASELINE-STREAM-ALLOCATION, INV-HARNESS, INV-BEHAVIORAL-EQUIV, INV-EQUIV-CHECK, INV-RECEIPT-LOCATION, INV-DISPATCH-SHAPE, INV-FACT-09, DECISION-RECEIPT-OWNERSHIP | creates 6, uncertain | — | f3-fold-candidates, harness-micro-modes |
+| f5-receipts | F_5 preregistered receipt campaign | simulation | Committed F_5 receipts compare the current GPU path, the prototypes that execute, and the best CPU path under one protocol. | receipt-provenance-format, micro-timing-interface, study-stream-allocation, hip-event-api, wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-03, REQ-07, REQ-09, REQ-10, BASELINE-PROTOCOL, BASELINE-CROSSOVER, BASELINE-CENSORED, BASELINE-STREAM-ALLOCATION, INV-BEHAVIORAL-EQUIV, INV-EQUIV-CHECK, INV-RECEIPT-LOCATION, INV-DISPATCH-SHAPE, INV-FACT-09, INV-PACKED-LIMITS, DECISION-RECEIPT-OWNERSHIP | creates 6, uncertain | — | f5-representation-prototype, harness-micro-modes |
+| f7-receipts | F_7 preregistered receipt campaign with bit-plane resource accounting | simulation | Committed F_7 receipts cover the protocol comparison plus bit-plane preparation cost, register pressure, spills, and occupancy. | receipt-provenance-format, micro-timing-interface, study-stream-allocation, hip-event-api, wave-decomposition-interface, fixture-corpus, prototype-crate-layout | REQ-03, REQ-07, REQ-09, REQ-10, REQ-11, BASELINE-PROTOCOL, BASELINE-CROSSOVER, BASELINE-CENSORED, BASELINE-STREAM-ALLOCATION, INV-BEHAVIORAL-EQUIV, INV-EQUIV-CHECK, INV-RECEIPT-LOCATION, INV-DISPATCH-SHAPE, INV-FACT-09, INV-PACKED-LIMITS, DECISION-RECEIPT-OWNERSHIP | creates 7, uncertain | — | f7-kernel-integration, harness-micro-modes |
+| runtime-qualification | Runtime qualification of wave utilization and launch duration | simulation | A qualification receipt states wave utilization, the occupancy-limiting resource, launch-duration envelope, and watchdog-safe work bounds. | receipt-provenance-format, micro-timing-interface, study-stream-allocation, hip-event-api, wave-decomposition-interface, prototype-crate-layout | REQ-04, INV-FACT-08, INV-NO-PROFILING, INV-FALSIFICATION, INV-RECEIPT-LOCATION, BASELINE-PROTOCOL, STUDY-SHAPES, DECISION-RECEIPT-OWNERSHIP | creates 3, uncertain | — | f3-receipts, f5-receipts, f7-receipts |
+| arch-scope-compile-evidence | Architecture scope statement with compile evidence | task | The study's supported GPU architecture set is stated, with compile evidence committed for each architecture claimed. | prototype-crate-layout, wave-decomposition-interface | REQ-04, INV-FACT-02, INV-GATE-SCOPE, INV-CRATE-PLACEMENT | creates 1, touches 2, uncertain | — | f3-fold-candidates, f5-representation-prototype, f7-kernel-integration |
+| synthesis-go-no-go | Field-by-field go/no-go synthesis with production design | task | A findings document records the per-field go/no-go verdict, the production design, and the representation-boundary decision. | receipt-provenance-format, wave-decomposition-interface, micro-timing-interface, fixture-corpus, prototype-crate-layout | REQ-01, REQ-05, REQ-06, REQ-07, REQ-11, STUDY-BOUNDARY, STUDY-DECISION-RULE, INV-FACT-03, INV-FACT-05, INV-FACT-10, INV-CONVERGENCE, INV-FALLBACK-GAP, INV-PROOF-OBLIGATION, INV-ORACLE, INV-CPU-CHUNKED | creates 1, touches 1, uncertain | — | runtime-qualification, arch-scope-compile-evidence |
+
+```mermaid
+flowchart LR
+    N0["equivalence-fixture-suite: Deterministic fixture corpus with CPU-oracle equivalence checking"]
+    N1["hip-event-timing: HIP event timing API for device-side kernel spans"]
+    N2["study-stream-allocation: Purpose-domain stream address allocator"]
+    N3["harness-micro-modes: Harness micro-measurement modes for Gray update and horizontal product"]
+    N4["f3-wave-prototype: Wave-cooperative intra-matrix Ryser prototype for F_3"]
+    N5["f3-fold-candidates: F_3 zero-mask sign-popcount fold candidate beside the halving control"]
+    N6["f5-representation-prototype: F_5 three-plane accumulator prototype beside the byte-arithmetic control"]
+    N7["f7-three-plane-exactness: F_7 three-plane Mersenne accumulator exact above the sixteen-lane bound"]
+    N8["f7-kernel-integration: F_7 permanent-shaped kernels for the three-plane state and the table control"]
+    N9["f3-receipts: F_3 preregistered receipt campaign"]
+    N10["f5-receipts: F_5 preregistered receipt campaign"]
+    N11["f7-receipts: F_7 preregistered receipt campaign with bit-plane resource accounting"]
+    N12["runtime-qualification: Runtime qualification of wave utilization and launch duration"]
+    N13["arch-scope-compile-evidence: Architecture scope statement with compile evidence"]
+    N14["synthesis-go-no-go: Field-by-field go/no-go synthesis with production design"]
+    N1 --> N3
+    N0 --> N3
+    N2 --> N3
+    N0 --> N4
+    N4 --> N5
+    N4 --> N6
+    N0 --> N7
+    N4 --> N8
+    N7 --> N8
+    N5 --> N9
+    N3 --> N9
+    N6 --> N10
+    N3 --> N10
+    N8 --> N11
+    N3 --> N11
+    N9 --> N12
+    N10 --> N12
+    N11 --> N12
+    N5 --> N13
+    N6 --> N13
+    N8 --> N13
+    N12 --> N14
+    N13 --> N14
+```
+<!-- jit:breakdown-overview:end -->
+
+## Material risks and owner decisions
+
+| Risk / decision | Resolution and rationale |
+|---|---|
+| Lane mapping (advisor-review correction) | An earlier draft of `wave-decomposition-interface` asked lanes to both partition the Gray range *and* cooperate on row-sum updates with a lane-reduced row product. Those are incompatible: a lane walking its own interval holds its own row sums, so there is nothing left to cooperate on per step. Owner-fixed resolution: **lane-owns-interval**. Each lane owns a contiguous Gray interval and its complete packed accumulator; the row product is lane-local over the row lanes inside that lane's own words; only partial Ryser sums cross the wave. This is the CPU chunk model of `parallel_bipedal3.rs` with lanes for workers, and REQ-01's four named elements map onto it exactly — interval initialization, per-lane row-sum update, lane-local row-product reduction, cross-lane partial-sum reduction. |
+| Register and LDS budget is stated, not implied (advisor-review addendum) | The contract now quantifies per-lane live state and per-block shared-memory allocation for all four packed paths, and names the column table's load pattern and its scattered per-step read. Each kernel task states the budget its design predicts; each per-field receipt campaign reports the device's measured registers, scratch, shared memory, and spills beside that prediction and names the occupancy-limiting resource; `runtime-qualification` returns the device-wide verdict on whether the budget is the limiter. A measurement that falsifies a predicted budget is recorded with the contradiction rather than restated, per `@/inv/falsification-preserved`. The figures in the contract are design arithmetic, not measurements, and the plan says so — they exist to be tested. |
+| Receipt ownership (advisor-review correction) | An earlier draft had one campaign task plus receipt-producing candidate tasks, so a field's measurements had two owners. Resolution: each field owns **all** of its preregistered evidence in one leaf (`f3-receipts`, `f5-receipts`, `f7-receipts`), and the candidate leaves are implementation-plus-equivalence only. `f7-receipts` additionally owns the bit-plane resource figures REQ-11 demands, and `runtime-qualification` cites them rather than re-measuring them; that boundary is stated in both issue bodies. |
+| Stream allocation is its own terminal (advisor-review split) | `receipt-provenance-format` was narrowed to what the committed harness actually provides. Purpose separation is *not* in it: today's disjointness rests on hand-chosen numeric bases two orders of magnitude apart, which the feasibility study §7.3 calls "verified, not designed" after ranges overlapped in an earlier revision. The allocator is now a separate root terminal, `study-stream-allocation`, and is the sole producer of the contract of the same name — a bit-field encoding with bounds assertions, an injectivity test, and golden derivation vectors has its own consumer family and its own test boundary, and it blocks the timing modes rather than riding along with them. |
+| Address disjointness is provable; output-stream disjointness is not | The allocator's criteria are worded over **seed inputs**: distinct $(\text{purpose}, \text{index})$ pairs encode to distinct addresses, bounds are asserted, and golden vectors pin the mapping. All three are testable. The criteria deliberately do not assert that the derived ChaCha20 output sequences are disjoint — that is a property of the cipher, no test here establishes it, and claiming it would be an unfalsifiable criterion in a study whose whole point is falsifiable evidence. |
+| Backend registration stays with the timing modes | `harness-micro-modes` registers every planned prototype path in `Backend::ALL` at once, each reporting unsupported with a stated reason until its implementation lands. Registration is how those modes expose the paths they can time, so it belongs with them. Rejected letting each candidate or receipt leaf edit `backend.rs`: eight sibling leaves editing one enum is a merge-conflict generator, and the harness already has a first-class representation for an unrunnable backend. The consequence is that `harness-micro-modes` depends on the fixture task for the crate's adapter surface. |
+| Receipts scope the full candidate set, not a pre-filtered one (advisor-review hardening) | The per-field campaigns are what *decide* retention, so their criteria are worded over "every planned prototype path that executes on the target device", with a separate criterion requiring a candidate that cannot execute to be named with its compile, correctness, or resource falsification and its exclusion cited to that evidence. "Every retained candidate" would have been circular. `runtime-qualification` still says "retained", correctly: it runs after all three campaigns, when retention is settled. |
+| Story slug | Chose `story:gpu-wave-permanents`, a descriptive kebab-case bucket. Rejected any JIT short id as a strategic label: short ids are non-descriptive UUID prefixes and break under rename. |
+| Prototype crate location | Chose a new `dev/research/permanent_wave_gpu/`. Every prior kernel-representation study in this repo lived under `dev/research/`; it is a `permanent_paths` entry so prototypes survive archival of `dev/active/0de41c82/`; and it keeps unvalidated `unsafe` out of the production HIP crate, which `@/inv/unsafe-kernel-isolation` guards. Rejected an experimental module inside `crates/gf2-kernels-hip` for exactly that reason. |
+| HIP event placement | The event API is a separate terminal in `crates/gf2-kernels-hip/src/host/`, not a rider on the harness work: it is production `unsafe` in the crate permitted to hold it, with its own consumer family and its own device-gated test boundary. Rejected a private FFI helper inside the research crate — it would duplicate a shared device-resource mechanism, and the same convergence argument governs the production design in REQ-06. |
+| Receipts location | Chose the issue's resolved doc directory, `dev/active/0de41c82/`, for findings and receipts, with executable prototypes under `dev/research/`. This matches the b488f02c precedent and what `jit doc dir` resolves to at authoring time. Documents are attached to their issue rather than cross-referenced by inline path from a sibling description. |
+| Watchdog re-derivation stance | The archived $\approx 190$–$200$ s boundary and the retracted hang attribution disagree, and the plan does not paper over it: the safe launch bound is re-derived by measurement in `runtime-qualification`, citing r4 as a prior calibration rather than as an established device property, and any contradicting measurement is recorded with the contradiction per `@/inv/falsification-preserved`. |
+| R2 amendment ownership | `synthesis-go-no-go` owns amending `dev/archive/…/f10152f6/r2_f7_encoding_decision.md`, and only where the receipts reopen it. `f7-three-plane-exactness` re-measures Candidate D under the permanent workload but explicitly does not touch the archived verdict, because that document states a re-benchmark is not a re-decision authority. `dev/archive` is permanent content, so the amendment needs owner approval before it lands; its footprint is recorded as uncertain for that reason. |
+| gfx1030 architecture scope | Split into its own terminal, `arch-scope-compile-evidence`, the only leaf touching the prototype crate's `build.rs`. `build.rs:43` applies one unconditional `--offload-arch=gfx1030` in production and the six-entry per-arch `.co` pipeline compiles only generated no-op probes, so REQ-04's scope statement has one defensible answer today. The leaf may widen it only by committing compile evidence; its footprint carries that uncertainty rather than promising the wider set. |
+| Wave interface producer and its edges | `wave-decomposition-interface` is implementation-produced by `f3-wave-prototype`, so `f5-representation-prototype` and `f7-kernel-integration` depend on it directly rather than on the fixture task alone. Three independently written lane-partition helpers would be the "private helper duplicating a shared mechanism" that `@/inv/convention-convergence` forbids. The cost is one extra wave of serialization; the alternative — declaring the interface plan-fixed — buys parallelism by giving up the single implementation. |
+| Arithmetic controls duplicated in the prototype crate | REQ-08's "current" $\mathbb{F}_5$ and $\mathbb{F}_7$ arithmetic is re-implemented inside the prototype crate rather than measured only through the shipped kernels, so the arithmetic comparison holds the execution mapping fixed. The shipped one-thread-per-matrix path is still measured, but as REQ-09's mapping control, not as the arithmetic control. |
+| No new public packed representation is planned | The breakdown deliberately contains no task that changes `Packed5` or `Packed7` at its source. A public packed representation attracts a Lean proof obligation by convention, and `AGENTS.md:114-116` requires an approved sketch first. If the synthesis chooses that resolution of REQ-11, it is follow-up work behind a new bracket, not a child of this container. |
+
+## Investigation sources
+
+- [Investigation](investigation.md) — exhaustive claim classification, consumer inventory, and primitive verification remain there.
+- [Representation study](bipedal-f5-f7-representation-study.md) — fold formulas, arithmetic candidates, benchmark shapes, architectural boundary options.
+- [Feasibility study](../../studies/b488f02c/feasibility-study.md) — baseline receipts, preregistered protocol, measured GPU-versus-CPU ordering, censored cells, and the §7.3 stream-allocation requirement.
+
+Source ids used by the manifest resolve as follows.
+
+- `REQ-01` … `REQ-11` — the container's success criteria, verbatim.
+- `INV-FACT-01` … `INV-FACT-10` — investigation §7, "Findings the breakdown should treat as facts", numbered in order.
+- `INV-ORACLE`, `INV-CPU-CHUNKED`, `INV-PACKED-LIMITS`, `INV-PACKED5-COST`, `INV-PROOF-OBLIGATION`, `INV-DISPATCH-SHAPE`, `INV-HARNESS` — investigation §1, claims 9, 10, 4, 5, 11, 3, and 7.
+- `INV-EQUIV-CHECK`, `INV-HIP-TESTS`, `INV-NO-PROFILING` — investigation §4b, §4d, and §2 "Not found".
+- `INV-CRATE-PLACEMENT`, `INV-LAUNCH-PURITY`, `INV-FALLBACK-GAP`, `INV-RECEIPT-LOCATION` — investigation §5.
+- `INV-CONVERGENCE`, `INV-FALSIFICATION`, `INV-BEHAVIORAL-EQUIV`, `INV-DETERMINISM`, `INV-GATE-SCOPE` — investigation §6.
+- `STUDY-FOLD`, `STUDY-CANDIDATES`, `STUDY-SHAPES`, `STUDY-BOUNDARY`, `STUDY-DECISION-RULE` — representation study sections "Constant-word horizontal product", "Arithmetic candidates", "Required benchmark shapes", "Architectural boundary", "Decision rule".
+- `BASELINE-PROTOCOL`, `BASELINE-CENSORED`, `BASELINE-CROSSOVER`, `BASELINE-STREAM-ALLOCATION` — feasibility study §4.2, §4.3, §4.4, and §4.7 with §7.3.
+- `DECISION-LANE-MAPPING`, `DECISION-RECEIPT-OWNERSHIP` — the two owner-fixed corrections recorded in the decisions table above.

@@ -1,0 +1,1325 @@
+[
+  {
+    "key": "stats-sampler",
+    "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
+    "description": "A production sampler that draws uniform random matrices over $\\mathbb{F}_q$ for $q \\in \\{3,5,7\\}$ from a reproducible address space whose purposes and streams are injective by construction, hosted in a new narrow workspace crate.\n\n## Background\n\nA published sampling dataset must let any shard be regenerated from its address alone, so the random-matrix source has to be version-stable and partitioned by construction rather than by audit. Two in-tree generators fall short of that. `gf2_algebra::testutil::random_matrix` reduces an MMIX LCG output modulo $q$ and is a test helper. `FieldMatrix::random_seeded` (`crates/gf2-core/src/field/matrix.rs:617`) takes a single `u64` seed, draws through `StdRng` — whose algorithm carries no cross-version reproducibility guarantee, so a dataset seeded through it stops being regenerable after a dependency bump — offers no partition of the stream space, and produces `FieldMatrix<Fp<P>>`. The gap is therefore not the absence of a uniform sampler but the absence of one with domain-separated, reproducible stream addressing.\n\nRejection sampling is required rather than optional. The sampler consumes bytes and $256 \\bmod 7 = 4$, so reducing a byte without rejection would give four residues probability $37/256$ and three of them $36/256$ against a uniform $1/7$. In relative terms the worst class is off by $1.56\\%$, about $22$ times the $0.07\\%$ relative resolution a standard error of $10^{-4}$ on $\\Pr[\\mathrm{per}(A)=0] \\approx 1/7$ represents.\n\nA prototype carrying these properties, with entry-uniformity and stream-separation tests, is `dev/research/permanent-sampling-feas/src/sampler.rs`; it is the reference to lift from.\n\n## Success Criteria\n\n- [hard] REQ-01: A workspace member crate `gf2-stats` builds with `gf2-core` as its only in-workspace dependency, and `rand_chacha` is declared once in `[workspace.dependencies]` at version 0.9 with the crate consuming it through `workspace = true`.\n- [hard] REQ-02: Matrix draws use ChaCha20 seeded from a 32-byte block of four little-endian `u64` words: campaign root, $q$, $n$, and a fourth word whose top $8$ bits hold the purpose tag and whose low $56$ bits hold the stream index.\n- [hard] REQ-03: Seed derivation asserts the stream index is below $2^{56}$ and refuses to derive otherwise, so the map from $(\\text{root}, q, n, \\text{purpose}, \\text{stream})$ to seed block is injective by construction rather than by convention.\n- [hard] REQ-04: Entries are exactly uniform over $\\mathbb{F}_q$: a test draws at least $3 \\times 10^5$ entries per field for $q \\in \\{3,5,7\\}$ and finds each residue class within six binomial standard errors of $1/q$.\n- [hard] REQ-05: Address separation is asserted at the address level: a test over a set of addresses differing in each component in turn finds every derived seed block distinct, and a further test finds two generators started from distinct addresses diverge in their raw output stream.\n- [hard] REQ-06: Committed golden vectors pin, for a fixed set of addresses spanning each field and each purpose tag, the derived 32-byte seed block and the first drawn matrix, and a test compares against them.\n- [hard] REQ-07: Two draws from one address tuple return identical matrices, demonstrated by test.\n- [hard] REQ-08: The draw-to-entry mapping is documented and tested as $A[k / n][k \\bmod n]$ row-major for draw index $k$, before any packed constructor reorders it into kernel storage.\n- [hard] REQ-09: A draw fills a caller-supplied row-major entry buffer without a per-draw heap allocation, so a caller can pack directly into the permanent kernels' matrix types.\n\n## Notes\n\nStream separation is a statement about addresses and generator state, not about output values: two disjoint streams may legitimately draw the same small matrix, and at $q = 3$, $n = 2$ there are only $81$ matrices in total. Tests therefore assert distinct derived seeds, distinct generator output, and golden-vector agreement, never that two streams share no matrix.\n\nThe crate carries no dependency on the algebra layer: packing into kernel matrix types is the caller's concern, which keeps the sampler usable from validation harnesses that never touch a permanent kernel.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Production ChaCha20 rejection sampler in a new gf2-stats crate, addressing matrices by campaign root, field, size, purpose and stream",
+      "contract_refs": [
+        "stream-purpose-namespace"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G1",
+        "C1",
+        "INV-4a"
+      ],
+      "terminal": {
+        "consumer_family": "campaign matrix producers",
+        "test_boundary": "gf2-stats sampler unit tests",
+        "worker_sized_reason": "One crate skeleton plus one module lifted from a tested prototype fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-stats/Cargo.toml",
+            "crates/gf2-stats/src/lib.rs",
+            "crates/gf2-stats/src/sampler.rs",
+            "crates/gf2-stats/tests/golden_vectors.rs",
+            "crates/gf2-stats/README.md"
+          ],
+          "touches": [
+            "Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "stats-intervals",
+    "title": "Binomial confidence intervals and exact preregistered tests",
+    "description": "Interval estimators and exact binomial hypothesis tests for zero-fraction cells, correct both at the campaign's large sample sizes and at the small counts of the rectangular validation.\n\n## Background\n\nEvery published Monte Carlo estimate in this repository states its sample count and an interval. The only interval implemented in-tree today is a Wilson score interval in a research prototype (`dev/research/permanent-sampling-feas/src/stats.rs:38`); no Clopper–Pearson estimator exists anywhere, and the rectangular validation cells — where the estimated event probability is of order $q^{-n}$ and counts are in the tens — are exactly where the Wilson interval's normal approximation is weakest.\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial tests on a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence that the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered tail probability of order $10^{-4}$ is reached far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A Wilson score interval is returned for a count out of $N$ at a caller-supplied level, agreeing to within $10^{-12}$ with an independently computed reference on hand-checked cases including $Z = 0$ and $Z = N$.\n- [hard] REQ-02: A Clopper–Pearson interval is returned for the same inputs and matches, to a stated tolerance, an independent computation of the same bounds by inversion of the binomial tail or equivalently by beta quantiles, on cases spanning $Z = 0$, $Z = N$, and small counts.\n- [hard] REQ-03: Clopper–Pearson coverage is demonstrated empirically: over repeated simulated draws at stated $(N, p)$ including small $N$ and small $p$, the fraction of intervals containing $p$ is at least the nominal level.\n- [hard] REQ-04: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a $p$-value from the binomial distribution, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-05: A two-sided exact binomial test against a caller-supplied exact probability returns a $p$-value under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-06: The exact-test interface reports its result on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision; a test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero.\n- [hard] REQ-07: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-08: Documentation states that normal-approximation critical values are planning approximations and that acceptance decisions use the exact tests.\n\n## Notes\n\nInterval and test entry points take counts, not samples, so they are usable both online against a running accumulator and offline against a published dataset.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "stats-sampler"
+    ],
+    "planning": {
+      "outcome": "Wilson and Clopper-Pearson intervals plus exact binomial tests with log-scale results for the permanent floor and the exact determinant value",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "G2",
+        "C2"
+      ],
+      "terminal": {
+        "consumer_family": "campaign acceptance checks",
+        "test_boundary": "gf2-stats interval unit tests",
+        "worker_sized_reason": "Two interval estimators plus two exact tests in one module fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-stats/src/intervals.rs"
+          ],
+          "touches": [
+            "crates/gf2-stats/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "shard-accumulator",
+    "title": "Checkpointable streaming shard accumulator",
+    "description": "A streaming accumulator that pools per-shard permanent and determinant zero counts with atomic commits, duplicate rejection, order-independent pooling, and exact replay after interruption.\n\n## Background\n\nA campaign cell runs for hours and is assembled from many independently addressed shards, produced in arbitrary order and possibly concurrently. Pooling those shards is where a sampling campaign silently corrupts itself: a shard counted twice shrinks the interval around a wrong estimate, and a shard lost to an interrupted write leaves an estimate whose sample count does not match its data. Both failure modes have already occurred in this problem family — a superseded measurement round pooled overlapping streams and reported an apparent below-floor signal that independent re-measurement dissolved.\n\nExisting in-tree statistics code has no accumulator type and no serialisation: the prototype's row type derives only `Clone` and `Debug` and leaves the crate as a formatted CSV line. Restart behaviour is therefore new work rather than a lift.\n\n## Success Criteria\n\n- [hard] REQ-01: A shard's counts enter the pooled state exactly once and as a unit; an interrupted commit leaves the pooled state as if that shard had never been offered, demonstrated by a test that interrupts mid-commit.\n- [hard] REQ-02: Offering a shard whose identity is already committed is rejected and reported to the caller, never silently merged and never double-counted.\n- [hard] REQ-03: Pooling one set of shards yields byte-identical pooled state under any offer order, demonstrated over a shuffled permutation set in a test.\n- [hard] REQ-04: Restoring from a serialised snapshot and continuing reproduces the counts of an uninterrupted run over the same shard set, bit for bit.\n- [hard] REQ-05: Pooled state carries, per cell, the matrix count, the permanent zero count, the histogram of permanent values over the $q$ residue classes, and the determinant zero count, so both companion quantities pool through one mechanism.\n- [hard] REQ-06: A shard whose production or evaluation failed is retained with its identity and failure reason, excluded from the pooled state until explicitly readmitted, and visible to the caller in that quarantined state.\n- [hard] REQ-07: The accumulator state serialises to a self-describing snapshot carrying a schema version, and a snapshot whose schema version differs from the reader's is refused rather than misread.\n- [hard] REQ-08: Pooled state carries the per-shard identities that produced it, so the sample count behind an estimate is derivable from the state alone.\n\n## Notes\n\nThe snapshot type is plain serialisable data with no dependency on any checkpoint-file mechanism, so persistence policy stays with the orchestration layer that owns crash-safe writing.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-stats",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "stats-sampler"
+    ],
+    "planning": {
+      "outcome": "Streaming accumulator whose shard commits are atomic, duplicate-rejecting, order-independent when pooled, and exactly replayable after interruption",
+      "contract_refs": [
+        "stream-purpose-namespace",
+        "shard-record-format"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G2",
+        "C2",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "gf2-stats accumulator unit tests",
+        "worker_sized_reason": "One accumulator type with its snapshot contract fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-stats/src/accumulator.rs"
+          ],
+          "touches": [
+            "crates/gf2-stats/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "checkpoint-generalization",
+    "title": "Generalise the simulation checkpoint writer over its payload",
+    "description": "The crash-safe checkpoint writer and reader in the simulation crate become generic over a serialisable payload and a configuration-hash provider, so a second campaign reuses the mechanism instead of copying it.\n\n## Background\n\n`crates/gf2-sim/src/checkpoint/mod.rs` implements a mature and tested crash-safe checkpoint mechanism: a PID-tagged temporary file, fsync, rename, and directory fsync, guarded by a blake3 hash over the serialised configuration so a resume against a different configuration is a hard error, with a reader that rejects a wrong schema version or a hash mismatch rather than silently accepting it. Its behaviour is pinned by a resume-versus-uninterrupted counter-equality test and a signal-and-resume byte-identity subprocess test.\n\nWhat is not reusable is the schema: the payload type is fixed to a fielded record of coding-domain quantities, and the writer is typed to that record rather than to a payload. A second campaign with different axes therefore cannot use the writer as it stands. The repository's convention rule holds that a shared mechanism has one form and that a private helper duplicating a shared mechanism is a defect unless it is a named, tracked exception; \"write a checkpoint crash-safely and refuse to resume against a different configuration\" is that shared mechanism, whatever the payload. Changing it at its source is the resolution taken here.\n\n## Success Criteria\n\n- [hard] REQ-01: The checkpoint writer and reader are generic over a serialisable payload type and a configuration-hash provider, with the previously hard-coded payload becoming one instantiation.\n- [hard] REQ-02: The atomic write path is behaviourally unchanged: PID-tagged temporary file, fsync, rename, directory fsync, and crash safety under a signal delivered during the write.\n- [hard] REQ-03: A reader refuses a checkpoint whose schema version, payload identity, or configuration hash disagrees with the caller's, and treats an absent file as fresh work.\n- [hard] REQ-04: The existing simulation pipeline uses the generic form, and the resume-versus-uninterrupted counter-equality test and the signal-and-resume byte-identity test pass with their assertions unchanged.\n- [hard] REQ-05: A second, unrelated payload type round-trips through the same writer and reader in a test, demonstrating the mechanism has one form.\n- [hard] REQ-06: Module documentation describes the payload contract a new caller must satisfy, and no documentation still describes the writer as specific to one campaign's record.\n\n## Notes\n\nDeterministic resume in the existing implementation works by storing each worker's absolute generator word position; the generic payload contract must leave that pattern expressible rather than assume a particular resume key.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Simulation checkpoint writer and reader carry any serialisable payload behind a config-hash provider, with resume behaviour unchanged",
+      "contract_refs": [],
+      "produces_contracts": [
+        "checkpoint-payload-api"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "INV-4b",
+        "INV-6",
+        "C3"
+      ],
+      "terminal": {
+        "consumer_family": "simulation campaign binaries",
+        "test_boundary": "gf2-sim checkpoint tests",
+        "worker_sized_reason": "One generalisation of one module with its existing tests kept green fits one focused cycle.",
+        "footprint": {
+          "touches": [
+            "crates/gf2-sim/src/checkpoint/mod.rs",
+            "crates/gf2-sim/src/bin/dvb_t2_awgn_campaign.rs",
+            "crates/gf2-sim/tests/determinism.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "dataset-format",
+    "title": "Versioned dataset layout for the permanent zero-fraction campaign",
+    "description": "The on-disk form of a published permanent zero-fraction dataset: a versioned campaign home, a root manifest schema, per-shard records, per-field summaries, and a raw-data checksum boundary that derived artefacts sit outside of, emitted by tooling that records provenance and refuses to write from an unidentified build.\n\n## Background\n\nNo manifest or checksum convention exists anywhere in this repository: a search for checksum and manifest files under the documentation tree returns nothing. The closest precedent, a per-curve README generated by an existing campaign binary, records invocation, configuration, host and wall-clock but records no git revision and no toolchain version. The repository requires every published number to trace to a committed artefact recording seeds, git revision, hardware and toolchain, so this schema is new work rather than an adaptation of an existing convention.\n\nThe dataset home is `dev/simulation_results/permanent-zero-fraction/<campaign-id>/`. This is a deliberate divergence from the earlier design sketch, which proposed `dev/campaigns/`: both directories are declared permanent documentation areas, but the development index classifies `dev/campaigns` as simulation campaign *definitions* and `dev/simulation_results` as campaign *outputs*, and today `dev/campaigns` holds only campaign configuration files. A published dataset is an output.\n\nTwo structural rules keep the dataset writable by concurrent producers and checksummable without a cycle. Each field's execution writes only files under its own field paths, including its own field summary, so no two concurrent producers write one file. And the checksum set covers raw data only — manifest, shard records, field summaries, and the pooled summary — while derived artefacts such as reports, figures and fit outputs sit outside it, since a checksum file that covered documents which quote the checksum could never be closed.\n\nTwo failure modes recorded from an earlier review cycle in this problem family shape the schema. Generated receipts that carried interpretive prose had to be regenerated every time a claim's wording changed, which was the single largest source of rework; emitted artefacts therefore carry data and mechanical provenance only. And a self-hash recorded by a binary with no build-state guard proves nothing about the source that produced it; the emitting binary therefore embeds the revision it was built from and refuses to write when the tree disagrees.\n\n## Success Criteria\n\n- [hard] REQ-01: A dataset lives at `dev/simulation_results/permanent-zero-fraction/<campaign-id>/` and contains a root manifest, per-shard records under `shards/q<q>/n<nn>/`, one summary per field under `summaries/`, a pooled `summary.csv`, and a `checksums.sha256`.\n- [hard] REQ-02: The root manifest schema carries the campaign root seed; the stream purpose namespace with each purpose's tag; the cell grid with per-cell $N$, shard size and shard identities; the backend selected per cell; the git revision; the compiler and accelerator runtime versions; the CPU and GPU models; and a schema version.\n- [hard] REQ-03: The schema partitions the tree into raw data — manifest, shard records, field summaries, pooled summary — and derived artefacts, with `checksums.sha256` covering the raw set only, so no artefact quoting a checksum is inside the set it quotes.\n- [hard] REQ-04: The schema assigns each file in the raw set exactly one writer role, with field-scoped paths written by that field's execution and campaign-scoped paths written only by finalization, so two concurrent field executions never write one file.\n- [hard] REQ-05: A per-shard record carries its stream address, matrix count, permanent zero count, the histogram of permanent values over the $q$ residue classes, and the determinant zero count over the same matrices.\n- [hard] REQ-06: A summary row carries, per $(q,n)$, the pooled matrix count, permanent zero count, determinant zero count, point estimates with intervals, and the recorded terminal state of that cell.\n- [hard] REQ-07: The emitting binary embeds the source revision it was built from and refuses to emit when the working tree or the recorded revision disagrees with the embedded one.\n- [hard] REQ-08: Emitted files carry data and mechanical provenance only: no emitted field, header, or comment states an interpretation of what the numbers mean, asserted by a test over the emitter's output.\n- [hard] REQ-09: Re-emitting a dataset from identical inputs produces byte-identical files.\n- [hard] REQ-10: The layout, the manifest schema, the shard and summary record schemas, the raw-versus-derived boundary, and the rule that a campaign id is never overwritten in place are documented at the dataset home.\n\n## Notes\n\nStorage stays $O(\\text{shards})$ because matrices are regenerable from their stream address; a whole cell costs tens of kilobytes.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Versioned dataset home with a root manifest schema, per-shard records, per-field summaries and a raw-data checksum boundary",
+      "contract_refs": [
+        "shard-record-format",
+        "stream-purpose-namespace"
+      ],
+      "produces_contracts": [
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "G4",
+        "C4",
+        "RC1",
+        "RC2",
+        "INV-5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset readers",
+        "test_boundary": "gf2-sim dataset emitter tests",
+        "worker_sized_reason": "One layout schema with one emitter module fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs",
+            "crates/gf2-sim/src/permanent_campaign/dataset.rs",
+            "dev/simulation_results/permanent-zero-fraction/README.md"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "driver-orchestration",
+    "title": "Campaign driver scheduling with checkpointed resume",
+    "description": "A campaign binary in the simulation crate that enumerates $(q, n, \\text{shard})$ work items from a campaign manifest, runs the composite draw-pack-evaluate-count loop, checkpoints its progress, and emits shards and its own field summary into the dataset tree.\n\n## Background\n\nThere is no campaign runner for permanent sampling in the workspace. The two existing runners are coding-domain: a configuration-driven forward-error-correction campaign runner in the coding crate, and a modulation-and-coding campaign binary in the simulation crate that writes a per-curve output directory with checkpoints and a structured progress log. The second is the structural precedent — argument-driven, checkpointed, writing a self-describing output directory — while its campaign axes and inner loop share nothing with $(q, n, \\text{shard})$ over permanent evaluations.\n\nThe composite loop this driver needs exists in a research prototype and times four phases in order: generate, evaluate, histogram with zero counting, and shard emission. That prototype module carries no tests at all, unlike the sampler and statistics modules being productionised alongside it, so the driver is test-first work rather than a transcription.\n\nHosting the driver in the simulation crate adds a dependency on the algebra crate. That edge points inward from orchestration to mathematics and is legal under the repository's layering rule; it is taken deliberately so the checkpoint mechanism is reused rather than reimplemented.\n\n## Success Criteria\n\n- [hard] REQ-01: A binary in the simulation crate enumerates $(q, n, \\text{shard})$ work items from a campaign manifest and executes them, with the algebra crate added as a dependency so the permanent kernels are reachable.\n- [hard] REQ-02: Each work item runs the composite loop — draw, pack, evaluate, count — and records per-phase wall-clock alongside its counts.\n- [hard] REQ-03: The scheduling module has no public function that no test exercises, with tests covering work-item enumeration, interruption and resume, and shard emission.\n- [hard] REQ-04: Interrupting the driver and restarting it produces a shard set and pooled counts identical to an uninterrupted run over the same work items.\n- [hard] REQ-05: A fixed campaign root reproduces identical shard contents across worker counts and across a checkpoint boundary.\n- [hard] REQ-06: A resume whose campaign configuration differs from the checkpointed one is refused with an error naming the disagreement, rather than continuing against changed inputs.\n- [hard] REQ-07: A work item whose evaluation fails is quarantined with its identity and error, remaining work continues, and the quarantined item is visible in the dataset rather than absent from it.\n- [hard] REQ-08: A single invocation covers one field and writes only that field's shard paths and that field's summary, so two invocations covering different fields can run concurrently without writing one file, asserted by a test over the paths a run opens for writing.\n- [hard] REQ-09: Emitted records conform to the dataset's shard and summary schemas and land under the campaign id the manifest names.\n\n## Notes\n\nBackend choice per cell, accelerator launch sizing, host locking, and the determinant companion are layered on top of this scheduler rather than built into it.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "shard-accumulator",
+      "checkpoint-generalization",
+      "dataset-format"
+    ],
+    "planning": {
+      "outcome": "Campaign binary in the simulation crate schedules cell and shard work, resumes from checkpoints, and emits field-scoped dataset files",
+      "contract_refs": [
+        "stream-purpose-namespace",
+        "shard-record-format",
+        "checkpoint-payload-api",
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G3",
+        "C3",
+        "C9",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign operators",
+        "test_boundary": "gf2-sim campaign driver tests",
+        "worker_sized_reason": "One scheduling module with one binary entry point fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/schedule.rs",
+            "crates/gf2-sim/src/bin/permanent_zero_fraction.rs",
+            "crates/gf2-sim/tests/permanent_campaign_resume.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/Cargo.toml",
+            "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "determinant-integration",
+    "title": "Determinant companion evaluated on the campaign's matrices",
+    "description": "The finite-field determinant is evaluated inside the campaign's composite loop on the same drawn matrices as the permanent, producing per-shard determinant zero counts and per-cell determinant statistics alongside the permanent ones.\n\n## Background\n\nThe determinant companion supplies a pipeline validation the permanent cannot. The count of invertible $n \\times n$ matrices over $\\mathbb{F}_q$ is $\\prod_{k=0}^{n-1}(q^n - q^k)$, so the singular probability is known exactly at every finite size:\n\n$$\n\\Pr[\\det(A) = 0] \\;=\\; 1 - \\prod_{i=1}^{n}\\left(1 - q^{-i}\\right),\n$$\n\nwhich pins a value at every size the campaign measures, unlike the permanent, whose exact value is available only at the smallest sizes. A determinant curve that misses its own exact values falsifies the pipeline before any permanent conclusion is drawn.\n\nThat check only has force if the determinant is computed on the *same* matrices as the permanent. Evaluating it on an independently drawn sample would test a different pipeline than the one producing the published permanent counts, and would leave the shared draw, pack and address path — where this problem family's recorded defects actually occurred — unchecked.\n\nThe routine exists and sits below the algebra layer: `FieldMatrix::det` (`crates/gf2-core/src/field/inverse.rs:494`) is a Dumas–Pernet elimination with an explicit permutation sign, generic over the finite-field trait, returning field zero at rank below $n$, so no reverse dependency is introduced.\n\n## Success Criteria\n\n- [hard] REQ-01: For each drawn matrix the composite loop evaluates both the permanent and the determinant over the same field, from the same drawn entries, without redrawing.\n- [hard] REQ-02: Each emitted shard record carries the determinant zero count over the matrices that shard drew, beside the permanent zero count for the same matrices.\n- [hard] REQ-03: A test asserts the two quantities come from one draw: for a fixed address, the matrices the determinant sees are bit-identical to those the permanent sees.\n- [hard] REQ-04: Each cell's summary row carries the pooled determinant zero count, the point estimate with its interval, and the verdict of the cell's exact determinant test against $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ at that $q$ and $n$.\n- [hard] REQ-05: The exact reference value is computed per cell from the finite-$n$ product, and no code path compares a measured determinant fraction against an asymptotic limit.\n- [hard] REQ-06: The determinant evaluation is switchable per cell from the campaign manifest, so a cell whose measured companion cost does not fit its budget runs without it and records that it did.\n- [hard] REQ-07: A test at small $(q,n)$ where the exact singular probability is enumerable confirms the pipeline's measured determinant fraction agrees with the exact value within a stated interval.\n- [hard] REQ-08: Adding the companion leaves permanent counts unchanged: a run with the companion enabled and one with it disabled produce identical permanent zero counts for the same addresses.\n\n## Notes\n\nThe permanent and determinant results are separate quantities pooled through one accumulator, so a cell that runs without the companion pools correctly rather than recording a zero determinant count.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "driver-orchestration"
+    ],
+    "planning": {
+      "outcome": "Determinant of each drawn matrix evaluated in the campaign loop, with per-cell determinant zero counts and exact-test verdicts recorded",
+      "contract_refs": [
+        "shard-record-format",
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-03",
+        "C11",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "gf2-sim determinant companion tests",
+        "worker_sized_reason": "One evaluation step wired into an existing loop fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/determinant.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/schedule.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "driver-backend-policy",
+    "title": "Backend selection and execution policy for campaign cells",
+    "description": "The execution layer beneath the campaign scheduler: each cell runs on the backend its frozen manifest names, batch-parallel across matrices where that wins, with accelerator launches sized from measured per-matrix cost and the host's device lock held for the duration.\n\n## Background\n\nBackend ranking in this problem family is measured, not intuited, and the measurements contradict the obvious expectation. Batching across matrices with a work-stealing pool wins decisively only at small $n$, where per-matrix scheduling overhead dominates a short kernel; from $n = 20$ upward at $q = 3$ the in-tree intra-matrix parallel path overtakes it and leads by roughly a factor of two at $n = 24$ and $n = 28$. The plausible mechanism is working-set size: many concurrent Gray-code walks each carry their own column-sum state, while one cooperatively walked matrix shares it. A campaign therefore needs both paths and must choose per $(q, n)$ from measurement.\n\nNo batch-parallel path exists in-tree for any field: the only parallel permanent routine splits one matrix's Gray-code walk and exists for $\\mathbb{F}_3$ alone. Batch parallelism is harness-side, needs no field-specific kernel, and works for all three fields, which is why it belongs in this layer.\n\nAccelerator launch sizing is a wall-clock question rather than a memory question. Device memory is not the binding resource at any batch size in reach, while per-launch time scales as $M \\cdot n \\cdot 2^n / W$, so holding a batch size fixed while $n$ rises from $20$ to $24$ multiplies per-launch occupancy by $19.2$ and each further step of $4$ in $n$ costs about another factor of $19$. A batch size that occupies the device for a comfortable fraction of a second at one size occupies it for many seconds at the next.\n\nAbove the packed $\\mathbb{F}_7$ kernel's $16$-lane ceiling the surviving paths are the accelerator and the generic Ryser routine; the generic routine is correct but reaches only $0.798$ matrices per second at $n = 24$ and $0.0426$ at $n = 28$, far under the rate a campaign cell needs.\n\n## Success Criteria\n\n- [hard] REQ-01: A cell's backend is read from the campaign manifest's per-$(q,n)$ table, and no code path selects a backend from a value observed during the run.\n- [hard] REQ-02: A batch-parallel path evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$ without a field-specific kernel.\n- [hard] REQ-03: The intra-matrix parallel path is selectable for $\\mathbb{F}_3$ where the manifest names it.\n- [hard] REQ-04: Accelerator execution splits a shard into launches sized from measured per-matrix cost so each launch's wall-clock stays under a configured cap, rather than from one batch size held fixed across the grid.\n- [hard] REQ-05: Accelerator and timed host work run under the repository's benchmark host lock wrapper (`dev/scripts/ccx1-bench-flock.sh`), so two concurrent field executions never contend for one device.\n- [hard] REQ-06: Every selectable backend passes one shared behavioural suite asserting per-matrix agreement with the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-07: A backend the manifest names but the host cannot provide halts that cell with an error naming the cell and the missing backend, rather than substituting another backend and continuing.\n\n## Notes\n\nHalting on an unavailable backend is specific to a preregistered campaign: substituting a backend would break the frozen selection the dataset records. It is a campaign policy, not a change to any library's fallback behaviour.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "component:gf2-algebra",
+      "satisfies:REQ-02"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "driver-orchestration"
+    ],
+    "planning": {
+      "outcome": "Per-cell backend selection from the frozen manifest, with batch-parallel execution, capped accelerator launches, and exclusive device access",
+      "contract_refs": [
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "G7",
+        "G8",
+        "C7",
+        "C8",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "gf2-sim backend policy tests",
+        "worker_sized_reason": "One selection layer over existing kernels with one shared behavioural suite fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/backend.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/schedule.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "acceptance-checks",
+    "title": "Standing acceptance tests for campaign cells",
+    "description": "Per-cell acceptance tests wired into the campaign driver: an exact test of the proved permanent floor, an exact two-sided test of the determinant companion, one global error budget across both families, and a halt-and-preserve rule with a predeclared retry policy.\n\n## Background\n\nThe floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is proved for every $n$ at odd characteristic, so a cell significantly below $1/q$ indicts the pipeline rather than the mathematics, and such a cell can never be reported as a scientific finding. Running that check on every cell costs nothing and is sharper than small-$n$ enumeration anchors, which say nothing at the sizes a campaign cares about.\n\nIts false-alarm rate has to be controlled or the check destroys itself. A nominal $95\\%$ interval misses its parameter $5\\%$ of the time and only the lower excursion trips a one-sided test, so a single cell sitting at $1/q$ — the worst case the theorem allows — flags with probability up to $2.5\\%$; across a grid of $63$ cells that compounds to a $79\\%$ chance of at least one false alarm, halting a healthy campaign nearly every run. The correction is an explicit family-wise error rate, and it must be allocated across both test families together rather than spending a fresh budget on each.\n\nThe determinant companion is checked against the exact finite-$n$ singular probability, never against its $n \\to \\infty$ limit. The limit overstates the exact value by $3.5 \\times 10^{-3}$ at $q=3$, $n=4$ and by $3.8 \\times 10^{-4}$ at $q=3$, $n=6$ — tens to hundreds of standard errors at cells that cost minutes to sample — so a limit-based check would manufacture failures exactly where the campaign's data is tightest.\n\nRerunning a halted cell until it passes spends the error budget silently, so retry behaviour is predeclared rather than decided in the moment.\n\n## Success Criteria\n\n- [hard] REQ-01: Each cell is checked against $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ by a one-sided exact binomial test of the composite null evaluated at its worst case $p = 1/q$.\n- [hard] REQ-02: Each cell for which the companion ran is checked by a two-sided exact binomial test of its determinant zero count against $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ at that cell's $q$ and $n$.\n- [hard] REQ-03: The error budget is allocated across the permanent-floor family and the determinant family from one global total, with each family's share and each cell's resulting level fixed before any campaign matrix is drawn and recorded with the campaign.\n- [hard] REQ-04: A failing cell halts the campaign, and the failure is recorded with the cell identity, counts, test statistic and level, rather than being reported as a scientific finding.\n- [hard] REQ-05: A rerun after a halt is admitted only under the campaign's predeclared retry rule, which states what may be rerun, how many attempts are allowed, and how the error budget is charged; a rerun outside that rule is refused by the driver.\n- [hard] REQ-06: A halted cell's data and verdict are preserved in the dataset together with the contradiction, and a later run neither removes nor overwrites them.\n- [hard] REQ-07: Acceptance decisions use exact tests only, taken through the log-scale or threshold-comparison interface so a decision stays correct where an exact tail underflows double precision; normal-approximation critical values appear nowhere in the decision path.\n- [hard] REQ-08: A test drives the acceptance layer with synthetic counts that must halt and with counts that must pass, asserting the verdict and the recorded evidence in both cases, including at a sample size where the exact tail underflows.\n\n## Notes\n\nThe proved upper bound $\\Pr \\le 1/q + 11/q^3$ is deliberately not part of the test: campaign cells sit tens to thousands of standard errors below it, so checking it would never fire and never inform.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-02",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review"
+    ],
+    "depends_on": [
+      "stats-intervals",
+      "driver-backend-policy",
+      "determinant-integration",
+      "protocol-draft"
+    ],
+    "planning": {
+      "outcome": "Per-cell exact binomial floor and determinant tests under one global error budget, halting on failure under a predeclared retry rule",
+      "contract_refs": [
+        "acceptance-test-protocol",
+        "campaign-dataset-layout",
+        "shard-record-format"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "INV-6",
+        "C11"
+      ],
+      "terminal": {
+        "consumer_family": "campaign driver",
+        "test_boundary": "gf2-sim acceptance layer tests",
+        "worker_sized_reason": "One acceptance layer over existing exact tests fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/acceptance.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "avx2-batched-impl",
+    "title": "Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents",
+    "description": "Build the four-matrix batched single-word $\\mathbb{F}_3$ permanent path that the kernel crate's batched arithmetic type was introduced for, and demonstrate it agrees with the scalar kernel matrix for matrix.\n\n## Background\n\nThe AVX2 single-word $\\mathbb{F}_3$ permanent kernel zero-pads one bipedal word into a four-element lane, so three lanes of four carry no data and the kernel runs slower than the scalar one — a committed cross-CPU receipt puts scalar at $0.317$–$0.319$ of the AVX2 time at $n \\in \\{16, 20, 24\\}$.\n\nThe module documentation states the intended resolution explicitly: the AVX2 single-word kernel exists to exercise dispatch wiring and kernel correctness on real hardware, and \"the batched multi-matrix path is the performance-oriented user\". That user does not exist. The batched four-lane arithmetic type it refers to landed in the kernel crate as `Bipedal3x4` (`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:183`), and nothing in the algebra crate evaluates four matrices' permanents through it. Building it makes the AVX2 lanes carry four matrices instead of one, which is what the hardware was there for.\n\n## Success Criteria\n\n- [hard] REQ-01: A public entry point evaluates four $\\mathbb{F}_3$ permanents at once through the batched bipedal type, returning one value per input matrix in input order.\n- [hard] REQ-02: The batched path agrees with the scalar single-word kernel on a randomised conformance set covering each size where one bipedal word suffices, and on the committed computer-algebra reference vectors.\n- [hard] REQ-03: A batch containing fewer than four matrices returns correct values for the matrices present, with a test covering each partial-batch width.\n- [hard] REQ-04: The batched path joins the crate's shared permanent behavioural suite, so it is exercised by the same contract as every other permanent backend rather than by a private test set.\n- [hard] REQ-05: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n- [hard] REQ-06: The entry point is reachable on hosts without AVX2 through the crate's existing feature and runtime-detection conventions, with a test asserting the fallback returns the same values.\n\n## Notes\n\nThis change adds a capability and asserts its correctness. Which path the public single-matrix dispatcher selects, and the prose and benchmark labels describing that selection, are a separate concern from whether the batched path exists and is correct.",
+    "type": "enhancement",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "component:gf2-kernels-simd",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Four matrices per AVX2 register through the batched bipedal type, conforming to the scalar kernel on the shared behavioural suite",
+      "contract_refs": [],
+      "source_refs": [
+        "G6",
+        "C6",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra permanent callers",
+        "test_boundary": "gf2-algebra permanent conformance tests",
+        "worker_sized_reason": "One batched entry point over an existing arithmetic type fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-algebra/src/permanent/batched_bipedal3.rs"
+          ],
+          "touches": [
+            "crates/gf2-algebra/src/permanent/mod.rs",
+            "crates/gf2-kernels-simd/src/x86/bipedal_avx2.rs"
+          ],
+          "uncertainty": "Whether the batched entry point needs new kernel-crate SIMD source or only algebra-crate glue over the existing batched type is settled by the implementer."
+        }
+      }
+    }
+  },
+  {
+    "key": "avx2-dispatch-migration",
+    "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
+    "description": "Route single-matrix callers of the public $\\mathbb{F}_3$ permanent entry point to the measured-faster kernel, and correct in the same change every piece of prose, benchmark label and artefact that the old selection made true.\n\n## Background\n\n`permanent_bipedal3` prefers the AVX2 single-word kernel whenever AVX2 is detected (`crates/gf2-algebra/src/permanent/bipedal3.rs:190-193`), and the SIMD feature is on by default, so every default build on an AVX2 host takes a path measured at roughly three times the scalar cost. No production code calls the dispatcher today; the penalty is paid by benchmarks, examples and research prototypes, and the campaign harness bypasses it by calling the single-word kernels directly.\n\nThat makes this a repository-hygiene change with a documentation blast radius. Three in-tree sources describe the current selection as intended: the bipedal module and dispatcher documentation, a scalar-versus-AVX2 example header, and a benchmark group labelled as the SIMD path. Changing the selection moves the numbers that benchmark feeds into committed receipts, so leaving the label untouched would leave a receipt describing itself wrongly — the exact failure mode an earlier review cycle in this repository spent rounds correcting.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed benchmark receipt reports per-matrix rates for the scalar kernel, the single-matrix AVX2 kernel, and the batched path at the sizes where one bipedal word suffices, recording seeds, git revision, hardware and toolchain.\n- [hard] REQ-02: `permanent_bipedal3` selects, for a single matrix, the path that receipt measures as faster, so a default build on an AVX2 host no longer pays the single-word SIMD penalty.\n- [hard] REQ-03: Existing callers keep their results: the crate's permanent conformance tests, computer-algebra vector tests, and accelerator-versus-processor equivalence tests pass with their assertions unchanged.\n- [hard] REQ-04: The prose describing the AVX2 single-word kernel as a dispatch-coverage kernel awaiting a batched performance user is corrected wherever it appears — the bipedal module and dispatcher documentation, the scalar-versus-AVX2 example header, and the benchmark group label naming the SIMD path — in this change.\n- [hard] REQ-05: The crate README and crate-level status prose describing the $\\mathbb{F}_3$ permanent entry point agree with the selection this change leaves in place.\n- [hard] REQ-06: Each modified SIMD source file has its sibling assembly artefact regenerated in the same change.\n\n## Notes\n\nThe sampling campaign does not depend on this change, since campaign code calls the single-word kernels directly. It closes a defect every other caller of the public entry point silently pays for.",
+    "type": "enhancement",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "component:gf2-kernels-simd"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review",
+      "asm-artefact-present"
+    ],
+    "depends_on": [
+      "avx2-batched-impl"
+    ],
+    "planning": {
+      "outcome": "Single-matrix callers routed to the measured-faster kernel, with stale prose, benchmark labels and assembly artefacts corrected in the same change",
+      "contract_refs": [],
+      "source_refs": [
+        "G6",
+        "C6",
+        "RC4",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "gf2-algebra permanent callers",
+        "test_boundary": "gf2-algebra dispatcher tests",
+        "worker_sized_reason": "One selection decision with its receipt and prose sweep fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/permanent_campaign/f3-dispatch-rates.csv"
+          ],
+          "touches": [
+            "crates/gf2-algebra/src/permanent/bipedal3.rs",
+            "crates/gf2-algebra/examples/s3_scalar_vs_avx2_sanity.rs",
+            "crates/gf2-algebra/benches/s1_n36_speedup.rs",
+            "crates/gf2-algebra/README.md",
+            "crates/gf2-algebra/src/lib.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "determinant-calibration",
+    "title": "Timing receipt for the determinant companion at campaign sizes",
+    "description": "A committed measurement of the finite-field determinant's cost at campaign sizes beside the permanent's cost at the same sizes, so the companion's marginal expense is a measured ratio rather than an argument from complexity expressions.\n\n## Background\n\nThe companion curve's affordability currently rests on arithmetic, not measurement: elimination is $O(n^3)$ per matrix against the permanent's $\\Theta(n 2^n)$, so the work ratio goes as $n^2 / 2^n$ — roughly $4 \\times 10^{-4}$ at $n = 20$ and $3 \\times 10^{-6}$ at $n = 28$. That is arithmetic on the complexity expressions, and the constant factors, which differ between a bit-sliced Gray-code walk and an elimination over $\\mathbb{F}_q$, are unknown.\n\nThe determinant path exists and is usable: `FieldMatrix::det` (`crates/gf2-core/src/field/inverse.rs:494`) is generic over the finite-field trait and sits below the algebra crate. Existing benchmarks for it cover a different field and much larger sizes — $n \\in \\{64, 256, 1024\\}$ over a Mersenne prime field and a binary extension field — so no committed receipt times it over $\\mathbb{F}_3$, $\\mathbb{F}_5$ or $\\mathbb{F}_7$ at the sizes this campaign uses. The repository requires performance claims to rest on committed measurements, so the companion is timed before it is assumed cheap.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports wall-clock per matrix for the finite-field determinant over $\\mathbb{F}_3$, $\\mathbb{F}_5$ and $\\mathbb{F}_7$ at the sizes the campaign grid reaches for each field, spanning at least $n \\in \\{4, 12, 20\\}$ and each field's frontier size.\n- [hard] REQ-02: The same receipt reports measured permanent cost per matrix at the same $(q, n)$ on a campaign-candidate backend, so the companion's marginal cost is stated as a measured ratio.\n- [hard] REQ-03: The receipt records seeds, git revision, hardware and toolchain, and reports repetition counts with dispersion rather than a single timing.\n- [hard] REQ-04: The receipt states, per cell, whether adding the determinant companion fits the campaign's per-cell wall-clock budget, and names the cells where it does not.\n- [hard] REQ-05: Rate ratios are formed from pooled totals rather than by averaging per-repetition reciprocals.\n- [hard] REQ-06: Where the measured ratio contradicts the complexity-based estimate, both are recorded together with the contradiction.\n\n## Notes\n\nThis work measures cost and changes no evaluation path: the determinant routine, its supporting elimination, and the permanent kernels all exist, and how the companion is wired into a campaign run is a separate concern.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-core",
+      "component:gf2-algebra"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Committed receipt timing the finite-field determinant at campaign sizes against measured permanent cost at the same sizes",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "C11",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign preregistration",
+        "test_boundary": "gf2-algebra benchmark harness",
+        "worker_sized_reason": "One benchmark over two existing routines with one committed receipt fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-algebra/benches/determinant_companion.rs",
+            "dev/benchmarks/permanent_campaign/determinant-cost.csv",
+            "dev/benchmarks/permanent_campaign/README.md"
+          ],
+          "touches": [
+            "crates/gf2-algebra/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "backend-remeasurement",
+    "title": "Re-measurement of contested backend orderings before the freeze",
+    "description": "Replicated timing of the in-tree backend comparisons the feasibility measurements left unresolved, producing the receipted per-$(q,n)$ ordering a frozen campaign backend table can rest on.\n\n## Background\n\nOne cell's ordering is explicitly open. At $q = 3$, $n = 28$ the accelerator path and the intra-matrix parallel path differ by $1.6\\%$ with the parallel path ahead, but each rate is a single cell execution. Within one execution repetitions are very stable — repetition dispersion is $0.12\\%$ for the parallel path and $0.16\\%$ for the accelerator — while across independent executions of one configuration the spread reaches $1.80\\%$ with a median of $0.84\\%$. The gap is therefore comparable to the widest disagreement measured across re-executions, and no ordering is asserted; the feasibility study states that a campaign choosing that cell's backend should re-measure.\n\nA published headline elsewhere in the repository is contradicted by newer measurement of the same configurations: an accelerator speedup of $28.65\\times$ at $n = 24$ and $30.32\\times$ at $n = 28$ reproduces only against a single-thread AVX2 baseline, and restating it against the best measured processor path gives $0.46\\times$ and $0.44\\times$. Any re-measurement touching those configurations records both readings together with the contradiction rather than quietly replacing one with the other.\n\n## Success Criteria\n\n- [hard] REQ-01: The scope is the backends present in the workspace at the time of measurement — scalar, AVX2, batch-parallel, intra-matrix parallel, generic Ryser, and the accelerator batch paths — and the receipt names the set it measured.\n- [hard] REQ-02: The $q = 3$, $n = 28$ comparison between the accelerator path and the intra-matrix parallel path is re-measured over enough independent executions of each configuration to separate a $1.6\\%$ gap from the recorded $1.8\\%$ cross-execution spread, or the receipt states that the two remain unseparated at the replication achieved.\n- [hard] REQ-03: Each measured configuration reports within-execution repetition dispersion and cross-execution dispersion as separate quantities.\n- [hard] REQ-04: Timed windows run under the repository's benchmark host lock, so no other work shares the device or the cores during a measurement.\n- [hard] REQ-05: Rates are composite rates covering draw, pack, evaluate and count, not kernel-only rates, and the receipt says which.\n- [hard] REQ-06: The receipt records seeds, git revision, hardware and toolchain.\n- [hard] REQ-07: The result is stated as a per-$(q,n)$ ordering table over the measured set, with any cell whose ordering remains unresolved marked as unresolved rather than broken by a tie-break the data does not support.\n- [hard] REQ-08: Where a re-measurement contradicts a previously published ordering or speedup, both readings are recorded together with the contradiction.\n\n## Notes\n\nBackends that do not yet exist in the workspace are out of scope here; a backend enters a campaign's selectable set only once a committed measurement covers it at the cells where it would be chosen.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "component:gf2-sim"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Replicated measurements settling the contested q=3 n=28 ordering across the in-tree backend set, receipted for the campaign backend table",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-02",
+        "C12",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign preregistration",
+        "test_boundary": "campaign backend measurement harness",
+        "worker_sized_reason": "One replicated measurement round over existing backends fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/benchmarks/permanent_campaign/backend-ordering.csv"
+          ],
+          "touches": [
+            "dev/benchmarks/permanent_campaign/README.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "protocol-draft",
+    "title": "Scientific preregistration protocol for the campaign",
+    "description": "The preregistration document that fixes what the campaign estimates, on which cells, at what sample sizes, under what error budget, with what failure and exclusion rules — written and committed before any campaign matrix is drawn.\n\n## Background\n\nThe conjecture under study is asymptotic: $\\Pr[\\mathrm{per}(A) = 0] = 1/q + o(1)$ is a statement about $n \\to \\infty$, and no finite grid of $n$ can confirm or contradict it in either direction, since an asymptotic statement is compatible with any finite prefix of the sequence. What finite data can address is the finite-$n$ correction $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ — its sign, its magnitude, and how it varies with $n$ and $q$ — and the pipeline that measures it.\n\nThe proved results bound that quantity far too loosely to substitute for measurement. The floor $\\Pr \\ge 1/q$ holds for every $n$ at odd characteristic; the ceiling $\\Pr \\le 1/q + 11/q^3$ holds for $n \\ge 3$ but sits $0.03$ to $0.41$ above the floor, between one-and-a-half and three-and-a-half orders of magnitude looser than the deviations a campaign can resolve.\n\nPreregistration is what separates this campaign from the by-product statistics that preceded it. Those cells had no fixed sample size and no stopping rule, and one of them — a $q = 7$, $n = 20$ reading $2.30$ standard errors below the floor — is exactly the shape of result that a post-hoc threshold manufactures. An earlier revision of the feasibility study spent its top recommendation chasing an apparent below-floor signal that proved to be two measurement defects plus fluctuation.\n\n## Success Criteria\n\n- [hard] REQ-01: The estimand is stated as $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$ over the measured range, with the explicit record that no finite grid tests an asymptotic statement in either direction.\n- [hard] REQ-02: $N$ per cell is fixed from the measured envelope before any campaign matrix is drawn and is not revised in response to observed values, and no stopping rule is keyed on the observed statistic.\n- [hard] REQ-03: The cell universe names a core processor-feasible grid — all $n$ from $4$ to the per-$q$ frontier, the frontier at a standard error of $10^{-3}$ being $n = 28$ at $q = 3$, $n = 24$ at $q = 5$ and $n = 20$ at $q = 7$, giving $K = 63$ cells — together with any predeclared accelerator-contingent extension cells.\n- [hard] REQ-04: Extension cells either enter the multiplicity accounting with the core grid or are placed in an explicitly gatekept second family whose entry condition is stated before any draw.\n- [hard] REQ-05: A global error budget is allocated numerically across the permanent-floor family and the determinant family, and the per-cell level each family uses follows from that allocation.\n- [hard] REQ-06: Acceptance decisions are specified as exact binomial tests — one-sided against the composite null $\\Pr \\ge 1/q$ evaluated at $p = 1/q$, and two-sided against $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ — with normal-approximation critical values recorded as planning approximations only.\n- [hard] REQ-07: Exclusion and failure rules are predeclared: what halts a cell, what quarantines a shard, what may be rerun, how many attempts are permitted, and how a rerun charges the error budget.\n- [hard] REQ-08: Backend selection is specified as a function of correctness, safety and measured throughput alone, and explicitly never of an observed zero fraction.\n- [hard] REQ-09: The $q = 7$, $n = 20$ cell is committed as the first cell resampled under a preregistered $N$, and the by-product reading motivating that choice stays on the record whatever the resample returns.\n- [hard] REQ-10: The validation plan names the exact enumeration anchors — $q = 3$ up to $n = 4$, $q = 5$ and $q = 7$ up to $n = 3$ — and requires sampler and estimator agreement with them before any estimated cell is believed.\n- [hard] REQ-11: The $q = 3$ arm is framed as reproduction and precision against published numerics, with no wording implying the campaign extends the $q = 3$ curve in $n$.\n- [hard] REQ-12: The convergence-shape comparison is preregistered as a likelihood comparison on observed counts under their binomial sampling distribution, with the range of $n$ over which candidate families are distinguishable reported rather than assumed.\n- [hard] REQ-13: Novelty statements are conditional on the recorded literature search, naming what was searched, what it returned, and that search's stated limits.\n- [hard] REQ-14: The protocol defines a cell's terminal states — executed with a recorded verdict, or halted under the predeclared rule — so a cell that is neither is an incomplete campaign rather than a silent omission.\n\n## Notes\n\nThe protocol is published at the dataset home rather than in an issue-scoped area, since it must outlive the work that produced it and be readable beside the data it governs.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "cites:GGK2025",
+      "cites:HKS2026",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Preregistration fixing estimands, cell universe, error budget, backend rule, exclusion rules and validation plan before the first campaign draw",
+      "contract_refs": [
+        "stream-purpose-namespace"
+      ],
+      "produces_contracts": [
+        "acceptance-test-protocol"
+      ],
+      "source_refs": [
+        "REQ-02",
+        "REQ-03",
+        "REQ-05",
+        "RC5",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign preregistration",
+        "test_boundary": "protocol document review",
+        "worker_sized_reason": "One document stating decisions already grounded in measurement fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/protocol.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "preregistration-freeze",
+    "title": "Frozen root manifest for the campaign",
+    "description": "The immutable root manifest instance for one campaign: the complete cell universe, the sample size per cell, the multiplicity count, the stream purpose namespace, the shard identities, and the backend chosen for each cell — committed before the first campaign matrix is drawn.\n\n## Background\n\nPreregistration only binds if it is instantiated. A protocol states the rules; the manifest states the numbers those rules produce for one campaign, and freezing it is what makes the difference between a fixed sample size and a sample size chosen once the data looked interesting.\n\nThe manifest is also the campaign's single addressing authority. Stream allocation must be structurally disjoint rather than coincidentally so: an earlier round in this problem family allocated sustained runs from a base commensurate with the grid's own allocation, so the two ranges collided in index space and the pooled counts were valid only because no colliding pair happened to share a cell. That was verified rather than designed, and a campaign running twelve hours per cell cannot audit its way out of the same mistake.\n\nEvery backend in the table has to be one whose ordering at that cell rests on committed measurement. Two measurement inputs feed the table: a re-measurement of the backends already present in the workspace, and whichever accelerator configurations a separate accelerator study retains and receipts. A configuration with no committed measurement at the cells where it would be chosen does not enter the table, however promising it looks.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed root manifest instance enumerates the complete $(q, n)$ cell universe, $N$ per cell, the cell count entering the multiplicity adjustment, the stream purpose namespace with each purpose's tag, the shard identities per cell, and the backend selected per cell.\n- [hard] REQ-02: The manifest is committed before the first campaign shard exists, evidenced by repository history.\n- [hard] REQ-03: Every backend named in the table is supported at that cell by a committed measurement, whether from the in-tree backend re-measurement or from a separately receipted accelerator configuration, and a cell whose ordering remains unresolved records the basis on which its backend was nonetheless chosen.\n- [hard] REQ-04: The manifest records the error-budget allocation across both test families and the resulting per-cell level, matching the numbers the protocol fixes.\n- [hard] REQ-05: The determinant companion is either enabled per cell with its measured marginal cost recorded, or disabled at named cells with the measurement that excludes it recorded.\n- [hard] REQ-06: The manifest carries a content hash bound to the campaign id, so a later modification is detectable rather than silent.\n- [hard] REQ-07: The manifest states that adding a cell afterwards requires a restated multiplicity adjustment under a new campaign id rather than reuse of this one.\n- [hard] REQ-08: Stream ranges allocated to distinct purposes and distinct cells are disjoint by construction of the address encoding, not by inspection of the allocated values, and the manifest states the construction and the purpose tags it assigns.\n\n## Notes\n\nThe campaign id is chosen at freeze time and names the dataset directory that every later artefact of this campaign lives under.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "dataset-format",
+      "determinant-calibration",
+      "backend-remeasurement",
+      "protocol-draft"
+    ],
+    "planning": {
+      "outcome": "Immutable root manifest fixing the cell universe, per-cell N, multiplicity, stream purposes, shard identities and backends before the first draw",
+      "contract_refs": [
+        "campaign-dataset-layout",
+        "acceptance-test-protocol",
+        "stream-purpose-namespace"
+      ],
+      "produces_contracts": [
+        "campaign-root-manifest"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6",
+        "INV-7"
+      ],
+      "terminal": {
+        "consumer_family": "campaign arms",
+        "test_boundary": "manifest conformance review",
+        "worker_sized_reason": "One manifest instance assembled from settled inputs fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/manifest.toml"
+          ],
+          "uncertainty": "The campaign id is chosen at freeze time, so the literal directory name under the dataset home is fixed by this work rather than in advance."
+        }
+      }
+    }
+  },
+  {
+    "key": "rank-predicate",
+    "title": "Permanental rank-deficiency predicate with exact validation",
+    "description": "A predicate deciding permanental rank deficiency of a rectangular matrix over $\\mathbb{F}_q$, validated by exhaustive enumeration and by agreement with an independent brute-force routine sharing no code path with it.\n\n## Background\n\nThe rectangular event in the literature is permanental rank deficiency, not the vanishing of a rectangular permanent. For an $n \\times k$ matrix $A$ with $k \\le n$,\n\n$$\n\\mathrm{per\\text{-}rank}(A) < k\n\\iff\n\\text{each } k \\times k \\text{ row submatrix of } A \\text{ has zero permanent},\n$$\n\nso the predicate is a conjunction over the $\\binom{n}{k}$ row subsets. A single scalar \"rectangular permanent\" is not the quantity at all: it can vanish through cancellation while some $k \\times k$ submatrix has nonzero permanent, and it can be nonzero when the rank condition is what one wants to test. Testing the event therefore needs no new numeric kernel — it enumerates row subsets and reuses the existing square kernels, exiting at the first nonzero permanent, which is the overwhelmingly common case.\n\nNo permanental-rank routine exists in the workspace today; the public permanent surface is square-only, exactly seven functions plus three accelerator batch entry points, all taking square matrices.\n\n## Success Criteria\n\n- [hard] REQ-01: A predicate decides, for an $n \\times k$ matrix over $\\mathbb{F}_q$ with $k \\le n$, whether $\\mathrm{per\\text{-}rank}(A) < k$, by testing $k \\times k$ row submatrices and exiting at the first nonzero permanent.\n- [hard] REQ-02: An independent brute-force permanental-rank routine, sharing no code path with the predicate, is available as an oracle.\n- [hard] REQ-03: Exhaustive enumeration over the $q^{nk}$ matrices confirms the predicate and the oracle return the same decision on every matrix for at least $(q,n,k) \\in \\{(3,3,1),(3,3,2),(3,4,2),(5,3,2),(7,3,2)\\}$.\n- [hard] REQ-04: The predicate's decision is correct on hand-constructed matrices covering the boundary cases: a zero row, a zero column, $k = 1$, $k = n$, and a matrix whose scalar rectangular permanent vanishes while a $k \\times k$ submatrix permanent does not.\n- [hard] REQ-05: Documentation states that permanental rank deficiency is the conjunction over row submatrices, and that a vanishing rectangular permanent is a different quantity.\n- [hard] REQ-06: Documentation states that the $(n,k)$ pairs reachable by sampling lie outside the $k \\le 0.1\\sqrt{n}$ hypothesis of the cited theorem, so agreement supports the implementation rather than the theorem in its proven range.\n- [hard] REQ-07: The predicate carries no dependency on statistical machinery: it decides one matrix and reports nothing about rates.\n\n## Notes\n\nThe proved regime is unreachable by direct sampling. The theorem requires $k \\le 0.1\\sqrt{n}$, so even $k = 3$ needs $n \\ge 900$, where the event probability is about $3 \\cdot 3^{-900}$; the predicate's role in the campaign is as a correctness check, not as a test of the theorem.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "satisfies:REQ-04",
+      "cites:GGK2025"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [],
+    "planning": {
+      "outcome": "Permanental rank-deficiency predicate over row submatrices, agreeing with an independent oracle on exhaustive enumeration",
+      "contract_refs": [],
+      "source_refs": [
+        "REQ-04",
+        "G5",
+        "C5",
+        "RC5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign pipeline validation",
+        "test_boundary": "gf2-algebra permanental rank tests",
+        "worker_sized_reason": "One predicate over existing square kernels with its enumeration oracle fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-algebra/src/permanent/rank.rs",
+            "crates/gf2-algebra/tests/permanental_rank.rs"
+          ],
+          "touches": [
+            "crates/gf2-algebra/src/permanent/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rank-event-estimation",
+    "title": "Observable-event rate estimates for permanental rank deficiency",
+    "description": "Stochastic estimates of the permanental rank-deficiency rate at the small $k$ where the event is observable, checked against the values those cases are known to take, together with a measured cost profile for the predicate.\n\n## Background\n\nDirect estimation of permanental rank deficiency is confined to small $k$. At $k = 1$ the event is an all-zero column, with probability exactly $q^{-n}$ — about $169$ events per $10^{7}$ samples at $q = 3$, $n = 10$. At $k = 2$ the predicted rate is about $2q^{-n}$, similarly observable at moderate $n$. Beyond that the event probability falls as $k/q^{n}$ and no Monte Carlo campaign observes it.\n\nThese estimates are a pipeline check rather than a test of the cited theorem, whose hypothesis $k \\le 0.1\\sqrt{n}$ no observable $(n,k)$ satisfies, and they must say so. Their statistical treatment is the small-count regime: event counts are in the tens, where a normal-approximation interval is at its weakest, so exact intervals are used.\n\nThe predicate's cost profile is measured here rather than asserted. Its early exit is the reason testing the event needs no new kernel, and the claim that expected work per matrix is a small constant number of $k \\times k$ permanents rather than $\\binom{n}{k}$ of them is a measurement the repository requires to be receipted.\n\n## Success Criteria\n\n- [hard] REQ-01: An estimate of $\\Pr[\\mathrm{per\\text{-}rank} < k]$ at $k = 1$ over at least three $(q, n)$ cells agrees with the exact $q^{-n}$, with agreement stated as an exact interval containing the exact value at a stated sample size and level.\n- [hard] REQ-02: An estimate at $k = 2$ over at least two $(q, n)$ cells is reported with its exact interval beside the $\\approx 2q^{-n}$ heuristic, and any disagreement is recorded rather than reconciled.\n- [hard] REQ-03: Intervals are exact rather than normal-approximation, since event counts are in the tens.\n- [hard] REQ-04: A committed receipt reports the measured mean number of $k \\times k$ permanent evaluations per matrix at each measured $(q, n, k)$, confirming or contradicting that the early exit keeps expected work a small constant.\n- [hard] REQ-05: The receipt records seeds, stream addresses, sample sizes, git revision, hardware and toolchain, so each estimate is regenerable.\n- [hard] REQ-06: Draws come from a stream purpose distinct from every campaign cell's, so no validation draw can enter a published zero-fraction cell.\n- [hard] REQ-07: The report of these estimates states that the measured $(n,k)$ lie outside the $k \\le 0.1\\sqrt{n}$ hypothesis, so agreement supports the implementation and the $k/q^{n}$ heuristic rather than the theorem in its proven range.\n\n## Notes\n\nAn estimate that disagrees with its known value is a pipeline finding, not a mathematical one, and is recorded as such.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "satisfies:REQ-04",
+      "cites:GGK2025"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "rank-predicate",
+      "stats-intervals"
+    ],
+    "planning": {
+      "outcome": "Estimated deficiency rates at k=1 and k=2 against their known values, with a measured mean evaluation cost per matrix",
+      "contract_refs": [
+        "stream-purpose-namespace"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "G5",
+        "C5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign pipeline validation",
+        "test_boundary": "rank-event estimate receipts",
+        "worker_sized_reason": "One estimation sweep over an existing predicate fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-algebra/tests/permanental_rank_rates.rs",
+            "dev/benchmarks/permanent_campaign/rank-event-rates.csv"
+          ],
+          "touches": [
+            "crates/gf2-algebra/Cargo.toml"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "exact-anchors",
+    "title": "Exact enumeration anchors for the smallest cells",
+    "description": "Exact ground truth for the smallest cells, computed by exhaustive enumeration and living where a campaign can re-run it, with the sampler and the estimator checked against it before any estimated cell is believed.\n\n## Background\n\nFor the smallest sizes the zero fraction is computable exactly by enumerating all $q^{n^2}$ matrices: $q = 3$ up to $n = 4$ ($3^{16} \\approx 4.3 \\times 10^7$), and $q = 5$ and $q = 7$ up to $n = 3$ ($5^9 \\approx 2.0 \\times 10^6$ and $7^9 \\approx 4.0 \\times 10^7$). These give ground truth against which a sampler and an estimator are validated rather than trusted.\n\nAnchors of this kind exist today, but in the wrong place. The order-3 permanent anchor script, the determinant anchor script, their committed outputs, and a standalone anchor-report crate all live under a study directory in an issue-scoped documentation area, so they are archival candidates attached to work that has closed. A campaign that must re-run its anchors needs them in a permanent home.\n\nThe determinant anchor is worth the same treatment and is stronger than the permanent anchor where it applies: the count of invertible $n \\times n$ matrices over $\\mathbb{F}_q$ is $\\prod_{k=0}^{n-1}(q^n - q^k)$, giving the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ at every finite $n$ — for instance $11/27$ at $q = 3$, $n = 2$ and $313/729$ at $n = 3$. Unlike the order-3 permanent anchors, it pins a value at every size the campaign measures.\n\n## Success Criteria\n\n- [hard] REQ-01: Exhaustive enumeration over the $q^{n^2}$ matrices computes $\\Pr[\\mathrm{per}(A) = 0]$ exactly as a rational for $q = 3$ up to $n = 4$, and for $q = 5$ and $q = 7$ up to $n = 3$.\n- [hard] REQ-02: The enumeration lives outside any issue-scoped documentation area and runs from the workspace, so it stays runnable after the study that first produced comparable numbers is archived.\n- [hard] REQ-03: Enumerated permanent values agree with the previously committed order-3 anchor counts for $q \\in \\{3,5,7\\}$, and any disagreement is recorded with both readings.\n- [hard] REQ-04: Exhaustive enumeration reproduces the exact singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ as a rational for at least $(q,n) \\in \\{(3,1),(3,2),(3,3),(5,2),(5,3),(7,2)\\}$.\n- [hard] REQ-05: A sampled estimate at each anchor cell agrees with its exact value within a stated interval at a stated sample size, drawn from a reserved validation stream purpose rather than from any purpose a campaign cell uses.\n- [hard] REQ-06: The cheap enumerations run inside the workspace's fast automated test tier, with the enumerations too large for that tier reachable through an explicitly invoked slower tier.\n\n## Notes\n\nValidation draws are separated from campaign draws by purpose tag, so a timing or correctness fixture can never contribute a matrix to a published cell.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-algebra",
+      "satisfies:REQ-04",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "stats-intervals"
+    ],
+    "planning": {
+      "outcome": "Re-runnable exact zero-fraction enumeration for the smallest cells, with sampler and estimator checked against the exact values",
+      "contract_refs": [
+        "stream-purpose-namespace"
+      ],
+      "source_refs": [
+        "REQ-04",
+        "C10",
+        "INV-7",
+        "RC5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign pipeline validation",
+        "test_boundary": "gf2-algebra exact anchor tests",
+        "worker_sized_reason": "One enumeration routine with its committed anchor values fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-algebra/src/permanent/exact.rs",
+            "crates/gf2-algebra/tests/permanent_exact_anchors.rs",
+            "dev/benchmarks/permanent_campaign/exact-anchors.csv"
+          ],
+          "touches": [
+            "crates/gf2-algebra/src/permanent/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "arm-q5",
+    "title": "Campaign arm for $q = 5$",
+    "description": "Execution of the frozen $q = 5$ cells: drawn from their allocated streams, evaluated on their assigned backends, emitted as dataset shards with a field summary, and driven to a recorded terminal state cell by cell.\n\n## Background\n\nA campaign arm executes cells that a frozen manifest already fixed: the sizes, the sample size per cell, the stream addresses, and the backend are inputs, not decisions taken while running. The arm's job is to draw the matrices those addresses name, evaluate their permanents and the determinant companion where the manifest enables it, pool the counts, and record the terminal state of every cell it is responsible for.\n\nTwo terminal states are admissible for a cell, and no third. A cell is *executed*: drawn at its preregistered $N$ with its acceptance verdict recorded. Or a cell is *halted*: stopped under the campaign's predeclared rule, with the halt, its cause, and the data collected up to that point recorded. A cell that is simply missing — not executed and not halted — is neither a result nor a falsification, and leaves the arm incomplete.\n\nEvery executed cell is checked against the proved floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$. A cell below that floor indicts the pipeline rather than the mathematics and halts the arm for investigation; it is never reported as a scientific finding.\n\nThe scientific reach is bounded by resolution rather than by size. Published $q = 3$ numerics stop being distinguishable from $1/3$ beyond $n = 13$, and this budget's per-cell sample sizes sit between $0.7\\times$ and $2.3\\times$ those across the measured sizes — the same order, not a different regime. Expect the deviation $\\delta(n)$ to be characterised only around $n \\lesssim 14$ to $16$ and bounded above that.\n\nThe $q = 5$ arm is one of the two fields for which a recorded literature search found no published numerics, so its cells are the campaign's novel measurements rather than a reproduction.\n\n## Success Criteria\n\n- [hard] REQ-01: Each $q = 5$ cell named in the frozen manifest reaches a terminal recorded state — executed at its preregistered $N$ with its acceptance verdict recorded, or halted under the predeclared rule with the halt and its cause recorded — and no cell is left in neither state.\n- [hard] REQ-02: The arm draws only from the streams the frozen manifest allocates to it, and runs no cell at an $N$ other than the frozen one and no cell absent from the frozen manifest.\n- [hard] REQ-03: Per-shard records land under this field's shard paths and this field's summary under the campaign id, and the arm writes no file outside its own field's paths.\n- [hard] REQ-04: The field summary states, for each frozen cell of this field, its terminal state, its pooled counts, its estimate with interval, and its acceptance verdict where one was taken.\n- [hard] REQ-05: A halted cell's data and verdict remain in the dataset, and a later run neither removes nor overwrites them.\n- [hard] REQ-06: Records carry the mechanical provenance the dataset schema requires — seeds, git revision, hardware, toolchain — and carry no interpretive commentary.\n- [hard] REQ-07: Cells the manifest places beyond the feasible frontier of $n = 24$ at a standard error of $10^{-3}$ reach their terminal state through the protocol's predeclared exclusion rules, with the determination recorded, rather than through absence.\n- [hard] REQ-08: An interruption of the arm resumes without redrawing or double-counting any committed shard, demonstrated by the resumed run's pooled counts.\n- [hard] REQ-09: Cells at this field are reported as measurements without a published baseline, with the recorded search and its stated limits as the basis for that description.",
+    "type": "simulation",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "preregistration-freeze",
+      "acceptance-checks",
+      "exact-anchors"
+    ],
+    "planning": {
+      "outcome": "Executes the frozen q=5 cells to a recorded terminal state each, emitting shard records and this field's summary",
+      "contract_refs": [
+        "campaign-root-manifest",
+        "acceptance-test-protocol",
+        "campaign-dataset-layout",
+        "shard-record-format",
+        "stream-purpose-namespace",
+        "checkpoint-payload-api"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset consumers",
+        "test_boundary": "per-cell terminal-state records",
+        "worker_sized_reason": "One field's frozen cells run as one supervised campaign execution.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/shards/q5/",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/summaries/q5.csv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "arm-q7",
+    "title": "Campaign arm for $q = 7$",
+    "description": "Execution of the frozen $q = 7$ cells, beginning with the resample of the one by-product cell that read below the proved floor, then the remaining cells to a recorded terminal state each.\n\n## Background\n\nA campaign arm executes cells that a frozen manifest already fixed: the sizes, the sample size per cell, the stream addresses, and the backend are inputs, not decisions taken while running. The arm's job is to draw the matrices those addresses name, evaluate their permanents and the determinant companion where the manifest enables it, pool the counts, and record the terminal state of every cell it is responsible for.\n\nTwo terminal states are admissible for a cell, and no third. A cell is *executed*: drawn at its preregistered $N$ with its acceptance verdict recorded. Or a cell is *halted*: stopped under the campaign's predeclared rule, with the halt, its cause, and the data collected up to that point recorded. A cell that is simply missing — not executed and not halted — is neither a result nor a falsification, and leaves the arm incomplete.\n\nEvery executed cell is checked against the proved floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$. A cell below that floor indicts the pipeline rather than the mathematics and halts the arm for investigation; it is never reported as a scientific finding.\n\nThe scientific reach is bounded by resolution rather than by size. Published $q = 3$ numerics stop being distinguishable from $1/3$ beyond $n = 13$, and this budget's per-cell sample sizes sit between $0.7\\times$ and $2.3\\times$ those across the measured sizes — the same order, not a different regime. Expect the deviation $\\delta(n)$ to be characterised only around $n \\lesssim 14$ to $16$ and bounded above that.\n\nOne $q = 7$ cell is scheduled first for a specific reason. A by-product sample of $17\\,819$ matrices at $n = 20$ read $2.30$ standard errors below $1/7$. It is not a finding: it had no preregistered sample size, and the threshold it exceeds is one the data chose rather than one fixed in advance. The kernel behind it is not in question either — an equivalence check at exactly that field and size returned byte-identical permanents between the accelerator and the generic reference over $512$ matrices. Resampling it under a preregistered $N$ is the only way to learn whether anything is there.\n\nThe packed $\\mathbb{F}_7$ kernel stops at $n = 16$ because its representation fits sixteen lanes in a machine word, so cells above that size depend on the accelerator or the generic routine; the generic routine reaches $0.798$ matrices per second at $n = 24$, which is $4.2$ times too slow for a cell at a standard error of $10^{-3}$ inside the budget.\n\n## Success Criteria\n\n- [hard] REQ-01: Each $q = 7$ cell named in the frozen manifest reaches a terminal recorded state — executed at its preregistered $N$ with its acceptance verdict recorded, or halted under the predeclared rule with the halt and its cause recorded — and no cell is left in neither state.\n- [hard] REQ-02: The arm draws only from the streams the frozen manifest allocates to it, and runs no cell at an $N$ other than the frozen one and no cell absent from the frozen manifest.\n- [hard] REQ-03: Per-shard records land under this field's shard paths and this field's summary under the campaign id, and the arm writes no file outside its own field's paths.\n- [hard] REQ-04: The field summary states, for each frozen cell of this field, its terminal state, its pooled counts, its estimate with interval, and its acceptance verdict where one was taken.\n- [hard] REQ-05: A halted cell's data and verdict remain in the dataset, and a later run neither removes nor overwrites them.\n- [hard] REQ-06: Records carry the mechanical provenance the dataset schema requires — seeds, git revision, hardware, toolchain — and carry no interpretive commentary.\n- [hard] REQ-07: Cells the manifest places beyond the feasible frontier of $n = 20$ at a standard error of $10^{-3}$ reach their terminal state through the protocol's predeclared exclusion rules, with the determination recorded, rather than through absence.\n- [hard] REQ-08: An interruption of the arm resumes without redrawing or double-counting any committed shard, demonstrated by the resumed run's pooled counts.\n- [hard] REQ-09: The $n = 20$ cell is the first cell this arm executes, and the earlier by-product reading is recorded beside the resampled result whatever the resample returns.\n- [hard] REQ-10: Cells at this field are reported as measurements without a published baseline, with the recorded search and its stated limits as the basis for that description.",
+    "type": "simulation",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "preregistration-freeze",
+      "acceptance-checks",
+      "exact-anchors"
+    ],
+    "planning": {
+      "outcome": "Executes the frozen q=7 cells from the resampled n=20 cell onward, each to a recorded terminal state, with this field's summary",
+      "contract_refs": [
+        "campaign-root-manifest",
+        "acceptance-test-protocol",
+        "campaign-dataset-layout",
+        "shard-record-format",
+        "stream-purpose-namespace",
+        "checkpoint-payload-api"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset consumers",
+        "test_boundary": "per-cell terminal-state records",
+        "worker_sized_reason": "One field's frozen cells run as one supervised campaign execution.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/shards/q7/",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/summaries/q7.csv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "arm-q3-reproduction",
+    "title": "Campaign arm for $q = 3$ as reproduction",
+    "description": "Execution of the frozen $q = 3$ cells as an independent reproduction of a published curve at tighter precision at some sizes, each cell driven to a recorded terminal state.\n\n## Background\n\nA campaign arm executes cells that a frozen manifest already fixed: the sizes, the sample size per cell, the stream addresses, and the backend are inputs, not decisions taken while running. The arm's job is to draw the matrices those addresses name, evaluate their permanents and the determinant companion where the manifest enables it, pool the counts, and record the terminal state of every cell it is responsible for.\n\nTwo terminal states are admissible for a cell, and no third. A cell is *executed*: drawn at its preregistered $N$ with its acceptance verdict recorded. Or a cell is *halted*: stopped under the campaign's predeclared rule, with the halt, its cause, and the data collected up to that point recorded. A cell that is simply missing — not executed and not halted — is neither a result nor a falsification, and leaves the arm incomplete.\n\nEvery executed cell is checked against the proved floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$. A cell below that floor indicts the pipeline rather than the mathematics and halts the arm for investigation; it is never reported as a scientific finding.\n\nThe scientific reach is bounded by resolution rather than by size. Published $q = 3$ numerics stop being distinguishable from $1/3$ beyond $n = 13$, and this budget's per-cell sample sizes sit between $0.7\\times$ and $2.3\\times$ those across the measured sizes — the same order, not a different regime. Expect the deviation $\\delta(n)$ to be characterised only around $n \\lesssim 14$ to $16$ and bounded above that.\n\nThe published $q = 3$ curve already reaches $n = 30$ by exact enumeration up to $n = 5$ and Monte Carlo above it. This budget beats that precision at $n = 16$ and $n = 20$, matches it at $n = 12$ and $n = 24$, and falls short at $n = 28$; extension to $n = 30$ misses the per-cell budget by about a third at a standard error of $10^{-3}$ and by two orders of magnitude at $10^{-4}$. What this arm contributes is tighter intervals at two sizes, intervals where the source publishes none, an independently reproducible artefact trail, and a cross-implementation check of a published result through different kernels, a different generator, and different backends.\n\n## Success Criteria\n\n- [hard] REQ-01: Each $q = 3$ cell named in the frozen manifest reaches a terminal recorded state — executed at its preregistered $N$ with its acceptance verdict recorded, or halted under the predeclared rule with the halt and its cause recorded — and no cell is left in neither state.\n- [hard] REQ-02: The arm draws only from the streams the frozen manifest allocates to it, and runs no cell at an $N$ other than the frozen one and no cell absent from the frozen manifest.\n- [hard] REQ-03: Per-shard records land under this field's shard paths and this field's summary under the campaign id, and the arm writes no file outside its own field's paths.\n- [hard] REQ-04: The field summary states, for each frozen cell of this field, its terminal state, its pooled counts, its estimate with interval, and its acceptance verdict where one was taken.\n- [hard] REQ-05: A halted cell's data and verdict remain in the dataset, and a later run neither removes nor overwrites them.\n- [hard] REQ-06: Records carry the mechanical provenance the dataset schema requires — seeds, git revision, hardware, toolchain — and carry no interpretive commentary.\n- [hard] REQ-07: Cells the manifest places beyond the feasible frontier of $n = 28$ at a standard error of $10^{-3}$ reach their terminal state through the protocol's predeclared exclusion rules, with the determination recorded, rather than through absence.\n- [hard] REQ-08: An interruption of the arm resumes without redrawing or double-counting any committed shard, demonstrated by the resumed run's pooled counts.\n- [hard] REQ-09: Records and generated artefacts describe this arm as a reproduction, and none states or implies that the campaign extends the published $q = 3$ curve in $n$.\n- [hard] REQ-10: Each cell with a published counterpart records the published point estimate beside the measured one, and a cell whose interval excludes the published estimate is flagged and preserved with the contradiction rather than reconciled away.",
+    "type": "simulation",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03",
+      "cites:HKS2026",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "preregistration-freeze",
+      "acceptance-checks",
+      "exact-anchors"
+    ],
+    "planning": {
+      "outcome": "Executes the frozen q=3 cells as an independent reproduction, each to a recorded terminal state, with published counterparts recorded",
+      "contract_refs": [
+        "campaign-root-manifest",
+        "acceptance-test-protocol",
+        "campaign-dataset-layout",
+        "shard-record-format",
+        "stream-purpose-namespace",
+        "checkpoint-payload-api"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset consumers",
+        "test_boundary": "per-cell terminal-state records",
+        "worker_sized_reason": "One field's frozen cells run as one supervised campaign execution.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/shards/q3/",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/summaries/q3.csv"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "campaign-finalization",
+    "title": "Deterministic finalization of a completed campaign dataset",
+    "description": "A finalizer that runs once every field has finished: it pools the per-field summaries into the campaign summary, verifies the dataset is complete and internally consistent, and writes the checksum file covering the raw data set.\n\n## Background\n\nField executions run independently and each writes only its own paths, so nothing in the dataset pools across fields while they are running — that is what lets them run concurrently without a shared writer. The pooled campaign summary and the checksum file are therefore campaign-scoped artefacts with exactly one writer, and this is it.\n\nThe checksum boundary matters as much as the checksums. The raw data set — root manifest, shard records, field summaries, and the pooled summary — is what a reader must be able to verify. Derived artefacts such as the analysis report, generated figures, and model-comparison outputs quote those numbers and sometimes quote the checksums themselves, so including them would make the checksum file depend on documents that depend on it. Keeping the boundary explicit avoids that cycle and makes \"verify the data I was given\" a well-defined operation.\n\nFinalization is also the campaign's completeness check. A dataset whose cells are partly executed, partly halted and partly missing is not a finished campaign, and the difference between a halted cell and an absent one is the difference between a recorded falsification and a gap.\n\n## Success Criteria\n\n- [hard] REQ-01: The finalizer pools every field summary into one campaign `summary.csv` carrying, per $(q,n)$, the pooled counts, point estimates with intervals, acceptance verdicts, and the cell's terminal state.\n- [hard] REQ-02: Finalization is deterministic: running it twice on one dataset produces byte-identical outputs, and the pooled result does not depend on the order fields finished or the order files are read.\n- [hard] REQ-03: The finalizer refuses to finalize a dataset in which a cell named by the frozen manifest has no terminal record, naming every such cell.\n- [hard] REQ-04: The finalizer verifies that per-shard records agree with the field summaries that pooled them, and refuses on any disagreement rather than overwriting either.\n- [hard] REQ-05: `checksums.sha256` covers exactly the raw data set — root manifest, shard records, field summaries, and the pooled summary — and covers no derived artefact.\n- [hard] REQ-06: A verification path re-checks a finalized dataset against its checksum file and reports pass or the failing paths.\n- [hard] REQ-07: The finalizer writes only campaign-scoped paths and modifies no field-scoped file, so finalizing cannot alter the data it summarises.\n- [hard] REQ-08: Outputs carry data and mechanical provenance only, with no interpretive statement about what the pooled numbers mean.\n\n## Notes\n\nA campaign that halted under its predeclared rule finalizes normally: the halt is a recorded terminal state, and the resulting dataset is a complete record of a falsified run rather than an incomplete one.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "satisfies:REQ-03"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "arm-q5",
+      "arm-q7",
+      "arm-q3-reproduction"
+    ],
+    "planning": {
+      "outcome": "Post-arm finalizer pooling field summaries into the campaign summary and checksumming the raw data set deterministically",
+      "contract_refs": [
+        "campaign-dataset-layout",
+        "campaign-root-manifest"
+      ],
+      "produces_contracts": [
+        "finalized-campaign-dataset"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "C4",
+        "RC1",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign dataset consumers",
+        "test_boundary": "gf2-sim finalizer tests",
+        "worker_sized_reason": "One pooling step with its completeness checks fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/finalize.rs",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/summary.csv",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/checksums.sha256"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "curve-generation",
+    "title": "Curve and table generation pipeline",
+    "description": "A reusable pipeline that turns any dataset in the campaign's published format into per-cell estimate tables with interval columns, zero-fraction curves against matrix size, and comparison columns against published prior art.\n\n## Background\n\nThe repository already carries a permanent-domain plot generator and a set of reproduction wrappers for this problem family, so figure generation has a precedent to sit beside rather than a convention to invent. What it must add is the discipline the repository requires of every Monte Carlo artefact: each estimate states its sample count and interval, and every plot or table carries error bars or interval columns.\n\nThe comparison against published $q = 3$ numerics is a first-class output rather than a remark. The right comparison is achieved precision, not trial count: matching the published sample sizes is not a goal, resolving $\\delta(n) = p(n) - 1/q$ is. The published table gives point estimates without uncertainty, so supplying a Wilson interval for every cell — including, by reanalysis, for the published counts themselves — is a contribution independent of how many samples any campaign draws.\n\nThis is tooling. It is developed and tested against fixture datasets in the published format, so its correctness does not wait on a campaign finishing, and it can be re-run against any later campaign.\n\n## Success Criteria\n\n- [hard] REQ-01: The pipeline reads a dataset in the campaign's published format and emits, per $(q, n)$, the pooled sample count, the point estimate $\\hat p$, and a $95\\%$ Wilson interval.\n- [hard] REQ-02: Curves of $\\hat p$ against $n$ per field carry interval error bars, and no emitted figure or table states an estimate without its sample count and its interval.\n- [hard] REQ-03: Comparison columns against published $q = 3$ counts carry the published point estimate, a Wilson interval obtained by reanalysis of the published counts, the dataset's own interval, and a precision classification for the cell.\n- [hard] REQ-04: A cell whose interval excludes a published point estimate is flagged in the output rather than smoothed over.\n- [hard] REQ-05: The pipeline refuses a dataset whose checksums do not verify, and refuses a dataset whose cells lack terminal states, rather than plotting from a tree it cannot vouch for.\n- [hard] REQ-06: The pipeline runs from the dataset alone with no value transcribed by hand, and rerunning it against an unchanged dataset reproduces byte-identical outputs.\n- [hard] REQ-07: Emitted figures and tables carry no interpretive text, so the wording of conclusions lives in an analysis narrative rather than in generated artefacts.\n- [hard] REQ-08: Committed fixture datasets in the published format, including one with a halted cell and one with a checksum mismatch, exercise the pipeline's outputs and its refusals in an automated test.\n\n## Notes\n\nOutputs are keyed by campaign id so results from two campaigns never overwrite one another.",
+    "type": "task",
+    "priority": "normal",
+    "labels": [
+      "epic:permanent-statistics",
+      "satisfies:REQ-03",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "stats-intervals",
+      "dataset-format"
+    ],
+    "planning": {
+      "outcome": "Reusable pipeline turning any published-format dataset into per-cell estimate tables, interval columns, curves and prior-art comparisons",
+      "contract_refs": [
+        "campaign-dataset-layout",
+        "shard-record-format"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign analysis readers",
+        "test_boundary": "analysis pipeline fixture tests",
+        "worker_sized_reason": "One analysis script over one settled dataset schema fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "scripts/permanent_zero_fraction_analysis.py",
+            "dev/simulation_results/permanent-zero-fraction/fixtures/"
+          ],
+          "touches": [
+            "dev/simulation_results/permanent-zero-fraction/README.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "curve-materialization",
+    "title": "Published zero-fraction curves and tables for the three fields",
+    "description": "The campaign's published curve and table artefacts: the analysis pipeline run against the finalized dataset to produce, for $q \\in \\{3,5,7\\}$, the empirical zero-fraction curve against matrix size with intervals, and the per-cell tables behind it.\n\n## Background\n\nThe epic's contract is a published dataset *and* published curves with confidence intervals. A dataset and a pipeline that could produce curves are not curves; this is the step that materialises them, so the deliverable exists as committed artefacts a reader can look at rather than as a capability someone could exercise.\n\nMaterialisation is mechanical by construction: the pipeline is tested separately against fixtures, and this work runs it on the finalized dataset and commits what it emits. That separation is what keeps the published artefacts free of hand adjustment — every number in them comes from the dataset through the pipeline.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed curve artefact per field plots $\\hat p(n)$ against $n$ over the cells the campaign executed, with interval error bars on every point.\n- [hard] REQ-02: A committed table per field carries, per $n$, the pooled sample count, $\\hat p$, the interval, the acceptance verdict, and the cell's terminal state.\n- [hard] REQ-03: The $q = 3$ tables carry the prior-art comparison columns, including intervals obtained by reanalysis of the published counts and the precision classification per cell.\n- [hard] REQ-04: Cells that reached a halted terminal state appear in the tables marked as halted rather than being omitted from them.\n- [hard] REQ-05: Every artefact is reproduced byte-identically by rerunning the pipeline against the finalized dataset, with the invocation recorded beside the outputs.\n- [hard] REQ-06: The artefacts carry the campaign id and the dataset checksum they were produced from, so a reader can tie a curve to the data behind it.\n- [hard] REQ-07: The artefacts sit outside the dataset's raw checksum set, as derived products of it.\n\n## Notes\n\nWhere a field's campaign halted before its frontier, the curves show what was measured with the halt visible, which is the campaign's result for that field rather than a shortfall to be hidden.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "satisfies:REQ-03",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-finalization",
+      "curve-generation"
+    ],
+    "planning": {
+      "outcome": "Curve and table artifacts for q=3, q=5 and q=7 materialized from the finalized dataset by the analysis pipeline",
+      "contract_refs": [
+        "finalized-campaign-dataset",
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "external readers of the campaign",
+        "test_boundary": "byte-identical regeneration from the finalized dataset",
+        "worker_sized_reason": "One pipeline run over one finalized dataset with its committed outputs fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/curves/",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/tables/"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "interpretive-report",
+    "title": "Analysis report on the measured zero-fraction curves",
+    "description": "The campaign's analysis report: what the measured curves show at the sizes measured, how they sit against the proved floor and the conjectured limit, what is reproduction and what is new, and what the pipeline's own checks returned.\n\n## Background\n\nThe report is where interpretation lives, and it is the only place it lives: emitted datasets and generated figures carry data and mechanical provenance only. That separation exists because the alternative was measured — an earlier review cycle in this problem family regenerated receipts every time a claim's wording changed, and that was its largest single source of rework.\n\nTwo disciplines constrain the wording. Consistency with $1/q + o(1)$ can only be phrased at the measured sizes, because an asymptotic statement is compatible with any finite prefix of the sequence; and novelty for $q \\in \\{5, 7\\}$ can only be stated conditionally on the recorded literature search, which ran one general web index rather than a bibliographic database and left three close candidate counting papers unread.\n\nThe report also inherits a live contradiction to resolve on the record rather than silently: an accelerator speedup headline of roughly $28$ to $30\\times$ published elsewhere in the repository rests on a single-thread AVX2 baseline, and the same configurations restated against the best measured processor path give $0.46\\times$ at $n = 24$ and $0.44\\times$ at $n = 28$.\n\n## Success Criteria\n\n- [hard] REQ-01: The report states, per field, the measured $\\hat p(n)$ with intervals and the sign and magnitude of $\\delta(n) = \\hat p(n) - 1/q$ over the measured range.\n- [hard] REQ-02: Consistency with $1/q + o(1)$ is phrased at the measured sizes only, with the explicit record that no finite grid confirms or contradicts an asymptotic statement.\n- [hard] REQ-03: The $q = 3$ results are presented as reproduction and precision against the published curve, with no wording implying extension in $n$.\n- [hard] REQ-04: Novelty for $q \\in \\{5,7\\}$ is stated conditionally on the recorded literature search, naming what was searched, what it returned, and that search's stated limits.\n- [hard] REQ-05: A cell whose interval excludes a published point estimate is reported together with the contradiction and its investigation, never reconciled away.\n- [hard] REQ-06: Each acceptance-test failure, each halted cell, and each quarantined shard over the campaign's life is reported, including any that a later admitted rerun passed.\n- [hard] REQ-07: The report distinguishes what the campaign measured from what the cited results prove, in particular that the proved ceiling $1/q + 11/q^{3}$ sits far above the deviations measured.\n- [hard] REQ-08: The determinant companion's agreement with its exact finite-size values is reported per cell as the pipeline validation it is, and any disagreement is reported as a pipeline finding.\n- [hard] REQ-09: Every number in the report traces to a committed artefact recording seeds, git revision, hardware and toolchain, and the report is published at the dataset home beside the data it describes.\n- [hard] REQ-10: Where a repository claim about relative backend performance is contradicted by the measurements this campaign rests on, both readings are recorded together with the contradiction.\n\n## Notes\n\nAn inconclusive result is a result: cells that cannot distinguish $\\hat p(n)$ from $1/q$ are reported as such rather than omitted. The report is a derived artefact and sits outside the dataset's raw checksum set.",
+    "type": "task",
+    "priority": "high",
+    "labels": [
+      "epic:permanent-statistics",
+      "satisfies:REQ-03",
+      "cites:GGK2025",
+      "cites:HKS2026",
+      "cites:Scheinerman2024"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "curve-materialization"
+    ],
+    "planning": {
+      "outcome": "Report assessing the measured curves against the proved floor at the measured sizes, published beside the dataset with conditional novelty claims",
+      "contract_refs": [
+        "finalized-campaign-dataset",
+        "campaign-root-manifest",
+        "acceptance-test-protocol"
+      ],
+      "source_refs": [
+        "REQ-03",
+        "C12",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "external readers of the campaign",
+        "test_boundary": "scientific review of the report",
+        "worker_sized_reason": "One report over one finalized dataset fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/report.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "model-fit",
+    "title": "Convergence-shape model comparison for the deviation term",
+    "description": "A preregistered comparison between candidate shapes for the finite-size deviation $\\delta(n) = \\Pr[\\mathrm{per}(A) = 0] - 1/q$, computed as a likelihood on the observed counts and published as its own artefact.\n\n## Background\n\nThe campaign's measurable target is the shape of $\\delta(n)$, and two families were named in advance as candidates: geometric decay $\\delta \\sim c\\,q^{-\\alpha n}$ and polynomial decay $\\delta \\sim c\\,n^{-\\beta}$. What a campaign can falsify is a model of $\\delta(n)$; what it cannot falsify is either the asymptotic conjecture or the proved floor.\n\nThe comparison is computed on counts rather than on point estimates. Each cell is a binomial observation with a known sample size, so the likelihood of a candidate shape is available directly; fitting point estimates by weighted least squares and comparing by an information criterion discards that structure and misstates the uncertainty, particularly at cells whose counts are small relative to their sample size.\n\nThe honest limit is stated with the result: two families can be told apart only while $|\\delta(n)|$ exceeds a few standard errors at several sizes, and the achievable precision means that range is expected to be roughly $n \\lesssim 14$ to $16$.\n\n## Success Criteria\n\n- [aspirational] REQ-01: Candidate families $\\delta(n) \\sim c\\,q^{-\\alpha n}$ and $\\delta(n) \\sim c\\,n^{-\\beta}$ are compared by a likelihood computed on the observed zero counts under their binomial sampling distribution, not by weighted least squares on point estimates.\n- [aspirational] REQ-02: The comparison specification — families, parameterisation, cells included, and comparison statistic — is fixed before the comparison is run against campaign data.\n- [aspirational] REQ-03: The range of $n$ over which $|\\delta(n)|$ exceeds a stated multiple of its standard error is reported, and no model preference is claimed outside that range.\n- [aspirational] REQ-04: Parameter estimates carry intervals, and the result states whether each family's interval excludes the other family's behaviour.\n- [aspirational] REQ-05: The outcome is recorded whatever it is, including an outcome in which the data do not distinguish the families.\n- [aspirational] REQ-06: The comparison runs from the finalized dataset alone, is rerunnable from it, and records the campaign id and dataset checksum it used.\n- [aspirational] REQ-07: The result is published as its own document with its own fit tables, and modifies no other published artefact.\n\n## Notes\n\nEvery criterion here is aspirational: the deliverable is a characterisation whose informativeness is set by the precision the campaign achieves, which is bounded by measurement rather than by effort.\n\nThis artefact stands alone. A campaign report may cite it where it exists, and is complete without it; nothing in the hard contract waits on this comparison. Like every derived product, it sits outside the dataset's raw checksum set.",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:permanent-statistics",
+      "cites:GGK2025",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "campaign-finalization"
+    ],
+    "planning": {
+      "outcome": "Preregistered likelihood comparison of geometric against polynomial deviation shapes on observed counts, standing as its own artefact",
+      "contract_refs": [
+        "finalized-campaign-dataset",
+        "acceptance-test-protocol"
+      ],
+      "source_refs": [
+        "REQ-05",
+        "INV-6"
+      ],
+      "terminal": {
+        "consumer_family": "campaign analysis readers",
+        "test_boundary": "model comparison rerun from the finalized dataset",
+        "worker_sized_reason": "One preregistered comparison over one finalized dataset fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "scripts/permanent_zero_fraction_model_fit.py",
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/model-fit.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "perm-det-figure",
+    "title": "Permanental against determinantal zero-fraction comparison figure",
+    "description": "A figure per field placing the measured permanent zero fraction beside the measured determinant zero fraction computed on the same drawn matrices, with the exact finite-size singular probability overlaid.\n\n## Background\n\nThe contrast is the point of the whole question. The determinant's zero probability is pinned exactly at every finite size by $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ and tends to a limit around $0.4399$ at $q = 3$, while the permanent's is conjectured to tend to $1/q$ — for $q = 3$ a separation between roughly $0.44$ and $0.33$ that a single figure makes visible in a way a table does not.\n\nTwo framings must not be confused. This figure compares zero fractions, which is what the campaign measures; a whole-distribution uniformity comparison between permanent and determinant values is a different question belonging to separate prior work in this repository.\n\nThe determinant curve is drawn against its exact finite-size values rather than its limit, since the limit overstates the exact value by more than a campaign standard error at the smallest sizes.\n\n## Success Criteria\n\n- [aspirational] REQ-01: A figure per field plots the measured $\\Pr[\\mathrm{per}(A) = 0]$ and $\\Pr[\\det(A) = 0]$ against $n$, both with interval error bars, from the counts the campaign recorded on the same drawn matrices.\n- [aspirational] REQ-02: The exact finite-size singular probability $1 - \\prod_{i=1}^{n}(1 - q^{-i})$ is overlaid, and any asymptotic limit shown is drawn as a distinct asymptote that no measured point is compared against.\n- [aspirational] REQ-03: The figure is generated from the finalized dataset by the committed analysis pipeline, with no hand-entered value.\n- [aspirational] REQ-04: The caption states the sample count per point and the interval level.\n- [aspirational] REQ-05: Cells where the campaign ran without the determinant companion are absent from the determinant series rather than shown as zero.\n- [aspirational] REQ-06: The figure and its caption present a zero-fraction comparison, distinct from a whole-distribution uniformity comparison.\n\n## Notes\n\nEvery criterion here is aspirational: the figure's value depends on the cells the campaign completes for both quantities. It is a derived artefact and sits outside the dataset's raw checksum set.",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:permanent-statistics",
+      "cites:HKS2026"
+    ],
+    "gates": [
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "curve-materialization"
+    ],
+    "planning": {
+      "outcome": "Figure comparing measured permanent and determinant zero fractions from the same matrices, with exact finite-size values overlaid",
+      "contract_refs": [
+        "finalized-campaign-dataset",
+        "campaign-dataset-layout"
+      ],
+      "source_refs": [
+        "REQ-05",
+        "C11"
+      ],
+      "terminal": {
+        "consumer_family": "campaign analysis readers",
+        "test_boundary": "figure regeneration from the finalized dataset",
+        "worker_sized_reason": "One figure family generated by an existing pipeline fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/<campaign-id>/figures/permanent-vs-determinant.png"
+          ],
+          "touches": [
+            "scripts/permanent_zero_fraction_analysis.py"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rare-event-design",
+    "title": "Preregistered rare-event estimator design",
+    "description": "The design document for a rare-event estimator of the permanental rank-deficiency probability: proposal distribution, weighting, the unbiasedness argument, the validation plan, and the stream purposes it will draw from — written before any estimator code exists.\n\n## Background\n\nDirect sampling cannot reach the regime the cited theorem describes. The proved statement requires $k \\le 0.1\\sqrt{n}$, so even $k = 3$ needs $n \\ge 900$, where the deficiency probability is about $k \\cdot q^{-n}$ — of order $3 \\cdot 3^{-900}$, which no Monte Carlo campaign observes at any budget. Direct estimation is confined to $k = 1$, where the event is an all-zero column with probability exactly $q^{-n}$, and $k = 2$, where the predicted rate is about $2q^{-n}$.\n\nAn importance-sampling or splitting estimator can extend that reach, and the danger it introduces is precisely that its output is unfalsifiable by inspection: a biased estimator or an interval with the wrong coverage produces a confident number about an event nobody can otherwise check. Fixing the estimator and its validation plan before writing it is what makes the later demonstration meaningful rather than a search for a configuration that agrees.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The document specifies the proposal distribution and the weighting, in enough detail that two implementers would produce the same estimator.\n- [aspirational] REQ-02: The unbiasedness argument is stated, identifying the conditions the proposal must satisfy for the weighted estimator to be unbiased.\n- [aspirational] REQ-03: The variance behaviour is discussed, including how effective sample size will be reported and what would count as an unusable configuration.\n- [aspirational] REQ-04: The validation plan names the exactly known cases the estimator will be checked against, the number of repeated runs, the nominal interval level, and the criterion by which coverage will be judged adequate.\n- [aspirational] REQ-05: The target $(q, n, k)$ beyond direct sampling's reach is named in advance, with the reason direct sampling cannot reach it stated numerically.\n- [aspirational] REQ-06: A distinct stream purpose is reserved for rare-event draws, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-07: The document states the gap between the regime the estimator targets and the theorem's $k \\le 0.1\\sqrt{n}$ hypothesis numerically.\n\n## Notes\n\nEvery criterion here is aspirational: whether a usable estimator exists for this event at these field orders is itself an open question, and a design concluding that none is available at this budget is a legitimate outcome.",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:permanent-statistics",
+      "cites:GGK2025"
+    ],
+    "gates": [
+      "doc-review",
+      "research-review"
+    ],
+    "depends_on": [
+      "preregistration-freeze",
+      "rank-predicate"
+    ],
+    "planning": {
+      "outcome": "Estimator design fixing proposal distribution, weighting, unbiasedness argument and validation plan before any estimator code exists",
+      "contract_refs": [
+        "campaign-root-manifest",
+        "acceptance-test-protocol",
+        "stream-purpose-namespace"
+      ],
+      "source_refs": [
+        "REQ-06",
+        "G5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign pipeline validation",
+        "test_boundary": "scientific review of the design",
+        "worker_sized_reason": "One design document over a settled predicate fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "dev/simulation_results/permanent-zero-fraction/rare-event-design.md"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "key": "rare-event-validation",
+    "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
+    "description": "The rare-event estimator built to its preregistered design, with unbiasedness and interval coverage demonstrated against exactly known cases, and one estimate produced beyond the reach of direct sampling.\n\n## Background\n\nA rare-event estimator's output cannot be checked by looking at it: the events it estimates are ones direct sampling never observes. Its credibility comes entirely from behaving correctly where the answer is known. At $k = 1$ the deficiency probability is exactly $q^{-n}$ at every $n$, and small $(q, n, k)$ are exhaustively enumerable, which gives a ladder of cases with known answers running from trivially small up to the edge of what direct sampling can reach.\n\nCoverage is a separate property from unbiasedness and is demonstrated separately: an estimator can be unbiased while reporting intervals that contain the true value far less often than their nominal level claims, and it is the interval that a reader of the result will rely on.\n\n## Success Criteria\n\n- [aspirational] REQ-01: The estimator implements the preregistered proposal and weighting, and a test asserts the implemented weights match the specification on hand-checked cases.\n- [aspirational] REQ-02: Unbiasedness is demonstrated against cases whose probability is known exactly, with the estimator's mean over repeated independent runs agreeing with the exact value within its own interval.\n- [aspirational] REQ-03: Interval coverage is demonstrated empirically: over repeated runs at a stated nominal level, the fraction of intervals containing the exact value matches the nominal level within its own binomial interval.\n- [aspirational] REQ-04: A deviation from the preregistered design made during implementation is recorded with its reason, and the validation is judged against the design as amended rather than silently against the new behaviour.\n- [aspirational] REQ-05: The estimator produces an estimate at the preregistered target $(q, n, k)$ beyond direct sampling's reach, reporting its variance and effective sample size there.\n- [aspirational] REQ-06: Draws come from the reserved rare-event stream purpose, so no such draw can enter a published zero-fraction cell.\n- [aspirational] REQ-07: A configuration whose effective sample size falls below the design's usability threshold is reported as unusable rather than as an estimate.\n\n## Notes\n\nEvery criterion here is aspirational. A demonstrated failure to achieve coverage is a recorded result and closes this work honestly; it is not a reason to relax the criterion.",
+    "type": "task",
+    "priority": "low",
+    "labels": [
+      "epic:permanent-statistics",
+      "component:gf2-sim",
+      "cites:GGK2025"
+    ],
+    "gates": [
+      "cargo-ci",
+      "code-review",
+      "doc-review"
+    ],
+    "depends_on": [
+      "rare-event-design",
+      "stats-intervals"
+    ],
+    "planning": {
+      "outcome": "Estimator built to the preregistered design, with unbiasedness and interval coverage shown against exactly known cases",
+      "contract_refs": [
+        "stream-purpose-namespace",
+        "campaign-root-manifest"
+      ],
+      "source_refs": [
+        "REQ-06",
+        "C5"
+      ],
+      "terminal": {
+        "consumer_family": "campaign pipeline validation",
+        "test_boundary": "estimator coverage tests against exact cases",
+        "worker_sized_reason": "One estimator with its coverage demonstration fits one focused cycle.",
+        "footprint": {
+          "creates": [
+            "crates/gf2-sim/src/permanent_campaign/rare_event.rs"
+          ],
+          "touches": [
+            "crates/gf2-sim/src/permanent_campaign/mod.rs"
+          ]
+        }
+      }
+    }
+  }
+]
