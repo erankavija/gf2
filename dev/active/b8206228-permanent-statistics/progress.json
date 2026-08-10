@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 3,
+  "current_wave": 4,
   "waves": [
     {
       "wave_number": 1,
@@ -119,28 +119,28 @@
           "short_id": "5143ee0b",
           "title": "Prototype crate skeleton with the complete candidate registry",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
           "short_id": "76dfd2ff",
           "title": "Mark historical S3/S5 permanent-benchmark receipts as non-authoritative",
           "classification": "documentation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "7edd421d-30a1-41e4-96f6-b46b8beac04d",
           "short_id": "7edd421d",
           "title": "HIP event timing API for device-side kernel spans",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "ddac2d5d-095d-4d0f-8935-f714256c4c64",
           "short_id": "ddac2d5d",
           "title": "Purpose-domain stream address allocator",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
