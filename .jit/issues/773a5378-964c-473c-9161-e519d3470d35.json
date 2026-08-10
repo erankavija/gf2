@@ -9,6 +9,7 @@
   ],
   "description": "The supported GPU architecture set for the study's prototype kernels, stated explicitly and backed by committed compile evidence for each architecture claimed.\n\n## Background\n\nThe architecture scope of the permanent kernels is narrower than the repository's target list suggests. The production kernels are compiled with a single unconditional offload architecture, `gfx1030`. A separate per-architecture code-object pipeline exists and records what compiled through a build manifest consumed by the crate's architecture type, but its only sources today are generated no-op probes, and the generated code-object directory is not tracked in the repository.\n\nA claim of support for an architecture is therefore only as good as the compile evidence behind it. The honest floor for the study is the one architecture its kernels are actually built for; widening that set means adding offload-architecture flags to the prototype crate's build and committing what each build produced.\n\n## Success Criteria\n\n- [hard] REQ-01: The prototype crate's build accepts an explicit set of offload architectures, defaulting to the single architecture the study measured on, so the compiled set is a stated input rather than an incidental one.\n- [hard] REQ-02: A committed artifact records, for each architecture in that set, the compiler invocation and its outcome for every prototype kernel the study retained.\n- [hard] REQ-03: A committed statement names the supported GPU architecture scope for the study's kernels, and every architecture it names has compile evidence in that artifact.\n- [hard] REQ-04: An architecture that fails to compile is recorded with its failure output and excluded from the supported set, rather than dropped silently.\n- [hard] REQ-05: The prototype crate's README states the supported architecture set together with the command that regenerates the compile evidence.\n- [hard] REQ-06: `cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release` passes on a ROCm host for the default architecture set.\n\n## Notes\n\nScope is compile-time architecture evidence. Runtime behaviour on any architecture beyond the measured one is outside this work, and the statement says so.\n\nThe prototype crate sits outside the default Cargo workspace, so the workspace CI pipeline never compiles it; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
   "documents": [],
+  "first_ready_at": "2026-08-10T09:30:15.383982053Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -24,7 +25,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Architecture scope statement with compile evidence",
-  "updated_at": "2026-08-09T11:48:32.447640650Z"
+  "updated_at": "2026-08-10T09:30:15.383982053Z"
 }
