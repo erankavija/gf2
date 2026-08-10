@@ -27,6 +27,7 @@ use crate::{check_hip, ffi, HipError, HIP_ERROR_NOT_READY};
 /// internally, or return the opaque handle.
 pub struct HipStream {
     raw: *mut c_void,
+    device_id: i32,
 }
 
 impl HipStream {
@@ -49,6 +50,14 @@ impl HipStream {
     ///
     /// Returns [`HipError::Hip`] if `hipStreamCreate` fails.
     pub fn new() -> Result<Self, HipError> {
+        let mut device_id = 0;
+        // SAFETY: `device_id` is a valid writable out-pointer. The HIP runtime
+        // writes the currently selected device index on success; recording it
+        // binds this stream's host-side metadata to the device it is created on.
+        check_hip(
+            unsafe { ffi::hip_get_device(&mut device_id) },
+            "hipGetDevice",
+        )?;
         let mut raw: *mut c_void = ptr::null_mut();
         // SAFETY: `hip_stream_create` writes a valid hipStream_t handle to
         // `raw` on success and leaves it untouched on failure. We pass a valid
@@ -57,7 +66,7 @@ impl HipStream {
             unsafe { ffi::hip_stream_create(&mut raw) },
             "hipStreamCreate",
         )?;
-        Ok(Self { raw })
+        Ok(Self { raw, device_id })
     }
 
     /// Returns the raw `hipStream_t` handle for passing to kernel-launch FFI.
@@ -76,6 +85,14 @@ impl HipStream {
     /// ```
     pub fn as_raw(&self) -> *mut c_void {
         self.raw
+    }
+
+    /// Returns the HIP device selected when this stream was created.
+    ///
+    /// Stream-aware allocation paths use this value so their device buffers
+    /// belong to the same device context as the caller-supplied stream.
+    pub fn device_id(&self) -> i32 {
+        self.device_id
     }
 
     /// Blocks the calling host thread until all work on this stream completes.

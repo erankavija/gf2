@@ -238,6 +238,54 @@ extern "C" {
     pub fn hip_stream_synchronize(stream: *mut c_void) -> c_int;
     pub fn hip_stream_query(stream: *mut c_void) -> c_int;
 
+    /// Creates a timing-enabled HIP event and writes its opaque handle to
+    /// `event` on success.
+    ///
+    /// # Safety
+    ///
+    /// `event` must be a valid, writable out-pointer. On success its returned
+    /// handle must be destroyed exactly once with [`hip_event_destroy`].
+    pub fn hip_event_create(event: *mut *mut c_void) -> c_int;
+
+    /// Destroys a timing-enabled HIP event created by [`hip_event_create`].
+    ///
+    /// # Safety
+    ///
+    /// `event` must be a live event handle created by `hip_event_create` that
+    /// has not already been destroyed. It must not be used after this call.
+    pub fn hip_event_destroy(event: *mut c_void) -> c_int;
+
+    /// Records `event` on `stream` (null selects HIP's default stream).
+    ///
+    /// # Safety
+    ///
+    /// `event` must be a live HIP event and `stream` must be a live
+    /// `hipStream_t` or null for the default stream. Both handles must belong
+    /// to the active HIP context.
+    pub fn hip_event_record(event: *mut c_void, stream: *mut c_void) -> c_int;
+
+    /// Non-blockingly queries whether `event` has completed.
+    ///
+    /// # Safety
+    ///
+    /// `event` must be a live HIP event in the active context. It must not be
+    /// concurrently destroyed for the duration of this call.
+    pub fn hip_event_query(event: *mut c_void) -> c_int;
+
+    /// Writes the elapsed device time in milliseconds from `start` to `stop`.
+    ///
+    /// # Safety
+    ///
+    /// `milliseconds` must be a valid writable `f32` out-pointer. `start` and
+    /// `stop` must be live timing-enabled HIP events recorded on the same
+    /// device; callers must establish that `stop` has completed before asking
+    /// for elapsed time.
+    pub fn hip_event_elapsed_time(
+        milliseconds: *mut f32,
+        start: *mut c_void,
+        stop: *mut c_void,
+    ) -> c_int;
+
     // Device selection / introspection.
     pub fn hip_set_device(device_id: c_int) -> c_int;
     pub fn hip_get_device(device_id: *mut c_int) -> c_int;

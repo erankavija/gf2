@@ -15,7 +15,12 @@
 //! The corresponding `.hip` source files are compiled by `build.rs` under
 //! the same condition.
 
+use std::ffi::c_void;
 use std::os::raw::c_int;
+use std::time::{Duration, Instant};
+
+use crate::host::{DeviceBuffer, HipEvent, HipEventSpan, HipStream, PinnedHostBuffer};
+use crate::HipError;
 
 extern "C" {
     /// Compute the permanent of an n×n matrix over GF(3) on the GPU (single matrix).
@@ -39,35 +44,20 @@ extern "C" {
     /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal3_hip(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int;
 
-    /// Compute permanents for a batch of M n×n matrices over GF(3) on the GPU.
+    /// Stream-bearing F_3 batch entry point.
     ///
-    /// Entry point in `hip/permanent/permanent_bipedal3.hip`. Launches one
-    /// HIP block per matrix (grid = M × 1 × 1, block = 1 × 1 × 1); only
-    /// thread 0 of each block executes the Gray walk. GPU parallelism comes
-    /// from M blocks running simultaneously.
+    /// # Safety
     ///
-    /// # Arguments
-    ///
-    /// - `matrices_ptr` — device pointer to `M` consecutive n×n row-major
-    ///   arrays of `u8` elements in GF(3) (values 0, 1, 2). Matrix `i`
-    ///   starts at `matrices_ptr + i * n * n`.
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
-    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal3_singleword` supports n=64 via a u128 counter.
-    /// - `m` — number of matrices (batch size); must be `>= 1`.
-    /// - `out_ptr` — device pointer to `M` consecutive `u64` outputs. On
-    ///   success, `out_ptr[i]` receives the permanent of matrix `i` modulo 3
-    ///   (value in `{0, 1, 2}`).
-    ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-    fn permanent_bipedal3_hip_batch(
+    /// `matrices_ptr` and `out_ptr` must satisfy the same device-allocation
+    /// requirements as `permanent_bipedal3_hip_batch`. `stream` must be a live
+    /// `hipStream_t` in the active context; it may be null only to select HIP's
+    /// default stream. All pointed-to allocations must outlive queued work.
+    fn permanent_bipedal3_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
+        stream: *mut c_void,
     ) -> c_int;
 
     /// Compute the permanent of an n×n matrix over GF(5) on the GPU (single matrix).
@@ -92,36 +82,20 @@ extern "C" {
     /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
     fn permanent_bipedal5_hip(matrix_ptr: *const u8, n: c_int, out_ptr: *mut u64) -> c_int;
 
-    /// Compute permanents for a batch of M n×n matrices over GF(5) on the GPU.
+    /// Stream-bearing F_5 batch entry point.
     ///
-    /// Entry point in `hip/permanent/permanent_bipedal5.hip`. Launches one
-    /// HIP block per matrix (grid = M × 1 × 1, block = 1 × 1 × 1); only
-    /// thread 0 of each block executes the Gray walk. GPU parallelism comes
-    /// from M blocks running simultaneously.
+    /// # Safety
     ///
-    /// # Arguments
-    ///
-    /// - `matrices_ptr` — device pointer to `M` consecutive n×n row-major
-    ///   arrays of `u8` elements in GF(5) (values 0..4). Matrix `i` starts
-    ///   at `matrices_ptr + i * n * n`.
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. This is
-    ///   a GPU-specific limit: the sequential Gray walk at n=64 would require
-    ///   2^64 ≈ 1.8×10^19 steps (~600 years on gfx1030). The CPU reference
-    ///   `permanent_bipedal5_singleword` was narrowed to n ≤ 63 on 2026-05-15
-    ///   for CPU/GPU consistency.
-    /// - `m` — number of matrices (batch size); must be `>= 1`.
-    /// - `out_ptr` — device pointer to `M` consecutive `u64` outputs. On
-    ///   success, `out_ptr[i]` receives the permanent of matrix `i` modulo 5
-    ///   (value in `{0, 1, 2, 3, 4}`).
-    ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-    fn permanent_bipedal5_hip_batch(
+    /// `matrices_ptr` and `out_ptr` must satisfy the same device-allocation
+    /// requirements as `permanent_bipedal5_hip_batch`. `stream` must be a live
+    /// `hipStream_t` in the active context; it may be null only to select HIP's
+    /// default stream. All pointed-to allocations must outlive queued work.
+    fn permanent_bipedal5_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
+        stream: *mut c_void,
     ) -> c_int;
 
     /// Initialize the F_7 GPU LUTs by copying host ADD/SUB/MUL LUTs to device memory.
@@ -148,36 +122,20 @@ extern "C" {
         host_mul_lut: *const u8,
     ) -> c_int;
 
-    /// Compute permanents for a batch of M n×n matrices over GF(7) on the GPU.
+    /// Stream-bearing F_7 batch entry point.
     ///
-    /// Entry point in `hip/permanent/permanent_bipedal7.hip`. Launches one
-    /// HIP block per matrix (grid = M × 1 × 1, block = 1 × 1 × 1); only
-    /// thread 0 of each block executes the Gray walk. GPU parallelism comes
-    /// from M blocks running simultaneously.
+    /// # Safety
     ///
-    /// Uses LUT-based F_7 arithmetic: ADD_LUT/SUB_LUT for column-sum updates,
-    /// MUL_LUT (in __constant__ memory) for the horizontal fold.
-    ///
-    /// # Arguments
-    ///
-    /// - `matrices_ptr` — device pointer to `M` consecutive n×n row-major
-    ///   arrays of `u8` elements in GF(7) (values 0..6). Matrix `i` starts
-    ///   at `matrices_ptr + i * n * n`.
-    /// - `n` — matrix dimension (n×n); must satisfy `1 <= n <= 63`. GPU
-    ///   sequential Gray walk at n=64 would take ~600 years on gfx1030.
-    /// - `m` — number of matrices (batch size); must be `>= 1`.
-    /// - `out_ptr` — device pointer to `M` consecutive `u64` outputs. On
-    ///   success, `out_ptr[i]` receives the permanent of matrix `i` modulo 7
-    ///   (value in `{0, 1, 2, 3, 4, 5, 6}`).
-    ///
-    /// # Returns
-    ///
-    /// 0 on success (`hipSuccess`), a non-zero HIP error code otherwise.
-    fn permanent_bipedal7_hip_batch(
+    /// `matrices_ptr` and `out_ptr` must satisfy the same device-allocation
+    /// requirements as `permanent_bipedal7_hip_batch`. `stream` must be a live
+    /// `hipStream_t` in the active context; it may be null only to select HIP's
+    /// default stream. All pointed-to allocations must outlive queued work.
+    fn permanent_bipedal7_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
+        stream: *mut c_void,
     ) -> c_int;
 
     /// Compute the permanent of an n×n matrix over GF(7) on the GPU (single matrix).
@@ -365,7 +323,35 @@ pub unsafe fn compute_permanent_gf3_batch(
     out_ptr: *mut u64,
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    unsafe { permanent_bipedal3_hip_batch(matrices_ptr, n, m, out_ptr) }
+    // A null stream preserves the original HIP default-stream behaviour.
+    unsafe {
+        compute_permanent_gf3_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
+    }
+}
+
+/// Computes an F_3 permanent batch on a caller-supplied HIP stream.
+///
+/// This is the asynchronous stream-bearing counterpart to
+/// [`compute_permanent_gf3_batch`]. It only enqueues the kernel; the caller
+/// must keep the allocations alive and synchronize or otherwise await the
+/// stream before reading `out_ptr`.
+///
+/// # Safety
+///
+/// - `matrices_ptr` and `out_ptr` must meet the allocation, element-value,
+///   `n`, and `m` requirements of [`compute_permanent_gf3_batch`].
+/// - `stream` must be a live `hipStream_t` in the active HIP context (or null
+///   for HIP's default stream) and all allocations must outlive queued work.
+pub unsafe fn compute_permanent_gf3_batch_on_stream(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+) -> c_int {
+    // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
+    // are forwarded verbatim from this unsafe function's contract.
+    unsafe { permanent_bipedal3_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
 }
 
 /// Compute the F_5 permanent of a single n×n matrix on the GPU.
@@ -482,7 +468,35 @@ pub unsafe fn compute_permanent_gf5_batch(
     out_ptr: *mut u64,
 ) -> c_int {
     // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    unsafe { permanent_bipedal5_hip_batch(matrices_ptr, n, m, out_ptr) }
+    // A null stream preserves the original HIP default-stream behaviour.
+    unsafe {
+        compute_permanent_gf5_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
+    }
+}
+
+/// Computes an F_5 permanent batch on a caller-supplied HIP stream.
+///
+/// This is the asynchronous stream-bearing counterpart to
+/// [`compute_permanent_gf5_batch`]. It only enqueues the kernel; the caller
+/// must keep the allocations alive and synchronize or otherwise await the
+/// stream before reading `out_ptr`.
+///
+/// # Safety
+///
+/// - `matrices_ptr` and `out_ptr` must meet the allocation, element-value,
+///   `n`, and `m` requirements of [`compute_permanent_gf5_batch`].
+/// - `stream` must be a live `hipStream_t` in the active HIP context (or null
+///   for HIP's default stream) and all allocations must outlive queued work.
+pub unsafe fn compute_permanent_gf5_batch_on_stream(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+) -> c_int {
+    // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
+    // are forwarded verbatim from this unsafe function's contract.
+    unsafe { permanent_bipedal5_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
 }
 
 /// Initialize the F_7 GPU LUT tables (ADD, SUB, MUL) from the host static consts.
@@ -731,6 +745,34 @@ pub unsafe fn compute_permanent_gf7_batch(
     m: c_int,
     out_ptr: *mut u64,
 ) -> c_int {
+    // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
+    // A null stream preserves the original HIP default-stream behaviour.
+    unsafe {
+        compute_permanent_gf7_batch_on_stream(matrices_ptr, n, m, out_ptr, std::ptr::null_mut())
+    }
+}
+
+/// Computes an F_7 permanent batch on a caller-supplied HIP stream.
+///
+/// This is the asynchronous stream-bearing counterpart to
+/// [`compute_permanent_gf7_batch`]. The F_7 LUTs must already have been
+/// initialized with [`init_permanent_gf7`]. It only enqueues the kernel; the
+/// caller must keep the allocations alive and synchronize or otherwise await
+/// the stream before reading `out_ptr`.
+///
+/// # Safety
+///
+/// - `matrices_ptr` and `out_ptr` must meet the allocation, element-value,
+///   `n`, and `m` requirements of [`compute_permanent_gf7_batch`].
+/// - `stream` must be a live `hipStream_t` in the active HIP context (or null
+///   for HIP's default stream) and all allocations must outlive queued work.
+pub unsafe fn compute_permanent_gf7_batch_on_stream(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+) -> c_int {
     // The caller is responsible for having called `init_permanent_gf7`
     // (or its underlying FFI `permanent_bipedal7_hip_init`) at least once
     // before invoking this function. If the LUTs are not populated, the
@@ -758,8 +800,9 @@ pub unsafe fn compute_permanent_gf7_batch(
         return init_rc;
     }
 
-    // SAFETY: preconditions forwarded verbatim from the caller (see doc comment).
-    unsafe { permanent_bipedal7_hip_batch(matrices_ptr, n, m, out_ptr) }
+    // SAFETY: all device-pointer, dimension, stream-lifetime, and initialized
+    // LUT preconditions are forwarded from this unsafe function's contract.
+    unsafe { permanent_bipedal7_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
 }
 
 /// Compute the byte-sum checksum of the GPU __constant__ MUL_LUT.
@@ -890,6 +933,345 @@ pub fn init_permanent_gf7_from_slices(
 //   7. Returns the output as `Vec<u64>`. Device memory is freed by `Drop`
 //      on the `DecoderDeviceBuffer` RAII wrappers.
 // ---------------------------------------------------------------------------
+
+/// Prime-specific permanent kernel selected by an instrumented dispatch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PermanentField {
+    /// The packed Bipedal3 F_3 kernel.
+    F3,
+    /// The direct-byte F_5 kernel.
+    F5,
+    /// The LUT-based F_7 kernel. Its LUTs must be initialized first.
+    F7,
+}
+
+/// Device- and host-clock durations from one permanent dispatch.
+///
+/// `h2d`, `kernel`, and `d2h` are device-event spans in execution order on
+/// one HIP stream. A missing optional phase means the boundary did not submit
+/// that phase; it is never encoded as a zero duration. `host_submission` is
+/// measured with [`Instant`] around the host kernel-submit call only, while
+/// `device_submission_to_kernel` is an independent device-event span from the
+/// pre-submit marker to the kernel-start marker. The two clocks are reported
+/// separately and are never subtracted from one another.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PermanentPhaseTimings {
+    /// Device-clock host-to-device transfer duration, if one was submitted.
+    pub h2d: Option<Duration>,
+    /// Device-clock kernel duration, if a kernel was submitted.
+    pub kernel: Option<Duration>,
+    /// Device-clock device-to-host transfer duration, if one was submitted.
+    pub d2h: Option<Duration>,
+    /// Host-clock duration of the `hipLaunchKernelGGL` submission call.
+    pub host_submission: Duration,
+    /// Device-clock duration from the pre-submit stream marker to the kernel
+    /// start marker. It is deliberately distinct from `host_submission`.
+    pub device_submission_to_kernel: Option<Duration>,
+}
+
+/// An event-instrumented permanent kernel launch on a caller-owned stream.
+///
+/// The boundary records its markers on that stream and does not call
+/// `hipDeviceSynchronize`. Poll [`is_complete`](Self::is_complete), synchronize
+/// the caller's stream, then call [`phase_timings`](Self::phase_timings) to
+/// obtain a kernel-only timing. Its H2D and D2H phase fields are `None`, which
+/// explicitly records that this low-level boundary did not submit copies.
+pub struct InstrumentedPermanentLaunch {
+    kernel: HipEventSpan,
+    submission_marker: HipEvent,
+    host_submission: Duration,
+}
+
+impl InstrumentedPermanentLaunch {
+    /// Returns whether the kernel stop event has completed without blocking.
+    pub fn is_complete(&self) -> Result<bool, HipError> {
+        self.kernel.is_complete()
+    }
+
+    /// Returns kernel and launch-overhead timing after completion.
+    ///
+    /// # Errors
+    ///
+    /// Returns `hipErrorNotReady` if the kernel stop event is incomplete. This
+    /// boundary does not report partial device durations.
+    pub fn phase_timings(&self) -> Result<PermanentPhaseTimings, HipError> {
+        let kernel = self.kernel.elapsed()?;
+        let device_submission_to_kernel =
+            self.kernel.elapsed_before_start(&self.submission_marker)?;
+        Ok(PermanentPhaseTimings {
+            h2d: None,
+            kernel: Some(kernel),
+            d2h: None,
+            host_submission: self.host_submission,
+            device_submission_to_kernel: Some(device_submission_to_kernel),
+        })
+    }
+}
+
+/// Enqueues an event-instrumented permanent batch kernel on `stream`.
+///
+/// The returned boundary owns only its HIP event markers. It returns after the
+/// launch is enqueued and never issues a device-wide synchronization. Callers
+/// retain ownership of the device allocations and must keep them alive until
+/// the stop event completes.
+///
+/// # Safety
+///
+/// `matrices_ptr` and `out_ptr` must be valid device allocations of the
+/// required lengths for `field`, with values in that field; `n` must be in
+/// `1..=63`, `m` must be nonzero, and both allocations must remain valid until
+/// the supplied stream has completed the queued kernel. F_7 also requires the
+/// canonical LUTs to have been initialized through [`init_permanent_gf7`].
+pub unsafe fn launch_permanent_batch_instrumented_on_stream(
+    field: PermanentField,
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: &HipStream,
+) -> Result<InstrumentedPermanentLaunch, HipError> {
+    let submission_marker = HipEvent::new()?;
+    let kernel = HipEventSpan::new()?;
+
+    // Put the marker and start event in the same stream before the host
+    // submission call. Their device-clock difference is queue/launch delay,
+    // while the host clock measures the FFI submission call separately.
+    submission_marker.record(stream)?;
+    kernel.record_start(stream)?;
+
+    let submission_started = Instant::now();
+    let code = match field {
+        PermanentField::F3 => {
+            // SAFETY: this function's safety contract guarantees the valid
+            // device ranges, dimensions, and stream/allocation lifetimes that
+            // the F_3 stream-bearing FFI launch requires.
+            unsafe {
+                compute_permanent_gf3_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
+            }
+        }
+        PermanentField::F5 => {
+            // SAFETY: this function's safety contract guarantees the valid
+            // device ranges, dimensions, and stream/allocation lifetimes that
+            // the F_5 stream-bearing FFI launch requires.
+            unsafe {
+                compute_permanent_gf5_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
+            }
+        }
+        PermanentField::F7 => {
+            // SAFETY: this function's safety contract guarantees the valid
+            // device ranges, dimensions, stream/allocation lifetimes, and
+            // initialized F_7 LUTs required by the F_7 stream-bearing launch.
+            unsafe {
+                compute_permanent_gf7_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
+            }
+        }
+    };
+    let host_submission = submission_started.elapsed();
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "permanent batch kernel launch on stream",
+        });
+    }
+
+    kernel.record_stop(stream)?;
+    Ok(InstrumentedPermanentLaunch {
+        kernel,
+        submission_marker,
+        host_submission,
+    })
+}
+
+/// An in-flight permanent dispatch with stream-local timing for H2D, kernel,
+/// and D2H phases.
+///
+/// The boundary owns its buffers so their lifetimes cover all asynchronous
+/// operations. [`finish`](Self::finish) synchronizes only its caller-supplied
+/// stream, not the device, and returns the results with complete event spans.
+pub struct InstrumentedPermanentDispatch<'a> {
+    stream: &'a HipStream,
+    _matrices: DeviceBuffer<u8>,
+    _output: DeviceBuffer<u64>,
+    _input_staging: PinnedHostBuffer<u8>,
+    output_staging: PinnedHostBuffer<u64>,
+    h2d: HipEventSpan,
+    launch: InstrumentedPermanentLaunch,
+    d2h: HipEventSpan,
+}
+
+impl InstrumentedPermanentDispatch<'_> {
+    /// Returns whether the final D2H stop event has completed without blocking.
+    pub fn is_complete(&self) -> Result<bool, HipError> {
+        self.d2h.is_complete()
+    }
+
+    /// Returns all completed phase and launch-overhead timing data.
+    ///
+    /// # Errors
+    ///
+    /// Returns `hipErrorNotReady` if any requested event span is incomplete.
+    pub fn phase_timings(&self) -> Result<PermanentPhaseTimings, HipError> {
+        let launch = self.launch.phase_timings()?;
+        Ok(PermanentPhaseTimings {
+            h2d: Some(self.h2d.elapsed()?),
+            kernel: launch.kernel,
+            d2h: Some(self.d2h.elapsed()?),
+            host_submission: launch.host_submission,
+            device_submission_to_kernel: launch.device_submission_to_kernel,
+        })
+    }
+
+    /// Waits for this dispatch's stream and returns its outputs and timings.
+    ///
+    /// This is a per-stream wait; it does not synchronize unrelated streams or
+    /// the whole HIP device.
+    pub fn finish(self) -> Result<(Vec<u64>, PermanentPhaseTimings), HipError> {
+        self.stream.synchronize()?;
+        let timings = self.phase_timings()?;
+        Ok((self.output_staging.as_slice().to_vec(), timings))
+    }
+}
+
+impl Drop for InstrumentedPermanentDispatch<'_> {
+    fn drop(&mut self) {
+        // Keep the pinned staging and device allocations alive until queued
+        // stream work drains, even when a caller abandons an in-flight handle.
+        // This is stream-local cleanup rather than a device-wide synchronization.
+        let _ = self.stream.synchronize();
+    }
+}
+
+/// Drains a stream before locally owned asynchronous-dispatch storage drops.
+///
+/// Construction code arms this guard immediately before the first async copy.
+/// Any later error return drops it before the local pinned and device buffers
+/// (which were declared first), keeping those allocations alive until HIP no
+/// longer references them. The fully constructed dispatch owns the same
+/// lifetime responsibility, so the guard is disarmed only after that ownership
+/// transfer succeeds.
+struct StreamDrainOnError<'a> {
+    stream: &'a HipStream,
+    armed: bool,
+}
+
+impl<'a> StreamDrainOnError<'a> {
+    fn new(stream: &'a HipStream) -> Self {
+        Self {
+            stream,
+            armed: false,
+        }
+    }
+
+    fn arm(&mut self) {
+        self.armed = true;
+    }
+
+    fn disarm(&mut self) {
+        self.armed = false;
+    }
+}
+
+impl Drop for StreamDrainOnError<'_> {
+    fn drop(&mut self) {
+        if self.armed {
+            // A stream-local wait establishes the lifetime condition documented
+            // by the async-copy APIs before Rust drops the local allocations.
+            let _ = self.stream.synchronize();
+        }
+    }
+}
+
+/// Starts a full H2D/kernel/D2H permanent dispatch with event timing.
+///
+/// Input and output staging are pinned and owned by the returned handle, so
+/// asynchronous copies remain valid until [`InstrumentedPermanentDispatch::finish`]
+/// or the handle is dropped. Every phase uses the supplied stream. The caller
+/// can inspect completion with [`InstrumentedPermanentDispatch::is_complete`]
+/// and receives `hipErrorNotReady` rather than a partial duration before it is
+/// complete.
+///
+/// # Panics
+///
+/// Panics if `n` is outside `1..=63`, `m == 0`, or `host_matrices` does not
+/// contain exactly `m * n * n` bytes.
+pub fn dispatch_permanent_batch_instrumented<'a>(
+    field: PermanentField,
+    host_matrices: &[u8],
+    n: usize,
+    m: usize,
+    stream: &'a HipStream,
+) -> Result<InstrumentedPermanentDispatch<'a>, HipError> {
+    assert!(
+        (1..=63).contains(&n),
+        "dispatch_permanent_batch_instrumented: n must be in 1..=63, got {n}"
+    );
+    assert!(
+        m > 0,
+        "dispatch_permanent_batch_instrumented: m must be nonzero"
+    );
+    assert_eq!(
+        host_matrices.len(),
+        m * n * n,
+        "dispatch_permanent_batch_instrumented: host_matrices.len() ({}) != m * n * n ({})",
+        host_matrices.len(),
+        m * n * n
+    );
+
+    let device_id = stream.device_id();
+    let mut input_staging = PinnedHostBuffer::<u8>::new(host_matrices.len(), device_id)?;
+    input_staging.as_mut_slice().copy_from_slice(host_matrices);
+    let mut output_staging = PinnedHostBuffer::<u64>::new(m, device_id)?;
+    let matrices = DeviceBuffer::<u8>::new(host_matrices.len(), device_id)?;
+    let output = DeviceBuffer::<u64>::new(m, device_id)?;
+    // Declared after the storage it protects, so its Drop runs first on every
+    // post-arm error path and drains the caller stream before these allocations
+    // can be released.
+    let mut drain_on_error = StreamDrainOnError::new(stream);
+
+    let h2d = HipEventSpan::new()?;
+    h2d.record_start(stream)?;
+    // Arm before the HIP submission: even an unusual runtime error reported by
+    // the async-copy call itself cannot leave queued work referring to storage
+    // that is subsequently dropped on this error path.
+    drain_on_error.arm();
+    matrices.copy_from_pinned_async(&input_staging, stream)?;
+    h2d.record_stop(stream)?;
+
+    // SAFETY: `matrices` and `output` are live device buffers of exactly the
+    // required sizes, field validation remains the caller's semantic contract,
+    // n/m were checked above, and the returned handle owns both buffers until
+    // its caller-supplied stream has drained.
+    let launch = unsafe {
+        launch_permanent_batch_instrumented_on_stream(
+            field,
+            matrices.as_ptr() as *const u8,
+            n as c_int,
+            m as c_int,
+            output.as_mut_ptr() as *mut u64,
+            stream,
+        )
+    }?;
+
+    let d2h = HipEventSpan::new()?;
+    d2h.record_start(stream)?;
+    output.copy_to_pinned_async(&mut output_staging, stream)?;
+    d2h.record_stop(stream)?;
+
+    let dispatch = InstrumentedPermanentDispatch {
+        stream,
+        _matrices: matrices,
+        _output: output,
+        _input_staging: input_staging,
+        output_staging,
+        h2d,
+        launch,
+        d2h,
+    };
+    // The handle now owns every allocation and drains its stream on Drop, so
+    // this construction-only guard must not perform a second cleanup wait.
+    drain_on_error.disarm();
+    Ok(dispatch)
+}
 
 /// Run the F_3 permanent GPU kernel on a batch of pre-serialised matrices
 /// and return the results as a host `Vec<u64>`.
