@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave7-curve-pipeline",
+  "claimed_at": "2026-08-10T10:04:24.234720163Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -11,9 +12,16 @@
   "first_ready_at": "2026-08-10T06:34:44.262284396Z",
   "gates_required": [
     "code-review",
-    "doc-review"
+    "doc-review",
+    "cargo-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T10:04:23.923787545Z",
+      "updated_by": null
+    }
+  },
   "id": "c31671ea-8da0-4c11-adfa-bc4ec5cdc49b",
   "labels": [
     "type:task",
@@ -22,7 +30,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Curve and table generation pipeline",
-  "updated_at": "2026-08-10T06:34:44.262284396Z"
+  "updated_at": "2026-08-10T10:04:28.172300350Z"
 }

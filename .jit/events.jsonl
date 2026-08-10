@@ -8013,3 +8013,6 @@
 {"from":"in_progress","id":"e693366a-eb0b-4cad-ab28-d7f8455b1089","issue_id":"773a5378-964c-473c-9161-e519d3470d35","timestamp":"2026-08-10T10:02:48.634281442Z","to":"done","type":"issue_state_changed"}
 {"id":"4ed197ef-0236-43fe-bf33-e9b366782cf4","issue_id":"773a5378-964c-473c-9161-e519d3470d35","timestamp":"2026-08-10T10:02:48.634281442Z","type":"issue_completed"}
 {"fields":["description"],"id":"0e7dfb97-9524-4eb0-baaf-5ad26a6990bc","issue_id":"773a5378-964c-473c-9161-e519d3470d35","timestamp":"2026-08-10T10:02:48.634281442Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"cargo-ci","id":"e4908522-b392-427b-b965-6e95fdb5241c","issue_id":"c31671ea-8da0-4c11-adfa-bc4ec5cdc49b","timestamp":"2026-08-10T10:04:23.923787545Z","type":"gate_added"}
+{"assignee":"agent:wave7-curve-pipeline","id":"17ae4030-9f9f-4af7-9c1f-d1cab5c6ba2b","issue_id":"c31671ea-8da0-4c11-adfa-bc4ec5cdc49b","timestamp":"2026-08-10T10:04:24.234720163Z","type":"issue_claimed"}
+{"from":"ready","id":"759a216a-61d4-46b3-895d-45d13c7a1cac","issue_id":"c31671ea-8da0-4c11-adfa-bc4ec5cdc49b","timestamp":"2026-08-10T10:04:28.172300350Z","to":"in_progress","type":"issue_state_changed"}
