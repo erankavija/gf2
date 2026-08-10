@@ -247,3 +247,27 @@ reserved = {}
 stage = "postcheck"
 title = "Permanent wave prototype checks pass"
 version = 1
+
+[[gates]]
+auto = true
+checker = { command = "cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --offline && cargo fmt --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --all-targets --offline -- -D warnings", env = {}, pass_context = false, timeout_seconds = 600, type = "exec" }
+description = "Run the standalone permanent-sampling-feas release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
+key = "permanent-sampling-feas-ci"
+mode = "auto"
+priority = 100
+reserved = {}
+stage = "postcheck"
+title = "Permanent sampling feasibility checks pass"
+version = 1
+
+[[gates]]
+auto = true
+checker = { command = "cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --features hip --offline && cargo fmt --manifest-path crates/gf2-kernels-hip/Cargo.toml --all -- --check && cargo clippy --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --all-targets --features hip --offline -- -D warnings", env = {}, pass_context = false, timeout_seconds = 900, type = "exec" }
+description = "Run the ROCm-only gf2-kernels-hip release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
+key = "gf2-kernels-hip-ci"
+mode = "auto"
+priority = 100
+reserved = {}
+stage = "postcheck"
+title = "HIP kernel crate checks pass"
+version = 1

@@ -11,9 +11,16 @@
   "first_ready_at": "2026-08-09T11:48:32.447640650Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "gf2-kernels-hip-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "gf2-kernels-hip-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T00:13:45.931146706Z",
+      "updated_by": null
+    }
+  },
   "id": "7edd421d-30a1-41e4-96f6-b46b8beac04d",
   "labels": [
     "type:task",
@@ -25,5 +32,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "HIP event timing API for device-side kernel spans",
-  "updated_at": "2026-08-09T23:20:53.511370190Z"
+  "updated_at": "2026-08-10T00:13:45.931146706Z"
 }

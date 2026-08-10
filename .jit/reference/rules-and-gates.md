@@ -27,10 +27,12 @@
 - **@/gate/criterion-1.5x** — Criterion 1.5x speedup: Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>.
 - **@/gate/doc-review** — Documentation Review: Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material.
 - **@/gate/fmt** — Code formatted: Require cargo fmt to report no formatting drift.
+- **@/gate/gf2-kernels-hip-ci** — HIP kernel crate checks pass: Run the ROCm-only gf2-kernels-hip release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes.
 - **@/gate/holistic-review** — Holistic Container Review: Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants.
 - **@/gate/jit-validate** — Issue Validation: Run declarative validation for the gated issue.
 - **@/gate/lake-build** — Lean4 proofs compile: Require lake build to succeed with no sorry warnings in hand-written proof files.
 - **@/gate/parallelism-pays** — Parallelism speedup demonstrated: Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target.
+- **@/gate/permanent-sampling-feas-ci** — Permanent sampling feasibility checks pass: Run the standalone permanent-sampling-feas release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes.
 - **@/gate/permanent-wave-gpu-ci** — Permanent wave prototype checks pass: Run the standalone permanent-wave-gpu release tests, formatting, Clippy, and ROCm probe build that workspace cargo-ci intentionally excludes.
 - **@/gate/plan-review** — Plan Review: Independently review the linked plan before implementation work fans out.
 - **@/gate/repo-validate** — Repository Validation: Run structural and declarative validation for the whole repository.
