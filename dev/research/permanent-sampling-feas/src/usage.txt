@@ -59,4 +59,7 @@ GRID TIMING COLUMNS
   The five per-phase fields are empty for CPU, unsupported, and unexecuted
   cells (or any path that lacks the instrumented boundary). `phase_timing_note`
   states why; a missing phase is never encoded as zero or substituted with a
-  wall-clock duration.
+  wall-clock duration. If event instrumentation is unavailable but the
+  synchronous `gpu_hip` evaluator succeeds, its same-backend values still
+  contribute to the cell while the phase fields remain empty and the note names
+  the failed timing boundary.

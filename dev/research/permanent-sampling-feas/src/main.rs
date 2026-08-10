@@ -408,7 +408,9 @@ address is (seed_root, q, n, purpose, stream_index)",
 stream wait, D2H, and free. kernel_device_s is the separate device-event kernel-only total; \
 h2d_device_s, d2h_device_s, host_submission_s, and device_submission_to_kernel_s are separate \
 phase totals. No column subtracts host and device timestamps. Empty phase columns carry their \
-reason in phase_timing_note and are never zero-filled or replaced by eval_s"
+reason in phase_timing_note and are never zero-filled or replaced by eval_s. If timing setup \
+fails but synchronous gpu_hip evaluation succeeds, that same-backend result is retained and the \
+note names the unavailable instrumented boundary"
         ),
         format!(
             "single-thread cells pinned to core {PINNED_CORE}; rayon cells use all logical CPUs"

@@ -26,17 +26,12 @@ use gf2_algebra::permanent::permanent_ryser;
 use gf2_core::gfp::Fp;
 use rayon::prelude::*;
 
-#[cfg(feature = "hip")]
-use std::sync::OnceLock;
-
-#[cfg(feature = "hip")]
-static TIMED_GF7_INIT: OnceLock<i32> = OnceLock::new();
-
 /// Phase spans returned by an event-instrumented GPU permanent dispatch.
 ///
 /// Device-event durations and the host duration of submission remain separate:
 /// no field is calculated by combining timestamps from those two clocks. A
-/// non-GPU backend returns [`None`] from [`evaluate_timed`] instead.
+/// non-GPU backend returns [`PhaseTiming::NotApplicable`] from
+/// [`evaluate_timed`] instead.
 #[derive(Clone, Copy, Debug)]
 pub struct GpuPhaseTimings {
     /// Device-clock host-to-device copy span.
@@ -51,13 +46,26 @@ pub struct GpuPhaseTimings {
     pub device_submission_to_kernel: std::time::Duration,
 }
 
-/// Values and, for an instrumented GPU dispatch, separate phase durations.
+/// Whether one evaluation supplied event-measured GPU phase timings.
+#[derive(Clone, Debug)]
+pub enum PhaseTiming {
+    /// Device and host-submission spans from the instrumented GPU boundary.
+    Measured(GpuPhaseTimings),
+    /// Instrumentation failed, but the same synchronous GPU backend returned
+    /// values. The narrative names the failed timing boundary rather than
+    /// presenting its evaluator wall clock as a device measurement.
+    Unavailable(String),
+    /// The backend has no GPU timing boundary.
+    NotApplicable,
+}
+
+/// Values and the availability of per-phase GPU timing data.
 pub struct TimedEvaluation {
     /// One canonical permanent value for every input matrix, in input order.
     pub values: Vec<u64>,
-    /// Event and submission spans for a GPU dispatch, absent for non-GPU
-    /// backends rather than fabricated from their host evaluation wall clock.
-    pub gpu_phase_timings: Option<GpuPhaseTimings>,
+    /// Event timing outcome, which never represents a host evaluation wall
+    /// clock as a device duration.
+    pub phase_timing: PhaseTiming,
 }
 
 /// The measured evaluation paths.
@@ -357,128 +365,124 @@ pub fn evaluate(backend: Backend, batch: &Batch) -> Vec<u64> {
 ///
 /// # Panics
 ///
-/// Propagates the selected backend's input and runtime failures. In particular,
-/// an instrumented GPU evaluation panics when stream creation, F_7 LUT setup,
-/// dispatch, or the stream-local completion wait fails.
+/// Propagates the selected backend's input and runtime failures. An
+/// instrumentation setup or dispatch failure falls back to the synchronous
+/// `gpu_hip` evaluator and returns [`PhaseTiming::Unavailable`]; a failure of
+/// that actual backend evaluation remains explicit.
 pub fn evaluate_timed(backend: Backend, batch: &Batch) -> TimedEvaluation {
     #[cfg(feature = "hip")]
     if backend == Backend::Gpu {
-        return evaluate_gpu_instrumented(batch);
+        return timing_or_same_backend_values(evaluate_gpu_instrumented(batch), || {
+            evaluate(backend, batch)
+        });
     }
 
     TimedEvaluation {
         values: evaluate(backend, batch),
-        gpu_phase_timings: None,
+        phase_timing: PhaseTiming::NotApplicable,
     }
 }
 
 #[cfg(feature = "hip")]
-fn evaluate_gpu_instrumented(batch: &Batch) -> TimedEvaluation {
-    use gf2_algebra::packed::packed7::{ADD_LUT, MUL_LUT, SUB_LUT};
-    use gf2_kernels_hip::host::HipStream;
-    use gf2_kernels_hip::permanent::{
-        dispatch_permanent_batch_instrumented, init_permanent_gf7_from_slices, PermanentField,
+fn evaluate_gpu_instrumented(batch: &Batch) -> Result<TimedEvaluation, String> {
+    use gf2_algebra::gpu::{
+        initialise_permanent_gf7_luts, serialise_permanent_bipedal3,
+        serialise_permanent_packed5, serialise_permanent_packed7,
     };
+    use gf2_kernels_hip::host::HipStream;
+    use gf2_kernels_hip::permanent::{dispatch_permanent_batch_instrumented, PermanentField};
 
     let (field, n, host_matrices) = match batch {
-        Batch::F3(matrices) => (
-            PermanentField::F3,
-            matrices[0].cols(),
-            serialise_bipedal3(matrices),
-        ),
-        Batch::F5(matrices) => (
-            PermanentField::F5,
-            matrices[0].cols(),
-            serialise_packed5(matrices),
-        ),
-        Batch::F7(matrices) => {
-            let rc = *TIMED_GF7_INIT
-                .get_or_init(|| init_permanent_gf7_from_slices(&ADD_LUT, &SUB_LUT, &MUL_LUT));
-            assert_eq!(
-                rc, 0,
-                "instrumented F_7 permanent LUT initialisation failed: {rc}"
-            );
-            (
-                PermanentField::F7,
-                matrices[0].cols(),
-                serialise_packed7(matrices),
-            )
+        Batch::F3(matrices) => {
+            let (host_matrices, n) = serialise_permanent_bipedal3(matrices);
+            (PermanentField::F3, n, host_matrices)
         }
-        _ => panic!("gpu_hip backend requires a packed F_3, F_5, or F_7 batch"),
+        Batch::F5(matrices) => {
+            let (host_matrices, n) = serialise_permanent_packed5(matrices);
+            (PermanentField::F5, n, host_matrices)
+        }
+        Batch::F7(matrices) => {
+            initialise_permanent_gf7_luts()
+                .map_err(|rc| format!("F_7 LUT timing setup returned HIP error {rc}"))?;
+            let (host_matrices, n) = serialise_permanent_packed7(matrices);
+            (PermanentField::F7, n, host_matrices)
+        }
+        _ => return Err("GPU timing requires a packed F_3, F_5, or F_7 batch".to_string()),
     };
 
-    let stream = HipStream::new().expect("create HIP stream for instrumented permanent dispatch");
+    let stream = HipStream::new()
+        .map_err(|error| format!("create instrumented permanent stream: {error}"))?;
     let dispatch =
         dispatch_permanent_batch_instrumented(field, &host_matrices, n, batch.len(), &stream)
-            .expect("start instrumented permanent dispatch");
+            .map_err(|error| format!("start instrumented permanent dispatch: {error}"))?;
     let (values, timings) = dispatch
         .finish()
-        .expect("finish instrumented permanent dispatch");
+        .map_err(|error| format!("finish instrumented permanent dispatch: {error}"))?;
     let timings = GpuPhaseTimings {
         h2d: timings
             .h2d
-            .expect("instrumented permanent dispatch must include H2D"),
+            .ok_or_else(|| "instrumented permanent dispatch omitted H2D timing".to_string())?,
         kernel: timings
             .kernel
-            .expect("instrumented permanent dispatch must include a kernel"),
+            .ok_or_else(|| "instrumented permanent dispatch omitted kernel timing".to_string())?,
         d2h: timings
             .d2h
-            .expect("instrumented permanent dispatch must include D2H"),
+            .ok_or_else(|| "instrumented permanent dispatch omitted D2H timing".to_string())?,
         host_submission: timings.host_submission,
         device_submission_to_kernel: timings
             .device_submission_to_kernel
-            .expect("instrumented permanent dispatch must include submission-to-kernel"),
+            .ok_or_else(|| {
+                "instrumented permanent dispatch omitted submission-to-kernel timing".to_string()
+            })?,
     };
-    TimedEvaluation {
+    Ok(TimedEvaluation {
         values,
-        gpu_phase_timings: Some(timings),
+        phase_timing: PhaseTiming::Measured(timings),
+    })
+}
+
+#[cfg(any(feature = "hip", test))]
+fn timing_or_same_backend_values(
+    instrumented: Result<TimedEvaluation, String>,
+    fallback_values: impl FnOnce() -> Vec<u64>,
+) -> TimedEvaluation {
+    match instrumented {
+        Ok(evaluation) => evaluation,
+        Err(reason) => TimedEvaluation {
+            values: fallback_values(),
+            phase_timing: PhaseTiming::Unavailable(format!(
+                "event timing unavailable: {reason}; values came from synchronous gpu_hip dispatch"
+            )),
+        },
     }
-}
-
-/// Serialise one F_3 packed batch to the permanent kernels' row-major byte ABI.
-///
-/// This is deliberately local to the research-only instrumented adapter. The
-/// production GPU adapter owns its ordinary one-shot serialisation, while this
-/// boundary must retain the raw byte buffer until the asynchronous dispatch
-/// finishes.
-#[cfg(feature = "hip")]
-fn serialise_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<u8> {
-    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
-        matrix.get(row, column).value() as u8
-    })
-}
-
-/// Serialise one F_5 packed batch to the permanent kernels' row-major byte ABI.
-#[cfg(feature = "hip")]
-fn serialise_packed5(matrices: &[Packed5Matrix]) -> Vec<u8> {
-    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
-        matrix.get(row, column).value() as u8
-    })
-}
-
-/// Serialise one F_7 packed batch to the permanent kernels' row-major byte ABI.
-#[cfg(feature = "hip")]
-fn serialise_packed7(matrices: &[Packed7Matrix]) -> Vec<u8> {
-    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
-        matrix.get(row, column).value() as u8
-    })
-}
-
-#[cfg(feature = "hip")]
-fn serialise_rows<M>(matrices: &[M], n: usize, entry: impl Fn(&M, usize, usize) -> u8) -> Vec<u8> {
-    let mut bytes = Vec::with_capacity(matrices.len() * n * n);
-    for matrix in matrices {
-        for row in 0..n {
-            for column in 0..n {
-                bytes.push(entry(matrix, row, column));
-            }
-        }
-    }
-    bytes
 }
 
 /// Count the matrices in `values` whose permanent is zero.
 #[must_use]
 pub fn count_zeros(values: &[u64]) -> u64 {
     values.iter().filter(|&&v| v == 0).count() as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn timing_failure_keeps_same_backend_values_with_a_reason() {
+        let evaluation = timing_or_same_backend_values(
+            Err("create instrumented permanent stream: no HIP device".to_string()),
+            || vec![2, 0, 1],
+        );
+
+        assert_eq!(evaluation.values, vec![2, 0, 1]);
+        match evaluation.phase_timing {
+            PhaseTiming::Unavailable(reason) => {
+                assert!(reason.contains("create instrumented permanent stream"));
+                assert!(reason.contains("synchronous gpu_hip dispatch"));
+            }
+            PhaseTiming::Measured(_) | PhaseTiming::NotApplicable => {
+                panic!("timing failure must remain unavailable")
+            }
+        }
+    }
 }

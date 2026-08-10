@@ -9,7 +9,7 @@
 //! so agreement on a zero *count* while disagreeing on individual values would
 //! still be a defect.
 
-use crate::backend::{evaluate, support, Backend, Batch, Support};
+use crate::backend::{evaluate, evaluate_timed, support, Backend, Batch, PhaseTiming, Support};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::packed::packed5::Packed5Matrix;
@@ -166,24 +166,31 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
                     row.matrices = 0;
                     row.status = "unsupported: AVX2 not detected at runtime".to_string();
                 } else {
-                    let got = evaluate(
-                        backend,
-                        if backend == Backend::RyserGeneric {
-                            &raw
-                        } else {
-                            &batch
-                        },
-                    );
+                    let backend_batch = if backend == Backend::RyserGeneric {
+                        &raw
+                    } else {
+                        &batch
+                    };
+                    let (got, timing_note) = if backend == Backend::Gpu {
+                        let evaluation = evaluate_timed(backend, backend_batch);
+                        let timing_note = match evaluation.phase_timing {
+                            PhaseTiming::Unavailable(reason) => Some(reason),
+                            PhaseTiming::Measured(_) | PhaseTiming::NotApplicable => None,
+                        };
+                        (evaluation.values, timing_note)
+                    } else {
+                        (evaluate(backend, backend_batch), None)
+                    };
                     row.mismatches = reference
                         .iter()
                         .zip(got.iter())
                         .filter(|(a, b)| a != b)
                         .count();
                     row.zeros_backend = crate::backend::count_zeros(&got);
-                    row.status = if row.mismatches == 0 {
-                        "identical".to_string()
-                    } else {
-                        "MISMATCH".to_string()
+                    row.status = match (row.mismatches, timing_note) {
+                        (0, Some(reason)) => format!("identical; {reason}"),
+                        (0, None) => "identical".to_string(),
+                        (_, _) => "MISMATCH".to_string(),
                     };
                 }
             }
@@ -371,5 +378,20 @@ independent expansion counted {independent}"
                 assert_eq!(row.zeros_reference, row.zeros_backend);
             }
         }
+    }
+
+    /// The equivalence command compares the values the timed GPU path emits,
+    /// including its same-backend fallback when event instrumentation is not
+    /// available on an otherwise working GPU dispatch.
+    #[cfg(feature = "hip")]
+    #[test]
+    fn timed_gpu_values_match_the_reference() {
+        let row = check(3, 3, 8, 0xB488_F02C)
+            .into_iter()
+            .find(|row| row.backend == Backend::Gpu.name())
+            .expect("GPU row when the HIP feature is enabled");
+        assert_eq!(row.mismatches, 0, "status={}", row.status);
+        assert_eq!(row.zeros_reference, row.zeros_backend, "status={}", row.status);
+        assert!(row.status.starts_with("identical"), "status={}", row.status);
     }
 }
