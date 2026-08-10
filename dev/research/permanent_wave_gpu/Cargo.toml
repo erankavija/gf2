@@ -15,6 +15,11 @@ name = "wave-gf3-device-evidence"
 path = "src/bin/wave_gf3_device_evidence.rs"
 required-features = ["hip", "fixture-oracle"]
 
+[[bin]]
+name = "f5-wave-device-evidence"
+path = "src/bin/f5_wave_device_evidence.rs"
+required-features = ["hip", "fixture-oracle"]
+
 [features]
 default = ["fixture-oracle"]
 # The deterministic fixture corpus deliberately reuses the feasibility
