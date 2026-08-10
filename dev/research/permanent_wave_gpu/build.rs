@@ -25,21 +25,30 @@ fn main() {
     let rocm_path = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_owned());
     let hipcc = Path::new(&rocm_path).join("bin/hipcc");
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("Cargo supplies OUT_DIR"));
-    let f7_equivalence = hip_root.join("f7_three_plane_equivalence.hip");
-
+    let shared_mapping = hip_root.join("wave_ryser_mapping.h");
+    assert!(
+        shared_mapping.is_file(),
+        "the HIP feature requires {}",
+        shared_mapping.display()
+    );
+    println!("cargo:rerun-if-changed={}", shared_mapping.display());
     for source in sources {
         println!("cargo:rerun-if-changed={}", source.display());
         compile_hip_source(&hipcc, &out_dir, &source);
     }
-    assert!(
-        f7_equivalence.is_file(),
-        "the HIP feature requires {}",
-        f7_equivalence.display()
+    publish_hip_executable(
+        &hipcc,
+        &out_dir,
+        &hip_root.join("f7_three_plane_equivalence.hip"),
+        "f7_three_plane_equivalence",
+        "PERMANENT_WAVE_GPU_F7_EQUIVALENCE_BIN",
     );
-    let executable = compile_hip_executable(&hipcc, &out_dir, &f7_equivalence);
-    println!(
-        "cargo:rustc-env=PERMANENT_WAVE_GPU_F7_EQUIVALENCE_BIN={}",
-        executable.display()
+    publish_hip_executable(
+        &hipcc,
+        &out_dir,
+        &hip_root.join("wave_gf3_equivalence.hip"),
+        "wave_gf3_equivalence",
+        "PERMANENT_WAVE_GPU_WAVE_GF3_EQUIVALENCE_BIN",
     );
 }
 
@@ -65,8 +74,19 @@ fn compile_hip_source(hipcc: &Path, out_dir: &Path, source: &Path) {
     );
 }
 
-fn compile_hip_executable(hipcc: &Path, out_dir: &Path, source: &Path) -> PathBuf {
-    let executable = out_dir.join("f7_three_plane_equivalence");
+fn publish_hip_executable(
+    hipcc: &Path,
+    out_dir: &Path,
+    source: &Path,
+    executable_name: &str,
+    environment_name: &str,
+) {
+    assert!(
+        source.is_file(),
+        "the HIP feature requires {}",
+        source.display()
+    );
+    let executable = out_dir.join(executable_name);
     let status = Command::new(hipcc)
         .args(["--offload-arch=gfx1030", "-O3"])
         .arg(source)
@@ -80,7 +100,10 @@ fn compile_hip_executable(hipcc: &Path, out_dir: &Path, source: &Path) -> PathBu
         hipcc.display(),
         source.display()
     );
-    executable
+    println!(
+        "cargo:rustc-env={environment_name}={}",
+        executable.display()
+    );
 }
 
 fn collect_hip_sources(directory: &Path) -> Vec<PathBuf> {
