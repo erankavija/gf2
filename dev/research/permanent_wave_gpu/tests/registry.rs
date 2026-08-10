@@ -22,6 +22,8 @@ fn every_planned_path_is_addressable_with_explicit_status() {
             path,
             MeasurementPath::WaveGf3
                 | MeasurementPath::FoldGf3
+                | MeasurementPath::F5ByteControl
+                | MeasurementPath::F5ThreePlane
                 | MeasurementPath::F7ThreePlaneAccumulator
         ) {
             path.dispatch()
