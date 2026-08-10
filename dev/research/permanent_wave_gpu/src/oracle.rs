@@ -242,7 +242,8 @@ impl EquivalenceReport {
 /// than with an aggregate zero count.
 #[must_use]
 pub fn check_registered_candidates(corpus: &FixtureCorpus) -> EquivalenceReport {
-    check_with_evaluator(corpus, |path, fixture| path.evaluate(fixture))
+    let fixtures: Vec<_> = corpus.fixtures().iter().collect();
+    check_with_evaluator(&fixtures, |path, fixture| path.evaluate(fixture))
 }
 
 /// One packed CPU reference row checked against the generic Ryser oracle.
@@ -305,7 +306,8 @@ impl CpuReferenceRow {
 /// corresponding exponential oracle work.
 #[must_use]
 pub fn check_cpu_reference_paths(corpus: &FixtureCorpus, max_n: usize) -> Vec<CpuReferenceRow> {
-    let mut cells = corpus_cells(corpus);
+    let fixtures: Vec<_> = corpus.fixtures().iter().collect();
+    let mut cells = corpus_cells(&fixtures);
     let mut rows = Vec::new();
     for ((q, n), fixtures) in &mut cells {
         if *n > max_n {
@@ -336,11 +338,11 @@ pub fn check_cpu_reference_paths(corpus: &FixtureCorpus, max_n: usize) -> Vec<Cp
     rows
 }
 
-fn check_with_evaluator<F>(corpus: &FixtureCorpus, mut evaluate: F) -> EquivalenceReport
+fn check_with_evaluator<F>(fixtures: &[&Fixture], mut evaluate: F) -> EquivalenceReport
 where
     F: FnMut(MeasurementPath, &Fixture) -> EvaluationResult,
 {
-    let cells = corpus_cells(corpus);
+    let cells = corpus_cells(fixtures);
     let mut candidate_cells = Vec::new();
     for path in MeasurementPath::ALL {
         for ((q, n), fixtures) in &cells {
@@ -401,13 +403,13 @@ where
     }
 }
 
-fn corpus_cells(corpus: &FixtureCorpus) -> BTreeMap<(u64, usize), Vec<&Fixture>> {
+fn corpus_cells<'a>(fixtures: &[&'a Fixture]) -> BTreeMap<(u64, usize), Vec<&'a Fixture>> {
     let mut cells = BTreeMap::new();
-    for fixture in corpus.fixtures() {
+    for fixture in fixtures {
         cells
             .entry((fixture.q(), fixture.n()))
             .or_insert_with(Vec::new)
-            .push(fixture);
+            .push(*fixture);
     }
     cells
 }
@@ -499,13 +501,146 @@ fn packed_reference_for(q: u64, n: usize) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeSet;
+
     use crate::fixtures::DEFAULT_FIXTURE_SEED;
     use crate::Unsupported;
+
+    fn parity_shard(corpus: &FixtureCorpus, shard: usize) -> Vec<&Fixture> {
+        corpus
+            .fixtures()
+            .iter()
+            .enumerate()
+            .filter_map(|(index, fixture)| (index % 2 == shard).then_some(fixture))
+            .collect()
+    }
+
+    fn assert_parity_shards_partition_the_corpus(corpus: &FixtureCorpus) {
+        let first: BTreeSet<_> = parity_shard(corpus, 0)
+            .into_iter()
+            .map(Fixture::id)
+            .collect();
+        let second: BTreeSet<_> = parity_shard(corpus, 1)
+            .into_iter()
+            .map(Fixture::id)
+            .collect();
+        let complete: BTreeSet<_> = corpus.fixtures().iter().map(Fixture::id).collect();
+
+        assert!(first.is_disjoint(&second));
+        assert_eq!(first.len() + second.len(), complete.len());
+        assert_eq!(
+            first.union(&second).copied().collect::<BTreeSet<_>>(),
+            complete
+        );
+    }
+
+    fn assert_candidate_report_semantics(report: &EquivalenceReport) {
+        assert_eq!(
+            report.candidate_cells().len(),
+            MeasurementPath::ALL.len() * report.path_frequencies().len(),
+            "every registered candidate must receive one result per retained corpus cell"
+        );
+        for row in report.candidate_cells() {
+            assert_eq!(row.reference(), "permanent_ryser");
+            assert_eq!(
+                row.mismatch_count(),
+                0,
+                "{} q={} n={} first={:?}",
+                row.candidate(),
+                row.q(),
+                row.n(),
+                row.first_mismatch_fixture_id()
+            );
+            assert_eq!(
+                row.secondary_reference_mismatch_count(),
+                0,
+                "{} q={} n={} packed reference must agree with Ryser",
+                row.candidate(),
+                row.q(),
+                row.n()
+            );
+            match row.status() {
+                CandidateCellStatus::Identical => {
+                    assert!(row.compared_count() > 0);
+                    assert!(row.unavailable_reason().is_none());
+                }
+                CandidateCellStatus::Unavailable { .. } => {
+                    assert_eq!(row.compared_count(), 0);
+                    assert!(row
+                        .unavailable_reason()
+                        .is_some_and(|reason| !reason.is_empty()));
+                }
+                CandidateCellStatus::PartiallyUnavailable { .. } => {
+                    assert!(row.compared_count() > 0);
+                    assert!(row
+                        .unavailable_reason()
+                        .is_some_and(|reason| !reason.is_empty()));
+                }
+                CandidateCellStatus::Mismatch => panic!(
+                    "{} q={} n={} disagreed with the CPU oracle at {:?}",
+                    row.candidate(),
+                    row.q(),
+                    row.n(),
+                    row.first_mismatch_fixture_id()
+                ),
+            }
+        }
+        for n in [20, 24] {
+            let rows: Vec<_> = report
+                .candidate_cells()
+                .iter()
+                .filter(|row| row.q() == 7 && row.n() == n)
+                .collect();
+            assert_eq!(rows.len(), MeasurementPath::ALL.len());
+            assert!(rows.iter().all(|row| {
+                row.reference() == "permanent_ryser" && row.secondary_reference().is_none()
+            }));
+        }
+        for n in [16, 20, 24] {
+            let accumulator = report
+                .candidate_cells()
+                .iter()
+                .find(|row| {
+                    row.candidate() == "f7-three-plane-accumulator" && row.q() == 7 && row.n() == n
+                })
+                .expect("each shard must retain every required F_7 order");
+            assert_eq!(accumulator.status(), &CandidateCellStatus::Identical);
+            assert_eq!(accumulator.compared_count(), accumulator.matrix_count());
+        }
+        for frequency in report.path_frequencies() {
+            assert!(frequency.expectations_are_complements());
+            assert!(frequency.zero_fast_expectation().starts_with("1 - "));
+            assert!(frequency.slow_expectation().starts_with('('));
+            assert_eq!(
+                frequency.observed_zero_fast_count() + frequency.observed_slow_count(),
+                frequency.observations()
+            );
+        }
+    }
+
+    fn assert_registered_candidate_parity_shard(shard: usize) {
+        let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
+        assert_parity_shards_partition_the_corpus(&corpus);
+        let fixtures = parity_shard(&corpus, shard);
+        let report = check_with_evaluator(&fixtures, |path, fixture| path.evaluate(fixture));
+        assert_candidate_report_semantics(&report);
+    }
+
+    #[test]
+    fn registered_candidates_shard_even_is_oracle_identical() {
+        assert_registered_candidate_parity_shard(0);
+    }
+
+    #[test]
+    fn registered_candidates_shard_odd_is_oracle_identical() {
+        assert_registered_candidate_parity_shard(1);
+    }
 
     #[test]
     fn checker_counts_the_first_per_matrix_mismatch() {
         let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
-        let report = check_with_evaluator(&corpus, |_path, fixture| {
+        let fixtures: Vec<_> = corpus.fixtures().iter().collect();
+        let report = check_with_evaluator(&fixtures, |_path, fixture| {
             if fixture.n() <= 1 {
                 Ok(0)
             } else {
@@ -526,7 +661,8 @@ mod tests {
     #[test]
     fn checker_accepts_an_executable_candidate_that_matches_ryser() {
         let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
-        let report = check_with_evaluator(&corpus, |_path, fixture| {
+        let fixtures: Vec<_> = corpus.fixtures().iter().collect();
+        let report = check_with_evaluator(&fixtures, |_path, fixture| {
             if fixture.n() == 1 {
                 Ok(oracle_value(fixture))
             } else {
