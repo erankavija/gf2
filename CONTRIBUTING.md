@@ -14,7 +14,7 @@ workflow all live there. This file is only the contributor entry point.
 - Confirm dependencies and required gates before changing code.
 
 The core project invariants are addressable JIT registry items. In particular,
-changes must preserve `@/inv/bitvec-tail-padding`,
+changes must preserve
 `@/inv/canonical-bit-indexing`, `@/inv/finite-field-laws`,
 `@/inv/standards-vector-conformance`,
 `@/inv/backend-behavioral-equivalence`,

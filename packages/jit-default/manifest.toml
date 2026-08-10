@@ -208,7 +208,9 @@ identity = "requirement"
 
 [contribution.value]
 section = "success_criteria"
-id-pattern = "[A-Z][A-Z0-9]*-[0-9]+"
+# gf2 fork of the upstream generic pattern: criteria prose contains tokens like
+# "AVX-512" that the generic [A-Z][A-Z0-9]*-[0-9]+ pattern reads as self-ids.
+id-pattern = "REQ-[0-9]+"
 markers = ["[hard]", "[aspirational]"]
 link-namespaces = ["satisfies"]
 scope = "issue"
