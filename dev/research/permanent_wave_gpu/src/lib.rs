@@ -19,3 +19,7 @@ mod wave_gf7;
 #[cfg(feature = "fixture-oracle")]
 pub use paths::EvaluationResult;
 pub use paths::{DispatchResult, MeasurementPath, Unsupported};
+/// Largest F_3 order whose exhaustive fixture oracle is part of the ordinary
+/// wave-candidate evidence. Larger corpus rows remain explicitly unavailable.
+#[cfg(feature = "fixture-oracle")]
+pub use wave::MAX_HOST_FIXTURE_ORDER as WAVE_GF3_MAX_FIXTURE_ORDER;

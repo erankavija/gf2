@@ -33,7 +33,7 @@ pub(crate) const WAVE_LANES: u64 = 32;
 /// budget.  Larger corpus cells remain visible through the canonical oracle
 /// report as explicitly unavailable rather than silently being skipped.
 #[cfg(feature = "fixture-oracle")]
-const MAX_HOST_FIXTURE_ORDER: usize = 16;
+pub const MAX_HOST_FIXTURE_ORDER: usize = 16;
 
 /// One contiguous, half-open interval of sequential Gray-code indices.
 ///
