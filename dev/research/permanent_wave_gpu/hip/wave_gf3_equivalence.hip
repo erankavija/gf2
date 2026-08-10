@@ -1,4 +1,4 @@
-// Device conformance for the F_3 wave-cooperative Ryser prototype.
+// Device conformance for the paired F_3 wave-cooperative Ryser folds.
 //
 // One block owns one matrix. Its active lanes partition the sequential
 // Gray-index range [0, 2^n) into balanced, contiguous, disjoint intervals.
@@ -9,12 +9,13 @@
 //
 // Register/shared-memory accounting hypothesis (before compiler allocation):
 // each lane owns two u64 packed words plus u64 Gray cursor/end bounds and one
-// u32 partial sum: a 9 x 32-bit-register lower-bound model. The subset and
-// product value are loop temporaries, not part of that stable state model; the
-// compiler's actual resource report is authoritative. The only dynamic shared
-// allocation is the read-only column table: two u64 words per column = 16n
-// bytes (384 B at n=24, 512 B at n=32). The compiler's gfx1030 report is
-// committed in `wave_gf3_resource_usage.log` beside this source.
+// u32 partial sum: a 9 x 32-bit-register lower-bound model. Neither product
+// adds persistent mapping state: the halving control uses local fold values,
+// and the zero-mask candidate additionally has only local active/zero-mask
+// and popcount values. The compiler's actual resource reports for both kernel
+// instantiations are authoritative. The only dynamic shared allocation is the
+// read-only column table: two u64 words per column = 16n bytes (384 B at n=24,
+// 512 B at n=32).
 //
 // The device executable is intentionally a self-checking conformance binary,
 // not a benchmark. It checks independent permutation references for small
@@ -59,6 +60,15 @@ struct DirectionObservation {
   unsigned added;
 };
 
+// Both F_3 product choices run inside the same template kernel below. The
+// type parameter makes the compiler emit independently reportable kernels
+// while preserving one staging, interval, update, and partial-reduction
+// mapping for the arithmetic comparison.
+enum class FoldKind : unsigned {
+  kHalving,
+  kZeroMaskSignPopcount,
+};
+
 __device__ __forceinline__ void add3(std::uint64_t& magnitude,
                                      std::uint64_t& sign,
                                      std::uint64_t right_magnitude,
@@ -83,12 +93,16 @@ __device__ __forceinline__ unsigned fp3_sub(unsigned left, unsigned right) {
   return left >= right ? left - right : left + 3 - right;
 }
 
-// This reduction stays inside the lane's packed words. It neither reads nor
-// writes another lane's accumulator; the active mask neutralizes every tail
-// bit as the Bipedal3 multiplicative identity before the six halving folds.
-__device__ __forceinline__ unsigned fold_product(std::uint64_t magnitude,
-                                                 std::uint64_t sign, int n) {
-  const auto active = (UINT64_C(1) << n) - 1;
+__device__ __forceinline__ std::uint64_t active_mask_for_order(int n) {
+  return (UINT64_C(1) << n) - 1;
+}
+
+// This control reduction stays inside the lane's packed words. It neither
+// reads nor writes another lane's accumulator; the active mask neutralizes
+// every tail bit as the Bipedal3 multiplicative identity before six halvings.
+__device__ __forceinline__ unsigned fold_product_halving(std::uint64_t magnitude,
+                                                         std::uint64_t sign, int n) {
+  const auto active = active_mask_for_order(n);
   magnitude |= ~active;
   sign &= active;
   magnitude &= magnitude >> 32;
@@ -109,9 +123,35 @@ __device__ __forceinline__ unsigned fold_product(std::uint64_t magnitude,
   return (sign & 1) == 0 ? 1 : 2;
 }
 
+// This candidate also stays lane-local. A clear magnitude bit identifies a
+// zero F_3 lane regardless of its don't-care sign bit. Once every active lane
+// is nonzero, the sign population parity is the product in F_3^*.
+__device__ __forceinline__ unsigned fold_product_zero_mask_sign_popcount(
+    std::uint64_t magnitude, std::uint64_t sign, int n) {
+  const auto active = active_mask_for_order(n);
+  const auto zero_mask = ~magnitude & active;
+  if (zero_mask != 0) {
+    return 0;
+  }
+  return (__popcll(sign & active) & 1) == 0 ? 1 : 2;
+}
+
+template <FoldKind Fold>
+__device__ __forceinline__ unsigned fold_product(std::uint64_t magnitude,
+                                                 std::uint64_t sign, int n) {
+  // `Fold` is a template constant. A normal branch keeps this source C++14
+  // compatible; the selected specialization still has a constant condition.
+  if (Fold == FoldKind::kHalving) {
+    return fold_product_halving(magnitude, sign, n);
+  } else {
+    return fold_product_zero_mask_sign_popcount(magnitude, sign, n);
+  }
+}
+
 // Exactly one matrix is assigned to each block. `blockDim.x` is the active
 // lane count selected solely from n; `gridDim.x` is the caller's batch size.
 // There is deliberately no occupancy query or device-state-dependent shape.
+template <FoldKind Fold>
 __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
                                 int n, int batch_size,
                                 unsigned* __restrict__ results) {
@@ -173,7 +213,7 @@ __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
   }
 
   unsigned partial = 0;
-  unsigned term = fold_product(magnitude, sign, n);
+  unsigned term = fold_product<Fold>(magnitude, sign, n);
   partial = (__popcll(subset) & 1) != 0
                 ? fp3_sub(partial, term)
                 : gf2_wave_mapping::add_scalar<3>(partial, term);
@@ -187,7 +227,7 @@ __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
       sub3(magnitude, sign, column_magnitude[transition.flipped_column],
            column_sign[transition.flipped_column]);
     }
-    term = fold_product(magnitude, sign, n);
+    term = fold_product<Fold>(magnitude, sign, n);
     partial = (__popcll(subset) & 1) != 0
                   ? fp3_sub(partial, term)
                   : gf2_wave_mapping::add_scalar<3>(partial, term);
@@ -204,16 +244,17 @@ __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
   }
 }
 
+template <FoldKind Fold>
 __global__ void active_mask_product_probe(unsigned* results) {
   if (blockIdx.x != 0 || threadIdx.x != 0) {
     return;
   }
   constexpr int kPartialWordOrder = 63;
   const auto active = (UINT64_C(1) << kPartialWordOrder) - 1;
-  const unsigned all_active_ones = fold_product(active, UINT64_C(1) << 63,
-                                                 kPartialWordOrder);
-  const unsigned active_zero = fold_product(active & ~(UINT64_C(1) << 62), 0,
-                                            kPartialWordOrder);
+  const unsigned all_active_ones = fold_product<Fold>(
+      active, UINT64_C(1) << 63, kPartialWordOrder);
+  const unsigned active_zero = fold_product<Fold>(
+      active & ~(UINT64_C(1) << 62), 0, kPartialWordOrder);
   results[0] = all_active_ones;
   results[1] = active_zero;
 }
@@ -271,7 +312,11 @@ unsigned cpu_permanent(const Case& test_case) {
   return total;
 }
 
-bool run_batch(const std::vector<Case>& cases) {
+const char* fold_name(FoldKind fold) {
+  return fold == FoldKind::kHalving ? "wave-gf3" : "fold-gf3";
+}
+
+bool run_batch(const std::vector<Case>& cases, FoldKind fold) {
   const int n = cases.front().n;
   for (const auto& test_case : cases) {
     if (test_case.n != n) {
@@ -304,13 +349,21 @@ bool run_batch(const std::vector<Case>& cases) {
                                                  hipMemcpyHostToDevice),
                                        "hipMemcpy matrices");
   if (copied) {
-    hipLaunchKernelGGL(wave_gf3_kernel, dim3(cases.size()),
-                       dim3(gf2_wave_mapping::active_lanes_for_order(n)),
-                       2 * n * sizeof(std::uint64_t), 0,
-                       device_matrices, n, static_cast<int>(cases.size()), device_results);
+    if (fold == FoldKind::kHalving) {
+      hipLaunchKernelGGL((wave_gf3_kernel<FoldKind::kHalving>), dim3(cases.size()),
+                         dim3(gf2_wave_mapping::active_lanes_for_order(n)),
+                         2 * n * sizeof(std::uint64_t), 0,
+                         device_matrices, n, static_cast<int>(cases.size()), device_results);
+    } else {
+      hipLaunchKernelGGL((wave_gf3_kernel<FoldKind::kZeroMaskSignPopcount>),
+                         dim3(cases.size()),
+                         dim3(gf2_wave_mapping::active_lanes_for_order(n)),
+                         2 * n * sizeof(std::uint64_t), 0,
+                         device_matrices, n, static_cast<int>(cases.size()), device_results);
+    }
   }
-  const bool launched = copied && check(hipGetLastError(), "wave_gf3 kernel launch") &&
-                        check(hipDeviceSynchronize(), "wave_gf3 synchronize") &&
+  const bool launched = copied && check(hipGetLastError(), "F_3 fold kernel launch") &&
+                        check(hipDeviceSynchronize(), "F_3 fold synchronize") &&
                         check(hipMemcpy(actual.data(), device_results,
                                         actual.size() * sizeof(actual.front()),
                                         hipMemcpyDeviceToHost),
@@ -330,14 +383,19 @@ bool run_batch(const std::vector<Case>& cases) {
   return true;
 }
 
-bool run_active_mask_probe() {
+bool run_active_mask_probe(FoldKind fold) {
   unsigned* device_results = nullptr;
   std::array<unsigned, 2> host_results{};
   if (!check(hipMalloc(&device_results, sizeof(host_results)), "hipMalloc mask probe")) {
     return false;
   }
-  hipLaunchKernelGGL(active_mask_product_probe, dim3(1), dim3(1), 0, 0,
-                     device_results);
+  if (fold == FoldKind::kHalving) {
+    hipLaunchKernelGGL((active_mask_product_probe<FoldKind::kHalving>), dim3(1), dim3(1), 0, 0,
+                       device_results);
+  } else {
+    hipLaunchKernelGGL((active_mask_product_probe<FoldKind::kZeroMaskSignPopcount>),
+                       dim3(1), dim3(1), 0, 0, device_results);
+  }
   const bool launched = check(hipGetLastError(), "active-mask probe launch") &&
                         check(hipDeviceSynchronize(), "active-mask probe synchronize") &&
                         check(hipMemcpy(host_results.data(), device_results,
@@ -348,8 +406,8 @@ bool run_active_mask_probe() {
     return false;
   }
   if (host_results != std::array<unsigned, 2>{1, 0}) {
-    std::fprintf(stderr, "n=63 active-mask probe got {%u, %u}, expected {1, 0}\n",
-                 host_results[0], host_results[1]);
+    std::fprintf(stderr, "%s n=63 active-mask probe got {%u, %u}, expected {1, 0}\n",
+                 fold_name(fold), host_results[0], host_results[1]);
     return false;
   }
   return true;
@@ -457,7 +515,7 @@ bool read_u64_le(std::uint64_t* value) {
   return true;
 }
 
-bool run_streamed_fixture_evidence() {
+bool run_streamed_fixture_evidence(FoldKind fold) {
   constexpr std::array<char, 8> kMagic = {'G', 'F', '2', 'W', 'A', 'V', 'E', '1'};
   std::array<char, kMagic.size()> magic{};
   std::uint32_t count = 0;
@@ -497,14 +555,15 @@ bool run_streamed_fixture_evidence() {
   }
   for (const auto& batch : batches) {
     const auto& cases = batch.second;
-    if (!run_batch(cases)) {
+    if (!run_batch(cases, fold)) {
       return false;
     }
   }
-  if (!run_mapping_probes() || !run_active_mask_probe()) {
+  if (!run_mapping_probes() || !run_active_mask_probe(fold)) {
     return false;
   }
-  std::fprintf(stdout, "F_3 wave device evidence matched %u streamed fixtures\n", count);
+  std::fprintf(stdout, "%s device evidence matched %u streamed fixtures\n", fold_name(fold),
+               count);
   return true;
 }
 
@@ -522,12 +581,28 @@ Case patterned_case(const char* name, int n, unsigned offset) {
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc == 2 && std::strcmp(argv[1], "--fixture-stdin") == 0) {
-    return run_streamed_fixture_evidence() ? 0 : 1;
+  FoldKind fold = FoldKind::kHalving;
+  bool reads_fixture_stdin = false;
+  for (int argument = 1; argument < argc; ++argument) {
+    if (std::strcmp(argv[argument], "--fixture-stdin") == 0) {
+      reads_fixture_stdin = true;
+    } else if (std::strcmp(argv[argument], "--fold") == 0 && argument + 1 < argc) {
+      const char* const selected = argv[++argument];
+      if (std::strcmp(selected, "wave-gf3") == 0) {
+        fold = FoldKind::kHalving;
+      } else if (std::strcmp(selected, "fold-gf3") == 0) {
+        fold = FoldKind::kZeroMaskSignPopcount;
+      } else {
+        std::fprintf(stderr, "unknown F_3 fold path: %s\n", selected);
+        return 2;
+      }
+    } else {
+      std::fprintf(stderr, "usage: %s [--fold wave-gf3|fold-gf3] [--fixture-stdin]\n", argv[0]);
+      return 2;
+    }
   }
-  if (argc != 1) {
-    std::fprintf(stderr, "usage: %s [--fixture-stdin]\n", argv[0]);
-    return 2;
+  if (reads_fixture_stdin) {
+    return run_streamed_fixture_evidence(fold) ? 0 : 1;
   }
   const std::vector<Case> empty_cases = {
       {"n0-empty", 0, {}},
@@ -549,8 +624,9 @@ int main(int argc, char** argv) {
       {"n3-zero-product", 3, {0, 0, 0, 0, 0, 0, 0, 1, 2}},
   };
 
-  if (!run_batch(empty_cases) || !run_batch(n4_cases) || !run_batch(n6_cases) ||
-      !run_batch(zero_cases) || !run_mapping_probes() || !run_active_mask_probe()) {
+  if (!run_batch(empty_cases, fold) || !run_batch(n4_cases, fold) ||
+      !run_batch(n6_cases, fold) || !run_batch(zero_cases, fold) ||
+      !run_mapping_probes() || !run_active_mask_probe(fold)) {
     return 1;
   }
   return 0;
