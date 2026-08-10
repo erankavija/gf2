@@ -79,6 +79,9 @@ impl CandidateCell {
     }
 
     /// Packed scalar reference checked in addition to Ryser, when supported.
+    ///
+    /// Returns `None` when this `(q, n)` cell has no packed scalar reference.
+    /// The primary Ryser candidate row remains present for those cells.
     #[must_use]
     pub const fn secondary_reference(&self) -> Option<&'static str> {
         self.secondary_reference
@@ -293,9 +296,12 @@ impl CpuReferenceRow {
 
 /// Cross-check packed CPU reference paths against Ryser for bounded fixtures.
 ///
-/// `max_n` makes the ordinary test tier deliberately finite.  The full
-/// candidate checker remains valid for every Ryser-supported order up to 63;
-/// callers selecting a candidate at a larger order are responsible for the
+/// `max_n` makes the ordinary test tier deliberately finite. Cells without a
+/// packed scalar reference according to [`packed_reference_for`] are omitted;
+/// they remain represented by [`check_registered_candidates`] with
+/// [`CandidateCell::secondary_reference`] set to `None`. The full candidate
+/// checker remains valid for every Ryser-supported order up to 63; callers
+/// selecting a candidate at a larger order are responsible for the
 /// corresponding exponential oracle work.
 #[must_use]
 pub fn check_cpu_reference_paths(corpus: &FixtureCorpus, max_n: usize) -> Vec<CpuReferenceRow> {
@@ -305,6 +311,9 @@ pub fn check_cpu_reference_paths(corpus: &FixtureCorpus, max_n: usize) -> Vec<Cp
         if *n > max_n {
             continue;
         }
+        let Some(reference) = packed_reference_for(*q, *n) else {
+            continue;
+        };
         let mut mismatch_count = 0;
         let mut first_mismatch_fixture_id = None;
         for fixture in fixtures.iter().copied() {
@@ -316,7 +325,7 @@ pub fn check_cpu_reference_paths(corpus: &FixtureCorpus, max_n: usize) -> Vec<Cp
             }
         }
         rows.push(CpuReferenceRow {
-            reference: packed_reference_name(*q),
+            reference,
             q: *q,
             n: *n,
             matrix_count: fixtures.len(),
@@ -475,15 +484,6 @@ fn fp_entries<const Q: u64>(fixture: &Fixture) -> Vec<Fp<Q>> {
         .iter()
         .map(|&value| Fp::<Q>::new(u64::from(value)))
         .collect()
-}
-
-fn packed_reference_name(q: u64) -> &'static str {
-    match q {
-        3 => "permanent_bipedal3",
-        5 => "permanent_bipedal5",
-        7 => "permanent_bipedal7",
-        _ => unreachable!("Fixture validates its field order"),
-    }
 }
 
 fn packed_reference_for(q: u64, n: usize) -> Option<&'static str> {
