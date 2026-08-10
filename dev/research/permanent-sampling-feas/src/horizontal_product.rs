@@ -3,21 +3,22 @@
 //! The permanent's row-product has two semantically distinct outcomes: a row
 //! sum of zero makes the product zero, while an all-nonzero row-sum vector
 //! runs the representation's complete reduction. This module retains their
-//! unconditioned occurrence frequencies separately from their conditioned
-//! device-event timing. Sampling and grouping are outside every reported
-//! device span, so grouping a branch for timing cannot change its frequency.
+//! unconditioned occurrence frequencies in one fixed host observation batch,
+//! separately from their conditioned device-event timing. Sampling and
+//! grouping are outside every reported device span, so branch timing cannot
+//! change an observed frequency.
 
 use crate::backend::Backend;
 use crate::protocol::Outcome;
 #[cfg(feature = "hip")]
 use crate::protocol::{capped_before_minimums_note, run_timed_repetitions};
-#[cfg(feature = "hip")]
-use crate::sampler::MatrixSampler;
-use crate::sampler::MeasurementPurpose;
+use crate::sampler::{MatrixSampler, MeasurementPurpose, STREAM_INDEX_CAPACITY};
 use crate::schedule::{scheduled_backend, SchedulePhase};
 
 /// CSV columns emitted by the `horizontal-product` command.
-pub const HORIZONTAL_PRODUCT_CSV_HEADER: &str = "q,n,backend,outcome,samples_per_rep,reps,timed_samples_total,zero_fast_observed_numerator,zero_fast_observed_denominator,nonzero_slow_observed_numerator,nonzero_slow_observed_denominator,zero_fast_observed_frequency,zero_fast_expected_frequency,nonzero_slow_observed_frequency,nonzero_slow_expected_frequency,zero_fast_s,zero_fast_compiler_barrier_baseline_s,zero_fast_net_per_operation_s,zero_fast_timed_operations,nonzero_slow_s,nonzero_slow_compiler_barrier_baseline_s,nonzero_slow_net_per_operation_s,nonzero_slow_timed_operations,duration_basis,timed_purpose,timed_index_first,overhead_exclusion,note";
+pub const HORIZONTAL_PRODUCT_CSV_HEADER: &str = "q,n,backend,outcome,samples_per_rep,reps,observed_samples_total,zero_fast_observed_numerator,zero_fast_observed_denominator,nonzero_slow_observed_numerator,nonzero_slow_observed_denominator,zero_fast_observed_frequency,zero_fast_expected_frequency,nonzero_slow_observed_frequency,nonzero_slow_expected_frequency,zero_fast_s,zero_fast_compiler_barrier_baseline_s,zero_fast_net_per_operation_s,zero_fast_timed_operations,nonzero_slow_s,nonzero_slow_compiler_barrier_baseline_s,nonzero_slow_net_per_operation_s,nonzero_slow_timed_operations,duration_basis,timed_purpose,timed_index_first,overhead_exclusion,note";
+
+const OBSERVATION_RELATION: &str = "observed frequencies derive from one fixed unconditioned host observation batch addressed by (seed_root, q, n, horizontal_product_timed, seed_index); device timing, when available, resamples under the canonical warm-up/repetition policy and does not alter those counts";
 
 /// One horizontal-product micro-measurement request.
 #[derive(Clone, Copy, Debug)]
@@ -26,13 +27,15 @@ pub struct HorizontalProductSpec {
     pub q: u64,
     /// Number of active row lanes in every sample.
     pub n: usize,
-    /// Independent, unconditioned row-sum vectors per canonical repetition.
+    /// Independent, unconditioned row-sum vectors in the fixed observation
+    /// batch and each canonical timing repetition.
     pub samples: usize,
     /// Candidate selected exclusively through the canonical schedule.
     pub backend: Backend,
     /// Root of the deterministic sampler address.
     pub seed_root: u64,
-    /// First stream index for both distinct mode purposes.
+    /// First stream index for the fixed observation batch and timing
+    /// repetitions.
     pub seed_index: u64,
 }
 
@@ -47,22 +50,25 @@ pub struct HorizontalProductResult {
     pub backend: &'static str,
     /// Whether the row measured, is unsupported, or is censored.
     pub outcome: Outcome,
-    /// Independent vectors requested in each repetition.
+    /// Independent vectors in the fixed observation batch and each timing
+    /// repetition.
     pub samples_per_rep: usize,
     /// Timed repetitions completed under the canonical policy.
     pub reps: usize,
-    /// All independent, unconditioned samples from timed repetitions only.
-    pub timed_samples_total: u64,
-    /// Timed samples whose product is zero.
-    pub zero_fast_samples: u64,
-    /// Timed samples whose product is nonzero.
-    pub nonzero_slow_samples: u64,
-    /// Observed zero-product frequency from timed samples only.
+    /// All independent, unconditioned samples in the fixed host observation
+    /// batch. This is separate from device-timed branch operations.
+    pub observed_samples_total: u64,
+    /// Numerator of the fixed observation batch's zero-product frequency.
+    pub zero_fast_observed_numerator: u64,
+    /// Numerator of the fixed observation batch's nonzero-product frequency.
+    pub nonzero_slow_observed_numerator: u64,
+    /// Observed zero-product frequency from the fixed host observation batch.
     pub zero_fast_observed_frequency: Option<f64>,
     /// Exact marginal zero-product expectation, projected to a stable `f64`
     /// when this mode supports the field order.
     pub zero_fast_expected_frequency: Option<f64>,
-    /// Observed nonzero-product frequency from timed samples only.
+    /// Observed nonzero-product frequency from the fixed host observation
+    /// batch.
     pub nonzero_slow_observed_frequency: Option<f64>,
     /// Exact marginal nonzero-product expectation, projected to a stable `f64`
     /// when this mode supports the field order.
@@ -85,9 +91,10 @@ pub struct HorizontalProductResult {
     pub nonzero_slow_timed_operations: u64,
     /// Clock domain of every reported duration.
     pub duration_basis: &'static str,
-    /// Named sampler purpose of timed repetitions.
+    /// Named sampler purpose of the fixed observation batch and timed
+    /// repetitions.
     pub timed_purpose: MeasurementPurpose,
-    /// First deterministic timed stream index.
+    /// First deterministic observation and timed stream index.
     pub timed_index_first: u64,
     /// Exact costs absent from every reported net duration.
     pub overhead_exclusion: &'static str,
@@ -106,11 +113,11 @@ impl HorizontalProductResult {
             self.outcome.name().to_string(),
             self.samples_per_rep.to_string(),
             self.reps.to_string(),
-            self.timed_samples_total.to_string(),
-            self.zero_fast_samples.to_string(),
-            self.timed_samples_total.to_string(),
-            self.nonzero_slow_samples.to_string(),
-            self.timed_samples_total.to_string(),
+            self.observed_samples_total.to_string(),
+            self.zero_fast_observed_numerator.to_string(),
+            self.observed_samples_total.to_string(),
+            self.nonzero_slow_observed_numerator.to_string(),
+            self.observed_samples_total.to_string(),
             optional_frequency(self.zero_fast_observed_frequency),
             optional_frequency(self.zero_fast_expected_frequency),
             optional_frequency(self.nonzero_slow_observed_frequency),
@@ -150,9 +157,25 @@ fn optional_frequency(value: Option<f64>) -> String {
 /// The default schedule intentionally includes candidates that cannot expose a
 /// separated zero/nonzero product branch. They produce a named unavailable row
 /// rather than a host-clock substitute, a synthetic branch, or a silently
-/// omitted registry entry.
+/// omitted registry entry. Every valid row first derives its unconditioned
+/// observed frequencies from a fixed host batch; device timing, when
+/// available, resamples separately and only supplies timing fields.
+///
+/// # Panics
+///
+/// Panics if `spec.seed_index >= STREAM_INDEX_CAPACITY`, if a canonical
+/// warm-up or timed repetition exhausts the stream-index range or overflows
+/// its counter, or if HIP reports a fatal launch or blob-loading failure. It
+/// also panics when a device product fails its host checksum. Recoverable
+/// device capability, resource, and event instrumentation failures instead
+/// produce explicit unsupported or unavailable rows.
 #[must_use]
 pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductResult {
+    assert!(
+        spec.seed_index < STREAM_INDEX_CAPACITY,
+        "horizontal-product seed index {} exceeds the stream-index capacity",
+        spec.seed_index
+    );
     let timed_purpose =
         scheduled_backend(spec.backend, SchedulePhase::HorizontalProductTimed).purpose();
     let mut result = HorizontalProductResult {
@@ -162,9 +185,9 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         outcome: Outcome::Unsupported,
         samples_per_rep: spec.samples,
         reps: 0,
-        timed_samples_total: 0,
-        zero_fast_samples: 0,
-        nonzero_slow_samples: 0,
+        observed_samples_total: 0,
+        zero_fast_observed_numerator: 0,
+        nonzero_slow_observed_numerator: 0,
         zero_fast_observed_frequency: None,
         zero_fast_expected_frequency: None,
         nonzero_slow_observed_frequency: None,
@@ -202,10 +225,19 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
     let (zero_expected, nonzero_expected) = expected_frequencies(spec.q, spec.n);
     result.zero_fast_expected_frequency = Some(zero_expected);
     result.nonzero_slow_expected_frequency = Some(nonzero_expected);
+    let observations = observe_products(spec, timed_purpose);
+    result.observed_samples_total = observations.total;
+    result.zero_fast_observed_numerator = observations.zero_fast;
+    result.nonzero_slow_observed_numerator = observations.nonzero_slow;
+    result.zero_fast_observed_frequency = frequency(observations.zero_fast, observations.total);
+    result.nonzero_slow_observed_frequency =
+        frequency(observations.nonzero_slow, observations.total);
 
     #[cfg(not(feature = "hip"))]
     {
-        result.note = "unsupported: horizontal-product branch timing requires the hip feature for device-event measurement; no host-clock substitute was used".to_string();
+        result.note = format!(
+            "{OBSERVATION_RELATION}; unsupported: horizontal-product branch timing requires the hip feature for device-event measurement; no host-clock substitute was used"
+        );
         result
     }
 
@@ -214,13 +246,13 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         let circuit = match circuit_for(spec.backend, spec.q) {
             Ok(circuit) => circuit,
             Err(reason) => {
-                result.note = reason;
+                result.note = format!("{OBSERVATION_RELATION}; {reason}");
                 return result;
             }
         };
         if !circuit.has_observable_branches() {
             result.note = format!(
-                "unavailable: {} uses the {} reduction, whose zero result is observed only after its complete reduction; emitting separate branch timings would invent a different circuit",
+                "{OBSERVATION_RELATION}; unavailable: {} uses the {} reduction, whose zero result is observed only after its complete reduction; emitting separate branch timings would invent a different circuit",
                 spec.backend.name(),
                 circuit.name(),
             );
@@ -248,19 +280,12 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         ) {
             Ok(policy) => policy,
             Err(HorizontalProductUnavailable(reason)) => {
-                result.note = reason;
+                result.note = format!("{OBSERVATION_RELATION}; {reason}");
                 return result;
             }
         };
         result.reps = policy.reps;
         let totals = RepetitionTotals::from_repetitions(&repetitions);
-        result.timed_samples_total = totals.timed_samples_total;
-        result.zero_fast_samples = totals.zero_fast_samples;
-        result.nonzero_slow_samples = totals.nonzero_slow_samples;
-        result.zero_fast_observed_frequency =
-            frequency(totals.zero_fast_samples, totals.timed_samples_total);
-        result.nonzero_slow_observed_frequency =
-            frequency(totals.nonzero_slow_samples, totals.timed_samples_total);
         result.zero_fast_s = totals.zero_fast.raw_s;
         result.zero_fast_compiler_barrier_baseline_s = totals.zero_fast.baseline_s;
         result.zero_fast_timed_operations = totals.zero_fast.operations;
@@ -268,12 +293,15 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         result.nonzero_slow_compiler_barrier_baseline_s = totals.nonzero_slow.baseline_s;
         result.nonzero_slow_timed_operations = totals.nonzero_slow.operations;
         result.duration_basis = "device_event_kernel";
-        result.overhead_exclusion = "net subtracts the same-geometry compiler-barrier device-event span for each observed branch; sampler construction, branch grouping, allocation, upload, download, submission, and host repetition-policy overhead are excluded";
+        result.overhead_exclusion = "net subtracts the same-geometry compiler-barrier device-event span for each timed branch; sampler construction, branch grouping, allocation, upload, download, submission, and host repetition-policy overhead are excluded";
 
         if policy.capped_before_minimums {
             result.outcome = Outcome::Censored;
-            result.note = capped_before_minimums_note(
-                "no branch net duration is reported; raw paired device-event spans remain diagnostic",
+            result.note = format!(
+                "{OBSERVATION_RELATION}; {}",
+                capped_before_minimums_note(
+                    "no branch net duration is reported; raw paired device-event spans remain diagnostic",
+                )
             );
             return result;
         }
@@ -315,9 +343,46 @@ pub fn expected_frequencies(q: u64, n: usize) -> (f64, f64) {
     (-log_nonzero.exp_m1(), log_nonzero.exp())
 }
 
-#[cfg(feature = "hip")]
 fn frequency(numerator: u64, denominator: u64) -> Option<f64> {
     (denominator > 0).then(|| numerator as f64 / denominator as f64)
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ObservationTotals {
+    total: u64,
+    zero_fast: u64,
+    nonzero_slow: u64,
+}
+
+fn observe_products(spec: HorizontalProductSpec, purpose: MeasurementPurpose) -> ObservationTotals {
+    let mut sampler = MatrixSampler::new(spec.seed_root, spec.q, spec.n, purpose, spec.seed_index);
+    let mut zero_fast = 0;
+    let mut nonzero_slow = 0;
+    for _ in 0..spec.samples {
+        let mut product = 1_u64;
+        for _ in 0..spec.n {
+            product = product * u64::from(sample_entry(&mut sampler, spec.q)) % spec.q;
+        }
+        if product == 0 {
+            zero_fast += 1;
+        } else {
+            nonzero_slow += 1;
+        }
+    }
+    ObservationTotals {
+        total: spec.samples as u64,
+        zero_fast,
+        nonzero_slow,
+    }
+}
+
+fn sample_entry(sampler: &mut MatrixSampler, q: u64) -> u8 {
+    match q {
+        3 => sampler.next_entry::<3>().value() as u8,
+        5 => sampler.next_entry::<5>().value() as u8,
+        7 => sampler.next_entry::<7>().value() as u8,
+        _ => unreachable!("field order was checked by the caller"),
+    }
 }
 
 #[cfg(any(feature = "hip", test))]
@@ -329,7 +394,7 @@ fn net_per_operation(raw_s: Option<f64>, baseline_s: Option<f64>, operations: u6
 #[cfg(feature = "hip")]
 fn measurement_note(result: &HorizontalProductResult) -> String {
     let mut notes = vec![
-        "observed frequencies use all and only unconditioned timed samples; warm-up samples are excluded".to_string(),
+        OBSERVATION_RELATION.to_string(),
         "expected frequencies are complements: zero fast = 1 - ((q-1)/q)^n and nonzero slow = ((q-1)/q)^n".to_string(),
     ];
     if result.zero_fast_timed_operations == 0 {
@@ -365,9 +430,6 @@ impl BranchTotals {
 #[cfg(feature = "hip")]
 #[derive(Clone, Copy, Debug, Default)]
 struct RepetitionTotals {
-    timed_samples_total: u64,
-    zero_fast_samples: u64,
-    nonzero_slow_samples: u64,
     zero_fast: BranchTotals,
     nonzero_slow: BranchTotals,
 }
@@ -377,9 +439,6 @@ impl RepetitionTotals {
     fn from_repetitions(repetitions: &[RepetitionSpans]) -> Self {
         let mut totals = Self::default();
         for repetition in repetitions {
-            totals.timed_samples_total += repetition.timed_samples_total;
-            totals.zero_fast_samples += repetition.zero_fast_samples;
-            totals.nonzero_slow_samples += repetition.nonzero_slow_samples;
             if let Some(span) = repetition.zero_fast {
                 totals
                     .zero_fast
@@ -406,9 +465,6 @@ struct BranchSpans {
 #[cfg(feature = "hip")]
 #[derive(Clone, Copy, Debug)]
 struct RepetitionSpans {
-    timed_samples_total: u64,
-    zero_fast_samples: u64,
-    nonzero_slow_samples: u64,
     zero_fast: Option<BranchSpans>,
     nonzero_slow: Option<BranchSpans>,
 }
@@ -545,9 +601,6 @@ fn one_repetition(
         })
     };
     Ok(RepetitionSpans {
-        timed_samples_total: spec.samples as u64,
-        zero_fast_samples: fast_expected.len() as u64,
-        nonzero_slow_samples: slow_expected.len() as u64,
         zero_fast,
         nonzero_slow,
     })
@@ -582,12 +635,7 @@ fn sample_row_sums(sampler: &mut MatrixSampler, q: u64, n: usize, samples: usize
     let mut values = Vec::with_capacity(n * samples);
     for _ in 0..samples {
         for _ in 0..n {
-            values.push(match q {
-                3 => sampler.next_entry::<3>().value() as u8,
-                5 => sampler.next_entry::<5>().value() as u8,
-                7 => sampler.next_entry::<7>().value() as u8,
-                _ => unreachable!("field order was checked by the caller"),
-            });
+            values.push(sample_entry(sampler, q));
         }
     }
     values
@@ -621,6 +669,115 @@ mod tests {
         }
     }
 
+    #[test]
+    fn unavailable_valid_rows_keep_a_fixed_unconditioned_observation_batch() {
+        for (q, n) in [(3, 1), (5, 12), (7, 63)] {
+            let spec = HorizontalProductSpec {
+                q,
+                n,
+                samples: 17,
+                backend: Backend::Scalar,
+                seed_root: 7,
+                seed_index: 0,
+            };
+            let row = run_horizontal_product(spec);
+            let repeated = run_horizontal_product(spec);
+
+            assert_eq!(row.outcome, Outcome::Unsupported);
+            assert_eq!(row.reps, 0);
+            assert_eq!(row.observed_samples_total, 17);
+            assert_eq!(
+                row.zero_fast_observed_numerator + row.nonzero_slow_observed_numerator,
+                row.observed_samples_total
+            );
+            assert!(row.zero_fast_observed_frequency.is_some());
+            assert!(row.nonzero_slow_observed_frequency.is_some());
+            assert!(
+                (row.zero_fast_observed_frequency
+                    .expect("valid observation has a frequency")
+                    + row
+                        .nonzero_slow_observed_frequency
+                        .expect("valid observation has a frequency")
+                    - 1.0)
+                    .abs()
+                    < 1e-15
+            );
+            assert_eq!(
+                row.zero_fast_observed_numerator,
+                repeated.zero_fast_observed_numerator
+            );
+            assert_eq!(
+                row.nonzero_slow_observed_numerator,
+                repeated.nonzero_slow_observed_numerator
+            );
+            assert!(row
+                .note
+                .contains("fixed unconditioned host observation batch"));
+            assert!(row.note.contains("does not alter those counts"));
+            assert_eq!(row.zero_fast_timed_operations, 0);
+            assert_eq!(row.nonzero_slow_timed_operations, 0);
+        }
+    }
+
+    #[cfg(not(feature = "hip"))]
+    #[test]
+    fn no_hip_gpu_rows_keep_observations_while_device_timing_is_unavailable() {
+        let row = run_horizontal_product(HorizontalProductSpec {
+            q: 3,
+            n: 12,
+            samples: 17,
+            backend: Backend::Gpu,
+            seed_root: 7,
+            seed_index: 0,
+        });
+
+        assert_eq!(row.outcome, Outcome::Unsupported);
+        assert_eq!(row.observed_samples_total, 17);
+        assert_eq!(
+            row.zero_fast_observed_numerator + row.nonzero_slow_observed_numerator,
+            row.observed_samples_total
+        );
+        assert_eq!(row.duration_basis, "unavailable");
+        assert_eq!(row.reps, 0);
+        assert_eq!(row.zero_fast_timed_operations, 0);
+        assert_eq!(row.nonzero_slow_timed_operations, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "horizontal-product seed index")]
+    fn observation_rejects_an_out_of_range_seed_index() {
+        let _ = run_horizontal_product(HorizontalProductSpec {
+            q: 3,
+            n: 12,
+            samples: 1,
+            backend: Backend::Scalar,
+            seed_root: 7,
+            seed_index: crate::sampler::STREAM_INDEX_CAPACITY,
+        });
+    }
+
+    #[test]
+    fn invalid_observation_inputs_stay_blank() {
+        for (q, n, samples) in [(3, 0, 1), (3, 64, 1), (3, 12, 0)] {
+            let row = run_horizontal_product(HorizontalProductSpec {
+                q,
+                n,
+                samples,
+                backend: Backend::Scalar,
+                seed_root: 7,
+                seed_index: 0,
+            });
+            assert_eq!(row.outcome, Outcome::Unsupported);
+            assert_eq!(row.observed_samples_total, 0);
+            assert_eq!(row.zero_fast_observed_numerator, 0);
+            assert_eq!(row.nonzero_slow_observed_numerator, 0);
+            assert!(row.zero_fast_observed_frequency.is_none());
+            assert!(row.nonzero_slow_observed_frequency.is_none());
+            assert!(row.zero_fast_expected_frequency.is_none());
+            assert!(row.nonzero_slow_expected_frequency.is_none());
+        }
+    }
+
     fn assert_unsupported_field_row(q: u64) {
         let row = run_horizontal_product(HorizontalProductSpec {
             q,
@@ -632,7 +789,9 @@ mod tests {
         });
         assert_eq!(row.outcome, Outcome::Unsupported);
         assert_eq!(row.reps, 0);
-        assert_eq!(row.timed_samples_total, 0);
+        assert_eq!(row.observed_samples_total, 0);
+        assert_eq!(row.zero_fast_observed_numerator, 0);
+        assert_eq!(row.nonzero_slow_observed_numerator, 0);
         assert!(row.zero_fast_expected_frequency.is_none());
         assert!(row.nonzero_slow_expected_frequency.is_none());
         assert_eq!(row.duration_basis, "unavailable");
@@ -686,9 +845,9 @@ mod tests {
             outcome: Outcome::Measured,
             samples_per_rep: 32,
             reps: 5,
-            timed_samples_total: 160,
-            zero_fast_samples: 159,
-            nonzero_slow_samples: 1,
+            observed_samples_total: 160,
+            zero_fast_observed_numerator: 159,
+            nonzero_slow_observed_numerator: 1,
             zero_fast_observed_frequency: Some(159.0 / 160.0),
             zero_fast_expected_frequency: Some(0.99),
             nonzero_slow_observed_frequency: Some(1.0 / 160.0),
@@ -708,13 +867,21 @@ mod tests {
             note: String::new(),
         };
         let csv = row.to_csv_row();
+        assert!(HORIZONTAL_PRODUCT_CSV_HEADER.contains("observed_samples_total"));
+        assert!(!HORIZONTAL_PRODUCT_CSV_HEADER.contains("timed_samples_total"));
         assert!(HORIZONTAL_PRODUCT_CSV_HEADER.contains("zero_fast_observed_numerator"));
         assert!(HORIZONTAL_PRODUCT_CSV_HEADER.contains("zero_fast_observed_denominator"));
         assert!(HORIZONTAL_PRODUCT_CSV_HEADER.contains("nonzero_slow_observed_numerator"));
         assert!(HORIZONTAL_PRODUCT_CSV_HEADER.contains("nonzero_slow_observed_denominator"));
         assert!(csv.contains("device_event_kernel"));
+        let columns = csv.split(',').collect::<Vec<_>>();
+        assert_eq!(columns[6], "160");
+        assert_eq!(columns[7], "159");
+        assert_eq!(columns[8], "160");
+        assert_eq!(columns[9], "1");
+        assert_eq!(columns[10], "160");
         assert_eq!(
-            csv.split(',').count(),
+            columns.len(),
             HORIZONTAL_PRODUCT_CSV_HEADER.split(',').count(),
             "CSV row width must remain aligned with its header"
         );
