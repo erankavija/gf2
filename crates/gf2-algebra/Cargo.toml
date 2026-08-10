@@ -59,6 +59,12 @@ name = "determinant_companion"
 harness = false
 required-features = ["test-support"]
 
+# ── Issue `ddd0c6ee` — four-matrix F_3 AVX2 receipt ──
+[[bench]]
+name = "batched_f3_permanent"
+harness = false
+required-features = ["simd", "test-support"]
+
 # ── Issue `96dcbec4` (epic `ae82bd73`) — paper Table 2 slope reproduction ──
 [[example]]
 name = "paper_repro_slope"
