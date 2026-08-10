@@ -20,9 +20,7 @@ use gf2_algebra::packed::{Bipedal3, Packed5, Packed7, PackedField};
 use gf2_core::gfp::Fp;
 
 use crate::backend::{support, Backend, Support};
-use crate::protocol::{
-    run_timed_repetitions, Outcome, MAX_CELL_SECONDS, MIN_REPS, MIN_TIMED_SECONDS,
-};
+use crate::protocol::{capped_before_minimums_note, run_timed_repetitions, Outcome};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
 use crate::schedule::{scheduled_backend, SchedulePhase};
 
@@ -191,9 +189,7 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
     };
     if policy.capped_before_minimums {
         result.outcome = Outcome::Censored;
-        result.note = format!(
-            "unavailable: {MAX_CELL_SECONDS:.0} s cap ended timing before both minimums ({MIN_REPS} repetitions and {MIN_TIMED_SECONDS:.0} s); no net per-operation duration is reported"
-        );
+        result.note = capped_before_minimums_note("no net per-operation duration is reported");
         return result;
     }
     let Some(net_per_operation_s) = net_per_operation(
@@ -458,10 +454,10 @@ fn gray_update_unavailable_reason(error: &gf2_kernels_hip::HipError) -> Option<S
         | HipError::Hip { code: 2, .. } => Some(format!(
             "unavailable: GPU resource failure prevents event-timed Gray-update evaluation: {error}"
         )),
-        HipError::NoDevice | HipError::UnsupportedArch { .. }
+        HipError::NoDevice
+        | HipError::UnsupportedArch { .. }
         | HipError::Hip {
-            code: 100 | 101,
-            context: "hipGetDevice",
+            code: 100 | 101, ..
         } => Some(format!(
             "unsupported: device unavailable for this event-timed GPU cell; no CPU fallback or host timing was substituted: {error}"
         )),
@@ -626,6 +622,13 @@ mod tests {
         })
         .expect("unsupported architecture is an explicit unsupported cell");
         assert!(unsupported_arch.contains("device unavailable"));
+
+        let raw_invalid_device = gray_update_unavailable_reason(&HipError::Hip {
+            code: 101,
+            context: "hipEventRecord",
+        })
+        .expect("raw invalid-device failure is an explicit unsupported cell");
+        assert!(raw_invalid_device.contains("device unavailable"));
 
         let event_failure = gray_update_unavailable_reason(&HipError::Hip {
             code: 700,
