@@ -282,3 +282,23 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 
 `verify` therefore separates the three outcomes by exit status alone, without
 parsing its output. The failing paths themselves are named on standard error.
+
+## Deterministic analysis artefacts
+
+`scripts/permanent_zero_fraction_analysis.py <campaign-directory>` consumes a
+published dataset only after checking the manifest-declared raw checksum set.
+It writes derived CSV and SVG artefacts below
+`<campaign-directory>/derived/<campaign-id>/zero-fraction-analysis/`; derived
+artefacts are outside the raw checksum set by construction. The output table
+retains every terminal cell. Completed cells carry their pooled count,
+count-derived point estimate, $95\%$ Wilson interval, and recorded campaign
+verdict; halted cells retain only counts and their mechanical reason.
+
+The Wilson computation is a Python transliteration of the campaign's fixed
+interval convention, using $z=1.959963984540054$, rather than a second
+statistical policy. Its $q=3$ comparison columns read the versioned
+`scheinerman2024-q3-targets-v1.csv` source-count table beside this README;
+they recompute source points and source intervals from those counts. The SVG
+point metadata carries each completed point's $N$, estimate, and interval, and
+all ordering, formatting, and SVG geometry are fixed so an unchanged dataset
+re-runs byte-identically.

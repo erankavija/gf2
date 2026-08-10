@@ -1,0 +1,1 @@
+{"schema_version":1,"q":3,"rows":[{"schema_version":1,"q":3,"n":4,"matrix_count":10,"permanent_zero_count":0,"determinant":{"state":"not_evaluated"},"terminal_state":{"state":"completed","permanent_estimate":{"point":0.0,"interval":{"lower":0.0,"upper":0.3}},"permanent_verdict":"accepted","determinant_estimate":{"state":"not_evaluated"}}}]}
