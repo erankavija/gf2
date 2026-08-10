@@ -1159,8 +1159,9 @@ pub enum GrayUpdateOperand<'a> {
 /// add and subtract updates for `steps` iterations.  F_3 uses the actual
 /// Bipedal3 two-plane update; F_5/F_7 use the shipped byte controls.  A second
 /// event-timed kernel executes the same loop geometry with compiler barriers,
-/// allowing the harness to report `(update - baseline) / steps` without
-/// including host-loop, allocation, transfer, or submission overhead.
+/// allowing the harness to aggregate repetitions and report
+/// `(sum(update) - sum(baseline)) / (steps * reps)` without including
+/// host-loop, allocation, transfer, or submission overhead.
 ///
 /// # Panics
 ///
