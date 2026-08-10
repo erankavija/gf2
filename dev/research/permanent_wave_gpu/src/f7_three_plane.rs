@@ -18,13 +18,18 @@
 //! remains in `wave_gf7` for `cc162697`; registering this control there would
 //! misrepresent a host accumulator as that device experiment.
 
+#[cfg(feature = "fixture-oracle")]
 use gf2_algebra::gray::gray_code_iter;
 
-use crate::{fixtures::Fixture, DispatchResult, EvaluationResult, Unsupported};
+use crate::DispatchResult;
+#[cfg(feature = "fixture-oracle")]
+use crate::{fixtures::Fixture, EvaluationResult, Unsupported};
 
+#[cfg(feature = "fixture-oracle")]
 const FIELD_ORDER: u64 = 7;
+#[cfg(feature = "fixture-oracle")]
 const MAX_ROWS: usize = 63;
-#[cfg(test)]
+#[cfg(all(test, feature = "fixture-oracle"))]
 const DEVICE_UNAVAILABLE: &str =
     "F_7 three-plane accumulator has no HIP kernel; cc162697 owns device integration";
 
@@ -33,6 +38,7 @@ const DEVICE_UNAVAILABLE: &str =
 /// The all-ones bit pattern is never a canonical lane value.  Constructors
 /// accept only `0..=6`, and the Mersenne add/subtract circuits preserve that
 /// representation when their inputs are canonical.
+#[cfg(feature = "fixture-oracle")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct ThreePlane {
     b0: u64,
@@ -40,6 +46,7 @@ struct ThreePlane {
     b2: u64,
 }
 
+#[cfg(feature = "fixture-oracle")]
 impl ThreePlane {
     const ZERO: Self = Self {
         b0: 0,
@@ -150,6 +157,7 @@ pub(crate) fn run() -> DispatchResult {
 }
 
 /// Evaluate the three-plane accumulator through its registered candidate path.
+#[cfg(feature = "fixture-oracle")]
 pub(crate) fn evaluate(fixture: &Fixture) -> EvaluationResult {
     if fixture.q() != FIELD_ORDER {
         return Err(Unsupported::new(
@@ -172,12 +180,13 @@ pub(crate) fn evaluate(fixture: &Fixture) -> EvaluationResult {
 ///
 /// This keeps the non-device status inspectable while the host implementation
 /// remains reachable through [`evaluate`].
-#[cfg(test)]
+#[cfg(all(test, feature = "fixture-oracle"))]
 #[must_use]
 fn device_falsification() -> Unsupported {
     Unsupported::new(DEVICE_UNAVAILABLE)
 }
 
+#[cfg(feature = "fixture-oracle")]
 fn permanent_three_plane(fixture: &Fixture) -> u8 {
     let n = fixture.n();
     if n == 0 {
@@ -213,7 +222,7 @@ fn permanent_three_plane(fixture: &Fixture) -> u8 {
 }
 
 /// Native-modular representation control with the same Gray walk and signs.
-#[cfg(test)]
+#[cfg(all(test, feature = "fixture-oracle"))]
 fn permanent_native_modular(fixture: &Fixture) -> u8 {
     let n = fixture.n();
     if n == 0 {
@@ -250,6 +259,7 @@ fn permanent_native_modular(fixture: &Fixture) -> u8 {
     }
 }
 
+#[cfg(feature = "fixture-oracle")]
 fn bit_sliced_columns(fixture: &Fixture) -> Vec<ThreePlane> {
     let n = fixture.n();
     (0..n)
@@ -262,23 +272,25 @@ fn bit_sliced_columns(fixture: &Fixture) -> Vec<ThreePlane> {
         .collect()
 }
 
+#[cfg(feature = "fixture-oracle")]
 #[inline]
 fn add_mod(left: u8, right: u8) -> u8 {
     (left + right) % FIELD_ORDER as u8
 }
 
+#[cfg(feature = "fixture-oracle")]
 #[inline]
 fn sub_mod(left: u8, right: u8) -> u8 {
     (left + FIELD_ORDER as u8 - right) % FIELD_ORDER as u8
 }
 
 #[inline]
-#[cfg(test)]
+#[cfg(all(test, feature = "fixture-oracle"))]
 fn mul_mod(left: u8, right: u8) -> u8 {
     (left * right) % FIELD_ORDER as u8
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "fixture-oracle"))]
 mod tests {
     use super::*;
     use crate::fixtures::{FixtureCorpus, FixtureRequirement, DEFAULT_FIXTURE_SEED};

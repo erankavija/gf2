@@ -24,6 +24,8 @@ use gf2_algebra::permanent::bipedal7::permanent_bipedal7;
 use gf2_algebra::permanent::permanent_bipedal3_parallel;
 use gf2_algebra::permanent::permanent_ryser;
 use gf2_core::gfp::Fp;
+#[cfg(feature = "prototype-registry")]
+use permanent_wave_gpu::MeasurementPath;
 use rayon::prelude::*;
 
 /// Phase spans returned by an event-instrumented GPU permanent dispatch.
@@ -95,11 +97,18 @@ pub enum Backend {
     /// complete Ryser evaluation and returns the same value the packed kernels
     /// do, which the equivalence check verifies.
     RyserGeneric,
+    /// A candidate reached directly from the wave-prototype registry.
+    #[cfg(feature = "prototype-registry")]
+    Prototype(MeasurementPath),
 }
 
 impl Backend {
-    /// Every backend, in the order the grid enumerates them.
-    pub const ALL: [Backend; 7] = [
+    /// The harness-native backends, in their stable measurement order.
+    ///
+    /// Prototype candidates deliberately do not appear here. They are derived
+    /// from `MeasurementPath::ALL` by [`Self::ALL`], preventing a second
+    /// hand-maintained candidate list in this crate.
+    pub const BUILTIN: [Backend; 7] = [
         Backend::Scalar,
         Backend::Avx2,
         Backend::Rayon,
@@ -108,6 +117,14 @@ impl Backend {
         Backend::Gpu,
         Backend::RyserGeneric,
     ];
+
+    /// Every backend, including every registered prototype path.
+    #[cfg(feature = "prototype-registry")]
+    pub const ALL: BackendSchedule = BackendSchedule;
+    /// Every harness-native backend when the prototype registry feature is
+    /// deliberately disabled.
+    #[cfg(not(feature = "prototype-registry"))]
+    pub const ALL: [Backend; 7] = Self::BUILTIN;
 
     /// Stable identifier used in the CSV `backend` column.
     #[must_use]
@@ -120,6 +137,8 @@ impl Backend {
             Backend::RayonIntra => "cpu_rayon_intra_matrix",
             Backend::Gpu => "gpu_hip",
             Backend::RyserGeneric => "cpu_ryser_generic",
+            #[cfg(feature = "prototype-registry")]
+            Backend::Prototype(path) => path.name(),
         }
     }
 
@@ -131,6 +150,79 @@ impl Backend {
             self,
             Backend::Rayon | Backend::RayonAvx2 | Backend::RayonIntra
         )
+    }
+
+    /// The registry path behind this backend, if it is a prototype candidate.
+    #[cfg(feature = "prototype-registry")]
+    #[must_use]
+    pub const fn prototype_path(self) -> Option<MeasurementPath> {
+        match self {
+            Self::Prototype(path) => Some(path),
+            _ => None,
+        }
+    }
+}
+
+/// Iterator source for the canonical default backend schedule.
+///
+/// It appends the prototype crate's registry directly to the harness-native
+/// paths, rather than restating any prototype candidate here.
+#[cfg(feature = "prototype-registry")]
+#[derive(Clone, Copy, Debug)]
+pub struct BackendSchedule;
+
+#[cfg(feature = "prototype-registry")]
+impl BackendSchedule {
+    /// Number of paths in the complete schedule.
+    #[must_use]
+    pub const fn len(self) -> usize {
+        Backend::BUILTIN.len() + MeasurementPath::ALL.len()
+    }
+
+    /// Whether the complete schedule has no paths.
+    ///
+    /// The harness-native schedule is nonempty even before prototype paths are
+    /// appended, so this is always `false`.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        false
+    }
+}
+
+#[cfg(feature = "prototype-registry")]
+impl IntoIterator for BackendSchedule {
+    type Item = Backend;
+    type IntoIter = BackendScheduleIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BackendScheduleIter { index: 0 }
+    }
+}
+
+/// Iterator over native backends followed by the prototype registry.
+///
+/// The registry half deliberately indexes `MeasurementPath::ALL` directly:
+/// changing that array's size or contents requires no schedule edit here.
+#[cfg(feature = "prototype-registry")]
+#[derive(Clone, Debug)]
+pub struct BackendScheduleIter {
+    index: usize,
+}
+
+#[cfg(feature = "prototype-registry")]
+impl Iterator for BackendScheduleIter {
+    type Item = Backend;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(backend) = Backend::BUILTIN.get(self.index).copied() {
+            self.index = self.index.checked_add(1)?;
+            return Some(backend);
+        }
+
+        let registry_index = self.index.checked_sub(Backend::BUILTIN.len())?;
+        let path = MeasurementPath::ALL.get(registry_index).copied()?;
+        self.index = self.index.checked_add(1)?;
+        Some(Backend::Prototype(path))
     }
 }
 
@@ -219,6 +311,14 @@ pub fn support(backend: Backend, q: u64, n: usize) -> Support {
                 Support::Supported
             }
         }
+        #[cfg(feature = "prototype-registry")]
+        Backend::Prototype(path) => match path.dispatch() {
+            Ok(()) => unsupported(format!(
+                "prototype candidate {} has no harness batch evaluator yet",
+                path.name()
+            )),
+            Err(reason) => unsupported(reason.reason().to_string()),
+        },
     }
 }
 

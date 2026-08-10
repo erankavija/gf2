@@ -1,6 +1,8 @@
 //! The complete measurement-path registry for this study.
 
-use crate::{f5_candidates, f7_three_plane, fixtures::Fixture, fold_gf3, wave, wave_gf7};
+#[cfg(feature = "fixture-oracle")]
+use crate::fixtures::Fixture;
+use crate::{f5_candidates, f7_three_plane, fold_gf3, wave, wave_gf7};
 
 /// Result of dispatching a candidate path.
 pub type DispatchResult = Result<(), Unsupported>;
@@ -10,6 +12,7 @@ pub type DispatchResult = Result<(), Unsupported>;
 /// The fixture itself retains the field order, so candidate modules must
 /// return the representative in `0..q`.  The oracle compares this value only
 /// with the matching field fixture.
+#[cfg(feature = "fixture-oracle")]
 pub type EvaluationResult = Result<u64, Unsupported>;
 
 /// A registered candidate that does not yet have an executable implementation.
@@ -93,6 +96,7 @@ impl MeasurementPath {
     /// This is the only candidate-to-oracle dispatch surface.  The fixture
     /// checker enumerates [`Self::ALL`] and calls this method, so adding a
     /// registered path automatically admits it to correctness reporting.
+    #[cfg(feature = "fixture-oracle")]
     pub fn evaluate(self, fixture: &Fixture) -> EvaluationResult {
         match self {
             Self::WaveGf3 => wave::evaluate(fixture),
