@@ -166,6 +166,21 @@ fn registered_candidates_remain_visible_and_path_frequencies_are_complementary()
             }
         }
     }
+    for n in [20, 24] {
+        let high_order_rows: Vec<_> = report
+            .candidate_cells()
+            .iter()
+            .filter(|row| row.q() == 7 && row.n() == n)
+            .collect();
+        assert_eq!(
+            high_order_rows.len(),
+            MeasurementPath::ALL.len(),
+            "F_7 n={n} must remain in the primary registry report"
+        );
+        assert!(high_order_rows.iter().all(|row| {
+            row.reference() == "permanent_ryser" && row.secondary_reference().is_none()
+        }));
+    }
     for frequency in report.path_frequencies() {
         assert!(frequency.expectations_are_complements());
         assert!(frequency.zero_fast_expectation().starts_with("1 - "));
@@ -186,11 +201,18 @@ fn registered_candidates_remain_visible_and_path_frequencies_are_complementary()
 }
 
 #[test]
-fn cpu_reference_paths_match_ryser_on_fast_corpus_cells() {
+fn cpu_reference_paths_match_ryser_where_packed_reference_exists() {
     let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
-    let rows = check_cpu_reference_paths(&corpus, 16);
+    let rows = check_cpu_reference_paths(&corpus, 24);
 
     assert!(!rows.is_empty());
+    assert!(rows.iter().any(|row| row.q() == 7 && row.n() == 16));
+    for n in [20, 24] {
+        assert!(
+            !rows.iter().any(|row| row.q() == 7 && row.n() == n),
+            "F_7 n={n} has no packed scalar reference"
+        );
+    }
     for row in rows {
         assert_eq!(
             row.mismatch_count(),
