@@ -110,18 +110,61 @@ fn registered_candidates_remain_visible_and_path_frequencies_are_complementary()
         "every registered candidate must receive one result per corpus cell"
     );
     for row in report.candidate_cells() {
-        assert!(matches!(
-            row.status(),
-            CandidateCellStatus::Unavailable { .. }
-        ));
-        assert!(
-            row.unavailable_reason()
-                .is_some_and(|reason| !reason.is_empty()),
-            "{} q={} n={} must state why it cannot execute",
+        assert_eq!(row.reference(), "permanent_ryser");
+        assert_eq!(
+            row.mismatch_count(),
+            0,
+            "{} q={} n={} first={:?}",
+            row.candidate(),
+            row.q(),
+            row.n(),
+            row.first_mismatch_fixture_id()
+        );
+        assert_eq!(
+            row.secondary_reference_mismatch_count(),
+            0,
+            "{} q={} n={} packed reference must agree with Ryser",
             row.candidate(),
             row.q(),
             row.n()
         );
+        match row.status() {
+            CandidateCellStatus::Identical => {
+                assert!(row.compared_count() > 0);
+                assert!(row.unavailable_reason().is_none());
+            }
+            CandidateCellStatus::Unavailable { .. } => {
+                assert_eq!(row.compared_count(), 0);
+                assert!(
+                    row.unavailable_reason()
+                        .is_some_and(|reason| !reason.is_empty()),
+                    "{} q={} n={} must state why it cannot execute",
+                    row.candidate(),
+                    row.q(),
+                    row.n()
+                );
+            }
+            CandidateCellStatus::PartiallyUnavailable { .. } => {
+                assert!(row.compared_count() > 0);
+                assert!(
+                    row.unavailable_reason()
+                        .is_some_and(|reason| !reason.is_empty()),
+                    "{} q={} n={} must state why it cannot execute",
+                    row.candidate(),
+                    row.q(),
+                    row.n()
+                );
+            }
+            CandidateCellStatus::Mismatch => {
+                panic!(
+                    "{} q={} n={} disagreed with the CPU oracle at {:?}",
+                    row.candidate(),
+                    row.q(),
+                    row.n(),
+                    row.first_mismatch_fixture_id()
+                );
+            }
+        }
     }
     for frequency in report.path_frequencies() {
         assert!(frequency.expectations_are_complements());
