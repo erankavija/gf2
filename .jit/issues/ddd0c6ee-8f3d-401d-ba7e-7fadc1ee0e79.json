@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave4-batched-receipt",
+  "claimed_at": "2026-08-10T01:37:34.437122353Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-09T23:11:01.325436084Z"
+  "updated_at": "2026-08-10T01:37:34.437122353Z"
 }
