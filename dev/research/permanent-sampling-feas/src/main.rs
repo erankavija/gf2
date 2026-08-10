@@ -404,8 +404,11 @@ address is (seed_root, q, n, purpose, stream_index)",
             }
         ),
         format!(
-            "gpu timing includes host serialisation, hipMalloc, H2D, launch, sync, D2H and free \
-(all inside gf2_algebra::gpu::permanent_batch_*), plus zero counting and shard I/O"
+            "eval_s is the host wall-clock around GPU serialisation, allocation, H2D, launch, \
+stream wait, D2H, and free. kernel_device_s is the separate device-event kernel-only total; \
+h2d_device_s, d2h_device_s, host_submission_s, and device_submission_to_kernel_s are separate \
+phase totals. No column subtracts host and device timestamps. Empty phase columns carry their \
+reason in phase_timing_note and are never zero-filled or replaced by eval_s"
         ),
         format!(
             "single-thread cells pinned to core {PINNED_CORE}; rayon cells use all logical CPUs"

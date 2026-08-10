@@ -29,7 +29,7 @@ path = "src/main.rs"
 
 [features]
 default = []
-hip = ["gf2-algebra/hip"]
+hip = ["gf2-algebra/hip", "dep:gf2-kernels-hip"]
 
 [dependencies]
 gf2-algebra = { path = "../../../crates/gf2-algebra", features = [
@@ -43,6 +43,11 @@ gf2-core = { path = "../../../crates/gf2-core" }
 # `permanent_bipedal3` dispatcher selects it implicitly, but the study has to
 # time the scalar and AVX2 paths as separate cells.
 gf2-kernels-simd = { path = "../../../crates/gf2-kernels-simd" }
+# The research-only GPU path calls the instrumented permanent boundary
+# directly so its device-event timings remain distinct from the composite
+# host wall clock. Production crates keep this dependency isolated behind
+# gf2-algebra's ordinary GPU adapter.
+gf2-kernels-hip = { path = "../../../crates/gf2-kernels-hip", optional = true, features = ["hip"] }
 rayon = "1.10"
 # ChaCha20 is the named, versioned campaign RNG. `rand_chacha` 0.9 is already
 # used elsewhere in the repository (crates/gf2-kernels-hip dev-dependencies).
