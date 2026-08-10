@@ -18,11 +18,9 @@ probe before candidate kernels exist) with:
 cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip
 ```
 
-The candidate list is deliberately complete from the first commit: two F_3
-paths, the F_5 byte-control and three-plane paths, the standalone F_7
-three-plane accumulator, and the F_7 lookup-table-control and permanent-shaped
-three-plane paths. Add a candidate implementation only by replacing its stub
-in the owning candidate module and adding that candidate's HIP and test files.
-Do not add a second registry or edit `src/lib.rs` or `src/paths.rs`; the
-measurement driver always enumerates `MeasurementPath::ALL` and dispatches
-through that one registry.
+The candidate list is deliberately complete from the first commit and is
+authoritatively defined by `MeasurementPath::ALL`. Add a candidate
+implementation only by replacing its stub in the owning candidate module and
+adding that candidate's HIP and test files. Do not add a second registry or
+edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
+`MeasurementPath::ALL` and dispatches through that one registry.
