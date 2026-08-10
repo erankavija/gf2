@@ -52,12 +52,17 @@ extern "C" {
     /// requirements as `permanent_bipedal3_hip_batch`. `stream` must be a live
     /// `hipStream_t` in the active context; it may be null only to select HIP's
     /// default stream. All pointed-to allocations must outlive queued work.
+    /// `kernel_start_event` is null for ordinary launches, or a live
+    /// timing-enabled `hipEvent_t` from the same context. When non-null, the
+    /// wrapper records it immediately before submitting the kernel and returns
+    /// that record error without submitting a kernel.
     fn permanent_bipedal3_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
         stream: *mut c_void,
+        kernel_start_event: *mut c_void,
     ) -> c_int;
 
     /// Compute the permanent of an n×n matrix over GF(5) on the GPU (single matrix).
@@ -90,12 +95,17 @@ extern "C" {
     /// requirements as `permanent_bipedal5_hip_batch`. `stream` must be a live
     /// `hipStream_t` in the active context; it may be null only to select HIP's
     /// default stream. All pointed-to allocations must outlive queued work.
+    /// `kernel_start_event` is null for ordinary launches, or a live
+    /// timing-enabled `hipEvent_t` from the same context. When non-null, the
+    /// wrapper records it immediately before submitting the kernel and returns
+    /// that record error without submitting a kernel.
     fn permanent_bipedal5_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
         stream: *mut c_void,
+        kernel_start_event: *mut c_void,
     ) -> c_int;
 
     /// Initialize the F_7 GPU LUTs by copying host ADD/SUB/MUL LUTs to device memory.
@@ -130,12 +140,17 @@ extern "C" {
     /// requirements as `permanent_bipedal7_hip_batch`. `stream` must be a live
     /// `hipStream_t` in the active context; it may be null only to select HIP's
     /// default stream. All pointed-to allocations must outlive queued work.
+    /// `kernel_start_event` is null for ordinary launches, or a live
+    /// timing-enabled `hipEvent_t` from the same context. When non-null, the
+    /// wrapper records it immediately before submitting the kernel and returns
+    /// that record error without submitting a kernel.
     fn permanent_bipedal7_hip_batch_on_stream(
         matrices_ptr: *const u8,
         n: c_int,
         m: c_int,
         out_ptr: *mut u64,
         stream: *mut c_void,
+        kernel_start_event: *mut c_void,
     ) -> c_int;
 
     /// Compute the permanent of an n×n matrix over GF(7) on the GPU (single matrix).
@@ -350,8 +365,50 @@ pub unsafe fn compute_permanent_gf3_batch_on_stream(
     stream: *mut c_void,
 ) -> c_int {
     // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
-    // are forwarded verbatim from this unsafe function's contract.
-    unsafe { permanent_bipedal3_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
+    // are forwarded verbatim from this unsafe function's contract. A null
+    // timing event preserves ordinary stream-launch behavior.
+    unsafe {
+        compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            std::ptr::null_mut(),
+        )
+    }
+}
+
+/// Raw F_3 stream launch that optionally records `kernel_start_event` in the
+/// C++ wrapper immediately before submitting the kernel.
+///
+/// # Safety
+///
+/// The device pointers and stream must satisfy
+/// [`compute_permanent_gf3_batch_on_stream`]'s contract. When non-null,
+/// `kernel_start_event` must be a live timing-enabled HIP event in the same
+/// context as `stream` and remain alive through this call.
+unsafe fn compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+    kernel_start_event: *mut c_void,
+) -> c_int {
+    // SAFETY: the caller establishes the device-pointer and stream lifetimes;
+    // a non-null marker is a live timing event in the same HIP context. The
+    // C++ wrapper records that marker before it submits the kernel.
+    unsafe {
+        permanent_bipedal3_hip_batch_on_stream(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            kernel_start_event,
+        )
+    }
 }
 
 /// Compute the F_5 permanent of a single n×n matrix on the GPU.
@@ -495,8 +552,50 @@ pub unsafe fn compute_permanent_gf5_batch_on_stream(
     stream: *mut c_void,
 ) -> c_int {
     // SAFETY: all device-pointer, dimension, and stream-lifetime preconditions
-    // are forwarded verbatim from this unsafe function's contract.
-    unsafe { permanent_bipedal5_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
+    // are forwarded verbatim from this unsafe function's contract. A null
+    // timing event preserves ordinary stream-launch behavior.
+    unsafe {
+        compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            std::ptr::null_mut(),
+        )
+    }
+}
+
+/// Raw F_5 stream launch that optionally records `kernel_start_event` in the
+/// C++ wrapper immediately before submitting the kernel.
+///
+/// # Safety
+///
+/// The device pointers and stream must satisfy
+/// [`compute_permanent_gf5_batch_on_stream`]'s contract. When non-null,
+/// `kernel_start_event` must be a live timing-enabled HIP event in the same
+/// context as `stream` and remain alive through this call.
+unsafe fn compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+    kernel_start_event: *mut c_void,
+) -> c_int {
+    // SAFETY: the caller establishes the device-pointer and stream lifetimes;
+    // a non-null marker is a live timing event in the same HIP context. The
+    // C++ wrapper records that marker before it submits the kernel.
+    unsafe {
+        permanent_bipedal5_hip_batch_on_stream(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            kernel_start_event,
+        )
+    }
 }
 
 /// Initialize the F_7 GPU LUT tables (ADD, SUB, MUL) from the host static consts.
@@ -795,14 +894,56 @@ pub unsafe fn compute_permanent_gf7_batch_on_stream(
     // failed (returned non-zero), this function refuses to launch and
     // propagates the original init error code rather than silently
     // computing against uninitialised device memory.
+    // SAFETY: all device-pointer, dimension, stream-lifetime, and initialized
+    // LUT preconditions are forwarded from this unsafe function's contract. A
+    // null timing event preserves ordinary stream-launch behavior.
+    unsafe {
+        compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            std::ptr::null_mut(),
+        )
+    }
+}
+
+/// Raw F_7 stream launch that optionally records `kernel_start_event` in the
+/// C++ wrapper immediately before submitting the kernel.
+///
+/// # Safety
+///
+/// The device pointers, initialized F_7 LUTs, and stream must satisfy
+/// [`compute_permanent_gf7_batch_on_stream`]'s contract. When non-null,
+/// `kernel_start_event` must be a live timing-enabled HIP event in the same
+/// context as `stream` and remain alive through this call.
+unsafe fn compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
+    matrices_ptr: *const u8,
+    n: c_int,
+    m: c_int,
+    out_ptr: *mut u64,
+    stream: *mut c_void,
+    kernel_start_event: *mut c_void,
+) -> c_int {
     let init_rc = GF7_INIT_RC.load(std::sync::atomic::Ordering::SeqCst);
     if init_rc != 0 {
         return init_rc;
     }
 
-    // SAFETY: all device-pointer, dimension, stream-lifetime, and initialized
-    // LUT preconditions are forwarded from this unsafe function's contract.
-    unsafe { permanent_bipedal7_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, stream) }
+    // SAFETY: the caller establishes the device-pointer, stream, and
+    // initialized-LUT preconditions; a non-null marker is a live timing event
+    // in the same HIP context. The C++ wrapper records it before kernel launch.
+    unsafe {
+        permanent_bipedal7_hip_batch_on_stream(
+            matrices_ptr,
+            n,
+            m,
+            out_ptr,
+            stream,
+            kernel_start_event,
+        )
+    }
 }
 
 /// Compute the byte-sum checksum of the GPU __constant__ MUL_LUT.
@@ -950,9 +1091,10 @@ pub enum PermanentField {
 /// `h2d`, `kernel`, and `d2h` are device-event spans in execution order on
 /// one HIP stream. A missing optional phase means the boundary did not submit
 /// that phase; it is never encoded as a zero duration. `host_submission` is
-/// measured with [`Instant`] around the host kernel-submit call only, while
-/// `device_submission_to_kernel` is an independent device-event span from the
-/// pre-submit marker to the kernel-start marker. The two clocks are reported
+/// measured with [`Instant`] around the one host submission-wrapper call only,
+/// while `device_submission_to_kernel` is an independent device-event span
+/// from the pre-submit marker to the kernel-start event that wrapper records
+/// immediately before `hipLaunchKernelGGL`. The two clocks are reported
 /// separately and are never subtracted from one another.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PermanentPhaseTimings {
@@ -962,7 +1104,8 @@ pub struct PermanentPhaseTimings {
     pub kernel: Option<Duration>,
     /// Device-clock device-to-host transfer duration, if one was submitted.
     pub d2h: Option<Duration>,
-    /// Host-clock duration of the `hipLaunchKernelGGL` submission call.
+    /// Host-clock duration of the wrapper call that records the kernel-start
+    /// event and submits `hipLaunchKernelGGL`.
     pub host_submission: Duration,
     /// Device-clock duration from the pre-submit stream marker to the kernel
     /// start marker. It is deliberately distinct from `host_submission`.
@@ -1033,40 +1176,68 @@ pub unsafe fn launch_permanent_batch_instrumented_on_stream(
     let submission_marker = HipEvent::new()?;
     let kernel = HipEventSpan::new()?;
 
-    // Put the marker and start event in the same stream before the host
-    // submission call. Their device-clock difference is queue/launch delay,
-    // while the host clock measures the FFI submission call separately.
+    // The pre-submit marker is ordered on the caller stream before starting
+    // the host clock. The C++ wrapper records `kernel`'s start event itself,
+    // immediately before `hipLaunchKernelGGL`, making their device-clock span
+    // a real submission-to-kernel boundary rather than two queued markers.
     submission_marker.record(stream)?;
-    kernel.record_start(stream)?;
-
-    let submission_started = Instant::now();
-    let code = match field {
+    let kernel_start_event = kernel.start_raw();
+    let (code, host_submission) = match field {
         PermanentField::F3 => {
             // SAFETY: this function's safety contract guarantees the valid
             // device ranges, dimensions, and stream/allocation lifetimes that
-            // the F_3 stream-bearing FFI launch requires.
-            unsafe {
-                compute_permanent_gf3_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
-            }
+            // the F_3 stream-bearing FFI launch and the live kernel start
+            // event required by this crate-private raw helper.
+            let submission_started = Instant::now();
+            let code = unsafe {
+                compute_permanent_gf3_batch_on_stream_with_kernel_start_event(
+                    matrices_ptr,
+                    n,
+                    m,
+                    out_ptr,
+                    stream.as_raw(),
+                    kernel_start_event,
+                )
+            };
+            (code, submission_started.elapsed())
         }
         PermanentField::F5 => {
             // SAFETY: this function's safety contract guarantees the valid
             // device ranges, dimensions, and stream/allocation lifetimes that
-            // the F_5 stream-bearing FFI launch requires.
-            unsafe {
-                compute_permanent_gf5_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
-            }
+            // the F_5 stream-bearing FFI launch and the live kernel start
+            // event required by this crate-private raw helper.
+            let submission_started = Instant::now();
+            let code = unsafe {
+                compute_permanent_gf5_batch_on_stream_with_kernel_start_event(
+                    matrices_ptr,
+                    n,
+                    m,
+                    out_ptr,
+                    stream.as_raw(),
+                    kernel_start_event,
+                )
+            };
+            (code, submission_started.elapsed())
         }
         PermanentField::F7 => {
             // SAFETY: this function's safety contract guarantees the valid
             // device ranges, dimensions, stream/allocation lifetimes, and
-            // initialized F_7 LUTs required by the F_7 stream-bearing launch.
-            unsafe {
-                compute_permanent_gf7_batch_on_stream(matrices_ptr, n, m, out_ptr, stream.as_raw())
-            }
+            // initialized F_7 LUTs required by the F_7 stream-bearing launch,
+            // plus the live kernel start event used by the raw helper.
+            let submission_started = Instant::now();
+            let code = unsafe {
+                compute_permanent_gf7_batch_on_stream_with_kernel_start_event(
+                    matrices_ptr,
+                    n,
+                    m,
+                    out_ptr,
+                    stream.as_raw(),
+                    kernel_start_event,
+                )
+            };
+            (code, submission_started.elapsed())
         }
     };
-    let host_submission = submission_started.elapsed();
     if code != 0 {
         return Err(HipError::Hip {
             code,

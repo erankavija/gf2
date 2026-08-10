@@ -323,7 +323,8 @@ extern "C" int permanent_bipedal3_hip_batch_on_stream(const unsigned char* matri
                                                        int n,
                                                        int m,
                                                        unsigned long long* out_ptr,
-                                                       void* stream) {
+                                                       void* stream,
+                                                       void* kernel_start_event) {
     if (m <= 0) return 0; // hipSuccess — nothing to do
     if (n <= 0 || n > 63) return 1; // hipErrorInvalidValue
 
@@ -332,12 +333,22 @@ extern "C" int permanent_bipedal3_hip_batch_on_stream(const unsigned char* matri
     // immediately (idle). The GPU win comes from M blocks in flight.
     dim3 grid((unsigned int)m, 1, 1);
     dim3 block(1, 1, 1);
+    hipStream_t hip_stream = reinterpret_cast<hipStream_t>(stream);
+
+    // The instrumented Rust path supplies this timing event. Record it in the
+    // launch wrapper, immediately before the kernel submission, so its device
+    // timestamp is a real kernel-start boundary rather than a queued marker.
+    if (kernel_start_event != nullptr) {
+        hipError_t record_status = hipEventRecord(
+            reinterpret_cast<hipEvent_t>(kernel_start_event), hip_stream);
+        if (record_status != hipSuccess) return (int)record_status;
+    }
 
     hipLaunchKernelGGL(permanent_bipedal3_kernel,
                        grid,
                        block,
                        /*sharedMemBytes=*/0,
-                       reinterpret_cast<hipStream_t>(stream),
+                       hip_stream,
                        matrices_ptr,
                        n,
                        m,
@@ -353,7 +364,8 @@ extern "C" int permanent_bipedal3_hip_batch(const unsigned char* matrices_ptr,
                                              int n,
                                              int m,
                                              unsigned long long* out_ptr) {
-    return permanent_bipedal3_hip_batch_on_stream(matrices_ptr, n, m, out_ptr, nullptr);
+    return permanent_bipedal3_hip_batch_on_stream(
+        matrices_ptr, n, m, out_ptr, nullptr, nullptr);
 }
 
 // ---------------------------------------------------------------------------

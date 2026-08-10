@@ -143,6 +143,16 @@ impl HipEventSpan {
         self.stop.record(stream)
     }
 
+    /// Returns the owned start event for a crate-internal launch wrapper.
+    ///
+    /// The returned handle remains owned by this span and is valid only while
+    /// the span is alive. The permanent FFI wrapper records it on the supplied
+    /// stream immediately before kernel submission; no public API exposes this
+    /// raw handle.
+    pub(crate) fn start_raw(&self) -> *mut c_void {
+        self.start.raw
+    }
+
     /// Returns whether the span's stop marker has completed.
     pub fn is_complete(&self) -> Result<bool, HipError> {
         self.stop.is_complete()
