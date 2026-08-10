@@ -1,7 +1,7 @@
 use permanent_wave_gpu::MeasurementPath;
 
 #[test]
-fn every_planned_path_is_addressable_and_explicitly_unsupported() {
+fn every_planned_path_is_addressable_with_explicit_status() {
     let expected = [
         "wave-gf3",
         "fold-gf3",
@@ -18,13 +18,18 @@ fn every_planned_path_is_addressable_and_explicitly_unsupported() {
     );
 
     for path in MeasurementPath::ALL {
-        let unsupported = path
-            .dispatch()
-            .expect_err("each unimplemented path must explicitly report unsupported");
-        assert!(
-            !unsupported.reason().is_empty(),
-            "{} must state why it is unsupported",
-            path.name()
-        );
+        if path == MeasurementPath::F7ThreePlaneAccumulator {
+            path.dispatch()
+                .expect("the landed F_7 accumulator must be dispatchable");
+        } else {
+            let unsupported = path
+                .dispatch()
+                .expect_err("each unimplemented path must explicitly report unsupported");
+            assert!(
+                !unsupported.reason().is_empty(),
+                "{} must state why it is unsupported",
+                path.name()
+            );
+        }
     }
 }
