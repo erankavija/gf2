@@ -1,17 +1,25 @@
 //! Stubs for the F_5 byte-control and three-plane candidate paths.
 
-use crate::{DispatchResult, Unsupported};
+use crate::{fixtures::Fixture, DispatchResult, EvaluationResult, Unsupported};
+
+const BYTE_CONTROL_UNAVAILABLE: &str =
+    "F_5 byte-oriented modular arithmetic control has not landed";
+const THREE_PLANE_UNAVAILABLE: &str = "F_5 canonical three-plane accumulator has not landed";
 
 /// Dispatch stub for the F_5 byte-oriented modular arithmetic control.
 pub(crate) fn byte_control() -> DispatchResult {
-    Err(Unsupported::new(
-        "F_5 byte-oriented modular arithmetic control has not landed",
-    ))
+    Err(Unsupported::new(BYTE_CONTROL_UNAVAILABLE))
 }
 
 /// Dispatch stub for the F_5 canonical three-plane accumulator.
 pub(crate) fn three_plane() -> DispatchResult {
-    Err(Unsupported::new(
-        "F_5 canonical three-plane accumulator has not landed",
-    ))
+    Err(Unsupported::new(THREE_PLANE_UNAVAILABLE))
+}
+
+pub(crate) fn evaluate_byte_control(_fixture: &Fixture) -> EvaluationResult {
+    Err(Unsupported::new(BYTE_CONTROL_UNAVAILABLE))
+}
+
+pub(crate) fn evaluate_three_plane(_fixture: &Fixture) -> EvaluationResult {
+    Err(Unsupported::new(THREE_PLANE_UNAVAILABLE))
 }
