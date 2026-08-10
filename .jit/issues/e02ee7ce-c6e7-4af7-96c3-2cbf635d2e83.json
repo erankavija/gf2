@@ -13,9 +13,16 @@
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "permanent-sampling-feas-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "permanent-sampling-feas-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T01:55:48.860191890Z",
+      "updated_by": null
+    }
+  },
   "id": "e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83",
   "labels": [
     "type:task",
@@ -27,5 +34,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Per-phase timing columns in the harness cell record",
-  "updated_at": "2026-08-10T01:37:42.545465833Z"
+  "updated_at": "2026-08-10T01:55:48.860191890Z"
 }

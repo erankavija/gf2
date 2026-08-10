@@ -7842,3 +7842,5 @@
 {"assignee":"agent:wave4-batched-receipt","id":"d42f6b33-8fa2-4418-a01b-2d0145a64ba7","issue_id":"ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79","timestamp":"2026-08-10T01:37:34.437122353Z","type":"issue_claimed"}
 {"from":"ready","id":"2df6ec3f-4dce-4c3a-8e3a-d42bf325ea0b","issue_id":"e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83","timestamp":"2026-08-10T01:37:42.545465833Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:wave4-phase-columns","id":"b718913f-791f-4e16-a60e-ffcf919e2033","issue_id":"e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83","timestamp":"2026-08-10T01:37:42.545465833Z","type":"issue_claimed"}
+{"gate_key":"permanent-wave-gpu-ci","id":"505a85c1-3474-4a3c-88f7-9443ee13e5a0","issue_id":"6d0ff83c-8355-40e3-819d-3eca22501bf7","timestamp":"2026-08-10T01:55:18.202311399Z","type":"gate_added"}
+{"gate_key":"permanent-sampling-feas-ci","id":"59ce896b-8f50-485b-a8c9-fb36f322c1ee","issue_id":"e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83","timestamp":"2026-08-10T01:55:48.860191890Z","type":"gate_added"}

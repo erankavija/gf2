@@ -11,9 +11,16 @@
   "first_ready_at": "2026-08-10T00:09:52.376318546Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "permanent-wave-gpu-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "permanent-wave-gpu-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T01:55:18.202311399Z",
+      "updated_by": null
+    }
+  },
   "id": "6d0ff83c-8355-40e3-819d-3eca22501bf7",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Deterministic fixture corpus with CPU-oracle equivalence checking",
-  "updated_at": "2026-08-10T01:37:26.343739228Z"
+  "updated_at": "2026-08-10T01:55:18.202311399Z"
 }
