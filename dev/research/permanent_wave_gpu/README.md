@@ -75,6 +75,106 @@ adding that candidate's HIP and test files. Do not add a second registry or
 edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 `MeasurementPath::ALL` and dispatches through that one registry.
 
+## F_3 wave-cooperative evidence boundary
+
+`WaveGf3` is the first executable intra-matrix candidate. It partitions the
+full sequential Gray range among at most 32 lanes, initializes every lane from
+the canonical subset at that lane's interval start, and combines only scalar
+partials in lane order. The host fixture/oracle path checks every tractable
+committed F_3 fixture through order 16. Larger F_3 corpus cells, including the
+order-63 partial-word fixture, remain explicit `Unsupported` rows whose reason
+names the exponential full-permanent cost; they are not a capability claim or
+silently omitted from the canonical report.
+
+This is a preserved falsification of literal full-permanent execution at
+order 63: `2^63` Ryser terms are not presented as a passing test. Instead the
+host and device checks retain exact interval union/disjointness and
+interval-start Gray-subset assertions at that order, plus active-tail-mask
+product probes. The device-touching Rust test is feature-gated and ignored with
+its required ROCm device reason. The separately invoked self-checking HIP
+executable provides the actual device evidence, and its resource receipt is
+recorded beside `hip/wave_gf3_equivalence.hip` after the checked gfx1030 build.
+
+### F_3 device/resource pre-commit capture — 2026-08-10
+
+This capture is deliberately **not** a clean-revision receipt. It records the
+device evidence obtained before the implementation commit so the raw result is
+preserved rather than retroactively represented as clean. The final receipt
+must repeat the two commands below from the committed, clean implementation
+revision before making a clean-provenance claim.
+
+- Base revision: `a816d3b713835339a3f43307d5447dca5c7e9699`.
+- Source state: dirty implementation worktree; binary patch SHA-256
+  `e5f0a54da2e6bacc69f9db6fed9d23816f47d496424e4c1d2897eae017d9102a`.
+- Host: AMD Ryzen 9 5900X; AMD Radeon RX 6950 XT (`gfx1030`, UUID
+  `GPU-8cd14d6d8a3c8a73`).
+- Toolchain: ROCm HIP `7.2.53211-9999`; AMD clang `22.0.0git`.
+
+The resource command was:
+
+```sh
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/wave_gf3_equivalence.hip \
+    -o /tmp/de2522d6-wave_gf3_equivalence.o \
+    2> /tmp/de2522d6-wave_gf3_resource.log
+```
+
+Its byte-faithful stderr is
+[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), SHA-256
+`c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
+For `wave_gf3_kernel`, the report gives 22 SGPRs, 22 VGPRs, zero scratch
+bytes/lane, zero SGPR/VGPR spills, and occupancy 16 waves/SIMD. It gives zero
+LDS bytes/block because it reports static LDS only; this is preserved compiler
+output, not evidence that the kernel lacks its launch-time `16n`-byte dynamic
+column table.
+
+The directly executed prebuilt self-check was:
+
+```sh
+dev/research/permanent_wave_gpu/target/release/build/permanent-wave-gpu-8352961633a25476/out/wave_gf3_equivalence
+```
+
+It exited 0 with no diagnostics. Its SHA-256 was
+`38c0cc9a9bfa48f2a9256d9426df7f6db37ab51cfbe9caaf5911661620e85a80`.
+The executable checks independent CPU-permutation references for the small
+structural cases and the device n=63 active-mask product probe; it does not
+claim an infeasible n=63 full permanent.
+
+### F_3 device/resource clean-revision receipt — 2026-08-10
+
+This final confirmation was made from clean implementation commit
+`18b022d6c6e13b6ae41759ce79a5ed420bd1d03f`
+(`feat(jit:de2522d6): add F3 wave Ryser prototype`):
+`git status --porcelain=v1 --untracked-files=all` was empty immediately before
+the resource capture and direct device execution. The host was the AMD Ryzen 9
+5900X / AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`) above, using HIP `7.2.53211-9999` and AMD clang
+`22.0.0git`.
+
+The clean compiler command repeated the pre-commit command with output
+`/tmp/de2522d6-wave_gf3_equivalence-clean.o` and stderr
+`/tmp/de2522d6-wave_gf3_resource-clean.log`. Its 2,165-byte stderr was
+byte-identical to the committed raw log (`cmp` exit 0; SHA-256
+`c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`),
+so no resource difference was observed. It again reports 22 SGPRs, 22 VGPRs,
+zero scratch and spills, occupancy 16 waves/SIMD, and zero static LDS; the
+dynamic-LDS reporting limitation remains preserved rather than inferred away.
+
+From `dev/research/permanent_wave_gpu`, the clean prebuilt executable command
+was:
+
+```sh
+target/release/build/permanent-wave-gpu-8352961633a25476/out/wave_gf3_equivalence
+```
+
+It exited 0 with no diagnostics; its SHA-256 was
+`38c0cc9a9bfa48f2a9256d9426df7f6db37ab51cfbe9caaf5911661620e85a80`.
+The clean commit also passed both formatting checks, the default release test
+suite, the focused no-default-feature registry test, default and HIP-feature
+release Clippy with `-D warnings`, and compilation (without execution) of the
+feature-gated ignored HIP test.
+
 The default `fixture-oracle` feature retains the corpus and oracle surface,
 which imports the harness's canonical sampler. When the harness imports this
 crate's registry, it disables that feature and enables its own default

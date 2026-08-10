@@ -18,9 +18,12 @@ fn every_planned_path_is_addressable_with_explicit_status() {
     );
 
     for path in MeasurementPath::ALL {
-        if path == MeasurementPath::F7ThreePlaneAccumulator {
+        if matches!(
+            path,
+            MeasurementPath::WaveGf3 | MeasurementPath::F7ThreePlaneAccumulator
+        ) {
             path.dispatch()
-                .expect("the landed F_7 accumulator must be dispatchable");
+                .expect("each landed candidate must be dispatchable");
         } else {
             let unsupported = path
                 .dispatch()
