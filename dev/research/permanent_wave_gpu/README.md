@@ -36,12 +36,20 @@ reported per $(q,n)$ cell beside the exact complementary expectations
 $1 - ((q-1)/q)^n$ and $((q-1)/q)^n$, respectively.  The observations are a
 fixed-subset diagnostic for the deterministic corpus, not a performance number.
 
-On a ROCm host, compile every HIP source under `hip/` (including the no-op
-probe before candidate kernels exist) with:
+On a ROCm host, the opt-in HIP feature compiles every source under `hip/` and
+links the prebuilt F_7 arithmetic-equivalence executable. Run it with:
 
 ```sh
-cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip
+cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release \
+    --features hip --test hip_f7_three_plane
 ```
+
+The executable launches one device thread and exhaustively checks all 49
+ordered F_7 Mersenne add/subtract pairs and all $7^3$ three-lane active
+zero-mask/$C_6$ product triples. It is an arithmetic conformance check, not a
+permanent kernel: the host fixture corpus remains the evidence for permanent
+equality at orders 16, 20, and 24, and `cc162697` owns permanent-shaped device
+paths.
 
 The candidate list is deliberately complete from the first commit and is
 authoritatively defined by `MeasurementPath::ALL`. Add a candidate
