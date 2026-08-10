@@ -77,19 +77,22 @@ edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 
 ## F_3 wave-cooperative evidence boundary
 
-`WaveGf3` is the first executable intra-matrix candidate. It partitions the
-full sequential Gray range among at most 32 lanes, initializes every lane from
-the canonical subset at that lane's interval start, and combines only scalar
-partials in lane order. The host fixture/oracle path checks every tractable
-committed F_3 fixture through order 16. Larger F_3 corpus cells, including the
-order-63 partial-word fixture, remain explicit `Unsupported` rows whose reason
-names the exponential full-permanent cost; they are not a capability claim or
+`WaveGf3` is the executable intra-matrix control and `FoldGf3` is its
+zero-mask/sign-popcount counterpart. They partition the full sequential Gray
+range among at most 32 lanes, initialize every lane from the canonical subset
+at that lane's interval start, and combine only scalar partials in lane order.
+The host fixture/oracle path checks every tractable committed F_3 fixture
+through order 16. Larger F_3 corpus cells, including the order-63
+partial-word fixture, remain explicit `Unsupported` rows whose reason names
+the exponential full-permanent cost; they are not a capability claim or
 silently omitted from the canonical report.
 
-Its stable source-level state model is two packed `u64` words plus `u64` Gray
-cursor/end bounds and one `u32` partial sum: a 9 x 32-bit-register lower
-bound. The current subset and horizontal-product value are loop temporaries;
-the committed compiler resource output, rather than this lower bound, is the
+Their stable source-level state model is two packed `u64` words plus `u64`
+Gray cursor/end bounds and one `u32` partial sum: a 9 x 32-bit-register lower
+bound. Neither fold adds persistent mapping state: the halving control uses
+only local fold temporaries, and the zero-mask candidate additionally has
+local active/zero-mask and popcount temporaries. The compiler resource output
+for both separately instantiated kernels, rather than this lower bound, is the
 authoritative allocation evidence.
 
 This is a preserved falsification of literal full-permanent execution at
@@ -104,11 +107,14 @@ recorded beside `hip/wave_gf3_equivalence.hip` after the checked gfx1030 build.
 For actual element-wise device evidence, use the opt-in driver rather than an
 ignored Cargo test. It streams every committed F_3 fixture through the bound,
 with its fixture ID, canonical row-major bytes, and independently computed
-`permanent_ryser` value, to the prebuilt HIP executable:
+`permanent_ryser` value, to the prebuilt HIP executable. The driver selects
+only `WaveGf3` or `FoldGf3` through the existing registry entries:
 
 ```sh
 cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence
+    --release --features hip --bin wave-gf3-device-evidence -- --path wave-gf3
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence -- --path fold-gf3
 ```
 
 ### F_3 device/resource pre-commit capture — 2026-08-10
@@ -215,10 +221,12 @@ after the fixture comparisons.
 
 The resource command repeated the command above with output
 `/tmp/de2522d6-wave_gf3_equivalence-rework.o` and stderr
-`/tmp/de2522d6-wave_gf3_resource-rework.log`. Its 4,400-byte stderr is now the
-byte-faithful canonical
-[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), SHA-256
+`/tmp/de2522d6-wave_gf3_resource-rework.log`. Its then-canonical 4,400-byte
+stderr had SHA-256
 `4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
+The paired-fold capture below supersedes that control-only byte copy at the
+canonical resource-log path; this paragraph remains historical evidence for
+the reviewed control revision.
 `wave_gf3_kernel` remains 22 SGPRs, 22 VGPRs, zero scratch and spills,
 occupancy 16 waves/SIMD, and zero reported static LDS. The existing active-mask
 probe remains 7 SGPRs and 2 VGPRs. The new n=63 mapping probe reports 7 SGPRs
@@ -267,10 +275,10 @@ The clean resource command was:
     2> /tmp/de2522d6-wave_gf3_resource-clean-rework.log
 ```
 
-It exited 0 in 4.1 seconds. `cmp` confirmed its stderr was byte-identical to
-the 4,400-byte canonical
-[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), with
-SHA-256 `4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
+It exited 0 in 4.1 seconds. At that revision `cmp` confirmed its stderr was
+byte-identical to the then-canonical 4,400-byte resource capture, with SHA-256
+`4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
+The paired-fold capture below later superseded that control-only byte copy.
 The historical 2,165-byte initial capture remains
 [`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log),
 SHA-256 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
@@ -281,3 +289,60 @@ crate's registry, it disables that feature and enables its own default
 `prototype-registry` adapter instead. This mutually exclusive feature boundary
 avoids a Cargo dependency cycle while keeping `MeasurementPath::ALL` available
 in both directions as the sole candidate list.
+
+### F_3 paired-fold clean device/resource receipt — 2026-08-10
+
+This evidence was recorded from clean implementation revision
+`682ef5787f5a3792872fb94441bf66e5c38c866c`
+(`feat(jit:739f43b0): add F3 sign-popcount fold`):
+`git status --porcelain=v1 --untracked-files=all` was empty immediately after
+that commit and before either driver or compiler command. The host was an AMD
+Ryzen 9 5900X 12-Core Processor with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`). ROCm SMI reported the GPU in a low-power state; this
+is correctness/resource evidence, not a performance measurement. The
+toolchain was ROCm HIP `7.2.53211-9999` and AMD clang `22.0.0git`.
+
+The direct, non-test evidence commands were:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence -- --path wave-gf3
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence -- --path fold-gf3
+```
+
+Both exited 0. The control reported `wave-gf3 device evidence matched 12
+streamed fixtures` and the candidate reported `fold-gf3 device evidence matched
+12 streamed fixtures`; each then reported success for all 12 committed F_3
+fixtures through order 16. The shell-measured totals were 0.093 s and 0.096 s,
+respectively. In fixture-input mode, a successful exit also requires the
+independent order-63 interval/start-subset mapping and active-mask probes; it
+does not claim a full order-63 permanent.
+
+The clean resource command was:
+
+```sh
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/wave_gf3_equivalence.hip \
+    -o /tmp/739f43b0-wave-gf3.o \
+    2> /tmp/739f43b0-wave-gf3-resource.log
+```
+
+It exited 0 in 1.64 s. Its 6,485-byte stderr is byte-faithfully committed as
+[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), with
+SHA-256 `03ba52528a5cd363405409af0545c38348abddc0f01fafb9a34a3d103f36c6cf`.
+The compiler names both specializations: `FoldKindE0` is the halving control
+and `FoldKindE1` is the zero-mask/sign-popcount candidate, following their
+source declaration order. The control reports 22 SGPRs and 22 VGPRs; the
+candidate reports 22 SGPRs and 25 VGPRs. Both report zero scratch bytes per
+lane, zero SGPR and VGPR spills, occupancy 16 waves/SIMD, and zero static LDS
+bytes per block. The launch still reserves the source-declared dynamic column
+table of $16n$ bytes per block, which this static-LDS report does not include.
+
+The resource comparison falsifies a zero-allocation interpretation of the
+nine 32-bit-unit source-level mapping model: neither fold adds persistent
+mapping state, but the candidate's local zero-mask/popcount work costs three
+additional VGPRs. It preserves the no-scratch/no-spill result and the same
+reported occupancy, so any performance conclusion remains a later measurement
+question rather than an inference from this receipt.
