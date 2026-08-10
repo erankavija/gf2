@@ -141,6 +141,40 @@ The executable checks independent CPU-permutation references for the small
 structural cases and the device n=63 active-mask product probe; it does not
 claim an infeasible n=63 full permanent.
 
+### F_3 device/resource clean-revision receipt — 2026-08-10
+
+This final confirmation was made from clean implementation commit
+`18b022d6c6e13b6ae41759ce79a5ed420bd1d03f`
+(`feat(jit:de2522d6): add F3 wave Ryser prototype`):
+`git status --porcelain=v1 --untracked-files=all` was empty immediately before
+the resource capture and direct device execution. The host was the AMD Ryzen 9
+5900X / AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`) above, using HIP `7.2.53211-9999` and AMD clang
+`22.0.0git`.
+
+The clean compiler command repeated the pre-commit command with output
+`/tmp/de2522d6-wave_gf3_equivalence-clean.o` and stderr
+`/tmp/de2522d6-wave_gf3_resource-clean.log`. Its 2,165-byte stderr was
+byte-identical to the committed raw log (`cmp` exit 0; SHA-256
+`c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`),
+so no resource difference was observed. It again reports 22 SGPRs, 22 VGPRs,
+zero scratch and spills, occupancy 16 waves/SIMD, and zero static LDS; the
+dynamic-LDS reporting limitation remains preserved rather than inferred away.
+
+From `dev/research/permanent_wave_gpu`, the clean prebuilt executable command
+was:
+
+```sh
+target/release/build/permanent-wave-gpu-8352961633a25476/out/wave_gf3_equivalence
+```
+
+It exited 0 with no diagnostics; its SHA-256 was
+`38c0cc9a9bfa48f2a9256d9426df7f6db37ab51cfbe9caaf5911661620e85a80`.
+The clean commit also passed both formatting checks, the default release test
+suite, the focused no-default-feature registry test, default and HIP-feature
+release Clippy with `-D warnings`, and compilation (without execution) of the
+feature-gated ignored HIP test.
+
 The default `fixture-oracle` feature retains the corpus and oracle surface,
 which imports the harness's canonical sampler. When the harness imports this
 crate's registry, it disables that feature and enables its own default
