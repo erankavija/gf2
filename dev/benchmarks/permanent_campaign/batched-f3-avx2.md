@@ -30,13 +30,11 @@ full-repository `git status --porcelain --untracked-files=all` output, after
 opening its output. A new in-repository output would therefore mark the source
 dirty; the next cohort will instead write first to a unique absent `/tmp` file.
 
-The reserved canonical destination for that future clean cohort is
-`dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.csv`.
-Its matching receipt will be
-`dev/benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md`.
-Neither path exists yet. The eventual run must use the locked five-execution
-protocol, validate all 450 coordinates and provenance fields, then copy the
-raw bytes without rewriting them before any result is interpreted.
+The fixed-harness successor completed the locked five-execution protocol from
+clean revision `88474a74ceee817040327db164c21f9fdd5ccf84`. Its raw bytes and
+interpretation are separately recorded in
+[`batched-f3-avx2-provenance-fixed.md`](batched-f3-avx2-provenance-fixed.md);
+that receipt does not rehabilitate this incomplete cohort.
 
 The previously preserved source-split attempt remains independently
 non-authoritative: [interrupted-attempt record](batched-f3-avx2-interrupted-2026-08-10.md).
