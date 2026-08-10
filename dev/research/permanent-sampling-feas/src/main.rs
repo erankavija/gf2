@@ -23,7 +23,7 @@ use permanent_sampling_feas::equivalence::{check, EQUIVALENCE_CSV_HEADER};
 use permanent_sampling_feas::protocol::{
     run_cell, run_sustained, shuffle, warm_machine, CellSpec, Outcome, CELL_CSV_HEADER,
     MAX_CELL_SECONDS, MIN_REPS, MIN_TIMED_SECONDS, PINNED_CORE, SUSTAINED_CSV_HEADER,
-    SUSTAINED_STREAMS_PER_RUN, SUSTAINED_STREAM_BASE, WARMUP_SECONDS,
+    SUSTAINED_INDICES_PER_RUN, WARMUP_SECONDS,
 };
 use permanent_sampling_feas::stats::{envelope_row, ENVELOPE_CSV_HEADER, Z_95};
 
@@ -41,15 +41,15 @@ const NS: [usize; 5] = [12, 16, 20, 24, 28];
 const GPU_BATCHES: [usize; 2] = [256, 1024];
 /// Seconds of full-machine load before the grid, to reach thermal steady state.
 const MACHINE_WARM_SECONDS: f64 = 90.0;
-/// Stream indices reserved to each cell, so no two cells share randomness.
-const STREAMS_PER_CELL: u64 = 100_000;
+/// Stream indices reserved to each cell within every grid purpose.
+const INDICES_PER_CELL: u64 = 100_000;
 /// Number of grid specifications in one unfiltered execution.
 ///
 /// `Backend::ALL` contains one GPU entry, while the grid expands it to both
 /// configured batch sizes, hence the extra specification per `(q, n)` pair.
 const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len() + 1);
 /// Stream-index space reserved to one fresh grid process.
-const STREAMS_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * STREAMS_PER_CELL;
+const INDICES_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * INDICES_PER_CELL;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -106,7 +106,7 @@ fn grid_specs() -> Vec<CellSpec> {
                     backend,
                     batch_size: None,
                     seed_root: SEED_ROOT,
-                    seed_stream: 0,
+                    seed_index: 0,
                     order_index: 0,
                 });
             }
@@ -117,7 +117,7 @@ fn grid_specs() -> Vec<CellSpec> {
                     backend: Backend::Gpu,
                     batch_size: Some(m),
                     seed_root: SEED_ROOT,
-                    seed_stream: 0,
+                    seed_index: 0,
                     order_index: 0,
                 });
             }
@@ -161,25 +161,25 @@ fn filter_specs(specs: &mut Vec<CellSpec>, filter: &str) -> Result<(), String> {
 /// Return the first stream index reserved to `order_index` in one fresh grid
 /// process. Each execution owns a full unfiltered-grid block, so filtering
 /// cannot make two execution ids reuse an address.
-fn execution_stream_base(execution_id: u64, order_index: usize) -> Result<u64, String> {
+fn execution_index_base(execution_id: u64, order_index: usize) -> Result<u64, String> {
     if order_index >= GRID_SPECS_PER_EXECUTION {
         return Err(format!(
             "order index {order_index} is outside the {GRID_SPECS_PER_EXECUTION}-cell grid"
         ));
     }
     let execution_offset = execution_id
-        .checked_mul(STREAMS_PER_EXECUTION)
-        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+        .checked_mul(INDICES_PER_EXECUTION)
+        .ok_or_else(|| format!("execution {execution_id} index range overflows u64"))?;
     let cell_offset = (order_index as u64)
-        .checked_mul(STREAMS_PER_CELL)
+        .checked_mul(INDICES_PER_CELL)
         .expect("bounded grid order cannot overflow");
     let first = execution_offset
         .checked_add(cell_offset)
         .and_then(|value| value.checked_add(1))
-        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+        .ok_or_else(|| format!("execution {execution_id} index range overflows u64"))?;
     first
-        .checked_add(STREAMS_PER_CELL - 1)
-        .ok_or_else(|| format!("execution {execution_id} stream range overflows u64"))?;
+        .checked_add(INDICES_PER_CELL - 1)
+        .ok_or_else(|| format!("execution {execution_id} index range overflows u64"))?;
     Ok(first)
 }
 
@@ -205,7 +205,7 @@ fn open_csv(path: &Path, host: &HostInfo, header: &str, extra: &[String]) -> Buf
 /// Resuming is sound because the cell schedule is a pure function of
 /// [`SEED_ROOT`]: the spec list is built in a fixed order and shuffled by a
 /// seeded Fisher-Yates, so a resumed run walks the identical sequence with the
-/// identical per-cell stream ranges and simply skips what is already recorded.
+/// identical purpose/index addresses and simply skips what is already recorded.
 /// A second preamble line records that the file was produced in more than one
 /// session.
 fn append_csv(path: &Path, host: &HostInfo) -> BufWriter<File> {
@@ -262,7 +262,7 @@ q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so 
 permanent_ryser is the reference there"
         ),
         format!("matrices_per_cell: {matrices}"),
-        format!("seed_root: 0x{SEED_ROOT:016x}, stream: 0 (reserved for this check)"),
+        format!("seed_root: 0x{SEED_ROOT:016x}, purpose: equivalence, index: 0"),
         "sizes: n in {8, 12, 16, 20} for every q. At q=7, n=20 the packed CPU kernels are \
 recorded unsupported and the comparison runs between the GPU and the generic path"
             .to_string(),
@@ -330,20 +330,20 @@ fn cmd_grid(args: &[String]) {
     specs.sort_by_key(|s| s.n);
     for (i, spec) in specs.iter_mut().enumerate() {
         spec.order_index = i;
-        spec.seed_stream = execution_stream_base(options.execution_id, i)
+        spec.seed_index = execution_index_base(options.execution_id, i)
             .unwrap_or_else(|message| panic!("{message}"));
     }
 
-    let execution_stream_first = execution_stream_base(options.execution_id, 0)
+    let execution_index_first = execution_index_base(options.execution_id, 0)
         .unwrap_or_else(|message| panic!("{message}"));
-    let execution_stream_last = execution_stream_base(
+    let execution_index_last = execution_index_base(
         options.execution_id,
         GRID_SPECS_PER_EXECUTION - 1,
     )
     .and_then(|first| {
         first
-            .checked_add(STREAMS_PER_CELL - 1)
-            .ok_or_else(|| "execution stream range overflows u64".to_string())
+            .checked_add(INDICES_PER_CELL - 1)
+            .ok_or_else(|| "execution index range overflows u64".to_string())
     })
     .unwrap_or_else(|message| panic!("{message}"));
 
@@ -387,12 +387,12 @@ file's own q=3 chain in the study's section 4.3 rather than quoted here, so that
 figure cannot survive a re-measurement"
         ),
         format!(
-            "seed_root: 0x{SEED_ROOT:016x}; each cell owns {STREAMS_PER_CELL} ChaCha20 streams"
+            "seed_root: 0x{SEED_ROOT:016x}; each cell owns {INDICES_PER_CELL} indices within each named purpose"
         ),
         format!(
-            "execution_id: {}; reserved stream-index block: {}..={} inclusive; full matrix \
-address is (seed_root, q, n, stream_index)",
-            options.execution_id, execution_stream_first, execution_stream_last
+            "execution_id: {}; reserved index block: {}..={} inclusive; full matrix \
+address is (seed_root, q, n, purpose, stream_index)",
+            options.execution_id, execution_index_first, execution_index_last
         ),
         format!(
             "machine warmup: {}",
@@ -578,19 +578,16 @@ count; each is that group's matrices over that group's time. The split measures 
 it does not attribute it to a cause"
             .to_string(),
         format!(
-            "seed_root: 0x{SEED_ROOT:016x}, streams from {}; run j reserves the \
-{SUSTAINED_STREAMS_PER_RUN} indices after {} + j*{SUSTAINED_STREAMS_PER_RUN}, which the \
-grid's 1 + i*{STREAMS_PER_CELL} per cell cannot reach. Both figures are formatted from \
-the constants they describe, so neither can drift from the rows below",
-            SUSTAINED_STREAM_BASE + 1,
-            SUSTAINED_STREAM_BASE
+            "seed_root: 0x{SEED_ROOT:016x}; sustained purpose uses indices \
+j*{SUSTAINED_INDICES_PER_RUN}..(j+1)*{SUSTAINED_INDICES_PER_RUN}-1. Its distinct \
+purpose tag makes these seed addresses separate from all grid purposes"
         ),
         "gpu batch 2048 probes whether 256/1024 are the ceiling; M=4096 was tried once \
 and the device faulted, ending that run. The fault is a single unretried event and its \
 cause is NOT established here: gpu-hang-2026-08-07.log is its only receipt and records \
 what was and was not captured. No ceiling mechanism is asserted from it"
             .to_string(),
-        "each run reserves a disjoint stream range (stream_first column), so two runs at one \
+        "each run reserves a disjoint index range (purpose and index_first columns), so two runs at one \
 (q, n) draw independent samples and their zero counts may be pooled"
             .to_string(),
     ];
@@ -794,7 +791,7 @@ ours {:.3e} -> {ratio:.2}x ({})",
 /// need. They are reported because they are genuine draws from the campaign's
 /// sampler through the campaign's kernels, so they demonstrate the end-to-end
 /// statistic and give a first look at the conjectured value. Every backend
-/// cell draws from its own reserved stream range, so pooling across backends
+/// cell draws from its own reserved purpose/index address range, so pooling across backends
 /// pools independent samples.
 fn cmd_zerofrac(args: &[String]) {
     let host = HostInfo::probe();
@@ -938,14 +935,14 @@ mod cli_tests {
     }
 
     #[test]
-    fn execution_stream_ranges_are_disjoint_and_checked() {
-        let execution_0_last = execution_stream_base(0, GRID_SPECS_PER_EXECUTION - 1)
+    fn execution_index_ranges_are_disjoint_and_checked() {
+        let execution_0_last = execution_index_base(0, GRID_SPECS_PER_EXECUTION - 1)
             .expect("last cell in execution zero");
         let execution_1_first =
-            execution_stream_base(1, 0).expect("first cell in execution one");
+            execution_index_base(1, 0).expect("first cell in execution one");
 
-        assert_eq!(execution_0_last + STREAMS_PER_CELL, execution_1_first);
-        assert!(execution_stream_base(0, GRID_SPECS_PER_EXECUTION).is_err());
-        assert!(execution_stream_base(u64::MAX, 0).is_err());
+        assert_eq!(execution_0_last + INDICES_PER_CELL, execution_1_first);
+        assert!(execution_index_base(0, GRID_SPECS_PER_EXECUTION).is_err());
+        assert!(execution_index_base(u64::MAX, 0).is_err());
     }
 }
