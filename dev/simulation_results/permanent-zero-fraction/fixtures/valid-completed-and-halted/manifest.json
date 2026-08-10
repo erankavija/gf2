@@ -25,5 +25,5 @@
       "determinant_companion": "not_evaluated"
     }
   ],
-  "provenance": {"git_revision": "0000000000000000000000000000000000000000", "compiler_version": "fixture", "rng_algorithm": "chacha20", "rng_version": "fixture", "invocation": ["fixture"], "cpu_model": "fixture", "accelerator_runtime": {"state": "not_present"}, "gpu_model": {"state": "not_present"}}
+  "provenance": {"git_revision": "0000000000000000000000000000000000000000", "compiler_version": "fixture", "rng_algorithm": "cha_cha20", "rng_version": "fixture", "invocation": ["fixture"], "cpu_model": "fixture", "accelerator_runtime": {"state": "not_present"}, "gpu_model": {"state": "not_present"}}
 }

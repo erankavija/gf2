@@ -271,6 +271,7 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 | `revision` | Prints the source revision this build embedded; it equals `git rev-parse HEAD` exactly when the binary is current with the checkout |
 | `emission-check <dir>` | Runs the guard a campaign driver must pass before writing, printing the approved revision or naming every path that refuses it |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
+| `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |
 | `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |
 
 | Exit status | Means |
@@ -286,8 +287,11 @@ parsing its output. The failing paths themselves are named on standard error.
 ## Deterministic analysis artefacts
 
 `scripts/permanent_zero_fraction_analysis.py <campaign-directory>` consumes a
-published dataset only after checking the manifest-declared raw checksum set.
-It writes derived CSV and SVG artefacts below
+published dataset only after checking the manifest-declared raw checksum set
+and invoking `permanent_dataset conform` from this checkout. The canonical
+reader verifies the schema and all cross-document shard and summary aggregates
+before the analysis process reads pooled counts or writes an artefact. It writes
+derived CSV and SVG artefacts below
 `<campaign-directory>/derived/<campaign-id>/zero-fraction-analysis/`; derived
 artefacts are outside the raw checksum set by construction. The output table
 retains every terminal cell. Completed cells carry their pooled count,

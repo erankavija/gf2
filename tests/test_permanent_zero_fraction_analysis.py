@@ -28,12 +28,17 @@ SPEC.loader.exec_module(ANALYSIS)
 
 class PermanentZeroFractionAnalysisTests(unittest.TestCase):
     def run_analysis(self, dataset: Path) -> subprocess.CompletedProcess[str]:
+        environment = dict(os.environ)
+        environment["CARGO_TARGET_DIR"] = str(
+            Path(tempfile.gettempdir()) / "gf2-permanent-dataset-python-tests"
+        )
         return subprocess.run(
             [sys.executable, str(SCRIPT), str(dataset)],
             cwd=REPOSITORY,
             text=True,
             capture_output=True,
             check=False,
+            env=environment,
         )
 
     def refresh_checksum(self, dataset: Path, relative_path: str) -> None:
@@ -77,7 +82,7 @@ class PermanentZeroFractionAnalysisTests(unittest.TestCase):
             self.assertEqual(completed["prior_interval_relation"], "disjoint")
             self.assertEqual(completed["interval_excludes_published"], "true")
             self.assertEqual(halted["halt_reason"], "backend_unavailable")
-            self.assertEqual(halted["pooled_sample_count"], "8")
+            self.assertEqual(halted["pooled_sample_count"], "10")
             self.assertEqual(halted["pooled_permanent_zero_count"], "2")
             self.assertEqual(
                 [halted[field] for field in list(halted)[8:]],
@@ -119,7 +124,25 @@ class PermanentZeroFractionAnalysisTests(unittest.TestCase):
 
             result = self.run_analysis(dataset)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("lacks a valid terminal_state", result.stderr)
+            self.assertIn("canonical dataset conformance refused", result.stderr)
+            self.assertIn("unknown terminal_state", result.stderr)
+            self.assertFalse((dataset / "derived").exists())
+
+    def test_aggregate_mismatch_refuses_after_checksum_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            dataset = Path(temporary) / "valid-completed-and-halted"
+            shutil.copytree(FIXTURES / "valid-completed-and-halted", dataset)
+            summary_path = dataset / "summary.csv"
+            summary_path.write_text(
+                summary_path.read_text(encoding="utf-8").replace(",10,0,0.0,", ",10,1,0.0,", 1),
+                encoding="utf-8",
+            )
+            self.refresh_checksum(dataset, "summary.csv")
+
+            result = self.run_analysis(dataset)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("canonical dataset conformance refused", result.stderr)
+            self.assertIn("pooled summary must equal the field-summary rows", result.stderr)
             self.assertFalse((dataset / "derived").exists())
 
     def test_unsupported_field_fixture_refuses_after_its_checksums_verify(self) -> None:

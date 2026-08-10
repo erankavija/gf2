@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -502,10 +503,42 @@ def read_summary(
 
 
 def _source_table_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[1]
-        / "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv"
-    )
+    return _repository_root() / "dev/simulation_results/permanent-zero-fraction/scheinerman2024-q3-targets-v1.csv"
+
+
+def _repository_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _require_canonical_conformance(dataset: Path) -> None:
+    """Run the schema owner after checksum verification and before analysis."""
+
+    try:
+        result = subprocess.run(
+            [
+                "cargo",
+                "+1.95.0",
+                "run",
+                "--quiet",
+                "-p",
+                "gf2-sim",
+                "--release",
+                "--bin",
+                "permanent_dataset",
+                "--",
+                "conform",
+                str(dataset),
+            ],
+            cwd=_repository_root(),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise _error(f"cannot invoke canonical dataset conformance: {exc}") from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise _error(f"canonical dataset conformance refused: {detail}")
 
 
 def load_prior_rows(path: Path | None = None) -> dict[tuple[int, int], PriorRow]:
@@ -739,6 +772,7 @@ def analyse(dataset: Path) -> Path:
 
     root = _dataset_root(dataset)
     campaign_id, manifest_sha256, manifest, field_terminals = verify_checksums(root)
+    _require_canonical_conformance(root)
     cells = read_summary(
         root,
         campaign_id,
