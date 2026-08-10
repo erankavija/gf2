@@ -48,9 +48,11 @@ pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
     let centre = (p + z_squared / (2.0 * n)) / denominator;
     let half_width = z * ((p * (1.0 - p) / n) + z_squared / (4.0 * n * n)).sqrt() / denominator;
 
+    let lower = (centre - half_width).max(0.0);
+    let upper = (centre + half_width).min(1.0);
     (
-        (centre - half_width).max(0.0),
-        (centre + half_width).min(1.0),
+        if successes == 0 { 0.0 } else { lower },
+        if successes == trials { 1.0 } else { upper },
     )
 }
 
