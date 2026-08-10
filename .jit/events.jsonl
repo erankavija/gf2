@@ -8059,3 +8059,4 @@
 {"fields":["labels"],"id":"66dd374e-a1db-4cd3-85af-8587265930dc","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-10T11:59:37.695552800Z","type":"issue_updated","updated_by":"issue-update"}
 {"gate_key":"code-review","id":"1f9a38f1-bb83-40d7-bef6-c3a1837ce524","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-10T12:02:35.162947164Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"doc-review","id":"482c4078-cfd1-45aa-8d8e-f365ea039ea5","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-10T12:04:37.458627263Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"acd3613a-963b-49c1-bf82-a59ab60fb65e","issue_id":"d658b160-2eaa-4a00-9e4a-2d0e264d99d3","priority":"high","timestamp":"2026-08-10T13:25:38.831233282Z","title":"cargo-ci build lock survives its run through a daemonising child","type":"issue_created"}
