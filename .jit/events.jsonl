@@ -7909,3 +7909,4 @@
 {"from":"ready","id":"d3fd394f-1779-4e95-baf0-6ed2f741fdb1","issue_id":"de2522d6-0dc1-4763-a20d-e7dd991722df","timestamp":"2026-08-10T05:10:07.338208176Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:wave5-f3-wave","id":"0bc829df-e8c1-4b49-99d1-b9a4ebbfce4f","issue_id":"de2522d6-0dc1-4763-a20d-e7dd991722df","timestamp":"2026-08-10T05:10:07.338208176Z","type":"issue_claimed"}
 {"gate_key":"permanent-wave-gpu-ci","id":"504d37f6-f735-4ee0-9118-078aaf931b54","issue_id":"de2522d6-0dc1-4763-a20d-e7dd991722df","timestamp":"2026-08-10T05:10:14.482153230Z","type":"gate_added"}
+{"fields":["description"],"id":"8f4e37b5-9176-4682-9003-4906d1dc05c7","issue_id":"de2522d6-0dc1-4763-a20d-e7dd991722df","timestamp":"2026-08-10T05:19:13.308954310Z","type":"issue_updated","updated_by":"issue-update"}
