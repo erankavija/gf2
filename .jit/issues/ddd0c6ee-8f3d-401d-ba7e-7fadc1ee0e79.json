@@ -8,13 +8,30 @@
   ],
   "description": "The committed measurement of what the four-matrix batched AVX2 path is worth: per-matrix rates for the batched path, the scalar kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n\n## Background\n\nThe batched path exists to make AVX2 lanes carry four matrices instead of one zero-padded word, and the single-matrix AVX2 kernel is already measured at roughly three times the scalar cost. Neither fact tells anyone what the batched path actually delivers: lane utilisation is an argument about the hardware, and the repository requires performance claims to rest on committed measurements rather than on arguments of that shape.\n\nThe measurement lands after the dispatcher selection settles, so the receipt describes the code as it will stand rather than a configuration that changed underneath it. That ordering also keeps the benchmark group labels the receipt quotes consistent with the prose sweep that accompanies the selection.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports per-matrix rates for the batched path, the scalar single-word kernel, and the single-matrix AVX2 kernel at the sizes where one bipedal word suffices.\n- [hard] REQ-02: The receipt records seeds, git revision, hardware and toolchain, and reports repetition counts with dispersion rather than a single timing.\n- [hard] REQ-03: The batched path's speedup is stated against the scalar kernel as a measured ratio formed from pooled totals, never by averaging per-repetition reciprocals.\n- [hard] REQ-04: The receipt states the sizes over which the batched path leads and the sizes where it does not, rather than a single headline ratio.\n- [hard] REQ-05: Where the measured result contradicts the expectation that four-lane batching pays at these sizes, both the expectation and the measurement are recorded together with the contradiction.\n- [hard] REQ-06: Any in-tree prose quoting a rate for these kernels agrees with this receipt.\n\n## Notes\n\nTimed windows run under the repository's benchmark host lock so no other work shares the cores during a measurement.",
   "documents": [],
+  "done_at": "2026-08-10T03:40:17.945570039Z",
   "first_ready_at": "2026-08-09T23:11:01.325436084Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:32:55.937609240Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:36:09.697828765Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:40:01.854179065Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79",
   "labels": [
     "type:task",
@@ -23,7 +40,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
-  "updated_at": "2026-08-10T01:37:34.437122353Z"
+  "updated_at": "2026-08-10T03:40:17.945570039Z"
 }

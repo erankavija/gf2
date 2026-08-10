@@ -15,10 +15,20 @@
     "permanent-wave-gpu-ci"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:40:57.137219952Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-10T03:45:00.802675385Z",
+      "updated_by": "auto:executor"
+    },
     "permanent-wave-gpu-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-10T01:55:18.202311399Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-10T03:41:21.350119649Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "6d0ff83c-8355-40e3-819d-3eca22501bf7",
@@ -33,5 +43,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Deterministic fixture corpus with CPU-oracle equivalence checking",
-  "updated_at": "2026-08-10T01:55:18.202311399Z"
+  "updated_at": "2026-08-10T03:45:00.802675385Z"
 }

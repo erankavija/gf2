@@ -9,6 +9,7 @@
   ],
   "description": "The permanent measurement harness reports event-measured kernel, transfer, and launch durations per timed cell, carried from the instrumented launch boundary through the protocol module's cell record into their own CSV columns.\n\n## Background\n\nEvery GPU figure recorded for the permanent kernels so far is a wall-clock span around a whole dispatch: host serialization of the batch, two device allocations, a host-to-device copy, the launch, a device synchronize, a device-to-host copy, and two frees. Kernel-only duration cannot be recovered from it, and the harness's four component phases — generate, evaluate, reduce, store — offer no finer split.\n\nRecovering it needs both halves. The device side supplies an event-instrumented launch boundary that brackets the kernel on its own stream without a device-wide synchronize; this work carries that measurement through the harness, into the protocol module's per-cell record and into the CSV schema, so a reader can tell a kernel span from a dispatch span without consulting code.\n\nLaunch overhead is two columns rather than one, because its two halves live on different clocks: the host-side duration of the submission call, and the device-only span between the submission marker event and the kernel start event. The boundary reports them separately, the record carries them separately, and no column is computed by subtracting a host timestamp from a device timestamp.\n\nA cell whose path cannot supply an event-measured duration must say so rather than dressing a wall-clock figure as a device measurement.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness times each GPU cell through an event-instrumented launch boundary that brackets the kernel on its own stream, so the recorded kernel duration excludes allocation, host-to-device copy, device-to-host copy, and host serialization.\n- [hard] REQ-02: The harness reports, per timed cell, that kernel-only device duration beside the existing wall-clock duration, and the CSV schema constant carries the new column so a reader can tell the two apart without consulting code.\n- [hard] REQ-03: The cell record carries the host-to-device copy duration, the device-to-host copy duration, the submission call's host-side duration, and the pre-kernel device span as their own columns, each separate from the kernel duration, so a reader attributes transfer and launch cost without a second run.\n- [hard] REQ-04: Host-clock and device-clock durations are distinct columns, and no column is derived by subtracting one clock's timestamp from the other's.\n- [hard] REQ-05: A cell whose path cannot supply an event-instrumented duration records the affected columns as absent with a stated reason rather than repeating the wall-clock figure or writing a zero.\n- [hard] REQ-06: The harness usage text describes the kernel-only and per-phase columns and the conditions under which each is absent.\n- [hard] REQ-07: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nScope is the per-phase timing columns alone. The registry-derived schedule adapter is separate work behind this leaf, sub-evaluate micro-measurements are separate work, and no campaign receipt is produced here.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
   "documents": [],
+  "done_at": "2026-08-10T03:31:32.643703049Z",
   "first_ready_at": "2026-08-10T01:13:43.604086649Z",
   "gates_required": [
     "cargo-ci",
@@ -17,10 +18,25 @@
     "permanent-sampling-feas-ci"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:26:48.458845803Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:29:42.258778558Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T03:31:04.658778743Z",
+      "updated_by": "auto:executor"
+    },
     "permanent-sampling-feas-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-10T01:55:48.860191890Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-10T03:08:38.178107191Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83",
@@ -32,7 +48,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Per-phase timing columns in the harness cell record",
-  "updated_at": "2026-08-10T01:55:48.860191890Z"
+  "updated_at": "2026-08-10T03:31:32.643703049Z"
 }
