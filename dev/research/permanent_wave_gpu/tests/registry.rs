@@ -25,6 +25,8 @@ fn every_planned_path_is_addressable_with_explicit_status() {
                 | MeasurementPath::F5ByteControl
                 | MeasurementPath::F5ThreePlane
                 | MeasurementPath::F7ThreePlaneAccumulator
+                | MeasurementPath::F7LookupTableControl
+                | MeasurementPath::F7ThreePlanePermanent
         ) {
             path.dispatch()
                 .expect("each landed candidate must be dispatchable");
