@@ -40,6 +40,41 @@ int hip_stream_query(void* stream) {
     return static_cast<int>(hipStreamQuery(reinterpret_cast<hipStream_t>(stream)));
 }
 
+// ---- Event management -----------------------------------------------------
+
+// Creates a HIP event using the default timing-enabled flags. Writes the
+// opaque hipEvent_t handle to `*event` on success.
+int hip_event_create(void** event) {
+    return static_cast<int>(hipEventCreate(reinterpret_cast<hipEvent_t*>(event)));
+}
+
+// Destroys an event previously created by hip_event_create.
+int hip_event_destroy(void* event) {
+    return static_cast<int>(hipEventDestroy(reinterpret_cast<hipEvent_t>(event)));
+}
+
+// Records an event in `stream`. A null stream selects HIP's default stream.
+int hip_event_record(void* event, void* stream) {
+    return static_cast<int>(hipEventRecord(
+        reinterpret_cast<hipEvent_t>(event),
+        reinterpret_cast<hipStream_t>(stream)));
+}
+
+// Non-blocking query: returns hipSuccess (0) after the event has completed,
+// hipErrorNotReady (>0) while it is pending, or another error code.
+int hip_event_query(void* event) {
+    return static_cast<int>(hipEventQuery(reinterpret_cast<hipEvent_t>(event)));
+}
+
+// Writes the elapsed device time from `start` to `stop` in milliseconds. HIP
+// requires both events to have completed before this call reports a duration.
+int hip_event_elapsed_time(float* milliseconds, void* start, void* stop) {
+    return static_cast<int>(hipEventElapsedTime(
+        milliseconds,
+        reinterpret_cast<hipEvent_t>(start),
+        reinterpret_cast<hipEvent_t>(stop)));
+}
+
 // ---- Device selection / introspection ------------------------------------
 
 // Sets the active HIP device for the calling host thread.
