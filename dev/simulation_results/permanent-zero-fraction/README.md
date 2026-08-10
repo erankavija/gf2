@@ -301,8 +301,18 @@ verdict; halted cells retain only counts and their mechanical reason.
 The Wilson computation is a Python transliteration of the campaign's fixed
 interval convention, using $z=1.959963984540054$, rather than a second
 statistical policy. Its $q=3$ comparison columns read the versioned
-`scheinerman2024-q3-targets-v1.csv` source-count table beside this README;
-they recompute source points and source intervals from those counts. The SVG
-point metadata carries each completed point's $N$, estimate, and interval, and
-all ordering, formatting, and SVG geometry are fixed so an unchanged dataset
-re-runs byte-identically.
+[`scheinerman2024-q3-targets-v1.csv`](scheinerman2024-q3-targets-v1.csv)
+source-count table beside this README; they recompute source points and source
+intervals from those counts. For a completed row with a source comparison,
+`precision_classification` is `prior_exact` when the source evidence is exact
+enumeration. Otherwise, with count-derived standard errors
+$s=\sqrt{\hat p(1-\hat p)/N}$, it is `exceeds_prior_precision` when
+$s_{campaign}<0.9s_{prior}$, `matches_prior_precision` when
+$0.9s_{prior}\le s_{campaign}\le1.1s_{prior}$, and
+`below_prior_precision` when $s_{campaign}>1.1s_{prior}$. The field is blank
+when no comparison applies. `interval_excludes_published` is `true` exactly
+when the dataset Wilson interval excludes the count-derived prior point
+estimate; it is `false` when that point is within the interval and blank when
+no comparison applies. The SVG point metadata carries each completed point's
+$N$, estimate, and interval, and all ordering, formatting, and SVG geometry
+are fixed so an unchanged dataset re-runs byte-identically.
