@@ -129,6 +129,10 @@ pub struct TimedRepetitions {
     pub reps: usize,
     /// Host wall-clock elapsed while the timed closure ran.
     pub wall_s: f64,
+    /// Whether the cap stopped timing before both committed minimums held.
+    ///
+    /// Consumers that report a derived duration must censor it in this case.
+    pub capped_before_minimums: bool,
 }
 
 /// Run a measurement shape under the protocol's committed warm-up and timed
@@ -168,13 +172,20 @@ pub fn run_timed_repetitions(
             .expect("timed repetition index overflow");
         reps += 1;
         let elapsed = timed_start.elapsed().as_secs_f64();
-        if (reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS) || elapsed >= MAX_CELL_SECONDS {
+        let minimums_met = reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS;
+        let capped = elapsed >= MAX_CELL_SECONDS;
+        if minimums_met || capped {
             return TimedRepetitions {
                 reps,
                 wall_s: elapsed,
+                capped_before_minimums: capped_before_minimums(reps, elapsed),
             };
         }
     }
+}
+
+fn capped_before_minimums(reps: usize, wall_s: f64) -> bool {
+    wall_s >= MAX_CELL_SECONDS && !(reps >= MIN_REPS && wall_s >= MIN_TIMED_SECONDS)
 }
 
 /// How a cell finished.
@@ -1174,5 +1185,12 @@ values came from synchronous gpu_hip dispatch";
             assert!(fields[column].is_empty(), "{column} must remain absent");
         }
         assert_eq!(fields["phase_timing_note"], reason);
+    }
+
+    #[test]
+    fn timed_repetition_cap_before_minimums_is_explicit() {
+        assert!(capped_before_minimums(MIN_REPS - 1, MAX_CELL_SECONDS));
+        assert!(!capped_before_minimums(MIN_REPS, MAX_CELL_SECONDS));
+        assert!(!capped_before_minimums(MIN_REPS, MIN_TIMED_SECONDS));
     }
 }
