@@ -245,9 +245,9 @@ determinant cell must be timed before the companion is assumed free, per
 **Layering note:** `det` is in `gf2-core`, i.e. *below* `gf2-algebra`, so a
 determinant companion introduces no reverse dependency.
 
-### C12 — issue 76dfd2ff (S3/S5 receipts non-authoritative) completed
+### C12 — issue 76dfd2ff (S3/S5 receipts non-authoritative) — provenance qualification landed
 
-**Completed in the merged `24d16432`/`c3130175` change.** The live
+The provenance qualification has landed in the tree. The live
 `dev/benchmarks/gf2_algebra_permanent/README.md` now records that
 `s3_cross_cpu-2026-05-12.csv` and `s5_gpu_crossover-2026-05-15.csv`, plus their
 `csvs/` snapshots, lack immutable measurement-source provenance and are
@@ -256,7 +256,7 @@ presentation requalify their live claims. The archived benchmark README and
 S5 plan retain their historical wording but now carry dated addenda pointing to
 the live provenance record.
 
-**Original finding before completion:** the live prose citing them as
+**Original finding before qualification:** the live prose citing them as
 authoritative was `ROADMAP.md`:
 
 - `ROADMAP.md:86` — "**GPU batch ~28-30× CPU-SIMD** at M=256 (n=24: 28.65×,
@@ -269,9 +269,10 @@ authoritative was `ROADMAP.md`:
 - `ROADMAP.md:84-85` cite `s1_speedup-2026-05-11.csv` for the 10.6× figure; same
   provenance class, though not contradicted.
 
-At investigation time, the epic's plan should sequence 76dfd2ff early because
-it was cheap, already `ready`, and cleared a contradiction the campaign's own
-report would otherwise have had to explain.
+At investigation time, the epic's plan called for sequencing 76dfd2ff early
+because it was a low-cost way to clear a contradiction the campaign's own
+report would otherwise have had to explain. The current lifecycle and gate
+status are authoritative in JIT, not in this investigation snapshot.
 
 ### C13 — REQ-01 creditable to b488f02c via a `satisfies:REQ-01` label
 
@@ -781,5 +782,5 @@ notes:
 | C9 composite hot path liftable | valid-and-open; **`protocol.rs` has no tests** |
 | C10 anchors exist | already-done, but **issue-scoped location** is a live problem |
 | C11 determinant path | already-done (`inverse.rs:494`); **unmeasured at campaign sizes** |
-| C12 76dfd2ff completed; historical receipts requalified | completed; durable status is `dev/benchmarks/gf2_algebra_permanent/README.md`; archived claim sites carry dated addenda |
+| C12 76dfd2ff provenance qualification landed | current lifecycle and gate status are authoritative in JIT; durable provenance is `dev/benchmarks/gf2_algebra_permanent/README.md`; archived claim sites carry dated addenda |
 | C13 REQ-01 creditable via label | **invalid-as-stated** — no `satisfies:` label *and* no dependency edge |
