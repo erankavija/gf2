@@ -402,3 +402,70 @@ mapping state, but the candidate's local zero-mask/popcount work costs three
 additional VGPRs. It preserves the no-scratch/no-spill result and the same
 reported occupancy, so any performance conclusion remains a later measurement
 question rather than an inference from this receipt.
+
+## F_7 wave permanent device/resource clean receipt — 2026-08-10
+
+This non-performance correctness and resource evidence was recorded from clean
+revision `a29c5e8a71a2795d5e1e97f10f698c4123b9275d`
+(`fix(jit:cc162697): align F7 evidence protocol`), containing the implementation
+commit `f1295700`. `git status --porcelain=v1 --untracked-files=all` was empty
+before the drivers and compiler capture. The host was an AMD Ryzen 9 5900X
+12-Core Processor with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`), driver `7.1.6-arch1-1`; ROCm SMI reported its
+low-power state. The toolchain was Rust/Cargo `1.95.0`, ROCm HIP
+`7.2.53211-9999`, and AMD clang `22.0.0git`.
+
+The direct non-test evidence commands were:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf7-device-evidence -- \
+    --path f7-lookup-table-control
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf7-device-evidence -- \
+    --path f7-three-plane-permanent
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf7-device-evidence -- \
+    --path f7-three-plane-permanent --stage three-plane-preparation
+```
+
+All exited 0. The lookup control and three-plane permanent each matched the
+host driver's independent generic `permanent_ryser` value for all 12 committed
+F_7 fixtures at orders 16, 20, and 24. The preparation command uses its
+separate stream, does not compute Ryser, and succeeded only after copying every
+prepared `b0`, `b1`, and `b2` column plane back from the device and comparing
+them with the canonical row-major matrix bytes.
+
+The clean resource command was:
+
+```sh
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/wave_gf7_equivalence.hip \
+    -o /tmp/cc162697-wave_gf7_equivalence.o \
+    2> /tmp/cc162697-wave_gf7_resource.log
+```
+
+It exited 0. The 4,341-byte stderr was byte-copied after validation as
+[`hip/wave_gf7_resource_usage.log`](hip/wave_gf7_resource_usage.log), SHA-256
+`45edf675b1f198f407347d6872753684496b37344cdeac5246a449f7f3e65f97`;
+`cmp` against `/tmp/cc162697-wave_gf7_resource.log` succeeded. The object is
+122,896 bytes, SHA-256
+`53f57558172cfd68d1c1d15624e17e486c799353f558a73e61bc75eb0871997b`.
+The invoked Rust driver is 738,912 bytes, SHA-256
+`45cc43ba054dd1ecc53d3b3223a65a1d6e7526fcc83550ed5de7c87d582d442f`;
+its HIP executable is 121,216 bytes, SHA-256
+`6b5c52941bcb8b191cd38f512b16efd4298d9dd382aec37350e05fbdf3f34282`.
+
+| Kernel | SGPRs | VGPRs | Scratch bytes/lane | SGPR/VGPR spills | Static LDS bytes/block | Occupancy waves/SIMD |
+| --- | ---: | ---: | ---: | --- | ---: | ---: |
+| `prepare_three_plane_columns` | 16 | 17 | 0 | 0 / 0 | 0 | 16 |
+| `wave_gf7_three_plane_kernel` | 16 | 34 | 0 | 0 / 0 | 0 | 16 |
+| `wave_gf7_lookup_table_kernel<1>` | 19 | 31 | 0 | 0 / 0 | 0 | 16 |
+| `wave_gf7_lookup_table_kernel<2>` | 26 | 41 | 24 | 0 / 0 | 0 | 16 |
+
+`LDS Size` is the compiler's static-LDS field. It does not include the explicit
+dynamic shared column tables requested at launch: $24n$ bytes for the
+three-plane kernel and $8n\lceil n/16 \rceil$ bytes for the lookup control.
+The 24-byte lookup-`<2>` scratch result is preserved as compiler evidence, not
+interpreted as a performance conclusion.
