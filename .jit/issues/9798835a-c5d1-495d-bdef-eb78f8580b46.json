@@ -9,6 +9,7 @@
   ],
   "description": "The measurement harness derives its backend schedule from the prototype crate's candidate registry through one stream-aware adapter, so the study has exactly one candidate list.\n\n## Background\n\nThe harness and the prototype crate must not end up with two hand-maintained candidate lists that drift apart. The prototype crate carries the study's candidate registry; this work adds the adapter that derives the harness's `Backend::ALL` schedule from that registry, so a candidate registered once in the prototype crate becomes schedulable by the harness without a second list to update. Drift between two lists is silent until a cell is missing from a receipt, which is why the equality of the two sets is asserted by a test rather than by review.\n\nThe adapter is also where a candidate's stream purpose is bound, so a scheduled path draws from the purpose domain the harness assigned it rather than from one chosen at the call site.\n\nA path registered through the adapter is scheduled by both the equivalence check and the timing grid and cannot silently miss a cell; a path whose implementation has not landed reports itself unsupported with a stated reason, which is how the harness already records a backend it cannot run.\n\nThis leaf follows the timing-column leaf on a dependency edge because the two rework the same harness files; the ordering keeps every footprint overlap on an edge and costs no wave, since this leaf's wave siblings are the field candidate leaves.\n\n## Success Criteria\n\n- [hard] REQ-01: The harness derives its backend schedule from the prototype crate's candidate registry through one adapter, so a candidate registered once in that registry is schedulable without a second hand-maintained list in the harness.\n- [hard] REQ-02: A candidate reached through that adapter draws from the stream purpose domain the harness assigned it, with no numeric stream base computed at the call site.\n- [hard] REQ-03: A registered candidate whose implementation has not landed is reported as unsupported with a stated reason rather than omitted from the schedule.\n- [hard] REQ-04: A test asserts that the set of paths the harness schedules equals the set the prototype registry enumerates, so a candidate cannot exist in one and be missing from the other.\n- [hard] REQ-05: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nScope is the schedule adapter alone. The per-phase timing columns land before this leaf on its dependency edge, and no campaign receipt is produced here.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
   "documents": [],
+  "done_at": "2026-08-10T05:08:50.025100977Z",
   "first_ready_at": "2026-08-10T03:31:38.380319840Z",
   "gates_required": [
     "cargo-ci",
@@ -16,10 +17,20 @@
     "permanent-sampling-feas-ci"
   ],
   "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T05:05:34.681077629Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T05:08:30.864691325Z",
+      "updated_by": "auto:executor"
+    },
     "permanent-sampling-feas-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-10T04:11:04.905921409Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-10T05:04:57.845670810Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "9798835a-c5d1-495d-bdef-eb78f8580b46",
@@ -31,7 +42,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Registry-derived schedule adapter for prototype candidates",
-  "updated_at": "2026-08-10T04:11:04.905921409Z"
+  "updated_at": "2026-08-10T05:08:50.025100977Z"
 }

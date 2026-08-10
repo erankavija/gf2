@@ -7,6 +7,7 @@
   ],
   "description": "The conservative small-count interval: a Clopper-Pearson estimator validated against an independent inversion of its own definition, with empirical coverage demonstrated in the regime the rectangular validation lives in.\n\n## Background\n\nNo Clopper-Pearson estimator exists anywhere in-tree, and the rectangular validation cells — where the estimated event probability is of order $q^{-n}$ and counts are in the tens — are exactly where a normal-approximation interval's coverage is weakest. Clopper-Pearson is conservative by construction and keeps its nominal coverage at counts in the tens.\n\nThe two estimators answer different questions. Checking one against the other proves nothing — containment follows from how they are built — so this estimator is validated against an independent computation of its own definition, and its coverage is demonstrated empirically rather than assumed from construction.\n\n## Success Criteria\n\n- [hard] REQ-01: A Clopper-Pearson interval is returned for a count out of $N$ at a caller-supplied level and matches, to a stated tolerance, an independent computation of its own bounds by inversion of the binomial tail or equivalently by beta quantiles, on cases spanning $Z = 0$, $Z = N$, and counts in the tens.\n- [hard] REQ-02: Coverage is demonstrated empirically: over repeated simulated draws at stated $(N, p)$ including small $N$ and small $p$, the fraction of intervals containing $p$ is at least the nominal level.\n- [hard] REQ-03: The estimator returns a well-formed interval at $N = 2 \\times 10^{7}$, with no overflow, no interval of negative width, and no bound outside $[0,1]$.\n- [hard] REQ-04: Documentation states which estimator suits which regime, so a caller at counts in the tens is not left with the normal-approximation interval by default.\n\n## Notes\n\nEntry points take counts, not samples, matching the Wilson estimator beside it, so both are usable online against a running accumulator and offline against a published dataset.\n",
   "documents": [],
+  "first_ready_at": "2026-08-10T04:23:17.326978156Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -20,7 +21,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Clopper-Pearson interval estimator with coverage demonstration",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-10T04:23:17.326978156Z"
 }
