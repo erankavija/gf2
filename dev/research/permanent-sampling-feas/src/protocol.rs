@@ -94,6 +94,7 @@ use crate::backend::{
 };
 use crate::env::{pin_thread, ThermalSample};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
+use crate::schedule::{scheduled_backend, SchedulePhase};
 
 /// Untimed work run before a cell's first timed repetition.
 pub const WARMUP_SECONDS: f64 = 3.0;
@@ -522,7 +523,7 @@ pub fn run_cell(
         probe_matrix_s: f64::NAN,
         projected_rate: f64::NAN,
         projection_reference_n: 0,
-        timed_purpose: MeasurementPurpose::GridTimed,
+        timed_purpose: scheduled_backend(backend, SchedulePhase::GridTimed).purpose(),
         timed_index_first: 0,
         rep_min_s: f64::NAN,
         rep_max_s: f64::NAN,
@@ -607,8 +608,13 @@ own q=3 chain in the study. The cell carries no measured rate"
             Some(cached) => cached,
             None => {
                 let cal = Instant::now();
-                let mut sampler =
-                    MatrixSampler::new(seed_root, q, n, MeasurementPurpose::GridProbe, seed_index);
+                let mut sampler = MatrixSampler::new(
+                    seed_root,
+                    q,
+                    n,
+                    scheduled_backend(backend, SchedulePhase::GridProbe).purpose(),
+                    seed_index,
+                );
                 let _ = one_rep(q, n, 1, backend, &mut sampler, seed_index, &mut devnull);
                 let measured = cal.elapsed().as_secs_f64();
                 probes.insert((q, backend.name(), n), measured);
@@ -655,7 +661,13 @@ from it, and the cell carries no rate"
     let mut warm_index = seed_index;
     let warm = Instant::now();
     loop {
-        let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::GridWarmup, warm_index);
+        let mut s = MatrixSampler::new(
+            seed_root,
+            q,
+            n,
+            scheduled_backend(backend, SchedulePhase::GridWarmup).purpose(),
+            warm_index,
+        );
         let _ = one_rep(q, n, m, backend, &mut s, warm_index, &mut devnull);
         warm_index = warm_index.checked_add(1).expect("warm-up index overflow");
         if warm.elapsed().as_secs_f64() >= WARMUP_SECONDS {
@@ -674,7 +686,13 @@ from it, and the cell carries no rate"
     let mut rep_totals: Vec<f64> = Vec::new();
     let timed_start = Instant::now();
     loop {
-        let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::GridTimed, index);
+        let mut s = MatrixSampler::new(
+            seed_root,
+            q,
+            n,
+            scheduled_backend(backend, SchedulePhase::GridTimed).purpose(),
+            index,
+        );
         let (times, zeros) = one_rep(q, n, m, backend, &mut s, index, sink);
         index = index
             .checked_add(1)
@@ -882,7 +900,13 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
 
     let start = Instant::now();
     while start.elapsed().as_secs_f64() < seconds {
-        let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Sustained, index);
+        let mut s = MatrixSampler::new(
+            seed_root,
+            q,
+            n,
+            scheduled_backend(backend, SchedulePhase::Sustained).purpose(),
+            index,
+        );
         let t = Instant::now();
         let (_, z) = one_rep(q, n, batch_size, backend, &mut s, index, sink);
         index = index
@@ -939,7 +963,7 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
         cpu_temp_end_c: end_thermal.cpu_temp_c,
         gpu_temp_end_c: end_thermal.gpu_temp_c,
         seed_root,
-        purpose: MeasurementPurpose::Sustained,
+        purpose: scheduled_backend(backend, SchedulePhase::Sustained).purpose(),
         index_first: index_base,
     }
 }
