@@ -10,6 +10,7 @@ use std::ffi::c_void;
 use std::ptr;
 use std::time::Duration;
 
+use crate::host::alloc::{restore_device, select_device};
 use crate::host::streams::HipStream;
 use crate::{check_hip, ffi, HipError, HIP_ERROR_NOT_READY};
 
@@ -39,6 +40,36 @@ impl HipEvent {
             "hipEventCreate succeeded without returning an event handle"
         );
         Ok(Self { raw })
+    }
+
+    /// Creates a timing event in `device_id`'s HIP context.
+    ///
+    /// This crate-internal constructor temporarily selects `device_id` using
+    /// the allocator's canonical device-selection/restore sequence. It is
+    /// used for caller-stream instrumentation because an allocation may have
+    /// restored a different previously-current device before timing events are
+    /// created.
+    pub(crate) fn new_on_device(device_id: i32) -> Result<Self, HipError> {
+        let previous = select_device(device_id)?;
+        let event = Self::new();
+        // Restore regardless of creation success so scoped event setup does
+        // not perturb the caller's current HIP device.
+        let restore_code = restore_device(previous);
+
+        match event {
+            Err(error) => Err(error),
+            Ok(event) if restore_code != 0 => {
+                // The event is already owned by Rust, so release it before
+                // surfacing the restoration failure rather than leaking a
+                // context-bound HIP handle on this error path.
+                drop(event);
+                Err(HipError::Hip {
+                    code: restore_code,
+                    context: "hipSetDevice(restore)",
+                })
+            }
+            Ok(event) => Ok(event),
+        }
     }
 
     /// Records this event on `stream` after all preceding stream work.
@@ -133,6 +164,17 @@ impl HipEventSpan {
         Ok(Self { start, stop })
     }
 
+    /// Creates an unrecorded event pair in `device_id`'s HIP context.
+    ///
+    /// Each owned event uses [`HipEvent::new_on_device`], so both timing
+    /// handles belong to the caller stream's device even if a preceding
+    /// device-scoped allocation restored another device as current.
+    pub(crate) fn new_on_device(device_id: i32) -> Result<Self, HipError> {
+        let start = HipEvent::new_on_device(device_id)?;
+        let stop = HipEvent::new_on_device(device_id)?;
+        Ok(Self { start, stop })
+    }
+
     /// Records the start marker on the caller-supplied stream.
     pub fn record_start(&self, stream: &HipStream) -> Result<(), HipError> {
         self.start.record(stream)
@@ -187,5 +229,74 @@ impl HipEventSpan {
             });
         }
         self.start.elapsed_since(marker)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A stream can outlive the current-device selection that created it. Event
+    /// creation must therefore explicitly target the stream's device before
+    /// recording the event on that stream.
+    #[test]
+    #[ignore = "external: requires two HIP devices"]
+    fn scoped_events_record_on_stream_after_restoring_another_device() {
+        let mut device_count = 0;
+        // SAFETY: `device_count` is a valid writable out-pointer for the HIP
+        // runtime's device-count query.
+        check_hip(
+            unsafe { ffi::hip_device_get_count(&mut device_count) },
+            "hipGetDeviceCount",
+        )
+        .expect("query HIP device count");
+        assert!(
+            device_count >= 2,
+            "this focused context test requires HIP devices 0 and 1"
+        );
+
+        // Select device 0 for the test's ambient current device and restore
+        // whatever device the host thread had selected when the test finishes.
+        let original_device = select_device(0).expect("select ambient device 0");
+        let result = (|| -> Result<i32, HipError> {
+            // Create the stream on device 1, then restore device 0 to recreate
+            // the cross-device allocation/creation condition this test covers.
+            let stream_previous = select_device(1)?;
+            let stream_result = HipStream::new();
+            let stream_restore = restore_device(stream_previous);
+            let stream = stream_result?;
+            if stream_restore != 0 {
+                return Err(HipError::Hip {
+                    code: stream_restore,
+                    context: "hipSetDevice(restore stream setup)",
+                });
+            }
+
+            let marker = HipEvent::new_on_device(stream.device_id())?;
+            let span = HipEventSpan::new_on_device(stream.device_id())?;
+
+            let mut current_device = -1;
+            // SAFETY: `current_device` is a valid writable out-pointer; this
+            // query verifies the scoped constructors restored ambient device 0.
+            check_hip(
+                unsafe { ffi::hip_get_device(&mut current_device) },
+                "hipGetDevice",
+            )?;
+
+            marker.record(&stream)?;
+            span.record_start(&stream)?;
+            span.record_stop(&stream)?;
+            stream.synchronize()?;
+            span.elapsed()?;
+            Ok(current_device)
+        })();
+        let final_restore = restore_device(original_device);
+
+        assert_eq!(final_restore, 0, "restore the test's original HIP device");
+        assert_eq!(
+            result.expect("create and record device-scoped events"),
+            0,
+            "scoped event creation must restore the ambient current device"
+        );
     }
 }
