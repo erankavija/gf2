@@ -567,17 +567,20 @@ bool run_streamed_fixture_evidence(KernelPath path, bool preparation_only) {
     std::uint32_t n = 0;
     std::uint64_t expected = 0;
     std::uint64_t matrix_size = 0;
-    if (!read_u32_le(&id_size) || id_size == 0 || id_size > 1024 || !read_u32_le(&n) ||
-        !read_u64_le(&expected) || !read_u64_le(&matrix_size) ||
-        (n != 16 && n != 20 && n != 24) || expected >= kFieldOrder ||
-        matrix_size != static_cast<std::uint64_t>(n) * n) {
+    if (!read_u32_le(&id_size) || id_size == 0 || id_size > 1024) {
       std::fprintf(stderr, "F_7 fixture %u has invalid evidence metadata\n", record);
       return false;
     }
-    Fixture fixture{std::string(id_size, '\0'), static_cast<int>(n), expected,
+    std::string id(id_size, '\0');
+    if (!read_exact(id.data(), id.size()) || !read_u32_le(&n) || !read_u64_le(&expected) ||
+        !read_u64_le(&matrix_size) || (n != 16 && n != 20 && n != 24) ||
+        expected >= kFieldOrder || matrix_size != static_cast<std::uint64_t>(n) * n) {
+      std::fprintf(stderr, "F_7 fixture %u has invalid evidence metadata\n", record);
+      return false;
+    }
+    Fixture fixture{id, static_cast<int>(n), expected,
                     std::vector<unsigned char>(matrix_size)};
-    if (!read_exact(fixture.id.data(), fixture.id.size()) ||
-        !read_exact(fixture.matrix.data(), fixture.matrix.size()) ||
+    if (!read_exact(fixture.matrix.data(), fixture.matrix.size()) ||
         !run_fixture(fixture, path, preparation_only)) {
       std::fprintf(stderr, "F_7 fixture %u failed\n", record);
       return false;
@@ -599,16 +602,20 @@ bool run_streamed_preparation_evidence() {
     std::uint32_t id_size = 0;
     std::uint32_t n = 0;
     std::uint64_t matrix_size = 0;
-    if (!read_u32_le(&id_size) || id_size == 0 || id_size > 1024 || !read_u32_le(&n) ||
-        !read_u64_le(&matrix_size) || (n != 16 && n != 20 && n != 24) ||
+    if (!read_u32_le(&id_size) || id_size == 0 || id_size > 1024) {
+      std::fprintf(stderr, "F_7 preparation fixture %u has invalid metadata\n", record);
+      return false;
+    }
+    std::string id(id_size, '\0');
+    if (!read_exact(id.data(), id.size()) || !read_u32_le(&n) || !read_u64_le(&matrix_size) ||
+        (n != 16 && n != 20 && n != 24) ||
         matrix_size != static_cast<std::uint64_t>(n) * n) {
       std::fprintf(stderr, "F_7 preparation fixture %u has invalid metadata\n", record);
       return false;
     }
-    Fixture fixture{std::string(id_size, '\0'), static_cast<int>(n), 0,
+    Fixture fixture{id, static_cast<int>(n), 0,
                     std::vector<unsigned char>(matrix_size)};
-    if (!read_exact(fixture.id.data(), fixture.id.size()) ||
-        !read_exact(fixture.matrix.data(), fixture.matrix.size()) ||
+    if (!read_exact(fixture.matrix.data(), fixture.matrix.size()) ||
         !run_fixture(fixture, KernelPath::kThreePlane, true)) {
       std::fprintf(stderr, "F_7 preparation fixture %u failed\n", record);
       return false;

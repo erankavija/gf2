@@ -224,6 +224,12 @@ mod tests {
         value
     }
 
+    fn read_u64_le(bytes: &[u8], cursor: &mut usize) -> u64 {
+        let value = u64::from_le_bytes(bytes[*cursor..*cursor + 8].try_into().unwrap());
+        *cursor += 8;
+        value
+    }
+
     #[test]
     fn evidence_selection_uses_only_registered_f7_paths_and_retains_all_orders() {
         assert_eq!(
@@ -262,7 +268,7 @@ mod tests {
     }
 
     #[test]
-    fn full_stream_prefixes_the_exact_public_packed7_tables() {
+    fn full_stream_round_trips_in_the_hip_parser_field_order() {
         let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
         let fixture = corpus
             .fixtures()
@@ -286,6 +292,14 @@ mod tests {
         assert_eq!(read_u32_le(&stream, &mut cursor), 1);
         let id_len = read_u32_le(&stream, &mut cursor) as usize;
         assert_eq!(&stream[cursor..cursor + id_len], fixture.id().as_bytes());
+        cursor += id_len;
+        assert_eq!(read_u32_le(&stream, &mut cursor) as usize, fixture.n());
+        assert_eq!(read_u64_le(&stream, &mut cursor), ryser_f7(fixture));
+        let matrix_len = read_u64_le(&stream, &mut cursor) as usize;
+        assert_eq!(matrix_len, fixture.matrix_bytes().len());
+        assert_eq!(&stream[cursor..cursor + matrix_len], fixture.matrix_bytes());
+        cursor += matrix_len;
+        assert_eq!(cursor, stream.len());
     }
 
     #[test]
@@ -305,11 +319,13 @@ mod tests {
         cursor += PREPARATION_STREAM_MAGIC.len();
         assert_eq!(read_u32_le(&stream, &mut cursor), 1);
         let id_len = read_u32_le(&stream, &mut cursor) as usize;
+        assert_eq!(&stream[cursor..cursor + id_len], fixture.id().as_bytes());
         cursor += id_len;
         assert_eq!(read_u32_le(&stream, &mut cursor) as usize, fixture.n());
-        let matrix_len = u64::from_le_bytes(stream[cursor..cursor + 8].try_into().unwrap());
-        cursor += 8;
-        assert_eq!(matrix_len as usize, fixture.matrix_bytes().len());
-        assert_eq!(&stream[cursor..], fixture.matrix_bytes());
+        let matrix_len = read_u64_le(&stream, &mut cursor) as usize;
+        assert_eq!(matrix_len, fixture.matrix_bytes().len());
+        assert_eq!(&stream[cursor..cursor + matrix_len], fixture.matrix_bytes());
+        cursor += matrix_len;
+        assert_eq!(cursor, stream.len());
     }
 }
