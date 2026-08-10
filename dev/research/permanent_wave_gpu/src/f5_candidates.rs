@@ -1,6 +1,8 @@
 //! Stubs for the F_5 byte-control and three-plane candidate paths.
 
-use crate::{fixtures::Fixture, DispatchResult, EvaluationResult, Unsupported};
+#[cfg(feature = "fixture-oracle")]
+use crate::{fixtures::Fixture, EvaluationResult};
+use crate::{DispatchResult, Unsupported};
 
 const BYTE_CONTROL_UNAVAILABLE: &str =
     "F_5 byte-oriented modular arithmetic control has not landed";
@@ -16,10 +18,12 @@ pub(crate) fn three_plane() -> DispatchResult {
     Err(Unsupported::new(THREE_PLANE_UNAVAILABLE))
 }
 
+#[cfg(feature = "fixture-oracle")]
 pub(crate) fn evaluate_byte_control(_fixture: &Fixture) -> EvaluationResult {
     Err(Unsupported::new(BYTE_CONTROL_UNAVAILABLE))
 }
 
+#[cfg(feature = "fixture-oracle")]
 pub(crate) fn evaluate_three_plane(_fixture: &Fixture) -> EvaluationResult {
     Err(Unsupported::new(THREE_PLANE_UNAVAILABLE))
 }

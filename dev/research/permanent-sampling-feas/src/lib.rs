@@ -27,4 +27,5 @@ pub mod equivalence;
 pub mod prior;
 pub mod protocol;
 pub mod sampler;
+pub mod schedule;
 pub mod stats;

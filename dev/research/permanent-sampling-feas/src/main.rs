@@ -45,8 +45,10 @@ const MACHINE_WARM_SECONDS: f64 = 90.0;
 const INDICES_PER_CELL: u64 = 100_000;
 /// Number of grid specifications in one unfiltered execution.
 ///
-/// `Backend::ALL` contains one GPU entry, while the grid expands it to both
-/// configured batch sizes, hence the extra specification per `(q, n)` pair.
+/// `Backend::ALL` derives every prototype candidate from its registry and
+/// contains one GPU entry, which the grid expands to both configured batch
+/// sizes. Prototype candidates retain one explicitly unsupported cell until
+/// their implementation supplies a harness batch evaluator.
 const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len() + 1);
 /// Stream-index space reserved to one fresh grid process.
 const INDICES_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * INDICES_PER_CELL;
@@ -449,7 +451,7 @@ note names the unavailable instrumented boundary"
                 continue;
             };
             let Some(name) = Backend::ALL
-                .iter()
+                .into_iter()
                 .map(|b| b.name())
                 .find(|nm| *nm == field(&row, "backend"))
             else {
@@ -896,6 +898,9 @@ one_over_q_inside_interval,scheinerman2024_p,scheinerman2024_inside_interval",
 mod cli_tests {
     use super::*;
 
+    #[cfg(feature = "prototype-registry")]
+    use permanent_wave_gpu::MeasurementPath;
+
     fn args(items: &[&str]) -> Vec<String> {
         items.iter().map(|item| (*item).to_string()).collect()
     }
@@ -932,6 +937,21 @@ mod cli_tests {
         assert_eq!(specs[0].n, 28);
         assert_eq!(specs[0].backend, Backend::Gpu);
         assert_eq!(specs[0].batch_size, Some(1024));
+    }
+
+    #[cfg(feature = "prototype-registry")]
+    #[test]
+    fn timing_grid_includes_every_registered_prototype_path() {
+        let specs = grid_specs();
+        for path in MeasurementPath::ALL {
+            assert!(
+                specs
+                    .iter()
+                    .any(|spec| spec.backend.name() == path.name() && spec.batch_size.is_none()),
+                "{} is missing from the timing grid",
+                path.name()
+            );
+        }
     }
 
     #[test]

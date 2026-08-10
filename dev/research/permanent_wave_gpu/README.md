@@ -49,3 +49,10 @@ implementation only by replacing its stub in the owning candidate module and
 adding that candidate's HIP and test files. Do not add a second registry or
 edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 `MeasurementPath::ALL` and dispatches through that one registry.
+
+The default `fixture-oracle` feature retains the corpus and oracle surface,
+which imports the harness's canonical sampler. When the harness imports this
+crate's registry, it disables that feature and enables its own default
+`prototype-registry` adapter instead. This mutually exclusive feature boundary
+avoids a Cargo dependency cycle while keeping `MeasurementPath::ALL` available
+in both directions as the sole candidate list.
