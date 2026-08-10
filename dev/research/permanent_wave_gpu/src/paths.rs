@@ -1,9 +1,16 @@
 //! The complete measurement-path registry for this study.
 
-use crate::{f5_candidates, f7_three_plane, fold_gf3, wave, wave_gf7};
+use crate::{f5_candidates, f7_three_plane, fixtures::Fixture, fold_gf3, wave, wave_gf7};
 
 /// Result of dispatching a candidate path.
 pub type DispatchResult = Result<(), Unsupported>;
+
+/// One candidate permanent result, represented by its canonical field value.
+///
+/// The fixture itself retains the field order, so candidate modules must
+/// return the representative in `0..q`.  The oracle compares this value only
+/// with the matching field fixture.
+pub type EvaluationResult = Result<u64, Unsupported>;
 
 /// A registered candidate that does not yet have an executable implementation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -78,6 +85,23 @@ impl MeasurementPath {
             Self::F7ThreePlaneAccumulator => f7_three_plane::run(),
             Self::F7LookupTableControl => wave_gf7::lookup_table_control(),
             Self::F7ThreePlanePermanent => wave_gf7::three_plane(),
+        }
+    }
+
+    /// Evaluate one fixture through this registered candidate.
+    ///
+    /// This is the only candidate-to-oracle dispatch surface.  The fixture
+    /// checker enumerates [`Self::ALL`] and calls this method, so adding a
+    /// registered path automatically admits it to correctness reporting.
+    pub fn evaluate(self, fixture: &Fixture) -> EvaluationResult {
+        match self {
+            Self::WaveGf3 => wave::evaluate(fixture),
+            Self::FoldGf3 => fold_gf3::evaluate(fixture),
+            Self::F5ByteControl => f5_candidates::evaluate_byte_control(fixture),
+            Self::F5ThreePlane => f5_candidates::evaluate_three_plane(fixture),
+            Self::F7ThreePlaneAccumulator => f7_three_plane::evaluate(fixture),
+            Self::F7LookupTableControl => wave_gf7::evaluate_lookup_table_control(fixture),
+            Self::F7ThreePlanePermanent => wave_gf7::evaluate_three_plane(fixture),
         }
     }
 }
