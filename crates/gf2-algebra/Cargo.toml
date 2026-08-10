@@ -32,6 +32,9 @@ serde = { version = "1", features = ["derive"], optional = true }
 [dev-dependencies]
 proptest = { workspace = true }
 criterion = { workspace = true }
+# Production-only validation boundary: exact algebra anchors exercise the
+# sampler and interval estimator without making algebra depend on statistics.
+gf2-stats = { path = "../gf2-stats" }
 # SHA-256 for the `paper_repro_slope` example's input-fingerprint column
 # (criterion 5 amendment 2026-05-11). Test-time only.
 sha2 = "0.10"

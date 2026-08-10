@@ -32,6 +32,7 @@
 
 pub mod bipedal3;
 pub mod bipedal3_multiword;
+pub mod exact;
 pub mod rank;
 pub mod reference;
 pub mod ryser;
@@ -40,6 +41,7 @@ pub use bipedal3::permanent_bipedal3;
 pub use bipedal3::permanent_bipedal3_batch;
 pub use bipedal3::permanent_bipedal3_singleword;
 pub use bipedal3_multiword::permanent_bipedal3_multiword;
+pub use exact::{enumerate_permanent_zero_probability, ExactProbability};
 pub use rank::{permanental_rank_status, PermanentalRank};
 pub use reference::permanent_mod3_reference;
 pub use ryser::permanent_ryser;
