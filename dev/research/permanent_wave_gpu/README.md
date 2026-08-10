@@ -75,6 +75,62 @@ adding that candidate's HIP and test files. Do not add a second registry or
 edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 `MeasurementPath::ALL` and dispatches through that one registry.
 
+## F_5 wave device/resource clean receipt — 2026-08-10
+
+This non-performance evidence was captured from clean implementation commit
+`9b78666c2a75d8217d8191db323c801cb0e0c95e`
+(`feat(jit:56c69654): add F5 three-plane prototype`):
+`git status --porcelain=v1 --untracked-files=all` was empty immediately before
+the checks. The host GPU was an AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`), driver `7.1.6-arch1-1`. The toolchain was Rust and
+Cargo `1.95.0`, ROCm HIP `7.2.53211-9999`, and AMD clang `22.0.0git`.
+
+The normal device-evidence driver — not an ignored Cargo test — was:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin f5-wave-device-evidence
+```
+
+It exited 0 and reported equality for all 14 committed F_5 fixtures admitted
+by the exact host bound `n <= 16`. Each fixture carries canonical row-major
+bytes and an independently calculated `gf2_algebra::permanent::permanent_ryser`
+value; both the byte-control and canonical Packed5 three-plane kernels matched
+that value element-wise. The same driver then passed the exact n=63 interval
+mapping, active-mask, exhaustive ordered F_5 add/subtract, and three-lane C4
+product probes. The n=63 corpus rows remain explicit `Unsupported` full
+permanents rather than an infeasible `2^63` device walk. The executed driver
+binary SHA-256 was
+`ae7a2db7170164ecad58159dd356d8c711bf980ce77dfd5d673f90835ecd51b3`.
+
+The clean compiler capture was:
+
+```sh
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/f5_wave_equivalence.hip \
+    -o /tmp/56c69654-f5-wave.o \
+    2> /tmp/56c69654-f5-wave-resource.log
+```
+
+The resulting object SHA-256 was
+`463e2b157180b7304b7d71db87bb32d740da41eb1d6261a0b1e3e2a7a5aba520`.
+Its byte-faithful 6,563-byte stderr is
+[`hip/f5_wave_resource_usage.log`](hip/f5_wave_resource_usage.log), SHA-256
+`3557d29800abb331d2a429aa3444a368867512554e4677ca9fb00ec634fee88d`.
+The two permanent kernels are separately named in that report:
+
+| Path | Kernel | SGPRs | VGPRs | Scratch | Spills | Static LDS | Occupancy |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Byte control | `f5_byte_control_kernel` | 78 | 77 | 0 B/lane | 0 / 0 | 0 B/block | 12 waves/SIMD |
+| Three plane | `f5_three_plane_kernel` | 20 | 66 | 0 B/lane | 0 / 0 | 0 B/block | 12 waves/SIMD |
+
+The compiler's `LDS Size` is static LDS only. It reports zero for both
+kernels; this must not be read as an absence of the explicit dynamic shared
+column tables requested at launch: `n^2` bytes for byte control and `24n` bytes
+for the three-plane path. The driver and report establish correctness and
+resource allocation evidence, not a timing or throughput claim.
+
 ## F_3 wave-cooperative evidence boundary
 
 `WaveGf3` is the executable intra-matrix control and `FoldGf3` is its

@@ -39,6 +39,13 @@ fn main() {
     publish_hip_executable(
         &hipcc,
         &out_dir,
+        &hip_root.join("f5_wave_equivalence.hip"),
+        "f5_wave_equivalence",
+        "PERMANENT_WAVE_GPU_F5_EQUIVALENCE_BIN",
+    );
+    publish_hip_executable(
+        &hipcc,
+        &out_dir,
         &hip_root.join("f7_three_plane_equivalence.hip"),
         "f7_three_plane_equivalence",
         "PERMANENT_WAVE_GPU_F7_EQUIVALENCE_BIN",

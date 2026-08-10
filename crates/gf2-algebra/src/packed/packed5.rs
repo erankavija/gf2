@@ -324,6 +324,27 @@ impl fmt::Debug for Packed5 {
 // ---------------------------------------------------------------------------
 
 impl Packed5 {
+    /// Return the exact bit-plane words of this packed value.
+    ///
+    /// The returned `(b0, b1, b2)` tuple uses canonical little-endian lane
+    /// indexing: bit `i` in every word describes lane `i`. A canonical F_5
+    /// value `v` has bit `k` of `v` in `bk`; public constructors and arithmetic
+    /// preserve the canonical values `0..=4` in every lane. This is a read-only
+    /// representation accessor, not an unchecked constructor.
+    ///
+    /// # Panics
+    ///
+    /// Never panics.
+    ///
+    /// # Complexity
+    ///
+    /// `O(1)`.
+    #[must_use]
+    #[inline]
+    pub const fn to_raw_planes(self) -> (u64, u64, u64) {
+        (self.b0, self.b1, self.b2)
+    }
+
     /// Inherent `add` wrapper — delegates to `<Self as PackedField<Fp<5>>>::add`.
     ///
     /// Exists as a fixed proof target for the Charon/Aeneas pipeline; the
@@ -1681,6 +1702,16 @@ mod tests {
     #[test]
     fn test_lanes_const_is_64() {
         assert_eq!(<Packed5 as PackedField<Fp<5>>>::LANES, 64);
+    }
+
+    #[test]
+    fn raw_planes_preserve_the_canonical_lane_encoding() {
+        let value = Packed5::zero()
+            .with_lane(0, Fp::<5>::new(1))
+            .with_lane(1, Fp::<5>::new(2))
+            .with_lane(2, Fp::<5>::new(3))
+            .with_lane(3, Fp::<5>::new(4));
+        assert_eq!(value.to_raw_planes(), (0b0101, 0b0110, 0b1000));
     }
 
     // -----------------------------------------------------------------------
