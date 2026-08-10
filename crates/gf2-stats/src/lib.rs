@@ -7,4 +7,5 @@
 
 #![deny(unsafe_code)]
 
+pub mod intervals;
 pub mod sampler;
