@@ -20,8 +20,12 @@ The historical receipt `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-
 | 28 | 27 360 000 µs              | 3 414 600 µs                | 8.0x    |
 | 36 | 9 030 741 000 µs           | 848 484 000 µs              | 10.6x   |
 
-Historical M=256 GPU batch processing against the sequential single-thread AVX2
-path (from
+The following historical M=256 GPU batch rows are **corroboration-only, not
+authoritative performance evidence**. The S5 receipt has no immutable
+measurement-source provenance (no committed harness SHA identifying its exact
+executable state); the directory's [provenance record](../../dev/benchmarks/gf2_algebra_permanent/README.md)
+explains the qualification. The rows show the historical comparison against
+the sequential single-thread AVX2 path (from
 [`s5_gpu_crossover-2026-05-15.csv`](../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv),
 AMD Radeon RX 6950 XT / gfx1030):
 
@@ -30,8 +34,9 @@ AMD Radeon RX 6950 XT / gfx1030):
 | 24 | 256       | 4.790                   | 137.250    | 28.65x                 |
 | 28 | 256       | 0.280                   | 8.490      | 30.32x                 |
 
-The GPU dominates that sequential AVX2 comparator at n <= 28 and M=256; this
-is not a claim that it dominates the best measured processor path. The
+The historical receipt shows the GPU ahead of that sequential AVX2 comparator
+at n <= 28 and M=256; this is not a current claim that it dominates the best
+measured processor path. The
 [feasibility study](../../dev/studies/b488f02c/feasibility-study.md#44-measured-throughput)
 restates the same M=256 configurations as 0.46x at n=24 and 0.44x at n=28
 against the best measured processor path. The
@@ -239,7 +244,7 @@ also states. The rest — `target/`, the agent worktree roots and
 - Packed API surface: [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md`](../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/9fe275d3/d1b_packed_field_api.md)
 - Feature-gate matrix: [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md`](../../dev/archive/ae82bd73-gf2-algebra-permanent/plans/4fced99b/d1c_feature_matrix.md)
 - S1 speedup data: [`dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv`](../../dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv)
-- GPU crossover data: [`dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`](../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv)
+- Historical GPU crossover data (corroboration-only): [`dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv`](../../dev/benchmarks/gf2_algebra_permanent/s5_gpu_crossover-2026-05-15.csv)
 - Workspace overview: [`../../README.md`](../../README.md)
 
 ## License
