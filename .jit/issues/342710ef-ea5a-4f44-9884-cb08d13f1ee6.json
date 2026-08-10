@@ -6,15 +6,44 @@
   "dependencies": [
     "af302aa9-5f6e-438e-8c9f-67b455d3ebee"
   ],
-  "description": "A harness mode that times zero-mask detection plus the complete nonzero horizontal reduction, reporting the fast and slow paths separately.\n\n## Background\n\nThe study must isolate three nested measurement shapes for each arithmetic representation it measures: one dependency-chained packed add or subtract on the same accumulator; zero-mask detection plus the complete nonzero horizontal reduction; and the full Ryser loop including matrix preparation, Gray initialization, update, product, partial-sum reduction, launch overhead, and transfer overhead. The harness times the third shape and, through its per-phase event columns, separates the device spans inside it. The first two shapes have no measurement path at all.\n\n```mermaid\nflowchart LR\n    A[Gray update micro-measurement] --> B[Horizontal product micro-measurement]\n    B --> C[End-to-end Ryser cell]\n    C --> D[Per-phase device spans inside the cell]\n```\n\nThis matters because a representation decision made on bulk independent-operator throughput does not transfer to the permanent: the shipped row-packed loop performs one packed add or subtract per Gray step followed by a horizontal product over the row lanes, and it is the dependency chain through the accumulator that a permanent-shaped measurement has to expose.\n\nThis mode covers the second shape. Its defining property is the branch: the horizontal product exits early when any active row sum is zero and runs the full reduction otherwise, and the two paths have different costs and different frequencies, so a single blended figure hides the quantity the representation comparison turns on.\n\n## Success Criteria\n\n- [hard] REQ-01: A harness mode times zero-mask detection plus the complete nonzero horizontal reduction for a measured path.\n- [hard] REQ-02: The mode reports the zero fast path and the nonzero slow path separately where the measured path permits the distinction, and states the reason where it does not.\n- [hard] REQ-03: The mode reports the observed frequency of each path beside its exact marginal expectation, the zero fast path against $1 - \\left(\\frac{q-1}{q}\\right)^n$ and the nonzero slow path against $\\left(\\frac{q-1}{q}\\right)^n$, noting that the two are complements.\n- [hard] REQ-04: The mode reuses the committed warm-up, repetition-count, timed-duration, and censoring policy of the harness protocol module instead of defining a private timing policy, and a censored row states its censoring reason.\n- [hard] REQ-05: For a GPU path the mode reports an event-measured kernel duration rather than a wall-clock span.\n- [hard] REQ-06: The mode addresses the sampler through a named purpose tag drawn from the harness's enumerated purpose set, with no numeric stream base computed in the mode's own code.\n- [hard] REQ-07: The mode reaches candidates through the harness's registry-derived schedule, so it covers a registered path without a schedule edit.\n- [hard] REQ-08: The harness usage text describes the mode together with its arguments.\n- [hard] REQ-09: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nScope is this one mode. With it the harness covers all three nested measurement shapes the study needs, and no campaign receipt is produced here.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
+  "description": "A harness mode that times zero-mask detection plus the complete nonzero horizontal reduction, reporting the fast and slow paths separately.\n\n## Background\n\nThe study must isolate three nested measurement shapes for each arithmetic representation it measures: one dependency-chained packed add or subtract on the same accumulator; zero-mask detection plus the complete nonzero horizontal reduction; and the full Ryser loop including matrix preparation, Gray initialization, update, product, partial-sum reduction, launch overhead, and transfer overhead. The harness times the third shape and, through its per-phase event columns, separates the device spans inside it. The first two shapes have no measurement path at all.\n\n```mermaid\nflowchart LR\n    A[Gray update micro-measurement] --> B[Horizontal product micro-measurement]\n    B --> C[End-to-end Ryser cell]\n    C --> D[Per-phase device spans inside the cell]\n```\n\nThis matters because a representation decision made on bulk independent-operator throughput does not transfer to the permanent: the shipped row-packed loop performs one packed add or subtract per Gray step followed by a horizontal product over the row lanes, and it is the dependency chain through the accumulator that a permanent-shaped measurement has to expose.\n\nThis mode covers the second shape. Its defining property is the branch: the horizontal product exits early when any active row sum is zero and runs the full reduction otherwise, and the two paths have different costs and different frequencies, so a single blended figure hides the quantity the representation comparison turns on.\n\n## Success Criteria\n\n- [hard] REQ-01: A harness mode times zero-mask detection plus the complete nonzero horizontal reduction for a measured path.\n- [hard] REQ-02: The mode reports the zero fast path and the nonzero slow path separately where the measured path permits the distinction, and states the reason where it does not.\n- [hard] REQ-03: The mode reports the observed frequency of each path beside its exact marginal expectation, the zero fast path against $1 - \\left(\\frac{q-1}{q}\\right)^n$ and the nonzero slow path against $\\left(\\frac{q-1}{q}\\right)^n$, noting that the two are complements.\n- [hard] REQ-04: The mode reuses the committed warm-up, repetition-count, timed-duration, and censoring policy of the harness protocol module instead of defining a private timing policy, and a censored row states its censoring reason.\n- [hard] REQ-05: For a GPU path the mode reports an event-measured kernel duration rather than a wall-clock span.\n- [hard] REQ-06: The mode addresses the sampler through a named purpose tag drawn from the harness's enumerated purpose set, with no numeric stream base computed in the mode's own code.\n- [hard] REQ-07: The mode reaches candidates through the harness's registry-derived schedule, so it covers a registered path without a schedule edit.\n- [hard] REQ-08: The harness usage text describes the mode together with its arguments.\n- [hard] REQ-09: `cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release` passes.\n\n## Notes\n\nScope is this one mode. With it the harness covers all three nested measurement shapes the study needs, and no campaign receipt is produced here.\n\nEvery crate under `dev/research/` is excluded from the default Cargo workspace, so the workspace CI pipeline never compiles them; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n\n\n## Completion Note\n\nDelivered in commits `2411ec4d`, `ecad2dba`, `f4b175a8`, `e33395d7`, and `283b79b6`. The registry-derived mode reports deterministic fixed-batch observed fast/slow frequencies and exact complements for every valid row, including timing-unavailable candidates, while keeping actual branch operation denominators separate. Supported HIP circuits use paired device-event kernel/baseline spans under the shared timing and censoring policy; unsupported and recoverable accelerator paths remain explicit rows with no host-clock substitute. Default and HIP standalone suites and Clippy pass, repository CI and kernel gates pass, and final code/documentation reviews pass. Qualitative clean-revision device execution exercised F3/F5/F7 rows without publishing or interpreting performance rates.",
   "documents": [],
+  "done_at": "2026-08-10T11:14:59.009859702Z",
   "first_ready_at": "2026-08-10T08:47:34.779928498Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "permanent-sampling-feas-ci",
+    "gf2-kernels-hip-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T10:31:34.884862086Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T11:12:45.878755653Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T11:14:40.419474033Z",
+      "updated_by": "auto:executor"
+    },
+    "gf2-kernels-hip-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T10:13:50.030966559Z",
+      "updated_by": "auto:executor"
+    },
+    "permanent-sampling-feas-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T11:03:47.711980612Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "342710ef-ea5a-4f44-9884-cb08d13f1ee6",
   "labels": [
     "type:task",
@@ -24,7 +53,7 @@
     "satisfies:REQ-09"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Horizontal product micro-measurement mode",
-  "updated_at": "2026-08-10T09:31:49.137533466Z"
+  "updated_at": "2026-08-10T11:14:59.009859702Z"
 }

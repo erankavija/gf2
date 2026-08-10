@@ -258,7 +258,7 @@
           "short_id": "342710ef",
           "title": "Horizontal product micro-measurement mode",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "4058e0ac-8405-4266-9ec2-05f2e0430ae9",
@@ -286,7 +286,7 @@
           "short_id": "c31671ea",
           "title": "Curve and table generation pipeline",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
