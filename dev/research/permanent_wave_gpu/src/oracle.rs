@@ -522,4 +522,27 @@ mod tests {
         assert_eq!(row.mismatch_count(), 1);
         assert_eq!(row.first_mismatch_fixture_id(), Some("q3-n0-empty"));
     }
+
+    #[test]
+    fn checker_accepts_an_executable_candidate_that_matches_ryser() {
+        let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
+        let report = check_with_evaluator(&corpus, |_path, fixture| {
+            if fixture.n() == 1 {
+                Ok(oracle_value(fixture))
+            } else {
+                Err(Unsupported::new(
+                    "test candidate only accepts singleton fixtures",
+                ))
+            }
+        });
+        let row = report
+            .candidate_cells()
+            .iter()
+            .find(|row| row.candidate() == "wave-gf3" && row.q() == 3 && row.n() == 1)
+            .expect("the canonical registry must reach q=3 n=1");
+        assert_eq!(row.status(), &CandidateCellStatus::Identical);
+        assert!(row.compared_count() > 0);
+        assert_eq!(row.mismatch_count(), 0);
+        assert!(row.unavailable_reason().is_none());
+    }
 }
