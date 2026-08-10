@@ -11,6 +11,7 @@
 
 use crate::backend::{evaluate, evaluate_timed, support, Backend, Batch, PhaseTiming, Support};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
+use crate::schedule::{scheduled_backends, SchedulePhase};
 use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
@@ -54,8 +55,14 @@ impl EquivalenceRow {
 
 /// Build the same `m` matrices as [`shared_batch`], unpacked, for the generic
 /// Ryser path.
-fn shared_raw_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
-    let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Equivalence, 0);
+fn shared_raw_batch(
+    q: u64,
+    n: usize,
+    m: usize,
+    seed_root: u64,
+    purpose: MeasurementPurpose,
+) -> Batch {
+    let mut s = MatrixSampler::new(seed_root, q, n, purpose, 0);
     match q {
         3 => Batch::RawF3(n, (0..m).map(|_| s.next_matrix::<3>(n)).collect()),
         5 => Batch::RawF5(n, (0..m).map(|_| s.next_matrix::<5>(n)).collect()),
@@ -65,9 +72,10 @@ fn shared_raw_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
 }
 
 /// Build `m` matrices for `(q, n)` from the equivalence-check stream.
-fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
-    // This named purpose keeps its inputs separate from timing cells.
-    let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Equivalence, 0);
+fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64, purpose: MeasurementPurpose) -> Batch {
+    // The schedule adapter binds this named purpose, keeping equivalence inputs
+    // separate from timing cells without a numeric stream base at this call site.
+    let mut s = MatrixSampler::new(seed_root, q, n, purpose, 0);
     match q {
         3 => Batch::F3(
             (0..m)
@@ -102,6 +110,10 @@ fn shared_batch(q: u64, n: usize, m: usize, seed_root: u64) -> Batch {
 #[must_use]
 pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> {
     let mut rows = Vec::new();
+    let purpose = scheduled_backends(SchedulePhase::Equivalence)
+        .next()
+        .expect("the canonical backend schedule is nonempty")
+        .purpose();
 
     let reference_backend = match support(Backend::Scalar, q, n) {
         Support::Supported => Backend::Scalar,
@@ -124,8 +136,8 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
         },
     };
 
-    let batch = shared_batch(q, n, m, seed_root);
-    let raw_ref = shared_raw_batch(q, n, m, seed_root);
+    let batch = shared_batch(q, n, m, seed_root, purpose);
+    let raw_ref = shared_raw_batch(q, n, m, seed_root, purpose);
     let reference = evaluate(
         reference_backend,
         if reference_backend == Backend::RyserGeneric {
@@ -142,7 +154,12 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
     // order - which is what makes the per-matrix comparison meaningful.
     let raw = raw_ref;
 
-    for backend in Backend::ALL.into_iter().filter(|b| *b != reference_backend) {
+    for scheduled in scheduled_backends(SchedulePhase::Equivalence) {
+        let backend = scheduled.backend();
+        if backend == reference_backend {
+            continue;
+        }
+        debug_assert_eq!(scheduled.purpose(), purpose);
         let mut row = EquivalenceRow {
             q,
             n,
@@ -275,6 +292,27 @@ pub fn exact_zero_count_order3(q: u64) -> (u64, u64, u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "prototype-registry")]
+    use permanent_wave_gpu::MeasurementPath;
+
+    #[cfg(feature = "prototype-registry")]
+    #[test]
+    fn every_registered_path_is_reported_by_equivalence() {
+        let rows = check(3, 3, 2, 0xB488_F02C);
+        for path in MeasurementPath::ALL {
+            let row = rows
+                .iter()
+                .find(|row| row.backend == path.name())
+                .unwrap_or_else(|| panic!("{} is missing from equivalence", path.name()));
+            assert!(
+                row.status.starts_with("unsupported: "),
+                "{} status={}",
+                path.name(),
+                row.status
+            );
+        }
+    }
 
     /// Sampling through the campaign's own sampler must recover the exact
     /// zero fraction at order 3, for every `q`.

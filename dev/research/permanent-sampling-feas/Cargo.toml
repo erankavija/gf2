@@ -28,7 +28,11 @@ name = "permanent_sampling_feas"
 path = "src/main.rs"
 
 [features]
-default = []
+default = ["prototype-registry"]
+# The prototype crate's registry is a lower-level dependency when the harness
+# schedules candidates. Its fixture/oracle feature remains disabled here: that
+# feature intentionally depends back on this harness for the canonical sampler.
+prototype-registry = ["dep:permanent-wave-gpu"]
 hip = ["gf2-algebra/hip", "dep:gf2-kernels-hip"]
 
 [dependencies]
@@ -48,6 +52,7 @@ gf2-kernels-simd = { path = "../../../crates/gf2-kernels-simd" }
 # host wall clock. Production crates keep this dependency isolated behind
 # gf2-algebra's ordinary GPU adapter.
 gf2-kernels-hip = { path = "../../../crates/gf2-kernels-hip", optional = true, features = ["hip"] }
+permanent-wave-gpu = { path = "../permanent_wave_gpu", optional = true, default-features = false }
 rayon = "1.10"
 # ChaCha20 is the named, versioned campaign RNG. `rand_chacha` 0.9 is already
 # used elsewhere in the repository (crates/gf2-kernels-hip dev-dependencies).
