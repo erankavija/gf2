@@ -41,7 +41,7 @@ const DEVICE_UNAVAILABLE: &str =
 /// representation when their inputs are canonical.
 #[cfg(feature = "fixture-oracle")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct ThreePlane {
+pub(crate) struct ThreePlane {
     b0: u64,
     b1: u64,
     b2: u64,
@@ -49,13 +49,13 @@ struct ThreePlane {
 
 #[cfg(feature = "fixture-oracle")]
 impl ThreePlane {
-    const ZERO: Self = Self {
+    pub(crate) const ZERO: Self = Self {
         b0: 0,
         b1: 0,
         b2: 0,
     };
 
-    fn from_values(values: &[u8]) -> Self {
+    pub(crate) fn from_values(values: &[u8]) -> Self {
         assert!(values.len() <= 64, "three-plane state has at most 64 lanes");
         let mut state = Self::ZERO;
         for (lane, &value) in values.iter().enumerate() {
@@ -89,7 +89,7 @@ impl ThreePlane {
 
     /// Add canonical F_7 planes with a Mersenne carry fold.
     #[must_use]
-    fn add(self, rhs: Self) -> Self {
+    pub(crate) fn add(self, rhs: Self) -> Self {
         // Three-bit ripple add, producing a fourth carry plane.
         let s0 = self.b0 ^ rhs.b0;
         let c1 = self.b0 & rhs.b0;
@@ -114,7 +114,7 @@ impl ThreePlane {
 
     /// Subtract canonical F_7 planes by adding the canonical additive inverse.
     #[must_use]
-    fn sub(self, rhs: Self) -> Self {
+    pub(crate) fn sub(self, rhs: Self) -> Self {
         let nonzero = rhs.b0 | rhs.b1 | rhs.b2;
         let negated = Self {
             b0: (!rhs.b0) & nonzero,
@@ -126,7 +126,7 @@ impl ThreePlane {
 
     /// Product of the active row lanes, using the C6 log-popcount reduction.
     #[must_use]
-    fn horizontal_product(self, active: u64) -> u8 {
+    pub(crate) fn horizontal_product(self, active: u64) -> u8 {
         debug_assert_eq!(self.b0 & self.b1 & self.b2 & active, 0);
         let b0 = self.b0 & active;
         let b1 = self.b1 & active;
@@ -262,7 +262,7 @@ fn permanent_native_modular(fixture: &Fixture) -> u8 {
 }
 
 #[cfg(feature = "fixture-oracle")]
-fn bit_sliced_columns(fixture: &Fixture) -> Vec<ThreePlane> {
+pub(crate) fn bit_sliced_columns(fixture: &Fixture) -> Vec<ThreePlane> {
     let n = fixture.n();
     (0..n)
         .map(|column| {

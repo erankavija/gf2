@@ -57,6 +57,13 @@ fn main() {
         "wave_gf3_equivalence",
         "PERMANENT_WAVE_GPU_WAVE_GF3_EQUIVALENCE_BIN",
     );
+    publish_hip_executable(
+        &hipcc,
+        &out_dir,
+        &hip_root.join("wave_gf7_equivalence.hip"),
+        "wave_gf7_equivalence",
+        "PERMANENT_WAVE_GPU_WAVE_GF7_EQUIVALENCE_BIN",
+    );
 }
 
 fn compile_hip_source(hipcc: &Path, out_dir: &Path, source: &Path) {
