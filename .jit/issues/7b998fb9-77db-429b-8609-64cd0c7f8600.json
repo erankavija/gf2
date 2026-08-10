@@ -11,9 +11,16 @@
   "first_ready_at": "2026-08-10T04:07:35.132241092Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "permanent-wave-gpu-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "permanent-wave-gpu-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T04:11:07.408584005Z",
+      "updated_by": null
+    }
+  },
   "id": "7b998fb9-77db-429b-8609-64cd0c7f8600",
   "labels": [
     "type:task",
@@ -31,5 +38,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "F_7 three-plane Mersenne accumulator exact above the sixteen-lane bound",
-  "updated_at": "2026-08-10T04:09:34.042512042Z"
+  "updated_at": "2026-08-10T04:11:07.408584005Z"
 }

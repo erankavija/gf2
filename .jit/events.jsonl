@@ -7885,3 +7885,5 @@
 {"assignee":"agent:wave5-schedule","id":"f5a38ee9-a1ef-41e2-88f3-1b7fca6ccbe0","issue_id":"9798835a-c5d1-495d-bdef-eb78f8580b46","timestamp":"2026-08-10T04:09:25.763611044Z","type":"issue_claimed"}
 {"from":"ready","id":"529ed396-9934-45aa-8e6d-7fc421b0dfd6","issue_id":"7b998fb9-77db-429b-8609-64cd0c7f8600","timestamp":"2026-08-10T04:09:34.042512042Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:wave5-f7-accumulator","id":"064ae945-3e1f-4c95-8a90-eb1fb6e854ea","issue_id":"7b998fb9-77db-429b-8609-64cd0c7f8600","timestamp":"2026-08-10T04:09:34.042512042Z","type":"issue_claimed"}
+{"gate_key":"permanent-sampling-feas-ci","id":"aa7b2346-daae-410c-b9e3-d23d22523982","issue_id":"9798835a-c5d1-495d-bdef-eb78f8580b46","timestamp":"2026-08-10T04:11:04.905921409Z","type":"gate_added"}
+{"gate_key":"permanent-wave-gpu-ci","id":"54b69f14-85a8-4091-8bdf-c52b619e7665","issue_id":"7b998fb9-77db-429b-8609-64cd0c7f8600","timestamp":"2026-08-10T04:11:07.408584005Z","type":"gate_added"}

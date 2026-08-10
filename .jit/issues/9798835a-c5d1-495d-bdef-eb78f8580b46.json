@@ -12,9 +12,16 @@
   "first_ready_at": "2026-08-10T03:31:38.380319840Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "permanent-sampling-feas-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "permanent-sampling-feas-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-10T04:11:04.905921409Z",
+      "updated_by": null
+    }
+  },
   "id": "9798835a-c5d1-495d-bdef-eb78f8580b46",
   "labels": [
     "type:task",
@@ -26,5 +33,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Registry-derived schedule adapter for prototype candidates",
-  "updated_at": "2026-08-10T04:09:25.763611044Z"
+  "updated_at": "2026-08-10T04:11:04.905921409Z"
 }
