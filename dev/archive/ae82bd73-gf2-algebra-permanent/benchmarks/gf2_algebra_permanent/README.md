@@ -87,6 +87,16 @@ Key observation: at small n (n in {16, 20, 24}), scalar is faster than the singl
 
 **File:** `s5_gpu_crossover-2026-05-15.csv` | **Snapshot:** `csvs/s5_gpu_crossover.csv`
 
+> **Post-hoc provenance qualification (2026-08-10; JIT issue `76dfd2ff`):**
+> This archived snapshot preserves the historical S3/S5 publication text and
+> CSV inventory. Those receipts lack immutable measurement-source provenance:
+> no committed harness source SHA identifies the exact executable state. The
+> S3/S5 CSVs and snapshots are therefore corroboration-only, not authoritative
+> measurement evidence. The historical figures and “canonical SSOT” wording
+> below must be read in that context; the [live provenance
+> record](../../../../benchmarks/gf2_algebra_permanent/README.md) is the current
+> status record. The archived CSVs and prose are not silently rewritten.
+
 AMD Radeon RX 6950 XT (gfx1030) vs CPU SIMD single-thread, fixed batch M=256, reps=3 (median).
 Seed: `0x00c0ffee00000000`.
 
