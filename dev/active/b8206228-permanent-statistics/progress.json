@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 5,
+  "current_wave": 6,
   "waves": [
     {
       "wave_number": 1,
@@ -185,28 +185,28 @@
           "short_id": "49cbb131",
           "title": "Wilson score interval estimator",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "7b998fb9-77db-429b-8609-64cd0c7f8600",
           "short_id": "7b998fb9",
           "title": "F_7 three-plane Mersenne accumulator exact above the sixteen-lane bound",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "9798835a-c5d1-495d-bdef-eb78f8580b46",
           "short_id": "9798835a",
           "title": "Registry-derived schedule adapter for prototype candidates",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "de2522d6-0dc1-4763-a20d-e7dd991722df",
           "short_id": "de2522d6",
           "title": "Wave-cooperative intra-matrix Ryser prototype for F_3",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
