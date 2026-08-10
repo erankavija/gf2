@@ -17,12 +17,11 @@
 //! ## Single-matrix and batched SIMD paths (`n ≤ 63`)
 //!
 //! The public single-matrix dispatcher selects the scalar single-word kernel.
-//! The locked four-matrix receipt records scalar at 2.687862–3.088253 times
-//! the direct single-matrix AVX2 rate for `n = 8, 12, 16, 20, 24, 28`, because
-//! the latter zero-pads one meaningful word into a four-lane register. See
+//! The first four-matrix cohort was reclassified as provenance-incomplete and
+//! makes no performance claim; see
 //! `dev/benchmarks/permanent_campaign/batched-f3-avx2.md`. Historical S3
-//! cross-CPU evidence is corroboration only; its provenance status is recorded
-//! in `dev/benchmarks/gf2_algebra_permanent/README.md`. The archived
+//! cross-CPU evidence is likewise corroboration only; its provenance status is
+//! recorded in `dev/benchmarks/gf2_algebra_permanent/README.md`. The archived
 //! portability plan preserves the historical rationale:
 //! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/363556e6/s3_cross_cpu_portability.md`.
 //!
