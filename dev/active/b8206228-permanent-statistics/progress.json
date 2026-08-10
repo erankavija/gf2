@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 6,
+  "current_wave": 7,
   "waves": [
     {
       "wave_number": 1,
@@ -239,7 +239,7 @@
           "short_id": "cc162697",
           "title": "F_7 permanent-shaped kernels for the three-plane state and the table control",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "d1b6a182-ffcd-4efb-b4da-73331c63a699",
