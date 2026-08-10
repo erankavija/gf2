@@ -14,4 +14,4 @@ pub mod paths;
 mod wave;
 mod wave_gf7;
 
-pub use paths::{DispatchResult, MeasurementPath, Unsupported};
+pub use paths::{DispatchResult, EvaluationResult, MeasurementPath, Unsupported};
