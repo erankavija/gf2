@@ -395,3 +395,9 @@ extern "C" int permanent_bipedal7_hip(const unsigned char* matrix_ptr,
                                        unsigned long long* out_ptr) {
     return permanent_bipedal7_hip_batch(matrix_ptr, n, 1, out_ptr);
 }
+
+// The horizontal-product F_7 lookup circuit must read this translation unit's
+// established d_MUL_LUT. ROCm device linking is per HIP source under the
+// crate's build, so include the shared micro implementation here rather than
+// duplicate the LUT or introduce an unresolved cross-unit device symbol.
+#include "horizontal_product_micro.hip"

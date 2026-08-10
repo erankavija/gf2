@@ -5,6 +5,7 @@
 //! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...]
 //! permanent_sampling_feas sustained   --out PATH [--seconds 300]
 //! permanent_sampling_feas gray-update --out PATH [--q 3] [--n 12] [--steps 1000001]
+//! permanent_sampling_feas horizontal-product --out PATH [--q 3] [--n 12] [--samples 4096]
 //! permanent_sampling_feas envelope    --throughput PATH --out PATH [--budget-hours 12]
 //! permanent_sampling_feas zerofrac    --throughput PATH --sustained PATH --out PATH
 //! ```
@@ -23,6 +24,9 @@ use permanent_sampling_feas::env::HostInfo;
 use permanent_sampling_feas::equivalence::{check, EQUIVALENCE_CSV_HEADER};
 use permanent_sampling_feas::gray_update::{
     run_gray_update, GrayUpdateSpec, GRAY_UPDATE_CSV_HEADER,
+};
+use permanent_sampling_feas::horizontal_product::{
+    run_horizontal_product, HorizontalProductSpec, HORIZONTAL_PRODUCT_CSV_HEADER,
 };
 use permanent_sampling_feas::protocol::{
     run_cell, run_sustained, shuffle, warm_machine, CellSpec, Outcome, CELL_CSV_HEADER,
@@ -66,6 +70,7 @@ fn main() {
         "grid" => cmd_grid(&args),
         "sustained" => cmd_sustained(&args),
         "gray-update" => cmd_gray_update(&args),
+        "horizontal-product" => cmd_horizontal_product(&args),
         "envelope" => cmd_envelope(&args),
         "zerofrac" => cmd_zerofrac(&args),
         _ => {
@@ -73,6 +78,73 @@ fn main() {
             std::process::exit(2);
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// branch-aware horizontal row product
+// ---------------------------------------------------------------------------
+
+fn cmd_horizontal_product(args: &[String]) {
+    let host = HostInfo::probe();
+    let path = out_path(args, "horizontal-product.csv");
+    let q = flag(args, "--q")
+        .map(|value| {
+            value
+                .parse::<u64>()
+                .map_err(|error| format!("invalid --q: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"));
+    let n = flag(args, "--n")
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .map_err(|error| format!("invalid --n: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"))
+        .unwrap_or(12);
+    let samples = flag(args, "--samples")
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .map_err(|error| format!("invalid --samples: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"))
+        .unwrap_or(4_096);
+    assert!(samples > 0, "horizontal-product --samples must be nonzero");
+
+    let notes = vec![
+        format!(
+            "protocol: warmup >= {WARMUP_SECONDS:.0} s, then >= {MIN_REPS} reps and >= {MIN_TIMED_SECONDS:.0} s timed, cap {MAX_CELL_SECONDS:.0} s"
+        ),
+        "shape: each timed sample is one unconditioned row-sum vector. Its zero branch times the representation's actual early product exit; its nonzero branch times zero detection plus the complete representation-specific reduction.".to_string(),
+        "frequency: zero_fast_observed_numerator / zero_fast_observed_denominator and nonzero_slow_observed_numerator / nonzero_slow_observed_denominator count only unconditioned timed samples, never warm-up or timing-conditioned inputs. Their exact marginal expectations are 1 - ((q-1)/q)^n and ((q-1)/q)^n, respectively; the paths are complements.".to_string(),
+        "duration: GPU rows are paired kernel device-event spans only. For each branch net_per_operation_s = (sum product spans - sum same-geometry compiler-barrier spans) / actual timed operations in that branch. Allocation, upload, download, submission, sampling, grouping, and host policy timing are excluded. A zero-observation branch or nonpositive subtraction has no rate, never a zero or positive substitute.".to_string(),
+        "availability: schedule rows derive from the prototype registry. A candidate without an observable branch isolate or a usable device-event boundary remains an explicit unavailable row; the harness does not replace it with a host-clock or another representation.".to_string(),
+    ];
+    let mut writer = open_csv(&path, &host, HORIZONTAL_PRODUCT_CSV_HEADER, &notes);
+    let fields: Box<dyn Iterator<Item = u64>> = match q {
+        Some(q) => Box::new(std::iter::once(q)),
+        None => Box::new(QS.into_iter()),
+    };
+    for q in fields {
+        for scheduled in scheduled_backends(SchedulePhase::HorizontalProductTimed) {
+            let row = run_horizontal_product(HorizontalProductSpec {
+                q,
+                n,
+                samples,
+                backend: scheduled.backend(),
+                seed_root: SEED_ROOT,
+                seed_index: 0,
+            });
+            println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
+            writeln!(writer, "{}", row.to_csv_row()).expect("write horizontal-product row");
+        }
+    }
+    writer.flush().expect("flush horizontal-product CSV");
+    println!("wrote {}", path.display());
 }
 
 // ---------------------------------------------------------------------------

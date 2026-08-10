@@ -45,6 +45,27 @@ SUBCOMMANDS
                two-plane packing; F_5/F_7 CPU uses packed arithmetic, while
                F_5/F_7 HIP currently measures their shipped byte controls.
 
+  horizontal-product
+               Time the branch-aware horizontal row product for every
+               registry-derived candidate. Zero-product and nonzero-product
+               samples are counted unconditioned; they are timed separately
+               only where the circuit exposes an actual branch. GPU timing is
+               device-event-only, never a host-clock substitute.
+                 --out PATH        output CSV (default horizontal-product.csv)
+                 --q Q             measure one field order (default all 3,5,7)
+                 --n N             active row-sum lanes (default 12; 1..=63)
+                 --samples N       independent unconditioned row-sum vectors
+                                   per repetition (default 4096; must be nonzero)
+               `zero_fast_observed_numerator` and
+               `zero_fast_observed_denominator` name the zero-product
+               frequency's exact timed-sample fraction; the analogous
+               `nonzero_slow_*` columns name its complement. Their expected
+               values are `1 - ((q-1)/q)^n` and `((q-1)/q)^n`.
+               Each branch's net duration uses only its actual timed-operation
+               denominator: `(product event spans - same-geometry barrier
+               spans) / branch operations`. A branch with no timed observation
+               or a nonpositive subtraction is explicitly unavailable, not zero.
+
   envelope     Derive required sample counts and wall-clock from a throughput CSV.
                  --throughput PATH input CSV from `grid` (required)
                  --out PATH        output CSV (default envelope.csv)
