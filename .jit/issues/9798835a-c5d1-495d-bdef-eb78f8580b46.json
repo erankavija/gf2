@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave5-schedule",
+  "claimed_at": "2026-08-10T04:09:25.763611044Z",
   "context": {},
   "created_at": "2026-08-09T11:48:32.447640650Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "satisfies:REQ-03"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Registry-derived schedule adapter for prototype candidates",
-  "updated_at": "2026-08-10T03:31:38.380319840Z"
+  "updated_at": "2026-08-10T04:09:25.763611044Z"
 }
