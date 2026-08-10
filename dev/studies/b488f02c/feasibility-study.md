@@ -589,10 +589,10 @@ Four results carry consequences beyond the envelope.
 `permanent_bipedal3` handed single matrices to the AVX2 kernel on any host
 supporting it. The cause is documented in the kernel itself: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
-of four lanes carry no data. The first four-matrix campaign cohort is
-[provenance-incomplete](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
-and is not used here to state a rate or ordering. The measurement-independent
-routing fix is that
+of four lanes carry no data. The locked
+[provenance-fixed four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
+records scalar/direct-AVX2 pooled-rate ratios of **2.858539x--3.354322x** at
+every $n \in \{8,12,16,20,24,28\}$. The routing fix is that
 [`permanent_bipedal3`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)
 now calls the scalar single-word kernel for $n \le 63$.
 
@@ -1158,10 +1158,12 @@ available, and the AVX2 single-word kernel is slower than the scalar one: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
 of four lanes carry no data. This was already visible in
 `s3_cross_cpu-2026-05-12.csv`; its historical result is not current
-authoritative evidence. The later four-matrix cohort is likewise
+authoritative evidence. The later locked
+[provenance-fixed four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2-provenance-fixed.md)
+records scalar/direct-AVX2 pooled-rate ratios of 3.273668x, 3.302095x, and
+3.354322x at $n = 16, 20, 24$, respectively. The earlier cohort remains
 [provenance-incomplete](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
-because its source-dirty check ignored untracked files. A clean-source rerun is
-required before a current rate or ordering is stated.
+and is not interpreted.
 The public entry point now calls `permanent_bipedal3_singleword` for
 $n \le 63$
 ([`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)),
