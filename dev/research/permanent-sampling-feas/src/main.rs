@@ -4,6 +4,7 @@
 //! permanent_sampling_feas equivalence --out PATH
 //! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...]
 //! permanent_sampling_feas sustained   --out PATH [--seconds 300]
+//! permanent_sampling_feas gray-update --out PATH [--q 3] [--n 12] [--steps 1000001]
 //! permanent_sampling_feas envelope    --throughput PATH --out PATH [--budget-hours 12]
 //! permanent_sampling_feas zerofrac    --throughput PATH --sustained PATH --out PATH
 //! ```
@@ -20,11 +21,15 @@ use std::path::{Path, PathBuf};
 use permanent_sampling_feas::backend::Backend;
 use permanent_sampling_feas::env::HostInfo;
 use permanent_sampling_feas::equivalence::{check, EQUIVALENCE_CSV_HEADER};
+use permanent_sampling_feas::gray_update::{
+    run_gray_update, GrayUpdateSpec, GRAY_UPDATE_CSV_HEADER,
+};
 use permanent_sampling_feas::protocol::{
     run_cell, run_sustained, shuffle, warm_machine, CellSpec, Outcome, CELL_CSV_HEADER,
     MAX_CELL_SECONDS, MIN_REPS, MIN_TIMED_SECONDS, PINNED_CORE, SUSTAINED_CSV_HEADER,
     SUSTAINED_INDICES_PER_RUN, WARMUP_SECONDS,
 };
+use permanent_sampling_feas::schedule::{scheduled_backends, SchedulePhase};
 use permanent_sampling_feas::stats::{envelope_row, ENVELOPE_CSV_HEADER, Z_95};
 
 /// Campaign root seed. Every stream in every subcommand derives from it, so a
@@ -60,6 +65,7 @@ fn main() {
         "equivalence" => cmd_equivalence(&args),
         "grid" => cmd_grid(&args),
         "sustained" => cmd_sustained(&args),
+        "gray-update" => cmd_gray_update(&args),
         "envelope" => cmd_envelope(&args),
         "zerofrac" => cmd_zerofrac(&args),
         _ => {
@@ -67,6 +73,73 @@ fn main() {
             std::process::exit(2);
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// dependency-chained Gray update
+// ---------------------------------------------------------------------------
+
+fn cmd_gray_update(args: &[String]) {
+    let host = HostInfo::probe();
+    let path = out_path(args, "gray-update.csv");
+    let q = flag(args, "--q")
+        .map(|value| {
+            value
+                .parse::<u64>()
+                .map_err(|error| format!("invalid --q: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"));
+    let n = flag(args, "--n")
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .map_err(|error| format!("invalid --n: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"))
+        .unwrap_or(12);
+    let steps = flag(args, "--steps")
+        .map(|value| {
+            value
+                .parse::<u64>()
+                .map_err(|error| format!("invalid --steps: {error}"))
+        })
+        .transpose()
+        .unwrap_or_else(|message| panic!("{message}"))
+        .unwrap_or(1_000_001);
+    assert!(steps > 0, "gray-update --steps must be nonzero");
+
+    let notes = vec![
+        format!(
+            "protocol: warmup >= {WARMUP_SECONDS:.0} s, then >= {MIN_REPS} reps and >= {MIN_TIMED_SECONDS:.0} s timed, cap {MAX_CELL_SECONDS:.0} s"
+        ),
+        "shape: one accumulator reads its immediately preceding add/subtract result; this is a latency chain, not independent-operation throughput".to_string(),
+        "representation: F_3 CPU/HIP rows use the Bipedal3 two-plane packed add/subtract; F_5/F_7 CPU rows use their packed representations, while F_5/F_7 HIP rows use the shipped byte controls until their registered packed prototypes land.".to_string(),
+        "duration: net_per_operation_s = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps). CPU rows use paired host spans; HIP rows use paired device-event kernel spans. Both exclude sampler construction and the surrounding host policy loop; HIP rows also exclude allocation, transfer, and submission.".to_string(),
+        "censoring: this constant-work shape has no Ryser work-model projection. Any future censored row must state its pre-execution reason and carries no duration.".to_string(),
+    ];
+    let mut writer = open_csv(&path, &host, GRAY_UPDATE_CSV_HEADER, &notes);
+    let fields: Box<dyn Iterator<Item = u64>> = match q {
+        Some(q) => Box::new(std::iter::once(q)),
+        None => Box::new(QS.into_iter()),
+    };
+    for q in fields {
+        for scheduled in scheduled_backends(SchedulePhase::GrayUpdateTimed) {
+            let row = run_gray_update(GrayUpdateSpec {
+                q,
+                n,
+                steps,
+                backend: scheduled.backend(),
+                seed_root: SEED_ROOT,
+                seed_index: 0,
+            });
+            println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
+            writeln!(writer, "{}", row.to_csv_row()).expect("write gray-update row");
+        }
+    }
+    writer.flush().expect("flush gray-update CSV");
+    println!("wrote {}", path.display());
 }
 
 fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {

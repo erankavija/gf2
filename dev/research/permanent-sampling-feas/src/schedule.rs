@@ -18,6 +18,10 @@ pub enum SchedulePhase {
     GridWarmup,
     /// Timed repetitions for a grid cell.
     GridTimed,
+    /// Untimed repetitions for the dependency-chained Gray-update mode.
+    GrayUpdateWarmup,
+    /// Timed repetitions for the dependency-chained Gray-update mode.
+    GrayUpdateTimed,
     /// Long-running throughput observation.
     Sustained,
 }
@@ -29,6 +33,8 @@ impl SchedulePhase {
             Self::GridProbe => MeasurementPurpose::GridProbe,
             Self::GridWarmup => MeasurementPurpose::GridWarmup,
             Self::GridTimed => MeasurementPurpose::GridTimed,
+            Self::GrayUpdateWarmup => MeasurementPurpose::GrayUpdateWarmup,
+            Self::GrayUpdateTimed => MeasurementPurpose::GrayUpdateTimed,
             Self::Sustained => MeasurementPurpose::Sustained,
         }
     }
@@ -108,6 +114,14 @@ mod tests {
             (SchedulePhase::GridProbe, MeasurementPurpose::GridProbe),
             (SchedulePhase::GridWarmup, MeasurementPurpose::GridWarmup),
             (SchedulePhase::GridTimed, MeasurementPurpose::GridTimed),
+            (
+                SchedulePhase::GrayUpdateWarmup,
+                MeasurementPurpose::GrayUpdateWarmup,
+            ),
+            (
+                SchedulePhase::GrayUpdateTimed,
+                MeasurementPurpose::GrayUpdateTimed,
+            ),
             (SchedulePhase::Sustained, MeasurementPurpose::Sustained),
         ];
 
