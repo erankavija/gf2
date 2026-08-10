@@ -7930,3 +7930,6 @@
 {"gate_key":"permanent-sampling-feas-ci","id":"6bb3d9bc-b0ae-45fc-a474-b4bc502cf36a","issue_id":"af302aa9-5f6e-438e-8c9f-67b455d3ebee","timestamp":"2026-08-10T06:16:38.992672347Z","type":"gate_added"}
 {"from":"ready","id":"4ce17a7e-94be-4d0f-b66a-60d9658a112e","issue_id":"d1b6a182-ffcd-4efb-b4da-73331c63a699","timestamp":"2026-08-10T06:16:46.586211090Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:wave6-clopper-pearson","id":"8da86eb6-2a88-4350-9f8d-42ffce0ccea0","issue_id":"d1b6a182-ffcd-4efb-b4da-73331c63a699","timestamp":"2026-08-10T06:16:46.586211090Z","type":"issue_claimed"}
+{"fields":["description"],"id":"18c92ba8-6e53-421e-8854-9693459dfa39","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:18:19.982090891Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["description"],"id":"b1ecf66c-1ed6-4e9a-b250-a57a9875a87a","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:18:40.931952515Z","type":"issue_updated","updated_by":"issue-update"}
+{"fields":["description"],"id":"32d45be8-8b13-46cd-8963-df9c7d825aa2","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:19:17.866054382Z","type":"issue_updated","updated_by":"issue-update"}
