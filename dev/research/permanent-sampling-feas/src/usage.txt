@@ -55,15 +55,21 @@ SUBCOMMANDS
                  --q Q             measure one field order (default all 3,5,7)
                  --n N             active row-sum lanes (default 12; 1..=63)
                  --samples N       independent unconditioned row-sum vectors
-                                   per repetition (default 4096; must be nonzero)
+                                   in the fixed observation batch and each
+                                   timing repetition (default 4096; nonzero)
                `zero_fast_observed_numerator` and
                `zero_fast_observed_denominator` name the zero-product
-               frequency's exact timed-sample fraction; the analogous
-               `nonzero_slow_*` columns name its complement. Their expected
-               values are `1 - ((q-1)/q)^n` and `((q-1)/q)^n`.
+               frequency's exact fixed host observation-batch fraction; the
+               analogous `nonzero_slow_*` columns name its complement. That
+               batch is addressed by `(seed_root, q, n,
+               horizontal_product_timed, seed_index)`. Device timing, when
+               available, resamples separately under the canonical
+               warm-up/repetition policy and cannot overwrite observation
+               counts. Their expected values are `1 - ((q-1)/q)^n` and
+               `((q-1)/q)^n`.
                Each branch's net duration uses only its actual timed-operation
                denominator: `(product event spans - same-geometry barrier
-               spans) / branch operations`. A branch with no timed observation
+               spans) / branch operations`. A branch with no timed operations
                or a nonpositive subtraction is explicitly unavailable, not zero.
 
   envelope     Derive required sample counts and wall-clock from a throughput CSV.
