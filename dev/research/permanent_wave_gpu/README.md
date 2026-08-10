@@ -26,7 +26,7 @@ The corpus is addressed through the feasibility study's existing
 `MeasurementPurpose::Equivalence` stream domain; it does not introduce another
 randomness-purpose registry.  It includes structural empty, singleton, Gray
 partition, add/subtract, partial-word, zero-product, and nonzero exponent-class
-fixtures for each supported field, plus $\\mathbb{F}_7$ orders 16, 20, and 24.
+fixtures for each supported field, plus $\mathbb{F}_7$ orders 16, 20, and 24.
 The report retains every `MeasurementPath::ALL` entry.  A candidate that is not
 yet executable receives an explicit unavailable reason instead of disappearing
 from correctness evidence.
