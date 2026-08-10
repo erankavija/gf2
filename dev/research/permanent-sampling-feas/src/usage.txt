@@ -43,3 +43,20 @@ SUBCOMMANDS
 
 The GPU backend needs `--features hip`; without it its cells are recorded as
 unsupported rather than skipped.
+
+GRID TIMING COLUMNS
+  `total_s`, `gen_s`, `eval_s`, `reduce_s`, and `store_s` are host wall-clock
+  totals over the timed repetitions. For an instrumented GPU/HIP cell,
+  `kernel_device_s` is instead the device-event kernel-only total: it excludes
+  allocation, H2D, D2H, host serialisation, and submission overhead.
+
+  `h2d_device_s` and `d2h_device_s` are device-event transfer totals.
+  `host_submission_s` is the host-clock total around the submission wrapper;
+  `device_submission_to_kernel_s` is the separate device-event total between
+  the pre-submission marker and kernel start. They must not be combined by
+  subtracting one clock from the other.
+
+  The five per-phase fields are empty for CPU, unsupported, and unexecuted
+  cells (or any path that lacks the instrumented boundary). `phase_timing_note`
+  states why; a missing phase is never encoded as zero or substituted with a
+  wall-clock duration.

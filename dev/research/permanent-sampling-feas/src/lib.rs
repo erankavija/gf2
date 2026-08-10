@@ -12,7 +12,8 @@
 //! - validates that every backend returns identical per-matrix permanents on
 //!   shared inputs ([`equivalence`]) before any timing counts as evidence;
 //! - times generation, evaluation, reduction, and shard storage separately and
-//!   as a composite ([`protocol`]);
+//!   as a composite, while GPU rows also retain their event-measured kernel,
+//!   transfer, and submission spans in distinct columns ([`protocol`]);
 //! - converts the composite rates into required sample counts and wall-clock
 //!   under a stated budget ([`stats`]), measured against the published $q = 3$
 //!   numerics the campaign has to beat to claim novelty ([`prior`]).
