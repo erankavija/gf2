@@ -23,6 +23,33 @@ use crate::host::{DeviceBuffer, HipEvent, HipEventSpan, HipStream, PinnedHostBuf
 use crate::HipError;
 
 extern "C" {
+    /// Enqueue one dependency-chained Gray update micro-kernel on `stream`.
+    ///
+    /// F_3 receives its two Bipedal3 planes through `bipedal_column`; F_5 and
+    /// F_7 receive their shipped byte-control column through `byte_column`.
+    /// `out` is a device output buffer: F_3 writes its two final Bipedal3
+    /// planes, while F_5/F_7 write one checksum word. The kernel alternates
+    /// add and subtract updates on one accumulator for `steps` iterations so
+    /// the dependency chain remains observable.
+    fn launch_gray_update_micro(
+        byte_column: *const u8,
+        bipedal_column: *const u64,
+        q: c_int,
+        n: c_int,
+        steps: u64,
+        out: *mut u64,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Enqueue the paired compiler-barrier baseline for the Gray-update mode.
+    fn launch_gray_update_compiler_barrier_baseline(
+        q: c_int,
+        n: c_int,
+        steps: u64,
+        out: *mut u64,
+        stream: *mut c_void,
+    ) -> c_int;
+
     /// Compute the permanent of an n×n matrix over GF(3) on the GPU (single matrix).
     ///
     /// Entry point in `hip/permanent/permanent_bipedal3.hip`. Delegates to
@@ -1084,6 +1111,245 @@ pub enum PermanentField {
     F5,
     /// The LUT-based F_7 kernel. Its LUTs must be initialized first.
     F7,
+}
+
+/// One GPU micro-measurement's paired device-event spans.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GrayUpdateTimings {
+    /// Device-event duration of the dependency-chained field updates.
+    pub update: Duration,
+    /// Device-event duration of the matched compiler-barrier baseline.
+    pub compiler_barrier_baseline: Duration,
+    /// Final update state copied after both event spans have stopped.
+    pub update_checksum: GrayUpdateChecksum,
+}
+
+/// Observable final state of one event-timed Gray-update chain.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GrayUpdateChecksum {
+    /// The exact Bipedal3 accumulator planes for the F_3 packed update.
+    Bipedal3 {
+        /// Magnitude plane.
+        mag: u64,
+        /// Sign plane.
+        sgn: u64,
+    },
+    /// Checksum of the byte accumulator used by the F_5/F_7 controls.
+    Bytes(u64),
+}
+
+/// Representation-specific operand for [`measure_gray_update_kernel`].
+pub enum GrayUpdateOperand<'a> {
+    /// The two raw Bipedal3 planes used by the shipped F_3 packed update.
+    Bipedal3 {
+        /// Magnitude bit plane.
+        mag: u64,
+        /// Sign bit plane.
+        sgn: u64,
+        /// Active packed row lanes.
+        n: usize,
+    },
+    /// Canonical byte values used by the shipped F_5/F_7 GPU controls.
+    Bytes(&'a [u8]),
+}
+
+/// Measure one dependency-chained Gray update on the HIP device clock.
+///
+/// The submitted update kernel holds one row-sum accumulator and alternates
+/// add and subtract updates for `steps` iterations.  F_3 uses the actual
+/// Bipedal3 two-plane update; F_5/F_7 use the shipped byte controls.  A second
+/// event-timed kernel executes the same loop geometry with compiler barriers,
+/// allowing the harness to report `(update - baseline) / steps` without
+/// including host-loop, allocation, transfer, or submission overhead.
+///
+/// # Panics
+///
+/// Panics if `steps == 0`, the operand's active-lane count lies outside
+/// `1..=63`, the field/operand representation does not match, or a byte
+/// operand contains a value outside its field.  A Bipedal3 operand also
+/// panics when either plane has a bit above its explicit active-lane domain.
+///
+/// # Errors
+///
+/// Returns the HIP error from stream creation, allocation, upload, launch,
+/// synchronization, or event timing.
+pub fn measure_gray_update_kernel(
+    field: PermanentField,
+    operand: GrayUpdateOperand<'_>,
+    steps: u64,
+) -> Result<GrayUpdateTimings, HipError> {
+    let q: c_int = match field {
+        PermanentField::F3 => 3,
+        PermanentField::F5 => 5,
+        PermanentField::F7 => 7,
+    };
+    assert!(
+        (1..=63).contains(&operand_len(&operand)),
+        "measure_gray_update_kernel: n must be in 1..=63, got {}",
+        operand_len(&operand)
+    );
+    assert!(
+        steps > 0,
+        "measure_gray_update_kernel: steps must be nonzero"
+    );
+    assert!(
+        matches!(
+            (&field, &operand),
+            (PermanentField::F3, GrayUpdateOperand::Bipedal3 { .. })
+                | (PermanentField::F5, GrayUpdateOperand::Bytes(_))
+                | (PermanentField::F7, GrayUpdateOperand::Bytes(_))
+        ),
+        "measure_gray_update_kernel: operand representation does not match F_{q}"
+    );
+
+    if let GrayUpdateOperand::Bytes(column) = &operand {
+        assert!(
+            column.iter().all(|&value| c_int::from(value) < q),
+            "measure_gray_update_kernel: column contains a value outside F_{q}"
+        );
+    }
+    if let GrayUpdateOperand::Bipedal3 { mag, sgn, n } = &operand {
+        validate_bipedal3_active_lanes(*mag, *sgn, *n);
+    }
+
+    let stream = HipStream::new()?;
+    let device_id = stream.device_id();
+    let n = operand_len(&operand);
+    let update_checksum = DeviceBuffer::<u64>::new(2, device_id)?;
+    let baseline_checksum = DeviceBuffer::<u64>::new(1, device_id)?;
+    let (byte_input, bipedal_input, is_bipedal3) = match operand {
+        GrayUpdateOperand::Bipedal3 { mag, sgn, .. } => {
+            let mut staging = PinnedHostBuffer::<u64>::new(2, device_id)?;
+            staging.as_mut_slice().copy_from_slice(&[mag, sgn]);
+            let input = DeviceBuffer::<u64>::new(2, device_id)?;
+            input.copy_from_pinned_async(&staging, &stream)?;
+            (None, Some((input, staging)), true)
+        }
+        GrayUpdateOperand::Bytes(column) => {
+            let mut staging = PinnedHostBuffer::<u8>::new(n, device_id)?;
+            staging.as_mut_slice().copy_from_slice(column);
+            let input = DeviceBuffer::<u8>::new(n, device_id)?;
+            input.copy_from_pinned_async(&staging, &stream)?;
+            (Some((input, staging)), None, false)
+        }
+    };
+
+    let update = HipEventSpan::new_on_device(device_id)?;
+    update.record_start(&stream)?;
+    // SAFETY: the input and update-output allocations are live device ranges of
+    // the required lengths; the field values and dimensions were checked above,
+    // and both buffers remain alive through the stream-local synchronization.
+    let code = unsafe {
+        launch_gray_update_micro(
+            byte_input
+                .as_ref()
+                .map_or(std::ptr::null(), |(input, _)| input.as_ptr() as *const u8),
+            bipedal_input
+                .as_ref()
+                .map_or(std::ptr::null(), |(input, _)| input.as_ptr() as *const u64),
+            q,
+            n as c_int,
+            steps,
+            update_checksum.as_mut_ptr() as *mut u64,
+            stream.as_raw(),
+        )
+    };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "launch_gray_update_micro",
+        });
+    }
+    update.record_stop(&stream)?;
+    let compiler_barrier_baseline = HipEventSpan::new_on_device(device_id)?;
+    compiler_barrier_baseline.record_start(&stream)?;
+    let code = unsafe {
+        launch_gray_update_compiler_barrier_baseline(
+            q,
+            n as c_int,
+            steps,
+            baseline_checksum.as_mut_ptr() as *mut u64,
+            stream.as_raw(),
+        )
+    };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "launch_gray_update_compiler_barrier_baseline",
+        });
+    }
+    compiler_barrier_baseline.record_stop(&stream)?;
+    let mut update_staging = PinnedHostBuffer::<u64>::new(2, device_id)?;
+    update_checksum.copy_to_pinned_async(&mut update_staging, &stream)?;
+    stream.synchronize()?;
+    let update_checksum = if is_bipedal3 {
+        GrayUpdateChecksum::Bipedal3 {
+            mag: update_staging.as_slice()[0],
+            sgn: update_staging.as_slice()[1],
+        }
+    } else {
+        GrayUpdateChecksum::Bytes(update_staging.as_slice()[0])
+    };
+    Ok(GrayUpdateTimings {
+        update: update.elapsed()?,
+        compiler_barrier_baseline: compiler_barrier_baseline.elapsed()?,
+        update_checksum,
+    })
+}
+
+fn operand_len(operand: &GrayUpdateOperand<'_>) -> usize {
+    match operand {
+        GrayUpdateOperand::Bipedal3 { n, .. } => *n,
+        GrayUpdateOperand::Bytes(column) => column.len(),
+    }
+}
+
+fn validate_bipedal3_active_lanes(mag: u64, sgn: u64, n: usize) {
+    let active = (1_u64 << n) - 1;
+    assert_eq!(
+        (mag | sgn) & !active,
+        0,
+        "measure_gray_update_kernel: Bipedal3 planes contain inactive high lanes"
+    );
+}
+
+#[cfg(test)]
+mod gray_update_micro_tests {
+    use super::{measure_gray_update_kernel, GrayUpdateOperand, PermanentField};
+
+    /// Exercises the real paired device-event boundary.  Normal test gates do
+    /// not opt into this host-gated evidence test; benchmark execution records
+    /// actual device evidence through the harness command instead.
+    #[test]
+    #[ignore = "sim: requires a HIP device for Gray-update event timing"]
+    fn bipedal3_gray_update_returns_two_device_event_spans() {
+        let timings = measure_gray_update_kernel(
+            PermanentField::F3,
+            GrayUpdateOperand::Bipedal3 {
+                mag: 0b101,
+                sgn: 0b100,
+                n: 3,
+            },
+            1_025,
+        )
+        .expect("event-timed Bipedal3 Gray update");
+
+        assert!(timings.update.as_nanos() > 0);
+        assert!(timings.compiler_barrier_baseline.as_nanos() > 0);
+        assert_eq!(
+            timings.update_checksum,
+            super::GrayUpdateChecksum::Bipedal3 {
+                mag: 0b101,
+                sgn: 0b100,
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "inactive high lanes")]
+    fn bipedal3_operand_rejects_bits_outside_its_active_domain() {
+        super::validate_bipedal3_active_lanes(1 << 3, 0, 3);
+    }
 }
 
 /// Device- and host-clock durations from one permanent dispatch.

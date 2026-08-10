@@ -89,11 +89,15 @@ pub enum MeasurementPurpose {
     Sustained,
     /// Deterministic ordering of the grid specification list.
     Shuffle,
+    /// Untimed dependency-chained Gray-update micro-measurements.
+    GrayUpdateWarmup,
+    /// Timed dependency-chained Gray-update micro-measurements.
+    GrayUpdateTimed,
 }
 
 impl MeasurementPurpose {
     /// Complete, canonical purpose set.
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 9] = [
         Self::Equivalence,
         Self::GridProbe,
         Self::GridWarmup,
@@ -101,6 +105,8 @@ impl MeasurementPurpose {
         Self::MachineWarmup,
         Self::Sustained,
         Self::Shuffle,
+        Self::GrayUpdateWarmup,
+        Self::GrayUpdateTimed,
     ];
 
     /// Fixed tag encoded in the high field of the stream word.
@@ -111,9 +117,13 @@ impl MeasurementPurpose {
             Self::GridProbe => 2,
             Self::GridWarmup => 3,
             Self::GridTimed => 4,
+            // Existing purpose tags are a reproducibility contract.  New
+            // consumers append tags rather than renumbering old streams.
             Self::MachineWarmup => 5,
             Self::Sustained => 6,
             Self::Shuffle => 7,
+            Self::GrayUpdateWarmup => 8,
+            Self::GrayUpdateTimed => 9,
         }
     }
 
@@ -125,6 +135,8 @@ impl MeasurementPurpose {
             Self::GridProbe => "grid_probe",
             Self::GridWarmup => "grid_warmup",
             Self::GridTimed => "grid_timed",
+            Self::GrayUpdateWarmup => "gray_update_warmup",
+            Self::GrayUpdateTimed => "gray_update_timed",
             Self::MachineWarmup => "machine_warmup",
             Self::Sustained => "sustained",
             Self::Shuffle => "shuffle",
@@ -388,6 +400,26 @@ mod tests {
             .collect();
         assert_eq!(tags.len(), MeasurementPurpose::ALL.len());
         assert!(tags.iter().all(|&tag| tag < PURPOSE_TAG_CAPACITY));
+    }
+
+    #[test]
+    fn established_purpose_order_and_tags_remain_stable() {
+        assert_eq!(
+            MeasurementPurpose::ALL[..7],
+            [
+                MeasurementPurpose::Equivalence,
+                MeasurementPurpose::GridProbe,
+                MeasurementPurpose::GridWarmup,
+                MeasurementPurpose::GridTimed,
+                MeasurementPurpose::MachineWarmup,
+                MeasurementPurpose::Sustained,
+                MeasurementPurpose::Shuffle,
+            ]
+        );
+        assert_eq!(MeasurementPurpose::GridTimed.tag(), 4);
+        assert_eq!(MeasurementPurpose::MachineWarmup.tag(), 5);
+        assert_eq!(MeasurementPurpose::Sustained.tag(), 6);
+        assert_eq!(MeasurementPurpose::Shuffle.tag(), 7);
     }
 
     #[test]
