@@ -17,9 +17,12 @@
 //! ## Single-matrix and batched SIMD paths (`n ≤ 63`)
 //!
 //! The public single-matrix dispatcher selects the scalar single-word kernel.
-//! Cross-CPU measurements put its time at 0.317–0.319 of the AVX2
+//! Historical cross-CPU corroboration put its time at 0.317–0.319 of the AVX2
 //! single-matrix kernel's time because the latter zero-pads one meaningful
-//! word into a four-lane register. The committed receipt is
+//! word into a four-lane register. That S3 receipt lacks immutable
+//! measurement-source provenance and is not authoritative; its status is
+//! recorded in `dev/benchmarks/gf2_algebra_permanent/README.md`. The archived
+//! portability plan preserves the historical rationale:
 //! `dev/archive/ae82bd73-gf2-algebra-permanent/plans/363556e6/s3_cross_cpu_portability.md`.
 //!
 //! The single-matrix AVX2 function remains directly available for kernel

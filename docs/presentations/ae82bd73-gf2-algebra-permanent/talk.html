@@ -119,7 +119,9 @@
   <a href="../../../dev/studies/b488f02c/feasibility-study.md#44-measured-throughput">feasibility study</a>
   gives 0.46× / 0.44× against the best measured CPU path. The
   <a href="../../../dev/benchmarks/permanent_campaign/backend-ordering.md">replicated receipt</a>
-  preserves both; its new n=28 GPU timing used M=1024, not M=256.</p>
+  preserves both; its new n=28 GPU timing used M=1024, not M=256. The historical
+  S5 receipt is corroboration-only because its measurement-source provenance is
+  not immutable; see the <a href="../../../dev/benchmarks/gf2_algebra_permanent/README.md">receipt note</a>.</p>
 </section>
 
 <!-- ── CAPABILITY 4 — LEAN ─────────────────────────────────────────────── -->
@@ -155,14 +157,16 @@
   <span class="seclabel">Capability 6 <span class="num">· 10 / 14</span></span>
   <h2>Reproducible benchmark artefact</h2>
   <ul>
-    <li>Dated single-source-of-truth CSVs (S1 / S1g / S2 / S3 / S5) with
-    hardware fingerprint and seed pins</li>
+    <li>Dated benchmark CSVs (S1 / S1g / S2 / S3 / S5) with hardware
+    fingerprint and seed pins; the historical S3/S5 provenance qualification
+    is recorded in the <a href="../../../dev/benchmarks/gf2_algebra_permanent/README.md">receipt note</a></li>
     <li>Deterministic figures; <code>provenance.json</code> recording the
     measurement commit of every dataset</li>
     <li><code>scripts/permanent-repro.sh</code> — one-command end-to-end repro</li>
   </ul>
-  <div class="note">Every headline number traces to a seed-pinned, committed
-  CSV — the benchmark is auditable, not anecdotal.</div>
+  <div class="note">Headline numbers trace to seed-pinned, committed receipts.
+  Historical S3/S5 rows are corroboration-only because their measurement-source
+  provenance cannot be reconstructed.</div>
 </section>
 
 <!-- ── RESULTS ─────────────────────────────────────────────────────────── -->
