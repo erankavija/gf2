@@ -245,18 +245,19 @@ determinant cell must be timed before the companion is assumed free, per
 **Layering note:** `det` is in `gf2-core`, i.e. *below* `gf2-algebra`, so a
 determinant companion introduces no reverse dependency.
 
-### C12 — issue 76dfd2ff (S3/S5 receipts non-authoritative) still open
+### C12 — issue 76dfd2ff (S3/S5 receipts non-authoritative) completed
 
-**Valid.** `76dfd2ff` is `ready`, priority low, labels `type:task`,
-`epic:permanent-statistics`, `component:gf2-algebra`, one gate (`doc-review`),
-no dependencies. Receipts live in `dev/benchmarks/gf2_algebra_permanent/`:
-`s3_cross_cpu-2026-05-12.csv` and `s5_gpu_crossover-2026-05-15.csv` (plus
-snapshots under `csvs/`). That directory has **no README in the live tree** — the
-provenance README that REQ-01 would amend is in the archive at
-`dev/archive/ae82bd73-gf2-algebra-permanent/benchmarks/gf2_algebra_permanent/README.md`,
-so REQ-01 has no live host document today and the task will have to create one.
+**Completed in the merged `24d16432`/`c3130175` change.** The live
+`dev/benchmarks/gf2_algebra_permanent/README.md` now records that
+`s3_cross_cpu-2026-05-12.csv` and `s5_gpu_crossover-2026-05-15.csv`, plus their
+`csvs/` snapshots, lack immutable measurement-source provenance and are
+corroboration-only. `ROADMAP.md`, the crate README, S3 rustdoc, and the
+presentation requalify their live claims. The archived benchmark README and
+S5 plan retain their historical wording but now carry dated addenda pointing to
+the live provenance record.
 
-**The live prose citing them as authoritative is `ROADMAP.md`:**
+**Original finding before completion:** the live prose citing them as
+authoritative was `ROADMAP.md`:
 
 - `ROADMAP.md:86` — "**GPU batch ~28-30× CPU-SIMD** at M=256 (n=24: 28.65×,
   n=28: 30.32×) … source: `…/s5_gpu_crossover-2026-05-15.csv`". The feasibility
@@ -268,9 +269,9 @@ so REQ-01 has no live host document today and the task will have to create one.
 - `ROADMAP.md:84-85` cite `s1_speedup-2026-05-11.csv` for the 10.6× figure; same
   provenance class, though not contradicted.
 
-The epic's plan should sequence 76dfd2ff early (it is cheap, it is already
-`ready`, and it clears a contradiction the campaign's own report would otherwise
-have to explain).
+At investigation time, the epic's plan should sequence 76dfd2ff early because
+it was cheap, already `ready`, and cleared a contradiction the campaign's own
+report would otherwise have had to explain.
 
 ### C13 — REQ-01 creditable to b488f02c via a `satisfies:REQ-01` label
 
@@ -780,5 +781,5 @@ notes:
 | C9 composite hot path liftable | valid-and-open; **`protocol.rs` has no tests** |
 | C10 anchors exist | already-done, but **issue-scoped location** is a live problem |
 | C11 determinant path | already-done (`inverse.rs:494`); **unmeasured at campaign sizes** |
-| C12 76dfd2ff open; receipts cited as authoritative | valid-and-open; live citer is `ROADMAP.md:84-86`, **no live README** to amend |
+| C12 76dfd2ff completed; historical receipts requalified | completed; durable status is `dev/benchmarks/gf2_algebra_permanent/README.md`; archived claim sites carry dated addenda |
 | C13 REQ-01 creditable via label | **invalid-as-stated** — no `satisfies:` label *and* no dependency edge |

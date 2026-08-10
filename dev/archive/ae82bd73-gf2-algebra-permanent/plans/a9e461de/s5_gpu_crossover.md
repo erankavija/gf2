@@ -146,6 +146,15 @@ batch size M, not of n alone.**
 criterion.** There is a crossover M at each n. For the practical production batch size of
 M=256, the GPU wins at all n from n=24 upward.
 
+> **Post-hoc provenance qualification (2026-08-10; JIT issue `76dfd2ff`):**
+> The S5 receipt cited by this archived plan lacks immutable measurement-source
+> provenance: no committed harness source SHA identifies the exact executable
+> state. Its figures are preserved as historical corroboration only, not as
+> authoritative evidence for a current production conclusion. See the [live
+> receipt provenance record](../../../../benchmarks/gf2_algebra_permanent/README.md)
+> for the current status. This addendum preserves the historical plan and does
+> not rewrite its original interpretation.
+
 ### Did the aspirational criterion n ≥ 40 get met?
 
 The aspirational criterion was: "GPU vs CPU SIMD throughput crossover occurs at n ≥ 40."
