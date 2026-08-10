@@ -36,7 +36,8 @@ fn main() {
             .file("hip/bch_syndrome.hip")
             .file("hip/permanent/permanent_bipedal3.hip")
             .file("hip/permanent/permanent_bipedal5.hip")
-            .file("hip/permanent/permanent_bipedal7.hip");
+            .file("hip/permanent/permanent_bipedal7.hip")
+            .file("hip/permanent/gray_update_micro.hip");
     }
 
     build
@@ -87,6 +88,7 @@ fn main() {
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal3.hip");
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal5.hip");
         println!("cargo:rerun-if-changed=hip/permanent/permanent_bipedal7.hip");
+        println!("cargo:rerun-if-changed=hip/permanent/gray_update_micro.hip");
     }
     // NOTE: do NOT `rerun-if-changed=kernels`. `compile_arch_blobs` WRITES the
     // generated `<name>.co` blobs (and any best-effort probe) into

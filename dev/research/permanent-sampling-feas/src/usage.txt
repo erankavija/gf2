@@ -28,6 +28,23 @@ SUBCOMMANDS
                  --out PATH        output CSV (default sustained.csv)
                  --seconds S       window per run (default 300)
 
+  gray-update  Time a dependency-chained packed Gray add/subtract on one
+               accumulator for every registry-derived candidate.  CPU duration
+               excludes sampling, packing, policy-loop, and output overhead;
+               HIP spans are kernel-only device-event spans, excluding
+               allocation, transfer, submission, and host-loop overhead.
+                 --out PATH        output CSV (default gray-update.csv)
+                 --q Q             measure one field order (default all 3,5,7)
+                 --n N             active accumulator lanes (default 12)
+                 --steps N         chained add/subtracts per repetition
+                                   (default 1000001; must be nonzero)
+               Output reports `net_per_operation_s` as `(update - compiler-barrier
+               baseline) / steps` across the timed repetitions; a nonpositive
+               subtraction is explicit and has no reported net duration.
+               Native representations are explicit: F_3 CPU/HIP uses Bipedal3
+               two-plane packing; F_5/F_7 CPU uses packed arithmetic, while
+               F_5/F_7 HIP currently measures their shipped byte controls.
+
   envelope     Derive required sample counts and wall-clock from a throughput CSV.
                  --throughput PATH input CSV from `grid` (required)
                  --out PATH        output CSV (default envelope.csv)
