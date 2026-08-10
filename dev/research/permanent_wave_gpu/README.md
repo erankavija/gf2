@@ -77,19 +77,22 @@ edit `src/lib.rs` or `src/paths.rs`; the measurement driver always enumerates
 
 ## F_3 wave-cooperative evidence boundary
 
-`WaveGf3` is the first executable intra-matrix candidate. It partitions the
-full sequential Gray range among at most 32 lanes, initializes every lane from
-the canonical subset at that lane's interval start, and combines only scalar
-partials in lane order. The host fixture/oracle path checks every tractable
-committed F_3 fixture through order 16. Larger F_3 corpus cells, including the
-order-63 partial-word fixture, remain explicit `Unsupported` rows whose reason
-names the exponential full-permanent cost; they are not a capability claim or
+`WaveGf3` is the executable intra-matrix control and `FoldGf3` is its
+zero-mask/sign-popcount counterpart. They partition the full sequential Gray
+range among at most 32 lanes, initialize every lane from the canonical subset
+at that lane's interval start, and combine only scalar partials in lane order.
+The host fixture/oracle path checks every tractable committed F_3 fixture
+through order 16. Larger F_3 corpus cells, including the order-63
+partial-word fixture, remain explicit `Unsupported` rows whose reason names
+the exponential full-permanent cost; they are not a capability claim or
 silently omitted from the canonical report.
 
-Its stable source-level state model is two packed `u64` words plus `u64` Gray
-cursor/end bounds and one `u32` partial sum: a 9 x 32-bit-register lower
-bound. The current subset and horizontal-product value are loop temporaries;
-the committed compiler resource output, rather than this lower bound, is the
+Their stable source-level state model is two packed `u64` words plus `u64`
+Gray cursor/end bounds and one `u32` partial sum: a 9 x 32-bit-register lower
+bound. Neither fold adds persistent mapping state: the halving control uses
+only local fold temporaries, and the zero-mask candidate additionally has
+local active/zero-mask and popcount temporaries. The compiler resource output
+for both separately instantiated kernels, rather than this lower bound, is the
 authoritative allocation evidence.
 
 This is a preserved falsification of literal full-permanent execution at
@@ -104,11 +107,14 @@ recorded beside `hip/wave_gf3_equivalence.hip` after the checked gfx1030 build.
 For actual element-wise device evidence, use the opt-in driver rather than an
 ignored Cargo test. It streams every committed F_3 fixture through the bound,
 with its fixture ID, canonical row-major bytes, and independently computed
-`permanent_ryser` value, to the prebuilt HIP executable:
+`permanent_ryser` value, to the prebuilt HIP executable. The driver selects
+only `WaveGf3` or `FoldGf3` through the existing registry entries:
 
 ```sh
 cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
-    --release --features hip --bin wave-gf3-device-evidence
+    --release --features hip --bin wave-gf3-device-evidence -- --path wave-gf3
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence -- --path fold-gf3
 ```
 
 ### F_3 device/resource pre-commit capture — 2026-08-10
