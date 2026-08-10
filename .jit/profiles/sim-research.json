@@ -1,26 +1,972 @@
 {
+  "record_version": 2,
   "id": "sim-research",
-  "version": "1.0.1",
+  "version": "1.0.2",
+  "compatible_jit": ">=1.0.0, <2.0.0",
   "origin": {
     "source": "directory",
     "location": "packages/sim-research"
   },
-  "package_hash": "f6948091b639bbdb95bb6c5970e663b32bd976592af0db06acb9cd4ac85074ff",
-  "target_hashes": {
-    ".jit/config.toml": "f9060b39f0e8408375f957a78f7ad203b41044f329bf5a82c13b68371d83d1b0",
-    ".jit/gates.toml": "f8cbeb87fa54b8f6e40e7169328c39c226919ca90911b90bdf50e218485e71b0",
-    ".jit/invariants.toml": "35a9d2519294a0edaacac13493c6ccd4038213eaaa505fe7c3cbd08b82c97bc5",
-    ".jit/reference/content-standards.md": "42e3335e803ed6b63989291f46ead1056889ec28e858437593f3d3472f13d510",
-    ".jit/reference/rules-and-gates.md": "9ee1fb5ce025bc55b235a306f8c90dd375098c273c97b44bcedbf6f1bf8310c0",
-    ".jit/rules.toml": "2a913de23fd9af39f93ce93e90036a9fb13273e0418c9df672b7f1472bbd5af7",
-    ".jit/schemas/jit-content-standards.json": "465099ef7bcad1125ea2537dd870e820971ad46e17a8fbd3874de62737e7607b",
-    ".jit/templates.toml": "9941e513eb012daf821560d4ff7e1884fda1e4c7cfe8f97ea8fd2e2868c8d7e5",
-    "AGENTS.md": "392d1c514856bc53002abf61419e54e9090b06e8a4b16866b5f56657ff5d11e6",
-    "contrib/gates/ai-review.sh": "f5b00a17b207620f6790dbe0fd84d9c8ed3fdb730031c801a79dbccc2e995f98",
-    "contrib/gates/breakdown-review-prompt.md": "ff4884cdb64f950b607df9bdb08099a0f3dbe71883762003bd8adcd335415685",
-    "contrib/gates/code-review-prompt.md": "4d5d1dd279d05e2e942a1b15b8f0dbc7b6396a451c2b924fab72995ccb732427",
-    "contrib/gates/doc-review-prompt.md": "ebbb11725009607893e1c8ef6087e5ce1e2e7a569a014099e387300d0e1aa1c0",
-    "contrib/gates/holistic-review-prompt.md": "c9ea78d07aa314fe1a9fe90ddf0e762681d9530d0c440f2a8a94c4020c8839f5",
-    "contrib/gates/plan-review-prompt.md": "5285ce78bab1209de560cdc20444d34c0c5088eb2cb90d77e3146b3a7ad0dabc"
-  }
+  "package_hash": "f77487a0de86e5b4b1ae0c00065963f4822fc7c1a996620c2289e12897b48b6f",
+  "variables": {},
+  "claims": [
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "breakdown"
+          }
+        }
+      },
+      "base_fingerprint": "7b5926c449e30ae71301f15fde3eada1ed39b86105bf18bd3d63ee126afa1899",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "bug"
+          }
+        }
+      },
+      "base_fingerprint": "5005848e8acaa602584e77d4299d847832751f00327ad97ecadf37d865b1df2f",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "enhancement"
+          }
+        }
+      },
+      "base_fingerprint": "464e2f9f7f3308d601ac26752098cb358ad5ca19738cc6dfddeac61016c5563e",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "planning"
+          }
+        }
+      },
+      "base_fingerprint": "52eaf7632f279ab3ce9b73bf58d6cf7228643b8f8111ccee80d0f58d38e8b6a5",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "simulation"
+          }
+        }
+      },
+      "base_fingerprint": "1e2495f0858660973484c6845de5c6a216ae146de0443891b72fa8c03f7663e4",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "brackets"
+          }
+        }
+      },
+      "base_fingerprint": "53e44d9dde800d5264f5bf6ba933e1009d68e96020d21c8eca918ee298edc951",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "epic"
+          }
+        }
+      },
+      "base_fingerprint": "d88bfca72977f18c1d1419e39835310e51032a7df122c5ac73d336f856140af3",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "ppc-kernel"
+          }
+        }
+      },
+      "base_fingerprint": "c40f4539d93d20725f462db14cddbe34105e990f706906b9d333b89c438e764e",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "satisfies"
+          }
+        }
+      },
+      "base_fingerprint": "d712145b6e801df6ef0964771c83c3a100fd3c64fb4144b1c792bde96d479137",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "story"
+          }
+        }
+      },
+      "base_fingerprint": "421a0676062dd629870674bad4ba599bf15e7917a9419d7d9f2c7c2c7803ded2",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "projection",
+            "name": "invariants"
+          }
+        }
+      },
+      "base_fingerprint": "b2cf35182876a5649981bcf53e9a6643dc0f1d48b633c3ab8f988aaf9a30e921",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "projection",
+            "name": "rules-and-gates"
+          }
+        }
+      },
+      "base_fingerprint": "3be2357d3fce23d162abe8f131cb01d20a121b17350eeec93802245272de92a9",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "asm-artefact-present"
+          }
+        }
+      },
+      "base_fingerprint": "c0c62bef3cfb99beb0cc55fd70a513cc47e56bf4ec2bd67576b9be615289b41a",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "breakdown-review"
+          }
+        }
+      },
+      "base_fingerprint": "6085149ddda0c9ff04c3ebae37f15bd3b2c62ba19fa3e67be27d63c88287e3c0",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "cargo-ci"
+          }
+        }
+      },
+      "base_fingerprint": "94602a750d8d9e14f91a8a4ee571191f7b7a614d301f3a04a2b9d1f6d1bbd797",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "cargo-kani"
+          }
+        }
+      },
+      "base_fingerprint": "9210a32c3ecdc11efa04cb4c3561730dfaf2207c7b600924c1c031d18acb749b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "clippy"
+          }
+        }
+      },
+      "base_fingerprint": "a8e26479933ed4aff169e245a1432c081a6c1b5c5e0e1dea387837fa31d86aa0",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "code-review"
+          }
+        }
+      },
+      "base_fingerprint": "57ed254f72da9fed146dabfe040d7bf894abdf150ec75880fcb76ba655224fde",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "coverage-preview"
+          }
+        }
+      },
+      "base_fingerprint": "a83c2bdaf9fbb497671619c2584204c0313aadf6e228a98874dc60ef31917fc7",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "criterion-1.5x"
+          }
+        }
+      },
+      "base_fingerprint": "a62ac065a68d3ee0791862d1b0f8c66bf520b22cb82f50d37146ac36b00dc4fb",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "doc-review"
+          }
+        }
+      },
+      "base_fingerprint": "1b56eeb34fd810495574a06f9611a07cf55db26c2d39d0c530d942381f564e0d",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "fmt"
+          }
+        }
+      },
+      "base_fingerprint": "e34256efb1876305d118a00c3adeec3caf9b1b68a4cebd4890c63720ddc8704c",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "holistic-review"
+          }
+        }
+      },
+      "base_fingerprint": "e83e20f4aa4d788f67a28f9166324337ac0f350b81a210d38a12f274b3de88c2",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "jit-validate"
+          }
+        }
+      },
+      "base_fingerprint": "15ce65e1c4207804aff09b9f92a815aa68197ec5387bca3aab691a3cec4bb2d6",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "lake-build"
+          }
+        }
+      },
+      "base_fingerprint": "515c43de9291eba86fe0a4c079b79f55728250fe0dfad36639f0ccf8651da00e",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "parallelism-pays"
+          }
+        }
+      },
+      "base_fingerprint": "401f688a7c1e7ec93ea25540070280a70aa74d0bc5cafdc803a60955cfb10f26",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "plan-review"
+          }
+        }
+      },
+      "base_fingerprint": "c106f870c05cb50f7a65d5d88901df2023ea359851d6bbd3e835f4bcdacb210b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "repo-validate"
+          }
+        }
+      },
+      "base_fingerprint": "2051ceae01ad1f1c2bbb1fa0c4d17378f38f80d286981a99c9c1f69d1bbb114f",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "tdd-reminder"
+          }
+        }
+      },
+      "base_fingerprint": "8175ee3d3af7632dbf0dee36e0e579a7b7241e91fdbef88b5417f68919bf30fa",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "tests"
+          }
+        }
+      },
+      "base_fingerprint": "b1aeeddf5227513e451afd4f9c1698b678475d208d578927a73fd9e5b5296fdd",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "gates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "gates",
+            "name": "verify-lean"
+          }
+        }
+      },
+      "base_fingerprint": "68c1337a27d34b7328c61439beeeec5911d3d5788e7f865d74d949d5ccf576fe",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "accelerator-safe-fallback"
+          }
+        }
+      },
+      "base_fingerprint": "7ef82135cad817e67d1901c4ea721e4571ea9f02308a1e155d666ff1e00d7fd8",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "backend-behavioral-equivalence"
+          }
+        }
+      },
+      "base_fingerprint": "7362b72d1755d3f1f444ab5065400d6a6e3515998b95759ef43f01ebed35574d",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "benchmark-backed-performance"
+          }
+        }
+      },
+      "base_fingerprint": "da287d0464e037ca0b779f7e5a41fa4e55ccb5c54f9bde03e331ce4f731e5052",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "canonical-bit-indexing"
+          }
+        }
+      },
+      "base_fingerprint": "1dd761c88faa16725749ea5daa4f83ed6144169de3b1da71c2ec993e18a6cf3a",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "canonical-cutover"
+          }
+        }
+      },
+      "base_fingerprint": "3c7c39af1918e9727020c4ffcd0e6e3528c6a280ea42844ebef9d054440dc729",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "convention-convergence"
+          }
+        }
+      },
+      "base_fingerprint": "29a98d558266018554b93172a7a06f62901e7f944624ee66897bbd323b8aca94",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "crate-dependency-direction"
+          }
+        }
+      },
+      "base_fingerprint": "d936194470d758b64f2ec5b195b432df0f65bcc54b0325483ecb51dd7443cb9a",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "deterministic-seeded-execution"
+          }
+        }
+      },
+      "base_fingerprint": "0042609debc42245f293e702d8b235bb5ac41e04dee60fd4ff2e32e57c109cbc",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "finite-field-laws"
+          }
+        }
+      },
+      "base_fingerprint": "be29fa3c4251cd7e35fdf5f404e32380ef3f976a324b004c3ec507696aeb97d6",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "library-first-generality"
+          }
+        }
+      },
+      "base_fingerprint": "06e7632fe2a416cb495cc04cb299de8c6ce25afc39474a8f99a985c6ae4b0f5b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "no-deferred-defects"
+          }
+        }
+      },
+      "base_fingerprint": "4141d6e393760afcfe4f7821651e3a03321519874992f10a58e02768ab0f51a1",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "present-tense-prose"
+          }
+        }
+      },
+      "base_fingerprint": "7ad997e3d6be22a0f566ae8a387fff22b64054fdda34dc8fde2b1e3db7fd677f",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "semantic-test-assertions"
+          }
+        }
+      },
+      "base_fingerprint": "a2bb2106c0f8e08104b8de2763d90e08fcef5ff649a50a6fd315b1fc2a6b24d2",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "semantic-types"
+          }
+        }
+      },
+      "base_fingerprint": "aca859b363dd9f0e0416ebf0162d7f84aa13bea4cfef1d62ec9ada1eec6f7060",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "shared-test-contracts"
+          }
+        }
+      },
+      "base_fingerprint": "363de1f126b508deb4abcbb0b0ebf4991b00e8d72ecad4eef30c78b42926bf2b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "single-source-prose"
+          }
+        }
+      },
+      "base_fingerprint": "496e6f6d9e2a43f8a8378ccc88c63b11c2cf76d44e7cb91bda1be2ddc2d6dcc5",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "standards-vector-conformance"
+          }
+        }
+      },
+      "base_fingerprint": "4400431ec30a8c5a3dc47efcb9c7a853a77123fa6af7b64370a7ba3c51e3f413",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "test-tier-budgets"
+          }
+        }
+      },
+      "base_fingerprint": "a3efffd1015b2c74456fd7c8a87d90b3cb5f9ddd974dad969c6695c713da5b39",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "invariants",
+          "target": {
+            "kind": "keyed-array",
+            "target": "invariants",
+            "name": "unsafe-kernel-isolation"
+          }
+        }
+      },
+      "base_fingerprint": "6e0a7a0132bdf8d79dc211e4e1e29f3c379dffb4a04959245f025930566f0293",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "rules",
+          "target": {
+            "kind": "keyed-array",
+            "target": "rules",
+            "name": "coverage-preview"
+          }
+        }
+      },
+      "base_fingerprint": "c3c0a835f7fdff78d4c18d11df020497677d3b8431ce89c72f4f56a03c577c13",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "rules",
+          "target": {
+            "kind": "keyed-array",
+            "target": "rules",
+            "name": "hard-criteria-covered"
+          }
+        }
+      },
+      "base_fingerprint": "70a3cedb3b1b51586dc74915abd7bc8b518d786686ff3aa7e5ddba71cfd7342c",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "rules",
+          "target": {
+            "kind": "keyed-array",
+            "target": "rules",
+            "name": "jit-content-standards"
+          }
+        }
+      },
+      "base_fingerprint": "f9aa085dee94ae3ddfacbb2aa83b629e0f5a4496444645d6537d450dc8798820",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "rules",
+          "target": {
+            "kind": "keyed-array",
+            "target": "rules",
+            "name": "orphan-leaf"
+          }
+        }
+      },
+      "base_fingerprint": "13330f5168d2364fd9a6e53fe36ea0945c9464a27a30e30bcfa10c148691cddf",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "rules",
+          "target": {
+            "kind": "keyed-array",
+            "target": "rules",
+            "name": "strategic-consistency"
+          }
+        }
+      },
+      "base_fingerprint": "85be6fbd5b9d0fd0f8c3e18eff6719f30919391bf75083becb93c964e9473c12",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "templates",
+          "target": {
+            "kind": "keyed-array",
+            "target": "templates",
+            "name": "plan"
+          }
+        }
+      },
+      "base_fingerprint": "29571c189b2c779483a4032626b3cc46e0e753f3e4c21b089e7b27d1baf40e92",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/ai-review.sh",
+          "mode": "executable"
+        }
+      },
+      "base_fingerprint": "72a4bc175cd53d3fd6c878e56bcc3ce572d861f7d928de2f5d6872d611535341",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/breakdown-review-prompt.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "618268dec01810be64503ced35c031fa3b4fb28b38a6de6e7c60a29a3466954b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/code-review-prompt.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "14711de0e96ca9d4ed0b6680154f5f257c7cd5bb2447211304d9f13a0cad1330",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/doc-review-prompt.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "b00025433f4a6db31ef8a36b84aed024508e04d7b41fe9a21d91e9def0fab521",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/holistic-review-prompt.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "ee5cb159af7c9abea19a4ebc72b1d942a8c51a99b43ea5e2b3bceb330ff5259c",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "worktree",
+          "path": "contrib/gates/plan-review-prompt.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "663018ef18c5273081a37cf49b179f1a6a02fc0fc1d735f12da625e02c52cd8d",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "data",
+          "path": "reference/content-standards.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "618c91dbb2671c081e2da39065825536077e8fb0a2f4f0242d0439759f6c83b9",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "data",
+          "path": "reference/rules-and-gates.md",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "289cf5a2863f2a6c8606fc23844ca98f061676f22a580945a2adc3d84abdff68",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "asset",
+        "target": {
+          "root": "data",
+          "path": "schemas/jit-content-standards.json",
+          "mode": "regular"
+        }
+      },
+      "base_fingerprint": "58eeb09624deea4bcc2875d07749f083fbef24cb8ba405c2ef191a1c7d439644",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "managed-region",
+        "target": {
+          "root": "worktree",
+          "path": "AGENTS.md"
+        },
+        "region_id": "profile-sim-research-guidance"
+      },
+      "base_fingerprint": "f19491dc1442729946d1c768b7d9d885d5e0caf0c2010901d502451bb3907284",
+      "retain_if_unowned": false
+    }
+  ]
 }

@@ -160,8 +160,8 @@ source-of-truth = "registry-first"
 [documentation]
 development_root = "dev"
 archive_root = "dev/archive"
-managed_paths = ["dev/active", "dev/studies", "dev/sessions", "dev/plans", "dev/presentations", "dev/benchmarks", "dev/bench_results"]
-permanent_paths = ["docs", "dev/archive", "dev/campaigns", "dev/reference_data", "dev/research", "dev/scripts", "dev/simulation_results"]
+managed_paths = ["dev/active", "dev/studies", "dev/sessions", "dev/plans", "dev/presentations", "dev/benchmarks", "dev/bench_results", "dev/design", "dev/experiments"]
+permanent_paths = ["docs", "dev/archive", "dev/campaigns", "dev/reference_data", "dev/research", "dev/scripts", "dev/simulation_results", "dev/architecture", "dev/eval", "dev/vision", "dev/index.md", "dev/TESTING.md", "dev/authoring-conventions.md"]
 issue_scoped_areas = ["dev/active", "dev/studies", "dev/plans", "dev/presentations", "dev/bench_results"]
 
 [projection]

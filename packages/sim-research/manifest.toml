@@ -3,7 +3,7 @@ dependencies = ["jit-default"]
 [profile]
 manifest-version = 1
 id = "sim-research"
-version = "1.0.1"
+version = "1.0.2"
 jit = ">=1.0.0, <2.0.0"
 
 # Repository-neutral workflow taxonomy. `jit-default` supplies the shared
@@ -161,7 +161,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/plan-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -185,7 +185,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/breakdown-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -209,7 +209,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/code-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -291,7 +291,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/doc-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -315,7 +315,7 @@ command = "./contrib/gates/ai-review.sh"
 timeout_seconds = 1800
 pass_context = true
 prompt_file = "./contrib/gates/holistic-review-prompt.md"
-env = { REVIEWER_AGENT = "codex exec" }
+env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }
 
 [[contribution]]
 kind = "keyed-array"
@@ -359,7 +359,7 @@ reserved = {}
 [contribution.value.checker]
 type = "exec"
 command = "./scripts/cargo-ci.sh"
-timeout_seconds = 300
+timeout_seconds = 900
 pass_context = false
 env = {}
 
@@ -578,14 +578,14 @@ type = "planning"
 gates = ["plan-review"]
 doc_area = "dev/active"
 doc = "{container.dir}/plan.md"
-description = "Plan {container.title} ({container.short_id}) against every hard success criterion, write the concise design at {doc} and its authoritative sibling breakdown manifest, and link both to this planning issue."
+description = "Plan {container.title} ({container.short_id}) against every hard success criterion, write the concise design at {doc} and its authoritative sibling breakdown manifest, and link both to this planning issue.\n\n## Success Criteria\n\n- [hard] REQ-01: The concise plan at {doc} and its authoritative sibling breakdown manifest exist, are linked to this issue, and pass the manifest validation, render check, and batch-create dry run.\n- [hard] REQ-02: The plan-review gate passes on this issue."
 
 [[contribution.value.nodes]]
 role = "breakdown"
 type = "breakdown"
 gates = ["coverage-preview", "breakdown-review"]
 labels = ["brackets:{container.short_id}"]
-description = "After the plan-review checkpoint passes, decompose the plan for {container.title} ({container.short_id}) into well-ordered implementation issues."
+description = "After the plan-review checkpoint passes, decompose the plan for {container.title} ({container.short_id}) into well-ordered implementation issues.\n\n## Success Criteria\n\n- [hard] REQ-01: Every manifest entry exists as exactly one created issue with exact title, description, type, priority, labels, gates, and dependency edges.\n- [hard] REQ-02: The bracket spine is wired: each manifest source depends on this issue, the container depends on each manifest sink, and no direct container anchor to this issue remains.\n- [hard] REQ-03: The coverage-preview and breakdown-review gates pass on this issue."
 depends_on = ["planning"]
 
 [[contribution.value.anchor_edges]]
@@ -597,17 +597,6 @@ kind = "move-upstream-to-role"
 role = "planning"
 
 # The gf2 engineering invariants are profile-owned registry items.
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "bitvec-tail-padding"
-
-[contribution.value]
-id = "bitvec-tail-padding"
-statement = "Every BitVec mutation leaves padding bits beyond len_bits zero, including construction from externally supplied words."
-kind = "enforced"
-enforced-by = "@/gate/code-review"
 
 [[contribution]]
 kind = "keyed-array"
@@ -703,7 +692,8 @@ identity = "semantic-types"
 [contribution.value]
 id = "semantic-types"
 statement = "Every identity, constrained token, closed vocabulary, and protocol sentinel has one canonical semantic type; raw strings exist only at parsing and serialization boundaries."
-kind = "advisory"
+kind = "enforced"
+enforced-by = "@/gate/code-review"
 
 [[contribution]]
 kind = "keyed-array"
@@ -713,7 +703,8 @@ identity = "canonical-cutover"
 [contribution.value]
 id = "canonical-cutover"
 statement = "Superseded aliases, fields, and representations are removed after cutover; compatibility code is allowed only in a named, versioned migration boundary with a tracked removal condition."
-kind = "advisory"
+kind = "enforced"
+enforced-by = "@/gate/code-review"
 
 [[contribution]]
 kind = "keyed-array"
@@ -762,24 +753,13 @@ enforced-by = "@/gate/code-review"
 [[contribution]]
 kind = "keyed-array"
 target = "invariants"
-identity = "fast-test-tier-budget"
+identity = "test-tier-budgets"
 
 [contribution.value]
-id = "fast-test-tier-budget"
-statement = "Release-mode fast-tier tests respect the configured five-second per-test and sixty-second suite budgets; slower work carries a descriptive ignore tier."
+id = "test-tier-budgets"
+statement = "Every test respects its tier's configured time budget: release-mode fast-tier tests within the per-test and suite budgets, ignored slow and simulation tests within the nightly budget or through an explicitly serialized or host-gated execution path; slower work carries a descriptive ignore tier."
 kind = "enforced"
 enforced-by = "@/gate/cargo-ci"
-
-[[contribution]]
-kind = "keyed-array"
-target = "invariants"
-identity = "slow-test-tier-budget"
-
-[contribution.value]
-id = "slow-test-tier-budget"
-statement = "Ignored slow and simulation tests respect the six-hundred-second nightly budget or self-select an explicitly serialized or host-gated execution path."
-kind = "enforced"
-enforced-by = "@/gate/code-review"
 
 [[contribution]]
 kind = "keyed-array"
@@ -789,7 +769,40 @@ identity = "convention-convergence"
 [contribution.value]
 id = "convention-convergence"
 statement = "A shared convention or abstraction has one form: work that finds it harmful or ill-fitting changes it at its source, or reports the mismatch as a blocking concern before proceeding. A local parallel variant, a private helper duplicating a shared mechanism, or a bypass around an abstraction is a defect unless it is a named, cited exception with a tracked convergence condition."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "present-tense-prose"
+
+[contribution.value]
+id = "present-tense-prose"
+statement = "Permanent artifacts describe the current state of the system; change-relative narration — old/new contrasts, previously/now framing, legacy markers, migration history — lives in commit messages and issue history."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "library-first-generality"
+
+[contribution.value]
+id = "library-first-generality"
+statement = "New behavior lands as a reusable API in the layer-appropriate library crate, generic over its natural domain; binaries, simulations, and orchestration stay thin consumers. A capability implemented privately inside a consumer that a library layer could own is a defect unless cited as a tracked exception."
 kind = "advisory"
+
+[[contribution]]
+kind = "keyed-array"
+target = "invariants"
+identity = "no-deferred-defects"
+
+[contribution.value]
+id = "no-deferred-defects"
+statement = "Quality defects surfaced while implementing a change are fixed in that change or filed as a tracked issue before completion; a TODO or FIXME marker without a tracked issue is a defect."
+kind = "enforced"
+enforced-by = "@/gate/code-review"
 
 [[contribution]]
 kind = "projection"

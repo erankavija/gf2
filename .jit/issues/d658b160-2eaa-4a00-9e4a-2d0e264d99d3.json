@@ -10,10 +10,11 @@
   "gates_status": {},
   "id": "d658b160-2eaa-4a00-9e4a-2d0e264d99d3",
   "labels": [
-    "type:bug"
+    "type:bug",
+    "epic:quality-documentation-tech-debt"
   ],
   "priority": "high",
   "state": "ready",
   "title": "cargo-ci build lock survives its run through a daemonising child",
-  "updated_at": "2026-08-10T13:25:38.831233282Z"
+  "updated_at": "2026-08-10T22:08:48.332802864Z"
 }

@@ -1,12 +1,670 @@
 {
+  "record_version": 2,
   "id": "jit-default",
   "version": "1.0.0",
+  "compatible_jit": ">=1.0.0, <2.0.0",
   "origin": {
     "source": "directory",
     "location": "packages/jit-default"
   },
-  "package_hash": "f583b4b93a0ed1cfcf99861e2680fe6ad1fc80a0eca7ea0d53bd3a4900c284ff",
-  "target_hashes": {
-    ".jit/config.toml": "5fb62ca428bee5eb75ab12094afe7e1af390a80a5c45b84feb6acb84f0dc7138"
-  }
+  "package_hash": "5414306b4969d52c7046e77e157f97033ed81604084eeca57e83dd0aa4cc3a62",
+  "variables": {},
+  "claims": [
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "scalar",
+            "target": "documentation-development-root"
+          }
+        }
+      },
+      "base_fingerprint": "bcaddf9c58e2033e3cf4ddb99f1fe88538c3183de93f2f06b2d9845d47a74c4e",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "scalar",
+            "target": "documentation-archive-root"
+          }
+        }
+      },
+      "base_fingerprint": "af4620c6bc49cf3754520ff97e334cb6b4f5fb0f73e29d242782d0659ef967c2",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "scalar",
+            "target": "validation-strictness"
+          }
+        }
+      },
+      "base_fingerprint": "81cd00f921f82b6bb7ab6bd3235377f78ee60e958741697ff9705a140136f193",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "scalar",
+            "target": "validation-default-type"
+          }
+        }
+      },
+      "base_fingerprint": "28bbc1a84503c5706c2b6bd83f9c90910cfafba0661726fd129eeebe1ab19c9d",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "epic"
+          }
+        }
+      },
+      "base_fingerprint": "38e863d6b13cb7f7211745a2a0e5b10d8b1f93b88d674d85963eae29c831b0f6",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "milestone"
+          }
+        }
+      },
+      "base_fingerprint": "c5d16579c0c9dfa47db1f85a83350b8e951b4daacd715a1349f1b1c94d70de1c",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "story"
+          }
+        }
+      },
+      "base_fingerprint": "fa61eb14b49ee4bab1ae70eea608ee41928da76a4350f7b576dab2889f644e38",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "type-hierarchy-types",
+            "name": "task"
+          }
+        }
+      },
+      "base_fingerprint": "b5a0668f48ca8311f38b5ec6f6350ae18e63f3c0d304483261faf44acdd88695",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "label-associations",
+            "name": "epic"
+          }
+        }
+      },
+      "base_fingerprint": "55dde49e7d707fae70bfcdfcc296da3820e490c7e8b05e79a363be93e37dd628",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "label-associations",
+            "name": "milestone"
+          }
+        }
+      },
+      "base_fingerprint": "c7e4b3831337bd71b8e24d515fe3f710dd594917cdd18821ca7c8e9ee0bfb882",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "label-associations",
+            "name": "story"
+          }
+        }
+      },
+      "base_fingerprint": "c60c1836ddcdd775317f6851540d4835dfa8c44ce9e96307c55af48ceb2842dd",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "component"
+          }
+        }
+      },
+      "base_fingerprint": "a96a969357b62bfd509e231d9bb2b57f8719702024f7c7b1f6fc8588cc313941",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "enforces"
+          }
+        }
+      },
+      "base_fingerprint": "fe51c76c9940c98df525276d1d67f3426e4954e7f7b50a8f091b74b5cf51711b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "milestone"
+          }
+        }
+      },
+      "base_fingerprint": "06deb0bf3b508cdc779050f08382523bb7e9868cde345c4170084b0d53c9bff3",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "priority"
+          }
+        }
+      },
+      "base_fingerprint": "3285b6399cefe5cbea1bbe5c90dceab8df188873ccb180e2d0effbe6a00f2679",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "resolution"
+          }
+        }
+      },
+      "base_fingerprint": "09c96daf7f006ecd8a15a93852cc9891924fa57d4a6680cbfd2de0b3c333b44d",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "team"
+          }
+        }
+      },
+      "base_fingerprint": "1d042d8e3705d9b7002fc15431d744a05266e95ba00d1277c23ac865ca66fd47",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "namespaces",
+            "name": "type"
+          }
+        }
+      },
+      "base_fingerprint": "f7708599549ae35fc812866d6d81c4ae334596a4f2739d597c8b46980bad599e",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "decision"
+          }
+        }
+      },
+      "base_fingerprint": "f05aa9d9acc0e4b591034817f30dca3b1177b5c748132ac4fb5c5b233d97b7a6",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "gate"
+          }
+        }
+      },
+      "base_fingerprint": "a59e6303c076fe3975f3309fbca198ceb9f74f8ddfb7b63b0ab04167fd6fccec",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "invariant"
+          }
+        }
+      },
+      "base_fingerprint": "5b919d0960fd126387afd511f8798bfe8a790c6b741a8b46caf6e32c6bb8cd07",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "requirement"
+          }
+        }
+      },
+      "base_fingerprint": "637df1aec61cf714d672a5b2bf5b654b7a2d17d0cffa997def2e232114e8db9b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "risk"
+          }
+        }
+      },
+      "base_fingerprint": "c54c873db47456f8a820ede6d1b234d43a29b9961c31cf4081d97c028935e279",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "map-entry",
+            "target": "item-kinds",
+            "name": "rule"
+          }
+        }
+      },
+      "base_fingerprint": "e17fb6295c9ecffe9718ed98ae1cbc443f9fc85494abd35e7c7a00797fcc1c6f",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "strategic-types",
+            "value": "epic"
+          }
+        }
+      },
+      "base_fingerprint": "f4982fa0d7480b04815fd88580b7ff5c5530b70ed567a336ee6887974aaaaf72",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "strategic-types",
+            "value": "milestone"
+          }
+        }
+      },
+      "base_fingerprint": "36489d96c39ed94fb2ffb194600578fbe8d1c6a8072be9b352affa27b7295af8",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/active"
+          }
+        }
+      },
+      "base_fingerprint": "f31923354ae65a7d5d78896e50a239c858ddd713353e7d493afceee3149426d4",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/benchmarks"
+          }
+        }
+      },
+      "base_fingerprint": "4596a38b9b075c4a694239d7cc44336ce446a800a311806915178489a9555c5b",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/design"
+          }
+        }
+      },
+      "base_fingerprint": "e001c2c19486e98ca0c45bdb1bea2c3430a7a1785ed43026ce225fd2b64c2752",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/experiments"
+          }
+        }
+      },
+      "base_fingerprint": "0974b641ddb2c4baf24d04e000ac1afe374a0a93257f2954e7006d2869460520",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/plans"
+          }
+        }
+      },
+      "base_fingerprint": "0282c11648265151e225c28e662f994aae6209ab06e0994d184fa28cff80d213",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/presentations"
+          }
+        }
+      },
+      "base_fingerprint": "7b3e4eab94de4bdd8657b6cce52faa054a23404b5b75819579c6a4d119ca2c95",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/sessions"
+          }
+        }
+      },
+      "base_fingerprint": "86edc7168f833b90391a523b77a9ce15c37fe683e4b0dc2d96e151ae7f4266e1",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-managed-paths",
+            "value": "dev/studies"
+          }
+        }
+      },
+      "base_fingerprint": "779cea959579122e21442d8fd5bf130887a2be2ce5a39c4392b25358d9e43bcc",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/TESTING.md"
+          }
+        }
+      },
+      "base_fingerprint": "51bc26f5c0e95f9b4435156ed38f631e6ec97347df890ba3dfaa99a7945983d2",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/architecture"
+          }
+        }
+      },
+      "base_fingerprint": "a8387512370dda87f84994ad377d60ca8645ffa8ebbd32e4a90d1e3358244eb8",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/authoring-conventions.md"
+          }
+        }
+      },
+      "base_fingerprint": "f3e451e9a1ec63d8706b1bfa97addc949b8d2dbfafbc90e2b33d094e6e535dff",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/eval"
+          }
+        }
+      },
+      "base_fingerprint": "9a628bd1db71d7f56963251fa395decc17a866896553462eccd4e7c47d2f5705",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/index.md"
+          }
+        }
+      },
+      "base_fingerprint": "f987a224ac4801c2203e04373ae60ad912c4225b42a79412383f95ca478b40f1",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-permanent-paths",
+            "value": "dev/vision"
+          }
+        }
+      },
+      "base_fingerprint": "f888ebdb0cf0e6d6ca1764dfe4aad4b0ef77aec1d6fe032ffab1175f571d7157",
+      "retain_if_unowned": false
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-issue-scoped-areas",
+            "value": "dev/active"
+          }
+        }
+      },
+      "base_fingerprint": "623bfe41719fd6d1d961e2349ce819e0a9dc28442bce6bb2968b5caecee5d4ce",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-issue-scoped-areas",
+            "value": "dev/plans"
+          }
+        }
+      },
+      "base_fingerprint": "2ae261ecc751e220dde0bc413ef816de1a36d2438c9e64fa40cd8a25096fa394",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-issue-scoped-areas",
+            "value": "dev/presentations"
+          }
+        }
+      },
+      "base_fingerprint": "4a1ebdd30a593a26d957a9bf3af3b6871fda7f0b3f56f54f6369e21bb8eaf4f4",
+      "retain_if_unowned": true
+    },
+    {
+      "identity": {
+        "kind": "semantic",
+        "identity": {
+          "registry": "config",
+          "target": {
+            "kind": "set-string",
+            "target": "documentation-issue-scoped-areas",
+            "value": "dev/studies"
+          }
+        }
+      },
+      "base_fingerprint": "10bdcb04f5f4d0ed3bb08c00ec78386275b433e5e133e4030a52e019b03baa12",
+      "retain_if_unowned": true
+    }
+  ]
 }
