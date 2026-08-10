@@ -86,6 +86,12 @@ pub fn wilson_interval(successes: u64, trials: u64, z: f64) -> (f64, f64) {
 /// is outside the open interval `(0, 1)`. A zero `trials` count has no
 /// estimand and returns `(NaN, NaN)`.
 ///
+/// # Complexity
+///
+/// Uses two fixed 80-step bisections. Each beta-CDF evaluation performs at
+/// most 200 continued-fraction iterations, with $O(1)$ auxiliary space. It
+/// therefore does materially more numerical work than [`wilson_interval`].
+///
 /// # Examples
 ///
 /// ```
