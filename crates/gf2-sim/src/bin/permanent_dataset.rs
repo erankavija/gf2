@@ -1,4 +1,5 @@
-//! Inspect, checksum, and verify a published permanent-zero-fraction dataset.
+//! Inspect, checksum, conform, and verify a published permanent-zero-fraction
+//! dataset.
 //!
 //! This is the reader- and finalization-side tool for the dataset described in
 //! `dev/simulation_results/permanent-zero-fraction/README.md`. It exists so the
@@ -21,6 +22,7 @@
 //! $ permanent_dataset revision
 //! $ permanent_dataset emission-check <campaign-directory>
 //! $ permanent_dataset checksums <campaign-directory> > <campaign-directory>/checksums.sha256
+//! $ permanent_dataset conform <campaign-directory>
 //! $ permanent_dataset verify <campaign-directory>
 //! ```
 //!
@@ -28,6 +30,7 @@
 //! `git rev-parse HEAD` exactly when this binary is current with the checkout.
 //! `emission-check` runs the guard a campaign driver must pass before writing.
 //! `checksums` renders the integrity file for a finished dataset on stdout.
+//! `conform` checks the complete schema and all cross-document aggregates.
 //! `verify` re-checks a dataset against that file and its recorded source.
 //!
 //! Exit status: `0` for success or a verified dataset, `1` for a refusal, a
@@ -41,10 +44,10 @@ use std::process::ExitCode;
 use gf2_sim::permanent_campaign::provenance::{
     approve_emission, build_revision, generate_integrity_file, verify_dataset, DatasetVerdict,
 };
-use gf2_sim::permanent_campaign::schema::read_manifest;
+use gf2_sim::permanent_campaign::schema::{conform_dataset, read_manifest};
 
-const USAGE: &str =
-    "usage: permanent_dataset <revision | emission-check | checksums | verify> [campaign-directory]";
+const USAGE: &str = "usage: permanent_dataset <revision | emission-check | checksums | conform | \
+                    verify> [campaign-directory]";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -56,6 +59,7 @@ fn main() -> ExitCode {
         }
         ["emission-check", root] => emission_check(Path::new(root)),
         ["checksums", root] => checksums(Path::new(root)),
+        ["conform", root] => conform(Path::new(root)),
         ["verify", root] => verify(Path::new(root)),
         _ => {
             eprintln!("{USAGE}");
@@ -88,6 +92,16 @@ fn checksums(root: &Path) -> ExitCode {
     }
 }
 
+fn conform(root: &Path) -> ExitCode {
+    match conform_dataset(root) {
+        Ok(_) => {
+            println!("conforms");
+            ExitCode::SUCCESS
+        }
+        Err(error) => report(&error),
+    }
+}
+
 fn verify(root: &Path) -> ExitCode {
     match verify_dataset(root) {
         Ok(DatasetVerdict::Verified) => {
@@ -109,4 +123,14 @@ fn verify(root: &Path) -> ExitCode {
 fn report(error: &dyn Error) -> ExitCode {
     eprintln!("{error}");
     ExitCode::FAILURE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::USAGE;
+
+    #[test]
+    fn usage_lists_canonical_conformance() {
+        assert!(USAGE.contains("conform"));
+    }
 }

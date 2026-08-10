@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" data-campaign-id="valid-completed-and-halted" data-manifest-sha256="4a104a9dc77187c2108861a2c117f2cbcd1166f4dd43e20e657688f2081114b5" data-q="3">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" data-campaign-id="valid-completed-and-halted" data-manifest-sha256="c0592229e96dceea41b0ae90d09e279a98564d444bd9a82370f411716c81d588" data-q="3">
   <title>campaign_id=valid-completed-and-halted; q=3; 95% Wilson error bars</title>
   <rect width="100%" height="100%" fill="white"/>
   <line x1="90" y1="435" x2="760" y2="435" stroke="black"/>
