@@ -93,11 +93,15 @@ pub enum MeasurementPurpose {
     GrayUpdateWarmup,
     /// Timed dependency-chained Gray-update micro-measurements.
     GrayUpdateTimed,
+    /// Untimed horizontal-product micro-measurements.
+    HorizontalProductWarmup,
+    /// Timed horizontal-product micro-measurements.
+    HorizontalProductTimed,
 }
 
 impl MeasurementPurpose {
     /// Complete, canonical purpose set.
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 11] = [
         Self::Equivalence,
         Self::GridProbe,
         Self::GridWarmup,
@@ -107,6 +111,8 @@ impl MeasurementPurpose {
         Self::Shuffle,
         Self::GrayUpdateWarmup,
         Self::GrayUpdateTimed,
+        Self::HorizontalProductWarmup,
+        Self::HorizontalProductTimed,
     ];
 
     /// Fixed tag encoded in the high field of the stream word.
@@ -124,6 +130,8 @@ impl MeasurementPurpose {
             Self::Shuffle => 7,
             Self::GrayUpdateWarmup => 8,
             Self::GrayUpdateTimed => 9,
+            Self::HorizontalProductWarmup => 10,
+            Self::HorizontalProductTimed => 11,
         }
     }
 
@@ -137,6 +145,8 @@ impl MeasurementPurpose {
             Self::GridTimed => "grid_timed",
             Self::GrayUpdateWarmup => "gray_update_warmup",
             Self::GrayUpdateTimed => "gray_update_timed",
+            Self::HorizontalProductWarmup => "horizontal_product_warmup",
+            Self::HorizontalProductTimed => "horizontal_product_timed",
             Self::MachineWarmup => "machine_warmup",
             Self::Sustained => "sustained",
             Self::Shuffle => "shuffle",
@@ -420,6 +430,21 @@ mod tests {
         assert_eq!(MeasurementPurpose::MachineWarmup.tag(), 5);
         assert_eq!(MeasurementPurpose::Sustained.tag(), 6);
         assert_eq!(MeasurementPurpose::Shuffle.tag(), 7);
+    }
+
+    #[test]
+    fn horizontal_product_purposes_append_without_renumbering_existing_streams() {
+        assert_eq!(MeasurementPurpose::GrayUpdateWarmup.tag(), 8);
+        assert_eq!(MeasurementPurpose::GrayUpdateTimed.tag(), 9);
+        assert_eq!(MeasurementPurpose::HorizontalProductWarmup.tag(), 10);
+        assert_eq!(MeasurementPurpose::HorizontalProductTimed.tag(), 11);
+        assert_eq!(
+            MeasurementPurpose::ALL[9..],
+            [
+                MeasurementPurpose::HorizontalProductWarmup,
+                MeasurementPurpose::HorizontalProductTimed,
+            ]
+        );
     }
 
     #[test]

@@ -50,6 +50,39 @@ extern "C" {
         stream: *mut c_void,
     ) -> c_int;
 
+    /// Enqueue one branch-specific horizontal-product micro-kernel.
+    ///
+    /// `byte_values` holds `sample_count * n` canonical field values for the
+    /// byte and lookup circuits. `plane_values` holds two Bipedal3 planes or
+    /// three F_5/F_7 planes per sample for their packed circuits. Exactly one
+    /// pointer is non-null according to `circuit`; `out` has one entry per
+    /// sample and remains live through stream synchronization.
+    fn launch_horizontal_product_micro(
+        byte_values: *const u8,
+        plane_values: *const u64,
+        circuit: c_int,
+        branch: c_int,
+        n: c_int,
+        sample_count: c_int,
+        out: *mut u64,
+        stream: *mut c_void,
+    ) -> c_int;
+
+    /// Enqueue the compiler-barrier baseline paired to one horizontal-product
+    /// circuit and branch. `iterations` supplies the real early-exit length for
+    /// byte-product samples; the other circuits encode their fixed branch
+    /// geometry. `out` has one entry per sample and remains live through the
+    /// stream synchronization.
+    fn launch_horizontal_product_compiler_barrier_baseline(
+        circuit: c_int,
+        branch: c_int,
+        n: c_int,
+        sample_count: c_int,
+        iterations: *const u8,
+        out: *mut u64,
+        stream: *mut c_void,
+    ) -> c_int;
+
     /// Compute the permanent of an n×n matrix over GF(3) on the GPU (single matrix).
     ///
     /// Entry point in `hip/permanent/permanent_bipedal3.hip`. Delegates to
@@ -1301,6 +1334,349 @@ pub fn measure_gray_update_kernel(
     })
 }
 
+/// Representation-specific horizontal-product circuit selected by the
+/// measurement harness.
+///
+/// This is intentionally a closed vocabulary rather than a raw integer FFI
+/// selector: every member names a landed arithmetic path, and its field order
+/// and branch observability stay coupled to the device implementation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum HorizontalProductCircuit {
+    /// F_3 Bipedal3 six-stage halving control.
+    Bipedal3Halving,
+    /// F_3 active zero-mask followed by sign-popcount parity.
+    Bipedal3ZeroMaskSignPopcount,
+    /// F_5 direct-byte product with its native early zero exit.
+    F5Byte,
+    /// F_5 three-plane active zero-mask followed by C4 log-popcount reduction.
+    F5ThreePlane,
+    /// F_7 native lookup-table product with its early zero exit.
+    F7Lookup,
+    /// F_7 three-plane active zero-mask followed by C6 log-popcount reduction.
+    F7ThreePlane,
+}
+
+impl HorizontalProductCircuit {
+    /// Stable circuit name recorded in measurement notes.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Bipedal3Halving => "bipedal3-halving",
+            Self::Bipedal3ZeroMaskSignPopcount => "bipedal3-zero-mask-sign-popcount",
+            Self::F5Byte => "f5-byte",
+            Self::F5ThreePlane => "f5-three-plane-c4",
+            Self::F7Lookup => "f7-lookup",
+            Self::F7ThreePlane => "f7-three-plane-c6",
+        }
+    }
+
+    /// Field order accepted by this circuit.
+    #[must_use]
+    pub const fn field_order(self) -> u64 {
+        match self {
+            Self::Bipedal3Halving | Self::Bipedal3ZeroMaskSignPopcount => 3,
+            Self::F5Byte | Self::F5ThreePlane => 5,
+            Self::F7Lookup | Self::F7ThreePlane => 7,
+        }
+    }
+
+    /// Whether the shipped circuit exposes distinct zero-fast and nonzero-slow
+    /// execution paths. The halving control only discovers zero after its full
+    /// reduction and must not be assigned synthetic branch timings.
+    #[must_use]
+    pub const fn has_observable_branches(self) -> bool {
+        !matches!(self, Self::Bipedal3Halving)
+    }
+
+    const fn raw(self) -> c_int {
+        match self {
+            Self::Bipedal3Halving => 1,
+            Self::Bipedal3ZeroMaskSignPopcount => 2,
+            Self::F5Byte => 3,
+            Self::F5ThreePlane => 4,
+            Self::F7Lookup => 5,
+            Self::F7ThreePlane => 6,
+        }
+    }
+}
+
+/// Which product branch an event-timed kernel executes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum HorizontalProductBranch {
+    /// A sampled vector with at least one zero row sum.
+    ZeroFast,
+    /// A sampled vector whose active row sums are all nonzero.
+    NonzeroSlow,
+}
+
+impl HorizontalProductBranch {
+    const fn raw(self) -> c_int {
+        match self {
+            Self::ZeroFast => 0,
+            Self::NonzeroSlow => 1,
+        }
+    }
+}
+
+/// Paired event spans and output values from one horizontal-product branch.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HorizontalProductTimings {
+    /// Device-event duration of the selected branch's product circuit.
+    pub product: Duration,
+    /// Device-event duration of the selected branch's same-geometry baseline.
+    pub compiler_barrier_baseline: Duration,
+    /// One product result per input row-sum vector, in input order.
+    pub values: Vec<u64>,
+}
+
+/// Measure one selected horizontal-product branch on the HIP device clock.
+///
+/// `values` contains consecutive row-sum vectors, each with `n` canonical
+/// values in the circuit's field. Its inputs are already conditioned by the
+/// caller on `branch`; the wrapper does not count, add, remove, or resample a
+/// vector. This keeps frequency measurement outside timing selection. The
+/// product event starts after representation encoding and upload, and output
+/// download occurs after both paired event stops.
+///
+/// The F_7 lookup circuit reads the established permanent `d_MUL_LUT`; callers
+/// must initialise that table through the existing permanent-LUT boundary
+/// before invoking this function.
+///
+/// # Panics
+///
+/// Panics if `n` is outside `1..=63`, `values` is empty or not a whole number
+/// of row-sum vectors, a value is outside the circuit's field, or a branch is
+/// requested from a circuit without distinct observable branches.
+///
+/// # Errors
+///
+/// Returns HIP errors from stream creation, allocation, upload, launch,
+/// synchronization, output download, or event timing. It never converts a host
+/// wall-clock duration into a device duration.
+pub fn measure_horizontal_product_kernel(
+    circuit: HorizontalProductCircuit,
+    values: &[u8],
+    n: usize,
+    branch: HorizontalProductBranch,
+) -> Result<HorizontalProductTimings, HipError> {
+    assert!(
+        circuit.has_observable_branches(),
+        "measure_horizontal_product_kernel: {} has no separated branches",
+        circuit.name()
+    );
+    assert!(
+        (1..=63).contains(&n),
+        "measure_horizontal_product_kernel: n must be in 1..=63, got {n}"
+    );
+    assert!(
+        !values.is_empty() && values.len().is_multiple_of(n),
+        "measure_horizontal_product_kernel: values must contain a nonempty whole number of n-lane samples"
+    );
+    assert!(
+        values
+            .iter()
+            .all(|&value| u64::from(value) < circuit.field_order()),
+        "measure_horizontal_product_kernel: input contains a value outside F_{}",
+        circuit.field_order()
+    );
+    let sample_count = values.len() / n;
+    assert!(
+        sample_count <= c_int::MAX as usize,
+        "measure_horizontal_product_kernel: sample count exceeds c_int"
+    );
+    let expected_zero = matches!(branch, HorizontalProductBranch::ZeroFast);
+    assert!(
+        values
+            .chunks_exact(n)
+            .all(|sample| sample.contains(&0) == expected_zero),
+        "measure_horizontal_product_kernel: every sample must belong to the requested branch"
+    );
+
+    let stream = HipStream::new()?;
+    let device_id = stream.device_id();
+    let output = DeviceBuffer::<u64>::new(sample_count, device_id)?;
+    let baseline_output = DeviceBuffer::<u64>::new(sample_count, device_id)?;
+    let baseline_iterations = horizontal_product_baseline_iterations(circuit, values, n, branch);
+    let mut iteration_staging = PinnedHostBuffer::<u8>::new(sample_count, device_id)?;
+    iteration_staging
+        .as_mut_slice()
+        .copy_from_slice(&baseline_iterations);
+    let iteration_input = DeviceBuffer::<u8>::new(sample_count, device_id)?;
+    iteration_input.copy_from_pinned_async(&iteration_staging, &stream)?;
+
+    let (byte_input, plane_input) = match circuit {
+        HorizontalProductCircuit::F5Byte | HorizontalProductCircuit::F7Lookup => {
+            let mut staging = PinnedHostBuffer::<u8>::new(values.len(), device_id)?;
+            staging.as_mut_slice().copy_from_slice(values);
+            let input = DeviceBuffer::<u8>::new(values.len(), device_id)?;
+            input.copy_from_pinned_async(&staging, &stream)?;
+            (Some((input, staging)), None)
+        }
+        HorizontalProductCircuit::Bipedal3Halving
+        | HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount
+        | HorizontalProductCircuit::F5ThreePlane
+        | HorizontalProductCircuit::F7ThreePlane => {
+            let planes = encode_horizontal_product_planes(circuit, values, n);
+            let mut staging = PinnedHostBuffer::<u64>::new(planes.len(), device_id)?;
+            staging.as_mut_slice().copy_from_slice(&planes);
+            let input = DeviceBuffer::<u64>::new(planes.len(), device_id)?;
+            input.copy_from_pinned_async(&staging, &stream)?;
+            (None, Some((input, staging)))
+        }
+    };
+
+    let product = HipEventSpan::new_on_device(device_id)?;
+    product.record_start(&stream)?;
+    // SAFETY: exactly one input allocation has the representation and length
+    // selected by `circuit`; all canonical values, dimensions, and sample count
+    // were validated above. The live stream and input/output allocations outlast
+    // both enqueued kernels through the synchronization below.
+    let code = unsafe {
+        launch_horizontal_product_micro(
+            byte_input
+                .as_ref()
+                .map_or(std::ptr::null(), |(input, _)| input.as_ptr() as *const u8),
+            plane_input
+                .as_ref()
+                .map_or(std::ptr::null(), |(input, _)| input.as_ptr() as *const u64),
+            circuit.raw(),
+            branch.raw(),
+            n as c_int,
+            sample_count as c_int,
+            output.as_mut_ptr() as *mut u64,
+            stream.as_raw(),
+        )
+    };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "launch_horizontal_product_micro",
+        });
+    }
+    product.record_stop(&stream)?;
+
+    let compiler_barrier_baseline = HipEventSpan::new_on_device(device_id)?;
+    compiler_barrier_baseline.record_start(&stream)?;
+    // SAFETY: the circuit, branch, dimensions, and sample count were checked
+    // above. `iteration_input` supplies one live device byte per sample and
+    // `baseline_output` supplies one live output word per sample; both and the
+    // stream remain live through synchronization below.
+    let code = unsafe {
+        launch_horizontal_product_compiler_barrier_baseline(
+            circuit.raw(),
+            branch.raw(),
+            n as c_int,
+            sample_count as c_int,
+            iteration_input.as_ptr() as *const u8,
+            baseline_output.as_mut_ptr() as *mut u64,
+            stream.as_raw(),
+        )
+    };
+    if code != 0 {
+        return Err(HipError::Hip {
+            code,
+            context: "launch_horizontal_product_compiler_barrier_baseline",
+        });
+    }
+    compiler_barrier_baseline.record_stop(&stream)?;
+    let mut output_staging = PinnedHostBuffer::<u64>::new(sample_count, device_id)?;
+    output.copy_to_pinned_async(&mut output_staging, &stream)?;
+    stream.synchronize()?;
+    Ok(HorizontalProductTimings {
+        product: product.elapsed()?,
+        compiler_barrier_baseline: compiler_barrier_baseline.elapsed()?,
+        values: output_staging.as_slice().to_vec(),
+    })
+}
+
+fn encode_horizontal_product_planes(
+    circuit: HorizontalProductCircuit,
+    values: &[u8],
+    n: usize,
+) -> Vec<u64> {
+    let planes_per_sample = match circuit {
+        HorizontalProductCircuit::Bipedal3Halving
+        | HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount => 2,
+        HorizontalProductCircuit::F5ThreePlane | HorizontalProductCircuit::F7ThreePlane => 3,
+        HorizontalProductCircuit::F5Byte | HorizontalProductCircuit::F7Lookup => {
+            unreachable!("byte circuits do not encode planes")
+        }
+    };
+    let mut planes = Vec::with_capacity(values.len() / n * planes_per_sample);
+    for sample in values.chunks_exact(n) {
+        let mut encoded = [0_u64; 3];
+        for (lane, &value) in sample.iter().enumerate() {
+            let mask = 1_u64 << lane;
+            match circuit {
+                HorizontalProductCircuit::Bipedal3Halving
+                | HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount => match value {
+                    0 => {}
+                    1 => encoded[0] |= mask,
+                    2 => {
+                        encoded[0] |= mask;
+                        encoded[1] |= mask;
+                    }
+                    _ => unreachable!("input validation established canonical F_3 values"),
+                },
+                HorizontalProductCircuit::F5ThreePlane | HorizontalProductCircuit::F7ThreePlane => {
+                    if value & 1 != 0 {
+                        encoded[0] |= mask;
+                    }
+                    if value & 2 != 0 {
+                        encoded[1] |= mask;
+                    }
+                    if value & 4 != 0 {
+                        encoded[2] |= mask;
+                    }
+                }
+                HorizontalProductCircuit::F5Byte | HorizontalProductCircuit::F7Lookup => {
+                    unreachable!("byte circuits do not encode planes")
+                }
+            }
+        }
+        planes.extend_from_slice(&encoded[..planes_per_sample]);
+    }
+    planes
+}
+
+fn horizontal_product_baseline_iterations(
+    circuit: HorizontalProductCircuit,
+    values: &[u8],
+    n: usize,
+    branch: HorizontalProductBranch,
+) -> Vec<u8> {
+    values
+        .chunks_exact(n)
+        .map(|sample| match circuit {
+            HorizontalProductCircuit::F5Byte | HorizontalProductCircuit::F7Lookup => match branch {
+                HorizontalProductBranch::ZeroFast => sample
+                    .iter()
+                    .position(|&value| value == 0)
+                    .expect("branch validation established a zero")
+                    .checked_add(1)
+                    .expect("n is bounded")
+                    as u8,
+                HorizontalProductBranch::NonzeroSlow => n as u8,
+            },
+            HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount => match branch {
+                HorizontalProductBranch::ZeroFast => 1,
+                HorizontalProductBranch::NonzeroSlow => 2,
+            },
+            HorizontalProductCircuit::F5ThreePlane => match branch {
+                HorizontalProductBranch::ZeroFast => 1,
+                HorizontalProductBranch::NonzeroSlow => 4,
+            },
+            HorizontalProductCircuit::F7ThreePlane => match branch {
+                HorizontalProductBranch::ZeroFast => 1,
+                HorizontalProductBranch::NonzeroSlow => 6,
+            },
+            HorizontalProductCircuit::Bipedal3Halving => {
+                unreachable!("the halving circuit has no separated branches")
+            }
+        })
+        .collect()
+}
+
 fn operand_len(operand: &GrayUpdateOperand<'_>) -> usize {
     match operand {
         GrayUpdateOperand::Bipedal3 { n, .. } => *n,
@@ -1353,6 +1729,128 @@ mod gray_update_micro_tests {
     #[should_panic(expected = "inactive high lanes")]
     fn bipedal3_operand_rejects_bits_outside_its_active_domain() {
         super::validate_bipedal3_active_lanes(1 << 3, 0, 3);
+    }
+}
+
+#[cfg(test)]
+mod horizontal_product_micro_tests {
+    use super::{HorizontalProductBranch, HorizontalProductCircuit};
+
+    #[test]
+    fn circuit_vocabulary_keeps_field_and_branch_contracts_explicit() {
+        assert_eq!(HorizontalProductCircuit::Bipedal3Halving.field_order(), 3);
+        assert!(!HorizontalProductCircuit::Bipedal3Halving.has_observable_branches());
+        assert_eq!(
+            HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount.field_order(),
+            3
+        );
+        assert!(HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount.has_observable_branches());
+        assert_eq!(HorizontalProductCircuit::F5Byte.field_order(), 5);
+        assert!(HorizontalProductCircuit::F5ThreePlane.has_observable_branches());
+        assert_eq!(HorizontalProductCircuit::F7Lookup.field_order(), 7);
+        assert!(HorizontalProductCircuit::F7ThreePlane.has_observable_branches());
+        assert_ne!(
+            HorizontalProductBranch::ZeroFast,
+            HorizontalProductBranch::NonzeroSlow
+        );
+    }
+
+    #[test]
+    fn plane_encoding_preserves_the_canonical_lane_values() {
+        assert_eq!(
+            super::encode_horizontal_product_planes(
+                HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount,
+                &[0, 1, 2],
+                3,
+            ),
+            vec![0b110, 0b100]
+        );
+        assert_eq!(
+            super::encode_horizontal_product_planes(
+                HorizontalProductCircuit::F5ThreePlane,
+                &[0, 1, 2, 3, 4],
+                5,
+            ),
+            vec![0b01010, 0b01100, 0b10000]
+        );
+        assert_eq!(
+            super::encode_horizontal_product_planes(
+                HorizontalProductCircuit::F7ThreePlane,
+                &[1, 3, 2, 6, 4, 5],
+                6,
+            ),
+            vec![0b100011, 0b001110, 0b111000]
+        );
+    }
+
+    #[test]
+    fn baseline_geometry_follows_the_actual_circuit_and_branch() {
+        use HorizontalProductBranch::{NonzeroSlow, ZeroFast};
+
+        assert_eq!(
+            super::horizontal_product_baseline_iterations(
+                HorizontalProductCircuit::F5Byte,
+                &[1, 0, 4],
+                3,
+                ZeroFast,
+            ),
+            vec![2],
+            "the byte control reaches its first zero after two multiplies"
+        );
+        assert_eq!(
+            super::horizontal_product_baseline_iterations(
+                HorizontalProductCircuit::F7Lookup,
+                &[1, 3, 6],
+                3,
+                NonzeroSlow,
+            ),
+            vec![3],
+            "the lookup control runs all active lanes on its nonzero branch"
+        );
+        assert_eq!(
+            super::horizontal_product_baseline_iterations(
+                HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount,
+                &[1, 2, 0],
+                3,
+                ZeroFast,
+            ),
+            vec![1]
+        );
+        assert_eq!(
+            super::horizontal_product_baseline_iterations(
+                HorizontalProductCircuit::F5ThreePlane,
+                &[1, 2, 4],
+                3,
+                NonzeroSlow,
+            ),
+            vec![4],
+            "one zero-mask plus three C4 exponent population counts"
+        );
+        assert_eq!(
+            super::horizontal_product_baseline_iterations(
+                HorizontalProductCircuit::F7ThreePlane,
+                &[1, 3, 2],
+                3,
+                NonzeroSlow,
+            ),
+            vec![6],
+            "one zero-mask plus five C6 exponent population counts"
+        );
+    }
+
+    #[test]
+    #[ignore = "sim: requires a HIP device for horizontal-product event timing"]
+    fn f3_zero_mask_product_returns_paired_device_event_spans() {
+        let timings = super::measure_horizontal_product_kernel(
+            HorizontalProductCircuit::Bipedal3ZeroMaskSignPopcount,
+            &[1, 2, 0],
+            3,
+            HorizontalProductBranch::ZeroFast,
+        )
+        .expect("event-timed F_3 zero-mask product");
+        assert!(timings.product.as_nanos() > 0);
+        assert!(timings.compiler_barrier_baseline.as_nanos() > 0);
+        assert_eq!(timings.values, vec![0]);
     }
 }
 

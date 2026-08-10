@@ -25,6 +25,7 @@ pub mod backend;
 pub mod env;
 pub mod equivalence;
 pub mod gray_update;
+pub mod horizontal_product;
 pub mod prior;
 pub mod protocol;
 pub mod sampler;
