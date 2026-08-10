@@ -10,6 +10,11 @@ description = "Standalone wave-parallel permanent HIP research prototype"
 name = "permanent_wave_gpu"
 path = "src/lib.rs"
 
+[[bin]]
+name = "wave-gf3-device-evidence"
+path = "src/bin/wave_gf3_device_evidence.rs"
+required-features = ["hip", "fixture-oracle"]
+
 [features]
 default = ["fixture-oracle"]
 # The deterministic fixture corpus deliberately reuses the feasibility

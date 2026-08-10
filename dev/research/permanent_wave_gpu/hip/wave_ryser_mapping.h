@@ -20,6 +20,12 @@ struct GrayInterval {
   std::uint64_t end;
 };
 
+struct GrayTransition {
+  std::uint64_t subset;
+  unsigned flipped_column;
+  bool added;
+};
+
 __host__ __device__ __forceinline__ unsigned active_lanes_for_order(int n) {
   return n < 5 ? (1U << n) : kWaveLanes;
 }
@@ -35,6 +41,13 @@ __host__ __device__ __forceinline__ GrayInterval balanced_interval(
 
 __host__ __device__ __forceinline__ std::uint64_t gray_subset(std::uint64_t index) {
   return index ^ (index >> 1);
+}
+
+/// Canonical transition at a nonzero sequential Gray index.
+__host__ __device__ __forceinline__ GrayTransition gray_transition(std::uint64_t index) {
+  const auto subset = gray_subset(index);
+  const auto flipped_column = static_cast<unsigned>(__builtin_ctzll(index));
+  return {subset, flipped_column, ((subset >> flipped_column) & 1) != 0};
 }
 
 template <unsigned Modulus>

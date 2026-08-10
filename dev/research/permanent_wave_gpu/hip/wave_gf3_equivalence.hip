@@ -8,17 +8,18 @@
 // lane order, so repeated launches have no schedule-dependent reduction order.
 //
 // Register/shared-memory accounting hypothesis (before compiler allocation):
-// each lane keeps five live u64 state words -- (magnitude, sign), Gray cursor,
-// interval end, and partial sum -- i.e. a 10 x 32-bit-register lower-bound
-// model. The only dynamic shared allocation is the read-only column table:
-// two u64 words per column = 16n bytes (384 B at n=24, 512 B at n=32). The
-// compiler's actual gfx1030 resource report is committed in
-// `wave_gf3_resource_usage.log` beside this source after the checked build.
+// each lane owns two u64 packed words plus u64 Gray cursor/end bounds and one
+// u32 partial sum: a 9 x 32-bit-register lower-bound model. The subset and
+// product value are loop temporaries, not part of that stable state model; the
+// compiler's actual resource report is authoritative. The only dynamic shared
+// allocation is the read-only column table: two u64 words per column = 16n
+// bytes (384 B at n=24, 512 B at n=32). The compiler's gfx1030 report is
+// committed in `wave_gf3_resource_usage.log` beside this source.
 //
 // The device executable is intentionally a self-checking conformance binary,
 // not a benchmark. It checks independent permutation references for small
-// structural matrices, both Gray transition directions via its n=4 case,
-// multi-index lane intervals at n=6, and the n=63 active-mask product probe.
+// structural matrices, both Gray transition directions via an explicit device
+// probe, multi-index lane intervals at n=6, and the n=63 mapping/mask probes.
 
 #include <hip/hip_runtime.h>
 
@@ -27,16 +28,35 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <cstdio>
+#include <iostream>
+#include <map>
 #include <numeric>
+#include <string>
 #include <vector>
 
 namespace {
 
 struct Case {
-  const char* name;
+  std::string id;
   int n;
   std::vector<unsigned char> matrix;
+  unsigned expected = 0;
+  bool uses_streamed_expected = false;
+};
+
+struct IntervalObservation {
+  std::uint64_t start;
+  std::uint64_t end;
+  std::uint64_t subset;
+};
+
+struct DirectionObservation {
+  std::uint64_t index;
+  std::uint64_t subset;
+  unsigned flipped_column;
+  unsigned added;
 };
 
 __device__ __forceinline__ void add3(std::uint64_t& magnitude,
@@ -137,9 +157,10 @@ __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
   const std::uint64_t lane_count = blockDim.x;
   const auto interval = gf2_wave_mapping::balanced_interval(total_indices, lane, lane_count);
 
-  // `cursor`, `interval_end`, and `partial` are the three scalar u64 live
-  // state words. Together with the packed (magnitude, sign) pair they are the
-  // documented five-word per-lane mapping budget.
+  // The stable state is the packed (magnitude, sign) u64 pair, u64 cursor/end,
+  // and u32 partial: nine 32-bit register units before compiler allocation.
+  // `subset` and `term` below are loop temporaries; the resource report, not
+  // this lower bound, determines actual allocation.
   std::uint64_t cursor = interval.start;
   const std::uint64_t interval_end = interval.end;
   std::uint64_t magnitude = 0;
@@ -157,14 +178,14 @@ __global__ void wave_gf3_kernel(const unsigned char* __restrict__ matrices,
                 ? fp3_sub(partial, term)
                 : gf2_wave_mapping::add_scalar<3>(partial, term);
   for (++cursor; cursor < interval_end; ++cursor) {
-    const unsigned flipped_column = __builtin_ctzll(cursor);
-    subset = gf2_wave_mapping::gray_subset(cursor);
-    if (((subset >> flipped_column) & 1) != 0) {
-      add3(magnitude, sign, column_magnitude[flipped_column],
-           column_sign[flipped_column]);
+    const auto transition = gf2_wave_mapping::gray_transition(cursor);
+    subset = transition.subset;
+    if (transition.added) {
+      add3(magnitude, sign, column_magnitude[transition.flipped_column],
+           column_sign[transition.flipped_column]);
     } else {
-      sub3(magnitude, sign, column_magnitude[flipped_column],
-           column_sign[flipped_column]);
+      sub3(magnitude, sign, column_magnitude[transition.flipped_column],
+           column_sign[transition.flipped_column]);
     }
     term = fold_product(magnitude, sign, n);
     partial = (__popcll(subset) & 1) != 0
@@ -195,6 +216,34 @@ __global__ void active_mask_product_probe(unsigned* results) {
                                             kPartialWordOrder);
   results[0] = all_active_ones;
   results[1] = active_zero;
+}
+
+// Return every lane's full n=63 interval observation. The host validates the
+// returned sequence exactly rather than inferring coverage from the mapping
+// formula on its own.
+__global__ void n63_mapping_probe(IntervalObservation* observations) {
+  if (blockIdx.x != 0 || threadIdx.x >= gf2_wave_mapping::kWaveLanes) {
+    return;
+  }
+  constexpr int kOrder = 63;
+  constexpr std::uint64_t kTotal = UINT64_C(1) << kOrder;
+  const auto interval = gf2_wave_mapping::balanced_interval(
+      kTotal, threadIdx.x, gf2_wave_mapping::kWaveLanes);
+  observations[threadIdx.x] = {interval.start, interval.end,
+                               gf2_wave_mapping::gray_subset(interval.start)};
+}
+
+// Observe both canonical Gray directions at the tractable n=4 fixture
+// boundary indices: index 8 enters column 3 and index 15 removes column 0.
+__global__ void n4_direction_probe(DirectionObservation* observations) {
+  if (blockIdx.x != 0 || threadIdx.x >= 2) {
+    return;
+  }
+  const std::uint64_t index = threadIdx.x == 0 ? UINT64_C(8) : UINT64_C(15);
+  const auto transition = gf2_wave_mapping::gray_transition(index);
+  observations[threadIdx.x] = {index, transition.subset,
+                               transition.flipped_column,
+                               static_cast<unsigned>(transition.added)};
 }
 
 bool check(hipError_t status, const char* operation) {
@@ -234,7 +283,8 @@ bool run_batch(const std::vector<Case>& cases) {
   std::vector<unsigned> expected;
   for (const auto& test_case : cases) {
     host_matrices.insert(host_matrices.end(), test_case.matrix.begin(), test_case.matrix.end());
-    expected.push_back(cpu_permanent(test_case));
+    expected.push_back(test_case.uses_streamed_expected ? test_case.expected
+                                                         : cpu_permanent(test_case));
   }
 
   unsigned char* device_matrices = nullptr;
@@ -272,7 +322,7 @@ bool run_batch(const std::vector<Case>& cases) {
   }
   for (std::size_t index = 0; index < cases.size(); ++index) {
     if (actual[index] != expected[index]) {
-      std::fprintf(stderr, "%s: device=%u cpu-permutation=%u\n", cases[index].name,
+      std::fprintf(stderr, "%s: device=%u expected=%u\n", cases[index].id.c_str(),
                    actual[index], expected[index]);
       return false;
     }
@@ -305,6 +355,159 @@ bool run_active_mask_probe() {
   return true;
 }
 
+bool run_mapping_probes() {
+  IntervalObservation* device_intervals = nullptr;
+  DirectionObservation* device_directions = nullptr;
+  std::array<IntervalObservation, gf2_wave_mapping::kWaveLanes> intervals{};
+  std::array<DirectionObservation, 2> directions{};
+  if (!check(hipMalloc(&device_intervals, sizeof(intervals)), "hipMalloc n=63 mapping") ||
+      !check(hipMalloc(&device_directions, sizeof(directions)), "hipMalloc n=4 directions")) {
+    (void)hipFree(device_intervals);
+    (void)hipFree(device_directions);
+    return false;
+  }
+  hipLaunchKernelGGL(n63_mapping_probe, dim3(1), dim3(gf2_wave_mapping::kWaveLanes), 0, 0,
+                     device_intervals);
+  const bool n63_launched = check(hipGetLastError(), "n=63 mapping probe launch") &&
+                            check(hipDeviceSynchronize(), "n=63 mapping probe synchronize") &&
+                            check(hipMemcpy(intervals.data(), device_intervals, sizeof(intervals),
+                                            hipMemcpyDeviceToHost),
+                                  "hipMemcpy n=63 mapping");
+  hipLaunchKernelGGL(n4_direction_probe, dim3(1), dim3(2), 0, 0, device_directions);
+  const bool n4_launched = check(hipGetLastError(), "n=4 direction probe launch") &&
+                           check(hipDeviceSynchronize(), "n=4 direction probe synchronize") &&
+                           check(hipMemcpy(directions.data(), device_directions, sizeof(directions),
+                                           hipMemcpyDeviceToHost),
+                                 "hipMemcpy n=4 directions");
+  const bool freed_intervals = check(hipFree(device_intervals), "hipFree n=63 mapping");
+  const bool freed_directions = check(hipFree(device_directions), "hipFree n=4 directions");
+  if (!n63_launched || !n4_launched || !freed_intervals || !freed_directions) {
+    return false;
+  }
+
+  constexpr std::uint64_t kTotal = UINT64_C(1) << 63;
+  constexpr std::uint64_t kLaneWidth = UINT64_C(1) << 58;
+  std::uint64_t next = 0;
+  for (unsigned lane = 0; lane < gf2_wave_mapping::kWaveLanes; ++lane) {
+    const std::uint64_t expected_start = lane * kLaneWidth;
+    const std::uint64_t expected_end = (lane + 1) * kLaneWidth;
+    const auto& observed = intervals[lane];
+    if (observed.start != next || observed.start != expected_start ||
+        observed.end != expected_end ||
+        observed.subset != (observed.start ^ (observed.start >> 1))) {
+      std::fprintf(stderr,
+                   "n=63 lane %u: got [%llu, %llu) subset=%#llx; expected [%llu, %llu)\n",
+                   lane, static_cast<unsigned long long>(observed.start),
+                   static_cast<unsigned long long>(observed.end),
+                   static_cast<unsigned long long>(observed.subset),
+                   static_cast<unsigned long long>(expected_start),
+                   static_cast<unsigned long long>(expected_end));
+      return false;
+    }
+    next = observed.end;
+  }
+  if (next != kTotal) {
+    std::fprintf(stderr, "n=63 intervals end at %llu instead of 2^63\n",
+                 static_cast<unsigned long long>(next));
+    return false;
+  }
+
+  const std::array<DirectionObservation, 2> expected_directions = {{
+      {8, 12, 3, 1},
+      {15, 8, 0, 0},
+  }};
+  for (std::size_t index = 0; index < directions.size(); ++index) {
+    const auto& observed = directions[index];
+    const auto& expected = expected_directions[index];
+    if (observed.index != expected.index || observed.subset != expected.subset ||
+        observed.flipped_column != expected.flipped_column || observed.added != expected.added) {
+      std::fprintf(stderr, "n=4 device direction probe did not retain add/sub boundaries\n");
+      return false;
+    }
+  }
+  return true;
+}
+
+bool read_exact(void* destination, std::size_t bytes) {
+  std::cin.read(static_cast<char*>(destination), static_cast<std::streamsize>(bytes));
+  return static_cast<bool>(std::cin);
+}
+
+bool read_u32_le(std::uint32_t* value) {
+  std::array<unsigned char, 4> bytes{};
+  if (!read_exact(bytes.data(), bytes.size())) {
+    return false;
+  }
+  *value = static_cast<std::uint32_t>(bytes[0]) |
+           (static_cast<std::uint32_t>(bytes[1]) << 8) |
+           (static_cast<std::uint32_t>(bytes[2]) << 16) |
+           (static_cast<std::uint32_t>(bytes[3]) << 24);
+  return true;
+}
+
+bool read_u64_le(std::uint64_t* value) {
+  std::array<unsigned char, 8> bytes{};
+  if (!read_exact(bytes.data(), bytes.size())) {
+    return false;
+  }
+  *value = 0;
+  for (unsigned shift = 0; shift < 8; ++shift) {
+    *value |= static_cast<std::uint64_t>(bytes[shift]) << (8 * shift);
+  }
+  return true;
+}
+
+bool run_streamed_fixture_evidence() {
+  constexpr std::array<char, 8> kMagic = {'G', 'F', '2', 'W', 'A', 'V', 'E', '1'};
+  std::array<char, kMagic.size()> magic{};
+  std::uint32_t count = 0;
+  if (!read_exact(magic.data(), magic.size()) || magic != kMagic || !read_u32_le(&count) ||
+      count == 0) {
+    std::fprintf(stderr, "invalid F_3 wave fixture evidence stream header\n");
+    return false;
+  }
+
+  std::map<int, std::vector<Case>> batches;
+  for (std::uint32_t record = 0; record < count; ++record) {
+    std::uint32_t id_size = 0;
+    std::uint32_t n = 0;
+    std::uint64_t expected = 0;
+    std::uint64_t matrix_size = 0;
+    if (!read_u32_le(&id_size) || id_size == 0 || id_size > 1024) {
+      std::fprintf(stderr, "fixture %u has invalid identifier length\n", record);
+      return false;
+    }
+    std::string id(id_size, '\0');
+    if (!read_exact(id.data(), id.size()) || !read_u32_le(&n) || !read_u64_le(&expected) ||
+        !read_u64_le(&matrix_size) || n > 63 || expected >= 3 ||
+        matrix_size != static_cast<std::uint64_t>(n) * n) {
+      std::fprintf(stderr, "fixture %u has invalid F_3 evidence metadata\n", record);
+      return false;
+    }
+    Case test_case{id, static_cast<int>(n), std::vector<unsigned char>(matrix_size),
+                   static_cast<unsigned>(expected), true};
+    if ((!test_case.matrix.empty() &&
+         !read_exact(test_case.matrix.data(), test_case.matrix.size())) ||
+        !std::all_of(test_case.matrix.begin(), test_case.matrix.end(),
+                     [](unsigned char value) { return value < 3; })) {
+      std::fprintf(stderr, "%s has invalid canonical F_3 row-major bytes\n", id.c_str());
+      return false;
+    }
+    batches[static_cast<int>(n)].push_back(std::move(test_case));
+  }
+  for (const auto& batch : batches) {
+    const auto& cases = batch.second;
+    if (!run_batch(cases)) {
+      return false;
+    }
+  }
+  if (!run_mapping_probes() || !run_active_mask_probe()) {
+    return false;
+  }
+  std::fprintf(stdout, "F_3 wave device evidence matched %u streamed fixtures\n", count);
+  return true;
+}
+
 Case patterned_case(const char* name, int n, unsigned offset) {
   Case test_case{name, n, std::vector<unsigned char>(n * n)};
   for (int row = 0; row < n; ++row) {
@@ -318,7 +521,14 @@ Case patterned_case(const char* name, int n, unsigned offset) {
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
+  if (argc == 2 && std::strcmp(argv[1], "--fixture-stdin") == 0) {
+    return run_streamed_fixture_evidence() ? 0 : 1;
+  }
+  if (argc != 1) {
+    std::fprintf(stderr, "usage: %s [--fixture-stdin]\n", argv[0]);
+    return 2;
+  }
   const std::vector<Case> empty_cases = {
       {"n0-empty", 0, {}},
   };
@@ -340,7 +550,7 @@ int main() {
   };
 
   if (!run_batch(empty_cases) || !run_batch(n4_cases) || !run_batch(n6_cases) ||
-      !run_batch(zero_cases) || !run_active_mask_probe()) {
+      !run_batch(zero_cases) || !run_mapping_probes() || !run_active_mask_probe()) {
     return 1;
   }
   return 0;

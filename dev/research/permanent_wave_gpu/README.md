@@ -86,6 +86,12 @@ order-63 partial-word fixture, remain explicit `Unsupported` rows whose reason
 names the exponential full-permanent cost; they are not a capability claim or
 silently omitted from the canonical report.
 
+Its stable source-level state model is two packed `u64` words plus `u64` Gray
+cursor/end bounds and one `u32` partial sum: a 9 x 32-bit-register lower
+bound. The current subset and horizontal-product value are loop temporaries;
+the committed compiler resource output, rather than this lower bound, is the
+authoritative allocation evidence.
+
 This is a preserved falsification of literal full-permanent execution at
 order 63: `2^63` Ryser terms are not presented as a passing test. Instead the
 host and device checks retain exact interval union/disjointness and
@@ -94,6 +100,16 @@ product probes. The device-touching Rust test is feature-gated and ignored with
 its required ROCm device reason. The separately invoked self-checking HIP
 executable provides the actual device evidence, and its resource receipt is
 recorded beside `hip/wave_gf3_equivalence.hip` after the checked gfx1030 build.
+
+For actual element-wise device evidence, use the opt-in driver rather than an
+ignored Cargo test. It streams every committed F_3 fixture through the bound,
+with its fixture ID, canonical row-major bytes, and independently computed
+`permanent_ryser` value, to the prebuilt HIP executable:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence
+```
 
 ### F_3 device/resource pre-commit capture — 2026-08-10
 
@@ -121,7 +137,7 @@ The resource command was:
 ```
 
 Its byte-faithful stderr is
-[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), SHA-256
+[`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log), SHA-256
 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
 For `wave_gf3_kernel`, the report gives 22 SGPRs, 22 VGPRs, zero scratch
 bytes/lane, zero SGPR/VGPR spills, and occupancy 16 waves/SIMD. It gives zero
@@ -155,7 +171,9 @@ the resource capture and direct device execution. The host was the AMD Ryzen 9
 The clean compiler command repeated the pre-commit command with output
 `/tmp/de2522d6-wave_gf3_equivalence-clean.o` and stderr
 `/tmp/de2522d6-wave_gf3_resource-clean.log`. Its 2,165-byte stderr was
-byte-identical to the committed raw log (`cmp` exit 0; SHA-256
+byte-identical to the preserved initial raw log
+([`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log);
+`cmp` exit 0; SHA-256
 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`),
 so no resource difference was observed. It again reports 22 SGPRs, 22 VGPRs,
 zero scratch and spills, occupancy 16 waves/SIMD, and zero static LDS; the
@@ -174,6 +192,40 @@ The clean commit also passed both formatting checks, the default release test
 suite, the focused no-default-feature registry test, default and HIP-feature
 release Clippy with `-D warnings`, and compilation (without execution) of the
 feature-gated ignored HIP test.
+
+### F_3 device/resource review-rework capture — 2026-08-10
+
+This capture is deliberately **not** a clean-revision receipt. It records the
+review rework while the source tree was dirty relative to `8a788b03` (the
+prior landed F_3 implementation), so the clean commit must repeat both commands
+before it makes a clean-provenance claim. The host and toolchain were the
+gfx1030 RX 6950 XT / HIP 7.2.53211 / AMD clang 22.0.0git named above.
+
+The direct opt-in evidence command was:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence
+```
+
+It exited 0 in 3.7 seconds and reported equality for all 12 streamed canonical
+F_3 fixtures through order 16. In its `--fixture-stdin` mode, this also runs
+the n=63 interval/start-subset mapping probe and active-mask product probe
+after the fixture comparisons.
+
+The resource command repeated the command above with output
+`/tmp/de2522d6-wave_gf3_equivalence-rework.o` and stderr
+`/tmp/de2522d6-wave_gf3_resource-rework.log`. Its 4,400-byte stderr is now the
+byte-faithful canonical
+[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), SHA-256
+`4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
+`wave_gf3_kernel` remains 22 SGPRs, 22 VGPRs, zero scratch and spills,
+occupancy 16 waves/SIMD, and zero reported static LDS. The existing active-mask
+probe remains 7 SGPRs and 2 VGPRs. The new n=63 mapping probe reports 7 SGPRs
+and 8 VGPRs; the n=4 direction probe reports 9 SGPRs and 9 VGPRs. Both new
+probes also report zero scratch and spills, occupancy 16, and zero static LDS.
+The initial 2,165-byte capture remains preserved under its explicit
+`-initial` filename rather than being overwritten.
 
 The default `fixture-oracle` feature retains the corpus and oracle surface,
 which imports the harness's canonical sampler. When the harness imports this
