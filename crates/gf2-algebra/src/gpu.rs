@@ -106,12 +106,31 @@ static GF7_ONCE: OnceLock<i32> = OnceLock::new();
 /// non-zero HIP error code.
 #[cfg(feature = "f7")]
 fn ensure_gf7_luts_initialised() {
-    let rc = *GF7_ONCE.get_or_init(init_gf7_luts_safe);
-    if rc != 0 {
+    if let Err(rc) = initialise_permanent_gf7_luts() {
         panic!(
             "permanent_batch_bipedal7: init_permanent_gf7 returned HIP error code {rc}. \
              Ensure a gfx1030-class GPU is present and ROCm is initialised."
         );
+    }
+}
+
+/// Initialise the canonical F_7 permanent LUTs once for a custom launch.
+///
+/// Ordinary [`permanent_batch_bipedal7`] calls this automatically. This is for
+/// a caller that uses the lower-level, stream-owned permanent launch boundary
+/// and must establish its F_7 precondition itself.
+///
+/// # Errors
+///
+/// Returns the non-zero HIP status from the one-time LUT upload. A failed
+/// upload is memoised for the process, so later calls return the same status.
+#[cfg(feature = "f7")]
+pub fn initialise_permanent_gf7_luts() -> Result<(), i32> {
+    let rc = *GF7_ONCE.get_or_init(init_gf7_luts_safe);
+    if rc == 0 {
+        Ok(())
+    } else {
+        Err(rc)
     }
 }
 
@@ -134,17 +153,38 @@ fn init_gf7_luts_safe() -> i32 {
 // element accessor `mat.get(i, j)` decodes each value on demand.
 // ---------------------------------------------------------------------------
 
-/// Serialise a slice of [`Bipedal3Matrix`] into a flat `Vec<u8>` for H2D
-/// transfer. Each matrix contributes `n * n` bytes in row-major order with
-/// element values in `{0, 1, 2}`.
-fn serialise_bipedal3(matrices: &[Bipedal3Matrix]) -> (Vec<u8>, usize) {
-    debug_assert!(!matrices.is_empty());
+/// Serialise a slice of [`Bipedal3Matrix`] into the permanent kernel byte ABI.
+///
+/// Each matrix contributes `n * n` row-major bytes with values in `{0, 1, 2}`.
+/// The returned dimension is the common matrix order.
+///
+/// # Panics
+///
+/// Panics if `matrices` is empty, or a matrix has a shape different from the
+/// first matrix's square shape.
+///
+/// # Complexity
+///
+/// `O(M * n^2)` time and bytes for `M` matrices of order `n`.
+pub fn serialise_permanent_bipedal3(matrices: &[Bipedal3Matrix]) -> (Vec<u8>, usize) {
+    assert!(
+        !matrices.is_empty(),
+        "serialise_permanent_bipedal3: matrices must not be empty"
+    );
     let n = matrices[0].cols();
     let m = matrices.len();
     let mut buf = Vec::with_capacity(m * n * n);
     for mat in matrices {
-        debug_assert_eq!(mat.rows(), n);
-        debug_assert_eq!(mat.cols(), n);
+        assert_eq!(
+            mat.rows(),
+            n,
+            "serialise_permanent_bipedal3: matrices must be square"
+        );
+        assert_eq!(
+            mat.cols(),
+            n,
+            "serialise_permanent_bipedal3: matrices must share an order"
+        );
         for i in 0..n {
             for j in 0..n {
                 buf.push(mat.get(i, j).value() as u8);
@@ -154,17 +194,39 @@ fn serialise_bipedal3(matrices: &[Bipedal3Matrix]) -> (Vec<u8>, usize) {
     (buf, n)
 }
 
-/// Serialise a slice of [`Packed5Matrix`] into a flat `Vec<u8>`.
-/// Element values are in `{0, 1, 2, 3, 4}`.
+/// Serialise a slice of [`Packed5Matrix`] into the permanent kernel byte ABI.
+///
+/// Each matrix contributes `n * n` row-major bytes with values in
+/// `{0, 1, 2, 3, 4}`. The returned dimension is the common matrix order.
+///
+/// # Panics
+///
+/// Panics if `matrices` is empty, or a matrix has a shape different from the
+/// first matrix's square shape.
+///
+/// # Complexity
+///
+/// `O(M * n^2)` time and bytes for `M` matrices of order `n`.
 #[cfg(feature = "f5")]
-fn serialise_packed5(matrices: &[Packed5Matrix]) -> (Vec<u8>, usize) {
-    debug_assert!(!matrices.is_empty());
+pub fn serialise_permanent_packed5(matrices: &[Packed5Matrix]) -> (Vec<u8>, usize) {
+    assert!(
+        !matrices.is_empty(),
+        "serialise_permanent_packed5: matrices must not be empty"
+    );
     let n = matrices[0].cols();
     let m = matrices.len();
     let mut buf = Vec::with_capacity(m * n * n);
     for mat in matrices {
-        debug_assert_eq!(mat.rows(), n);
-        debug_assert_eq!(mat.cols(), n);
+        assert_eq!(
+            mat.rows(),
+            n,
+            "serialise_permanent_packed5: matrices must be square"
+        );
+        assert_eq!(
+            mat.cols(),
+            n,
+            "serialise_permanent_packed5: matrices must share an order"
+        );
         for i in 0..n {
             for j in 0..n {
                 buf.push(mat.get(i, j).value() as u8);
@@ -174,17 +236,39 @@ fn serialise_packed5(matrices: &[Packed5Matrix]) -> (Vec<u8>, usize) {
     (buf, n)
 }
 
-/// Serialise a slice of [`Packed7Matrix`] into a flat `Vec<u8>`.
-/// Element values are in `{0, 1, 2, 3, 4, 5, 6}`.
+/// Serialise a slice of [`Packed7Matrix`] into the permanent kernel byte ABI.
+///
+/// Each matrix contributes `n * n` row-major bytes with values in
+/// `{0, 1, 2, 3, 4, 5, 6}`. The returned dimension is the common matrix order.
+///
+/// # Panics
+///
+/// Panics if `matrices` is empty, or a matrix has a shape different from the
+/// first matrix's square shape.
+///
+/// # Complexity
+///
+/// `O(M * n^2)` time and bytes for `M` matrices of order `n`.
 #[cfg(feature = "f7")]
-fn serialise_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usize) {
-    debug_assert!(!matrices.is_empty());
+pub fn serialise_permanent_packed7(matrices: &[Packed7Matrix]) -> (Vec<u8>, usize) {
+    assert!(
+        !matrices.is_empty(),
+        "serialise_permanent_packed7: matrices must not be empty"
+    );
     let n = matrices[0].cols();
     let m = matrices.len();
     let mut buf = Vec::with_capacity(m * n * n);
     for mat in matrices {
-        debug_assert_eq!(mat.rows(), n);
-        debug_assert_eq!(mat.cols(), n);
+        assert_eq!(
+            mat.rows(),
+            n,
+            "serialise_permanent_packed7: matrices must be square"
+        );
+        assert_eq!(
+            mat.cols(),
+            n,
+            "serialise_permanent_packed7: matrices must share an order"
+        );
         for i in 0..n {
             for j in 0..n {
                 buf.push(mat.get(i, j).value() as u8);
@@ -292,7 +376,7 @@ pub fn permanent_batch_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<Fp<3>> {
         "permanent_batch_bipedal3: n must be <= 63 (GPU Gray-walk limit), got n = {n}"
     );
 
-    let (host_buf, _) = serialise_bipedal3(matrices);
+    let (host_buf, _) = serialise_permanent_bipedal3(matrices);
     let raw = permanent_gf3_batch_dispatch(&host_buf, n, m);
     raw.into_iter().map(Fp::<3>::new).collect()
 }
@@ -389,7 +473,7 @@ pub fn permanent_batch_bipedal5(matrices: &[Packed5Matrix]) -> Vec<Fp<5>> {
         "permanent_batch_bipedal5: n must be <= 63 (GPU Gray-walk limit), got n = {n}"
     );
 
-    let (host_buf, _) = serialise_packed5(matrices);
+    let (host_buf, _) = serialise_permanent_packed5(matrices);
     let raw = permanent_gf5_batch_dispatch(&host_buf, n, m);
     raw.into_iter().map(Fp::<5>::new).collect()
 }
@@ -498,7 +582,28 @@ pub fn permanent_batch_bipedal7(matrices: &[Packed7Matrix]) -> Vec<Fp<7>> {
     // Ensure the F_7 device LUTs are uploaded before the first compute call.
     ensure_gf7_luts_initialised();
 
-    let (host_buf, _) = serialise_packed7(matrices);
+    let (host_buf, _) = serialise_permanent_packed7(matrices);
     let raw = permanent_gf7_batch_dispatch(&host_buf, n, m);
     raw.into_iter().map(Fp::<7>::new).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn permanent_serialisation_is_canonical_row_major_bytes() {
+        let data = [
+            Fp::<3>::new(0),
+            Fp::<3>::new(1),
+            Fp::<3>::new(2),
+            Fp::<3>::new(1),
+        ];
+        let matrix = Bipedal3Matrix::from_row_major(&data, 2, 2);
+
+        let (bytes, n) = serialise_permanent_bipedal3(&[matrix]);
+
+        assert_eq!(n, 2);
+        assert_eq!(bytes, [0, 1, 2, 1]);
+    }
 }

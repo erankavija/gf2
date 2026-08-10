@@ -90,7 +90,8 @@ use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
 
 use crate::backend::{
-    count_zeros, evaluate, evaluate_timed, support, Backend, Batch, GpuPhaseTimings, Support,
+    count_zeros, evaluate, evaluate_timed, support, Backend, Batch, PhaseTiming,
+    Support,
 };
 use crate::env::{pin_thread, ThermalSample};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
@@ -114,6 +115,7 @@ pub const MATRICES_PER_WORKER: usize = 4;
 pub const PINNED_CORE: usize = 0;
 /// Stream indices reserved to each sustained run within its named purpose.
 pub const SUSTAINED_INDICES_PER_RUN: u64 = 100_000;
+const PHASE_TIMING_NOT_RUN: &str = "event timing unavailable: cell did not run";
 
 /// How a cell finished.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -330,7 +332,7 @@ struct RepTimes {
     eval_s: f64,
     reduce_s: f64,
     store_s: f64,
-    gpu_phase_timings: Option<GpuPhaseTimings>,
+    phase_timing: PhaseTiming,
 }
 
 impl RepTimes {
@@ -376,7 +378,7 @@ fn one_rep(
             eval_s,
             reduce_s,
             store_s,
-            gpu_phase_timings: evaluation.gpu_phase_timings,
+            phase_timing: evaluation.phase_timing,
         },
         zeros,
     )
@@ -512,7 +514,7 @@ pub fn run_cell(
         host_submission_s: None,
         device_submission_to_kernel_s: None,
         phase_timing_note: if backend == Backend::Gpu {
-            "event timing unavailable: cell did not run".to_string()
+            PHASE_TIMING_NOT_RUN.to_string()
         } else {
             "event timing unavailable: backend is not GPU/HIP".to_string()
         },
@@ -686,7 +688,7 @@ from it, and the cell carries no rate"
         result.matrices += m as u64;
         result.zeros += zeros;
         result.reps += 1;
-        accumulate_gpu_phase_timings(&mut result, times.gpu_phase_timings);
+        accumulate_gpu_phase_timings(&mut result, times.phase_timing);
 
         let elapsed = timed_start.elapsed().as_secs_f64();
         if (result.reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS) || elapsed >= MAX_CELL_SECONDS
@@ -712,20 +714,29 @@ from it, and the cell carries no rate"
 /// Accumulate the independent timings from each event-instrumented GPU
 /// dispatch. A cell has one backend, so it never combines a device-clock
 /// duration with a host timestamp or a non-GPU evaluation wall clock.
-fn accumulate_gpu_phase_timings(result: &mut CellResult, timings: Option<GpuPhaseTimings>) {
-    let Some(timings) = timings else {
-        return;
-    };
-
-    result.kernel_device_s = add_duration(result.kernel_device_s, timings.kernel);
-    result.h2d_device_s = add_duration(result.h2d_device_s, timings.h2d);
-    result.d2h_device_s = add_duration(result.d2h_device_s, timings.d2h);
-    result.host_submission_s = add_duration(result.host_submission_s, timings.host_submission);
-    result.device_submission_to_kernel_s = add_duration(
-        result.device_submission_to_kernel_s,
-        timings.device_submission_to_kernel,
-    );
-    result.phase_timing_note.clear();
+fn accumulate_gpu_phase_timings(result: &mut CellResult, phase_timing: PhaseTiming) {
+    match phase_timing {
+        PhaseTiming::Measured(timings) if result.phase_timing_note.is_empty() || result.phase_timing_note == PHASE_TIMING_NOT_RUN => {
+            result.kernel_device_s = add_duration(result.kernel_device_s, timings.kernel);
+            result.h2d_device_s = add_duration(result.h2d_device_s, timings.h2d);
+            result.d2h_device_s = add_duration(result.d2h_device_s, timings.d2h);
+            result.host_submission_s = add_duration(result.host_submission_s, timings.host_submission);
+            result.device_submission_to_kernel_s = add_duration(
+                result.device_submission_to_kernel_s,
+                timings.device_submission_to_kernel,
+            );
+            result.phase_timing_note.clear();
+        }
+        PhaseTiming::Measured(_) | PhaseTiming::NotApplicable => {}
+        PhaseTiming::Unavailable(reason) => {
+            result.kernel_device_s = None;
+            result.h2d_device_s = None;
+            result.d2h_device_s = None;
+            result.host_submission_s = None;
+            result.device_submission_to_kernel_s = None;
+            result.phase_timing_note = reason;
+        }
+    }
 }
 
 fn add_duration(total: Option<f64>, duration: std::time::Duration) -> Option<f64> {
@@ -957,6 +968,7 @@ pub fn shuffle<T>(items: &mut [T], seed_root: u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::backend::GpuPhaseTimings;
     use std::collections::BTreeMap;
 
     fn example_result() -> CellResult {
@@ -1055,5 +1067,36 @@ mod tests {
             fields["phase_timing_note"],
             "event timing unavailable: backend is not GPU/HIP"
         );
+    }
+
+    #[test]
+    fn instrumentation_failure_clears_partial_phases_and_keeps_its_reason() {
+        let mut result = example_result();
+        let reason = "event timing unavailable: create instrumented permanent stream: no HIP device; \
+values came from synchronous gpu_hip dispatch";
+
+        accumulate_gpu_phase_timings(&mut result, PhaseTiming::Unavailable(reason.to_string()));
+        accumulate_gpu_phase_timings(
+            &mut result,
+            PhaseTiming::Measured(GpuPhaseTimings {
+                h2d: std::time::Duration::from_secs(1),
+                kernel: std::time::Duration::from_secs(1),
+                d2h: std::time::Duration::from_secs(1),
+                host_submission: std::time::Duration::from_secs(1),
+                device_submission_to_kernel: std::time::Duration::from_secs(1),
+            }),
+        );
+
+        let fields = csv_fields(&result);
+        for column in [
+            "kernel_device_s",
+            "h2d_device_s",
+            "d2h_device_s",
+            "host_submission_s",
+            "device_submission_to_kernel_s",
+        ] {
+            assert!(fields[column].is_empty(), "{column} must remain absent");
+        }
+        assert_eq!(fields["phase_timing_note"], reason);
     }
 }
