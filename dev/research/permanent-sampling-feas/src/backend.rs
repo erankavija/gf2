@@ -26,6 +26,40 @@ use gf2_algebra::permanent::permanent_ryser;
 use gf2_core::gfp::Fp;
 use rayon::prelude::*;
 
+#[cfg(feature = "hip")]
+use std::sync::OnceLock;
+
+#[cfg(feature = "hip")]
+static TIMED_GF7_INIT: OnceLock<i32> = OnceLock::new();
+
+/// Phase spans returned by an event-instrumented GPU permanent dispatch.
+///
+/// Device-event durations and the host duration of submission remain separate:
+/// no field is calculated by combining timestamps from those two clocks. A
+/// non-GPU backend returns [`None`] from [`evaluate_timed`] instead.
+#[derive(Clone, Copy, Debug)]
+pub struct GpuPhaseTimings {
+    /// Device-clock host-to-device copy span.
+    pub h2d: std::time::Duration,
+    /// Device-clock kernel-only span.
+    pub kernel: std::time::Duration,
+    /// Device-clock device-to-host copy span.
+    pub d2h: std::time::Duration,
+    /// Host-clock duration of the submission wrapper call.
+    pub host_submission: std::time::Duration,
+    /// Device-clock interval from submission marker to kernel start marker.
+    pub device_submission_to_kernel: std::time::Duration,
+}
+
+/// Values and, for an instrumented GPU dispatch, separate phase durations.
+pub struct TimedEvaluation {
+    /// One canonical permanent value for every input matrix, in input order.
+    pub values: Vec<u64>,
+    /// Event and submission spans for a GPU dispatch, absent for non-GPU
+    /// backends rather than fabricated from their host evaluation wall clock.
+    pub gpu_phase_timings: Option<GpuPhaseTimings>,
+}
+
 /// The measured evaluation paths.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Backend {
@@ -312,6 +346,135 @@ pub fn evaluate(backend: Backend, batch: &Batch) -> Vec<u64> {
             batch.len()
         ),
     }
+}
+
+/// Evaluate a batch and retain the instrumented HIP phase spans when present.
+///
+/// CPU backends deliberately return no phase spans: their evaluation wall
+/// clock is not presented as a device measurement. The GPU path uses the
+/// stream-local instrumented permanent boundary, whose kernel span excludes
+/// allocation, transfer, and host serialisation.
+///
+/// # Panics
+///
+/// Propagates the selected backend's input and runtime failures. In particular,
+/// an instrumented GPU evaluation panics when stream creation, F_7 LUT setup,
+/// dispatch, or the stream-local completion wait fails.
+pub fn evaluate_timed(backend: Backend, batch: &Batch) -> TimedEvaluation {
+    #[cfg(feature = "hip")]
+    if backend == Backend::Gpu {
+        return evaluate_gpu_instrumented(batch);
+    }
+
+    TimedEvaluation {
+        values: evaluate(backend, batch),
+        gpu_phase_timings: None,
+    }
+}
+
+#[cfg(feature = "hip")]
+fn evaluate_gpu_instrumented(batch: &Batch) -> TimedEvaluation {
+    use gf2_algebra::packed::packed7::{ADD_LUT, MUL_LUT, SUB_LUT};
+    use gf2_kernels_hip::host::HipStream;
+    use gf2_kernels_hip::permanent::{
+        dispatch_permanent_batch_instrumented, init_permanent_gf7_from_slices, PermanentField,
+    };
+
+    let (field, n, host_matrices) = match batch {
+        Batch::F3(matrices) => (
+            PermanentField::F3,
+            matrices[0].cols(),
+            serialise_bipedal3(matrices),
+        ),
+        Batch::F5(matrices) => (
+            PermanentField::F5,
+            matrices[0].cols(),
+            serialise_packed5(matrices),
+        ),
+        Batch::F7(matrices) => {
+            let rc = *TIMED_GF7_INIT
+                .get_or_init(|| init_permanent_gf7_from_slices(&ADD_LUT, &SUB_LUT, &MUL_LUT));
+            assert_eq!(
+                rc, 0,
+                "instrumented F_7 permanent LUT initialisation failed: {rc}"
+            );
+            (
+                PermanentField::F7,
+                matrices[0].cols(),
+                serialise_packed7(matrices),
+            )
+        }
+        _ => panic!("gpu_hip backend requires a packed F_3, F_5, or F_7 batch"),
+    };
+
+    let stream = HipStream::new().expect("create HIP stream for instrumented permanent dispatch");
+    let dispatch =
+        dispatch_permanent_batch_instrumented(field, &host_matrices, n, batch.len(), &stream)
+            .expect("start instrumented permanent dispatch");
+    let (values, timings) = dispatch
+        .finish()
+        .expect("finish instrumented permanent dispatch");
+    let timings = GpuPhaseTimings {
+        h2d: timings
+            .h2d
+            .expect("instrumented permanent dispatch must include H2D"),
+        kernel: timings
+            .kernel
+            .expect("instrumented permanent dispatch must include a kernel"),
+        d2h: timings
+            .d2h
+            .expect("instrumented permanent dispatch must include D2H"),
+        host_submission: timings.host_submission,
+        device_submission_to_kernel: timings
+            .device_submission_to_kernel
+            .expect("instrumented permanent dispatch must include submission-to-kernel"),
+    };
+    TimedEvaluation {
+        values,
+        gpu_phase_timings: Some(timings),
+    }
+}
+
+/// Serialise one F_3 packed batch to the permanent kernels' row-major byte ABI.
+///
+/// This is deliberately local to the research-only instrumented adapter. The
+/// production GPU adapter owns its ordinary one-shot serialisation, while this
+/// boundary must retain the raw byte buffer until the asynchronous dispatch
+/// finishes.
+#[cfg(feature = "hip")]
+fn serialise_bipedal3(matrices: &[Bipedal3Matrix]) -> Vec<u8> {
+    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
+        matrix.get(row, column).value() as u8
+    })
+}
+
+/// Serialise one F_5 packed batch to the permanent kernels' row-major byte ABI.
+#[cfg(feature = "hip")]
+fn serialise_packed5(matrices: &[Packed5Matrix]) -> Vec<u8> {
+    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
+        matrix.get(row, column).value() as u8
+    })
+}
+
+/// Serialise one F_7 packed batch to the permanent kernels' row-major byte ABI.
+#[cfg(feature = "hip")]
+fn serialise_packed7(matrices: &[Packed7Matrix]) -> Vec<u8> {
+    serialise_rows(matrices, matrices[0].cols(), |matrix, row, column| {
+        matrix.get(row, column).value() as u8
+    })
+}
+
+#[cfg(feature = "hip")]
+fn serialise_rows<M>(matrices: &[M], n: usize, entry: impl Fn(&M, usize, usize) -> u8) -> Vec<u8> {
+    let mut bytes = Vec::with_capacity(matrices.len() * n * n);
+    for matrix in matrices {
+        for row in 0..n {
+            for column in 0..n {
+                bytes.push(entry(matrix, row, column));
+            }
+        }
+    }
+    bytes
 }
 
 /// Count the matrices in `values` whose permanent is zero.
