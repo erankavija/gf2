@@ -391,7 +391,11 @@ independent expansion counted {independent}"
             .find(|row| row.backend == Backend::Gpu.name())
             .expect("GPU row when the HIP feature is enabled");
         assert_eq!(row.mismatches, 0, "status={}", row.status);
-        assert_eq!(row.zeros_reference, row.zeros_backend, "status={}", row.status);
+        assert_eq!(
+            row.zeros_reference, row.zeros_backend,
+            "status={}",
+            row.status
+        );
         assert!(row.status.starts_with("identical"), "status={}", row.status);
     }
 }

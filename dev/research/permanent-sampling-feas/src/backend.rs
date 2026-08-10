@@ -386,8 +386,8 @@ pub fn evaluate_timed(backend: Backend, batch: &Batch) -> TimedEvaluation {
 #[cfg(feature = "hip")]
 fn evaluate_gpu_instrumented(batch: &Batch) -> Result<TimedEvaluation, String> {
     use gf2_algebra::gpu::{
-        initialise_permanent_gf7_luts, serialise_permanent_bipedal3,
-        serialise_permanent_packed5, serialise_permanent_packed7,
+        initialise_permanent_gf7_luts, serialise_permanent_bipedal3, serialise_permanent_packed5,
+        serialise_permanent_packed7,
     };
     use gf2_kernels_hip::host::HipStream;
     use gf2_kernels_hip::permanent::{dispatch_permanent_batch_instrumented, PermanentField};
@@ -429,11 +429,9 @@ fn evaluate_gpu_instrumented(batch: &Batch) -> Result<TimedEvaluation, String> {
             .d2h
             .ok_or_else(|| "instrumented permanent dispatch omitted D2H timing".to_string())?,
         host_submission: timings.host_submission,
-        device_submission_to_kernel: timings
-            .device_submission_to_kernel
-            .ok_or_else(|| {
-                "instrumented permanent dispatch omitted submission-to-kernel timing".to_string()
-            })?,
+        device_submission_to_kernel: timings.device_submission_to_kernel.ok_or_else(|| {
+            "instrumented permanent dispatch omitted submission-to-kernel timing".to_string()
+        })?,
     };
     Ok(TimedEvaluation {
         values,

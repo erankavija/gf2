@@ -90,8 +90,7 @@ use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
 
 use crate::backend::{
-    count_zeros, evaluate, evaluate_timed, support, Backend, Batch, PhaseTiming,
-    Support,
+    count_zeros, evaluate, evaluate_timed, support, Backend, Batch, PhaseTiming, Support,
 };
 use crate::env::{pin_thread, ThermalSample};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
@@ -716,11 +715,15 @@ from it, and the cell carries no rate"
 /// duration with a host timestamp or a non-GPU evaluation wall clock.
 fn accumulate_gpu_phase_timings(result: &mut CellResult, phase_timing: PhaseTiming) {
     match phase_timing {
-        PhaseTiming::Measured(timings) if result.phase_timing_note.is_empty() || result.phase_timing_note == PHASE_TIMING_NOT_RUN => {
+        PhaseTiming::Measured(timings)
+            if result.phase_timing_note.is_empty()
+                || result.phase_timing_note == PHASE_TIMING_NOT_RUN =>
+        {
             result.kernel_device_s = add_duration(result.kernel_device_s, timings.kernel);
             result.h2d_device_s = add_duration(result.h2d_device_s, timings.h2d);
             result.d2h_device_s = add_duration(result.d2h_device_s, timings.d2h);
-            result.host_submission_s = add_duration(result.host_submission_s, timings.host_submission);
+            result.host_submission_s =
+                add_duration(result.host_submission_s, timings.host_submission);
             result.device_submission_to_kernel_s = add_duration(
                 result.device_submission_to_kernel_s,
                 timings.device_submission_to_kernel,
@@ -1072,7 +1075,8 @@ mod tests {
     #[test]
     fn instrumentation_failure_clears_partial_phases_and_keeps_its_reason() {
         let mut result = example_result();
-        let reason = "event timing unavailable: create instrumented permanent stream: no HIP device; \
+        let reason =
+            "event timing unavailable: create instrumented permanent stream: no HIP device; \
 values came from synchronous gpu_hip dispatch";
 
         accumulate_gpu_phase_timings(&mut result, PhaseTiming::Unavailable(reason.to_string()));
