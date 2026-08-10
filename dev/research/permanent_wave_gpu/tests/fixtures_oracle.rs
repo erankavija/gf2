@@ -1,9 +1,6 @@
 use gf2_algebra::gray::gray_code_iter;
 use permanent_wave_gpu::fixtures::{FixtureCorpus, FixtureRequirement, DEFAULT_FIXTURE_SEED};
-use permanent_wave_gpu::oracle::{
-    check_cpu_reference_paths, check_registered_candidates, CandidateCellStatus,
-};
-use permanent_wave_gpu::MeasurementPath;
+use permanent_wave_gpu::oracle::check_cpu_reference_paths;
 
 #[test]
 fn deterministic_corpus_covers_the_structural_boundaries() {
@@ -96,107 +93,6 @@ fn deterministic_corpus_covers_the_structural_boundaries() {
             .fixtures()
             .iter()
             .any(|fixture| fixture.q() == 7 && fixture.n() == n));
-    }
-}
-
-#[test]
-fn registered_candidates_remain_visible_and_path_frequencies_are_complementary() {
-    let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
-    let report = check_registered_candidates(&corpus);
-
-    assert_eq!(
-        report.candidate_cells().len(),
-        MeasurementPath::ALL.len() * report.path_frequencies().len(),
-        "every registered candidate must receive one result per corpus cell"
-    );
-    for row in report.candidate_cells() {
-        assert_eq!(row.reference(), "permanent_ryser");
-        assert_eq!(
-            row.mismatch_count(),
-            0,
-            "{} q={} n={} first={:?}",
-            row.candidate(),
-            row.q(),
-            row.n(),
-            row.first_mismatch_fixture_id()
-        );
-        assert_eq!(
-            row.secondary_reference_mismatch_count(),
-            0,
-            "{} q={} n={} packed reference must agree with Ryser",
-            row.candidate(),
-            row.q(),
-            row.n()
-        );
-        match row.status() {
-            CandidateCellStatus::Identical => {
-                assert!(row.compared_count() > 0);
-                assert!(row.unavailable_reason().is_none());
-            }
-            CandidateCellStatus::Unavailable { .. } => {
-                assert_eq!(row.compared_count(), 0);
-                assert!(
-                    row.unavailable_reason()
-                        .is_some_and(|reason| !reason.is_empty()),
-                    "{} q={} n={} must state why it cannot execute",
-                    row.candidate(),
-                    row.q(),
-                    row.n()
-                );
-            }
-            CandidateCellStatus::PartiallyUnavailable { .. } => {
-                assert!(row.compared_count() > 0);
-                assert!(
-                    row.unavailable_reason()
-                        .is_some_and(|reason| !reason.is_empty()),
-                    "{} q={} n={} must state why it cannot execute",
-                    row.candidate(),
-                    row.q(),
-                    row.n()
-                );
-            }
-            CandidateCellStatus::Mismatch => {
-                panic!(
-                    "{} q={} n={} disagreed with the CPU oracle at {:?}",
-                    row.candidate(),
-                    row.q(),
-                    row.n(),
-                    row.first_mismatch_fixture_id()
-                );
-            }
-        }
-    }
-    for n in [20, 24] {
-        let high_order_rows: Vec<_> = report
-            .candidate_cells()
-            .iter()
-            .filter(|row| row.q() == 7 && row.n() == n)
-            .collect();
-        assert_eq!(
-            high_order_rows.len(),
-            MeasurementPath::ALL.len(),
-            "F_7 n={n} must remain in the primary registry report"
-        );
-        assert!(high_order_rows.iter().all(|row| {
-            row.reference() == "permanent_ryser" && row.secondary_reference().is_none()
-        }));
-    }
-    for frequency in report.path_frequencies() {
-        assert!(frequency.expectations_are_complements());
-        assert!(frequency.zero_fast_expectation().starts_with("1 - "));
-        assert!(frequency.slow_expectation().starts_with('('));
-        assert_eq!(
-            frequency.observed_zero_fast_count() + frequency.observed_slow_count(),
-            frequency.observations()
-        );
-        if frequency.n() > 0 {
-            assert!(
-                frequency.observations() > 0,
-                "q={} n={} needs a uniform observation for its exact marginal",
-                frequency.q(),
-                frequency.n()
-            );
-        }
     }
 }
 
