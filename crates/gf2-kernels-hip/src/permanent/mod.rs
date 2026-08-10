@@ -1263,6 +1263,9 @@ pub fn measure_gray_update_kernel(
     update.record_stop(&stream)?;
     let compiler_barrier_baseline = HipEventSpan::new_on_device(device_id)?;
     compiler_barrier_baseline.record_start(&stream)?;
+    // SAFETY: `q`, `n`, and `steps` were validated above; `baseline_checksum`
+    // is a live device output allocation of the required length; and the live
+    // stream and allocation both outlast the queued work through synchronization.
     let code = unsafe {
         launch_gray_update_compiler_barrier_baseline(
             q,

@@ -8,6 +8,10 @@
 //! subtracted before the per-operation result is reported. HIP rows use the
 //! same paired device-event method, excluding allocation, upload, submission,
 //! and host repetition-policy overhead.
+//!
+//! Clean-device functional evidence may validly produce an explicit censored
+//! row when paired subtraction is nonpositive; that confirms the execution
+//! path without publishing a performance result.
 
 use std::hint::black_box;
 use std::time::Instant;
@@ -16,7 +20,9 @@ use gf2_algebra::packed::{Bipedal3, Packed5, Packed7, PackedField};
 use gf2_core::gfp::Fp;
 
 use crate::backend::{support, Backend, Support};
-use crate::protocol::{run_timed_repetitions, Outcome};
+use crate::protocol::{
+    run_timed_repetitions, Outcome, MAX_CELL_SECONDS, MIN_REPS, MIN_TIMED_SECONDS,
+};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
 use crate::schedule::{scheduled_backend, SchedulePhase};
 
@@ -179,6 +185,13 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
     } else {
         "net subtracts the same-geometry compiler-barrier host span; sampling, packing, repetition policy, and CSV output are excluded"
     };
+    if policy.capped_before_minimums {
+        result.outcome = Outcome::Censored;
+        result.note = format!(
+            "unavailable: {MAX_CELL_SECONDS:.0} s cap ended timing before both minimums ({MIN_REPS} repetitions and {MIN_TIMED_SECONDS:.0} s); no net per-operation duration is reported"
+        );
+        return result;
+    }
     let Some(net_per_operation_s) = net_per_operation(
         update_s,
         compiler_barrier_baseline_s,
