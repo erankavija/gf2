@@ -17,6 +17,15 @@
 //! component times are reported separately so the study can attribute cost.
 //! The envelope in the study is derived from the composite rate.
 //!
+//! GPU rows additionally carry event-measured `kernel_device_s`,
+//! `h2d_device_s`, `d2h_device_s`, and `device_submission_to_kernel_s` totals
+//! from the permanent dispatch stream, plus `host_submission_s` from the host
+//! submission call. These are independent columns: the device-event values
+//! never use host timestamps, and the host submission value is never combined
+//! with a device event. CPU, unsupported, and unexecuted rows leave all five
+//! columns empty and state why in `phase_timing_note`; they never substitute a
+//! wall-clock evaluation duration or zero.
+//!
 //! # Repetition and censoring policy
 //!
 //! Every cell first runs an untimed warm-up of at least [`WARMUP_SECONDS`], on
@@ -80,7 +89,9 @@ use gf2_algebra::packed::bipedal3::Bipedal3Matrix;
 use gf2_algebra::packed::packed5::Packed5Matrix;
 use gf2_algebra::packed::packed7::Packed7Matrix;
 
-use crate::backend::{count_zeros, evaluate, support, Backend, Batch, Support};
+use crate::backend::{
+    count_zeros, evaluate, evaluate_timed, support, Backend, Batch, GpuPhaseTimings, Support,
+};
 use crate::env::{pin_thread, ThermalSample};
 use crate::sampler::{MatrixSampler, MeasurementPurpose};
 
@@ -141,6 +152,20 @@ pub struct CellResult {
     pub eval_s: f64,
     pub reduce_s: f64,
     pub store_s: f64,
+    /// Summed device-event kernel-only duration. It excludes allocation,
+    /// transfer, host serialisation, and host submission time.
+    pub kernel_device_s: Option<f64>,
+    /// Summed device-event host-to-device transfer duration.
+    pub h2d_device_s: Option<f64>,
+    /// Summed device-event device-to-host transfer duration.
+    pub d2h_device_s: Option<f64>,
+    /// Summed host-clock duration of the GPU submission wrapper call.
+    pub host_submission_s: Option<f64>,
+    /// Summed device-event duration from submission marker to kernel start.
+    pub device_submission_to_kernel_s: Option<f64>,
+    /// Why phase timing columns are absent. Empty only when every timing field
+    /// was supplied by the event-instrumented GPU boundary.
+    pub phase_timing_note: String,
     /// `matrices / total_s`, or `NaN` for a cell that carries no rate.
     pub composite_rate: f64,
     /// Wall-clock of the single-matrix probe that sized the batch, where one
@@ -158,7 +183,9 @@ pub struct CellResult {
     /// First index of the *timed* repetitions. Warm-up has a distinct purpose,
     /// so this is independent of its wall-clock-dependent repetition count.
     pub timed_index_first: u64,
-    /// `matrices / eval_s`: the kernel-only rate, for attribution only.
+    /// `matrices / eval_s`: the host-clock evaluation rate, for attribution
+    /// only. GPU kernel-only rate must instead be derived from
+    /// `kernel_device_s` when that event measurement is present.
     pub eval_rate: f64,
     pub rep_min_s: f64,
     pub rep_max_s: f64,
@@ -178,6 +205,8 @@ pub struct CellResult {
 /// CSV header for [`CellResult::to_csv_row`].
 pub const CELL_CSV_HEADER: &str = "q,n,backend,outcome,batch_size,reps,matrices,zeros,\
 total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,\
+kernel_device_s,h2d_device_s,d2h_device_s,host_submission_s,device_submission_to_kernel_s,\
+phase_timing_note,\
 probe_matrix_s,projected_matrices_per_s,projection_reference_n,timed_purpose,timed_index_first,\
 rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_index_first,\
 cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note";
@@ -189,6 +218,7 @@ impl CellResult {
         let _ = write!(
             s,
             "{},{},{},{},{},{},{},{},{:.6},{:.6},{:.6},{:.6},{:.6},{:.4},{:.4},\
+{},{},{},{},{},{},\
 {:.6},{:.6},{},{},{},{:.6},{:.6},{:.6},{},{},0x{:016x},{},{:.1},{:.1},{:.1},{},{}",
             self.q,
             self.n,
@@ -205,6 +235,12 @@ impl CellResult {
             self.store_s,
             self.composite_rate,
             self.eval_rate,
+            optional_seconds(self.kernel_device_s),
+            optional_seconds(self.h2d_device_s),
+            optional_seconds(self.d2h_device_s),
+            optional_seconds(self.host_submission_s),
+            optional_seconds(self.device_submission_to_kernel_s),
+            self.phase_timing_note,
             self.probe_matrix_s,
             self.projected_rate,
             self.projection_reference_n,
@@ -225,6 +261,12 @@ impl CellResult {
         );
         s
     }
+}
+
+/// Render an optional event or host-clock duration without inventing zero for
+/// a phase that was not measured.
+fn optional_seconds(seconds: Option<f64>) -> String {
+    seconds.map_or_else(String::new, |value| format!("{value:.6}"))
 }
 
 /// Build `m` matrices of order `n` over `F_q` from `sampler`, in the
@@ -288,6 +330,7 @@ struct RepTimes {
     eval_s: f64,
     reduce_s: f64,
     store_s: f64,
+    gpu_phase_timings: Option<GpuPhaseTimings>,
 }
 
 impl RepTimes {
@@ -310,12 +353,12 @@ fn one_rep(
     let gen_s = t0.elapsed().as_secs_f64();
 
     let t1 = Instant::now();
-    let values = evaluate(backend, &batch);
+    let evaluation = evaluate_timed(backend, &batch);
     let eval_s = t1.elapsed().as_secs_f64();
 
     let t2 = Instant::now();
-    let hist = histogram(q, &values);
-    let zeros = count_zeros(&values);
+    let hist = histogram(q, &evaluation.values);
+    let zeros = count_zeros(&evaluation.values);
     let reduce_s = t2.elapsed().as_secs_f64();
 
     let t3 = Instant::now();
@@ -333,6 +376,7 @@ fn one_rep(
             eval_s,
             reduce_s,
             store_s,
+            gpu_phase_timings: evaluation.gpu_phase_timings,
         },
         zeros,
     )
@@ -462,6 +506,16 @@ pub fn run_cell(
         eval_s: 0.0,
         reduce_s: 0.0,
         store_s: 0.0,
+        kernel_device_s: None,
+        h2d_device_s: None,
+        d2h_device_s: None,
+        host_submission_s: None,
+        device_submission_to_kernel_s: None,
+        phase_timing_note: if backend == Backend::Gpu {
+            "event timing unavailable: cell did not run".to_string()
+        } else {
+            "event timing unavailable: backend is not GPU/HIP".to_string()
+        },
         composite_rate: f64::NAN,
         eval_rate: f64::NAN,
         probe_matrix_s: f64::NAN,
@@ -487,6 +541,7 @@ pub fn run_cell(
     };
 
     if let Support::Unsupported(reason) = support(backend, q, n) {
+        result.phase_timing_note = format!("event timing unavailable: {reason}");
         result.note = reason;
         return result;
     }
@@ -631,6 +686,7 @@ from it, and the cell carries no rate"
         result.matrices += m as u64;
         result.zeros += zeros;
         result.reps += 1;
+        accumulate_gpu_phase_timings(&mut result, times.gpu_phase_timings);
 
         let elapsed = timed_start.elapsed().as_secs_f64();
         if (result.reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS) || elapsed >= MAX_CELL_SECONDS
@@ -651,6 +707,29 @@ from it, and the cell carries no rate"
     result.outcome = Outcome::Measured;
     record_rate(rates, q, backend, batch_key, n, result.composite_rate);
     result
+}
+
+/// Accumulate the independent timings from each event-instrumented GPU
+/// dispatch. A cell has one backend, so it never combines a device-clock
+/// duration with a host timestamp or a non-GPU evaluation wall clock.
+fn accumulate_gpu_phase_timings(result: &mut CellResult, timings: Option<GpuPhaseTimings>) {
+    let Some(timings) = timings else {
+        return;
+    };
+
+    result.kernel_device_s = add_duration(result.kernel_device_s, timings.kernel);
+    result.h2d_device_s = add_duration(result.h2d_device_s, timings.h2d);
+    result.d2h_device_s = add_duration(result.d2h_device_s, timings.d2h);
+    result.host_submission_s = add_duration(result.host_submission_s, timings.host_submission);
+    result.device_submission_to_kernel_s = add_duration(
+        result.device_submission_to_kernel_s,
+        timings.device_submission_to_kernel,
+    );
+    result.phase_timing_note.clear();
+}
+
+fn add_duration(total: Option<f64>, duration: std::time::Duration) -> Option<f64> {
+    Some(total.unwrap_or(0.0) + duration.as_secs_f64())
 }
 
 /// Sample standard deviation, or `NaN` for fewer than two observations.
@@ -872,5 +951,109 @@ pub fn shuffle<T>(items: &mut [T], seed_root: u64) {
             }
         };
         items.swap(i, j as usize);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    fn example_result() -> CellResult {
+        CellResult {
+            q: 3,
+            n: 12,
+            backend: "gpu_hip",
+            outcome: Outcome::Measured,
+            note: String::new(),
+            batch_size: 256,
+            reps: 5,
+            matrices: 1_280,
+            zeros: 427,
+            total_s: 12.0,
+            gen_s: 1.0,
+            eval_s: 9.0,
+            reduce_s: 1.0,
+            store_s: 1.0,
+            kernel_device_s: Some(0.25),
+            h2d_device_s: Some(0.125),
+            d2h_device_s: Some(0.0625),
+            host_submission_s: Some(0.015625),
+            device_submission_to_kernel_s: Some(0.03125),
+            phase_timing_note: String::new(),
+            composite_rate: 106.666_666_666_7,
+            probe_matrix_s: f64::NAN,
+            projected_rate: f64::NAN,
+            projection_reference_n: 0,
+            timed_purpose: MeasurementPurpose::GridTimed,
+            timed_index_first: 42,
+            eval_rate: 142.222_222_222_2,
+            rep_min_s: 2.0,
+            rep_max_s: 3.0,
+            rep_sd_s: 0.5,
+            threads: 1,
+            pinned_core: "0".to_string(),
+            seed_root: 0xB488_F02C_0000_0001,
+            seed_index_first: 42,
+            cpu_mhz_mean: 3_600.0,
+            cpu_temp_c: 60.0,
+            gpu_temp_c: 70.0,
+            order_index: 2,
+        }
+    }
+
+    fn csv_fields(result: &CellResult) -> BTreeMap<&'static str, String> {
+        let header = CELL_CSV_HEADER.split(',');
+        let row = result.to_csv_row();
+        header.zip(row.split(',').map(str::to_string)).collect()
+    }
+
+    #[test]
+    fn cell_csv_schema_is_canonical() {
+        assert_eq!(
+            CELL_CSV_HEADER,
+            "q,n,backend,outcome,batch_size,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,kernel_device_s,h2d_device_s,d2h_device_s,host_submission_s,device_submission_to_kernel_s,phase_timing_note,probe_matrix_s,projected_matrices_per_s,projection_reference_n,timed_purpose,timed_index_first,rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_index_first,cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note"
+        );
+    }
+
+    #[test]
+    fn csv_keeps_phase_clocks_distinct_from_evaluation_wall_clock() {
+        let fields = csv_fields(&example_result());
+
+        assert_eq!(fields["eval_s"], "9.000000");
+        assert_eq!(fields["kernel_device_s"], "0.250000");
+        assert_eq!(fields["h2d_device_s"], "0.125000");
+        assert_eq!(fields["d2h_device_s"], "0.062500");
+        assert_eq!(fields["host_submission_s"], "0.015625");
+        assert_eq!(fields["device_submission_to_kernel_s"], "0.031250");
+        assert!(fields["phase_timing_note"].is_empty());
+        assert_ne!(fields["kernel_device_s"], fields["eval_s"]);
+    }
+
+    #[test]
+    fn unavailable_phase_measurements_are_blank_with_a_reason() {
+        let mut result = example_result();
+        result.backend = "cpu_scalar";
+        result.kernel_device_s = None;
+        result.h2d_device_s = None;
+        result.d2h_device_s = None;
+        result.host_submission_s = None;
+        result.device_submission_to_kernel_s = None;
+        result.phase_timing_note = "event timing unavailable: backend is not GPU/HIP".to_string();
+
+        let fields = csv_fields(&result);
+        for column in [
+            "kernel_device_s",
+            "h2d_device_s",
+            "d2h_device_s",
+            "host_submission_s",
+            "device_submission_to_kernel_s",
+        ] {
+            assert!(fields[column].is_empty(), "{column} must remain absent");
+        }
+        assert_eq!(
+            fields["phase_timing_note"],
+            "event timing unavailable: backend is not GPU/HIP"
+        );
     }
 }
