@@ -121,7 +121,7 @@ pub fn device_mem_info_for(device_id: i32) -> Result<(usize, usize), HipError> {
 /// multi-GPU host (design doc §7 seam). If `hipGetDevice` fails no switch is
 /// performed; if `hipSetDevice` fails the current device is unchanged, so the
 /// caller has nothing to restore.
-fn select_device(device_id: i32) -> Result<i32, HipError> {
+pub(crate) fn select_device(device_id: i32) -> Result<i32, HipError> {
     let mut prev: i32 = 0;
     // SAFETY: `&mut prev` is a valid out-pointer the runtime writes on success.
     let code = unsafe { ffi::hip_get_device(&mut prev) };
@@ -146,7 +146,7 @@ fn select_device(device_id: i32) -> Result<i32, HipError> {
 /// (`0` = success) so the caller can apply its own error precedence (the
 /// primary runtime call's failure should usually take precedence over a restore
 /// failure). Paired with [`select_device`].
-fn restore_device(prev: i32) -> i32 {
+pub(crate) fn restore_device(prev: i32) -> i32 {
     // SAFETY: `prev` was obtained from `hipGetDevice`, so it is a valid index.
     unsafe { ffi::hip_set_device(prev) }
 }
