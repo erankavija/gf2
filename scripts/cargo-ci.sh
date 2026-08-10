@@ -17,12 +17,34 @@ set -euo pipefail
 # every cargo build fans out to all cores, so K runs demand K×nproc — and
 # multiply peak RAM into swap, making the host and any interactive shell laggy.
 # That hurts especially here: the test step is a `--release` nextest run with
-# GPU/SIMD features, one of the heaviest builds on the machine. We re-exec under
+# GPU/SIMD features, one of the heaviest builds on the machine. We re-run under
 # a blocking flock so concurrent runs queue rather than fail; the lock is held
 # for the whole run and released on exit. CARGO_CI_LOCKED guards against
 # infinite re-exec; CARGO_CI_NO_LOCK=1 disables (e.g. an isolated CI container
 # that already owns the machine); CARGO_CI_BUILD_LOCK overrides the lock path —
-# set it to the same value in this and the jit repo to serialize host-wide.
+# set it to the same value in this and the jit repo to serialize host-wide;
+# CARGO_CI_LOCK_TIMEOUT bounds the wait.
+#
+# `flock -o` is load-bearing: it closes the lock descriptor in the child before
+# exec. Without it every descendant inherits the descriptor, and a descendant
+# that daemonises keeps holding the lock after this run exits — `sccache`
+# double-forks to PPID 1 and does exactly that — so the next caller blocks
+# forever against a run that finished long ago. Because the lock is host-wide,
+# a daemon leaked by either repository wedges the other one.
+#
+# The wait is bounded and announced. An unbounded silent block is
+# indistinguishable from a hung or dead process; `-E 75` separates "could not
+# acquire the lock" from the wrapped command's own exit status so the timeout
+# can name what it was waiting for.
+report_build_lock_holders() {
+  local lock="$1"
+  if command -v lslocks >/dev/null 2>&1; then
+    lslocks -o COMMAND,PID,MODE,PATH 2>/dev/null | awk -v lock="$lock" 'NR==1 || $NF==lock'
+  elif command -v fuser >/dev/null 2>&1; then
+    fuser -v "$lock" 2>&1
+  fi
+}
+
 if [ -z "${CARGO_CI_NO_LOCK:-}" ] && [ -z "${CARGO_CI_LOCKED:-}" ]; then
   # Host-wide by default, not per-repository: the jit checkout runs the same
   # wrapper, and a repository-scoped lock let the two build concurrently and
@@ -31,8 +53,23 @@ if [ -z "${CARGO_CI_NO_LOCK:-}" ] && [ -z "${CARGO_CI_LOCKED:-}" ]; then
   # same twelve pass in ~1.0 s each on an uncontended host. Agreed with the jit
   # execution lead as the shared default; override for an isolated host.
   BUILD_LOCK="${CARGO_CI_BUILD_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/cargo-ci.lock}"
+  LOCK_TIMEOUT="${CARGO_CI_LOCK_TIMEOUT:-1800}"
   if command -v flock >/dev/null 2>&1; then
-    exec env CARGO_CI_LOCKED=1 flock "$BUILD_LOCK" "$0" "$@"
+    if ! flock -n -o "$BUILD_LOCK" true 2>/dev/null; then
+      echo "cargo-ci: another build holds $BUILD_LOCK; waiting up to ${LOCK_TIMEOUT}s" >&2
+      report_build_lock_holders "$BUILD_LOCK" >&2
+    fi
+    lock_status=0
+    env CARGO_CI_LOCKED=1 flock -o -w "$LOCK_TIMEOUT" -E 75 "$BUILD_LOCK" "$0" "$@" ||
+      lock_status=$?
+    if [ "$lock_status" -eq 75 ]; then
+      echo "ERROR: cargo-ci: timed out after ${LOCK_TIMEOUT}s waiting for $BUILD_LOCK" >&2
+      report_build_lock_holders "$BUILD_LOCK" >&2
+      echo "       A holder with PPID 1 and no live cargo/rustc is a leaked daemon," >&2
+      echo "       not a running build; stop it (e.g. sccache --stop-server) and retry." >&2
+      exit 2
+    fi
+    exit "$lock_status"
   fi
   echo "cargo-ci: flock not found; running without host-wide build lock" >&2
 fi
