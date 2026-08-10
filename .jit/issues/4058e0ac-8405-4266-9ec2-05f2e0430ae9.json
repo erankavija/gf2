@@ -6,14 +6,26 @@
   "dependencies": [
     "d1b6a182-ffcd-4efb-b4da-73331c63a699"
   ],
-  "description": "The two exact binomial tests the campaign's acceptance decisions rest on, with a result interface that stays correct where an exact tail underflows double precision.\n\n## Background\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$, so a test evaluated there is valid against the whole null. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial observations of a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered per-cell level of order $10^{-4}$ sits far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a result from the binomial distribution, matching a brute-force sum over the probability mass function for $N \\le 200$.\n- [hard] REQ-02: A two-sided exact binomial test against a caller-supplied exact probability returns a result under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-03: The result interface reports on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision.\n- [hard] REQ-04: A test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero, for counts on both sides of the threshold.\n- [hard] REQ-05: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-06: Documentation states that normal-approximation critical values are planning approximations for sizing, and that acceptance decisions use these exact tests.\n\n## Notes\n\nThe tests take counts and a null value, so the same entry points serve a running campaign and a later reanalysis of a published dataset.",
+  "description": "The two exact binomial tests the campaign's acceptance decisions rest on, with a result interface that stays correct where an exact tail underflows double precision.\n\n## Background\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$, so a test evaluated there is valid against the whole null. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial observations of a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered per-cell level of order $10^{-4}$ sits far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a result from the binomial distribution, matching a brute-force sum over the probability mass function for $N \\le 200$.\n- [hard] REQ-02: A two-sided exact binomial test against a caller-supplied exact probability returns a result under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-03: The result interface reports on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision.\n- [hard] REQ-04: A test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero, for counts on both sides of the threshold.\n- [hard] REQ-05: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-06: Documentation states that normal-approximation critical values are planning approximations for sizing, and that acceptance decisions use these exact tests.\n\n## Notes\n\nThe tests take counts and a null value, so the same entry points serve a running campaign and a later reanalysis of a published dataset.\n\n## Completion Note\n\nDelivered in commits `42d0fd65` and `2e02d9d4`. `gf2-stats` now provides lower-tail composite-floor and probability-ordering two-sided exact binomial tests, log-scale results with a literal closed threshold comparison, and a global Bonferroni allocator. Independent small-count PMF sums agree, degenerate boundaries are explicit, symmetric p=0.5 ties are preserved, and the 20,000,000-trial underflow case returns finite log statistics on both decision sides in 0.038 seconds. The shared numerical helper pins log-Gamma at 1 and 2 exactly so the elementary p=0.5 equality contract needs no epsilon. Release tests, doctests, workspace all-features Clippy, repository CI, and holistic code review pass.",
   "documents": [],
+  "done_at": "2026-08-10T11:38:03.348183944Z",
   "first_ready_at": "2026-08-10T06:34:32.816785991Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T11:34:48.841574226Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T11:37:44.474306114Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "4058e0ac-8405-4266-9ec2-05f2e0430ae9",
   "labels": [
     "type:task",
@@ -23,7 +35,7 @@
     "cites:HKS2026"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Preregistered exact binomial tests for campaign cells",
-  "updated_at": "2026-08-10T09:31:58.304174298Z"
+  "updated_at": "2026-08-10T11:38:03.348183944Z"
 }

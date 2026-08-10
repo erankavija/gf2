@@ -8045,3 +8045,10 @@
 {"from":"backlog","id":"412b1ff4-4e08-4846-bfeb-edaa33283c7d","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-10T11:15:04.872139759Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"4baefdeb-9fd0-4512-b9b1-9f69ec64f942","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-10T11:15:10.729787865Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"98b90452-1355-4ca7-831d-c274924f0313","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-10T11:15:16.563027494Z","to":"ready","type":"issue_state_changed"}
+{"gate_key":"cargo-ci","id":"ea561e46-d833-4c98-bdf5-f042fc7df644","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:24:18.672027523Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"8f6f577b-2009-42b9-99bf-4d0a44168e2e","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:34:48.841574226Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"ab7ba4df-c407-4a2f-9be0-8cb6b28ad627","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:37:44.474306114Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"cfb744ae-fbe8-4ce8-9d08-76bc569e247f","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:38:03.348183944Z","to":"done","type":"issue_state_changed"}
+{"id":"865b3fe5-c8a6-44f8-af58-c5d91ecf4e0c","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:38:03.348183944Z","type":"issue_completed"}
+{"fields":["description"],"id":"c367a0c6-4675-4b47-883d-72790c8a554a","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T11:38:03.348183944Z","type":"issue_updated","updated_by":"issue-update"}
+{"from":"backlog","id":"1feea9e6-cfa9-4397-b3ac-78fbd74ed499","issue_id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","timestamp":"2026-08-10T11:38:09.250622343Z","to":"ready","type":"issue_state_changed"}
