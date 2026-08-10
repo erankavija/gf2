@@ -281,7 +281,7 @@ fn largest_left_mass_at_most(
     let mut lower = 0;
     let mut upper = lower_mode;
     while lower < upper {
-        let midpoint = lower + (upper - lower + 1) / 2;
+        let midpoint = lower + (upper - lower).div_ceil(2);
         if log_binomial_probability(midpoint, trials, probability) <= observed_log_mass {
             lower = midpoint;
         } else {
