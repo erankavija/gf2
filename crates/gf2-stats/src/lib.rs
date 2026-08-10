@@ -7,5 +7,8 @@
 
 #![deny(unsafe_code)]
 
+pub mod binomial;
 pub mod intervals;
 pub mod sampler;
+
+mod numerics;
