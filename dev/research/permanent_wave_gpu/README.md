@@ -51,6 +51,23 @@ permanent kernel: the host fixture corpus remains the evidence for permanent
 equality at orders 16, 20, and 24, and `cc162697` owns permanent-shaped device
 paths.
 
+### Device arithmetic receipt — 2026-08-10
+
+This non-performance conformance run was made from clean implementation commit
+`df5a51f6` (`fix(jit:7b998fb9): add device arithmetic conformance`) on an AMD
+Radeon RX 6950 XT (`gfx1030`, UUID `GPU-8cd14d6d8a3c8a73`) with ROCm HIP
+`7.2.53211-9999` and AMD clang `22.0.0git`. The command was:
+
+```sh
+cargo +1.95.0 test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --test hip_f7_three_plane -- --nocapture
+```
+
+It passed `device_f7_three_plane_arithmetic_is_exact`: release build 2.56 s,
+device test 0.06 s, command wall time 2.64 s. The result confirms device
+arithmetic only; it neither measures performance nor claims a device permanent
+implementation.
+
 The candidate list is deliberately complete from the first commit and is
 authoritatively defined by `MeasurementPath::ALL`. Add a candidate
 implementation only by replacing its stub in the owning candidate module and
