@@ -191,6 +191,14 @@ fn capped_before_minimums(reps: usize, wall_s: f64) -> bool {
     wall_s >= MAX_CELL_SECONDS && !(reps >= MIN_REPS && wall_s >= MIN_TIMED_SECONDS)
 }
 
+/// Explain why the canonical cap leaves a derived measurement unavailable.
+#[must_use]
+pub(crate) fn capped_before_minimums_note(unavailable_measurement: &str) -> String {
+    format!(
+        "unavailable: {MAX_CELL_SECONDS:.0} s cap ended timing before both minimums ({MIN_REPS} repetitions and {MIN_TIMED_SECONDS:.0} s); {unavailable_measurement}"
+    )
+}
+
 /// How a cell finished.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -783,17 +791,33 @@ from it, and the cell carries no rate"
     debug_assert_eq!(result.reps, policy.reps);
 
     result.total_s = rep_totals.iter().sum();
+    result.rep_min_s = rep_totals.iter().copied().fold(f64::INFINITY, f64::min);
+    result.rep_max_s = rep_totals.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    result.rep_sd_s = sample_sd(&rep_totals);
+    if policy.capped_before_minimums {
+        censor_capped_cell(&mut result);
+        return result;
+    }
+
+    result.outcome = Outcome::Measured;
     // Rates come from summed time over summed matrices, never from averaging
     // per-repetition rates: the mean of reciprocals is not the reciprocal of
     // the mean.
     result.composite_rate = result.matrices as f64 / result.total_s;
     result.eval_rate = result.matrices as f64 / result.eval_s;
-    result.rep_min_s = rep_totals.iter().copied().fold(f64::INFINITY, f64::min);
-    result.rep_max_s = rep_totals.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    result.rep_sd_s = sample_sd(&rep_totals);
-    result.outcome = Outcome::Measured;
     record_rate(rates, q, backend, batch_key, n, result.composite_rate);
     result
+}
+
+/// Censor a post-execution cell that did not complete the canonical minimums.
+///
+/// Raw aggregate spans remain diagnostic CSV fields, but no derived rate is
+/// reportable or eligible as a projection reference.
+fn censor_capped_cell(result: &mut CellResult) {
+    result.outcome = Outcome::Censored;
+    result.composite_rate = f64::NAN;
+    result.eval_rate = f64::NAN;
+    result.note = capped_before_minimums_note("no derived rate is reported");
 }
 
 /// Accumulate the independent timings from each event-instrumented GPU
@@ -1201,6 +1225,22 @@ values came from synchronous gpu_hip dispatch";
         assert!(capped_before_minimums(MIN_REPS - 1, MAX_CELL_SECONDS));
         assert!(!capped_before_minimums(MIN_REPS, MAX_CELL_SECONDS));
         assert!(!capped_before_minimums(MIN_REPS, MIN_TIMED_SECONDS));
+    }
+
+    #[test]
+    fn capped_cell_keeps_raw_spans_but_has_no_derived_rate() {
+        let mut result = example_result();
+        censor_capped_cell(&mut result);
+
+        assert_eq!(result.outcome, Outcome::Censored);
+        assert!(result.composite_rate.is_nan());
+        assert!(result.eval_rate.is_nan());
+        assert_eq!(result.total_s, 12.0);
+        assert_eq!(result.eval_s, 9.0);
+        assert!(result
+            .note
+            .contains("cap ended timing before both minimums"));
+        assert!(result.note.contains("no derived rate is reported"));
     }
 
     #[test]

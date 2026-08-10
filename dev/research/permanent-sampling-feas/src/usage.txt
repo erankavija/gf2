@@ -39,7 +39,7 @@ SUBCOMMANDS
                  --steps N         chained add/subtracts per repetition
                                    (default 1000001; must be nonzero)
                Output reports `net_per_operation_s` as `(update - compiler-barrier
-               baseline) / steps` across the timed repetitions; a nonpositive
+               baseline) / (steps * reps)` across the timed repetitions; a nonpositive
                subtraction is explicit and has no reported net duration.
                Native representations are explicit: F_3 CPU/HIP uses Bipedal3
                two-plane packing; F_5/F_7 CPU uses packed arithmetic, while
