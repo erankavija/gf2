@@ -117,7 +117,7 @@ fn cmd_gray_update(args: &[String]) {
         "shape: one accumulator reads its immediately preceding add/subtract result; this is a latency chain, not independent-operation throughput".to_string(),
         "representation: F_3 CPU/HIP rows use the Bipedal3 two-plane packed add/subtract; F_5/F_7 CPU rows use their packed representations, while F_5/F_7 HIP rows use the shipped byte controls until their registered packed prototypes land.".to_string(),
         "duration: net_per_operation_s = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps). CPU rows use paired host spans; HIP rows use paired device-event kernel spans. Both exclude sampler construction and the surrounding host policy loop; HIP rows also exclude allocation, transfer, and submission.".to_string(),
-        "censoring: this constant-work shape has no Ryser work-model projection. Any future censored row must state its pre-execution reason and carries no duration.".to_string(),
+        "censoring: this constant-work shape has no Ryser work-model projection. Unsupported rows did not execute and have no paired spans; post-execution capped or nonpositive-net censored rows retain diagnostic paired spans but leave net_per_operation_s absent.".to_string(),
     ];
     let mut writer = open_csv(&path, &host, GRAY_UPDATE_CSV_HEADER, &notes);
     let fields: Box<dyn Iterator<Item = u64>> = match q {
