@@ -169,25 +169,11 @@ fn permanent_wave_gf3(fixture: &Fixture) -> Fp<3> {
 
     let columns = packed_columns(fixture);
     let partition = partition_for_order(n);
-    evaluate_partitioned(
-        &columns,
-        n,
-        partition,
-        WaveOps {
-            packed_zero: <Bipedal3 as PackedField<Fp<3>>>::zero(),
-            scalar_zero: Fp::<3>::new(0),
-            packed_add: bipedal3_add,
-            packed_sub: bipedal3_sub,
-            product: bipedal3_product,
-            scalar_add: fp3_add,
-            scalar_sub: fp3_sub,
-            scalar_neg: fp3_neg,
-        },
-    )
+    evaluate_partitioned(&columns, n, partition, f3_wave_ops(bipedal3_product))
 }
 
 #[cfg(feature = "fixture-oracle")]
-fn packed_columns(fixture: &Fixture) -> Vec<Bipedal3> {
+pub(crate) fn packed_columns(fixture: &Fixture) -> Vec<Bipedal3> {
     let n = fixture.n();
     (0..n)
         .map(|column| {
@@ -201,6 +187,23 @@ fn packed_columns(fixture: &Fixture) -> Vec<Bipedal3> {
             packed
         })
         .collect()
+}
+
+/// Bind F_3's existing packed add/subtract and scalar operations to the
+/// reusable wave mapping while allowing a candidate to supply only its local
+/// horizontal-product fold.
+#[cfg(feature = "fixture-oracle")]
+pub(crate) fn f3_wave_ops(product: fn(Bipedal3, usize) -> Fp<3>) -> WaveOps<Bipedal3, Fp<3>> {
+    WaveOps {
+        packed_zero: <Bipedal3 as PackedField<Fp<3>>>::zero(),
+        scalar_zero: Fp::<3>::new(0),
+        packed_add: bipedal3_add,
+        packed_sub: bipedal3_sub,
+        product,
+        scalar_add: fp3_add,
+        scalar_sub: fp3_sub,
+        scalar_neg: fp3_neg,
+    }
 }
 
 pub(crate) fn evaluate_partitioned<P, Scalar>(

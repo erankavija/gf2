@@ -20,7 +20,9 @@ fn every_planned_path_is_addressable_with_explicit_status() {
     for path in MeasurementPath::ALL {
         if matches!(
             path,
-            MeasurementPath::WaveGf3 | MeasurementPath::F7ThreePlaneAccumulator
+            MeasurementPath::WaveGf3
+                | MeasurementPath::FoldGf3
+                | MeasurementPath::F7ThreePlaneAccumulator
         ) {
             path.dispatch()
                 .expect("each landed candidate must be dispatchable");
