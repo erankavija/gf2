@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "campaign_id": "valid-completed-and-halted",
+  "root_seed": 17,
+  "stream_purposes": [{"name": "fixture", "tag": 0}],
+  "cells": [
+    {
+      "q": 3,
+      "n": 4,
+      "matrix_count": 10,
+      "shard_size": 10,
+      "shards": [{"shard_id": 0, "stream_index": 0}],
+      "backend": "scalar",
+      "backend_receipt": {"path": "dev/reference_data/fixture", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+      "determinant_companion": "not_evaluated"
+    },
+    {
+      "q": 5,
+      "n": 4,
+      "matrix_count": 20,
+      "shard_size": 10,
+      "shards": [{"shard_id": 0, "stream_index": 0}, {"shard_id": 1, "stream_index": 1}],
+      "backend": "scalar",
+      "backend_receipt": {"path": "dev/reference_data/fixture", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+      "determinant_companion": "not_evaluated"
+    }
+  ],
+  "provenance": {"git_revision": "0000000000000000000000000000000000000000", "compiler_version": "fixture", "rng_algorithm": "chacha20", "rng_version": "fixture", "invocation": ["fixture"], "cpu_model": "fixture", "accelerator_runtime": {"state": "not_present"}, "gpu_model": {"state": "not_present"}}
+}

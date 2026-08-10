@@ -1,0 +1,1 @@
+{"schema_version":1,"shard_id":1,"stream_address":{"root_seed":17,"q":5,"n":4,"purpose_tag":0,"stream_index":1},"matrix_count":10,"permanent_zero_count":2,"permanent_histogram":[2,2,2,2,2],"determinant":{"state":"not_evaluated"}}

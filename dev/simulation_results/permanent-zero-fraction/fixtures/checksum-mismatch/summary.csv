@@ -1,0 +1,2 @@
+schema_version,q,n,matrix_count,permanent_zero_count,permanent_point_estimate,permanent_interval_lower,permanent_interval_upper,permanent_verdict,determinant_state,determinant_sample_count,determinant_zero_count,determinant_point_estimate,determinant_interval_lower,determinant_interval_upper,determinant_verdict,terminal_state,halt_reason
+1,3,4,10,4,0.4,0.3,0.5,accepted,not_evaluated,,,,,,,completed,
