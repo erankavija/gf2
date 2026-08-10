@@ -155,18 +155,22 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
     }
 
     let mut spans = Vec::new();
-    let policy = run_timed_repetitions(
+    let policy = match run_timed_repetitions(
         spec.seed_index,
         |index| {
             let purpose =
                 scheduled_backend(spec.backend, SchedulePhase::GrayUpdateWarmup).purpose();
-            let _ = one_repetition(spec, purpose, index);
+            one_repetition(spec, purpose, index).map(|_| ())
         },
-        || {},
-        |index| {
-            spans.push(one_repetition(spec, timed_purpose, index));
-        },
-    );
+        || Ok(()),
+        |index| one_repetition(spec, timed_purpose, index).map(|span| spans.push(span)),
+    ) {
+        Ok(policy) => policy,
+        Err(GrayUpdateUnavailable(reason)) => {
+            result.note = reason;
+            return result;
+        }
+    };
     result.reps = policy.reps;
     let update_s: f64 = spans.iter().map(|span| span.update_s).sum();
     let compiler_barrier_baseline_s: f64 = spans
@@ -262,6 +266,13 @@ struct RepetitionSpans {
     compiler_barrier_baseline_s: f64,
 }
 
+/// An event-timed GPU evaluation that the harness cannot perform safely.
+///
+/// The row remains explicit rather than substituting a CPU or host-clock
+/// duration for a device-event measurement.
+#[derive(Debug)]
+struct GrayUpdateUnavailable(String);
+
 fn net_per_operation(
     update_s: f64,
     compiler_barrier_baseline_s: f64,
@@ -276,14 +287,26 @@ fn one_repetition(
     spec: GrayUpdateSpec,
     purpose: MeasurementPurpose,
     index: u64,
-) -> RepetitionSpans {
+) -> Result<RepetitionSpans, GrayUpdateUnavailable> {
     let mut sampler = MatrixSampler::new(spec.seed_root, spec.q, spec.n, purpose, index);
     match spec.backend {
         Backend::Scalar => match spec.q {
-            3 => packed_repetition::<Bipedal3, 3>(&mut sampler, spec.n, spec.steps),
-            5 => packed_repetition::<Packed5, 5>(&mut sampler, spec.n, spec.steps),
+            3 => Ok(packed_repetition::<Bipedal3, 3>(
+                &mut sampler,
+                spec.n,
+                spec.steps,
+            )),
+            5 => Ok(packed_repetition::<Packed5, 5>(
+                &mut sampler,
+                spec.n,
+                spec.steps,
+            )),
             7 if spec.n <= <Packed7 as PackedField<Fp<7>>>::LANES => {
-                packed_repetition::<Packed7, 7>(&mut sampler, spec.n, spec.steps)
+                Ok(packed_repetition::<Packed7, 7>(
+                    &mut sampler,
+                    spec.n,
+                    spec.steps,
+                ))
             }
             7 => unreachable!("support must reject Packed7 rows above its lane bound"),
             _ => unreachable!("support must reject unknown field orders"),
@@ -350,7 +373,12 @@ where
 }
 
 #[cfg(feature = "hip")]
-fn gpu_repetition(sampler: &mut MatrixSampler, q: u64, n: usize, steps: u64) -> RepetitionSpans {
+fn gpu_repetition(
+    sampler: &mut MatrixSampler,
+    q: u64,
+    n: usize,
+    steps: u64,
+) -> Result<RepetitionSpans, GrayUpdateUnavailable> {
     use gf2_kernels_hip::permanent::{
         measure_gray_update_kernel, GrayUpdateChecksum, GrayUpdateOperand, PermanentField,
     };
@@ -398,15 +426,49 @@ fn gpu_repetition(sampler: &mut MatrixSampler, q: u64, n: usize, steps: u64) -> 
         7 => PermanentField::F7,
         _ => unreachable!("support must reject unknown field orders"),
     };
-    let timings = measure_gray_update_kernel(field, operand, steps)
-        .unwrap_or_else(|error| panic!("event-timed Gray-update kernel failed: {error}"));
+    let timings = match measure_gray_update_kernel(field, operand, steps) {
+        Ok(timings) => timings,
+        Err(error) => match gray_update_unavailable_reason(&error) {
+            Some(reason) => return Err(GrayUpdateUnavailable(reason)),
+            None => panic!("fatal event-timed Gray-update kernel failure: {error}"),
+        },
+    };
     assert_eq!(
         timings.update_checksum, expected_checksum,
         "the device Gray-update chain must produce its sampled odd/even final state"
     );
-    RepetitionSpans {
+    Ok(RepetitionSpans {
         update_s: timings.update.as_secs_f64(),
         compiler_barrier_baseline_s: timings.compiler_barrier_baseline.as_secs_f64(),
+    })
+}
+
+/// Classify failures which leave this row without a valid device-event span.
+///
+/// This is an output policy, not a CPU fallback: a missing device, resource,
+/// or timing boundary stays an explicit unsupported row. Kernel launch,
+/// synchronization, transfer, blob-load, and checksum failures are correctness
+/// failures and therefore remain fatal to the command.
+#[cfg(feature = "hip")]
+fn gray_update_unavailable_reason(error: &gf2_kernels_hip::HipError) -> Option<String> {
+    use gf2_kernels_hip::HipError;
+
+    match error {
+        HipError::OutOfMemory { .. }
+        | HipError::Hip { code: 2, .. } => Some(format!(
+            "unavailable: GPU resource failure prevents event-timed Gray-update evaluation: {error}"
+        )),
+        HipError::NoDevice | HipError::UnsupportedArch { .. }
+        | HipError::Hip {
+            code: 100 | 101,
+            context: "hipGetDevice",
+        } => Some(format!(
+            "unsupported: device unavailable for this event-timed GPU cell; no CPU fallback or host timing was substituted: {error}"
+        )),
+        HipError::Hip { context, .. } if context.starts_with("hipEvent") => Some(format!(
+            "unavailable: GPU event instrumentation failed; no host timing was substituted: {error}"
+        )),
+        HipError::Hip { .. } | HipError::BlobLoad { .. } => None,
     }
 }
 
@@ -430,7 +492,12 @@ fn bipedal3_raw_chain(column_mag: u64, column_sgn: u64, steps: u64) -> (u64, u64
 }
 
 #[cfg(not(feature = "hip"))]
-fn gpu_repetition(_: &mut MatrixSampler, _: u64, _: usize, _: u64) -> RepetitionSpans {
+fn gpu_repetition(
+    _: &mut MatrixSampler,
+    _: u64,
+    _: usize,
+    _: u64,
+) -> Result<RepetitionSpans, GrayUpdateUnavailable> {
     unreachable!("support rejects GPU when the hip feature is disabled")
 }
 
@@ -528,6 +595,61 @@ mod tests {
         })
         .expect_err("F_7 packed micro-update has only sixteen lanes");
         assert!(reason.contains("16 lanes"));
+    }
+
+    #[cfg(feature = "hip")]
+    #[test]
+    fn gpu_resource_capability_and_event_failures_remain_explicit_rows() {
+        use gf2_kernels_hip::HipError;
+
+        let out_of_memory = gray_update_unavailable_reason(&HipError::OutOfMemory {
+            device_id: 0,
+            bytes_requested: 4096,
+        })
+        .expect("typed out-of-memory is unavailable, not a panic");
+        assert!(out_of_memory.contains("resource failure"));
+
+        let raw_out_of_memory = gray_update_unavailable_reason(&HipError::Hip {
+            code: 2,
+            context: "hipMalloc",
+        })
+        .expect("raw HIP out-of-memory is unavailable, not a panic");
+        assert!(raw_out_of_memory.contains("resource failure"));
+
+        let no_device = gray_update_unavailable_reason(&HipError::NoDevice)
+            .expect("a missing device is an explicit unsupported cell");
+        assert!(no_device.contains("device unavailable"));
+        assert!(no_device.contains("no CPU fallback or host timing was substituted"));
+
+        let unsupported_arch = gray_update_unavailable_reason(&HipError::UnsupportedArch {
+            gcn_arch_name: "gfx999".to_string(),
+        })
+        .expect("unsupported architecture is an explicit unsupported cell");
+        assert!(unsupported_arch.contains("device unavailable"));
+
+        let event_failure = gray_update_unavailable_reason(&HipError::Hip {
+            code: 700,
+            context: "hipEventElapsedTime",
+        })
+        .expect("event instrumentation failure is unavailable, not a panic");
+        assert!(event_failure.contains("event instrumentation failed"));
+        assert!(event_failure.contains("no host timing was substituted"));
+
+        assert!(gray_update_unavailable_reason(&HipError::Hip {
+            code: 700,
+            context: "launch_gray_update_micro",
+        })
+        .is_none());
+        assert!(gray_update_unavailable_reason(&HipError::Hip {
+            code: 700,
+            context: "hipStreamSynchronize",
+        })
+        .is_none());
+        assert!(gray_update_unavailable_reason(&HipError::BlobLoad {
+            path: std::path::PathBuf::from("missing.co"),
+            source: "missing".to_string(),
+        })
+        .is_none());
     }
 
     #[cfg(feature = "prototype-registry")]
