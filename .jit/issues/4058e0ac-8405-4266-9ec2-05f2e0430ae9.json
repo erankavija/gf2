@@ -7,6 +7,7 @@
   ],
   "description": "The two exact binomial tests the campaign's acceptance decisions rest on, with a result interface that stays correct where an exact tail underflows double precision.\n\n## Background\n\nThe campaign's acceptance decisions rest on two nulls known exactly rather than approximately. The permanent floor $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ is a composite null whose worst case is $p = 1/q$, so a test evaluated there is valid against the whole null. The determinant companion is pinned at the exact finite-$n$ value $1 - \\prod_{i=1}^{n}(1 - q^{-i})$. Both are binomial observations of a count out of a fixed $N$, so both admit an exact $p$-value; the normal-approximation critical values that appear in planning arithmetic ($z = 3.16$ one-sided, $z = 3.36$ two-sided at a family of $63$ cells) are sizing tools, not decision rules.\n\nExactness has a numerical consequence the interface must face rather than hide. At $N = 2 \\times 10^{7}$ a preregistered per-cell level of order $10^{-4}$ sits far out in the distribution, and the exact tail sum legitimately underflows double precision. An interface returning a plain probability silently reports zero there, which is indistinguishable from a catastrophic disagreement and equally indistinguishable from a bug.\n\n## Success Criteria\n\n- [hard] REQ-01: A one-sided exact binomial test of the composite null $\\Pr[\\mathrm{per}(A) = 0] \\ge 1/q$ evaluates the null at its worst case $p = 1/q$ and returns a result from the binomial distribution, matching a brute-force sum over the probability mass function for $N \\le 200$.\n- [hard] REQ-02: A two-sided exact binomial test against a caller-supplied exact probability returns a result under a stated and documented two-sided convention, matching a brute-force sum for $N \\le 200$.\n- [hard] REQ-03: The result interface reports on a log scale, or as a direct comparison against a caller-supplied threshold, so a decision stays correct where the exact tail underflows double precision.\n- [hard] REQ-04: A test at $N = 2 \\times 10^{7}$ with a preregistered per-cell level returns a decision and a finite log-scale statistic rather than a probability that has flushed to zero, for counts on both sides of the threshold.\n- [hard] REQ-05: A level-allocation helper divides a caller-supplied error budget across a caller-supplied number of tests and returns the per-test level, documented so one global budget can be split across more than one test family.\n- [hard] REQ-06: Documentation states that normal-approximation critical values are planning approximations for sizing, and that acceptance decisions use these exact tests.\n\n## Notes\n\nThe tests take counts and a null value, so the same entry points serve a running campaign and a later reanalysis of a published dataset.",
   "documents": [],
+  "first_ready_at": "2026-08-10T06:34:32.816785991Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -21,7 +22,7 @@
     "cites:HKS2026"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Preregistered exact binomial tests for campaign cells",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-10T06:34:32.816785991Z"
 }
