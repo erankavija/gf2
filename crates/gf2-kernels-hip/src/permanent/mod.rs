@@ -1173,8 +1173,9 @@ pub unsafe fn launch_permanent_batch_instrumented_on_stream(
     out_ptr: *mut u64,
     stream: &HipStream,
 ) -> Result<InstrumentedPermanentLaunch, HipError> {
-    let submission_marker = HipEvent::new()?;
-    let kernel = HipEventSpan::new()?;
+    let event_device = stream.device_id();
+    let submission_marker = HipEvent::new_on_device(event_device)?;
+    let kernel = HipEventSpan::new_on_device(event_device)?;
 
     // The pre-submit marker is ordered on the caller stream before starting
     // the host clock. The C++ wrapper records `kernel`'s start event itself,
@@ -1399,7 +1400,7 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
     // can be released.
     let mut drain_on_error = StreamDrainOnError::new(stream);
 
-    let h2d = HipEventSpan::new()?;
+    let h2d = HipEventSpan::new_on_device(device_id)?;
     h2d.record_start(stream)?;
     // Arm before the HIP submission: even an unusual runtime error reported by
     // the async-copy call itself cannot leave queued work referring to storage
@@ -1423,7 +1424,7 @@ pub fn dispatch_permanent_batch_instrumented<'a>(
         )
     }?;
 
-    let d2h = HipEventSpan::new()?;
+    let d2h = HipEventSpan::new_on_device(device_id)?;
     d2h.record_start(stream)?;
     output.copy_to_pinned_async(&mut output_staging, stream)?;
     d2h.record_stop(stream)?;
