@@ -1,7 +1,7 @@
 {
   "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
   "epic_short_id": "b8206228",
-  "current_wave": 4,
+  "current_wave": 5,
   "waves": [
     {
       "wave_number": 1,
@@ -159,21 +159,21 @@
           "short_id": "ddd0c6ee",
           "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
           "classification": "research",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "6d0ff83c-8355-40e3-819d-3eca22501bf7",
           "short_id": "6d0ff83c",
           "title": "Deterministic fixture corpus with CPU-oracle equivalence checking",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83",
           "short_id": "e02ee7ce",
           "title": "Per-phase timing columns in the harness cell record",
           "classification": "implementation",
-          "status": "pending"
+          "status": "completed"
         }
       ]
     },
