@@ -22,6 +22,10 @@ pub enum SchedulePhase {
     GrayUpdateWarmup,
     /// Timed repetitions for the dependency-chained Gray-update mode.
     GrayUpdateTimed,
+    /// Untimed repetitions for the horizontal-product micro-measurement mode.
+    HorizontalProductWarmup,
+    /// Timed repetitions for the horizontal-product micro-measurement mode.
+    HorizontalProductTimed,
     /// Long-running throughput observation.
     Sustained,
 }
@@ -35,6 +39,8 @@ impl SchedulePhase {
             Self::GridTimed => MeasurementPurpose::GridTimed,
             Self::GrayUpdateWarmup => MeasurementPurpose::GrayUpdateWarmup,
             Self::GrayUpdateTimed => MeasurementPurpose::GrayUpdateTimed,
+            Self::HorizontalProductWarmup => MeasurementPurpose::HorizontalProductWarmup,
+            Self::HorizontalProductTimed => MeasurementPurpose::HorizontalProductTimed,
             Self::Sustained => MeasurementPurpose::Sustained,
         }
     }
@@ -121,6 +127,14 @@ mod tests {
             (
                 SchedulePhase::GrayUpdateTimed,
                 MeasurementPurpose::GrayUpdateTimed,
+            ),
+            (
+                SchedulePhase::HorizontalProductWarmup,
+                MeasurementPurpose::HorizontalProductWarmup,
+            ),
+            (
+                SchedulePhase::HorizontalProductTimed,
+                MeasurementPurpose::HorizontalProductTimed,
             ),
             (SchedulePhase::Sustained, MeasurementPurpose::Sustained),
         ];
