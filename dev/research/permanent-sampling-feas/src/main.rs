@@ -334,18 +334,16 @@ fn cmd_grid(args: &[String]) {
             .unwrap_or_else(|message| panic!("{message}"));
     }
 
-    let execution_index_first = execution_index_base(options.execution_id, 0)
-        .unwrap_or_else(|message| panic!("{message}"));
-    let execution_index_last = execution_index_base(
-        options.execution_id,
-        GRID_SPECS_PER_EXECUTION - 1,
-    )
-    .and_then(|first| {
-        first
-            .checked_add(INDICES_PER_CELL - 1)
-            .ok_or_else(|| "execution index range overflows u64".to_string())
-    })
-    .unwrap_or_else(|message| panic!("{message}"));
+    let execution_index_first =
+        execution_index_base(options.execution_id, 0).unwrap_or_else(|message| panic!("{message}"));
+    let execution_index_last =
+        execution_index_base(options.execution_id, GRID_SPECS_PER_EXECUTION - 1)
+            .and_then(|first| {
+                first
+                    .checked_add(INDICES_PER_CELL - 1)
+                    .ok_or_else(|| "execution index range overflows u64".to_string())
+            })
+            .unwrap_or_else(|message| panic!("{message}"));
 
     let notes = vec![
         format!(
@@ -921,11 +919,8 @@ mod cli_tests {
     #[test]
     fn exact_gpu_batch_filter_selects_only_m1024() {
         let mut specs = grid_specs();
-        filter_specs(
-            &mut specs,
-            "q=3,n=28,backend=gpu_hip,batch_size=1024",
-        )
-        .expect("valid exact filter");
+        filter_specs(&mut specs, "q=3,n=28,backend=gpu_hip,batch_size=1024")
+            .expect("valid exact filter");
 
         assert_eq!(specs.len(), 1);
         assert_eq!(specs[0].q, 3);
@@ -938,8 +933,7 @@ mod cli_tests {
     fn execution_index_ranges_are_disjoint_and_checked() {
         let execution_0_last = execution_index_base(0, GRID_SPECS_PER_EXECUTION - 1)
             .expect("last cell in execution zero");
-        let execution_1_first =
-            execution_index_base(1, 0).expect("first cell in execution one");
+        let execution_1_first = execution_index_base(1, 0).expect("first cell in execution one");
 
         assert_eq!(execution_0_last + INDICES_PER_CELL, execution_1_first);
         assert!(execution_index_base(0, GRID_SPECS_PER_EXECUTION).is_err());

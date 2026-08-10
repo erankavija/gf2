@@ -250,13 +250,7 @@ impl MatrixSampler {
     /// only ever calls [`MatrixSampler::next_raw_byte`], which has no domain
     /// restriction.
     #[must_use]
-    pub fn new(
-        root: u64,
-        q: u64,
-        n: usize,
-        purpose: MeasurementPurpose,
-        index: u64,
-    ) -> Self {
+    pub fn new(root: u64, q: u64, n: usize, purpose: MeasurementPurpose, index: u64) -> Self {
         Self {
             rng: ChaCha20Rng::from_seed(derive_seed(root, q, n, purpose, index)),
             buf: vec![0u8; REFILL_BYTES],
@@ -421,10 +415,12 @@ mod tests {
                 purpose: MeasurementPurpose::GridTimed,
                 index: 17,
                 seed: [
-                    1, 0, 0, 0, 44, 240, 136, 180, 3, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0,
-                    0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 4, 0,
+                    1, 0, 0, 0, 44, 240, 136, 180, 3, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0,
+                    17, 0, 0, 0, 0, 0, 4, 0,
                 ],
-                prefix: [5, 140, 88, 65, 91, 196, 180, 169, 111, 127, 20, 24, 233, 97, 88, 43],
+                prefix: [
+                    5, 140, 88, 65, 91, 196, 180, 169, 111, 127, 20, 24, 233, 97, 88, 43,
+                ],
             },
             Golden {
                 root: 0,
@@ -433,10 +429,12 @@ mod tests {
                 purpose: MeasurementPurpose::GridWarmup,
                 index: 0x1234,
                 seed: [
-                    0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0,
-                    0, 0, 0, 52, 18, 0, 0, 0, 0, 3, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 52,
+                    18, 0, 0, 0, 0, 3, 0,
                 ],
-                prefix: [231, 16, 108, 1, 163, 194, 49, 178, 13, 236, 225, 221, 249, 51, 179, 5],
+                prefix: [
+                    231, 16, 108, 1, 163, 194, 49, 178, 13, 236, 225, 221, 249, 51, 179, 5,
+                ],
             },
             Golden {
                 root: u64::MAX,
@@ -445,10 +443,12 @@ mod tests {
                 purpose: MeasurementPurpose::Sustained,
                 index: STREAM_INDEX_CAPACITY - 1,
                 seed: [
-                    255, 255, 255, 255, 255, 255, 255, 255, 7, 0, 0, 0, 0, 0, 0, 0, 20, 0,
-                    0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 6, 0,
+                    255, 255, 255, 255, 255, 255, 255, 255, 7, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
+                    0, 0, 0, 255, 255, 255, 255, 255, 255, 6, 0,
                 ],
-                prefix: [111, 3, 82, 253, 222, 57, 95, 238, 79, 3, 156, 133, 70, 209, 16, 111],
+                prefix: [
+                    111, 3, 82, 253, 222, 57, 95, 238, 79, 3, 156, 133, 70, 209, 16, 111,
+                ],
             },
         ];
 
@@ -460,11 +460,21 @@ mod tests {
                 vector.purpose,
                 vector.index,
             );
-            assert_eq!(seed, vector.seed, "seed vector for {}", vector.purpose.name());
+            assert_eq!(
+                seed,
+                vector.seed,
+                "seed vector for {}",
+                vector.purpose.name()
+            );
             let mut rng = ChaCha20Rng::from_seed(seed);
             let mut prefix = [0u8; 16];
             rng.fill_bytes(&mut prefix);
-            assert_eq!(prefix, vector.prefix, "ChaCha20 vector for {}", vector.purpose.name());
+            assert_eq!(
+                prefix,
+                vector.prefix,
+                "ChaCha20 vector for {}",
+                vector.purpose.name()
+            );
         }
     }
 
@@ -524,10 +534,15 @@ mod tests {
         let b = MatrixSampler::new(7, 3, 4, MeasurementPurpose::GridTimed, 0).next_matrix::<3>(4);
         assert_eq!(a, b, "same tuple must reproduce the same draw");
 
-        let other_stream = MatrixSampler::new(7, 3, 4, MeasurementPurpose::GridTimed, 1).next_matrix::<3>(4);
-        assert_ne!(a, other_stream, "stream index must select a different sample");
+        let other_stream =
+            MatrixSampler::new(7, 3, 4, MeasurementPurpose::GridTimed, 1).next_matrix::<3>(4);
+        assert_ne!(
+            a, other_stream,
+            "stream index must select a different sample"
+        );
 
-        let other_n = MatrixSampler::new(7, 3, 5, MeasurementPurpose::GridTimed, 0).next_matrix::<3>(4);
+        let other_n =
+            MatrixSampler::new(7, 3, 5, MeasurementPurpose::GridTimed, 0).next_matrix::<3>(4);
         assert_ne!(a, other_n, "n must select a different sample");
     }
 

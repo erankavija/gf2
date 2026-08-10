@@ -285,13 +285,8 @@ mod tests {
             let truth = exact_zeros as f64 / total as f64;
 
             let draws = 400_000usize;
-            let mut sampler = MatrixSampler::new(
-                0xB488_F02C,
-                q,
-                3,
-                MeasurementPurpose::Equivalence,
-                12_345,
-            );
+            let mut sampler =
+                MatrixSampler::new(0xB488_F02C, q, 3, MeasurementPurpose::Equivalence, 12_345);
             let mut zeros = 0u64;
             for _ in 0..draws {
                 let value = match q {

@@ -551,22 +551,9 @@ own q=3 chain in the study. The cell carries no measured rate"
             Some(cached) => cached,
             None => {
                 let cal = Instant::now();
-                let mut sampler = MatrixSampler::new(
-                    seed_root,
-                    q,
-                    n,
-                    MeasurementPurpose::GridProbe,
-                    seed_index,
-                );
-                let _ = one_rep(
-                    q,
-                    n,
-                    1,
-                    backend,
-                    &mut sampler,
-                    seed_index,
-                    &mut devnull,
-                );
+                let mut sampler =
+                    MatrixSampler::new(seed_root, q, n, MeasurementPurpose::GridProbe, seed_index);
+                let _ = one_rep(q, n, 1, backend, &mut sampler, seed_index, &mut devnull);
                 let measured = cal.elapsed().as_secs_f64();
                 probes.insert((q, backend.name(), n), measured);
                 measured
@@ -633,7 +620,9 @@ from it, and the cell carries no rate"
     loop {
         let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::GridTimed, index);
         let (times, zeros) = one_rep(q, n, m, backend, &mut s, index, sink);
-        index = index.checked_add(1).expect("timed repetition index overflow");
+        index = index
+            .checked_add(1)
+            .expect("timed repetition index overflow");
         rep_totals.push(times.total());
         result.gen_s += times.gen_s;
         result.eval_s += times.eval_s;
@@ -685,13 +674,7 @@ pub fn warm_machine(seconds: f64, seed_root: u64) {
     let mut stream = 0u64;
     while start.elapsed().as_secs_f64() < seconds {
         stream += 1;
-        let mut s = MatrixSampler::new(
-            seed_root,
-            3,
-            22,
-            MeasurementPurpose::MachineWarmup,
-            stream,
-        );
+        let mut s = MatrixSampler::new(seed_root, 3, 22, MeasurementPurpose::MachineWarmup, stream);
         let batch = generate(Backend::Rayon, 3, 22, rayon::current_num_threads(), &mut s);
         let _ = evaluate(Backend::Rayon, &batch);
     }
@@ -808,16 +791,10 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
     while start.elapsed().as_secs_f64() < seconds {
         let mut s = MatrixSampler::new(seed_root, q, n, MeasurementPurpose::Sustained, index);
         let t = Instant::now();
-        let (_, z) = one_rep(
-            q,
-            n,
-            batch_size,
-            backend,
-            &mut s,
-            index,
-            sink,
-        );
-        index = index.checked_add(1).expect("sustained shard index overflow");
+        let (_, z) = one_rep(q, n, batch_size, backend, &mut s, index, sink);
+        index = index
+            .checked_add(1)
+            .expect("sustained shard index overflow");
         shard_times.push(t.elapsed().as_secs_f64());
         matrices += batch_size as u64;
         zeros += z;
@@ -879,13 +856,7 @@ pub fn run_sustained(spec: &SustainedSpec, sink: &mut dyn std::io::Write) -> Sus
 /// Fisher–Yates driven by a ChaCha20 stream so the order is recorded by its
 /// seed and reproducible.
 pub fn shuffle<T>(items: &mut [T], seed_root: u64) {
-    let mut sampler = MatrixSampler::new(
-        seed_root,
-        0xFFFF_FFFF,
-        0,
-        MeasurementPurpose::Shuffle,
-        0,
-    );
+    let mut sampler = MatrixSampler::new(seed_root, 0xFFFF_FFFF, 0, MeasurementPurpose::Shuffle, 0);
     for i in (1..items.len()).rev() {
         // Rejection-sample an index in 0..=i to avoid modulo bias.
         let bound = (i + 1) as u64;
