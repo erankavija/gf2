@@ -303,6 +303,11 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
 /// Return the exact marginal expectations, projected to stable floating-point
 /// values. The mathematical contract remains $1 - ((q-1)/q)^n$ and
 /// $((q-1)/q)^n$; `exp_m1` avoids cancellation in the zero-path projection.
+///
+/// # Panics
+///
+/// Panics if `q <= 1`, because those values do not define a field order for
+/// this expectation.
 #[must_use]
 pub fn expected_frequencies(q: u64, n: usize) -> (f64, f64) {
     assert!(q > 1, "horizontal-product expectation requires q > 1");
