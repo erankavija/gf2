@@ -586,17 +586,13 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 Four results carry consequences beyond the envelope.
 
 **The public F_3 dispatcher routed to the slower kernel (gap G6, since fixed).**
-The scalar single-word kernel beats the AVX2 single-word kernel by
-**2.687862x-3.088253x** at every $n \in \{8,12,16,20,24,28\}$ in the locked
-[four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
-— while
 `permanent_bipedal3` handed single matrices to the AVX2 kernel on any host
 supporting it. The cause is documented in the kernel itself: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
-of four lanes carry no data. This reproduces the ratio already visible in
-`dev/benchmarks/gf2_algebra_permanent/s3_cross_cpu-2026-05-12.csv` (scalar at
-0.317-0.319 of the AVX2 time), now on an independent locked harness and RNG. The
-measurement is what the current routing rests on:
+of four lanes carry no data. The first four-matrix campaign cohort is
+[provenance-incomplete](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
+and is not used here to state a rate or ordering. The measurement-independent
+routing fix is that
 [`permanent_bipedal3`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)
 now calls the scalar single-word kernel for $n \le 63$.
 
@@ -1161,11 +1157,11 @@ handed single matrices to the AVX2 single-word kernel on any host where AVX2 was
 available, and the AVX2 single-word kernel is slower than the scalar one: the
 SIMD path zero-pads a single Bipedal3 word into a 4-element AVX2 lane, so three
 of four lanes carry no data. This was already visible in
-`s3_cross_cpu-2026-05-12.csv` (scalar at 0.317–0.319 of the AVX2 time at
-$n = 16, 20, 24$) and is reconfirmed by the locked
-[four-matrix receipt](../../benchmarks/permanent_campaign/batched-f3-avx2.md):
-scalar/direct-AVX2 pooled-rate ratios are 3.068743x, 3.088253x, and 3.086040x
-at those respective sizes.
+`s3_cross_cpu-2026-05-12.csv`; its historical result is not current
+authoritative evidence. The later four-matrix cohort is likewise
+[provenance-incomplete](../../benchmarks/permanent_campaign/batched-f3-avx2.md)
+because its source-dirty check ignored untracked files. A clean-source rerun is
+required before a current rate or ordering is stated.
 The public entry point now calls `permanent_bipedal3_singleword` for
 $n \le 63$
 ([`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs)),

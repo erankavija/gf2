@@ -12,13 +12,10 @@ The reference paper (Scheinerman 2024, arXiv 2407.20205v2) introduces a "bipedal
 
 ## Headline performance numbers
 
-The current locked four-matrix F_3 receipt is
-[`batched-f3-avx2.md`](../../dev/benchmarks/permanent_campaign/batched-f3-avx2.md).
-On its prepared Ryzen 9 5900X host, the batched AVX2 path leads scalar at every
-one-word size measured (`n = 8, 12, 16, 20, 24, 28`) by 3.608645x--6.202144x;
-the direct single-matrix AVX2 comparator is 2.687862x--3.088253x slower than
-scalar.  The receipt carries the exact source, raw-data hash, protocol, and
-dispersion, so these machine-dependent rates are not generalized across hosts.
+The first locked four-matrix F_3 cohort is
+[reclassified as provenance-incomplete](../../dev/benchmarks/permanent_campaign/batched-f3-avx2.md)
+because its source-dirty check did not include untracked files. It provides no
+current performance claim; a corrected clean-source cohort will replace it.
 
 The historical receipt `dev/benchmarks/gf2_algebra_permanent/s1_speedup-2026-05-11.csv` predates the current scalar dispatcher selection. On its AMD Ryzen 9 5900X host, the public entry point still selected the single-matrix AVX2 path; these figures record that earlier routing rather than the current dispatcher:
 
