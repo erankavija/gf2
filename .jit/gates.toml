@@ -235,3 +235,15 @@ reserved = {}
 stage = "postcheck"
 title = "Research Review"
 version = 1
+
+[[gates]]
+auto = true
+checker = { command = "cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release && cargo fmt --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --all-targets -- -D warnings && cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip", env = {}, pass_context = false, timeout_seconds = 600, type = "exec" }
+description = "Run the standalone permanent-wave-gpu release tests, formatting, Clippy, and ROCm probe build that workspace cargo-ci intentionally excludes."
+key = "permanent-wave-gpu-ci"
+mode = "auto"
+priority = 100
+reserved = {}
+stage = "postcheck"
+title = "Permanent wave prototype checks pass"
+version = 1

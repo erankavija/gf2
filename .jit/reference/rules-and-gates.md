@@ -31,6 +31,7 @@
 - **@/gate/jit-validate** — Issue Validation: Run declarative validation for the gated issue.
 - **@/gate/lake-build** — Lean4 proofs compile: Require lake build to succeed with no sorry warnings in hand-written proof files.
 - **@/gate/parallelism-pays** — Parallelism speedup demonstrated: Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target.
+- **@/gate/permanent-wave-gpu-ci** — Permanent wave prototype checks pass: Run the standalone permanent-wave-gpu release tests, formatting, Clippy, and ROCm probe build that workspace cargo-ci intentionally excludes.
 - **@/gate/plan-review** — Plan Review: Independently review the linked plan before implementation work fans out.
 - **@/gate/repo-validate** — Repository Validation: Run structural and declarative validation for the whole repository.
 - **@/gate/research-review** — Research Review: Verify scientific rigor: claims trace to artifacts, statistics are sound, citations resolve, results are reproducible.

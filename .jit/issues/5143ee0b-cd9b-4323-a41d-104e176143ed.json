@@ -8,13 +8,36 @@
   ],
   "description": "A new `dev/research/permanent_wave_gpu/` crate created with its candidate registry already complete, so the study's arithmetic and kernel candidates can be implemented concurrently without any two of them editing the same file.\n\n## Background\n\nThe wave-parallel permanent study implements five GPU candidates over $\\mathbb{F}_3$, $\\mathbb{F}_5$, and $\\mathbb{F}_7$, several of them at the same time. A crate whose module list and dispatch registry grow one entry per candidate would put every candidate on the same two files, so the registry is created complete instead: every planned candidate is enumerated from the start, each entry dispatching to a named function in that candidate's own module, and each of those functions begins as a stub returning an unsupported result with a stated reason.\n\nThat is the harness's single-list backend schedule applied to a crate. A registered path cannot silently miss a measurement cell, and a path that cannot run is recorded with a reason rather than dropped, which is how the existing measurement harness already represents a backend it cannot execute.\n\nThe build plumbing follows the same rule. Compiling an enumerated list of kernel sources would put every candidate back on the build script, so the build script compiles whatever HIP sources it finds under the crate's `hip/` directory — the way the in-tree per-architecture blob pipeline collects its own sources. A no-op probe source keeps that path exercised before any candidate kernel exists, mirroring the probe source the kernels crate generates for the same reason.\n\n## Success Criteria\n\n- [hard] REQ-01: `dev/research/permanent_wave_gpu/` exists as a standalone crate outside the default Cargo workspace, carrying a `.gitignore` whose entries are `target/` and `Cargo.lock`.\n- [hard] REQ-02: The crate README states the crate's scope, its build and test invocations, and the registry convention by which a candidate is implemented.\n- [hard] REQ-03: The crate's module list and measurement-path registry enumerate the study's full planned candidate set, so a measurement driver enumerates every planned path from the start and implementing a candidate later requires no edit to either registry file.\n- [hard] REQ-04: Each registry entry dispatches to a named function in that candidate's own module file, and each such module file exists with that function returning an unsupported result carrying a stated reason.\n- [hard] REQ-05: A test enumerates the registry and asserts that every planned candidate is addressable and that an unimplemented one reports unsupported with a reason rather than panicking or returning a value.\n- [hard] REQ-06: The build script compiles every HIP source found under the crate's `hip/` directory rather than an enumerated list, so adding a kernel source needs no build-script edit.\n- [hard] REQ-07: A no-op probe HIP source keeps the device compile path exercised while no candidate kernel exists, and the build succeeds on a ROCm host with only that source present.\n- [hard] REQ-08: `cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release` passes on a host with no device.\n- [hard] REQ-09: `cargo fmt --manifest-path dev/research/permanent_wave_gpu/Cargo.toml -- --check` and `cargo clippy --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --all-targets -- -D warnings` report no findings.\n\n## Notes\n\nScope is the crate skeleton, its registry, and its build plumbing. Fixtures, the oracle comparator, and candidate implementations land against this skeleton afterwards.\n\nThe crate is excluded from the default workspace, so the workspace CI pipeline never compiles it; the explicit `--manifest-path` invocations above are the only build evidence for this change.\n\nCrates under `dev/research/` are permanent repository content, which is what lets rejected candidates and their falsifying evidence stay compiled and tested for the life of the study.\n",
   "documents": [],
+  "done_at": "2026-08-10T00:09:46.514578569Z",
   "first_ready_at": "2026-08-09T11:48:32.447640650Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "permanent-wave-gpu-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-09T23:56:43.559948494Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T00:04:22.749451329Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T00:09:24.459579439Z",
+      "updated_by": "auto:executor"
+    },
+    "permanent-wave-gpu-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T00:01:20.777799206Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5143ee0b-cd9b-4323-a41d-104e176143ed",
   "labels": [
     "type:task",
@@ -24,7 +47,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Prototype crate skeleton with the complete candidate registry",
-  "updated_at": "2026-08-09T23:20:47.703477368Z"
+  "updated_at": "2026-08-10T00:09:46.514578569Z"
 }
