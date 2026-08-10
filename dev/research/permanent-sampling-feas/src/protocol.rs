@@ -82,6 +82,7 @@
 //! whose per-step cost matches the model, projects high. Magnitudes are
 //! re-derived from each grid's own chains in the study, never quoted here.
 
+use std::convert::Infallible;
 use std::fmt::Write as _;
 use std::time::Instant;
 
@@ -144,29 +145,31 @@ pub struct TimedRepetitions {
 /// The timed loop stops under precisely the same minimum-repetition,
 /// minimum-duration, and maximum-duration policy used by grid cells. A shape
 /// that needs pre-execution censoring keeps that decision in its own semantic
-/// cost model, as [`run_cell`] does for Ryser.
-pub fn run_timed_repetitions(
+/// cost model, as [`run_cell`] does for Ryser. A fallible shape can stop at
+/// its first unavailable measurement boundary without completing unrelated
+/// warm-up or timed repetitions.
+pub fn run_timed_repetitions<E>(
     first_index: u64,
-    mut warmup: impl FnMut(u64),
-    mut after_warmup: impl FnMut(),
-    mut timed: impl FnMut(u64),
-) -> TimedRepetitions {
+    mut warmup: impl FnMut(u64) -> Result<(), E>,
+    mut after_warmup: impl FnMut() -> Result<(), E>,
+    mut timed: impl FnMut(u64) -> Result<(), E>,
+) -> Result<TimedRepetitions, E> {
     let mut warm_index = first_index;
     let warm_start = Instant::now();
     loop {
-        warmup(warm_index);
+        warmup(warm_index)?;
         warm_index = warm_index.checked_add(1).expect("warm-up index overflow");
         if warm_start.elapsed().as_secs_f64() >= WARMUP_SECONDS {
             break;
         }
     }
-    after_warmup();
+    after_warmup()?;
 
     let mut index = first_index;
     let timed_start = Instant::now();
     let mut reps = 0;
     loop {
-        timed(index);
+        timed(index)?;
         index = index
             .checked_add(1)
             .expect("timed repetition index overflow");
@@ -175,11 +178,11 @@ pub fn run_timed_repetitions(
         let minimums_met = reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS;
         let capped = elapsed >= MAX_CELL_SECONDS;
         if minimums_met || capped {
-            return TimedRepetitions {
+            return Ok(TimedRepetitions {
                 reps,
                 wall_s: elapsed,
                 capped_before_minimums: capped_before_minimums(reps, elapsed),
-            };
+            });
         }
     }
 }
@@ -745,8 +748,12 @@ from it, and the cell carries no rate"
                 warm_index,
             );
             let _ = one_rep(q, n, m, backend, &mut s, warm_index, &mut devnull);
+            Ok::<(), Infallible>(())
         },
-        || thermal = Some(ThermalSample::probe()),
+        || {
+            thermal = Some(ThermalSample::probe());
+            Ok(())
+        },
         |index| {
             let mut s = MatrixSampler::new(
                 seed_root,
@@ -765,8 +772,10 @@ from it, and the cell carries no rate"
             result.zeros += zeros;
             result.reps += 1;
             accumulate_gpu_phase_timings(&mut result, times.phase_timing);
+            Ok(())
         },
-    );
+    )
+    .unwrap_or_else(|never| match never {});
     let thermal = thermal.expect("canonical timing policy runs its post-warm-up hook");
     result.cpu_mhz_mean = thermal.cpu_mhz_mean;
     result.cpu_temp_c = thermal.cpu_temp_c;
@@ -1192,5 +1201,28 @@ values came from synchronous gpu_hip dispatch";
         assert!(capped_before_minimums(MIN_REPS - 1, MAX_CELL_SECONDS));
         assert!(!capped_before_minimums(MIN_REPS, MAX_CELL_SECONDS));
         assert!(!capped_before_minimums(MIN_REPS, MIN_TIMED_SECONDS));
+    }
+
+    #[test]
+    fn fallible_timing_shape_stops_at_its_first_unavailable_boundary() {
+        let mut after_warmup_ran = false;
+        let mut timed_ran = false;
+        let error = run_timed_repetitions(
+            0,
+            |_| Err::<(), _>("event timing unavailable"),
+            || {
+                after_warmup_ran = true;
+                Ok(())
+            },
+            |_| {
+                timed_ran = true;
+                Ok(())
+            },
+        )
+        .expect_err("the first unavailable boundary must stop the timing shape");
+
+        assert_eq!(error, "event timing unavailable");
+        assert!(!after_warmup_ran);
+        assert!(!timed_ran);
     }
 }
