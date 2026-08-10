@@ -5,6 +5,32 @@ wave-parallel permanent candidates over $\mathbb{F}_3$, $\mathbb{F}_5$, and
 $\mathbb{F}_7$. It intentionally remains outside the default workspace so
 candidate experiments and their rejected paths stay independently buildable.
 
+## Architecture scope and compile evidence
+
+The current claimed and measured architecture scope is exactly `gfx1030`, the
+target exercised by the committed device receipts below. HIP builds accept an
+explicit comma-separated `PERMANENT_WAVE_GPU_OFFLOAD_ARCHES` value and default
+to `gfx1030`; the value is passed to every retained prototype kernel source and
+executable build. This compile-time selection does not claim runtime support,
+portability, or performance on an architecture without device evidence.
+
+Regenerate the compact versioned receipt from a fully clean tracked and
+untracked worktree on a ROCm host with:
+
+```sh
+bash dev/research/permanent_wave_gpu/scripts/compile_arch_evidence.sh
+```
+
+The script captures revision and clean-worktree provenance before creating
+outputs, uses an isolated target directory, and records the verbose Cargo/build
+and toolchain output in
+`dev/research/permanent_wave_gpu/hip/architecture_compile_evidence-v1.log`,
+and writes `architecture_compile_evidence-v1.md` only after every attempt
+finishes. The default receipt claims only `gfx1030`; set
+`PERMANENT_WAVE_GPU_EVIDENCE_ARCHES` to record an explicit extra attempt. The
+script always includes `gfx1030`, and preserves any extra architecture's exact
+outcome and diagnostic without silently promoting it into the claimed set.
+
 Run the host-only registry tests with:
 
 ```sh
