@@ -7993,3 +7993,9 @@
 {"id":"981d151f-ba43-4e4d-8ed9-857647d2835d","issue_id":"cc162697-2566-4b21-9b20-a97d3d293e58","timestamp":"2026-08-10T09:30:09.586564484Z","type":"issue_completed"}
 {"fields":["description"],"id":"a196e5c0-956c-45ef-9c66-97b7105610a8","issue_id":"cc162697-2566-4b21-9b20-a97d3d293e58","timestamp":"2026-08-10T09:30:09.586564484Z","type":"issue_updated","updated_by":"issue-update"}
 {"from":"backlog","id":"4be804a4-e4ce-49b9-b9a9-fc1bc4c24a8a","issue_id":"773a5378-964c-473c-9161-e519d3470d35","timestamp":"2026-08-10T09:30:15.383982053Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:wave7-product-micro","id":"76952a59-5a66-49de-bfc1-478215e3e2d3","issue_id":"342710ef-ea5a-4f44-9884-cb08d13f1ee6","timestamp":"2026-08-10T09:31:45.219573345Z","type":"issue_claimed"}
+{"from":"ready","id":"ab8dc27c-0a9c-473b-bc33-fd3efd92589c","issue_id":"342710ef-ea5a-4f44-9884-cb08d13f1ee6","timestamp":"2026-08-10T09:31:49.137533466Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:wave7-exact-binomial","id":"0ac8111b-31f9-433d-beea-50c2392dbde7","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T09:31:54.408867664Z","type":"issue_claimed"}
+{"from":"ready","id":"97d07fe3-2ec7-4daa-ae14-3cf079c177fe","issue_id":"4058e0ac-8405-4266-9ec2-05f2e0430ae9","timestamp":"2026-08-10T09:31:58.304174298Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:wave7-anchor-validation","id":"bd6a35cb-c483-43e0-bc0f-6ffe345d78b9","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-10T09:32:03.138841852Z","type":"issue_claimed"}
+{"from":"ready","id":"c23a1f06-bb79-4a89-a393-4f7856400b15","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-10T09:32:07.032440266Z","to":"in_progress","type":"issue_state_changed"}

@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:wave7-exact-binomial",
+  "claimed_at": "2026-08-10T09:31:54.408867664Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -22,7 +23,7 @@
     "cites:HKS2026"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Preregistered exact binomial tests for campaign cells",
-  "updated_at": "2026-08-10T06:34:32.816785991Z"
+  "updated_at": "2026-08-10T09:31:58.304174298Z"
 }
