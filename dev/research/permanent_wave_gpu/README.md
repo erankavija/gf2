@@ -227,6 +227,54 @@ probes also report zero scratch and spills, occupancy 16, and zero static LDS.
 The initial 2,165-byte capture remains preserved under its explicit
 `-initial` filename rather than being overwritten.
 
+### F_3 device/resource clean-rework receipt — 2026-08-10
+
+This confirmation was made from clean reviewed revision
+`22201e296b07ad1af20a738cefb56c13378f532d`; `git status --porcelain=v1
+--untracked-files=all` was empty immediately before the checks. The host was
+an AMD Ryzen 9 5900X with an AMD Radeon RX 6950 XT (`gfx1030`, UUID
+`GPU-8cd14d6d8a3c8a73`), using ROCm HIP `7.2.53211-9999` and AMD clang
+`22.0.0git`.
+
+Both repository and standalone Rust 1.95 formatting checks passed in 1.3 s
+each. The default release suite passed 16 unit tests, 2 fixture-oracle tests,
+and the registry test (3.49 s build, 3.94 s test time). The focused
+no-default registry test passed (2.17 s build; its reusable mapping warnings
+remain the documented registry-only boundary). The host-only evidence
+selection/protocol test passed (9.43 s HIP-feature build), as did default and
+HIP-feature all-target Clippy with `-D warnings` (0.21 s and 6.93 s), and the
+feature-gated ignored HIP test's compile-only command (2.27 s).
+
+The direct non-test device command was:
+
+```sh
+cargo +1.95.0 run --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --bin wave-gf3-device-evidence
+```
+
+It exited 0 in 2.8 seconds, reporting element-wise equality for all 12
+canonical F_3 fixtures through order 16. The executable's fixture-input mode
+then ran the n=63 interval/start-subset mapping and active-mask product probes;
+this command is direct device evidence, not `cargo test -- --ignored`.
+
+The clean resource command was:
+
+```sh
+/opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 \
+    -Rpass-analysis=kernel-resource-usage \
+    -c hip/wave_gf3_equivalence.hip \
+    -o /tmp/de2522d6-wave_gf3_equivalence-clean-rework.o \
+    2> /tmp/de2522d6-wave_gf3_resource-clean-rework.log
+```
+
+It exited 0 in 4.1 seconds. `cmp` confirmed its stderr was byte-identical to
+the 4,400-byte canonical
+[`hip/wave_gf3_resource_usage.log`](hip/wave_gf3_resource_usage.log), with
+SHA-256 `4e052d08dab816ea569f9b0d2251d887cdc1d8db523300608c59a57c0a47ad8c`.
+The historical 2,165-byte initial capture remains
+[`hip/wave_gf3_resource_usage-initial.log`](hip/wave_gf3_resource_usage-initial.log),
+SHA-256 `c538c2739cd8a50735c7c7041198c4c4df0bf526c13624d5579a5ac574861a49`.
+
 The default `fixture-oracle` feature retains the corpus and oracle surface,
 which imports the harness's canonical sampler. When the harness imports this
 crate's registry, it disables that feature and enables its own default
