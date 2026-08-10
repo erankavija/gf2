@@ -28,6 +28,7 @@ const BATCH_WIDTH: usize = 4;
 const DEFAULT_REPETITIONS: u32 = 5;
 const DEFAULT_TARGET_MS: u64 = 250;
 const MAX_CALLS: u64 = 1 << 32;
+const GIT_STATUS_ARGS: &[&str] = &["status", "--porcelain", "--untracked-files=all"];
 
 /// The established one-word permanent benchmark group. Keeping the receipt
 /// on this exact set makes its per-size statements auditable against the
@@ -92,8 +93,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "AVX2 is required: refusing to publish a scalar fallback as an AVX2 measurement".into(),
         );
     };
-    let metadata = collect_metadata()?;
     let mut output = open_output(&args.output, args.append)?;
+    // Collect this after opening the output: an in-repository output is itself
+    // an untracked source change and must make the row dirty. The campaign uses
+    // a unique `/tmp` output, so its artifact does not alter this check.
+    let metadata = collect_metadata()?;
     if !args.append || output.metadata()?.len() == 0 {
         writeln!(
             output,
@@ -368,19 +372,7 @@ fn command_output(program: &str, args: &[&str]) -> io::Result<String> {
 
 fn collect_metadata() -> io::Result<Metadata> {
     let git_revision = command_output("git", &["rev-parse", "HEAD"])?;
-    let status = command_output(
-        "git",
-        &[
-            "status",
-            "--porcelain",
-            "--untracked-files=no",
-            "--",
-            "Cargo.toml",
-            "Cargo.lock",
-            "crates/gf2-algebra",
-            "crates/gf2-kernels-simd",
-        ],
-    )?;
+    let status = command_output("git", GIT_STATUS_ARGS)?;
     let rustc = command_output("rustc", &["+1.95.0", "--version"])?;
     let hostname = command_output("hostname", &[])?;
     let kernel = command_output("uname", &["-srvmo"])?;
@@ -400,7 +392,7 @@ fn collect_metadata() -> io::Result<Metadata> {
         .as_secs();
     Ok(Metadata {
         git_revision,
-        source_dirty: !status.is_empty(),
+        source_dirty: source_dirty_from_porcelain(&status),
         rustc,
         hostname,
         cpu_model,
@@ -408,6 +400,10 @@ fn collect_metadata() -> io::Result<Metadata> {
         governor,
         timestamp_unix_s,
     })
+}
+
+fn source_dirty_from_porcelain(status: &str) -> bool {
+    !status.is_empty()
 }
 
 fn self_check() -> Result<(), Box<dyn std::error::Error>> {
@@ -490,5 +486,18 @@ mod tests {
         unique.sort_unstable();
         unique.dedup();
         assert_eq!(unique.len(), starts.len());
+    }
+
+    #[test]
+    fn full_repository_status_marks_tracked_and_untracked_changes_dirty() {
+        assert_eq!(
+            GIT_STATUS_ARGS,
+            ["status", "--porcelain", "--untracked-files=all"]
+        );
+        assert!(source_dirty_from_porcelain(
+            " M crates/gf2-algebra/src/lib.rs"
+        ));
+        assert!(source_dirty_from_porcelain("?? scratch-notes.txt"));
+        assert!(!source_dirty_from_porcelain(""));
     }
 }
