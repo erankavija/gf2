@@ -16,6 +16,14 @@ default = []
 # remain runnable on hosts without a ROCm toolchain or device.
 hip = []
 
+[dependencies]
+gf2-algebra = { path = "../../../crates/gf2-algebra", features = ["f5", "f7"] }
+gf2-core = { path = "../../../crates/gf2-core" }
+# The feasibility harness owns the campaign's canonical domain-separated
+# sampler and MeasurementPurpose vocabulary.  Fixtures use its Equivalence
+# domain rather than assigning another random stream tag in this prototype.
+permanent-sampling-feas = { path = "../permanent-sampling-feas" }
+
 [profile.release]
 opt-level = 3
 lto = "thin"
