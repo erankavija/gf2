@@ -187,6 +187,12 @@ fn stream_address_from_tag(tag: u64, index: u64) -> u64 {
 }
 
 /// Encode one named measurement purpose and its bounded stream index.
+///
+/// # Panics
+///
+/// Panics if `index >= STREAM_INDEX_CAPACITY`. The `MeasurementPurpose` enum
+/// supplies only internally bounded purpose tags, so it cannot violate the
+/// purpose-tag capacity check.
 #[must_use]
 pub fn stream_address(purpose: MeasurementPurpose, index: u64) -> u64 {
     stream_address_from_tag(purpose.tag(), index)
@@ -194,6 +200,12 @@ pub fn stream_address(purpose: MeasurementPurpose, index: u64) -> u64 {
 
 /// Assemble the 32-byte ChaCha20 seed for one `(root, q, n, purpose, index)`
 /// tuple.
+///
+/// # Panics
+///
+/// Panics if `index >= STREAM_INDEX_CAPACITY`, as enforced by
+/// [`stream_address`]. The enum-typed `purpose` always supplies an internally
+/// bounded purpose tag.
 #[must_use]
 pub fn derive_seed(
     root: u64,
@@ -249,6 +261,12 @@ impl MatrixSampler {
     /// opens a stream with a sentinel `q` far outside the samplable domain and
     /// only ever calls [`MatrixSampler::next_raw_byte`], which has no domain
     /// restriction.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index >= STREAM_INDEX_CAPACITY`, as enforced while deriving
+    /// the stream seed. The enum-typed `purpose` always supplies an internally
+    /// bounded purpose tag; `q` and `n` are otherwise unrestricted here.
     #[must_use]
     pub fn new(root: u64, q: u64, n: usize, purpose: MeasurementPurpose, index: u64) -> Self {
         Self {
