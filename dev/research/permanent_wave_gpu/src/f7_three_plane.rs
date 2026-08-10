@@ -6,11 +6,12 @@
 //! circuit is the Mersenne fold from the archived `f7_packing` candidate D:
 //! `7 = 2^3 - 1`, so a three-bit carry folds back as one.
 //!
-//! This is deliberately an accumulator-level, host-executable candidate.  It
-//! does not claim a HIP kernel or device-resource evidence: the permanent
-//! shaped device paths are explicitly owned by issue `cc162697`.  Keeping the
-//! host path executable makes that absence falsifiable rather than silently
-//! dropping the candidate from the study registry.
+//! This is deliberately an accumulator-level candidate. Its opt-in HIP test
+//! validates the arithmetic circuits on device, but it does not claim a
+//! permanent-shaped HIP kernel or its device-resource evidence; those paths
+//! are explicitly owned by issue `cc162697`. Keeping the host permanent driver
+//! executable makes that boundary falsifiable rather than silently dropping
+//! the candidate from the study registry.
 //!
 //! The native-modular control below is a paired correctness control for this
 //! accumulator, not a second measurement path.  In particular,
@@ -31,7 +32,7 @@ const FIELD_ORDER: u64 = 7;
 const MAX_ROWS: usize = 63;
 #[cfg(all(test, feature = "fixture-oracle"))]
 const DEVICE_UNAVAILABLE: &str =
-    "F_7 three-plane accumulator has no HIP kernel; cc162697 owns device integration";
+    "F_7 three-plane accumulator has no permanent-shaped HIP kernel; cc162697 owns it";
 
 /// One canonical F_7 word, bit-sliced across up to 64 row lanes.
 ///
@@ -176,10 +177,11 @@ pub(crate) fn evaluate(fixture: &Fixture) -> EvaluationResult {
     Ok(u64::from(permanent_three_plane(fixture)))
 }
 
-/// Explicit device falsification for this accumulator-level issue.
+/// Explicit permanent-kernel falsification for this accumulator-level issue.
 ///
-/// This keeps the non-device status inspectable while the host implementation
-/// remains reachable through [`evaluate`].
+/// The opt-in HIP test validates arithmetic only; this keeps the absence of a
+/// device permanent path inspectable while the host implementation remains
+/// reachable through [`evaluate`].
 #[cfg(all(test, feature = "fixture-oracle"))]
 #[must_use]
 fn device_falsification() -> Unsupported {
@@ -293,7 +295,57 @@ fn mul_mod(left: u8, right: u8) -> u8 {
 #[cfg(all(test, feature = "fixture-oracle"))]
 mod tests {
     use super::*;
-    use crate::fixtures::{FixtureCorpus, FixtureRequirement, DEFAULT_FIXTURE_SEED};
+    use std::collections::BTreeSet;
+
+    use crate::fixtures::{Fixture, FixtureCorpus, FixtureRequirement, DEFAULT_FIXTURE_SEED};
+
+    fn f7_parity_shard(corpus: &FixtureCorpus, shard: usize) -> Vec<&Fixture> {
+        corpus
+            .fixtures()
+            .iter()
+            .enumerate()
+            .filter_map(|(index, fixture)| {
+                (index % 2 == shard && fixture.q() == FIELD_ORDER).then_some(fixture)
+            })
+            .collect()
+    }
+
+    fn assert_f7_parity_shards_partition_the_corpus(corpus: &FixtureCorpus) {
+        let first: BTreeSet<_> = f7_parity_shard(corpus, 0)
+            .into_iter()
+            .map(Fixture::id)
+            .collect();
+        let second: BTreeSet<_> = f7_parity_shard(corpus, 1)
+            .into_iter()
+            .map(Fixture::id)
+            .collect();
+        let complete: BTreeSet<_> = corpus
+            .fixtures()
+            .iter()
+            .filter(|fixture| fixture.q() == FIELD_ORDER)
+            .map(Fixture::id)
+            .collect();
+
+        assert!(first.is_disjoint(&second));
+        assert_eq!(first.len() + second.len(), complete.len());
+        assert_eq!(
+            first.union(&second).copied().collect::<BTreeSet<_>>(),
+            complete
+        );
+    }
+
+    fn assert_native_control_parity_shard(shard: usize) {
+        let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
+        assert_f7_parity_shards_partition_the_corpus(&corpus);
+        for fixture in f7_parity_shard(&corpus, shard) {
+            assert_eq!(
+                permanent_three_plane(fixture),
+                permanent_native_modular(fixture),
+                "native control diverged for {}",
+                fixture.id()
+            );
+        }
+    }
 
     #[test]
     fn mersenne_add_and_subtract_are_exhaustive_over_ordered_lane_pairs() {
@@ -333,30 +385,13 @@ mod tests {
     }
 
     #[test]
-    fn native_control_matches_three_planes_on_structural_and_high_order_fixtures() {
-        let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
-        let mut covered_high_orders = [false; 3];
-        for fixture in corpus.fixtures().iter().filter(|fixture| {
-            fixture.q() == FIELD_ORDER
-                && (fixture.n() <= 4
-                    || (fixture.n() == 16 && fixture.id().ends_with("-00"))
-                    || (fixture.n() == 20 && fixture.id().ends_with("-00"))
-                    || (fixture.n() == 24 && fixture.id().ends_with("-00")))
-        }) {
-            match fixture.n() {
-                16 => covered_high_orders[0] = true,
-                20 => covered_high_orders[1] = true,
-                24 => covered_high_orders[2] = true,
-                _ => {}
-            }
-            assert_eq!(
-                permanent_three_plane(fixture),
-                permanent_native_modular(fixture),
-                "native control diverged for {}",
-                fixture.id()
-            );
-        }
-        assert!(covered_high_orders.into_iter().all(|covered| covered));
+    fn native_control_even_shard_matches_three_planes_on_all_f7_fixtures() {
+        assert_native_control_parity_shard(0);
+    }
+
+    #[test]
+    fn native_control_odd_shard_matches_three_planes_on_all_f7_fixtures() {
+        assert_native_control_parity_shard(1);
     }
 
     #[test]
@@ -397,7 +432,7 @@ mod tests {
     }
 
     #[test]
-    fn device_absence_is_explicitly_falsified_not_silently_unsupported() {
+    fn permanent_kernel_absence_is_explicitly_falsified() {
         assert_eq!(device_falsification().reason(), DEVICE_UNAVAILABLE);
         assert!(run().is_ok());
     }

@@ -36,12 +36,37 @@ reported per $(q,n)$ cell beside the exact complementary expectations
 $1 - ((q-1)/q)^n$ and $((q-1)/q)^n$, respectively.  The observations are a
 fixed-subset diagnostic for the deterministic corpus, not a performance number.
 
-On a ROCm host, compile every HIP source under `hip/` (including the no-op
-probe before candidate kernels exist) with:
+On a ROCm host, the opt-in HIP feature compiles every source under `hip/` and
+links the prebuilt F_7 arithmetic-equivalence executable. Run it with:
 
 ```sh
-cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip
+cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release \
+    --features hip --test hip_f7_three_plane
 ```
+
+The executable launches one device thread and exhaustively checks all 49
+ordered F_7 Mersenne add/subtract pairs and all $7^3$ three-lane active
+zero-mask/$C_6$ product triples. It is an arithmetic conformance check, not a
+permanent kernel: the host fixture corpus remains the evidence for permanent
+equality at orders 16, 20, and 24, and `cc162697` owns permanent-shaped device
+paths.
+
+### Device arithmetic receipt — 2026-08-10
+
+This non-performance conformance run was made from clean implementation commit
+`df5a51f6` (`fix(jit:7b998fb9): add device arithmetic conformance`) on an AMD
+Radeon RX 6950 XT (`gfx1030`, UUID `GPU-8cd14d6d8a3c8a73`) with ROCm HIP
+`7.2.53211-9999` and AMD clang `22.0.0git`. The command was:
+
+```sh
+cargo +1.95.0 test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml \
+    --release --features hip --test hip_f7_three_plane -- --nocapture
+```
+
+It passed `device_f7_three_plane_arithmetic_is_exact`: release build 2.56 s,
+device test 0.06 s, command wall time 2.64 s. The result confirms device
+arithmetic only; it neither measures performance nor claims a device permanent
+implementation.
 
 The candidate list is deliberately complete from the first commit and is
 authoritatively defined by `MeasurementPath::ALL`. Add a candidate
