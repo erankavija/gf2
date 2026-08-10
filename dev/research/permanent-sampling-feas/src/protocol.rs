@@ -117,6 +117,66 @@ pub const PINNED_CORE: usize = 0;
 pub const SUSTAINED_INDICES_PER_RUN: u64 = 100_000;
 const PHASE_TIMING_NOT_RUN: &str = "event timing unavailable: cell did not run";
 
+/// Result of applying the harness's canonical warm-up and timed-repetition
+/// policy to a measurement shape.
+///
+/// The closures receive deterministic stream indices.  Their caller supplies
+/// the named purpose through the schedule adapter, so this policy owns timing
+/// but never manufactures a sampler domain or a candidate list.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct TimedRepetitions {
+    /// Number of timed repetitions completed.
+    pub reps: usize,
+    /// Host wall-clock elapsed while the timed closure ran.
+    pub wall_s: f64,
+}
+
+/// Run a measurement shape under the protocol's committed warm-up and timed
+/// repetition policy.
+///
+/// The warm-up and timed closures are deliberately separate because their
+/// sampler purposes must be distinct. `after_warmup` preserves the grid
+/// protocol's thermal sampling boundary without duplicating the timing policy.
+/// The timed loop stops under precisely the same minimum-repetition,
+/// minimum-duration, and maximum-duration policy used by grid cells. A shape
+/// that needs pre-execution censoring keeps that decision in its own semantic
+/// cost model, as [`run_cell`] does for Ryser.
+pub fn run_timed_repetitions(
+    first_index: u64,
+    mut warmup: impl FnMut(u64),
+    mut after_warmup: impl FnMut(),
+    mut timed: impl FnMut(u64),
+) -> TimedRepetitions {
+    let mut warm_index = first_index;
+    let warm_start = Instant::now();
+    loop {
+        warmup(warm_index);
+        warm_index = warm_index.checked_add(1).expect("warm-up index overflow");
+        if warm_start.elapsed().as_secs_f64() >= WARMUP_SECONDS {
+            break;
+        }
+    }
+    after_warmup();
+
+    let mut index = first_index;
+    let timed_start = Instant::now();
+    let mut reps = 0;
+    loop {
+        timed(index);
+        index = index
+            .checked_add(1)
+            .expect("timed repetition index overflow");
+        reps += 1;
+        let elapsed = timed_start.elapsed().as_secs_f64();
+        if (reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS) || elapsed >= MAX_CELL_SECONDS {
+            return TimedRepetitions {
+                reps,
+                wall_s: elapsed,
+            };
+        }
+    }
+}
+
 /// How a cell finished.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -656,63 +716,51 @@ from it, and the cell carries no rate"
     });
     result.batch_size = m;
 
-    // Warm-up has a distinct purpose, so its wall-clock-dependent repetition
-    // count cannot alter the timed sample's address sequence.
-    let mut warm_index = seed_index;
-    let warm = Instant::now();
-    loop {
-        let mut s = MatrixSampler::new(
-            seed_root,
-            q,
-            n,
-            scheduled_backend(backend, SchedulePhase::GridWarmup).purpose(),
-            warm_index,
-        );
-        let _ = one_rep(q, n, m, backend, &mut s, warm_index, &mut devnull);
-        warm_index = warm_index.checked_add(1).expect("warm-up index overflow");
-        if warm.elapsed().as_secs_f64() >= WARMUP_SECONDS {
-            break;
-        }
-    }
-    // Timed repetitions always start here, whatever the warm-up did.
-    let mut index = seed_index;
-    result.timed_index_first = index;
-
-    let thermal = ThermalSample::probe();
+    let mut rep_totals: Vec<f64> = Vec::new();
+    let mut thermal = None;
+    // `run_timed_repetitions` keeps the warm-up, minimum repetitions,
+    // minimum timed duration, and cap canonical for every timing shape.  The
+    // distinct scheduled purposes ensure a wall-clock-dependent warm-up count
+    // cannot alter the timed sample's address sequence.
+    result.timed_index_first = seed_index;
+    let policy = run_timed_repetitions(
+        seed_index,
+        |warm_index| {
+            let mut s = MatrixSampler::new(
+                seed_root,
+                q,
+                n,
+                scheduled_backend(backend, SchedulePhase::GridWarmup).purpose(),
+                warm_index,
+            );
+            let _ = one_rep(q, n, m, backend, &mut s, warm_index, &mut devnull);
+        },
+        || thermal = Some(ThermalSample::probe()),
+        |index| {
+            let mut s = MatrixSampler::new(
+                seed_root,
+                q,
+                n,
+                scheduled_backend(backend, SchedulePhase::GridTimed).purpose(),
+                index,
+            );
+            let (times, zeros) = one_rep(q, n, m, backend, &mut s, index, sink);
+            rep_totals.push(times.total());
+            result.gen_s += times.gen_s;
+            result.eval_s += times.eval_s;
+            result.reduce_s += times.reduce_s;
+            result.store_s += times.store_s;
+            result.matrices += m as u64;
+            result.zeros += zeros;
+            result.reps += 1;
+            accumulate_gpu_phase_timings(&mut result, times.phase_timing);
+        },
+    );
+    let thermal = thermal.expect("canonical timing policy runs its post-warm-up hook");
     result.cpu_mhz_mean = thermal.cpu_mhz_mean;
     result.cpu_temp_c = thermal.cpu_temp_c;
     result.gpu_temp_c = thermal.gpu_temp_c;
-
-    let mut rep_totals: Vec<f64> = Vec::new();
-    let timed_start = Instant::now();
-    loop {
-        let mut s = MatrixSampler::new(
-            seed_root,
-            q,
-            n,
-            scheduled_backend(backend, SchedulePhase::GridTimed).purpose(),
-            index,
-        );
-        let (times, zeros) = one_rep(q, n, m, backend, &mut s, index, sink);
-        index = index
-            .checked_add(1)
-            .expect("timed repetition index overflow");
-        rep_totals.push(times.total());
-        result.gen_s += times.gen_s;
-        result.eval_s += times.eval_s;
-        result.reduce_s += times.reduce_s;
-        result.store_s += times.store_s;
-        result.matrices += m as u64;
-        result.zeros += zeros;
-        result.reps += 1;
-        accumulate_gpu_phase_timings(&mut result, times.phase_timing);
-
-        let elapsed = timed_start.elapsed().as_secs_f64();
-        if (result.reps >= MIN_REPS && elapsed >= MIN_TIMED_SECONDS) || elapsed >= MAX_CELL_SECONDS
-        {
-            break;
-        }
-    }
+    debug_assert_eq!(result.reps, policy.reps);
 
     result.total_s = rep_totals.iter().sum();
     // Rates come from summed time over summed matrices, never from averaging
