@@ -1,5 +1,5 @@
 {
-  "assignee": "agent:wave7-f7-compile",
+  "assignee": null,
   "claimed_at": "2026-08-10T09:34:05.847868559Z",
   "context": {},
   "created_at": "2026-08-09T11:48:32.447640650Z",
@@ -8,15 +8,63 @@
     "739f43b0-4672-46e5-9a68-afaa1610d5c1",
     "cc162697-2566-4b21-9b20-a97d3d293e58"
   ],
-  "description": "The supported GPU architecture set for the study's prototype kernels, stated explicitly and backed by committed compile evidence for each architecture claimed.\n\n## Background\n\nThe architecture scope of the permanent kernels is narrower than the repository's target list suggests. The production kernels are compiled with a single unconditional offload architecture, `gfx1030`. A separate per-architecture code-object pipeline exists and records what compiled through a build manifest consumed by the crate's architecture type, but its only sources today are generated no-op probes, and the generated code-object directory is not tracked in the repository.\n\nA claim of support for an architecture is therefore only as good as the compile evidence behind it. The honest floor for the study is the one architecture its kernels are actually built for; widening that set means adding offload-architecture flags to the prototype crate's build and committing what each build produced.\n\n## Success Criteria\n\n- [hard] REQ-01: The prototype crate's build accepts an explicit set of offload architectures, defaulting to the single architecture the study measured on, so the compiled set is a stated input rather than an incidental one.\n- [hard] REQ-02: A committed artifact records, for each architecture in that set, the compiler invocation and its outcome for every prototype kernel the study retained.\n- [hard] REQ-03: A committed statement names the supported GPU architecture scope for the study's kernels, and every architecture it names has compile evidence in that artifact.\n- [hard] REQ-04: An architecture that fails to compile is recorded with its failure output and excluded from the supported set, rather than dropped silently.\n- [hard] REQ-05: The prototype crate's README states the supported architecture set together with the command that regenerates the compile evidence.\n- [hard] REQ-06: `cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release` passes on a ROCm host for the default architecture set.\n\n## Notes\n\nScope is compile-time architecture evidence. Runtime behaviour on any architecture beyond the measured one is outside this work, and the statement says so.\n\nThe prototype crate sits outside the default Cargo workspace, so the workspace CI pipeline never compiles it; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n",
-  "documents": [],
+  "description": "The supported GPU architecture set for the study's prototype kernels, stated explicitly and backed by committed compile evidence for each architecture claimed.\n\n## Background\n\nThe architecture scope of the permanent kernels is narrower than the repository's target list suggests. The production kernels are compiled with a single unconditional offload architecture, `gfx1030`. A separate per-architecture code-object pipeline exists and records what compiled through a build manifest consumed by the crate's architecture type, but its only sources today are generated no-op probes, and the generated code-object directory is not tracked in the repository.\n\nA claim of support for an architecture is therefore only as good as the compile evidence behind it. The honest floor for the study is the one architecture its kernels are actually built for; widening that set means adding offload-architecture flags to the prototype crate's build and committing what each build produced.\n\n## Success Criteria\n\n- [hard] REQ-01: The prototype crate's build accepts an explicit set of offload architectures, defaulting to the single architecture the study measured on, so the compiled set is a stated input rather than an incidental one.\n- [hard] REQ-02: A committed artifact records, for each architecture in that set, the compiler invocation and its outcome for every prototype kernel the study retained.\n- [hard] REQ-03: A committed statement names the supported GPU architecture scope for the study's kernels, and every architecture it names has compile evidence in that artifact.\n- [hard] REQ-04: An architecture that fails to compile is recorded with its failure output and excluded from the supported set, rather than dropped silently.\n- [hard] REQ-05: The prototype crate's README states the supported architecture set together with the command that regenerates the compile evidence.\n- [hard] REQ-06: `cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release` passes on a ROCm host for the default architecture set.\n\n## Notes\n\nScope is compile-time architecture evidence. Runtime behaviour on any architecture beyond the measured one is outside this work, and the statement says so.\n\nThe prototype crate sits outside the default Cargo workspace, so the workspace CI pipeline never compiles it; the explicit `--manifest-path` invocation above is the only build evidence for this change.\n\n\n## Completion Evidence\n\nImplementation commit cb4cfb03 makes the HIP offload architecture set an explicit validated build input defaulting to gfx1030. Clean-source receipt commit d150d9e8 records the exact verbose gfx1030 build, toolchain and source inventory, successful compilation of every retained HIP source and retained executable, and a matching raw-log hash. The claimed architecture set remains exactly gfx1030; the artifact makes no runtime or performance claim for any unmeasured architecture. Both evidence files are linked through this issue. The standalone prototype gate, repository CI, code review, and documentation review pass on the merged revision.",
+  "documents": [
+    {
+      "commit": "d150d9e8",
+      "doc_type": "receipt",
+      "format": "markdown",
+      "label": "Architecture compile evidence receipt",
+      "path": "dev/research/permanent_wave_gpu/architecture_compile_evidence-v1.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "external",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html",
+          "resolved_path": null
+        }
+      ],
+      "commit": "d150d9e8",
+      "doc_type": "raw-evidence",
+      "format": "markdown",
+      "label": "Raw HIP architecture compile log",
+      "path": "dev/research/permanent_wave_gpu/hip/architecture_compile_evidence-v1.log"
+    }
+  ],
+  "done_at": "2026-08-10T10:02:48.634281442Z",
   "first_ready_at": "2026-08-10T09:30:15.383982053Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
-    "doc-review"
+    "doc-review",
+    "permanent-wave-gpu-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T09:53:47.245548269Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T10:00:32.882749803Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-10T10:02:27.460156034Z",
+      "updated_by": "auto:executor"
+    },
+    "permanent-wave-gpu-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-10T09:53:11.547753486Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "773a5378-964c-473c-9161-e519d3470d35",
   "labels": [
     "type:task",
@@ -26,7 +74,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Architecture scope statement with compile evidence",
-  "updated_at": "2026-08-10T09:34:09.736226371Z"
+  "updated_at": "2026-08-10T10:02:48.634281442Z"
 }
