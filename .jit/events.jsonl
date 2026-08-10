@@ -7922,3 +7922,11 @@
 {"from":"backlog","id":"ff9fb264-bdfb-4b88-91e0-dc7786f7074b","issue_id":"56c69654-694b-45cd-bb4b-3e4a798f4c08","timestamp":"2026-08-10T06:14:27.666552985Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"efb6a993-9d1b-4eab-a03e-ec91f39fabd3","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:14:33.363683995Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"871081df-4703-4f2f-93f1-31759f849ad8","issue_id":"cc162697-2566-4b21-9b20-a97d3d293e58","timestamp":"2026-08-10T06:14:39.062562515Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"a6f35d2f-73d1-4371-8f34-990feb9f05cd","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:16:27.336392863Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:wave6-f3-folds","id":"c1ac5caf-0561-4edf-ae0e-5aa039bf24b7","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:16:27.336392863Z","type":"issue_claimed"}
+{"gate_key":"permanent-wave-gpu-ci","id":"0ad201ab-6d95-446a-b20a-9d0e58a44de1","issue_id":"739f43b0-4672-46e5-9a68-afaa1610d5c1","timestamp":"2026-08-10T06:16:29.378630017Z","type":"gate_added"}
+{"from":"ready","id":"8440efdc-ad4b-4b84-8913-c237884add01","issue_id":"af302aa9-5f6e-438e-8c9f-67b455d3ebee","timestamp":"2026-08-10T06:16:36.942382881Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:wave6-gray-update","id":"daa7f534-6f1a-4fbc-b6e4-d7602cce5f31","issue_id":"af302aa9-5f6e-438e-8c9f-67b455d3ebee","timestamp":"2026-08-10T06:16:36.942382881Z","type":"issue_claimed"}
+{"gate_key":"permanent-sampling-feas-ci","id":"6bb3d9bc-b0ae-45fc-a474-b4bc502cf36a","issue_id":"af302aa9-5f6e-438e-8c9f-67b455d3ebee","timestamp":"2026-08-10T06:16:38.992672347Z","type":"gate_added"}
+{"from":"ready","id":"4ce17a7e-94be-4d0f-b66a-60d9658a112e","issue_id":"d1b6a182-ffcd-4efb-b4da-73331c63a699","timestamp":"2026-08-10T06:16:46.586211090Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:wave6-clopper-pearson","id":"8da86eb6-2a88-4350-9f8d-42ffce0ccea0","issue_id":"d1b6a182-ffcd-4efb-b4da-73331c63a699","timestamp":"2026-08-10T06:16:46.586211090Z","type":"issue_claimed"}
