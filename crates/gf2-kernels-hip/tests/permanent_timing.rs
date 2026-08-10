@@ -17,7 +17,9 @@ use gf2_kernels_hip::permanent::{dispatch_permanent_batch_instrumented, Permanen
 /// One full event-instrumented F_3 dispatch yields positive H2D, kernel, and
 /// D2H durations. Their device-clock sum fits within the host wall clock of
 /// this synchronous (finish-and-read) dispatch, while the kernel-only span is
-/// strictly smaller than that enclosing end-to-end time.
+/// strictly smaller than that enclosing end-to-end time. The separately
+/// reported launch marker span starts before host submission and ends at the
+/// C++ wrapper's event record immediately before kernel submission.
 #[test]
 #[ignore = "external: gfx1030 HIP device required for permanent event timing"]
 fn permanent_event_timing_reports_positive_phase_spans() {
@@ -58,6 +60,6 @@ fn permanent_event_timing_reports_positive_phase_spans() {
 
     assert!(
         timing.device_submission_to_kernel.is_some(),
-        "device-side launch marker span is reported independently"
+        "the wrapper-recorded pre-submit-to-kernel-start device span is reported independently"
     );
 }
