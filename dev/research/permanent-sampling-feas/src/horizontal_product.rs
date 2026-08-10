@@ -59,12 +59,14 @@ pub struct HorizontalProductResult {
     pub nonzero_slow_samples: u64,
     /// Observed zero-product frequency from timed samples only.
     pub zero_fast_observed_frequency: Option<f64>,
-    /// Exact marginal zero-product expectation, projected to a stable `f64`.
-    pub zero_fast_expected_frequency: f64,
+    /// Exact marginal zero-product expectation, projected to a stable `f64`
+    /// when this mode supports the field order.
+    pub zero_fast_expected_frequency: Option<f64>,
     /// Observed nonzero-product frequency from timed samples only.
     pub nonzero_slow_observed_frequency: Option<f64>,
-    /// Exact marginal nonzero-product expectation, projected to a stable `f64`.
-    pub nonzero_slow_expected_frequency: f64,
+    /// Exact marginal nonzero-product expectation, projected to a stable `f64`
+    /// when this mode supports the field order.
+    pub nonzero_slow_expected_frequency: Option<f64>,
     /// Sum of fast-branch device-event spans.
     pub zero_fast_s: Option<f64>,
     /// Sum of same-geometry fast-branch compiler-barrier spans.
@@ -110,9 +112,9 @@ impl HorizontalProductResult {
             self.nonzero_slow_samples.to_string(),
             self.timed_samples_total.to_string(),
             optional_frequency(self.zero_fast_observed_frequency),
-            format!("{:.12}", self.zero_fast_expected_frequency),
+            optional_frequency(self.zero_fast_expected_frequency),
             optional_frequency(self.nonzero_slow_observed_frequency),
-            format!("{:.12}", self.nonzero_slow_expected_frequency),
+            optional_frequency(self.nonzero_slow_expected_frequency),
             optional_seconds(self.zero_fast_s),
             optional_seconds(self.zero_fast_compiler_barrier_baseline_s),
             optional_rate(self.zero_fast_net_per_operation_s),
@@ -153,7 +155,6 @@ fn optional_frequency(value: Option<f64>) -> String {
 pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductResult {
     let timed_purpose =
         scheduled_backend(spec.backend, SchedulePhase::HorizontalProductTimed).purpose();
-    let (zero_expected, nonzero_expected) = expected_frequencies(spec.q, spec.n);
     let mut result = HorizontalProductResult {
         q: spec.q,
         n: spec.n,
@@ -165,9 +166,9 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         zero_fast_samples: 0,
         nonzero_slow_samples: 0,
         zero_fast_observed_frequency: None,
-        zero_fast_expected_frequency: zero_expected,
+        zero_fast_expected_frequency: None,
         nonzero_slow_observed_frequency: None,
-        nonzero_slow_expected_frequency: nonzero_expected,
+        nonzero_slow_expected_frequency: None,
         zero_fast_s: None,
         zero_fast_compiler_barrier_baseline_s: None,
         zero_fast_net_per_operation_s: None,
@@ -198,6 +199,9 @@ pub fn run_horizontal_product(spec: HorizontalProductSpec) -> HorizontalProductR
         );
         return result;
     }
+    let (zero_expected, nonzero_expected) = expected_frequencies(spec.q, spec.n);
+    result.zero_fast_expected_frequency = Some(zero_expected);
+    result.nonzero_slow_expected_frequency = Some(nonzero_expected);
 
     #[cfg(not(feature = "hip"))]
     {
@@ -612,6 +616,54 @@ mod tests {
         }
     }
 
+    fn assert_unsupported_field_row(q: u64) {
+        let row = run_horizontal_product(HorizontalProductSpec {
+            q,
+            n: 12,
+            samples: 1,
+            backend: Backend::Gpu,
+            seed_root: 7,
+            seed_index: 0,
+        });
+        assert_eq!(row.outcome, Outcome::Unsupported);
+        assert_eq!(row.reps, 0);
+        assert_eq!(row.timed_samples_total, 0);
+        assert!(row.zero_fast_expected_frequency.is_none());
+        assert!(row.nonzero_slow_expected_frequency.is_none());
+        assert_eq!(row.duration_basis, "unavailable");
+        assert!(row.note.contains(&format!("q = {q}")));
+
+        let csv = row.to_csv_row();
+        let columns = csv.split(',').collect::<Vec<_>>();
+        assert_eq!(
+            columns.len(),
+            HORIZONTAL_PRODUCT_CSV_HEADER.split(',').count()
+        );
+        assert!(
+            columns[12].is_empty(),
+            "unsupported field has no zero expectation"
+        );
+        assert!(
+            columns[14].is_empty(),
+            "unsupported field has no nonzero expectation"
+        );
+    }
+
+    #[test]
+    fn zero_field_is_an_explicit_unsupported_row_without_expectation_projection() {
+        assert_unsupported_field_row(0);
+    }
+
+    #[test]
+    fn unit_field_is_an_explicit_unsupported_row_without_expectation_projection() {
+        assert_unsupported_field_row(1);
+    }
+
+    #[test]
+    fn unsupported_prime_field_is_an_explicit_unsupported_row_without_expectation_projection() {
+        assert_unsupported_field_row(11);
+    }
+
     #[test]
     fn rates_need_a_strictly_positive_matched_subtraction_and_actual_operations() {
         assert_eq!(net_per_operation(Some(0.2), Some(0.2), 8), None);
@@ -633,9 +685,9 @@ mod tests {
             zero_fast_samples: 159,
             nonzero_slow_samples: 1,
             zero_fast_observed_frequency: Some(159.0 / 160.0),
-            zero_fast_expected_frequency: 0.99,
+            zero_fast_expected_frequency: Some(0.99),
             nonzero_slow_observed_frequency: Some(1.0 / 160.0),
-            nonzero_slow_expected_frequency: 0.01,
+            nonzero_slow_expected_frequency: Some(0.01),
             zero_fast_s: Some(0.2),
             zero_fast_compiler_barrier_baseline_s: Some(0.05),
             zero_fast_net_per_operation_s: Some(0.15 / 159.0),
