@@ -8102,3 +8102,4 @@
 {"gate_key":"research-review","id":"1d944640-ef1a-4cb1-b738-63cc3e3e997e","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T16:56:19.680882317Z","type":"gate_failed","updated_by":"auto:executor"}
 {"fields":["description"],"id":"ffab4ad1-438f-41e2-ad30-aadade701a1b","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T17:04:26.494687426Z","type":"issue_updated","updated_by":"issue-update"}
 {"gate_key":"research-review","id":"8cdf2b0f-c0ac-4f90-b9fe-aed10ab14e35","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T17:08:31.006755791Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"d337fef3-7b3a-40f6-91e2-4cd7d8323db2","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T17:19:04.455233592Z","type":"issue_updated","updated_by":"doc-add"}
