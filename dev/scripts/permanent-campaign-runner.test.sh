@@ -5,6 +5,14 @@ THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT="$THIS_DIR/permanent-campaign-runner.sh"
 ROOT="$(cd "$THIS_DIR/../.." && pwd)"
 WORK="$(mktemp -d)"
+# The suite drives the real runner against this repository root, and measure
+# refuses any dirty or untracked state, so a clean tree is a prerequisite for
+# every case after the two refusal tests.
+if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=all)" ]]; then
+    echo "PREREQ: this self-test needs a clean worktree (tracked and untracked); commit or clean first" >&2
+    rm -rf "$WORK"
+    exit 2
+fi
 BACKUP="$WORK/README.md"
 cp "$ROOT/README.md" "$BACKUP"
 trap 'cp "$BACKUP" "$ROOT/README.md"; rm -rf "$WORK"' EXIT
@@ -24,6 +32,17 @@ for ((i=1; i<=$#; i++)); do
     [[ "${!i}" == --execution-id ]] && { j=$((i + 1)); execution_id="${!j}"; }
 done
 if [[ "${CAMPAIGN_TEST_FAIL_STEP:-}" == "$step" || "${CAMPAIGN_TEST_FAIL_EXECUTION_ID:-}" == "$execution_id" ]]; then exit 42; fi
+if [[ "$step" == equivalence ]]; then
+    echo 'q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status' > "$out"
+    for q in 3 5 7; do
+        mismatches=0; status=identical
+        if [[ "${CAMPAIGN_TEST_EQUIVALENCE_MISMATCH_Q:-}" == "$q" ]]; then
+            mismatches=1; status=MISMATCH
+        fi
+        echo "$q,12,scalar,stub,1,$mismatches,0,0,$status" >> "$out"
+    done
+    exit 0
+fi
 mkdir -p "$(dirname "$out")"; echo "stub $step" > "$out"
 STUB
     chmod +x "$path"
@@ -57,54 +76,75 @@ t1() {
     printf '\nrunner self-test marker\n' >> "$ROOT/README.md"
     set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" dirty 2>&1); r=$?; set -e
     cp "$BACKUP" "$ROOT/README.md"
-    assert_rc 2 "$r" t1; assert_has "$o" 'clean tracked worktree' t1
-    echo 'PASS: dirty refusal'; PASS=$((PASS + 1))
+    assert_rc 2 "$r" t1; assert_has "$o" 'clean worktree (tracked and untracked)' t1
+    echo 'PASS: tracked dirty refusal'; PASS=$((PASS + 1))
 }
 
 t2() {
-    local d="$WORK/t2" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
-    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(printf '%064d' 0)"
-    set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" hash 2>&1); r=$?; set -e
-    assert_rc 2 "$r" t2; assert_has "$o" 'binary hash mismatch' t2
-    echo 'PASS: hash mismatch refusal'; PASS=$((PASS + 1))
+    local d="$WORK/t2" h="$WORK/h" f="$WORK/f" marker="$ROOT/.permanent-campaign-runner-untracked-$BASHPID"; mkdir -p "$d"
+    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
+    touch "$marker"
+    set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" untracked 2>&1); r=$?; set -e
+    rm -f "$marker"
+    assert_rc 2 "$r" t2; assert_has "$o" 'clean worktree (tracked and untracked)' t2; assert_has "$o" 'permanent-campaign-runner-untracked' t2
+    echo 'PASS: untracked refusal'; PASS=$((PASS + 1))
 }
 
 t3() {
     local d="$WORK/t3" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
-    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
-    set +e; local o r; o=$(CAMPAIGN_TEST_FAIL_STEP=grid measure "$d/m" "$h" "$f" "$d/s" censor 2>&1); r=$?; set -e
-    assert_rc 7 "$r" t3
-    local sum; sum=$(find "$d/s" -name '*.run-summary.txt' -print -quit)
-    local text; text=$(cat "$sum")
-    assert_has "$text" 'step=grid execution_id=' t3
-    assert_has "$text" 'step=gray-update execution_id=' t3
-    assert_has "$text" 'step=horizontal-product execution_id=' t3
-    assert_has "$o" 'campaign censored' t3
-    echo 'PASS: censoring continues and exits 7'; PASS=$((PASS + 1))
+    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(printf '%064d' 0)"
+    set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" hash 2>&1); r=$?; set -e
+    assert_rc 2 "$r" t3; assert_has "$o" 'binary hash mismatch' t3
+    echo 'PASS: hash mismatch refusal'; PASS=$((PASS + 1))
 }
 
 t4() {
     local d="$WORK/t4" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
     stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
-    set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" success 2>&1); r=$?; set -e
-    assert_rc 0 "$r" t4; assert_has "$o" 'all pipeline steps completed' t4
+    set +e; local o r; o=$(CAMPAIGN_TEST_FAIL_STEP=grid measure "$d/m" "$h" "$f" "$d/s" censor 2>&1); r=$?; set -e
+    assert_rc 7 "$r" t4
     local sum; sum=$(find "$d/s" -name '*.run-summary.txt' -print -quit)
-    [[ "$(grep -c 'status=completed' "$sum")" -eq 4 ]] || { echo 'FAIL: t4 completion count'; return 1; }
-    [[ "$(grep 'execution_id=' "$sum" | awk -F'execution_id=' '{print $2}' | awk '{print $1}' | sort -u | wc -l)" -eq 4 ]] || { echo 'FAIL: t4 IDs'; return 1; }
+    local text; text=$(cat "$sum")
+    assert_has "$text" 'step=grid execution_id=' t4
+    assert_has "$text" 'step=gray-update execution_id=' t4
+    assert_has "$text" 'step=horizontal-product execution_id=' t4
+    assert_has "$o" 'campaign censored' t4
+    echo 'PASS: censoring continues and exits 7'; PASS=$((PASS + 1))
+}
+
+t7() {
+    local d="$WORK/t7" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
+    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
+    set +e; local o r; o=$(measure "$d/m" "$h" "$f" "$d/s" success 2>&1); r=$?; set -e
+    assert_rc 0 "$r" t7; assert_has "$o" 'all pipeline steps completed' t7
+    local sum; sum=$(find "$d/s" -name '*.run-summary.txt' -print -quit)
+    [[ "$(grep -c 'status=completed' "$sum")" -eq 4 ]] || { echo 'FAIL: t7 completion count'; return 1; }
+    [[ "$(grep 'execution_id=' "$sum" | awk -F'execution_id=' '{print $2}' | awk '{print $1}' | sort -u | wc -l)" -eq 4 ]] || { echo 'FAIL: t7 IDs'; return 1; }
     echo 'PASS: success exit and distinct IDs'; PASS=$((PASS + 1))
 }
 
 t5() {
     local d="$WORK/t5" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
     stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
-    set +e; local o r; o=$(CAMPAIGN_TEST_FAIL_EXECUTION_ID=5001 measure "$d/m" "$h" "$f" "$d/s" equivalence-censor 2>&1); r=$?; set -e
+    set +e; local o r; o=$(CAMPAIGN_TEST_EQUIVALENCE_MISMATCH_Q=5 measure "$d/m" "$h" "$f" "$d/s" equivalence-censor 2>&1); r=$?; set -e
     assert_rc 7 "$r" t5
     local text; text=$(find "$d/s" -name '*.run-summary.txt' -exec cat {} \;)
-    [[ "$(printf '%s\n' "$text" | grep -c 'q=5 step=equivalence .*status=failed')" -eq 1 ]] || { echo 'FAIL: t5 equivalence failure'; return 1; }
+    [[ "$(printf '%s\n' "$text" | grep -c '^shared_equivalence=')" -eq 3 ]] || { echo 'FAIL: t5 shared equivalence references'; return 1; }
     [[ "$(printf '%s\n' "$text" | grep -c 'q=5 .*status=skipped_equivalence_failed')" -eq 3 ]] || { echo 'FAIL: t5 skipped timing steps'; return 1; }
-    [[ "$(printf '%s\n' "$text" | grep -c 'q=3 .*status=completed')" -eq 4 ]] || { echo 'FAIL: t5 q=3 completed count'; return 1; }
-    [[ "$(printf '%s\n' "$text" | grep -c 'q=7 .*status=completed')" -eq 4 ]] || { echo 'FAIL: t5 q=7 completed count'; return 1; }
-    echo 'PASS: equivalence failure skips one field and continues'; PASS=$((PASS + 1))
+    [[ "$(printf '%s\n' "$text" | grep -Ec 'q=3 step=(grid|gray-update|horizontal-product).*status=completed')" -eq 3 ]] || { echo 'FAIL: t5 q=3 timing count'; return 1; }
+    [[ "$(printf '%s\n' "$text" | grep -Ec 'q=7 step=(grid|gray-update|horizontal-product).*status=completed')" -eq 3 ]] || { echo 'FAIL: t5 q=7 timing count'; return 1; }
+    assert_has "$o" 'campaign censored' t5
+    echo 'PASS: global equivalence q=5 mismatch skips only q=5'; PASS=$((PASS + 1))
+}
+
+t6() {
+    local d="$WORK/t6" h="$WORK/h" f="$WORK/f"; mkdir -p "$d"
+    stub_harness "$h"; stub_flock "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
+    set +e; local o r; o=$(CAMPAIGN_TEST_FAIL_STEP=equivalence measure "$d/m" "$h" "$f" "$d/s" equivalence-failure 2>&1); r=$?; set -e
+    assert_rc 7 "$r" t6
+    local text; text=$(find "$d/s" -name '*.run-summary.txt' -exec cat {} \;)
+    [[ "$(printf '%s\n' "$text" | grep -c 'status=skipped_equivalence_failed')" -eq 9 ]] || { echo 'FAIL: t6 all timing steps skipped'; return 1; }
+    echo 'PASS: equivalence process failure without CSV skips all fields'; PASS=$((PASS + 1))
 }
 
 t1
@@ -112,4 +152,6 @@ t2
 t3
 t4
 t5
-echo "PASS: $PASS/5 permanent-campaign-runner tests"
+t6
+t7
+echo "PASS: $PASS/7 permanent-campaign-runner tests"

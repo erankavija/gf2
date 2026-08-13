@@ -2,12 +2,19 @@
 # permanent-campaign-runner.sh — deterministic overnight receipt campaigns.
 #
 # One-shot scheduling (2026-08-14 02:00, canonical repository):
-#   systemd-run --user --on-calendar='2026-08-14 02:00' --unit=gf2-permanent-campaign.service /bin/bash -lc '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/dev/studies/permanent-campaign-systemd.log 2>&1'
-#   systemctl --user status gf2-permanent-campaign.service
-#   systemctl --user stop gf2-permanent-campaign.service
+#   systemd-run --user --on-calendar='2026-08-14 02:00' --unit=gf2-permanent-campaign.timer /bin/bash -lc '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/target/permanent-campaign/systemd-measure.log 2>&1'
+#   systemctl --user list-timers 'gf2-permanent-campaign*'
+#   systemctl --user status gf2-permanent-campaign.timer
+#   systemctl --user stop gf2-permanent-campaign.timer
+#   systemctl --user stop gf2-permanent-campaign.service  # stop an already-running instance
 #
 # at(1) alternative:
-#   echo '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/dev/studies/permanent-campaign-at.log 2>&1' | at 02:00 2026-08-14
+#   echo '/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh measure >> /home/vkaskivuo/Projects/gf2/target/permanent-campaign/at-measure.log 2>&1' | at 02:00 2026-08-14
+#
+# The outer logs live under target/, which prepare creates and git ignores, so
+# their creation cannot make the measure pre-flight reject its own run. The
+# per-step logs and CSV outputs are created under dev/studies/ only after the
+# same pre-flight check has passed.
 
 set -euo pipefail
 
@@ -61,13 +68,15 @@ hash_file() {
 }
 
 tracked_worktree_clean() {
-    git -C "$REPO_ROOT" diff --quiet && git -C "$REPO_ROOT" diff --cached --quiet
+    git -C "$REPO_ROOT" diff --quiet \
+        && git -C "$REPO_ROOT" diff --cached --quiet \
+        && [[ -z "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all)" ]]
 }
 
 assert_tracked_worktree_clean() {
     if ! tracked_worktree_clean; then
-        echo "ERROR: measure requires a clean tracked worktree" >&2
-        git -C "$REPO_ROOT" status --short --untracked-files=no >&2
+        echo "ERROR: measure requires a clean worktree (tracked and untracked)" >&2
+        git -C "$REPO_ROOT" status --short --untracked-files=all >&2
         exit 2
     fi
 }
@@ -119,12 +128,17 @@ verify_manifest() {
                 actual=$(hash_file "$path")
                 [[ "$actual" == "$expected" ]] || die "binary hash mismatch: $path (manifest $expected, actual $actual)"
                 ;;
-            ''|manifest_version=*|source_revision=*|tracked_worktree_dirty=*|resource_receipt=*) ;;
+            ''|manifest_version=*|source_revision=*|tracked_worktree_dirty=*|resource_receipt=*|rust_toolchain=*|build_rustc=*) ;;
             *) die "unknown manifest line: $kind|$path|$expected" ;;
         esac
     done < "$MANIFEST_PATH"
     [[ -n "$HARNESS_BIN" ]] || die "manifest does not name a harness binary"
     [[ -x "$HARNESS_BIN" ]] || die "manifest harness is not executable: $HARNESS_BIN"
+}
+
+manifest_value() {
+    local key="$1"
+    sed -n "s/^${key}=//p" "$MANIFEST_PATH" | head -n 1
 }
 
 write_provenance() {
@@ -136,7 +150,9 @@ write_provenance() {
         echo "campaign_run_id: $RUN_ID"
         echo "source_revision: $(git -C "$REPO_ROOT" rev-parse HEAD)"
         if tracked_worktree_clean; then echo "tracked_worktree_dirty: false"; else echo "tracked_worktree_dirty: true"; fi
-        echo "tracked_dirty_check: git diff --quiet && git diff --cached --quiet"
+        echo "tracked_dirty_check: git diff --quiet && git diff --cached --quiet && git status --porcelain --untracked-files=all"
+        echo "rust_toolchain: $(manifest_value rust_toolchain)"
+        echo "build_rustc: $(manifest_value build_rustc)"
         echo "binary_hashes: see $MANIFEST_PATH and the harness CSV preambles"
         print_manifest_binary_hashes
         echo
@@ -146,7 +162,7 @@ write_provenance() {
         capture_block "gpu_model_uuid_command: $ROCM_PATH/bin/rocm-smi --showproductname --showuniqueid" "$ROCM_PATH/bin/rocm-smi" --showproductname --showuniqueid
         capture_block "rocm_hipcc_version_command: $ROCM_PATH/bin/hipcc --version" "$ROCM_PATH/bin/hipcc" --version
         capture_block "amd_clang_version_command: $ROCM_PATH/llvm/bin/clang --version" "$ROCM_PATH/llvm/bin/clang" --version
-        capture_block "rustc_version_command: rustc -V" rustc -V
+        capture_block "ambient_rustc_command: rustc -V" rustc -V
         capture_block "kernel_version_command: uname -r" uname -r
         echo
         echo "harness_csv_preamble_reference: each CSV under $study_dir has the authoritative # preamble"
@@ -171,6 +187,7 @@ prepare() {
     require_command hipcc
     require_command sha256sum
     require_command git
+    require_command rustc
     mkdir -p "$SAMPLING_TARGET_DIR" "$WAVE_TARGET_DIR" "$TARGET_ROOT"
     echo "building permanent-sampling-feas (HIP)"
     cargo +1.95.0 build --manifest-path "$SAMPLING_MANIFEST" --release --features hip --target-dir "$SAMPLING_TARGET_DIR"
@@ -219,6 +236,8 @@ prepare() {
         echo "manifest_version=1"
         echo "source_revision=$(git -C "$REPO_ROOT" rev-parse HEAD)"
         echo "tracked_worktree_dirty=$(if tracked_worktree_clean; then echo false; else echo true; fi)"
+        echo "rust_toolchain=1.95.0"
+        echo "build_rustc=$(rustc +1.95.0 -V)"
         echo "resource_receipt=$resource_root/receipt.txt"
         echo "harness|$SAMPLING_TARGET_DIR/release/permanent_sampling_feas|"
         for binary in "${binaries[@]}"; do
@@ -228,7 +247,7 @@ prepare() {
     } > "$manifest_tmp"
     mv "$manifest_tmp" "$MANIFEST_PATH"
     echo "prepared manifest: $MANIFEST_PATH"
-    grep -E '^(manifest_version|source_revision|resource_receipt|binary\|)' "$MANIFEST_PATH"
+    grep -E '^(manifest_version|source_revision|rust_toolchain|build_rustc|resource_receipt|binary\|)' "$MANIFEST_PATH"
 }
 
 run_step() {
@@ -268,6 +287,12 @@ run_step() {
     if [[ "$rc" -eq 0 && ! -s "$out" ]]; then
         rc=2; status=failed
         echo "missing output after successful harness step" >> "$log"
+    elif [[ "$step" == equivalence && -s "$out" ]] && grep -q '^q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status$' "$out"; then
+        # The harness writes the complete CSV before returning nonzero for a
+        # value mismatch. Keep that evidence usable for per-field gating;
+        # an exit failure with no equivalence CSV remains an infrastructure
+        # failure and censors every field below.
+        status=completed
     elif [[ "$rc" -eq 0 ]]; then
         status=completed
     else
@@ -284,13 +309,39 @@ record_equivalence_skip() {
         "$q" "$step" "$execution_id" >> "$summary"
 }
 
+equivalence_field_failed() {
+    local q="$1" csv="$2"
+    local row_q mismatches status
+    while IFS=, read -r row_q _ _ _ _ mismatches _ _ status; do
+        [[ "$row_q" == "$q" ]] || continue
+        if [[ "$mismatches" =~ ^[1-9][0-9]*$ || "$status" == "MISMATCH" ]]; then
+            return 0
+        fi
+    done < <(grep -v '^#' "$csv" | tail -n +2)
+    return 1
+}
+
+record_shared_equivalence() {
+    local execution_id="$1" status="$2" exit_status="$3" log="$4" out="$5" summary="$6"
+    printf 'shared_equivalence=execution_id=%s status=%s exit=%s log=%s out=%s\n' \
+        "$execution_id" "$status" "$exit_status" "$log" "$out" >> "$summary"
+}
+
 run_locked_pipeline() {
     local smoke="$1"
     CAMPAIGN_MODE="$([[ "$smoke" == true ]] && echo smoke || echo measure)"
     export CAMPAIGN_MODE
-    local q study run_dir summary provenance base step_index execution_id skip_warmup equivalence_failed
+    local q study run_dir summary provenance base step_index execution_id skip_warmup
+    local shared_equivalence_id shared_equivalence_status shared_equivalence_exit
+    local shared_equivalence_csv shared_equivalence_log shared_equivalence_out
+    local idx shared_run shared_summary shared_provenance
+    local timing_status equivalence_falsified=false
+    local -a field_runs field_summaries field_provenances
     local first_grid=true
     FAILURE_COUNT=0
+    # Set up all field summaries before the single global equivalence check so
+    # that its execution, CSV, and verdict are recorded in all three fields.
+    idx=0
     for q in 3 5 7; do
         study=$(study_dir_for_q "$q")
         if [[ "$smoke" == true ]]; then run_dir="$study/smoke/$RUN_ID"; else run_dir="$study"; fi
@@ -304,37 +355,82 @@ run_locked_pipeline() {
             echo "mode: $CAMPAIGN_MODE"
         } > "$summary"
         write_provenance "$provenance" "$run_dir"
-        if [[ "$smoke" == true ]]; then base=$((q * 1000 + 10000)); else base=$((q * 1000)); fi
-        step_index=0
-        equivalence_failed=false
-        for step in equivalence grid gray-update horizontal-product; do
-            step_index=$((step_index + 1))
-            execution_id=$((base + step_index))
-            if [[ "$equivalence_failed" == true ]]; then
-                # The harness cannot exclude one backend from the remaining
-                # timing modes reliably, so censor the whole field after a
-                # failed equivalence check.
-                record_equivalence_skip "$q" "$step" "$execution_id" "$summary"
-                continue
-            fi
-            skip_warmup=false
-            [[ "$first_grid" == false ]] && skip_warmup=true
-            run_step "$q" "$step" "$execution_id" \
-                "$run_dir/permanent-campaign-$RUN_ID-q$q-$step.csv" \
-                "$run_dir/permanent-campaign-$RUN_ID-q$q-$step.log" \
-                "$summary" "$provenance" "$smoke" "$skip_warmup"
-            if [[ "$step" == equivalence && "$RUN_STEP_STATUS" == failed ]]; then
-                equivalence_failed=true
-            fi
-            if [[ "$step" == grid ]]; then
-                # grid owns the 90 s warm-up. Once invoked, later executions
-                # under this held lock use --skip-machine-warmup as usage.txt
-                # directs; the lock couples the chain to that thermal state.
-                first_grid=false
-            fi
-        done
-        echo "summary: $summary"
+        field_runs[idx]="$run_dir"
+        field_summaries[idx]="$summary"
+        field_provenances[idx]="$provenance"
+        idx=$((idx + 1))
     done
+
+    shared_run="${field_runs[0]}"
+    shared_summary="${field_summaries[0]}"
+    shared_provenance="${field_provenances[0]}"
+    if [[ "$smoke" == true ]]; then shared_equivalence_id=13001; else shared_equivalence_id=3001; fi
+    shared_equivalence_out="$shared_run/permanent-campaign-$RUN_ID-shared-equivalence.csv"
+    shared_equivalence_csv="$shared_equivalence_out"
+    shared_equivalence_log="$shared_run/permanent-campaign-$RUN_ID-shared-equivalence.log"
+    run_step 3 equivalence "$shared_equivalence_id" "$shared_equivalence_out" \
+        "$shared_equivalence_log" "$shared_summary" "$shared_provenance" "$smoke" false
+    shared_equivalence_status="$RUN_STEP_STATUS"
+    shared_equivalence_exit=$(awk -F'exit_status: ' 'END {print $2}' "$shared_equivalence_log")
+    for idx in 0 1 2; do
+        record_shared_equivalence "$shared_equivalence_id" \
+            "$shared_equivalence_status" "$shared_equivalence_exit" \
+            "$shared_equivalence_log" "$shared_equivalence_csv" "${field_summaries[$idx]}"
+    done
+
+    if [[ "$shared_equivalence_status" != completed ]]; then
+        # No usable global CSV means no field-level verdict exists. Preserve
+        # the canonical per-field timing execution IDs while censoring all
+        # timing steps after the failed shared pre-flight.
+        idx=0
+        for q in 3 5 7; do
+            if [[ "$smoke" == true ]]; then base=$((q * 1000 + 10000)); else base=$((q * 1000)); fi
+            for step_index in 2 3 4; do
+                case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
+                record_equivalence_skip "$q" "$timing_status" "$((base + step_index))" "${field_summaries[$idx]}"
+            done
+            idx=$((idx + 1))
+        done
+    else
+        idx=0
+        for q in 3 5 7; do
+            if [[ "$smoke" == true ]]; then base=$((q * 1000 + 10000)); else base=$((q * 1000)); fi
+            if equivalence_field_failed "$q" "$shared_equivalence_csv"; then
+                equivalence_falsified=true
+                for step_index in 2 3 4; do
+                    case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
+                    # Unsupported and unavailable rows do not enter this
+                    # branch: only mismatches > 0 or status=MISMATCH censor.
+                    record_equivalence_skip "$q" "$timing_status" "$((base + step_index))" "${field_summaries[$idx]}"
+                done
+            else
+                for step_index in 2 3 4; do
+                    case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
+                    execution_id=$((base + step_index))
+                    skip_warmup=false
+                    [[ "$first_grid" == false ]] && skip_warmup=true
+                    run_step "$q" "$timing_status" "$execution_id" \
+                        "${field_runs[$idx]}/permanent-campaign-$RUN_ID-q$q-$timing_status.csv" \
+                        "${field_runs[$idx]}/permanent-campaign-$RUN_ID-q$q-$timing_status.log" \
+                        "${field_summaries[$idx]}" "${field_provenances[$idx]}" "$smoke" "$skip_warmup"
+                    if [[ "$timing_status" == grid ]]; then
+                        # grid owns the 90 s warm-up. Once invoked, later
+                        # executions under this held lock use
+                        # --skip-machine-warmup as usage.txt directs.
+                        first_grid=false
+                    fi
+                done
+            fi
+            echo "summary: ${field_summaries[$idx]}"
+            idx=$((idx + 1))
+        done
+    fi
+    if [[ "$equivalence_falsified" == true ]]; then
+        # A valid CSV mismatch is evidence rather than an infrastructure
+        # failure, so its unaffected fields still run; the falsified field
+        # nevertheless makes the campaign censored and returns exit 7.
+        FAILURE_COUNT=$((FAILURE_COUNT + 1))
+    fi
     if [[ "$FAILURE_COUNT" -ne 0 ]]; then
         echo "campaign censored: $FAILURE_COUNT step(s) failed; see run-summary files" >&2
         return "$CENSORED_EXIT"
