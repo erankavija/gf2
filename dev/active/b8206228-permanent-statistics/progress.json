@@ -18,7 +18,7 @@
      "short_id": "22c7a3cd",
      "title": "Checkpointable streaming shard accumulator",
      "classification": "implementation",
-     "status": "merged_gating"
+     "status": "done"
     },
     {
      "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
@@ -39,7 +39,7 @@
      "short_id": "e0251af3",
      "title": "Observable-event rate estimates for permanental rank deficiency",
      "classification": "research",
-     "status": "merged_gating"
+     "status": "reviews_pending"
     }
    ]
   },
