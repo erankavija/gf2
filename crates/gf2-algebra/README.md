@@ -159,7 +159,7 @@ assert_eq!(permanent_bipedal3_parallel(&mat), Fp::<3>::new(0));
 | Module       | Purpose                                                                              |
 |--------------|--------------------------------------------------------------------------------------|
 | `packed`     | `PackedField` / `PackedFieldVec` traits and per-prime impls: `Bipedal3` (F_3, 64 lanes), `Packed5` (F_5, 64 lanes), `Packed7` (F_7, 16 lanes). Also `*Matrix` types for each. |
-| `permanent`  | `permanent_ryser` (field-generic oracle), `permanent_mod3_reference` (paper baseline), `permanent_bipedal{3,5,7}` fast paths, parallel and multi-word variants, and `permanental_rank_status` (rectangular permanental rank deficiency). |
+| `permanent`  | `permanent_ryser` (field-generic oracle), `permanent_mod3_reference` (paper baseline), `permanent_bipedal{3,5,7}` fast paths, parallel and multi-word variants, and `permanental_rank_status` (rectangular permanental rank deficiency). `permanent::exact` exhaustively enumerates all `q^(n^2)` matrices for exact rational permanent-zero campaign ground-truth anchors via `enumerate_permanent_zero_probability` and `ExactProbability` (q=3 through n=4; q=5,7 through n=3); cheap enumerations run in the fast tier, while q=3,n=4 and q=7,n=3 run only in the explicitly invoked slow tier. |
 | `gray`       | Gray-code subset enumerator used by Ryser's formula and all bipedal kernels.         |
 | `parallel`   | Rayon-based work-stealing dispatch (feature = "parallel", default on).               |
 | `gpu`        | HIP/ROCm host-side batch dispatcher (feature = "hip", default off).                 |
