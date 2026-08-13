@@ -63,7 +63,7 @@
 //! | Module       | Purpose                                                                           |
 //! |--------------|-----------------------------------------------------------------------------------|
 //! | [`packed`]   | `PackedField` / `PackedFieldVec` traits and `Bipedal3` (F_3) / `Packed5` (F_5) / `Packed7` (F_7) impls. |
-//! | [`permanent`]| `Permanent` trait, `permanent_ryser`, the per-prime `permanent_bipedal*` family, and the rectangular `permanental_rank_status` predicate. |
+//! | [`permanent`]| `Permanent` trait, `permanent_ryser`, the per-prime `permanent_bipedal*` family, the rectangular `permanental_rank_status` predicate, and `permanent::exact`'s exhaustive `q^(n^2)` campaign-anchor enumeration via `enumerate_permanent_zero_probability` and `ExactProbability` (q=3 through n=4; q=5,7 through n=3). Cheap enumerations run in the fast tier; q=3,n=4 and q=7,n=3 run only in the explicitly invoked slow tier. |
 //! | [`gray`]     | Gray-code subset enumerator used by Ryser's formula and the bipedal kernels.      |
 //! | `parallel`   | Rayon-based work-stealing dispatch (cfg `feature = "parallel"`, default on).      |
 //! | `gpu`        | HIP/ROCm host-side dispatcher (cfg `feature = "hip"`, default off).               |
