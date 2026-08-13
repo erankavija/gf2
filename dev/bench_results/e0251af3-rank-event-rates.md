@@ -28,7 +28,7 @@ The measured means are small constants relative to the $\binom{n}{k}$ worst-case
 
 ## Provenance and regeneration
 
-- Git revision: `b11b14fc1db0ea6905ff9350ca764c65c4b07793`
+- Git revision: `df2868bc0ef8e2d7164bccd7fcf5efa88ae2a5b8`
 - CPU model: `AMD Ryzen 9 5900X 12-Core Processor`
 - Toolchain: `rustc 1.97.0 (2d8144b78 2026-07-07)`; `cargo 1.97.0 (c980f4866 2026-06-30)`
 - Sampler: `gf2_stats::sampler::MatrixSampler<F_q>` with ChaCha20; root `ROOT = 0xe0251af320260813`.
