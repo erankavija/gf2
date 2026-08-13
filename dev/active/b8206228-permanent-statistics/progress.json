@@ -18,7 +18,7 @@
      "short_id": "22c7a3cd",
      "title": "Checkpointable streaming shard accumulator",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "merged_gating"
     },
     {
      "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
@@ -39,7 +39,7 @@
      "short_id": "e0251af3",
      "title": "Observable-event rate estimates for permanental rank deficiency",
      "classification": "research",
-     "status": "dispatched"
+     "status": "merged_gating"
     }
    ]
   },
@@ -265,7 +265,14 @@
    ]
   }
  ],
- "created_during_execution": [],
+ "created_during_execution": [
+  {
+   "short_id": "2ddf2f4b",
+   "title": "Deterministic overnight runner for the receipt campaigns",
+   "reason": "Owner directive 2026-08-13: campaigns execute overnight via a deterministic AI-free runner; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
+   "wave": "1.5"
+  }
+ ],
  "escalations": [
   {
    "issue": "9c5b26fb",
@@ -330,7 +337,8 @@
   "531695da": 1,
   "5758790d": 2,
   "6ae9f4ac": 1,
-  "9c5b26fb": 4
+  "9c5b26fb": 4,
+  "2ddf2f4b": 1
  },
  "surfaced_pitfalls": [
   "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
