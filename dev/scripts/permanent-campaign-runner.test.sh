@@ -66,6 +66,21 @@ STUB
     chmod +x "$path"
 }
 
+# A wrapper that dirties the repository after the pre-lock checks have passed
+# and before the lock-held child starts, standing in for a change landing while
+# this run waited on the shared host mutex.
+stub_flock_dirtying() {
+    local path="$1"
+    cat > "$path" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$1" == --full-host ]] || exit 91
+touch "$CAMPAIGN_TEST_LOCK_DIRTY_MARKER"
+shift; exec "$@"
+STUB
+    chmod +x "$path"
+}
+
 manifest() {
     local path="$1" harness="$2" hash="$3"
     printf 'manifest_version=1\nharness|%s|\nbinary|%s|%s\n' "$harness" "$harness" "$hash" > "$path"
@@ -163,6 +178,25 @@ t6() {
     echo 'PASS: equivalence process failure without CSV skips all fields'; PASS=$((PASS + 1))
 }
 
+t8() {
+    local d="$WORK/t8" h="$WORK/h" f="$WORK/f-dirtying"
+    local marker="$ROOT/.permanent-campaign-runner-lock-race-$BASHPID"; mkdir -p "$d"
+    stub_harness "$h"; stub_flock_dirtying "$f"; manifest "$d/m" "$h" "$(sha256sum "$h" | awk '{print $1}')"
+    # The tree is clean when measure runs its pre-lock checks, so the refusal
+    # below can only come from the revalidation inside the lock-held child.
+    set +e; local o r
+    o=$(CAMPAIGN_TEST_LOCK_DIRTY_MARKER="$marker" measure "$d/m" "$h" "$f" "$d/s" lock-race 2>&1); r=$?
+    set -e
+    rm -f "$marker"
+    assert_rc 2 "$r" t8
+    assert_has "$o" 'clean worktree (tracked and untracked)' t8
+    assert_has "$o" 'permanent-campaign-runner-lock-race' t8
+    # run_campaign creates the study root before taking the lock; refusing under
+    # the lock must leave it without a single run summary.
+    [[ -z "$(find "$d/s" -name '*.run-summary.txt' 2>/dev/null)" ]] || { echo 'FAIL: t8 ran a step after refusing'; return 1; }
+    echo 'PASS: dirt landing during the lock wait is refused under the lock'; PASS=$((PASS + 1))
+}
+
 t1
 t2
 t3
@@ -170,4 +204,5 @@ t4
 t5
 t6
 t7
-echo "PASS: $PASS/7 permanent-campaign-runner tests"
+t8
+echo "PASS: $PASS/8 permanent-campaign-runner tests"
