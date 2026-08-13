@@ -35,6 +35,29 @@ ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 ARCH="${PERMANENT_CAMPAIGN_ARCH:-gfx1030}"
 RUN_ID="${CAMPAIGN_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
 
+# The production permanent kernels the campaign measures, listed as the
+# translation units crates/gf2-kernels-hip/build.rs hands to hipcc. build.rs
+# owns that set, so the receipt sweep enumerates it instead of globbing the
+# directory; assert_crate_permanent_inventory fails the run when the two drift.
+CRATE_PERMANENT_DIR="$REPO_ROOT/crates/gf2-kernels-hip/hip/permanent"
+CRATE_BUILD_RS="$REPO_ROOT/crates/gf2-kernels-hip/build.rs"
+CRATE_PERMANENT_TU_ROOTS=(
+    gray_update_micro.hip
+    permanent_bipedal3.hip
+    permanent_bipedal5.hip
+    permanent_bipedal7.hip
+)
+# `<fragment>|<translation unit root that includes it>`. A fragment has no
+# translation unit of its own: permanent_bipedal7.hip includes
+# horizontal_product_micro.hip textually so the F_7 lookup circuit reads that
+# unit's established __constant__ d_MUL_LUT, and compiling the fragment alone
+# fails on that undeclared symbol. hipcc therefore never sees it as a source,
+# in the crate build or here, and its kernels' resource remarks appear in the
+# permanent_bipedal7.hip log its receipt entry cites.
+CRATE_PERMANENT_FRAGMENTS=(
+    "horizontal_product_micro.hip|permanent_bipedal7.hip"
+)
+
 # Exit 2 means a runner/preparation refusal or infrastructure error. Exit 7
 # means the campaign ran to completion but at least one harness step failed.
 CENSORED_EXIT=7
@@ -182,6 +205,115 @@ record_command() {
     printf 'command: %s\n' "${rendered% }" >> "$provenance"
 }
 
+crate_permanent_source_is_listed() {
+    local name="$1" candidate entry
+    for candidate in "${CRATE_PERMANENT_TU_ROOTS[@]}"; do
+        if [[ "$candidate" == "$name" ]]; then return 0; fi
+    done
+    for entry in "${CRATE_PERMANENT_FRAGMENTS[@]}"; do
+        if [[ "${entry%%|*}" == "$name" ]]; then return 0; fi
+    done
+    return 1
+}
+
+# Refuses to capture receipts once the crate's translation unit set no longer
+# matches the lists above, so a renamed, added, or newly self-contained kernel
+# source stops the campaign instead of losing its receipt unnoticed.
+assert_crate_permanent_inventory() {
+    local listed compiled entry fragment root path name
+    listed=$(printf '%s\n' "${CRATE_PERMANENT_TU_ROOTS[@]}" | sort)
+    compiled=$(sed -n 's/.*\.file("hip\/permanent\/\([A-Za-z0-9_]*\.hip\)").*/\1/p' "$CRATE_BUILD_RS" | sort)
+    if [[ "$listed" != "$compiled" ]]; then
+        die "gf2-kernels-hip translation unit drift: build.rs compiles [$(tr '\n' ' ' <<< "$compiled")], this runner captures [$(tr '\n' ' ' <<< "$listed")]"
+    fi
+    for entry in "${CRATE_PERMANENT_FRAGMENTS[@]}"; do
+        fragment="${entry%%|*}"
+        root="${entry##*|}"
+        [[ -f "$CRATE_PERMANENT_DIR/$fragment" ]] || die "listed fragment is missing: $CRATE_PERMANENT_DIR/$fragment"
+        grep -qF "#include \"$fragment\"" "$CRATE_PERMANENT_DIR/$root" \
+            || die "$root no longer includes $fragment; its kernels are not in that translation unit's resource log"
+    done
+    for path in "$CRATE_PERMANENT_DIR"/*.hip; do
+        [[ -f "$path" ]] || die "no HIP sources under $CRATE_PERMANENT_DIR"
+        name="${path##*/}"
+        crate_permanent_source_is_listed "$name" \
+            || die "unswept kernel source $path: list it as a translation unit root or as a fragment of one"
+    done
+}
+
+# Compiles $source as its own translation unit under the resource-usage remark
+# flag, with the extra hipcc flags given after it, and appends its receipt
+# entry. Leaves the captured artifacts in the CAPTURED_* globals so a fragment
+# of this unit can cite the same object and log.
+capture_translation_unit() {
+    local resource_root="$1" source="$2"
+    shift 2
+    local object log status source_hash rendered
+    local -a command
+    object="$resource_root/${source##*/}.o"
+    log="$resource_root/${source##*/}.resource.log"
+    if [[ -e "$object" ]]; then
+        die "resource capture would overwrite $object: two measured sources share a basename"
+    fi
+    command=("$ROCM_PATH/bin/hipcc" "--offload-arch=$ARCH" "$@" -Rpass-analysis=kernel-resource-usage -c "$source" -o "$object")
+    echo "capturing resource usage: $source"
+    set +e
+    "${command[@]}" 2> "$log"
+    status=$?
+    set -e
+    [[ "$status" -eq 0 ]] || die "resource capture failed for $source (exit $status)"
+    source_hash=$(hash_file "$source")
+    printf -v rendered '%q ' "${command[@]}"
+    CAPTURED_COMMAND="${rendered% }"
+    CAPTURED_STATUS="$status"
+    CAPTURED_OBJECT="$object"
+    CAPTURED_OBJECT_SHA256="$(hash_file "$object")"
+    CAPTURED_LOG="$log"
+    CAPTURED_LOG_SHA256="$(hash_file "$log")"
+    append_receipt_entry "$resource_root" "$source" "$source_hash" "$source" root
+}
+
+# One per-source receipt entry. `source` is the measured kernel source;
+# `translation_unit` is the source hipcc compiled, which is the measured source
+# itself for a root and the including root for a fragment.
+append_receipt_entry() {
+    local resource_root="$1" source="$2" source_hash="$3" translation_unit="$4" role="$5"
+    {
+        printf 'source: %s\nsource_sha256: %s\n' "$source" "$source_hash"
+        printf 'command: %s\n' "$CAPTURED_COMMAND"
+        printf 'exit_status: %s\nobject: %s\nobject_sha256: %s\nresource_log: %s\nresource_log_sha256: %s\n' \
+            "$CAPTURED_STATUS" "$CAPTURED_OBJECT" "$CAPTURED_OBJECT_SHA256" "$CAPTURED_LOG" "$CAPTURED_LOG_SHA256"
+        printf 'translation_unit: %s\ntranslation_unit_role: %s\n\n' "$translation_unit" "$role"
+    } >> "$resource_root/receipt.txt"
+}
+
+# Every kernel the campaign measures: the prototype candidates from
+# permanent_wave_gpu, and the production permanent and micro-measurement
+# kernels the prepared harness launches from gf2-kernels-hip. The crate's
+# unrelated coding and modem kernels are deliberately outside this sweep.
+capture_resource_receipts() {
+    local resource_root="$1"
+    local source root entry fragment
+    # Each wave source is a self-contained translation unit, compiled here with
+    # the flags permanent_wave_gpu's build script uses for it.
+    while IFS= read -r source; do
+        capture_translation_unit "$resource_root" "$source" -O3
+    done < <(find "$REPO_ROOT/dev/research/permanent_wave_gpu/hip" -type f -name '*.hip' -print | sort)
+    # -O3 -fPIC are the flags build.rs hands hipcc for the crate sources, so
+    # these receipts describe the kernels as the crate actually builds them.
+    assert_crate_permanent_inventory
+    for root in "${CRATE_PERMANENT_TU_ROOTS[@]}"; do
+        capture_translation_unit "$resource_root" "$CRATE_PERMANENT_DIR/$root" -O3 -fPIC
+        for entry in "${CRATE_PERMANENT_FRAGMENTS[@]}"; do
+            [[ "${entry##*|}" == "$root" ]] || continue
+            fragment="${entry%%|*}"
+            echo "capturing resource usage: $CRATE_PERMANENT_DIR/$fragment (no standalone translation unit; captured from $root)"
+            append_receipt_entry "$resource_root" "$CRATE_PERMANENT_DIR/$fragment" \
+                "$(hash_file "$CRATE_PERMANENT_DIR/$fragment")" "$CRATE_PERMANENT_DIR/$root" included-fragment
+        done
+    done
+}
+
 prepare() {
     require_command cargo
     require_command hipcc
@@ -195,7 +327,6 @@ prepare() {
     cargo +1.95.0 build --manifest-path "$WAVE_MANIFEST" --release --features hip --target-dir "$WAVE_TARGET_DIR"
 
     local resource_root="$TARGET_ROOT/hip-resource-usage-$RUN_ID"
-    local source object log status source_hash object_hash log_hash
     mkdir -p "$resource_root"
     {
         echo "schema_version: 1"
@@ -205,30 +336,7 @@ prepare() {
         echo "hipcc: $ROCM_PATH/bin/hipcc"
         echo "resource_flag: -Rpass-analysis=kernel-resource-usage"
     } > "$resource_root/receipt.txt"
-    while IFS= read -r source; do
-        source_hash=$(hash_file "$source")
-        object="$resource_root/$(basename "$source").o"
-        log="$resource_root/$(basename "$source").resource.log"
-        echo "capturing resource usage: $source"
-        set +e
-        "$ROCM_PATH/bin/hipcc" "--offload-arch=$ARCH" -O3 -Rpass-analysis=kernel-resource-usage -c "$source" -o "$object" 2> "$log"
-        status=$?
-        set -e
-        [[ "$status" -eq 0 ]] || die "resource capture failed for $source (exit $status)"
-        object_hash=$(hash_file "$object")
-        log_hash=$(hash_file "$log")
-        {
-            printf 'source: %s\nsource_sha256: %s\n' "$source" "$source_hash"
-            printf 'command: %q ' "$ROCM_PATH/bin/hipcc" "--offload-arch=$ARCH" -O3 -Rpass-analysis=kernel-resource-usage -c "$source" -o "$object"
-            printf '\nexit_status: %s\nobject: %s\nobject_sha256: %s\nresource_log: %s\nresource_log_sha256: %s\n\n' "$status" "$object" "$object_hash" "$log" "$log_hash"
-        } >> "$resource_root/receipt.txt"
-    # Every kernel the campaign measures: the prototype candidates, and the
-    # production permanent and micro-measurement kernels the prepared harness
-    # launches from gf2-kernels-hip. The crate's unrelated coding/modem
-    # kernels are deliberately outside this sweep.
-    done < <(find "$REPO_ROOT/dev/research/permanent_wave_gpu/hip" \
-        "$REPO_ROOT/crates/gf2-kernels-hip/hip/permanent" \
-        -type f -name '*.hip' -print | sort)
+    capture_resource_receipts "$resource_root"
 
     local binaries=(
         "$SAMPLING_TARGET_DIR/release/permanent_sampling_feas"
