@@ -1,639 +1,354 @@
 {
-  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
-  "epic_short_id": "b8206228",
-  "current_wave": 7,
-  "waves": [
+ "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
+ "epic_short_id": "b8206228",
+ "current_wave": 1,
+ "waves": [
+  {
+   "wave_number": 1,
+   "issues": [
     {
-      "wave_number": 1,
-      "issues": [
-        {
-          "id": "b494fec8-579f-4a2d-8579-4fa58d50e3b1",
-          "short_id": "b494fec8",
-          "title": "Workspace convergence of the rand 0.9 ecosystem",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "6602d181-9fb6-42a6-a97e-9fb38a8e71d1",
-          "short_id": "6602d181",
-          "title": "Generic checkpoint payload mechanism",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "5758790d-421b-47d2-a6f0-c40d1c5dc465",
-          "short_id": "5758790d",
-          "title": "Versioned dataset layout and record schemas",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "83eedd07-9710-4109-98a3-2b839f3cee98",
-          "short_id": "83eedd07",
-          "title": "Four-matrix batched AVX2 single-word path for $\\mathbb{F}_3$ permanents",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "8cb4def5-0c95-4eb2-a2a2-04445390cc4c",
-          "short_id": "8cb4def5",
-          "title": "Timing receipt for the determinant companion at campaign sizes",
-          "classification": "research",
-          "status": "completed"
-        },
-        {
-          "id": "296a41c9-b50d-40d2-83b8-70684c27a9d8",
-          "short_id": "296a41c9",
-          "title": "Re-measurement of contested backend orderings before the freeze",
-          "classification": "research",
-          "status": "completed"
-        },
-        {
-          "id": "9c5b26fb-a505-492e-8e9f-d8d520496ad0",
-          "short_id": "9c5b26fb",
-          "title": "Scientific preregistration protocol for the campaign",
-          "classification": "documentation",
-          "status": "completed"
-        }
-      ]
+     "id": "047b62ed-5184-4295-b4bd-d31263411b53",
+     "short_id": "047b62ed",
+     "title": "F_3 preregistered receipt campaign",
+     "classification": "research",
+     "status": "pending"
     },
     {
-      "wave_number": 2,
-      "issues": [
-        {
-          "id": "c1b253cb-babf-45ef-8898-27d743eaafac",
-          "short_id": "c1b253cb",
-          "title": "Named exception record for the rand 0.8 holdout",
-          "classification": "documentation",
-          "status": "completed"
-        },
-        {
-          "id": "2d315f69-e8c6-4f15-9ea6-125ce3c6c4d0",
-          "short_id": "2d315f69",
-          "title": "Existing pipeline migrated onto the generic checkpoint",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "d36810e7-d000-4514-b18f-9a63a1403ba9",
-          "short_id": "d36810e7",
-          "title": "Source identity and integrity for published datasets",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "18dec119-c2d9-48f7-b383-3c73f66e49f3",
-          "short_id": "18dec119",
-          "title": "Dispatcher routing and prose sweep for the $\\mathbb{F}_3$ permanent path",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "175972df-556d-437f-a9cd-10f08eed03d6",
-          "short_id": "175972df",
-          "title": "Permanental rank-deficiency predicate with exact validation",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
+     "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
+     "short_id": "22c7a3cd",
+     "title": "Checkpointable streaming shard accumulator",
+     "classification": "implementation",
+     "status": "dispatched"
     },
     {
-      "wave_number": 3,
-      "issues": [
-        {
-          "id": "531695da-f7a4-45e7-b982-cbe27bd41745",
-          "short_id": "531695da",
-          "title": "Empty gf2-stats workspace member crate",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "240b7618-f24f-4fc1-b708-ac349b3b3286",
-          "short_id": "240b7618",
-          "title": "Cross-file narrative sweep for the $\\mathbb{F}_3$ permanent selection",
-          "classification": "documentation",
-          "status": "completed"
-        },
-        {
-          "id": "5143ee0b-cd9b-4323-a41d-104e176143ed",
-          "short_id": "5143ee0b",
-          "title": "Prototype crate skeleton with the complete candidate registry",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "76dfd2ff-9b49-4fb0-8120-95f446c6fd4c",
-          "short_id": "76dfd2ff",
-          "title": "Mark historical S3/S5 permanent-benchmark receipts as non-authoritative",
-          "classification": "documentation",
-          "status": "completed"
-        },
-        {
-          "id": "7edd421d-30a1-41e4-96f6-b46b8beac04d",
-          "short_id": "7edd421d",
-          "title": "HIP event timing API for device-side kernel spans",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "ddac2d5d-095d-4d0f-8935-f714256c4c64",
-          "short_id": "ddac2d5d",
-          "title": "Purpose-domain stream address allocator",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
+     "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
+     "short_id": "6c7fcb38",
+     "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
+     "classification": "research",
+     "status": "pending"
     },
     {
-      "wave_number": 4,
-      "issues": [
-        {
-          "id": "6ae9f4ac-3a71-4db5-b7d7-51b0f92fdc8f",
-          "short_id": "6ae9f4ac",
-          "title": "Uniform $\\mathbb{F}_q$ matrix sampler with domain-separated streams",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "ddd0c6ee-8f3d-401d-ba7e-7fadc1ee0e79",
-          "short_id": "ddd0c6ee",
-          "title": "Benchmark receipt for the batched $\\mathbb{F}_3$ permanent path",
-          "classification": "research",
-          "status": "completed"
-        },
-        {
-          "id": "6d0ff83c-8355-40e3-819d-3eca22501bf7",
-          "short_id": "6d0ff83c",
-          "title": "Deterministic fixture corpus with CPU-oracle equivalence checking",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "e02ee7ce-c6e7-4af7-96c3-2cbf635d2e83",
-          "short_id": "e02ee7ce",
-          "title": "Per-phase timing columns in the harness cell record",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
+     "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
+     "short_id": "91605d4d",
+     "title": "F_5 preregistered receipt campaign",
+     "classification": "research",
+     "status": "pending"
     },
     {
-      "wave_number": 5,
-      "issues": [
-        {
-          "id": "49cbb131-cae2-4e8e-97d4-759ecbb11297",
-          "short_id": "49cbb131",
-          "title": "Wilson score interval estimator",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "7b998fb9-77db-429b-8609-64cd0c7f8600",
-          "short_id": "7b998fb9",
-          "title": "F_7 three-plane Mersenne accumulator exact above the sixteen-lane bound",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "9798835a-c5d1-495d-bdef-eb78f8580b46",
-          "short_id": "9798835a",
-          "title": "Registry-derived schedule adapter for prototype candidates",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "de2522d6-0dc1-4763-a20d-e7dd991722df",
-          "short_id": "de2522d6",
-          "title": "Wave-cooperative intra-matrix Ryser prototype for F_3",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
-    },
-    {
-      "wave_number": 6,
-      "issues": [
-        {
-          "id": "56c69654-694b-45cd-bb4b-3e4a798f4c08",
-          "short_id": "56c69654",
-          "title": "F_5 three-plane accumulator prototype beside the byte-arithmetic control",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "739f43b0-4672-46e5-9a68-afaa1610d5c1",
-          "short_id": "739f43b0",
-          "title": "F_3 zero-mask sign-popcount fold candidate beside the halving control",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "af302aa9-5f6e-438e-8c9f-67b455d3ebee",
-          "short_id": "af302aa9",
-          "title": "Dependency-chained Gray update micro-measurement mode",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "cc162697-2566-4b21-9b20-a97d3d293e58",
-          "short_id": "cc162697",
-          "title": "F_7 permanent-shaped kernels for the three-plane state and the table control",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "d1b6a182-ffcd-4efb-b4da-73331c63a699",
-          "short_id": "d1b6a182",
-          "title": "Clopper-Pearson interval estimator with coverage demonstration",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
-    },
-    {
-      "wave_number": 7,
-      "issues": [
-        {
-          "id": "342710ef-ea5a-4f44-9884-cb08d13f1ee6",
-          "short_id": "342710ef",
-          "title": "Horizontal product micro-measurement mode",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "4058e0ac-8405-4266-9ec2-05f2e0430ae9",
-          "short_id": "4058e0ac",
-          "title": "Preregistered exact binomial tests for campaign cells",
-          "classification": "implementation",
-          "status": "completed"
-        },
-        {
-          "id": "44534b2f-b92a-4758-9e78-3a93ce4a209c",
-          "short_id": "44534b2f",
-          "title": "Exact enumeration anchors for the smallest cells",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "773a5378-964c-473c-9161-e519d3470d35",
-          "short_id": "773a5378",
-          "title": "Architecture scope statement with compile evidence",
-          "classification": "documentation",
-          "status": "completed"
-        },
-        {
-          "id": "c31671ea-8da0-4c11-adfa-bc4ec5cdc49b",
-          "short_id": "c31671ea",
-          "title": "Curve and table generation pipeline",
-          "classification": "implementation",
-          "status": "completed"
-        }
-      ]
-    },
-    {
-      "wave_number": 8,
-      "issues": [
-        {
-          "id": "047b62ed-5184-4295-b4bd-d31263411b53",
-          "short_id": "047b62ed",
-          "title": "F_3 preregistered receipt campaign",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
-          "short_id": "22c7a3cd",
-          "title": "Checkpointable streaming shard accumulator",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
-          "short_id": "6c7fcb38",
-          "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
-          "short_id": "91605d4d",
-          "title": "F_5 preregistered receipt campaign",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
-          "short_id": "e0251af3",
-          "title": "Observable-event rate estimates for permanental rank deficiency",
-          "classification": "research",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 9,
-      "issues": [
-        {
-          "id": "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
-          "short_id": "41c3d91d",
-          "title": "Campaign driver scheduling and shard emission",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
-          "short_id": "a9284086",
-          "title": "Runtime qualification of wave utilization and launch duration",
-          "classification": "research",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 10,
-      "issues": [
-        {
-          "id": "0dffa759-8ff3-4198-a901-23bedf6667e0",
-          "short_id": "0dffa759",
-          "title": "Field-by-field go/no-go synthesis with production design",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
-          "short_id": "51498b90",
-          "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 11,
-      "issues": [
-        {
-          "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
-          "short_id": "0de41c82",
-          "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
-          "short_id": "4a6bdcff",
-          "title": "Determinant companion evaluated on the campaign's matrices",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 12,
-      "issues": [
-        {
-          "id": "7a816262-1eed-492c-a58b-6752fdf50636",
-          "short_id": "7a816262",
-          "title": "Frozen root manifest for the campaign",
-          "classification": "documentation",
-          "status": "pending"
-        },
-        {
-          "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
-          "short_id": "eb8825c8",
-          "title": "Batch-parallel processor path for campaign shards",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 13,
-      "issues": [
-        {
-          "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
-          "short_id": "032cc754",
-          "title": "Processor backend selection for campaign cells",
-          "classification": "implementation",
-          "status": "pending"
-        },
-        {
-          "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
-          "short_id": "3f664839",
-          "title": "Preregistered rare-event estimator design",
-          "classification": "design",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 14,
-      "issues": [
-        {
-          "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
-          "short_id": "a39bb161",
-          "title": "Accelerator execution for campaign cells",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 15,
-      "issues": [
-        {
-          "id": "1947125e-33eb-4442-b717-24442cc35ca1",
-          "short_id": "1947125e",
-          "title": "Shared behavioural conformance suite across campaign backends",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 16,
-      "issues": [
-        {
-          "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
-          "short_id": "73317b2e",
-          "title": "Standing acceptance tests for campaign cells",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 17,
-      "issues": [
-        {
-          "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
-          "short_id": "1d0b3ec4",
-          "title": "Campaign arm for $q = 5$",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "ed494117-4245-4e92-855b-3c54e207697d",
-          "short_id": "ed494117",
-          "title": "Campaign arm for $q = 7$",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
-          "short_id": "90a61cd4",
-          "title": "Campaign arm for $q = 3$ as reproduction",
-          "classification": "research",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 18,
-      "issues": [
-        {
-          "id": "f27150a5-8713-4bce-b404-9e477937d498",
-          "short_id": "f27150a5",
-          "title": "Deterministic finalization of a completed campaign dataset",
-          "classification": "implementation",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 19,
-      "issues": [
-        {
-          "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
-          "short_id": "f74e327d",
-          "title": "Published zero-fraction curves and tables for the three fields",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
-          "short_id": "53d8e438",
-          "title": "Convergence-shape model comparison for the deviation term",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
-          "short_id": "6639435f",
-          "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
-          "classification": "research",
-          "status": "pending"
-        }
-      ]
-    },
-    {
-      "wave_number": 20,
-      "issues": [
-        {
-          "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
-          "short_id": "b5d45bcd",
-          "title": "Analysis report on the measured zero-fraction curves",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
-          "short_id": "0665e7be",
-          "title": "Permanental against determinantal zero-fraction comparison figure",
-          "classification": "research",
-          "status": "pending"
-        },
-        {
-          "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
-          "short_id": "b05c908b",
-          "title": "Preregistered rare-event estimate beyond direct sampling",
-          "classification": "research",
-          "status": "pending"
-        }
-      ]
+     "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
+     "short_id": "e0251af3",
+     "title": "Observable-event rate estimates for permanental rank deficiency",
+     "classification": "research",
+     "status": "dispatched"
     }
-  ],
-  "created_during_execution": [],
-  "escalations": [
-    {
-      "issue": "9c5b26fb",
-      "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
-      "status": "approved",
-      "requested_at": "2026-08-09T16:21:42Z",
-      "resolved_at": "2026-08-09T16:59:46Z",
-      "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
-    },
-    {
-      "issue": "9c5b26fb",
-      "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
-      "status": "approved",
-      "requested_at": "2026-08-09T19:22:02Z",
-      "resolved_at": "2026-08-09T19:31:03Z",
-      "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
-    },
-    {
-      "issue": "9c5b26fb",
-      "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
-      "status": "approved",
-      "requested_at": "2026-08-09T19:55:35Z",
-      "resolved_at": "2026-08-09T19:58:15Z",
-      "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
-    },
-    {
-      "issue": "240b7618",
-      "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
-      "status": "approved",
-      "requested_at": "2026-08-09T22:12:00Z",
-      "resolved_at": "2026-08-09T22:31:00Z",
-      "decision": "Owner approved amending REQ-05 on the grounds that the breakdown manifest is a historical artefact. REQ-05 now excludes historical material, defined as the development archive together with the frozen manifest, and requires the recorded search to state that exclusion. The Notes section carries the justification: the manifest is a verbatim copy of the .jit/ issue descriptions, so editing an entry would make the copy disagree with the issue it produced.",
-      "options": [
-        "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
-        "Amend REQ-05 to name the frozen-manifest exclusion.",
-        "Revert to editing manifest entries to past tense, abandoning the freeze.",
-        "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
-      ],
-      "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
-    },
-    {
-      "issue": "240b7618",
-      "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
-      "status": "approved",
-      "requested_at": "2026-08-09T22:58:00Z",
-      "options": [
-        "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
-        "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
-        "Keep iterating in place against successive objections."
-      ],
-      "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
-      "resolved_at": "2026-08-09T23:05:00Z",
-      "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision — the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
-    }
-  ],
-  "rework_counts": {
-    "175972df": 2,
-    "18dec119": 2,
-    "240b7618": 5,
-    "d36810e7": 2,
-    "296a41c9": 2,
-    "531695da": 1,
-    "5758790d": 2,
-    "6ae9f4ac": 1,
-    "9c5b26fb": 4
+   ]
   },
-  "surfaced_pitfalls": [
-    "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
-    "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
-    "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
-    "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
-    "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
-    "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
-    "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it — frozen, historical, faithful to the store, snapshotted at a revision — became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
-    "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
-    "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
-    "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
-    "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
-    "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
-    "Requiring a worker to falsify its tests — reinstate the defect and show the test turns red — is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
-    "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted."
-  ],
-  "started_at": "2026-08-09T12:20:30Z"
+  {
+   "wave_number": 2,
+   "issues": [
+    {
+     "id": "41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d",
+     "short_id": "41c3d91d",
+     "title": "Campaign driver scheduling and shard emission",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
+     "short_id": "a9284086",
+     "title": "Runtime qualification of wave utilization and launch duration",
+     "classification": "research",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 3,
+   "issues": [
+    {
+     "id": "0dffa759-8ff3-4198-a901-23bedf6667e0",
+     "short_id": "0dffa759",
+     "title": "Field-by-field go/no-go synthesis with production design",
+     "classification": "design",
+     "status": "pending"
+    },
+    {
+     "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
+     "short_id": "51498b90",
+     "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 4,
+   "issues": [
+    {
+     "id": "0de41c82-fb20-4adb-ba6e-30061a83c301",
+     "short_id": "0de41c82",
+     "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
+     "short_id": "4a6bdcff",
+     "title": "Determinant companion evaluated on the campaign's matrices",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 5,
+   "issues": [
+    {
+     "id": "7a816262-1eed-492c-a58b-6752fdf50636",
+     "short_id": "7a816262",
+     "title": "Frozen root manifest for the campaign",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
+     "short_id": "eb8825c8",
+     "title": "Batch-parallel processor path for campaign shards",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 6,
+   "issues": [
+    {
+     "id": "032cc754-c88c-4e1b-b56d-6511d0a70c3c",
+     "short_id": "032cc754",
+     "title": "Processor backend selection for campaign cells",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "3f664839-fb97-4bb5-8141-7c39026325fe",
+     "short_id": "3f664839",
+     "title": "Preregistered rare-event estimator design",
+     "classification": "design",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 7,
+   "issues": [
+    {
+     "id": "a39bb161-0746-4f24-9057-32c9c2fa09fd",
+     "short_id": "a39bb161",
+     "title": "Accelerator execution for campaign cells",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 8,
+   "issues": [
+    {
+     "id": "1947125e-33eb-4442-b717-24442cc35ca1",
+     "short_id": "1947125e",
+     "title": "Shared behavioural conformance suite across campaign backends",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 9,
+   "issues": [
+    {
+     "id": "73317b2e-8f01-472e-b04f-05ff9ef2b8be",
+     "short_id": "73317b2e",
+     "title": "Standing acceptance tests for campaign cells",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 10,
+   "issues": [
+    {
+     "id": "1d0b3ec4-f4b1-4dba-91b0-4afbaca71b48",
+     "short_id": "1d0b3ec4",
+     "title": "Campaign arm for $q = 5$",
+     "classification": "research",
+     "status": "pending"
+    },
+    {
+     "id": "90a61cd4-c48d-4097-ae2c-e628163a754a",
+     "short_id": "90a61cd4",
+     "title": "Campaign arm for $q = 3$ as reproduction",
+     "classification": "research",
+     "status": "pending"
+    },
+    {
+     "id": "ed494117-4245-4e92-855b-3c54e207697d",
+     "short_id": "ed494117",
+     "title": "Campaign arm for $q = 7$",
+     "classification": "research",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 11,
+   "issues": [
+    {
+     "id": "f27150a5-8713-4bce-b404-9e477937d498",
+     "short_id": "f27150a5",
+     "title": "Deterministic finalization of a completed campaign dataset",
+     "classification": "implementation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 12,
+   "issues": [
+    {
+     "id": "53d8e438-7bbe-4397-b43c-c9e100e145b1",
+     "short_id": "53d8e438",
+     "title": "Convergence-shape model comparison for the deviation term",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "6639435f-8be8-4408-b6ab-759fe0099bd2",
+     "short_id": "6639435f",
+     "title": "Rare-event estimator with demonstrated unbiasedness and coverage",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "f74e327d-688d-4ffe-880f-a01b471e33d8",
+     "short_id": "f74e327d",
+     "title": "Published zero-fraction curves and tables for the three fields",
+     "classification": "documentation",
+     "status": "pending"
+    }
+   ]
+  },
+  {
+   "wave_number": 13,
+   "issues": [
+    {
+     "id": "0665e7be-6150-45a0-94bc-1ce11c61bd2b",
+     "short_id": "0665e7be",
+     "title": "Permanental against determinantal zero-fraction comparison figure",
+     "classification": "documentation",
+     "status": "pending"
+    },
+    {
+     "id": "b05c908b-690d-4caa-9e2d-46d0f9ae0acc",
+     "short_id": "b05c908b",
+     "title": "Preregistered rare-event estimate beyond direct sampling",
+     "classification": "implementation",
+     "status": "pending"
+    },
+    {
+     "id": "b5d45bcd-05b8-42cd-a418-b73b47a15dac",
+     "short_id": "b5d45bcd",
+     "title": "Analysis report on the measured zero-fraction curves",
+     "classification": "documentation",
+     "status": "pending"
+    }
+   ]
+  }
+ ],
+ "created_during_execution": [],
+ "escalations": [
+  {
+   "issue": "9c5b26fb",
+   "reason": "The final research gate found a halted-cell schema contradiction and missing Monte Carlo confidence intervals after the protocol exhausted its two allowed rework cycles.",
+   "status": "approved",
+   "requested_at": "2026-08-09T16:21:42Z",
+   "resolved_at": "2026-08-09T16:59:46Z",
+   "decision": "Owner approved one additional bounded protocol rework; the rework counter resets under the escalation policy."
+  },
+  {
+   "issue": "9c5b26fb",
+   "reason": "The final post-reset research review found that fitted parameters and delta-AIC values derived from Monte Carlo counts still lack calibrated uncertainty intervals.",
+   "status": "approved",
+   "requested_at": "2026-08-09T19:22:02Z",
+   "resolved_at": "2026-08-09T19:31:03Z",
+   "decision": "Owner approved one additional protocol-only rework to preregister deterministic binomial-bootstrap 95% intervals and interval-aware distinguishability; no campaign draws, code, or receipt changes."
+  },
+  {
+   "issue": "9c5b26fb",
+   "reason": "The bootstrap research review accepted the uncertainty method but found that the future analysis receipt omits host hardware identity; it also advised a fixed-address deterministic bootstrap rerun check.",
+   "status": "approved",
+   "requested_at": "2026-08-09T19:55:35Z",
+   "resolved_at": "2026-08-09T19:58:15Z",
+   "decision": "Owner approved one provenance-only protocol correction requiring analysis-host hardware fields and an exact fixed-address bootstrap regeneration check; no methodology, code, campaign draws, or current receipts change."
+  },
+  {
+   "issue": "240b7618",
+   "reason": "REQ-05 failed code-review for a third consecutive round on one root cause, hitting both MAX_REWORK_ATTEMPTS and MAX_SAME_FINDING_REPEATS. The criterion permits excluding only archived material from the recorded audit, and the owner-approved manifest freeze excludes dev/active/b8206228-permanent-statistics/breakdown.json by assertion instead. The two reviewers disagree: doc-review passed the identical tree with zero findings.",
+   "status": "approved",
+   "requested_at": "2026-08-09T22:12:00Z",
+   "resolved_at": "2026-08-09T22:31:00Z",
+   "decision": "Owner approved amending REQ-05 on the grounds that the breakdown manifest is a historical artefact. REQ-05 now excludes historical material, defined as the development archive together with the frozen manifest, and requires the recorded search to state that exclusion. The Notes section carries the justification: the manifest is a verbatim copy of the .jit/ issue descriptions, so editing an entry would make the copy disagree with the issue it produced.",
+   "options": [
+    "Move the frozen manifest under dev/archive so the exclusion is literally what REQ-05 allows.",
+    "Amend REQ-05 to name the frozen-manifest exclusion.",
+    "Revert to editing manifest entries to past tense, abandoning the freeze.",
+    "Delete breakdown.json, since all 43 entries are verified byte-identical to the authoritative .jit/ store."
+   ],
+   "lead_recommendation": "Move it under dev/archive: satisfies the criterion literally, preserves the freeze decision, needs no amendment."
+  },
+  {
+   "issue": "240b7618",
+   "reason": "The approved REQ-05 amendment did not settle the criterion. Five rounds have now objected to excluding breakdown.json on five different grounds, each created by fixing the previous one: framing live in the manifest; a second occurrence; the exclusion is not archived material; the README's fidelity check reports DIVERGED after the amendment changed this issue's own description; resynchronising means the manifest is not frozen; and finally the README's cited revision 89531d65 does not match the file. The last is factually correct - the file differs from 89531d65 in eight entries (protocol-draft, dataset-schema, acceptance-checks, arm-q3-reproduction, arm-q5, arm-q7, curve-generation, campaign-finalization), all from 9c5b26fb's protocol-bracket resyncs in 7901430a and 95e16b81, none from 240b7618. The manifest is therefore neither the snapshot at its claimed revision nor a mirror of the store, and any prose describing it becomes the next round's target. The root cause is the file's location under dev/active, not the criterion's wording.",
+   "status": "approved",
+   "requested_at": "2026-08-09T22:58:00Z",
+   "options": [
+    "Move the manifest to dev/archive/b8206228-permanent-statistics/ so exclusion follows from the criterion's plain 'archived material' with no assertion to falsify.",
+    "Delete the manifest: all 43 entries were verified byte-identical to the .jit/ store, which is authoritative, and the snapshot already fails its own provenance claim.",
+    "Keep iterating in place against successive objections."
+   ],
+   "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
+   "resolved_at": "2026-08-09T23:05:00Z",
+   "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision \u2014 the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
+  }
+ ],
+ "rework_counts": {
+  "175972df": 2,
+  "18dec119": 2,
+  "240b7618": 5,
+  "d36810e7": 2,
+  "296a41c9": 2,
+  "531695da": 1,
+  "5758790d": 2,
+  "6ae9f4ac": 1,
+  "9c5b26fb": 4
+ },
+ "surfaced_pitfalls": [
+  "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
+  "The 6602d181 documentation gate reported a low-severity pre-existing stale design-reference path in crates/gf2-sim/src/lib.rs; retain it for the epic-level stale-content sweep because it is outside the generic checkpoint leaf.",
+  "A cold optimized rebuild after SIMD source changes can exceed the cargo-ci gate's fixed 300-second wrapper timeout even when the identical CI script is healthy. Run the identical script once to complete cold artefacts, then rerun the unchanged registered gate; never substitute the warm-up result for gate evidence.",
+  "The more common cause of that same 300-second signature is not a cold rebuild: scripts/cargo-ci.sh re-execs itself under a blocking host-wide flock (XDG_RUNTIME_DIR/gf2-cargo-ci.lock), so a gate run started while any other cargo-ci is in flight spends its entire wrapper budget queued and is recorded as status error with no output and no check lines. Distinguish the two by the run record: a lock wait produces an empty stdout at almost exactly 300000ms. Workers in separate worktrees share this lock, so drain the queue before evaluating the gate rather than warming artefacts.",
+  "Run cargo-ci before code-review for code-bearing leaves: the reviewer treats pending executable evidence as a procedural failure even when the implementation diff is otherwise reviewable.",
+  "The documentation gate will not tolerate a planned temporary live-prose contradiction across a dependency edge: the dispatcher leaf must repair blocking crate README, benchmark-label, and example-header fallout before the broader downstream narrative sweep can become eligible.",
+  "breakdown.json in the epic's artefact directory copies the issue descriptions whose authoritative source is the .jit/ issue store, and reviewers read it as live prose: each entry's background paragraph states its pre-change condition, so it reads as false the moment that leaf lands. Five review rounds were burned on it. Every justification written for excluding it \u2014 frozen, historical, faithful to the store, snapshotted at a revision \u2014 became the next round's target, because each was a checkable claim the reviewer could and did falsify. Settled only when the owner recorded the exclusion as a decision in the issue description itself, explicitly not contingent on any property of the file. The lesson generalises: an exclusion defended by an assertion about the excluded thing invites verification of that assertion; an exclusion recorded as a decision does not. Do not edit the manifest and do not resynchronise it.",
+  "A recorded audit command is only as good as its pattern breadth. The round-one 240b7618 audit required the words public and dispatcher to be adjacent and searched two paths, so it returned a false all-clear over bare-symbol occurrences of the same claim living in dev/studies. When a criterion asks for a recorded repository search, run the recorded command against the known-bad text before accepting it, and escape a literal token in the pattern so the command text cannot match itself.",
+  "Prose the lead writes about a stale-framing sweep is itself swept. Two surfaced-pitfall entries in this file quoted the superseded claims verbatim and turned up as live occurrences in 240b7618's own audit. Describe a retired claim rather than reproducing it.",
+  "A cargo-ci gate run reported 'Passed gate cargo-ci for issue 175972df' while persisting no record under .jit/gate-runs/, on a tree that the next identical invocation failed on clippy and that a direct cargo clippy run independently failed. Treat a gate pass with no corresponding run record as no evidence at all: after every jit gate evaluate, confirm the recorded status with jit gate status before acting on the verdict. The repository has a prior false-pass incident of a different mechanism recorded in scripts/cargo-ci.sh (jit issue 941d1528).",
+  "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
+  "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
+  "Requiring a worker to falsify its tests \u2014 reinstate the defect and show the test turns red \u2014 is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
+  "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted."
+ ],
+ "started_at": "2026-08-09T12:20:30Z",
+ "rederived_at": "2026-08-13T15:55:00Z",
+ "rederivation_note": "Waves recomputed 2026-08-13 from live jit graph deps over the 28 open issues (session-4 resume); prior 20-wave plan retained in git history. Wave numbers restart at 1."
 }
