@@ -11,10 +11,11 @@
   "id": "398f0691-624a-4580-8bdd-80bea51292ae",
   "labels": [
     "component:gf2-sim",
-    "type:bug"
+    "type:bug",
+    "epic:quality-documentation-tech-debt"
   ],
   "priority": "normal",
   "state": "ready",
   "title": "Flaky test: kill_mid_write_randomized_defense_in_depth fails under host load",
-  "updated_at": "2026-08-13T16:35:05.548634005Z"
+  "updated_at": "2026-08-13T19:38:31.014519523Z"
 }
