@@ -8109,3 +8109,4 @@
 {"gate_key":"research-review","id":"3f5c0b22-44be-4103-986c-57e088bc6e8e","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T17:31:47.700781859Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"ae45c7e3-4f2a-4e48-b771-282c491ae339","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T17:32:22.009736824Z","to":"done","type":"issue_state_changed"}
 {"id":"07c062f3-feeb-4055-9fd5-83c88598e875","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T17:32:22.009736824Z","type":"issue_completed"}
+{"fields":["documents"],"id":"1b58f29b-5413-44d8-8d1f-0d995fd5008e","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T17:32:44.993254110Z","type":"issue_updated","updated_by":"doc-remove"}
