@@ -99,6 +99,20 @@ pub enum PermanentalRank {
     Full,
 }
 
+/// The result of a permanental-rank decision together with its evaluation cost.
+///
+/// `permanent_evaluations` counts the `k × k` row-submatrix permanents that
+/// the production predicate actually evaluates. It includes the final
+/// nonzero witness when the decision is [`PermanentalRank::Full`], and equals
+/// `C(n, k)` for a deficient matrix.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PermanentalRankEvaluation {
+    /// Whether the matrix has permanental rank below `k`.
+    pub status: PermanentalRank,
+    /// Number of `k × k` permanent evaluations performed by the predicate.
+    pub permanent_evaluations: usize,
+}
+
 impl PermanentalRank {
     /// `true` for [`PermanentalRank::Deficient`].
     ///
@@ -182,6 +196,22 @@ pub fn permanental_rank_status<F: FiniteField>(
     n: usize,
     k: usize,
 ) -> PermanentalRank {
+    permanental_rank_status_with_stats::<F>(matrix, n, k).status
+}
+
+/// Decide permanental rank and report the number of square permanent
+/// evaluations used by the production predicate.
+///
+/// This is the instrumented form of [`permanental_rank_status`]. The returned
+/// count is intended for reproducible cost measurements; it does not change
+/// the early-exit traversal or the decision. See [`permanental_rank_status`]
+/// for the matrix representation, panics, and complexity contract.
+#[must_use]
+pub fn permanental_rank_status_with_stats<F: FiniteField>(
+    matrix: &[F],
+    n: usize,
+    k: usize,
+) -> PermanentalRankEvaluation {
     assert!(
         k <= n,
         "permanental_rank_status: k ({k}) must not exceed n ({n}); permanental rank k needs \
@@ -199,13 +229,17 @@ pub fn permanental_rank_status<F: FiniteField>(
     // and the strict inequality `0 < 0` fails. Returning here also keeps the
     // loop below free of the degenerate `matrix[0]` bootstrap.
     if k == 0 {
-        return PermanentalRank::Full;
+        return PermanentalRankEvaluation {
+            status: PermanentalRank::Full,
+            permanent_evaluations: 0,
+        };
     }
 
     // `rows` holds the current k-subset in strictly increasing order, starting
     // at the lexicographically first subset {0, 1, ..., k-1}.
     let mut rows: Vec<usize> = (0..k).collect();
     let mut submatrix: Vec<F> = Vec::with_capacity(k * k);
+    let mut permanent_evaluations = 0;
 
     loop {
         submatrix.clear();
@@ -214,8 +248,12 @@ pub fn permanental_rank_status<F: FiniteField>(
         }
 
         // Early exit: one nonzero k × k permanent already witnesses per-rank k.
+        permanent_evaluations += 1;
         if !permanent_ryser::<F>(&submatrix, k).is_zero() {
-            return PermanentalRank::Full;
+            return PermanentalRankEvaluation {
+                status: PermanentalRank::Full,
+                permanent_evaluations,
+            };
         }
 
         // Advance to the next subset in lexicographic order: find the
@@ -223,7 +261,10 @@ pub fn permanental_rank_status<F: FiniteField>(
         // bump it, and repack every position to its right.
         let Some(pivot) = (0..k).rev().find(|&i| rows[i] != i + n - k) else {
             // Every subset was exhausted with a zero permanent.
-            return PermanentalRank::Deficient;
+            return PermanentalRankEvaluation {
+                status: PermanentalRank::Deficient,
+                permanent_evaluations,
+            };
         };
         rows[pivot] += 1;
         for i in pivot + 1..k {
@@ -279,6 +320,36 @@ mod tests {
             permanental_rank_status::<Fp<3>>(&[], 4, 0),
             PermanentalRank::Full,
             "the empty submatrix has permanent 1, so per-rank(A) = 0 is not < 0"
+        );
+        assert_eq!(
+            permanental_rank_status_with_stats::<Fp<3>>(&[], 4, 0),
+            PermanentalRankEvaluation {
+                status: PermanentalRank::Full,
+                permanent_evaluations: 0,
+            }
+        );
+    }
+
+    #[test]
+    fn test_evaluation_stats_match_early_exit_and_full_scan() {
+        let mut full = vec![Fp::<3>::zero(); 4 * 2];
+        full[0] = Fp::<3>::one();
+        full[3] = Fp::<3>::one();
+        assert_eq!(
+            permanental_rank_status_with_stats::<Fp<3>>(&full, 4, 2),
+            PermanentalRankEvaluation {
+                status: PermanentalRank::Full,
+                permanent_evaluations: 1,
+            }
+        );
+
+        let deficient = vec![Fp::<3>::zero(); 4 * 2];
+        assert_eq!(
+            permanental_rank_status_with_stats::<Fp<3>>(&deficient, 4, 2),
+            PermanentalRankEvaluation {
+                status: PermanentalRank::Deficient,
+                permanent_evaluations: 6,
+            }
         );
     }
 
