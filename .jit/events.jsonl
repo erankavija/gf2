@@ -8084,3 +8084,4 @@
 {"fields":["dependencies"],"id":"71642de7-f803-4fa1-a379-14faafc9f223","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-13T16:07:55.236923039Z","type":"issue_updated","updated_by":"dependency-add"}
 {"from":"ready","id":"b343a2a5-ff33-4f0f-9e8e-269e8541de65","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:08:01.479732416Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"8da01085-a935-451a-ad1c-91817e0f6b9a","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:08:01.479732416Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"c1de7b0c-1113-457b-8ad1-278351897a60","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T16:22:04.960066997Z","type":"issue_updated","updated_by":"doc-add"}
