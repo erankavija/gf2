@@ -39,7 +39,7 @@
      "short_id": "e0251af3",
      "title": "Observable-event rate estimates for permanental rank deficiency",
      "classification": "research",
-     "status": "reviews_pending"
+     "status": "done"
     }
    ]
   },
@@ -270,7 +270,8 @@
    "short_id": "2ddf2f4b",
    "title": "Deterministic overnight runner for the receipt campaigns",
    "reason": "Owner directive 2026-08-13: campaigns execute overnight via a deterministic AI-free runner; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
-   "wave": "1.5"
+   "wave": "1.5",
+   "status": "done"
   }
  ],
  "escalations": [
@@ -338,7 +339,7 @@
   "5758790d": 2,
   "6ae9f4ac": 1,
   "9c5b26fb": 4,
-  "2ddf2f4b": 2,
+  "2ddf2f4b": 5,
   "e0251af3": 1
  },
  "surfaced_pitfalls": [
