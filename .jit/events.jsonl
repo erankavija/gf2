@@ -8090,3 +8090,7 @@
 {"gate_key":"cargo-ci","id":"9ce7e8d7-0f96-4db0-8c7d-79dd15ef430c","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T16:33:55.442946368Z","type":"gate_passed","updated_by":"auto:executor"}
 {"id":"63b1c8fb-ec1f-495c-a874-e4af53fd9907","issue_id":"398f0691-624a-4580-8bdd-80bea51292ae","priority":"normal","timestamp":"2026-08-13T16:35:05.548634005Z","title":"Flaky test: kill_mid_write_randomized_defense_in_depth fails under host load","type":"issue_created"}
 {"fields":["dependencies"],"id":"08617157-b886-4e18-9cff-5d27027e447a","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-13T16:35:19.314215214Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"b453aa8c-4feb-4f58-b0bb-fc1391e8dc3f","issue_id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","timestamp":"2026-08-13T16:37:26.012128062Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"6bd46c55-9682-458d-a218-3bcabbd88341","issue_id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","timestamp":"2026-08-13T16:38:13.386465866Z","to":"done","type":"issue_state_changed"}
+{"id":"6890f051-53ca-4ceb-a3e9-4effd0850fbb","issue_id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","timestamp":"2026-08-13T16:38:13.386465866Z","type":"issue_completed"}
+{"from":"backlog","id":"19f3c5b2-e38f-4e37-8daa-0ec6d8ee8c9e","issue_id":"41c3d91d-5eeb-4173-9fb9-fe7a3e3bb39d","timestamp":"2026-08-13T16:38:19.118303446Z","to":"ready","type":"issue_state_changed"}

@@ -8,6 +8,7 @@
   ],
   "description": "A campaign binary in the simulation crate that enumerates $(q, n, \\text{shard})$ work items from a campaign manifest, runs the composite draw-pack-evaluate-count loop, and emits shards and its own field summary deterministically into the dataset tree.\n\n## Background\n\nThere is no campaign runner for permanent sampling in the workspace. The two existing runners are coding-domain: a configuration-driven forward-error-correction campaign runner in the coding crate, and a modulation-and-coding campaign binary in the simulation crate that writes a per-curve output directory with checkpoints and a structured progress log. The second is the structural precedent — argument-driven, writing a self-describing output directory — while its campaign axes and inner loop share nothing with $(q, n, \\text{shard})$ over permanent evaluations.\n\nThe composite loop this driver needs exists in a research prototype and times four phases in order: generate, evaluate, histogram with zero counting, and shard emission. That prototype module carries no tests at all, unlike the sampler and statistics modules being productionised alongside it, so the driver is test-first work rather than a transcription.\n\nHosting the driver in the simulation crate adds a dependency on the algebra crate. That edge points inward from orchestration to mathematics and is legal under the repository's layering rule.\n\n## Success Criteria\n\n- [hard] REQ-01: A binary in the simulation crate enumerates $(q, n, \\text{shard})$ work items from a campaign manifest and executes them, with the algebra crate added as a dependency so the permanent kernels are reachable.\n- [hard] REQ-02: Each work item runs the composite loop — draw, pack, evaluate, count — and records per-phase wall-clock alongside its counts.\n- [hard] REQ-03: A single invocation covers one field and writes only that field's shard paths and that field's summary, so two invocations covering different fields can run concurrently without writing one file, asserted by a test over the paths a run opens for writing.\n- [hard] REQ-04: Emitted records conform to the dataset's shard and summary schemas and land under the campaign id the manifest names.\n- [hard] REQ-05: Emission is deterministic: re-emitting from identical inputs produces byte-identical files, so a reader comparing two runs of the same work items sees no spurious difference.\n- [hard] REQ-06: The scheduling module has no public function that no test exercises, with tests covering work-item enumeration and shard emission.\n\n## Notes\n\nCheckpointed resume, run-to-run determinism across worker counts, quarantine, and configuration-mismatch refusal are separate work behind this leaf on a dependency edge. Backend choice per cell, accelerator launch sizing, host locking, and the determinant companion are layered on top of the scheduler rather than built into it.\n",
   "documents": [],
+  "first_ready_at": "2026-08-13T16:38:19.118303446Z",
   "gates_required": [
     "cargo-ci",
     "code-review",
@@ -22,7 +23,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Campaign driver scheduling and shard emission",
-  "updated_at": "2026-08-09T11:54:10.417169574Z"
+  "updated_at": "2026-08-13T16:38:19.118303446Z"
 }
