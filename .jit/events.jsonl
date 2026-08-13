@@ -8126,3 +8126,4 @@
 {"from":"backlog","id":"c741c9f5-5911-41fe-9840-82cdfaed00d9","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-13T19:36:45.459928294Z","to":"ready","type":"issue_state_changed"}
 {"fields":["documents"],"id":"a9570f17-ba0a-4c4b-9105-c0b9d9dd0fff","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-13T19:38:00.745633813Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["labels"],"id":"616d9d09-2f58-4f1a-8881-1f3a23144c16","issue_id":"398f0691-624a-4580-8bdd-80bea51292ae","timestamp":"2026-08-13T19:38:31.014519523Z","type":"issue_updated","updated_by":"issue-update"}
+{"id":"8caa2330-00fb-4dd6-a53a-cdec27567bb1","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"upgraded","variables":[]}],"timestamp":"2026-08-13T21:23:19.710371523Z","type":"profile_lifecycle"}
