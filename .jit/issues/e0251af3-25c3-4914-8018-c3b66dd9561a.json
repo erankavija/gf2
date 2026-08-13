@@ -16,6 +16,7 @@
       "path": "dev/bench_results/e0251af3-rank-event-rates.md"
     }
   ],
+  "done_at": "2026-08-13T17:32:22.009736824Z",
   "first_ready_at": "2026-08-13T15:46:34.278299084Z",
   "gates_required": [
     "cargo-ci",
@@ -25,7 +26,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-13T16:33:55.442946368Z",
+      "updated_at": "2026-08-13T17:20:02.986793808Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -34,8 +35,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-13T17:08:31.006755791Z",
+      "status": "passed",
+      "updated_at": "2026-08-13T17:31:47.700781859Z",
       "updated_by": "auto:executor"
     }
   },
@@ -48,7 +49,7 @@
     "cites:GGK2025"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Observable-event rate estimates for permanental rank deficiency",
-  "updated_at": "2026-08-13T17:08:31.006755791Z"
+  "updated_at": "2026-08-13T17:32:22.009736824Z"
 }
