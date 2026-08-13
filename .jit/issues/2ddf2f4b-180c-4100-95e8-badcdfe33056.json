@@ -5,7 +5,21 @@
   "created_at": "2026-08-13T16:07:21.133381612Z",
   "dependencies": [],
   "description": "A committed, AI-free runner script that executes the three preregistered receipt campaigns unattended on the prepared benchmark host, so the overnight measurement window needs no orchestrator.\n\n## Background\n\nThe receipt campaigns (047b62ed F_3, 91605d4d F_5, 6c7fcb38 F_7) require an uncontended host under the repository benchmark lock (their REQ-15). The measurement protocol is fully encoded in the permanent-sampling-feas harness CLI (equivalence, grid, gray-update, horizontal-product; --only/--execution-id/--resume/--skip-machine-warmup), and the candidate set is registry-derived (MeasurementPath::ALL through the schedule adapter). What is missing is deterministic orchestration: build-ahead, lock-holding serial execution per field, censoring on failure, provenance capture, and committed output routing to the per-issue study directories.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed runner under dev/scripts/ executes, per field q in {3,5,7} serially: backend equivalence first (a field whose equivalence run fails records that falsification and executes no timing for the disagreeing backend), then the timing grid, then the gray-update and horizontal-product isolation runs, writing outputs and logs into dev/studies/047b62ed (q=3), dev/studies/91605d4d (q=5), dev/studies/6c7fcb38 (q=7).\n- [hard] REQ-02: The runner has a prepare mode (compiles the harness and prototype crate with --features hip, captures hipcc -Rpass-analysis=kernel-resource-usage resource receipts for every measured kernel, records binary hashes) and a measure mode that compiles nothing, holds the repository benchmark lock (dev/scripts/ccx1-bench-flock.sh --full-host or the same canonical mutex) for the duration, and refuses to start if the git worktree is dirty or the recorded binary hashes do not match.\n- [hard] REQ-03: The runner is deterministic and unattended: no jit invocations, no network, no prompts; every step's stdout/stderr is captured to a per-step log; stream/execution ids used are recorded; a failing step is censored with its evidence and the run proceeds to the next step, with the final exit code distinguishing all-complete from partially-censored.\n- [hard] REQ-04: A smoke mode exercises every step end-to-end on a tiny subset (single n, small counts) in minutes, and a passing smoke run on this host is committed evidence before any overnight scheduling.\n- [hard] REQ-05: Each output directory carries a provenance block: git revision, binary SHA-256 hashes, CPU model, GPU model and UUID, ROCm/clang versions, rustc version, kernel/driver, and the exact commands executed.\n- [hard] REQ-06: The script header documents the exact one-shot scheduling command (systemd-run --user --on-calendar or at) and how to verify/cancel the scheduled run.\n\n## Notes\n\nThe runner executes measurements and writes evidence; turning that evidence into the campaigns' committed receipts and reports stays with the campaign issues. Follow the harness usage text (dev/research/permanent-sampling-feas/src/usage.txt) for warmup and resume semantics: default machine warmup on the first execution, --skip-machine-warmup only while one lock holder chains executions, --execution-id disjoint per fresh process, justified in script comments.",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "other",
+      "format": "markdown",
+      "label": "Campaign runner",
+      "path": "dev/scripts/permanent-campaign-runner.sh"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "Passing host smoke run summary (q=3)",
+      "path": "dev/studies/047b62ed/smoke/20260813T163921Z-3617707/permanent-campaign-20260813T163921Z-3617707.run-summary.txt"
+    }
+  ],
   "first_ready_at": "2026-08-13T16:07:21.133381612Z",
   "gates_required": [
     "code-review",
@@ -31,5 +45,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Deterministic overnight runner for the receipt campaigns",
-  "updated_at": "2026-08-13T16:08:01.479732416Z"
+  "updated_at": "2026-08-13T16:47:15.466218396Z"
 }
