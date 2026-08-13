@@ -1,0 +1,50 @@
+# git_sha: 0b36a65a4152af90c06d7aa56fe058a3f39e26dd
+# git_worktree_dirty: true
+# harness_source_sha: 283b79b6fddc24b32d749237682bb63a5ec9a19e
+# harness_source_dirty: false
+# deps_source_sha: f0f2cac0857e0a535eb13f74ea772b5c4746485b
+# deps_source_dirty: false
+# binary_sha256: cb05d168b9c9f8ac28ad3d93fceafac8d27e3e0f48441c15a3fb6614ef0690e7
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# cpu: AMD Ryzen 9 5900X 12-Core Processor
+# logical_cpus: 24
+# rayon_threads: 24
+# avx2: true, avx512f: false
+# cpu_governor: powersave
+# gpu: card0,AMD Radeon RX 6950 XT,0x73a5,Advanced Micro Devices Inc. [AMD/ATI],D4124100,0x0e3a,0xc0,1,42338,gfx1030
+# rocm: 7.2.4
+# hip_feature: true
+# kernel: 7.1.6-arch1-1
+# timestamp_utc: 2026-08-13T16:39:37Z
+# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T163921Z-3617707/permanent-campaign-20260813T163921Z-3617707-q3-grid.csv --execution-id 13002 --only q=3,n=12
+# protocol: warmup >= 3 s, then >= 5 reps and >= 5 s timed, cap 120 s per cell
+# composite = generate + evaluate + reduce + store, all timed per repetition
+# store: one shard record per batch appended and fsync-free flushed to a scratch file
+# rates are summed matrices over summed time; per-repetition rates are never averaged
+# schedule: randomised with seed 0xb488f02c00000001 then stably sorted by ascending n, so each n-stratum is randomised and every cell has a smaller-n reference on its own (q, backend, batch size); see order_index
+# outcomes: measured | unsupported (a kernel bound forbids the cell, named in note) | censored (not attempted; carries NO measured rate)
+# censoring contract: a censored row's composite_matrices_per_s is NaN. Its projected_matrices_per_s is an ESTIMATE, obtained by scaling the MEASURED rate at projection_reference_n through Ryser's n*2^n work model. No bound on a batched rate is derived from probe_matrix_s, which is a single-matrix LATENCY. Neither 1/probe nor W/probe (W = compute units) bounds a batched rate: a compute unit hosts several workgroups at once and a probe pays launch costs a batch amortises. An earlier harness published W/probe as an upper bound and measurements exceeded it; the study's section 4.3 records that falsification and says which of its numbers survive in this file
+# projection accuracy: on the q=3 GPU chain, where the projection can be checked against a measurement, it lands LOW at every step. Censored cells' true rates are therefore expected to run somewhat higher than their projections - an extrapolation from that one chain to the others, not a measured property of them. The magnitude is re-derived from THIS file's own q=3 chain in the study's section 4.3 rather than quoted here, so that a stale figure cannot survive a re-measurement
+# seed_root: 0xb488f02c00000001; each cell owns 100000 indices within each named purpose
+# execution_id: 13002; reserved index block: 292545000001..=292567500000 inclusive; full matrix address is (seed_root, q, n, purpose, stream_index)
+# machine warmup: full rayon load for 90 s before the first timed cell
+# eval_s is the host wall-clock around GPU serialisation, allocation, H2D, launch, stream wait, D2H, and free. kernel_device_s is the separate device-event kernel-only total; h2d_device_s, d2h_device_s, host_submission_s, and device_submission_to_kernel_s are separate phase totals. No column subtracts host and device timestamps. Empty phase columns carry their reason in phase_timing_note and are never zero-filled or replaced by eval_s. If timing setup fails but synchronous gpu_hip evaluation succeeds, that same-backend result is retained and the note names the unavailable instrumented boundary
+# single-thread cells pinned to core 0; rayon cells use all logical CPUs
+q,n,backend,outcome,batch_size,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,kernel_device_s,h2d_device_s,d2h_device_s,host_submission_s,device_submission_to_kernel_s,phase_timing_note,probe_matrix_s,projected_matrices_per_s,projection_reference_n,timed_purpose,timed_index_first,rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_index_first,cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note
+3,12,cpu_rayon_intra_matrix,measured,19034,10,190340,63705,5.193605,0.357691,4.835658,0.000187,0.000068,36648.9198,39361.7563,,,,,,event timing unavailable: backend is not GPU/HIP,0.000105,NaN,0,grid_timed,292545000001,0.510646,0.547032,0.010745,24,all,0xb488f02c00000001,292545000001,4308.6,73.9,44.0,0,
+3,12,cpu_rayon_batch_avx2,measured,31378,30,941340,314293,4.517157,1.658290,2.857742,0.000942,0.000182,208392.1399,329399.8824,,,,,,event timing unavailable: backend is not GPU/HIP,0.000064,NaN,0,grid_timed,292545100001,0.148156,0.153333,0.001443,24,all,0xb488f02c00000001,292545100001,4145.3,74.6,44.0,1,
+3,12,gpu_hip,measured,1024,1000,1024000,341409,4.770816,1.579219,3.187604,0.000831,0.003163,214638.3127,321244.4530,1.350389,0.036839,0.008925,0.003239,0.009789,,0.036935,NaN,0,grid_timed,292545200001,0.004162,0.006317,0.000066,1,0,0xb488f02c00000001,292545200001,2108.1,74.5,46.0,2,
+3,12,f5-three-plane,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate f5-three-plane has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292545300001,NaN,NaN,NaN,3,prototype candidate f5-three-plane has no harness batch evaluator yet
+3,12,f7-three-plane-permanent,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292545400001,NaN,NaN,NaN,4,prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+3,12,cpu_rayon_batch_scalar,measured,65536,12,786432,261499,4.896380,2.296145,2.598968,0.001123,0.000144,160614.9987,302593.9860,,,,,,event timing unavailable: backend is not GPU/HIP,0.000024,NaN,0,grid_timed,292545500001,0.226139,0.504127,0.111103,24,all,0xb488f02c00000001,292545500001,1952.0,73.2,46.0,5,
+3,12,cpu_ryser_generic,measured,11421,5,57105,18902,8.912318,0.018280,8.893944,0.000043,0.000050,6407.4242,6420.6611,,,,,,event timing unavailable: backend is not GPU/HIP,0.000175,NaN,0,grid_timed,292545600001,1.686671,1.988361,0.135648,1,0,0xb488f02c00000001,292545600001,3697.7,72.9,46.0,6,
+3,12,gpu_hip,measured,256,1934,495104,165235,4.842158,0.942141,3.891266,0.000668,0.008082,102248.6350,127234.6943,0.945832,0.025280,0.018243,0.008712,0.009356,,0.036935,NaN,0,grid_timed,292545700001,0.002096,0.006955,0.000555,1,0,0xb488f02c00000001,292545700001,3171.8,74.5,48.0,7,
+3,12,wave-gf3,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate wave-gf3 has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292545800001,NaN,NaN,NaN,8,prototype candidate wave-gf3 has no harness batch evaluator yet
+3,12,fold-gf3,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate fold-gf3 has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292545900001,NaN,NaN,NaN,9,prototype candidate fold-gf3 has no harness batch evaluator yet
+3,12,f5-byte-control,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate f5-byte-control has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292546000001,NaN,NaN,NaN,10,prototype candidate f5-byte-control has no harness batch evaluator yet
+3,12,f7-three-plane-accumulator,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292546100001,NaN,NaN,NaN,11,prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+3,12,cpu_avx2,measured,26685,5,133425,44160,7.794423,0.230208,7.564053,0.000111,0.000050,17118.0088,17639.3517,,,,,,event timing unavailable: backend is not GPU/HIP,0.000075,NaN,0,grid_timed,292546200001,1.446314,1.624376,0.071902,1,0,0xb488f02c00000001,292546200001,2450.2,79.1,47.0,12,
+3,12,cpu_scalar,measured,65536,5,327680,109292,6.621224,0.628497,5.992427,0.000253,0.000047,49489.3422,54682.3556,,,,,,event timing unavailable: backend is not GPU/HIP,0.000028,NaN,0,grid_timed,292546300001,1.285980,1.405669,0.050039,1,0,0xb488f02c00000001,292546300001,2143.1,77.9,47.0,13,
+3,12,f7-lookup-table-control,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: prototype candidate f7-lookup-table-control has no harness batch evaluator yet,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,292546400001,NaN,NaN,NaN,14,prototype candidate f7-lookup-table-control has no harness batch evaluator yet
