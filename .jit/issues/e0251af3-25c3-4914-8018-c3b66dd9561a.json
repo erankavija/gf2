@@ -35,7 +35,7 @@
     },
     "research-review": {
       "status": "failed",
-      "updated_at": "2026-08-13T16:56:19.680882317Z",
+      "updated_at": "2026-08-13T17:08:31.006755791Z",
       "updated_by": "auto:executor"
     }
   },
@@ -50,5 +50,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Observable-event rate estimates for permanental rank deficiency",
-  "updated_at": "2026-08-13T17:04:26.494687426Z"
+  "updated_at": "2026-08-13T17:08:31.006755791Z"
 }
