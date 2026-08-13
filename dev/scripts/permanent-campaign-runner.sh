@@ -222,7 +222,13 @@ prepare() {
             printf 'command: %q ' "$ROCM_PATH/bin/hipcc" "--offload-arch=$ARCH" -O3 -Rpass-analysis=kernel-resource-usage -c "$source" -o "$object"
             printf '\nexit_status: %s\nobject: %s\nobject_sha256: %s\nresource_log: %s\nresource_log_sha256: %s\n\n' "$status" "$object" "$object_hash" "$log" "$log_hash"
         } >> "$resource_root/receipt.txt"
-    done < <(find "$REPO_ROOT/dev/research/permanent_wave_gpu/hip" -type f -name '*.hip' -print | sort)
+    # Every kernel the campaign measures: the prototype candidates, and the
+    # production permanent and micro-measurement kernels the prepared harness
+    # launches from gf2-kernels-hip. The crate's unrelated coding/modem
+    # kernels are deliberately outside this sweep.
+    done < <(find "$REPO_ROOT/dev/research/permanent_wave_gpu/hip" \
+        "$REPO_ROOT/crates/gf2-kernels-hip/hip/permanent" \
+        -type f -name '*.hip' -print | sort)
 
     local binaries=(
         "$SAMPLING_TARGET_DIR/release/permanent_sampling_feas"
