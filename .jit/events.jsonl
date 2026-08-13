@@ -8073,3 +8073,14 @@
 {"assignee":"agent:worker","id":"3d241aad-1830-45c8-8f92-abfa61c0371e","issue_id":"22c7a3cd-b231-424e-86e5-2a0ad47aeacc","timestamp":"2026-08-13T15:48:33.833046169Z","type":"issue_claimed"}
 {"from":"ready","id":"2bfe889d-aed9-4081-867c-52aa655d1f75","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T15:48:39.545864334Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"81a6c59f-76e6-4e30-ab67-e636538fb5af","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T15:48:39.545864334Z","type":"issue_claimed"}
+{"id":"affae9d2-804d-495d-8dd7-852e148c282e","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","priority":"high","timestamp":"2026-08-13T16:07:21.133381612Z","title":"Deterministic overnight runner for the receipt campaigns","type":"issue_created"}
+{"gate_key":"code-review","id":"e2bc7851-8607-4558-95d3-77c031359057","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:07:36.203623394Z","type":"gate_added"}
+{"gate_key":"doc-review","id":"6784da08-d3b3-4724-9493-e29f1a93ae0d","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:07:36.481768374Z","type":"gate_added"}
+{"from":"ready","id":"507e7298-4aff-481f-99cf-9c800aeeb51c","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-13T16:07:40.593233270Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"787e9a7b-7671-4e9d-8f88-57f5f07aa9e3","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-13T16:07:40.593233270Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"8853cd4f-c21a-42c2-b714-fd5239741bea","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-13T16:07:47.121761588Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"b3d17fa7-66e5-48fe-be1b-79fa5d8db30b","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-13T16:07:47.121761588Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"3dcfd3fd-09e7-4fa8-bb45-44dd85113c2b","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-13T16:07:55.236923039Z","to":"backlog","type":"issue_state_changed"}
+{"fields":["dependencies"],"id":"71642de7-f803-4fa1-a379-14faafc9f223","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-13T16:07:55.236923039Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"b343a2a5-ff33-4f0f-9e8e-269e8541de65","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:08:01.479732416Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"8da01085-a935-451a-ad1c-91817e0f6b9a","issue_id":"2ddf2f4b-180c-4100-95e8-badcdfe33056","timestamp":"2026-08-13T16:08:01.479732416Z","type":"issue_claimed"}
