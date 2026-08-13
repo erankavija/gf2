@@ -1,4 +1,4 @@
-# git_sha: 2fdfea995de195b630d6d1fdd27b9291d873a203
+# git_sha: c625c6fb18e688fdcd7fb45ccd4b85a06e733060
 # git_worktree_dirty: true
 # harness_source_sha: 283b79b6fddc24b32d749237682bb63a5ec9a19e
 # harness_source_dirty: false
@@ -17,8 +17,8 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.6-arch1-1
-# timestamp_utc: 2026-08-13T19:07:26Z
-# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas equivalence --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-shared-equivalence.csv --matrices 1
+# timestamp_utc: 2026-08-13T19:26:31Z
+# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas equivalence --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-shared-equivalence.csv --matrices 1
 # check: per-matrix permanent values against a reference kernel, named per row in the reference column. The scalar single-word kernel is the reference wherever it exists; at q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic permanent_ryser is the reference there
 # matrices_per_cell: 1
 # seed_root: 0xb488f02c00000001, purpose: equivalence, index: 0

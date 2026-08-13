@@ -1,4 +1,4 @@
-# git_sha: 2fdfea995de195b630d6d1fdd27b9291d873a203
+# git_sha: c625c6fb18e688fdcd7fb45ccd4b85a06e733060
 # git_worktree_dirty: true
 # harness_source_sha: 283b79b6fddc24b32d749237682bb63a5ec9a19e
 # harness_source_dirty: false
@@ -17,20 +17,20 @@
 # rocm: 7.2.4
 # hip_feature: true
 # kernel: 7.1.6-arch1-1
-# timestamp_utc: 2026-08-13T19:12:05Z
-# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q5-gray-update.csv --q 5 --n 1 --steps 1
+# timestamp_utc: 2026-08-13T19:31:09Z
+# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q5-gray-update.csv --q 5 --n 1 --steps 1
 # protocol: warmup >= 3 s, then >= 5 reps and >= 5 s timed, cap 120 s
 # shape: one accumulator reads its immediately preceding add/subtract result; this is a latency chain, not independent-operation throughput
 # representation: F_3 CPU/HIP rows use the Bipedal3 two-plane packed add/subtract; F_5/F_7 CPU rows use their packed representations, while F_5/F_7 HIP rows use the shipped byte controls until their registered packed prototypes land.
 # duration: net_per_operation_s = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps). CPU rows use paired host spans; HIP rows use paired device-event kernel spans. Both exclude sampler construction and the surrounding host policy loop; HIP rows also exclude allocation, transfer, and submission.
 # censoring: this constant-work shape has no Ryser work-model projection. Unsupported rows did not execute and have no paired spans; post-execution capped or nonpositive-net censored rows retain diagnostic paired spans but leave net_per_operation_s absent.
 q,n,backend,outcome,steps,reps,update_s,compiler_barrier_baseline_s,net_per_operation_s,duration_basis,timed_purpose,timed_index_first,overhead_exclusion,note
-5,1,cpu_scalar,measured,1,3136423,0.069510576,0.062209504,0.000000002328,host_clock_update_chain,gray_update_timed,0,net subtracts the same-geometry compiler-barrier host span; sampling; packing; repetition policy; and CSV output are excluded,net per-operation duration = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps); canonical warm-up/repetition/censoring policy applied
+5,1,cpu_scalar,measured,1,3166448,0.069983926,0.062618872,0.000000002326,host_clock_update_chain,gray_update_timed,0,net subtracts the same-geometry compiler-barrier host span; sampling; packing; repetition policy; and CSV output are excluded,net per-operation duration = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps); canonical warm-up/repetition/censoring policy applied
 5,1,cpu_avx2,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,gf2-algebra exposes no AVX2 permanent path for F_5
 5,1,cpu_rayon_batch_scalar,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,unsupported: cpu_rayon_batch_scalar has no isolated dependency-chained Gray-update evaluator
 5,1,cpu_rayon_batch_avx2,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,gf2-algebra exposes no AVX2 permanent path for F_5
 5,1,cpu_rayon_intra_matrix,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,gf2-algebra exposes no rayon permanent path for F_5
-5,1,gpu_hip,measured,1,4889,0.042868558,0.041828112,0.000000212814,device_event_kernel,gray_update_timed,0,net subtracts the same-geometry compiler-barrier kernel event span; device events also exclude allocation; transfer; submission; and host repetition-policy overhead,net per-operation duration = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps); canonical warm-up/repetition/censoring policy applied
+5,1,gpu_hip,measured,1,4929,0.043567238,0.042706755,0.000000174576,device_event_kernel,gray_update_timed,0,net subtracts the same-geometry compiler-barrier kernel event span; device events also exclude allocation; transfer; submission; and host repetition-policy overhead,net per-operation duration = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps); canonical warm-up/repetition/censoring policy applied
 5,1,cpu_ryser_generic,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,unsupported: cpu_ryser_generic has no isolated dependency-chained Gray-update evaluator
 5,1,wave-gf3,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,registered F_3 Bipedal3 path supports q = 3 and n <= 63
 5,1,fold-gf3,unsupported,1,0,,,,unavailable,gray_update_timed,0,no duration: candidate did not run,registered F_3 Bipedal3 path supports q = 3 and n <= 63

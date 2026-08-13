@@ -1,0 +1,35 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-grid.csv --only q=3\,n=12 --execution-id 13002
+# started_utc: 2026-08-13T19:26:46Z
+warming the machine for 90 s ...
+[1/15] q=3 n=12 cpu_rayon_intra_matrix
+    37646.661 matrices/s composite (40215.128 eval-only), M=29181, reps=7, sd=0.005 s
+[2/15] q=3 n=12 cpu_rayon_batch_avx2
+    207761.997 matrices/s composite (329989.168 eval-only), M=29490, reps=32, sd=0.002 s
+[3/15] q=3 n=12 gpu_hip
+    215470.172 matrices/s composite (321214.755 eval-only), M=1024, reps=1004, sd=0.000 s
+[4/15] q=3 n=12 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[5/15] q=3 n=12 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[6/15] q=3 n=12 cpu_rayon_batch_scalar
+    303060.155 matrices/s composite (649698.682 eval-only), M=65536, reps=21, sd=0.008 s
+[7/15] q=3 n=12 cpu_ryser_generic
+    6889.561 matrices/s composite (6904.435 eval-only), M=13193, reps=5, sd=0.004 s
+[8/15] q=3 n=12 gpu_hip
+    121650.230 matrices/s composite (150107.023 eval-only), M=256, reps=2311, sd=0.000 s
+[9/15] q=3 n=12 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[10/15] q=3 n=12 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[11/15] q=3 n=12 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[12/15] q=3 n=12 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[13/15] q=3 n=12 cpu_avx2
+    18780.261 matrices/s composite (19328.687 eval-only), M=34294, reps=5, sd=0.001 s
+[14/15] q=3 n=12 cpu_scalar
+    52642.367 matrices/s composite (57200.211 eval-only), M=65536, reps=5, sd=0.001 s
+[15/15] q=3 n=12 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-grid.csv
+# exit_status: 0
