@@ -1,0 +1,162 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas equivalence --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-shared-equivalence.csv --matrices 1
+# started_utc: 2026-08-13T19:07:25Z
+q=3 n=8 cpu_avx2                 identical
+q=3 n=8 cpu_rayon_batch_scalar   identical
+q=3 n=8 cpu_rayon_batch_avx2     identical
+q=3 n=8 cpu_rayon_intra_matrix   identical
+q=3 n=8 gpu_hip                  identical
+q=3 n=8 cpu_ryser_generic        identical
+q=3 n=8 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=3 n=8 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=3 n=8 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=3 n=8 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=3 n=8 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=3 n=8 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=3 n=8 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=3 n=12 cpu_avx2                 identical
+q=3 n=12 cpu_rayon_batch_scalar   identical
+q=3 n=12 cpu_rayon_batch_avx2     identical
+q=3 n=12 cpu_rayon_intra_matrix   identical
+q=3 n=12 gpu_hip                  identical
+q=3 n=12 cpu_ryser_generic        identical
+q=3 n=12 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=3 n=12 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=3 n=12 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=3 n=12 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=3 n=12 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=3 n=12 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=3 n=12 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=3 n=16 cpu_avx2                 identical
+q=3 n=16 cpu_rayon_batch_scalar   identical
+q=3 n=16 cpu_rayon_batch_avx2     identical
+q=3 n=16 cpu_rayon_intra_matrix   identical
+q=3 n=16 gpu_hip                  identical
+q=3 n=16 cpu_ryser_generic        identical
+q=3 n=16 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=3 n=16 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=3 n=16 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=3 n=16 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=3 n=16 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=3 n=16 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=3 n=16 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=3 n=20 cpu_avx2                 identical
+q=3 n=20 cpu_rayon_batch_scalar   identical
+q=3 n=20 cpu_rayon_batch_avx2     identical
+q=3 n=20 cpu_rayon_intra_matrix   identical
+q=3 n=20 gpu_hip                  identical
+q=3 n=20 cpu_ryser_generic        identical
+q=3 n=20 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=3 n=20 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=3 n=20 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=3 n=20 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=3 n=20 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=3 n=20 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=3 n=20 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=5 n=8 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=8 cpu_rayon_batch_scalar   identical
+q=5 n=8 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=8 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_5
+q=5 n=8 gpu_hip                  identical
+q=5 n=8 cpu_ryser_generic        identical
+q=5 n=8 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=5 n=8 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=5 n=8 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=5 n=8 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=5 n=8 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=5 n=8 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=5 n=8 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=5 n=12 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=12 cpu_rayon_batch_scalar   identical
+q=5 n=12 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=12 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_5
+q=5 n=12 gpu_hip                  identical
+q=5 n=12 cpu_ryser_generic        identical
+q=5 n=12 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=5 n=12 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=5 n=12 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=5 n=12 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=5 n=12 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=5 n=12 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=5 n=12 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=5 n=16 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=16 cpu_rayon_batch_scalar   identical
+q=5 n=16 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=16 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_5
+q=5 n=16 gpu_hip                  identical
+q=5 n=16 cpu_ryser_generic        identical
+q=5 n=16 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=5 n=16 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=5 n=16 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=5 n=16 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=5 n=16 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=5 n=16 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=5 n=16 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=5 n=20 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=20 cpu_rayon_batch_scalar   identical
+q=5 n=20 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=20 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_5
+q=5 n=20 gpu_hip                  identical
+q=5 n=20 cpu_ryser_generic        identical
+q=5 n=20 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=5 n=20 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=5 n=20 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=5 n=20 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=5 n=20 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=5 n=20 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=5 n=20 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=7 n=8 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=8 cpu_rayon_batch_scalar   identical
+q=7 n=8 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=8 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_7
+q=7 n=8 gpu_hip                  identical
+q=7 n=8 cpu_ryser_generic        identical
+q=7 n=8 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=7 n=8 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=7 n=8 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=7 n=8 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=7 n=8 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=7 n=8 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=7 n=8 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=7 n=12 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=12 cpu_rayon_batch_scalar   identical
+q=7 n=12 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=12 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_7
+q=7 n=12 gpu_hip                  identical
+q=7 n=12 cpu_ryser_generic        identical
+q=7 n=12 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=7 n=12 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=7 n=12 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=7 n=12 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=7 n=12 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=7 n=12 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=7 n=12 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=7 n=16 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=16 cpu_rayon_batch_scalar   identical
+q=7 n=16 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=16 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_7
+q=7 n=16 gpu_hip                  identical
+q=7 n=16 cpu_ryser_generic        identical
+q=7 n=16 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=7 n=16 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=7 n=16 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=7 n=16 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=7 n=16 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=7 n=16 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=7 n=16 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+q=7 n=20 cpu_scalar               unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+q=7 n=20 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=20 cpu_rayon_batch_scalar   unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+q=7 n=20 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=20 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_7
+q=7 n=20 gpu_hip                  identical
+q=7 n=20 wave-gf3                 unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+q=7 n=20 fold-gf3                 unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+q=7 n=20 f5-byte-control          unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+q=7 n=20 f5-three-plane           unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+q=7 n=20 f7-three-plane-accumulator unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+q=7 n=20 f7-lookup-table-control  unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+q=7 n=20 f7-three-plane-permanent unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-shared-equivalence.csv
+all backends agree per matrix
+# exit_status: 0
