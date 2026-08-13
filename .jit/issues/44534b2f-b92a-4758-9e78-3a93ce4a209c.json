@@ -18,6 +18,7 @@
       "path": "dev/benchmarks/permanent_campaign/exact-anchors.csv"
     }
   ],
+  "done_at": "2026-08-13T15:46:28.605805771Z",
   "first_ready_at": "2026-08-10T06:34:38.550233341Z",
   "gates_required": [
     "cargo-ci",
@@ -36,8 +37,8 @@
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-10T12:04:37.458627263Z",
+      "status": "passed",
+      "updated_at": "2026-08-13T15:45:33.191366727Z",
       "updated_by": "auto:executor"
     }
   },
@@ -49,7 +50,7 @@
     "cites:Scheinerman2024"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Exact enumeration anchors for the smallest cells",
-  "updated_at": "2026-08-10T12:04:37.458627263Z"
+  "updated_at": "2026-08-13T15:46:28.605805771Z"
 }

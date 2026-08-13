@@ -8065,3 +8065,7 @@
 {"fields":["labels"],"id":"473a63e4-ea2d-4811-a1cd-23422c964e15","issue_id":"d658b160-2eaa-4a00-9e4a-2d0e264d99d3","timestamp":"2026-08-10T22:08:48.332802864Z","type":"issue_updated","updated_by":"issue-update"}
 {"id":"62ca6b81-df80-4c75-8b1a-5bb1b56f0d5a","issue_id":"ec3971f3-8a4d-4200-9905-505dc19ebc9e","priority":"normal","timestamp":"2026-08-13T15:41:50.584153729Z","title":"Re-localize namespace examples via profile packages once capture folds semantic drift","type":"issue_created"}
 {"fields":["dependencies"],"id":"e21d3663-da66-4d7b-956b-7caac371a6f2","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-13T15:42:10.110372135Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"doc-review","id":"56aea13c-24a0-47c8-bf77-82145a86be80","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-13T15:45:33.191366727Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"7c6fcdaf-3060-455e-9280-214360b8a9e7","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-13T15:46:28.605805771Z","to":"done","type":"issue_state_changed"}
+{"id":"47d6dab5-cd1b-471c-b68a-2a02c9c1ab12","issue_id":"44534b2f-b92a-4758-9e78-3a93ce4a209c","timestamp":"2026-08-13T15:46:28.605805771Z","type":"issue_completed"}
+{"from":"backlog","id":"9ba2479f-b0c8-42ed-9e99-f4a0838bd94b","issue_id":"e0251af3-25c3-4914-8018-c3b66dd9561a","timestamp":"2026-08-13T15:46:34.278299084Z","to":"ready","type":"issue_state_changed"}
