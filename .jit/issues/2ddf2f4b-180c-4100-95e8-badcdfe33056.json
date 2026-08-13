@@ -28,12 +28,12 @@
   "gates_status": {
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-13T17:26:11.640660731Z",
+      "updated_at": "2026-08-13T18:57:00.963134034Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-13T17:28:49.105903672Z",
+      "status": "passed",
+      "updated_at": "2026-08-13T18:58:20.307434335Z",
       "updated_by": "auto:executor"
     }
   },
@@ -45,5 +45,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Deterministic overnight runner for the receipt campaigns",
-  "updated_at": "2026-08-13T17:32:44.993254110Z"
+  "updated_at": "2026-08-13T18:58:20.307434335Z"
 }
