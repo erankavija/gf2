@@ -1,0 +1,20 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-13T15:41:50.584153729Z",
+  "dependencies": [],
+  "description": "Restore the gf2-localized namespace examples to `.jit/config.toml` through the profile machinery, so the localization is package-published instead of adopter drift.\n\n## Background\n\nThe repository's `[namespaces.type]` and `[namespaces.component]` examples were localized at profile adoption (type:simulation; component:gf2-*), but the jit-default applied-profile record holds the package-published fingerprints, so `jit profile validate` and `jit validate` reported permanent divergence, and jit 1.0.0 offers no fold path: apply/upgrade refuse with a single-owner PROFILE_CONFLICT even when candidate equals current (a known deficiency, fixed on jit main), and 1.0.0 `jit profile capture` folds assets only. On 2026-08-13 the published values were restored to unblock the `repo-validate` gate; both validations pass since.\n\nThe jit lead (forum, 2026-08-13) confirms current jit main folds drifted semantic map-entries into the package manifest via `jit profile capture` (as Refreshed), after which reapply refreshes the record and both validations agree; the fix landed at/after commit dcb946edf but main is not yet release-worthy.\n\nThe localized values to restore:\n\n- `[namespaces.type]` examples: `[\"type:task\", \"type:simulation\", \"type:story\", \"type:epic\", \"type:milestone\"]`\n- `[namespaces.component]` examples: `[\"component:gf2-core\", \"component:gf2-coding\", \"component:gf2-algebra\", \"component:gf2-sim\", \"component:gf2-kernels-simd\", \"component:gf2-kernels-hip\"]`\n\n## Success Criteria\n\n- [hard] REQ-01: A jit release (or an owner-approved pinned build at/after dcb946edf) whose `jit profile capture` folds semantic contributions is installed.\n- [hard] REQ-02: The localized type and component examples above are re-introduced in `.jit/config.toml`, folded into the owning package via `jit profile capture`, and the package reapplied, with the manifest diff and capture report inspected.\n- [hard] REQ-03: `jit profile validate` and `jit validate` both pass afterwards.",
+  "documents": [],
+  "first_ready_at": "2026-08-13T15:41:50.584153729Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "ec3971f3-8a4d-4200-9905-505dc19ebc9e",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "type:task"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Re-localize namespace examples via profile packages once capture folds semantic drift",
+  "updated_at": "2026-08-13T15:41:50.584153729Z"
+}
