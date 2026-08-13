@@ -338,7 +338,8 @@
   "5758790d": 2,
   "6ae9f4ac": 1,
   "9c5b26fb": 4,
-  "2ddf2f4b": 1
+  "2ddf2f4b": 2,
+  "e0251af3": 1
  },
  "surfaced_pitfalls": [
   "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
@@ -354,7 +355,13 @@
   "jit keeps authoritative state in the shared .git/jit/ store and materialises it into whichever checkout a jit command runs from, so a worker's .jit/*.json and .jit/events.jsonl acquire modifications carrying other issues' gate transitions. A worker committing with git add -A sweeps the lead's state into its branch; one worker caught and reverted exactly that. Brief workers to stage explicit paths, and check every worker commit for .jit/ paths before merging.",
   "A worker's own worktree cargo-ci is not the gate. 175972df passed its worktree checks and failed clippy::assign_op_pattern on the merged tree, because clippy --workspace --all-targets with -D warnings over the combination is the only run that sees it. Gate after the merge, never instead of it.",
   "Requiring a worker to falsify its tests \u2014 reinstate the defect and show the test turns red \u2014 is worth doing, but a falsification that does not reproduce the original defect byte-for-byte can go red for an unrelated reason and read as proof. On d36810e7 the reinstated code built the exemption prefix as components.join('/') plus a trailing slash, yielding '/', which no path matches, so everything refused; the real defect yielded '', which every path matches, so everything was exempt. The test failed for the opposite reason to the bug. Require the reinstated body to be diffed against the real pre-fix code, and ask which red was observed.",
-  "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted."
+  "A test can be excused by a rule unrelated to its subject and pass with the behaviour it protects completely broken. d36810e7's derived-artefact exemption test wrote its file untracked, and the untracked rule excuses those regardless, so the test could not have detected a broken subtree exemption. When a test asserts an exemption, confirm the fixture actually reaches the code path being exempted.",
+  {
+   "issue": "e0251af3",
+   "source": "research-review round 2 F3 (advisory)",
+   "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
+   "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
+  }
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
