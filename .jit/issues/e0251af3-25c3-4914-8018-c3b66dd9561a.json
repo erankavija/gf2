@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-13T15:48:39.545864334Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -23,7 +24,7 @@
     "cites:GGK2025"
   ],
   "priority": "normal",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Observable-event rate estimates for permanental rank deficiency",
-  "updated_at": "2026-08-13T15:46:34.278299084Z"
+  "updated_at": "2026-08-13T15:48:39.545864334Z"
 }
