@@ -593,8 +593,26 @@ run_campaign() {
         "$FLOCK_WRAPPER" --full-host "$BASH" "$SCRIPT_PATH" __locked-pipeline "$smoke"
 }
 
+# Re-runs measure's refusals inside the lock-held child, before any step. The
+# pre-lock checks fail fast without waiting, but the canonical mutex is shared
+# with every other worker on this host and a run can sit on it for a long time;
+# a commit, an untracked file, or a rebuilt binary landing during that wait
+# would otherwise reach the campaign unchecked (REQ-02). smoke deliberately
+# tolerates a dirty tree — its outputs are plumbing evidence, not campaign
+# evidence — so it revalidates nothing here.
+revalidate_under_lock() {
+    local smoke="$1"
+    if [[ "$smoke" == true ]]; then
+        return 0
+    fi
+    require_command git
+    assert_tracked_worktree_clean
+    verify_manifest
+}
+
 if [[ "${1:-}" == "__locked-pipeline" ]]; then
     [[ $# -eq 2 ]] || die "internal pipeline invocation has wrong arity"
+    revalidate_under_lock "$2"
     run_locked_pipeline "$2"
     exit $?
 fi
@@ -608,6 +626,8 @@ case "${1:-}" in
         run_campaign true
         ;;
     measure)
+        # Fail fast before queueing for the host mutex; revalidate_under_lock
+        # repeats both refusals once the lock is held.
         require_command git
         assert_tracked_worktree_clean
         verify_manifest
