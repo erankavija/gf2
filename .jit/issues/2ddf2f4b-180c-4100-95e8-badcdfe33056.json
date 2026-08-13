@@ -20,6 +20,7 @@
       "path": "dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606.run-summary.txt"
     }
   ],
+  "done_at": "2026-08-13T19:36:29.439187780Z",
   "first_ready_at": "2026-08-13T16:07:21.133381612Z",
   "gates_required": [
     "code-review",
@@ -27,8 +28,8 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-13T19:21:27.028292569Z",
+      "status": "passed",
+      "updated_at": "2026-08-13T19:36:04.187789216Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
@@ -43,7 +44,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Deterministic overnight runner for the receipt campaigns",
-  "updated_at": "2026-08-13T19:33:31.655537246Z"
+  "updated_at": "2026-08-13T19:36:29.439187780Z"
 }
