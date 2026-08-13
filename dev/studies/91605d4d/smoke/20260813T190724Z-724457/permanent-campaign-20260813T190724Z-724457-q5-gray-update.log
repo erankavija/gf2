@@ -1,0 +1,18 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q5-gray-update.csv --q 5 --n 1 --steps 1
+# started_utc: 2026-08-13T19:12:04Z
+q=5 n=1 cpu_scalar               measured
+q=5 n=1 cpu_avx2                 unsupported
+q=5 n=1 cpu_rayon_batch_scalar   unsupported
+q=5 n=1 cpu_rayon_batch_avx2     unsupported
+q=5 n=1 cpu_rayon_intra_matrix   unsupported
+q=5 n=1 gpu_hip                  measured
+q=5 n=1 cpu_ryser_generic        unsupported
+q=5 n=1 wave-gf3                 unsupported
+q=5 n=1 fold-gf3                 unsupported
+q=5 n=1 f5-byte-control          unsupported
+q=5 n=1 f5-three-plane           unsupported
+q=5 n=1 f7-three-plane-accumulator unsupported
+q=5 n=1 f7-lookup-table-control  unsupported
+q=5 n=1 f7-three-plane-permanent unsupported
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q5-gray-update.csv
+# exit_status: 0
