@@ -13,4 +13,7 @@ in the tens. Campaign acceptance decisions use the exact tests, whose log-scale
 results retain a decision even when a p-value would underflow as a direct
 probability.
 
-Later changes add a streaming shard accumulator.
+The streaming shard accumulator in `accumulator` pools per-shard permanent and
+determinant zero counts with atomic commits, duplicate rejection,
+order-independent pooling, failed-shard quarantine, and schema-versioned JSON
+snapshots for exact replay after interruption.

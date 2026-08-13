@@ -13,3 +13,5 @@ rust-version = "1.95"
 gf2-core = { path = "../gf2-core" }
 rand_chacha = { workspace = true }
 rand_core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
