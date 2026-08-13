@@ -1,22 +1,22 @@
-# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q5-grid.csv --only q=5\,n=12 --execution-id 15002 --skip-machine-warmup
-# started_utc: 2026-08-13T19:11:11Z
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q5-grid.csv --only q=5\,n=12 --execution-id 15002 --skip-machine-warmup
+# started_utc: 2026-08-13T19:30:17Z
 skipping machine warmup by request
 [1/15] q=5 n=12 cpu_rayon_intra_matrix
     unsupported: gf2-algebra exposes no rayon permanent path for F_5
 [2/15] q=5 n=12 cpu_rayon_batch_avx2
     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
 [3/15] q=5 n=12 gpu_hip
-    22693.694 matrices/s composite (23712.138 eval-only), M=1024, reps=110, sd=0.000 s
+    22671.547 matrices/s composite (23687.110 eval-only), M=1024, reps=110, sd=0.000 s
 [4/15] q=5 n=12 f5-three-plane
     unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
 [5/15] q=5 n=12 f7-three-plane-permanent
     unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
 [6/15] q=5 n=12 cpu_rayon_batch_scalar
-    66358.932 matrices/s composite (80481.571 eval-only), M=12491, reps=26, sd=0.005 s
+    67539.858 matrices/s composite (81965.403 eval-only), M=12783, reps=25, sd=0.001 s
 [7/15] q=5 n=12 cpu_ryser_generic
-    6885.734 matrices/s composite (6915.427 eval-only), M=13210, reps=5, sd=0.005 s
+    6869.516 matrices/s composite (6898.607 eval-only), M=12880, reps=5, sd=0.004 s
 [8/15] q=5 n=12 gpu_hip
-    10917.096 matrices/s composite (11155.317 eval-only), M=256, reps=213, sd=0.001 s
+    10888.817 matrices/s composite (11124.516 eval-only), M=256, reps=212, sd=0.001 s
 [9/15] q=5 n=12 wave-gf3
     unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
 [10/15] q=5 n=12 fold-gf3
@@ -28,8 +28,8 @@ skipping machine warmup by request
 [13/15] q=5 n=12 cpu_avx2
     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
 [14/15] q=5 n=12 cpu_scalar
-    6583.668 matrices/s composite (6694.522 eval-only), M=12811, reps=5, sd=0.004 s
+    6597.082 matrices/s composite (6708.335 eval-only), M=12872, reps=5, sd=0.000 s
 [15/15] q=5 n=12 f7-lookup-table-control
     unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
-wrote /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q5-grid.csv
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q5-grid.csv
 # exit_status: 0

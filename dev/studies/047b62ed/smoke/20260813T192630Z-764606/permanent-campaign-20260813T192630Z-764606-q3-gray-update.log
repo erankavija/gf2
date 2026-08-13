@@ -1,5 +1,5 @@
-# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q3-gray-update.csv --q 3 --n 1 --steps 1
-# started_utc: 2026-08-13T19:10:31Z
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-gray-update.csv --q 3 --n 1 --steps 1
+# started_utc: 2026-08-13T19:29:36Z
 q=3 n=1 cpu_scalar               measured
 q=3 n=1 cpu_avx2                 unsupported
 q=3 n=1 cpu_rayon_batch_scalar   unsupported
@@ -14,5 +14,5 @@ q=3 n=1 f5-three-plane           unsupported
 q=3 n=1 f7-three-plane-accumulator unsupported
 q=3 n=1 f7-lookup-table-control  unsupported
 q=3 n=1 f7-three-plane-permanent unsupported
-wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T190724Z-724457/permanent-campaign-20260813T190724Z-724457-q3-gray-update.csv
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-gray-update.csv
 # exit_status: 0
