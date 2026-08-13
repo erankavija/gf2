@@ -20,6 +20,7 @@ PASS=0
 
 assert_rc() { [[ "$1" -eq "$2" ]] || { echo "FAIL: $3 (expected $1, got $2)"; return 1; }; }
 assert_has() { [[ "$1" == *"$2"* ]] || { echo "FAIL: $3 (missing $2)"; return 1; }; }
+assert_matches() { [[ "$1" =~ $2 ]] || { echo "FAIL: $3 (no match for $2)"; return 1; }; }
 
 stub_harness() {
     local path="$1"
@@ -31,7 +32,13 @@ for ((i=1; i<=$#; i++)); do
     [[ "${!i}" == --out ]] && { j=$((i + 1)); out="${!j}"; }
     [[ "${!i}" == --execution-id ]] && { j=$((i + 1)); execution_id="${!j}"; }
 done
-if [[ "${CAMPAIGN_TEST_FAIL_STEP:-}" == "$step" || "${CAMPAIGN_TEST_FAIL_EXECUTION_ID:-}" == "$execution_id" ]]; then exit 42; fi
+# The execution-id trigger applies only when the caller set one: grid is the
+# only step the runner gives --execution-id, so an unguarded comparison would
+# match every other step on the empty string and fail the whole pipeline.
+if [[ "${CAMPAIGN_TEST_FAIL_STEP:-}" == "$step" ]] \
+    || { [[ -n "${CAMPAIGN_TEST_FAIL_EXECUTION_ID:-}" ]] && [[ "${CAMPAIGN_TEST_FAIL_EXECUTION_ID}" == "$execution_id" ]]; }; then
+    exit 42
+fi
 if [[ "$step" == equivalence ]]; then
     echo 'q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status' > "$out"
     for q in 3 5 7; do
@@ -105,9 +112,11 @@ t4() {
     assert_rc 7 "$r" t4
     local sum; sum=$(find "$d/s" -name '*.run-summary.txt' -print -quit)
     local text; text=$(cat "$sum")
-    assert_has "$text" 'step=grid execution_id=' t4
-    assert_has "$text" 'step=gray-update execution_id=' t4
-    assert_has "$text" 'step=horizontal-product execution_id=' t4
+    # grid is the only step the harness gives an execution id; the rest name
+    # the fixed stream addresses their CSV preambles record.
+    assert_matches "$text" 'step=grid execution_id=[0-9]+ ' t4
+    assert_has "$text" 'step=gray-update execution_id=fixed-streams ' t4
+    assert_has "$text" 'step=horizontal-product execution_id=fixed-streams ' t4
     assert_has "$o" 'campaign censored' t4
     echo 'PASS: censoring continues and exits 7'; PASS=$((PASS + 1))
 }
@@ -119,8 +128,15 @@ t7() {
     assert_rc 0 "$r" t7; assert_has "$o" 'all pipeline steps completed' t7
     local sum; sum=$(find "$d/s" -name '*.run-summary.txt' -print -quit)
     [[ "$(grep -c 'status=completed' "$sum")" -eq 4 ]] || { echo 'FAIL: t7 completion count'; return 1; }
-    [[ "$(grep 'execution_id=' "$sum" | awk -F'execution_id=' '{print $2}' | awk '{print $1}' | sort -u | wc -l)" -eq 4 ]] || { echo 'FAIL: t7 IDs'; return 1; }
-    echo 'PASS: success exit and distinct IDs'; PASS=$((PASS + 1))
+    # Only grid reserves a stream block per execution, so only grid lines carry
+    # a numeric id, one distinct value per field. Every other step, and the
+    # shared equivalence reference, records the fixed-stream marker instead.
+    local text; text=$(find "$d/s" -name '*.run-summary.txt' -exec cat {} \;)
+    [[ "$(printf '%s\n' "$text" | grep -Eo 'step=grid execution_id=[0-9]+' | sort -u | wc -l)" -eq 3 ]] || { echo 'FAIL: t7 grid IDs'; return 1; }
+    [[ "$(printf '%s\n' "$text" | grep -Ec 'step=(equivalence|gray-update|horizontal-product) execution_id=fixed-streams ')" -eq 7 ]] || { echo 'FAIL: t7 fixed-stream markers'; return 1; }
+    [[ "$(printf '%s\n' "$text" | grep -Ec 'step=(equivalence|gray-update|horizontal-product) execution_id=[0-9]')" -eq 0 ]] || { echo 'FAIL: t7 synthetic id on a fixed-stream step'; return 1; }
+    [[ "$(printf '%s\n' "$text" | grep -c '^shared_equivalence=execution_id=fixed-streams ')" -eq 3 ]] || { echo 'FAIL: t7 shared equivalence marker'; return 1; }
+    echo 'PASS: success exit, numeric grid ids, fixed-stream markers'; PASS=$((PASS + 1))
 }
 
 t5() {

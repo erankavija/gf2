@@ -58,6 +58,16 @@ CRATE_PERMANENT_FRAGMENTS=(
     "horizontal_product_micro.hip|permanent_bipedal7.hip"
 )
 
+# Recorded in place of an execution id for the steps that have none. The
+# harness parses --execution-id under grid alone (src/usage.txt; GridOptions is
+# the only parser): equivalence, gray-update, and horizontal-product draw from
+# fixed stream addresses of the form (seed_root, purpose, index) that their own
+# CSV preambles record. A numeric id on those lines would assert a per-execution
+# stream block the harness never reserved, so their summary lines name the fixed
+# addressing instead and the runner passes them neither --execution-id nor
+# --skip-machine-warmup.
+FIXED_STREAM_EXECUTION_ID=fixed-streams
+
 # Exit 2 means a runner/preparation refusal or infrastructure error. Exit 7
 # means the campaign ran to completion but at least one harness step failed.
 CENSORED_EXIT=7
@@ -366,11 +376,20 @@ prepare() {
 
 run_step() {
     local q="$1" step="$2" execution_id="$3" out="$4" log="$5" summary="$6" provenance="$7" smoke="$8" skip_warmup="$9"
-    local -a command=("$HARNESS_BIN" "$step" --out "$out" --execution-id "$execution_id")
+    local -a command=("$HARNESS_BIN" "$step" --out "$out")
     case "$step" in
         equivalence) [[ "$smoke" == true ]] && command+=(--matrices 1) ;;
         grid)
             if [[ "$smoke" == true ]]; then command+=(--only "q=$q,n=12"); else command+=(--only "q=$q"); fi
+            # grid alone parses --only, --execution-id, and
+            # --skip-machine-warmup (usage.txt). Its execution id reserves a
+            # disjoint stream-index block for this fresh process, and it owns
+            # the 90 s whole-machine warm-up that the later steps inherit under
+            # the held lock. The other steps are handed neither flag: they read
+            # fixed stream addresses, and their permissive parsers would accept
+            # the flags into the invocation preamble while ignoring them.
+            command+=(--execution-id "$execution_id")
+            [[ "$skip_warmup" == true ]] && command+=(--skip-machine-warmup)
             ;;
         gray-update)
             command+=(--q "$q")
@@ -382,10 +401,6 @@ run_step() {
             ;;
         *) die "unknown pipeline step: $step" ;;
     esac
-    # Harness gap: only grid parses --execution-id, --skip-machine-warmup, and
-    # --only; the permissive other modes retain these flags in their invocation
-    # preamble for the lock-held chain.
-    [[ "$skip_warmup" == true ]] && command+=(--skip-machine-warmup)
     record_command "$provenance" "${command[@]}"
     local rendered rc status
     printf -v rendered '%q ' "${command[@]}"
@@ -417,6 +432,17 @@ run_step() {
     if [[ "$status" != completed ]]; then FAILURE_COUNT=$((FAILURE_COUNT + 1)); fi
 }
 
+# grid is the only timing step whose stream block depends on an execution id;
+# the others record the fixed-stream marker whether they run or are censored.
+timing_execution_id() {
+    local step="$1" base="$2" step_index="$3"
+    if [[ "$step" == grid ]]; then
+        printf '%s\n' "$((base + step_index))"
+    else
+        printf '%s\n' "$FIXED_STREAM_EXECUTION_ID"
+    fi
+}
+
 record_equivalence_skip() {
     local q="$1" step="$2" execution_id="$3" summary="$4"
     printf 'q=%s step=%s execution_id=%s status=skipped_equivalence_failed exit=- log=- out=-\n' \
@@ -446,7 +472,7 @@ run_locked_pipeline() {
     CAMPAIGN_MODE="$([[ "$smoke" == true ]] && echo smoke || echo measure)"
     export CAMPAIGN_MODE
     local q study run_dir summary provenance base step_index execution_id skip_warmup
-    local shared_equivalence_id shared_equivalence_status shared_equivalence_exit
+    local shared_equivalence_status shared_equivalence_exit
     local shared_equivalence_csv shared_equivalence_log shared_equivalence_out
     local idx shared_run shared_summary shared_provenance
     local timing_status equivalence_falsified=false
@@ -478,30 +504,32 @@ run_locked_pipeline() {
     shared_run="${field_runs[0]}"
     shared_summary="${field_summaries[0]}"
     shared_provenance="${field_provenances[0]}"
-    if [[ "$smoke" == true ]]; then shared_equivalence_id=13001; else shared_equivalence_id=3001; fi
     shared_equivalence_out="$shared_run/permanent-campaign-$RUN_ID-shared-equivalence.csv"
     shared_equivalence_csv="$shared_equivalence_out"
     shared_equivalence_log="$shared_run/permanent-campaign-$RUN_ID-shared-equivalence.log"
-    run_step 3 equivalence "$shared_equivalence_id" "$shared_equivalence_out" \
+    # The run id and mode in each summary header identify this equivalence
+    # execution; the CSV preamble records the fixed stream address it read.
+    run_step 3 equivalence "$FIXED_STREAM_EXECUTION_ID" "$shared_equivalence_out" \
         "$shared_equivalence_log" "$shared_summary" "$shared_provenance" "$smoke" false
     shared_equivalence_status="$RUN_STEP_STATUS"
     shared_equivalence_exit=$(awk -F'exit_status: ' 'END {print $2}' "$shared_equivalence_log")
     for idx in 0 1 2; do
-        record_shared_equivalence "$shared_equivalence_id" \
+        record_shared_equivalence "$FIXED_STREAM_EXECUTION_ID" \
             "$shared_equivalence_status" "$shared_equivalence_exit" \
             "$shared_equivalence_log" "$shared_equivalence_csv" "${field_summaries[$idx]}"
     done
 
     if [[ "$shared_equivalence_status" != completed ]]; then
         # No usable global CSV means no field-level verdict exists. Preserve
-        # the canonical per-field timing execution IDs while censoring all
-        # timing steps after the failed shared pre-flight.
+        # grid's canonical per-field execution id while censoring all timing
+        # steps after the failed shared pre-flight.
         idx=0
         for q in 3 5 7; do
             if [[ "$smoke" == true ]]; then base=$((q * 1000 + 10000)); else base=$((q * 1000)); fi
             for step_index in 2 3 4; do
                 case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
-                record_equivalence_skip "$q" "$timing_status" "$((base + step_index))" "${field_summaries[$idx]}"
+                record_equivalence_skip "$q" "$timing_status" \
+                    "$(timing_execution_id "$timing_status" "$base" "$step_index")" "${field_summaries[$idx]}"
             done
             idx=$((idx + 1))
         done
@@ -515,12 +543,13 @@ run_locked_pipeline() {
                     case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
                     # Unsupported and unavailable rows do not enter this
                     # branch: only mismatches > 0 or status=MISMATCH censor.
-                    record_equivalence_skip "$q" "$timing_status" "$((base + step_index))" "${field_summaries[$idx]}"
+                    record_equivalence_skip "$q" "$timing_status" \
+                        "$(timing_execution_id "$timing_status" "$base" "$step_index")" "${field_summaries[$idx]}"
                 done
             else
                 for step_index in 2 3 4; do
                     case "$step_index" in 2) timing_status=grid ;; 3) timing_status=gray-update ;; 4) timing_status=horizontal-product ;; esac
-                    execution_id=$((base + step_index))
+                    execution_id=$(timing_execution_id "$timing_status" "$base" "$step_index")
                     skip_warmup=false
                     [[ "$first_grid" == false ]] && skip_warmup=true
                     run_step "$q" "$timing_status" "$execution_id" \
@@ -528,9 +557,11 @@ run_locked_pipeline() {
                         "${field_runs[$idx]}/permanent-campaign-$RUN_ID-q$q-$timing_status.log" \
                         "${field_summaries[$idx]}" "${field_provenances[$idx]}" "$smoke" "$skip_warmup"
                     if [[ "$timing_status" == grid ]]; then
-                        # grid owns the 90 s warm-up. Once invoked, later
-                        # executions under this held lock use
-                        # --skip-machine-warmup as usage.txt directs.
+                        # grid owns the 90 s warm-up. Once the first field's
+                        # grid has run it, the later grid executions under this
+                        # held lock pass --skip-machine-warmup as usage.txt
+                        # directs; the steps that never parse the flag inherit
+                        # the same warmed host without being handed it.
                         first_grid=false
                     fi
                 done
