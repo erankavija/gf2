@@ -27,6 +27,7 @@
       "path": "dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314.run-summary.txt"
     }
   ],
+  "done_at": "2026-08-14T17:23:30.736867097Z",
   "first_ready_at": "2026-08-14T05:58:48.931531042Z",
   "gates_required": [
     "code-review",
@@ -35,19 +36,19 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-14T05:58:59.288605855Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-14T17:22:04.850068375Z",
+      "updated_by": "auto:executor"
     },
     "permanent-sampling-feas-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-14T05:58:59.406913249Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-14T17:18:44.226311416Z",
+      "updated_by": "auto:executor"
     },
     "permanent-wave-gpu-ci": {
-      "status": "pending",
-      "updated_at": "2026-08-14T05:58:59.523817692Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-14T17:19:11.098191994Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "e31b1918-75b8-4c22-a900-c318059c1702",
@@ -57,7 +58,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
-  "updated_at": "2026-08-14T17:18:21.939312730Z"
+  "updated_at": "2026-08-14T17:23:30.736867097Z"
 }

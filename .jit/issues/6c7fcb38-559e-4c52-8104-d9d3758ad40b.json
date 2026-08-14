@@ -31,7 +31,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-  "updated_at": "2026-08-14T05:59:13.900582406Z"
+  "updated_at": "2026-08-14T17:23:41.678218948Z"
 }
