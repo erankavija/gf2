@@ -19,6 +19,12 @@
       "format": "markdown",
       "label": "Defect record: pre-fix partial equivalence check (killed in q=5,n=28)",
       "path": "dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-check-partial.csv"
+    },
+    {
+      "commit": null,
+      "doc_type": "report",
+      "label": "REQ-07 smoke: extended runner end-to-end at final revision",
+      "path": "dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314.run-summary.txt"
     }
   ],
   "first_ready_at": "2026-08-14T05:58:48.931531042Z",
@@ -53,5 +59,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
-  "updated_at": "2026-08-14T17:09:20.466369163Z"
+  "updated_at": "2026-08-14T17:18:21.939312730Z"
 }

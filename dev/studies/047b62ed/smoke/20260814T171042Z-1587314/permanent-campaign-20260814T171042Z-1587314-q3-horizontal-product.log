@@ -1,5 +1,5 @@
-# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-horizontal-product.csv --q 3 --n 1 --samples 1
-# started_utc: 2026-08-13T19:30:08Z
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q3-horizontal-product.csv --q 3 --n 1 --samples 1
+# started_utc: 2026-08-14T17:14:06Z
 q=3 n=1 cpu_scalar               unsupported
 q=3 n=1 cpu_avx2                 unsupported
 q=3 n=1 cpu_rayon_batch_scalar   unsupported
@@ -14,5 +14,5 @@ q=3 n=1 f5-three-plane           unsupported
 q=3 n=1 f7-three-plane-accumulator unsupported
 q=3 n=1 f7-lookup-table-control  unsupported
 q=3 n=1 f7-three-plane-permanent unsupported
-wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q3-horizontal-product.csv
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q3-horizontal-product.csv
 # exit_status: 0

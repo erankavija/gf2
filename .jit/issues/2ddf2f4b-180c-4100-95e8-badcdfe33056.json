@@ -17,7 +17,7 @@
       "commit": null,
       "doc_type": "report",
       "label": "Passing host smoke run summary (q=3)",
-      "path": "dev/studies/047b62ed/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606.run-summary.txt"
+      "path": "dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314.run-summary.txt"
     }
   ],
   "done_at": "2026-08-13T19:36:29.439187780Z",
@@ -46,5 +46,5 @@
   "priority": "high",
   "state": "done",
   "title": "Deterministic overnight runner for the receipt campaigns",
-  "updated_at": "2026-08-13T19:36:29.439187780Z"
+  "updated_at": "2026-08-14T17:18:21.780503254Z"
 }
