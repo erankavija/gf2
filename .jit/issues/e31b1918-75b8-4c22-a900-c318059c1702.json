@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:worker",
+  "claimed_at": "2026-08-14T06:00:14.001410830Z",
   "context": {},
   "created_at": "2026-08-14T05:58:48.931531042Z",
   "dependencies": [],
@@ -35,7 +36,7 @@
     "type:task"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
-  "updated_at": "2026-08-14T05:58:59.523817692Z"
+  "updated_at": "2026-08-14T06:00:14.001410830Z"
 }

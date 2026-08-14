@@ -11,7 +11,7 @@
      "short_id": "047b62ed",
      "title": "F_3 preregistered receipt campaign",
      "classification": "research",
-     "status": "pending"
+     "status": "blocked-on-e31b1918-rerun"
     },
     {
      "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
@@ -272,6 +272,13 @@
    "reason": "Owner directive 2026-08-13: campaigns execute overnight via a deterministic AI-free runner; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
    "wave": "1.5",
    "status": "done"
+  },
+  {
+   "short_id": "e31b1918",
+   "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
+   "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
+   "wave": "0.9",
+   "status": "pending"
   }
  ],
  "escalations": [
@@ -327,6 +334,14 @@
    "lead_recommendation": "Move it to dev/archive. This was the recommendation at the first escalation and every round since has strengthened it; treating the amendment as sufficient was the lead's misjudgement.",
    "resolved_at": "2026-08-09T23:05:00Z",
    "decision": "Owner ruled that the project does not yet perform manual archival and the manifest is simply excluded. The exclusion is recorded as a binding decision in issue 240b7618's description under \"Decision \u2014 the breakdown manifest is excluded\", explicitly not contingent on the file being frozen, matching any revision, or agreeing with the .jit/ store. Both READMEs were swept in the same change to drop every checkable claim about the file."
+  },
+  {
+   "issue": "047b62ed",
+   "reason": "The three receipt campaigns' REQ-01/REQ-04/REQ-14 require prototype timing, but the prototype registry's batch dispatch is a skeleton stub and no issue in the graph delivers the harness batch evaluator; the component isolates and equivalence run also cover fewer orders than the grid, and REQ-01's identical-corpus clause contradicts the harness's deliberate disjoint per-cell stream design.",
+   "status": "approved",
+   "requested_at": "2026-08-14T05:20:00Z",
+   "resolved_at": "2026-08-14T05:24:00Z",
+   "decision": "Owner chose wire-and-rerun: new prerequisite task e31b1918 wires prototype batch evaluators, de-aliases the Gray-update rows, extends isolates and equivalence to the grid's order set; the runner then re-arms and all three fields' evidence regenerates. Owner also approved amending REQ-01's corpus clause on all three campaigns (identical sampler on preregistered disjoint streams for timing; literally identical corpus for equivalence) and correcting 047b62ed's Background zero-fast-path ordering sentence."
   }
  ],
  "rework_counts": {
@@ -362,7 +377,9 @@
    "source": "research-review round 2 F3 (advisory)",
    "finding": "No committed artifact predating the results establishes the claimed preregistered cells, sample sizes, and stopping rule; the harness constants were committed together with the receipt.",
    "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
-  }
+  },
+  "The v1 F_3 receipts (dev/studies/047b62ed/receipts.md, commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
+  "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream."
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
