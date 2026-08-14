@@ -8160,3 +8160,4 @@
 {"from":"backlog","id":"591e5612-50db-4a42-ae5e-485619a46017","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-14T17:23:36.210745713Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"84b29391-b7cc-4c92-a539-d8b0d81fec78","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-14T17:23:41.678218948Z","to":"ready","type":"issue_state_changed"}
 {"from":"backlog","id":"e2877b69-5464-47aa-921b-77bc35802971","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-14T17:23:47.133372808Z","to":"ready","type":"issue_state_changed"}
+{"fields":["documents"],"id":"220a8d16-9d01-4f4e-92af-10e90553269b","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-14T17:25:00.031694905Z","type":"issue_updated","updated_by":"doc-add"}
