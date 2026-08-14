@@ -6,7 +6,19 @@ SUBCOMMANDS
                inputs. Exits non-zero on any mismatch. Run this before `grid`;
                a throughput number from a disagreeing backend is not evidence.
                  --out PATH        output CSV (default equivalence.csv)
-                 --matrices N      matrices per (q, n) cell (default 512)
+                 --matrices N      cap on the matrices per (q, n) cell; it only
+                                   lowers a count, never raises one
+                 --n LIST          comma-separated subset of the order table to
+                                   run (default every order below)
+               Sizes cover every timed grid order, with n=8 retained below them.
+               Per-order counts are 512 through n=20, then 32 at n=24 and 4 at
+               n=28. They derive from the committed
+               dev/studies/047b62ed/*q3-grid.csv cpu_scalar probe_matrix_s
+               costs: 0.004144 s at n=20, 0.067676 s at n=24, and 1.065811 s at
+               n=28. Applying ceil(512 * cost(20) / cost(n)) with a four-matrix
+               minimum gives 32 and 4. This 32/4 choice is the overnight
+               preflight budget; it is a planning estimate from one q=3 receipt
+               and requires host validation before the run.
 
   grid         Time the composite campaign hot path over q in {3,5,7} and
                n in {12,16,20,24,28} on every backend. Requires an idle host.
@@ -35,15 +47,20 @@ SUBCOMMANDS
                allocation, transfer, submission, and host-loop overhead.
                  --out PATH        output CSV (default gray-update.csv)
                  --q Q             measure one field order (default all 3,5,7)
-                 --n N             active accumulator lanes (default 12)
+                 --n LIST          comma-separated active accumulator lane
+                                   counts (default the grid's 12,16,20,24,28);
+                                   each order is its own row per candidate
                  --steps N         chained add/subtracts per repetition
                                    (default 1000001; must be nonzero)
                Output reports `net_per_operation_s` as `(update - compiler-barrier
                baseline) / (steps * reps)` across the timed repetitions; a nonpositive
                subtraction is explicit and has no reported net duration.
-               Native representations are explicit: F_3 CPU/HIP uses Bipedal3
-               two-plane packing; F_5/F_7 CPU uses packed arithmetic, while
-               F_5/F_7 HIP currently measures their shipped byte controls.
+               A row reports a span only from a circuit distinct to the backend
+               it names: `cpu_scalar` times its field's packed host add/subtract
+               and `gpu_hip` the shipped device update circuit. A registered
+               candidate whose Gray update is that same shipped circuit, or is
+               fused inside its full-permanent kernel with no device source
+               isolating it, is an explicit unsupported row stating which.
 
   horizontal-product
                Time the branch-aware horizontal row product for every
@@ -53,7 +70,9 @@ SUBCOMMANDS
                device-event-only, never a host-clock substitute.
                  --out PATH        output CSV (default horizontal-product.csv)
                  --q Q             measure one field order (default all 3,5,7)
-                 --n N             active row-sum lanes (default 12; 1..=63)
+                 --n LIST          comma-separated active row-sum lane counts
+                                   (default the grid's 12,16,20,24,28; 1..=63);
+                                   each order is its own row per candidate
                  --samples N       independent unconditioned row-sum vectors
                                    in the fixed observation batch and each
                                    timing repetition (default 4096; nonzero)
@@ -86,7 +105,10 @@ SUBCOMMANDS
                  --out PATH        output CSV (default zero-fraction.csv)
 
 The GPU backend needs `--features hip`; without it its cells are recorded as
-unsupported rather than skipped.
+unsupported rather than skipped. The same feature compiles the wave-prototype
+candidate executables, so a registered candidate's cells evaluate that
+candidate's own device kernel; a candidate with no full-permanent kernel of its
+own keeps an unsupported row naming that absence in every build.
 
 GRID TIMING COLUMNS
   `total_s`, `gen_s`, `eval_s`, `reduce_s`, and `store_s` are host wall-clock

@@ -27,13 +27,18 @@ fn main() {
     let hipcc = Path::new(&rocm_path).join("bin/hipcc");
     let offload_arches = offload_arches();
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("Cargo supplies OUT_DIR"));
-    let shared_mapping = hip_root.join("wave_ryser_mapping.h");
-    assert!(
-        shared_mapping.is_file(),
-        "the HIP feature requires {}",
-        shared_mapping.display()
-    );
-    println!("cargo:rerun-if-changed={}", shared_mapping.display());
+    // Headers every candidate source shares: the cross-field Ryser mapping and
+    // the harness batch-evaluation boundary. They carry no kernels of their own,
+    // so they are watched and required here rather than compiled.
+    for header in ["wave_ryser_mapping.h", "wave_batch_stream.h"] {
+        let path = hip_root.join(header);
+        assert!(
+            path.is_file(),
+            "the HIP feature requires {}",
+            path.display()
+        );
+        println!("cargo:rerun-if-changed={}", path.display());
+    }
     for source in sources {
         println!("cargo:rerun-if-changed={}", source.display());
         compile_hip_source(&hipcc, &out_dir, &source, &offload_arches);

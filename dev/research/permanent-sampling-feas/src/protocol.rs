@@ -595,7 +595,7 @@ pub fn run_cell(
         d2h_device_s: None,
         host_submission_s: None,
         device_submission_to_kernel_s: None,
-        phase_timing_note: if backend == Backend::Gpu {
+        phase_timing_note: if backend.has_device_event_timing() {
             PHASE_TIMING_NOT_RUN.to_string()
         } else {
             "event timing unavailable: backend is not GPU/HIP".to_string()

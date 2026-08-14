@@ -14,8 +14,8 @@ fn device_f7_wave_paths_match_their_structural_references() {
         MeasurementPath::F7LookupTableControl,
         MeasurementPath::F7ThreePlanePermanent,
     ] {
-        path.dispatch()
-            .expect("each registered F_7 permanent candidate must be dispatchable");
+        path.device_batch_kernel()
+            .expect("each registered F_7 permanent candidate must own a batch kernel");
         let status = Command::new(env!("PERMANENT_WAVE_GPU_WAVE_GF7_EQUIVALENCE_BIN"))
             .args(["--path", path.name()])
             .status()

@@ -16,7 +16,8 @@ use gf2_algebra::packed::{Bipedal3, PackedField};
 #[cfg(feature = "fixture-oracle")]
 use gf2_core::gfp::Fp;
 
-use crate::DispatchResult;
+use crate::device_batch::{DeviceBatchKernel, DeviceExecutable};
+use crate::paths::DeviceBatchResult;
 #[cfg(feature = "fixture-oracle")]
 use crate::Unsupported;
 #[cfg(feature = "fixture-oracle")]
@@ -121,11 +122,18 @@ pub(crate) struct WaveOps<P, Scalar> {
     pub(crate) scalar_neg: fn(Scalar) -> Scalar,
 }
 
-/// The registry dispatch confirms that the candidate's host/device boundary
-/// is present.  Device execution remains selected by the crate's opt-in HIP
-/// test feature, so ordinary registry users do not need a ROCm runtime.
-pub(crate) fn run() -> DispatchResult {
-    Ok(())
+/// The halving control's device batch kernel.
+///
+/// `wave_gf3_kernel<kHalving>` in `hip/wave_gf3_equivalence.hip` gives one
+/// block to each matrix of a batch and follows Ryser's `n <= 63` Gray bound.
+pub(crate) fn device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        3,
+        63,
+        DeviceExecutable::WaveGf3,
+        &["--fold", "wave-gf3"],
+        false,
+    ))
 }
 
 /// Evaluate the F_3 candidate through the canonical fixture/oracle path.

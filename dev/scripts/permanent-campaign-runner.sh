@@ -20,7 +20,9 @@ set -euo pipefail
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# Tests may point repository checks at a clean fixture while executing this
+# working copy of the runner. Production uses the script's repository root.
+REPO_ROOT="${CAMPAIGN_REPO_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 SAMPLING_MANIFEST="$REPO_ROOT/dev/research/permanent-sampling-feas/Cargo.toml"
 WAVE_MANIFEST="$REPO_ROOT/dev/research/permanent_wave_gpu/Cargo.toml"
@@ -378,7 +380,13 @@ run_step() {
     local q="$1" step="$2" execution_id="$3" out="$4" log="$5" summary="$6" provenance="$7" smoke="$8" skip_warmup="$9"
     local -a command=("$HARNESS_BIN" "$step" --out "$out")
     case "$step" in
-        equivalence) [[ "$smoke" == true ]] && command+=(--matrices 1) ;;
+        equivalence)
+            # The measure run covers the harness's whole committed order table,
+            # whose per-order sample counts were chosen against this budget, so
+            # it narrows nothing. Smoke keeps its plumbing evidence cheap: the
+            # largest orders cost minutes to hours per matrix on the device.
+            [[ "$smoke" == true ]] && command+=(--matrices 1 --n 8)
+            ;;
         grid)
             if [[ "$smoke" == true ]]; then command+=(--only "q=$q,n=12"); else command+=(--only "q=$q"); fi
             # grid alone parses --only, --execution-id, and
@@ -391,13 +399,19 @@ run_step() {
             command+=(--execution-id "$execution_id")
             [[ "$skip_warmup" == true ]] && command+=(--skip-machine-warmup)
             ;;
-        gray-update)
+        gray-update|horizontal-product)
+            # Both isolates default --n to the harness's own timing-grid order
+            # set, so the measure run passes no order flag and covers every grid
+            # order for this field; the orders that ran are recorded in the
+            # step's CSV preamble. Smoke narrows to a single tiny order.
             command+=(--q "$q")
-            [[ "$smoke" == true ]] && command+=(--n 1 --steps 1)
-            ;;
-        horizontal-product)
-            command+=(--q "$q")
-            [[ "$smoke" == true ]] && command+=(--n 1 --samples 1)
+            if [[ "$smoke" == true ]]; then
+                command+=(--n 1)
+                case "$step" in
+                    gray-update) command+=(--steps 1) ;;
+                    horizontal-product) command+=(--samples 1) ;;
+                esac
+            fi
             ;;
         *) die "unknown pipeline step: $step" ;;
     esac

@@ -146,25 +146,30 @@ mod tests {
         }
     }
 
+    /// A scheduled candidate is supported only in the field its own device
+    /// kernel evaluates, and states a reason everywhere else.
     #[test]
-    fn every_currently_unevaluable_path_is_explicitly_unsupported() {
+    fn every_scheduled_candidate_is_supported_only_in_its_own_field() {
         for scheduled in scheduled_backends(SchedulePhase::GridTimed) {
             let Some(path) = scheduled.backend().prototype_path() else {
                 continue;
             };
-            match crate::backend::support(scheduled.backend(), 3, 12) {
-                crate::backend::Support::Supported => {
-                    panic!(
-                        "{} lacks a harness evaluator but was scheduled as supported",
+            let field = path
+                .device_batch_kernel()
+                .map(|kernel| kernel.field_order());
+            for q in [3_u64, 5, 7] {
+                match crate::backend::support(scheduled.backend(), q, 12) {
+                    crate::backend::Support::Supported => assert_eq!(
+                        field,
+                        Ok(q),
+                        "{} was scheduled as supported outside its own field",
                         path.name()
-                    )
-                }
-                crate::backend::Support::Unsupported(reason) => {
-                    assert!(
-                        !reason.is_empty(),
-                        "{} must retain its unsupported reason",
+                    ),
+                    crate::backend::Support::Unsupported(reason) => assert!(
+                        reason.contains(path.name()),
+                        "{} must name itself in its unsupported reason, got {reason}",
                         path.name()
-                    );
+                    ),
                 }
             }
         }

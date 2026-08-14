@@ -188,7 +188,7 @@ pub fn check(q: u64, n: usize, m: usize, seed_root: u64) -> Vec<EquivalenceRow> 
                     } else {
                         &batch
                     };
-                    let (got, timing_note) = if backend == Backend::Gpu {
+                    let (got, timing_note) = if backend.has_device_event_timing() {
                         let evaluation = evaluate_timed(backend, backend_batch);
                         let timing_note = match evaluation.phase_timing {
                             PhaseTiming::Unavailable(reason) => Some(reason),
@@ -423,6 +423,7 @@ independent expansion counted {independent}"
     /// available on an otherwise working GPU dispatch.
     #[cfg(feature = "hip")]
     #[test]
+    #[ignore = "device: requires a ROCm GPU"]
     fn timed_gpu_values_match_the_reference() {
         let row = check(3, 3, 8, 0xB488_F02C)
             .into_iter()

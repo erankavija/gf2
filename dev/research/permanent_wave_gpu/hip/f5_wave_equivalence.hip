@@ -712,12 +712,66 @@ Case patterned_case(const char* name, int n, unsigned offset) {
 
 }  // namespace
 
+// Included below the kernels above rather than beside the other headers: the
+// committed compiler resource remarks cite those kernels by line, and an
+// include above them would move every citation.
+#include "wave_batch_stream.h"
+
+namespace {
+
+// Serve the harness's batch evaluations of the selected F_5 path through the
+// exact launch geometry the fixture evidence uses.
+int serve_batch_evaluations(Path path) {
+  const auto launch = [path](const std::uint8_t* device_matrices, int n, int batch,
+                             unsigned* device_results) {
+    const auto lanes = gf2_wave_mapping::active_lanes_for_order(n);
+    const std::size_t shared_bytes = path == Path::kByteControl
+                                         ? static_cast<std::size_t>(n) * n
+                                         : 3 * static_cast<std::size_t>(n) * sizeof(std::uint64_t);
+    if (path == Path::kByteControl) {
+      hipLaunchKernelGGL(f5_byte_control_kernel, dim3(batch), dim3(lanes), shared_bytes, 0,
+                         device_matrices, n, batch, device_results);
+    } else {
+      hipLaunchKernelGGL(f5_three_plane_kernel, dim3(batch), dim3(lanes), shared_bytes, 0,
+                         device_matrices, n, batch, device_results);
+    }
+    return true;
+  };
+  return gf2_wave_batch::serve_batch_stream(kMaxRows, launch, gf2_wave_batch::NoLookupTables{});
+}
+
+bool parse_batch_path(const char* value, Path* path) {
+  if (std::strcmp(value, "f5-byte-control") == 0) {
+    *path = Path::kByteControl;
+    return true;
+  }
+  if (std::strcmp(value, "f5-three-plane") == 0) {
+    *path = Path::kThreePlane;
+    return true;
+  }
+  return false;
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
   if (argc == 2 && std::strcmp(argv[1], "--fixture-stdin") == 0) {
     return run_streamed_fixture_evidence() ? 0 : 1;
   }
+  if (argc == 4 && std::strcmp(argv[1], "--batch-stdin") == 0 &&
+      std::strcmp(argv[2], "--path") == 0) {
+    Path path = Path::kByteControl;
+    if (!parse_batch_path(argv[3], &path)) {
+      std::fprintf(stderr, "unknown F_5 path: %s\n", argv[3]);
+      return 2;
+    }
+    return serve_batch_evaluations(path);
+  }
   if (argc != 1) {
-    std::fprintf(stderr, "usage: %s [--fixture-stdin]\n", argv[0]);
+    std::fprintf(stderr,
+                 "usage: %s [--fixture-stdin | --batch-stdin --path "
+                 "f5-byte-control|f5-three-plane]\n",
+                 argv[0]);
     return 2;
   }
   const std::vector<Case> empty_cases = {{"n0-empty", 0, {}}};

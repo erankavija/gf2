@@ -1,11 +1,12 @@
 //! The complete measurement-path registry for this study.
 
+use crate::device_batch::DeviceBatchKernel;
 #[cfg(feature = "fixture-oracle")]
 use crate::fixtures::Fixture;
 use crate::{f5_candidates, f7_three_plane, fold_gf3, wave, wave_gf7};
 
-/// Result of dispatching a candidate path.
-pub type DispatchResult = Result<(), Unsupported>;
+/// The device batch kernel a candidate owns, or why it has none.
+pub type DeviceBatchResult = Result<DeviceBatchKernel, String>;
 
 /// One candidate permanent result, represented by its canonical field value.
 ///
@@ -78,16 +79,26 @@ impl MeasurementPath {
         }
     }
 
-    /// Dispatches this path to its dedicated candidate module.
-    pub fn dispatch(self) -> DispatchResult {
+    /// The device batch kernel this candidate owns, or why it has none.
+    ///
+    /// Each path answers from its dedicated candidate module, so a later
+    /// implementation lands beside its own kernel rather than in this registry.
+    /// The answer describes the committed device sources and is therefore the
+    /// same in every build; whether that kernel is *reachable* from this build
+    /// and host is [`Self::prepare_batch_evaluator`]'s question.
+    ///
+    /// # Errors
+    ///
+    /// Returns the reason this candidate has no full-permanent batch kernel.
+    pub fn device_batch_kernel(self) -> DeviceBatchResult {
         match self {
-            Self::WaveGf3 => wave::run(),
-            Self::FoldGf3 => fold_gf3::run(),
-            Self::F5ByteControl => f5_candidates::byte_control(),
-            Self::F5ThreePlane => f5_candidates::three_plane(),
-            Self::F7ThreePlaneAccumulator => f7_three_plane::run(),
-            Self::F7LookupTableControl => wave_gf7::lookup_table_control(),
-            Self::F7ThreePlanePermanent => wave_gf7::three_plane(),
+            Self::WaveGf3 => wave::device_batch_kernel(),
+            Self::FoldGf3 => fold_gf3::device_batch_kernel(),
+            Self::F5ByteControl => f5_candidates::byte_control_device_batch_kernel(),
+            Self::F5ThreePlane => f5_candidates::three_plane_device_batch_kernel(),
+            Self::F7ThreePlaneAccumulator => f7_three_plane::device_batch_kernel(),
+            Self::F7LookupTableControl => wave_gf7::lookup_table_control_device_batch_kernel(),
+            Self::F7ThreePlanePermanent => wave_gf7::three_plane_device_batch_kernel(),
         }
     }
 

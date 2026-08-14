@@ -89,9 +89,8 @@ fn run_evidence(path: MeasurementPath) -> Result<(), Box<dyn Error>> {
     if !matches!(path, MeasurementPath::WaveGf3 | MeasurementPath::FoldGf3) {
         return Err(format!("{} is not an F_3 wave fold", path.name()).into());
     }
-    path.dispatch().map_err(|unsupported| {
-        format!("{} is unavailable: {}", path.name(), unsupported.reason())
-    })?;
+    path.device_batch_kernel()
+        .map_err(|reason| format!("{} is unavailable: {reason}", path.name()))?;
 
     let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
     let fixtures = selected_f3_fixtures(&corpus);
