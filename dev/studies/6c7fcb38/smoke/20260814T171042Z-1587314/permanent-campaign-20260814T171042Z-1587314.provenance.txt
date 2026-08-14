@@ -1,19 +1,19 @@
 schema_version: 1
-campaign_run_id: 20260813T192630Z-764606
-source_revision: c625c6fb18e688fdcd7fb45ccd4b85a06e733060
+campaign_run_id: 20260814T171042Z-1587314
+source_revision: 089d268ec730fa971c7a9d0770295f4e226661a8
 tracked_worktree_dirty: true
 tracked_dirty_check: git diff --quiet && git diff --cached --quiet && git status --porcelain --untracked-files=all
 rust_toolchain: 1.95.0
 build_rustc: rustc 1.95.0 (59807616e 2026-04-14)
 binary_hashes: see /home/vkaskivuo/Projects/gf2/target/permanent-campaign/manifest-v1.txt and the harness CSV preambles
-binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas cb05d168b9c9f8ac28ad3d93fceafac8d27e3e0f48441c15a3fb6614ef0690e7
-binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas cb05d168b9c9f8ac28ad3d93fceafac8d27e3e0f48441c15a3fb6614ef0690e7
-binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence ecf2a915fe5a01d6e30ab40b0c461ecd2dfda05be4492bb3aadf2f56d70575f8
-binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence ecf2a915fe5a01d6e30ab40b0c461ecd2dfda05be4492bb3aadf2f56d70575f8
-binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence 4fbd05a7f38c3adf0349842b062682f3309f751a5d936da820901445d7ed8b15
-binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence 4fbd05a7f38c3adf0349842b062682f3309f751a5d936da820901445d7ed8b15
-binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence f7f40137f307d3e048151d35a5e1042ab795d8b8601ed519e58907f5bbd9f789
-binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence f7f40137f307d3e048151d35a5e1042ab795d8b8601ed519e58907f5bbd9f789
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence e7bc53a697968fae88baee18745cd7d7e67201fdb65e6faab27769ffe242c1c5
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence e7bc53a697968fae88baee18745cd7d7e67201fdb65e6faab27769ffe242c1c5
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence bee168a131de7ca9f5a916363dee9e827e0136ac556d4153790073b9ce75e088
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence bee168a131de7ca9f5a916363dee9e827e0136ac556d4153790073b9ce75e088
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence 97c132c4af31697738ca0ea4ca47040bf8dedada1d5b9ce5283e9c240278c0ce
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence 97c132c4af31697738ca0ea4ca47040bf8dedada1d5b9ce5283e9c240278c0ce
 
 # The harness CSV preamble is the canonical source for facts it embeds.
 # This block records command outputs rather than a second hand-written inventory.
@@ -34,7 +34,7 @@ Socket(s):                               1
 Stepping:                                2
 Microcode version:                       0xa201211
 Frequency boost:                         enabled
-CPU(s) scaling MHz:                      60%
+CPU(s) scaling MHz:                      69%
 CPU max MHz:                             4954.5649
 CPU min MHz:                             567.0890
 BogoMIPS:                                7399.82
@@ -101,10 +101,10 @@ rustc 1.97.0 (2d8144b78 2026-07-07)
 kernel_version_command: uname -r
 7.1.6-arch1-1
 
-harness_csv_preamble_reference: each CSV under /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260813T192630Z-764606 has the authoritative # preamble
+harness_csv_preamble_reference: each CSV under /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260814T171042Z-1587314 has the authoritative # preamble
 contention_caveat: smoke ran while other workers may have compiled or used shared resources; timing values are plumbing evidence, not campaign evidence.
 
 exact_commands_executed:
-command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q7-grid.csv --only q=7\,n=12 --execution-id 17002 --skip-machine-warmup
-command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q7-gray-update.csv --q 7 --n 1 --steps 1
-command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260813T192630Z-764606/permanent-campaign-20260813T192630Z-764606-q7-horizontal-product.csv --q 7 --n 1 --samples 1
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q7-grid.csv --only q=7\,n=12 --execution-id 17002 --skip-machine-warmup
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q7-gray-update.csv --q 7 --n 1 --steps 1
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q7-horizontal-product.csv --q 7 --n 1 --samples 1

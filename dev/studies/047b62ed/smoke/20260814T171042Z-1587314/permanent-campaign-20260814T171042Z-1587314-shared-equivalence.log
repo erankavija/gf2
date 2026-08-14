@@ -1,0 +1,45 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas equivalence --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-shared-equivalence.csv --matrices 1 --n 8
+# started_utc: 2026-08-14T17:10:43Z
+q=3 n=8 cpu_avx2                 identical
+q=3 n=8 cpu_rayon_batch_scalar   identical
+q=3 n=8 cpu_rayon_batch_avx2     identical
+q=3 n=8 cpu_rayon_intra_matrix   identical
+q=3 n=8 gpu_hip                  identical
+q=3 n=8 cpu_ryser_generic        identical
+q=3 n=8 wave-gf3                 identical
+q=3 n=8 fold-gf3                 identical
+q=3 n=8 f5-byte-control          unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+q=3 n=8 f5-three-plane           unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+q=3 n=8 f7-three-plane-accumulator unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+q=3 n=8 f7-lookup-table-control  unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+q=3 n=8 f7-three-plane-permanent unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+q=5 n=8 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=8 cpu_rayon_batch_scalar   identical
+q=5 n=8 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+q=5 n=8 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_5
+q=5 n=8 gpu_hip                  identical
+q=5 n=8 cpu_ryser_generic        identical
+q=5 n=8 wave-gf3                 unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+q=5 n=8 fold-gf3                 unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+q=5 n=8 f5-byte-control          identical
+q=5 n=8 f5-three-plane           identical
+q=5 n=8 f7-three-plane-accumulator unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+q=5 n=8 f7-lookup-table-control  unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+q=5 n=8 f7-three-plane-permanent unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+q=7 n=8 cpu_avx2                 unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=8 cpu_rayon_batch_scalar   identical
+q=7 n=8 cpu_rayon_batch_avx2     unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+q=7 n=8 cpu_rayon_intra_matrix   unsupported: gf2-algebra exposes no rayon permanent path for F_7
+q=7 n=8 gpu_hip                  identical
+q=7 n=8 cpu_ryser_generic        identical
+q=7 n=8 wave-gf3                 unsupported: wave-gf3 evaluates F_3 permanents, not F_7
+q=7 n=8 fold-gf3                 unsupported: fold-gf3 evaluates F_3 permanents, not F_7
+q=7 n=8 f5-byte-control          unsupported: f5-byte-control evaluates F_5 permanents, not F_7
+q=7 n=8 f5-three-plane           unsupported: f5-three-plane evaluates F_5 permanents, not F_7
+q=7 n=8 f7-three-plane-accumulator unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+q=7 n=8 f7-lookup-table-control  identical
+q=7 n=8 f7-three-plane-permanent identical
+
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-shared-equivalence.csv
+all backends agree per matrix
+# exit_status: 0

@@ -1,0 +1,35 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q5-grid.csv --only q=5\,n=12 --execution-id 15002 --skip-machine-warmup
+# started_utc: 2026-08-14T17:14:14Z
+skipping machine warmup by request
+[1/15] q=5 n=12 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[2/15] q=5 n=12 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[3/15] q=5 n=12 gpu_hip
+    22724.474 matrices/s composite (23749.226 eval-only), M=1024, reps=111, sd=0.000 s
+[4/15] q=5 n=12 f5-three-plane
+    203491.994 matrices/s composite (348842.819 eval-only), M=43, reps=21932, sd=0.000 s
+[5/15] q=5 n=12 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[6/15] q=5 n=12 cpu_rayon_batch_scalar
+    66786.852 matrices/s composite (81149.561 eval-only), M=12190, reps=26, sd=0.001 s
+[7/15] q=5 n=12 cpu_ryser_generic
+    6732.333 matrices/s composite (6761.372 eval-only), M=13118, reps=5, sd=0.011 s
+[8/15] q=5 n=12 gpu_hip
+    10894.075 matrices/s composite (11130.541 eval-only), M=256, reps=212, sd=0.001 s
+[9/15] q=5 n=12 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[10/15] q=5 n=12 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[11/15] q=5 n=12 f5-byte-control
+    33800.286 matrices/s composite (36339.488 eval-only), M=35, reps=4766, sd=0.000 s
+[12/15] q=5 n=12 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[13/15] q=5 n=12 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[14/15] q=5 n=12 cpu_scalar
+    6265.321 matrices/s composite (6366.879 eval-only), M=12377, reps=5, sd=0.003 s
+[15/15] q=5 n=12 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/smoke/20260814T171042Z-1587314/permanent-campaign-20260814T171042Z-1587314-q5-grid.csv
+# exit_status: 0
