@@ -1,0 +1,11 @@
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark: Function Name: _Z25permanent_bipedal5_kernelPKhiiPy [-Rpass-analysis=kernel-resource-usage]
+   97 |                                            unsigned long long* __restrict__ out_ptr) {
+      | ^
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     TotalSGPRs: 107 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     VGPRs: 128 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     ScratchSize [bytes/lane]: 4000 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     Dynamic Stack: False [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     Occupancy [waves/SIMD]: 8 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     SGPRs Spill: 4 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     VGPRs Spill: 6 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip:97:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage]

@@ -1,0 +1,155 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-grid.csv --only q=7 --execution-id 7002 --skip-machine-warmup
+# started_utc: 2026-08-13T23:43:28Z
+skipping machine warmup by request
+[1/75] q=7 n=12 cpu_ryser_generic
+    7205.129 matrices/s composite (7243.997 eval-only), M=11374, reps=5, sd=0.011 s
+[2/75] q=7 n=12 gpu_hip
+    9584.690 matrices/s composite (9662.038 eval-only), M=256, reps=187, sd=0.001 s
+[3/75] q=7 n=12 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[4/75] q=7 n=12 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[5/75] q=7 n=12 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[6/75] q=7 n=12 cpu_scalar
+    6427.462 matrices/s composite (6470.978 eval-only), M=12202, reps=5, sd=0.001 s
+[7/75] q=7 n=12 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[8/75] q=7 n=12 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[9/75] q=7 n=12 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[10/75] q=7 n=12 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[11/75] q=7 n=12 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[12/75] q=7 n=12 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[13/75] q=7 n=12 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_7
+[14/75] q=7 n=12 cpu_rayon_batch_scalar
+    71772.643 matrices/s composite (77957.774 eval-only), M=12396, reps=29, sd=0.002 s
+[15/75] q=7 n=12 gpu_hip
+    20969.078 matrices/s composite (21333.413 eval-only), M=1024, reps=103, sd=0.000 s
+[16/75] q=7 n=16 cpu_ryser_generic
+    313.783 matrices/s composite (313.853 eval-only), M=624, reps=5, sd=0.001 s
+[17/75] q=7 n=16 cpu_scalar
+    311.898 matrices/s composite (312.025 eval-only), M=624, reps=5, sd=0.001 s
+[18/75] q=7 n=16 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_7
+[19/75] q=7 n=16 gpu_hip
+    536.186 matrices/s composite (536.569 eval-only), M=256, reps=11, sd=0.030 s
+[20/75] q=7 n=16 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[21/75] q=7 n=16 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[22/75] q=7 n=16 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[23/75] q=7 n=16 cpu_rayon_batch_scalar
+    3713.824 matrices/s composite (3738.410 eval-only), M=624, reps=30, sd=0.002 s
+[24/75] q=7 n=16 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[25/75] q=7 n=16 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[26/75] q=7 n=16 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[27/75] q=7 n=16 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[28/75] q=7 n=16 gpu_hip
+    1109.608 matrices/s composite (1111.216 eval-only), M=1024, reps=6, sd=0.000 s
+[29/75] q=7 n=16 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[30/75] q=7 n=16 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[31/75] q=7 n=20 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[32/75] q=7 n=20 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[33/75] q=7 n=20 cpu_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+[34/75] q=7 n=20 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[35/75] q=7 n=20 gpu_hip
+    57.952 matrices/s composite (57.959 eval-only), M=1024, reps=5, sd=0.009 s
+[36/75] q=7 n=20 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[37/75] q=7 n=20 cpu_rayon_batch_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+[38/75] q=7 n=20 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[39/75] q=7 n=20 gpu_hip
+    28.107 matrices/s composite (28.108 eval-only), M=256, reps=5, sd=0.629 s
+[40/75] q=7 n=20 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_7
+[41/75] q=7 n=20 cpu_ryser_generic
+    15.401 matrices/s composite (15.401 eval-only), M=31, reps=5, sd=0.001 s
+[42/75] q=7 n=20 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[43/75] q=7 n=20 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[44/75] q=7 n=20 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[45/75] q=7 n=20 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[46/75] q=7 n=24 cpu_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 24
+[47/75] q=7 n=24 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 1.4639 matrices/s at n=24 under Ryser's n*2^n work model, so one repetition would take 175 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[48/75] q=7 n=24 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[49/75] q=7 n=24 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[50/75] q=7 n=24 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_7
+[51/75] q=7 n=24 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[52/75] q=7 n=24 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[53/75] q=7 n=24 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[54/75] q=7 n=24 cpu_rayon_batch_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 24
+[55/75] q=7 n=24 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[56/75] q=7 n=24 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[57/75] q=7 n=24 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 3.0183 matrices/s at n=24 under Ryser's n*2^n work model, so one repetition would take 339 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[58/75] q=7 n=24 cpu_ryser_generic
+    0.799 matrices/s composite (0.799 eval-only), M=2, reps=5, sd=0.000 s
+[59/75] q=7 n=24 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[60/75] q=7 n=24 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[61/75] q=7 n=28 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_7
+[62/75] q=7 n=28 cpu_rayon_batch_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 28
+[63/75] q=7 n=28 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[64/75] q=7 n=28 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[65/75] q=7 n=28 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 0.1617 matrices/s at n=28 under Ryser's n*2^n work model, so one repetition would take 6333 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[66/75] q=7 n=28 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[67/75] q=7 n=28 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_7
+[68/75] q=7 n=28 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 0.0784 matrices/s at n=28 under Ryser's n*2^n work model, so one repetition would take 3264 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[69/75] q=7 n=28 cpu_ryser_generic
+    0.043 matrices/s composite (0.043 eval-only), M=1, reps=5, sd=0.024 s
+[70/75] q=7 n=28 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[71/75] q=7 n=28 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[72/75] q=7 n=28 cpu_scalar
+    unsupported: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 28
+[73/75] q=7 n=28 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[74/75] q=7 n=28 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[75/75] q=7 n=28 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-grid.csv
+# exit_status: 0

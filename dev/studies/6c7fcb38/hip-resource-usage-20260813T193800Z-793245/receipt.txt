@@ -1,0 +1,116 @@
+schema_version: 1
+source_revision: ed51847ad5364fa15d5fc27b81a04b993deb8ad3
+tracked_worktree_dirty=false
+architecture: gfx1030
+hipcc: /opt/rocm/bin/hipcc
+resource_flag: -Rpass-analysis=kernel-resource-usage
+source: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip
+source_sha256: a938162c22133962b5d8ff40aa8eea9e6c4d0a670d7ed7cd687c7dde107c7d29
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f5_wave_equivalence.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f5_wave_equivalence.hip.o
+object_sha256: 10ebefce7248d8b8b397dfaabb4beebdcd9f53c1748dacde4350326ecde77817
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f5_wave_equivalence.hip.resource.log
+resource_log_sha256: 0c065c476655c129cde4a6fac3958933b342eec76b121ac9910a7356d0daea8d
+translation_unit: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip
+source_sha256: 44c5cae2af84e8912f5b4216723fe33e32033337bd1c0ab2463e7307303e4e3f
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f7_three_plane_equivalence.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f7_three_plane_equivalence.hip.o
+object_sha256: e2f531d6170037ccf4fe799865163d9492d904a07bcfb1d8569554e6c459aae4
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/f7_three_plane_equivalence.hip.resource.log
+resource_log_sha256: e3809eefc4f1fa8b8b6369b3904d40a26984c356808c1847312020dc236d2c38
+translation_unit: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/probe.hip
+source_sha256: c2646135b706bf3a242cd5b0770cc8a283494df003b6b66d9bdff4bdaa2345b9
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/probe.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/probe.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/probe.hip.o
+object_sha256: fa9ca24052c45329153f0b60f21734223f79d4ca62350765ea238bd4114076cb
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/probe.hip.resource.log
+resource_log_sha256: 4cfb44b06a1474a2d6dd8738340b5a6598e1ba1a170698f6789fcfb4fdd44e9d
+translation_unit: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/probe.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip
+source_sha256: a21ec7a235bcd277814aa15daaf1d515c9ed892f86d66f78808e5d5fe81ca82a
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf3_equivalence.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf3_equivalence.hip.o
+object_sha256: 79a57b1bbd5d3aabc20faf85446925ab8aafe269e4f1fea4b2be44cdc6b5e688
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf3_equivalence.hip.resource.log
+resource_log_sha256: 28cee5d9b72c42da33b611e1f17e42178afbc09cbab124e2ddb3b93f8aa58d4d
+translation_unit: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip
+source_sha256: 20b522c24d44103412fe7021b90bb98581e0d8b86b7b9f817ae388330d107f84
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf7_equivalence.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf7_equivalence.hip.o
+object_sha256: 172553d0fabde0dafcf3b8889d1e9b86d43f191fba96ecffe154d6575e1bbdaf
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/wave_gf7_equivalence.hip.resource.log
+resource_log_sha256: 1fe023e73486cd0e56d0bc5589dfd77e6584eea85409ad393ecd00b7ac03fd6c
+translation_unit: /home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/wave_gf7_equivalence.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/gray_update_micro.hip
+source_sha256: bc54eb94a9a73d33910a1437dde080e5d24cde8e8c4c4f81ca45b9f6a288b3ae
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -fPIC -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/gray_update_micro.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/gray_update_micro.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/gray_update_micro.hip.o
+object_sha256: 4de96eeaa75c2a2764525a7ecacc5efbd136cb87f0f884ae09e049a0017edda3
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/gray_update_micro.hip.resource.log
+resource_log_sha256: 64f6a5ba2a30c4219f6c416ae9966b77152e4897ae691db00b60fe293cc2cfa0
+translation_unit: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/gray_update_micro.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip
+source_sha256: 96dab17d00fcb1ec9525ed5a7d452ca8d3a47e338b87f2d85da08d55e8b316b0
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -fPIC -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal3.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal3.hip.o
+object_sha256: 1b58775c782e510f46f94242866f520302d429303fbf6918fb113f2e6541a889
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal3.hip.resource.log
+resource_log_sha256: 3e2ff9634a02996428ef579a20cc2531f409fc6596bcc025e960063f9951e974
+translation_unit: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip
+source_sha256: c117bacf9bbe7afd420331d8e03a5c5be9ca659d5bd3a23bd7c828b83881f9d5
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -fPIC -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal5.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal5.hip.o
+object_sha256: c5f35fe6ba01490e49a67416eae5235a2e53d1c0937d56a758f0f67b80b1d05b
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal5.hip.resource.log
+resource_log_sha256: ad7bcae9c92a7320daac8fcbde73fc81f195df8859ae8c8ebc46c1fbbb74cd00
+translation_unit: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal5.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip
+source_sha256: 4f46600e0b6b421782fac225f88250554e9bf0df56cb39aafbe75164fc3161ec
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -fPIC -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.o
+object_sha256: 7efd79890f89e79b00f95cc678d4c9ec3dca9875c9180c57e1392dfe4e9b10b3
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.resource.log
+resource_log_sha256: cbd31e56360cbc41a994a97c251e81773819f49adecd0aa2986859cf00308fbe
+translation_unit: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip
+translation_unit_role: root
+
+source: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/horizontal_product_micro.hip
+source_sha256: 02472275a50940d1c424cd416d0128a7dfbd8bdd530eea510aee59c94feeb88b
+command: /opt/rocm/bin/hipcc --offload-arch=gfx1030 -O3 -fPIC -Rpass-analysis=kernel-resource-usage -c /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip -o /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.o
+exit_status: 0
+object: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.o
+object_sha256: 7efd79890f89e79b00f95cc678d4c9ec3dca9875c9180c57e1392dfe4e9b10b3
+resource_log: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/hip-resource-usage-20260813T193800Z-793245/permanent_bipedal7.hip.resource.log
+resource_log_sha256: cbd31e56360cbc41a994a97c251e81773819f49adecd0aa2986859cf00308fbe
+translation_unit: /home/vkaskivuo/Projects/gf2/crates/gf2-kernels-hip/hip/permanent/permanent_bipedal7.hip
+translation_unit_role: included-fragment
+

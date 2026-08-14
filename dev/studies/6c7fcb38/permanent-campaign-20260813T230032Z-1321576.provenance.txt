@@ -1,0 +1,110 @@
+schema_version: 1
+campaign_run_id: 20260813T230032Z-1321576
+source_revision: afe4cafec88683df812fece597584318123ebdd0
+tracked_worktree_dirty: true
+tracked_dirty_check: git diff --quiet && git diff --cached --quiet && git status --porcelain --untracked-files=all
+rust_toolchain: 1.95.0
+build_rustc: rustc 1.95.0 (59807616e 2026-04-14)
+binary_hashes: see /home/vkaskivuo/Projects/gf2/target/permanent-campaign/manifest-v1.txt and the harness CSV preambles
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas cb05d168b9c9f8ac28ad3d93fceafac8d27e3e0f48441c15a3fb6614ef0690e7
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas cb05d168b9c9f8ac28ad3d93fceafac8d27e3e0f48441c15a3fb6614ef0690e7
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence ecf2a915fe5a01d6e30ab40b0c461ecd2dfda05be4492bb3aadf2f56d70575f8
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf3-device-evidence ecf2a915fe5a01d6e30ab40b0c461ecd2dfda05be4492bb3aadf2f56d70575f8
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence 4fbd05a7f38c3adf0349842b062682f3309f751a5d936da820901445d7ed8b15
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/f5-wave-device-evidence 4fbd05a7f38c3adf0349842b062682f3309f751a5d936da820901445d7ed8b15
+binary_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence f7f40137f307d3e048151d35a5e1042ab795d8b8601ed519e58907f5bbd9f789
+binary_manifest_hash: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-wave-gpu-hip/release/wave-gf7-device-evidence f7f40137f307d3e048151d35a5e1042ab795d8b8601ed519e58907f5bbd9f789
+
+# The harness CSV preamble is the canonical source for facts it embeds.
+# This block records command outputs rather than a second hand-written inventory.
+cpu_model_command: lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 5900X 12-Core Processor
+CPU family:                              25
+Model:                                   33
+Thread(s) per core:                      2
+Core(s) per socket:                      12
+Socket(s):                               1
+Stepping:                                2
+Microcode version:                       0xa201211
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      59%
+CPU max MHz:                             4954.5649
+CPU min MHz:                             567.0890
+BogoMIPS:                                7399.82
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+L1d cache:                               384 KiB (12 instances)
+L1i cache:                               384 KiB (12 instances)
+L2 cache:                                6 MiB (12 instances)
+L3 cache:                                64 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+gpu_model_uuid_command: /opt/rocm/bin/rocm-smi --showproductname --showuniqueid
+WARNING: AMD GPU device(s) is/are in a low-power state. Check power control/runtime_status
+
+
+
+============================ ROCm System Management Interface ============================
+======================================= Unique ID ========================================
+GPU[0]		: Unique ID: 0x8cd14d6d8a3c8a73
+==========================================================================================
+====================================== Product Info ======================================
+GPU[0]		: Card Series: 		AMD Radeon RX 6950 XT
+GPU[0]		: Card Model: 		0x73a5
+GPU[0]		: Card Vendor: 		Advanced Micro Devices, Inc. [AMD/ATI]
+GPU[0]		: Card SKU: 		D4124100
+GPU[0]		: Subsystem ID: 	0x0e3a
+GPU[0]		: Device Rev: 		0xc0
+GPU[0]		: Node ID: 		1
+GPU[0]		: GUID: 		42338
+GPU[0]		: GFX Version: 		gfx1030
+==========================================================================================
+================================== End of ROCm SMI Log ===================================
+rocm_hipcc_version_command: /opt/rocm/bin/hipcc --version
+HIP version: 7.2.53211-9999
+AMD clang version 22.0.0git (/srcdest/rocm-llvm f58b06dce1f9c15707c5f808fd002e18c2accf7e)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /opt/rocm/lib/llvm/bin
+amd_clang_version_command: /opt/rocm/llvm/bin/clang --version
+AMD clang version 22.0.0git (/srcdest/rocm-llvm f58b06dce1f9c15707c5f808fd002e18c2accf7e)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /opt/rocm/lib/llvm/bin
+ambient_rustc_command: rustc -V
+/home/vkaskivuo/Projects/gf2/dev/scripts/permanent-campaign-runner.sh: line 121: rustc: command not found
+command_exit_status: 127
+kernel_version_command: uname -r
+7.1.6-arch1-1
+
+harness_csv_preamble_reference: each CSV under /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38 has the authoritative # preamble
+
+exact_commands_executed:
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-grid.csv --only q=7 --execution-id 7002 --skip-machine-warmup
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-gray-update.csv --q 7
+command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/permanent-campaign-20260813T230032Z-1321576-q7-horizontal-product.csv --q 7
