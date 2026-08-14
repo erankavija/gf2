@@ -1,0 +1,168 @@
+# git_sha: 9cfc82c7edc6eaa7538c43d307a8467fc7a8aa84
+# git_worktree_dirty: true
+# harness_source_sha: 283b79b6fddc24b32d749237682bb63a5ec9a19e
+# harness_source_dirty: true
+# deps_source_sha: 63a10bf8091d113037ba79051e600311320621e7
+# deps_source_dirty: false
+# binary_sha256: 1003f72bdc73805b590e9de3d1a868be3bb441fad756d56561920c25c744fac6
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# cpu: AMD Ryzen 9 5900X 12-Core Processor
+# logical_cpus: 24
+# rayon_threads: 24
+# avx2: true, avx512f: false
+# cpu_governor: powersave
+# gpu: card0,AMD Radeon RX 6950 XT,0x73a5,Advanced Micro Devices Inc. [AMD/ATI],D4124100,0x0e3a,0xc0,1,42338,gfx1030
+# rocm: 7.2.4
+# hip_feature: true
+# kernel: 7.1.6-arch1-1
+# timestamp_utc: 2026-08-14T07:33:14Z
+# invocation: dev/research/permanent-sampling-feas/target/release/permanent_sampling_feas equivalence --out /tmp/claude-1000/-home-vkaskivuo-Projects-gf2/319d0848-8051-46ad-a1a7-29308f453648/scratchpad/equiv-check.csv
+# check: per-matrix permanent values against a reference kernel, named per row in the reference column. The scalar single-word kernel is the reference wherever it exists; at q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic permanent_ryser is the reference there
+# matrices_per_cell: n=8: 512; n=12: 512; n=16: 512; n=20: 512; n=24: 32; n=28: 4
+# seed_root: 0xb488f02c00000001, purpose: equivalence, index: 0
+# sizes: every timed grid order, with n=8 retained below them. At q=7, n>16 the packed CPU kernels are recorded unsupported and the comparison runs between the GPU, the registered candidates, and the generic path
+# sample counts: the four smallest orders keep 512 matrices. The two largest use the committed dev/studies/047b62ed/*q3-grid.csv cpu_scalar probe_matrix_s costs 0.004144 s at n=20, 0.067676 s at n=24, and 1.065811 s at n=28. Applying ceil(512 * cost(n=20) / cost(n)) with a four-matrix minimum gives 32 at n=24 and 4 at n=28. These are planning estimates from one q=3 receipt and require host validation before the overnight run; --matrices caps every order and never raises one
+# candidates: a registered prototype cell evaluates that candidate's own device kernel over the same batch object the built-in backends receive, so every row compares a literally identical corpus
+q,n,reference,backend,matrices,mismatches,zeros_reference,zeros_backend,status
+3,8,cpu_scalar,cpu_avx2,512,0,169,169,identical
+3,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,169,169,identical
+3,8,cpu_scalar,cpu_rayon_batch_avx2,512,0,169,169,identical
+3,8,cpu_scalar,cpu_rayon_intra_matrix,512,0,169,169,identical
+3,8,cpu_scalar,gpu_hip,512,0,169,169,identical
+3,8,cpu_scalar,cpu_ryser_generic,512,0,169,169,identical
+3,8,cpu_scalar,wave-gf3,512,0,169,169,identical
+3,8,cpu_scalar,fold-gf3,512,0,169,169,identical
+3,8,cpu_scalar,f5-byte-control,0,0,169,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,8,cpu_scalar,f5-three-plane,0,0,169,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,8,cpu_scalar,f7-three-plane-accumulator,0,0,169,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,8,cpu_scalar,f7-lookup-table-control,0,0,169,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,8,cpu_scalar,f7-three-plane-permanent,0,0,169,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+3,12,cpu_scalar,cpu_avx2,512,0,165,165,identical
+3,12,cpu_scalar,cpu_rayon_batch_scalar,512,0,165,165,identical
+3,12,cpu_scalar,cpu_rayon_batch_avx2,512,0,165,165,identical
+3,12,cpu_scalar,cpu_rayon_intra_matrix,512,0,165,165,identical
+3,12,cpu_scalar,gpu_hip,512,0,165,165,identical
+3,12,cpu_scalar,cpu_ryser_generic,512,0,165,165,identical
+3,12,cpu_scalar,wave-gf3,512,0,165,165,identical
+3,12,cpu_scalar,fold-gf3,512,0,165,165,identical
+3,12,cpu_scalar,f5-byte-control,0,0,165,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,12,cpu_scalar,f5-three-plane,0,0,165,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,12,cpu_scalar,f7-three-plane-accumulator,0,0,165,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,12,cpu_scalar,f7-lookup-table-control,0,0,165,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,12,cpu_scalar,f7-three-plane-permanent,0,0,165,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+3,16,cpu_scalar,cpu_avx2,512,0,157,157,identical
+3,16,cpu_scalar,cpu_rayon_batch_scalar,512,0,157,157,identical
+3,16,cpu_scalar,cpu_rayon_batch_avx2,512,0,157,157,identical
+3,16,cpu_scalar,cpu_rayon_intra_matrix,512,0,157,157,identical
+3,16,cpu_scalar,gpu_hip,512,0,157,157,identical
+3,16,cpu_scalar,cpu_ryser_generic,512,0,157,157,identical
+3,16,cpu_scalar,wave-gf3,512,0,157,157,identical
+3,16,cpu_scalar,fold-gf3,512,0,157,157,identical
+3,16,cpu_scalar,f5-byte-control,0,0,157,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,16,cpu_scalar,f5-three-plane,0,0,157,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,16,cpu_scalar,f7-three-plane-accumulator,0,0,157,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,16,cpu_scalar,f7-lookup-table-control,0,0,157,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,16,cpu_scalar,f7-three-plane-permanent,0,0,157,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+3,20,cpu_scalar,cpu_avx2,512,0,162,162,identical
+3,20,cpu_scalar,cpu_rayon_batch_scalar,512,0,162,162,identical
+3,20,cpu_scalar,cpu_rayon_batch_avx2,512,0,162,162,identical
+3,20,cpu_scalar,cpu_rayon_intra_matrix,512,0,162,162,identical
+3,20,cpu_scalar,gpu_hip,512,0,162,162,identical
+3,20,cpu_scalar,cpu_ryser_generic,512,0,162,162,identical
+3,20,cpu_scalar,wave-gf3,512,0,162,162,identical
+3,20,cpu_scalar,fold-gf3,512,0,162,162,identical
+3,20,cpu_scalar,f5-byte-control,0,0,162,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,20,cpu_scalar,f5-three-plane,0,0,162,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,20,cpu_scalar,f7-three-plane-accumulator,0,0,162,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,20,cpu_scalar,f7-lookup-table-control,0,0,162,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,20,cpu_scalar,f7-three-plane-permanent,0,0,162,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+3,24,cpu_scalar,cpu_avx2,32,0,13,13,identical
+3,24,cpu_scalar,cpu_rayon_batch_scalar,32,0,13,13,identical
+3,24,cpu_scalar,cpu_rayon_batch_avx2,32,0,13,13,identical
+3,24,cpu_scalar,cpu_rayon_intra_matrix,32,0,13,13,identical
+3,24,cpu_scalar,gpu_hip,32,0,13,13,identical
+3,24,cpu_scalar,cpu_ryser_generic,32,0,13,13,identical
+3,24,cpu_scalar,wave-gf3,32,0,13,13,identical
+3,24,cpu_scalar,fold-gf3,32,0,13,13,identical
+3,24,cpu_scalar,f5-byte-control,0,0,13,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,24,cpu_scalar,f5-three-plane,0,0,13,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,24,cpu_scalar,f7-three-plane-accumulator,0,0,13,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,24,cpu_scalar,f7-lookup-table-control,0,0,13,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,24,cpu_scalar,f7-three-plane-permanent,0,0,13,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+3,28,cpu_scalar,cpu_avx2,4,0,0,0,identical
+3,28,cpu_scalar,cpu_rayon_batch_scalar,4,0,0,0,identical
+3,28,cpu_scalar,cpu_rayon_batch_avx2,4,0,0,0,identical
+3,28,cpu_scalar,cpu_rayon_intra_matrix,4,0,0,0,identical
+3,28,cpu_scalar,gpu_hip,4,0,0,0,identical
+3,28,cpu_scalar,cpu_ryser_generic,4,0,0,0,identical
+3,28,cpu_scalar,wave-gf3,4,0,0,0,identical
+3,28,cpu_scalar,fold-gf3,4,0,0,0,identical
+3,28,cpu_scalar,f5-byte-control,0,0,0,0,unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+3,28,cpu_scalar,f5-three-plane,0,0,0,0,unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+3,28,cpu_scalar,f7-three-plane-accumulator,0,0,0,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+3,28,cpu_scalar,f7-lookup-table-control,0,0,0,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+3,28,cpu_scalar,f7-three-plane-permanent,0,0,0,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+5,8,cpu_scalar,cpu_avx2,0,0,105,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,8,cpu_scalar,cpu_rayon_batch_scalar,512,0,105,105,identical
+5,8,cpu_scalar,cpu_rayon_batch_avx2,0,0,105,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,8,cpu_scalar,cpu_rayon_intra_matrix,0,0,105,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,8,cpu_scalar,gpu_hip,512,0,105,105,identical
+5,8,cpu_scalar,cpu_ryser_generic,512,0,105,105,identical
+5,8,cpu_scalar,wave-gf3,0,0,105,0,unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+5,8,cpu_scalar,fold-gf3,0,0,105,0,unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+5,8,cpu_scalar,f5-byte-control,512,0,105,105,identical
+5,8,cpu_scalar,f5-three-plane,512,0,105,105,identical
+5,8,cpu_scalar,f7-three-plane-accumulator,0,0,105,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+5,8,cpu_scalar,f7-lookup-table-control,0,0,105,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+5,8,cpu_scalar,f7-three-plane-permanent,0,0,105,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+5,12,cpu_scalar,cpu_avx2,0,0,95,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,12,cpu_scalar,cpu_rayon_batch_scalar,512,0,95,95,identical
+5,12,cpu_scalar,cpu_rayon_batch_avx2,0,0,95,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,12,cpu_scalar,cpu_rayon_intra_matrix,0,0,95,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,12,cpu_scalar,gpu_hip,512,0,95,95,identical
+5,12,cpu_scalar,cpu_ryser_generic,512,0,95,95,identical
+5,12,cpu_scalar,wave-gf3,0,0,95,0,unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+5,12,cpu_scalar,fold-gf3,0,0,95,0,unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+5,12,cpu_scalar,f5-byte-control,512,0,95,95,identical
+5,12,cpu_scalar,f5-three-plane,512,0,95,95,identical
+5,12,cpu_scalar,f7-three-plane-accumulator,0,0,95,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+5,12,cpu_scalar,f7-lookup-table-control,0,0,95,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+5,12,cpu_scalar,f7-three-plane-permanent,0,0,95,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+5,16,cpu_scalar,cpu_avx2,0,0,110,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,16,cpu_scalar,cpu_rayon_batch_scalar,512,0,110,110,identical
+5,16,cpu_scalar,cpu_rayon_batch_avx2,0,0,110,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,16,cpu_scalar,cpu_rayon_intra_matrix,0,0,110,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,16,cpu_scalar,gpu_hip,512,0,110,110,identical
+5,16,cpu_scalar,cpu_ryser_generic,512,0,110,110,identical
+5,16,cpu_scalar,wave-gf3,0,0,110,0,unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+5,16,cpu_scalar,fold-gf3,0,0,110,0,unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+5,16,cpu_scalar,f5-byte-control,512,0,110,110,identical
+5,16,cpu_scalar,f5-three-plane,512,0,110,110,identical
+5,16,cpu_scalar,f7-three-plane-accumulator,0,0,110,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+5,16,cpu_scalar,f7-lookup-table-control,0,0,110,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+5,16,cpu_scalar,f7-three-plane-permanent,0,0,110,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+5,20,cpu_scalar,cpu_avx2,0,0,109,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,20,cpu_scalar,cpu_rayon_batch_scalar,512,0,109,109,identical
+5,20,cpu_scalar,cpu_rayon_batch_avx2,0,0,109,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,20,cpu_scalar,cpu_rayon_intra_matrix,0,0,109,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,20,cpu_scalar,gpu_hip,512,0,109,109,identical
+5,20,cpu_scalar,cpu_ryser_generic,512,0,109,109,identical
+5,20,cpu_scalar,wave-gf3,0,0,109,0,unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+5,20,cpu_scalar,fold-gf3,0,0,109,0,unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+5,20,cpu_scalar,f5-byte-control,512,0,109,109,identical
+5,20,cpu_scalar,f5-three-plane,512,0,109,109,identical
+5,20,cpu_scalar,f7-three-plane-accumulator,0,0,109,0,unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+5,20,cpu_scalar,f7-lookup-table-control,0,0,109,0,unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+5,20,cpu_scalar,f7-three-plane-permanent,0,0,109,0,unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+5,24,cpu_scalar,cpu_avx2,0,0,6,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,24,cpu_scalar,cpu_rayon_batch_scalar,32,0,6,6,identical
+5,24,cpu_scalar,cpu_rayon_batch_avx2,0,0,6,0,unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+5,24,cpu_scalar,cpu_rayon_intra_matrix,0,0,6,0,unsupported: gf2-algebra exposes no rayon permanent path for F_5
+5,24,cpu_scalar,gpu_hip,32,0,6,6,identical
+5,24,cpu_scalar,cpu_ryser_generic,32,0,6,6,identical
+5,24,cpu_scalar,wave-gf3,0,0,6,0,unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+5,24,cpu_scalar,fold-gf3,0,0,6,0,unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+5,24,cpu_scalar,f5-byte-control,32,0,6,6,identical
+5,24,cpu_scalar,f5-three-plane,32,0,6,6,identical
