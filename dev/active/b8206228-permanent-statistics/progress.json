@@ -11,7 +11,7 @@
      "short_id": "047b62ed",
      "title": "F_3 preregistered receipt campaign",
      "classification": "research",
-     "status": "blocked-on-e31b1918-rerun"
+     "status": "pending-overnight-rerun"
     },
     {
      "id": "22c7a3cd-b231-424e-86e5-2a0ad47aeacc",
@@ -278,8 +278,8 @@
    "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
    "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
    "wave": "0.9",
-   "status": "implemented-in-review",
-   "note": "Implementation committed at 3933338a (codex luna converged the opus worker WIP after three API-529 failures). Host device tests pass; partial device equivalence 74/74 identical. OPEN DEFECT before gates: EQUIVALENCE_SIZES overnight budget understated for slow backends at n>=24 (q=5,n=28 cell >12 min); fix, then smoke (REQ-07), gates, close, re-arm runner."
+   "status": "done",
+   "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f (234 rows, 0 mismatches, 5690 s wall); smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
   }
  ],
  "escalations": [
@@ -381,7 +381,7 @@
   },
   "The v1 F_3 receipts (dev/studies/047b62ed/receipts.md, commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
   "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
-  "e31b1918's EQUIVALENCE_SIZES counts (n=24:32, n=28:4) derive from q=3 cpu_scalar probe costs; measured host check spent >12 min inside the single q=5,n=28 equivalence cell (cpu_ryser_generic / F5/F7 scalar dominate). Bound slow backends or shrink counts and measure the true step duration before arming measure. Evidence: dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-check-partial.csv.",
+  "RESOLVED 2026-08-14 (de5f7414): equivalence counts are now budgeted per (q,n) cell against the summed committed probe costs of that cell's measured CPU backends (240 s per-cell budget; only q=5,n=28 halves to 2). Full-order host validation at the final revision: 234 rows, 0 mismatches, 5690 s wall (dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-full.csv). The general lesson stands: never derive a per-cell budget from one field's fastest backend; sum the participating backends' measured costs.",
   "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit."
  ],
  "started_at": "2026-08-09T12:20:30Z",
