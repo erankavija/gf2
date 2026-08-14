@@ -1,0 +1,155 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-grid.csv --only q=3 --execution-id 3002
+# started_utc: 2026-08-13T23:03:27Z
+warming the machine for 90 s ...
+[1/75] q=3 n=12 cpu_ryser_generic
+    6887.131 matrices/s composite (6917.478 eval-only), M=10621, reps=5, sd=0.006 s
+[2/75] q=3 n=12 gpu_hip
+    121487.134 matrices/s composite (149766.568 eval-only), M=256, reps=2308, sd=0.000 s
+[3/75] q=3 n=12 cpu_avx2
+    18659.363 matrices/s composite (19371.028 eval-only), M=34711, reps=5, sd=0.002 s
+[4/75] q=3 n=12 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[5/75] q=3 n=12 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[6/75] q=3 n=12 cpu_scalar
+    51506.049 matrices/s composite (57335.563 eval-only), M=65536, reps=5, sd=0.000 s
+[7/75] q=3 n=12 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[8/75] q=3 n=12 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[9/75] q=3 n=12 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[10/75] q=3 n=12 cpu_rayon_batch_avx2
+    203146.267 matrices/s composite (332943.549 eval-only), M=33496, reps=27, sd=0.003 s
+[11/75] q=3 n=12 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[12/75] q=3 n=12 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[13/75] q=3 n=12 cpu_rayon_intra_matrix
+    37046.897 matrices/s composite (39287.608 eval-only), M=25183, reps=8, sd=0.003 s
+[14/75] q=3 n=12 cpu_rayon_batch_scalar
+    303392.392 matrices/s composite (649321.937 eval-only), M=65536, reps=21, sd=0.005 s
+[15/75] q=3 n=12 gpu_hip
+    217172.381 matrices/s composite (324486.620 eval-only), M=1024, reps=1011, sd=0.000 s
+[16/75] q=3 n=16 cpu_ryser_generic
+    307.463 matrices/s composite (307.514 eval-only), M=603, reps=5, sd=0.001 s
+[17/75] q=3 n=16 cpu_scalar
+    3730.800 matrices/s composite (3765.470 eval-only), M=7406, reps=5, sd=0.001 s
+[18/75] q=3 n=16 cpu_rayon_intra_matrix
+    4351.058 matrices/s composite (4408.986 eval-only), M=8147, reps=5, sd=0.005 s
+[19/75] q=3 n=16 gpu_hip
+    27277.647 matrices/s composite (29263.632 eval-only), M=256, reps=529, sd=0.000 s
+[20/75] q=3 n=16 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[21/75] q=3 n=16 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[22/75] q=3 n=16 cpu_avx2
+    1228.843 matrices/s composite (1232.617 eval-only), M=2449, reps=5, sd=0.002 s
+[23/75] q=3 n=16 cpu_rayon_batch_scalar
+    37003.599 matrices/s composite (41883.044 eval-only), M=7330, reps=25, sd=0.001 s
+[24/75] q=3 n=16 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[25/75] q=3 n=16 cpu_rayon_batch_avx2
+    19383.922 matrices/s composite (20585.188 eval-only), M=2411, reps=40, sd=0.005 s
+[26/75] q=3 n=16 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[27/75] q=3 n=16 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[28/75] q=3 n=16 gpu_hip
+    58228.096 matrices/s composite (67978.231 eval-only), M=1024, reps=280, sd=0.000 s
+[29/75] q=3 n=16 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[30/75] q=3 n=16 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[31/75] q=3 n=20 cpu_avx2
+    77.019 matrices/s composite (77.041 eval-only), M=154, reps=5, sd=0.001 s
+[32/75] q=3 n=20 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[33/75] q=3 n=20 cpu_scalar
+    235.554 matrices/s composite (235.760 eval-only), M=483, reps=5, sd=0.001 s
+[34/75] q=3 n=20 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[35/75] q=3 n=20 gpu_hip
+    4867.095 matrices/s composite (4955.651 eval-only), M=1024, reps=24, sd=0.001 s
+[36/75] q=3 n=20 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[37/75] q=3 n=20 cpu_rayon_batch_scalar
+    2554.302 matrices/s composite (2584.736 eval-only), M=486, reps=27, sd=0.001 s
+[38/75] q=3 n=20 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[39/75] q=3 n=20 gpu_hip
+    2122.278 matrices/s composite (2139.178 eval-only), M=256, reps=42, sd=0.001 s
+[40/75] q=3 n=20 cpu_rayon_intra_matrix
+    2928.415 matrices/s composite (2965.546 eval-only), M=4252, reps=5, sd=0.001 s
+[41/75] q=3 n=20 cpu_ryser_generic
+    15.151 matrices/s composite (15.152 eval-only), M=30, reps=5, sd=0.001 s
+[42/75] q=3 n=20 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[43/75] q=3 n=20 cpu_rayon_batch_avx2
+    1232.948 matrices/s composite (1240.852 eval-only), M=156, reps=40, sd=0.003 s
+[44/75] q=3 n=20 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[45/75] q=3 n=20 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[46/75] q=3 n=24 cpu_scalar
+    14.710 matrices/s composite (14.712 eval-only), M=30, reps=5, sd=0.001 s
+[47/75] q=3 n=24 gpu_hip
+    137.164 matrices/s composite (137.261 eval-only), M=256, reps=5, sd=0.040 s
+[48/75] q=3 n=24 cpu_rayon_batch_avx2
+    82.253 matrices/s composite (82.303 eval-only), M=96, reps=5, sd=0.004 s
+[49/75] q=3 n=24 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[50/75] q=3 n=24 cpu_rayon_intra_matrix
+    291.800 matrices/s composite (292.260 eval-only), M=530, reps=5, sd=0.004 s
+[51/75] q=3 n=24 cpu_avx2
+    4.799 matrices/s composite (4.799 eval-only), M=10, reps=5, sd=0.003 s
+[52/75] q=3 n=24 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+[53/75] q=3 n=24 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[54/75] q=3 n=24 cpu_rayon_batch_scalar
+    162.570 matrices/s composite (162.755 eval-only), M=96, reps=9, sd=0.009 s
+[55/75] q=3 n=24 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[56/75] q=3 n=24 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[57/75] q=3 n=24 gpu_hip
+    312.683 matrices/s composite (313.186 eval-only), M=1024, reps=5, sd=0.005 s
+[58/75] q=3 n=24 cpu_ryser_generic
+    0.785 matrices/s composite (0.785 eval-only), M=2, reps=5, sd=0.001 s
+[59/75] q=3 n=24 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[60/75] q=3 n=24 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[61/75] q=3 n=28 cpu_rayon_intra_matrix
+    19.140 matrices/s composite (19.143 eval-only), M=96, reps=5, sd=0.009 s
+[62/75] q=3 n=28 cpu_rayon_batch_scalar
+    10.209 matrices/s composite (10.210 eval-only), M=96, reps=5, sd=0.018 s
+[63/75] q=3 n=28 cpu_avx2
+    0.299 matrices/s composite (0.299 eval-only), M=1, reps=5, sd=0.003 s
+[64/75] q=3 n=28 f7-three-plane-permanent
+    unsupported: prototype candidate f7-three-plane-permanent has no harness batch evaluator yet
+[65/75] q=3 n=28 gpu_hip
+    censored: unavailable: 120 s cap ended timing before both minimums (5 repetitions and 5 s); no derived rate is reported
+[66/75] q=3 n=28 f7-lookup-table-control
+    unsupported: prototype candidate f7-lookup-table-control has no harness batch evaluator yet
+[67/75] q=3 n=28 cpu_rayon_batch_avx2
+    5.133 matrices/s composite (5.133 eval-only), M=96, reps=5, sd=0.019 s
+[68/75] q=3 n=28 gpu_hip
+    8.551 matrices/s composite (8.552 eval-only), M=256, reps=5, sd=0.680 s
+[69/75] q=3 n=28 cpu_ryser_generic
+    0.042 matrices/s composite (0.042 eval-only), M=1, reps=5, sd=0.012 s
+[70/75] q=3 n=28 fold-gf3
+    unsupported: prototype candidate fold-gf3 has no harness batch evaluator yet
+[71/75] q=3 n=28 wave-gf3
+    unsupported: prototype candidate wave-gf3 has no harness batch evaluator yet
+[72/75] q=3 n=28 cpu_scalar
+    0.916 matrices/s composite (0.916 eval-only), M=2, reps=5, sd=0.012 s
+[73/75] q=3 n=28 f5-three-plane
+    unsupported: prototype candidate f5-three-plane has no harness batch evaluator yet
+[74/75] q=3 n=28 f5-byte-control
+    unsupported: prototype candidate f5-byte-control has no harness batch evaluator yet
+[75/75] q=3 n=28 f7-three-plane-accumulator
+    unsupported: prototype candidate f7-three-plane-accumulator has no harness batch evaluator yet
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-grid.csv
+# exit_status: 0

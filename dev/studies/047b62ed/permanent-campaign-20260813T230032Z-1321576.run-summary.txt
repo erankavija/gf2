@@ -1,0 +1,8 @@
+schema_version: 1
+campaign_run_id: 20260813T230032Z-1321576
+mode: measure
+q=3 step=equivalence execution_id=fixed-streams status=completed exit=0 log=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-shared-equivalence.log out=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-shared-equivalence.csv
+shared_equivalence=execution_id=fixed-streams status=completed exit=0 log=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-shared-equivalence.log out=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-shared-equivalence.csv
+q=3 step=grid execution_id=3002 status=completed exit=0 log=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-grid.log out=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-grid.csv
+q=3 step=gray-update execution_id=fixed-streams status=completed exit=0 log=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-gray-update.log out=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-gray-update.csv
+q=3 step=horizontal-product execution_id=fixed-streams status=completed exit=0 log=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-horizontal-product.log out=/home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260813T230032Z-1321576-q3-horizontal-product.csv
