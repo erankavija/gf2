@@ -11,14 +11,15 @@ SUBCOMMANDS
                  --n LIST          comma-separated subset of the order table to
                                    run (default every order below)
                Sizes cover every timed grid order, with n=8 retained below them.
-               Per-order counts are 512 through n=20, then 32 at n=24 and 4 at
-               n=28. They derive from the committed
-               dev/studies/047b62ed/*q3-grid.csv cpu_scalar probe_matrix_s
-               costs: 0.004144 s at n=20, 0.067676 s at n=24, and 1.065811 s at
-               n=28. Applying ceil(512 * cost(20) / cost(n)) with a four-matrix
-               minimum gives 32 and 4. This 32/4 choice is the overnight
-               preflight budget; it is a planning estimate from one q=3 receipt
-               and requires host validation before the run.
+               Per-order ceilings are 512 through n=20, then 32 at n=24 and 4
+               at n=28. Each (q, n) cell starts at its ceiling and halves,
+               flooring at 2, until the sum of its measured CPU backends'
+               committed probe_matrix_s costs times the count fits a 240-second
+               per-cell budget at the speeds of grid-receipt run
+               20260813T230032Z-1321576 (the three fields' committed
+               dev/studies/{047b62ed,91605d4d,6c7fcb38}/*-grid.csv). Only the
+               q=5, n=28 cell halves: its three CPU backends sum to 68.354 s
+               per matrix, so four matrices project to 273 s and two to 137 s.
 
   grid         Time the composite campaign hot path over q in {3,5,7} and
                n in {12,16,20,24,28} on every backend. Requires an idle host.

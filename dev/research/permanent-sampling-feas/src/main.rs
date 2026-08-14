@@ -61,20 +61,37 @@ const INDICES_PER_CELL: u64 = 100_000;
 /// row naming the reason everywhere else.
 const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len() + 1);
 
-/// Equivalence orders and the matrices compared at each.
+/// Per-order ceilings for equivalence matrix counts.
 ///
-/// The orders cover every timed grid order, with `n = 8` retained below them.
-/// The four smallest keep the campaign's established 512-matrix cells. The two
-/// largest use the committed q=3 grid receipt's `cpu_scalar` single-matrix
-/// probe costs: 0.004144 s at n=20, 0.067676 s at n=24, and 1.065811 s at
-/// n=28. The derivation is `ceil(512 * cost(n=20) / cost(n))`, with a minimum
-/// of four matrices: that gives 32 at n=24 and 4 at n=28. The costs are
-/// planning estimates read from `dev/studies/047b62ed/*q3-grid.csv`, chosen so
-/// the full equivalence step fits the overnight campaign budget.
-const EQUIVALENCE_SIZES: [(usize, usize); 6] =
+/// Each `(q, n)` cell starts at its per-order ceiling and halves, flooring at
+/// two, until the sum of its measured CPU backends' committed `probe_matrix_s`
+/// costs times the count fits the 240-second per-cell budget at grid-receipt
+/// speeds. Receipt run `20260813T230032Z-1321576` measures 22.054209 s for
+/// `cpu_scalar`, 22.269200 s for `cpu_rayon_batch_scalar`, and 24.030546 s for
+/// `cpu_ryser_generic` at `q=5, n=28`: 68.354 s per matrix, so the ceiling of
+/// four projects to 273 s, above 240 s, and one halving gives two matrices at
+/// 137 s. A q=3 `cpu_scalar`-only derivation understates fields dominated by
+/// slower backends; host validation measured more than 12 minutes in that
+/// `q=5, n=28` cell.
+const EQUIVALENCE_ORDER_CEILINGS: [(usize, usize); 6] =
     [(8, 512), (12, 512), (16, 512), (20, 512), (24, 32), (28, 4)];
+/// Per-field counts required by the 240-second equivalence-cell budget.
+const EQUIVALENCE_BUDGET_OVERRIDES: [(u64, usize, usize); 1] = [(5, 28, 2)];
 /// Stream-index space reserved to one fresh grid process.
 const INDICES_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * INDICES_PER_CELL;
+
+fn equivalence_matrices(q: u64, n: usize) -> usize {
+    let ceiling = EQUIVALENCE_ORDER_CEILINGS
+        .iter()
+        .find_map(|(order, matrices)| (*order == n).then_some(*matrices))
+        .unwrap_or_else(|| panic!("equivalence order {n} is outside the committed order table"));
+    EQUIVALENCE_BUDGET_OVERRIDES
+        .iter()
+        .find_map(|(override_q, order, matrices)| {
+            (*override_q == q && *order == n).then_some(*matrices)
+        })
+        .map_or(ceiling, |matrices| ceiling.min(matrices))
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -453,7 +470,7 @@ fn cmd_equivalence(args: &[String]) {
     // `--n` narrows the committed order table; it cannot introduce an order
     // whose sample count was never chosen against the budget.
     let selected = flag(args, "--n").map(|_| orders(args));
-    let sizes: Vec<(usize, usize)> = EQUIVALENCE_SIZES
+    let sizes: Vec<(usize, usize)> = EQUIVALENCE_ORDER_CEILINGS
         .into_iter()
         .filter(|(n, _)| selected.as_ref().is_none_or(|orders| orders.contains(n)))
         .map(|(n, matrices)| (n, cap.map_or(matrices, |cap| cap.min(matrices))))
@@ -470,7 +487,21 @@ fn cmd_equivalence(args: &[String]) {
 
     let per_order = sizes
         .iter()
-        .map(|(n, matrices)| format!("n={n}: {matrices}"))
+        .map(|(n, matrices)| {
+            let exceptions = EQUIVALENCE_BUDGET_OVERRIDES
+                .iter()
+                .filter(|(_, order, _)| order == n)
+                .map(|(q, _, override_matrices)| {
+                    format!("q={q}: {}", (*matrices).min(*override_matrices))
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            if exceptions.is_empty() {
+                format!("n={n}: {matrices}")
+            } else {
+                format!("n={n}: {matrices} ({exceptions})")
+            }
+        })
         .collect::<Vec<_>>()
         .join("; ");
     let notes = vec![
@@ -486,12 +517,13 @@ permanent_ryser is the reference there"
 CPU kernels are recorded unsupported and the comparison runs between the GPU, the registered \
 candidates, and the generic path"
             .to_string(),
-        "sample counts: the four smallest orders keep 512 matrices. The two largest use the \
-committed dev/studies/047b62ed/*q3-grid.csv cpu_scalar probe_matrix_s costs 0.004144 s at \
-n=20, 0.067676 s at n=24, and 1.065811 s at n=28. Applying \
-ceil(512 * cost(n=20) / cost(n)) with a four-matrix minimum gives 32 at n=24 and 4 at \
-n=28. These are planning estimates from one q=3 receipt and require host validation before \
-the overnight run; --matrices caps every order and never raises one"
+        "sample counts: each (q, n) cell starts at its per-order ceiling and halves, flooring at \
+2, until the sum of its measured CPU backends' committed probe_matrix_s costs times the count \
+fits the 240-second per-cell budget at grid-receipt speeds. Receipt run \
+20260813T230032Z-1321576 and committed dev/studies/{047b62ed,91605d4d,6c7fcb38}/*-grid.csv \
+record 22.054209 s (cpu_scalar), 22.269200 s (cpu_rayon_batch_scalar), and 24.030546 s \
+(cpu_ryser_generic) per matrix at q=5, n=28; the three-backend sum is 68.354 s per matrix, \
+so four projects to 273 s and two to 137 s. --matrices caps every order and never raises one"
             .to_string(),
         "candidates: a registered prototype cell evaluates that candidate's own device kernel \
 over the same batch object the built-in backends receive, so every row compares a literally \
@@ -503,6 +535,7 @@ identical corpus"
     let mut mismatches = 0usize;
     for q in QS {
         for (n, matrices) in sizes.iter().copied() {
+            let matrices = matrices.min(equivalence_matrices(q, n));
             for row in check(q, n, matrices, SEED_ROOT) {
                 mismatches += row.mismatches;
                 println!(
@@ -1186,14 +1219,24 @@ mod cli_tests {
     #[test]
     fn equivalence_covers_the_full_grid_order_set_with_committed_counts() {
         assert_eq!(
-            EQUIVALENCE_SIZES,
+            EQUIVALENCE_ORDER_CEILINGS,
             [(8, 512), (12, 512), (16, 512), (20, 512), (24, 32), (28, 4),]
         );
+        assert_eq!(EQUIVALENCE_BUDGET_OVERRIDES, [(5, 28, 2)]);
         assert!(NS.iter().all(|order| {
-            EQUIVALENCE_SIZES
+            EQUIVALENCE_ORDER_CEILINGS
                 .iter()
                 .any(|(equivalence_order, _)| equivalence_order == order)
         }));
+        for (q, expected) in [
+            (3, [512, 512, 512, 32, 4]),
+            (5, [512, 512, 512, 32, 2]),
+            (7, [512, 512, 512, 32, 4]),
+        ] {
+            for (n, expected_matrices) in NS.into_iter().zip(expected) {
+                assert_eq!(equivalence_matrices(q, n), expected_matrices);
+            }
+        }
     }
 
     #[test]
