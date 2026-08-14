@@ -1,0 +1,11 @@
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark: Function Name: _Z26f7_three_plane_equivalencePi [-Rpass-analysis=kernel-resource-usage]
+   82 | __global__ void f7_three_plane_equivalence(int* failures) {
+      | ^
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     TotalSGPRs: 40 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     VGPRs: 2 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     ScratchSize [bytes/lane]: 0 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     Dynamic Stack: False [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     Occupancy [waves/SIMD]: 16 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     SGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     VGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+/home/vkaskivuo/Projects/gf2/dev/research/permanent_wave_gpu/hip/f7_three_plane_equivalence.hip:82:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage]
