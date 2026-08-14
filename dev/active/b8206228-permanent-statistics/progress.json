@@ -278,7 +278,8 @@
    "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
    "reason": "Owner-approved wire-and-rerun resolution of the 2026-08-14 escalation; campaigns 047b62ed/91605d4d/6c7fcb38 now depend on it.",
    "wave": "0.9",
-   "status": "pending"
+   "status": "implemented-in-review",
+   "note": "Implementation committed at 3933338a (codex luna converged the opus worker WIP after three API-529 failures). Host device tests pass; partial device equivalence 74/74 identical. OPEN DEFECT before gates: EQUIVALENCE_SIZES overnight budget understated for slow backends at n>=24 (q=5,n=28 cell >12 min); fix, then smoke (REQ-07), gates, close, re-arm runner."
   }
  ],
  "escalations": [
@@ -379,7 +380,9 @@
    "disposition": "advisory; epic REQ-06 (preregistered rare-event estimator) names preregistration for the ASPIRATIONAL estimator issues 3f664839/6639435f/b05c908b \u2014 for those, require the design/constants commit to land and be linked BEFORE any estimating run, so this finding does not recur as a blocking one."
   },
   "The v1 F_3 receipts (dev/studies/047b62ed/receipts.md, commit 6eb364e9) and all campaign run 20260813T230032Z-1321576 raw evidence come from the pre-e31b1918 harness. After the rerun, supersede them per the standing rule: git rm superseded run evidence and re-point links in the same commit; reviewers reject evidence from a non-final tool revision.",
-  "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream."
+  "Gray-update isolate rows for wave-gf3/fold-gf3 in run 20260813T230032Z-1321576 alias the shipped gray_update_micro_kernel (field selected from q alone); do not cite them as prototype evidence anywhere downstream.",
+  "e31b1918's EQUIVALENCE_SIZES counts (n=24:32, n=28:4) derive from q=3 cpu_scalar probe costs; measured host check spent >12 min inside the single q=5,n=28 equivalence cell (cpu_ryser_generic / F5/F7 scalar dominate). Bound slow backends or shrink counts and measure the true step duration before arming measure. Evidence: dev/active/b8206228-permanent-statistics/e31b1918-equiv-host-check-partial.csv.",
+  "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit."
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
