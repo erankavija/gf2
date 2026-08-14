@@ -1,0 +1,41 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-14T05:58:48.931531042Z",
+  "dependencies": [],
+  "description": "The measurement harness executes every registered wave-study prototype candidate whose device kernel exists, and the campaign isolates and equivalence run cover the timing grid's full order set, so the receipt campaigns can compare the prototype mapping against the shipped control by measurement.\n\n## Background\n\nThe receipt campaigns compare the current GPU path, every planned prototype path that executes on the target device, and the best in-tree CPU path. The prototype crate `dev/research/permanent_wave_gpu/` registers every candidate in a complete measurement-path registry, and the $\\mathbb{F}_3$ fold kernels compile for `gfx1030`, match all committed fixtures on the campaign host, and appear in the committed compiler resource receipt. Their registry batch dispatch is still the skeleton stub: `dispatch()` returns without launching (`dev/research/permanent_wave_gpu/src/paths.rs`, `src/wave.rs`), so the harness `grid` and `equivalence` subcommands of `dev/research/permanent-sampling-feas/` record every prototype cell as unsupported with the reason `no harness batch evaluator yet`, and the campaign receipts carry a one-sided mapping comparison.\n\nThree adjacent coverage gaps surfaced in the same campaign run. The Gray-update isolate presents `wave-gf3` and `fold-gf3` rows that alias the shipped kernel, because the device entry selects its field from $q$ alone (`dev/research/permanent-sampling-feas/src/gray_update.rs`); the two component isolates accept a single order and the campaign invokes them only at $n = 12$ while the grid measures $n \\in \\{12, 16, 20, 24, 28\\}$; and the equivalence run stops at $n = 20$, leaving the two largest timed orders without an order-matched equivalence cell.\n\n## Success Criteria\n\n- [hard] REQ-01: Every registered prototype candidate whose device kernel is implemented executes through the harness batch-evaluator dispatch in both the timing grid and the equivalence run, launching that candidate's own kernel; a candidate without an implemented kernel keeps an unsupported outcome naming that reason.\n- [hard] REQ-02: A Gray-update isolate row reports a span only from a circuit distinct to the backend it names; a backend without a distinct Gray-update circuit is an unsupported row stating that reason rather than an alias of another backend's kernel.\n- [hard] REQ-03: The Gray-update and horizontal-product isolates accept the timing grid's order set, and the campaign runner invokes them at every grid order for each field.\n- [hard] REQ-04: The equivalence run covers every timed grid order with a stated per-order sample count chosen against the overnight budget, and each field's timing remains gated on its per-field equivalence verdict.\n- [hard] REQ-05: Sampling determinism is preserved: matrices are addressed through purpose-tagged, structurally disjoint stream domains, with no numeric stream base computed outside the sampler's addressing scheme, and unchanged addresses reproduce the same matrices as before.\n- [hard] REQ-06: The standalone harness and prototype crate checks pass, and the runner's stub tests pass with the extended step set.\n- [hard] REQ-07: A smoke-mode run of the extended runner completes end-to-end on the host, and its committed evidence comes from the final revision of the runner and harness.\n\n## Notes\n\nThe per-order equivalence sample counts at $n = 24$ and $n = 28$ are chosen from the measured single-matrix oracle cost so the full overnight pipeline fits its budget; the chosen counts and that justification are stated in the committed evidence. Prototype kernels themselves are inputs: no new device kernel is in scope, and a registered candidate whose kernel is absent stays unsupported.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-14T05:58:48.931531042Z",
+  "gates_required": [
+    "code-review",
+    "permanent-sampling-feas-ci",
+    "permanent-wave-gpu-ci"
+  ],
+  "gates_status": {
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-14T05:58:59.288605855Z",
+      "updated_by": null
+    },
+    "permanent-sampling-feas-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-14T05:58:59.406913249Z",
+      "updated_by": null
+    },
+    "permanent-wave-gpu-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-14T05:58:59.523817692Z",
+      "updated_by": null
+    }
+  },
+  "id": "e31b1918-75b8-4c22-a900-c318059c1702",
+  "labels": [
+    "epic:permanent-statistics",
+    "story:gpu-wave-permanents",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Prototype batch evaluators and full-order isolates in the campaign harness",
+  "updated_at": "2026-08-14T05:58:59.523817692Z"
+}
