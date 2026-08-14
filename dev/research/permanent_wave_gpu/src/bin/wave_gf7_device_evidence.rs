@@ -155,9 +155,8 @@ fn run_evidence(path: MeasurementPath, stage: EvidenceStage) -> Result<(), Box<d
     ) {
         return Err(format!("{} is not an F_7 wave permanent candidate", path.name()).into());
     }
-    path.dispatch().map_err(|unsupported| {
-        format!("{} is unavailable: {}", path.name(), unsupported.reason())
-    })?;
+    path.device_batch_kernel()
+        .map_err(|reason| format!("{} is unavailable: {reason}", path.name()))?;
 
     let corpus = FixtureCorpus::seeded(DEFAULT_FIXTURE_SEED);
     let fixtures = selected_f7_fixtures(&corpus);

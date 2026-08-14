@@ -580,12 +580,46 @@ Case patterned_case(const char* name, int n, unsigned offset) {
 
 }  // namespace
 
+// Included below the kernels above rather than beside the other headers: the
+// committed compiler resource remarks cite those kernels by line, and an
+// include above them would move every citation.
+#include "wave_batch_stream.h"
+
+namespace {
+
+// Serve the harness's batch evaluations of the selected fold through the exact
+// launch geometry the fixture evidence uses: one block per matrix, the active
+// lane count chosen from n alone, and two packed words of shared memory per
+// column.
+int serve_batch_evaluations(FoldKind fold) {
+  const auto launch = [fold](const unsigned char* device_matrices, int n, int batch,
+                             unsigned* device_results) {
+    const auto lanes = gf2_wave_mapping::active_lanes_for_order(n);
+    const std::size_t shared_bytes = 2 * static_cast<std::size_t>(n) * sizeof(std::uint64_t);
+    if (fold == FoldKind::kHalving) {
+      hipLaunchKernelGGL((wave_gf3_kernel<FoldKind::kHalving>), dim3(batch), dim3(lanes),
+                         shared_bytes, 0, device_matrices, n, batch, device_results);
+    } else {
+      hipLaunchKernelGGL((wave_gf3_kernel<FoldKind::kZeroMaskSignPopcount>), dim3(batch),
+                         dim3(lanes), shared_bytes, 0, device_matrices, n, batch,
+                         device_results);
+    }
+    return true;
+  };
+  return gf2_wave_batch::serve_batch_stream(63, launch, gf2_wave_batch::NoLookupTables{});
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
   FoldKind fold = FoldKind::kHalving;
   bool reads_fixture_stdin = false;
+  bool serves_batch_stdin = false;
   for (int argument = 1; argument < argc; ++argument) {
     if (std::strcmp(argv[argument], "--fixture-stdin") == 0) {
       reads_fixture_stdin = true;
+    } else if (std::strcmp(argv[argument], "--batch-stdin") == 0) {
+      serves_batch_stdin = true;
     } else if (std::strcmp(argv[argument], "--fold") == 0 && argument + 1 < argc) {
       const char* const selected = argv[++argument];
       if (std::strcmp(selected, "wave-gf3") == 0) {
@@ -597,9 +631,18 @@ int main(int argc, char** argv) {
         return 2;
       }
     } else {
-      std::fprintf(stderr, "usage: %s [--fold wave-gf3|fold-gf3] [--fixture-stdin]\n", argv[0]);
+      std::fprintf(stderr,
+                   "usage: %s [--fold wave-gf3|fold-gf3] [--fixture-stdin | --batch-stdin]\n",
+                   argv[0]);
       return 2;
     }
+  }
+  if (reads_fixture_stdin && serves_batch_stdin) {
+    std::fprintf(stderr, "--fixture-stdin and --batch-stdin read the same stream\n");
+    return 2;
+  }
+  if (serves_batch_stdin) {
+    return serve_batch_evaluations(fold);
   }
   if (reads_fixture_stdin) {
     return run_streamed_fixture_evidence(fold) ? 0 : 1;

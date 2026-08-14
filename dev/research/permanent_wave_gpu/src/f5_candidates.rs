@@ -15,9 +15,10 @@ use gf2_algebra::packed::{Packed5, PackedField};
 #[cfg(feature = "fixture-oracle")]
 use gf2_core::gfp::Fp;
 
+use crate::device_batch::{DeviceBatchKernel, DeviceExecutable};
+use crate::paths::DeviceBatchResult;
 #[cfg(feature = "fixture-oracle")]
 use crate::wave::{self, WaveOps};
-use crate::DispatchResult;
 #[cfg(feature = "fixture-oracle")]
 use crate::{fixtures::Fixture, EvaluationResult, Unsupported};
 
@@ -82,14 +83,33 @@ impl ByteAccumulator {
     }
 }
 
-/// Dispatch the byte representation control already present in the registry.
-pub(crate) fn byte_control() -> DispatchResult {
-    Ok(())
+/// The byte representation control's device batch kernel.
+///
+/// `f5_byte_control_kernel` in `hip/f5_wave_equivalence.hip` gives one block to
+/// each matrix of a batch and stages `n * n` bytes per block, within the
+/// mapping's `n <= 63` Gray bound.
+pub(crate) fn byte_control_device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        5,
+        63,
+        DeviceExecutable::F5Wave,
+        &["--path", "f5-byte-control"],
+        false,
+    ))
 }
 
-/// Dispatch the canonical three-plane candidate already present in the registry.
-pub(crate) fn three_plane() -> DispatchResult {
-    Ok(())
+/// The canonical three-plane candidate's device batch kernel.
+///
+/// `f5_three_plane_kernel` shares the control's executable and batch geometry,
+/// staging three packed planes per column instead of the byte table.
+pub(crate) fn three_plane_device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        5,
+        63,
+        DeviceExecutable::F5Wave,
+        &["--path", "f5-three-plane"],
+        false,
+    ))
 }
 
 /// Evaluate the byte-oriented modular control through its registered path.

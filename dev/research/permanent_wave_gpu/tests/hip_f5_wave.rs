@@ -11,10 +11,10 @@ use permanent_wave_gpu::MeasurementPath;
 #[ignore = "device: requires a ROCm gfx1030 device"]
 fn device_f5_wave_paths_match_independent_structural_references() {
     MeasurementPath::F5ByteControl
-        .dispatch()
+        .device_batch_kernel()
         .expect("the existing byte-control registry entry must reach the landed candidate");
     MeasurementPath::F5ThreePlane
-        .dispatch()
+        .device_batch_kernel()
         .expect("the existing three-plane registry entry must reach the landed candidate");
 
     let status = Command::new(env!("PERMANENT_WAVE_GPU_F5_EQUIVALENCE_BIN"))

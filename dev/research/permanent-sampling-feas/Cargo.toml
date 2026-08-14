@@ -33,7 +33,10 @@ default = ["prototype-registry"]
 # schedules candidates. Its fixture/oracle feature remains disabled here: that
 # feature intentionally depends back on this harness for the canonical sampler.
 prototype-registry = ["dep:permanent-wave-gpu"]
-hip = ["gf2-algebra/hip", "dep:gf2-kernels-hip"]
+# The prototype crate's HIP feature compiles the candidate executables this
+# harness dispatches batches to, so device measurement of a candidate and of the
+# shipped control are enabled by the same flag.
+hip = ["gf2-algebra/hip", "dep:gf2-kernels-hip", "permanent-wave-gpu?/hip"]
 
 [dependencies]
 gf2-algebra = { path = "../../../crates/gf2-algebra", features = [

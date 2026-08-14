@@ -140,15 +140,14 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
         result.note = "unsupported: --steps must be nonzero".to_string();
         return result;
     }
-    if let Err(reason) = gray_update_support(spec) {
+    // The circuit question comes first: a backend with no Gray-update circuit
+    // of its own is unsupported whatever its field and order bounds allow.
+    if let Some(reason) = absent_gray_update_circuit(spec.backend) {
         result.note = reason;
         return result;
     }
-    if !has_gray_update_evaluator(spec.backend) {
-        result.note = format!(
-            "unsupported: {} has no isolated dependency-chained Gray-update evaluator",
-            spec.backend.name()
-        );
+    if let Err(reason) = gray_update_support(spec) {
+        result.note = reason;
         return result;
     }
 
@@ -177,12 +176,12 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
         .sum();
     result.update_s = Some(update_s);
     result.compiler_barrier_baseline_s = Some(compiler_barrier_baseline_s);
-    result.duration_basis = if uses_gpu_evaluator(spec.backend) {
+    result.duration_basis = if spec.backend == Backend::Gpu {
         "device_event_kernel"
     } else {
         "host_clock_update_chain"
     };
-    result.overhead_exclusion = if uses_gpu_evaluator(spec.backend) {
+    result.overhead_exclusion = if spec.backend == Backend::Gpu {
         "net subtracts the same-geometry compiler-barrier kernel event span; device events also exclude allocation, transfer, submission, and host repetition-policy overhead"
     } else {
         "net subtracts the same-geometry compiler-barrier host span; sampling, packing, repetition policy, and CSV output are excluded"
@@ -210,45 +209,56 @@ pub fn run_gray_update(spec: GrayUpdateSpec) -> GrayUpdateResult {
     result
 }
 
-fn has_gray_update_evaluator(backend: Backend) -> bool {
-    matches!(backend, Backend::Scalar) || uses_gpu_evaluator(backend)
+/// Why `backend` names no Gray-update circuit of its own, if it names none.
+///
+/// A row reports a span only for a circuit distinct to the backend it names.
+/// The scalar rows time their packed representation's own host add/subtract and
+/// `gpu_hip` times the shipped device update; every other backend is an
+/// explicit unsupported row rather than an alias of one of those two.
+fn absent_gray_update_circuit(backend: Backend) -> Option<String> {
+    match backend {
+        Backend::Scalar | Backend::Gpu => None,
+        #[cfg(feature = "prototype-registry")]
+        Backend::Prototype(path) => Some(absent_prototype_gray_update_circuit(path)),
+        _ => Some(format!(
+            "unsupported: {} has no isolated dependency-chained Gray-update evaluator",
+            backend.name()
+        )),
+    }
 }
 
-fn uses_gpu_evaluator(backend: Backend) -> bool {
-    backend == Backend::Gpu || registered_f3_bipedal_evaluator(backend)
-}
-
+/// State why a registered candidate exposes no Gray-update circuit to time.
+///
+/// The F_3 folds differ from the shipped kernel in their lane-local product,
+/// not in the packed add/subtract, so a span from them would be the shipped
+/// circuit under a candidate's name. The remaining candidates do carry their
+/// own update arithmetic, but it runs fused inside their full-permanent kernel
+/// and no device source isolates it.
 #[cfg(feature = "prototype-registry")]
-fn registered_f3_bipedal_evaluator(backend: Backend) -> bool {
-    matches!(
-        backend,
-        Backend::Prototype(
-            permanent_wave_gpu::MeasurementPath::WaveGf3
-                | permanent_wave_gpu::MeasurementPath::FoldGf3
-        )
-    )
-}
+fn absent_prototype_gray_update_circuit(path: permanent_wave_gpu::MeasurementPath) -> String {
+    use permanent_wave_gpu::MeasurementPath;
 
-#[cfg(not(feature = "prototype-registry"))]
-fn registered_f3_bipedal_evaluator(_: Backend) -> bool {
-    false
+    match path {
+        MeasurementPath::WaveGf3 | MeasurementPath::FoldGf3 => format!(
+            "unsupported: {} applies the same packed Bipedal3 add/subtract the shipped {} \
+Gray-update circuit times, and its own update runs fused inside the full-permanent wave kernel; \
+no circuit distinct to this candidate exists to isolate",
+            path.name(),
+            Backend::Gpu.name()
+        ),
+        _ => format!(
+            "unsupported: {}'s Gray update runs fused inside its full-permanent kernel and no \
+device source isolates it; timing the shipped {} update under this name would report another \
+backend's circuit",
+            path.name(),
+            Backend::Gpu.name()
+        ),
+    }
 }
 
 fn gray_update_support(spec: GrayUpdateSpec) -> Result<(), String> {
     if spec.backend == Backend::Scalar && spec.q == 7 && spec.n > 16 {
         return Err("packed F_7 Gray-update representation has 16 lanes; n exceeds 16".to_string());
-    }
-    if registered_f3_bipedal_evaluator(spec.backend) {
-        if spec.q != 3 || spec.n > 63 {
-            return Err("registered F_3 Bipedal3 path supports q = 3 and n <= 63".to_string());
-        }
-        if !cfg!(feature = "hip") {
-            return Err(
-                "registered F_3 Bipedal3 path requires the hip feature for event-timed evaluation"
-                    .to_string(),
-            );
-        }
-        return Ok(());
     }
     match support(spec.backend, spec.q, spec.n) {
         Support::Supported => Ok(()),
@@ -308,12 +318,7 @@ fn one_repetition(
             _ => unreachable!("support must reject unknown field orders"),
         },
         Backend::Gpu => gpu_repetition(&mut sampler, spec.q, spec.n, spec.steps),
-        #[cfg(feature = "prototype-registry")]
-        Backend::Prototype(
-            permanent_wave_gpu::MeasurementPath::WaveGf3
-            | permanent_wave_gpu::MeasurementPath::FoldGf3,
-        ) => gpu_repetition(&mut sampler, spec.q, spec.n, spec.steps),
-        _ => unreachable!("has_gray_update_evaluator filtered this backend"),
+        _ => unreachable!("absent_gray_update_circuit filtered this backend"),
     }
 }
 
@@ -512,24 +517,40 @@ mod tests {
         assert_eq!(scheduled, canonical);
     }
 
-    #[cfg(all(feature = "prototype-registry", not(feature = "hip")))]
+    /// Every registered candidate stays an explicit row that names why it has
+    /// no Gray-update circuit of its own, and never reports a span from one.
+    #[cfg(feature = "prototype-registry")]
     #[test]
-    fn unsupported_prototype_remains_a_named_output_row() {
-        let backend = scheduled_backends(SchedulePhase::GrayUpdateTimed)
-            .find(|scheduled| scheduled.backend().prototype_path().is_some())
-            .expect("prototype registry supplies a candidate")
-            .backend();
-        let row = run_gray_update(GrayUpdateSpec {
-            q: 3,
-            n: 12,
-            steps: 1,
-            backend,
-            seed_root: 7,
-            seed_index: 0,
-        });
-        assert_eq!(row.outcome, Outcome::Unsupported);
-        assert!(row.note.contains("requires the hip feature"));
-        assert!(row.net_per_operation_s.is_none());
+    fn registered_candidates_report_no_span_from_another_backends_circuit() {
+        for scheduled in scheduled_backends(SchedulePhase::GrayUpdateTimed) {
+            let Some(path) = scheduled.backend().prototype_path() else {
+                continue;
+            };
+            let row = run_gray_update(GrayUpdateSpec {
+                q: 3,
+                n: 12,
+                steps: 1,
+                backend: scheduled.backend(),
+                seed_root: 7,
+                seed_index: 0,
+            });
+            assert_eq!(row.outcome, Outcome::Unsupported, "{}", path.name());
+            assert!(
+                row.note.contains(path.name()),
+                "{} must name itself in its reason, got {}",
+                path.name(),
+                row.note
+            );
+            assert!(
+                row.note.contains("fused") || row.note.contains("isolate"),
+                "{} must state that no distinct circuit is isolable, got {}",
+                path.name(),
+                row.note
+            );
+            assert!(row.net_per_operation_s.is_none(), "{}", path.name());
+            assert!(row.update_s.is_none(), "{}", path.name());
+            assert_eq!(row.duration_basis, "unavailable", "{}", path.name());
+        }
     }
 
     #[test]
@@ -655,29 +676,27 @@ mod tests {
         .is_none());
     }
 
+    /// The two F_3 folds differ from the shipped kernel in their product, not
+    /// their update, so their reason names that specific aliasing.
     #[cfg(feature = "prototype-registry")]
     #[test]
-    fn landed_registered_f3_paths_are_event_evaluable_only_with_hip() {
+    fn the_f3_wave_folds_name_the_shipped_update_they_would_have_aliased() {
         for path in [
             permanent_wave_gpu::MeasurementPath::WaveGf3,
             permanent_wave_gpu::MeasurementPath::FoldGf3,
         ] {
-            let spec = GrayUpdateSpec {
-                q: 3,
-                n: 12,
-                steps: 1,
-                backend: Backend::Prototype(path),
-                seed_root: 7,
-                seed_index: 0,
-            };
-            if cfg!(feature = "hip") {
-                assert!(gray_update_support(spec).is_ok());
-                assert!(uses_gpu_evaluator(spec.backend));
-            } else {
-                let reason =
-                    gray_update_support(spec).expect_err("HIP is required for event timing");
-                assert!(reason.contains("requires the hip feature"));
-            }
+            let reason = absent_gray_update_circuit(Backend::Prototype(path))
+                .expect("an F_3 wave fold has no update circuit of its own");
+            assert!(reason.contains(Backend::Gpu.name()), "{reason}");
+            assert!(reason.contains("add/subtract"), "{reason}");
         }
+    }
+
+    /// The shipped device circuit keeps its own row.
+    #[test]
+    fn the_shipped_and_scalar_circuits_remain_their_own_rows() {
+        assert!(absent_gray_update_circuit(Backend::Gpu).is_none());
+        assert!(absent_gray_update_circuit(Backend::Scalar).is_none());
+        assert!(absent_gray_update_circuit(Backend::Rayon).is_some());
     }
 }

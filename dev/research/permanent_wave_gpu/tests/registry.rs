@@ -18,25 +18,25 @@ fn every_planned_path_is_addressable_with_explicit_status() {
     );
 
     for path in MeasurementPath::ALL {
-        if matches!(
-            path,
-            MeasurementPath::WaveGf3
-                | MeasurementPath::FoldGf3
-                | MeasurementPath::F5ByteControl
-                | MeasurementPath::F5ThreePlane
-                | MeasurementPath::F7ThreePlaneAccumulator
-                | MeasurementPath::F7LookupTableControl
-                | MeasurementPath::F7ThreePlanePermanent
-        ) {
-            path.dispatch()
-                .expect("each landed candidate must be dispatchable");
-        } else {
-            let unsupported = path
-                .dispatch()
-                .expect_err("each unimplemented path must explicitly report unsupported");
+        // The accumulator candidate's device source is a single-thread
+        // arithmetic probe, so it has no batch kernel to reach; every other
+        // registered path owns one.
+        if path == MeasurementPath::F7ThreePlaneAccumulator {
+            let reason = path
+                .device_batch_kernel()
+                .expect_err("an accumulator probe is not a full-permanent batch kernel");
             assert!(
-                !unsupported.reason().is_empty(),
-                "{} must state why it is unsupported",
+                reason.contains(path.name()),
+                "{} must state why it has no batch kernel",
+                path.name()
+            );
+        } else {
+            let kernel = path.device_batch_kernel().unwrap_or_else(|reason| {
+                panic!("{} must own a batch kernel: {reason}", path.name())
+            });
+            assert!(
+                matches!(kernel.field_order(), 3 | 5 | 7),
+                "{} must name the field its kernel evaluates",
                 path.name()
             );
         }

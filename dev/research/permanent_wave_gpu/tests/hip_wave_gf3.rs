@@ -13,7 +13,7 @@ use permanent_wave_gpu::MeasurementPath;
 #[ignore = "device: requires a ROCm gfx1030 device"]
 fn device_f3_folds_match_independent_structural_references() {
     for path in [MeasurementPath::WaveGf3, MeasurementPath::FoldGf3] {
-        path.dispatch()
+        path.device_batch_kernel()
             .expect("the existing registry entry must reach the landed F_3 candidate");
 
         let status = Command::new(env!("PERMANENT_WAVE_GPU_WAVE_GF3_EQUIVALENCE_BIN"))

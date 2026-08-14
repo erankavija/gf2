@@ -639,13 +639,139 @@ KernelPath parse_path(const char* value, bool* valid) {
 
 }  // namespace
 
+// Included below the kernels above rather than beside the other headers: the
+// committed compiler resource remarks cite those kernels by line, and an
+// include above them would move every citation.
+#include "wave_batch_stream.h"
+
+namespace {
+
+// The control packs ceil(n/16) nibble words per column, so kMaxControlWords
+// fixes its largest order; the three-plane path keeps Ryser's Gray bound.
+constexpr int kMaxControlOrder = static_cast<int>(16 * kMaxControlWords);
+constexpr int kMaxThreePlaneOrder = 63;
+
+// The three-plane mapping consumes prepared bit planes, not matrix bytes, so
+// its batch launch stages them first. The device buffer is retained between
+// batches: a fresh allocation for every batch would enter the kernel span the
+// harness reads.
+class ThreePlaneBatchLaunch {
+ public:
+  ThreePlaneBatchLaunch() = default;
+  ThreePlaneBatchLaunch(const ThreePlaneBatchLaunch&) = delete;
+  ThreePlaneBatchLaunch& operator=(const ThreePlaneBatchLaunch&) = delete;
+
+  ~ThreePlaneBatchLaunch() {
+    if (columns_ != nullptr) {
+      (void)hipFree(columns_);
+    }
+  }
+
+  bool operator()(const unsigned char* device_matrices, int n, int batch,
+                  unsigned* device_results) {
+    const auto words = static_cast<std::size_t>(batch) * 3 * static_cast<std::size_t>(n);
+    if (!reserve(words)) {
+      return false;
+    }
+    const auto lanes = gf2_wave_mapping::active_lanes_for_order(n);
+    hipLaunchKernelGGL(prepare_three_plane_columns, dim3(batch), dim3(lanes), 0, 0,
+                       device_matrices, n, batch, columns_);
+    if (!gf2_wave_batch::stream_check(hipGetLastError(), "three-plane preparation launch")) {
+      return false;
+    }
+    hipLaunchKernelGGL(wave_gf7_three_plane_kernel, dim3(batch), dim3(lanes),
+                       3 * static_cast<std::size_t>(n) * sizeof(std::uint64_t), 0, columns_, n,
+                       batch, device_results);
+    return true;
+  }
+
+ private:
+  bool reserve(std::size_t words) {
+    if (words <= capacity_) {
+      return true;
+    }
+    if (columns_ != nullptr &&
+        !gf2_wave_batch::stream_check(hipFree(columns_), "hipFree three-plane columns")) {
+      return false;
+    }
+    columns_ = nullptr;
+    capacity_ = 0;
+    if (!gf2_wave_batch::stream_check(
+            hipMalloc(&columns_, words * sizeof(std::uint64_t)),
+            "hipMalloc three-plane columns")) {
+      return false;
+    }
+    capacity_ = words;
+    return true;
+  }
+
+  std::uint64_t* columns_ = nullptr;
+  std::size_t capacity_ = 0;
+};
+
+struct LookupTableBatchLaunch {
+  bool operator()(const unsigned char* device_matrices, int n, int batch,
+                  unsigned* device_results) const {
+    const auto lanes = gf2_wave_mapping::active_lanes_for_order(n);
+    if (n <= 16) {
+      hipLaunchKernelGGL((wave_gf7_lookup_table_kernel<1>), dim3(batch), dim3(lanes),
+                         static_cast<std::size_t>(n) * sizeof(std::uint64_t), 0,
+                         device_matrices, n, batch, device_results);
+    } else {
+      hipLaunchKernelGGL((wave_gf7_lookup_table_kernel<kMaxControlWords>), dim3(batch),
+                         dim3(lanes),
+                         static_cast<std::size_t>(n) * kMaxControlWords * sizeof(std::uint64_t),
+                         0, device_matrices, n, batch, device_results);
+    }
+    return true;
+  }
+};
+
+// The harness supplies the same canonical Packed7 table bytes the fixture
+// evidence streams, in add/sub/mul order; this executable never regenerates
+// them for a measured batch.
+struct UploadCanonicalLookupTables {
+  bool operator()(const unsigned char* tables) const {
+    const auto* const add = tables;
+    const auto* const sub = tables + kLutBytes;
+    const auto* const mul = tables + 2 * kLutBytes;
+    return gf2_wave_batch::stream_check(
+               hipMemcpyToSymbol(HIP_SYMBOL(d_mul_lut), mul, kLutBytes, 0,
+                                 hipMemcpyHostToDevice),
+               "hipMemcpyToSymbol batch MUL_LUT") &&
+           gf2_wave_batch::stream_check(
+               hipMemcpyToSymbol(HIP_SYMBOL(d_add_lut), add, kLutBytes, 0,
+                                 hipMemcpyHostToDevice),
+               "hipMemcpyToSymbol batch ADD_LUT") &&
+           gf2_wave_batch::stream_check(
+               hipMemcpyToSymbol(HIP_SYMBOL(d_sub_lut), sub, kLutBytes, 0,
+                                 hipMemcpyHostToDevice),
+               "hipMemcpyToSymbol batch SUB_LUT");
+  }
+};
+
+int serve_batch_evaluations(KernelPath path) {
+  if (path == KernelPath::kThreePlane) {
+    ThreePlaneBatchLaunch launch;
+    return gf2_wave_batch::serve_batch_stream(kMaxThreePlaneOrder, launch,
+                                              UploadCanonicalLookupTables{});
+  }
+  return gf2_wave_batch::serve_batch_stream(kMaxControlOrder, LookupTableBatchLaunch{},
+                                            UploadCanonicalLookupTables{});
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
   KernelPath path = KernelPath::kLookupTableControl;
   bool reads_fixture_stdin = false;
+  bool serves_batch_stdin = false;
   bool preparation_only = false;
   for (int argument = 1; argument < argc; ++argument) {
     if (std::strcmp(argv[argument], "--fixture-stdin") == 0) {
       reads_fixture_stdin = true;
+    } else if (std::strcmp(argv[argument], "--batch-stdin") == 0) {
+      serves_batch_stdin = true;
     } else if (std::strcmp(argv[argument], "--stage") == 0 && argument + 1 < argc &&
                std::strcmp(argv[argument + 1], "three-plane-preparation") == 0) {
       preparation_only = true;
@@ -660,7 +786,7 @@ int main(int argc, char** argv) {
     } else {
       std::fprintf(stderr,
                    "usage: %s [--path f7-lookup-table-control|f7-three-plane-permanent] "
-                   "[--stage three-plane-preparation] [--fixture-stdin]\n",
+                   "[--stage three-plane-preparation] [--fixture-stdin | --batch-stdin]\n",
                    argv[0]);
       return 2;
     }
@@ -668,6 +794,13 @@ int main(int argc, char** argv) {
   if (preparation_only && path != KernelPath::kThreePlane) {
     std::fprintf(stderr, "three-plane preparation requires f7-three-plane-permanent\n");
     return 2;
+  }
+  if (serves_batch_stdin && (reads_fixture_stdin || preparation_only)) {
+    std::fprintf(stderr, "--batch-stdin serves whole permanent batches on its own stream\n");
+    return 2;
+  }
+  if (serves_batch_stdin) {
+    return serve_batch_evaluations(path);
   }
   if (!reads_fixture_stdin && path == KernelPath::kLookupTableControl &&
       !initialise_smoke_lookup_tables()) {

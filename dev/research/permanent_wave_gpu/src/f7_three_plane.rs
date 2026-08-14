@@ -22,7 +22,8 @@
 #[cfg(feature = "fixture-oracle")]
 use gf2_algebra::gray::gray_code_iter;
 
-use crate::DispatchResult;
+use crate::device_batch::missing_kernel_reason;
+use crate::paths::{DeviceBatchResult, MeasurementPath};
 #[cfg(feature = "fixture-oracle")]
 use crate::{fixtures::Fixture, EvaluationResult, Unsupported};
 
@@ -30,10 +31,6 @@ use crate::{fixtures::Fixture, EvaluationResult, Unsupported};
 const FIELD_ORDER: u64 = 7;
 #[cfg(feature = "fixture-oracle")]
 const MAX_ROWS: usize = 63;
-#[cfg(all(test, feature = "fixture-oracle"))]
-const DEVICE_UNAVAILABLE: &str =
-    "F_7 three-plane accumulator has no permanent-shaped HIP kernel; cc162697 owns it";
-
 /// One canonical F_7 word, bit-sliced across up to 64 row lanes.
 ///
 /// The all-ones bit pattern is never a canonical lane value.  Constructors
@@ -152,9 +149,19 @@ impl ThreePlane {
     }
 }
 
-/// The registry dispatch confirms the host accumulator is compiled and ready.
-pub(crate) fn run() -> DispatchResult {
-    Ok(())
+/// This candidate has no full-permanent device kernel to batch.
+///
+/// `hip/f7_three_plane_equivalence.hip` implements a single-thread conformance
+/// probe of the three-plane add, subtract, and horizontal product; it evaluates
+/// no matrix and takes no batch. The permanent-shaped use of this arithmetic is
+/// the separately registered `f7-three-plane-permanent` candidate.
+pub(crate) fn device_batch_kernel() -> DeviceBatchResult {
+    Err(missing_kernel_reason(
+        MeasurementPath::F7ThreePlaneAccumulator,
+        "hip/f7_three_plane_equivalence.hip holds a single-thread three-plane \
+accumulator conformance probe, not a full-permanent batch kernel; the \
+permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate",
+    ))
 }
 
 /// Evaluate the three-plane accumulator through its registered candidate path.
@@ -175,17 +182,6 @@ pub(crate) fn evaluate(fixture: &Fixture) -> EvaluationResult {
     // `check_registered_candidates` can retain any candidate/Ryser mismatch
     // with its fixture identifier in the canonical report.
     Ok(u64::from(permanent_three_plane(fixture)))
-}
-
-/// Explicit permanent-kernel falsification for this accumulator-level issue.
-///
-/// The opt-in HIP test validates arithmetic only; this keeps the absence of a
-/// device permanent path inspectable while the host implementation remains
-/// reachable through [`evaluate`].
-#[cfg(all(test, feature = "fixture-oracle"))]
-#[must_use]
-fn device_falsification() -> Unsupported {
-    Unsupported::new(DEVICE_UNAVAILABLE)
 }
 
 #[cfg(feature = "fixture-oracle")]
@@ -433,7 +429,13 @@ mod tests {
 
     #[test]
     fn permanent_kernel_absence_is_explicitly_falsified() {
-        assert_eq!(device_falsification().reason(), DEVICE_UNAVAILABLE);
-        assert!(run().is_ok());
+        let reason = device_batch_kernel()
+            .expect_err("this candidate has no permanent-shaped device kernel");
+        assert!(reason.contains("f7-three-plane-accumulator"));
+        assert!(reason.contains("conformance probe"));
+        assert!(
+            reason.contains("f7-three-plane-permanent"),
+            "the falsification must name where the permanent-shaped kernel does live"
+        );
     }
 }

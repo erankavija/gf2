@@ -1,11 +1,11 @@
 //! Driver for the permanent-campaign feasibility measurements (JIT `b488f02c`).
 //!
 //! ```text
-//! permanent_sampling_feas equivalence --out PATH
+//! permanent_sampling_feas equivalence --out PATH [--n 8,12,...] [--matrices N]
 //! permanent_sampling_feas grid        --out PATH [--only q=3,n=28,...]
 //! permanent_sampling_feas sustained   --out PATH [--seconds 300]
-//! permanent_sampling_feas gray-update --out PATH [--q 3] [--n 12] [--steps 1000001]
-//! permanent_sampling_feas horizontal-product --out PATH [--q 3] [--n 12] [--samples 4096]
+//! permanent_sampling_feas gray-update --out PATH [--q 3] [--n 12,16,20,24,28] [--steps 1000001]
+//! permanent_sampling_feas horizontal-product --out PATH [--q 3] [--n 12,16,20,24,28] [--samples 4096]
 //! permanent_sampling_feas envelope    --throughput PATH --out PATH [--budget-hours 12]
 //! permanent_sampling_feas zerofrac    --throughput PATH --sustained PATH --out PATH
 //! ```
@@ -56,9 +56,23 @@ const INDICES_PER_CELL: u64 = 100_000;
 ///
 /// `Backend::ALL` derives every prototype candidate from its registry and
 /// contains one GPU entry, which the grid expands to both configured batch
-/// sizes. Prototype candidates retain one explicitly unsupported cell until
-/// their implementation supplies a harness batch evaluator.
+/// sizes. A candidate cell measures that candidate's own device kernel wherever
+/// its field and order bounds admit the cell, and is an explicit unsupported
+/// row naming the reason everywhere else.
 const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len() + 1);
+
+/// Equivalence orders and the matrices compared at each.
+///
+/// The orders cover every timed grid order, with `n = 8` retained below them.
+/// The four smallest keep the campaign's established 512-matrix cells. The two
+/// largest use the committed q=3 grid receipt's `cpu_scalar` single-matrix
+/// probe costs: 0.004144 s at n=20, 0.067676 s at n=24, and 1.065811 s at
+/// n=28. The derivation is `ceil(512 * cost(n=20) / cost(n))`, with a minimum
+/// of four matrices: that gives 32 at n=24 and 4 at n=28. The costs are
+/// planning estimates read from `dev/studies/047b62ed/*q3-grid.csv`, chosen so
+/// the full equivalence step fits the overnight campaign budget.
+const EQUIVALENCE_SIZES: [(usize, usize); 6] =
+    [(8, 512), (12, 512), (16, 512), (20, 512), (24, 32), (28, 4)];
 /// Stream-index space reserved to one fresh grid process.
 const INDICES_PER_EXECUTION: u64 = GRID_SPECS_PER_EXECUTION as u64 * INDICES_PER_CELL;
 
@@ -95,15 +109,7 @@ fn cmd_horizontal_product(args: &[String]) {
         })
         .transpose()
         .unwrap_or_else(|message| panic!("{message}"));
-    let n = flag(args, "--n")
-        .map(|value| {
-            value
-                .parse::<usize>()
-                .map_err(|error| format!("invalid --n: {error}"))
-        })
-        .transpose()
-        .unwrap_or_else(|message| panic!("{message}"))
-        .unwrap_or(12);
+    let orders = orders(args);
     let samples = flag(args, "--samples")
         .map(|value| {
             value
@@ -123,6 +129,14 @@ fn cmd_horizontal_product(args: &[String]) {
         "frequency: one fixed unconditioned host observation batch, addressed by (seed_root, q, n, horizontal_product_timed, seed_index), supplies observed_samples_total and both observed numerator/denominator pairs for every valid row. Device timing, when available, resamples under the canonical warm-up/repetition policy and never overwrites those frequencies. Their exact marginal expectations are 1 - ((q-1)/q)^n and ((q-1)/q)^n, respectively; the paths are complements.".to_string(),
         "duration: GPU rows are paired kernel device-event spans only. For each branch net_per_operation_s = (sum product spans - sum same-geometry compiler-barrier spans) / actual timed operations in that branch. Allocation, upload, download, submission, sampling, grouping, and host policy timing are excluded. A branch with no timed operations or a nonpositive subtraction has no rate, never a zero or positive substitute.".to_string(),
         "availability: schedule rows derive from the prototype registry. A candidate without an observable branch isolate or a usable device-event boundary remains an explicit unavailable row; the harness does not replace it with a host-clock or another representation.".to_string(),
+        format!(
+            "orders: {}. Each order is an independent row per candidate, addressed by its own (seed_root, q, n, horizontal_product_*, seed_index) tuple.",
+            orders
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
     ];
     let mut writer = open_csv(&path, &host, HORIZONTAL_PRODUCT_CSV_HEADER, &notes);
     let fields: Box<dyn Iterator<Item = u64>> = match q {
@@ -130,17 +144,19 @@ fn cmd_horizontal_product(args: &[String]) {
         None => Box::new(QS.into_iter()),
     };
     for q in fields {
-        for scheduled in scheduled_backends(SchedulePhase::HorizontalProductTimed) {
-            let row = run_horizontal_product(HorizontalProductSpec {
-                q,
-                n,
-                samples,
-                backend: scheduled.backend(),
-                seed_root: SEED_ROOT,
-                seed_index: 0,
-            });
-            println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
-            writeln!(writer, "{}", row.to_csv_row()).expect("write horizontal-product row");
+        for n in orders.iter().copied() {
+            for scheduled in scheduled_backends(SchedulePhase::HorizontalProductTimed) {
+                let row = run_horizontal_product(HorizontalProductSpec {
+                    q,
+                    n,
+                    samples,
+                    backend: scheduled.backend(),
+                    seed_root: SEED_ROOT,
+                    seed_index: 0,
+                });
+                println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
+                writeln!(writer, "{}", row.to_csv_row()).expect("write horizontal-product row");
+            }
         }
     }
     writer.flush().expect("flush horizontal-product CSV");
@@ -162,15 +178,7 @@ fn cmd_gray_update(args: &[String]) {
         })
         .transpose()
         .unwrap_or_else(|message| panic!("{message}"));
-    let n = flag(args, "--n")
-        .map(|value| {
-            value
-                .parse::<usize>()
-                .map_err(|error| format!("invalid --n: {error}"))
-        })
-        .transpose()
-        .unwrap_or_else(|message| panic!("{message}"))
-        .unwrap_or(12);
+    let orders = orders(args);
     let steps = flag(args, "--steps")
         .map(|value| {
             value
@@ -187,9 +195,17 @@ fn cmd_gray_update(args: &[String]) {
             "protocol: warmup >= {WARMUP_SECONDS:.0} s, then >= {MIN_REPS} reps and >= {MIN_TIMED_SECONDS:.0} s timed, cap {MAX_CELL_SECONDS:.0} s"
         ),
         "shape: one accumulator reads its immediately preceding add/subtract result; this is a latency chain, not independent-operation throughput".to_string(),
-        "representation: F_3 CPU/HIP rows use the Bipedal3 two-plane packed add/subtract; F_5/F_7 CPU rows use their packed representations, while F_5/F_7 HIP rows use the shipped byte controls until their registered packed prototypes land.".to_string(),
+        "representation: cpu_scalar rows use their field's packed host add/subtract and gpu_hip rows the shipped device update circuit. A row reports a span only from a circuit distinct to the backend it names, so a registered candidate whose Gray update is either that same shipped circuit or fused inside its full-permanent kernel is an explicit unsupported row stating which.".to_string(),
         "duration: net_per_operation_s = (sum update spans - sum same-geometry compiler-barrier spans) / (steps * reps). CPU rows use paired host spans; HIP rows use paired device-event kernel spans. Both exclude sampler construction and the surrounding host policy loop; HIP rows also exclude allocation, transfer, and submission.".to_string(),
         "censoring: this constant-work shape has no Ryser work-model projection. Unsupported rows did not execute and have no paired spans; post-execution capped or nonpositive-net censored rows retain diagnostic paired spans but leave net_per_operation_s absent.".to_string(),
+        format!(
+            "orders: {}. Each order is an independent row per candidate, addressed by its own (seed_root, q, n, gray_update_*, seed_index) tuple.",
+            orders
+                .iter()
+                .map(usize::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
     ];
     let mut writer = open_csv(&path, &host, GRAY_UPDATE_CSV_HEADER, &notes);
     let fields: Box<dyn Iterator<Item = u64>> = match q {
@@ -197,21 +213,48 @@ fn cmd_gray_update(args: &[String]) {
         None => Box::new(QS.into_iter()),
     };
     for q in fields {
-        for scheduled in scheduled_backends(SchedulePhase::GrayUpdateTimed) {
-            let row = run_gray_update(GrayUpdateSpec {
-                q,
-                n,
-                steps,
-                backend: scheduled.backend(),
-                seed_root: SEED_ROOT,
-                seed_index: 0,
-            });
-            println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
-            writeln!(writer, "{}", row.to_csv_row()).expect("write gray-update row");
+        for n in orders.iter().copied() {
+            for scheduled in scheduled_backends(SchedulePhase::GrayUpdateTimed) {
+                let row = run_gray_update(GrayUpdateSpec {
+                    q,
+                    n,
+                    steps,
+                    backend: scheduled.backend(),
+                    seed_root: SEED_ROOT,
+                    seed_index: 0,
+                });
+                println!("q={q} n={n} {:<24} {}", row.backend, row.outcome.name());
+                writeln!(writer, "{}", row.to_csv_row()).expect("write gray-update row");
+            }
         }
     }
     writer.flush().expect("flush gray-update CSV");
     println!("wrote {}", path.display());
+}
+
+/// Matrix orders a micro-measurement mode covers, from `--n`.
+///
+/// The value is a comma-separated list, and its default is the timing grid's
+/// order set, so an isolate covers exactly the orders the grid measures unless
+/// a caller narrows it.
+///
+/// # Panics
+///
+/// Panics if the list is empty or holds a value that is not an order.
+fn orders(args: &[String]) -> Vec<usize> {
+    let Some(value) = flag(args, "--n") else {
+        return NS.to_vec();
+    };
+    let mut parsed = Vec::new();
+    for item in value.split(',') {
+        let item = item.trim();
+        parsed.push(
+            item.parse::<usize>()
+                .unwrap_or_else(|error| panic!("invalid --n order `{item}`: {error}")),
+        );
+    }
+    assert!(!parsed.is_empty(), "--n must name at least one order");
+    parsed
 }
 
 fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
@@ -397,10 +440,39 @@ fn completed_cells(path: &Path) -> std::collections::HashSet<(u64, usize, String
 fn cmd_equivalence(args: &[String]) {
     let host = HostInfo::probe();
     let path = out_path(args, "equivalence.csv");
-    let matrices: usize = flag(args, "--matrices")
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(512);
+    // `--matrices` caps every order rather than replacing the table, so a
+    // smoke invocation shrinks the run while no invocation can enlarge the
+    // largest orders past the budget their counts were chosen against.
+    let cap: Option<usize> = flag(args, "--matrices")
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .unwrap_or_else(|error| panic!("invalid --matrices: {error}"))
+        })
+        .inspect(|cap| assert!(*cap > 0, "equivalence --matrices must be nonzero"));
+    // `--n` narrows the committed order table; it cannot introduce an order
+    // whose sample count was never chosen against the budget.
+    let selected = flag(args, "--n").map(|_| orders(args));
+    let sizes: Vec<(usize, usize)> = EQUIVALENCE_SIZES
+        .into_iter()
+        .filter(|(n, _)| selected.as_ref().is_none_or(|orders| orders.contains(n)))
+        .map(|(n, matrices)| (n, cap.map_or(matrices, |cap| cap.min(matrices))))
+        .collect();
+    if let Some(requested) = &selected {
+        for n in requested {
+            assert!(
+                sizes.iter().any(|(order, _)| order == n),
+                "equivalence --n {n} is outside the committed order table"
+            );
+        }
+    }
+    assert!(!sizes.is_empty(), "equivalence needs at least one order");
 
+    let per_order = sizes
+        .iter()
+        .map(|(n, matrices)| format!("n={n}: {matrices}"))
+        .collect::<Vec<_>>()
+        .join("; ");
     let notes = vec![
         format!(
             "check: per-matrix permanent values against a reference kernel, named per row in \
@@ -408,17 +480,29 @@ the reference column. The scalar single-word kernel is the reference wherever it
 q=7, n>16 it does not (permanent_bipedal7 asserts n <= Packed7::LANES = 16), so the generic \
 permanent_ryser is the reference there"
         ),
-        format!("matrices_per_cell: {matrices}"),
+        format!("matrices_per_cell: {per_order}"),
         format!("seed_root: 0x{SEED_ROOT:016x}, purpose: equivalence, index: 0"),
-        "sizes: n in {8, 12, 16, 20} for every q. At q=7, n=20 the packed CPU kernels are \
-recorded unsupported and the comparison runs between the GPU and the generic path"
+        "sizes: every timed grid order, with n=8 retained below them. At q=7, n>16 the packed \
+CPU kernels are recorded unsupported and the comparison runs between the GPU, the registered \
+candidates, and the generic path"
+            .to_string(),
+        "sample counts: the four smallest orders keep 512 matrices. The two largest use the \
+committed dev/studies/047b62ed/*q3-grid.csv cpu_scalar probe_matrix_s costs 0.004144 s at \
+n=20, 0.067676 s at n=24, and 1.065811 s at n=28. Applying \
+ceil(512 * cost(n=20) / cost(n)) with a four-matrix minimum gives 32 at n=24 and 4 at \
+n=28. These are planning estimates from one q=3 receipt and require host validation before \
+the overnight run; --matrices caps every order and never raises one"
+            .to_string(),
+        "candidates: a registered prototype cell evaluates that candidate's own device kernel \
+over the same batch object the built-in backends receive, so every row compares a literally \
+identical corpus"
             .to_string(),
     ];
     let mut w = open_csv(&path, &host, EQUIVALENCE_CSV_HEADER, &notes);
 
     let mut mismatches = 0usize;
     for q in QS {
-        for n in [8usize, 12, 16, 20] {
+        for (n, matrices) in sizes.iter().copied() {
             for row in check(q, n, matrices, SEED_ROOT) {
                 mismatches += row.mismatches;
                 println!(
@@ -1097,6 +1181,19 @@ mod cli_tests {
                 path.name()
             );
         }
+    }
+
+    #[test]
+    fn equivalence_covers_the_full_grid_order_set_with_committed_counts() {
+        assert_eq!(
+            EQUIVALENCE_SIZES,
+            [(8, 512), (12, 512), (16, 512), (20, 512), (24, 32), (28, 4),]
+        );
+        assert!(NS.iter().all(|order| {
+            EQUIVALENCE_SIZES
+                .iter()
+                .any(|(equivalence_order, _)| equivalence_order == order)
+        }));
     }
 
     #[test]

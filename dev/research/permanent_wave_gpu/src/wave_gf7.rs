@@ -12,7 +12,8 @@ use gf2_algebra::packed::Packed7;
 #[cfg(feature = "fixture-oracle")]
 use gf2_core::gfp::Fp;
 
-use crate::DispatchResult;
+use crate::device_batch::{DeviceBatchKernel, DeviceExecutable};
+use crate::paths::DeviceBatchResult;
 #[cfg(feature = "fixture-oracle")]
 use crate::{f7_three_plane, fixtures::Fixture, wave, EvaluationResult, Unsupported};
 
@@ -21,17 +22,35 @@ const FIELD_ORDER: u64 = 7;
 #[cfg(feature = "fixture-oracle")]
 const MAX_HOST_FIXTURE_ORDER: usize = 16;
 
-/// Dispatch the F_7 lookup-table arithmetic representation control.
+/// The F_7 lookup-table control's device batch kernel.
 ///
-/// HIP execution is opt-in; this confirms that the existing registry entry
-/// reaches its landed candidate module on hosts without ROCm.
-pub(crate) fn lookup_table_control() -> DispatchResult {
-    Ok(())
+/// `wave_gf7_lookup_table_kernel<Words>` packs `ceil(n / 16)` nibble words per
+/// column, and `hip/wave_gf7_equivalence.hip` instantiates it up to
+/// `kMaxControlWords = 2`, so the control accepts `n <= 32`. Its arithmetic
+/// reads the canonical Packed7 tables, which the batch boundary uploads.
+pub(crate) fn lookup_table_control_device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        7,
+        32,
+        DeviceExecutable::WaveGf7,
+        &["--path", "f7-lookup-table-control"],
+        true,
+    ))
 }
 
-/// Dispatch the F_7 permanent-shaped three-plane kernel.
-pub(crate) fn three_plane() -> DispatchResult {
-    Ok(())
+/// The F_7 permanent-shaped three-plane kernel's device batch evaluator.
+///
+/// `wave_gf7_three_plane_kernel` consumes prepared bit planes, so a batch
+/// launch stages them through `prepare_three_plane_columns` first. It carries
+/// no multiplication tables and keeps Ryser's `n <= 63` Gray bound.
+pub(crate) fn three_plane_device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        7,
+        63,
+        DeviceExecutable::WaveGf7,
+        &["--path", "f7-three-plane-permanent"],
+        false,
+    ))
 }
 
 #[cfg(feature = "fixture-oracle")]

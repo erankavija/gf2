@@ -152,6 +152,21 @@ impl Backend {
         )
     }
 
+    /// Whether this backend's evaluation reports device-event phase spans.
+    ///
+    /// Both the shipped HIP dispatcher and the prototype candidates measure
+    /// their transfers and kernels on the device clock, so a row from either
+    /// carries phase columns; every processor backend leaves them absent.
+    #[must_use]
+    pub fn has_device_event_timing(self) -> bool {
+        match self {
+            Backend::Gpu => true,
+            #[cfg(feature = "prototype-registry")]
+            Backend::Prototype(_) => true,
+            _ => false,
+        }
+    }
+
     /// The registry path behind this backend, if it is a prototype candidate.
     #[cfg(feature = "prototype-registry")]
     #[must_use]
@@ -311,13 +326,28 @@ pub fn support(backend: Backend, q: u64, n: usize) -> Support {
                 Support::Supported
             }
         }
+        // A candidate is supported once its own device kernel exists, accepts
+        // this cell's field and order, and its resident worker starts. The
+        // worker starts here rather than at the first evaluation so that a
+        // cell's single-matrix calibration measures the kernel, not a process
+        // start.
         #[cfg(feature = "prototype-registry")]
-        Backend::Prototype(path) => match path.dispatch() {
-            Ok(()) => unsupported(format!(
-                "prototype candidate {} has no harness batch evaluator yet",
-                path.name()
+        Backend::Prototype(path) => match path.device_batch_kernel() {
+            Err(reason) => unsupported(reason),
+            Ok(kernel) if kernel.field_order() != q => unsupported(format!(
+                "{} evaluates F_{} permanents, not F_{q}",
+                path.name(),
+                kernel.field_order()
             )),
-            Err(reason) => unsupported(reason.reason().to_string()),
+            Ok(kernel) if !(1..=kernel.max_order()).contains(&n) => unsupported(format!(
+                "{} device kernel accepts 1 <= n <= {}; n = {n}",
+                path.name(),
+                kernel.max_order()
+            )),
+            Ok(_) => match path.prepare_batch_evaluator() {
+                Ok(_) => Support::Supported,
+                Err(reason) => unsupported(reason),
+            },
         },
     }
 }
@@ -448,11 +478,55 @@ pub fn evaluate(backend: Backend, batch: &Batch) -> Vec<u64> {
             .map(|x| x.value())
             .collect(),
 
+        #[cfg(all(feature = "prototype-registry", feature = "hip"))]
+        (Backend::Prototype(path), batch) => evaluate_prototype(path, batch).values,
+
         (b, batch) => panic!(
             "unsupported cell: backend {} with a q-batch of {} matrices",
             b.name(),
             batch.len()
         ),
+    }
+}
+
+/// Evaluate a packed batch through a prototype candidate's own device kernel.
+///
+/// The batch is serialised to the same row-major canonical byte layout the
+/// shipped GPU dispatcher uses, so a candidate and the control consume exactly
+/// the matrices the sampler produced. That serialisation is charged to the
+/// evaluation phase, matching where `gpu_hip` pays for its own.
+///
+/// # Panics
+///
+/// Panics if the candidate's device evaluation fails. A launch, transfer, or
+/// stream failure is a correctness failure of the measured path, not a cell
+/// outcome, so it is never replaced by a processor result.
+#[cfg(all(feature = "prototype-registry", feature = "hip"))]
+fn evaluate_prototype(path: MeasurementPath, batch: &Batch) -> TimedEvaluation {
+    use gf2_algebra::gpu::{
+        serialise_permanent_bipedal3, serialise_permanent_packed5, serialise_permanent_packed7,
+    };
+
+    let (matrices, n) = match batch {
+        Batch::F3(v) => serialise_permanent_bipedal3(v),
+        Batch::F5(v) => serialise_permanent_packed5(v),
+        Batch::F7(v) => serialise_permanent_packed7(v),
+        _ => panic!("{} evaluates packed F_3, F_5, or F_7 batches", path.name()),
+    };
+    let submitted = std::time::Instant::now();
+    let evaluation = path
+        .evaluate_batch(n, &matrices)
+        .unwrap_or_else(|reason| panic!("fatal {} device batch failure: {reason}", path.name()));
+    let host_submission = submitted.elapsed();
+    TimedEvaluation {
+        values: evaluation.values,
+        phase_timing: PhaseTiming::Measured(GpuPhaseTimings {
+            h2d: evaluation.spans.h2d,
+            kernel: evaluation.spans.kernel,
+            d2h: evaluation.spans.d2h,
+            host_submission,
+            device_submission_to_kernel: evaluation.spans.submission_to_kernel,
+        }),
     }
 }
 
@@ -475,6 +549,14 @@ pub fn evaluate_timed(backend: Backend, batch: &Batch) -> TimedEvaluation {
         return timing_or_same_backend_values(evaluate_gpu_instrumented(batch), || {
             evaluate(backend, batch)
         });
+    }
+
+    // A candidate's device spans arrive with its values from the same
+    // evaluation, so there is no separate instrumented boundary to fall back
+    // from: one dispatch either produces both or fails the cell.
+    #[cfg(all(feature = "prototype-registry", feature = "hip"))]
+    if let Backend::Prototype(path) = backend {
+        return evaluate_prototype(path, batch);
     }
 
     TimedEvaluation {

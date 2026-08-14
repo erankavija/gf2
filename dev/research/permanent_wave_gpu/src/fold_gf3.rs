@@ -10,15 +10,25 @@ use gf2_algebra::packed::Bipedal3;
 #[cfg(feature = "fixture-oracle")]
 use gf2_core::gfp::Fp;
 
-use crate::DispatchResult;
+use crate::device_batch::{DeviceBatchKernel, DeviceExecutable};
+use crate::paths::DeviceBatchResult;
 #[cfg(feature = "fixture-oracle")]
 use crate::{fixtures::Fixture, wave, EvaluationResult, Unsupported};
 
-/// The candidate shares the control's host/device boundary; the optional HIP
-/// evidence path selects this fold through the existing `FoldGf3` registry
-/// entry rather than introducing a second measurement registry.
-pub(crate) fn run() -> DispatchResult {
-    Ok(())
+/// The zero-mask fold's device batch kernel.
+///
+/// The candidate shares the control's executable and launch geometry:
+/// `wave_gf3_kernel<kZeroMaskSignPopcount>` is the same template with this
+/// fold's lane-local product, selected through the existing `FoldGf3` registry
+/// entry rather than a second measurement registry.
+pub(crate) fn device_batch_kernel() -> DeviceBatchResult {
+    Ok(DeviceBatchKernel::new(
+        3,
+        63,
+        DeviceExecutable::WaveGf3,
+        &["--fold", "fold-gf3"],
+        false,
+    ))
 }
 
 /// Evaluate the zero-mask fold through the control's exact lane mapping.

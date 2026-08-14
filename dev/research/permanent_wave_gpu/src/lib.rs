@@ -5,6 +5,7 @@
 //! dispatches to a dedicated module so later implementations do not contend on
 //! the registry files.
 
+pub mod device_batch;
 mod f5_candidates;
 mod f7_three_plane;
 #[cfg(feature = "fixture-oracle")]
@@ -16,9 +17,10 @@ pub mod paths;
 mod wave;
 mod wave_gf7;
 
+pub use device_batch::{BatchEvaluation, DeviceBatchKernel, DeviceSpans};
 #[cfg(feature = "fixture-oracle")]
 pub use paths::EvaluationResult;
-pub use paths::{DispatchResult, MeasurementPath, Unsupported};
+pub use paths::{DeviceBatchResult, MeasurementPath, Unsupported};
 /// Largest F_3 order whose exhaustive fixture oracle is part of the ordinary
 /// wave-candidate evidence. Larger corpus rows remain explicitly unavailable.
 #[cfg(feature = "fixture-oracle")]
