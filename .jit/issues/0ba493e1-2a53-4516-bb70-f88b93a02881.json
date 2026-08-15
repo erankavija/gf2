@@ -1,0 +1,23 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T07:17:55.900367261Z",
+  "dependencies": [],
+  "description": "Campaign evidence validity is currently keyed to the harness binary hash and source revision, so documentation-only edits threaten committed evidence; converge on @/inv/behavioral-evidence-validity by pinning a behavioral identity that documentation changes cannot move.\n\n## Background\n\nRegistered invariants @/inv/behavioral-evidence-validity and @/inv/runtime-observed-provenance post-date the runner manifest (verify_manifest pins binary SHA-256; comment edits shift debug info and thus the binary). A docs-only citation repair after run 20260814T230032Z-2085453 had to be escalated because reviewers treat evidence from a non-final tool revision as invalid.\n\n## Success Criteria\n\n- [hard] REQ-01: The runner manifest records a behavioral identity for each measurement tool — a hash over the behavior-relevant input set (or a reproducible build with documentation-invariant output) — and run provenance records it beside the binary hash.\n- [hard] REQ-02: A documentation-only change to tool source demonstrably leaves the behavioral identity unchanged, with a test or recorded check asserting it.\n- [hard] REQ-03: An audit confirms emitted preambles satisfy @/inv/runtime-observed-provenance (runtime-observed facts, own protocol constants, identity-based citations only), with any violation fixed or filed.\n\n## Notes\n\nEnforces @/inv/behavioral-evidence-validity and @/inv/runtime-observed-provenance.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-15T07:17:55.900367261Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "0ba493e1-2a53-4516-bb70-f88b93a02881",
+  "labels": [
+    "component:gf2-sim",
+    "epic:quality-documentation-tech-debt",
+    "type:task",
+    "enforces:@/invariant/behavioral-evidence-validity",
+    "enforces:@/invariant/runtime-observed-provenance"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Behavioral evidence identity for campaign tooling",
+  "updated_at": "2026-08-15T07:18:25.446080354Z"
+}

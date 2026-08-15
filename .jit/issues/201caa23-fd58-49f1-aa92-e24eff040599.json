@@ -1,0 +1,22 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T07:17:50.319903535Z",
+  "dependencies": [],
+  "description": "The permanent-campaign runner executes its whole pipeline as one uninterrupted overnight session; converge it on @/inv/campaign-resumability so completed cells persist as checkpointed evidence and an interrupted, censored, or budget-exhausted run continues without repeating completed work.\n\n## Background\n\nRegistered invariant @/inv/campaign-resumability post-dates the runner (dev/scripts/permanent-campaign-runner.sh) and the permanent-sampling-feas harness. The harness's disjoint per-cell stream addressing already makes every cell independently reproducible, so cell-granular checkpointing is a scheduling concern, not a sampling redesign. Cost of the status quo: the e31b1918 harness fix forced regenerating all three fields' evidence in one ~2.3 h night even though only the equivalence step changed.\n\n## Success Criteria\n\n- [hard] REQ-01: A measure run records per-cell completion durably; re-invoking the runner after an interruption or budget stop executes only cells without committed evidence and produces a dataset identical to an uninterrupted run (deterministic-seeded-execution holds across the resume boundary).\n- [hard] REQ-02: A run can be budget-bounded (wall-clock or cell count) and exits cleanly at the bound with a resumable state and an explicit run-summary status.\n- [hard] REQ-03: Runner tests cover interrupt-and-resume and budget-stop-and-resume paths.\n\n## Notes\n\nEnforces @/inv/campaign-resumability. Coordinate with 3ea21d74 and 79c5ace7 (harness output-schema fixes) so schema and scheduling changes land in one tool revision where practical.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-15T07:17:50.319903535Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "201caa23-fd58-49f1-aa92-e24eff040599",
+  "labels": [
+    "component:gf2-sim",
+    "epic:quality-documentation-tech-debt",
+    "type:task",
+    "enforces:@/invariant/campaign-resumability"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Resumable multi-night execution for the campaign runner",
+  "updated_at": "2026-08-15T07:18:19.840652561Z"
+}
