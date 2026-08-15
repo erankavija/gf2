@@ -583,7 +583,7 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 | 7 | 24 | unsupported | — | unsupported | — | **0.798** | censored | censored |
 | 7 | 28 | unsupported | — | unsupported | — | **0.0426** | censored | censored |
 
-† Cells marked † come from runs that did not meet the stated minimum of five repetitions and five seconds of timed work before the 120 s cap ended timing, and their rates rest on fewer repetitions than the protocol requires: $q{=}3$, $n{=}28$, GPU $M{=}1024$ (3 repetitions); $q{=}5$, $n{=}28$, rayon batch (1 repetition).
+† Cells marked † come from runs that did not meet the stated minimum of five repetitions and five seconds of timed work before the 120 s cap ended timing, and their rates rest on fewer repetitions than the protocol requires: $q{=}3$, $n{=}28$, GPU $M{=}1024$ (3 repetitions); $q{=}5$, $n{=}28$, rayon batch (1 repetition). Any derived figure marked † that uses one of these rates inherits the same nonconformance: §4.6's 68.60 h and 6 860 h projections from the $q{=}5$, $n{=}28$ rate and §7.6's 4.50 matrices/s GPU projection from the $q{=}3$, $n{=}28$, $M{=}1024$ rate.
 
 Four results carry consequences beyond the envelope.
 
@@ -772,7 +772,7 @@ the conservative $p = 1/2$ column is in the CSV.
 | 5 | 16 | rayon batch | 4 164 | 160 000 | 0.01 | 16 000 000 | 1.07 |
 | 5 | 20 | rayon batch | 213.7 | 160 000 | 0.21 | 16 000 000 | 20.80 (x) |
 | 5 | 24 | rayon batch | 11.83 | 160 000 | 3.76 | 16 000 000 | 375.7 (x) |
-| 5 | 28 | rayon batch | 0.648 | 160 000 | 68.60 (x) | 16 000 000 | 6 860 (x) |
+| 5 | 28 | rayon batch | 0.648† | 160 000 | 68.60 (x)† | 16 000 000 | 6 860 (x)† |
 | 7 | 12 | rayon batch | 72 556 | 122 449 | 0.00 | 12 244 898 | 0.05 |
 | 7 | 16 | rayon batch | 3 741 | 122 449 | 0.01 | 12 244 898 | 0.91 |
 | 7 | 20 | GPU $M{=}1024$ | 57.93 | 122 449 | 0.59 | 12 244 898 | 58.71 (x) |
@@ -1569,8 +1569,9 @@ adds, and where it does not:
    the target.** His table already reaches $n = 30$. Projecting this study's
    fastest measured $q = 3$ path at $n = 28$ — intra-matrix rayon, 19.58
    matrices/s — through Ryser's $n \cdot 2^n$ work model gives an **estimated**
-   4.57 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.50 from
-   19.27. **These are projections, not measurements**, formed by the same
+   4.57 matrices/s at $n = 30$; the GPU at $M = 1024$ projects to 4.50† from
+   19.27†. This GPU projection inherits the source rate's stopping-rule
+   nonconformance. **These are projections, not measurements**, formed by the same
    machinery as §4.3's censored cells and from the reference measurements named
    here. Their bias is only partly validated: §4.3's 14-18 % low reading comes
    from the $q = 3$ GPU chain, so it transfers to the GPU-based estimate here —

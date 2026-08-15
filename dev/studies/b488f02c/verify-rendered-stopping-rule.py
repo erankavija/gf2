@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Verify protocol markers on every rendered section 4.4 throughput cell.
+"""Verify protocol markers on every rendered anomalous throughput rate.
 
 The check maps each section 4.4 table cell to its measured row in
 throughput-2026-08-07.csv and requires a dagger on a measured cell whose CSV
-row has fewer than the protocol's five timed repetitions. A dagger on a
-conforming cell is also a failure. The CSV's ``total_s`` column is parsed as
-the accumulated composite timed work; the protocol's stopping clock is the
-enclosing wall-clock loop, whose successful ``measured`` outcome records that
-both stopping minima were reached. Exit 0 means the rendered table is clean;
-exit 1 lists every failure. Recorded per JIT issue 4fdd781a.
+row has fewer than the protocol's five timed repetitions. It also scans the
+whole study for every rendered rate token derived from such a row. A dagger
+on a conforming cell is also a failure. The CSV's ``total_s`` column is
+parsed as the accumulated composite timed work; the protocol's stopping clock
+is the enclosing wall-clock loop, whose successful ``measured`` outcome
+records that both stopping minima were reached. Exit 0 means the rendered
+document is clean; exit 1 lists every failure. Recorded per JIT issue
+4fdd781a.
 
 Run from the repository root:
 
@@ -45,8 +47,7 @@ def csv_rows():
         return list(csv.DictReader(line for line in fh if not line.startswith("#")))
 
 
-def section_44():
-    text = DOC.read_text(encoding="utf-8")
+def section_44(text):
     start_marker = "### 4.4 Measured throughput"
     start = text.index(start_marker)
     next_heading = text.find("\n### ", start + len(start_marker))
@@ -71,6 +72,58 @@ def row_is_nonconforming(row):
     return row["outcome"] == "measured" and reps < MIN_REPS
 
 
+def rendered_rate_tokens(row):
+    """Return normal publication precisions for a measured CSV rate.
+
+    The study renders rates at a small number of significant figures. Keeping
+    these tokens derived from the CSV lets the document-wide check follow the
+    measured rows without a section-specific list of rates or locations.
+    """
+    rate = float(row["composite_matrices_per_s"])
+    return {format(rate, f".{figures}g") for figures in range(3, 7)}
+
+
+def line_number(text, offset):
+    return text.count("\n", 0, offset) + 1
+
+
+def has_dagger_after_rate(text, match):
+    """Whether the rendered rate has the study's adjacent dagger marker."""
+    line_end = text.find("\n", match.end())
+    if line_end == -1:
+        line_end = len(text)
+    suffix = text[match.end() : line_end]
+    return "†" in suffix[:8]
+
+
+def document_rate_failures(text, rows):
+    anomalous = [row for row in rows if row_is_nonconforming(row)]
+    token_rows = {
+        token: row
+        for row in anomalous
+        for token in rendered_rate_tokens(row)
+    }
+    if not token_rows:
+        return []
+    token_pattern = re.compile(
+        r"(?<![0-9])(?:"
+        + "|".join(re.escape(token) for token in sorted(token_rows, key=len, reverse=True))
+        + r")(?![0-9])"
+    )
+    failures = []
+    for match in token_pattern.finditer(text):
+        row = token_rows[match.group(0)]
+        if has_dagger_after_rate(text, match):
+            continue
+        batch = f" M={row['batch_size']}" if row["backend"] == "gpu_hip" else ""
+        failures.append(
+            f"line {line_number(text, match.start())}: rendered nonconforming rate"
+            f" {match.group(0)} (q={row['q']} n={row['n']}"
+            f" {row['backend']}{batch}): missing †"
+        )
+    return failures
+
+
 def main():
     rows = csv_rows()
     by_key = {}
@@ -78,7 +131,8 @@ def main():
         key = (row["q"], row["n"], row["backend"], row["batch_size"])
         by_key[key] = row
 
-    section = section_44()
+    text = DOC.read_text(encoding="utf-8")
+    section = section_44(text)
     row_re = re.compile(r"^\|\s*([357])\s*\|\s*(\d+)\s*\|(.+)\|\s*$", re.M)
     failures = []
     checked = 0
@@ -132,6 +186,7 @@ def main():
                     f" (reps={row['reps']}, total_s={row['total_s']})"
                 )
 
+    failures.extend(document_rate_failures(text, rows))
     print(f"checked {checked} rendered measured section 4.4 cells against {CSV_PATH.name}")
     if failures:
         for failure in failures:
