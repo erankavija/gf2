@@ -359,6 +359,14 @@
    "requested_at": "2026-08-15T07:35:00Z",
    "resolved_at": "2026-08-15T07:37:00Z",
    "decision": "Owner approved amending REQ-03 on all three campaigns: a representation whose component admits no distinct isolate (fused or branchless circuit) is recorded with that structural reason in place of a duration, and a censored isolate carries its censoring reason."
+  },
+  {
+   "issue": "047b62ed",
+   "reason": "doc-review round 1 finding F1: REQ-07 requires measured resource figures beside the budget 'that kernel's design predicted', but no committed design states a per-lane register budget for permanent_bipedal3_kernel, gray_update_micro_kernel, or horizontal_product_micro_kernel; a post-measurement prediction would be post-hoc. Same wording on 91605d4d and 6c7fcb38.",
+   "status": "approved",
+   "requested_at": "2026-08-15T07:55:00Z",
+   "resolved_at": "2026-08-15T07:57:00Z",
+   "decision": "Owner approved amending REQ-07 on all three campaigns: the prediction-beside-measurement pairing applies where a committed design states such a prediction; a measured kernel without one is recorded as such, and the absence is not filled with a post-hoc figure. Finding F2 (REQ-08 occupancy limiter naming) is being fixed in-artifact, not amended."
   }
  ],
  "rework_counts": {
