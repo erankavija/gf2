@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T07:15:29.502162676Z",
+  "dependencies": [],
+  "description": "In the permanent-sampling-feas grid, `host_submission_s` is an asynchronous dispatcher submission span on `gpu_hip` rows (backend.rs:613) but a host clock wrapped around the candidate's whole synchronous batch evaluation on registered-prototype rows (backend.rs:516-520). Read naively as launch overhead, a prototype row's value overstates the launch by three orders of magnitude.\n\n## Background\n\nObserved in campaign run 20260814T230032Z-2085453: prototype rows report host_submission_s at 0.75-1.00 of eval_s while gpu_hip rows report 0.0000-0.0019 of eval_s. The F_3 receipts (dev/studies/047b62ed/receipts.md section 4.3) document the dual semantics and use device-clock `device_submission_to_kernel_s` for cross-path launch comparisons. Surfaced by the F_3 receipt campaign (047b62ed) review.\n\n## Success Criteria\n\n- [hard] REQ-01: Either the column carries one semantic across all device-path rows, or the schema splits the two measurements into distinctly named columns, with the CSV header/preamble documenting the meaning.\n- [hard] REQ-02: A test or emitted preamble assertion prevents a synchronous whole-evaluation span from being emitted under a name that denotes submission overhead.\n\n## Notes\n\nBehavioral output change to the harness; same evidence/tool-revision coordination note as the CSV quoting fix. Fixing both in one schema revision is sensible.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-15T07:15:29.502162676Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "79c5ace7-6c08-4298-a0e7-ad275a6e9444",
+  "labels": [
+    "component:gf2-sim",
+    "epic:quality-documentation-tech-debt",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Harness host_submission_s column carries two semantics across backend rows",
+  "updated_at": "2026-08-15T07:15:29.502162676Z"
+}

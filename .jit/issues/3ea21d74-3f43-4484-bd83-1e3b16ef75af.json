@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T07:15:23.913170837Z",
+  "dependencies": [],
+  "description": "The permanent-sampling-feas grid CSV writer emits `phase_timing_note` and `note` unquoted, and out-of-field candidate rows carry a literal comma in both (e.g. \"evaluates F_7 permanents, not F_3\"), so those rows hold 40 fields against the 38-column header and a plain CSV reader silently mis-assigns columns.\n\n## Background\n\nObserved in campaign run 20260814T230032Z-2085453: 25 of 75 q=3 grid rows are malformed this way. The equivalence CSV carries the same commas but its free text is the last column, so it is recoverable by rejoining; the isolate CSVs use semicolons and are clean. Receipt tooling (dev/studies/047b62ed/analysis.py) works around the defect by anchoring the field split on the seed_root prefix. Surfaced by the F_3 receipt campaign (047b62ed) review.\n\n## Success Criteria\n\n- [hard] REQ-01: The grid CSV writer quotes or otherwise escapes `phase_timing_note` and `note` such that every emitted row parses to exactly the header's column count with a standard CSV reader.\n- [hard] REQ-02: A test exercises an out-of-field candidate row containing a comma in its free text and asserts standard-parser round-tripping.\n\n## Notes\n\nBehavioral output change to the harness: committed evidence produced before the fix retains the old format, and receipts that parse it document their workaround. Coordinate with any pending campaign rerun so evidence and tool revision stay aligned.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-15T07:15:23.913170837Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "3ea21d74-3f43-4484-bd83-1e3b16ef75af",
+  "labels": [
+    "component:gf2-sim",
+    "epic:quality-documentation-tech-debt",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Grid CSV emits unquoted free-text columns, malforming out-of-field rows",
+  "updated_at": "2026-08-15T07:15:23.913170837Z"
+}
