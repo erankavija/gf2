@@ -178,9 +178,14 @@
     "doc-review"
   ],
   "gates_status": {
-    "doc-review": {
+    "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-15T07:23:48.412281706Z",
+      "updated_at": "2026-08-15T07:46:55.909972472Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-15T07:42:42.787397353Z",
       "updated_by": "auto:executor"
     }
   },
@@ -199,5 +204,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "F_3 preregistered receipt campaign",
-  "updated_at": "2026-08-15T07:34:40.606582100Z"
+  "updated_at": "2026-08-15T07:46:55.909972472Z"
 }

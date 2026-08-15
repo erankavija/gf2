@@ -8186,3 +8186,5 @@
 {"fields":["description"],"id":"d1b68863-6ca6-4994-8cf6-dcca440f6db5","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:34:40.606582100Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"0b69f7d6-f555-4beb-b341-afe2657de216","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-15T07:34:46.310915292Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"15d28524-098c-4d46-8e2a-112496079d90","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T07:34:51.984339625Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"doc-review","id":"2dd5330e-348b-41ec-8450-a5ac54e5cdf1","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:42:42.787397353Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"7d0c5d7b-3897-4dd2-b152-64109dbe8061","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:46:55.909972472Z","type":"gate_failed","updated_by":"auto:executor"}
