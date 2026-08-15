@@ -3,12 +3,16 @@
 //! The manifest is read from `--manifest`; `--output` names the campaign
 //! directory and `--q` selects exactly one field. The binary reports timings
 //! to standard output and writes only the selected field's shard records and
-//! summary. Use `permanent_dataset conform` after all field arms and campaign
-//! finalization files are present.
+//! summary. Before execution, it passes the output directory through
+//! `approve_emission`; the guard contract binds writers, and this binary is the
+//! writer, while `emit_field` remains the library emission primitive. Use
+//! `permanent_dataset conform` after all field arms and campaign finalization
+//! files are present.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+use gf2_sim::permanent_campaign::provenance::approve_emission;
 use gf2_sim::permanent_campaign::schedule::{emit_field, run_field};
 use gf2_sim::permanent_campaign::schema::read_manifest;
 
@@ -50,6 +54,10 @@ fn main() -> ExitCode {
         Ok(manifest) => manifest,
         Err(error) => return failure(error),
     };
+    if let Err(refusal) = approve_emission(&output) {
+        eprintln!("emission refused: {refusal}");
+        return ExitCode::FAILURE;
+    }
     let run = match run_field(&manifest, field) {
         Ok(run) => run,
         Err(error) => return failure(error),

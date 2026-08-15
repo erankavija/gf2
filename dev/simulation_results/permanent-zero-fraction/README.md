@@ -269,10 +269,23 @@ $ cargo run -p gf2-sim --release --bin permanent_dataset -- <subcommand> [campai
 | Subcommand | Does |
 | --- | --- |
 | `revision` | Prints the source revision this build embedded; it equals `git rev-parse HEAD` exactly when the binary is current with the checkout |
-| `emission-check <dir>` | Runs the guard a campaign driver must pass before writing, printing the approved revision or naming every path that refuses it |
+| `emission-check <dir>` | Runs the source-identity guard that `permanent_campaign` passes before writing, printing the approved revision or naming every path that refuses it |
 | `checksums <dir>` | Renders the integrity file for a finished dataset on standard output; it writes nothing, so redirect it into `checksums.sha256` |
 | `conform <dir>` | Validates the complete schema and cross-document shard and summary aggregates without modifying the dataset |
 | `verify <dir>` | Re-checks a dataset against its integrity file and its recorded source |
+
+The `permanent_campaign` binary executes one field arm:
+
+```console
+$ cargo run -p gf2-sim --release --bin permanent_campaign -- \
+    --manifest PATH --output CAMPAIGN-DIR --q FIELD
+```
+
+One invocation executes exactly one field arm and writes only that field's
+shard files and field summary, so field arms can run concurrently. The writer
+passes `approve_emission` before it runs the field, establishing source
+identity before any dataset bytes are written. Per-phase timings go to standard
+output and never into dataset files.
 
 | Exit status | Means |
 | --- | --- |
