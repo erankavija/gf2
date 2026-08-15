@@ -5,7 +5,15 @@
   "created_at": "2026-08-15T07:54:36.651544581Z",
   "dependencies": [],
   "description": "dev/studies/b488f02c/feasibility-study.md section 4.4 publishes two q=3 cells that disagree with its own committed artifact dev/studies/b488f02c/throughput-2026-08-07.csv at the table's shown precision: 18182 for (n=12, cpu_avx2) where the CSV's 18181.4619 renders 18181, and 30210 for (n=16, GPU M=256) where the CSV's 30209.4610 renders 30209. Both are +1 in the last shown digit; the table's other 5-to-6-digit integer cells reproduce their raw values exactly.\n\n## Background\n\nThe first cell was found by the F_3 receipt campaign (047b62ed) when its analysis switched from quoting the table to parsing the CSV; the second by this issue's recorded check, whose significant-figure reading follows the table's own evident convention (integer cells carry all shown digits; e.g. 61306 reproduces 61306.0236 exactly). The F_3 receipts section 11.1 asserts only one divergent cell, because its checker read the trailing zero of 30210 as insignificant; that dependent claim is corrected in this issue's scope. cpu_avx2 and the M=256 GPU configuration set no best-path baseline at those orders, so no ratio or go/no-go input changes.\n\n## Success Criteria\n\n- [hard] REQ-01: Both published section 4.4 cells agree with the committed CSV at the table's shown precision, and the correction commit cites this issue.\n- [hard] REQ-02: A recorded check (script or command in the study directory) verifies every published section 4.4 q=3 cell against the CSV at each cell's shown precision, treating every shown digit of an integer cell as significant.\n- [hard] REQ-03: The dependent claim in dev/studies/047b62ed/receipts.md section 11.1 is corrected to state both divergent cells and the significant-figure reading that distinguishes the counts, preserving the original observation record.\n\n## Notes\n\nPer @/inv/claims-trace-to-artifacts and @/inv/falsification-preserved. Owner-approved scope amendment 2026-08-15: second cell and the receipts correction added; 047b62ed remains closed, with this issue's doc-review gate covering the correction.\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Published-table verification check",
+      "path": "dev/studies/b488f02c/verify-published-table.py"
+    }
+  ],
   "first_ready_at": "2026-08-15T07:54:36.651544581Z",
   "gates_required": [
     "doc-review"
@@ -26,5 +34,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Feasibility study table cell disagrees with its own committed CSV",
-  "updated_at": "2026-08-15T09:13:09.650773431Z"
+  "updated_at": "2026-08-15T09:15:04.277415476Z"
 }
