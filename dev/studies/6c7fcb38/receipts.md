@@ -1,9 +1,11 @@
 # $\mathbb{F}_7$ preregistered receipt campaign — committed receipts
 
 Campaign run `20260814T230032Z-2085453`, field $q = 7$, grid execution id
-`7002`. Every figure below is derived from the raw artifacts committed beside
-this file; [`analysis.py`](analysis.py) in this directory regenerates all of
-them from those artifacts and prints them under the section headings used here.
+`7002`, paired with profiled evidence run `20260815T181923Z` for the per-kernel
+split of §12 and the occupancy counters of §13. Every figure below is derived
+from the artifacts committed beside this file; [`analysis.py`](analysis.py) in
+this directory regenerates all of them from those artifacts and prints them
+under the section headings used here.
 
 ```sh
 python3 dev/studies/6c7fcb38/analysis.py
@@ -18,6 +20,7 @@ python3 dev/studies/6c7fcb38/analysis.py
 | [`…provenance.txt`](permanent-campaign-20260814T230032Z-2085453.provenance.txt) | Revision, toolchain, binary hashes, host inventory, exact commands |
 | [`…run-summary.txt`](permanent-campaign-20260814T230032Z-2085453.run-summary.txt) | Per-step status and exit codes |
 | [`hip-resource-usage-20260814T172506Z-1610002/`](hip-resource-usage-20260814T172506Z-1610002/) | Compiler kernel-resource receipt and per-kernel logs |
+| [`profiled-20260815T181923Z/`](profiled-20260815T181923Z/provenance.txt) | Paired profiled evidence run: per-kernel durations (§12) and occupancy counters (§13), carrying no timing authority |
 | [`analysis.py`](analysis.py) | Derivation of every table here from the artifacts above |
 
 Each CSV carries a `#` preamble that is the authoritative source for the facts
@@ -1369,7 +1372,10 @@ table lives, measured on both sides, and it is where the study's occupancy
 hypothesis stands after this run for this field: **the control mapping is
 register-limited and spilling at half the wave-slot ceiling, every
 lane-owns-interval kernel sits at the ceiling, and neither is limited by
-anything else the compiler reports** (§8). The prediction that shared-memory
+anything else the compiler reports** (§8). Those are per-SIMD ceilings; where
+the paired profiled run can read achieved occupancy, it sits far below them
+because the cell launches tens of waves against the device's 2 560 slots
+(§13). The prediction that shared-memory
 pressure grows with matrix order remains untested, because the compiler's static
 field cannot see the dynamic allocation and no prototype cell in this run is
 large enough for that pressure to bind.
@@ -1513,9 +1519,10 @@ host-side plane preparation exists on the measured path, so there is no host
 portion to measure rather than an unmeasured one. The grid's `gen_s` column is
 sampler matrix generation and packing, not plane preparation.
 
-**The device-side portion is measured, but not separately from the Gray walk,
-and no committed column separates them.** The three-plane batch launch enqueues
-the preparation kernel and then the Gray-walk kernel back to back inside one
+**The timing run measures the device-side portion without separating it from
+the Gray walk, and no committed column of that run divides the two.** The
+three-plane batch launch enqueues the preparation kernel and then the Gray-walk
+kernel back to back inside one
 call (`wave_gf7_equivalence.hip:677`, `:682`, both inside
 `ThreePlaneBatchLaunch::operator()` at `:670-686`), and the harness's event
 bracketing records `kKernelStart` before that call and `kKernelEnd` after it
@@ -1540,8 +1547,8 @@ beside it for scale:
 | 24 | 18 | 74 | 5.002998 | 0.0676081 | 0.000702 | none on this path |
 | 28 | 3 | 6 | 5.917556 | 0.9862593 | 0.000058 | none on this path |
 
-**No committed artifact of this run times the preparation kernel on its own,
-and none of the harness's seven measurement modes produces one.** The modes are
+**No committed artifact of the timing run times the preparation kernel on its
+own, and none of the harness's seven measurement modes produces one.** The modes are
 `equivalence`, `grid`, `sustained`, `gray-update`, `horizontal-product`,
 `envelope`, and `zerofrac`
 (`dev/research/permanent-sampling-feas/src/usage.txt`); none is a preparation
@@ -1566,20 +1573,101 @@ why one exists: a profiler resolves `prepare_three_plane_columns` and
 `wave_gf7_three_plane_kernel` as separate dispatches where a single pair of
 stream events cannot.
 
-> **Pending the paired profiled evidence run.** The per-kernel durations that
-> separate preparation from the Gray walk are not yet written into this section.
-> They come from the committed paired profiled run over the same hash-pinned
-> binaries and cells, and are reported beside the unprofiled combined spans
-> tabulated above rather than replacing them, with the separation between the
-> two runs stated as §13 states it. Until that artifact is committed this half
-> of REQ-16 is open, and no figure is substituted for it: what the timing run
-> alone bounds is the sum, so the preparation kernel's contribution is at most
-> the whole combined span in the table above.
+**The paired profiled run is a second run, and the separation is deliberate.**
+It executes the same hash-pinned harness binary, SHA-256
+`edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce`, the hash §1
+records for the timing run, under the same `--full-host` benchmark mutex, and
+its grid passes reuse `--execution-id 7002`, so the profiled three-plane cells
+draw the same preregistered matrices as the timing cells of §4. Kernel tracing
+and counter collection perturb execution, so the profiled figures are reported
+beside the unprofiled spans above rather than replacing them: this artifact
+carries no timing authority and the preregistered timing evidence carries no
+profiler
+([`profiled-20260815T181923Z/provenance.txt`](profiled-20260815T181923Z/provenance.txt),
+`separation:`; §13 states the same separation for the counters). The four
+three-plane trace passes run one order each at $n = 12$, 16, 20, and 24, and
+each pass wraps exactly one device-executing workload
+([`…/run.log`](profiled-20260815T181923Z/run.log), one `COMMAND`/`EXIT` pair per
+pass, all eighteen exit 0).
+
+**Each profiled pass re-calibrates its own batch from a single-matrix probe, so
+the split is a property of the profiled cells rather than a decomposition of the
+timing cells' spans.** The probe runs under the profiler and the calibration
+sizes the batch for a fixed 2 s repetition
+(`dev/research/permanent-sampling-feas/src/protocol.rs:109`), and the profiled
+$M$ comes out below the timing $M$ at all four orders. Both batches are named in
+the tables below, and no profiled figure is transferred to a timing row.
+
+Per-kernel durations are rocprofv3's own aggregation over every dispatch of the
+pass — the `Calls`, `TotalDurationNs`, and `AverageNs` columns of each pass's
+`…_kernel_stats.csv`, one row for `prepare_three_plane_columns` and one for
+`wave_gf7_three_plane_kernel`. They come from the run's kernel-trace passes; the
+counter passes §13 reads add no durations. The dispatch count exceeds the cell's `reps`
+because the trace also covers the single-matrix probe that sizes the batch
+(`dev/research/permanent-sampling-feas/src/protocol.rs:255-258`) and the untimed
+warm-up the protocol runs before the first timed repetition (`:101`, `:151-166`).
+
+| $n$ | profiled $M$ | dispatches per kernel | preparation, per dispatch | Gray walk, per dispatch | preparation, total | Gray walk, total | preparation share |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 12 | 20 | 54 435 | 2.139 µs | 23.262 µs | 116.432 ms | 1 266.257 ms | **8.4207 %** |
+| 16 | 31 | 16 272 | 2.312 µs | 312.386 µs | 37.624 ms | 5 083.143 ms | **0.7347 %** |
+| 20 | 32 | 1 637 | 2.657 µs | 4 654.140 µs | 4.350 ms | 7 618.827 ms | **0.0571 %** |
+| 24 | 16 | 120 | 3.020 µs | 67 665.938 µs | 0.362 ms | 8 119.913 ms | **0.0045 %** |
+
+**The preparation share collapses with the order, and the two kernels' scaling
+is what collapses it.** Per dispatch, preparation grows by factors of 1.081,
+1.149, and 1.137 across the three steps in $n$, staying inside a launch-latency
+floor of a few microseconds, while the Gray walk grows by 13.43, 14.90, and
+14.54 — near the factor of 16 that four more orders of $2^n$ Ryser terms imply.
+The share therefore falls by roughly an order of magnitude per step: 11.5, 12.9,
+and 12.8 times smaller at each. At the declared operating point of §15, $n = 20$,
+bit-plane staging costs 0.0571 % of the device time the bit-sliced path spends
+per launch.
+
+The spread per dispatch, and how the two traced kernels account for the span the
+harness brackets:
+
+| $n$ | preparation, min–max | Gray walk, min–max | traced pair per launch | profiled `kernel_device_s` per launch | pair as a share of the bracket | timing $M$ | unprofiled `kernel_device_s` per launch |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 12 | 1.920–5.080 µs | 23.080–24.480 µs | 25.401 µs | 45.392 µs | 55.96 % | 46 | 40.2461 µs |
+| 16 | 2.080–36.001 µs | 311.083–344.403 µs | 314.698 µs | 332.577 µs | 94.62 % | 1 109 | 1 047.9368 µs |
+| 20 | 2.560–17.000 µs | 4 609.434–8 688.478 µs | 4 656.797 µs | 4 671.643 µs | 99.68 % | 41 | 4 671.6491 µs |
+| 24 | 2.920–4.480 µs | 67 496.502–67 872.752 µs | 67 668.958 µs | 67 681.622 µs | 99.98 % | 18 | 67 608.0811 µs |
+
+The fifth column is the profiled pass's own event-bracketed span, from the
+workload CSV that pass wrote, and the two traced kernels account for 55.96 % of
+it at $n = 12$ and 99.98 % at $n = 24$. The remainder is the gap between the two
+launches inside one bracket, and it is close to fixed — 19.991, 17.879, 14.846,
+and 12.664 µs across the four orders — so it is most of a 25 µs pair and nothing
+against a 68 ms one. That gap is the cost of staging as a second launch rather
+than the cost of the staging kernel, which is why REQ-16's figure is the kernel
+duration and not the bracket residual.
+
+The last column repeats the unprofiled combined figure from the table above, at
+the timing cell's own batch. At $n = 20$ and $n = 24$, where the two runs'
+batches are closest, the profiled bracket and the unprofiled span land within
+0.0001 % and 0.11 % of each other. At $n = 16$ the timing cell runs 1 109
+matrices against the profiled cell's 31 and its span is 3.15 times longer. At
+$n = 12$ the profiled cell runs the smaller batch and the longer span,
+45.392 µs against 40.246 µs, 12.79 % above it, which is the tracing overhead
+this artifact's separation clause exists for. None of these comparisons is
+offered as a timing result.
+
+**The profiler's own `StdDev` column is not read here.** On three of the four
+passes it is inconsistent with the same row's `MinNs` and `MaxNs` — at $n = 24$
+it reports 62 252.466 µs against a 376.250 µs range between the fastest and
+slowest of 120 dispatches — so dispersion is quoted from the minimum and maximum
+this receipt tabulates instead, and the `StdDev` figure is recorded as
+unexplained rather than used.
 
 The compiler receipt of §7 records the staging kernel at 16 `TotalSGPRs`, 17
 `VGPRs`, zero scratch, zero spills, and occupancy 16, against the Gray-walk
 kernel's 16, 34, zero, zero, and 16. Those are compile-time figures and not a
 division of the measured span; §13 states why that distinction is load-bearing.
+The profiled run confirms the register figures at runtime and does not replace
+them: the counter aggregate's per-dispatch `VGPR_Count` is 24 for the staging
+kernel and 40 for the Gray walk, each the compiler's per-lane count rounded up
+to the runtime's allocation granularity of eight (§13).
 
 ## 13. Achieved occupancy (REQ-17)
 
@@ -1595,7 +1683,7 @@ the counters the receipt records achieved occupancy as not measured, with the
 reason.
 
 **The timing run carries no counters, by design, and that is what makes it the
-unperturbed half of the pair.** Three facts about it, each checkable:
+unperturbed half of the pair.** Three facts, each checkable:
 
 1. **The runner invokes no profiler.** A search of the whole 30 313-byte
    [`dev/scripts/permanent-campaign-runner.sh`](../../scripts/permanent-campaign-runner.sh)
@@ -1603,70 +1691,291 @@ unperturbed half of the pair.** Three facts about it, each checkable:
    invocation of the measure pipeline is a plain harness call, recorded verbatim
    in the `# invocation:` line of each CSV and under `exact_commands_executed:`
    in the provenance file (§1), and none is wrapped in a profiler.
-2. **No committed artifact of this run carries profiler counters.**
+2. **No committed artifact of the timing run carries profiler counters.**
    `analysis.py` section 13 scans all ten committed artifacts of run
    `20260814T230032Z-2085453` — the four CSVs, the four logs, the provenance
    file, and the run summary — for the same tokens plus `MeanOccupancyPerCU`,
    `GRBM`, and `SQ_WAVES`, reports zero hits in every file, and asserts the
-   total is zero, so a future run that does carry counters fails the script
-   rather than passing silently under this section's text.
-3. **A profiler is present on the campaign host.** `/opt/rocm/bin/rocprof`,
-   `/opt/rocm/bin/rocprofv2`, and `/opt/rocm/bin/rocprofv3` are installed and on
-   `PATH`; `rocprof-compute` and `omniperf` are not. No profiler was executed in
-   the course of writing these receipts, so what is asserted here is presence on
-   `PATH`, not a demonstration that one opens the device.
+   total is zero, so a run that does carry counters fails the script rather than
+   passing silently under this section's text.
+3. **The counters come from the second run of the pair, which is where this
+   study profiles the measured workload.** `rocprofv3` 1.1.0 at
+   `/opt/rocm/bin/rocprofv3` executes the passes of
+   [`profiled-20260815T181923Z/`](profiled-20260815T181923Z/provenance.txt)
+   against the same hash-pinned binary, each pass wrapping one
+   device-executing workload: eighteen passes in round 1, all exiting 0
+   ([`…/run.log`](profiled-20260815T181923Z/run.log), one `COMMAND`/`EXIT` pair
+   per pass), and eleven in round 2
+   ([`…/run2.log`](profiled-20260815T181923Z/run2.log)), of which the nine
+   counter passes exit 0 and the two profiler-capability probes exit 101.
+   `/opt/rocm/bin/rocprof` and `/opt/rocm/bin/rocprofv2` are installed on the
+   host as well, and round 2's two probes record both of them aborting this
+   workload under their interception; `rocprof-compute` and `omniperf` are not
+   installed.
 
 Facts 1 and 2 are what the criterion's separation clause asks to be stated: no
 counter collection touched the preregistered timing evidence, so every figure in
-§4 through §11 is unperturbed by profiling. Fact 3 is why the counters can be
-had at all — the criterion's not-measured escape applies only where no profiler
-on this host can produce them, and that is not this host's situation.
+§4 through §11 is unperturbed by profiling. Fact 3 is the other half of that
+separation, and it is why the criterion's not-measured escape is not a statement
+about this host: a profiler runs here and returns counters.
 
-**The only occupancy figures anywhere in this receipt set are compiler
-predictions, and they are not offered as a stand-in.** The `Occupancy
-[waves/SIMD]` field of `-Rpass-analysis=kernel-resource-usage` is emitted at
-compile time from the per-thread resource counts in the same remark block; §8
-shows that it is reproduced exactly, for all 26 kernel entries in the receipt,
-by a function of `VGPRs` alone. A quantity that a compile-time register count
-determines completely is a prediction of occupancy, not an observation of it,
-and the receipt it comes from is dated `20260814T172506Z` — before the measured
-run began at `23:00:34Z` — at a different revision
-(`f9224650a780ea8ed98bcdff6e662cdb0d7b94f4`) from the run's HEAD. It is reported
-in §7 and §8 as what it is, and no row of this document presents it as achieved
-occupancy.
+**The counters, and what each one is.** Eight of round 1's eighteen passes
+collect `--pmc SQ_WAVES OccupancyPercent MeanOccupancyPerCU` over whole
+workloads: the shipped path, the lookup control, and the three-plane path at
+$n = 12$ and $n = 20$, plus both component-isolate modes
+([`…/run.log`](profiled-20260815T181923Z/run.log)). Round 2 re-collects two of
+the three over the first eight dispatch iterations of each workload, for the
+reason this section reaches below. `rocprofv3-avail info --pmc` on this host
+reports what the three counters are for `gfx1030`, and two of the three are
+derived expressions rather than hardware counts:
 
-The prediction half of the criterion's pairing is available from the timing run's
-own artifacts and is recorded here, so the achieved column has its predicted
-column to sit beside. The budget-predicted occupancy is the compiler figure of
-§7, and the per-lane register and per-block shared-memory budgets those
-predictions would rest on are the ones §7.2 enumerates — of which none is a
-committed per-lane register budget, so for every $\mathbb{F}_7$ kernel the
-prediction side of REQ-17's pairing rests on the compiler's own register
-measurement rather than on a design's stated budget.
+| Counter | What the tool reports it is | Units |
+| --- | --- | --- |
+| `SQ_WAVES` | hardware counter in block `SQ`: "*Count number of waves sent to distributed sequencers (SQs) … A sum of all SQ_WAVES values will give the total number of waves started by the application during the collection timeframe*", which under dispatch profiling is the kernel's own execution | waves launched by the dispatch |
+| `OccupancyPercent` | derived: "*GPU Occupancy as % of maximum*", expression `100*reduce(SQ_WAVE_CYCLES,sum)/reduce(GRBM_GUI_ACTIVE,max)/CU_NUM/32` | percent of the per-CU wave-slot count |
+| `MeanOccupancyPerCU` | derived: "*Mean occupancy per compute unit*", expression `reduce(accumulate(SQ_LEVEL_WAVES,HIGH_RES),sum)/reduce(GRBM_GUI_ACTIVE,max)/CU_NUM` | waves resident per compute unit |
 
-| Kernel | budget-predicted occupancy (compiler, waves/SIMD) | achieved occupancy (profiler counters) |
-| --- | ---: | --- |
-| `permanent_bipedal7_kernel` | 8 | awaiting the paired profiled run |
-| `wave_gf7_lookup_table_kernel<1>` | 16 | awaiting the paired profiled run |
-| `wave_gf7_lookup_table_kernel<2>` | 16 | awaiting the paired profiled run |
-| `prepare_three_plane_columns` | 16 | awaiting the paired profiled run |
-| `wave_gf7_three_plane_kernel` | 16 | awaiting the paired profiled run |
-| `gray_update_micro_kernel` | 16 | awaiting the paired profiled run |
-| `gray_update_compiler_barrier_baseline_kernel` | 16 | awaiting the paired profiled run |
-| `horizontal_product_micro_kernel` | 16 | awaiting the paired profiled run |
-| `horizontal_product_compiler_barrier_baseline_kernel` | 16 | awaiting the paired profiled run |
+Neither derived counter is a raw reading: each divides an accumulated wave-cycle
+count by `GRBM_GUI_ACTIVE` and by the device's compute-unit count, so each is a
+time-average over the dispatch, and the two are one quantity in two units.
 
-> **Pending the paired profiled evidence run.** The achieved column is filled
-> from the committed paired profiled run over the same hash-pinned binaries and
-> cells, run separately from the timing run for the reason stated above. Until
-> that artifact is committed this half of REQ-17 is open, and the compiler
-> figures in the left column stay what they are — a compile-time prediction that
-> accompanies the achieved figure and never stands in for it.
+**The geometry they normalise against comes from the profiler's own agent
+report**, `…_agent_info.csv`, identical in every pass directory of both rounds:
+`Cu_Count` 80, `Simd_Per_Cu` 2, `Simd_Count` 160, `Max_Waves_Per_Simd` 16,
+`Max_Waves_Per_Cu` 32, `Wave_Front_Size` 32, `Gfx_Target_Version` 100300. The
+device therefore holds $80 \times 32 = 2\,560$ wave slots. That report also
+settles, from the runtime rather than from the compiler, the wave-slot ceiling
+§8 derives from an empty probe kernel's saturation: `Max_Waves_Per_Simd` is 16,
+which is the value §8 names as the architectural ceiling.
 
-If that run should find that no profiler on this host can produce the counters,
-the criterion's escape applies and this section records achieved occupancy as
-not measured with that as the reason. That would be a finding of the profiled
-run, and nothing in the timing run's artifacts settles it in advance.
+**A round-1 reading is an occupancy measurement only if it survives the
+counters' own definitions.** Three tests follow from the counter table and the
+agent report, and `analysis.py` section 13 applies all three to every reading:
+
+1. **Unit identity.** The two derived counters are the same quantity, so
+   `MeanOccupancyPerCU` $= $ `OccupancyPercent` $\times 32 / 100$ identically.
+2. **Range.** No dispatch holds more waves on a compute unit than the agent
+   reports slots for, so `MeanOccupancyPerCU` $\le 32$.
+3. **Provenance of the waves.** No dispatch holds more waves resident than it
+   launched, so `MeanOccupancyPerCU` $\times 80 \le$ `SQ_WAVES`. This one can
+   only fail a reading, never certify one: where `SQ_WAVES` is itself inflated,
+   as it is in two passes below, the comparison passes vacuously.
+
+The tests are not a filter chosen to fit an outcome: where they pass, the
+reading is also exactly the value the launch geometry implies. A dispatch of one
+wave on this device is $1 / 80 = 0.0125$ waves per CU and $1 / 2\,560 =
+0.0390625$ % of the slots, and that is what the Gray-update passes read, to the
+six digits the aggregate carries.
+
+**Nine of the twelve round-1 readings fail.** Full-pass collection is what they
+fail under: each derived counter divides by a `GRBM_GUI_ACTIVE` window that
+drifts with cumulative dispatch count, exact on a pass's first dispatches and
+degrading after (`provenance.txt`, `round 2:`).
+
+| Pass | Kernel | dispatches | `SQ_WAVES` | `OccupancyPercent` | `MeanOccupancyPerCU` | its maximum | waves resident | reading |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `pmc-grayupdate` | `gray_update_micro_kernel` | 31 | 1.00 | 0.039062 | 0.012500 | 0.012500 | 1.00 | **survives all three tests** |
+| `pmc-grayupdate` | `gray_update_compiler_barrier_baseline_kernel` | 31 | 1.00 | 0.039062 | 0.012500 | 0.012500 | 1.00 | **survives all three tests** |
+| `pmc-n20-lookup` | `wave_gf7_lookup_table_kernel<2>` | 115 | 28.76 | 1.114438 | 0.356620 | 0.360673 | 28.53 | **survives all three tests** |
+| `pmc-n12-gpuhip` | `permanent_bipedal7_kernel` | 466 | 525.74 | 5.743100 | 5.847435 | 40.042924 | 467.79 | fails tests 1 and 2; the two counters disagree by a factor of 3.182 |
+| `pmc-n20-gpuhip` | `permanent_bipedal7_kernel` | 13 | 590.85 | 0.000000 | 3280.454195 | 3461.399003 | 262 436.34 | fails all three; `OccupancyPercent` is exactly zero on every dispatch |
+| `pmc-n12-lookup` | `wave_gf7_lookup_table_kernel<1>` | 2 807 | 1 554.45 | 0.000000 | 147.504202 | 3512.585827 | 11 800.34 | fails all three; `OccupancyPercent` is exactly zero on every dispatch |
+| `pmc-n12-threeplane` | `prepare_three_plane_columns` | 33 710 | 2 374.38 | 0.021388 | 17.578662 | 5591.426145 | 1 406.29 | fails tests 1 and 2; disagree by a factor of 2 568 |
+| `pmc-n12-threeplane` | `wave_gf7_three_plane_kernel` | 33 710 | 34 421.18 | 0.072084 | 262.625609 | 4504.360769 | 21 010.05 | fails tests 1 and 2; disagree by a factor of 1.14 × 10⁴ |
+| `pmc-n20-threeplane` | `prepare_three_plane_columns` | 1 636 | 12.99 | 0.064581 | 59.368457 | 209.134371 | 4 749.48 | fails all three; disagree by a factor of 2 873 |
+| `pmc-n20-threeplane` | `wave_gf7_three_plane_kernel` | 1 636 | 12.99 | 0.284039 | 1167.382432 | 3312.290413 | 93 390.59 | fails all three; disagree by a factor of 1.28 × 10⁴ |
+| `pmc-horizprod` | `horizontal_product_micro_kernel` | 105 430 | 441 106.20 | 1.050744 | 666.348961 | 17172.489033 | 53 307.92 | fails tests 1 and 2; disagree by a factor of 1 982 |
+| `pmc-horizprod` | `horizontal_product_compiler_barrier_baseline_kernel` | 105 430 | 351 235.15 | 0.976263 | 612.196504 | 14281.645119 | 48 975.72 | fails tests 1 and 2; disagree by a factor of 1 960 |
+
+Each counter column is the mean over the pass's dispatches from
+[`counters-aggregate.csv`](profiled-20260815T181923Z/counters-aggregate.csv),
+with that file's per-dispatch maximum for `MeanOccupancyPerCU` beside it because
+test 2 is a bound on every dispatch rather than on the average; "waves resident"
+is the mean `MeanOccupancyPerCU` $\times 80$, the device-wide resident count the
+reading implies. The identity factor quoted in the last column is
+`MeanOccupancyPerCU` over `OccupancyPercent` $\times 32/100$, which test 1
+requires to be 1. These rows stay in the record as the falsification they are;
+the achieved column below is not filled from them.
+
+**Round 2 collects over the first eight dispatch iterations of each workload,
+where the run's provenance places the windows before they drift.** Its nine
+counter passes (`pmc2-*`,
+`--pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8]`, all exit 0
+in [`run2.log`](profiled-20260815T181923Z/run2.log)) repeat round 1's six grid
+passes and both isolate modes, and add the walk kernel's mid-duration order
+$n = 16$. They collect two counters rather than three, so the unit identity has
+no second counter to hold a reading against, and the run's provenance records
+the physical test set that replaces it: a reading counts when it stays inside
+the agent's 32 waves per CU and puts no more waves resident than the dispatch's
+own geometry launches. Launch width is `Grid_Size / Workgroup_Size` from the
+dispatch record itself rather than `SQ_WAVES`, because `SQ_WAVES` is the counter
+that fails in round 2: it reports 87 812 120 waves for a 13-wave dispatch in
+`pmc2-n20-threeplane`. Each round is
+authoritative for the counter the other breaks, so wave counts in this section
+come from round 1's `SQ_WAVES`, which matches the batch exactly, or from the
+launch geometry, and occupancy comes from round 2. The break is narrow: round
+2's `SQ_WAVES` reproduces the launch geometry throughout seven of its nine
+passes, including both isolate passes and the three-plane pass at $n = 12$, and
+departs from it only in the two three-plane passes at $n = 16$ and $n = 20$.
+The second bound carries a one-percent slack for the counters' rounding:
+the largest residency any accepted reading shows is 1.000005 of the waves
+launched, and the smallest any rejected reading shows is 538 times them.
+
+The round-2 per-dispatch CSVs are committed in full, so these rows are a
+projection of the artifact and not of an aggregate:
+
+| Pass | Kernel | launch width | dispatches | `MeanOccupancyPerCU` mean | min–max | resident waves | residency of the launch | achieved occupancy |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `pmc2-grayupdate` | `gray_update_micro_kernel` | 1 | 8 | 0.012500 | 0.012500–0.012500 | 1.00 | 1.0000 | **0.0391 %** |
+| `pmc2-grayupdate` | `gray_update_compiler_barrier_baseline_kernel` | 1 | 8 | 0.012500 | 0.012500–0.012500 | 1.00 | 1.0000 | **0.0391 %** |
+| `pmc2-n12-gpuhip` | `permanent_bipedal7_kernel` | 256 | 7 | 2.635082 | 2.623938–2.645387 | 209.92 | 0.8200–0.8267 | **8.2346 %** |
+| `pmc2-n20-gpuhip` | `permanent_bipedal7_kernel` | 256 | 5 | 2.712428 | 2.639225–3.000388 | 211.14 | 0.8248–0.9376 | **8.4763 %** |
+| `pmc2-n20-gpuhip` | `permanent_bipedal7_kernel` | 1 024 | 1 | 8.791383 | — | 703.31 | 0.6868 | **27.4731 %** |
+| `pmc2-n12-lookup` | `wave_gf7_lookup_table_kernel<1>` | 1 614 | 7 | 15.813119 | 15.767075–15.888531 | 1 261.37 | 0.7815–0.7875 | **49.4160 %** |
+| `pmc2-n20-lookup` | `wave_gf7_lookup_table_kernel<2>` | 28 | 7 | 0.347347 | 0.346776–0.347812 | 27.74 | 0.9908–0.9937 | **1.0855 %** |
+| `pmc2-n16-threeplane` | `prepare_three_plane_columns` | 14 | 7 | 0.040845 | 0.037912–0.047535 | 3.03 | 0.2166–0.2716 | **0.1276 %** |
+| `pmc2-n16-threeplane` | `wave_gf7_three_plane_kernel` | 14 | 7 | 0.168679 | 0.168402–0.168965 | 13.47 | 0.9623–0.9655 | **0.5271 %** |
+| `pmc2-n20-threeplane` | `prepare_three_plane_columns` | 13 | 7 | 0.042929 | 0.039938–0.048063 | 3.20 | 0.2458–0.2958 | **0.1342 %** |
+| `pmc2-n20-threeplane` | `wave_gf7_three_plane_kernel` | 13 | 7 | 0.161383 | 0.161207–0.161601 | 12.90 | 0.9920–0.9945 | **0.5043 %** |
+| `pmc2-horizprod` | `horizontal_product_micro_kernel` | 3 435–3 473 | 4 | 6.824382 | 6.292963–8.214959 | 503.44 | 0.1450–0.1913 | **21.3262 %** |
+| `pmc2-horizprod` | `horizontal_product_micro_kernel` | 623–661 | 4 | 2.065386 | 2.003962–2.141143 | 160.32 | 0.2573–0.2600 | **6.4543 %** |
+| `pmc2-horizprod` | `horizontal_product_compiler_barrier_baseline_kernel` | 3 435–3 473 | 4 | 5.848223 | 5.549022–6.289457 | 443.92 | 0.1284–0.1465 | **18.2757 %** |
+| `pmc2-horizprod` | `horizontal_product_compiler_barrier_baseline_kernel` | 623–661 | 4 | 1.515651 | 1.424089–1.630843 | 113.93 | 0.1803–0.1974 | **4.7364 %** |
+
+"Resident waves" is the minimum over the band's dispatches of
+`MeanOccupancyPerCU` $\times 80$; "residency of the launch" is that count over
+the dispatch's own launch width; achieved occupancy is the mean reading against
+the device's 2 560 slots. The horizontal-product isolate alternates two launch
+widths inside one repetition, and they are its two branch populations: one wave
+per sample of the 4 096-sample batch, split 3 435–3 473 against 623–661, which
+is the zero-fast against nonzero-slow split §9 measures at 0.8469 and 0.1531.
+The single-matrix probe dispatch that opens each grid cell is a launch width of
+its own and is excluded from these bands; where it is admissible it reads
+0.003417 to 0.012473 waves per CU, which is 0.27 to 1.00 of the one wave it
+launches, the low end being the staging kernel whose dispatch is a couple of
+microseconds long (§12). The Gray-walk kernel's own single-wave dispatches are
+the sharpest check in the set: 0.012108 at $n = 16$ and 0.012473 at $n = 20$
+against the $1/80 = 0.0125$ that one resident wave on eighty compute units
+gives exactly.
+
+**Every measured kernel has an achieved-occupancy figure, and the two rounds
+agree where both are admissible.** `wave_gf7_lookup_table_kernel<2>` reads
+0.356620 waves per CU at 29 launched waves in round 1 and 0.347347 at 28 in
+round 2, a ratio of 0.974 against the 0.966 the launch widths imply; both
+Gray-update kernels read 0.012500 in both rounds.
+
+| Kernel | budget-predicted occupancy (compiler, waves/SIMD) | predicted share of the device's slots | achieved occupancy (profiler counters) | evidence |
+| --- | ---: | ---: | ---: | --- |
+| `permanent_bipedal7_kernel` | 8 | 50 % | **8.2346 %** at $M = 256$, $n = 12$; **8.4763 %** at $M = 256$ and **27.4731 %** at $M = 1024$, $n = 20$ | `pmc2-n12-gpuhip` 7 dispatches, `pmc2-n20-gpuhip` 5 and 1 |
+| `wave_gf7_lookup_table_kernel<1>` | 16 | 100 % | **49.4160 %** at $M = 1614$, $n = 12$ | `pmc2-n12-lookup`, 7 dispatches |
+| `wave_gf7_lookup_table_kernel<2>` | 16 | 100 % | **1.0855 %** at $M = 28$, $n = 20$ | `pmc2-n20-lookup`, 7 dispatches; round 1 agrees at 1.114438 % on 115 |
+| `prepare_three_plane_columns` | 16 | 100 % | **0.1276 %** at $M = 14$, $n = 16$; **0.1342 %** at $M = 13$, $n = 20$ | `pmc2-n16-threeplane` and `pmc2-n20-threeplane`, 7 dispatches each |
+| `wave_gf7_three_plane_kernel` | 16 | 100 % | **0.5271 %** at $M = 14$, $n = 16$; **0.5043 %** at $M = 13$, $n = 20$ | `pmc2-n16-threeplane` and `pmc2-n20-threeplane`, 7 dispatches each |
+| `gray_update_micro_kernel` | 16 | 100 % | **0.0391 %** on a one-wave launch | `pmc2-grayupdate`, 8 dispatches; round 1 agrees on 31 |
+| `gray_update_compiler_barrier_baseline_kernel` | 16 | 100 % | **0.0391 %** on a one-wave launch | `pmc2-grayupdate`, 8 dispatches; round 1 agrees on 31 |
+| `horizontal_product_micro_kernel` | 16 | 100 % | **21.3262 %** on the zero-fast branch, **6.4543 %** on the nonzero-slow branch | `pmc2-horizprod`, 4 dispatches each |
+| `horizontal_product_compiler_barrier_baseline_kernel` | 16 | 100 % | **18.2757 %** on the zero-fast branch, **4.7364 %** on the nonzero-slow branch | `pmc2-horizprod`, 4 dispatches each |
+
+The predicted column is a per-SIMD residency ceiling, so the share of the
+device's 2 560 slots it stands for is that ceiling over `Max_Waves_Per_Simd`.
+Reaching it needs a grid wide enough to fill the device and a dispatch long
+enough for the filled state to dominate it, and one profiled launch is wide
+enough: the horizontal-product isolate's zero-fast branch launches 3 435 to
+3 473 waves against 2 560 slots and still reads 21.3262 %, on dispatches
+averaging 3.069 µs where the ramp is most of the window. Every other profiled
+cell launches between one wave and 1 614.
+
+**What the figures say is that these kernels are launch-bound at the batch sizes
+this campaign measures, and that residency of the waves they do launch is
+high.** The three-plane Gray walk holds 0.9623 to 0.9945 of its launched waves
+resident, the two lookup instantiations 0.7815 to 0.9937, the shipped kernel
+0.8200 to 0.9376 at $M = 256$, and the Gray-update isolate its single wave for
+the whole dispatch — so nothing here is losing occupancy to resource pressure at
+its own launch width. What separates the achieved figures from the predicted
+ceiling is the width: 13 and 14 waves on the three-plane cells and 28 on
+`wave_gf7_lookup_table_kernel<2>`, all probe-calibrated small; 256 and 1 024 on
+the shipped kernel; 1 614 on the lookup control at $n = 12$, which is the
+highest achieved occupancy in the campaign at 49.4160 %. The gap between the
+predicted 100 % and these figures is grid width and not a divergence from the
+register-pressure prediction: the two quantities are the per-SIMD ceiling and
+the device-wide average, and nothing in this run measures the first directly.
+§8's reading is untouched, and the profiled run confirms its launch-geometry
+half exactly: in five of the six round-1 grid
+passes `SQ_WAVES` per dispatch is the cell's batch size — 256 and 1 024 for the
+shipped kernel's two cells at both orders, 1 555 and 29 for the lookup control,
+13 for the three-plane path at $n = 20$ — apart from the single-matrix probe,
+which reads 1. That is the one-wave-per-matrix launch §8 derives from source,
+measured.
+
+**What the counters get wrong is recorded rather than smoothed.** Four
+observations, each checkable in the tables above:
+
+- **The three-plane pair has no admissible reading at $n = 12$.** Both round-2
+  passes at that order read far outside the slot count — 94.22 to 468.5 waves
+  per CU on the staging kernel and 1 293 to 1 907 on the Gray walk, against a
+  14-wave launch — as round 1 did. The two kernels' occupancy is measured at
+  $n = 16$ and $n = 20$ and not at $n = 12$, and no figure is carried across
+  orders to fill it.
+- **Two round-2 dispatches at $n = 20$ on the shipped kernel are excluded**, the
+  probe at 3 280 waves per CU and the first $M = 256$ dispatch at 3 247, both
+  round-1-shaped readings; the five dispatches after them read 2.639 to 3.000
+  and are what the table reports. The exclusion is the physical bound, not a
+  choice of a favourable value: the rejected readings exceed their launch width
+  by 538 times and more, and the accepted ones by at most five parts per
+  million.
+- **`SQ_WAVES` is inflated in round 2 in the two passes where the occupancy
+  counter works**, to 87 812 120 waves for a 13-wave dispatch at $n = 20$ and
+  3 355 459 for a 14-wave one at $n = 16$, so the round-2 admissibility test
+  uses the dispatch's own `Grid_Size` and `Workgroup_Size` instead. On the
+  three-plane path the two counters fail in complementary places: at $n = 12$
+  `SQ_WAVES` is exact and the occupancy reading is not, at $n = 16$ and $n = 20$
+  the reverse. Which counter survives which collection mode is not explained by
+  this evidence, and no mechanism is asserted here.
+- **`rocprofv3` is the only profiler on this host that runs this workload.**
+  `rocprofv2` and legacy `rocprof`, invoked with the same counters on the
+  $q = 7$, $n = 20$ three-plane cell, both abort the workload itself — the
+  candidate reports a device batch failure under their interception and the pass
+  exits 101, recorded under
+  [`rocprofv2-n20-threeplane/`](profiled-20260815T181923Z/rocprofv2-n20-threeplane/)
+  and `rocprofv1-n20-threeplane/` (`provenance.txt`, `profiler capability
+  probes:`).
+
+**The criterion's not-measured escape is not invoked.** REQ-17 directs that
+where the campaign host's profiler cannot produce the counters, the receipt
+record achieved occupancy as not measured with the reason rather than a computed
+stand-in. It does not arise: every measured $\mathbb{F}_7$ kernel has an
+admissible reading from the paired run, and the readings that fail their own
+definitions are reported as failures beside the ones that do not, with no figure
+computed to replace them — in particular none back-derived from registers, which
+is what the compiler's column already is and which §8 shows is reproduced for
+all 26 receipt entries by `VGPRs` alone.
+
+**The compiler figures remain a prediction and never stand in for the achieved
+column.** The `Occupancy [waves/SIMD]` field of
+`-Rpass-analysis=kernel-resource-usage` is emitted at compile time from the
+per-thread resource counts in the same remark block, and §8 shows it is
+reproduced exactly, for all 26 kernel entries in the receipt, by a function of
+`VGPRs` alone. A quantity a compile-time register count determines completely is
+a prediction of occupancy rather than an observation of it, and the receipt it
+comes from is dated `20260814T172506Z`, before the timing run began at
+`23:00:34Z`, at a different revision
+(`f9224650a780ea8ed98bcdff6e662cdb0d7b94f4`). It is reported in §7 and §8 as
+what it is, and no row of this document presents it as achieved occupancy. The
+paired run does confirm the register counts it rests on, from the runtime rather
+than the compiler: the counter aggregate's per-dispatch
+`VGPR_Count` is the compiler's `VGPRs` rounded up to the runtime's allocation
+granularity of eight for all nine kernels — 128 against 128, 32 against 31, 48
+against 41, 24 against 17, 40 against 34, and 8 against 5, 2, 3, and 2 — and
+`Scratch_Size` reproduces the compiler's 4 000 bytes per lane for the shipped
+kernel and 24 for `wave_gf7_lookup_table_kernel<2>`. `analysis.py` section 13
+asserts that rounding for every kernel.
+
+The prediction half of the criterion's pairing is the compiler figure of §7, and
+the per-lane register and per-block shared-memory budgets those predictions
+would rest on are the ones §7.2 enumerates — of which none is a committed
+per-lane register budget, so for every $\mathbb{F}_7$ kernel the prediction side
+of REQ-17's pairing rests on the compiler's own register measurement rather than
+on a design's stated budget.
 
 ## 14. Exact operation above the sixteen-lane limit (REQ-18)
 
@@ -1819,8 +2128,8 @@ yet derived.**
 | REQ-13 | §2 | **Satisfied, and not vacuous for this field.** `f7-three-plane-accumulator` is a planned $\mathbb{F}_7$ candidate that cannot execute as a permanent path on the target device, and it is named in the record with its falsification, quoted verbatim: its HIP translation unit holds a single-thread three-plane accumulator conformance probe and not a full-permanent batch kernel. §2 states that this is a structural falsification rather than a compile or resource one, and cites the compiler receipt entry that shows the same source compiling clean for `gfx1030`, so the exclusion is not mistaken for a build failure. Its exclusion from the timing comparison cites that evidence, and no timing is attributed to it in §4; it appears in §6.2 only because that isolate times a circuit rather than a path. The four out-of-field prototypes carry their by-field reasons. Separately and distinctly, three in-tree CPU paths cannot execute for this field at all and two more stop at $n = 16$; they are named with the library-capability absence and the lane bound that exclude them, quoted verbatim, confirmed independently in the equivalence file, and §2 states that these are host-tree capability limits rather than device falsifications. |
 | REQ-14 | §4.4 | **Satisfied.** The best-performing prototype by ratio against the best applicable in-tree CPU path is `f7-three-plane-permanent`; its best operating point is $n = 20$, $M = 41$, where it measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a ratio of **545.6693×**, with a launch duration of **4.8485 µs per launch** on the device clock (`device_submission_to_kernel_s` 0.004960 s over 1 023 launches). §4.4 also states the alternative reading — the highest absolute prototype rate in the campaign is `f7-lookup-table-control` at $n = 12$, 630 625.0668 matrices/s and 8.7878× the best CPU path, at 4.6533 µs per launch — rather than leaving the choice of reading implicit. §4.5 records that this operating point's batch is not matched to the control's. |
 | REQ-15 | §1 | **Satisfied.** Three exact commands for this field plus the shared equivalence command are committed with their revision, toolchain, and binary hashes; `analysis.py` regenerates every table here from the committed artifacts with one command; the run executes on the prepared benchmark host under the repository's full-host benchmark mutex, with a pristine-worktree refusal and a binary-hash verification enforced both before and after the lock is acquired, and with the machine warm-up held by the first grid under the same lock. |
-| REQ-16 | §12 | **Open pending the paired profiled evidence run.** The host-side portion is established and reported: it is zero by construction, because the harness streams canonical matrix bytes and the byte-to-plane transpose runs on the device as its own kernel, and §12 attributes it with the source citation the criterion asks for in that case. The device-side portion is measured as a combined span at all five orders and reported as the unprofiled timing the separated figures sit beside; §12 shows why the timing run cannot divide it, since both launches fall inside one event-bracketed span by the harness's documented design, and shows that no committed artifact of that run and no harness mode times the staging alone. The per-kernel separation comes from the committed paired profiled run over the same hash-pinned binaries and cells and is not yet written into §12. No figure is substituted for it in the meantime. |
-| REQ-17 | §13 | **Open pending the paired profiled evidence run.** The prediction half of the pairing is recorded per kernel in §13 from the compiler receipt, explicitly as a compile-time prediction: §8 shows the compiler's occupancy field is reproduced exactly for all 26 receipt entries by a function of `VGPRs` alone, and the receipt predates the run at a different revision, so no row of this document offers it as achieved occupancy. The separation the criterion asks to be stated is stated and is checkable: the runner invokes no profiler, and `analysis.py` section 13 asserts that no committed artifact of the timing run carries counters, so the preregistered timing evidence of §4 through §11 is unperturbed by counter collection. The achieved column is filled from the committed paired profiled run and is not yet written. The criterion's not-measured escape is not claimed: it applies only where no profiler on this host can produce the counters, and rocprof, rocprofv2 and rocprofv3 are installed and on `PATH`. |
+| REQ-16 | §12 | **Satisfied.** Both portions are reported, separately, for the one bit-sliced path that executes. The host-side portion is zero by construction, because the harness streams canonical matrix bytes and the byte-to-plane transpose runs on the device as its own kernel, and §12 attributes it with the source citation the criterion allows in that case. The device-side portion is separated by the committed paired profiled evidence run over the same hash-pinned binary and the same preregistered cells (`--execution-id 7002`), reported beside the unprofiled combined `kernel_device_s` table rather than replacing it, with the separation between the two runs and its reason stated: rocprofv3's per-kernel aggregation carries `prepare_three_plane_columns` and `wave_gf7_three_plane_kernel` as separate rows at $n = 12$, 16, 20, and 24, at per-dispatch averages of 2.139 against 23.262 µs, 2.312 against 312.386 µs, 2.657 against 4 654.140 µs, and 3.020 against 67 665.938 µs, so preparation is 8.4207 %, 0.7347 %, 0.0571 %, and 0.0045 % of the pair. §12 also states why the timing run alone cannot divide its own span, that each profiled pass re-calibrates its own batch so the profiled and timing batches differ and both are tabulated, and that the profiler's `StdDev` column is inconsistent with its own minimum and maximum and is therefore not read. |
+| REQ-17 | §13 | **Satisfied.** Achieved occupancy is reported for every measured $\mathbb{F}_7$ kernel from the committed paired profiled run's counters, beside the compiler's prediction, and the criterion's not-measured escape does not arise. Each figure names its counter, that counter's definition and units from `rocprofv3-avail`, its pass, its launch width, and its dispatch count: as a share of the device's 2 560 wave slots, 8.2346 % and 8.4763 % at $M = 256$ and 27.4731 % at $M = 1024$ for the shipped kernel, 49.4160 % for `wave_gf7_lookup_table_kernel<1>`, 1.0855 % for `<2>`, 0.1276 % and 0.1342 % for `prepare_three_plane_columns` at $n = 16$ and $n = 20$, 0.5271 % and 0.5043 % for `wave_gf7_three_plane_kernel`, 0.0391 % for both Gray-update kernels, and 21.3262 % against 6.4543 % and 18.2757 % against 4.7364 % for the horizontal-product pair on its two branches. Admissibility is a stated physical test set applied per dispatch rather than a preference: a reading counts when it stays inside the agent-reported 32 waves per CU and holds no more waves resident than its own launch geometry supplies. Falsification is preserved rather than repaired — nine of round 1's twelve full-pass readings break the two derived counters' unit identity, by factors of 3.182 to 1.28 × 10⁴, and are tabulated as failures; the three-plane pair has no admissible reading at $n = 12$; two round-2 dispatches at $n = 20$ are excluded with their values shown; `SQ_WAVES` is inflated in round 2 where round 1 had it exact; and `rocprofv2` and legacy `rocprof` abort the workload under their interception. The separation the criterion asks to be stated is stated and checkable: the runner invokes no profiler, `analysis.py` section 13 asserts that no committed artifact of the timing run carries counters, and the paired run is where the measured workload is profiled. The prediction column stays a compile-time figure and never stands in for the achieved one; the paired run confirms the register counts it rests on at runtime, `VGPR_Count` being the compiler's `VGPRs` rounded up to a multiple of eight for all nine kernels. |
 | REQ-18 | §14 | **Satisfied.** The one bit-sliced path that executes as a permanent path, `f7-three-plane-permanent`, is `measured` at $n = 16$, $n = 20$, and $n = 24$ — and at $n = 12$ and $n = 28$ besides — and is `identical` with zero mismatches against the campaign oracle at every one of those orders, on 512, 512, and 32 matrices at the three the criterion names. §14 settles which paths are bit-sliced from source, records that the second bit-sliced candidate does not execute as a permanent path at any order and so has no cell to measure, and states the measurement scale at each order rather than implying it. The sixteen-lane limit the demonstration is above is the same one this run records refusing the packed CPU path at those orders, which is why the oracle is the independent generic Ryser driver there. |
 | REQ-19 | §15 | **Aspirational; throughput met, bound met against a prior.** At the declared operating point $n = 20$, `f7-three-plane-permanent` measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a factor of **545.6693×** against a $1.5\times$ target, with a launch duration of 4.8485 µs on the device clock and a kernel span of 0.004672 s per launch. §15 states the caveat that the denominator at this order is a single-threaded generic driver because this field has no packed CPU kernel there. No safe launch-duration bound derived by this study is committed yet; measured against the only committed figure — the archived ≈190–200 s per-launch calibration, cited as a prior rather than as an established device property, and with its $q = 5$ work budget deliberately not transferred to this field — this operating point sits at 0.00002 of the span boundary. |
 
@@ -1829,66 +2138,88 @@ yet derived.**
 Collected so a reader does not have to reassemble it from the sections above.
 
 1. **The timing run measures no achieved occupancy and divides no kernel
-   span.** Both are properties of this run rather than of the field: profiling
+   span.** Both are properties of that run rather than of the field: profiling
    is kept off the timing run so counter collection cannot perturb the
    preregistered evidence, and the two three-plane launches share one event
    span by the harness's documented design. The paired profiled evidence run
-   supplies both figures; until it is committed, §12 and §13 are open and carry
-   no substitute number.
-2. **The two mappings are compared at three orders, not five.** All four control
+   supplies the division (§12) and the occupancy counters (§13), at its own
+   probe-calibrated batch sizes and with no timing authority.
+2. **The bit-sliced path's two kernels have no achieved-occupancy reading at
+   $n = 12$.** Both counter passes at that order read outside the device's
+   per-CU slot count, in both rounds (§13), so those kernels' occupancy is
+   measured at $n = 16$ and $n = 20$ only, and §12's preparation split at
+   $n = 12$ has no occupancy figure beside it. Nine of round 1's twelve
+   full-pass readings fail the counters' own definitions, and they are recorded
+   as failures rather than repaired.
+3. **No cell in this campaign tests the register-pressure prediction.** Every
+   measured kernel fills between 0.0391 % and 49.4160 % of the device's 2 560
+   wave slots because its cell launches 1 to 1 614 waves, and each holds most or
+   all of those waves resident, so nothing here approaches the per-SIMD
+   residency ceiling the compiler predicts. The gap between the two is grid
+   width rather than a divergence from the prediction, and closing it would need
+   a cell wide enough to fill the device.
+4. **The two mappings are compared at three orders, not five.** All four control
    cells at $n \in \{24, 28\}$ are censored before running, so §10's mapping
    ratios exist only at $n \in \{12, 16, 20\}$ and nothing here settles the
    ordering between the two mappings at this field's two largest orders.
-3. **Almost no prototype cell is measured near the control's batch sizes.**
+5. **Almost no prototype cell is measured near the control's batch sizes.**
    Every prototype cell sizes itself from a one-matrix probe, so the mapping
    comparison mixes the mapping effect with a device-parallelism effect that
    ranges over a factor of 5 833 across the prototype cells. The one near-match
    is the $n = 16$ three-plane cell at $M = 1109$ against the control's 1 024;
    everywhere else, separating the two needs a run with the prototype batch
    sizes pinned to the control's.
-4. **The $n = 12$ ordering between the two prototypes is a batch artefact as
+6. **The $n = 12$ ordering between the two prototypes is a batch artefact as
    much as a circuit result.** The lookup control leads the bit-sliced path
    0.4524 to 1 at that order while running 5 833 matrices against 46, and
    186 656 active lanes against 1 472 (§4.5). Nothing in this run isolates how
    much of that reversal is the circuit, and it is the one order where the
    bit-sliced path does not lead.
-5. **The $n = 20$ headline ratio is not decomposed.**
+7. **The $n = 20$ headline ratio is not decomposed.**
    `f7-three-plane-permanent` at 545.6693× the best CPU path runs 1 312 lanes
    against the shipped path's 1 024 and is compared against a single-threaded
    generic driver rather than a packed or parallel one. Both the mapping term
    and the choice of denominator are large, and no cell in this run separates
    them.
-6. **The two horizontal-product circuits are not ordered.** The F7ThreePlane
+8. **The two horizontal-product circuits are not ordered.** The F7ThreePlane
    circuit yields a nonzero-branch duration at exactly two cells, and its partner
    branches there are censored (§6.2). The 23.3× and 312× gaps against the
    F7Lookup circuit at those cells are reported as the two figures they are, and
    no ordering of the circuits is asserted from them.
-7. **The $24n$-byte and $8n\lceil n/16 \rceil$-byte shared column tables are
+9. **The $24n$-byte and $8n\lceil n/16 \rceil$-byte shared column tables are
    unmeasured.** The compiler reports static LDS only, so this field's committed
    shared-memory prediction is neither confirmed nor refuted here, and no
-   prototype cell in this run is large enough for shared-memory pressure to bind.
-8. **No per-lane register budget is predicted for any of the nine measured
-   kernels.** The prediction-beside-measurement pairing is one-sided on registers
-   throughout this field (§7.2). Their measured figures stand on their own and
-   there is nothing to diverge from, so this campaign cannot test a register
-   hypothesis for any kernel it measures.
-9. **The 32-byte gap between declared and reported scratch is unexplained.**
+   prototype cell in this run is large enough for shared-memory pressure to
+   bind. One committed observation indicates a route to closing this rather than
+   closing it: the paired run's `rocprofv2` capability probe carries an
+   `LDS_Per_Workgroup` column and records 512 bytes for `wave_gf7_three_plane_kernel`
+   at $n = 20$ on the four dispatches it captures before the workload aborts
+   ([`…/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv`](profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv)),
+   which is the design's $24n = 480$ bytes at a 128-byte allocation granularity.
+   A dedicated pass with that tool could measure the launch-time allocation; this
+   probe does not, because it does not run the workload (§13).
+10. **No per-lane register budget is predicted for any of the nine measured
+    kernels.** The prediction-beside-measurement pairing is one-sided on
+    registers throughout this field (§7.2). Their measured figures stand on
+    their own and there is nothing to diverge from, so this campaign cannot test
+    a register hypothesis for any kernel it measures.
+11. **The 32-byte gap between declared and reported scratch is unexplained.**
     `permanent_bipedal7_kernel` declares 4 032 bytes of runtime-indexed private
     arrays and the compiler reports 4 000 bytes/lane. No committed source or
     receipt accounts for the difference, and none is asserted here.
-10. **The $n = 28$ equivalence cell compares four matrices** and the $n = 24$
+12. **The $n = 28$ equivalence cell compares four matrices** and the $n = 24$
     cell 32, against 512 at the four smallest orders, so this field's two largest
     orders rest on much weaker correctness gates than the rest — including the
     $n = 24$ gate that REQ-18's demonstration depends on.
-11. **The Gray-update host circuit is not measured above $n = 16$.** The packed
+13. **The Gray-update host circuit is not measured above $n = 16$.** The packed
     $\mathbb{F}_7$ representation has sixteen lanes, so §6.1's host-versus-device
     latency comparison exists at two orders and nothing here extends it.
-12. **The safe launch-duration bound is not this study's own.** §15 measures
+14. **The safe launch-duration bound is not this study's own.** §15 measures
     against an archived prior whose watchdog attribution was retracted and whose
     work budget is stated for a different field; deriving the study's own bound
     is a separate deliverable and this campaign contributes 16 device-backed
     cells toward it rather than closing it.
-13. **The permanent-zero fraction at $n = 28$ pools 28 matrices.** Its interval
+15. **The permanent-zero fraction at $n = 28$ pools 28 matrices.** Its interval
     spans a factor of 7.3 and it supports nothing on its own (§9.1).
 
 Three observations in this run contradict a statement outside its own numbers
