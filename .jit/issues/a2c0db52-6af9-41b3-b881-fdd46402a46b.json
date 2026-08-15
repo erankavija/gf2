@@ -14,15 +14,16 @@
       "path": "dev/studies/b488f02c/verify-published-table.py"
     }
   ],
+  "done_at": "2026-08-15T09:18:01.044275669Z",
   "first_ready_at": "2026-08-15T07:54:36.651544581Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-15T08:49:02.094932802Z",
-      "updated_by": null
+      "status": "passed",
+      "updated_at": "2026-08-15T09:17:38.408694013Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "a2c0db52-6af9-41b3-b881-fdd46402a46b",
@@ -32,7 +33,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Feasibility study table cell disagrees with its own committed CSV",
-  "updated_at": "2026-08-15T09:15:04.277415476Z"
+  "updated_at": "2026-08-15T09:18:01.044275669Z"
 }

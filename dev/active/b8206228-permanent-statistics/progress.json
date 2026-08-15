@@ -280,6 +280,14 @@
    "wave": "0.9",
    "status": "done",
    "note": "Closed 2026-08-14 (session 6). Implementation 3933338a; budget fix de5f7414 (per-cell 240 s rule, q=5,n=28 count 4->2); full-order host equivalence validation 0c0f525f (234 rows, 0 mismatches, 5690 s wall); smoke evidence 7174718d. All three gates passed with persisted records; lead review PASS."
+  },
+  {
+   "short_id": "a2c0db52",
+   "title": "Feasibility study table cells disagree with their own committed CSV",
+   "reason": "Found by the F_3 receipts (one cell) and this issue's recorded check (second cell); owner-approved scope amendment covered both plus the dependent receipts 11.1 correction.",
+   "wave": "1 (interleaved)",
+   "status": "done",
+   "note": "Closed 2026-08-15: both cells fixed, recorded check committed (verify-published-table.py), F_3 receipts 11.1 corrected; doc-review passed with persisted record at 71db423f."
   }
  ],
  "escalations": [
