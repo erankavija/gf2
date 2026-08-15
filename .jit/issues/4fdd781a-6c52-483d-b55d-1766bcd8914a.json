@@ -20,9 +20,9 @@
   ],
   "gates_status": {
     "doc-review": {
-      "status": "pending",
-      "updated_at": "2026-08-15T09:30:25.626714806Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-15T10:36:52.388844187Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "4fdd781a-6c52-483d-b55d-1766bcd8914a",
@@ -34,5 +34,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
-  "updated_at": "2026-08-15T10:33:47.018643712Z"
+  "updated_at": "2026-08-15T10:36:52.388844187Z"
 }

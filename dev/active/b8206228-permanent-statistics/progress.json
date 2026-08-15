@@ -25,7 +25,7 @@
      "short_id": "6c7fcb38",
      "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
      "classification": "research",
-     "status": "pending"
+     "status": "receipts-committed-pending-profiled-run"
     },
     {
      "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
@@ -288,6 +288,14 @@
    "wave": "1 (interleaved)",
    "status": "done",
    "note": "Closed 2026-08-15: both cells fixed, recorded check committed (verify-published-table.py), F_3 receipts 11.1 corrected; doc-review passed with persisted record at 71db423f."
+  },
+  {
+   "short_id": "4fdd781a",
+   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
+   "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
+   "wave": "1 (interleaved)",
+   "status": "in_progress",
+   "note": "Round-1 fix 7a0af9ab (luna); doc-review FAILED with 3 findings (downstream renderings unmarked, check scope too narrow) - rework specified in handoff-5.md."
   }
  ],
  "escalations": [
@@ -405,7 +413,8 @@
   "9c5b26fb": 4,
   "2ddf2f4b": 5,
   "e0251af3": 1,
-  "047b62ed": 2
+  "047b62ed": 2,
+  "4fdd781a": 1
  },
  "surfaced_pitfalls": [
   "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",

@@ -8221,3 +8221,4 @@
 {"fields":["documents"],"id":"fda6b122-20e4-4494-8213-398aa11c8130","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T10:05:05.964539075Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["description"],"id":"35d37780-f66a-4850-ac2e-f0ce88936ff2","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T10:33:10.505779656Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["documents"],"id":"d4fef4c5-f402-4220-88f0-06251554b389","issue_id":"4fdd781a-6c52-483d-b55d-1766bcd8914a","timestamp":"2026-08-15T10:33:47.018643712Z","type":"issue_updated","updated_by":"doc-add"}
+{"gate_key":"doc-review","id":"47679aab-d06d-4171-8ce1-0fc20903bb3b","issue_id":"4fdd781a-6c52-483d-b55d-1766bcd8914a","timestamp":"2026-08-15T10:36:52.388844187Z","type":"gate_failed","updated_by":"auto:executor"}
