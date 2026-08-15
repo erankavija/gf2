@@ -367,6 +367,14 @@
    "requested_at": "2026-08-15T07:55:00Z",
    "resolved_at": "2026-08-15T07:57:00Z",
    "decision": "Owner approved amending REQ-07 on all three campaigns: the prediction-beside-measurement pairing applies where a committed design states such a prediction; a measured kernel without one is recorded as such, and the absence is not filled with a post-hoc figure. Finding F2 (REQ-08 occupancy limiter naming) is being fixed in-artifact, not amended."
+  },
+  {
+   "issue": "a2c0db52",
+   "reason": "The recorded check found a second feasibility-table cell (q=3, n=16, GPU M=256: published 30210, CSV 30209.4610) disagreeing with the committed artifact under the table's own integer-precision convention, contradicting the closed F_3 receipts' section 11.1 one-cell claim.",
+   "status": "approved",
+   "requested_at": "2026-08-15T09:05:00Z",
+   "resolved_at": "2026-08-15T09:08:00Z",
+   "decision": "Owner approved amending a2c0db52 to cover both cells plus the dependent F_3 receipts section 11.1 correction, all gated under a2c0db52's doc-review; 047b62ed stays closed."
   }
  ],
  "rework_counts": {
