@@ -763,14 +763,15 @@ the $16n$-byte table is requested dynamically at launch, so a 0 in that column
 is silence rather than evidence of absence. No occupancy conclusion in §8 rests
 on treating it as a zero.
 
-**Shipped GPU path (`permanent_bipedal3_kernel`).** No committed design document
-states a predicted per-lane register budget for this kernel; §12 records that
-absence rather than filling it with a back-derived number. Its predicted
-per-block shared-memory allocation is exact and available: the launch passes
+**Shipped GPU path (`permanent_bipedal3_kernel`).** Its predicted per-block
+shared-memory allocation is exact and available: the launch passes
 `sharedMemBytes = 0`
 (`crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip:350`) and the
 translation unit contains no `__shared__` declaration, so 0 bytes/block is the
 complete shared-memory picture for this kernel and the measurement confirms it.
+No committed design document states a predicted per-lane register budget for it.
+That absence is recorded here as an absence and nowhere filled with a
+back-derived number; the prediction-coverage table below states it per kernel.
 
 Its measured **1040 scratch bytes per lane** is the campaign's other
 quantitative finding on resources, and it has an exact cause in the source:
@@ -794,6 +795,31 @@ No design document predicts a budget for it. Its paired barrier baseline reports
 13 and 2. That the baseline is far cheaper in registers while measuring *longer*
 on the device (§6.1) is recorded as the observation it is, and is why that
 isolate reports no net rate.
+
+### 7.2 Prediction coverage, stated per kernel
+
+Which of the two predicted quantities a committed design actually states, for
+each of the seven kernels this campaign measures. Where one exists, §7.1 pairs
+it with the measurement above; where none exists, the row says so and no figure
+is supplied in its place.
+
+| Kernel | committed per-lane register prediction | committed per-block shared-memory prediction |
+| --- | --- | --- |
+| `permanent_bipedal3_kernel` | none committed | 0 B/block, exact (`permanent_bipedal3.hip:350`, no `__shared__`) |
+| `wave_gf3_kernel<FoldKindE0>` | $\ge 9 \times$ 32-bit (`README.md:172-174`) | $16n$ B/block (`README.md:422-423`) |
+| `wave_gf3_kernel<FoldKindE1>` | $\ge 9 \times$ 32-bit (`README.md:172-174`) | $16n$ B/block (`README.md:422-423`) |
+| `gray_update_micro_kernel` | none committed | 0 B/block, exact (`gray_update_micro.hip:112`, no `__shared__`) |
+| `gray_update_compiler_barrier_baseline_kernel` | none committed | 0 B/block, exact (`gray_update_micro.hip:126`, no `__shared__`) |
+| `horizontal_product_micro_kernel` | none committed | 0 B/block, exact (`horizontal_product_micro.hip:196`, no `__shared__`) |
+| `horizontal_product_compiler_barrier_baseline_kernel` | none committed | 0 B/block, exact (`horizontal_product_micro.hip:208-209`, no `__shared__`) |
+
+So every measured kernel has a committed per-block shared-memory prediction, and
+the measurement confirms it for the five whose launches request none. Two of the
+seven have a committed per-lane register prediction, and §7.1 pairs both with
+their measurements. The other five have none, which is recorded as the state of
+the committed record rather than as a measurement result, and no post-hoc
+budget is derived for them from the numbers this receipt measured — a figure
+back-derived from the measurement could not afterwards be diverged from it.
 
 No kernel measured over this field reports a nonzero SGPR or VGPR spill count,
 and no measurement in this campaign contradicts a numeric register or
@@ -1130,7 +1156,7 @@ of the work model.
 | REQ-04 | §10, §4.5 | **Satisfied.** Both mappings are measured at all five matching orders. The control's fixed $M \in \{256, 1024\}$ and each prototype cell's probe-calibrated $M \in \{2, 3, 17, 22, 41, 44, 45, 448\}$ are recorded beside their throughputs in the §10 mapping table and in every throughput table of §4. §4.5 quantifies the confound: the batch size *is* the prototype's device parallelism, tabulated as 64–14 336 active lanes against the control's 256 or 1024, with the probe cost that sets each batch and the probe-to-achieved ratio per path. The mappings are therefore comparable on the order axis, which is what §10's ordering rests on. |
 | REQ-05 | §4.3 | **Satisfied.** `kernel_device_s` is its own device-event column on all four device paths; allocation, copy, and host serialisation are outside it, and the residual is derivable per cell. |
 | REQ-06 | §4.3 | **Satisfied.** `h2d_device_s`, `d2h_device_s`, `host_submission_s`, and `device_submission_to_kernel_s` are four separate columns, and per-launch costs follow from them and `reps` without a second run. §4.3 states, with the `host_submission_s`/`eval_s` ratios as evidence, that the host-clock column measures an asynchronous submission on `gpu_hip` rows and a synchronous submit-and-complete on prototype rows, so that it is not misread as a prototype launch overhead. |
-| REQ-07 | §7 | **Satisfied with two recorded gaps.** Registers per thread, scratch per thread, static LDS per block, and both spill counts are reported for all eight kernels beside their design predictions where a prediction exists. The gaps: the compiler's static-LDS field cannot observe the prototypes' $16n$-byte dynamic table, and no committed design states a per-lane register budget for `permanent_bipedal3_kernel`, `gray_update_micro_kernel`, or `horizontal_product_micro_kernel`. |
+| REQ-07 | §7, §7.1, §7.2 | **Satisfied.** Registers per thread, private scratch per thread, static LDS per block, and both spill counts are reported for all eight kernels of the receipt in §7's table, each with its resource-log line. Predictions are paired with those measurements wherever a committed design states one: the two `wave_gf3_kernel` specializations against the README's $\ge 9 \times$ 32-bit per-lane lower bound and its $16n$-byte per-block shared table, and every non-prototype kernel against the exact 0 bytes/block its own launch and translation unit state. §7.2 gives the coverage per kernel and per quantity. The five kernels for which no committed design states a per-lane register budget are recorded as such and no post-hoc figure is supplied for them, which is what makes a later divergence visible rather than pre-empted. The one blind spot is recorded rather than closed by assumption: the compiler's static-LDS field cannot observe the prototypes' $16n$-byte dynamic table, so that prediction is neither confirmed nor refuted here and no occupancy conclusion in §8 rests on reading its 0 as an absence. |
 | REQ-08 | §8 | **Satisfied.** §8's table names the occupancy-limiting resource for each of the seven measured $\mathbb{F}_3$ kernels: the `gfx1030` architectural wave-slot ceiling of 16 waves/SIMD, binding because no measured per-thread quantity — 2–25 `VGPRs`, 13–86 `TotalSGPRs`, 0 or 1040 scratch bytes per lane, 0 static LDS bytes per block, zero spills throughout — costs a wave slot. Each row carries its per-thread usage, its occupancy, and its resource-log line. The naming holds at each measured order $n \in \{12, 16, 20, 24, 28\}$, with the evidence stated: $n$ is a runtime argument and not a template parameter, so the compiler emits one resource block per kernel and no per-order variation is possible. The derivation rests on the compiler computing occupancy from exactly those quantities, plus two controls in the same receipt — the empty `permanent_wave_gpu_probe` reporting 16 with zero usage, which establishes the ceiling, and `permanent_bipedal7_kernel` at 128 `VGPRs` reporting 8, which shows the field falls under pressure rather than being constant. The dynamic-LDS blind spot is stated rather than assumed away, and §8 scopes it to the two prototype rows it actually qualifies. |
 | REQ-09 | §7.1 | **Satisfied.** The one prediction a measurement contradicts — the zero-allocation reading of the nine 32-bit-unit mapping model — is carried with its contradiction in the recording artifact's own words, and the 1040-byte scratch measurement is reported against the design narrative it qualifies. No prediction is silently restated. |
 | REQ-10 | §9 | **Satisfied.** Both frequencies, both exact expectations, their complement relation, the sample count 4096, and Wilson 95 % intervals are reported at all five measured orders, with the interval method fixed deterministically. A second, larger branch observation from the same file's timed-operation counts is reported beside it with its own intervals and its dependence on the same purpose stream stated. |
@@ -1157,10 +1183,12 @@ Collected so a reader does not have to reassemble it from the sections above.
    static LDS only, so the study's central shared-memory prediction is neither
    confirmed nor refuted here, and no prototype cell in this run is large enough
    for shared-memory pressure to bind.
-4. **No per-lane register budget is predicted for the shipped kernel.** REQ-07's
-   prediction-beside-measurement pairing is one-sided for
-   `permanent_bipedal3_kernel`, `gray_update_micro_kernel`, and
-   `horizontal_product_micro_kernel`.
+4. **No per-lane register budget is predicted for five of the seven measured
+   kernels.** The prediction-beside-measurement pairing is one-sided for
+   `permanent_bipedal3_kernel`, `gray_update_micro_kernel`,
+   `horizontal_product_micro_kernel`, and the two compiler-barrier baselines
+   (§7.2). Their measured figures stand on their own and there is nothing to
+   diverge from, so this campaign cannot test a register hypothesis for them.
 5. **The $n = 28$, $M = 1024$ ordering is open.** The cell is censored; the
    study's 0.984× figure for it is neither confirmed nor overturned.
 6. **This field's Gray update has no device duration.** The device circuit is
