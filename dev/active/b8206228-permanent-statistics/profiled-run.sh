@@ -100,6 +100,46 @@ pmc_grid pmc-n20-threeplane "q=7,n=20,backend=f7-three-plane-permanent" || fail=
 pmc_mode pmc-grayupdate gray-update        || fail=1
 pmc_mode pmc-horizprod  horizontal-product || fail=1
 
+# Round-2 counter passes: the full-pass derived counters above drift with
+# cumulative dispatch count (rocprofv3's accumulate/max windows), so achieved
+# occupancy is read from early dispatch iterations only, where the derived
+# values are exact. OccupancyPercent reads zero under iteration-range
+# collection on this stack, so round 2 records MeanOccupancyPerCU beside
+# SQ_WAVES; admissibility is the physical bound
+# 0 < MeanOccupancyPerCU <= min(32, SQ_WAVES/80) per collected dispatch.
+PMC2=(--pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range '[1-8]')
+ONLY="q=7,n=12,backend=gpu_hip"                  run_grid_pass pmc2-n12-gpuhip     "${PMC2[@]}" || fail=1
+ONLY="q=7,n=12,backend=f7-lookup-table-control"  run_grid_pass pmc2-n12-lookup     "${PMC2[@]}" || fail=1
+ONLY="q=7,n=12,backend=f7-three-plane-permanent" run_grid_pass pmc2-n12-threeplane "${PMC2[@]}" || fail=1
+ONLY="q=7,n=20,backend=gpu_hip"                  run_grid_pass pmc2-n20-gpuhip     "${PMC2[@]}" || fail=1
+ONLY="q=7,n=20,backend=f7-lookup-table-control"  run_grid_pass pmc2-n20-lookup     "${PMC2[@]}" || fail=1
+ONLY="q=7,n=20,backend=f7-three-plane-permanent" run_grid_pass pmc2-n20-threeplane "${PMC2[@]}" || fail=1
+MODE=gray-update        run_mode_pass pmc2-grayupdate "${PMC2[@]}" || fail=1
+MODE=horizontal-product run_mode_pass pmc2-horizprod  "${PMC2[@]}" || fail=1
+ONLY="q=7,n=16,backend=f7-three-plane-permanent" run_grid_pass pmc2-n16-threeplane "${PMC2[@]}" || fail=1
+
+# Profiler capability probes: rocprofv2 and legacy rocprof abort this
+# workload under their interception (device batch failure in the candidate
+# worker). The recorded failures ground the receipt's statement that
+# rocprofv3 is the one profiler on this host that both runs the workload
+# and produces counters; a probe unexpectedly SUCCEEDING here invalidates
+# that statement and must be investigated, so success is the failure mode.
+V2PMC=$OUT/v2-pmc.txt
+printf 'pmc: SQ_WAVES MeanOccupancyPerCU\n' > "$V2PMC"
+probe() {
+  local name=$1 tool=$2
+  local dir=$OUT/$name; mkdir -p "$dir"
+  local cmd=("$FLOCK" --full-host "$tool" -i "$V2PMC" -d "$dir" -o "$dir/results.csv" \
+    "$BIN" grid --out "$dir/grid.csv" --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup)
+  echo "COMMAND[$name]: ${cmd[*]}" | tee -a "$LOG"
+  local t0=$(date +%s); "${cmd[@]}" >> "$LOG" 2>&1; local rc=$?
+  echo "EXIT[$name]: $rc after $(( $(date +%s) - t0 )) s" | tee -a "$LOG"
+  if [ $rc -eq 0 ]; then echo "PROBE-UNEXPECTED-SUCCESS[$name]" | tee -a "$LOG"; fail=1; fi
+}
+probe rocprofv2-n20-threeplane /opt/rocm/bin/rocprofv2
+probe rocprofv1-n20-threeplane /opt/rocm/bin/rocprof
+rm -f "$V2PMC"
+
 echo "overall_fail: $fail" | tee -a "$LOG"
 
 # Packaging: per-dispatch counter and trace CSVs are too large to commit.

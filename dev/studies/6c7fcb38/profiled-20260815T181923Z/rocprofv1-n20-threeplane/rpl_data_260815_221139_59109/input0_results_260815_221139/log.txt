@@ -1,0 +1,7 @@
+skipping machine warmup by request
+[1/1] q=7 n=20 f7-three-plane-permanent
+/usr/include/c++/16.1.1/bits/stl_vector.h:1272: std::vector<_Tp, _Alloc>::const_reference std::vector<_Tp, _Alloc>::operator[](size_type) const [with _Tp = unsigned int; _Alloc = std::allocator<unsigned int>; const_reference = const unsigned int&; size_type = long unsigned int]: Assertion '__n < this->size()' failed.
+
+thread 'main' (59173) panicked at src/backend.rs:519:34:
+fatal f7-three-plane-permanent device batch failure: read from f7-three-plane-permanent worker: failed to fill whole buffer
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

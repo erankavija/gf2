@@ -1,0 +1,49 @@
+"Correlation_Id","Dispatch_Id","Agent_Id","Queue_Id","Process_Id","Thread_Id","Grid_Size","Kernel_Id","Kernel_Name","Workgroup_Size","LDS_Block_Size","Scratch_Size","VGPR_Count","Accum_VGPR_Count","SGPR_Count","Counter_Name","Counter_Value","Start_Timestamp","End_Timestamp"
+1,1,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",3.81790137e-02,13390462162263,13390462165263
+1,1,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",2621436.000000,13390462162263,13390462165263
+2,2,"Agent 1",1,58693,58693,32,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",3.44449437e-03,13390462993429,13390462996069
+2,2,"Agent 1",1,58693,58693,32,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",1.000000,13390462993429,13390462996069
+3,3,"Agent 1",1,58693,58693,32,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.21077565e-02,13390463145130,13390463459053
+3,3,"Agent 1",1,58693,58693,32,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",1.000000,13390463145130,13390463459053
+4,4,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",2.53069836e-02,13390463496293,13390463499013
+4,4,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",62359.000000,13390463496293,13390463499013
+5,5,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.04675188e-02,13390463676824,13390463679264
+5,5,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13390463676824,13390463679264
+6,6,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",4.75346756e-02,13390463735745,13390463738385
+6,6,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",18239.000000,13390463735745,13390463738385
+7,7,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68792857e-01,13390463770105,13390464084868
+7,7,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",3355459.000000,13390463770105,13390464084868
+8,8,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",2.40460280e-02,13390464122268,13390464124908
+8,8,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13390464122268,13390464124908
+9,9,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",3.90283332e-02,13390464251039,13390464253559
+9,9,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13390464251039,13390464253559
+10,10,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",4.59014111e-02,13390464292079,13390464294519
+10,10,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",22789.000000,13390464292079,13390464294519
+11,11,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68758588e-01,13390464327559,13390464641562
+11,11,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",2510594.000000,13390464327559,13390464641562
+12,12,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",2.35502756e-02,13390464679322,13390464681922
+12,12,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",57358.000000,13390464679322,13390464681922
+13,13,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",3.86906034e-02,13390464802633,13390464805113
+13,13,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13390464802633,13390464805113
+14,14,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",4.02062246e-02,13390464844113,13390464846514
+14,14,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",15721.000000,13390464844113,13390464846514
+15,15,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68599802e-01,13390464879314,13390465193236
+15,15,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",3342902.000000,13390464879314,13390465193236
+16,16,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",2.36785003e-02,13390465230357,13390465232957
+16,16,"Agent 1",1,58693,58693,512,6,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13390465230357,13390465232957
+18,18,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",3.80721309e-02,13390465371108,13390465373428
+18,18,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",20574.000000,13390465371108,13390465373428
+19,19,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68575884e-01,13390465406148,13390465720070
+19,19,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",2518744.000000,13390465406148,13390465720070
+22,22,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",3.79116916e-02,13390465888432,13390465890632
+22,22,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",57801.000000,13390465888432,13390465890632
+23,23,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68657285e-01,13390465922912,13390466236274
+23,23,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",3349635.000000,13390465922912,13390466236274
+26,26,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",3.82956994e-02,13390466406756,13390466408836
+26,26,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",19320.000000,13390466406756,13390466408836
+27,27,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68401636e-01,13390466441316,13390466754639
+27,27,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",2512497.000000,13390466441316,13390466754639
+30,30,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"MeanOccupancyPerCU",3.79903158e-02,13390466922120,13390466924320
+30,30,"Agent 1",1,58693,58693,448,20,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",32,0,0,24,0,128,"SQ_WAVES",57854.000000,13390466922120,13390466924320
+31,31,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"MeanOccupancyPerCU",1.68965399e-01,13390466956640,13390467269003
+31,31,"Agent 1",1,58693,58693,448,19,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",32,0,0,40,0,128,"SQ_WAVES",3344229.000000,13390466956640,13390467269003

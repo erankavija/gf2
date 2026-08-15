@@ -1,0 +1,6 @@
+Dispatch_ID,GPU_ID,Queue_ID,PID,TID,Grid_Size,Workgroup_Size,LDS_Per_Workgroup,Scratch_Per_Workitem,Arch_VGPR,Accum_VGPR,SGPR,Wave_Size,Kernel_Name,Start_Timestamp,End_Timestamp,Correlation_ID,SQ_WAVES,MeanOccupancyPerCU
+
+0,1,1,58897,58897,512,512,0,0,16,0,128,32,"__amd_rocclr_copyBuffer.kd",13412891516310,13412891519710,0,16.000000,1.323569
+1,1,1,58897,58897,32,32,0,0,24,0,128,32,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*) (.kd)",13412892224501,13412892227861,0,1.000000,0.003784
+2,1,1,58897,58897,32,32,512,0,40,0,128,32,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*) (.kd)",13412892403904,13412897026059,0,1.000000,0.012472
+3,1,1,58897,58897,512,512,0,0,16,0,128,32,"__amd_rocclr_copyBuffer.kd",13412897063859,13412897066379,0,16.000000,0.064790

@@ -1,0 +1,338 @@
+round2_stamp: 20260815T190045Z
+binary_sha256: edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce (matches manifest-v1.txt)
+COMMAND[pmc2-n12-gpuhip]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip -o pmc2-n12-gpuhip-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/grid.csv --only q=7,n=12,backend=gpu_hip --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+W20260815 22:00:45.339213 140286169640704 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090614 sec
+W20260815 22:00:45.339401 140286169640704 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/grid.csv --only q=7,n=12,backend=gpu_hip --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/2] q=7 n=12 gpu_hip
+W20260815 22:00:47.317040 140286169640704 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    9538.225 matrices/s composite (9622.273 eval-only), M=256, reps=186, sd=0.001 s
+[2/2] q=7 n=12 gpu_hip
+    20957.605 matrices/s composite (21344.596 eval-only), M=1024, reps=103, sd=0.000 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/grid.csv
+W20260815 22:01:04.136477 140286169640704 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/grid.csv --only q=7,n=12,backend=gpu_hip --execution-id 7002 --skip-machine-warmup' ::    18.797076 sec
+E20260815 22:01:04.144790 140286169640704 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/pmc2-n12-gpuhip-56315_counter_collection.csv
+E20260815 22:01:04.146445 140286169640704 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-gpuhip/pmc2-n12-gpuhip-56315_agent_info.csv
+W20260815 22:01:04.147877 140286169640704 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011094 sec
+W20260815 22:01:04.147899 140286169640704 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011119 sec
+EXIT[pmc2-n12-gpuhip]: 0 after 19 s
+COMMAND[pmc2-n12-lookup]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup -o pmc2-n12-lookup-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/grid.csv --only q=7,n=12,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+W20260815 22:01:04.326206 139780909326080 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090059 sec
+W20260815 22:01:04.326674 139780909326080 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/grid.csv --only q=7,n=12,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/1] q=7 n=12 f7-lookup-table-control
+W20260815 22:01:06.386040 140263935450688 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.092290 sec
+W20260815 22:01:06.386211 140263935450688 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-lookup-table-control' ::     0.000000 sec
+W20260815 22:01:06.401121 140263935450688 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    620360.317 matrices/s composite (1325797.465 eval-only), M=1614, reps=1751, sd=0.000 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/grid.csv
+W20260815 22:01:14.754878 139780909326080 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/grid.csv --only q=7,n=12,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup' ::    10.428204 sec
+W20260815 22:01:14.755273 139780909326080 simple_timer.cpp:55] [rocprofv3] output generation ::     0.000359 sec
+W20260815 22:01:14.755287 139780909326080 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.000375 sec
+W20260815 22:01:14.764342 140263935450688 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-lookup-table-control' ::     8.378131 sec
+EXIT[pmc2-n12-lookup]: 0 after 10 s
+COMMAND[pmc2-n12-threeplane]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane -o pmc2-n12-threeplane-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/grid.csv --only q=7,n=12,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup
+E20260815 22:01:14.775143 140263935450688 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/pmc2-n12-lookup-56583_counter_collection.csv
+E20260815 22:01:14.776976 140263935450688 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-lookup/pmc2-n12-lookup-56583_agent_info.csv
+W20260815 22:01:14.778208 140263935450688 simple_timer.cpp:55] [rocprofv3] output generation ::     0.013385 sec
+W20260815 22:01:14.778232 140263935450688 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.013414 sec
+nice: cannot set niceness: Permission denied
+W20260815 22:01:14.950183 139867522137856 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.093609 sec
+W20260815 22:01:14.950388 139867522137856 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/grid.csv --only q=7,n=12,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/1] q=7 n=12 f7-three-plane-permanent
+W20260815 22:01:17.022535 140120199634496 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.088732 sec
+W20260815 22:01:17.022723 140120199634496 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     0.000000 sec
+W20260815 22:01:17.037621 140120199634496 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    78990.098 matrices/s composite (87953.523 eval-only), M=14, reps=27810, sd=0.000 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/grid.csv
+W20260815 22:01:25.395743 139867522137856 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/grid.csv --only q=7,n=12,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::    10.445355 sec
+W20260815 22:01:25.396222 139867522137856 simple_timer.cpp:55] [rocprofv3] output generation ::     0.000435 sec
+W20260815 22:01:25.396238 139867522137856 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.000455 sec
+W20260815 22:01:25.406189 140120199634496 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     8.383466 sec
+EXIT[pmc2-n12-threeplane]: 0 after 11 s
+COMMAND[pmc2-n20-gpuhip]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip -o pmc2-n20-gpuhip-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/grid.csv --only q=7,n=20,backend=gpu_hip --execution-id 7002 --skip-machine-warmup
+E20260815 22:01:25.417138 140120199634496 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/pmc2-n12-threeplane-56690_counter_collection.csv
+E20260815 22:01:25.418926 140120199634496 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n12-threeplane/pmc2-n12-threeplane-56690_agent_info.csv
+W20260815 22:01:25.420166 140120199634496 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012172 sec
+W20260815 22:01:25.420188 140120199634496 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012197 sec
+nice: cannot set niceness: Permission denied
+W20260815 22:01:25.607198 140503349714688 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.099676 sec
+W20260815 22:01:25.607388 140503349714688 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/grid.csv --only q=7,n=20,backend=gpu_hip --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/2] q=7 n=20 gpu_hip
+W20260815 22:01:27.588684 140503349714688 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    27.194 matrices/s composite (27.195 eval-only), M=256, reps=5, sd=0.527 s
+[2/2] q=7 n=20 gpu_hip
+    57.830 matrices/s composite (57.838 eval-only), M=1024, reps=5, sd=0.005 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/grid.csv
+W20260815 22:04:18.732952 140503349714688 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/grid.csv --only q=7,n=20,backend=gpu_hip --execution-id 7002 --skip-machine-warmup' ::   173.125564 sec
+E20260815 22:04:18.741686 140503349714688 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/pmc2-n20-gpuhip-56824_counter_collection.csv
+E20260815 22:04:18.743857 140503349714688 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-gpuhip/pmc2-n20-gpuhip-56824_agent_info.csv
+W20260815 22:04:18.745034 140503349714688 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011722 sec
+W20260815 22:04:18.745057 140503349714688 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011748 sec
+EXIT[pmc2-n20-gpuhip]: 0 after 173 s
+COMMAND[pmc2-n20-lookup]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup -o pmc2-n20-lookup-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/grid.csv --only q=7,n=20,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+W20260815 22:04:18.926662 140476610641664 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090941 sec
+W20260815 22:04:18.926866 140476610641664 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/grid.csv --only q=7,n=20,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/1] q=7 n=20 f7-lookup-table-control
+W20260815 22:04:21.008699 139890615266880 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.089781 sec
+W20260815 22:04:21.008879 139890615266880 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-lookup-table-control' ::     0.000000 sec
+W20260815 22:04:21.023258 139890615266880 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    392.179 matrices/s composite (392.638 eval-only), M=28, reps=71, sd=0.000 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/grid.csv
+W20260815 22:04:29.600705 140476610641664 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/grid.csv --only q=7,n=20,backend=f7-lookup-table-control --execution-id 7002 --skip-machine-warmup' ::    10.673839 sec
+W20260815 22:04:29.601176 140476610641664 simple_timer.cpp:55] [rocprofv3] output generation ::     0.000430 sec
+W20260815 22:04:29.601193 140476610641664 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.000450 sec
+W20260815 22:04:29.611255 139890615266880 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-lookup-table-control' ::     8.602376 sec
+EXIT[pmc2-n20-lookup]: 0 after 11 s
+COMMAND[pmc2-n20-threeplane]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane -o pmc2-n20-threeplane-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/grid.csv --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup
+E20260815 22:04:29.620873 139890615266880 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/pmc2-n20-lookup-57231_counter_collection.csv
+E20260815 22:04:29.622878 139890615266880 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-lookup/pmc2-n20-lookup-57231_agent_info.csv
+W20260815 22:04:29.624061 139890615266880 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012344 sec
+W20260815 22:04:29.624086 139890615266880 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012372 sec
+nice: cannot set niceness: Permission denied
+W20260815 22:04:29.793016 139997869231872 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.089938 sec
+W20260815 22:04:29.793220 139997869231872 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/grid.csv --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/1] q=7 n=20 f7-three-plane-permanent
+W20260815 22:04:31.846660 139749606366784 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090351 sec
+W20260815 22:04:31.846852 139749606366784 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     0.000000 sec
+W20260815 22:04:31.860960 139749606366784 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    2676.821 matrices/s composite (2698.445 eval-only), M=13, reps=1029, sd=0.000 s
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/grid.csv
+W20260815 22:04:40.222311 139997869231872 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/grid.csv --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::    10.429091 sec
+W20260815 22:04:40.222798 139997869231872 simple_timer.cpp:55] [rocprofv3] output generation ::     0.000444 sec
+W20260815 22:04:40.225257 139997869231872 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.002906 sec
+W20260815 22:04:40.236343 139749606366784 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     8.389491 sec
+EXIT[pmc2-n20-threeplane]: 0 after 11 s
+COMMAND[pmc2-grayupdate]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate -o pmc2-grayupdate-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/gray-update.csv --q 7
+E20260815 22:04:40.245750 139749606366784 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/pmc2-n20-threeplane-57350_counter_collection.csv
+E20260815 22:04:40.247858 139749606366784 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n20-threeplane/pmc2-n20-threeplane-57350_agent_info.csv
+W20260815 22:04:40.249158 139749606366784 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012373 sec
+W20260815 22:04:40.249183 139749606366784 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012400 sec
+nice: cannot set niceness: Permission denied
+W20260815 22:04:40.419778 140500335722240 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090316 sec
+W20260815 22:04:40.420234 140500335722240 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/gray-update.csv --q 7' ::     0.000000 sec
+q=7 n=12 cpu_scalar               measured
+q=7 n=12 cpu_avx2                 unsupported
+q=7 n=12 cpu_rayon_batch_scalar   unsupported
+q=7 n=12 cpu_rayon_batch_avx2     unsupported
+q=7 n=12 cpu_rayon_intra_matrix   unsupported
+W20260815 22:04:50.445871 140500335722240 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+q=7 n=12 gpu_hip                  measured
+q=7 n=12 cpu_ryser_generic        unsupported
+q=7 n=12 wave-gf3                 unsupported
+q=7 n=12 fold-gf3                 unsupported
+q=7 n=12 f5-byte-control          unsupported
+q=7 n=12 f5-three-plane           unsupported
+q=7 n=12 f7-three-plane-accumulator unsupported
+q=7 n=12 f7-lookup-table-control  unsupported
+q=7 n=12 f7-three-plane-permanent unsupported
+q=7 n=16 cpu_scalar               measured
+q=7 n=16 cpu_avx2                 unsupported
+q=7 n=16 cpu_rayon_batch_scalar   unsupported
+q=7 n=16 cpu_rayon_batch_avx2     unsupported
+q=7 n=16 cpu_rayon_intra_matrix   unsupported
+q=7 n=16 gpu_hip                  measured
+q=7 n=16 cpu_ryser_generic        unsupported
+q=7 n=16 wave-gf3                 unsupported
+q=7 n=16 fold-gf3                 unsupported
+q=7 n=16 f5-byte-control          unsupported
+q=7 n=16 f5-three-plane           unsupported
+q=7 n=16 f7-three-plane-accumulator unsupported
+q=7 n=16 f7-lookup-table-control  unsupported
+q=7 n=16 f7-three-plane-permanent unsupported
+q=7 n=20 cpu_scalar               unsupported
+q=7 n=20 cpu_avx2                 unsupported
+q=7 n=20 cpu_rayon_batch_scalar   unsupported
+q=7 n=20 cpu_rayon_batch_avx2     unsupported
+q=7 n=20 cpu_rayon_intra_matrix   unsupported
+q=7 n=20 gpu_hip                  measured
+q=7 n=20 cpu_ryser_generic        unsupported
+q=7 n=20 wave-gf3                 unsupported
+q=7 n=20 fold-gf3                 unsupported
+q=7 n=20 f5-byte-control          unsupported
+q=7 n=20 f5-three-plane           unsupported
+q=7 n=20 f7-three-plane-accumulator unsupported
+q=7 n=20 f7-lookup-table-control  unsupported
+q=7 n=20 f7-three-plane-permanent unsupported
+q=7 n=24 cpu_scalar               unsupported
+q=7 n=24 cpu_avx2                 unsupported
+q=7 n=24 cpu_rayon_batch_scalar   unsupported
+q=7 n=24 cpu_rayon_batch_avx2     unsupported
+q=7 n=24 cpu_rayon_intra_matrix   unsupported
+q=7 n=24 gpu_hip                  measured
+q=7 n=24 cpu_ryser_generic        unsupported
+q=7 n=24 wave-gf3                 unsupported
+q=7 n=24 fold-gf3                 unsupported
+q=7 n=24 f5-byte-control          unsupported
+q=7 n=24 f5-three-plane           unsupported
+q=7 n=24 f7-three-plane-accumulator unsupported
+q=7 n=24 f7-lookup-table-control  unsupported
+q=7 n=24 f7-three-plane-permanent unsupported
+q=7 n=28 cpu_scalar               unsupported
+q=7 n=28 cpu_avx2                 unsupported
+q=7 n=28 cpu_rayon_batch_scalar   unsupported
+q=7 n=28 cpu_rayon_batch_avx2     unsupported
+q=7 n=28 cpu_rayon_intra_matrix   unsupported
+q=7 n=28 gpu_hip                  measured
+q=7 n=28 cpu_ryser_generic        unsupported
+q=7 n=28 wave-gf3                 unsupported
+q=7 n=28 fold-gf3                 unsupported
+q=7 n=28 f5-byte-control          unsupported
+q=7 n=28 f5-three-plane           unsupported
+q=7 n=28 f7-three-plane-accumulator unsupported
+q=7 n=28 f7-lookup-table-control  unsupported
+q=7 n=28 f7-three-plane-permanent unsupported
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/gray-update.csv
+W20260815 22:07:15.310184 140500335722240 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas gray-update --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/gray-update.csv --q 7' ::   154.889950 sec
+E20260815 22:07:15.318777 140500335722240 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/pmc2-grayupdate-57457_counter_collection.csv
+E20260815 22:07:15.320821 140500335722240 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-grayupdate/pmc2-grayupdate-57457_agent_info.csv
+W20260815 22:07:15.321993 140500335722240 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011404 sec
+W20260815 22:07:15.322017 140500335722240 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011431 sec
+EXIT[pmc2-grayupdate]: 0 after 155 s
+COMMAND[pmc2-horizprod]: /home/vkaskivuo/Projects/gf2/dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod -o pmc2-horizprod-%pid% -- /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/horizontal-product.csv --q 7
+nice: cannot set niceness: Permission denied
+W20260815 22:07:15.500842 140681310248704 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.090142 sec
+W20260815 22:07:15.501035 140681310248704 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/horizontal-product.csv --q 7' ::     0.000000 sec
+q=7 n=12 cpu_scalar               unsupported
+q=7 n=12 cpu_avx2                 unsupported
+q=7 n=12 cpu_rayon_batch_scalar   unsupported
+q=7 n=12 cpu_rayon_batch_avx2     unsupported
+q=7 n=12 cpu_rayon_intra_matrix   unsupported
+W20260815 22:07:17.474831 140681310248704 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+q=7 n=12 gpu_hip                  measured
+q=7 n=12 cpu_ryser_generic        unsupported
+q=7 n=12 wave-gf3                 unsupported
+q=7 n=12 fold-gf3                 unsupported
+q=7 n=12 f5-byte-control          unsupported
+q=7 n=12 f5-three-plane           unsupported
+q=7 n=12 f7-three-plane-accumulator measured
+q=7 n=12 f7-lookup-table-control  measured
+q=7 n=12 f7-three-plane-permanent measured
+q=7 n=16 cpu_scalar               unsupported
+q=7 n=16 cpu_avx2                 unsupported
+q=7 n=16 cpu_rayon_batch_scalar   unsupported
+q=7 n=16 cpu_rayon_batch_avx2     unsupported
+q=7 n=16 cpu_rayon_intra_matrix   unsupported
+q=7 n=16 gpu_hip                  measured
+q=7 n=16 cpu_ryser_generic        unsupported
+q=7 n=16 wave-gf3                 unsupported
+q=7 n=16 fold-gf3                 unsupported
+q=7 n=16 f5-byte-control          unsupported
+q=7 n=16 f5-three-plane           unsupported
+q=7 n=16 f7-three-plane-accumulator measured
+q=7 n=16 f7-lookup-table-control  measured
+q=7 n=16 f7-three-plane-permanent measured
+q=7 n=20 cpu_scalar               unsupported
+q=7 n=20 cpu_avx2                 unsupported
+q=7 n=20 cpu_rayon_batch_scalar   unsupported
+q=7 n=20 cpu_rayon_batch_avx2     unsupported
+q=7 n=20 cpu_rayon_intra_matrix   unsupported
+q=7 n=20 gpu_hip                  measured
+q=7 n=20 cpu_ryser_generic        unsupported
+q=7 n=20 wave-gf3                 unsupported
+q=7 n=20 fold-gf3                 unsupported
+q=7 n=20 f5-byte-control          unsupported
+q=7 n=20 f5-three-plane           unsupported
+q=7 n=20 f7-three-plane-accumulator measured
+q=7 n=20 f7-lookup-table-control  measured
+q=7 n=20 f7-three-plane-permanent measured
+q=7 n=24 cpu_scalar               unsupported
+q=7 n=24 cpu_avx2                 unsupported
+q=7 n=24 cpu_rayon_batch_scalar   unsupported
+q=7 n=24 cpu_rayon_batch_avx2     unsupported
+q=7 n=24 cpu_rayon_intra_matrix   unsupported
+q=7 n=24 gpu_hip                  measured
+q=7 n=24 cpu_ryser_generic        unsupported
+q=7 n=24 wave-gf3                 unsupported
+q=7 n=24 fold-gf3                 unsupported
+q=7 n=24 f5-byte-control          unsupported
+q=7 n=24 f5-three-plane           unsupported
+q=7 n=24 f7-three-plane-accumulator measured
+q=7 n=24 f7-lookup-table-control  measured
+q=7 n=24 f7-three-plane-permanent measured
+q=7 n=28 cpu_scalar               unsupported
+q=7 n=28 cpu_avx2                 unsupported
+q=7 n=28 cpu_rayon_batch_scalar   unsupported
+q=7 n=28 cpu_rayon_batch_avx2     unsupported
+q=7 n=28 cpu_rayon_intra_matrix   unsupported
+q=7 n=28 gpu_hip                  measured
+q=7 n=28 cpu_ryser_generic        unsupported
+q=7 n=28 wave-gf3                 unsupported
+q=7 n=28 fold-gf3                 unsupported
+q=7 n=28 f5-byte-control          unsupported
+q=7 n=28 f5-three-plane           unsupported
+q=7 n=28 f7-three-plane-accumulator measured
+q=7 n=28 f7-lookup-table-control  measured
+q=7 n=28 f7-three-plane-permanent measured
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/horizontal-product.csv
+W20260815 22:09:57.550638 140681310248704 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas horizontal-product --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/horizontal-product.csv --q 7' ::   162.049603 sec
+E20260815 22:09:57.564046 140681310248704 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/pmc2-horizprod-57950_counter_collection.csv
+E20260815 22:09:57.565811 140681310248704 output_stream.cpp:111] Opened result file: /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-horizprod/pmc2-horizprod-57950_agent_info.csv
+W20260815 22:09:57.567020 140681310248704 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012131 sec
+W20260815 22:09:57.567046 140681310248704 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012159 sec
+EXIT[pmc2-horizprod]: 0 after 162 s
+overall_fail: 0
+COMMAND[pmc2-n16-threeplane]: dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv3 --pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8] -f csv -d dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane -o pmc2-n16-threeplane-%pid% -- target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/grid.csv --only q=7,n=16,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+W20260815 22:10:46.953400 140429209587456 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.091412 sec
+W20260815 22:10:46.953614 140429209587456 simple_timer.cpp:55] [rocprofv3] 'target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/grid.csv --only q=7,n=16,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::     0.000000 sec
+skipping machine warmup by request
+[1/1] q=7 n=16 f7-three-plane-permanent
+W20260815 22:10:49.021472 140208889642560 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.089351 sec
+W20260815 22:10:49.021675 140208889642560 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     0.000000 sec
+W20260815 22:10:49.035654 140208889642560 tool.cpp:2423] HSA version 1.18.0 initialized (instance=0)
+    29087.839 matrices/s composite (30730.952 eval-only), M=14, reps=10317, sd=0.000 s
+wrote dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/grid.csv
+W20260815 22:10:57.395902 140429209587456 simple_timer.cpp:55] [rocprofv3] 'target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/grid.csv --only q=7,n=16,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup' ::    10.442288 sec
+W20260815 22:10:57.396383 140429209587456 simple_timer.cpp:55] [rocprofv3] output generation ::     0.000440 sec
+W20260815 22:10:57.396399 140429209587456 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.000459 sec
+W20260815 22:10:57.406406 140208889642560 simple_timer.cpp:55] [rocprofv3] '/home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/build/permanent-wave-gpu-6c023542c09d06ea/out/wave_gf7_equivalence --batch-stdin --path f7-three-plane-permanent' ::     8.384731 sec
+EXIT[pmc2-n16-threeplane]: 0 after 11 s
+E20260815 22:10:57.416578 140208889642560 output_stream.cpp:111] Opened result file: dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/pmc2-n16-threeplane-58693_counter_collection.csv
+E20260815 22:10:57.418706 140208889642560 output_stream.cpp:111] Opened result file: dev/studies/6c7fcb38/profiled-20260815T181923Z/pmc2-n16-threeplane/pmc2-n16-threeplane-58693_agent_info.csv
+W20260815 22:10:57.420072 140208889642560 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012761 sec
+W20260815 22:10:57.420099 140208889642560 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012791 sec
+COMMAND[rocprofv2-n20-threeplane]: dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprofv2 -i /tmp/claude-1000/-home-vkaskivuo-Projects-gf2/4ddf7dc6-3035-4278-a9ed-7a34b3e2470c/scratchpad/v2-pmc.txt --plugin file -d dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane -o v2-n20-threeplane target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/grid.csv --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+
+[0;31mWARNING: We are phasing out development and support for roctracer/rocprofiler/rocprof/rocprofv2 in favor of rocprofiler-sdk/rocprofv3 in upcoming ROCm releases. Going forward, only critical defect fixes will be addressed for older versions of profiling tools and libraries. We encourage all users to upgrade to the latest version, rocprofiler-sdk library and rocprofv3 tool, to ensure continued support and access to new features.[0m
+
+skipping machine warmup by request
+[1/1] q=7 n=20 f7-three-plane-permanent
+
+thread 'main' (58828) panicked at src/backend.rs:519:34:
+fatal f7-three-plane-permanent device batch failure: f7-three-plane-permanent worker reported device failure status 1346588498 for a batch of 1 matrices at n = 20; see its stderr
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+EXIT[rocprofv2-n20-threeplane]: 101 after 0 s
+COMMAND[rocprofv1-n20-threeplane]: dev/scripts/ccx1-bench-flock.sh --full-host /opt/rocm/bin/rocprof -i /tmp/claude-1000/-home-vkaskivuo-Projects-gf2/4ddf7dc6-3035-4278-a9ed-7a34b3e2470c/scratchpad/v2-pmc.txt -d dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane -o dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/v1-results.csv target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/grid.csv --only q=7,n=20,backend=f7-three-plane-permanent --execution-id 7002 --skip-machine-warmup
+nice: cannot set niceness: Permission denied
+
+[0;31mWARNING: We are phasing out development and support for roctracer/rocprofiler/rocprof/rocprofv2 in favor of rocprofiler-sdk/rocprofv3 in upcoming ROCm releases. Going forward, only critical defect fixes will be addressed for older versions of profiling tools and libraries. We encourage all users to upgrade to the latest version, rocprofiler-sdk library and rocprofv3 tool, to ensure continued support and access to new features.[0m
+
+RPL: on '260815_221139' from '/opt/rocm' in '/home/vkaskivuo/Projects/gf2'
+RPL: profiling '"target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas" "grid" "--out" "dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/grid.csv" "--only" "q=7,n=20,backend=f7-three-plane-permanent" "--execution-id" "7002" "--skip-machine-warmup"'
+RPL: input file '/tmp/claude-1000/-home-vkaskivuo-Projects-gf2/4ddf7dc6-3035-4278-a9ed-7a34b3e2470c/scratchpad/v2-pmc.txt'
+RPL: output dir 'dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/rpl_data_260815_221139_59109'
+
+------------ ------------ ------------
+WARNING: rocprof(v1) is not supported on this device. Recommended use: rocprofv2
+Please refer project's README for a list of supported architecures.
+------------ ------------ ------------
+
+RPL: result dir 'dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/rpl_data_260815_221139_59109/input0_results_260815_221139'
+skipping machine warmup by request
+[1/1] q=7 n=20 f7-three-plane-permanent
+/usr/include/c++/16.1.1/bits/stl_vector.h:1272: std::vector<_Tp, _Alloc>::const_reference std::vector<_Tp, _Alloc>::operator[](size_type) const [with _Tp = unsigned int; _Alloc = std::allocator<unsigned int>; const_reference = const unsigned int&; size_type = long unsigned int]: Assertion '__n < this->size()' failed.
+
+thread 'main' (59173) panicked at src/backend.rs:519:34:
+fatal f7-three-plane-permanent device batch failure: read from f7-three-plane-permanent worker: failed to fill whole buffer
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+File 'dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/v1-results.csv' is generating
+EXIT[rocprofv1-n20-threeplane]: 101 after 1 s
