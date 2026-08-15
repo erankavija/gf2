@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T07:54:36.651544581Z",
+  "dependencies": [],
+  "description": "dev/studies/b488f02c/feasibility-study.md section 4.4 publishes 18182 for the q=3, n=12, cpu_avx2 composite rate; its own committed artifact dev/studies/b488f02c/throughput-2026-08-07.csv holds 18181.4619, which renders as 18181 at the table's five significant figures. One cell, 0.003% overstatement; the other 34 published q=3 cells round correctly.\n\n## Background\n\nFound by the F_3 receipt campaign (047b62ed) when its analysis.py switched from quoting the study's table to parsing the CSV (commit 61d4bb3d); recorded in the receipts as section 11.1. cpu_avx2 is never the best applicable CPU path at any order, so no baseline ratio depends on the cell.\n\n## Success Criteria\n\n- [hard] REQ-01: The published section 4.4 cell agrees with the committed CSV at the table's stated precision, and the correction commit cites this issue.\n- [hard] REQ-02: A recorded check (script or command in the study directory) verifies every published section 4.4 q=3 cell against the CSV at each cell's shown precision.\n\n## Notes\n\nPer @/inv/claims-trace-to-artifacts and @/inv/falsification-preserved; the receipts' section 11.1 record stays regardless (it documents the discrepancy at the time of measurement).\n",
+  "documents": [],
+  "first_ready_at": "2026-08-15T07:54:36.651544581Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "a2c0db52-6af9-41b3-b881-fdd46402a46b",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-algebra",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Feasibility study table cell disagrees with its own committed CSV",
+  "updated_at": "2026-08-15T07:54:36.651544581Z"
+}
