@@ -213,9 +213,9 @@
     },
     {
       "commit": null,
-      "doc_type": "evidence",
-      "label": "Paired profiled run provenance",
-      "path": "dev/studies/6c7fcb38/profiled-20260815T104014Z/provenance.txt"
+      "doc_type": null,
+      "label": "Paired profiled evidence run 20260815T181923Z",
+      "path": "dev/studies/6c7fcb38/profiled-20260815T181923Z/provenance.txt"
     }
   ],
   "first_ready_at": "2026-08-10T11:15:10.729787865Z",
@@ -241,5 +241,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-  "updated_at": "2026-08-15T10:50:29.700241212Z"
+  "updated_at": "2026-08-15T18:44:06.458363355Z"
 }

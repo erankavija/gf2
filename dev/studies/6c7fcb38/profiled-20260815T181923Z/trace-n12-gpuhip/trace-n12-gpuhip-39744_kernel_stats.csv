@@ -1,0 +1,3 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",467,15028364302,32180651.610278,99.99,19390802,46259238,33432153.989864
+"__amd_rocclr_copyBuffer",468,951486,2033.089744,6.331e-03,1760,3120,164.740132
