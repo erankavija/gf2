@@ -32,7 +32,7 @@
      "short_id": "91605d4d",
      "title": "F_5 preregistered receipt campaign",
      "classification": "research",
-     "status": "pending"
+     "status": "done"
     },
     {
      "id": "e0251af3-25c3-4914-8018-c3b66dd9561a",
@@ -426,7 +426,13 @@
   "The runner's smoke outputs land under each campaign study's smoke/ directory; a new smoke run supersedes the smoke evidence linked on closed 2ddf2f4b \u2014 git rm the superseded evidence and re-point the jit doc links in the same commit.",
   "The Ryser work-model projection is conservative (lands low) only on fixed-batch GPU chains; on probe-calibrated prototype chains it lands HIGH by up to ~680% at large orders because batch size moves up to 20x between adjacent orders (F_3 receipts section 5). Never treat a censored prototype cell's projection as a lower bound.",
   "Harness defects surfaced by the F_3 receipts and filed under the tech-debt umbrella 86b9c719: 3ea21d74 (grid CSV emits unquoted note columns; 25 malformed rows per field-grid) and 79c5ace7 (host_submission_s carries two semantics across backend rows). Receipt tooling for F_5/F_7 must reuse the seed_root-anchored CSV split and the device-clock launch column, as the F_3 analysis.py does.",
-  "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task."
+  "Lead and worker sharing one checkout share one git index: the lead's `git add <paths> && git commit` commits ANYTHING the worker has staged, burying the worker's change in the lead's commit (happened to the 047b62ed receipts alignment; repaired by splitting unpushed HEAD, commits 2a5cda47 + 62c061c7). Before any lead commit while a worker is active on the same checkout, run `git diff --cached --stat` and abort if staged paths are not the lead's own; better, never run lead commits while a same-checkout worker is mid-task.",
+  {
+   "issue": "91605d4d",
+   "source": "code-review round 1 (advisory, pre-existing)",
+   "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/runtime-observed-provenance.",
+   "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
+  }
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
