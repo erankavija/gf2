@@ -149,6 +149,9 @@ facts. See `@/inv/single-source-prose`.
 - **uncertainty-reported** — Every Monte Carlo estimate in a published artifact states its sample count and confidence interval; plots and tables of stochastic results carry error bars or interval columns.
 - **external-claims-cited** — Every reproduction target or externally sourced number cites a key resolving in the citation registry; a work referenced only by prose title is a staleness defect.
 - **falsification-preserved** — Data that contradicts a criterion, hypothesis, or cited claim is recorded together with the contradiction; silent rework of the falsified statement is a defect.
+- **campaign-resumability** — A simulation campaign is a resumable sequence of bounded runs: completed cells persist as durable checkpointed evidence, an interrupted, censored, or budget-exhausted run continues without repeating completed work, and no protocol step requires one uninterrupted session.
+- **behavioral-evidence-validity** — Committed measurement evidence is invalidated only by a change to the producing tool's measurement behavior — sampling, evaluation, timing, or output semantics — never by a documentation, narrative, or review-artifact change; the tool pins its behavioral identity so the two are distinguishable.
+- **runtime-observed-provenance** — Measurement-tool source and emitted preambles state only runtime-observed facts, the tool's own protocol constants, and identity-based citations of committed derivation records; a hand-written figure, file inventory, or prior-run narrative embedded in a tool is a staleness defect.
 <!-- jit:invariants:end -->
 
 ## JIT workflow
