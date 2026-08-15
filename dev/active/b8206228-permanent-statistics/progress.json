@@ -351,6 +351,14 @@
    "requested_at": "2026-08-15T07:20:00Z",
    "resolved_at": "2026-08-15T07:24:00Z",
    "decision": "Owner approved amending REQ-04 on all three campaigns: comparison at matching orders with the control's fixed and the prototypes' probe-calibrated batch sizes recorded beside their throughputs and the batch-size confound quantified; mappings comparable on the order axis. Owner chose a docs-only repair of the harness citation now (name the superseded run as historical, note the counts reproduce against the committed 20260814 run) over wire-and-rerun or leaving it, accepting the post-run docs-edit review risk."
+  },
+  {
+   "issue": "047b62ed",
+   "reason": "REQ-03's 'for every representation that executes' clause collides with structurally non-isolable components: the prototypes' Gray update runs fused inside the wave kernel and the halving reduction has no observable branch boundary, a record-the-reason design earlier review rounds endorsed.",
+   "status": "approved",
+   "requested_at": "2026-08-15T07:35:00Z",
+   "resolved_at": "2026-08-15T07:37:00Z",
+   "decision": "Owner approved amending REQ-03 on all three campaigns: a representation whose component admits no distinct isolate (fused or branchless circuit) is recorded with that structural reason in place of a duration, and a censored isolate carries its censoring reason."
   }
  ],
  "rework_counts": {
