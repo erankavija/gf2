@@ -210,6 +210,12 @@
       "format": "markdown",
       "label": "Receipts analysis script",
       "path": "dev/studies/6c7fcb38/analysis.py"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "label": "Paired profiled run provenance",
+      "path": "dev/studies/6c7fcb38/profiled-20260815T104014Z/provenance.txt"
     }
   ],
   "first_ready_at": "2026-08-10T11:15:10.729787865Z",
@@ -235,5 +241,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-  "updated_at": "2026-08-15T10:33:10.505779656Z"
+  "updated_at": "2026-08-15T10:50:29.700241212Z"
 }
