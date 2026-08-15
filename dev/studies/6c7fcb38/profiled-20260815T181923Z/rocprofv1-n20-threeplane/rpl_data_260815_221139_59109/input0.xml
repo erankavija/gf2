@@ -1,0 +1,3 @@
+# 260815_221139 'dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv1-n20-threeplane/rpl_data_260815_221139_59109/input0.xml' generated with '/opt/rocm/libexec/rocprofiler/txt2xml.sh 1'
+<metric range="" kernel="" gpu_index=""></metric>
+<metric name=SQ_WAVES,MeanOccupancyPerCU ></metric>

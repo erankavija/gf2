@@ -41,10 +41,38 @@ contents (committed): per pass directory: <name>-<pid>_kernel_stats.csv and
   count, mean/min/max, and the constant per-dispatch resource fields), and
   aggregate-counters.py, the script that derives it.
 
-raw retention (not committed): the per-dispatch counter_collection and
+raw retention (not committed): the round-1 per-dispatch counter_collection and
   kernel_trace CSVs (436 MB uncompressed) are zstd-compressed and retained
   locally at target/permanent-campaign/profiled-raw-20260815T181923Z/,
   mirroring the pass-directory layout. counters-aggregate.csv is derived from
   them by aggregate-counters.py (command: python3 aggregate-counters.py
   <raw-retention-dir>). The whole artifact regenerates from the committed
   profiled-run.sh against the hash-pinned binary.
+
+round 2 (run2.log): the round-1 full-pass derived occupancy counters fail
+  their own definitional identity on nine of twelve (pass, kernel) readings —
+  by rocprofv3's counter definitions on gfx1030, MeanOccupancyPerCU must equal
+  OccupancyPercent*32/100, and both derive from windows that drift with
+  cumulative dispatch count, exact on a pass's first dispatches and degrading
+  monotonically after. Round 2 therefore re-collects counters over early
+  dispatch iterations only (--kernel-iteration-range [1-8]), one pass per
+  workload as before (pmc2-*), recording SQ_WAVES and MeanOccupancyPerCU.
+  OccupancyPercent reads zero under iteration-range collection on this stack
+  and is omitted; admissibility of a round-2 reading is instead the physical
+  test set: MeanOccupancyPerCU inside (0, 32] (the agent's 32 waves-per-CU
+  ceiling), consistency with the dispatch's own SQ_WAVES, stability across
+  same-configuration dispatches, and agreement across orders and with the
+  three round-1 readings that pass the identity test (gray-update pair,
+  lookup<2>). Round 2 adds pmc2-n16-threeplane (the walk kernel's 312 us
+  mid-duration order) beyond the round-1 counter cells. The round-2
+  per-dispatch counter CSVs are small and committed in full; round-1's
+  identity-failing full-pass readings remain in counters-aggregate.csv as the
+  recorded falsification.
+
+profiler capability probes (run2.log): rocprofv2 and legacy rocprof, invoked
+  with the same counters on the q=7,n=20,backend=f7-three-plane-permanent
+  cell, both abort the workload itself (the candidate worker reports a device
+  batch failure under their interception; exit 101 recorded with output
+  retained under rocprofv2-n20-threeplane/ and rocprofv1-n20-threeplane/).
+  rocprofv3 is the one profiler on this host that both runs the workload and
+  produces counters for it.

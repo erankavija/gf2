@@ -1,0 +1,49 @@
+"Correlation_Id","Dispatch_Id","Agent_Id","Queue_Id","Process_Id","Thread_Id","Grid_Size","Kernel_Id","Kernel_Name","Workgroup_Size","LDS_Block_Size","Scratch_Size","VGPR_Count","Accum_VGPR_Count","SGPR_Count","Counter_Name","Counter_Value","Start_Timestamp","End_Timestamp"
+1,1,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.23462114e-02,13178911475888,13178911480488
+1,1,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178911475888,13178911480488
+2,2,"Agent 1",2,57950,57950,3435,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",8.214959,13178913177175,13178913181615
+2,2,"Agent 1",2,57950,57950,3435,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3435.000000,13178913177175,13178913181615
+3,3,"Agent 1",2,57950,57950,3435,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",6.289457,13178913302397,13178913304957
+3,3,"Agent 1",2,57950,57950,3435,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3435.000000,13178913302397,13178913304957
+4,4,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.07775481e-02,13178914704182,13178914707422
+4,4,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178914704182,13178914707422
+5,5,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",5.20645120e-02,13178914769563,13178914773523
+5,5,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178914769563,13178914773523
+6,6,"Agent 1",2,57950,57950,661,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",2.141143,13178914806923,13178914809603
+6,6,"Agent 1",2,57950,57950,661,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",661.000000,13178914806923,13178914809603
+7,7,"Agent 1",2,57950,57950,661,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",1.630843,13178914899834,13178914901674
+7,7,"Agent 1",2,57950,57950,661,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",661.000000,13178914899834,13178914901674
+8,8,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.24789653e-02,13178914968135,13178914970495
+8,8,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178914968135,13178914970495
+9,9,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.44687356e-02,13178916982077,13178916986517
+9,9,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178916982077,13178916986517
+10,10,"Agent 1",2,57950,57950,3464,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",6.375778,13178917090588,13178917094148
+10,10,"Agent 1",2,57950,57950,3464,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3464.000000,13178917090588,13178917094148
+11,11,"Agent 1",2,57950,57950,3464,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",5.680593,13178917131908,13178917134588
+11,11,"Agent 1",2,57950,57950,3464,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3464.000000,13178917131908,13178917134588
+12,12,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",3.95863166e-02,13178918376012,13178918379412
+12,12,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178918376012,13178918379412
+13,13,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",5.30129771e-02,13178918451783,13178918454663
+13,13,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178918451783,13178918454663
+14,14,"Agent 1",2,57950,57950,632,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",2.039372,13178918490023,13178918492783
+14,14,"Agent 1",2,57950,57950,632,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",632.000000,13178918490023,13178918492783
+15,15,"Agent 1",2,57950,57950,632,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",1.424089,13178918530863,13178918532824
+15,15,"Agent 1",2,57950,57950,632,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",632.000000,13178918530863,13178918532824
+16,16,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"MeanOccupancyPerCU",4.30956637e-02,13178918565944,13178918568304
+16,16,"Agent 1",2,57950,57950,512,14,"__amd_rocclr_copyBuffer",512,0,0,16,0,128,"SQ_WAVES",16.000000,13178918565944,13178918568304
+18,18,"Agent 1",2,57950,57950,3473,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",6.292963,13178920276811,13178920280491
+18,18,"Agent 1",2,57950,57950,3473,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3473.000000,13178920276811,13178920280491
+19,19,"Agent 1",2,57950,57950,3473,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",5.873818,13178920318171,13178920320491
+19,19,"Agent 1",2,57950,57950,3473,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3473.000000,13178920318171,13178920320491
+22,22,"Agent 1",2,57950,57950,623,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",2.003962,13178921642127,13178921644927
+22,22,"Agent 1",2,57950,57950,623,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",623.000000,13178921642127,13178921644927
+23,23,"Agent 1",2,57950,57950,623,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",1.504838,13178921683008,13178921684768
+23,23,"Agent 1",2,57950,57950,623,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",623.000000,13178921683008,13178921684768
+26,26,"Agent 1",2,57950,57950,3457,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",6.413827,13178923314347,13178923317907
+26,26,"Agent 1",2,57950,57950,3457,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3457.000000,13178923314347,13178923317907
+27,27,"Agent 1",2,57950,57950,3457,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",5.549022,13178923355548,13178923357868
+27,27,"Agent 1",2,57950,57950,3457,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",3457.000000,13178923355548,13178923357868
+30,30,"Agent 1",2,57950,57950,639,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",2.077068,13178924670314,13178924673034
+30,30,"Agent 1",2,57950,57950,639,1,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",639.000000,13178924670314,13178924673034
+31,31,"Agent 1",2,57950,57950,639,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"MeanOccupancyPerCU",1.502833,13178924710874,13178924712794
+31,31,"Agent 1",2,57950,57950,639,3,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",1,0,0,8,0,128,"SQ_WAVES",639.000000,13178924710874,13178924712794
