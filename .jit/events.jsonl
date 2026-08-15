@@ -8219,3 +8219,4 @@
 {"gate_key":"doc-review","id":"fdf1c779-cd97-4426-9fbe-f65625e349ba","issue_id":"4fdd781a-6c52-483d-b55d-1766bcd8914a","timestamp":"2026-08-15T09:30:25.626714806Z","type":"gate_added"}
 {"fields":["documents"],"id":"9d661460-5c79-47e3-b9ca-6111c4980cb2","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T10:05:03.019610882Z","type":"issue_updated","updated_by":"doc-add"}
 {"fields":["documents"],"id":"fda6b122-20e4-4494-8213-398aa11c8130","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T10:05:05.964539075Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["description"],"id":"35d37780-f66a-4850-ac2e-f0ce88936ff2","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T10:33:10.505779656Z","type":"issue_updated","updated_by":"issue-update"}

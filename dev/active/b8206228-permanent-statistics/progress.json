@@ -383,6 +383,14 @@
    "requested_at": "2026-08-15T09:05:00Z",
    "resolved_at": "2026-08-15T09:08:00Z",
    "decision": "Owner approved amending a2c0db52 to cover both cells plus the dependent F_3 receipts section 11.1 correction, all gated under a2c0db52's doc-review; 047b62ed stays closed."
+  },
+  {
+   "issue": "6c7fcb38",
+   "reason": "F_7 evidence audit: REQ-17's profiler counters were never collected (the AI-free runner invokes no profiler) and its escape clause's precondition is factually false (rocprof/v2/v3 installed); REQ-16's preparation-vs-Gray-walk separation has no committed measurement (one event span brackets both launches).",
+   "status": "approved",
+   "requested_at": "2026-08-15T09:55:00Z",
+   "resolved_at": "2026-08-15T09:58:00Z",
+   "decision": "Owner approved the paired-profiled-run resolution: REQ-16/REQ-17 amended to accept a committed paired profiled evidence run over the same hash-pinned binaries and cells, separate from the timing run with the perturbation rationale stated; the lead runs the profile on the host and commits the artifact."
   }
  ],
  "rework_counts": {
