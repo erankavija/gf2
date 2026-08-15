@@ -66,13 +66,13 @@ const GRID_SPECS_PER_EXECUTION: usize = QS.len() * NS.len() * (Backend::ALL.len(
 /// Each `(q, n)` cell starts at its per-order ceiling and halves, flooring at
 /// two, until the sum of its measured CPU backends' committed `probe_matrix_s`
 /// costs times the count fits the 240-second per-cell budget at grid-receipt
-/// speeds. Receipt run `20260813T230032Z-1321576` measures 22.054209 s for
-/// `cpu_scalar`, 22.269200 s for `cpu_rayon_batch_scalar`, and 24.030546 s for
+/// speeds. Superseded receipt run `20260813T230032Z-1321576`, whose grid CSVs
+/// are retrievable from git history, measures 22.054209 s for `cpu_scalar`,
+/// 22.269200 s for `cpu_rayon_batch_scalar`, and 24.030546 s for
 /// `cpu_ryser_generic` at `q=5, n=28`: 68.354 s per matrix, so the ceiling of
 /// four projects to 273 s, above 240 s, and one halving gives two matrices at
 /// 137 s. A q=3 `cpu_scalar`-only derivation understates fields dominated by
-/// slower backends; host validation measured more than 12 minutes in that
-/// `q=5, n=28` cell.
+/// slower backends; host validation measured more than 12 minutes in that cell.
 const EQUIVALENCE_ORDER_CEILINGS: [(usize, usize); 6] =
     [(8, 512), (12, 512), (16, 512), (20, 512), (24, 32), (28, 4)];
 /// Per-field counts required by the 240-second equivalence-cell budget.
@@ -519,10 +519,10 @@ candidates, and the generic path"
             .to_string(),
         "sample counts: each (q, n) cell starts at its per-order ceiling and halves, flooring at \
 2, until the sum of its measured CPU backends' committed probe_matrix_s costs times the count \
-fits the 240-second per-cell budget at grid-receipt speeds. Receipt run \
-20260813T230032Z-1321576 and committed dev/studies/{047b62ed,91605d4d,6c7fcb38}/*-grid.csv \
-record 22.054209 s (cpu_scalar), 22.269200 s (cpu_rayon_batch_scalar), and 24.030546 s \
-(cpu_ryser_generic) per matrix at q=5, n=28; the three-backend sum is 68.354 s per matrix, \
+fits the 240-second per-cell budget at grid-receipt speeds. Superseded receipt run \
+20260813T230032Z-1321576, its grid CSVs retrievable from git history, records 22.054209 s \
+(cpu_scalar), 22.269200 s (cpu_rayon_batch_scalar), and 24.030546 s (cpu_ryser_generic) \
+per matrix at q=5, n=28; the three-backend sum is 68.354 s per matrix, \
 so four projects to 273 s and two to 137 s. --matrices caps every order and never raises one"
             .to_string(),
         "candidates: a registered prototype cell evaluates that candidate's own device kernel \

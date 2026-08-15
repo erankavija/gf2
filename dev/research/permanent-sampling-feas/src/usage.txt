@@ -15,9 +15,9 @@ SUBCOMMANDS
                at n=28. Each (q, n) cell starts at its ceiling and halves,
                flooring at 2, until the sum of its measured CPU backends'
                committed probe_matrix_s costs times the count fits a 240-second
-               per-cell budget at the speeds of grid-receipt run
-               20260813T230032Z-1321576 (the three fields' committed
-               dev/studies/{047b62ed,91605d4d,6c7fcb38}/*-grid.csv). Only the
+               per-cell budget at the speeds of superseded grid-receipt run
+               20260813T230032Z-1321576, whose grid CSVs are retrievable
+               from git history. Only the
                q=5, n=28 cell halves: its three CPU backends sum to 68.354 s
                per matrix, so four matrices project to 273 s and two to 137 s.
 
