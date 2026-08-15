@@ -294,8 +294,8 @@
    "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
    "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
    "wave": "1 (interleaved)",
-   "status": "in_progress",
-   "note": "Round-1 fix 7a0af9ab (luna); doc-review failed R1 with 3 findings (downstream renderings unmarked, check scope too narrow). Rework R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; doc-review failed R2 with 1 new finding (checker verifies only the repetition minimum, not the five-second timed-work minimum). Rework R3 (luna, rework count 2 = MAX): verify the five-second half via the pinned harness source's loop-exit structure (git show harness_source_sha) plus direct total_s>=5 proof, and cap-path evidence total_s>=120 for reps<5 rows; lead verified total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test would falsely flag conforming cells."
+   "status": "done",
+   "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
   }
  ],
  "escalations": [
