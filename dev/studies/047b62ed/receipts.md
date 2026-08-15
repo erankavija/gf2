@@ -804,41 +804,65 @@ that recorded it.
 
 ## 8. What limits occupancy (REQ-08)
 
-The compiler reports `Occupancy [waves/SIMD]: 16` for every kernel this campaign
-measures over $\mathbb{F}_3$, at every order, and the resource figures do not
-vary with $n$. Two controls in the same receipt fix what that number means.
+**For every kernel this campaign measures over $\mathbb{F}_3$, at every measured
+order, the resource that limits occupancy is the architectural wave-slot ceiling
+of the `gfx1030` SIMD — 16 waves/SIMD — and not registers, private scratch,
+static LDS, or spills.** Occupancy is a count of waves per SIMD, so when no
+per-thread quantity reduces that count below the hardware maximum, the maximum
+itself is what binds. The table names it per kernel; the two controls below are
+what make that a reading of the measurement rather than an assumption about it.
 
-The upper control is `permanent_wave_gpu_probe`, an empty kernel with 0
+Per-thread usage is quoted as `VGPRs` / `TotalSGPRs` / scratch bytes per lane /
+static LDS bytes per block / SGPR + VGPR spills, all from the receipt of §7.
+
+| Kernel | measured per-thread usage | occupancy waves/SIMD | resource that limits occupancy | log |
+| --- | --- | ---: | --- | --- |
+| `permanent_bipedal3_kernel` | 19 / 27 / 1040 / 0 / 0+0 | 16 | wave-slot ceiling | `permanent_bipedal3.hip.resource.log:1` |
+| `wave_gf3_kernel<FoldKindE0>` | 22 / 22 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:23` |
+| `wave_gf3_kernel<FoldKindE1>` | 25 / 22 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:34` |
+| `gray_update_micro_kernel` | 5 / 86 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `gray_update_micro.hip.resource.log:1` |
+| `gray_update_compiler_barrier_baseline_kernel` | 2 / 13 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `gray_update_micro.hip.resource.log:12` |
+| `horizontal_product_micro_kernel` | 3 / 26 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `permanent_bipedal7.hip.resource.log:24` |
+| `horizontal_product_compiler_barrier_baseline_kernel` | 2 / 14 / 0 / 0 / 0+0 | 16 | wave-slot ceiling | `permanent_bipedal7.hip.resource.log:35` |
+
+The derivation is that the compiler computes the occupancy field from exactly
+these per-thread quantities, and for all seven kernels it returns the ceiling,
+so none of them reaches a threshold that would cost a wave slot. Two controls in
+the same receipt establish that reading, and neither is an $\mathbb{F}_3$
+measurement cell — both are cited as controls.
+
+The **upper control** is `permanent_wave_gpu_probe`, an empty kernel with 0
 `TotalSGPRs`, 0 `VGPRs`, 0 scratch, and 0 LDS (`probe.hip.resource.log:1`),
 which also reports 16. A kernel that consumes no registers at all cannot be
-register-limited, so 16 is the saturation value of that field on `gfx1030`.
+register-limited, so 16 is the saturation value of that field on `gfx1030` and
+therefore the architectural ceiling this receipt names.
 
-The lower control is `permanent_bipedal7_kernel` in the same receipt
+The **lower control** is `permanent_bipedal7_kernel` in the same receipt
 (`permanent_bipedal7.hip.resource.log:1`): 107 `TotalSGPRs`, 128 `VGPRs`,
 4000 scratch bytes per lane, 4 SGPR spills, 6 VGPR spills, and **occupancy 8**.
 The field does fall when per-thread usage is heavy, so a report of 16 is a
-measured absence of register pressure rather than an unresponsive constant. That
+measured absence of resource pressure rather than an unresponsive constant. That
 kernel evaluates $\mathbb{F}_7$ permanents and no cell of this campaign runs it;
 it is cited as the control that makes the $\mathbb{F}_3$ readings interpretable.
 
-Derived from the measured per-thread resource usage, therefore: **no measured
-$\mathbb{F}_3$ kernel is limited by registers, private scratch, or static LDS,
-at any measured order.** The supporting facts are that each reports occupancy at
-the ceiling that the empty probe establishes, each reports zero SGPR and VGPR
-spills, none reports a static LDS allocation, and the heavy $\mathbb{F}_7$
-kernel in the same receipt shows the occupancy field falling to 8 when register
-use, scratch, and spills all rise.
-
-The statement holds at every measured order without a per-order table because
-$n$ reaches these kernels as a runtime argument rather than a template
-parameter: the mangled names are `_Z25permanent_bipedal3_kernelPKhiiPy` and
+**The named limiter holds at each measured order** $n \in \{12, 16, 20, 24, 28\}$
+for every row of the table. The evidence is that $n$ reaches these kernels as a
+runtime argument rather than a template parameter, so no per-order variation in
+resource usage is possible: the mangled names are
+`_Z25permanent_bipedal3_kernelPKhiiPy` and
 `_ZN12_GLOBAL__N_115wave_gf3_kernelILNS_8FoldKindE0EEEvPKhiiPj`, whose only
-template parameter is `FoldKind`, and the compiler emits one resource block per
-kernel rather than one per order.
+template parameter is `FoldKind` and not the order, and the compiler emits one
+resource block per kernel rather than one per order. The per-thread figures
+above are therefore the figures at every measured order, and the resource they
+name as limiting is the same at every measured order.
 
-What does bound each path's device parallelism at each measured order is its
-launch geometry and its batch size, which are fixed by the kernel's own contract
-and by the cell's calibration rather than by its resource usage. The shipped
+Occupancy and device-wide resident work are separate quantities, and the table
+above answers only the first. Occupancy is how many waves a SIMD may host; what
+bounds each path's *device parallelism* at each measured order is its launch
+geometry and its batch size, fixed by the kernel's own contract and by the
+cell's calibration rather than by its resource usage. A path can sit at the
+wave-slot ceiling and still leave most of the device idle, and the shipped path
+does exactly that. The shipped
 kernel launches `gridDim.x = M` blocks of `dim3 block(1, 1, 1)`, one matrix per
 block, with only thread 0 doing work
 (`crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip:174-176`, `:334-335`,
@@ -855,7 +879,17 @@ many matrices are in flight.
 One resource this derivation cannot rule on is dynamic LDS, for the reason in
 §7.1: the compiler's static field is silent about the prototypes' $16n$-byte
 launch-time table, so no claim is made that shared memory does or does not bound
-the prototype mapping's occupancy.
+the prototype mapping's occupancy. That scopes two rows of the table. For
+`wave_gf3_kernel<FoldKindE0>` and `<FoldKindE1>` the named limiter is the
+binding one among the resources this receipt can observe, and the launch-time
+shared allocation is outside that set; for the other five kernels the compiler's
+static LDS field is the complete shared-memory picture, because each launch
+passes `sharedMemBytes = 0`
+(`crates/gf2-kernels-hip/hip/permanent/permanent_bipedal3.hip:350`,
+`gray_update_micro.hip:112`, `:126`,
+`horizontal_product_micro.hip:196`, `:208-209`) and none of those three
+translation units contains a `__shared__` declaration, so nothing is left
+unobserved.
 
 ## 9. Zero fast path and its exact marginal expectation (REQ-10)
 
@@ -1097,7 +1131,7 @@ of the work model.
 | REQ-05 | §4.3 | **Satisfied.** `kernel_device_s` is its own device-event column on all four device paths; allocation, copy, and host serialisation are outside it, and the residual is derivable per cell. |
 | REQ-06 | §4.3 | **Satisfied.** `h2d_device_s`, `d2h_device_s`, `host_submission_s`, and `device_submission_to_kernel_s` are four separate columns, and per-launch costs follow from them and `reps` without a second run. §4.3 states, with the `host_submission_s`/`eval_s` ratios as evidence, that the host-clock column measures an asynchronous submission on `gpu_hip` rows and a synchronous submit-and-complete on prototype rows, so that it is not misread as a prototype launch overhead. |
 | REQ-07 | §7 | **Satisfied with two recorded gaps.** Registers per thread, scratch per thread, static LDS per block, and both spill counts are reported for all eight kernels beside their design predictions where a prediction exists. The gaps: the compiler's static-LDS field cannot observe the prototypes' $16n$-byte dynamic table, and no committed design states a per-lane register budget for `permanent_bipedal3_kernel`, `gray_update_micro_kernel`, or `horizontal_product_micro_kernel`. |
-| REQ-08 | §8 | **Satisfied.** The limiting resource is named per kernel and shown to be constant in $n$, derived from the measured per-thread usage with two controls in the same receipt: the empty probe kernel fixes 16 waves/SIMD as the field's ceiling, and `permanent_bipedal7_kernel` at 128 VGPRs and occupancy 8 shows the field responds to pressure. The dynamic-LDS blind spot is stated rather than assumed away. |
+| REQ-08 | §8 | **Satisfied.** §8's table names the occupancy-limiting resource for each of the seven measured $\mathbb{F}_3$ kernels: the `gfx1030` architectural wave-slot ceiling of 16 waves/SIMD, binding because no measured per-thread quantity — 2–25 `VGPRs`, 13–86 `TotalSGPRs`, 0 or 1040 scratch bytes per lane, 0 static LDS bytes per block, zero spills throughout — costs a wave slot. Each row carries its per-thread usage, its occupancy, and its resource-log line. The naming holds at each measured order $n \in \{12, 16, 20, 24, 28\}$, with the evidence stated: $n$ is a runtime argument and not a template parameter, so the compiler emits one resource block per kernel and no per-order variation is possible. The derivation rests on the compiler computing occupancy from exactly those quantities, plus two controls in the same receipt — the empty `permanent_wave_gpu_probe` reporting 16 with zero usage, which establishes the ceiling, and `permanent_bipedal7_kernel` at 128 `VGPRs` reporting 8, which shows the field falls under pressure rather than being constant. The dynamic-LDS blind spot is stated rather than assumed away, and §8 scopes it to the two prototype rows it actually qualifies. |
 | REQ-09 | §7.1 | **Satisfied.** The one prediction a measurement contradicts — the zero-allocation reading of the nine 32-bit-unit mapping model — is carried with its contradiction in the recording artifact's own words, and the 1040-byte scratch measurement is reported against the design narrative it qualifies. No prediction is silently restated. |
 | REQ-10 | §9 | **Satisfied.** Both frequencies, both exact expectations, their complement relation, the sample count 4096, and Wilson 95 % intervals are reported at all five measured orders, with the interval method fixed deterministically. A second, larger branch observation from the same file's timed-operation counts is reported beside it with its own intervals and its dependence on the same purpose stream stated. |
 | REQ-11 | §3 | **Satisfied.** `cpu_scalar` is the oracle and the other eight executing paths, both prototypes included, are re-confirmed identical against it on the campaign host, in the same run, before any timing cell, at every order the grid times. The $n = 24$ and $n = 28$ cells compare 32 and 4 matrices against 512 at the smaller orders, which is stated rather than presented as an equal gate. |
