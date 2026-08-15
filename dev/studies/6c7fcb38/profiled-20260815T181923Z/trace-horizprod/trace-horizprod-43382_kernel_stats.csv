@@ -1,0 +1,4 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"__amd_rocclr_copyBuffer",217067,664322751,3060.450234,53.93,1840,33720,734.714127
+"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",108684,333539528,3068.892643,27.08,1721,37881,1099.485100
+"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",108684,233900624,2152.116448,18.99,1560,11360,423.433120

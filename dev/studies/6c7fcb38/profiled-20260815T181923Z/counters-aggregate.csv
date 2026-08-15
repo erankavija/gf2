@@ -1,0 +1,61 @@
+pass,kernel,counter,dispatches,mean,min,max,VGPR_Count,Accum_VGPR_Count,SGPR_Count,LDS_Block_Size,Scratch_Size,Workgroup_Size
+pmc-grayupdate,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,62,0.036103,0.030839,0.046599,16,0,128,0,0,512
+pmc-grayupdate,__amd_rocclr_copyBuffer,OccupancyPercent,62,0.112163,0.096071,0.144940,16,0,128,0,0,512
+pmc-grayupdate,__amd_rocclr_copyBuffer,SQ_WAVES,62,16.000000,16.000000,16.000000,16,0,128,0,0,512
+pmc-grayupdate,"gray_update_compiler_barrier_baseline_kernel(int, int, unsigned long long, unsigned long long*)",MeanOccupancyPerCU,31,0.012500,0.012500,0.012500,8,0,128,0,0,1
+pmc-grayupdate,"gray_update_compiler_barrier_baseline_kernel(int, int, unsigned long long, unsigned long long*)",OccupancyPercent,31,0.039062,0.039061,0.039062,8,0,128,0,0,1
+pmc-grayupdate,"gray_update_compiler_barrier_baseline_kernel(int, int, unsigned long long, unsigned long long*)",SQ_WAVES,31,1.000000,1.000000,1.000000,8,0,128,0,0,1
+pmc-grayupdate,"gray_update_micro_kernel(unsigned char const*, unsigned long long const*, int, int, unsigned long long, unsigned long long*)",MeanOccupancyPerCU,31,0.012500,0.012500,0.012500,8,0,128,0,0,1
+pmc-grayupdate,"gray_update_micro_kernel(unsigned char const*, unsigned long long const*, int, int, unsigned long long, unsigned long long*)",OccupancyPercent,31,0.039062,0.039062,0.039062,8,0,128,0,0,1
+pmc-grayupdate,"gray_update_micro_kernel(unsigned char const*, unsigned long long const*, int, int, unsigned long long, unsigned long long*)",SQ_WAVES,31,1.000000,1.000000,1.000000,8,0,128,0,0,1
+pmc-horizprod,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,210562,43.940372,0.010706,6473.981260,16,0,128,0,0,512
+pmc-horizprod,__amd_rocclr_copyBuffer,OccupancyPercent,210562,0.009588,0.000000,0.265494,16,0,128,0,0,512
+pmc-horizprod,__amd_rocclr_copyBuffer,SQ_WAVES,210562,3649.129121,16.000000,329914.000000,16,0,128,0,0,512
+pmc-horizprod,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",MeanOccupancyPerCU,105430,612.196504,0.068851,14281.645119,8,0,128,0,0,1
+pmc-horizprod,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",OccupancyPercent,105430,0.976263,0.000000,22.090331,8,0,128,0,0,1
+pmc-horizprod,"horizontal_product_compiler_barrier_baseline_kernel(int, int, int, int, unsigned char const*, unsigned long long*)",SQ_WAVES,105430,351235.148041,31.000000,8147141.000000,8,0,128,0,0,1
+pmc-horizprod,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",MeanOccupancyPerCU,105430,666.348961,0.074087,17172.489033,8,0,128,0,0,1
+pmc-horizprod,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",OccupancyPercent,105430,1.050744,0.000000,25.489737,8,0,128,0,0,1
+pmc-horizprod,"horizontal_product_micro_kernel(unsigned char const*, unsigned long long const*, int, int, int, unsigned long long*)",SQ_WAVES,105430,441106.199089,31.000000,19720463.000000,8,0,128,0,0,1
+pmc-n12-gpuhip,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,467,0.047749,0.032230,0.098710,16,0,128,0,0,512
+pmc-n12-gpuhip,__amd_rocclr_copyBuffer,OccupancyPercent,467,0.056664,0.000000,0.160326,16,0,128,0,0,512
+pmc-n12-gpuhip,__amd_rocclr_copyBuffer,SQ_WAVES,467,16.000000,16.000000,16.000000,16,0,128,0,0,512
+pmc-n12-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",MeanOccupancyPerCU,466,5.847435,0.012286,40.042924,128,0,128,0,4000,1
+pmc-n12-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",OccupancyPercent,466,5.743100,0.000000,13.731729,128,0,128,0,4000,1
+pmc-n12-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",SQ_WAVES,466,525.736052,1.000000,1024.000000,128,0,128,0,4000,1
+pmc-n12-lookup,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,2808,0.021626,0.012649,0.034932,16,0,128,0,0,512
+pmc-n12-lookup,__amd_rocclr_copyBuffer,OccupancyPercent,2808,0.000000,0.000000,0.000000,16,0,128,0,0,512
+pmc-n12-lookup,__amd_rocclr_copyBuffer,SQ_WAVES,2808,16.000000,16.000000,16.000000,16,0,128,0,0,512
+pmc-n12-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<1u>(unsigned char const*, int, int, unsigned int*)",MeanOccupancyPerCU,2807,147.504202,0.011663,3512.585827,32,0,128,0,0,32
+pmc-n12-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<1u>(unsigned char const*, int, int, unsigned int*)",OccupancyPercent,2807,0.000000,0.000000,0.000000,32,0,128,0,0,32
+pmc-n12-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<1u>(unsigned char const*, int, int, unsigned int*)",SQ_WAVES,2807,1554.446384,1.000000,1555.000000,32,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",MeanOccupancyPerCU,33710,17.578662,0.003479,5591.426145,24,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",OccupancyPercent,33710,0.021388,0.000000,0.136830,24,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",SQ_WAVES,33710,2374.381519,1.000000,110594.000000,24,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",MeanOccupancyPerCU,33710,262.625609,0.008581,4504.360769,40,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",OccupancyPercent,33710,0.072084,0.000000,0.374386,40,0,128,0,0,32
+pmc-n12-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",SQ_WAVES,33710,34421.178226,1.000000,393715.000000,40,0,128,0,0,32
+pmc-n12-threeplane,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,67420,16.026304,0.009443,4144.781023,16,0,128,0,0,512
+pmc-n12-threeplane,__amd_rocclr_copyBuffer,OccupancyPercent,67420,0.013558,0.000000,0.362277,16,0,128,0,0,512
+pmc-n12-threeplane,__amd_rocclr_copyBuffer,SQ_WAVES,67420,1777.913453,16.000000,65194.000000,16,0,128,0,0,512
+pmc-n20-gpuhip,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,14,133.306751,0.035195,677.630592,16,0,128,0,0,512
+pmc-n20-gpuhip,__amd_rocclr_copyBuffer,OccupancyPercent,14,0.000000,0.000000,0.000000,16,0,128,0,0,512
+pmc-n20-gpuhip,__amd_rocclr_copyBuffer,SQ_WAVES,14,16.000000,16.000000,16.000000,16,0,128,0,0,512
+pmc-n20-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",MeanOccupancyPerCU,13,3280.454195,3145.359416,3461.399003,128,0,128,0,4000,1
+pmc-n20-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",OccupancyPercent,13,0.000000,0.000000,0.000000,128,0,128,0,4000,1
+pmc-n20-gpuhip,"permanent_bipedal7_kernel(unsigned char const*, int, int, unsigned long long*)",SQ_WAVES,13,590.846154,1.000000,1024.000000,128,0,128,0,4000,1
+pmc-n20-lookup,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,230,0.050212,0.017170,0.108298,16,0,128,0,0,512
+pmc-n20-lookup,__amd_rocclr_copyBuffer,OccupancyPercent,230,0.155976,0.053356,0.337163,16,0,128,0,0,512
+pmc-n20-lookup,__amd_rocclr_copyBuffer,SQ_WAVES,230,23.930435,16.000000,32.000000,16,0,128,0,0,512
+pmc-n20-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",MeanOccupancyPerCU,115,0.356620,0.012479,0.360673,48,0,128,0,24,32
+pmc-n20-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",OccupancyPercent,115,1.114438,0.038997,1.127103,48,0,128,0,24,32
+pmc-n20-lookup,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",SQ_WAVES,115,28.756522,1.000000,29.000000,48,0,128,0,24,32
+pmc-n20-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",MeanOccupancyPerCU,1636,59.368457,0.004135,209.134371,24,0,128,0,0,32
+pmc-n20-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",OccupancyPercent,1636,0.064581,0.012872,0.114726,24,0,128,0,0,32
+pmc-n20-threeplane,"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",SQ_WAVES,1636,12.992665,1.000000,13.000000,24,0,128,0,0,32
+pmc-n20-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",MeanOccupancyPerCU,1636,1167.382432,0.012472,3312.290413,40,0,128,0,0,32
+pmc-n20-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",OccupancyPercent,1636,0.284039,0.038976,0.389162,40,0,128,0,0,32
+pmc-n20-threeplane,"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",SQ_WAVES,1636,12.992665,1.000000,13.000000,40,0,128,0,0,32
+pmc-n20-threeplane,__amd_rocclr_copyBuffer,MeanOccupancyPerCU,3272,0.027892,0.010435,0.049453,16,0,128,0,0,512
+pmc-n20-threeplane,__amd_rocclr_copyBuffer,OccupancyPercent,3272,0.042288,0.000000,0.154145,16,0,128,0,0,512
+pmc-n20-threeplane,__amd_rocclr_copyBuffer,SQ_WAVES,3272,16.000000,16.000000,16.000000,16,0,128,0,0,512

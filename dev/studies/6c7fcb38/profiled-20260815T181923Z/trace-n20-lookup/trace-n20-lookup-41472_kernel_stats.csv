@@ -1,0 +1,3 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",115,8165221964,71001930.121739,99.99,70277948,71300781,64971044.241729
+"__amd_rocclr_copyBuffer",230,559360,2432.000000,6.850e-03,2080,4240,339.913166

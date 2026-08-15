@@ -1,0 +1,4 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"(anonymous namespace)::wave_gf7_three_plane_kernel(unsigned long const*, int, int, unsigned int*)",1637,7618827154,4654139.984117,99.84,4609434,8688478,4546838.147899
+"__amd_rocclr_copyBuffer",3274,8205955,2506.400428,0.1075,1880,18760,606.118884
+"(anonymous namespace)::prepare_three_plane_columns(unsigned char const*, int, int, unsigned long*)",1637,4349658,2657.091020,0.0570,2560,17000,369.025318

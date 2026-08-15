@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 # Paired profiled evidence run for JIT 6c7fcb38 (amended REQ-16/REQ-17).
+#
+# Pass structure: every pass wraps exactly one device-executing workload.
+# The harness's grid mode runs each backend in its own process, and several
+# profiled processes writing one fixed -o path keep only the last writer's
+# data, so each grid pass filters to a single backend and every -o carries
+# %pid% so per-process outputs survive regardless of process structure.
+# The gray-update and horizontal-product component-isolate modes are
+# profiled as their own passes: the micro kernels and their compiler-barrier
+# baselines execute only there, never in grid mode.
 set -uo pipefail
 REPO=/home/vkaskivuo/Projects/gf2
 BIN=$REPO/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
@@ -18,13 +27,14 @@ if ! grep -q "$HASH" "$MANIFEST"; then
 fi
 echo "binary_sha256: $HASH (matches manifest-v1.txt)" | tee -a "$LOG"
 
-run_pass() {
+# Grid pass: ONLY selects one (q, n, backend) cell set.
+run_grid_pass() {
   local name=$1; shift
   local prof_args=("$@")
   local only=${ONLY:?}
   local dir=$OUT/$name
   mkdir -p "$dir"
-  local cmd=("$FLOCK" --full-host "$ROCPROF" "${prof_args[@]}" -f csv -d "$dir" -o "$name" -- \
+  local cmd=("$FLOCK" --full-host "$ROCPROF" "${prof_args[@]}" -f csv -d "$dir" -o "$name-%pid%" -- \
     "$BIN" grid --out "$dir/grid.csv" --only "$only" --execution-id 7002 --skip-machine-warmup)
   echo "COMMAND[$name]: ${cmd[*]}" | tee -a "$LOG"
   local t0=$(date +%s)
@@ -34,16 +44,78 @@ run_pass() {
   return $rc
 }
 
+# Component-isolate pass: MODE is gray-update or horizontal-product,
+# invoked exactly as the timing campaign invokes it (--q 7).
+run_mode_pass() {
+  local name=$1; shift
+  local prof_args=("$@")
+  local mode=${MODE:?}
+  local dir=$OUT/$name
+  mkdir -p "$dir"
+  local cmd=("$FLOCK" --full-host "$ROCPROF" "${prof_args[@]}" -f csv -d "$dir" -o "$name-%pid%" -- \
+    "$BIN" "$mode" --out "$dir/$mode.csv" --q 7)
+  echo "COMMAND[$name]: ${cmd[*]}" | tee -a "$LOG"
+  local t0=$(date +%s)
+  "${cmd[@]}" >> "$LOG" 2>&1
+  local rc=$?
+  echo "EXIT[$name]: $rc after $(( $(date +%s) - t0 )) s" | tee -a "$LOG"
+  return $rc
+}
+
+PMC=(--pmc SQ_WAVES OccupancyPercent MeanOccupancyPerCU)
+TRACE=(--kernel-trace --stats)
+
+# pmc pass with single-counter fallback, mirroring the grid/mode split.
+pmc_grid() { # name only
+  local name=$1 only=$2
+  ONLY=$only run_grid_pass "$name" "${PMC[@]}" \
+    || { echo "retry $name with OccupancyPercent only" | tee -a "$LOG"; ONLY=$only run_grid_pass "$name-occ" --pmc OccupancyPercent; }
+}
+pmc_mode() { # name mode
+  local name=$1 mode=$2
+  MODE=$mode run_mode_pass "$name" "${PMC[@]}" \
+    || { echo "retry $name with OccupancyPercent only" | tee -a "$LOG"; MODE=$mode run_mode_pass "$name-occ" --pmc OccupancyPercent; }
+}
+
 fail=0
-ONLY="q=7,n=12" run_pass trace-n12 --kernel-trace --stats || fail=1
-ONLY="q=7,n=12" run_pass pmc-n12 --pmc SQ_WAVES OccupancyPercent MeanOccupancyPerCU \
-  || { echo "retry pmc-n12 with OccupancyPercent only" | tee -a "$LOG"; ONLY="q=7,n=12" run_pass pmc-n12-occ --pmc OccupancyPercent || fail=1; }
-ONLY="q=7,n=16,backend=f7-three-plane-permanent" run_pass trace-n16-threeplane --kernel-trace --stats || fail=1
-ONLY="q=7,n=20" run_pass trace-n20 --kernel-trace --stats || fail=1
-ONLY="q=7,n=20" run_pass pmc-n20 --pmc SQ_WAVES OccupancyPercent MeanOccupancyPerCU \
-  || { echo "retry pmc-n20 with OccupancyPercent only" | tee -a "$LOG"; ONLY="q=7,n=20" run_pass pmc-n20-occ --pmc OccupancyPercent || fail=1; }
-ONLY="q=7,n=24,backend=f7-three-plane-permanent" run_pass trace-n24-threeplane --kernel-trace --stats || fail=1
+# Kernel-trace passes: per-kernel durations (REQ-16 preparation vs Gray walk)
+ONLY="q=7,n=12,backend=gpu_hip"                    run_grid_pass trace-n12-gpuhip     "${TRACE[@]}" || fail=1
+ONLY="q=7,n=12,backend=f7-lookup-table-control"    run_grid_pass trace-n12-lookup     "${TRACE[@]}" || fail=1
+ONLY="q=7,n=12,backend=f7-three-plane-permanent"   run_grid_pass trace-n12-threeplane "${TRACE[@]}" || fail=1
+ONLY="q=7,n=16,backend=f7-three-plane-permanent"   run_grid_pass trace-n16-threeplane "${TRACE[@]}" || fail=1
+ONLY="q=7,n=20,backend=gpu_hip"                    run_grid_pass trace-n20-gpuhip     "${TRACE[@]}" || fail=1
+ONLY="q=7,n=20,backend=f7-lookup-table-control"    run_grid_pass trace-n20-lookup     "${TRACE[@]}" || fail=1
+ONLY="q=7,n=20,backend=f7-three-plane-permanent"   run_grid_pass trace-n20-threeplane "${TRACE[@]}" || fail=1
+ONLY="q=7,n=24,backend=f7-three-plane-permanent"   run_grid_pass trace-n24-threeplane "${TRACE[@]}" || fail=1
+MODE=gray-update        run_mode_pass trace-grayupdate "${TRACE[@]}" || fail=1
+MODE=horizontal-product run_mode_pass trace-horizprod  "${TRACE[@]}" || fail=1
+
+# Counter passes: achieved occupancy (REQ-17) for every measured F_7 kernel
+pmc_grid pmc-n12-gpuhip     "q=7,n=12,backend=gpu_hip"                  || fail=1
+pmc_grid pmc-n12-lookup     "q=7,n=12,backend=f7-lookup-table-control"  || fail=1
+pmc_grid pmc-n12-threeplane "q=7,n=12,backend=f7-three-plane-permanent" || fail=1
+pmc_grid pmc-n20-gpuhip     "q=7,n=20,backend=gpu_hip"                  || fail=1
+pmc_grid pmc-n20-lookup     "q=7,n=20,backend=f7-lookup-table-control"  || fail=1
+pmc_grid pmc-n20-threeplane "q=7,n=20,backend=f7-three-plane-permanent" || fail=1
+pmc_mode pmc-grayupdate gray-update        || fail=1
+pmc_mode pmc-horizprod  horizontal-product || fail=1
 
 echo "overall_fail: $fail" | tee -a "$LOG"
+
+# Packaging: per-dispatch counter and trace CSVs are too large to commit.
+# Compress them, move them to the local (uncommitted) retention directory
+# under target/, and aggregate the counters into the committed
+# counters-aggregate.csv via the aggregation script committed beside the
+# artifact. Only aggregates, rocprofv3's own kernel_stats, workload CSVs,
+# run.log, and provenance are committed.
+if [ "$fail" -eq 0 ]; then
+  RAW=$REPO/target/permanent-campaign/profiled-raw-$STAMP
+  mkdir -p "$RAW"
+  ( cd "$OUT" && find . \( -name '*_counter_collection.csv' -o -name '*_kernel_trace.csv' \) -exec zstd -q -19 -T0 --rm {} + \
+    && find . -name '*.zst' | while read -r f; do mkdir -p "$RAW/$(dirname "$f")"; mv "$f" "$RAW/$f"; done )
+  cp "$REPO/dev/studies/6c7fcb38/profiled-20260815T181923Z/aggregate-counters.py" "$OUT/" 2>/dev/null || true
+  python3 "$OUT/aggregate-counters.py" "$RAW" | tee -a "$LOG"
+  echo "raw_retention: $RAW" | tee -a "$LOG"
+fi
 echo "$OUT"
 exit $fail

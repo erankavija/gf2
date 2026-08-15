@@ -1,0 +1,4 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"gray_update_micro_kernel(unsigned char const*, unsigned long long const*, int, int, unsigned long long, unsigned long long*)",31,121396332701,3916010732.290323,89.05,2389125704,5543838617,741742155.610648
+"gray_update_compiler_barrier_baseline_kernel(int, int, unsigned long long, unsigned long long*)",31,14924830728,481446152.516129,10.95,299005455,676139918,506885302.159758
+"__amd_rocclr_copyBuffer",62,175240,2826.451613,1.285e-04,2280,4040,454.165048

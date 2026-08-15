@@ -1,0 +1,50 @@
+schema_version: 2
+artifact: paired profiled evidence run for JIT issue 6c7fcb38 (amended REQ-16/REQ-17)
+stamp_utc: 20260815T181923Z
+git_revision_at_run_start: 1824f5262f0d54c5e19a02adbb1efabf9a4ab8ff
+commits_during_run: c315fe2b and 806a1a29 landed while later passes ran; both touch only dev/studies/b488f02c and .jit state (issue 4fdd781a), disjoint from the profiled binary, workload, and this study. The binary's behavioral identity is hash-pinned below, so the tree revision is informational (behavioral-evidence-validity).
+binary: target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
+binary_sha256: edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+binary_manifest: target/permanent-campaign/manifest-v1.txt (hash verified before the first pass; see run.log)
+profiler: rocprofv3 1.1.0 (/opt/rocm/bin/rocprofv3), ROCm 7.2.4, gfx1030 (AMD Radeon RX 6950 XT), host AMD Ryzen 9 5900X, kernel 7.1.8-arch1-3
+lock: every pass ran under dev/scripts/ccx1-bench-flock.sh --full-host (canonical benchmark mutex); light CPU-bound review processes (an LLM CLI editing an unrelated study file, and one AI doc-review gate) ran on the host during some passes. This artifact carries no timing authority (see separation below), and its per-kernel durations are used for within-run separation shares, not cross-run throughput claims.
+runner: dev/active/b8206228-permanent-statistics/profiled-run.sh (this run executed its pass list verbatim; run.log records one COMMAND/EXIT pair per pass, eighteen passes, all exit 0)
+
+supersedes: profiled-20260815T104014Z (removed in the same commit). That run's multi-backend passes pointed several profiled processes at one fixed -o output path, so only the last-writing process's data survived: its committed CSVs held only wave_gf7_lookup_table_kernel dispatches for the passes its provenance described as "all backends", its cell list therefore did not match its data, and the component-isolate micro kernels were never profiled at all. This run corrects both defects: every pass wraps exactly one device-executing workload, every -o carries %pid% so per-process outputs survive regardless of process structure, and the gray-update and horizontal-product isolate modes are profiled as their own passes.
+
+passes: eighteen, recorded verbatim in run.log.
+  kernel-trace (--kernel-trace --stats): grid cells q=7 with backend filters —
+    n=12 and n=20 for gpu_hip, f7-lookup-table-control, f7-three-plane-permanent;
+    n=16 and n=24 for f7-three-plane-permanent (REQ-18 orders);
+    plus the gray-update and horizontal-product component-isolate modes (--q 7).
+  counters (--pmc SQ_WAVES OccupancyPercent MeanOccupancyPerCU): the same three
+    backends at n=12 and n=20, plus both isolate modes.
+  Grid passes reuse --execution-id 7002, reproducing the timing run's
+  preregistered stream addresses, so the profiled grid cells draw the same
+  matrices as timing run 20260814T230032Z-2085453. The isolate-mode passes
+  invoke the modes exactly as the campaign runner does (--q 7, fixed streams).
+
+kernel_coverage: every F_7 kernel the timing run measured has trace and counter
+  evidence — permanent_bipedal7_kernel (n=12, n=20), wave_gf7_lookup_table_kernel<1u>
+  (n=12), wave_gf7_lookup_table_kernel<2u> (n=20), prepare_three_plane_columns and
+  wave_gf7_three_plane_kernel (n=12, 16, 20, 24 trace; n=12, 20 counters),
+  gray_update_micro_kernel, gray_update_compiler_barrier_baseline_kernel,
+  horizontal_product_micro_kernel, horizontal_product_compiler_barrier_baseline_kernel
+  (isolate-mode passes).
+
+separation: this run is deliberately distinct from timing run 20260814T230032Z-2085453; profiler counter collection and kernel tracing perturb execution, so the preregistered timing evidence carries no profiler and this artifact carries no timing authority. The grid.csv / gray-update.csv / horizontal-product.csv files under each pass directory are the profiled workload's own output, retained as the workload record only, never as timing evidence.
+
+contents (committed): per pass directory: <name>-<pid>_kernel_stats.csv and
+  <name>-<pid>_domain_stats.csv (trace passes; rocprofv3's own per-kernel
+  aggregation), <name>-<pid>_agent_info.csv, and the workload CSV. At the root:
+  run.log, counters-aggregate.csv (one row per pass/kernel/counter with dispatch
+  count, mean/min/max, and the constant per-dispatch resource fields), and
+  aggregate-counters.py, the script that derives it.
+
+raw retention (not committed): the per-dispatch counter_collection and
+  kernel_trace CSVs (436 MB uncompressed) are zstd-compressed and retained
+  locally at target/permanent-campaign/profiled-raw-20260815T181923Z/,
+  mirroring the pass-directory layout. counters-aggregate.csv is derived from
+  them by aggregate-counters.py (command: python3 aggregate-counters.py
+  <raw-retention-dir>). The whole artifact regenerates from the committed
+  profiled-run.sh against the hash-pinned binary.
