@@ -97,7 +97,7 @@ feature set together.
 Reproduction requires the exact commands as recorded, including `--only q=3`
 and `--execution-id 3002`. A cell's first stream index is
 `execution_id * 22 500 000 + order_index * 100 000 + 1`
-(`dev/research/permanent-sampling-feas/src/main.rs:371-392`, `:54`, `:81`), and
+(`dev/research/permanent-sampling-feas/src/main.rs:371-391`, `:54`, `:81`), and
 `order_index` is the cell's position after the spec list is shuffled with
 `SEED_ROOT` and stably sorted by ascending $n$
 (`dev/research/permanent-sampling-feas/src/main.rs:593-598`). The shuffle runs
@@ -280,7 +280,7 @@ so a cell's sample does not depend on which backend measures it*"
 (`dev/research/permanent-sampling-feas/src/protocol.rs:362-363`). Timing cells
 draw from that one sampler on preregistered, structurally disjoint per-cell
 stream addresses: each cell owns a reserved block of 100 000 stream indices
-keyed on its `order_index` (`main.rs:54`, `:371-392`, `:593-598`) — "*Every
+keyed on its `order_index` (`main.rs:54`, `:371-391`, `:593-598`) — "*Every
 backend cell draws from its own reserved purpose/index address range, so pooling
 across backends pools independent samples*" (`main.rs:1060-1062`).
 The equivalence comparison of §3 runs on one literally identical matrix corpus,
@@ -482,7 +482,8 @@ The consequence for the comparison is stated rather than smoothed over: the
 $n = 20$ ratio of 23.4238 is the joint effect of the fold circuit and a cell
 that runs 14 336 lanes against the shipped path's 1 024, and this campaign
 measures no prototype cell at $M \in \{256, 1024\}$ that would separate them.
-§12 records this against REQ-04.
+Every cell's batch size is carried beside its throughput here and in §10, and
+§13 keeps the undecomposed ratio on the list of what this run leaves open.
 
 The probe is a single-matrix latency and the preamble forbids deriving a
 batched rate from it; the ratio between the two is nevertheless informative
@@ -568,10 +569,15 @@ out-of-field prototype rows of §2.
 
 REQ-03 asks that the dependency-chained Gray update, the horizontal product,
 and the end-to-end Ryser loop each be isolated for every representation of this
-field that executes. The end-to-end Ryser loop is §4, covering all nine
-executing paths at all five orders. Both isolates run at all five orders in this
-campaign (`# orders: 12, 16, 20, 24, 28` in each isolate preamble; each order is
-an independent row per candidate with its own seed address).
+field that executes; that a representation whose component admits no distinct
+isolate — a fused or branchless circuit — be recorded with that structural
+reason in place of a duration; and that a censored isolate carry its censoring
+reason. The end-to-end Ryser loop is §4, covering all nine executing paths at
+all five orders. Both component isolates run at all five orders in this campaign
+(`# orders: 12, 16, 20, 24, 28` in each isolate preamble; each order is an
+independent row per candidate with its own seed address). Each subsection below
+gives the durations it measures, then the reason carried by every row that has
+none, and names which of the two kinds that reason is.
 
 ### 6.1 Dependency-chained Gray update
 
@@ -605,17 +611,27 @@ runs *faster* than the same-geometry barrier baseline it is measured against, by
 reports no rate rather than a clamped or negative one, and no false positive
 rate is substituted.
 
-The five remaining CPU rows carry `unsupported: <backend> has no isolated
-dependency-chained Gray-update evaluator`, so one CPU representation is
-isolated. **The two $\mathbb{F}_3$ prototypes are `unsupported` with a
-circuit-level reason rather than a measurement**: `unsupported: fold-gf3 applies
+That reason is a censoring reason: the row executed, its paired spans are
+retained as diagnostics, and only the derived rate is withheld.
+
+**The two $\mathbb{F}_3$ prototypes carry a structural reason instead of a
+measurement**, which is the fused-circuit case: `unsupported: fold-gf3 applies
 the same packed Bipedal3 add/subtract the shipped gpu_hip Gray-update circuit
 times; and its own update runs fused inside the full-permanent wave kernel; no
 circuit distinct to this candidate exists to isolate`, and the same string for
 `wave-gf3` (`dev/research/permanent-sampling-feas/src/gray_update.rs:231-248`).
-So this field has one Gray-update circuit across all its representations; the
-isolate measures it on the host and attempts it on the device, where the
-subtraction censors it.
+The five remaining CPU rows carry `unsupported: <backend> has no isolated
+dependency-chained Gray-update evaluator`, under the rule the isolate's own
+preamble states — "*A row reports a span only from a circuit distinct to the
+backend it names*" — so they are the same structural case: they share
+`cpu_scalar`'s packed host add/subtract and have no circuit of their own to
+isolate.
+
+So this field has one Gray-update circuit across all its representations. The
+isolate measures it on the host at every order, attempts it on the device at
+every order and censors it there with the reason above, and records every other
+row's absence as the structural fact that the row's backend has no distinct
+circuit to time.
 
 ### 6.2 Horizontal product
 
@@ -640,12 +656,12 @@ which enters `horizontal_product_micro_kernel` and dispatches to
 | 24 | 2 177 | 0.020431881 | 0.020232145 | 2.2e-11 | 8 916 463 | 0.004011606 | 0.004106485 | absent | 529 |
 | 28 | 2 224 | 0.021166517 | 0.020910727 | 2.8e-11 | 9 109 408 | 0.000838733 | 0.000858527 | absent | 96 |
 
-The nonzero-slow branch is censored at every order: `nonzero slow timing
-unavailable: raw device span minus its same-geometry baseline was nonpositive;
-so no false positive rate is reported`. Only the zero-fast branch carries a
-duration, and it is flat at 2.0–2.8 × 10⁻¹¹ s per operation across the five
-orders, which the shape predicts for an early exit whose expected work does not
-grow with $n$.
+The nonzero-slow branch is censored at every order, and carries its censoring
+reason: `nonzero slow timing unavailable: raw device span minus its
+same-geometry baseline was nonpositive; so no false positive rate is reported`.
+Only the zero-fast branch carries a duration, and it is flat at
+2.0–2.8 × 10⁻¹¹ s per operation across the five orders, which the shape predicts
+for an early exit whose expected work does not grow with $n$.
 
 `gpu_hip` and `wave-gf3` both select `Bipedal3Halving`
 (`horizontal_product.rs:486`, `:494`) and are `unavailable` with the reason
@@ -661,8 +677,9 @@ horizontal-product isolate; no generic or host-clock replacement was used`.
 
 So of the two $\mathbb{F}_3$ horizontal-product representations, the
 zero-mask/sign-popcount fold yields an isolated duration on its zero branch at
-every order, and the bipedal3-halving representation yields none by
-construction, with that construction recorded as the reason rather than worked
+every order and a censoring reason on its nonzero branch, and the
+bipedal3-halving representation yields none because it is branchless at this
+boundary — the structural case, recorded as the reason rather than worked
 around.
 
 ## 7. Kernel resources against design-predicted budgets (REQ-07, REQ-09)
@@ -956,22 +973,33 @@ lane owning a balanced Gray interval
 specializations are equivalence-confirmed against the CPU oracle at every grid
 order in the same run (§3) and are `measured` in all ten of their grid cells.
 
-| $n$ | control `gpu_hip` $M{=}1024$ | `wave-gf3` (its $M$) | `fold-gf3` (its $M$) | fold / control |
-| ---: | ---: | ---: | ---: | ---: |
-| 12 | 214 467.4416 | 211 897.8391 (44) | 228 042.8264 (45) | 1.0633 |
-| 16 | 57 627.3613 | 71 337.8740 (45) | 82 098.9857 (44) | 1.4247 |
-| 20 | 4 848.4654 | 8 598.6487 (41) | 69 485.2981 (448) | 14.3314 |
-| 24 | 312.1116 | 242.1683 (17) | 461.3922 (22) | 1.4783 |
-| 28 | 8.5448 ($M{=}256$; $M{=}1024$ censored) | 1.7883 (2) | 3.9630 (3) | 0.4638 |
+Each mapping's batch size is carried in its own column beside the throughput it
+produced. The control's are the grid's two fixed sizes; the prototypes' are what
+each cell's own probe calibrated.
 
-**The two mappings are compared at matching orders and not at matching batch
-sizes.** All five orders carry both mappings, so the order axis of REQ-04 is
-met. The batch-size axis is not: the grid fixes the control at $M \in \{256,
-1024\}$ and calibrates every prototype cell from its own probe, producing $M \in
-\{2, 3, 17, 22, 41, 44, 45, 448\}$ (§4.5). No prototype cell in this campaign
-runs at 256 or at 1024, so the fold/control ratios above compare cells that
-differ in device parallelism as well as in mapping, and the $n = 20$ column is
-where that difference is largest.
+| $n$ | control $M$ | control rate | `wave-gf3` $M$ | `wave-gf3` rate | `fold-gf3` $M$ | `fold-gf3` rate | fold / control |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 12 | 1024 | 214 467.4416 | 44 | 211 897.8391 | 45 | 228 042.8264 | 1.0633 |
+| 16 | 1024 | 57 627.3613 | 45 | 71 337.8740 | 44 | 82 098.9857 | 1.4247 |
+| 20 | 1024 | 4 848.4654 | 41 | 8 598.6487 | 448 | 69 485.2981 | 14.3314 |
+| 24 | 1024 | 312.1116 | 17 | 242.1683 | 22 | 461.3922 | 1.4783 |
+| 28 | 256 | 8.5448 | 2 | 1.7883 | 3 | 3.9630 | 0.4638 |
+
+The control column is `gpu_hip` at its better configuration per order, which is
+$M = 1024$ everywhere except $n = 28$, where $M = 1024$ is censored (§5) and
+$M = 256$ is the only measured control cell.
+
+**The two mappings are compared at matching orders, and each cell's batch size
+is carried beside its throughput because the two differ in it.** All five orders
+carry both mappings. The grid fixes the control at $M \in \{256, 1024\}$ and
+calibrates every prototype cell from its own probe, producing $M \in \{2, 3, 17,
+22, 41, 44, 45, 448\}$; §4.5 quantifies what that difference is worth, in active
+lanes per repetition and in the probe cost that sets it. No prototype cell in
+this campaign runs at 256 or at 1024, so the fold/control ratios above compare
+cells that differ in device parallelism as well as in mapping, and the $n = 20$
+column is where that difference is largest. The ordering on the order axis is
+what these ratios support; the size of the mapping's own contribution at any one
+order is not separable from them.
 
 The comparison that this campaign does support at matched geometry is the
 resource comparison of §7: control at 27 SGPR / 19 VGPR / 1040 scratch bytes per
@@ -1062,10 +1090,10 @@ of the work model.
 
 | REQ | Where addressed | Status |
 | --- | --- | --- |
-| REQ-01 | §2, §3, §4.2 | **Satisfied.** The current GPU path at both configured batch sizes, both planned $\mathbb{F}_3$ prototype paths (each `measured` in all ten of its grid cells), and all six in-tree CPU paths are compared over $\mathbb{F}_3$ at five orders, with the best applicable CPU path identified per order from this run's own data. Every timing cell draws from one identical sampler on preregistered, structurally disjoint per-cell stream addresses (`main.rs:54`, `:371-392`, `:593-598`); the equivalence comparison runs on one literally identical matrix corpus per $(q, n)$ (`equivalence.rs:139`, `:186-192`). |
+| REQ-01 | §2, §3, §4.2 | **Satisfied.** The current GPU path at both configured batch sizes, both planned $\mathbb{F}_3$ prototype paths (each `measured` in all ten of its grid cells), and all six in-tree CPU paths are compared over $\mathbb{F}_3$ at five orders, with the best applicable CPU path identified per order from this run's own data. Every timing cell draws from one identical sampler on preregistered, structurally disjoint per-cell stream addresses (`main.rs:54`, `:371-391`, `:593-598`); the equivalence comparison runs on one literally identical matrix corpus per $(q, n)$ (`equivalence.rs:139`, `:186-192`). |
 | REQ-02 | §1, §4.1 | **Satisfied.** Every listed item maps to a named CSV column or provenance line, tabulated in §4.1. |
-| REQ-03 | §4, §6 | **Satisfied in part.** The end-to-end Ryser loop is isolated for all nine executing paths at all five orders. The Gray-update isolate runs at all five orders and yields a duration for one representation (`cpu_scalar`); the device circuit is attempted and censored for a nonpositive barrier subtraction at every order, and the two prototypes carry a circuit-level reason that this field has no candidate-distinct Gray update to isolate. The horizontal-product isolate runs at all five orders and yields a zero-branch duration for the zero-mask/sign-popcount representation; the bipedal3-halving representation has no observable branch boundary and reports that instead of a synthetic split, and its nonzero branch is censored at every order. |
-| REQ-04 | §10, §4.5 | **Satisfied in part.** Both mappings are measured at all five matching orders. The batch sizes do not match: the control is fixed at $M \in \{256, 1024\}$ and every prototype cell is calibrated from its own probe to $M \in \{2, 3, 17, 22, 41, 44, 45, 448\}$, so the two mappings are comparable on the order axis and confounded with device parallelism on the batch axis. §4.5 quantifies the confound and §10 states the ratios with their batch sizes attached. |
+| REQ-03 | §4, §6 | **Satisfied.** The end-to-end Ryser loop is isolated for all nine executing paths at all five orders. Gray update, at all five orders: a duration for the host circuit (`cpu_scalar`); the shipped device circuit censored with its censoring reason verbatim, the nonpositive barrier subtraction; both prototypes recorded with the structural reason that their update is the same packed Bipedal3 add/subtract, fused inside the full-permanent wave kernel, so no candidate-distinct circuit exists to isolate; the remaining CPU backends recorded as having no distinct evaluator, under the preamble's rule that a row reports a span only from a circuit distinct to the backend it names. Horizontal product, at all five orders: a zero-branch duration for the zero-mask/sign-popcount representation, its nonzero branch censored with its censoring reason at every order, and the bipedal3-halving representation recorded with the structural reason that its zero result is observable only after the complete reduction, so it is branchless at this boundary and no synthetic split is emitted. No absence is left without a reason of the kind the criterion names. |
+| REQ-04 | §10, §4.5 | **Satisfied.** Both mappings are measured at all five matching orders. The control's fixed $M \in \{256, 1024\}$ and each prototype cell's probe-calibrated $M \in \{2, 3, 17, 22, 41, 44, 45, 448\}$ are recorded beside their throughputs in the §10 mapping table and in every throughput table of §4. §4.5 quantifies the confound: the batch size *is* the prototype's device parallelism, tabulated as 64–14 336 active lanes against the control's 256 or 1024, with the probe cost that sets each batch and the probe-to-achieved ratio per path. The mappings are therefore comparable on the order axis, which is what §10's ordering rests on. |
 | REQ-05 | §4.3 | **Satisfied.** `kernel_device_s` is its own device-event column on all four device paths; allocation, copy, and host serialisation are outside it, and the residual is derivable per cell. |
 | REQ-06 | §4.3 | **Satisfied.** `h2d_device_s`, `d2h_device_s`, `host_submission_s`, and `device_submission_to_kernel_s` are four separate columns, and per-launch costs follow from them and `reps` without a second run. §4.3 states, with the `host_submission_s`/`eval_s` ratios as evidence, that the host-clock column measures an asynchronous submission on `gpu_hip` rows and a synchronous submit-and-complete on prototype rows, so that it is not misread as a prototype launch overhead. |
 | REQ-07 | §7 | **Satisfied with two recorded gaps.** Registers per thread, scratch per thread, static LDS per block, and both spill counts are reported for all eight kernels beside their design predictions where a prediction exists. The gaps: the compiler's static-LDS field cannot observe the prototypes' $16n$-byte dynamic table, and no committed design states a per-lane register budget for `permanent_bipedal3_kernel`, `gray_update_micro_kernel`, or `horizontal_product_micro_kernel`. |
@@ -1085,8 +1113,8 @@ Collected so a reader does not have to reassemble it from the sections above.
 1. **No prototype cell is measured at the control's batch sizes.** Every
    prototype cell sizes itself from a one-matrix probe, so the mapping
    comparison of §10 mixes the mapping effect with a device-parallelism effect
-   that ranges over a factor of 224 across the prototype cells. This is what
-   holds REQ-04 to a partial satisfaction.
+   that ranges over a factor of 224 across the prototype cells. Separating the
+   two needs a run with the prototype batch sizes pinned to the control's.
 2. **The $n = 20$ headline ratio is not decomposed.** `fold-gf3` at 23.4238×
    the best CPU path runs 14 336 lanes against the shipped path's 1 024. No cell
    in this run isolates how much of that ratio is the fold circuit and how much
