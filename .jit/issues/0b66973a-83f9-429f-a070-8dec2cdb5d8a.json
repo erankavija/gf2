@@ -6,11 +6,18 @@
   "dependencies": [],
   "description": "The closed F_5 receipt campaign's receipts deny a committed per-lane register statement that the kernel source itself carries, so the receipts' prediction-coverage story is false for both F_5 prototype kernels.\n\n## Background\n\n`dev/studies/91605d4d/receipts.md` states that no committed design states a per-lane register budget for the F_5 prototype kernels — the bolded claim near line 883, the per-kernel coverage table in section 7.2 (lines 967–979), the REQ-07 conformance row (line 1486), and the section-17 limitation entry (line 1519) all render it. The committed kernel source contradicts this: `dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:9-15` states source-level stable-lane-state models for both kernels — `f5_byte_control_kernel` at $n + 20$ bytes and `f5_three_plane_kernel` at 11 32-bit register units — as explicit register/shared-memory hypotheses before compiler allocation, with the compiler resource report named authoritative for the final counts.\n\nThe F_3 receipts (`dev/studies/047b62ed/receipts.md`) already pair exactly this kind of source-level lower bound (the $\\ge 9 \\times$ 32-bit statement) with the measured figures; per `@/inv/convention-convergence` that pairing is the convention. The identical defect in the F_7 receipts was found by 6c7fcb38's code-review gate and is being fixed under that issue; this issue owns the F_5 instance, which lives in a closed campaign.\n\n## Success Criteria\n\n- [hard] REQ-01: Every rendering in `dev/studies/91605d4d/receipts.md` of the claim that no committed design states a per-lane register budget for a kernel whose committed source does state one is corrected: the section-7.1 table, the section-7.2 coverage table, the conformance-table rows, and the section-17 limitation entry pair the measured registers with the source-stated model as a source-level lower bound in the source's own units (with any unit conversion stated), following the F_3 receipts' pairing convention, each with its source file:line citation.\n- [hard] REQ-02: Where a measurement sits at or above its stated lower bound the pairing states the confirmation; a measurement below the bound is recorded together with the contradiction per `@/inv/falsification-preserved`. Claims of absence for kernels whose sources genuinely state no per-lane register model are left standing, each verified against its source.\n- [hard] REQ-03: The receipts' analysis script still reproduces every rendered figure after the edit, and no measurement artifact, CSV, or evidence file is modified.\n\n## Notes\n\nDoc-only correction of a closed study's receipts; measurement evidence is untouched per `@/inv/behavioral-evidence-validity`. Found by the F_7 code-review finding on 6c7fcb38 (gate-run record of 2026-08-16); same root cause: the receipt author searched the README for budget statements and missed the HIP translation-unit headers.\n",
   "documents": [],
+  "done_at": "2026-08-15T22:41:11.028408134Z",
   "first_ready_at": "2026-08-15T22:22:39.709250883Z",
   "gates_required": [
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-15T22:40:17.733416556Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "0b66973a-83f9-429f-a070-8dec2cdb5d8a",
   "labels": [
     "epic:permanent-statistics",
@@ -18,7 +25,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "F_5 receipts deny committed per-lane register models their kernel source states",
-  "updated_at": "2026-08-15T22:24:55.121117825Z"
+  "updated_at": "2026-08-15T22:41:11.028408134Z"
 }

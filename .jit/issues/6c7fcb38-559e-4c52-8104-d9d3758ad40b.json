@@ -218,6 +218,7 @@
       "path": "dev/studies/6c7fcb38/profiled-20260815T181923Z/provenance.txt"
     }
   ],
+  "done_at": "2026-08-15T22:40:58.813722990Z",
   "first_ready_at": "2026-08-10T11:15:10.729787865Z",
   "gates_required": [
     "code-review",
@@ -225,13 +226,13 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T22:15:55.973580764Z",
+      "status": "passed",
+      "updated_at": "2026-08-15T22:36:38.475236406Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T22:18:17.336669458Z",
+      "status": "passed",
+      "updated_at": "2026-08-15T22:38:24.710435760Z",
       "updated_by": "auto:executor"
     }
   },
@@ -250,7 +251,7 @@
     "satisfies:REQ-11"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-  "updated_at": "2026-08-15T22:18:17.336669458Z"
+  "updated_at": "2026-08-15T22:40:58.813722990Z"
 }

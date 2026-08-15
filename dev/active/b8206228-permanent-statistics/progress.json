@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 1,
+ "current_wave": 2,
  "waves": [
   {
    "wave_number": 1,
@@ -25,7 +25,7 @@
      "short_id": "6c7fcb38",
      "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
      "classification": "research",
-     "status": "rework-1-dispatched: profiled run and receipts sections 12/13 committed (bd4faeb5); first gate round 2026-08-16 failed both gates with one blocking finding each (code-review: receipts deny the committed wave_gf7_equivalence.hip:8-18 per-lane register lower bounds; doc-review: provenance round-2 SQ_WAVES admissibility text contradicts the applied receipts section-13 policy); rework dispatched to codex luna"
+     "status": "done"
     },
     {
      "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
@@ -294,7 +294,8 @@
    "title": "F_5 receipts deny committed per-lane register models their kernel source states",
    "reason": "The 6c7fcb38 code-review finding (receipts deny the wave_gf7_equivalence.hip:8-18 per-lane lower bounds) generalises to the closed F_5 receipts, which deny the f5_wave_equivalence.hip:9-15 models; filed per the a2c0db52 interleaved-bug precedent.",
    "wave": "1 (interleaved)",
-   "status": "in-progress"
+   "status": "done",
+   "note": "Closed 2026-08-16: pairing corrected at 682d5942, doc-review passed first round with persisted record, lead six-tier review PASS."
   },
   {
    "short_id": "4fdd781a",
