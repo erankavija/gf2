@@ -835,7 +835,13 @@ def main() -> None:
               f" = {rayon / gpus[gk]:.4f}x{here}")
 
     print()
-    print("== section 11.1: prior cells published as measured outside the stated stopping rule ==")
+    print("== section 11.1: independent check of the prior study's daggered cells ==")
+    # The prior study marks its stopping-rule-nonconforming rendered cells with a
+    # dagger under bug 4fdd781a and carries its own check for the convention,
+    # dev/studies/b488f02c/verify-rendered-stopping-rule.py. This block derives
+    # the same set from the CSV independently, so the receipts can cite the
+    # marking and state that an independent derivation agrees with it.
+    #
     # The harness rule, as implemented: a cell stops once both minimums are met
     # or the cap is reached, and it is censored only when the cap arrives first
     # (protocol.rs:178-186, :190-191). So the cap bounds when a further
@@ -853,8 +859,19 @@ def main() -> None:
             print(f"  q={row['q']} n={row['n']} {row['backend']} M={row['batch_size']}"
                   f" reps={row['reps']} total_s={row['total_s']}"
                   f" composite={row['composite_matrices_per_s']}"
-                  f"  [cap reached before both minimums; the rule censors this cell]")
-    print("prior cells that close above the cap while conforming, which the rule allows:")
+                  f"  [cap reached before both minimums; expect a dagger on this cell]")
+    # The rendered marking is the prior study's own artifact; agreement between
+    # the set derived here and the daggered set there is what the receipts cite.
+    rendered = (STUDY.parent / "b488f02c" / "feasibility-study.md").read_text()
+    daggered = sum(1 for line in rendered.splitlines()
+                   if line.startswith("|") and "†" in line)
+    print(f"rendered section 4.4 rows carrying a dagger: {daggered}")
+    assert daggered == sum(1 for row in prior_rows
+                           if row["outcome"] == "measured" and outside_rule(row)), (
+        "the daggered rendered cells no longer match the cells this check derives"
+    )
+    print("prior cells that close above the cap while conforming, which the rule allows"
+          " and which the rendered table correctly leaves unmarked:")
     for row in prior_rows:
         if (row["outcome"] == "measured" and float(row["total_s"]) > 120.0
                 and not outside_rule(row)):
