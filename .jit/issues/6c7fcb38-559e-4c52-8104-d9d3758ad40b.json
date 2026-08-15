@@ -223,7 +223,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-15T22:15:55.973580764Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-15T22:18:17.336669458Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "6c7fcb38-559e-4c52-8104-d9d3758ad40b",
   "labels": [
     "type:simulation",
@@ -241,5 +252,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "F_7 preregistered receipt campaign with bit-plane resource accounting",
-  "updated_at": "2026-08-15T18:44:06.458363355Z"
+  "updated_at": "2026-08-15T22:18:17.336669458Z"
 }
