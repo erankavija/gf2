@@ -8235,3 +8235,5 @@
 {"gate_key":"doc-review","id":"72d9831c-125a-4f4f-8041-8241f2138e0c","issue_id":"6c7fcb38-559e-4c52-8104-d9d3758ad40b","timestamp":"2026-08-15T22:18:17.336669458Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"8eab2bc5-ee85-454b-b0a7-a0e08b3274e9","issue_id":"0b66973a-83f9-429f-a070-8dec2cdb5d8a","priority":"low","timestamp":"2026-08-15T22:22:39.709250883Z","title":"F_5 receipts deny committed per-lane register models their kernel source states","type":"issue_created"}
 {"fields":["dependencies"],"id":"6751d139-c73c-40a6-a9f8-f17ae2145d1b","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-15T22:22:54.051205967Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"b940e27b-fb36-4318-9580-06bcce41287f","issue_id":"0b66973a-83f9-429f-a070-8dec2cdb5d8a","timestamp":"2026-08-15T22:24:55.121117825Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-luna","id":"87daad9d-ff09-4936-83fe-d8c242a4d055","issue_id":"0b66973a-83f9-429f-a070-8dec2cdb5d8a","timestamp":"2026-08-15T22:24:55.121117825Z","type":"issue_claimed"}

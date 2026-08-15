@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex-luna",
+  "claimed_at": "2026-08-15T22:24:55.121117825Z",
   "context": {},
   "created_at": "2026-08-15T22:22:39.709250883Z",
   "dependencies": [],
@@ -17,7 +18,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "ready",
+  "state": "in_progress",
   "title": "F_5 receipts deny committed per-lane register models their kernel source states",
-  "updated_at": "2026-08-15T22:22:39.709250883Z"
+  "updated_at": "2026-08-15T22:24:55.121117825Z"
 }
