@@ -21,7 +21,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-15T10:36:52.388844187Z",
+      "updated_at": "2026-08-15T16:06:52.216973478Z",
       "updated_by": "auto:executor"
     }
   },
@@ -34,5 +34,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
-  "updated_at": "2026-08-15T10:36:52.388844187Z"
+  "updated_at": "2026-08-15T16:06:52.216973478Z"
 }
