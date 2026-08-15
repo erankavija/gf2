@@ -1074,15 +1074,19 @@ is large enough for that pressure to bind.
 
 ## 11. This campaign against the figures it has to confirm or overturn
 
-The comparison target is
+The comparison target is the prior grid committed as
+[`dev/studies/b488f02c/throughput-2026-08-07.csv`](../b488f02c/throughput-2026-08-07.csv),
+which is the artifact
 [`dev/studies/b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md)
-§4.4. Its grid runs on the same CPU, the same GPU, the same ROCm 7.2.4, and the
-same `powersave` governor, under the same harness protocol
-([`dev/studies/b488f02c/throughput-2026-08-07.csv`](../b488f02c/throughput-2026-08-07.csv)
+§4.4 renders its table from. Every prior rate quoted below is read from that CSV
+by `analysis.py`, not from the rendered table, so no figure of the prior run is
+maintained in two places; §11.1 records the one cell where the two disagree.
+That grid runs on the same CPU, the same GPU, the same ROCm 7.2.4, and the
+same `powersave` governor, under the same harness protocol (its own
 preamble); the two differ in host kernel (`7.1.3-arch1-3` there against
 `7.1.6-arch1-1` here) and in Rust toolchain (`1.97.0` there against the
 campaign's manifest-pinned `1.95.0`). `analysis.py` section 11 prints the full
-34-pair comparison.
+39-pair comparison.
 
 **The crossover shape of the shipped paths is confirmed, and a prototype
 overturns its middle.** The study reports that batch rayon takes $n = 12$, the
@@ -1121,18 +1125,22 @@ $n = 24$ and **0.4390×** at $n = 28$. The headline ratio and its restatement
 both reproduce, so the divergence remains entirely in the choice of CPU
 baseline.
 
-**Run-to-run agreement.** Across the 34 backend/order pairs both runs measure,
-the median absolute disagreement is 2.08 % and every CPU pair agrees within
-7.59 %. From $n = 20$ upward every pair agrees within 4.58 % and every GPU pair
-within 0.96 %, including $n = 28$, $M = 256$ at 0.15 % and $n = 24$,
-$M = 1024$ at 0.55 %. The single large disagreement is $n = 12$, $M = 256$ at
-$-44.77\%$ (218 275 against 120 552.7194), with $n = 12$, $M = 1024$ at
-$-13.40\%$. The phase columns locate it: at $n = 12$, $M = 256$ the kernel is
-28.4 % of `eval_s` and the host-side residual is 70.0 % (§4.3), so that cell
-measures the dispatcher's per-call host work far more than it measures the
-device, and it is the least reproducible cell in the grid. This is recorded as a
-limit on the smallest order rather than smoothed over; it does not touch the
-crossover, which is decided at $n \ge 16$ where agreement is within 10.4 %.
+**Run-to-run agreement.** The prior CSV carries 40 measured $q = 3$ cells and
+this run measures 39 of them — every one except $n = 28$, $M = 1024$, censored
+here (§5) — so the comparison is over 39 backend/order pairs. The median
+absolute disagreement is 2.28 %, and the largest CPU disagreement anywhere is
+7.59 % at $n = 12$, `cpu_rayon_batch_scalar`. From $n = 20$ upward the largest
+disagreement of any pair is 4.61 % and of any GPU pair 0.97 %, the latter at
+$n = 20$, $M = 256$; $n = 28$, $M = 256$ agrees to 0.15 % and $n = 24$,
+$M = 1024$ to 0.56 %. The single large disagreement is $n = 12$, $M = 256$ at
+$-44.77\%$ (218 274.6416 against 120 552.7194), with $n = 12$, $M = 1024$ at
+$-13.40\%$.
+The phase columns locate it: at $n = 12$, $M = 256$ the kernel is 28.4 % of
+`eval_s` and the host-side residual is 70.0 % (§4.3), so that cell measures the
+dispatcher's per-call host work far more than it measures the device, and it is
+the least reproducible cell in the grid. This is recorded as a limit on the
+smallest order rather than smoothed over; it does not touch the crossover, which
+is decided at $n \ge 16$, where the largest disagreement is 10.40 %.
 
 **The projection bias is confirmed in direction and, at the two steps the study
 publishes, in magnitude — on the GPU chain only.** The study measures the
@@ -1145,6 +1153,34 @@ $16 \rightarrow 20$. The bias shrinks monotonically with $n$ on both GPU chains.
 On the two prototype chains it does not shrink and it changes sign (§5), so the
 "lands low at every step" statement is a property of a fixed-batch chain and not
 of the work model.
+
+### 11.1 One cell where the prior study's table and its own CSV disagree
+
+Reading the prior rates from the CSV rather than from the rendered table makes
+the two comparable, so the comparison was made. 34 of the 35 $q = 3$ cells that
+§4.4 publishes are the correctly rounded CSV value at the precision the table
+shows. One is not:
+
+| $q$, $n$, path | §4.4 publishes | CSV holds | correctly rounded to 5 significant figures |
+| --- | ---: | ---: | ---: |
+| 3, 12, `cpu_avx2` | 18 182 | 18 181.4619 | 18 181 |
+
+The published cell rounds up where its own artifact rounds down, a
+$0.003\,\%$ overstatement. Nothing in either document turns on it. The
+discrepancy is confined to the prior run's rendered table, and the only figure
+here that touches that cell is its run-to-run delta, which moves from
+$+1.63\,\%$ against the table to $+1.64\,\%$ against the CSV; `cpu_avx2` is
+never the best applicable in-tree CPU path at any order, so it sets no baseline
+ratio anywhere in this document. It is recorded because a table that
+disagrees with the artifact it renders is the kind of drift this campaign's
+figures are supposed to make visible, per `@/inv/falsification-preserved`, and
+because this receipt now quotes the CSV — a reader comparing this document to
+§4.4 would otherwise find the difference and have nothing to attribute it to.
+
+The prior CSV also carries a $q = 3$ backend that §4.4's table does not print,
+`cpu_rayon_batch_avx2`, at all five orders. Those five cells are in the 39-pair
+comparison above; they are absent from the study's published table, not from its
+data.
 
 ## 12. Criterion-by-criterion conformance
 
