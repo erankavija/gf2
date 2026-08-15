@@ -24,6 +24,10 @@ GRID = STUDY / f"{RUN}-q3-grid.csv"
 GRAY = STUDY / f"{RUN}-q3-gray-update.csv"
 HPROD = STUDY / f"{RUN}-q3-horizontal-product.csv"
 EQUIV = STUDY / f"{RUN}-shared-equivalence.csv"
+# Prior grid this campaign has to confirm or overturn: the committed artifact
+# the feasibility study's section 4.4 table is rendered from, read here rather
+# than that table, so no figure of it is maintained in two places.
+PRIOR = STUDY.parent / "b488f02c" / "throughput-2026-08-07.csv"
 RESOURCES = STUDY.parent / "6c7fcb38" / "hip-resource-usage-20260814T172506Z-1610002"
 RESOURCE_LOGS = (
     "permanent_bipedal3.hip.resource.log",
@@ -498,44 +502,47 @@ def main() -> None:
         ir = float(intra["composite_matrices_per_s"])
         print(f"n={n}: {gk} {gr:.4f} / cpu_rayon_intra_matrix {ir:.4f} = {gr / ir:.4f}x")
 
-    # Quoted from the published table in
-    # `dev/studies/b488f02c/feasibility-study.md` section 4.4, q=3 rows. The
-    # copy exists so the agreement percentages below are reproducible from this
-    # script alone; that table remains the source of truth for its own figures.
-    prior = {
-        12: {"cpu_scalar": 50846.0, "cpu_avx2": 18182.0, "cpu_rayon_batch_scalar": 280056.0,
-             "cpu_rayon_intra_matrix": 38462.0, "cpu_ryser_generic": 6902.0,
-             "gpu_hip@M=256": 218275.0, "gpu_hip@M=1024": 247646.0},
-        16: {"cpu_scalar": 3638.0, "cpu_avx2": 1196.0, "cpu_rayon_batch_scalar": 36311.0,
-             "cpu_rayon_intra_matrix": 4439.0, "cpu_ryser_generic": 307.8,
-             "gpu_hip@M=256": 30210.0, "gpu_hip@M=1024": 61306.0},
-        20: {"cpu_scalar": 229.9, "cpu_avx2": 74.82, "cpu_rayon_batch_scalar": 2500.0,
-             "cpu_rayon_intra_matrix": 2982.0, "cpu_ryser_generic": 15.18,
-             "gpu_hip@M=256": 2136.0, "gpu_hip@M=1024": 4863.0},
-        24: {"cpu_scalar": 14.35, "cpu_avx2": 4.650, "cpu_rayon_batch_scalar": 155.4,
-             "cpu_rayon_intra_matrix": 296.6, "cpu_ryser_generic": 0.777,
-             "gpu_hip@M=256": 136.4, "gpu_hip@M=1024": 310.4},
-        28: {"cpu_scalar": 0.903, "cpu_avx2": 0.289, "cpu_rayon_batch_scalar": 9.986,
-             "cpu_rayon_intra_matrix": 19.58, "cpu_ryser_generic": 0.0419,
-             "gpu_hip@M=256": 8.532, "gpu_hip@M=1024": 19.27},
-    }
+    prior: dict[int, dict[str, float]] = {n: {} for n in ORDERS}
+    for row in read_simple(PRIOR):
+        if int(row["q"]) != Q or row["outcome"] != "measured":
+            continue
+        prior[int(row["n"])][label(row)] = float(row["composite_matrices_per_s"])
+
     print()
-    print("== section 11: agreement with feasibility-study section 4.4 ==")
-    print(f"{'n':>3} {'path':>24} {'study 4.4':>12} {'this run':>12} {'delta':>8}")
-    spread = []
+    print("== section 11: agreement with the prior grid's committed rates ==")
+    print(f"source: {PRIOR}")
+    print(f"{'n':>3} {'path':>24} {'prior run':>14} {'this run':>14} {'delta':>8}")
+    spread: list[float] = []
+    by_group: dict[str, list[float]] = {}
     for n in ORDERS:
-        for key, ref in prior[n].items():
+        for key, ref in sorted(prior[n].items()):
             cell = by_order[n].get(key)
             if cell is None:
-                print(f"{n:>3} {key:>24} {ref:>12.4f} {'censored':>12} {'-':>8}")
+                print(f"{n:>3} {key:>24} {ref:>14.4f} {'censored':>14} {'-':>8}")
                 continue
             here = float(cell["composite_matrices_per_s"])
             delta = 100.0 * (here - ref) / ref
             spread.append(abs(delta))
-            print(f"{n:>3} {key:>24} {ref:>12.4f} {here:>12.4f} {delta:>7.2f}%")
+            group = "gpu" if key.startswith("gpu_hip") else "cpu"
+            by_group.setdefault(group, []).append(abs(delta))
+            if n >= 16:
+                by_group.setdefault("n>=16", []).append(abs(delta))
+            if n >= 20:
+                by_group.setdefault("n>=20", []).append(abs(delta))
+                by_group.setdefault(f"n>=20 {group}", []).append(abs(delta))
+            print(f"{n:>3} {key:>24} {ref:>14.4f} {here:>14.4f} {delta:>7.2f}%")
     spread.sort()
     print(f"pairs={len(spread)} median|delta|={spread[len(spread) // 2]:.2f}%"
           f" max|delta|={spread[-1]:.2f}%")
+    for group in sorted(by_group):
+        print(f"  max|delta| over {group:>12} = {max(by_group[group]):.2f}%"
+              f"  (n={len(by_group[group])})")
+
+    print()
+    print("== section 11: prior-run coverage ==")
+    print(f"q={Q} measured cells in the prior CSV: "
+          f"{sum(len(v) for v in prior.values())} over orders {ORDERS}")
+    print("keys: " + ", ".join(sorted({k for n in ORDERS for k in prior[n]})))
 
 
 if __name__ == "__main__":
