@@ -8162,3 +8162,5 @@
 {"from":"backlog","id":"e2877b69-5464-47aa-921b-77bc35802971","issue_id":"91605d4d-8c30-43d6-b1bd-26f277b31120","timestamp":"2026-08-14T17:23:47.133372808Z","to":"ready","type":"issue_state_changed"}
 {"fields":["documents"],"id":"220a8d16-9d01-4f4e-92af-10e90553269b","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-14T17:25:00.031694905Z","type":"issue_updated","updated_by":"doc-add"}
 {"id":"15f573f5-4836-49d4-bf3d-72ebe3728f9a","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"upgraded","variables":[]}],"timestamp":"2026-08-14T18:33:50.178872649Z","type":"profile_lifecycle"}
+{"from":"ready","id":"6b9fee77-1772-4f58-975f-d46e67b97c62","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T06:27:35.906452984Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:worker","id":"789bf3d8-a1e1-4531-8ad8-116a3a3c724f","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T06:27:35.906452984Z","type":"issue_claimed"}
