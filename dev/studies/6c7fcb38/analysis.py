@@ -8,14 +8,16 @@ Run from the repository root:
 The script reads only committed artifacts and writes nothing: the three
 $\\mathbb{F}_7$ CSVs of campaign run `20260814T230032Z-2085453` beside it, the
 shared equivalence CSV of the same run under `dev/studies/047b62ed/`, the prior
-grid under `dev/studies/b488f02c/`, and the compiler kernel-resource logs of
-receipt `20260814T172506Z-1610002` in this directory. Every figure quoted in
+grid under `dev/studies/b488f02c/`, the compiler kernel-resource logs of
+receipt `20260814T172506Z-1610002` in this directory, and the paired profiled
+evidence run `20260815T181923Z` in its own subdirectory. Every figure quoted in
 `receipts.md` is printed here under the heading that names its section, so a
 reviewer can diff prose against data without re-running the measurement.
 """
 
 from __future__ import annotations
 
+import csv
 import math
 import pathlib
 
@@ -43,6 +45,77 @@ RESOURCE_LOGS = (
     "gray_update_micro.hip.resource.log",
     "probe.hip.resource.log",
 )
+
+# Paired profiled evidence run: a second run of the same hash-pinned binary
+# over the same preregistered cells, kept apart from the timing run so counter
+# collection cannot perturb the timing evidence, and carrying no timing
+# authority of its own (`profiled-20260815T181923Z/provenance.txt`).
+PROFILED = STUDY / "profiled-20260815T181923Z"
+PROFILED_COUNTERS = PROFILED / "counters-aggregate.csv"
+# The traced three-plane passes, one order each, that separate the bit-plane
+# staging kernel from the Gray walk inside the harness's single event span.
+PROFILED_THREE_PLANE = {
+    12: "trace-n12-threeplane",
+    16: "trace-n16-threeplane",
+    20: "trace-n20-threeplane",
+    24: "trace-n24-threeplane",
+}
+# The nine measured F_7 kernels: short name, the substring identifying the
+# kernel in the profiler's demangled `Name` / `Kernel_Name` field, and the
+# substring identifying it in the compiler receipt's mangled name. The lookup
+# control is templated on word count, so its two instantiations differ only in
+# that argument.
+MEASURED_KERNELS = (
+    ("permanent_bipedal7_kernel",
+     "permanent_bipedal7_kernel(", "permanent_bipedal7_kernelPKhiiPy"),
+    ("wave_gf7_lookup_table_kernel<1>",
+     "wave_gf7_lookup_table_kernel<1u>", "wave_gf7_lookup_table_kernelILj1EE"),
+    ("wave_gf7_lookup_table_kernel<2>",
+     "wave_gf7_lookup_table_kernel<2u>", "wave_gf7_lookup_table_kernelILj2EE"),
+    ("prepare_three_plane_columns",
+     "prepare_three_plane_columns(", "prepare_three_plane_columns"),
+    ("wave_gf7_three_plane_kernel",
+     "wave_gf7_three_plane_kernel(", "wave_gf7_three_plane_kernel"),
+    ("gray_update_micro_kernel",
+     "gray_update_micro_kernel(", "gray_update_micro_kernel"),
+    ("gray_update_compiler_barrier_baseline_kernel",
+     "gray_update_compiler_barrier_baseline_kernel(",
+     "gray_update_compiler_barrier_baseline_kernel"),
+    ("horizontal_product_micro_kernel",
+     "horizontal_product_micro_kernel(", "horizontal_product_micro_kernel"),
+    ("horizontal_product_compiler_barrier_baseline_kernel",
+     "horizontal_product_compiler_barrier_baseline_kernel(",
+     "horizontal_product_compiler_barrier_baseline_kernel"),
+)
+# The runtime's own copy kernel, present in every counter pass, which serves as
+# the same-pass control for a counter that reads zero throughout a pass.
+RUNTIME_COPY_KERNEL = "__amd_rocclr_copyBuffer"
+COUNTER_NAMES = ("MeanOccupancyPerCU", "OccupancyPercent", "SQ_WAVES")
+# The GPU agent fields the occupancy reading is normalised against, read from
+# the profiler's own per-pass agent report rather than assumed.
+AGENT_FIELDS = (
+    "Cu_Count",
+    "Simd_Count",
+    "Simd_Per_Cu",
+    "Max_Waves_Per_Simd",
+    "Max_Waves_Per_Cu",
+    "Wave_Front_Size",
+    "Gfx_Target_Version",
+)
+# `OccupancyPercent` and `MeanOccupancyPerCU` are one quantity in two units on
+# this stack: `100*reduce(SQ_WAVE_CYCLES,sum)/reduce(GRBM_GUI_ACTIVE,max)/
+# CU_NUM/32` and `reduce(accumulate(SQ_LEVEL_WAVES,HIGH_RES),sum)/
+# reduce(GRBM_GUI_ACTIVE,max)/CU_NUM` (`rocprofv3-avail info --pmc`, gfx1030),
+# so a reading has to satisfy MeanOccupancyPerCU = OccupancyPercent *
+# Max_Waves_Per_Cu / 100, has to stay inside the agent's own per-CU wave-slot
+# count, and cannot hold more waves resident than the dispatch launched.
+OCCUPANCY_IDENTITY_TOLERANCE = 0.01
+# Round 2 has no second counter to check the identity against, so a reading is
+# admissible when it stays inside the agent's per-CU wave-slot count and puts no
+# more waves resident than the dispatch's own geometry launches. The one-percent
+# slack on the second bound absorbs the counter's own rounding; every reading it
+# rejects exceeds the launch count by a factor of ten or more.
+ROUND2_LAUNCH_TOLERANCE = 0.01
 
 Q = 7
 ORDERS = [12, 16, 20, 24, 28]
@@ -144,6 +217,96 @@ def read_resource_log(path: pathlib.Path) -> list[dict[str, str]]:
             key, value = body.split(":", 1)
             kernels[-1][key.strip()] = value.strip()
     return kernels
+
+
+def profiled_kernel_stats(pass_name: str) -> tuple[str, dict[str, dict[str, str]]]:
+    """rocprofv3's own per-kernel aggregation for one traced pass.
+
+    Returns the committed file's name for citation and its rows keyed by the
+    demangled kernel name, so a caller cites the file it read.
+    """
+    files = sorted((PROFILED / pass_name).glob("*_kernel_stats.csv"))
+    assert len(files) == 1, f"{pass_name}: expected one kernel_stats CSV, found {files}"
+    with files[0].open() as handle:
+        rows = list(csv.DictReader(handle))
+    return files[0].name, {row["Name"]: row for row in rows}
+
+
+def profiled_kernel_row(
+    rows: dict[str, dict[str, str]], key: str
+) -> dict[str, str]:
+    """The one row of a traced pass whose kernel name carries `key`."""
+    matches = [row for name, row in rows.items() if key in name]
+    assert len(matches) == 1, f"{key}: matched {len(matches)} kernels"
+    return matches[0]
+
+
+def profiled_cell(pass_name: str) -> dict[str, str]:
+    """A profiled pass's own workload row: its record, never timing evidence."""
+    rows = read_grid(PROFILED / pass_name / "grid.csv")
+    assert len(rows) == 1, f"{pass_name}: expected one workload row, found {len(rows)}"
+    return rows[0]
+
+
+def profiled_agent() -> tuple[int, dict[str, str]]:
+    """GPU agent geometry the profiler reports, asserted equal in every pass."""
+    seen: set[tuple[str, ...]] = set()
+    passes = 0
+    for path in sorted(PROFILED.glob("*/*_agent_info.csv")):
+        passes += 1
+        with path.open() as handle:
+            for row in csv.DictReader(handle):
+                if row["Agent_Type"] == "GPU":
+                    seen.add(tuple(row[field] for field in AGENT_FIELDS))
+    assert len(seen) == 1, f"passes disagree on the GPU agent: {seen}"
+    return passes, dict(zip(AGENT_FIELDS, seen.pop()))
+
+
+def profiled_counters() -> dict[tuple[str, str], dict[str, dict[str, str]]]:
+    """The committed counter aggregate, keyed by (pass, kernel) then counter."""
+    with PROFILED_COUNTERS.open() as handle:
+        rows = list(csv.DictReader(handle))
+    by_kernel: dict[tuple[str, str], dict[str, dict[str, str]]] = {}
+    for row in rows:
+        by_kernel.setdefault((row["pass"], row["kernel"]), {})[row["counter"]] = row
+    return by_kernel
+
+
+def profiled_round2() -> dict[tuple[str, str, int], list[dict[str, float]]]:
+    """Round-2 per-dispatch counters, grouped by pass, kernel and launch width.
+
+    Round 2 collects over dispatch iterations 1-8 of each workload and commits
+    the per-dispatch CSVs in full, so no aggregation stands between the receipt
+    and the reading. The launch width is the dispatch's own recorded geometry,
+    `Grid_Size / Workgroup_Size` workgroups of at most one wavefront each, which
+    is the wave count the launch asks for independently of what `SQ_WAVES`
+    reports.
+    """
+    grouped: dict[tuple[str, str, int], list[dict[str, float]]] = {}
+    for path in sorted(PROFILED.glob("pmc2-*/*_counter_collection.csv")):
+        pass_name = path.parent.name
+        with path.open() as handle:
+            rows = list(csv.DictReader(handle))
+        by_dispatch: dict[int, dict[str, str]] = {}
+        for row in rows:
+            entry = by_dispatch.setdefault(int(row["Dispatch_Id"]), dict(row))
+            entry[row["Counter_Name"]] = row["Counter_Value"]
+        for dispatch, row in sorted(by_dispatch.items()):
+            short = next(
+                (s for s, key, _ in MEASURED_KERNELS if key in row["Kernel_Name"]),
+                None,
+            )
+            if short is None:
+                continue
+            workgroup = int(row["Workgroup_Size"])
+            assert workgroup <= 32, f"{pass_name}: {workgroup} threads exceed one wave"
+            launched = int(row["Grid_Size"]) // workgroup
+            grouped.setdefault((pass_name, short, launched), []).append({
+                "dispatch": dispatch,
+                "per_cu": float(row["MeanOccupancyPerCU"]),
+                "sq_waves": float(row["SQ_WAVES"]),
+            })
+    return grouped
 
 
 def wilson(successes: int, total: int, z: float = 1.959963984540054) -> tuple[float, float]:
@@ -862,10 +1025,23 @@ def main() -> None:
                   f"  [cap reached before both minimums; expect a dagger on this cell]")
     # The rendered marking is the prior study's own artifact; agreement between
     # the set derived here and the daggered set there is what the receipts cite.
+    # That study daggers every rendering of a nonconforming rate, in its
+    # section 4.4 table and in the derived tables and prose that carry the same
+    # figure, and its own verify-rendered-stopping-rule.py enforces that
+    # document-wide. The set this block derives is a set of cells, so the
+    # comparison is against the section 4.4 cells, one per measured cell.
     rendered = (STUDY.parent / "b488f02c" / "feasibility-study.md").read_text()
-    daggered = sum(1 for line in rendered.splitlines()
-                   if line.startswith("|") and "†" in line)
-    print(f"rendered section 4.4 rows carrying a dagger: {daggered}")
+    start = rendered.index("### 4.4 Measured throughput")
+    end = rendered.find("\n### ", start + 1)
+    section_44 = rendered[start:end if end != -1 else len(rendered)]
+    daggered = sum(
+        1
+        for line in section_44.splitlines()
+        if line.startswith("|")
+        for cell in line.split("|")
+        if "†" in cell
+    )
+    print(f"rendered section 4.4 cells carrying a dagger: {daggered}")
     assert daggered == sum(1 for row in prior_rows
                            if row["outcome"] == "measured" and outside_rule(row)), (
         "the daggered rendered cells no longer match the cells this check derives"
@@ -929,12 +1105,120 @@ def main() -> None:
               f" {'0 by source':>13}")
 
     print()
-    print("== section 13: occupancy evidence available in this run's artifacts ==")
-    # Achieved occupancy asks for profiler counters taken during the measured
-    # run. This block reports what the run's own artifacts contain: the compiler
-    # figure, which is a compile-time prediction and not a runtime observation,
-    # and a token scan over every committed artifact of the run for profiler
-    # output.
+    print("== section 12: profiled per-kernel split of the three-plane span ==")
+    # The paired profiled run resolves the two launches the timing run's event
+    # bracket cannot: rocprofv3's own kernel_stats aggregation carries
+    # `prepare_three_plane_columns` and `wave_gf7_three_plane_kernel` as
+    # separate rows of the same pass. Each pass re-calibrates its own batch
+    # from a single-matrix probe, so the profiled M is the profiled cell's and
+    # not the timing cell's, and the trace counts the probe and the untimed
+    # warm-up as well as the timed repetitions.
+    timing_per_launch = {
+        int(row["n"]): float(row["kernel_device_s"]) / int(row["reps"])
+        for row in device_rows
+        if row["backend"] in BIT_SLICED and row["kernel_device_s"]
+    }
+    timing_batch = {
+        int(row["n"]): row["batch_size"]
+        for row in device_rows
+        if row["backend"] in BIT_SLICED and row["kernel_device_s"]
+    }
+    print(f"{'n':>3} {'M':>4} {'reps':>6} {'calls':>6} {'prep us':>9} {'walk us':>12}"
+          f" {'pair us':>12} {'prep ms':>9} {'walk ms':>10} {'prep share %':>12}"
+          f" {'bracket us':>12} {'pair/bracket %':>15} {'timing M':>8} {'timing us':>12}")
+    profiled_split: dict[int, tuple[float, ...]] = {}
+    profiled_spread: dict[int, tuple[float, ...]] = {}
+    for n, pass_name in PROFILED_THREE_PLANE.items():
+        stats_file, rows = profiled_kernel_stats(pass_name)
+        prep = profiled_kernel_row(rows, "prepare_three_plane_columns(")
+        walk = profiled_kernel_row(rows, "wave_gf7_three_plane_kernel(")
+        calls = int(prep["Calls"])
+        assert calls == int(walk["Calls"]), f"{pass_name}: staged launches unpaired"
+        prep_avg = float(prep["AverageNs"]) / 1e3
+        walk_avg = float(walk["AverageNs"]) / 1e3
+        prep_total = int(prep["TotalDurationNs"]) / 1e6
+        walk_total = int(walk["TotalDurationNs"]) / 1e6
+        share = 100.0 * prep_total / (prep_total + walk_total)
+        cell = profiled_cell(pass_name)
+        bracket = 1e6 * float(cell["kernel_device_s"]) / int(cell["reps"])
+        profiled_split[n] = (prep_avg, walk_avg, prep_total, walk_total, share)
+        profiled_spread[n] = (
+            float(prep["MinNs"]) / 1e3, float(prep["MaxNs"]) / 1e3,
+            float(walk["MinNs"]) / 1e3, float(walk["MaxNs"]) / 1e3,
+            100.0 * (prep_avg + walk_avg) / bracket,
+        )
+        print(f"{n:>3} {cell['batch_size']:>4} {cell['reps']:>6} {calls:>6}"
+              f" {prep_avg:>9.3f} {walk_avg:>12.3f} {prep_avg + walk_avg:>12.3f}"
+              f" {prep_total:>9.3f} {walk_total:>10.3f} {share:>12.4f}"
+              f" {bracket:>12.3f} {profiled_spread[n][4]:>15.2f}"
+              f" {timing_batch[n]:>8} {1e6 * timing_per_launch[n]:>12.4f}"
+              f"  {stats_file}")
+    print("the launch gap inside one bracket, and the profiled bracket against"
+          " the unprofiled timing span at the timing cell's own batch:")
+    rendered_gap = {12: (19.991, 1.1279), 16: (17.879, 0.3174),
+                    20: (14.846, 1.0000), 24: (12.664, 1.0011)}
+    for n, pass_name in PROFILED_THREE_PLANE.items():
+        prep_avg, walk_avg, _, _, _ = profiled_split[n]
+        bracket = (prep_avg + walk_avg) / (profiled_spread[n][4] / 100.0)
+        gap = bracket - (prep_avg + walk_avg)
+        timing = 1e6 * timing_per_launch[n]
+        print(f"  n={n:>3} gap={gap:>10.3f} us  bracket/timing={bracket / timing:>9.4f}"
+              f"  timing/bracket={timing / bracket:>9.4f}"
+              f"  relative difference={100.0 * (bracket - timing) / timing:>9.4f} %")
+        want_gap, want_ratio = rendered_gap[n]
+        assert round(gap, 3) == want_gap and round(bracket / timing, 4) == want_ratio, (
+            f"section 12 renders {want_gap} us and {want_ratio} for n={n}"
+        )
+    print("per-dispatch spread, and the profiler's own StdDev column beside it:")
+    for n, pass_name in PROFILED_THREE_PLANE.items():
+        _, rows = profiled_kernel_stats(pass_name)
+        prep = profiled_kernel_row(rows, "prepare_three_plane_columns(")
+        walk = profiled_kernel_row(rows, "wave_gf7_three_plane_kernel(")
+        low_prep, high_prep, low_walk, high_walk, _ = profiled_spread[n]
+        print(f"  n={n:>3} prep {low_prep:>10.3f}-{high_prep:<10.3f} us"
+              f" (StdDev {float(prep['StdDev']) / 1e3:>12.3f} us)"
+              f"  walk {low_walk:>10.3f}-{high_walk:<10.3f} us"
+              f" (spread {high_walk - low_walk:>10.3f} us,"
+              f" StdDev {float(walk['StdDev']) / 1e3:>12.3f} us)")
+    # Every figure section 12 renders from this pass set, as written there.
+    rendered_split = {
+        12: (2.139, 23.262, 116.432, 1266.257, 8.4207),
+        16: (2.312, 312.386, 37.624, 5083.143, 0.7347),
+        20: (2.657, 4654.140, 4.350, 7618.827, 0.0571),
+        24: (3.020, 67665.938, 0.362, 8119.913, 0.0045),
+    }
+    rendered_spread = {
+        12: (1.920, 5.080, 23.080, 24.480, 55.96),
+        16: (2.080, 36.001, 311.083, 344.403, 94.62),
+        20: (2.560, 17.000, 4609.434, 8688.478, 99.68),
+        24: (2.920, 4.480, 67496.502, 67872.752, 99.98),
+    }
+    for n, expected in rendered_split.items():
+        for values, wanted, places in (
+            (profiled_split[n], expected, (3, 3, 3, 3, 4)),
+            (profiled_spread[n], rendered_spread[n], (3, 3, 3, 3, 2)),
+        ):
+            for value, want, place in zip(values, wanted, places):
+                assert round(value, place) == want, (
+                    f"section 12 renders {want} for n={n} where the artifact now"
+                    f" gives {round(value, place)}"
+                )
+    print("preparation stays inside a launch-latency floor while the walk grows"
+          " with the order:")
+    orders = sorted(PROFILED_THREE_PLANE)
+    for lower, upper in zip(orders, orders[1:]):
+        print(f"  n={lower}->{upper} prep x{profiled_split[upper][0] / profiled_split[lower][0]:.3f}"
+              f" walk x{profiled_split[upper][1] / profiled_split[lower][1]:.2f}"
+              f" share /{profiled_split[lower][4] / profiled_split[upper][4]:.1f}")
+
+    print()
+    print("== section 13: occupancy evidence in the timing run's own artifacts ==")
+    # Achieved occupancy comes from the paired profiled run, in the blocks
+    # below. This block establishes the other half of the criterion's pairing
+    # and the separation between the two runs: the compiler figure, which is a
+    # compile-time prediction and not a runtime observation, and a token scan
+    # over every committed artifact of the timing run, which carries no
+    # profiler output at all.
     print("compiler Occupancy [waves/SIMD], per F_7 kernel, from the compile receipt:")
     for name in ("permanent_bipedal7.hip.resource.log",
                  "wave_gf7_equivalence.hip.resource.log"):
@@ -950,18 +1234,551 @@ def main() -> None:
         + list(STUDY.glob(f"{RUN}*.txt"))
         + [EQUIV, EQUIV.with_suffix(".log")]
     )
-    print("profiler-token scan over every committed artifact of this run:")
+    print(f"profiler-token scan over every committed artifact of run {RUN}:")
     total_hits = 0
     for artifact in artifacts:
         text = artifact.read_text(errors="replace").lower()
         hits = {t: text.count(t.lower()) for t in tokens if t.lower() in text}
         total_hits += sum(hits.values())
         print(f"  {artifact.name:>72} hits={hits or '{}'}")
-    print(f"total profiler-token hits across the run's artifacts = {total_hits}")
+    print(f"total profiler-token hits across that run's artifacts = {total_hits}")
     assert total_hits == 0, (
         "a run artifact now carries profiler output; section 13 of receipts.md"
         " states that none does and must be revised with it"
     )
+
+    print()
+    print("== section 13: passes of the paired profiled run, and their exits ==")
+    for log_name in ("run.log", "run2.log"):
+        text = (PROFILED / log_name).read_text().splitlines()
+        commands = [line for line in text if line.startswith("COMMAND[")]
+        exits = [line for line in text if line.startswith("EXIT[")]
+        codes: dict[str, int] = {}
+        for line in exits:
+            code = int(line.split("]:", 1)[1].split()[0])
+            codes[code] = codes.get(code, 0) + 1
+        assert len(commands) == len(exits), f"{log_name}: {len(commands)} commands, {len(exits)} exits"
+        print(f"  {log_name}: {len(commands)} passes, exits "
+              + " ".join(f"{code}x{count}" for code, count in sorted(codes.items())))
+    assert [len([line for line in (PROFILED / name).read_text().splitlines()
+                 if line.startswith("COMMAND[")]) for name in ("run.log", "run2.log")] \
+        == [18, 11], "section 13 renders eighteen round-1 passes and eleven round-2 passes"
+
+    print("== section 13: device geometry the occupancy counters normalise against ==")
+    agent_passes, agent = profiled_agent()
+    cu_count = int(agent["Cu_Count"])
+    waves_per_cu = int(agent["Max_Waves_Per_Cu"])
+    device_slots = cu_count * waves_per_cu
+    print("  " + " ".join(f"{field}={agent[field]}" for field in AGENT_FIELDS)
+          + f" device wave slots={device_slots}"
+          + f" (one agent report, identical in all {agent_passes} pass directories)")
+    assert cu_count * int(agent["Simd_Per_Cu"]) == int(agent["Simd_Count"])
+    assert int(agent["Simd_Per_Cu"]) * int(agent["Max_Waves_Per_Simd"]) == waves_per_cu
+
+    print()
+    print("== section 13: achieved occupancy from the paired profiled counters ==")
+    counters = profiled_counters()
+    present = {counter for readings in counters.values() for counter in readings}
+    assert present == set(COUNTER_NAMES), f"the collected counter set is {sorted(present)}"
+    covered = {
+        short
+        for short, profiler_key, _ in MEASURED_KERNELS
+        for (_, kernel) in counters
+        if profiler_key in kernel
+    }
+    missing = {short for short, _, _ in MEASURED_KERNELS} - covered
+    assert not missing, f"the counter aggregate covers no dispatch of {sorted(missing)}"
+    print(f"counters collected: {' '.join(sorted(present))};"
+          f" F_7 kernels covered: {len(covered)} of {len(MEASURED_KERNELS)}")
+
+    # A reading is an occupancy measurement only if it survives the counters'
+    # own definitions: the two derived counters are one quantity in two units,
+    # neither may exceed the agent's wave-slot count, and a dispatch cannot
+    # hold more waves resident than it launched.
+    def occupancy_reading(pass_name: str, kernel: str) -> dict[str, object]:
+        readings = counters[(pass_name, kernel)]
+        occupancy = float(readings["OccupancyPercent"]["mean"])
+        per_cu = float(readings["MeanOccupancyPerCU"]["mean"])
+        per_cu_max = float(readings["MeanOccupancyPerCU"]["max"])
+        launched = float(readings["SQ_WAVES"]["mean"])
+        launched_min = float(readings["SQ_WAVES"]["min"])
+        launched_max = float(readings["SQ_WAVES"]["max"])
+        resident = per_cu * cu_count
+        identity = per_cu / (occupancy * waves_per_cu / 100.0) if occupancy else math.inf
+        if occupancy == 0.0:
+            reason = "OccupancyPercent reads exactly zero on every dispatch"
+        elif abs(identity - 1.0) > OCCUPANCY_IDENTITY_TOLERANCE:
+            reason = f"the two counters disagree by a factor of {identity:.4g}"
+        elif per_cu_max > waves_per_cu:
+            reason = f"more than {waves_per_cu} waves on a CU, which has that many slots"
+        elif resident > launched:
+            reason = "more waves resident than the dispatch launched"
+        else:
+            reason = ""
+        return {
+            "dispatches": int(readings["SQ_WAVES"]["dispatches"]),
+            "occupancy": occupancy,
+            "per_cu": per_cu,
+            "per_cu_max": per_cu_max,
+            "launched": launched,
+            "launched_min": launched_min,
+            "launched_max": launched_max,
+            "resident": resident,
+            "identity": identity,
+            "fails": tuple(
+                index
+                for index, failed in enumerate(
+                    (
+                        occupancy == 0.0
+                        or abs(identity - 1.0) > OCCUPANCY_IDENTITY_TOLERANCE,
+                        per_cu_max > waves_per_cu,
+                        resident > launched,
+                    ),
+                    start=1,
+                )
+                if failed
+            ),
+            "reason": reason,
+            "vgpr": int(readings["SQ_WAVES"]["VGPR_Count"]),
+            "scratch": int(readings["SQ_WAVES"]["Scratch_Size"]),
+            "lds": int(readings["SQ_WAVES"]["LDS_Block_Size"]),
+        }
+
+    print(f"{'pass':>19} {'kernel':>52} {'disp':>7} {'launched':>12} {'occ %':>10}"
+          f" {'waves/CU':>10} {'max waves/CU':>13} {'resident':>11} {'identity':>10}"
+          f"  fails  verdict")
+    readings: dict[str, list[tuple[str, dict[str, object]]]] = {}
+    for pass_name, kernel in sorted(counters):
+        for short, profiler_key, _ in MEASURED_KERNELS:
+            if profiler_key not in kernel:
+                continue
+            reading = occupancy_reading(pass_name, kernel)
+            readings.setdefault(short, []).append((pass_name, reading))
+            fails = ",".join(str(index) for index in reading["fails"]) or "-"
+            print(f"{pass_name:>19} {short:>52} {reading['dispatches']:>7}"
+                  f" {reading['launched']:>12.2f} {reading['occupancy']:>10.6f}"
+                  f" {reading['per_cu']:>10.4f} {reading['per_cu_max']:>13.4f}"
+                  f" {reading['resident']:>11.2f}"
+                  f" {reading['identity']:>10.4g}  {fails:>5}  "
+                  + (reading["reason"] or "measures achieved occupancy"))
+    print(f"the same passes' runtime copy kernel, the same-pass control for a"
+          f" counter that reads zero throughout a pass:")
+    for pass_name, kernel in sorted(counters):
+        if kernel != RUNTIME_COPY_KERNEL:
+            continue
+        occupancy = counters[(pass_name, kernel)]["OccupancyPercent"]
+        print(f"  {pass_name:>19} {RUNTIME_COPY_KERNEL} OccupancyPercent"
+              f" mean={occupancy['mean']} min={occupancy['min']} max={occupancy['max']}")
+
+    compiler = {
+        kernel["kernel"]: kernel
+        for name in RESOURCE_LOGS
+        for kernel in read_resource_log(RESOURCES / name)
+    }
+    print("round-1 verdict per measured kernel, beside the compiler's"
+          " per-SIMD prediction. The prediction is a per-SIMD residency ceiling,"
+          " so its device-wide share is the ceiling divided by"
+          f" Max_Waves_Per_Simd={agent['Max_Waves_Per_Simd']}, reachable only by a"
+          f" grid wide enough to fill all {device_slots} slots:")
+    print(f"{'kernel':>52} {'waves/SIMD':>11} {'predicted %':>12} {'round-1 %':>11}"
+          f" {'round-1 waves/CU':>18}  evidence")
+    achieved: dict[str, tuple[str, dict[str, object]]] = {}
+    for short, profiler_key, compiler_key in MEASURED_KERNELS:
+        usable = [(p, r) for p, r in readings[short] if not r["reason"]]
+        assert len(usable) <= 1, f"{short}: {len(usable)} usable readings"
+        entry = next(k for name, k in compiler.items() if compiler_key in name)
+        predicted = int(entry["Occupancy [waves/SIMD]"])
+        share = 100.0 * predicted / int(agent["Max_Waves_Per_Simd"])
+        if usable:
+            pass_name, reading = usable[0]
+            achieved[short] = (pass_name, reading)
+            print(f"{short:>52} {predicted:>11} {share:>12.1f}"
+                  f" {reading['occupancy']:>11.6f}"
+                  f" {reading['per_cu']:>18.6f}  {pass_name},"
+                  f" {reading['dispatches']} dispatches,"
+                  f" {reading['launched']:.0f} waves launched")
+        else:
+            why = "; ".join(f"{p}: {r['reason']}" for p, r in readings[short])
+            print(f"{short:>52} {predicted:>11} {share:>12.1f}"
+                  f" {'no round-1 reading':>18} {'':>11}  {why}")
+
+    # Every figure section 13's counter table renders, as written there:
+    # (pass, kernel) -> dispatches, mean SQ_WAVES, mean OccupancyPercent, mean
+    # MeanOccupancyPerCU, the resident waves that implies, and whether the
+    # reading survives the three tests.
+    rendered_readings = {
+        ("pmc-grayupdate", "gray_update_micro_kernel"):
+            (31, 1.00, 0.039062, 0.012500, 0.012500, 1.00, ()),
+        ("pmc-grayupdate", "gray_update_compiler_barrier_baseline_kernel"):
+            (31, 1.00, 0.039062, 0.012500, 0.012500, 1.00, ()),
+        ("pmc-horizprod", "horizontal_product_micro_kernel"):
+            (105430, 441106.20, 1.050744, 666.348961, 17172.489033, 53307.92, (1, 2)),
+        ("pmc-horizprod", "horizontal_product_compiler_barrier_baseline_kernel"):
+            (105430, 351235.15, 0.976263, 612.196504, 14281.645119, 48975.72, (1, 2)),
+        ("pmc-n12-gpuhip", "permanent_bipedal7_kernel"):
+            (466, 525.74, 5.743100, 5.847435, 40.042924, 467.79, (1, 2)),
+        ("pmc-n12-lookup", "wave_gf7_lookup_table_kernel<1>"):
+            (2807, 1554.45, 0.0, 147.504202, 3512.585827, 11800.34, (1, 2, 3)),
+        ("pmc-n12-threeplane", "prepare_three_plane_columns"):
+            (33710, 2374.38, 0.021388, 17.578662, 5591.426145, 1406.29, (1, 2)),
+        ("pmc-n12-threeplane", "wave_gf7_three_plane_kernel"):
+            (33710, 34421.18, 0.072084, 262.625609, 4504.360769, 21010.05, (1, 2)),
+        ("pmc-n20-gpuhip", "permanent_bipedal7_kernel"):
+            (13, 590.85, 0.0, 3280.454195, 3461.399003, 262436.34, (1, 2, 3)),
+        ("pmc-n20-lookup", "wave_gf7_lookup_table_kernel<2>"):
+            (115, 28.76, 1.114438, 0.356620, 0.360673, 28.53, ()),
+        ("pmc-n20-threeplane", "prepare_three_plane_columns"):
+            (1636, 12.99, 0.064581, 59.368457, 209.134371, 4749.48, (1, 2, 3)),
+        ("pmc-n20-threeplane", "wave_gf7_three_plane_kernel"):
+            (1636, 12.99, 0.284039, 1167.382432, 3312.290413, 93390.59, (1, 2, 3)),
+    }
+    rendered_keys = {
+        (pass_name, short)
+        for short, entries in readings.items()
+        for pass_name, _ in entries
+    }
+    assert rendered_keys == set(rendered_readings), (
+        "section 13 renders a different reading set than the aggregate now holds:"
+        f" {sorted(rendered_keys ^ set(rendered_readings))}"
+    )
+    for short, entries in readings.items():
+        for pass_name, reading in entries:
+            expected = rendered_readings[(pass_name, short)]
+            got = (
+                reading["dispatches"],
+                round(float(reading["launched"]), 2),
+                round(float(reading["occupancy"]), 6),
+                round(float(reading["per_cu"]), 6),
+                round(float(reading["per_cu_max"]), 6),
+                round(float(reading["resident"]), 2),
+                reading["fails"],
+            )
+            assert got == expected, (
+                f"section 13 renders {expected} for {short} in {pass_name} where"
+                f" the artifact now gives {got}"
+            )
+    print("waves launched per dispatch, minimum and maximum over each pass:")
+    for short, entries in readings.items():
+        for pass_name, reading in entries:
+            print(f"  {pass_name:>19} {short:>52}"
+                  f" {reading['launched_min']:>12.0f} {reading['launched_max']:>12.0f}")
+    for short in ("horizontal_product_micro_kernel",
+                  "horizontal_product_compiler_barrier_baseline_kernel"):
+        reading = next(r for p, r in readings[short] if p == "pmc-horizprod")
+        assert int(reading["launched_min"]) == 31, (
+            f"section 13 renders 31 as the smallest {short} reading"
+        )
+    rendered_launched = {
+        ("pmc-n12-threeplane", "prepare_three_plane_columns"): 110594,
+        ("pmc-n12-threeplane", "wave_gf7_three_plane_kernel"): 393715,
+        ("pmc-horizprod", "horizontal_product_micro_kernel"): 19720463,
+        ("pmc-horizprod", "horizontal_product_compiler_barrier_baseline_kernel"): 8147141,
+    }
+    for (pass_name, short), want in rendered_launched.items():
+        reading = next(r for p, r in readings[short] if p == pass_name)
+        assert int(reading["launched_max"]) == want, (
+            f"section 13 renders {want} waves for {short} in {pass_name}"
+        )
+
+    # The three readings section 13 fills the achieved column from, and the
+    # span of the unit-identity failure it reports for the rest.
+    assert set(achieved) == {
+        "wave_gf7_lookup_table_kernel<2>",
+        "gray_update_micro_kernel",
+        "gray_update_compiler_barrier_baseline_kernel",
+    }, f"the measurable kernel set is now {sorted(achieved)}"
+    finite = [
+        float(reading["identity"])
+        for entries in readings.values()
+        for _, reading in entries
+        if math.isfinite(float(reading["identity"])) and reading["reason"]
+    ]
+    print(f"unit-identity failure spans {min(finite):.4g} to {max(finite):.4g}"
+          f" over {len(finite)} readings; two further readings hold"
+          f" OccupancyPercent at exactly zero")
+    assert round(min(finite), 1) == 3.2 and round(max(finite) / 1000.0, 1) == 12.8, (
+        "section 13 states the identity failure spans 3.2 to 1.28e4"
+    )
+
+    print()
+    print("== section 13: round-2 early-iteration readings ==")
+    # Round 2 re-collects over dispatch iterations 1-8, where round 1's derived
+    # counters are still exact. OccupancyPercent reads zero under
+    # iteration-range collection on this stack and is omitted, so the unit
+    # identity is unavailable and admissibility is the physical test set the
+    # run's provenance records, applied per dispatch: the reading inside the
+    # agent's per-CU wave-slot count, and no more waves resident than the
+    # dispatch's own geometry launches.
+    round2 = profiled_round2()
+    # The horizontal-product isolate alternates two launch widths within one
+    # repetition, one wave per sample of each branch, so its dispatches band by
+    # branch against the isolate's 4096-sample batch rather than by exact width.
+    def band(pass_name: str, launched: int) -> str:
+        if pass_name != "pmc2-horizprod":
+            return f"{launched} waves"
+        return "zero-fast branch" if launched > 2048 else "nonzero-slow branch"
+
+    banded: dict[tuple[str, str, str], list[dict[str, float]]] = {}
+    for (pass_name, short, launched), entries in round2.items():
+        for entry in entries:
+            entry["launched"] = float(launched)
+            banded.setdefault((pass_name, short, band(pass_name, launched)), []).append(entry)
+    print(f"{'pass':>21} {'kernel':>52} {'band':>19} {'disp':>5} {'launched':>15}"
+          f" {'waves/CU mean':>14} {'min':>12} {'max':>12} {'resident':>10}"
+          f" {'residency':>13} {'occupancy %':>12}  excluded")
+    round2_reported: dict[tuple[str, str, str], tuple[float, ...]] = {}
+    round2_excluded: dict[tuple[str, str, str], list[float]] = {}
+    for key, entries in sorted(banded.items()):
+        good = [
+            entry for entry in entries
+            if 0.0 < entry["per_cu"] <= waves_per_cu
+            and entry["per_cu"] * cu_count
+            <= entry["launched"] * (1.0 + ROUND2_LAUNCH_TOLERANCE)
+        ]
+        excluded = [entry["per_cu"] for entry in entries if entry not in good]
+        round2_excluded[key] = excluded
+        if not good:
+            print(f"{key[0]:>21} {key[1]:>52} {key[2]:>19} {0:>5}"
+                  f" {'-':>15} {'-':>14} {'-':>12} {'-':>12} {'-':>10} {'-':>10}"
+                  f" {'-':>12}  every dispatch inadmissible:"
+                  f" {' '.join(f'{value:.4g}' for value in excluded)}")
+            continue
+        values = [entry["per_cu"] for entry in good]
+        widths = {int(entry["launched"]) for entry in good}
+        mean = sum(values) / len(values)
+        resident = [value * cu_count for value in values]
+        residency = [
+            value * cu_count / entry["launched"] for value, entry in zip(values, good)
+        ]
+        share = [100.0 * value * cu_count / device_slots for value in values]
+        round2_reported[key] = (
+            len(good), mean, min(values), max(values),
+            min(resident), max(resident), min(residency), max(residency),
+            min(share), max(share),
+        )
+        span = "-".join(str(w) for w in sorted(widths))
+        mean_share = 100.0 * mean * cu_count / device_slots
+        print(f"{key[0]:>21} {key[1]:>52} {key[2]:>19} {len(good):>5} {span:>15}"
+              f" {mean:>14.6f} {min(values):>12.6f} {max(values):>12.6f}"
+              f" {min(resident):>10.2f} {min(residency):>6.4f}-{max(residency):<6.4f}"
+              f" {mean_share:>12.4f}"
+              f"  {len(excluded)} of {len(entries)}"
+              + (f": {' '.join(f'{value:.4g}' for value in excluded)}" if excluded else ""))
+    accepted_excess = max(
+        (entry["per_cu"] * cu_count / entry["launched"]
+         for entries in banded.values() for entry in entries
+         if 0.0 < entry["per_cu"] <= waves_per_cu
+         and entry["per_cu"] * cu_count
+         <= entry["launched"] * (1.0 + ROUND2_LAUNCH_TOLERANCE)),
+    )
+    rejected_factor = min(
+        (entry["per_cu"] * cu_count / entry["launched"]
+         for entries in banded.values() for entry in entries
+         if not (0.0 < entry["per_cu"] <= waves_per_cu
+                 and entry["per_cu"] * cu_count
+                 <= entry["launched"] * (1.0 + ROUND2_LAUNCH_TOLERANCE))),
+    )
+    print(f"largest residency any accepted reading shows = {accepted_excess:.9f}"
+          f" of the waves launched; smallest of any rejected = {rejected_factor:.1f}x")
+    assert round(accepted_excess, 6) == 1.000005 and rejected_factor > 10.0, (
+        "section 13 states that the accepted readings exceed the launch count by"
+        " at most five parts per million and the rejected ones by tenfold or more"
+    )
+    probes = [
+        stats[1] for key, stats in round2_reported.items() if key[2] == "1 waves"
+        and key[0] != "pmc2-grayupdate"
+    ]
+    print(f"single-matrix probe dispatches, admissible ones: {len(probes)} readings"
+          f" from {min(probes):.6f} to {max(probes):.6f} waves per CU")
+    assert (round(min(probes), 6), round(max(probes), 6)) == (0.003417, 0.012473), (
+        "section 13 renders the probe readings as 0.003417 to 0.012473 waves per CU"
+    )
+    covered_round2 = {short for _, short, _ in round2_reported}
+    missing_round2 = {short for short, _, _ in MEASURED_KERNELS} - covered_round2
+    assert not missing_round2, (
+        "section 13 reports an admissible round-2 reading for every measured"
+        f" kernel; none for {sorted(missing_round2)}"
+    )
+    print(f"kernels with an admissible round-2 reading: {len(covered_round2)}"
+          f" of {len(MEASURED_KERNELS)}")
+    print("achieved occupancy per measured kernel, as a share of the device's"
+          f" {device_slots} wave slots:")
+    for short, _, compiler_key in MEASURED_KERNELS:
+        entry = next(k for name, k in compiler.items() if compiler_key in name)
+        predicted = int(entry["Occupancy [waves/SIMD]"])
+        figures = [
+            f"{100.0 * stats[1] * cu_count / device_slots:.4f} % ({key[0]},"
+            f" {key[2]}, {stats[0]} dispatches)"
+            for key, stats in sorted(round2_reported.items())
+            if key[1] == short and not (key[2] == "1 waves"
+                                        and key[0] != "pmc2-grayupdate")
+        ]
+        print(f"  {short:>52} predicted {predicted:>2} waves/SIMD"
+              f" = {100.0 * predicted / int(agent['Max_Waves_Per_Simd']):>5.1f} %;"
+              f" achieved " + "; ".join(figures))
+    # Every round-2 figure section 13 renders: (pass, kernel, band) ->
+    # dispatches, mean/min/max waves per CU, and the residency and device-slot
+    # shares those imply.
+    rendered_round2 = {
+        ("pmc2-grayupdate", "gray_update_micro_kernel", "1 waves"):
+            (8, 0.012500, 0.0125, 0.0125, 1.0000, 1.0000, 0.0391, 0.0391),
+        ("pmc2-grayupdate", "gray_update_compiler_barrier_baseline_kernel", "1 waves"):
+            (8, 0.012500, 0.0125, 0.0125, 1.0000, 1.0000, 0.0391, 0.0391),
+        ("pmc2-n12-gpuhip", "permanent_bipedal7_kernel", "256 waves"):
+            (7, 2.635082, 2.6239, 2.6454, 0.8200, 0.8267, 8.1998, 8.2668),
+        ("pmc2-n20-gpuhip", "permanent_bipedal7_kernel", "256 waves"):
+            (5, 2.712428, 2.6392, 3.0004, 0.8248, 0.9376, 8.2476, 9.3762),
+        ("pmc2-n20-gpuhip", "permanent_bipedal7_kernel", "1024 waves"):
+            (1, 8.791383, 8.7914, 8.7914, 0.6868, 0.6868, 27.4731, 27.4731),
+        ("pmc2-n12-lookup", "wave_gf7_lookup_table_kernel<1>", "1614 waves"):
+            (7, 15.813119, 15.7671, 15.8885, 0.7815, 0.7875, 49.2721, 49.6517),
+        ("pmc2-n20-lookup", "wave_gf7_lookup_table_kernel<2>", "28 waves"):
+            (7, 0.347347, 0.3468, 0.3478, 0.9908, 0.9937, 1.0837, 1.0869),
+        ("pmc2-n16-threeplane", "prepare_three_plane_columns", "14 waves"):
+            (7, 0.040845, 0.0379, 0.0475, 0.2166, 0.2716, 0.1185, 0.1485),
+        ("pmc2-n16-threeplane", "wave_gf7_three_plane_kernel", "14 waves"):
+            (7, 0.168679, 0.1684, 0.1690, 0.9623, 0.9655, 0.5263, 0.5280),
+        ("pmc2-n20-threeplane", "prepare_three_plane_columns", "13 waves"):
+            (7, 0.042929, 0.0399, 0.0481, 0.2458, 0.2958, 0.1248, 0.1502),
+        ("pmc2-n20-threeplane", "wave_gf7_three_plane_kernel", "13 waves"):
+            (7, 0.161383, 0.1612, 0.1616, 0.9920, 0.9945, 0.5038, 0.5050),
+        ("pmc2-horizprod", "horizontal_product_micro_kernel", "zero-fast branch"):
+            (4, 6.824382, 6.2930, 8.2150, 0.1450, 0.1913, 19.6655, 25.6717),
+        ("pmc2-horizprod", "horizontal_product_micro_kernel", "nonzero-slow branch"):
+            (4, 2.065386, 2.0040, 2.1411, 0.2573, 0.2600, 6.2624, 6.6911),
+        ("pmc2-horizprod", "horizontal_product_compiler_barrier_baseline_kernel", "zero-fast branch"):
+            (4, 5.848223, 5.5490, 6.2895, 0.1284, 0.1465, 17.3407, 19.6546),
+        ("pmc2-horizprod", "horizontal_product_compiler_barrier_baseline_kernel", "nonzero-slow branch"):
+            (4, 1.515651, 1.4241, 1.6308, 0.1803, 0.1974, 4.4503, 5.0964),
+    }
+    for key, expected in rendered_round2.items():
+        assert key in round2_reported, f"section 13 renders a reading for {key}"
+        count, mean, low, high, _, _, res_low, res_high, share_low, share_high = \
+            round2_reported[key]
+        got = (count, round(mean, 6), round(low, 4), round(high, 4),
+               round(res_low, 4), round(res_high, 4),
+               round(share_low, 4), round(share_high, 4))
+        assert got == expected, (
+            f"section 13 renders {expected} for {key} where the artifact now"
+            f" gives {got}"
+        )
+    # The dispatches the physical tests exclude, which section 13 reports as the
+    # round-2 half of the falsification rather than dropping.
+    rendered_excluded = {
+        ("pmc2-n12-threeplane", "prepare_three_plane_columns", "14 waves"): 7,
+        ("pmc2-n12-threeplane", "wave_gf7_three_plane_kernel", "1 waves"): 1,
+        ("pmc2-n12-threeplane", "wave_gf7_three_plane_kernel", "14 waves"): 7,
+        ("pmc2-n20-gpuhip", "permanent_bipedal7_kernel", "1 waves"): 1,
+        ("pmc2-n20-gpuhip", "permanent_bipedal7_kernel", "256 waves"): 1,
+    }
+    assert {key: len(values) for key, values in round2_excluded.items() if values} \
+        == rendered_excluded, (
+        "section 13 renders a different set of excluded round-2 dispatches than"
+        f" the artifact gives: {[(k, len(v)) for k, v in round2_excluded.items() if v]}"
+    )
+
+    print("round-2 SQ_WAVES against the same dispatch's launch geometry, which"
+          " it reproduces on the two isolate passes and breaks elsewhere:")
+    for (pass_name, short, launched), entries in sorted(round2.items()):
+        sq_readings = {int(entry["sq_waves"]) for entry in entries}
+        agrees = sq_readings == {launched}
+        print(f"  {pass_name:>21} {short:>52} launched={launched:>8}"
+              f" SQ_WAVES min={min(sq_readings):>10} max={max(sq_readings):>10}"
+              f"  {'agrees' if agrees else 'breaks'}")
+    breaking = {
+        pass_name for (pass_name, _, launched), entries in round2.items()
+        if {int(entry["sq_waves"]) for entry in entries} != {launched}
+    }
+    agreeing = {pass_name for pass_name, _, _ in round2} - breaking
+    print(f"round-2 passes whose SQ_WAVES matches the geometry throughout:"
+          f" {len(agreeing)} of {len(agreeing) + len(breaking)};"
+          f" breaking: {sorted(breaking)}")
+    assert breaking == {"pmc2-n16-threeplane", "pmc2-n20-threeplane"}, (
+        "section 13 states that round-2 SQ_WAVES breaks in exactly the two"
+        f" three-plane passes at n=16 and n=20: {sorted(breaking)}"
+    )
+
+    # The rocprofv2 capability probe's four captured dispatches, which section 17
+    # cites for the launch-time LDS allocation it records before the abort.
+    probe_csv = (PROFILED / "rocprofv2-n20-threeplane" / "pmc_1"
+                 / "results_v2-n20-threeplane.csv")
+    with probe_csv.open() as handle:
+        probe_rows = [row for row in csv.DictReader(handle) if row.get("Kernel_Name")]
+    walk = [row for row in probe_rows
+            if "wave_gf7_three_plane_kernel" in row["Kernel_Name"]]
+    print(f"rocprofv2 capability probe: {len(probe_rows)} dispatches captured;"
+          f" wave_gf7_three_plane_kernel LDS_Per_Workgroup="
+          f"{ {row['LDS_Per_Workgroup'] for row in walk} }")
+    assert len(probe_rows) == 4 and {row["LDS_Per_Workgroup"] for row in walk} == {"512"}, (
+        "section 17 cites four captured dispatches and 512 bytes per workgroup"
+    )
+    assert 512 == 128 * math.ceil(3 * 20 * 8 / 128), (
+        "section 17 states 512 is 24n = 480 bytes at a 128-byte granularity"
+    )
+
+    print("traced per-dispatch duration of every profiled kernel, from each"
+          " trace pass's own kernel_stats aggregation:")
+    traced_average_s: dict[tuple[str, str], float] = {}
+    for directory in sorted(PROFILED.glob("trace-*")):
+        stats_file, rows = profiled_kernel_stats(directory.name)
+        for name, row in sorted(rows.items()):
+            if name == RUNTIME_COPY_KERNEL:
+                continue
+            short = next((s for s, key, _ in MEASURED_KERNELS if key in name), name)
+            average_s = float(row["AverageNs"]) / 1e9
+            traced_average_s[(directory.name, short)] = average_s
+            print(f"  {directory.name:>21} {short:>52} calls={row['Calls']:>7}"
+                  f" average={average_s:>13.9f} s = {1e6 * average_s:>13.3f} us"
+                  f"  {stats_file}")
+    longest = max(traced_average_s, key=traced_average_s.get)
+    print(f"longest traced dispatch: {longest[1]} in {longest[0]} at"
+          f" {traced_average_s[longest]:.9f} s")
+    assert longest == ("trace-n20-gpuhip", "permanent_bipedal7_kernel"), (
+        "section 13 names the shipped kernel at n=20 as the run's longest dispatch"
+    )
+    assert round(
+        traced_average_s[("trace-horizprod", "horizontal_product_micro_kernel")], 9
+    ) == 0.000003069, (
+        "section 13 renders 3.069 us as the horizontal-product micro kernel's"
+        " traced dispatch length"
+    )
+    assert round(traced_average_s[longest], 9) == 12.886639517, (
+        "section 13 renders 12.886639517 s as that dispatch length"
+    )
+
+    print("runtime per-dispatch register allocation against the compiler's"
+          " per-lane count:")
+    for short, profiler_key, compiler_key in MEASURED_KERNELS:
+        entry = next(k for name, k in compiler.items() if compiler_key in name)
+        compiled = int(entry["VGPRs"])
+        runtime = {r["vgpr"] for _, r in readings[short]}
+        assert len(runtime) == 1, f"{short}: passes disagree on VGPR_Count {runtime}"
+        allocated = runtime.pop()
+        granularity = 8 * math.ceil(compiled / 8)
+        print(f"  {short:>52} compiler VGPRs={compiled:>3}"
+              f" runtime VGPR_Count={allocated:>3} ceil to 8 = {granularity:>3}"
+              f" {'agree' if allocated == granularity else 'DISAGREE'}")
+        assert allocated == granularity, (
+            f"{short}: the runtime allocation no longer rounds the compiler's"
+            f" per-lane count up to a multiple of eight"
+        )
+
+    print("waves launched per dispatch against the profiled cell's batch, which"
+          " both mappings launch one wave per matrix for:")
+    for pass_name in sorted({p for p, _ in counters}):
+        workload = PROFILED / pass_name / "grid.csv"
+        if not workload.exists():
+            continue
+        batches = {int(row["batch_size"]) for row in read_grid(workload)}
+        for (candidate, kernel) in sorted(counters):
+            if candidate != pass_name or kernel == RUNTIME_COPY_KERNEL:
+                continue
+            largest = int(float(counters[(pass_name, kernel)]["SQ_WAVES"]["max"]))
+            short = next(s for s, key, _ in MEASURED_KERNELS if key in kernel)
+            print(f"  {pass_name:>19} {short:>52}"
+                  f" batches={','.join(str(b) for b in sorted(batches)):>9}"
+                  f" SQ_WAVES max={largest:>8}"
+                  f" {'equals the largest batch' if largest in batches else 'exceeds the launch geometry'}")
 
     print()
     print("== section 14: exact operation above the sixteen-lane limit ==")
