@@ -10,4 +10,5 @@
 #[cfg(test)]
 pub(crate) mod fixture;
 pub mod provenance;
+pub mod schedule;
 pub mod schema;
