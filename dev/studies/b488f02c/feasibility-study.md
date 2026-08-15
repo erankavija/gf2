@@ -571,17 +571,19 @@ per-cell CSV. Selected rows (full grid in `throughput-2026-08-07.csv`):
 | 3 | 16 | 3 638 | 1 196 | 36 311 | 4 439 | 307.8 | 30 209 | **61 306** |
 | 3 | 20 | 229.9 | 74.82 | 2 500 | 2 982 | 15.18 | 2 136 | **4 863** |
 | 3 | 24 | 14.35 | 4.650 | 155.4 | 296.6 | 0.777 | 136.4 | **310.4** |
-| 3 | 28 | 0.903 | 0.289 | 9.986 | **19.58** | 0.0419 | 8.532 | 19.27 |
+| 3 | 28 | 0.903 | 0.289 | 9.986 | **19.58** | 0.0419 | 8.532 | 19.27† |
 | 5 | 12 | 6 787 | — | **72 323** | — | 6 906 | 11 440 | 23 210 |
 | 5 | 16 | 327.0 | — | **4 164** | — | 306.9 | 617.5 | 1 224 |
 | 5 | 20 | 16.42 | — | **213.7** | — | 15.08 | 32.39 | 63.92 |
 | 5 | 24 | 0.855 | — | **11.83** | — | 0.777 | censored | censored |
-| 5 | 28 | 0.0461 | — | **0.648** | — | 0.0417 | censored | censored |
+| 5 | 28 | 0.0461 | — | **0.648†** | — | 0.0417 | censored | censored |
 | 7 | 12 | 6 496 | — | **72 556** | — | 7 285 | 10 016 | 21 596 |
 | 7 | 16 | 313.9 | — | **3 741** | — | 314.6 | 536.2 | 1 108 |
 | 7 | 20 | unsupported | — | unsupported | — | 15.42 | 27.98 | **57.93** |
 | 7 | 24 | unsupported | — | unsupported | — | **0.798** | censored | censored |
 | 7 | 28 | unsupported | — | unsupported | — | **0.0426** | censored | censored |
+
+† Cells marked † come from runs that did not meet the stated minimum of five repetitions and five seconds of timed work before the 120 s cap ended timing, and their rates rest on fewer repetitions than the protocol requires: $q{=}3$, $n{=}28$, GPU $M{=}1024$ (3 repetitions); $q{=}5$, $n{=}28$, rayon batch (1 repetition).
 
 Four results carry consequences beyond the envelope.
 

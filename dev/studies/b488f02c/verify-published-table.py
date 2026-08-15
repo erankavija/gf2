@@ -76,7 +76,7 @@ def main():
             failures.append(f"n={n}: expected {len(COLUMNS)} cells, found {len(cells)}")
             continue
         for (label, backend, batch), cell in zip(COLUMNS, cells):
-            token = cell.strip("* ")
+            token = cell.strip("* †")
             if token in {"—", "-", "censored", ""}:
                 continue
             # The table separates digit groups with U+2009 thin spaces.
