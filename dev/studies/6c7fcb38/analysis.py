@@ -1677,8 +1677,9 @@ def main() -> None:
         f" the artifact gives: {[(k, len(v)) for k, v in round2_excluded.items() if v]}"
     )
 
-    print("round-2 SQ_WAVES against the same dispatch's launch geometry, which"
-          " it reproduces on the two isolate passes and breaks elsewhere:")
+    print("round-2 SQ_WAVES diagnostic against the same dispatch's launch geometry"
+          " (not an admissibility test), which it reproduces on the two isolate"
+          " passes and breaks elsewhere:")
     for (pass_name, short, launched), entries in sorted(round2.items()):
         sq_readings = {int(entry["sq_waves"]) for entry in entries}
         agrees = sq_readings == {launched}

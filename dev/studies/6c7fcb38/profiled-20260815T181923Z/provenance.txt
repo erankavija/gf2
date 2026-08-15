@@ -69,6 +69,19 @@ round 2 (run2.log): the round-1 full-pass derived occupancy counters fail
   identity-failing full-pass readings remain in counters-aggregate.csv as the
   recorded falsification.
 
+amendment (2026-08-16): analysis of the committed round-2 per-dispatch counter
+  CSVs found `SQ_WAVES` inflated relative to each dispatch's launch geometry in
+  `pmc2-n16-threeplane` and `pmc2-n20-threeplane` — 3 355 459 waves for a
+  14-wave dispatch and 87 812 120 waves for a 13-wave dispatch
+  (`receipts.md` §13, the round-2 counter table and its `SQ_WAVES` falsification
+  paragraph; the corresponding `pmc2-*/*_counter_collection.csv` files). The
+  SQ_WAVES-consistency test listed in the original round-2 paragraph above is
+  therefore superseded. The applied admissibility policy is the one stated in
+  `receipts.md` §13 and is authoritative for admissibility: accept
+  `MeanOccupancyPerCU` only inside (0, 32] and only when its resident waves do
+  not exceed the dispatch's own launch geometry, with the documented one-percent
+  rounding slack.
+
 profiler capability probes (run2.log): rocprofv2 and legacy rocprof, invoked
   with the same counters on the q=7,n=20,backend=f7-three-plane-permanent
   cell, both abort the workload itself (the candidate worker reports a device

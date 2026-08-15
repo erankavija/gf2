@@ -106,7 +106,8 @@ pmc_mode pmc-horizprod  horizontal-product || fail=1
 # values are exact. OccupancyPercent reads zero under iteration-range
 # collection on this stack, so round 2 records MeanOccupancyPerCU beside
 # SQ_WAVES; admissibility is the physical bound
-# 0 < MeanOccupancyPerCU <= min(32, SQ_WAVES/80) per collected dispatch.
+# 0 < MeanOccupancyPerCU <= 32 and resident waves <= the dispatch's own
+# Grid_Size/Workgroup_Size launch geometry, with counter-rounding slack.
 PMC2=(--pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range '[1-8]')
 ONLY="q=7,n=12,backend=gpu_hip"                  run_grid_pass pmc2-n12-gpuhip     "${PMC2[@]}" || fail=1
 ONLY="q=7,n=12,backend=f7-lookup-table-control"  run_grid_pass pmc2-n12-lookup     "${PMC2[@]}" || fail=1
