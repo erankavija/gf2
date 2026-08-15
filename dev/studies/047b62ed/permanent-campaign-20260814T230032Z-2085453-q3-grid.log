@@ -1,0 +1,155 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv --only q=3 --execution-id 3002
+# started_utc: 2026-08-15T00:35:22Z
+warming the machine for 90 s ...
+[1/75] q=3 n=12 cpu_ryser_generic
+    6831.978 matrices/s composite (6863.703 eval-only), M=12211, reps=5, sd=0.002 s
+[2/75] q=3 n=12 gpu_hip
+    120552.719 matrices/s composite (149016.855 eval-only), M=256, reps=2290, sd=0.000 s
+[3/75] q=3 n=12 cpu_avx2
+    18479.191 matrices/s composite (19195.045 eval-only), M=34783, reps=5, sd=0.001 s
+[4/75] q=3 n=12 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+[5/75] q=3 n=12 wave-gf3
+    211897.839 matrices/s composite (326234.228 eval-only), M=44, reps=22803, sd=0.000 s
+[6/75] q=3 n=12 cpu_scalar
+    51519.145 matrices/s composite (57528.698 eval-only), M=65536, reps=5, sd=0.000 s
+[7/75] q=3 n=12 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[8/75] q=3 n=12 f5-three-plane
+    unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+[9/75] q=3 n=12 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+[10/75] q=3 n=12 cpu_rayon_batch_avx2
+    203520.883 matrices/s composite (327424.879 eval-only), M=33524, reps=27, sd=0.001 s
+[11/75] q=3 n=12 fold-gf3
+    228042.826 matrices/s composite (366844.146 eval-only), M=45, reps=23902, sd=0.000 s
+[12/75] q=3 n=12 f5-byte-control
+    unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+[13/75] q=3 n=12 cpu_rayon_intra_matrix
+    37411.378 matrices/s composite (39724.888 eval-only), M=26185, reps=8, sd=0.001 s
+[14/75] q=3 n=12 cpu_rayon_batch_scalar
+    301317.421 matrices/s composite (652070.152 eval-only), M=65536, reps=20, sd=0.005 s
+[15/75] q=3 n=12 gpu_hip
+    214467.442 matrices/s composite (320807.605 eval-only), M=1024, reps=999, sd=0.000 s
+[16/75] q=3 n=16 cpu_ryser_generic
+    304.576 matrices/s composite (304.631 eval-only), M=603, reps=5, sd=0.002 s
+[17/75] q=3 n=16 cpu_scalar
+    3753.179 matrices/s composite (3788.721 eval-only), M=7358, reps=5, sd=0.001 s
+[18/75] q=3 n=16 cpu_rayon_intra_matrix
+    4389.521 matrices/s composite (4449.929 eval-only), M=7369, reps=5, sd=0.012 s
+[19/75] q=3 n=16 gpu_hip
+    27069.134 matrices/s composite (29088.629 eval-only), M=256, reps=525, sd=0.000 s
+[20/75] q=3 n=16 wave-gf3
+    71337.874 matrices/s composite (87823.100 eval-only), M=45, reps=7740, sd=0.000 s
+[21/75] q=3 n=16 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[22/75] q=3 n=16 cpu_avx2
+    1218.187 matrices/s composite (1221.947 eval-only), M=2435, reps=5, sd=0.001 s
+[23/75] q=3 n=16 cpu_rayon_batch_scalar
+    37066.369 matrices/s composite (42072.618 eval-only), M=7577, reps=24, sd=0.001 s
+[24/75] q=3 n=16 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+[25/75] q=3 n=16 cpu_rayon_batch_avx2
+    18999.231 matrices/s composite (20179.392 eval-only), M=2380, reps=40, sd=0.004 s
+[26/75] q=3 n=16 fold-gf3
+    82098.986 matrices/s composite (104941.513 eval-only), M=44, reps=9076, sd=0.000 s
+[27/75] q=3 n=16 f5-byte-control
+    unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+[28/75] q=3 n=16 gpu_hip
+    57627.361 matrices/s composite (67442.543 eval-only), M=1024, reps=277, sd=0.000 s
+[29/75] q=3 n=16 f5-three-plane
+    unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+[30/75] q=3 n=16 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+[31/75] q=3 n=20 cpu_avx2
+    76.546 matrices/s composite (76.568 eval-only), M=152, reps=5, sd=0.002 s
+[32/75] q=3 n=20 fold-gf3
+    69485.298 matrices/s composite (94175.689 eval-only), M=448, reps=756, sd=0.000 s
+[33/75] q=3 n=20 cpu_scalar
+    236.949 matrices/s composite (237.163 eval-only), M=487, reps=5, sd=0.001 s
+[34/75] q=3 n=20 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+[35/75] q=3 n=20 gpu_hip
+    4848.465 matrices/s composite (4938.323 eval-only), M=1024, reps=24, sd=0.001 s
+[36/75] q=3 n=20 f5-byte-control
+    unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+[37/75] q=3 n=20 cpu_rayon_batch_scalar
+    2563.440 matrices/s composite (2594.906 eval-only), M=486, reps=27, sd=0.001 s
+[38/75] q=3 n=20 f5-three-plane
+    unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+[39/75] q=3 n=20 gpu_hip
+    2115.493 matrices/s composite (2132.675 eval-only), M=256, reps=42, sd=0.001 s
+[40/75] q=3 n=20 cpu_rayon_intra_matrix
+    2966.444 matrices/s composite (3000.464 eval-only), M=2817, reps=6, sd=0.001 s
+[41/75] q=3 n=20 cpu_ryser_generic
+    15.043 matrices/s composite (15.043 eval-only), M=30, reps=5, sd=0.001 s
+[42/75] q=3 n=20 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[43/75] q=3 n=20 cpu_rayon_batch_avx2
+    1202.282 matrices/s composite (1210.252 eval-only), M=154, reps=39, sd=0.005 s
+[44/75] q=3 n=20 wave-gf3
+    8598.649 matrices/s composite (8899.709 eval-only), M=41, reps=1045, sd=0.000 s
+[45/75] q=3 n=20 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+[46/75] q=3 n=24 cpu_scalar
+    14.813 matrices/s composite (14.815 eval-only), M=31, reps=5, sd=0.001 s
+[47/75] q=3 n=24 gpu_hip
+    137.151 matrices/s composite (137.250 eval-only), M=256, reps=5, sd=0.040 s
+[48/75] q=3 n=24 cpu_rayon_batch_avx2
+    81.165 matrices/s composite (81.211 eval-only), M=96, reps=5, sd=0.012 s
+[49/75] q=3 n=24 f5-byte-control
+    unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+[50/75] q=3 n=24 cpu_rayon_intra_matrix
+    296.499 matrices/s composite (296.983 eval-only), M=572, reps=5, sd=0.006 s
+[51/75] q=3 n=24 cpu_avx2
+    4.786 matrices/s composite (4.786 eval-only), M=10, reps=5, sd=0.002 s
+[52/75] q=3 n=24 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[53/75] q=3 n=24 fold-gf3
+    461.392 matrices/s composite (462.571 eval-only), M=22, reps=105, sd=0.000 s
+[54/75] q=3 n=24 cpu_rayon_batch_scalar
+    162.519 matrices/s composite (162.714 eval-only), M=96, reps=9, sd=0.007 s
+[55/75] q=3 n=24 wave-gf3
+    242.168 matrices/s composite (242.498 eval-only), M=17, reps=72, sd=0.000 s
+[56/75] q=3 n=24 f5-three-plane
+    unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+[57/75] q=3 n=24 gpu_hip
+    312.112 matrices/s composite (312.622 eval-only), M=1024, reps=5, sd=0.009 s
+[58/75] q=3 n=24 cpu_ryser_generic
+    0.780 matrices/s composite (0.780 eval-only), M=2, reps=5, sd=0.000 s
+[59/75] q=3 n=24 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+[60/75] q=3 n=24 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+[61/75] q=3 n=28 cpu_rayon_intra_matrix
+    19.463 matrices/s composite (19.466 eval-only), M=96, reps=5, sd=0.011 s
+[62/75] q=3 n=28 cpu_rayon_batch_scalar
+    10.243 matrices/s composite (10.244 eval-only), M=96, reps=5, sd=0.009 s
+[63/75] q=3 n=28 cpu_avx2
+    0.299 matrices/s composite (0.299 eval-only), M=1, reps=5, sd=0.004 s
+[64/75] q=3 n=28 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_3
+[65/75] q=3 n=28 gpu_hip
+    censored: unavailable: 120 s cap ended timing before both minimums (5 repetitions and 5 s); no derived rate is reported
+[66/75] q=3 n=28 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_3
+[67/75] q=3 n=28 cpu_rayon_batch_avx2
+    5.067 matrices/s composite (5.067 eval-only), M=96, reps=5, sd=0.032 s
+[68/75] q=3 n=28 gpu_hip
+    8.545 matrices/s composite (8.545 eval-only), M=256, reps=5, sd=0.675 s
+[69/75] q=3 n=28 cpu_ryser_generic
+    0.041 matrices/s composite (0.041 eval-only), M=1, reps=5, sd=0.034 s
+[70/75] q=3 n=28 fold-gf3
+    3.963 matrices/s composite (3.963 eval-only), M=3, reps=7, sd=0.001 s
+[71/75] q=3 n=28 wave-gf3
+    1.788 matrices/s composite (1.788 eval-only), M=2, reps=5, sd=0.001 s
+[72/75] q=3 n=28 cpu_scalar
+    0.928 matrices/s composite (0.928 eval-only), M=2, reps=5, sd=0.012 s
+[73/75] q=3 n=28 f5-three-plane
+    unsupported: f5-three-plane evaluates F_5 permanents, not F_3
+[74/75] q=3 n=28 f5-byte-control
+    unsupported: f5-byte-control evaluates F_5 permanents, not F_3
+[75/75] q=3 n=28 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv
+# exit_status: 0
