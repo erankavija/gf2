@@ -10,7 +10,168 @@
     "e31b1918-75b8-4c22-a900-c318059c1702"
   ],
   "description": "One preregistered measurement campaign over $\\mathbb{F}_3$, producing the committed receipts that compare the current GPU path, every planned prototype path that executes on the target device, and the best applicable in-tree CPU path.\n\n## Background\n\nRepresentation and execution-mapping decisions in this study are settled by receipts rather than by argument. A comparison is sound only when each path in it draws from one identical sampler under one protocol on preregistered, structurally disjoint per-cell stream addresses, on an uncontended host, with the provenance needed to reproduce it; the equivalence comparison additionally runs every path on one literally identical matrix corpus.\n\nThese measurements are what decide which candidates the study keeps, so the campaign's scope is the full planned candidate set for this field, not a pre-filtered one. A candidate that fails to build, fails equivalence, or exhausts a device resource is excluded from the timing comparison and carries that falsifying evidence into the record; a candidate that runs is measured.\n\nPrior measurement over $\\mathbb{F}_3$ put no single path ahead across the grid: batch rayon led at $n = 12$, the GPU at batch size $1024$ led from $n = 16$ through $n = 24$, and intra-matrix rayon led at $n = 28$, where the GPU's edge had decayed to $0.984\\times$ and no ordering was asserted. The headline of an earlier receipt — a $28.65\\times$ GPU win at $n = 24$ — was restated as $0.46\\times$ once the baseline was the best CPU path rather than the single-threaded AVX2 one. Those are the figures this campaign has to improve on or confirm.\n\n$\\mathbb{F}_3$ has the largest zero fast-path share of the three fields, since $1 - \\left(\\frac{q-1}{q}\\right)^n$ decreases in $q$, so the fold comparison it carries is the one most likely to be decided by an early return, and the cost of that early return is precisely what its measurement has to expose.\n\nThe measurement harness at `dev/research/permanent-sampling-feas/` already encodes the protocol: an untimed warm-up of at least $3$ s per cell; repetitions until both at least $5$ repetitions and at least $5$ s of timed work have accumulated; a $120$ s cap per cell that censors rather than truncates; a batch size calibrated per cell from a single-matrix probe to target a $2$ s repetition and capped at $65\\,536$; matrices drawn by exact rejection from ChaCha20 on structurally disjoint per-purpose stream domains; and a generated provenance preamble carrying binary hash, CPU model, GPU model, and ROCm version.\n\nTimings must separate the kernel-only device span from the surrounding work, because the shipped dispatcher performs host serialization, two device allocations, a host-to-device copy, a launch, a device synchronize, a device-to-host copy, and two frees per call, with no persistent buffers and no streams.\n\nThe study's lane-owns-interval mapping gives every lane a full packed accumulator plus three scalar `u64` words, and reserves a shared column table per block that grows with matrix order. That register and shared-memory budget is the study's central occupancy hypothesis: the kernels under measurement each state the budget their design predicts, and this campaign is where the prediction meets the compiler and the device. Reporting the measured figures against the predicted ones is what turns the hypothesis into evidence, in either direction.\n\n## Success Criteria\n\n- [hard] REQ-01: Committed receipts compare, over $\\mathbb{F}_3$, the current GPU path, every planned prototype path that executes on the target device, and the best applicable in-tree CPU path, with every timing cell drawing from one identical sampler on preregistered, structurally disjoint stream addresses and the equivalence comparison running on one literally identical matrix corpus.\n- [hard] REQ-02: Receipts record matrix order, batch size, seed, purpose tag, kernel-only throughput, end-to-end throughput, launch duration, git revision, CPU model, GPU model, ROCm version, compiler version, and each censoring or failure observation.\n- [hard] REQ-03: Committed receipts isolate the dependency-chained Gray update, the horizontal product, and the end-to-end Ryser loop for every representation of this field that executes.\n- [hard] REQ-04: Receipts cover the current one-thread-per-matrix execution mapping as the control and the lane-owns-interval mapping, at matching orders and batch sizes, so the two mappings are comparable.\n- [hard] REQ-05: Event-timed kernel duration is reported in its own column, separate from allocation, copy, and host-serialization time.\n- [hard] REQ-06: Host-to-device copy duration, device-to-host copy duration, and launch overhead are each reported in their own column, so transfer and launch cost are attributable without a second run.\n- [hard] REQ-07: For each measured kernel of this field, receipts report the registers per thread, private scratch memory per thread, shared memory per block, and spill counts the device actually reported, each beside the per-lane register budget and per-block shared-memory allocation that kernel's design predicted, so a divergence between prediction and measurement is visible rather than inferred.\n- [hard] REQ-08: Receipts name the resource that limits occupancy for each measured kernel at each measured order, derived from the measured per-thread resource usage, and state the evidence that derivation rests on.\n- [hard] REQ-09: A measurement that contradicts the predicted register or shared-memory budget is recorded together with the contradiction, and the prediction it falsifies is not silently restated.\n- [hard] REQ-10: Receipts report, at each measured order and for $q = 3$, the observed zero-fast-path frequency beside its exact marginal expectation $1 - \\left(\\frac{q-1}{q}\\right)^n$ and the observed nonzero-slow-path frequency beside $\\left(\\frac{q-1}{q}\\right)^n$, stating that the two expectations are complements.\n- [hard] REQ-11: Equivalence between each measured path and the CPU oracle is re-confirmed on the campaign host before any timing from the same run counts as evidence, and that confirmation is committed alongside the timing receipts.\n- [hard] REQ-12: A censored cell states its censoring reason and the rate it was projected from, and carries no measured throughput value.\n- [hard] REQ-13: A planned candidate for this field that cannot execute on the target device is named in the record together with its compile, correctness, or resource falsification, and its exclusion from the timing comparison cites that evidence.\n- [hard] REQ-14: The receipts state, for the best-performing prototype at its best operating point, the measured ratio against the best applicable in-tree CPU path and the launch duration at that point.\n- [hard] REQ-15: Receipts are reproducible from committed commands, and the campaign runs on the prepared benchmark host under the repository's benchmark lock.\n\n## Notes\n\nScope is execution and receipts over this one field. Timing instrumentation, prototype kernels, and the harness backend schedule are inputs to this campaign rather than deliverables of it.\n\nThe $\\mathbb{F}_3$ arithmetic background is [Scheinerman2024].\n\nReceipts belong in the issue's resolved study directory and are attached to the issue as documents rather than referenced by an inline path from another description.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2828c0ae1c8fa79df9dd4024d4c23170760b3c521bcf114792e24d911284b173",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt",
+          "resolved_path": "dev/studies/6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "708bd7cf18b372ed2c56dfb41cf93c33bbdc3c0e9476c56f626adcee7826c882",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../research/permanent_wave_gpu/README.md",
+          "resolved_path": "dev/research/permanent_wave_gpu/README.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bca8df0fc103330de8fb75fb44348607fcd949c735914725f20da5958b80d752",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../b488f02c/throughput-2026-08-07.csv",
+          "resolved_path": "dev/studies/b488f02c/throughput-2026-08-07.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "d67ffe49e8357be9071c497c87222f03dd15b4d3ad51f0ffaaf1015191645464",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-shared-equivalence.log",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-shared-equivalence.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "3541ddc4188b3d38f179ab93f7f487f30eada9e532b10b718b45b6022474e02c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/permanent-campaign-runner.sh",
+          "resolved_path": "dev/scripts/permanent-campaign-runner.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c3829994762236dde8578350dcab0bf85631f09be6497cef9bbbc31a28e3b976",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-grid.csv",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "90457baea3365cb9eb693e88f9bbcbe56f8a60078ac9add8b26f01e7ebf967b7",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "permanent-campaign-20260814T230032Z-2085453.provenance.txt",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453.provenance.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "0e8fb123bddbcb35d5fb7a46f889f90ebc202f089cccb8a7dc73ad5e90ba677a",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-gray-update.csv",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-gray-update.csv"
+        },
+        {
+          "asset_type": "directory",
+          "content_hash": null,
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/",
+          "resolved_path": "dev/studies/6c7fcb38/hip-resource-usage-20260814T172506Z-1610002"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "402e4a2e5eab804cc522e8085294df3b0ee07111ee814a35265a3e74e1951f36",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "permanent-campaign-20260814T230032Z-2085453.run-summary.txt",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453.run-summary.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "fe146689f616f3466c788d7b47ecfb5467f8565ec11fbec3ef2b26dc649b1700",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../b488f02c/feasibility-study.md",
+          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/ccx1-bench-flock.sh",
+          "resolved_path": "dev/scripts/ccx1-bench-flock.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7d09b205dc823a56be7175f96dd396ed06cefeccc592ccaf7be0e5bf5351ee62",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-grid.log",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "229fd2feb8d6eb81d8e350954ae4d9cb3ce2aad62e9c310e68ca5670a22faa83",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-gray-update.log",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-gray-update.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "f3150bc70379d2c786805ce28b0418ae367e4934033451979f2c43999ce446c1",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.csv",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "ea863f1e9f6872a76330450dda114825dfd0b33671102415207e29bd42e4cf63",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "analysis.py",
+          "resolved_path": "dev/studies/047b62ed/analysis.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a251f56b26a026b7ac551fd2fd788559c041ad4c9e2d34303a5ea0b74df0003e",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.log",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-horizontal-product.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7d75c06e0f6761c4ffd166e4c1b0aa174a4fdc434b50c540cb7ef7b6d0527cd7",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "permanent-campaign-20260814T230032Z-2085453-shared-equivalence.csv",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-shared-equivalence.csv"
+        }
+      ],
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "F_3 campaign receipts",
+      "path": "dev/studies/047b62ed/receipts.md"
+    },
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Receipts analysis script",
+      "path": "dev/studies/047b62ed/analysis.py"
+    }
+  ],
   "first_ready_at": "2026-08-10T11:15:04.872139759Z",
   "gates_required": [
     "code-review",
@@ -32,5 +193,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "F_3 preregistered receipt campaign",
-  "updated_at": "2026-08-15T06:27:35.906452984Z"
+  "updated_at": "2026-08-15T07:01:35.671050636Z"
 }

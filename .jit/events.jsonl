@@ -8164,3 +8164,5 @@
 {"id":"15f573f5-4836-49d4-bf3d-72ebe3728f9a","isolated_torn_tail":false,"operation":"upgrade","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"upgraded","variables":[]}],"timestamp":"2026-08-14T18:33:50.178872649Z","type":"profile_lifecycle"}
 {"from":"ready","id":"6b9fee77-1772-4f58-975f-d46e67b97c62","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T06:27:35.906452984Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:worker","id":"789bf3d8-a1e1-4531-8ad8-116a3a3c724f","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T06:27:35.906452984Z","type":"issue_claimed"}
+{"fields":["documents"],"id":"213db26e-3f22-4197-8b5c-beabade46501","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:01:35.547760370Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"2cfc82fb-a54c-4eb5-a21c-8d9d67790432","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:01:35.671050636Z","type":"issue_updated","updated_by":"doc-add"}
