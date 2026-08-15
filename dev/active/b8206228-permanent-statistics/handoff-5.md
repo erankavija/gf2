@@ -17,7 +17,7 @@
 
 ## The paired profiled evidence run (the one blocker for wave 1)
 
-Owner-approved design (amended REQ-16/17 on `6c7fcb38`, commit `afa665d9`): per-kernel durations and achieved-occupancy counters from rocprofv3 over the SAME hash-pinned binaries and cells as the timing run, committed as its own artifact under `dev/studies/6c7fcb38/`, kept separate from the timing run (counter collection perturbs timing — state this in the provenance). Smoke-validated recipe (lead-run, device work):
+Owner-approved design (amended REQ-16/17 on `6c7fcb38`, commit `afa665d9`): per-kernel durations and achieved-occupancy counters from rocprofv3 over the SAME hash-pinned binaries and cells as the timing run, committed as its own artifact under `dev/studies/6c7fcb38/`, kept separate from the timing run (counter collection perturbs timing — state this in the provenance). Smoke-validated recipe (lead-run, device work) — EXECUTABLE at `dev/active/b8206228-permanent-statistics/profiled-run.sh` (verifies the manifest hash, runs all six passes under the bench lock, writes `dev/studies/6c7fcb38/profiled-<UTC>/` with run.log; on success: write the provenance file per step 5, commit, `jit doc add`, message worker-6c7fcb38 per step 6). Prose recipe:
 
 1. Verify the binary: `sha256sum target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas` must equal the manifest value in `target/permanent-campaign/manifest-v1.txt` (edb03650…; matched this session).
 2. Kernel-trace pass (per cell set):
