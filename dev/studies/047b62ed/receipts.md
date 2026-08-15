@@ -1080,7 +1080,7 @@ which is the artifact
 [`dev/studies/b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md)
 §4.4 renders its table from. Every prior rate quoted below is read from that CSV
 by `analysis.py`, not from the rendered table, so no figure of the prior run is
-maintained in two places; §11.1 records the one cell where the two disagree.
+maintained in two places; §11.1 records the two cells where the two disagree.
 That grid runs on the same CPU, the same GPU, the same ROCm 7.2.4, and the
 same `powersave` governor, under the same harness protocol (its own
 preamble); the two differ in host kernel (`7.1.3-arch1-3` there against
@@ -1154,24 +1154,33 @@ On the two prototype chains it does not shrink and it changes sign (§5), so the
 "lands low at every step" statement is a property of a fixed-batch chain and not
 of the work model.
 
-### 11.1 One cell where the prior study's table and its own CSV disagree
+### 11.1 Two cells where the prior study's table and its own CSV disagree
 
 Reading the prior rates from the CSV rather than from the rendered table makes
-the two comparable, so the comparison was made. 34 of the 35 $q = 3$ cells that
+the two comparable, so the comparison was made. 33 of the 35 $q = 3$ cells that
 §4.4 publishes are the correctly rounded CSV value at the precision the table
-shows. One is not:
+shows. Two are not, both one unit high in the last shown digit:
 
 | $q$, $n$, path | §4.4 publishes | CSV holds | correctly rounded to 5 significant figures |
 | --- | ---: | ---: | ---: |
 | 3, 12, `cpu_avx2` | 18 182 | 18 181.4619 | 18 181 |
+| 3, 16, `gpu_hip` $M{=}256$ | 30 210 | 30 209.4610 | 30 209 |
 
-The published cell rounds up where its own artifact rounds down, a
-$0.003\,\%$ overstatement. Nothing in either document turns on it. The
-discrepancy is confined to the prior run's rendered table, and the only figure
-here that touches that cell is its run-to-run delta, which moves from
-$+1.63\,\%$ against the table to $+1.64\,\%$ against the CSV; `cpu_avx2` is
-never the best applicable in-tree CPU path at any order, so it sets no baseline
-ratio anywhere in this document. It is recorded because a table that
+The count turns on how the trailing zero of 30 210 is read. This receipt's
+first record counted one cell, reading that zero as insignificant — at four
+significant figures, 30 209.4610 renders 30 210 correctly. The table's own
+convention says otherwise: its other five- and six-digit integer cells
+reproduce their raw values exactly (61 306 from 61 306.0236, 218 275 from
+218 274.6416), so every shown digit is significant and 30 210 is the second
+divergent cell. The recorded check committed with the correction
+(`dev/studies/b488f02c/verify-published-table.py`, JIT issue `a2c0db52`)
+applies that reading; each published cell rounds up where its own artifact
+rounds down, a $0.003\,\%$ overstatement. Nothing in either document turns on
+them: the run-to-run delta at 3, 12, `cpu_avx2` moves from $+1.63\,\%$ against
+the table to $+1.64\,\%$ against the CSV; `cpu_avx2` is never the best
+applicable in-tree CPU path and $M = 256$ is not the better shipped-GPU
+configuration at $n = 16$, so neither cell sets a baseline
+ratio anywhere in this document. They are recorded because a table that
 disagrees with the artifact it renders is the kind of drift this campaign's
 figures are supposed to make visible, per `@/inv/falsification-preserved`, and
 because this receipt now quotes the CSV — a reader comparing this document to
