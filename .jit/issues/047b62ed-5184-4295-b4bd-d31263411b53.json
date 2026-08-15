@@ -172,6 +172,7 @@
       "path": "dev/studies/047b62ed/analysis.py"
     }
   ],
+  "done_at": "2026-08-15T08:03:01.336821413Z",
   "first_ready_at": "2026-08-10T11:15:04.872139759Z",
   "gates_required": [
     "code-review",
@@ -179,13 +180,13 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T07:46:55.909972472Z",
+      "status": "passed",
+      "updated_at": "2026-08-15T08:02:13.653078250Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "passed",
-      "updated_at": "2026-08-15T07:42:42.787397353Z",
+      "updated_at": "2026-08-15T07:56:24.492451295Z",
       "updated_by": "auto:executor"
     }
   },
@@ -202,7 +203,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "F_3 preregistered receipt campaign",
-  "updated_at": "2026-08-15T07:46:55.909972472Z"
+  "updated_at": "2026-08-15T08:03:01.336821413Z"
 }

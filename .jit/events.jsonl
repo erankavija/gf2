@@ -8190,3 +8190,7 @@
 {"gate_key":"code-review","id":"7d0c5d7b-3897-4dd2-b152-64109dbe8061","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:46:55.909972472Z","type":"gate_failed","updated_by":"auto:executor"}
 {"id":"d4acd940-8d2d-4d16-bb21-0baf3037088b","issue_id":"a2c0db52-6af9-41b3-b881-fdd46402a46b","priority":"low","timestamp":"2026-08-15T07:54:36.651544581Z","title":"Feasibility study table cell disagrees with its own committed CSV","type":"issue_created"}
 {"fields":["dependencies"],"id":"ed0dcd77-5baa-4508-9dac-7e66e421b767","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-15T07:54:48.298180373Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"doc-review","id":"329d81c6-6b8e-405f-b4cd-0c4886ddee03","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T07:56:24.492451295Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"8f903bef-d101-4705-9222-bf5fe584104a","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T08:02:13.653078250Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"6a678bf7-f34f-4ae2-a690-b2a51464e817","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T08:03:01.336821413Z","to":"done","type":"issue_state_changed"}
+{"id":"d9373bca-2540-4c71-ac71-5c49aa110e11","issue_id":"047b62ed-5184-4295-b4bd-d31263411b53","timestamp":"2026-08-15T08:03:01.336821413Z","type":"issue_completed"}
