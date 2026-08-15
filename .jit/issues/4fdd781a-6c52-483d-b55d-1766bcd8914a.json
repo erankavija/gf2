@@ -14,14 +14,15 @@
       "path": "dev/studies/b488f02c/verify-rendered-stopping-rule.py"
     }
   ],
+  "done_at": "2026-08-15T18:29:01.983032323Z",
   "first_ready_at": "2026-08-15T09:15:54.344910240Z",
   "gates_required": [
     "doc-review"
   ],
   "gates_status": {
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T16:06:52.216973478Z",
+      "status": "passed",
+      "updated_at": "2026-08-15T18:28:06.419239026Z",
       "updated_by": "auto:executor"
     }
   },
@@ -32,7 +33,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
-  "updated_at": "2026-08-15T16:06:52.216973478Z"
+  "updated_at": "2026-08-15T18:29:01.983032323Z"
 }
