@@ -1,0 +1,155 @@
+# command: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/permanent-campaign-20260814T230032Z-2085453-q5-grid.csv --only q=5 --execution-id 5002 --skip-machine-warmup
+# started_utc: 2026-08-15T00:59:54Z
+skipping machine warmup by request
+[1/75] q=5 n=12 cpu_ryser_generic
+    6850.816 matrices/s composite (6882.406 eval-only), M=10681, reps=5, sd=0.003 s
+[2/75] q=5 n=12 gpu_hip
+    10853.589 matrices/s composite (11089.482 eval-only), M=256, reps=212, sd=0.001 s
+[3/75] q=5 n=12 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[4/75] q=5 n=12 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+[5/75] q=5 n=12 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[6/75] q=5 n=12 cpu_scalar
+    6254.133 matrices/s composite (6357.112 eval-only), M=11846, reps=5, sd=0.000 s
+[7/75] q=5 n=12 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[8/75] q=5 n=12 f5-three-plane
+    207146.408 matrices/s composite (356190.577 eval-only), M=44, reps=21807, sd=0.000 s
+[9/75] q=5 n=12 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[10/75] q=5 n=12 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[11/75] q=5 n=12 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[12/75] q=5 n=12 f5-byte-control
+    42476.223 matrices/s composite (46452.289 eval-only), M=45, reps=4645, sd=0.000 s
+[13/75] q=5 n=12 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[14/75] q=5 n=12 cpu_rayon_batch_scalar
+    66412.121 matrices/s composite (80774.969 eval-only), M=12004, reps=26, sd=0.002 s
+[15/75] q=5 n=12 gpu_hip
+    22663.058 matrices/s composite (23686.286 eval-only), M=1024, reps=110, sd=0.000 s
+[16/75] q=5 n=16 cpu_ryser_generic
+    304.512 matrices/s composite (304.565 eval-only), M=607, reps=5, sd=0.001 s
+[17/75] q=5 n=16 cpu_scalar
+    307.449 matrices/s composite (307.749 eval-only), M=613, reps=5, sd=0.000 s
+[18/75] q=5 n=16 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[19/75] q=5 n=16 gpu_hip
+    616.593 matrices/s composite (617.822 eval-only), M=256, reps=13, sd=0.031 s
+[20/75] q=5 n=16 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[21/75] q=5 n=16 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[22/75] q=5 n=16 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[23/75] q=5 n=16 cpu_rayon_batch_scalar
+    3816.827 matrices/s composite (3875.512 eval-only), M=612, reps=32, sd=0.002 s
+[24/75] q=5 n=16 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[25/75] q=5 n=16 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[26/75] q=5 n=16 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[27/75] q=5 n=16 f5-byte-control
+    5252.216 matrices/s composite (5342.717 eval-only), M=102, reps=257, sd=0.000 s
+[28/75] q=5 n=16 gpu_hip
+    1224.330 matrices/s composite (1229.190 eval-only), M=1024, reps=6, sd=0.001 s
+[29/75] q=5 n=16 f5-three-plane
+    66125.000 matrices/s composite (84536.635 eval-only), M=45, reps=7118, sd=0.000 s
+[30/75] q=5 n=16 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+[31/75] q=5 n=20 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[32/75] q=5 n=20 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[33/75] q=5 n=20 cpu_scalar
+    15.579 matrices/s composite (15.581 eval-only), M=31, reps=5, sd=0.001 s
+[34/75] q=5 n=20 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+[35/75] q=5 n=20 gpu_hip
+    63.939 matrices/s composite (63.958 eval-only), M=1024, reps=5, sd=0.007 s
+[36/75] q=5 n=20 f5-byte-control
+    17.201 matrices/s composite (17.202 eval-only), M=6, reps=15, sd=0.000 s
+[37/75] q=5 n=20 cpu_rayon_batch_scalar
+    197.567 matrices/s composite (197.833 eval-only), M=96, reps=11, sd=0.010 s
+[38/75] q=5 n=20 f5-three-plane
+    7415.978 matrices/s composite (7693.736 eval-only), M=41, reps=901, sd=0.000 s
+[39/75] q=5 n=20 gpu_hip
+    32.519 matrices/s composite (32.525 eval-only), M=256, reps=5, sd=0.663 s
+[40/75] q=5 n=20 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[41/75] q=5 n=20 cpu_ryser_generic
+    14.987 matrices/s composite (14.987 eval-only), M=30, reps=5, sd=0.000 s
+[42/75] q=5 n=20 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[43/75] q=5 n=20 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[44/75] q=5 n=20 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[45/75] q=5 n=20 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[46/75] q=5 n=24 cpu_scalar
+    0.826 matrices/s composite (0.826 eval-only), M=2, reps=5, sd=0.000 s
+[47/75] q=5 n=24 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 1.6937 matrices/s at n=24 under Ryser's n*2^n work model, so one repetition would take 151 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[48/75] q=5 n=24 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[49/75] q=5 n=24 f5-byte-control
+    0.156 matrices/s composite (0.156 eval-only), M=1, reps=5, sd=0.004 s
+[50/75] q=5 n=24 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[51/75] q=5 n=24 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[52/75] q=5 n=24 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+[53/75] q=5 n=24 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[54/75] q=5 n=24 cpu_rayon_batch_scalar
+    10.754 matrices/s composite (10.755 eval-only), M=96, reps=5, sd=0.007 s
+[55/75] q=5 n=24 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[56/75] q=5 n=24 f5-three-plane
+    211.940 matrices/s composite (212.252 eval-only), M=17, reps=63, sd=0.000 s
+[57/75] q=5 n=24 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 3.3302 matrices/s at n=24 under Ryser's n*2^n work model, so one repetition would take 307 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[58/75] q=5 n=24 cpu_ryser_generic
+    0.777 matrices/s composite (0.777 eval-only), M=2, reps=5, sd=0.002 s
+[59/75] q=5 n=24 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+[60/75] q=5 n=24 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[61/75] q=5 n=28 cpu_rayon_intra_matrix
+    unsupported: gf2-algebra exposes no rayon permanent path for F_5
+[62/75] q=5 n=28 cpu_rayon_batch_scalar
+    censored: unavailable: 120 s cap ended timing before both minimums (5 repetitions and 5 s); no derived rate is reported
+[63/75] q=5 n=28 cpu_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[64/75] q=5 n=28 f7-three-plane-permanent
+    unsupported: f7-three-plane-permanent evaluates F_7 permanents, not F_5
+[65/75] q=5 n=28 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 0.1784 matrices/s at n=28 under Ryser's n*2^n work model, so one repetition would take 5740 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[66/75] q=5 n=28 f7-lookup-table-control
+    unsupported: f7-lookup-table-control evaluates F_7 permanents, not F_5
+[67/75] q=5 n=28 cpu_rayon_batch_avx2
+    unsupported: gf2-algebra exposes no AVX2 permanent path for F_5
+[68/75] q=5 n=28 gpu_hip
+    censored: not attempted: the measured rate at n=20 projects to 0.0907 matrices/s at n=28 under Ryser's n*2^n work model, so one repetition would take 2821 s against the 120 s cap. The projection is an ESTIMATE; where it can be checked against a measurement, on the q=3 GPU chain, it lands LOW, so this cell's true rate is expected to be somewhat higher - an extrapolation from that chain, not a measurement of this cell. The magnitude is re-derived from this file's own q=3 chain in the study. The cell carries no measured rate
+[69/75] q=5 n=28 cpu_ryser_generic
+    0.042 matrices/s composite (0.042 eval-only), M=1, reps=5, sd=0.022 s
+[70/75] q=5 n=28 fold-gf3
+    unsupported: fold-gf3 evaluates F_3 permanents, not F_5
+[71/75] q=5 n=28 wave-gf3
+    unsupported: wave-gf3 evaluates F_3 permanents, not F_5
+[72/75] q=5 n=28 cpu_scalar
+    0.045 matrices/s composite (0.045 eval-only), M=1, reps=5, sd=0.008 s
+[73/75] q=5 n=28 f5-three-plane
+    1.578 matrices/s composite (1.578 eval-only), M=2, reps=5, sd=0.001 s
+[74/75] q=5 n=28 f5-byte-control
+    censored: unavailable: 120 s cap ended timing before both minimums (5 repetitions and 5 s); no derived rate is reported
+[75/75] q=5 n=28 f7-three-plane-accumulator
+    unsupported: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+wrote /home/vkaskivuo/Projects/gf2/dev/studies/91605d4d/permanent-campaign-20260814T230032Z-2085453-q5-grid.csv
+# exit_status: 0
