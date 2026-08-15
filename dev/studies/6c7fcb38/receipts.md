@@ -1445,45 +1445,59 @@ run's.
 
 ### 11.1 Prior cells published outside the stopping rule, and this field's exposure
 
-Reading the prior rates from the CSV rather than from the rendered table makes
-the two comparable, so the comparison was made, and it surfaces cells the prior
-artifact publishes as measured in a state its own preamble's protocol censors.
-Tracked as open bug `4fdd781a`.
+**The prior study marks the affected cells itself, and this receipt cites that
+marking rather than re-deriving it.** Two rendered §4.4 cells carry a dagger
+under bug `4fdd781a`, with a footnote naming their repetition counts: $q = 3$,
+$n = 28$, GPU $M = 1024$ at three repetitions, and $q = 5$, $n = 28$, rayon
+batch at one, both from "*runs that did not meet the stated minimum of five
+repetitions and five seconds of timed work before the 120 s cap ended timing*"
+([`dev/studies/b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md):574,
+`:579`, `:586`). That study carries its own recorded check for the convention,
+[`verify-rendered-stopping-rule.py`](../b488f02c/verify-rendered-stopping-rule.py),
+which fails on a missing or a misplaced dagger.
 
-The rule, as the harness implements it, has to be applied exactly to say which
-cells those are. A cell stops once both minimums are met or the cap is reached,
-and it is censored only when the cap arrives first
-(`dev/research/permanent-sampling-feas/src/protocol.rs:178-186`, `:190-191`). So
-the 120 s cap bounds when a further repetition may *start*, not a cell's total:
-a cell that met both minimums may legitimately close above 120 s because the
-repetition already in flight finished.
+**Neither daggered cell is a $q = 7$ cell**, so nothing in §11's comparison
+rests on a prior figure its own stopping rule forbids. The same check applied to
+this run's own $q = 7$ grid finds zero measured cells outside the rule: the
+fewest repetitions any measured cell runs is 5 and the longest closes at
+117.147505 s (§5).
 
-| $q$, $n$, path | prior `outcome` | prior `reps` | prior `total_s` | prior published rate | reading |
+`analysis.py` section 11.1 reproduces the marking independently, and it agrees
+cell for cell — including on the cell it declines to flag. The rule as the
+harness implements it has to be applied exactly for that agreement to hold: a
+cell stops once both minimums are met or the cap is reached, and it is censored
+only when the cap arrives first
+(`dev/research/permanent-sampling-feas/src/protocol.rs:178-186`, `:190-191`), so
+the 120 s cap bounds when a further repetition may *start* rather than bounding
+a cell's total.
+
+| $q$, $n$, path | prior `outcome` | prior `reps` | prior `total_s` | prior published rate | marking |
 | --- | --- | ---: | ---: | ---: | --- |
-| 5, 28, `cpu_rayon_batch_scalar` | `measured` | 1 | 148.177477 | 0.6479 | cap reached before both minimums — the rule censors this cell |
-| 3, 28, `gpu_hip` $M{=}1024$ | `measured` | 3 | 159.439482 | 19.2675 | cap reached before both minimums — the rule censors this cell |
-| 3, 28, `gpu_hip` $M{=}256$ | `measured` | 5 | 150.019069 | 8.5322 | both minimums met before the cap; the last repetition ran long — conformant |
+| 5, 28, `cpu_rayon_batch_scalar` | `measured` | 1 | 148.177477 | 0.6479 | daggered — cap reached before both minimums |
+| 3, 28, `gpu_hip` $M{=}1024$ | `measured` | 3 | 159.439482 | 19.2675 | daggered — cap reached before both minimums |
+| 3, 28, `gpu_hip` $M{=}256$ | `measured` | 5 | 150.019069 | 8.5322 | not daggered — both minimums met before the cap; the last repetition ran long |
 
-**Not one of the three is a $q = 7$ cell**, and the check finds no $q = 7$
-violation in the prior file at all, so nothing in §11's comparison rests on a
-prior figure its own stopping rule forbids. The same check applied to this run's
-own $q = 7$ grid finds zero measured cells outside the rule: the fewest
-repetitions any measured cell runs is 5 and the longest closes at 117.147505 s
-(§5). `analysis.py` section 11.1 enumerates all of it.
-
-The third row is recorded because a check that flags it as a violation would be
-wrong, and because bug `4fdd781a`'s description names two cells while a
-total-only reading of the cap would name three. The distinction is the harness's
-own, and this receipt states it so the correction that bug tracks is applied to
-the two cells that need it.
+The third row is tabulated because it is the case a coarser check gets wrong: a
+total-only reading of the 120 s cap would flag it, since it closes at
+150.019069 s. It met both minimums first, so the rule leaves it measured and the
+landed convention correctly leaves it unmarked.
 
 ## 12. Bit-plane input preparation cost (REQ-16)
 
 REQ-16 asks for measured bit-plane input preparation cost, reported separately
 from the Gray walk, with the host-side portion distinguished from any
-device-side portion, for every bit-sliced path that executes. One bit-sliced
-path executes as a permanent path in this field, `f7-three-plane-permanent`
-(§14 fixes which paths are bit-sliced and which are not).
+device-side portion, for every bit-sliced path that executes. It allows the
+separation to come from a committed paired profiled evidence run over the same
+hash-pinned binaries and cells, reported beside the unprofiled timing, and it
+allows a portion that is zero by construction to be attributed with its source
+citation. One bit-sliced path executes as a permanent path in this field,
+`f7-three-plane-permanent` (§14 fixes which paths are bit-sliced and which are
+not).
+
+This section reports the two halves in that order: the host-side portion, which
+is zero by construction and is attributed from source here, and the device-side
+portion, whose separation into preparation and Gray walk comes from the paired
+profiled run.
 
 **The host-side portion is zero, and that is a source fact rather than a
 measurement.** The harness serialises the batch to canonical matrix *bytes* and
@@ -1545,31 +1559,43 @@ copying every prepared `b0`, `b1`, and `b2` column plane back from the device
 and comparing them with the canonical row-major matrix bytes*"
 ([`dev/research/permanent_wave_gpu/README.md`](../../research/permanent_wave_gpu/README.md):460-463).
 
-What this campaign therefore establishes for REQ-16 is the host/device
-attribution, from source, and the combined device span, from measurement. **The
-separation of the preparation cost from the Gray-walk cost is not established,
-and no figure is invented for it.** What the receipt can bound is the sum: the
-preparation kernel's contribution is at most the whole combined span above, and
-the compiler receipt of §7 records the staging kernel at 16 `TotalSGPRs`, 17
+So the timing run establishes the host/device attribution from source and the
+combined device span from measurement, and it cannot divide that span. The
+per-kernel split comes from the paired profiled evidence run instead, which is
+why one exists: a profiler resolves `prepare_three_plane_columns` and
+`wave_gf7_three_plane_kernel` as separate dispatches where a single pair of
+stream events cannot.
+
+> **Pending the paired profiled evidence run.** The per-kernel durations that
+> separate preparation from the Gray walk are not yet written into this section.
+> They come from the committed paired profiled run over the same hash-pinned
+> binaries and cells, and are reported beside the unprofiled combined spans
+> tabulated above rather than replacing them, with the separation between the
+> two runs stated as §13 states it. Until that artifact is committed this half
+> of REQ-16 is open, and no figure is substituted for it: what the timing run
+> alone bounds is the sum, so the preparation kernel's contribution is at most
+> the whole combined span in the table above.
+
+The compiler receipt of §7 records the staging kernel at 16 `TotalSGPRs`, 17
 `VGPRs`, zero scratch, zero spills, and occupancy 16, against the Gray-walk
-kernel's 16, 34, zero, zero, and 16. Separating the two costs needs either a
-second event pair inside `ThreePlaneBatchLaunch` or a preparation-only timing
-mode, and both are harness changes rather than readings of this run. §17 records
-it as the gap it is.
+kernel's 16, 34, zero, zero, and 16. Those are compile-time figures and not a
+division of the measured span; §13 states why that distinction is load-bearing.
 
 ## 13. Achieved occupancy (REQ-17)
 
 REQ-17 asks for achieved occupancy for each measured $\mathbb{F}_7$ kernel from
-observed runtime evidence — profiler counters taken during the measured run —
-beside the occupancy that kernel's stated register and shared-memory budget
-predicts. It states that compiler resource-usage output may accompany that
-figure but never stands in for it, and that where the profiler is unavailable on
-the campaign host the receipt records achieved occupancy as not measured, with
-the reason.
+observed runtime evidence — profiler counters from a committed paired profiled
+evidence run over the same hash-pinned binaries and cells as the timing run,
+kept separate from the timing run so counter collection does not perturb the
+preregistered timing evidence, with that separation stated — beside the
+occupancy that kernel's stated register and shared-memory budget predicts. It
+states that compiler resource-usage output may accompany that figure but never
+stands in for it, and that where no profiler on the campaign host can produce
+the counters the receipt records achieved occupancy as not measured, with the
+reason.
 
-**Achieved occupancy is not measured for any kernel in this campaign, and the
-reason is not that the profiler was unavailable.** The three facts, each
-checkable:
+**The timing run carries no counters, by design, and that is what makes it the
+unperturbed half of the pair.** Three facts about it, each checkable:
 
 1. **The runner invokes no profiler.** A search of the whole 30 313-byte
    [`dev/scripts/permanent-campaign-runner.sh`](../../scripts/permanent-campaign-runner.sh)
@@ -1590,13 +1616,11 @@ checkable:
    the course of writing these receipts, so what is asserted here is presence on
    `PATH`, not a demonstration that one opens the device.
 
-So the criterion's escape clause does not apply on its stated terms. Recording
-"not measured because the profiler is unavailable on the campaign host" would be
-a false statement about this host. What the record supports is narrower and is
-stated as such: **achieved occupancy is not measured, because the campaign
-pipeline collected no profiler counters, on a host where a profiler is
-installed.** §16 reads REQ-17 as unmet on that basis rather than as satisfied by
-the escape clause, and §17 carries it as the campaign's largest gap.
+Facts 1 and 2 are what the criterion's separation clause asks to be stated: no
+counter collection touched the preregistered timing evidence, so every figure in
+§4 through §11 is unperturbed by profiling. Fact 3 is why the counters can be
+had at all — the criterion's not-measured escape applies only where no profiler
+on this host can produce them, and that is not this host's situation.
 
 **The only occupancy figures anywhere in this receipt set are compiler
 predictions, and they are not offered as a stand-in.** The `Occupancy
@@ -1611,30 +1635,38 @@ run began at `23:00:34Z` — at a different revision
 in §7 and §8 as what it is, and no row of this document presents it as achieved
 occupancy.
 
-The second half of the criterion is available and is recorded here for the
-kernel-by-kernel pairing it asks for, so that a later profiled run has the
-predicted column to sit beside. The budget-predicted occupancy is the compiler
-figure of §7, and the per-lane register and per-block shared-memory budgets
-those predictions would rest on are the ones §7.2 enumerates — of which none is
-a committed per-lane register budget, so for every $\mathbb{F}_7$ kernel the
+The prediction half of the criterion's pairing is available from the timing run's
+own artifacts and is recorded here, so the achieved column has its predicted
+column to sit beside. The budget-predicted occupancy is the compiler figure of
+§7, and the per-lane register and per-block shared-memory budgets those
+predictions would rest on are the ones §7.2 enumerates — of which none is a
+committed per-lane register budget, so for every $\mathbb{F}_7$ kernel the
 prediction side of REQ-17's pairing rests on the compiler's own register
 measurement rather than on a design's stated budget.
 
 | Kernel | budget-predicted occupancy (compiler, waves/SIMD) | achieved occupancy (profiler counters) |
 | --- | ---: | --- |
-| `permanent_bipedal7_kernel` | 8 | not measured — no profiler counters collected during the run |
-| `wave_gf7_lookup_table_kernel<1>` | 16 | not measured — same reason |
-| `wave_gf7_lookup_table_kernel<2>` | 16 | not measured — same reason |
-| `prepare_three_plane_columns` | 16 | not measured — same reason |
-| `wave_gf7_three_plane_kernel` | 16 | not measured — same reason |
-| `gray_update_micro_kernel` | 16 | not measured — same reason |
-| `gray_update_compiler_barrier_baseline_kernel` | 16 | not measured — same reason |
-| `horizontal_product_micro_kernel` | 16 | not measured — same reason |
-| `horizontal_product_compiler_barrier_baseline_kernel` | 16 | not measured — same reason |
+| `permanent_bipedal7_kernel` | 8 | awaiting the paired profiled run |
+| `wave_gf7_lookup_table_kernel<1>` | 16 | awaiting the paired profiled run |
+| `wave_gf7_lookup_table_kernel<2>` | 16 | awaiting the paired profiled run |
+| `prepare_three_plane_columns` | 16 | awaiting the paired profiled run |
+| `wave_gf7_three_plane_kernel` | 16 | awaiting the paired profiled run |
+| `gray_update_micro_kernel` | 16 | awaiting the paired profiled run |
+| `gray_update_compiler_barrier_baseline_kernel` | 16 | awaiting the paired profiled run |
+| `horizontal_product_micro_kernel` | 16 | awaiting the paired profiled run |
+| `horizontal_product_compiler_barrier_baseline_kernel` | 16 | awaiting the paired profiled run |
 
-Closing this needs a profiled re-measurement on the campaign host, which is
-device work and a change to the runner, not a reading of the artifacts this
-campaign committed.
+> **Pending the paired profiled evidence run.** The achieved column is filled
+> from the committed paired profiled run over the same hash-pinned binaries and
+> cells, run separately from the timing run for the reason stated above. Until
+> that artifact is committed this half of REQ-17 is open, and the compiler
+> figures in the left column stay what they are — a compile-time prediction that
+> accompanies the achieved figure and never stands in for it.
+
+If that run should find that no profiler on this host can produce the counters,
+the criterion's escape applies and this section records achieved occupancy as
+not measured with that as the reason. That would be a finding of the profiled
+run, and nothing in the timing run's artifacts settles it in advance.
 
 ## 14. Exact operation above the sixteen-lane limit (REQ-18)
 
@@ -1787,8 +1819,8 @@ yet derived.**
 | REQ-13 | §2 | **Satisfied, and not vacuous for this field.** `f7-three-plane-accumulator` is a planned $\mathbb{F}_7$ candidate that cannot execute as a permanent path on the target device, and it is named in the record with its falsification, quoted verbatim: its HIP translation unit holds a single-thread three-plane accumulator conformance probe and not a full-permanent batch kernel. §2 states that this is a structural falsification rather than a compile or resource one, and cites the compiler receipt entry that shows the same source compiling clean for `gfx1030`, so the exclusion is not mistaken for a build failure. Its exclusion from the timing comparison cites that evidence, and no timing is attributed to it in §4; it appears in §6.2 only because that isolate times a circuit rather than a path. The four out-of-field prototypes carry their by-field reasons. Separately and distinctly, three in-tree CPU paths cannot execute for this field at all and two more stop at $n = 16$; they are named with the library-capability absence and the lane bound that exclude them, quoted verbatim, confirmed independently in the equivalence file, and §2 states that these are host-tree capability limits rather than device falsifications. |
 | REQ-14 | §4.4 | **Satisfied.** The best-performing prototype by ratio against the best applicable in-tree CPU path is `f7-three-plane-permanent`; its best operating point is $n = 20$, $M = 41$, where it measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a ratio of **545.6693×**, with a launch duration of **4.8485 µs per launch** on the device clock (`device_submission_to_kernel_s` 0.004960 s over 1 023 launches). §4.4 also states the alternative reading — the highest absolute prototype rate in the campaign is `f7-lookup-table-control` at $n = 12$, 630 625.0668 matrices/s and 8.7878× the best CPU path, at 4.6533 µs per launch — rather than leaving the choice of reading implicit. §4.5 records that this operating point's batch is not matched to the control's. |
 | REQ-15 | §1 | **Satisfied.** Three exact commands for this field plus the shared equivalence command are committed with their revision, toolchain, and binary hashes; `analysis.py` regenerates every table here from the committed artifacts with one command; the run executes on the prepared benchmark host under the repository's full-host benchmark mutex, with a pristine-worktree refusal and a binary-hash verification enforced both before and after the lock is acquired, and with the machine warm-up held by the first grid under the same lock. |
-| REQ-16 | §12 | **Partially met, and the shortfall is named.** The host-side portion is established from source and is zero: the harness streams canonical matrix bytes and the byte-to-plane transpose runs on the device as its own kernel, so there is no host-side preparation to measure. The device-side portion is measured, but not separately from the Gray walk: both launches sit inside one event-bracketed span by the harness's own documented design, so `kernel_device_s` is their sum and no committed column separates them. §12 gives the combined per-launch figure at all five orders, shows that no harness mode and no committed artifact of this run times the preparation kernel alone, and identifies the only preparation-specific route in the tree as a correctness stage that emits no duration. No separated figure is invented. **The criterion's "separately from the Gray walk" is not satisfied by this run's evidence.** |
-| REQ-17 | §13 | **Not met.** Achieved occupancy is not measured for any $\mathbb{F}_7$ kernel: the runner invokes no profiler, and `analysis.py` section 13 asserts that no committed artifact of this run carries profiler counters. The criterion's escape clause permits recording achieved occupancy as not measured only where the profiler is unavailable on the campaign host, and that condition does not hold — `rocprof`, `rocprofv2`, and `rocprofv3` are installed and on `PATH`. §13 therefore records the true reason rather than the permitted one, states it as unmet, and reports the compiler occupancy figure explicitly as a compile-time prediction that this receipt does not offer as a stand-in. Closing this needs a profiled re-measurement. |
+| REQ-16 | §12 | **Open pending the paired profiled evidence run.** The host-side portion is established and reported: it is zero by construction, because the harness streams canonical matrix bytes and the byte-to-plane transpose runs on the device as its own kernel, and §12 attributes it with the source citation the criterion asks for in that case. The device-side portion is measured as a combined span at all five orders and reported as the unprofiled timing the separated figures sit beside; §12 shows why the timing run cannot divide it, since both launches fall inside one event-bracketed span by the harness's documented design, and shows that no committed artifact of that run and no harness mode times the staging alone. The per-kernel separation comes from the committed paired profiled run over the same hash-pinned binaries and cells and is not yet written into §12. No figure is substituted for it in the meantime. |
+| REQ-17 | §13 | **Open pending the paired profiled evidence run.** The prediction half of the pairing is recorded per kernel in §13 from the compiler receipt, explicitly as a compile-time prediction: §8 shows the compiler's occupancy field is reproduced exactly for all 26 receipt entries by a function of `VGPRs` alone, and the receipt predates the run at a different revision, so no row of this document offers it as achieved occupancy. The separation the criterion asks to be stated is stated and is checkable: the runner invokes no profiler, and `analysis.py` section 13 asserts that no committed artifact of the timing run carries counters, so the preregistered timing evidence of §4 through §11 is unperturbed by counter collection. The achieved column is filled from the committed paired profiled run and is not yet written. The criterion's not-measured escape is not claimed: it applies only where no profiler on this host can produce the counters, and rocprof, rocprofv2 and rocprofv3 are installed and on `PATH`. |
 | REQ-18 | §14 | **Satisfied.** The one bit-sliced path that executes as a permanent path, `f7-three-plane-permanent`, is `measured` at $n = 16$, $n = 20$, and $n = 24$ — and at $n = 12$ and $n = 28$ besides — and is `identical` with zero mismatches against the campaign oracle at every one of those orders, on 512, 512, and 32 matrices at the three the criterion names. §14 settles which paths are bit-sliced from source, records that the second bit-sliced candidate does not execute as a permanent path at any order and so has no cell to measure, and states the measurement scale at each order rather than implying it. The sixteen-lane limit the demonstration is above is the same one this run records refusing the packed CPU path at those orders, which is why the oracle is the independent generic Ryser driver there. |
 | REQ-19 | §15 | **Aspirational; throughput met, bound met against a prior.** At the declared operating point $n = 20$, `f7-three-plane-permanent` measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a factor of **545.6693×** against a $1.5\times$ target, with a launch duration of 4.8485 µs on the device clock and a kernel span of 0.004672 s per launch. §15 states the caveat that the denominator at this order is a single-threaded generic driver because this field has no packed CPU kernel there. No safe launch-duration bound derived by this study is committed yet; measured against the only committed figure — the archived ≈190–200 s per-launch calibration, cited as a prior rather than as an established device property, and with its $q = 5$ work budget deliberately not transferred to this field — this operating point sits at 0.00002 of the span boundary. |
 
@@ -1796,69 +1828,67 @@ yet derived.**
 
 Collected so a reader does not have to reassemble it from the sections above.
 
-1. **Achieved occupancy is not measured for any kernel.** REQ-17's runtime
-   evidence does not exist in this run, the escape clause's precondition does not
-   hold on this host, and §13 records that rather than either fabricating a
-   figure or claiming an exemption. This is the campaign's largest gap and the
-   only criterion it reports as unmet.
-2. **Bit-plane preparation is not separated from the Gray walk.** The two
-   launches share one event span by design, so §12 can attribute the cost to the
-   device and bound it by the combined span but cannot divide it. Separating them
-   needs a harness change, not a re-reading.
-3. **The two mappings are compared at three orders, not five.** All four control
+1. **The timing run measures no achieved occupancy and divides no kernel
+   span.** Both are properties of this run rather than of the field: profiling
+   is kept off the timing run so counter collection cannot perturb the
+   preregistered evidence, and the two three-plane launches share one event
+   span by the harness's documented design. The paired profiled evidence run
+   supplies both figures; until it is committed, §12 and §13 are open and carry
+   no substitute number.
+2. **The two mappings are compared at three orders, not five.** All four control
    cells at $n \in \{24, 28\}$ are censored before running, so §10's mapping
    ratios exist only at $n \in \{12, 16, 20\}$ and nothing here settles the
    ordering between the two mappings at this field's two largest orders.
-4. **Almost no prototype cell is measured near the control's batch sizes.**
+3. **Almost no prototype cell is measured near the control's batch sizes.**
    Every prototype cell sizes itself from a one-matrix probe, so the mapping
    comparison mixes the mapping effect with a device-parallelism effect that
    ranges over a factor of 5 833 across the prototype cells. The one near-match
    is the $n = 16$ three-plane cell at $M = 1109$ against the control's 1 024;
    everywhere else, separating the two needs a run with the prototype batch
    sizes pinned to the control's.
-5. **The $n = 12$ ordering between the two prototypes is a batch artefact as
+4. **The $n = 12$ ordering between the two prototypes is a batch artefact as
    much as a circuit result.** The lookup control leads the bit-sliced path
    0.4524 to 1 at that order while running 5 833 matrices against 46, and
    186 656 active lanes against 1 472 (§4.5). Nothing in this run isolates how
    much of that reversal is the circuit, and it is the one order where the
    bit-sliced path does not lead.
-6. **The $n = 20$ headline ratio is not decomposed.**
+5. **The $n = 20$ headline ratio is not decomposed.**
    `f7-three-plane-permanent` at 545.6693× the best CPU path runs 1 312 lanes
    against the shipped path's 1 024 and is compared against a single-threaded
    generic driver rather than a packed or parallel one. Both the mapping term
    and the choice of denominator are large, and no cell in this run separates
    them.
-7. **The two horizontal-product circuits are not ordered.** The F7ThreePlane
+6. **The two horizontal-product circuits are not ordered.** The F7ThreePlane
    circuit yields a nonzero-branch duration at exactly two cells, and its partner
    branches there are censored (§6.2). The 23.3× and 312× gaps against the
    F7Lookup circuit at those cells are reported as the two figures they are, and
    no ordering of the circuits is asserted from them.
-8. **The $24n$-byte and $8n\lceil n/16 \rceil$-byte shared column tables are
+7. **The $24n$-byte and $8n\lceil n/16 \rceil$-byte shared column tables are
    unmeasured.** The compiler reports static LDS only, so this field's committed
    shared-memory prediction is neither confirmed nor refuted here, and no
    prototype cell in this run is large enough for shared-memory pressure to bind.
-9. **No per-lane register budget is predicted for any of the nine measured
+8. **No per-lane register budget is predicted for any of the nine measured
    kernels.** The prediction-beside-measurement pairing is one-sided on registers
    throughout this field (§7.2). Their measured figures stand on their own and
    there is nothing to diverge from, so this campaign cannot test a register
    hypothesis for any kernel it measures.
-10. **The 32-byte gap between declared and reported scratch is unexplained.**
+9. **The 32-byte gap between declared and reported scratch is unexplained.**
     `permanent_bipedal7_kernel` declares 4 032 bytes of runtime-indexed private
     arrays and the compiler reports 4 000 bytes/lane. No committed source or
     receipt accounts for the difference, and none is asserted here.
-11. **The $n = 28$ equivalence cell compares four matrices** and the $n = 24$
+10. **The $n = 28$ equivalence cell compares four matrices** and the $n = 24$
     cell 32, against 512 at the four smallest orders, so this field's two largest
     orders rest on much weaker correctness gates than the rest — including the
     $n = 24$ gate that REQ-18's demonstration depends on.
-12. **The Gray-update host circuit is not measured above $n = 16$.** The packed
+11. **The Gray-update host circuit is not measured above $n = 16$.** The packed
     $\mathbb{F}_7$ representation has sixteen lanes, so §6.1's host-versus-device
     latency comparison exists at two orders and nothing here extends it.
-13. **The safe launch-duration bound is not this study's own.** §15 measures
+12. **The safe launch-duration bound is not this study's own.** §15 measures
     against an archived prior whose watchdog attribution was retracted and whose
     work budget is stated for a different field; deriving the study's own bound
     is a separate deliverable and this campaign contributes 16 device-backed
     cells toward it rather than closing it.
-14. **The permanent-zero fraction at $n = 28$ pools 28 matrices.** Its interval
+13. **The permanent-zero fraction at $n = 28$ pools 28 matrices.** Its interval
     spans a factor of 7.3 and it supports nothing on its own (§9.1).
 
 Three observations in this run contradict a statement outside its own numbers
@@ -1874,13 +1904,14 @@ and are recorded rather than restated, per `@/inv/falsification-preserved`:
   projection here inherits that failure — but the failure is the second and third
   instance of the pattern the $\mathbb{F}_3$ campaign predicted and the
   $\mathbb{F}_5$ campaign first observed with a censored cell attached.
-- **The prior grid publishes two rates its own stated stopping rule forbids** —
+- **The prior grid published two rates its own stated stopping rule forbids** —
   $q = 5$, $n = 28$ at one repetition and $q = 3$, $n = 28$ at three, both
-  against a five-repetition minimum reached only after the 120 s cap (§11.1).
-  Neither is a $q = 7$ cell, and this run's own $q = 7$ grid has no cell outside
-  the rule. §11.1 additionally separates a third prior cell that a total-only
-  reading of the cap would wrongly flag, so that bug `4fdd781a`'s correction is
-  applied to the two cells that need it and not to the one that does not.
+  against a five-repetition minimum reached only after the 120 s cap. Both
+  rendered cells now carry a dagger and a footnote under bug `4fdd781a`, and
+  §11.1 cites that marking rather than re-deriving it. Neither is a $q = 7$
+  cell, and this run's own $q = 7$ grid has no cell outside the rule. §11.1 also
+  tabulates the third prior cell that a total-only reading of the cap would
+  wrongly flag, which the landed convention correctly leaves unmarked.
 - **The exact marginal branch expectation falls outside the Wilson interval of
   the $n = 24$ timed-operation observation**, at $z = +2.85$, on all four
   backends that resample the same addresses (§9). It is one order of five under a
