@@ -7,16 +7,16 @@
 //! the revision `gf2-sim` embeds at build time is carried by a real executable
 //! rather than only by the library that any executable links.
 //!
-//! It is not the campaign driver, which is separate work. A driver enumerates
-//! the frozen manifest's work items, derives stream addresses, draws matrices,
-//! evaluates permanents and the determinant companion, accumulates shard
-//! records, and writes the dataset. This binary has no sampler, no backend
-//! selection, and no accumulator, and it never creates or mutates a dataset
-//! file: `checksums` prints to standard output rather than writing
-//! `checksums.sha256`, so the executable has no write path into a dataset at
-//! all. What it shares with the future driver is the two library entry points
-//! the driver will also call — the guard before writing, and the integrity
-//! generator at finalization.
+//! The campaign driver is the `permanent_campaign` binary. It enumerates the
+//! frozen manifest's work items, derives stream addresses, draws matrices,
+//! evaluates permanents, accumulates shard records, and writes shard files and
+//! the field summary through the emission guard. The scheduler refuses
+//! `DeterminantPlan` values other than `NotEvaluated` via
+//! `DeterminantCompanionRequested`; determinant-companion evaluation belongs to
+//! separate work. This binary has no sampler, no backend selection, and no
+//! accumulator, and it never creates or mutates a dataset file: `checksums`
+//! prints to standard output rather than writing `checksums.sha256`, so the
+//! executable has no write path into a dataset at all.
 //!
 //! ```console
 //! $ permanent_dataset revision
@@ -28,7 +28,8 @@
 //!
 //! `revision` prints the embedded source revision, which equals
 //! `git rev-parse HEAD` exactly when this binary is current with the checkout.
-//! `emission-check` runs the guard a campaign driver must pass before writing.
+//! `emission-check` runs the guard that `permanent_campaign` passes before
+//! writing.
 //! `checksums` renders the integrity file for a finished dataset on stdout.
 //! `conform` checks the complete schema and all cross-document aggregates.
 //! `verify` re-checks a dataset against that file and its recorded source.

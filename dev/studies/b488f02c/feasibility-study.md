@@ -1032,7 +1032,7 @@ agent working with review, and assume the harness in
 |---|---|---|---|
 | G1 | Uniform $\mathbb{F}_q$ matrix sampler | Landed as [`gf2_stats::sampler`](../../../crates/gf2-stats/src/sampler.rs); prototype retained as historical context | 0.5 d (historical) |
 | G2 | Streaming zero-fraction statistics with CIs | Prototyped, needs checkpointing | 1.0 d |
-| G3 | Campaign runner | Missing; design decided below | 2.0 d |
+| G3 | Campaign runner | Landed as [`gf2_sim::permanent_campaign::schedule`](../../../crates/gf2-sim/src/permanent_campaign/schedule.rs) and the [`permanent_campaign` binary](../../../crates/gf2-sim/src/bin/permanent_campaign.rs); one field arm enumerates, executes, and emits the manifest's work items | 2.0 d (historical) |
 | G4 | Versioned dataset format | Landed as [`gf2_sim::permanent_campaign`](../../../crates/gf2-sim/src/permanent_campaign/), published under [`dev/simulation_results/permanent-zero-fraction/`](../../simulation_results/permanent-zero-fraction/README.md) | 0.5 d (historical) |
 | G5 | Permanental-rank predicate for the rectangular check | Landed as [`permanent::permanental_rank_status`](../../../crates/gf2-algebra/src/permanent/rank.rs); **no new kernel needed** | 1.0 d (historical) |
 | G6 | `permanent_bipedal3` routed single matrices to the slower kernel | Defect, confirmed by measurement; fixed in [`permanent/bipedal3.rs`](../../../crates/gf2-algebra/src/permanent/bipedal3.rs), measurement retained as historical context | 0.5 d (historical) |
@@ -1069,8 +1069,8 @@ a shard, and a Clopper–Pearson option for the small-count cells of the
 rectangular validation, where the Wilson interval's normal approximation is
 weakest. *1.0 d.*
 
-**G3 — campaign runner. Decision: write a dedicated driver, do not adapt the
-`gf2-sim` FEC campaign runner.** The FEC runner's campaign schema is
+**G3 — campaign driver boundary.** The landed dedicated driver is separate
+from the `gf2-sim` FEC campaign runner. The FEC runner's campaign schema is
 coding-domain — codes, modems, channels, SNR sweeps — while this campaign's axes
 are $(q, n, \text{shard})$ and its per-point work is a permanent evaluation, not
 a decode. Adapting it would mean either widening that schema to carry a second,
@@ -1125,10 +1125,9 @@ $\binom{n}{k}$ of them). *1.0 d.*
 
 This landed as
 [`permanent::permanental_rank_status`](../../../crates/gf2-algebra/src/permanent/rank.rs)
-in `gf2-algebra`, not in the campaign driver as this section first projected.
-The predicate decides one matrix and carries no dependency on sampling or
-statistics, so it belongs beside the square permanent kernels it calls; the
-driver consumes it. Its cross-check oracle is
+in `gf2-algebra`. The predicate decides one matrix and carries no dependency
+on sampling or statistics, so it belongs beside the square permanent kernels
+it calls; the campaign driver consumes it. Its cross-check oracle is
 `gf2_algebra::testutil::permanental_rank_bruteforce`, which shares no code path
 with it.
 
@@ -1352,13 +1351,13 @@ this recommendation rather than caveats on it.
    budget chasing $n = 28$ at $q = 3$ buys a wide interval around a value nobody
    can distinguish from $1/3$.
 
-Recommended first breakdown: G1 and G2 (sampler and streaming statistics,
-productionised from this harness, carrying the disjoint-stream and
-deterministic-warm-up properties §4.7 shows are load-bearing), G4 (dataset
-format), G6 (the one-line F_3 dispatcher routing fix that cost every caller ~3x,
-since landed), then G3 (campaign driver with the §7.2 acceptance test wired in),
-then the $q \in \{5,7\}$ arms at the sizes §4.6 makes feasible, then $q = 3$ as
-reproduction, then G5 and G7 as follow-ups.
+The operational dependency order is G1 and G2 (sampler and streaming
+statistics, carrying the disjoint-stream and deterministic-warm-up properties
+§4.7 shows are load-bearing), G4 (dataset format), G6 (the one-line F_3
+dispatcher routing fix that cost every caller ~3x), and the landed G3 campaign
+driver with the §7.2 acceptance test wired in. The remaining order is the
+$q \in \{5,7\}$ arms at the sizes §4.6 makes feasible, then $q = 3$ as
+reproduction, then G5 and G7.
 
 ### 7.1 What this campaign can and cannot establish
 
