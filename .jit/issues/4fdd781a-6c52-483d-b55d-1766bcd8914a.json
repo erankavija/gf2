@@ -5,7 +5,15 @@
   "created_at": "2026-08-15T09:15:54.344910240Z",
   "dependencies": [],
   "description": "dev/studies/b488f02c/throughput-2026-08-07.csv carries two measured cells whose repetition counts violate the protocol the study states (at least 5 repetitions and 5 s of timed work under a 120 s cap): q=5, n=28, cpu_rayon_batch_scalar at one repetition of ~148 s, and q=3, n=28, gpu_hip M=1024 at three repetitions. The feasibility-study section 4.4 table publishes the q=5 cell's 0.648 without qualification.\n\n## Background\n\nFound by the F_5 receipt campaign (91605d4d, receipts section 14): both offending cells are ones the campaign reruns censor under the same rule, and the q=5 cell is load-bearing for cross-run comparison — it makes the prior best CPU path at n=28 appear 14.3x faster than what the rule-conformant rerun measures. The campaign receipts already record the discrepancy; this issue owns the correction at the source.\n\n## Success Criteria\n\n- [hard] REQ-01: The feasibility study identifies each published cell that does not meet the stated repetition/censoring rule and marks it as protocol-nonconforming where it is rendered, or removes it from the rendered table, without altering the committed CSV.\n- [hard] REQ-02: The recorded check in the study directory (or a companion check) verifies that every rendered throughput cell either satisfies the stated stopping rule or carries the nonconformance marker.\n\n## Notes\n\nThe committed CSV is a faithful record of what ran and is not edited (falsification-preserved); the defect is the unqualified rendering. Related: a2c0db52 (rounding discrepancies in the same table).\n",
-  "documents": [],
+  "documents": [
+    {
+      "commit": null,
+      "doc_type": "evidence",
+      "format": "markdown",
+      "label": "Stopping-rule rendering check",
+      "path": "dev/studies/b488f02c/verify-rendered-stopping-rule.py"
+    }
+  ],
   "first_ready_at": "2026-08-15T09:15:54.344910240Z",
   "gates_required": [
     "doc-review"
@@ -26,5 +34,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Prior throughput grid publishes rates its stated stopping rule forbids",
-  "updated_at": "2026-08-15T09:30:25.626714806Z"
+  "updated_at": "2026-08-15T10:33:47.018643712Z"
 }
