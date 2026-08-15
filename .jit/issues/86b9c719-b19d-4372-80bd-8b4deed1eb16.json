@@ -4,6 +4,7 @@
   "created_at": "2026-02-21T19:35:51.583905100Z",
   "dependencies": [
     "0056e853-0be7-48ec-8407-ea16bcc45392",
+    "023233c5-c9d8-4c92-8af3-c041bfb94e7b",
     "0ba493e1-2a53-4516-bb70-f88b93a02881",
     "1b929ce5-122d-40f3-b579-617869cfc70a",
     "201caa23-fd58-49f1-aa92-e24eff040599",
@@ -43,5 +44,5 @@
   "priority": "normal",
   "state": "backlog",
   "title": "Quality, documentation, and tech debt",
-  "updated_at": "2026-08-15T07:18:14.239783478Z"
+  "updated_at": "2026-08-15T19:22:36.857051395Z"
 }

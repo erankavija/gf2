@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-15T19:22:23.839664751Z",
+  "dependencies": [],
+  "description": "The F_7 receipt campaign (6c7fcb38) records launch-time dynamic shared-memory allocation as a measurement blind spot: rocprofv3's counter collection reports LDS_Block_Size 0 (static LDS only) for kernels whose dynamic allocation the design predicts (24n bytes for wave_gf7_three_plane_kernel, 8n*ceil(n/16) for the shared-table kernels). A rocprofv2 capability probe committed at dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/ captured LDS_Per_Workgroup 512 for the walk kernel at n=20 in its four pre-crash dispatches — the design's 480-byte prediction at 128-byte allocation granularity — indicating rocprofv2 reports the launch-time dynamic figure rocprofv3 does not. rocprofv2 aborts this workload under full interception (recorded in the same artifact's run2.log), so a usable pass needs a workaround (e.g. minimal counter set, per-kernel filtering, or tolerating the abort after enough dispatches).\n\n## Success Criteria\n\n- [hard] REQ-01: A committed evidence pass records the launch-time dynamic LDS allocation for every executing F_7 device kernel with a design-stated shared-memory budget, over the hash-pinned campaign binary, compared against the design predictions at the allocator's granularity; kernels the tooling cannot capture are recorded as such with the failing command.\n- [hard] REQ-02: The receipts' shared-memory blind-spot statements (dev/studies/6c7fcb38/receipts.md sections 7.1, 8, 17) are updated to cite the new evidence, and every claim remains reproducible from committed artifacts.",
+  "documents": [],
+  "first_ready_at": "2026-08-15T19:22:23.839664751Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "023233c5-c9d8-4c92-8af3-c041bfb94e7b",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-algebra",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Dynamic LDS confirmation pass for F_7 device kernels via rocprofv2",
+  "updated_at": "2026-08-15T19:22:23.839664751Z"
+}
