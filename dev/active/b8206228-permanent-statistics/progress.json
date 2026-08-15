@@ -295,7 +295,7 @@
    "reason": "Found by the F_5 receipts; rendering correction with recorded check.",
    "wave": "1 (interleaved)",
    "status": "in_progress",
-   "note": "Round-1 fix 7a0af9ab (luna); doc-review FAILED with 3 findings (downstream renderings unmarked, check scope too narrow) - rework specified in handoff-5.md."
+   "note": "Round-1 fix 7a0af9ab (luna); doc-review failed R1 with 3 findings (downstream renderings unmarked, check scope too narrow). Rework R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; doc-review failed R2 with 1 new finding (checker verifies only the repetition minimum, not the five-second timed-work minimum). Rework R3 (luna, rework count 2 = MAX): verify the five-second half via the pinned harness source's loop-exit structure (git show harness_source_sha) plus direct total_s>=5 proof, and cap-path evidence total_s>=120 for reps<5 rows; lead verified total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test would falsely flag conforming cells."
   }
  ],
  "escalations": [
@@ -414,7 +414,7 @@
   "2ddf2f4b": 5,
   "e0251af3": 1,
   "047b62ed": 2,
-  "4fdd781a": 1
+  "4fdd781a": 2
  },
  "surfaced_pitfalls": [
   "Do not run the workspace fast tier while workers are compiling or testing: CPU contention pushed ten LDPC tests and the deterministic fsync test past their existing five-second limits. On an idle host, the unchanged registered cargo-ci gate passed at normal priority.",
