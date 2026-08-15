@@ -853,8 +853,18 @@ The receipt records it as `translation_unit_role: included-fragment` against the
 ### 7.1 Predicted budgets and what the device reports
 
 **Lane-owns-interval prototypes (`f5-byte-control`, `f5-three-plane`).** The
-only committed design statement of a resource budget for these two kernels is a
-per-block shared-memory allocation, in
+committed HIP translation unit states source-level stable-lane-state models
+before compiler allocation (`dev/research/permanent_wave_gpu/hip/f5_wave_equivalence.hip:9-15`). `f5_byte_control_kernel` has $n + 20$ bytes
+of stable lane state; beside the `VGPRs` measurement, that byte model is
+$\frac{n+20}{4}$ 32-bit register units, or 8–12 units at the measured orders
+$n \in \{12, 16, 20, 24, 28\}$ (`f5_wave_equivalence.hip:9-12`).
+`f5_three_plane_kernel` has 11 32-bit register units of stable lane state
+(`f5_wave_equivalence.hip:13-15`). These are source-level lower bounds on
+stable lane state only: loop temporaries and compiler-introduced scratch are
+excluded, and the `gfx1030` `-Rpass-analysis=kernel-resource-usage` report is
+authoritative for final counts (`f5_wave_equivalence.hip:17-20`).
+
+The committed per-block shared-memory allocation is also stated in
 [`dev/research/permanent_wave_gpu/README.md`](../../research/permanent_wave_gpu/README.md):
 "*The compiler's `LDS Size` is static LDS only. It reports zero for both
 kernels; this must not be read as an absence of the explicit dynamic shared
@@ -868,8 +878,8 @@ backing `extern __shared__ std::uint8_t staged_matrix[]` at `:233` and
 
 | Kernel | predicted per-lane registers | measured per-lane (`VGPRs`) | measured per-wave (`TotalSGPRs`) | predicted per-block shared | measured static LDS |
 | --- | --- | ---: | ---: | --- | --- |
-| `f5_byte_control_kernel` | none committed | 77 | 78 | $n^2$ B | 0 B (static field only) |
-| `f5_three_plane_kernel` | none committed | 66 | 20 | $24n$ B | 0 B (static field only) |
+| `f5_byte_control_kernel` | $n+20$ B = $\frac{n+20}{4}$ 32-bit units, source-level lower bound (`f5_wave_equivalence.hip:9-12`) | 77 | 78 | $n^2$ B | 0 B (static field only) |
+| `f5_three_plane_kernel` | $11 \times$ 32-bit units, source-level lower bound (`f5_wave_equivalence.hip:13-15`) | 66 | 20 | $24n$ B | 0 B (static field only) |
 
 The shared-memory prediction is **not confirmed and not refuted by this
 campaign**, and the committed design says so first:
@@ -880,16 +890,16 @@ a zero. §4.5 carries the launch-time figure per cell, 144–784 bytes per block
 for the byte control and 288–672 for the three-plane path, from the source
 formulas rather than from any measurement.
 
-**No committed design states a per-lane register budget for either
-$\mathbb{F}_5$ kernel.** The nine-32-bit-register lower bound in the same README
-is stated in its "## F_3 wave-cooperative evidence boundary" section, of
-`WaveGf3` and `FoldGf3`: "*Their stable source-level state model is two packed
-`u64` words plus `u64` Gray cursor/end bounds and one `u32` partial sum: a 9 x
-32-bit-register lower bound.*" (`:160`, `:172-174`), and the $16n$-byte shared
-table it pairs with is likewise F_3's (`:422-423`). Neither covers this field,
-whose committed tables are $n^2$ and $24n$. That absence is recorded here as an
-absence and nowhere filled with a back-derived number; §7.2 states it per
-kernel.
+**The committed design states a per-lane source-level register lower bound for
+both $\mathbb{F}_5$ prototype kernels.** The byte-control model is $n+20$ bytes,
+which converts to $\frac{n+20}{4}$ 32-bit units (8–12 at the measured orders),
+and the three-plane model is 11 32-bit units (`f5_wave_equivalence.hip:9-15`).
+The measured 77 and 66 VGPRs respectively are above those bounds at every
+measured order, confirming both lower bounds. The source deliberately excludes
+loop temporaries and compiler-introduced scratch from the models and names the
+compiler resource report authoritative for final counts
+(`f5_wave_equivalence.hip:17-20`). The F_3 nine-32-bit-register lower bound in
+the README is a separate field-scoped statement and is not applied here.
 
 **One committed design claim about registers is qualitative rather than
 numeric, and this field's measurement confirms it.** The lane-owns-interval
@@ -943,19 +953,15 @@ bytes, 4 and 6 spills, 0 static LDS, occupancy 8. The shipped byte-arithmetic
 mapping costs the same resources in both fields that use it.
 
 Nothing in this campaign contradicts a numeric register or shared-memory
-prediction that a committed design states for this field, because the two
-committed statements are the $n^2$/$24n$ shared tables, which the compiler's
-static field cannot observe, and the exact 0 B/block for the five kernels whose
-launches request none, which it confirms. The absence is a fact about the
-committed record rather than an absence of searching: the study's own
-investigation states that no register, spill, or occupancy measurement of any
-permanent kernel existed in the tree before this work
-([`dev/active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):410-411),
-and the only committed resource figures for this field's kernels are the prior
-measurement replicated above. That is the state of the record, and §7.2 gives
-it per kernel rather than leaving it to be inferred. The contradictions this run
-*does* produce are of other committed statements and are recorded in §5 and §14
-with the statements they contradict.
+prediction that a committed design states for this field: the two prototype
+register models are lower bounds confirmed by the 77 and 66 VGPR measurements,
+while the $n^2$/$24n$ shared tables are dynamic and outside the compiler's
+static field, and the exact 0 B/block for the five kernels whose launches
+request none is confirmed. The prior resource table is replicated above, not
+used as a post-hoc prediction. §7.2 gives the committed model coverage per
+kernel rather than deriving a budget from measured values. The contradictions
+this run *does* produce are of other committed statements and are recorded in
+§5 and §14 with the statements they contradict.
 
 ### 7.2 Prediction coverage, stated per kernel
 
@@ -967,22 +973,22 @@ is supplied in its place.
 | Kernel | committed per-lane register prediction | committed per-block shared-memory prediction |
 | --- | --- | --- |
 | `permanent_bipedal5_kernel` | none committed | 0 B/block, exact (`permanent_bipedal5.hip:269`, no `__shared__`) |
-| `f5_byte_control_kernel` | none committed | $n^2$ B/block (`README.md:154-157`) |
-| `f5_three_plane_kernel` | none committed | $24n$ B/block (`README.md:154-157`) |
+| `f5_byte_control_kernel` | $n+20$ B = $\frac{n+20}{4}$ 32-bit units, source-level lower bound (`f5_wave_equivalence.hip:9-12`) | $n^2$ B/block (`README.md:154-157`) |
+| `f5_three_plane_kernel` | $11 \times$ 32-bit units, source-level lower bound (`f5_wave_equivalence.hip:13-15`) | $24n$ B/block (`README.md:154-157`) |
 | `gray_update_micro_kernel` | none committed | 0 B/block, exact (`gray_update_micro.hip:112`, no `__shared__`) |
 | `gray_update_compiler_barrier_baseline_kernel` | none committed | 0 B/block, exact (`gray_update_micro.hip:126`, no `__shared__`) |
 | `horizontal_product_micro_kernel` | none committed | 0 B/block, exact (`horizontal_product_micro.hip:196`, no `__shared__`) |
 | `horizontal_product_compiler_barrier_baseline_kernel` | none committed | 0 B/block, exact (`horizontal_product_micro.hip:208-209`, no `__shared__`) |
 
 So every measured kernel has a committed per-block shared-memory prediction, and
-the measurement confirms it for the five whose launches request none.
-**Not one of the seven has a committed per-lane register prediction.** That is
-recorded as the state of the committed record rather than as a measurement
-result, and no post-hoc budget is derived for any of them from the numbers this
-receipt measured — a figure back-derived from the measurement could not
-afterwards be diverged from it. This field's prediction-beside-measurement
-pairing is therefore one-sided on registers throughout, which is a stronger
-absence than $\mathbb{F}_3$'s and is what §14 records as the limit it is.
+the measurement confirms it for the five whose launches request none. Two of
+the seven have a committed per-lane source-level register lower bound, and §7.1
+pairs both with their measurements: 77 VGPRs confirms the byte-control bound at
+all measured orders, and 66 VGPRs confirms the three-plane bound. The other five
+have no committed per-lane register model, which is recorded as the state of the
+committed record rather than as a measurement result, and no post-hoc budget is
+derived for them from the numbers this receipt measured — a figure back-derived
+from the measurement could not afterwards be diverged from it.
 
 Two of the seven kernels report nonzero spill counts, both of them the same
 shipped `permanent_bipedal5_kernel` figures (4 SGPR and 6 VGPR spills), and no
@@ -1483,9 +1489,9 @@ yet derived.**
 | REQ-04 | §10, §4.5 | **Satisfied, with its coverage stated exactly.** Both mappings are measured at the three matching orders $n \in \{12, 16, 20\}$; at $n \in \{24, 28\}$ the control has no measured cell because all four of its cells are censored (§5), and §10 states that rather than deriving a ratio from a projection. The control's fixed $M \in \{256, 1024\}$ and each prototype cell's probe-calibrated $M \in \{1, 2, 6, 17, 41, 44, 45, 102\}$ are recorded beside their throughputs in the §10 mapping table and in every throughput table of §4. §4.5 quantifies the confound: the batch size *is* the prototype's device parallelism, tabulated as 32–3 264 active lanes against the control's 256 or 1024, with the probe cost that sets each batch, the reconstruction of every batch from that probe, and the rayon floor that overrides it. The mappings are therefore comparable on the order axis over the three orders both occupy. |
 | REQ-05 | §4.3 | **Satisfied.** `kernel_device_s` is its own device-event column on all four device paths; allocation, copy, and host serialisation are outside it, and the residual is derivable per cell. |
 | REQ-06 | §4.3 | **Satisfied.** `h2d_device_s`, `d2h_device_s`, `host_submission_s`, and `device_submission_to_kernel_s` are four separate columns, and per-launch costs follow from them and `reps` without a second run. §4.3 states, with the `host_submission_s`/`eval_s` ratios as evidence, that the host-clock column measures an asynchronous submission on `gpu_hip` rows and a synchronous submit-and-complete on prototype rows, so that it is not misread as a prototype launch overhead. |
-| REQ-07 | §7, §7.1, §7.2 | **Satisfied.** Registers per thread, private scratch per thread, static LDS per block, and both spill counts are reported for all seven measured kernels in §7's table, each with its resource-log line. Predictions are paired with those measurements wherever a committed design states one: the two prototype kernels against the README's $n^2$ and $24n$ per-block shared tables, and every non-prototype kernel against the exact 0 bytes/block its own launch and translation unit state. §7.2 gives the coverage per kernel and per quantity. No committed design states a per-lane register budget for any of the seven, which is recorded as such with the scope of the F_3-only statement that might be mistaken for one, and no post-hoc figure is supplied — a figure back-derived from the measurement could not afterwards be diverged from it. The README's committed prior resource table for the two prototype kernels is reported separately in §7.1 as an exact replication and explicitly not as prediction coverage. The one blind spot is recorded rather than closed by assumption: the compiler's static-LDS field cannot observe the launch-time tables, so that prediction is neither confirmed nor refuted here and no occupancy conclusion in §8 rests on reading its 0 as an absence. |
+| REQ-07 | §7, §7.1, §7.2 | **Satisfied.** Registers per thread, private scratch per thread, static LDS per block, and both spill counts are reported for all seven measured kernels in §7's table, each with its resource-log line. Predictions are paired with those measurements wherever a committed design states one: the two prototype kernels against the source-level stable-lane-state lower bounds of $n+20$ bytes (converted to $\frac{n+20}{4}$ 32-bit units at the measured orders) and 11 32-bit units (`f5_wave_equivalence.hip:9-15`), the same measurements confirming both bounds, the prototype shared tables of $n^2$ and $24n$ bytes, and every non-prototype kernel against the exact 0 bytes/block its own launch and translation unit state. The source scopes those register models to stable lane state, excludes loop temporaries and compiler-introduced scratch, and names the `gfx1030` resource report authoritative for final counts (`f5_wave_equivalence.hip:17-20`). §7.2 gives the coverage per kernel and per quantity; the other five kernels have no committed per-lane register model, and no post-hoc figure is supplied for them — a figure back-derived from the measurement could not afterwards be diverged from it. The README's committed prior resource table for the two prototype kernels is reported separately in §7.1 as an exact replication and explicitly not as prediction coverage. The one blind spot is recorded rather than closed by assumption: the compiler's static-LDS field cannot observe the launch-time tables, so that prediction is neither confirmed nor refuted here and no occupancy conclusion in §8 rests on reading its 0 as an absence. |
 | REQ-08 | §8 | **Satisfied.** §8's table names the occupancy-limiting resource for each of the seven measured $\mathbb{F}_5$ kernels: per-lane vector registers for the three full-permanent kernels, which report 8, 12, and 12 waves/SIMD, and the `gfx1030` architectural wave-slot ceiling of 16 for the four isolate kernels. Each row carries its per-thread usage, its occupancy, and its resource-log line. The derivation rests on stated, checkable evidence: `VGPRs` alone reproduces all 26 occupancy entries in the receipt under a 1 024-register, 16-unit allocation capped at 16, which `analysis.py` section 8 asserts; scalar registers and private scratch are shown not to bind by counterexample in the same receipt (86 SGPRs at occupancy 16, 1040 scratch bytes at occupancy 16); the empty `permanent_wave_gpu_probe` at zero usage reporting 16 establishes the ceiling; and this field's own `permanent_bipedal5_kernel` at 128 `VGPRs` reporting 8 shows the field falls under pressure rather than being constant. The naming holds at each measured order $n \in \{12, 16, 20, 24, 28\}$, with the evidence stated: $n$ is a runtime argument and not a template parameter on any of the three, so the compiler emits one resource block per kernel and no per-order variation is possible. The dynamic-LDS blind spot is stated rather than assumed away, and §8 scopes it to the two prototype rows it actually qualifies. |
-| REQ-09 | §7.1, §7.2, §5, §14 | **Satisfied.** No measurement in this campaign contradicts a numeric register or shared-memory prediction that a committed design states for this field, and §7.1 states why rather than leaving it implicit: the only committed budget statements are the $n^2$ and $24n$ dynamic shared tables, which the compiler's static field cannot observe, and the exact 0 B/block for the five kernels whose launches request none, which it confirms. No prediction is silently restated: the F_3-scoped nine-register lower bound is quoted with its scope and not applied here, the README's prior F_5 resource table is reported as a replication with all twelve figures matching, and the one qualitative committed claim about register residency is quoted and confirmed against zero scratch and zero spills on both prototypes. The contradictions this run does produce are of other committed statements and are carried with them — the projection-accuracy statement against this file's own prototype chains (§5), the prior artifact's sub-minimum published cell (§11.1), the packed-kernel run-to-run shift (§11), and the $n = 28$ branch-frequency interval (§9) — collected in §14. |
+| REQ-09 | §7.1, §7.2, §5, §14 | **Satisfied.** No measurement in this campaign contradicts a numeric register or shared-memory prediction that a committed design states for this field. The source-level stable-lane-state lower bounds for the two prototypes are $n+20$ bytes, or $\frac{n+20}{4}$ 32-bit units at the measured orders, and 11 32-bit units (`f5_wave_equivalence.hip:9-15`); 77 and 66 VGPRs respectively confirm them at every measured order. The source excludes loop temporaries and compiler-introduced scratch and names the compiler resource report authoritative for final counts (`f5_wave_equivalence.hip:17-20`). The dynamic $n^2$ and $24n$ shared tables remain outside the compiler's static field, while the exact 0 B/block for the five kernels whose launches request none is confirmed. No prediction is silently restated: the F_3-scoped nine-register lower bound is kept separate, the README's prior F_5 resource table is reported as a replication with all twelve figures matching, and the one qualitative committed claim about register residency is quoted and confirmed against zero scratch and zero spills on both prototypes. The contradictions this run does produce are of other committed statements and are carried with them — the projection-accuracy statement against this file's own prototype chains (§5), the prior artifact's sub-minimum published cell (§11.1), the packed-kernel run-to-run shift (§11), and the $n = 28$ branch-frequency interval (§9) — collected in §14. |
 | REQ-10 | §9 | **Satisfied.** Both frequencies, both exact expectations $1 - (4/5)^n$ and $(4/5)^n$, their complement relation, the sample count 4096, and Wilson 95 % intervals are reported at all five measured orders, with the interval method fixed deterministically at $z = 1.959963984540054$. A second, larger branch observation from the same file's timed-operation counts is reported beside it with its own intervals, its $z$ statistics, and its dependence on the same purpose stream stated, including the one order where the exact marginal falls outside the interval. |
 | REQ-11 | §3 | **Satisfied.** `cpu_scalar` is the oracle and the other five executing paths, both prototypes included, are re-confirmed identical against it on the campaign host, in the same run, before any timing cell, at every order the grid times and at $n = 8$ below them. The $n = 24$ and $n = 28$ cells compare 32 and 2 matrices against 512 at the smaller orders, with the $n = 28$ figure an explicit per-field override; §3 states this rather than presenting it as an equal gate. |
 | REQ-12 | §5 | **Satisfied.** All six censored cells state their censoring reason and the rate they were projected from, and carry `NaN` for both throughput columns; §4.3 withholds their kernel-only rates for the same reason. The two censoring kinds — not attempted before running, and capped after running — are distinguished, and the projection's measured bias is given per chain so that each censored cell's projection can be read with the bias of the chain it came from, including the one chain where it is not conservative. |
@@ -1516,12 +1522,16 @@ Collected so a reader does not have to reassemble it from the sections above.
    compiler reports static LDS only, so this field's committed shared-memory
    prediction is neither confirmed nor refuted here, and no prototype cell in
    this run is large enough for shared-memory pressure to bind.
-5. **No per-lane register budget is predicted for any of the seven measured
-   kernels.** The prediction-beside-measurement pairing is one-sided on
-   registers throughout this field (§7.2). Their measured figures stand on
-   their own and there is nothing to diverge from, so this campaign cannot test
-   a register hypothesis for any kernel it measures — which is a weaker position
-   than $\mathbb{F}_3$'s, where two of seven had one.
+5. **No per-lane register budget is predicted for five of the seven measured
+   kernels.** The prediction-beside-measurement pairing is one-sided for
+   `permanent_bipedal5_kernel`, `gray_update_micro_kernel`,
+   `gray_update_compiler_barrier_baseline_kernel`,
+   `horizontal_product_micro_kernel`, and
+   `horizontal_product_compiler_barrier_baseline_kernel` (§7.2). Their measured
+   figures stand on their own and there is nothing to diverge from, so this
+   campaign cannot test a register hypothesis for those five kernels. The two
+   prototype kernels have source-level stable-lane-state lower bounds, and the
+   measurements confirm them as stated in §7.1 (`f5_wave_equivalence.hip:9-15`).
 6. **The 32-byte gap between declared and reported scratch is unexplained.**
    `permanent_bipedal5_kernel` declares 4 032 bytes of runtime-indexed private
    arrays and the compiler reports 4 000 bytes/lane. No committed source or
