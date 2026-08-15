@@ -8203,3 +8203,5 @@
 {"gate_key":"doc-review","id":"3d53c8da-43f5-438a-95fd-f5fdee0c4672","issue_id":"a2c0db52-6af9-41b3-b881-fdd46402a46b","timestamp":"2026-08-15T08:49:02.094932802Z","type":"gate_added"}
 {"fields":["description"],"id":"8ee84f42-4590-4ebf-b5e6-99f0c991a6aa","issue_id":"a2c0db52-6af9-41b3-b881-fdd46402a46b","timestamp":"2026-08-15T09:13:09.650773431Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["documents"],"id":"a40e772e-1e58-4c23-92f4-db0080a7f50a","issue_id":"a2c0db52-6af9-41b3-b881-fdd46402a46b","timestamp":"2026-08-15T09:15:04.277415476Z","type":"issue_updated","updated_by":"doc-add"}
+{"id":"41b962c3-25bc-4057-9096-f17e4a9dc33b","issue_id":"4fdd781a-6c52-483d-b55d-1766bcd8914a","priority":"low","timestamp":"2026-08-15T09:15:54.344910240Z","title":"Prior throughput grid publishes rates its stated stopping rule forbids","type":"issue_created"}
+{"fields":["dependencies"],"id":"49df5871-c633-4440-bca5-4d9755bbc006","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-15T09:16:05.945007899Z","type":"issue_updated","updated_by":"dependency-add"}
