@@ -212,12 +212,24 @@
       "path": "dev/studies/91605d4d/analysis.py"
     }
   ],
+  "done_at": "2026-08-15T09:28:30.838390714Z",
   "first_ready_at": "2026-08-10T11:15:16.563027494Z",
   "gates_required": [
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-15T09:27:47.338131219Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "passed",
+      "updated_at": "2026-08-15T09:20:40.398941141Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "91605d4d-8c30-43d6-b1bd-26f277b31120",
   "labels": [
     "type:simulation",
@@ -232,7 +244,7 @@
     "satisfies:REQ-10"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "F_5 preregistered receipt campaign",
-  "updated_at": "2026-08-15T08:46:01.791464146Z"
+  "updated_at": "2026-08-15T09:28:30.838390714Z"
 }
