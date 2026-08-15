@@ -343,6 +343,14 @@
    "requested_at": "2026-08-14T05:20:00Z",
    "resolved_at": "2026-08-14T05:24:00Z",
    "decision": "Owner chose wire-and-rerun: new prerequisite task e31b1918 wires prototype batch evaluators, de-aliases the Gray-update rows, extends isolates and equivalence to the grid's order set; the runner then re-arms and all three fields' evidence regenerates. Owner also approved amending REQ-01's corpus clause on all three campaigns (identical sampler on preregistered disjoint streams for timing; literally identical corpus for equivalence) and correcting 047b62ed's Background zero-fast-path ordering sentence."
+  },
+  {
+   "issue": "047b62ed",
+   "reason": "The F_3 receipts, complete and honest, exposed REQ-04's 'matching orders and batch sizes' clause as structurally unsatisfiable: the harness fixes gpu_hip at M in {256,1024} and probe-calibrates every prototype cell (M 2..448), so no matched-batch pair exists; the same clause binds 91605d4d and 6c7fcb38. Separately, the lead's evidence-supersession commits made the harness's equivalence-budget citation of run 20260813T230032Z-1321576's grid CSVs false against the tree.",
+   "status": "approved",
+   "requested_at": "2026-08-15T07:20:00Z",
+   "resolved_at": "2026-08-15T07:24:00Z",
+   "decision": "Owner approved amending REQ-04 on all three campaigns: comparison at matching orders with the control's fixed and the prototypes' probe-calibrated batch sizes recorded beside their throughputs and the batch-size confound quantified; mappings comparable on the order axis. Owner chose a docs-only repair of the harness citation now (name the superseded run as historical, note the counts reproduce against the committed 20260814 run) over wire-and-rerun or leaving it, accepting the post-run docs-edit review risk."
   }
  ],
  "rework_counts": {
