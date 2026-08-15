@@ -1,0 +1,50 @@
+# git_sha: bde4185b6f970fefc422d882f6513023248f6134
+# git_worktree_dirty: true
+# harness_source_sha: 6ebf2b69f319b30407a2f61c4a6674baa82f712c
+# harness_source_dirty: false
+# deps_source_sha: 63a10bf8091d113037ba79051e600311320621e7
+# deps_source_dirty: false
+# binary_sha256: edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+# note: git_worktree_dirty covers the whole repository, including .jit/ workflow state other agents own. harness_source_* pin this crate; deps_source_* pin crates/, where the measured kernels live and whose changes would move the numbers without moving harness_source_sha. binary_sha256 pins the executable outright, covering harness, path dependencies, toolchain and compiled feature set together.
+# rustc: rustc 1.97.0 (2d8144b78 2026-07-07)
+# cargo: cargo 1.97.0 (c980f4866 2026-06-30)
+# cpu: AMD Ryzen 9 5900X 12-Core Processor
+# logical_cpus: 24
+# rayon_threads: 24
+# avx2: true, avx512f: false
+# cpu_governor: powersave
+# gpu: card0,AMD Radeon RX 6950 XT,0x73a5,Advanced Micro Devices Inc. [AMD/ATI],D4124100,0x0e3a,0xc0,1,42338,gfx1030
+# rocm: 7.2.4
+# hip_feature: true
+# kernel: 7.1.6-arch1-1
+# timestamp_utc: 2026-08-15T10:46:09Z
+# invocation: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas grid --out /home/vkaskivuo/Projects/gf2/dev/studies/6c7fcb38/profiled-20260815T104014Z/pmc-n20/grid.csv --only q=7,n=20 --execution-id 7002 --skip-machine-warmup
+# protocol: warmup >= 3 s, then >= 5 reps and >= 5 s timed, cap 120 s per cell
+# composite = generate + evaluate + reduce + store, all timed per repetition
+# store: one shard record per batch appended and fsync-free flushed to a scratch file
+# rates are summed matrices over summed time; per-repetition rates are never averaged
+# schedule: randomised with seed 0xb488f02c00000001 then stably sorted by ascending n, so each n-stratum is randomised and every cell has a smaller-n reference on its own (q, backend, batch size); see order_index
+# outcomes: measured | unsupported (a kernel bound forbids the cell, named in note) | censored (not attempted; carries NO measured rate)
+# censoring contract: a censored row's composite_matrices_per_s is NaN. Its projected_matrices_per_s is an ESTIMATE, obtained by scaling the MEASURED rate at projection_reference_n through Ryser's n*2^n work model. No bound on a batched rate is derived from probe_matrix_s, which is a single-matrix LATENCY. Neither 1/probe nor W/probe (W = compute units) bounds a batched rate: a compute unit hosts several workgroups at once and a probe pays launch costs a batch amortises. An earlier harness published W/probe as an upper bound and measurements exceeded it; the study's section 4.3 records that falsification and says which of its numbers survive in this file
+# projection accuracy: on the q=3 GPU chain, where the projection can be checked against a measurement, it lands LOW at every step. Censored cells' true rates are therefore expected to run somewhat higher than their projections - an extrapolation from that one chain to the others, not a measured property of them. The magnitude is re-derived from THIS file's own q=3 chain in the study's section 4.3 rather than quoted here, so that a stale figure cannot survive a re-measurement
+# seed_root: 0xb488f02c00000001; each cell owns 100000 indices within each named purpose
+# execution_id: 7002; reserved index block: 157545000001..=157567500000 inclusive; full matrix address is (seed_root, q, n, purpose, stream_index)
+# machine warmup: skipped by --skip-machine-warmup; caller must preserve a prior locked warmup
+# eval_s is the host wall-clock around GPU serialisation, allocation, H2D, launch, stream wait, D2H, and free. kernel_device_s is the separate device-event kernel-only total; h2d_device_s, d2h_device_s, host_submission_s, and device_submission_to_kernel_s are separate phase totals. No column subtracts host and device timestamps. Empty phase columns carry their reason in phase_timing_note and are never zero-filled or replaced by eval_s. If timing setup fails but synchronous gpu_hip evaluation succeeds, that same-backend result is retained and the note names the unavailable instrumented boundary
+# single-thread cells pinned to core 0; rayon cells use all logical CPUs
+q,n,backend,outcome,batch_size,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,kernel_device_s,h2d_device_s,d2h_device_s,host_submission_s,device_submission_to_kernel_s,phase_timing_note,probe_matrix_s,projected_matrices_per_s,projection_reference_n,timed_purpose,timed_index_first,rep_min_s,rep_max_s,rep_sd_s,threads,pinned_core,seed_root,seed_index_first,cpu_mhz_mean,cpu_temp_c,gpu_temp_c,order_index,note
+7,20,cpu_rayon_intra_matrix,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: gf2-algebra exposes no rayon permanent path for F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,24,,0xb488f02c00000001,157545000001,NaN,NaN,NaN,0,gf2-algebra exposes no rayon permanent path for F_7
+7,20,cpu_rayon_batch_avx2,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: gf2-algebra exposes no AVX2 permanent path for F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,24,,0xb488f02c00000001,157545100001,NaN,NaN,NaN,1,gf2-algebra exposes no AVX2 permanent path for F_7
+7,20,gpu_hip,measured,1024,5,5120,731,88.242818,0.011358,88.231407,0.000004,0.000049,58.0217,58.0292,88.214588,0.000159,0.000330,0.000112,0.000024,,7.500643,NaN,0,grid_timed,157545200001,17.644120,17.654927,0.004529,1,0,0xb488f02c00000001,157545200001,2150.5,85.2,64.0,2,
+7,20,f5-three-plane,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: f5-three-plane evaluates F_5 permanents, not F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157545300001,NaN,NaN,NaN,3,f5-three-plane evaluates F_5 permanents, not F_7
+7,20,f7-three-plane-permanent,measured,13,1022,13286,1866,4.998360,0.033287,4.962861,0.000088,0.002125,2658.0718,2677.0850,4.822030,0.041258,0.043269,4.944599,0.004982,,0.158529,NaN,0,grid_timed,157545400001,0.004874,0.005067,0.000009,1,0,0xb488f02c00000001,157545400001,2102.2,87.2,64.0,4,
+7,20,cpu_rayon_batch_scalar,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,24,,0xb488f02c00000001,157545500001,NaN,NaN,NaN,5,permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+7,20,cpu_ryser_generic,measured,31,5,155,12,10.281710,0.000200,10.281480,0.000002,0.000029,15.0753,15.0757,,,,,,event timing unavailable: backend is not GPU/HIP,0.066308,NaN,0,grid_timed,157545600001,2.054645,2.058715,0.001776,1,0,0xb488f02c00000001,157545600001,2102.2,89.5,60.0,6,
+7,20,gpu_hip,measured,256,5,1280,205,45.581619,0.003245,45.578333,0.000002,0.000039,28.0815,28.0835,45.567432,0.000081,0.000322,0.000105,0.000027,,7.500643,NaN,0,grid_timed,157545700001,8.416829,9.595909,0.637811,1,0,0xb488f02c00000001,157545700001,2099.1,90.2,61.0,7,
+7,20,wave-gf3,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: wave-gf3 evaluates F_3 permanents, not F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157545800001,NaN,NaN,NaN,8,wave-gf3 evaluates F_3 permanents, not F_7
+7,20,fold-gf3,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: fold-gf3 evaluates F_3 permanents, not F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157545900001,NaN,NaN,NaN,9,fold-gf3 evaluates F_3 permanents, not F_7
+7,20,f5-byte-control,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: f5-byte-control evaluates F_5 permanents, not F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157546000001,NaN,NaN,NaN,10,f5-byte-control evaluates F_5 permanents, not F_7
+7,20,f7-three-plane-accumulator,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157546100001,NaN,NaN,NaN,11,f7-three-plane-accumulator has no device batch evaluator: hip/f7_three_plane_equivalence.hip holds a single-thread three-plane accumulator conformance probe, not a full-permanent batch kernel; the permanent-shaped use of this arithmetic is the f7-three-plane-permanent candidate
+7,20,cpu_avx2,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: gf2-algebra exposes no AVX2 permanent path for F_7,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157546200001,NaN,NaN,NaN,12,gf2-algebra exposes no AVX2 permanent path for F_7
+7,20,cpu_scalar,unsupported,0,0,0,0,0.000000,0.000000,0.000000,0.000000,0.000000,NaN,NaN,,,,,,event timing unavailable: permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20,NaN,NaN,0,grid_timed,0,NaN,NaN,NaN,1,,0xb488f02c00000001,157546300001,NaN,NaN,NaN,13,permanent_bipedal7 asserts n <= Packed7::LANES = 16; n = 20
+7,20,f7-lookup-table-control,measured,29,71,2059,291,5.055103,0.005121,5.049792,0.000008,0.000182,407.3112,407.7396,5.037262,0.003040,0.003304,5.046930,0.000344,,0.071300,NaN,0,grid_timed,157546400001,0.070982,0.071502,0.000113,1,0,0xb488f02c00000001,157546400001,2099.1,89.1,66.0,14,

@@ -1,0 +1,13 @@
+schema_version: 1
+artifact: paired profiled evidence run for JIT issue 6c7fcb38 (amended REQ-16/REQ-17)
+stamp_utc: 20260815T104014Z
+git_revision_at_run: bde4185b6f970fefc422d882f6513023248f6134
+binary: /home/vkaskivuo/Projects/gf2/target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
+binary_sha256: edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+binary_manifest: target/permanent-campaign/manifest-v1.txt (hash verified before the first pass; see run.log)
+profiler: rocprofv3 1.1.0 (/opt/rocm/bin/rocprofv3), ROCm 7.2.4, gfx1030 (AMD Radeon RX 6950 XT), host AMD Ryzen 9 5900X, kernel 7.1.6-arch1-1
+lock: every pass ran under dev/scripts/ccx1-bench-flock.sh --full-host (canonical benchmark mutex)
+commands: recorded verbatim in run.log, one COMMAND/EXIT pair per pass; six passes, all exit 0
+cells: q=7 n=12 all backends (trace + counters), n=16 f7-three-plane-permanent (trace), n=20 all backends (trace + counters), n=24 f7-three-plane-permanent (trace); --execution-id 7002 reproduces the timing run's preregistered stream addresses, so the profiled cells draw the same matrices as timing run 20260814T230032Z-2085453
+separation: this run is deliberately distinct from timing run 20260814T230032Z-2085453; profiler counter collection and kernel tracing perturb execution, so the preregistered timing evidence carries no profiler and this artifact carries no timing authority. The grid.csv files under each pass directory are the profiled workload's own output, retained as the workload record only, never as timing evidence.
+contents: per pass directory: <name>_kernel_trace.csv + <name>_kernel_stats.csv (trace passes) or <name>_counter_collection.csv (counter passes: per-dispatch OccupancyPercent, MeanOccupancyPerCU, SQ_WAVES, plus runtime LDS_Block_Size, Scratch_Size, VGPR_Count, SGPR_Count per kernel), <name>_agent_info.csv, grid.csv, and run.log at the root

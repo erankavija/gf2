@@ -1,0 +1,346 @@
+"Kind","Agent_Id","Queue_Id","Stream_Id","Thread_Id","Dispatch_Id","Kernel_Id","Kernel_Name","Correlation_Id","Start_Timestamp","End_Timestamp","LDS_Block_Size","Scratch_Size","VGPR_Count","Accum_VGPR_Count","SGPR_Count","Workgroup_Size_X","Workgroup_Size_Y","Workgroup_Size_Z","Grid_Size_X","Grid_Size_Y","Grid_Size_Z"
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,1,12,"__amd_rocclr_copyBuffer",1,401599549738451,401599549741571,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,2,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",2,401599549863365,401599619887291,0,24,48,0,128,32,1,1,32,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,3,12,"__amd_rocclr_copyBuffer",3,401599619900291,401599619902931,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,4,12,"__amd_rocclr_copyBuffer",4,401599620101213,401599620103973,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,5,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",5,401599620117496,401599690915721,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,6,12,"__amd_rocclr_copyBuffer",6,401599690928761,401599690931241,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,7,12,"__amd_rocclr_copyBuffer",7,401599691099823,401599691103263,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,8,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",8,401599691116803,401599761787452,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,9,12,"__amd_rocclr_copyBuffer",9,401599761800452,401599761802852,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,10,12,"__amd_rocclr_copyBuffer",10,401599761974374,401599761977094,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,11,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",11,401599761990705,401599832768902,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,12,12,"__amd_rocclr_copyBuffer",12,401599832781862,401599832784262,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,13,12,"__amd_rocclr_copyBuffer",13,401599832947074,401599832950354,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,14,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",14,401599832963854,401599903539692,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,15,12,"__amd_rocclr_copyBuffer",15,401599903552732,401599903555092,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,16,12,"__amd_rocclr_copyBuffer",16,401599903719814,401599903722734,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,17,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",17,401599903736079,401599974572333,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,18,12,"__amd_rocclr_copyBuffer",18,401599974585333,401599974587453,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,19,12,"__amd_rocclr_copyBuffer",19,401599974757635,401599974760235,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,20,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",20,401599974773689,401600045429863,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,21,12,"__amd_rocclr_copyBuffer",21,401600045442823,401600045444943,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,22,12,"__amd_rocclr_copyBuffer",22,401600045607615,401600045610575,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,23,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",23,401600045624075,401600116454133,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,24,12,"__amd_rocclr_copyBuffer",24,401600116467133,401600116469213,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,25,12,"__amd_rocclr_copyBuffer",25,401600116647105,401600116649665,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,26,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",26,401600116663079,401600187529064,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,27,12,"__amd_rocclr_copyBuffer",27,401600187542344,401600187544424,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,28,12,"__amd_rocclr_copyBuffer",28,401600187719026,401600187721546,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,29,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",29,401600187735032,401600258474824,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,30,12,"__amd_rocclr_copyBuffer",30,401600258487824,401600258489904,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,31,12,"__amd_rocclr_copyBuffer",31,401600258659886,401600258662406,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,32,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",32,401600258675721,401600329535994,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,33,12,"__amd_rocclr_copyBuffer",33,401600329548954,401600329551074,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,34,12,"__amd_rocclr_copyBuffer",34,401600329716506,401600329719066,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,35,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",35,401600329732409,401600400371954,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,36,12,"__amd_rocclr_copyBuffer",36,401600400385234,401600400387354,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,37,12,"__amd_rocclr_copyBuffer",37,401600400556316,401600400558876,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,38,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",38,401600400572369,401600471209595,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,39,12,"__amd_rocclr_copyBuffer",39,401600471222635,401600471224715,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,40,12,"__amd_rocclr_copyBuffer",40,401600471390207,401600471393407,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,41,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",41,401600471406981,401600542083055,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,42,12,"__amd_rocclr_copyBuffer",42,401600542096215,401600542098295,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,43,12,"__amd_rocclr_copyBuffer",43,401600542256737,401600542259377,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,44,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",44,401600542272788,401600612828975,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,45,12,"__amd_rocclr_copyBuffer",45,401600612842015,401600612844095,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,46,12,"__amd_rocclr_copyBuffer",46,401600613013337,401600613016497,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,47,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",47,401600613030213,401600683855326,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,48,12,"__amd_rocclr_copyBuffer",48,401600683868446,401600683870526,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,49,12,"__amd_rocclr_copyBuffer",49,401600684041878,401600684044318,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,50,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",50,401600684057783,401600754796176,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,51,12,"__amd_rocclr_copyBuffer",51,401600754809176,401600754811296,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,52,12,"__amd_rocclr_copyBuffer",52,401600754980668,401600754983268,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,53,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",53,401600754996583,401600825757256,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,54,12,"__amd_rocclr_copyBuffer",54,401600825770256,401600825772336,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,55,12,"__amd_rocclr_copyBuffer",55,401600825943218,401600825945818,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,56,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",56,401600825959319,401600896747796,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,57,12,"__amd_rocclr_copyBuffer",57,401600896760796,401600896762956,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,58,12,"__amd_rocclr_copyBuffer",58,401600896927178,401600896930418,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,59,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",59,401600896943921,401600967589797,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,60,12,"__amd_rocclr_copyBuffer",60,401600967602757,401600967604877,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,61,12,"__amd_rocclr_copyBuffer",61,401600967773209,401600967776409,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,62,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",62,401600967790146,401601038601757,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,63,12,"__amd_rocclr_copyBuffer",63,401601038615197,401601038617437,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,64,12,"__amd_rocclr_copyBuffer",64,401601038782399,401601038785839,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,65,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",65,401601038799919,401601109396047,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,66,12,"__amd_rocclr_copyBuffer",66,401601109409567,401601109411807,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,67,12,"__amd_rocclr_copyBuffer",67,401601109583809,401601109586809,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,68,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",68,401601109600722,401601180240208,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,69,12,"__amd_rocclr_copyBuffer",69,401601180253648,401601180255888,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,70,12,"__amd_rocclr_copyBuffer",70,401601180423820,401601180427260,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,71,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",71,401601180441296,401601251376988,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,72,12,"__amd_rocclr_copyBuffer",72,401601251390428,401601251392708,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,73,12,"__amd_rocclr_copyBuffer",73,401601251557780,401601251560980,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,74,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",74,401601251575280,401601322142048,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,75,12,"__amd_rocclr_copyBuffer",75,401601322155488,401601322157728,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,76,12,"__amd_rocclr_copyBuffer",76,401601322320550,401601322323510,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,77,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",77,401601322337626,401601393127398,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,78,12,"__amd_rocclr_copyBuffer",78,401601393141038,401601393143278,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,79,12,"__amd_rocclr_copyBuffer",79,401601393316180,401601393319860,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,80,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",80,401601393334040,401601463952169,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,81,12,"__amd_rocclr_copyBuffer",81,401601463965609,401601463967929,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,82,12,"__amd_rocclr_copyBuffer",82,401601464135801,401601464139161,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,83,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",83,401601464153250,401601534855059,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,84,12,"__amd_rocclr_copyBuffer",84,401601534868579,401601534870859,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,85,12,"__amd_rocclr_copyBuffer",85,401601535040621,401601535044501,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,86,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",86,401601535058698,401601605792749,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,87,12,"__amd_rocclr_copyBuffer",87,401601605806189,401601605808469,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,88,12,"__amd_rocclr_copyBuffer",88,401601605976841,401601605980481,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,89,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",89,401601605994611,401601676758340,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,90,12,"__amd_rocclr_copyBuffer",90,401601676772100,401601676774300,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,91,12,"__amd_rocclr_copyBuffer",91,401601676935322,401601676938402,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,92,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",92,401601676952461,401601747692830,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,93,12,"__amd_rocclr_copyBuffer",93,401601747706310,401601747708550,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,94,12,"__amd_rocclr_copyBuffer",94,401601747873942,401601747876862,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,95,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",95,401601747890961,401601818573970,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,96,12,"__amd_rocclr_copyBuffer",96,401601818587450,401601818589730,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,97,12,"__amd_rocclr_copyBuffer",97,401601818763152,401601818766032,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,98,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",98,401601818780119,401601889671771,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,99,12,"__amd_rocclr_copyBuffer",99,401601889685251,401601889687451,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,100,12,"__amd_rocclr_copyBuffer",100,401601889863363,401601889866643,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,101,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",101,401601889881112,401601960492081,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,102,12,"__amd_rocclr_copyBuffer",102,401601960505601,401601960507801,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,103,12,"__amd_rocclr_copyBuffer",103,401601960675383,401601960678943,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,104,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",104,401601960693061,401602031401391,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,105,12,"__amd_rocclr_copyBuffer",105,401602031414831,401602031417071,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,106,12,"__amd_rocclr_copyBuffer",106,401602031584683,401602031588243,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,107,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",107,401602031602311,401602102218121,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,108,12,"__amd_rocclr_copyBuffer",108,401602102231561,401602102233801,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,109,12,"__amd_rocclr_copyBuffer",109,401602102406603,401602102409523,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,110,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",110,401602102423911,401602173220082,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,111,12,"__amd_rocclr_copyBuffer",111,401602173233562,401602173235802,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,112,12,"__amd_rocclr_copyBuffer",112,401602173402434,401602173405874,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,113,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",113,401602173419854,401602244072222,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,114,12,"__amd_rocclr_copyBuffer",114,401602244085622,401602244087862,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,115,12,"__amd_rocclr_copyBuffer",115,401602244256154,401602244259634,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,116,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",116,401602244274180,401602315066672,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,117,12,"__amd_rocclr_copyBuffer",117,401602315080112,401602315082472,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,118,12,"__amd_rocclr_copyBuffer",118,401602315255364,401602315258404,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,119,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",119,401602315272593,401602385839722,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,120,12,"__amd_rocclr_copyBuffer",120,401602385853242,401602385855482,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,121,12,"__amd_rocclr_copyBuffer",121,401602386026674,401602386029634,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,122,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",122,401602386043602,401602456841493,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,123,12,"__amd_rocclr_copyBuffer",123,401602456854933,401602456857173,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,124,12,"__amd_rocclr_copyBuffer",124,401602457027445,401602457030845,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,125,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",125,401602457044973,401602527681703,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,126,12,"__amd_rocclr_copyBuffer",126,401602527695223,401602527697463,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,127,12,"__amd_rocclr_copyBuffer",127,401602527858665,401602527861785,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,128,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",128,401602527876032,401602598581363,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,129,12,"__amd_rocclr_copyBuffer",129,401602598594843,401602598597123,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,130,12,"__amd_rocclr_copyBuffer",130,401602598765055,401602598768575,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,131,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",131,401602598782625,401602669455714,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,132,12,"__amd_rocclr_copyBuffer",132,401602669469154,401602669471434,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,133,12,"__amd_rocclr_copyBuffer",133,401602895512308,401602895515548,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,134,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",134,401602895529928,401602966304619,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,135,12,"__amd_rocclr_copyBuffer",135,401602966318139,401602966320659,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,136,12,"__amd_rocclr_copyBuffer",136,401602966525431,401602966528671,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,137,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",137,401602966542680,401603037237169,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,138,12,"__amd_rocclr_copyBuffer",138,401603037250649,401603037253169,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,139,12,"__amd_rocclr_copyBuffer",139,401603037429841,401603037433001,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,140,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",140,401603037447197,401603108324009,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,141,12,"__amd_rocclr_copyBuffer",141,401603108337449,401603108340009,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,142,12,"__amd_rocclr_copyBuffer",142,401603108520161,401603108523321,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,143,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",143,401603108537398,401603179356089,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,144,12,"__amd_rocclr_copyBuffer",144,401603179369529,401603179372009,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,145,12,"__amd_rocclr_copyBuffer",145,401603179547941,401603179551101,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,146,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",146,401603179565157,401603250442690,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,147,12,"__amd_rocclr_copyBuffer",147,401603250456290,401603250458810,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,148,12,"__amd_rocclr_copyBuffer",148,401603250628502,401603250631462,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,149,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",149,401603250649420,401603321322270,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,150,12,"__amd_rocclr_copyBuffer",150,401603321335710,401603321337950,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,151,12,"__amd_rocclr_copyBuffer",151,401603321512672,401603321515672,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,152,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",152,401603321529960,401603392177050,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,153,12,"__amd_rocclr_copyBuffer",153,401603392190610,401603392192890,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,154,12,"__amd_rocclr_copyBuffer",154,401603392361562,401603392365162,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,155,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",155,401603392379260,401603463146351,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,156,12,"__amd_rocclr_copyBuffer",156,401603463159791,401603463162071,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,157,12,"__amd_rocclr_copyBuffer",157,401603463331633,401603463334673,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,158,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",158,401603463348782,401603533984151,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,159,12,"__amd_rocclr_copyBuffer",159,401603533997591,401603533999791,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,160,12,"__amd_rocclr_copyBuffer",160,401603534168253,401603534171893,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,161,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",161,401603534186072,401603604792961,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,162,12,"__amd_rocclr_copyBuffer",162,401603604806481,401603604808721,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,163,12,"__amd_rocclr_copyBuffer",163,401603604978263,401603604981903,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,164,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",164,401603604996120,401603675746972,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,165,12,"__amd_rocclr_copyBuffer",165,401603675760452,401603675762692,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,166,12,"__amd_rocclr_copyBuffer",166,401603675947634,401603675950554,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,167,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",167,401603675964564,401603746501852,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,168,12,"__amd_rocclr_copyBuffer",168,401603746515412,401603746517652,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,169,12,"__amd_rocclr_copyBuffer",169,401603746684104,401603746687024,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,170,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",170,401603746701403,401603817350532,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,171,12,"__amd_rocclr_copyBuffer",171,401603817364012,401603817366252,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,172,12,"__amd_rocclr_copyBuffer",172,401603817540254,401603817543094,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,173,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",173,401603817557123,401603888160772,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,174,12,"__amd_rocclr_copyBuffer",174,401603888174532,401603888176772,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,175,12,"__amd_rocclr_copyBuffer",175,401603888350804,401603888354284,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,176,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",176,401603888368423,401603959033233,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,177,12,"__amd_rocclr_copyBuffer",177,401603959046713,401603959049033,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,178,12,"__amd_rocclr_copyBuffer",178,401603959218515,401603959222235,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,179,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",179,401603959236581,401604029973713,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,180,12,"__amd_rocclr_copyBuffer",180,401604029987193,401604029989513,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,181,12,"__amd_rocclr_copyBuffer",181,401604030166555,401604030169635,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,182,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",182,401604030183601,401604101005533,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,183,12,"__amd_rocclr_copyBuffer",183,401604101019013,401604101021253,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,184,12,"__amd_rocclr_copyBuffer",184,401604101196235,401604101199235,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,185,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",185,401604101213451,401604172002183,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,186,12,"__amd_rocclr_copyBuffer",186,401604172015663,401604172017903,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,187,12,"__amd_rocclr_copyBuffer",187,401604172192645,401604172195765,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,188,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",188,401604172209805,401604242804254,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,189,12,"__amd_rocclr_copyBuffer",189,401604242817694,401604242819934,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,190,12,"__amd_rocclr_copyBuffer",190,401604242990816,401604242994856,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,191,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",191,401604243008945,401604313693674,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,192,12,"__amd_rocclr_copyBuffer",192,401604313707154,401604313709394,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,193,12,"__amd_rocclr_copyBuffer",193,401604313877616,401604313881096,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,194,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",194,401604313895571,401604384734704,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,195,12,"__amd_rocclr_copyBuffer",195,401604384748144,401604384750384,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,196,12,"__amd_rocclr_copyBuffer",196,401604384919566,401604384923126,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,197,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",197,401604384937195,401604455695005,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,198,12,"__amd_rocclr_copyBuffer",198,401604455708485,401604455710685,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,199,12,"__amd_rocclr_copyBuffer",199,401604455879047,401604455882447,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,200,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",200,401604455896575,401604526623945,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,201,12,"__amd_rocclr_copyBuffer",201,401604526637385,401604526639665,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,202,12,"__amd_rocclr_copyBuffer",202,401604526805597,401604526809117,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,203,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",203,401604526823233,401604597604325,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,204,12,"__amd_rocclr_copyBuffer",204,401604597617805,401604597620085,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,205,12,"__amd_rocclr_copyBuffer",205,401604597786377,401604597789617,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,206,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",206,401604597803716,401604668459246,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,207,12,"__amd_rocclr_copyBuffer",207,401604668472686,401604668474966,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,208,12,"__amd_rocclr_copyBuffer",208,401604668639488,401604668642408,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,209,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",209,401604668656315,401604739434726,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,210,12,"__amd_rocclr_copyBuffer",210,401604739448206,401604739450486,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,211,12,"__amd_rocclr_copyBuffer",211,401604739616368,401604739619408,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,212,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",212,401604739633505,401604810374716,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,213,12,"__amd_rocclr_copyBuffer",213,401604810388196,401604810390556,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,214,12,"__amd_rocclr_copyBuffer",214,401604810561478,401604810564878,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,215,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",215,401604810579122,401604881636817,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,216,12,"__amd_rocclr_copyBuffer",216,401604881650297,401604881652537,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,217,12,"__amd_rocclr_copyBuffer",217,401604881825679,401604881829159,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,218,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",218,401604881843397,401604952523047,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,219,12,"__amd_rocclr_copyBuffer",219,401604952536527,401604952538767,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,220,12,"__amd_rocclr_copyBuffer",220,401604952713699,401604952717019,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,221,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",221,401604952731277,401605023448247,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,222,12,"__amd_rocclr_copyBuffer",222,401605023461727,401605023464007,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,223,12,"__amd_rocclr_copyBuffer",223,401605023632749,401605023636349,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,224,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",224,401605023650646,401605094395497,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,225,12,"__amd_rocclr_copyBuffer",225,401605094409097,401605094411337,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,226,12,"__amd_rocclr_copyBuffer",226,401605094588779,401605094592019,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,227,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",227,401605094605957,401605165422128,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,228,12,"__amd_rocclr_copyBuffer",228,401605165435608,401605165437848,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,229,12,"__amd_rocclr_copyBuffer",229,401605165606260,401605165609660,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,230,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",230,401605165623750,401605236187758,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,231,12,"__amd_rocclr_copyBuffer",231,401605236201198,401605236203438,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,232,12,"__amd_rocclr_copyBuffer",232,401605236378910,401605236381870,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,233,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",233,401605236396086,401605307180058,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,234,12,"__amd_rocclr_copyBuffer",234,401605307193498,401605307195738,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,235,12,"__amd_rocclr_copyBuffer",235,401605307359560,401605307362760,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,236,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",236,401605307376848,401605378130699,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,237,12,"__amd_rocclr_copyBuffer",237,401605378144379,401605378146659,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,238,12,"__amd_rocclr_copyBuffer",238,401605378327821,401605378331221,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,239,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",239,401605378345300,401605448916909,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,240,12,"__amd_rocclr_copyBuffer",240,401605448930349,401605448932629,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,241,12,"__amd_rocclr_copyBuffer",241,401605449105261,401605449108741,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,242,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",242,401605449122797,401605519942889,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,243,12,"__amd_rocclr_copyBuffer",243,401605519956569,401605519958849,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,244,12,"__amd_rocclr_copyBuffer",244,401605520127371,401605520130451,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,245,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",245,401605520144518,401605590875889,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,246,12,"__amd_rocclr_copyBuffer",246,401605590889369,401605590891689,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,247,12,"__amd_rocclr_copyBuffer",247,401605591061631,401605591064871,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,248,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",248,401605591079117,401605661962410,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,249,12,"__amd_rocclr_copyBuffer",249,401605661975890,401605661978130,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,250,12,"__amd_rocclr_copyBuffer",250,401605662153672,401605662156632,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,251,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",251,401605662170647,401605732994420,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,252,12,"__amd_rocclr_copyBuffer",252,401605733007860,401605733010100,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,253,12,"__amd_rocclr_copyBuffer",253,401605733173692,401605733176692,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,254,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",254,401605733190660,401605803849150,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,255,12,"__amd_rocclr_copyBuffer",255,401605803862590,401605803864870,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,256,12,"__amd_rocclr_copyBuffer",256,401605804036042,401605804039722,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,257,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",257,401605804053880,401605874817971,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,258,12,"__amd_rocclr_copyBuffer",258,401605874831451,401605874833731,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,259,12,"__amd_rocclr_copyBuffer",259,401605875006073,401605875008993,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,260,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",260,401605875023020,401605945778071,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,261,12,"__amd_rocclr_copyBuffer",261,401605945791511,401605945793791,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,262,12,"__amd_rocclr_copyBuffer",262,401605945965193,401605945968673,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,263,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",263,401605945982920,401606016680891,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,264,12,"__amd_rocclr_copyBuffer",264,401606016694371,401606016696611,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,265,12,"__amd_rocclr_copyBuffer",265,401606016863883,401606016867003,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,266,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",266,401606016881129,401606087782302,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,267,12,"__amd_rocclr_copyBuffer",267,401606087795782,401606087798102,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,268,12,"__amd_rocclr_copyBuffer",268,401606087972524,401606087975604,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,269,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",269,401606087989663,401606158560992,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,270,12,"__amd_rocclr_copyBuffer",270,401606158574432,401606158576712,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,271,12,"__amd_rocclr_copyBuffer",271,401606158741174,401606158744374,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,272,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",272,401606158758401,401606229500412,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,273,12,"__amd_rocclr_copyBuffer",273,401606229513852,401606229516092,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,274,12,"__amd_rocclr_copyBuffer",274,401606229684404,401606229688004,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,275,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",275,401606229702011,401606300485422,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,276,12,"__amd_rocclr_copyBuffer",276,401606300498862,401606300501182,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,277,12,"__amd_rocclr_copyBuffer",277,401606300672974,401606300675934,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,278,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",278,401606300690152,401606371417403,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,279,12,"__amd_rocclr_copyBuffer",279,401606371430803,401606371433083,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,280,12,"__amd_rocclr_copyBuffer",280,401606371600535,401606371603615,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,281,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",281,401606371617732,401606442369903,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,282,12,"__amd_rocclr_copyBuffer",282,401606442383503,401606442385783,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,283,12,"__amd_rocclr_copyBuffer",283,401606442554285,401606442557805,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,284,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",284,401606442571930,401606513467543,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,285,12,"__amd_rocclr_copyBuffer",285,401606513481023,401606513483263,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,286,12,"__amd_rocclr_copyBuffer",286,401606513649035,401606513652435,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,287,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",287,401606513666575,401606584257784,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,288,12,"__amd_rocclr_copyBuffer",288,401606584271224,401606584273624,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,289,12,"__amd_rocclr_copyBuffer",289,401606584439726,401606584442726,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,290,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",290,401606584456974,401606655117184,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,291,12,"__amd_rocclr_copyBuffer",291,401606655130704,401606655133024,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,292,12,"__amd_rocclr_copyBuffer",292,401606655306116,401606655309156,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,293,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",293,401606655323134,401606725961944,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,294,12,"__amd_rocclr_copyBuffer",294,401606725975744,401606725978024,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,295,12,"__amd_rocclr_copyBuffer",295,401606726146716,401606726149836,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,296,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",296,401606726164063,401606796914434,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,297,12,"__amd_rocclr_copyBuffer",297,401606796927874,401606796930114,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,298,12,"__amd_rocclr_copyBuffer",298,401606797104836,401606797107796,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,299,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",299,401606797121714,401606867860645,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,300,12,"__amd_rocclr_copyBuffer",300,401606867874125,401606867876365,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,301,12,"__amd_rocclr_copyBuffer",301,401606868049797,401606868053237,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,302,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",302,401606868067453,401606938871665,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,303,12,"__amd_rocclr_copyBuffer",303,401606938885145,401606938887385,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,304,12,"__amd_rocclr_copyBuffer",304,401606939069587,401606939072627,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,305,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",305,401606939086826,401607009695835,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,306,12,"__amd_rocclr_copyBuffer",306,401607009709355,401607009711595,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,307,12,"__amd_rocclr_copyBuffer",307,401607009879897,401607009883537,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,308,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",308,401607009898125,401607080615456,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,309,12,"__amd_rocclr_copyBuffer",309,401607080629016,401607080631336,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,310,12,"__amd_rocclr_copyBuffer",310,401607080817758,401607080820718,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,311,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",311,401607080834672,401607151853166,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,312,12,"__amd_rocclr_copyBuffer",312,401607151866606,401607151868846,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,313,12,"__amd_rocclr_copyBuffer",313,401607152046078,401607152049038,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,314,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",314,401607152063084,401607222842496,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,315,12,"__amd_rocclr_copyBuffer",315,401607222856136,401607222858376,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,316,12,"__amd_rocclr_copyBuffer",316,401607223033848,401607223037368,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,317,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",317,401607223051494,401607293880667,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,318,12,"__amd_rocclr_copyBuffer",318,401607293894107,401607293896387,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,319,12,"__amd_rocclr_copyBuffer",319,401607294069139,401607294072859,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,320,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",320,401607294086917,401607364749167,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,321,12,"__amd_rocclr_copyBuffer",321,401607364762727,401607364765007,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,322,12,"__amd_rocclr_copyBuffer",322,401607364930819,401607364934139,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,323,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",323,401607364948336,401607435708627,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,324,12,"__amd_rocclr_copyBuffer",324,401607435722067,401607435724307,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,325,12,"__amd_rocclr_copyBuffer",325,401607435893399,401607435897079,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,326,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",326,401607435911207,401607506643858,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,327,12,"__amd_rocclr_copyBuffer",327,401607506657338,401607506659618,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,328,12,"__amd_rocclr_copyBuffer",328,401607506824430,401607506827430,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,329,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",329,401607506841410,401607577391858,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,330,12,"__amd_rocclr_copyBuffer",330,401607577405298,401607577407538,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,331,12,"__amd_rocclr_copyBuffer",331,401607577574460,401607577577780,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,332,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",332,401607577591966,401607648413978,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,333,12,"__amd_rocclr_copyBuffer",333,401607648427458,401607648429698,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,334,12,"__amd_rocclr_copyBuffer",334,401607648591770,401607648594690,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,335,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",335,401607648608785,401607719498438,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,336,12,"__amd_rocclr_copyBuffer",336,401607719511878,401607719514158,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,337,12,"__amd_rocclr_copyBuffer",337,401607719695970,401607719699210,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,338,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",338,401607719713267,401607790573999,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,339,12,"__amd_rocclr_copyBuffer",339,401607790587519,401607790589799,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,340,12,"__amd_rocclr_copyBuffer",340,401607790768231,401607790771311,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,341,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",341,401607790785684,401607861758899,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,342,12,"__amd_rocclr_copyBuffer",342,401607861772379,401607861774699,0,0,16,0,128,512,1,1,512,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,343,12,"__amd_rocclr_copyBuffer",343,401607861949991,401607861953311,0,0,16,0,128,512,1,1,1024,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,344,1,"void (anonymous namespace)::wave_gf7_lookup_table_kernel<2u>(unsigned char const*, int, int, unsigned int*)",344,401607861967630,401607932574039,0,24,48,0,128,32,1,1,928,1,1
+"KERNEL_DISPATCH","Agent 1",1,0,2308788,345,12,"__amd_rocclr_copyBuffer",345,401607932587519,401607932589839,0,0,16,0,128,512,1,1,512,1,1
