@@ -1,0 +1,35 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-16T23:34:12.834776667Z",
+  "dependencies": [],
+  "description": "The bipedal3.rs module and type doc comments state the codeword (mag=0, sgn=1) is 'never produced by add/sub/mul/neg from canonical inputs' (crates/gf2-algebra/src/packed/bipedal3.rs:19-21, :62-65). The committed formulas contradict this for three of the four operations on canonical inputs: add((1,1),(1,0)) for 2+1, sub((1,0),(1,0)) for 1-1, and mul with a zero operand each return (0,1); only neg never produces it. Every such result decodes to the correct field value because lane, all_zero, and Eq read the encoding's equivalence classes, so no computed value is wrong; the false claim is the documentation's. The same doc comments cite '[Scheinerman2024] Theorem 2.1 / Algorithm 2' while the paper carries no object labelled Algorithm 2 (the add body comment repeats 'Algorithm 2'). Found during the 0dffa759 synthesis and recorded there as finding F.13.\n\n## Success Criteria\n\n- [hard] REQ-01: The never-produced claim is corrected everywhere it renders in crates/gf2-algebra/src/packed/bipedal3.rs to state the class semantics (a clear mag bit is field zero regardless of sign; the operations respect the classes and can produce (0,1)), with a doctest or unit test pinning one producing case per affected operation.\n- [hard] REQ-02: Every 'Algorithm 2' citation in the file names the object the paper actually carries (Theorem 2.1 for the bipedal operation formulas), and the correction is swept across the file's doc and body comments.",
+  "documents": [],
+  "first_ready_at": "2026-08-16T23:34:12.834776667Z",
+  "gates_required": [
+    "code-review",
+    "cargo-ci"
+  ],
+  "gates_status": {
+    "cargo-ci": {
+      "status": "pending",
+      "updated_at": "2026-08-16T23:34:18.099436584Z",
+      "updated_by": null
+    },
+    "code-review": {
+      "status": "pending",
+      "updated_at": "2026-08-16T23:34:17.980595610Z",
+      "updated_by": null
+    }
+  },
+  "id": "63d931a9-add9-4812-8d7b-56b71cb325a0",
+  "labels": [
+    "epic:permanent-statistics",
+    "component:gf2-algebra",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
+  "updated_at": "2026-08-16T23:34:18.099436584Z"
+}

@@ -166,6 +166,11 @@
       "status": "failed",
       "updated_at": "2026-08-16T22:52:46.954104101Z",
       "updated_by": "auto:executor"
+    },
+    "research-review": {
+      "status": "failed",
+      "updated_at": "2026-08-16T23:12:20.810579794Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "0dffa759-8ff3-4198-a901-23bedf6667e0",
@@ -184,5 +189,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Field-by-field go/no-go synthesis with production design",
-  "updated_at": "2026-08-16T22:52:46.954104101Z"
+  "updated_at": "2026-08-16T23:12:20.810579794Z"
 }

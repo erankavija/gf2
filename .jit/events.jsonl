@@ -8296,3 +8296,8 @@
 {"gate_key":"doc-review","id":"c7b5ac79-57ee-4157-ab02-e017274e37c1","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:57:54.498893961Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"fc1d6d63-a105-403c-8a71-2d4e05171491","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:58:32.633858271Z","to":"done","type":"issue_state_changed"}
 {"id":"557d39fa-006a-48ff-8ccd-97a4da9f1291","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:58:32.633858271Z","type":"issue_completed"}
+{"gate_key":"research-review","id":"55eec4c3-5ba3-4484-94fe-bc25bc18755e","issue_id":"0dffa759-8ff3-4198-a901-23bedf6667e0","timestamp":"2026-08-16T23:12:20.810579794Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"8242f416-224a-464f-95e1-ac5ff5984ffb","issue_id":"63d931a9-add9-4812-8d7b-56b71cb325a0","priority":"low","timestamp":"2026-08-16T23:34:12.834776667Z","title":"Bipedal3 doc comments deny the alternative zero their own circuits produce","type":"issue_created"}
+{"gate_key":"code-review","id":"234423b1-53c3-4c23-a676-46717f6343ed","issue_id":"63d931a9-add9-4812-8d7b-56b71cb325a0","timestamp":"2026-08-16T23:34:17.980595610Z","type":"gate_added"}
+{"gate_key":"cargo-ci","id":"338f89e2-461d-4a67-bda6-2aa2b3c1e93b","issue_id":"63d931a9-add9-4812-8d7b-56b71cb325a0","timestamp":"2026-08-16T23:34:18.099436584Z","type":"gate_added"}
+{"fields":["dependencies"],"id":"0a9ec2c3-468e-4d8a-8d0d-874410253870","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-16T23:34:22.028166058Z","type":"issue_updated","updated_by":"dependency-add"}
