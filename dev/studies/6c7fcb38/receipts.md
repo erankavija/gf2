@@ -2082,15 +2082,31 @@ archived prior calibration in
 [`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`](../../archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md)
 §2.5, which places a hang boundary at "*≈190–200 s*" per launch and reports
 bounded sub-batches holding every launch at "*≈10–117 s*". That calibration's
-work budget, $\text{sub\_batch} \cdot 2^n \le 1.3 \times 10^9$, is stated for
-$q = 5$; no $q = 7$ work budget is committed, so this receipt applies only the
-per-launch span boundary to this field and does not transfer the work budget
-across fields. The campaign plan directs that the archived figure be treated
+per-field work budgets are $\text{sub\_batch} \cdot 2^n \le 1.3 \times 10^9$
+at $q = 5$ and $\le 3.5 \times 10^8$ at $q = 7$; the $q = 7$ entry is
+committed at
+[`r4_gpu_uniformity_resample.md`](../../archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md):225-227.
+This receipt therefore applies the archived prior's $q = 7$ work budget to
+this field as well as its per-launch span boundary; it does not transfer the
+$q = 5$ budget across fields. The campaign plan directs that the archived
+figure be treated
 "*as a prior*" rather than as an established device property
 ([`dev/active/0de41c82/plan.md`](../../active/0de41c82/plan.md):13), because the
 one observed hang's attribution to a watchdog timeout was explicitly retracted
 ([`../b488f02c/feasibility-study.md`](../b488f02c/feasibility-study.md):264-268).
 It is cited here on those terms.
+
+**Correction (2026-08-17; falsified premise preserved).** The original §15
+wording stated, "*the work budget ... is stated for $q = 5$; no $q = 7$ work
+budget is committed*," and declined to apply a work budget to this field. That
+premise is false: the archived source commits $3.5 \times 10^8$ for $q = 7$
+at `r4_gpu_uniformity_resample.md`:225-227, and the runtime qualification
+records that the budget was exceeded 3.07× without fault
+([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1-§9.2, §10.2).
+The §15 verdict is amended only to include this comparison: the declared
+operating point is below the archived $q = 7$ work budget, while the
+throughput and launch-duration conclusions still hold against an archived
+prior rather than a bound this study has derived.
 
 Measured against that prior, this campaign's launches sit inside it with margin,
 and `analysis.py` section 15 tabulates every device row:
@@ -2103,8 +2119,8 @@ and `analysis.py` section 15 tabulates every device row:
   the "≈10–117 s" band the archived calibration reports for its bounded
   sub-batches.
 - The largest per-launch work anywhere in this campaign is
-  $1.074 \times 10^9$ (`gpu_hip`, $n = 20$, $M = 1024$), whose kernel span is
-  17.6686 s, 0.0930 of the boundary.
+  $1.074 \times 10^9$ (`gpu_hip`, $n = 20$, $M = 1024$), 3.07× the archived
+  $q = 7$ work budget, whose kernel span is 17.6686 s, 0.0930 of the boundary.
 - No cell in this run failed with a device fault; every step reports
   `status=completed exit=0`.
 
@@ -2113,9 +2129,9 @@ campaign supplies 16 device-backed cells' worth of evidence toward the bound the
 study still owes.
 
 **Verdict: the throughput half of REQ-19 is met with a very large margin at the
-declared operating point; the launch-duration half is met against the only
-committed bound, which is an archived prior rather than a bound this study has
-yet derived.**
+declared operating point; the launch-duration half is met against the archived
+prior's span boundary, and the operating point is also below its committed
+$q = 7$ work budget. Neither comparison is a bound this study has yet derived.**
 
 ## 16. Criterion-by-criterion conformance
 
@@ -2139,7 +2155,7 @@ yet derived.**
 | REQ-16 | §12 | **Satisfied.** Both portions are reported, separately, for the one bit-sliced path that executes. The host-side portion is zero by construction, because the harness streams canonical matrix bytes and the byte-to-plane transpose runs on the device as its own kernel, and §12 attributes it with the source citation the criterion allows in that case. The device-side portion is separated by the committed paired profiled evidence run over the same hash-pinned binary and the same preregistered cells (`--execution-id 7002`), reported beside the unprofiled combined `kernel_device_s` table rather than replacing it, with the separation between the two runs and its reason stated: rocprofv3's per-kernel aggregation carries `prepare_three_plane_columns` and `wave_gf7_three_plane_kernel` as separate rows at $n = 12$, 16, 20, and 24, at per-dispatch averages of 2.139 against 23.262 µs, 2.312 against 312.386 µs, 2.657 against 4 654.140 µs, and 3.020 against 67 665.938 µs, so preparation is 8.4207 %, 0.7347 %, 0.0571 %, and 0.0045 % of the pair. §12 also states why the timing run alone cannot divide its own span, that each profiled pass re-calibrates its own batch so the profiled and timing batches differ and both are tabulated, and that the profiler's `StdDev` column is inconsistent with its own minimum and maximum and is therefore not read. |
 | REQ-17 | §13 | **Satisfied.** Achieved occupancy is reported for every measured $\mathbb{F}_7$ kernel from the committed paired profiled run's counters, beside the compiler's prediction, and the criterion's not-measured escape does not arise. Each figure names its counter, that counter's definition and units from `rocprofv3-avail`, its pass, its launch width, and its dispatch count: as a share of the device's 2 560 wave slots, 8.2346 % and 8.4763 % at $M = 256$ and 27.4731 % at $M = 1024$ for the shipped kernel, 49.4160 % for `wave_gf7_lookup_table_kernel<1>`, 1.0855 % for `<2>`, 0.1276 % and 0.1342 % for `prepare_three_plane_columns` at $n = 16$ and $n = 20$, 0.5271 % and 0.5043 % for `wave_gf7_three_plane_kernel`, 0.0391 % for both Gray-update kernels, and 21.3262 % against 6.4543 % and 18.2757 % against 4.7364 % for the horizontal-product pair on its two branches. Admissibility is a stated physical test set applied per dispatch rather than a preference: a reading counts when it stays inside the agent-reported 32 waves per CU and holds no more waves resident than its own launch geometry supplies. Falsification is preserved rather than repaired — nine of round 1's twelve full-pass readings break the two derived counters' unit identity, by factors of 3.182 to 1.28 × 10⁴, and are tabulated as failures; the three-plane pair has no admissible reading at $n = 12$; two round-2 dispatches at $n = 20$ are excluded with their values shown; `SQ_WAVES` is inflated in round 2 where round 1 had it exact; and `rocprofv2` and legacy `rocprof` abort the workload under their interception. The separation the criterion asks to be stated is stated and checkable: the runner invokes no profiler, `analysis.py` section 13 asserts that no committed artifact of the timing run carries counters, and the paired run is where the measured workload is profiled. The prediction column stays a compile-time figure and never stands in for the achieved one; the paired run confirms the register counts it rests on at runtime, `VGPR_Count` being the compiler's `VGPRs` rounded up to a multiple of eight for all nine kernels. |
 | REQ-18 | §14 | **Satisfied.** The one bit-sliced path that executes as a permanent path, `f7-three-plane-permanent`, is `measured` at $n = 16$, $n = 20$, and $n = 24$ — and at $n = 12$ and $n = 28$ besides — and is `identical` with zero mismatches against the campaign oracle at every one of those orders, on 512, 512, and 32 matrices at the three the criterion names. §14 settles which paths are bit-sliced from source, records that the second bit-sliced candidate does not execute as a permanent path at any order and so has no cell to measure, and states the measurement scale at each order rather than implying it. The sixteen-lane limit the demonstration is above is the same one this run records refusing the packed CPU path at those orders, which is why the oracle is the independent generic Ryser driver there. |
-| REQ-19 | §15 | **Aspirational; throughput met, bound met against a prior.** At the declared operating point $n = 20$, `f7-three-plane-permanent` measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a factor of **545.6693×** against a $1.5\times$ target, with a launch duration of 4.8485 µs on the device clock and a kernel span of 0.004672 s per launch. §15 states the caveat that the denominator at this order is a single-threaded generic driver because this field has no packed CPU kernel there. No safe launch-duration bound derived by this study is committed yet; measured against the only committed figure — the archived ≈190–200 s per-launch calibration, cited as a prior rather than as an established device property, and with its $q = 5$ work budget deliberately not transferred to this field — this operating point sits at 0.00002 of the span boundary. |
+| REQ-19 | §15 | **Aspirational; throughput met, both archived prior comparisons met.** At the declared operating point $n = 20$, `f7-three-plane-permanent` measures 8 397.8509 matrices/s against `cpu_ryser_generic` at 15.3900, a factor of **545.6693×** against a $1.5\times$ target, with a launch duration of 4.8485 µs on the device clock and a kernel span of 0.004672 s per launch. §15 states the caveat that the denominator at this order is a single-threaded generic driver because this field has no packed CPU kernel there. No safe launch-duration bound derived by this study is committed yet; measured against the archived ≈190–200 s per-launch calibration and its committed $q = 7$ work budget of $3.5 \times 10^8$, both cited as priors rather than as established device properties, this operating point sits at 0.00002 of the span boundary and 0.1228 of the work budget. |
 
 ## 17. What this campaign does not establish
 
@@ -2226,10 +2242,11 @@ Collected so a reader does not have to reassemble it from the sections above.
     $\mathbb{F}_7$ representation has sixteen lanes, so §6.1's host-versus-device
     latency comparison exists at two orders and nothing here extends it.
 14. **The safe launch-duration bound is not this study's own.** §15 measures
-    against an archived prior whose watchdog attribution was retracted and whose
-    work budget is stated for a different field; deriving the study's own bound
-    is a separate deliverable and this campaign contributes 16 device-backed
-    cells toward it rather than closing it.
+    against an archived prior whose watchdog attribution was retracted; its
+    committed $q = 7$ work budget is also a prior comparison, not a bound this
+    study derives. Deriving the study's own bound is a separate deliverable and
+    this campaign contributes 16 device-backed cells toward it rather than
+    closing it.
 15. **The permanent-zero fraction at $n = 28$ pools 28 matrices.** Its interval
     spans a factor of 7.3 and it supports nothing on its own (§9.1).
 

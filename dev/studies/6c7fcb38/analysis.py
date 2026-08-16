@@ -136,12 +136,12 @@ BIT_SLICED = ("f7-three-plane-permanent",)
 # the orders this campaign measures: active_lanes_for_order(n) = 32 for n >= 5
 # (dev/research/permanent_wave_gpu/hip/wave_ryser_mapping.h:29-31, :16).
 WAVE_LANES = 32
-# Archived per-launch work budget, carried as a prior rather than as an
-# established device property. The archived calibration states its budget for
-# q=5; no q=7 budget is committed, so only the per-launch span boundary is
-# applied to this field (dev/archive/ae82bd73-gf2-algebra-permanent/plans/
-# b293af5a/r4_gpu_uniformity_resample.md section 2.5).
+# Archived per-launch q=7 work budget and span boundary, both carried as priors
+# rather than as established device properties. The q=7 budget is committed at
+# 3.5e8 in dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/
+# r4_gpu_uniformity_resample.md:225-227.
 ARCHIVED_HANG_BOUNDARY_S = 190.0
+ARCHIVED_Q7_WORK_BUDGET = 3.5e8
 # The grid writer emits `phase_timing_note` and `note` unquoted, and both carry
 # literal commas on the out-of-field rows, so those lines hold more fields than
 # the header names (bug 3ea21d74). `seed_root` is the one column whose value has
@@ -1819,7 +1819,8 @@ def main() -> None:
         worst_span = max(worst_span, span)
         print(f"{n:>3} {row['backend']:>26} {m:>6} {work:>16.4g}"
               f" {span:>16.4f} {span / ARCHIVED_HANG_BOUNDARY_S:>15.4f}")
-    print(f"largest per-launch work in this campaign = {worst_work:.4g}")
+    print(f"largest per-launch work in this campaign = {worst_work:.4g}"
+          f" ({worst_work / ARCHIVED_Q7_WORK_BUDGET:.2f}x archived q=7 work budget)")
     print(f"longest kernel span per launch = {worst_span:.4f} s"
           f" ({worst_span / ARCHIVED_HANG_BOUNDARY_S:.4f} of the archived"
           f" {ARCHIVED_HANG_BOUNDARY_S:.0f} s hang boundary)")
@@ -1840,7 +1841,9 @@ def main() -> None:
           f" us/launch")
     print(f"kernel_device_s={cell['kernel_device_s']} over reps={reps}"
           f" = {float(cell['kernel_device_s']) / reps:.6f} s/launch")
-    print(f"per-launch work M*2^n = {m * 2**declared_n:.6g}")
+    work = m * 2**declared_n
+    print(f"per-launch work M*2^n = {work:.6g}"
+          f" ({work / ARCHIVED_Q7_WORK_BUDGET:.4f} of archived q=7 work budget)")
     print("every path measured at this order, ranked:")
     for key, row in sorted(
         by_order[declared_n].items(),
