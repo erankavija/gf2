@@ -8288,3 +8288,4 @@
 {"fields":["dependencies"],"id":"98f81824-d284-43eb-ac83-8468c9496281","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-16T02:01:17.949979761Z","type":"issue_updated","updated_by":"dependency-add"}
 {"from":"ready","id":"552cf4ca-d305-4cb3-849d-3228f74d2296","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:41:13.987625252Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-luna","id":"39785552-3b53-4873-84cf-27f7f1465358","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:41:13.987625252Z","type":"issue_claimed"}
+{"gate_key":"cargo-ci","id":"4e16aa8b-ee31-4e11-9e10-fb8b48672321","issue_id":"51498b90-ae91-449f-bcc2-0f209bd16284","timestamp":"2026-08-16T22:42:07.418707979Z","type":"gate_passed","updated_by":"auto:executor"}
