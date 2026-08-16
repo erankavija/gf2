@@ -23,12 +23,12 @@
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-16T01:47:51.282521702Z",
+      "updated_at": "2026-08-16T22:54:00.099950879Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-16T01:50:20.719733296Z",
+      "updated_at": "2026-08-16T22:56:50.053348733Z",
       "updated_by": "auto:executor"
     }
   },
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-  "updated_at": "2026-08-16T22:42:07.418707979Z"
+  "updated_at": "2026-08-16T22:56:50.053348733Z"
 }
