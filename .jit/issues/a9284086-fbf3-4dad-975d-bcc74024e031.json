@@ -205,7 +205,18 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-16T01:09:06.477267650Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-16T01:11:17.579437278Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
   "labels": [
     "type:simulation",
@@ -217,5 +228,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Runtime qualification of wave utilization and launch duration",
-  "updated_at": "2026-08-16T01:05:25.015951279Z"
+  "updated_at": "2026-08-16T01:11:17.579437278Z"
 }
