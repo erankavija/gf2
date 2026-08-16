@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "dispatched"
+     "status": "REQ-08 amendment approved and applied; gates pending"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "rework-1-dispatched: implementation committed (e31b7f3f red, 6e4a16d9 fix), cargo-ci passed; code-review failed (config-mismatch error always names root_seed, crash-window shard cannot be adopted on resume, shard writes not durable before checkpoint) and doc-review failed (README rerun wording contradicts resume, driver API rustdoc lacks the contract); rework to codex luna"
+     "status": "rework-1-committed: ce86c386 (adoption, durability, named refusal); cargo-ci passed; reviews pending"
     }
    ]
   },
@@ -407,6 +407,14 @@
    "requested_at": "2026-08-15T09:55:00Z",
    "resolved_at": "2026-08-15T09:58:00Z",
    "decision": "Owner approved the paired-profiled-run resolution: REQ-16/REQ-17 amended to accept a committed paired profiled evidence run over the same hash-pinned binaries and cells, separate from the timing run with the perturbation rationale stated; the lead runs the profile on the host and commits the artifact."
+  },
+  {
+   "issue": "0dffa759",
+   "reason": "REQ-08 requires amending the archived F_7 encoding decision under dev/archive/ (permanent content; owner approval required per the issue Notes). The synthesis determined the receipts support the three-plane candidate and drafted a purely additive amendment.",
+   "status": "approved",
+   "requested_at": "2026-08-17",
+   "resolved_at": "2026-08-17",
+   "decision": "Owner approved the drafted amendment verbatim; the lead applied the note and pointer stubs to the archived file and updated the study documents' pending-approval framing."
   }
  ],
  "rework_counts": {
