@@ -17,6 +17,7 @@
       "path": "dev/active/41c3d91d/tdd-red-evidence.md"
     }
   ],
+  "done_at": "2026-08-16T00:12:51.969502576Z",
   "first_ready_at": "2026-08-13T16:38:19.118303446Z",
   "gates_required": [
     "cargo-ci",
@@ -26,17 +27,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-15T23:43:03.888363242Z",
+      "updated_at": "2026-08-16T00:06:49.534575312Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T23:46:28.040644990Z",
+      "status": "passed",
+      "updated_at": "2026-08-16T00:10:09.120488274Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-15T23:49:16.882751566Z",
+      "status": "passed",
+      "updated_at": "2026-08-16T00:12:05.536623691Z",
       "updated_by": "auto:executor"
     }
   },
@@ -48,7 +49,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Campaign driver scheduling and shard emission",
-  "updated_at": "2026-08-15T23:49:16.882751566Z"
+  "updated_at": "2026-08-16T00:12:51.969502576Z"
 }

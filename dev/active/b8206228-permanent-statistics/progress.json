@@ -51,14 +51,14 @@
      "short_id": "41c3d91d",
      "title": "Campaign driver scheduling and shard emission",
      "classification": "implementation",
-     "status": "rework-2-dispatched (MAX): round-2 reviews closed all round-1 findings but found the hardcoded AcceptanceVerdict::Accepted bypassing the preregistered permanent-floor exact test, and emit_field overwriting existing dataset files against the README immutability contract; red-first fixes dispatched to codex luna"
+     "status": "done"
     },
     {
      "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
      "short_id": "a9284086",
      "title": "Runtime qualification of wave utilization and launch duration",
      "classification": "research",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
