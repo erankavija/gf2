@@ -1070,7 +1070,7 @@ rectangular validation, where the Wilson interval's normal approximation is
 weakest. *1.0 d.*
 
 **G3 — campaign driver boundary.** The landed dedicated driver is separate
-from the `gf2-sim` FEC campaign runner. The FEC runner's campaign schema is
+from the `gf2-coding` FEC campaign runner. The FEC runner's campaign schema is
 coding-domain — codes, modems, channels, SNR sweeps — while this campaign's axes
 are $(q, n, \text{shard})$ and its per-point work is a permanent evaluation, not
 a decode. Adapting it would mean either widening that schema to carry a second,

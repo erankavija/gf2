@@ -10,9 +10,11 @@ The campaign's controlling [scientific preregistration](protocol.md) is stored
 beside those datasets; it is not part of any dataset's raw or derived file set.
 
 A campaign id uses lowercase ASCII letters, digits, and interior hyphens. A
-writer must refuse an id whose directory already exists. Corrections,
-extensions, reruns, and schema migrations always receive a new campaign id;
-they never overwrite an existing dataset in place.
+Dataset-scale writers must refuse an existing campaign-id directory, while a
+field-scale writer refuses every existing shard or summary file inside the
+selected campaign directory. Corrections, extensions, reruns, and schema
+migrations always receive a new campaign id; they never overwrite an existing
+dataset in place.
 
 The canonical typed schema and conformance reader are
 `gf2_sim::permanent_campaign::schema`. JSON documents reject missing required
@@ -284,8 +286,10 @@ $ cargo run -p gf2-sim --release --bin permanent_campaign -- \
 One invocation executes exactly one field arm and writes only that field's
 shard files and field summary, so field arms can run concurrently. The writer
 passes `approve_emission` before it runs the field, establishing source
-identity before any dataset bytes are written. Per-phase timings go to standard
-output and never into dataset files.
+identity before any dataset bytes are written. Re-running a field arm against
+the same tree is refused at the first existing shard or summary file, so its
+first emission remains unchanged. Per-phase timings go to standard output and
+never into dataset files.
 
 | Exit status | Means |
 | --- | --- |

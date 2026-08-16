@@ -20,7 +20,8 @@
 //! ```
 
 use std::fmt;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -29,6 +30,7 @@ use gf2_algebra::permanent::{
     permanent_bipedal3, permanent_bipedal5, permanent_bipedal7, permanent_ryser,
 };
 use gf2_core::gfp::Fp;
+use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
 use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
@@ -42,6 +44,11 @@ use super::schema::{
 
 /// The purpose tag reserved for published campaign-cell matrix streams.
 pub const CAMPAIGN_CELL_PURPOSE_TAG: u8 = SamplerPurpose::CampaignCell as u8;
+
+/// Family-wise error budget for the permanent-floor tests, as preregistered
+/// in `dev/simulation_results/permanent-zero-fraction/protocol.md` under
+/// "Error budgets" and "Permanent-floor decision".
+const PERMANENT_FAMILYWISE_ERROR: f64 = 0.025;
 
 /// One manifest shard expanded into executable scheduling data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -231,7 +238,7 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
         }
         shards.push(run_shard(manifest.root_seed, purpose.tag, item)?);
     }
-    let summary = summarize(field, &shards);
+    let summary = summarize(field, &shards, manifest.cells.len() as u64);
     Ok(FieldRun {
         q: field,
         shards,
@@ -244,8 +251,8 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
 ///
 /// The campaign manifest is read-only input and is intentionally not written.
 /// Consequently two invocations selecting different fields open disjoint
-/// shard and summary paths. Existing files are replaced with the same bytes;
-/// callers that need immutable-publication refusal use the provenance layer.
+/// shard and summary paths. The writer refuses every dataset file that already
+/// exists, so re-emission of the same work items targets a fresh campaign tree.
 pub fn emit_field(
     root: &Path,
     manifest: &CampaignManifest,
@@ -475,7 +482,7 @@ fn evaluate_permanent<const Q: u64>(
     Ok(value)
 }
 
-fn summarize(q: u8, shards: &[ShardRun]) -> FieldSummary {
+fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary {
     let mut rows = Vec::new();
     let mut index = 0;
     while index < shards.len() {
@@ -500,7 +507,12 @@ fn summarize(q: u8, shards: &[ShardRun]) -> FieldSummary {
                     point: zero_count as f64 / matrix_count as f64,
                     interval: Interval { lower, upper },
                 },
-                permanent_verdict: AcceptanceVerdict::Accepted,
+                permanent_verdict: permanent_acceptance(
+                    q,
+                    zero_count,
+                    matrix_count,
+                    family_test_count,
+                ),
                 determinant_estimate: DeterminantEstimate::NotEvaluated,
             },
         });
@@ -509,6 +521,21 @@ fn summarize(q: u8, shards: &[ShardRun]) -> FieldSummary {
         schema_version: SCHEMA_VERSION,
         q,
         rows,
+    }
+}
+
+fn permanent_acceptance(
+    q: u8,
+    permanent_zero_count: u64,
+    matrix_count: u64,
+    family_test_count: u64,
+) -> AcceptanceVerdict {
+    let level = bonferroni_level(PERMANENT_FAMILYWISE_ERROR, family_test_count);
+    if permanent_zero_floor_test(permanent_zero_count, matrix_count, u64::from(q)).rejects_at(level)
+    {
+        AcceptanceVerdict::Rejected
+    } else {
+        AcceptanceVerdict::Accepted
     }
 }
 
@@ -527,7 +554,15 @@ fn create_parent(path: &Path) -> Result<(), ScheduleError> {
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
-    fs::write(path, bytes).map_err(|source| ScheduleError::Io {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(|source| ScheduleError::Io {
+            path: path.to_owned(),
+            source,
+        })?;
+    file.write_all(bytes).map_err(|source| ScheduleError::Io {
         path: path.to_owned(),
         source,
     })

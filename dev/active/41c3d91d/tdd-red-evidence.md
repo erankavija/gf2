@@ -86,3 +86,76 @@ thread 'binary_refuses_emission_before_writing_outside_repository' panicked at c
 binary must refuse emission; status ExitStatus(unix_wait_status(0))
 stderr:
 ```
+
+## 2026-08-16 — round-2 schedule and emission red tests
+
+Patch 1 added only the three tests in
+`crates/gf2-sim/src/permanent_campaign/schedule.rs`. The focused command was:
+
+```console
+CARGO_NET_OFFLINE=true cargo nextest run -p gf2-sim --release --profile ci -E 'test(permanent_floor_rejection_is_the_preregistered_exact_test) | test(summary_verdict_matches_the_pooled_permanent_floor_decision) | test(re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission)'
+```
+
+The tests failed before execution because the production decision helper had
+not been added yet. This is the complete captured output:
+
+```text
+   Compiling gf2-sim v0.1.0 (/home/vkaskivuo/Projects/gf2/crates/gf2-sim)
+error[E0425]: cannot find function `permanent_acceptance` in this scope
+   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:648:20
+    |
+648 |         assert_eq!(permanent_acceptance(3, 0, 11, 1), AcceptanceVerdict::Rejected);
+    |                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `permanent_acceptance` in this scope
+   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:649:20
+    |
+649 |         assert_eq!(permanent_acceptance(3, 4, 11, 1), AcceptanceVerdict::Accepted);
+    |                    ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `permanent_acceptance` in this scope
+   --> crates/gf2-sim/src/permanent_campaign/schedule.rs:668:13
+    |
+668 |             permanent_acceptance(
+    |             ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `gf2-sim` (lib test) due to 3 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: command `/home/vkaskivuo/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo test --no-run --message-format json-render-diagnostics --package gf2-sim --release` exited with code 101
+```
+
+The Fix-B test was also replayed against a clean `HEAD` snapshot in
+`/tmp/gf2-41c3d91d-redb-AObOtx`, with only that test added. The focused command
+was:
+
+```console
+CARGO_NET_OFFLINE=true CARGO_TARGET_DIR=/tmp/gf2-41c3d91d-redb-target cargo nextest run -p gf2-sim --release --profile ci -E 'test(re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission)'
+```
+
+It reached the old overwriting writer and failed as required:
+
+```text
+FAIL [   0.004s] (1/1) gf2-sim permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission
+  stdout ───
+
+    running 1 test
+    test permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission ... FAILED
+
+    failures:
+
+    failures:
+        permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 238 filtered out; finished in 0.00s
+
+  stderr ───
+
+    thread 'permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission' (7882) panicked at crates/gf2-sim/src/permanent_campaign/schedule.rs:718:14:
+    re-emitting into an existing dataset must refuse: ["/tmp/campaign-reemit-7881/campaign-test/shards/q3/n02/shard-000000.json", "/tmp/campaign-reemit-7881/campaign-test/summaries/q3.json"]
+
+────────────
+     Summary [   0.005s] 1 test run: 0 passed, 1 failed, 379 skipped
+        FAIL [   0.004s] (1/1) gf2-sim permanent_campaign::schedule::tests::re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission
+error: test run failed
+```
