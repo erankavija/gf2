@@ -1,0 +1,3 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"(anonymous namespace)::f5_three_plane_kernel(unsigned char const*, int, int, unsigned int*)",101,8129753565,80492609.554455,99.99,80456275,80512786,74021828.007267
+"__amd_rocclr_copyBuffer",202,544813,2697.094059,6.701e-03,2320,3840,362.786529

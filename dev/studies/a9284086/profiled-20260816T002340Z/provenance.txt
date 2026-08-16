@@ -1,0 +1,89 @@
+schema_version: 2
+artifact: paired profiled evidence run for JIT issue a9284086 (runtime qualification of the retained F_3 and F_5 GPU permanent paths)
+stamp_utc: 20260816T002340Z
+git_revision_at_run_start: 6f87b14a78e640fca9702bccfd6659d143fa19d0
+binary: target/permanent-campaign/permanent-sampling-feas-hip/release/permanent_sampling_feas
+binary_sha256: edb03650bbbfb47064a3a2b5e021ac055394812a4362c577fdad07cdbd997bce
+binary_manifest: target/permanent-campaign/manifest-v1.txt (hash verified before the first pass; see run.log)
+profiler: rocprofv3 1.1.0 (/opt/rocm/bin/rocprofv3), ROCm 7.2.4, gfx1030 (AMD Radeon RX 6950 XT), host AMD Ryzen 9 5900X, 24 logical CPUs, kernel 7.1.8-arch1-3
+device_compiler: hipcc reporting HIP 7.2.53211-9999 and AMD clang 22.0.0git (the compiler of the resource receipt this run's counters are paired with)
+lock: every pass ran under dev/scripts/ccx1-bench-flock.sh --full-host (the repository's canonical benchmark mutex, /tmp/gf2-ccx1.lock). The wrapper's nice(1) step is best-effort and reports "cannot set niceness: Permission denied" for a non-root caller; the mutex itself is held for every pass. This artifact carries no timing authority (see separation below), so its per-kernel durations are used for within-run separation and geometry, never for cross-run throughput claims.
+runner: dev/studies/a9284086/profiled-run.sh (this run executed its pass list verbatim; run.log records one COMMAND/EXIT pair per pass, thirty-four passes, all exit 0)
+
+passes: thirty-four, recorded verbatim in run.log — seventeen cells, each with
+  one kernel-trace pass and one early-iteration counter pass.
+  cells: q=3 at n=12, 20, 28 for gpu_hip, wave-gf3, and fold-gf3; q=5 at n=12
+    and 20 for gpu_hip, f5-byte-control, and f5-three-plane, and at n=24 for
+    f5-byte-control and f5-three-plane. n=12 and n=20 are the orders the
+    committed F_7 counter evidence uses; n=28 and n=24 are the declared
+    operating points of q=3 and q=5
+    (dev/simulation_results/permanent-zero-fraction/protocol.md:51-54). The
+    q=5, n=24 gpu_hip cells are censored before running in the timing grid, so
+    that cell dispatches nothing and is not a pass.
+  kernel-trace (--kernel-trace --stats): rocprofv3's own per-kernel
+    aggregation, committed as <name>-<pid>_kernel_stats.csv and
+    <name>-<pid>_domain_stats.csv.
+  counters (--pmc SQ_WAVES MeanOccupancyPerCU --kernel-iteration-range [1-8]):
+    per-dispatch counter CSVs, committed in full.
+  Grid passes reuse each field's committed --execution-id — 3002 for q=3 and
+  5002 for q=5 — so the profiled cells draw the same preregistered matrices as
+  timing run 20260814T230032Z-2085453. Every pass wraps exactly one
+  device-executing workload, and every -o carries %pid% so per-process outputs
+  survive regardless of process structure.
+
+counter round: this run collects the F_7 study's round-2 counter set from the
+  start and never its round-1 full-pass set. That run established that
+  rocprofv3's full-pass derived occupancy counters divide by a GRBM_GUI_ACTIVE
+  window that drifts with cumulative dispatch count, exact on a pass's first
+  dispatches and degrading monotonically after
+  (dev/studies/6c7fcb38/receipts.md section 13, and that run's provenance.txt
+  under "round 2:"). OccupancyPercent reads zero under iteration-range
+  collection on this stack and is omitted.
+
+admissibility: the policy committed in dev/studies/6c7fcb38/receipts.md
+  section 13 and made authoritative for round-2 readings by that run's
+  2026-08-16 provenance amendment. A reading counts when MeanOccupancyPerCU
+  lies inside (0, 32] — the agent's own Max_Waves_Per_Cu — and puts no more
+  waves resident than the dispatch's own Grid_Size/Workgroup_Size launch
+  geometry supplies, with one percent of slack for the counter's rounding.
+  SQ_WAVES is recorded per dispatch but is not an admissibility test: the same
+  amendment records it inflated relative to launch geometry in round-2
+  collection.
+
+separation: this run is deliberately distinct from timing run
+  20260814T230032Z-2085453. Counter collection and kernel tracing perturb
+  execution, so the preregistered timing evidence carries no profiler and this
+  artifact carries no timing authority. Its grid.csv files are the profiled
+  workload's own output, retained as the workload record only. One profiled cell
+  that the timing run records as measured comes out censored here — q=3, n=28,
+  gpu_hip at M=256, under kernel tracing; the same cell is measured in the
+  counter pass, which does not trace — and every profiled cell recalibrates its
+  own batch from a single-matrix probe under the profiler, so profiled batch
+  sizes are below the timing batches throughout. Both are the perturbation this
+  clause exists for.
+
+profiler capability: not re-probed. The committed F_7 run records rocprofv2 and
+  legacy rocprof aborting this workload under their interception on this host,
+  with the failing commands and their exit 101 retained
+  (dev/studies/6c7fcb38/profiled-20260815T181923Z/run2.log, and that run's
+  provenance.txt under "profiler capability probes:").
+
+dynamic LDS: rocprofv3's per-dispatch LDS_Block_Size reads 0 for every kernel
+  in this run, including the lane-owns-interval kernels whose launches request
+  a dynamic shared column table. The runtime record therefore shares the
+  compiler's static-LDS blind spot. Tracked as JIT issue 023233c5, which also
+  records the rocprofv2 probe that read LDS_Per_Workgroup 512 for the F_7 walk
+  kernel at n=20.
+
+contents (committed): per pass directory — <name>-<pid>_kernel_stats.csv and
+  <name>-<pid>_domain_stats.csv (trace passes), <name>-<pid>_agent_info.csv,
+  <name>-<pid>_counter_collection.csv (counter passes), and the workload CSV.
+  At the root: run.log and this file.
+
+raw retention (not committed): the per-dispatch kernel_trace CSVs are
+  zstd-compressed and retained locally at
+  target/permanent-campaign/profiled-raw-a9284086-20260816T002340Z/, mirroring
+  the pass-directory layout. Nothing in this receipt is derived from them: the
+  committed kernel_stats aggregations and counter CSVs carry every figure. The
+  whole artifact regenerates from the committed profiled-run.sh against the
+  hash-pinned binary.

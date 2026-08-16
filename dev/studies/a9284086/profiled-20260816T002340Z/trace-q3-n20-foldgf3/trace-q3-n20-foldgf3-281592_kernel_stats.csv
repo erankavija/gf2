@@ -1,0 +1,3 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"void (anonymous namespace)::wave_gf3_kernel<((anonymous namespace)::FoldKind)1>(unsigned char const*, int, int, unsigned int*)",2431,7248502328,2981695.733443,99.82,2975759,2982954,2499075.056208
+"__amd_rocclr_copyBuffer",4862,13360764,2747.997532,0.1840,2200,11961,419.302481
