@@ -7,8 +7,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use gf2_sim::checkpoint::{CheckpointReader, CheckpointWriter};
 use gf2_sim::permanent_campaign::driver::{
-    campaign_config_hash, run_field_checkpointed, run_field_checkpointed_with_evaluator,
-    CampaignCheckpoint, CampaignDriverError,
+    campaign_config_hash, campaign_configuration, run_field_checkpointed,
+    run_field_checkpointed_with_evaluator, CampaignCheckpoint, CampaignDriverError,
 };
 use gf2_sim::permanent_campaign::schedule::evaluate_work_item;
 use gf2_sim::permanent_campaign::schema::{
@@ -191,6 +191,95 @@ fn changed_configuration_refuses_resume_naming_the_disagreement() {
 }
 
 #[test]
+fn changed_campaign_id_refuses_resume_naming_campaign_id() {
+    clear_interrupt();
+    let root = temp_root("config-campaign-id");
+    let path = checkpoint(&root);
+    let original = manifest(7);
+    request_interrupt();
+    assert!(matches!(
+        run_field_checkpointed(&root, &original, 3, &path, 1),
+        Err(CampaignDriverError::Interrupted)
+    ));
+    clear_interrupt();
+    let mut changed = manifest(7);
+    changed.campaign_id = "campaign-resume-other".parse().unwrap();
+    let error = run_field_checkpointed(&root, &changed, 3, &path, 1).unwrap_err();
+    assert!(error.to_string().contains("campaign_id"), "error: {error}");
+}
+
+#[test]
+fn crash_window_shard_is_adopted_without_re_emission() {
+    clear_interrupt();
+    let manifest = manifest(19);
+    let root = temp_root("adopt");
+    let path = checkpoint(&root);
+    let mut evaluations = 0;
+    let interrupted =
+        run_field_checkpointed_with_evaluator(&root, &manifest, 3, &path, 1, |item| {
+            evaluations += 1;
+            let result = evaluate_work_item(&manifest, item).map_err(|error| error.to_string());
+            if evaluations == 1 {
+                request_interrupt();
+            }
+            result
+        });
+    assert!(matches!(interrupted, Err(CampaignDriverError::Interrupted)));
+    fs::remove_file(&path).unwrap();
+    clear_interrupt();
+
+    let mut resumed_evaluations = 0;
+    run_field_checkpointed_with_evaluator(&root, &manifest, 3, &path, 1, |item| {
+        resumed_evaluations += 1;
+        evaluate_work_item(&manifest, item).map_err(|error| error.to_string())
+    })
+    .unwrap();
+
+    let reference_root = temp_root("adopt-reference");
+    run_field_checkpointed(
+        &reference_root,
+        &manifest,
+        3,
+        &checkpoint(&reference_root),
+        1,
+    )
+    .unwrap();
+    assert_eq!(dataset_bytes(&root), dataset_bytes(&reference_root));
+    assert_eq!(resumed_evaluations, 2);
+}
+
+#[test]
+fn corrupted_crash_window_shard_is_refused_with_path_and_mismatch() {
+    clear_interrupt();
+    let manifest = manifest(23);
+    let root = temp_root("adopt-corrupt");
+    let path = checkpoint(&root);
+    let mut evaluations = 0;
+    let interrupted =
+        run_field_checkpointed_with_evaluator(&root, &manifest, 3, &path, 1, |item| {
+            evaluations += 1;
+            let result = evaluate_work_item(&manifest, item).map_err(|error| error.to_string());
+            if evaluations == 1 {
+                request_interrupt();
+            }
+            result
+        });
+    assert!(matches!(interrupted, Err(CampaignDriverError::Interrupted)));
+    fs::remove_file(&path).unwrap();
+    let shard_path = root.join("shards/q3/n02/shard-000000.json");
+    fs::write(&shard_path, b"tampered").unwrap();
+    clear_interrupt();
+
+    let error = run_field_checkpointed(&root, &manifest, 3, &path, 1).unwrap_err();
+    let message = error.to_string();
+    assert!(
+        message.contains(shard_path.to_string_lossy().as_ref()),
+        "error: {message}"
+    );
+    assert!(message.contains("mismatch"), "error: {message}");
+}
+
+#[test]
 fn failing_work_item_is_quarantined_and_visible() {
     clear_interrupt();
     let root = temp_root("quarantine");
@@ -218,7 +307,7 @@ fn signal_during_checkpoint_write_never_corrupts_resume() {
     let root = temp_root("fsync");
     let manifest = manifest(13);
     let path = checkpoint(&root);
-    let payload = CampaignCheckpoint::new(3);
+    let payload = CampaignCheckpoint::new(campaign_configuration(&manifest, 3));
     let writer = CheckpointWriter::<CampaignCheckpoint, _>::for_payload(
         &path,
         campaign_config_hash(&manifest, 3),

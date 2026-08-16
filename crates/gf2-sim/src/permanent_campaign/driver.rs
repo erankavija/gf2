@@ -6,6 +6,17 @@
 //! completed work. The configuration identity covers the complete manifest
 //! and selected field, while output paths and worker count remain outside the
 //! identity so a later processor can change its execution width safely.
+//!
+//! A normal caller passes the campaign output directory and a checkpoint path
+//! to [`run_field_checkpointed`]. The driver writes each durable shard before
+//! recording it in the checkpoint, observes interruption at the next work-item
+//! boundary, and writes a field summary only after every item is completed or
+//! quarantined. A restart uses the same configuration and checkpoint: completed
+//! items are loaded, an emitted-but-uncheckpointed shard is adopted after a
+//! deterministic byte comparison, and remaining work continues. A changed
+//! manifest configuration is refused with named component differences. These
+//! are the operational contracts of `@/inv/campaign-resumability` and
+//! `@/inv/deterministic-seeded-execution`.
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -18,15 +29,16 @@ use crate::checkpoint::{
     CheckpointLoadError, CheckpointPayload, CheckpointReader, CheckpointWriter,
 };
 use crate::permanent_campaign::schedule::{
-    emit_shard, emit_summary, enumerate_work_items, evaluate_work_item, summarize_with_quarantine,
-    EvaluatedShard, FieldRun, PhaseDurations, ShardRun, WorkItem,
+    emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
+    evaluate_work_item, shard_record_bytes, summarize_with_quarantine, EvaluatedShard, FieldRun,
+    PhaseDurations, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, CampaignManifest, QuarantinedShard, ShardRecord,
 };
 use crate::snr_checkpoint::is_interrupted;
 
-const CHECKPOINT_SCHEMA_VERSION: u32 = 1;
+const CHECKPOINT_SCHEMA_VERSION: u32 = 2;
 
 /// Stable identity of one scheduler work item.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
@@ -61,6 +73,9 @@ pub struct WorkerCheckpoint {
 /// Generic-checkpoint payload for one permanent-campaign field arm.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct CampaignCheckpoint {
+    /// The individually comparable configuration components for this resume;
+    /// a mismatch is a hard refusal rather than fresh work.
+    pub configuration: CampaignConfiguration,
     /// Field arm represented by this payload.
     pub field: u8,
     /// Work items whose records are durably emitted.
@@ -74,17 +89,31 @@ pub struct CampaignCheckpoint {
 }
 
 impl CampaignCheckpoint {
-    /// Creates an empty checkpoint for one field arm.
+    /// Creates an empty checkpoint for one field-arm configuration.
     #[must_use]
-    pub fn new(field: u8) -> Self {
+    pub fn new(configuration: CampaignConfiguration) -> Self {
         Self {
-            field,
+            field: configuration.field,
+            configuration,
             completed: Vec::new(),
             quarantined: Vec::new(),
             worker_states: Vec::new(),
             field_complete: false,
         }
     }
+}
+
+/// Individually comparable configuration components recorded in a checkpoint.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct CampaignConfiguration {
+    /// BLAKE3 digest of the complete serialized campaign manifest.
+    pub manifest_content_hash: String,
+    /// Immutable campaign directory identity.
+    pub campaign_id: String,
+    /// Field arm selected by the invocation.
+    pub field: u8,
+    /// Campaign-wide sampler root seed.
+    pub root_seed: u64,
 }
 
 impl CheckpointPayload for CampaignCheckpoint {
@@ -106,15 +135,19 @@ pub enum CampaignDriverError {
     },
     /// The scheduler rejected a work item or emission.
     Schedule(crate::permanent_campaign::schedule::ScheduleError),
-    /// The caller requested a graceful interruption after the durable flush.
+    /// The caller requested a graceful interruption after the preceding shard
+    /// or quarantine checkpoint was durably flushed; remaining work is left
+    /// for the next invocation.
     Interrupted,
     /// A present checkpoint disagrees with the live campaign configuration.
+    /// The message names each differing manifest hash, campaign id, field, or
+    /// root seed component and includes checkpointed/current values.
     ResumeRefused(String),
     /// A previously emitted record is not a valid shard document.
     InvalidExistingShard {
         /// Existing shard path.
         path: PathBuf,
-        /// Validation diagnostic.
+        /// Validation or serialized-byte-mismatch diagnostic.
         message: String,
     },
 }
@@ -153,15 +186,40 @@ impl From<crate::permanent_campaign::schedule::ScheduleError> for CampaignDriver
 /// instead of exposing only an opaque digest.
 #[must_use]
 pub fn campaign_config_hash(manifest: &CampaignManifest, field: u8) -> String {
-    let bytes = serde_json::to_vec(manifest).expect("campaign manifest is serializable");
-    let digest = blake3::hash(&bytes).to_hex();
+    let configuration = campaign_configuration(manifest, field);
     format!(
-        "blake3:{digest};campaign_id={};field={field};root_seed={};manifest={digest}",
-        manifest.campaign_id, manifest.root_seed
+        "blake3:{digest};campaign_id={campaign_id};field={field};root_seed={root_seed};manifest={digest}",
+        campaign_id = configuration.campaign_id,
+        field = configuration.field,
+        root_seed = configuration.root_seed,
+        digest = configuration.manifest_content_hash,
     )
 }
 
+/// Returns the individually comparable configuration recorded in a checkpoint.
+#[must_use]
+pub fn campaign_configuration(manifest: &CampaignManifest, field: u8) -> CampaignConfiguration {
+    let bytes = serde_json::to_vec(manifest).expect("campaign manifest is serializable");
+    CampaignConfiguration {
+        manifest_content_hash: blake3::hash(&bytes).to_hex().to_string(),
+        campaign_id: manifest.campaign_id.to_string(),
+        field,
+        root_seed: manifest.root_seed,
+    }
+}
+
 /// Runs one field arm with checkpointed shard execution.
+///
+/// Resume uses the checkpoint's configuration identity and completed work set.
+/// Completed items are loaded without re-evaluation. If a shard was durably
+/// emitted before its completion checkpoint, the driver deterministically
+/// re-evaluates it and adopts it only when its serialized bytes match; a
+/// mismatch names the existing path and refuses to overwrite it. Checkpointed
+/// shard and summary bytes are durable before their completion state is
+/// persisted. An interrupt is observed at a work-item boundary after the
+/// preceding checkpoint write, and an evaluator error quarantines that item in
+/// the field summary while remaining work continues. These contracts enforce
+/// `@/inv/campaign-resumability` and `@/inv/deterministic-seeded-execution`.
 pub fn run_field_checkpointed(
     root: &Path,
     manifest: &CampaignManifest,
@@ -184,24 +242,72 @@ pub fn run_field_checkpointed(
 /// A callback error quarantines that work item and does not stop remaining
 /// work. Successful callbacks must return the production [`EvaluatedShard`]
 /// result; this seam lets conformance tests exercise quarantine without
-/// replacing the scheduler or its sampler.
+/// replacing the scheduler or its sampler. The resume, interruption, adoption,
+/// durability, and quarantine contracts are the same as
+/// [`run_field_checkpointed`].
 pub fn run_field_checkpointed_with_evaluator<E>(
     root: &Path,
     manifest: &CampaignManifest,
     field: u8,
     checkpoint_path: &Path,
     worker_count: usize,
-    mut evaluator: E,
+    evaluator: E,
 ) -> Result<FieldRun, CampaignDriverError>
 where
     E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
 {
+    run_field_checkpointed_inner(
+        root,
+        manifest,
+        field,
+        checkpoint_path,
+        worker_count,
+        evaluator,
+        DurabilityHooks {
+            on_shard_durable: ignore_durable_path,
+            on_summary_durable: ignore_durable_path,
+            on_checkpoint_fsync: ignore_checkpoint_fsync,
+        },
+    )
+}
+
+struct DurabilityHooks<S, M, C> {
+    on_shard_durable: S,
+    on_summary_durable: M,
+    on_checkpoint_fsync: C,
+}
+
+fn ignore_durable_path(_: &Path) {}
+
+fn ignore_checkpoint_fsync() {}
+
+fn run_field_checkpointed_inner<E, S, M, C>(
+    root: &Path,
+    manifest: &CampaignManifest,
+    field: u8,
+    checkpoint_path: &Path,
+    worker_count: usize,
+    mut evaluator: E,
+    hooks: DurabilityHooks<S, M, C>,
+) -> Result<FieldRun, CampaignDriverError>
+where
+    E: FnMut(&WorkItem) -> Result<EvaluatedShard, String>,
+    S: FnMut(&Path),
+    M: FnMut(&Path),
+    C: FnMut(),
+{
+    let DurabilityHooks {
+        mut on_shard_durable,
+        mut on_summary_durable,
+        mut on_checkpoint_fsync,
+    } = hooks;
     if worker_count == 0 {
         return Err(CampaignDriverError::ResumeRefused(
             "worker_count must be non-zero".to_owned(),
         ));
     }
     let items = enumerate_work_items(manifest, Some(field))?;
+    let configuration = campaign_configuration(manifest, field);
     let hash = campaign_config_hash(manifest, field);
     let reader =
         CheckpointReader::<CampaignCheckpoint, _>::for_payload(checkpoint_path, hash.clone());
@@ -212,10 +318,10 @@ where
         })?;
     let mut checkpoint = match reader.load_payload() {
         Ok(Some(payload)) => payload,
-        Ok(None) => CampaignCheckpoint::new(field),
+        Ok(None) => CampaignCheckpoint::new(configuration.clone()),
         Err(error @ CheckpointLoadError::ConfigHashMismatch { .. }) => {
             return Err(CampaignDriverError::ResumeRefused(
-                configuration_disagreement(&error.to_string()),
+                configuration_disagreement(checkpoint_path, &configuration, &error.to_string()),
             ));
         }
         Err(error) => return Err(CampaignDriverError::Checkpoint(error)),
@@ -225,6 +331,11 @@ where
             "field differs: checkpoint has {}, live configuration has {field}",
             checkpoint.field
         )));
+    }
+    if checkpoint.configuration != configuration {
+        return Err(CampaignDriverError::ResumeRefused(
+            configuration_differences(&checkpoint.configuration, &configuration),
+        ));
     }
 
     let expected: BTreeSet<_> = items.iter().map(WorkItemId::from).collect();
@@ -262,12 +373,12 @@ where
             checkpoint
                 .worker_states
                 .sort_by_key(|state| state.worker_index);
-            writer
-                .write_payload(&checkpoint)
-                .map_err(|source| CampaignDriverError::Io {
-                    path: checkpoint_path.to_owned(),
-                    source,
-                })?;
+            persist_checkpoint(
+                &writer,
+                &checkpoint,
+                checkpoint_path,
+                &mut on_checkpoint_fsync,
+            )?;
             return Err(CampaignDriverError::Interrupted);
         }
 
@@ -285,16 +396,16 @@ where
                 checkpoint
                     .worker_states
                     .sort_by_key(|state| state.worker_index);
-                writer
-                    .write_payload(&checkpoint)
-                    .map_err(|source| CampaignDriverError::Io {
-                        path: checkpoint_path.to_owned(),
-                        source,
-                    })?;
+                persist_checkpoint(
+                    &writer,
+                    &checkpoint,
+                    checkpoint_path,
+                    &mut on_checkpoint_fsync,
+                )?;
                 continue;
             }
         };
-        emit_shard(root, manifest, &evaluated.run)?;
+        let shard = emit_or_adopt_shard(root, manifest, item, &evaluated, &mut on_shard_durable)?;
         completed.insert(id);
         checkpoint
             .worker_states
@@ -308,13 +419,13 @@ where
         checkpoint
             .worker_states
             .sort_by_key(|state| state.worker_index);
-        writer
-            .write_payload(&checkpoint)
-            .map_err(|source| CampaignDriverError::Io {
-                path: checkpoint_path.to_owned(),
-                source,
-            })?;
-        shards.push(evaluated.run);
+        persist_checkpoint(
+            &writer,
+            &checkpoint,
+            checkpoint_path,
+            &mut on_checkpoint_fsync,
+        )?;
+        shards.push(shard);
     }
 
     // Records emitted before the checkpoint boundary are authoritative. This
@@ -344,18 +455,70 @@ where
         let _ = crate::permanent_campaign::schema::read_field_summary(root, field)
             .map_err(|error| CampaignDriverError::ResumeRefused(error.to_string()))?;
     } else {
-        emit_summary(root, manifest, &summary)?;
+        emit_summary_with_durability_hook(root, manifest, &summary, |path| {
+            on_summary_durable(path)
+        })?;
     }
     checkpoint.completed = completed.into_iter().collect();
     checkpoint.quarantined = quarantined;
     checkpoint.field_complete = true;
+    persist_checkpoint(
+        &writer,
+        &checkpoint,
+        checkpoint_path,
+        &mut on_checkpoint_fsync,
+    )?;
+    Ok(FieldRun::from_parts(field, shards, summary))
+}
+
+fn persist_checkpoint<C>(
+    writer: &CheckpointWriter<CampaignCheckpoint, String>,
+    checkpoint: &CampaignCheckpoint,
+    checkpoint_path: &Path,
+    on_checkpoint_fsync: &mut C,
+) -> Result<(), CampaignDriverError>
+where
+    C: FnMut(),
+{
     writer
-        .write_payload(&checkpoint)
+        .write_payload_with_fsync_hook(checkpoint, on_checkpoint_fsync)
         .map_err(|source| CampaignDriverError::Io {
             path: checkpoint_path.to_owned(),
             source,
-        })?;
-    Ok(FieldRun::from_parts(field, shards, summary))
+        })
+}
+
+fn emit_or_adopt_shard<S>(
+    root: &Path,
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    evaluated: &EvaluatedShard,
+    on_shard_durable: &mut S,
+) -> Result<ShardRun, CampaignDriverError>
+where
+    S: FnMut(&Path),
+{
+    let path = root.join(shard_record_file(item.q, item.n, item.shard_id));
+    let expected = shard_record_bytes(&evaluated.run.record)?;
+    match fs::read(&path) {
+        Ok(existing) => {
+            if existing != expected {
+                return Err(CampaignDriverError::InvalidExistingShard {
+                    path,
+                    message: "serialized shard bytes mismatch (corruption or foreign file)"
+                        .to_owned(),
+                });
+            }
+            load_existing_shard(root, manifest, item)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            emit_shard_with_durability_hook(root, manifest, &evaluated.run, |durable_path| {
+                on_shard_durable(durable_path)
+            })?;
+            Ok(evaluated.run.clone())
+        }
+        Err(source) => Err(CampaignDriverError::Io { path, source }),
+    }
 }
 
 fn load_existing_shard(
@@ -399,19 +562,121 @@ fn load_existing_shard(
     })
 }
 
-fn configuration_disagreement(error: &str) -> String {
-    let detail = error
-        .split("loaded ")
-        .nth(1)
-        .and_then(|value| value.split(", expected").next())
-        .unwrap_or(error);
-    if detail.contains("root_seed=") {
-        "root_seed differs between checkpoint and live campaign".to_owned()
-    } else if detail.contains("field=") {
-        "field differs between checkpoint and live campaign".to_owned()
-    } else if detail.contains("campaign_id=") {
-        "campaign_id differs between checkpoint and live campaign".to_owned()
+fn configuration_disagreement(
+    checkpoint_path: &Path,
+    current: &CampaignConfiguration,
+    fallback: &str,
+) -> String {
+    let loaded = fs::read(checkpoint_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+        .and_then(|envelope| envelope.get("payload").cloned())
+        .and_then(|payload| serde_json::from_value::<CampaignCheckpoint>(payload).ok())
+        .map(|checkpoint| checkpoint.configuration);
+    loaded
+        .map(|loaded| configuration_differences(&loaded, current))
+        .unwrap_or_else(|| {
+            format!("manifest configuration differs from the checkpoint: {fallback}")
+        })
+}
+
+fn configuration_differences(
+    checkpoint: &CampaignConfiguration,
+    current: &CampaignConfiguration,
+) -> String {
+    let mut differences = Vec::new();
+    if checkpoint.manifest_content_hash != current.manifest_content_hash {
+        differences.push(format!(
+            "manifest_content_hash differs (checkpointed={}, current={})",
+            checkpoint.manifest_content_hash, current.manifest_content_hash
+        ));
+    }
+    if checkpoint.campaign_id != current.campaign_id {
+        differences.push(format!(
+            "campaign_id differs (checkpointed={}, current={})",
+            checkpoint.campaign_id, current.campaign_id
+        ));
+    }
+    if checkpoint.field != current.field {
+        differences.push(format!(
+            "field differs (checkpointed={}, current={})",
+            checkpoint.field, current.field
+        ));
+    }
+    if checkpoint.root_seed != current.root_seed {
+        differences.push(format!(
+            "root_seed differs (checkpointed={}, current={})",
+            checkpoint.root_seed, current.root_seed
+        ));
+    }
+    if differences.is_empty() {
+        "manifest configuration differs from the checkpoint".to_owned()
     } else {
-        "campaign manifest configuration differs from the checkpoint".to_owned()
+        differences.join("; ")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::permanent_campaign::fixture::{manifest, TestDir};
+    use std::cell::RefCell;
+    use std::path::Path;
+    use std::rc::Rc;
+
+    #[test]
+    fn shard_and_summary_durability_precede_checkpoint_recording() {
+        let directory = TestDir::new();
+        let campaign = manifest();
+        let checkpoint = directory.root().join("campaign.checkpoint.json");
+        let events = Rc::new(RefCell::new(Vec::new()));
+        let shard_events = Rc::clone(&events);
+        let summary_events = Rc::clone(&events);
+        let checkpoint_events = Rc::clone(&events);
+
+        run_field_checkpointed_inner(
+            directory.root(),
+            &campaign,
+            3,
+            &checkpoint,
+            1,
+            |item| evaluate_work_item(&campaign, item).map_err(|error| error.to_string()),
+            DurabilityHooks {
+                on_shard_durable: move |path: &Path| {
+                    shard_events
+                        .borrow_mut()
+                        .push(format!("shard:{}", path.display()))
+                },
+                on_summary_durable: move |path: &Path| {
+                    summary_events
+                        .borrow_mut()
+                        .push(format!("summary:{}", path.display()))
+                },
+                on_checkpoint_fsync: move || {
+                    checkpoint_events.borrow_mut().push("checkpoint".to_owned())
+                },
+            },
+        )
+        .unwrap();
+
+        let events = events.borrow();
+        let first_shard = events
+            .iter()
+            .position(|event| event.starts_with("shard:"))
+            .unwrap();
+        let first_checkpoint = events
+            .iter()
+            .position(|event| event == "checkpoint")
+            .unwrap();
+        let summary = events
+            .iter()
+            .position(|event| event.starts_with("summary:"))
+            .unwrap();
+        let final_checkpoint = events
+            .iter()
+            .rposition(|event| event == "checkpoint")
+            .unwrap();
+        assert!(first_shard < first_checkpoint, "events: {events:?}");
+        assert!(summary < final_checkpoint, "events: {events:?}");
     }
 }

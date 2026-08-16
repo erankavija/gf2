@@ -635,6 +635,14 @@ fn create_parent(path: &Path) -> Result<(), ScheduleError> {
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
+    write_file_with_durability_hook(path, bytes, |_| {})
+}
+
+fn write_file_with_durability_hook(
+    path: &Path,
+    bytes: &[u8],
+    mut on_durable: impl FnMut(&Path),
+) -> Result<(), ScheduleError> {
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -646,14 +654,29 @@ fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
     file.write_all(bytes).map_err(|source| ScheduleError::Io {
         path: path.to_owned(),
         source,
-    })
+    })?;
+    file.sync_all().map_err(|source| ScheduleError::Io {
+        path: path.to_owned(),
+        source,
+    })?;
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    fs::File::open(parent)
+        .and_then(|directory| directory.sync_all())
+        .map_err(|source| ScheduleError::Io {
+            path: parent.to_owned(),
+            source,
+        })?;
+    on_durable(path);
+    Ok(())
 }
 
-/// Emits one shard record with the same create-new refusal as [`emit_field`].
-pub(crate) fn emit_shard(
+/// Emits one shard record with the same create-new refusal as [`emit_field`],
+/// fsyncing the file and its directory and reporting the durable path.
+pub(crate) fn emit_shard_with_durability_hook(
     root: &Path,
     manifest: &CampaignManifest,
     shard: &ShardRun,
+    mut on_durable: impl FnMut(&Path),
 ) -> Result<PathBuf, ScheduleError> {
     let campaign_name = manifest.campaign_id.to_string();
     if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
@@ -676,17 +699,25 @@ pub(crate) fn emit_shard(
         shard.record.shard_id,
     ));
     create_parent(&path)?;
-    let bytes = serde_json::to_vec_pretty(&shard.record).map_err(ScheduleError::Serialization)?;
-    write_file(&path, &bytes)?;
+    let bytes = shard_record_bytes(&shard.record)?;
+    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
     Ok(path)
 }
 
-/// Emits a field summary after all selected work items have reached a terminal
-/// state. The summary writer retains the existing create-new refusal.
-pub(crate) fn emit_summary(
+/// Canonical serialized form of a shard record, shared by emission and the
+/// resume-time adoption comparison.
+pub(crate) fn shard_record_bytes(record: &ShardRecord) -> Result<Vec<u8>, ScheduleError> {
+    serde_json::to_vec_pretty(record).map_err(ScheduleError::Serialization)
+}
+
+/// Emits a field summary after all selected work items reach a terminal
+/// state, with the existing create-new refusal and the same durability
+/// contract as shard emission.
+pub(crate) fn emit_summary_with_durability_hook(
     root: &Path,
     manifest: &CampaignManifest,
     summary: &FieldSummary,
+    mut on_durable: impl FnMut(&Path),
 ) -> Result<PathBuf, ScheduleError> {
     let campaign_name = manifest.campaign_id.to_string();
     if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
@@ -697,7 +728,7 @@ pub(crate) fn emit_summary(
     let path = root.join(field_summary_file(summary.q));
     create_parent(&path)?;
     let bytes = serde_json::to_vec_pretty(summary).map_err(ScheduleError::Serialization)?;
-    write_file(&path, &bytes)?;
+    write_file_with_durability_hook(&path, &bytes, &mut on_durable)?;
     Ok(path)
 }
 
