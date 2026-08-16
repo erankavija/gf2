@@ -38,8 +38,8 @@ use gf2_stats::sampler::{
 use super::schema::{
     field_summary_file, shard_record_file, AcceptanceVerdict, Backend, CampaignManifest, CellSpec,
     CellTerminalState, DeterminantCount, DeterminantEstimate, DeterminantPlan, FieldSummary,
-    Interval, ProportionEstimate, ShardRecord, ShardSpec, StreamAddress, SummaryRow,
-    SCHEMA_VERSION,
+    Interval, ProportionEstimate, QuarantinedShard, ShardRecord, ShardSpec, StreamAddress,
+    SummaryRow, SCHEMA_VERSION,
 };
 
 /// The purpose tag reserved for published campaign-cell matrix streams.
@@ -99,6 +99,17 @@ pub struct ShardRun {
     pub timing: PhaseDurations,
 }
 
+/// A deterministic shard result and the sampler's absolute generator position
+/// after its final matrix draw.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EvaluatedShard {
+    /// Schema record produced by the evaluation.
+    pub run: ShardRun,
+    /// Absolute ChaCha20 generator word position observed at the checkpoint
+    /// boundary. The driver records this caller-owned continuation state.
+    pub generator_word_position: u128,
+}
+
 /// Completed execution for one field arm.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FieldRun {
@@ -108,6 +119,10 @@ pub struct FieldRun {
 }
 
 impl FieldRun {
+    pub(crate) fn from_parts(q: u8, shards: Vec<ShardRun>, summary: FieldSummary) -> Self {
+        Self { q, shards, summary }
+    }
+
     /// Returns the field order covered by this invocation.
     #[must_use]
     pub const fn q(&self) -> u8 {
@@ -332,6 +347,30 @@ fn shard_matrix_count(cell: &CellSpec, shard: &ShardSpec) -> u64 {
 }
 
 fn run_shard(root_seed: u64, purpose_tag: u8, item: &WorkItem) -> Result<ShardRun, ScheduleError> {
+    Ok(run_shard_with_position(root_seed, purpose_tag, item)?.run)
+}
+
+/// Evaluates one manifest work item and returns its continuation position.
+///
+/// This is the library seam used by the checkpointed driver and by tests that
+/// inject an evaluation failure. It performs no dataset I/O.
+pub fn evaluate_work_item(
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+) -> Result<EvaluatedShard, ScheduleError> {
+    let purpose = manifest
+        .stream_purposes
+        .iter()
+        .find(|purpose| purpose.tag == CAMPAIGN_CELL_PURPOSE_TAG)
+        .ok_or(ScheduleError::MissingCampaignPurpose)?;
+    run_shard_with_position(manifest.root_seed, purpose.tag, item)
+}
+
+fn run_shard_with_position(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+) -> Result<EvaluatedShard, ScheduleError> {
     match item.q {
         3 => run_shard_for::<3>(root_seed, purpose_tag, item, FieldOrder::F3),
         5 => run_shard_for::<5>(root_seed, purpose_tag, item, FieldOrder::F5),
@@ -347,7 +386,7 @@ fn run_shard_for<const Q: u64>(
     purpose_tag: u8,
     item: &WorkItem,
     field_order: FieldOrder,
-) -> Result<ShardRun, ScheduleError> {
+) -> Result<EvaluatedShard, ScheduleError> {
     let stream = StreamIndex::new(item.stream_index).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
     })?;
@@ -391,28 +430,31 @@ fn run_shard_for<const Q: u64>(
         count += started.elapsed();
     }
 
-    Ok(ShardRun {
-        record: ShardRecord {
-            schema_version: SCHEMA_VERSION,
-            shard_id: item.shard_id,
-            stream_address: StreamAddress {
-                root_seed,
-                q: item.q,
-                n: item.n,
-                purpose_tag,
-                stream_index: item.stream_index,
+    Ok(EvaluatedShard {
+        run: ShardRun {
+            record: ShardRecord {
+                schema_version: SCHEMA_VERSION,
+                shard_id: item.shard_id,
+                stream_address: StreamAddress {
+                    root_seed,
+                    q: item.q,
+                    n: item.n,
+                    purpose_tag,
+                    stream_index: item.stream_index,
+                },
+                matrix_count: item.matrix_count,
+                permanent_zero_count,
+                permanent_histogram: histogram,
+                determinant: DeterminantCount::NotEvaluated,
             },
-            matrix_count: item.matrix_count,
-            permanent_zero_count,
-            permanent_histogram: histogram,
-            determinant: DeterminantCount::NotEvaluated,
+            timing: PhaseDurations {
+                draw,
+                pack,
+                evaluate,
+                count,
+            },
         },
-        timing: PhaseDurations {
-            draw,
-            pack,
-            evaluate,
-            count,
-        },
+        generator_word_position: sampler.generator_word_position(),
     })
 }
 
@@ -521,7 +563,46 @@ fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary
         schema_version: SCHEMA_VERSION,
         q,
         rows,
+        quarantined: Vec::new(),
     }
+}
+
+/// Builds a field summary while retaining failed work-item identities.
+pub(crate) fn summarize_with_quarantine(
+    manifest: &CampaignManifest,
+    q: u8,
+    shards: &[ShardRun],
+    quarantined: Vec<QuarantinedShard>,
+) -> FieldSummary {
+    let mut summary = summarize(q, shards, manifest.cells.len() as u64);
+    for row in &mut summary.rows {
+        if quarantined
+            .iter()
+            .any(|item| item.q == row.q && item.n == row.n)
+        {
+            row.terminal_state = CellTerminalState::Halted {
+                reason: super::schema::HaltReason::ExecutionFailure,
+            };
+        }
+    }
+    for cell in manifest.cells.iter().filter(|cell| cell.q == q) {
+        if !summary.rows.iter().any(|row| row.n == cell.n) {
+            summary.rows.push(SummaryRow {
+                schema_version: SCHEMA_VERSION,
+                q,
+                n: cell.n,
+                matrix_count: 0,
+                permanent_zero_count: 0,
+                determinant: DeterminantCount::NotEvaluated,
+                terminal_state: CellTerminalState::Halted {
+                    reason: super::schema::HaltReason::ExecutionFailure,
+                },
+            });
+        }
+    }
+    summary.rows.sort_by_key(|row| row.n);
+    summary.quarantined = quarantined;
+    summary
 }
 
 fn permanent_acceptance(
@@ -566,6 +647,58 @@ fn write_file(path: &Path, bytes: &[u8]) -> Result<(), ScheduleError> {
         path: path.to_owned(),
         source,
     })
+}
+
+/// Emits one shard record with the same create-new refusal as [`emit_field`].
+pub(crate) fn emit_shard(
+    root: &Path,
+    manifest: &CampaignManifest,
+    shard: &ShardRun,
+) -> Result<PathBuf, ScheduleError> {
+    let campaign_name = manifest.campaign_id.to_string();
+    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
+        return Err(ScheduleError::InvalidWorkItem(format!(
+            "output directory must be named by campaign id {campaign_name}"
+        )));
+    }
+    let address = &shard.record.stream_address;
+    let expected = enumerate_work_items(manifest, Some(address.q))?;
+    if !expected.iter().any(|item| {
+        item.shard_id == shard.record.shard_id && item.q == address.q && item.n == address.n
+    }) {
+        return Err(ScheduleError::InvalidWorkItem(
+            "shard result does not match manifest work items".to_owned(),
+        ));
+    }
+    let path = root.join(shard_record_file(
+        address.q,
+        address.n,
+        shard.record.shard_id,
+    ));
+    create_parent(&path)?;
+    let bytes = serde_json::to_vec_pretty(&shard.record).map_err(ScheduleError::Serialization)?;
+    write_file(&path, &bytes)?;
+    Ok(path)
+}
+
+/// Emits a field summary after all selected work items have reached a terminal
+/// state. The summary writer retains the existing create-new refusal.
+pub(crate) fn emit_summary(
+    root: &Path,
+    manifest: &CampaignManifest,
+    summary: &FieldSummary,
+) -> Result<PathBuf, ScheduleError> {
+    let campaign_name = manifest.campaign_id.to_string();
+    if root.file_name() != Some(std::ffi::OsStr::new(&campaign_name)) {
+        return Err(ScheduleError::InvalidWorkItem(format!(
+            "output directory must be named by campaign id {campaign_name}"
+        )));
+    }
+    let path = root.join(field_summary_file(summary.q));
+    create_parent(&path)?;
+    let bytes = serde_json::to_vec_pretty(summary).map_err(ScheduleError::Serialization)?;
+    write_file(&path, &bytes)?;
+    Ok(path)
 }
 
 #[cfg(test)]

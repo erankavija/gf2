@@ -12,8 +12,8 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+use gf2_sim::permanent_campaign::driver::run_field_checkpointed;
 use gf2_sim::permanent_campaign::provenance::approve_emission;
-use gf2_sim::permanent_campaign::schedule::{emit_field, run_field};
 use gf2_sim::permanent_campaign::schema::read_manifest;
 
 const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD";
@@ -58,7 +58,8 @@ fn main() -> ExitCode {
         eprintln!("emission refused: {refusal}");
         return ExitCode::FAILURE;
     }
-    let run = match run_field(&manifest, field) {
+    let checkpoint = output.join("campaign.checkpoint.json");
+    let run = match run_field_checkpointed(&output, &manifest, field, &checkpoint, 1) {
         Ok(run) => run,
         Err(error) => return failure(error),
     };
@@ -76,13 +77,8 @@ fn main() -> ExitCode {
             shard.timing.count.as_secs_f64(),
         );
     }
-    match emit_field(&output, &manifest, &run) {
-        Ok(paths) => {
-            println!("wrote {} deterministic field files", paths.len());
-            ExitCode::SUCCESS
-        }
-        Err(error) => failure(error),
-    }
+    println!("wrote deterministic field files for q={}", run.q());
+    ExitCode::SUCCESS
 }
 
 fn usage(message: &str) -> ExitCode {

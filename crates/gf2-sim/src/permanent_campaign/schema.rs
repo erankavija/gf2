@@ -108,6 +108,8 @@ const JSON_FIELDS: &[&str] = &[
     "permanent_zero_count",
     "permanent_histogram",
     "determinant",
+    "quarantined",
+    "error",
     "determinant_estimate",
     "sample_count",
     "zero_count",
@@ -678,6 +680,11 @@ impl<'de> Deserialize<'de> for DeterminantCount {
 }
 
 /// One field execution's raw summary document.
+///
+/// A field may retain failed shard evaluations in [`FieldSummary::quarantined`]
+/// while the remaining shards continue. This keeps the failure identity and
+/// diagnostic in the canonical dataset document rather than silently dropping
+/// the work item.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FieldSummary {
@@ -687,6 +694,23 @@ pub struct FieldSummary {
     pub q: u8,
     /// Cell summaries ordered by matrix size.
     pub rows: Vec<SummaryRow>,
+    /// Failed shard evaluations retained with their stable identity.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub quarantined: Vec<QuarantinedShard>,
+}
+
+/// A shard evaluation that failed and was retained in the dataset.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct QuarantinedShard {
+    /// Prime field order of the failed work item.
+    pub q: u8,
+    /// Matrix dimension of the failed work item.
+    pub n: u16,
+    /// Stable cell-local shard identity.
+    pub shard_id: u64,
+    /// Mechanical evaluation diagnostic.
+    pub error: String,
 }
 
 /// Pooled summary of one $(q,n)$ cell.
@@ -1207,6 +1231,25 @@ impl SchemaDocument for FieldSummary {
             }
             if !orders.insert(row.n) {
                 return Err(format!("duplicate summary row ({},{})", row.q, row.n));
+            }
+        }
+        let mut quarantined = BTreeSet::new();
+        for item in &self.quarantined {
+            validate_field(item.q)?;
+            if item.q != self.q {
+                return Err(format!(
+                    "quarantined shard q={} differs from field summary q={}",
+                    item.q, self.q
+                ));
+            }
+            if item.n == 0 {
+                return Err("quarantined shard n must be non-zero".to_owned());
+            }
+            if item.error.trim().is_empty() {
+                return Err("quarantined shard error must not be empty".to_owned());
+            }
+            if !quarantined.insert((item.q, item.n, item.shard_id)) {
+                return Err("duplicate quarantined shard identity".to_owned());
             }
         }
         Ok(())
@@ -2529,6 +2572,7 @@ mod tests {
                 schema_version: SCHEMA_VERSION,
                 q: 3,
                 rows: vec![summary_row()],
+                quarantined: Vec::new(),
             })
             .unwrap(),
             serde_json::to_value(DeterminantEstimate::Evaluated {

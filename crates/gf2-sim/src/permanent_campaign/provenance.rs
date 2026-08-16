@@ -791,7 +791,24 @@ fn unexecuted_shard_paths(
         if !path.is_file() {
             return Err(IntegrityError::MissingRawFile { path });
         }
-        for row in read_field_summary(root, q)?.rows {
+        let summary = read_field_summary(root, q)?;
+        for item in &summary.quarantined {
+            let known = manifest.cells.iter().any(|cell| {
+                cell.q == item.q
+                    && cell.n == item.n
+                    && cell
+                        .shards
+                        .iter()
+                        .any(|shard| shard.shard_id == item.shard_id)
+            });
+            if !known {
+                return Err(IntegrityError::Schema(SchemaError::InvalidValue {
+                    path: path.clone(),
+                    message: "quarantined shard is absent from the manifest".to_owned(),
+                }));
+            }
+        }
+        for row in summary.rows {
             if matches!(row.terminal_state, CellTerminalState::Halted { .. }) {
                 halted.insert((row.q, row.n));
             }
