@@ -540,6 +540,7 @@ mod tests {
         ArtifactIdentity, Availability, CellSpec, GitRevision, Provenance, RngAlgorithm, ShardSpec,
         StreamPurpose,
     };
+    use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
     use std::collections::BTreeSet;
 
     fn manifest(cells: Vec<CellSpec>) -> CampaignManifest {
@@ -637,6 +638,48 @@ mod tests {
     }
 
     #[test]
+    fn permanent_floor_rejection_is_the_preregistered_exact_test() {
+        let level = bonferroni_level(0.025, 1);
+        let rejected = permanent_zero_floor_test(0, 11, 3);
+        let accepted = permanent_zero_floor_test(4, 11, 3);
+
+        assert!(rejected.rejects_at(level));
+        assert!(!accepted.rejects_at(level));
+        assert_eq!(
+            permanent_acceptance(3, 0, 11, 1),
+            AcceptanceVerdict::Rejected
+        );
+        assert_eq!(
+            permanent_acceptance(3, 4, 11, 1),
+            AcceptanceVerdict::Accepted
+        );
+    }
+
+    #[test]
+    fn summary_verdict_matches_the_pooled_permanent_floor_decision() {
+        let campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
+        let family_test_count = campaign.cells.len() as u64;
+        let run = run_field(&campaign, 3).unwrap();
+        let row = &run.summary().rows[0];
+        let CellTerminalState::Completed {
+            permanent_verdict, ..
+        } = row.terminal_state
+        else {
+            panic!("small completed run must produce a completed summary row");
+        };
+
+        assert_eq!(
+            permanent_verdict,
+            permanent_acceptance(
+                row.q,
+                row.permanent_zero_count,
+                row.matrix_count,
+                family_test_count,
+            )
+        );
+    }
+
+    #[test]
     fn emission_paths_are_disjoint_for_single_field_invocations() {
         let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)]), cell(5, 2, 1, &[(0, 20)])]);
         let q3 = run_field(&campaign, 3).unwrap();
@@ -699,5 +742,29 @@ mod tests {
         }
         let _ = fs::remove_dir_all(left_parent);
         let _ = fs::remove_dir_all(right_parent);
+    }
+
+    #[test]
+    fn re_emitting_into_the_same_tree_refuses_and_preserves_the_first_emission() {
+        let campaign = manifest(vec![cell(3, 2, 1, &[(0, 10)])]);
+        let run = run_field(&campaign, 3).unwrap();
+        let parent = std::env::temp_dir().join(format!("campaign-reemit-{}", std::process::id()));
+        let root = parent.join("campaign-test");
+        let paths = emit_field(&root, &campaign, &run).unwrap();
+        let first_bytes: Vec<_> = paths
+            .iter()
+            .map(fs::read)
+            .collect::<Result<_, _>>()
+            .unwrap();
+
+        let refusal = emit_field(&root, &campaign, &run)
+            .expect_err("re-emitting into an existing dataset must refuse");
+        assert!(refusal
+            .to_string()
+            .contains(paths[0].to_string_lossy().as_ref()));
+        for (path, bytes) in paths.iter().zip(first_bytes) {
+            assert_eq!(fs::read(path).unwrap(), bytes);
+        }
+        let _ = fs::remove_dir_all(parent);
     }
 }
