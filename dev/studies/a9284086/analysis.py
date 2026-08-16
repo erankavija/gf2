@@ -1042,9 +1042,12 @@ def section_9_watchdog() -> None:
               f"({ryser / fault_ryser:.2f}x in M*n*2^n), span "
               f"{kernel / reps:.6f} s")
     print()
-    print("Upper bound on the faulted launch's span, from this study's measured")
-    print("spans at the same field and order under strictly linear scaling in M,")
-    print("which the measured 256 -> 1024 step at that order shows is pessimistic:")
+    print("ESTIMATE, not a bound: the faulted configuration is unmeasured, so any")
+    print("span figure for it comes from scaling measured neighbours under an")
+    print("assumption those measurements do not settle. Route 1 scales this")
+    print("study's device spans at that order linearly in M; the step it actually")
+    print("measures there is sublinear, so linear scaling is a model and not a")
+    print("ceiling.")
     same = [(int(row["batch_size"]),
              number(row, "kernel_device_s") / number(row, "reps"))
             for row in device_cells(FAULT_Q)
@@ -1052,21 +1055,36 @@ def section_9_watchdog() -> None:
             and number(row, "reps")]
     for m, span in sorted(same):
         print(f"  measured M={m:>5} span {span:.6f} s -> M={FAULT_M} "
-              f"at most {span * FAULT_M / m:.4f} s "
-              f"({span * FAULT_M / m / ARCHIVED_SPAN_BOUNDARY_S:.4f} of the "
-              f"archived boundary)")
+              f"estimated {span * FAULT_M / m:.4f} s under linear scaling")
+    if len(same) >= 2:
+        (m0, s0), (m1, s1) = sorted(same)[0], sorted(same)[-1]
+        print(f"  measured step at that order: M {m0} -> {m1} ({m1 / m0:.2f}x) "
+              f"costs {s1 / s0:.4f}x, i.e. sublinear")
     rows = [row for row in read_simple(SUSTAINED)
             if int(row["q"]) == FAULT_Q and int(row["n"]) == FAULT_N
             and row["backend"] == "gpu_hip"]
     print()
-    print("The committed sustained receipt at the same cell, wall time per shard,")
-    print("an upper bound on the device span because it carries the host work too:")
+    print("Route 2, also an ESTIMATE: the committed sustained receipt's wall time")
+    print("per shard at the same cell, a composite host+device quantity, scaled by")
+    print("the batch ratio. Its own two points step super-linearly, so extending")
+    print("them assumes a scaling they do not settle.")
+    wall_per_shard = []
     for row in rows:
         m = int(row["batch_size"])
         shards = int(row["shards"])
         wall = float(row["wall_s"])
+        wall_per_shard.append((m, wall / shards))
         print(f"  M={m:>5} {shards:>4} shards over {wall:.3f} s -> "
-              f"{wall / shards:.4f} s per launch")
+              f"{wall / shards:.4f} s per launch -> M={FAULT_M} estimated "
+              f"{wall / shards * FAULT_M / m:.4f} s")
+    if len(wall_per_shard) >= 2:
+        (m0, w0), (m1, w1) = sorted(wall_per_shard)[0], sorted(wall_per_shard)[-1]
+        print(f"  measured step on this route: M {m0} -> {m1} ({m1 / m0:.2f}x) "
+              f"costs {w1 / w0:.4f}x, i.e. super-linear")
+    print()
+    print("Neither route bounds the unmeasured configuration, and the receipt does")
+    print("not use either as a bound: the reconciliation rests on the measured")
+    print("completions above.")
 
 
 def section_10_prose_checks() -> None:

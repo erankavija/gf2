@@ -716,6 +716,12 @@ study's investigation records the two documents as disagreeing and forbids
 papering over it
 ([`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md):352-358).
 
+The archived document carries a dated supersession note (2026-08-16) above its
+§2.5, and beside each of its two other renderings of the same claim, pointing at
+the retraction and at this receipt's §9 and §10; its original text is preserved
+unchanged beneath those notes (`@/inv/falsification-preserved`). The two
+documents therefore cross-cite rather than contradict each other in place.
+
 ### 9.2 What this study's own measurements establish, per field
 
 The bound this study derives is an *observed clean-completion envelope*: the
@@ -767,8 +773,9 @@ $M = 4096$, attempted once while probing the batch ceiling and never retried
 ([`../b488f02c/gpu-hang-2026-08-07.log`](../b488f02c/gpu-hang-2026-08-07.log);
 the harness records the same event and lowers its own sustained probe to
 $M = 2048$ because of it,
-`dev/research/permanent-sampling-feas/src/main.rs:819-826`). Three of this
-study's measurements bear on it directly.
+`dev/research/permanent-sampling-feas/src/main.rs:819-826`). What this study
+measures near it, what it does not measure, and what stays unexplained follow in
+that order.
 
 **This study completed a launch of the same kernel at exactly that launch's
 work, and one four times larger.** $4096 \cdot 2^{24}$ and $256 \cdot 2^{28}$
@@ -779,28 +786,55 @@ time each and all five completed. The $M = 1024$ cell at the same order carries
 4.00× the faulted launch's $M \cdot 2^n$ and 4.67× its Ryser-weighted work, and
 its three launches, at 53.02–53.20 s each, all completed.
 
-**The faulted launch's span is not recorded anywhere, and this study bounds it
-rather than asserting it.** At the faulted cell's own $(q, n)$ this study
-measures 1.862555 s per launch at $M = 256$ and 3.270548 s at $M = 1024$. Under
-strictly linear scaling in $M$ — an upper bound, since the measured $256
-\rightarrow 1024$ step at that order costs 1.7559× rather than 4× (§8) — a
-4 096-matrix launch runs **at most 13.0822 s**, which is 0.0689 of the archived
-190 s boundary. The committed sustained receipt at the same cell agrees from a
-different direction: it records 55 shards over 180.435 s at $M = 1024$ and 19
-over 185.510 s at $M = 2048$, or 3.2806 s and 9.7637 s of wall time per launch
-([`../b488f02c/sustained-2026-08-07.csv`](../b488f02c/sustained-2026-08-07.csv)),
-which doubles to about 19.5 s at 4 096 matrices. Wall time per shard is itself
-an upper bound on the device span, because it carries the host generation work
-too, so both routes put the faulted launch an order of magnitude inside the
-archived boundary.
+**The faulted configuration itself is unmeasured, and its span is unknown.** No
+committed artifact records how long that launch ran, and nothing in this study
+measures $q = 3$, $n = 24$ at $M = 4096$, because that configuration is out of
+reach of the hash-pinned binary (§12). Two span figures can be formed for it by
+scaling measured neighbours, and **both are estimates under a stated scaling
+assumption rather than bounds** (`@/inv/benchmark-backed-performance`):
 
-**What that does and does not establish.** It establishes that the faulted
-launch was, by every committed measurement of the same kernel at the same
-order, an order of magnitude inside the archived per-launch span boundary, so a
-watchdog timeout at ≈190–200 s does not account for it. That is independent
-support for the retraction the fault's own record already carries. It does not
-identify the cause: this study captured no diagnostic at a fault, because no
-fault occurred in it.
+- Scaling this study's own device spans at that order linearly in $M$: from the
+  measured 1.862555 s at $M = 256$ that estimates 29.8009 s, and from the
+  measured 3.270548 s at $M = 1024$ it estimates 13.0822 s. **The two bases
+  disagree by 2.28×**, which is the sublinearity the linear model ignores — the
+  step this study actually measures at that order is 1.7559× for 4.00× the batch
+  (§8). Whether that behaviour persists to a batch four times beyond the measured
+  range is untested, so linear scaling is neither a ceiling nor a single figure.
+- Scaling the committed sustained receipt's wall time per shard at the same cell
+  by the batch ratio: 3.2806 s at $M = 1024$ estimates 13.1225 s and 9.7637 s at
+  $M = 2048$ estimates 19.5274 s, from 55 shards over 180.435 s and 19 over
+  185.510 s
+  ([`../b488f02c/sustained-2026-08-07.csv`](../b488f02c/sustained-2026-08-07.csv)).
+  Those two points step **super**-linearly, 2.9762× for 2.00× the batch, in the
+  opposite direction to the device spans above, so extending either assumes a
+  scaling the measurements do not settle. The quantity is composite host and
+  device wall time rather than a device span.
+
+Neither figure establishes an upper bound at a configuration no committed
+measurement covers, and neither is used as one below.
+
+**What the reconciliation rests on is what is measured.** Three committed facts,
+none of them an extrapolation:
+
+1. the same kernel, same field, at exactly the faulted launch's $M \cdot 2^n$ and
+   1.17× its Ryser-weighted work, completed five launches averaging 29.954639 s
+   of device kernel time;
+2. the same kernel at 4.00× that work and 4.67× its Ryser-weighted work
+   completed three launches of 53.02–53.20 s each;
+3. six committed device cells run above their field's archived work budget, to
+   68.72× at $q = 3$, and none faults (§9.2).
+
+Those bear on the archived calibration's *work-budget* half: a per-launch work
+budget of $4.0 \times 10^9$ at $q = 3$ is not a necessary condition for this
+kernel to complete on this host. They bear on its *span-boundary* half not at
+all, because the longest launch any of them runs is 53.20 s and nothing in this
+study reaches the archived ≈190–200 s region (§9.4).
+
+**The fault stays unexplained, and this study does not explain it.** Its
+configuration is unmeasured, its span unknown, and its cause unidentified — which
+is what its own record states, having explicitly retracted the watchdog
+attribution for want of a diagnostic that would separate the hypotheses. This
+study adds no such diagnostic, because no fault occurred in it.
 
 ### 9.4 The bound, stated
 
@@ -889,7 +923,7 @@ table confirms its launch formula at the allocator's granularity.
 | REQ-04 | §6 | **Satisfied.** The verdict is stated across the study's kernels at three levels, each with the measurement behind it. The lane-owns-interval mapping's stated per-lane register budget implies the wave-slot ceiling for all seven kernels that have one, and its per-block shared-memory allocation leaves the device's LDS with headroom above the per-CU wave-slot cap, so neither is the limiter anywhere. Where per-SIMD occupancy falls below the ceiling — four of eleven kernels — the resource that limits it is the compiler's realised per-lane vector-register allocation, from the receipt of §4 and confirmed at runtime by `VGPR_Count` in §5. Where achieved occupancy falls below that ceiling, which is every cell in the study, the limiting quantity is the launch width the batch calibration supplies, measured as launch geometry and residency in §5. §6 states which candidate mechanisms this evidence cannot rule on. |
 | REQ-05 | §7 | **Satisfied.** Host-to-device transfer, device-to-host transfer, and launch overhead are each a separate device-event column of the field campaigns' grids, reported per launch beside kernel time over all 52 device cells that carry spans, and cited to those columns rather than re-measured. `device_submission_to_kernel_s` is the launch measure used, and §7 states why a prototype row's `host_submission_s` is not one, citing bug `79c5ace7`. |
 | REQ-06 | §8 | **Satisfied.** Sustained-kernel duration per launch is reported for every measured device cell of the three fields against both matrix order and per-launch work, in the two work forms $M \cdot 2^n$ and $M \cdot n \cdot 2^n$, all measured on the target device by the campaigns' device-event `kernel_device_s` column. Two readings show the two axes do not collapse: at fixed order a 4.00× batch step costs 1.73–2.03× the span, and at one fixed work value the span varies by 978.5× across paths. |
-| REQ-07 | §9 | **Satisfied.** A per-field bound is derived from this study's own measurements and stated with the cell that supports it: per-launch work to $2.7488 \times 10^{11}$ and span to 53.077521 s at $q = 3$, to $1.0737 \times 10^{9}$ and 115.452922 s at $q = 5$, and to $1.0737 \times 10^{9}$ and 21.722805 s at $q = 7$, each naming its order, path, batch, outcome, and launch count. §9.4 states that these are lower bounds on the safe region rather than located boundaries, because no launch in this study was run to failure. The reconciliation with the archived calibration is explicit: six committed cells exceed their field's archived work budget without fault, one of them carrying exactly the recorded fault's $M \cdot 2^n$ and 1.17× its Ryser-weighted work; the faulted launch's own span is bounded above at 13.0822 s from this study's measurements at the same cell, an order of magnitude inside the archived boundary, which is independent support for the retraction that fault's record already carries. |
+| REQ-07 | §9 | **Satisfied.** A per-field bound is derived from this study's own measurements and stated with the cell that supports it: per-launch work to $2.7488 \times 10^{11}$ and span to 53.077521 s at $q = 3$, to $1.0737 \times 10^{9}$ and 115.452922 s at $q = 5$, and to $1.0737 \times 10^{9}$ and 21.722805 s at $q = 7$, each naming its order, path, batch, outcome, and launch count. §9.4 states that these are lower bounds on the safe region rather than located boundaries, because no launch in this study was run to failure. The reconciliation with the archived calibration is explicit: six committed cells exceed their field's archived work budget without fault, one of them carrying exactly the recorded fault's $M \cdot 2^n$ and 1.17× its Ryser-weighted work; §9.3 states that the faulted configuration itself is unmeasured and its span unknown, presents the two scalings of measured neighbours as estimates under stated assumptions rather than bounds, and rests the reconciliation on the measured completions instead. The evidence bears on the archived calibration's work-budget half and, as §9.3 and §9.4 both state, not on its span boundary. |
 | REQ-08 | §10 | **Satisfied.** Five contradictions are recorded with the statements they contradict rather than replacing them: the archived $q = 3$ and $q = 7$ work budgets exceeded 68.72× and 3.07× without fault, the 978.5× span spread that falsifies a work budget's premise as a bound on device time, the archived "never tripped it" sentence against the one recorded $q = 3$ device fault, and rocprofv3's runtime `LDS_Block_Size` reading 0 for launches that request dynamic shared memory. §10 also states, and `analysis.py` checks, that nothing here contradicts a committed register or shared-memory budget. |
 | REQ-09 | §1 | **Satisfied.** The new evidence is reproduced by one committed command, `dev/studies/a9284086/profiled-run.sh`, which verifies the binary against the manifest before its first pass and holds `dev/scripts/ccx1-bench-flock.sh --full-host` for every pass; `run.log` records all 34 commands verbatim with their exit codes, and `analysis.py` asserts the pass inventory and the zero exits. The consumed evidence is reproduced by its own campaigns' committed commands. `analysis.py` regenerates every table here from committed artifacts with one command. |
 
@@ -901,10 +935,11 @@ Collected so a reader does not have to reassemble it from the sections above.
    clean completions, not an upper bound on safe operation. No launch in this
    study was run to failure, and the longest span it observes is 115.452922 s,
    0.61 of the archived ≈190–200 s figure, so nothing here tests above that.
-2. **The recorded fault's cause remains unidentified.** This study bounds that
-   launch's span from its own measurements and shows a watchdog timeout at the
-   archived boundary does not account for it, which is what its own record
-   already says. No diagnostic separating the remaining hypotheses exists,
+2. **The recorded fault's cause remains unidentified, and its span unknown.**
+   Its configuration is unmeasured here; the two span figures §9.3 forms from
+   measured neighbours are estimates under stated scaling assumptions and are
+   not bounds, so this study neither rules the archived watchdog boundary in nor
+   rules it out for that launch. No diagnostic separating the hypotheses exists,
    because no fault occurred in this study to capture one from.
 3. **The faulting configuration is not re-run, and cannot be from the pinned
    binary.** The grid's GPU batch set is fixed at $\{256, 1024\}$
