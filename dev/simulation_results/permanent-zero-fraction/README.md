@@ -115,7 +115,10 @@ $O(\text{shards})$.
 ## Field and pooled summary schemas
 
 Each `summaries/q<q>.json` file is a `FieldSummary` containing
-`schema_version`, `q`, and `rows`. A `SummaryRow` is shared by field summaries
+`schema_version`, `q`, `rows`, and — only when present — `quarantined`, the
+failed shard evaluations retained with their identity (`q`, `n`, `shard_id`)
+and mechanical `error` diagnostic instead of being dropped from the dataset.
+A `SummaryRow` is shared by field summaries
 and `summary.csv`; per $(q,n)$ it contains:
 
 - pooled `matrix_count` and `permanent_zero_count`;

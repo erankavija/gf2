@@ -198,6 +198,7 @@ pub(crate) fn write_fixture_at_revision(root: &Path, revision: &GitRevision) {
         schema_version: SCHEMA_VERSION,
         q: 3,
         rows: vec![summary_row()],
+        quarantined: Vec::new(),
     };
     fs::write(
         summary_dir.join("q3.json"),
@@ -269,6 +270,7 @@ pub(crate) fn write_multifield_fixture(root: &Path) {
         schema_version: SCHEMA_VERSION,
         q: 5,
         rows: vec![q5_row.clone()],
+        quarantined: Vec::new(),
     };
     fs::write(
         root.join("summaries/q5.json"),

@@ -292,6 +292,18 @@ impl<const Q: u64> MatrixSampler<Q> {
         self.address
     }
 
+    /// Returns the absolute ChaCha20 generator word position at the latest
+    /// refill boundary.
+    ///
+    /// The sampler owns a small byte buffer, so this is the underlying
+    /// generator's position rather than a byte cursor into that buffer. It is
+    /// sufficient for checkpoint payloads at work-item boundaries, where the
+    /// stream address remains the canonical way to reopen the shard stream.
+    #[must_use]
+    pub fn generator_word_position(&self) -> u128 {
+        self.rng.get_word_pos()
+    }
+
     /// Draws one exactly uniform element of `Fp<Q>` by byte rejection.
     ///
     /// The accepted byte range is the greatest multiple of `Q` below 256, so
