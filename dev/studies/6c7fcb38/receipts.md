@@ -2108,8 +2108,10 @@ operating point is below the archived $q = 7$ work budget, while the
 throughput and launch-duration conclusions still hold against an archived
 prior rather than a bound this study has derived.
 
-Measured against that prior, this campaign's launches sit inside it with margin,
-and `analysis.py` section 15 tabulates every device row:
+Measured against that prior's per-launch span boundary alone, this campaign's
+launches sit inside it with margin; one cell exceeds the archived $q = 7$ work
+budget 3.07× without fault, and `analysis.py` section 15 tabulates every device
+row:
 
 - The declared operating point's launch runs a kernel span of 0.004672 s,
   **0.00002 of the archived 190 s boundary**, carrying $4.299 \times 10^7$ units
