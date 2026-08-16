@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "REQ-08 amendment approved and applied; gates pending"
+     "status": "rework-1-dispatched: doc-review F1 + research-review F1-F6 (go-verdict safe-duration logic, Wilson n=24, crossover synthesis, F3 validity argument, stale work-budget text, Scheinerman cite); REQ-08 amendment applied with owner approval"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "rework-1-committed: ce86c386 (adoption, durability, named refusal); cargo-ci passed; reviews pending"
+     "status": "rework-2-dispatched: R2 code-review F1 CLI single field-bound checkpoint path; doc-review F1-F3 README concurrency/rerun contract + worker-count rustdoc; to codex luna"
     }
    ]
   },
@@ -434,7 +434,9 @@
   "4fdd781a": 2,
   "41c3d91d": 2,
   "a9284086": 1,
-  "51498b90": 1
+  "51498b90": 2,
+  "0dffa759": 1,
+  "e1c96c9c": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
