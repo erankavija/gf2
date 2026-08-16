@@ -6,6 +6,11 @@ Input CSV: `dev/benchmarks/perm_uniformity/results-2026-05-17-gpu.csv`
 RNG seed: `0x00c0ffee00000001`
 Harness: `dev/research/perm_uniformity_gpu/` (non-workspace research stub)
 
+> **Superseded in part (2026-08-16):** this document's GPU-watchdog account —
+> §2.5 and the two places later in the document that restate it — is not
+> established. See the supersession note above §2.5. Nothing else in this
+> document is affected, and no original text has been changed.
+
 ---
 
 ## 1. Motivation
@@ -145,6 +150,10 @@ q=7 at the same n (300k vs 200k at n≤12; 40k at n=16/20) — q=7 is **not**
 under-sampled to dodge the watchdog. The watchdog is defeated by the
 bounded-duration sub-batch kernels (§2.5), not by shrinking N.
 
+> **(2026-08-16)** "*The watchdog is defeated*" is superseded: see the
+> supersession note above §2.5. The sampling argument this sentence supports —
+> that q=7 uses larger N rather than smaller — is unaffected.
+
 N is the `[aspirational]` provisional knob; these are the values actually
 used on the gfx1030 dev host.
 
@@ -163,6 +172,48 @@ required N is fixed and exceeds a tractable wall-clock on gfx1030:
   floor ≪ TVD_det/2 = 0.01 is ≥ 20,000 (floor 0.0069) ⇒ ≈7.3 h; N=8,000
   gives floor 0.01092 > 0.01 (fails the requirement). Infeasible at the
   required N on gfx1030; documented with the measured per-launch number.
+
+> **Supersession note (2026-08-16) — §2.5's watchdog account is not
+> established.** The original text below is preserved unchanged rather than
+> reworked (`@/inv/falsification-preserved`); read it as a prior calibration of
+> one kernel on one host, not as an established device property. Three of its
+> claims are superseded: the attribution of the observed hang to a watchdog
+> timeout, the ≈190–200 s hang boundary, and the "fully defeated" verdict, along
+> with the per-field `sub_batch · 2^n` budgets derived from them.
+>
+> 1. **The hang attribution was explicitly retracted.** The one recorded device
+>    fault's own receipt states that "*nothing here attributes the hang to a
+>    watchdog timeout: that is one hypothesis among others (driver defect,
+>    memory pressure, a transient), and no diagnostic was captured that would
+>    separate them*", and that the file "*supports NO claim in the study*"
+>    (`dev/studies/b488f02c/gpu-hang-2026-08-07.log`). The study carrying that
+>    observation records the retraction as a corrected overreach
+>    (`dev/studies/b488f02c/feasibility-study.md`:264-268).
+> 2. **A later runtime qualification records the boundary as unestablished and
+>    the fault as unexplained.** `dev/studies/a9284086/receipt.md` §9–§10 (JIT
+>    issue `a9284086`) measures the retained GPU permanent paths on the same
+>    gfx1030 host and finds that six committed device cells run above the
+>    per-field budgets stated below without any fault, reaching 68.72× the q=3
+>    budget of 4.0e9; that a launch carrying exactly the faulted launch's work
+>    completed, as did one at four times that work; and that no launch in that
+>    study was run to failure, so the ≈190–200 s boundary is neither confirmed
+>    nor refuted there.
+> 3. **The faulted configuration itself remains unmeasured.** Its span is not
+>    recorded anywhere and its cause is unidentified; the same receipt's §9.3
+>    presents the only available span figures as estimates under stated scaling
+>    assumptions and explicitly not as bounds.
+>
+> The budgets below are therefore not a necessary condition for safe operation
+> of these kernels on this host, and the boundary below is not a measured device
+> property. **This note scopes every restatement of the watchdog verdict in this
+> document, wherever it appears** — §2.4's "*The watchdog is defeated*", §3's
+> results-table "*now defeated by chunking*" annotations, §6's "*the watchdog
+> is defeated*" and "*the §2.5 mitigation holds*" verdicts, and §9's limitation 1
+> "*GPU watchdog: DEFEATED*" — and each of those sites carries a pointer back
+> here. What none of it disturbs is the run record itself: the launches those
+> sections describe did complete, with zero GPU hangs observed, and
+> `validate_chunked_equals_unchunked` holds. It is the *mechanism* and the
+> *boundary*, not the observations, that are unestablished.
 
 ### 2.5 GPU watchdog mitigation: bounded sub-batch kernels + cooldown
 
@@ -259,6 +310,11 @@ because the converged TVD_perm is sub-floor; the `[hard]` core claim
 | **16** | 40,000 | 0.00395000 | [0.00225, 0.00953] | 0.04137500 | [0.03718, 0.04558] | **−0.025000** | 0.003989 | **PASS (new: n>14, absent in 8e4e19a0)** |
 | **20** | 20,000 | 0.00320000 | [0.00255, 0.01140] | 0.04125000 | [0.03500, 0.04720] | **−0.020700** | 0.005642 | **PASS (new: n>14; previously hung the GPU, now defeated by chunking)** |
 | **24** | 8,000 | 0.00962500 | [0.00563, 0.02250] | 0.04037500 | [0.03150, 0.05088] | **−0.005875** | 0.008921 | **PASS (new: n>14; the 8e4e19a0 q=5-large-n N=8000 standard; 203.4 min, 104 chunked launches)** |
+
+> **(2026-08-16)** The "*now defeated by chunking*" annotation in the table
+> above, and the "*with §2.5 it now completes cleanly*" reading below, are
+> superseded on the mechanism: see the supersession note above §2.5. The clean
+> completions themselves are unaffected.
 
 F_5 n=16 and n=20 are new cells beyond `8e4e19a0`'s single-word CPU cap of
 n≤14. **F_5 n=20 is the cell that reproducibly hung the gfx1030 GPU twice
@@ -430,6 +486,13 @@ established by `diff_q95 ≪ 0`, not by a resolved point estimate:
    uninterrupted 203.4 min run (104 bounded sub-batch launches ≈117 s
    each, zero GPU hangs)**. GENUINE PASS — the §2.5 mitigation holds for
    the longest feasible F_5 cell.
+
+   > **(2026-08-16)** Items 5 and 6 above are superseded on the mechanism —
+   > "*the watchdog is defeated*" and "*the §2.5 mitigation holds*" attribute the
+   > clean runs to a watchdog account that was later retracted and a boundary
+   > that is unestablished; see the supersession note above §2.5. The PASS
+   > verdicts, the sample sizes, and the zero-hang observations are unaffected.
+
 7. **q=7, n=8** — `8e4e19a0` had no F_7 n>14; this is a new GPU-path
    extension cell. N=300,000: TVD_perm=0.00200810 (CI [0.00136, 0.00416]),
    diff_q95=**−0.013955**, floor 0.001784. GENUINE PASS.
@@ -598,6 +661,12 @@ actual values are recorded here and in the CSV header.
    `validate_chunked_equals_unchunked` assertion confirms the mitigation
    does not perturb the sampled stream. This is no longer a limitation —
    it is a solved problem and the central deliverable of this rework.
+
+   > **(2026-08-16)** Superseded: see the supersession note above §2.5. The
+   > watchdog attribution was later retracted and the boundary is unestablished,
+   > so "DEFEATED" states more than the evidence carries. What this item's own
+   > runs do establish stands: zero GPU hangs occurred across the cells listed,
+   > and `validate_chunked_equals_unchunked` holds.
 
 2. **q=5 n=24: RESOLVED — completed genuine PASS.** The longest feasible
    F_5 cell (N=8,000, ≈3.4 h) had been cut **three** times at ≈58–60 min
