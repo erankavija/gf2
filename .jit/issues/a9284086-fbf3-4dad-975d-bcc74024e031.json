@@ -9,7 +9,197 @@
     "91605d4d-8c30-43d6-b1bd-26f277b31120"
   ],
   "description": "A bounded qualification receipt across the study's retained GPU permanent paths: wave utilization, the occupancy-limiting resource, transfer and launch overhead, sustained-kernel duration, and watchdog-safe per-launch work bounds re-derived by measurement.\n\n## Background\n\nA go decision needs to know not only how fast a kernel runs but what the device is doing while it runs, and how long a single launch may safely last. Neither has been measured for any permanent kernel in this repository: no occupancy, register-count, spill, or profiler record for these kernels exists anywhere in the tree.\n\nThe watchdog record is contested and has to be treated as such. A prior calibration placed a hang boundary at roughly $190$–$200$ s per launch and derived per-field work budgets on $\\text{sub\\_batch} \\cdot 2^n$ of $4.0 \\times 10^9$ at $q = 3$, $1.3 \\times 10^9$ at $q = 5$, and $3.5 \\times 10^8$ at $q = 7$, with a $400$ ms host cooldown, and recorded that the $\\mathbb{F}_3$ kernel never tripped it even on a $2300$ s single launch at $n = 32$. A later observation recorded one device hang and explicitly retracted the attribution of that hang to a watchdog timeout, because no diagnostic separated the possible causes. The safe launch bound reported here therefore comes from this study's own measurement, citing the earlier calibration as a prior rather than as an established device property.\n\nPer-kernel resource figures are produced by each field's own measurement campaign, which reports them against the per-lane register budget and per-block shared-memory allocation that kernel's design predicted. This qualification consumes those committed figures rather than re-measuring them, and adds what no single field can settle: whether that register and shared-memory budget is what limits occupancy across the study's kernels, or whether instruction scheduling, the scattered shared-memory read of the column table, or something else dominates. That is the study's central occupancy hypothesis, and this is where it is answered device-wide.\n\n## Success Criteria\n\n- [hard] REQ-01: A committed receipt reports, for each retained GPU permanent path, the wave utilization achieved by its execution mapping, expressed as the share of wavefront lanes performing useful work.\n- [hard] REQ-02: The receipt reports the occupancy-limiting resource for each retained path, together with registers per thread, private scratch memory per thread, shared memory per block, and spill counts; figures already committed by a field's own measurement campaign are cited to their receipt rather than re-measured, and the citation names the file.\n- [hard] REQ-03: Achieved occupancy for each retained path comes from observed runtime evidence — profiler counters taken during a measured run — and compiler resource-usage output never substitutes for it. Where the profiler is unavailable on the target host, achieved occupancy is recorded as not measured with the reason, and no computed figure is presented as achieved.\n- [hard] REQ-04: The receipt states, across the study's kernels, whether the per-lane register budget and per-block shared-memory allocation of the lane-owns-interval mapping is what limits occupancy, naming the resource that does limit it where the answer is no, and citing the measurement behind the verdict.\n- [hard] REQ-05: The receipt reports host-to-device transfer time, device-to-host transfer time, and launch overhead, each separate from kernel execution time, citing the per-phase columns the field campaigns committed rather than re-measuring them.\n- [hard] REQ-06: The receipt reports sustained-kernel duration as a function of matrix order and per-launch work, measured on the target device.\n- [hard] REQ-07: A watchdog-safe per-launch work bound is derived from this study's own measurements for each field, stated together with the measurement that supports it, and reconciled against the earlier calibration figures and the retracted hang attribution described in the background.\n- [hard] REQ-08: A measurement that contradicts the earlier calibration, or the register and shared-memory budget the mapping predicted, is recorded together with the contradiction rather than replacing it silently.\n- [hard] REQ-09: The qualification is reproducible from committed commands on the prepared benchmark host, under the repository's benchmark lock.\n\n## Notes\n\nScope is device-wide runtime qualification. The architecture-scope statement and its compile evidence are a separate deliverable, and this qualification makes no claim about architectures beyond the one it measured on.\n\nCommitted evidence belongs in the issue's resolved study directory and is attached to the issue as a document rather than referenced by an inline path from another description.\n",
-  "documents": [],
+  "documents": [
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "70f3fc1260aeb093cdb7d4feb510df31e707d72f922f419847d4ddef088b91f2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md",
+          "resolved_path": "dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c3829994762236dde8578350dcab0bf85631f09be6497cef9bbbc31a28e3b976",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv",
+          "resolved_path": "dev/studies/047b62ed/permanent-campaign-20260814T230032Z-2085453-q3-grid.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "19aa47b2953f5f1fe575a21d82d131bb2cba65cde45e2019fa6524d6c7f883d0",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../simulation_results/permanent-zero-fraction/protocol.md",
+          "resolved_path": "dev/simulation_results/permanent-zero-fraction/protocol.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "4576047fa082ab4b6a0029cde5f579a093232b7b5bdb44b85f4ee6e404f117fb",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../91605d4d/permanent-campaign-20260814T230032Z-2085453-q5-grid.csv",
+          "resolved_path": "dev/studies/91605d4d/permanent-campaign-20260814T230032Z-2085453-q5-grid.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "09ea72acf5966b39a4e21667e77251c9598241aa05a1de8801a262b418f6b80c",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../b488f02c/sustained-2026-08-07.csv",
+          "resolved_path": "dev/studies/b488f02c/sustained-2026-08-07.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0b0b1b345260dfec9545273ce798f4223aee2bbca87ef0d04414fe0d0c88ca2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../047b62ed/receipts.md",
+          "resolved_path": "dev/studies/047b62ed/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "5c1a902eeb4a1f1a49c0a65b7b66e5f6ab7c73b59de569f955651dbb7a0ce103",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6c7fcb38/permanent-campaign-20260814T230032Z-2085453-q7-grid.csv",
+          "resolved_path": "dev/studies/6c7fcb38/permanent-campaign-20260814T230032Z-2085453-q7-grid.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "bd9a0366f0295c9c3c47cce6ea2ac802cfc579fdf0ce5d8c91148f9d5e297594",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../b488f02c/gpu-hang-2026-08-07.log",
+          "resolved_path": "dev/studies/b488f02c/gpu-hang-2026-08-07.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "2828c0ae1c8fa79df9dd4024d4c23170760b3c521bcf114792e24d911284b173",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt",
+          "resolved_path": "dev/studies/6c7fcb38/hip-resource-usage-20260814T172506Z-1610002/receipt.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "88f0519cb7a2464ca4b01833c537b534222fcfbbb0127626ad165f3407ee72a1",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/0de41c82/plan.md",
+          "resolved_path": "dev/active/0de41c82/plan.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "cdcab7306ab9e99ceedf5b98aa01fb0690de403c6c36c4d805d6fb0529c168f4",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "profiled-20260816T002340Z/provenance.txt",
+          "resolved_path": "dev/studies/a9284086/profiled-20260816T002340Z/provenance.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "838d60a8bd793b455a273aea2619f7ebbf7e7ed4314d722f01869103153524d7",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6c7fcb38/receipts.md",
+          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c9d0d255a685de778a3690504a82cadaa1b28ff2a14fd14f38a09fcd42d928c5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv",
+          "resolved_path": "dev/studies/6c7fcb38/profiled-20260815T181923Z/rocprofv2-n20-threeplane/pmc_1/results_v2-n20-threeplane.csv"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9caaf43896ebead274461e441814e95dbfeb4f5865181d34f9b4bcd2c1a00602",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "analysis.py",
+          "resolved_path": "dev/studies/a9284086/analysis.py"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "14327bb6b509ed9d23bb4d17b9e84be0dd6db070798572768fbeb31fb886b006",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "profiled-20260816T002340Z/run.log",
+          "resolved_path": "dev/studies/a9284086/profiled-20260816T002340Z/run.log"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "926051cdd017ca00d2fc05a79be9f6fcb3416326d38f566e3e5412d55b411ff8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../active/0de41c82/investigation.md",
+          "resolved_path": "dev/active/0de41c82/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "8d14215fbcf651de6607c29797ca64e472d9fa38e24a1bd601bc25b7d651bc4e",
+          "is_shared": false,
+          "mime_type": "text/plain",
+          "original_path": "../6c7fcb38/profiled-20260815T181923Z/provenance.txt",
+          "resolved_path": "dev/studies/6c7fcb38/profiled-20260815T181923Z/provenance.txt"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../91605d4d/receipts.md",
+          "resolved_path": "dev/studies/91605d4d/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "c209cd8a1d518884e87485b4d4fcd750f2bed615609e4535ae80e82fea66c39f",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "../../scripts/ccx1-bench-flock.sh",
+          "resolved_path": "dev/scripts/ccx1-bench-flock.sh"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "7e18c2b4d342d15d3ff3570fd3eb861d5a88c8eda697b71e3d82122a258e1c58",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "profiled-run.sh",
+          "resolved_path": "dev/studies/a9284086/profiled-run.sh"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Runtime qualification receipt",
+      "path": "dev/studies/a9284086/receipt.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Receipt analysis script",
+      "path": "dev/studies/a9284086/analysis.py"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "label": "Paired profiled evidence run 20260816T002340Z",
+      "path": "dev/studies/a9284086/profiled-20260816T002340Z/provenance.txt"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": "Profiled-run reproduction script",
+      "path": "dev/studies/a9284086/profiled-run.sh"
+    }
+  ],
   "first_ready_at": "2026-08-15T22:41:04.847901926Z",
   "gates_required": [
     "code-review",
@@ -27,5 +217,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Runtime qualification of wave utilization and launch duration",
-  "updated_at": "2026-08-16T00:14:56.807981032Z"
+  "updated_at": "2026-08-16T01:05:25.015951279Z"
 }
