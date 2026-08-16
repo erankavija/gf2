@@ -77,7 +77,7 @@
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "dispatched"
+     "status": "rework-1-dispatched: implementation committed (e31b7f3f red, 6e4a16d9 fix), cargo-ci passed; code-review failed (config-mismatch error always names root_seed, crash-window shard cannot be adopted on resume, shard writes not durable before checkpoint) and doc-review failed (README rerun wording contradicts resume, driver API rustdoc lacks the contract); rework to codex luna"
     }
    ]
   },
@@ -425,7 +425,8 @@
   "047b62ed": 2,
   "4fdd781a": 2,
   "41c3d91d": 2,
-  "a9284086": 1
+  "a9284086": 1,
+  "51498b90": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
