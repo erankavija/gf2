@@ -15,7 +15,23 @@
     "code-review",
     "doc-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-16T01:43:42.930692398Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-16T01:47:51.282521702Z",
+      "updated_by": "auto:executor"
+    },
+    "doc-review": {
+      "status": "failed",
+      "updated_at": "2026-08-16T01:50:20.719733296Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
   "labels": [
     "type:task",
@@ -26,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-  "updated_at": "2026-08-16T01:27:37.958615817Z"
+  "updated_at": "2026-08-16T01:50:20.719733296Z"
 }
