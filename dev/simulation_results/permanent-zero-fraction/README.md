@@ -296,7 +296,7 @@ never into dataset files.
 | `0` | The subcommand succeeded, and for `verify` the dataset verified |
 | `1` | Emission was refused, the dataset failed, or the command errored |
 | `2` | `verify` reached the unverifiable verdict: provenance is undecided |
-| `64` | The command line was not one of the four forms above |
+| `64` | The command line was not one of the subcommand forms above |
 
 `verify` therefore separates the three outcomes by exit status alone, without
 parsing its output. The failing paths themselves are named on standard error.
