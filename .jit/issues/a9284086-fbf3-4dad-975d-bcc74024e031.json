@@ -200,6 +200,7 @@
       "path": "dev/studies/a9284086/profiled-run.sh"
     }
   ],
+  "done_at": "2026-08-16T01:25:02.691763455Z",
   "first_ready_at": "2026-08-15T22:41:04.847901926Z",
   "gates_required": [
     "code-review",
@@ -207,13 +208,13 @@
   ],
   "gates_status": {
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-16T01:09:06.477267650Z",
+      "status": "passed",
+      "updated_at": "2026-08-16T01:23:17.903058075Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-16T01:11:17.579437278Z",
+      "status": "passed",
+      "updated_at": "2026-08-16T01:24:24.314272835Z",
       "updated_by": "auto:executor"
     }
   },
@@ -226,7 +227,7 @@
     "satisfies:REQ-04"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Runtime qualification of wave utilization and launch duration",
-  "updated_at": "2026-08-16T01:11:17.579437278Z"
+  "updated_at": "2026-08-16T01:25:02.691763455Z"
 }

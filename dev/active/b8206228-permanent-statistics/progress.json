@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 2,
+ "current_wave": 3,
  "waves": [
   {
    "wave_number": 1,
@@ -58,7 +58,7 @@
      "short_id": "a9284086",
      "title": "Runtime qualification of wave utilization and launch duration",
      "classification": "research",
-     "status": "rework-1-dispatched: receipt+evidence committed through 41ed30f6; round-1 gates failed one finding each (code-review: the M=4096 fault-span extrapolations presented as upper bounds at an unmeasured configuration; doc-review: the archived r4 resample doc still presents the retracted watchdog attribution and boundary as established); rework sent to worker-a9284086"
+     "status": "done"
     }
    ]
   },
@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "pending"
+     "status": "dispatched"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "pending"
+     "status": "dispatched"
     }
    ]
   },
