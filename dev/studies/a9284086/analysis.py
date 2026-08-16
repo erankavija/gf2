@@ -1069,6 +1069,52 @@ def section_9_watchdog() -> None:
               f"{wall / shards:.4f} s per launch")
 
 
+def section_10_prose_checks() -> None:
+    heading("10. The receipt's stated counts, checked against the data")
+    receipt = (STUDY / "receipt.md").read_text()
+    agent = agent_report()
+    codes = pass_exit_codes()
+    dispatches = 0
+    groups = 0
+    width_one = 0
+    residencies = []
+    for label, q, _, name in PROFILED_CELLS:
+        for kernel in path_of(q, name).kernels:
+            admissible, rejected = occupancy_readings(f"pmc-{label}", kernel, agent)
+            dispatches += len(admissible) + len(rejected)
+            widths: dict[int, list] = {}
+            for entry in admissible:
+                widths.setdefault(entry["waves_launched"], []).append(entry)
+            groups += len(widths)
+            width_one += 1 if 1 in widths else 0
+            residencies.extend(entry["residency"] for entry in admissible)
+    device_cell_count = sum(
+        1 for q in FIELD_STUDY for row in device_cells(q)
+        if number(row, "reps") and number(row, "kernel_device_s") is not None
+    )
+    kernels = sum(len(path.kernels) for path in PATHS)
+    words = {9: "Nine", 11: "eleven", 34: "Thirty-four", 17: "seventeen",
+             35: "35", 23: "23", 135: "135"}
+    stated = [
+        (f"{words[len(PATHS)]} paths are retained", len(PATHS)),
+        (f"dispatching {words[kernels]} kernels", kernels),
+        (f"{words[len(codes)]} passes", len(codes)),
+        (f"{words[len(PROFILED_CELLS)]} cells", len(PROFILED_CELLS)),
+        (f"over the {device_cell_count} device cells", device_cell_count),
+        (f"all {dispatches} counted dispatches", dispatches),
+        (f"{groups} launch-width", groups),
+        ("the seventeen\nwidth-1 groups", width_one),
+    ]
+    for phrase, value in stated:
+        assert phrase in receipt, f"receipt does not state {phrase!r} (value {value})"
+        print(f"  receipt states {phrase!r:<48} -> derived {value}")
+    span = f"{min(residencies):.4f} to {max(residencies):.4f}"
+    assert span in receipt, f"receipt does not state residency range {span}"
+    print(f"  receipt states residency range {span!r:<26} -> derived from "
+          f"{len(residencies)} dispatches")
+    assert width_one == 17, width_one
+
+
 def section_11_f7_citation() -> None:
     heading("11. The committed F_7 occupancy evidence this receipt cites")
     counters = F7_PROFILED / "counters-aggregate.csv"
@@ -1093,6 +1139,7 @@ def main() -> int:
     section_7_phases()
     section_8_duration()
     section_9_watchdog()
+    section_10_prose_checks()
     section_11_f7_citation()
     return 0
 
