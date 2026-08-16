@@ -8286,3 +8286,5 @@
 {"fields":["documents"],"id":"82f14db1-8a52-4379-9dea-79b6a86898db","issue_id":"0dffa759-8ff3-4198-a901-23bedf6667e0","timestamp":"2026-08-16T02:00:38.520013360Z","type":"issue_updated","updated_by":"doc-add"}
 {"id":"ff746a90-67b6-4fe6-9a83-e0ec294ba785","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","priority":"low","timestamp":"2026-08-16T02:00:43.865898570Z","title":"F_7 receipts deny the committed q=7 work budget the archived calibration states","type":"issue_created"}
 {"fields":["dependencies"],"id":"98f81824-d284-43eb-ac83-8468c9496281","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-16T02:01:17.949979761Z","type":"issue_updated","updated_by":"dependency-add"}
+{"from":"ready","id":"552cf4ca-d305-4cb3-849d-3228f74d2296","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:41:13.987625252Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-luna","id":"39785552-3b53-4873-84cf-27f7f1465358","issue_id":"e1c96c9c-b2ab-43a4-a65a-eb51a53c744d","timestamp":"2026-08-16T22:41:13.987625252Z","type":"issue_claimed"}
