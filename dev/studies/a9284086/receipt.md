@@ -162,10 +162,20 @@ dispatches' own `Workgroup_Size`.
 **The launch-geometry share is exact by construction and differs by a factor of
 32 between the two mappings.**
 
-| Mapping | Paths | Lanes the launch makes active | Share of a wavefront | Launch citation |
-| --- | --- | ---: | ---: | --- |
-| one thread per matrix | `gpu_hip` at $q \in \{3, 5, 7\}$ | 1 of 32 | **3.1250 %** | `permanent_bipedal3.hip:334-335`, `permanent_bipedal5.hip:253-254`, `permanent_bipedal7.hip:350-351`, each with `if (threadIdx.x != 0) return;` at `:174`, `:99`, `:99` |
-| lane-owns-interval | the six prototype paths | 32 of 32 | **100.0000 %** | `wave_ryser_mapping.h:29-31` with `wave_gf3_equivalence.hip:597-606`, `f5_wave_equivalence.hip:727-737`, `wave_gf7_equivalence.hip:676-684`, `:715-724` |
+| $q$ | Path | Mapping | Lanes the launch makes active | Share of a wavefront | Launch citation |
+| ---: | --- | --- | ---: | ---: | --- |
+| 3 | `gpu_hip` | one thread per matrix | 1 of 32 | **3.1250 %** | `permanent_bipedal3.hip:334-335`, with `if (threadIdx.x != 0) return;` at `:174` |
+| 3 | `wave-gf3` | lane-owns-interval | 32 of 32 | **100.0000 %** | `wave_gf3_equivalence.hip:597-606` |
+| 3 | `fold-gf3` | lane-owns-interval | 32 of 32 | **100.0000 %** | `wave_gf3_equivalence.hip:597-606` |
+| 5 | `gpu_hip` | one thread per matrix | 1 of 32 | **3.1250 %** | `permanent_bipedal5.hip:253-254`, with `if (threadIdx.x != 0) return;` at `:99` |
+| 5 | `f5-byte-control` | lane-owns-interval | 32 of 32 | **100.0000 %** | `f5_wave_equivalence.hip:727-737` |
+| 5 | `f5-three-plane` | lane-owns-interval | 32 of 32 | **100.0000 %** | `f5_wave_equivalence.hip:727-737` |
+| 7 | `gpu_hip` | one thread per matrix | 1 of 32 | **3.1250 %** | `permanent_bipedal7.hip:350-351`, with `if (threadIdx.x != 0) return;` at `:99` |
+| 7 | `f7-lookup-table-control` | lane-owns-interval | 32 of 32 | **100.0000 %** | `wave_gf7_equivalence.hip:715-724` |
+| 7 | `f7-three-plane-permanent` | lane-owns-interval | 32 of 32 | **100.0000 %** | `wave_gf7_equivalence.hip:676-684` |
+
+Every lane-owns-interval row's 32 is `active_lanes_for_order(n)` at the orders
+these campaigns measure (`wave_ryser_mapping.h:29-31`).
 
 **The lane-owns-interval mapping has no tail-interval idleness at any measured
 order, and that is exact rather than approximate.** `balanced_interval` gives
@@ -239,19 +249,19 @@ per-thread vector-register count, `TotalSGPRs` the per-wave scalar count,
 first line of that kernel's remark block inside the named log of the receipt
 directory.
 
-| $q$ | Kernel | `TotalSGPRs` | `VGPRs` | scratch B/lane | SGPR + VGPR spill | static LDS B/block | occupancy waves/SIMD | occupancy-limiting resource | log |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| 3 | `permanent_bipedal3_kernel` | 27 | 19 | 1040 | 0 + 0 | 0 | 16 | wave-slot ceiling | `permanent_bipedal3.hip.resource.log:1` |
-| 3 | `wave_gf3_kernel<kHalving>` | 22 | 22 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:23` |
-| 3 | `wave_gf3_kernel<kZeroMaskSignPopcount>` | 22 | 25 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:34` |
-| 5 | `permanent_bipedal5_kernel` | 107 | 128 | 4000 | 4 + 6 | 0 | 8 | per-lane vector registers | `permanent_bipedal5.hip.resource.log:1` |
-| 5 | `f5_byte_control_kernel` | 78 | 77 | 0 | 0 + 0 | 0 | 12 | per-lane vector registers | `f5_wave_equivalence.hip.resource.log:1` |
-| 5 | `f5_three_plane_kernel` | 20 | 66 | 0 | 0 + 0 | 0 | 12 | per-lane vector registers | `f5_wave_equivalence.hip.resource.log:12` |
-| 7 | `permanent_bipedal7_kernel` | 107 | 128 | 4000 | 4 + 6 | 0 | 8 | per-lane vector registers | `permanent_bipedal7.hip.resource.log:1` |
-| 7 | `wave_gf7_lookup_table_kernel<1>` | 19 | 31 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:23` |
-| 7 | `wave_gf7_lookup_table_kernel<2>` | 26 | 41 | 24 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:34` |
-| 7 | `prepare_three_plane_columns` | 16 | 17 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:1` |
-| 7 | `wave_gf7_three_plane_kernel` | 16 | 34 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:12` |
+| $q$ | Path | Kernel | `TotalSGPRs` | `VGPRs` | scratch B/lane | SGPR + VGPR spill | static LDS B/block | occupancy waves/SIMD | occupancy-limiting resource | log |
+| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 3 | `gpu_hip` | `permanent_bipedal3_kernel` | 27 | 19 | 1040 | 0 + 0 | 0 | 16 | wave-slot ceiling | `permanent_bipedal3.hip.resource.log:1` |
+| 3 | `wave-gf3` | `wave_gf3_kernel<kHalving>` | 22 | 22 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:23` |
+| 3 | `fold-gf3` | `wave_gf3_kernel<kZeroMaskSignPopcount>` | 22 | 25 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf3_equivalence.hip.resource.log:34` |
+| 5 | `gpu_hip` | `permanent_bipedal5_kernel` | 107 | 128 | 4000 | 4 + 6 | 0 | 8 | per-lane vector registers | `permanent_bipedal5.hip.resource.log:1` |
+| 5 | `f5-byte-control` | `f5_byte_control_kernel` | 78 | 77 | 0 | 0 + 0 | 0 | 12 | per-lane vector registers | `f5_wave_equivalence.hip.resource.log:1` |
+| 5 | `f5-three-plane` | `f5_three_plane_kernel` | 20 | 66 | 0 | 0 + 0 | 0 | 12 | per-lane vector registers | `f5_wave_equivalence.hip.resource.log:12` |
+| 7 | `gpu_hip` | `permanent_bipedal7_kernel` | 107 | 128 | 4000 | 4 + 6 | 0 | 8 | per-lane vector registers | `permanent_bipedal7.hip.resource.log:1` |
+| 7 | `f7-lookup-table-control` | `wave_gf7_lookup_table_kernel<1>` | 19 | 31 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:23` |
+| 7 | `f7-lookup-table-control` | `wave_gf7_lookup_table_kernel<2>` | 26 | 41 | 24 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:34` |
+| 7 | `f7-three-plane-permanent` | `prepare_three_plane_columns` | 16 | 17 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:1` |
+| 7 | `f7-three-plane-permanent` | `wave_gf7_three_plane_kernel` | 16 | 34 | 0 | 0 + 0 | 0 | 16 | wave-slot ceiling | `wave_gf7_equivalence.hip.resource.log:12` |
 
 **The limiter column is derived from the receipt as a whole, and the derivation
 is checkable.** The compiler emits its occupancy field from the per-thread
