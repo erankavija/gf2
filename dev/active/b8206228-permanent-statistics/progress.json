@@ -58,7 +58,7 @@
      "short_id": "a9284086",
      "title": "Runtime qualification of wave utilization and launch duration",
      "classification": "research",
-     "status": "dispatched"
+     "status": "rework-1-dispatched: receipt+evidence committed through 41ed30f6; round-1 gates failed one finding each (code-review: the M=4096 fault-span extrapolations presented as upper bounds at an unmeasured configuration; doc-review: the archived r4 resample doc still presents the retracted watchdog attribution and boundary as established); rework sent to worker-a9284086"
     }
    ]
   },
@@ -424,7 +424,8 @@
   "e0251af3": 1,
   "047b62ed": 2,
   "4fdd781a": 2,
-  "41c3d91d": 2
+  "41c3d91d": 2,
+  "a9284086": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
