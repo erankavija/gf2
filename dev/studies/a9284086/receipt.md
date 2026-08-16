@@ -73,6 +73,16 @@ The grid passes reuse each field's committed `--execution-id` — `3002` for
 $q = 3$ and `5002` for $q = 5$ — so the profiled cells draw the same
 preregistered matrices as the timing run's cells at those orders.
 
+**The seventeen cells are each field's three retained device paths at $n = 12$
+and $n = 20$, the two orders the committed $\mathbb{F}_7$ counter evidence uses,
+plus that field's declared operating point** — $n = 28$ for $q = 3$ and
+$n = 24$ for $q = 5$, which the campaign protocol fixes as the
+processor-feasible frontier of each field
+([`dev/simulation_results/permanent-zero-fraction/protocol.md`](../../simulation_results/permanent-zero-fraction/protocol.md):51-54).
+The $q = 5$, $n = 24$ shipped cells are censored before running in the timing
+grid, so that cell dispatches nothing and is not a pass, which is why $q = 5$
+contributes eight cells against $q = 3$'s nine.
+
 **The two runs are deliberately separate, and this one carries no timing
 authority.** Counter collection and kernel tracing perturb execution; the
 preregistered timing evidence therefore carries no profiler, and no duration
@@ -707,7 +717,7 @@ device spans and its launches completed; the censoring is the harness's
 stopping rule ending the cell, not a device failure
 ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.3).
 
-| $q$ | Largest per-launch work observed | its span | Longest per-launch span observed | its work | archived work budget | observed work over budget |
+| $q$ | Largest per-launch work observed | its span | Longest per-launch span observed | its work | archived work budget | observed work as a multiple of the budget |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 3 | $2.7488 \times 10^{11}$ — $n = 28$, `gpu_hip`, $M = 1024$, `censored`, 3 launches | 53.077521 s | 53.077521 s, the same cell | $2.7488 \times 10^{11}$ | $4.0 \times 10^9$ | **68.72×** |
 | 5 | $1.0737 \times 10^{9}$ — $n = 20$, `gpu_hip`, $M = 1024$, `measured`, 5 launches | 16.006792 s | 115.452922 s — $n = 28$, `f5-byte-control`, $M = 1$, `censored`, 2 launches | $2.6844 \times 10^{8}$ | $1.3 \times 10^9$ | 0.83× |
@@ -754,10 +764,10 @@ study's measurements bear on it directly.
 work, and one four times larger.** $4096 \cdot 2^{24}$ and $256 \cdot 2^{28}$
 are both $6.8719 \times 10^{10}$, so the $q = 3$, $n = 28$, $M = 256$ cell
 carries the faulted launch's $M \cdot 2^n$ exactly, and 1.17× its
-$M \cdot n \cdot 2^n$; it ran five launches at 29.954639 s each and completed.
-The $M = 1024$ cell at the same order carries 4.00× the faulted launch's
-$M \cdot 2^n$ and 4.67× its Ryser-weighted work, and completed three launches at
-53.077521 s each.
+$M \cdot n \cdot 2^n$; its five launches average 29.954639 s of device kernel
+time each and all five completed. The $M = 1024$ cell at the same order carries
+4.00× the faulted launch's $M \cdot 2^n$ and 4.67× its Ryser-weighted work, and
+its three launches, at 53.02–53.20 s each, all completed.
 
 **The faulted launch's span is not recorded anywhere, and this study bounds it
 rather than asserting it.** At the faulted cell's own $(q, n)$ this study
@@ -769,8 +779,10 @@ strictly linear scaling in $M$ — an upper bound, since the measured $256
 different direction: it records 55 shards over 180.435 s at $M = 1024$ and 19
 over 185.510 s at $M = 2048$, or 3.2806 s and 9.7637 s of wall time per launch
 ([`../b488f02c/sustained-2026-08-07.csv`](../b488f02c/sustained-2026-08-07.csv)),
-and wall time per shard is itself an upper bound on the device span because it
-carries the host generation work too.
+which doubles to about 19.5 s at 4 096 matrices. Wall time per shard is itself
+an upper bound on the device span, because it carries the host generation work
+too, so both routes put the faulted launch an order of magnitude inside the
+archived boundary.
 
 **What that does and does not establish.** It establishes that the faulted
 launch was, by every committed measurement of the same kernel at the same
@@ -841,8 +853,8 @@ Recorded here with the statements they contradict, per
    are recorded here so the reader does not meet either alone.
 5. **The runtime record shares the compiler's dynamic-LDS blind spot.**
    rocprofv3's per-dispatch `LDS_Block_Size` reads 0 for every kernel in this
-   study's counter CSVs, including launches that request 144–784 bytes of
-   dynamic shared memory (§2, §4). The one runtime reading of a dynamic table in
+   study's counter CSVs, including launches that request 144 to 576 bytes of
+   dynamic shared memory at the orders it profiles (§2). The one runtime reading of a dynamic table in
    the study's evidence comes from the $\mathbb{F}_7$ run's `rocprofv2` probe.
    Tracked as JIT issue `023233c5`.
 
