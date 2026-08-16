@@ -51,7 +51,7 @@
      "short_id": "41c3d91d",
      "title": "Campaign driver scheduling and shard emission",
      "classification": "implementation",
-     "status": "rework-1-dispatched: implementation committed 8a2f8746, cargo-ci passed; code-review failed (provenance-guard bypass in the binary, no red-first evidence in tagged history) and doc-review failed (stale campaign-driver narrative in permanent_dataset rustdoc, dataset README, feasibility G3 row, plus the same guard contradiction); rework with red-first guard patch dispatched to codex luna"
+     "status": "rework-2-dispatched (MAX): round-2 reviews closed all round-1 findings but found the hardcoded AcceptanceVerdict::Accepted bypassing the preregistered permanent-floor exact test, and emit_field overwriting existing dataset files against the README immutability contract; red-first fixes dispatched to codex luna"
     },
     {
      "id": "a9284086-fbf3-4dad-975d-bcc74024e031",
@@ -424,7 +424,7 @@
   "e0251af3": 1,
   "047b62ed": 2,
   "4fdd781a": 2,
-  "41c3d91d": 1
+  "41c3d91d": 2
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",

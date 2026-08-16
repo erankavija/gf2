@@ -26,17 +26,17 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-15T23:20:38.166785008Z",
+      "updated_at": "2026-08-15T23:43:03.888363242Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
       "status": "failed",
-      "updated_at": "2026-08-15T23:24:08.833836730Z",
+      "updated_at": "2026-08-15T23:46:28.040644990Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-15T23:27:10.163921759Z",
+      "updated_at": "2026-08-15T23:49:16.882751566Z",
       "updated_by": "auto:executor"
     }
   },
@@ -50,5 +50,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Campaign driver scheduling and shard emission",
-  "updated_at": "2026-08-15T23:42:33.004657936Z"
+  "updated_at": "2026-08-15T23:49:16.882751566Z"
 }
