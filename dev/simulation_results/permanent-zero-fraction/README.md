@@ -9,7 +9,7 @@ is one immutable, versioned dataset:
 The campaign's controlling [scientific preregistration](protocol.md) is stored
 beside those datasets; it is not part of any dataset's raw or derived file set.
 
-A campaign id uses lowercase ASCII letters, digits, and interior hyphens. A
+A campaign id uses lowercase ASCII letters, digits, and interior hyphens.
 Dataset-scale writers must refuse an existing campaign-id directory, while a
 field-scale writer refuses every existing shard or summary file inside the
 selected campaign directory. Corrections, extensions, reruns, and schema
@@ -289,10 +289,15 @@ $ cargo run -p gf2-sim --release --bin permanent_campaign -- \
 One invocation executes exactly one field arm and writes only that field's
 shard files and field summary, so field arms can run concurrently. The writer
 passes `approve_emission` before it runs the field, establishing source
-identity before any dataset bytes are written. Re-running a field arm against
-the same tree is refused at the first existing shard or summary file, so its
-first emission remains unchanged. Per-phase timings go to standard output and
-never into dataset files.
+identity before any dataset bytes are written. An interrupted field arm
+resumes from `<campaign-directory>/campaign.checkpoint.json`; checkpointed
+completed shards are never re-evaluated or rewritten, and a shard emitted just
+before a checkpoint update is adopted after a deterministic byte comparison.
+A resume whose configuration differs is refused and names the differing
+component. An evaluation failure is quarantined and remains visible in the
+field summary while the remaining work continues. A COMPLETED field-arm
+re-run still refuses at its existing files, preserving the first emission.
+Per-phase timings go to standard output and never into dataset files.
 
 | Exit status | Means |
 | --- | --- |
