@@ -971,20 +971,20 @@ displaces it and because §7 chooses the internal-state resolution. The amendmen
 records a falsified premise and a scoped changed verdict, not a re-decision of
 the public encoding.
 
-**Status: drafted, not applied.** `dev/archive/` is permanent repository content
-and amending it needs the owner's approval
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174). The
-amendment text is drafted at
-[`req08-amendment-draft.md`](req08-amendment-draft.md) and no file under
-`dev/archive/` is modified by this work. The draft follows the format the same
-archived directory already uses: the 2026-08-16 supersession note above
-`r4_gpu_uniformity_resample.md` §2.5 preserves the original text unchanged
-beneath it and cross-cites rather than rewriting
+**Status: applied with owner approval (2026-08-17).** `dev/archive/` is
+permanent repository content and amending it needs the owner's approval
+([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174); the
+owner approved the drafted text verbatim and the note and pointer stubs of
+[`req08-amendment-draft.md`](req08-amendment-draft.md) are inserted in the
+archived file at the draft's stated insertion points. The amendment follows the
+format the same archived directory already uses: the 2026-08-16 supersession
+note above `r4_gpu_uniformity_resample.md` §2.5 preserves the original text
+unchanged beneath it and cross-cites rather than rewriting
 (`@/inv/falsification-preserved`).
 
-**Until the amendment lands, this document does not treat the archived decision
-as superseded.** The archived verdict stands as written, and §7's choice is
-consistent with it standing: `Packed7` remains Candidate A.
+**What the amendment changes is scoped as stated above**: the standing of the
+§6 workload model and the scope of the archived verdict. `Packed7` remains
+Candidate A, and §7's internal-state choice is consistent with that.
 
 ## 9. The 1.5× operating-point question (REQ-11)
 
@@ -1200,7 +1200,7 @@ their censored cells, and the one order where the lookup control wins.
 | REQ-05 | §4.2, §5.2 | **Satisfied.** $\mathbb{F}_5$: `f5-byte-control` and `f5-three-plane`, each with lane state, row-product circuit, shared-memory formula, measured `VGPRs`/`TotalSGPRs`/scratch, occupancy, and composite rate at five orders, cited to [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.2, §6.2, §7, §10, before the selection. $\mathbb{F}_7$: `f7-lookup-table-control` and `f7-three-plane-permanent`, the same fields, cited to [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2, §7, §10, §12, before the selection; the third planned candidate is recorded with its structural falsification (§10, F.1). |
 | REQ-06 | §6 | **Satisfied.** For both go verdicts: input layout (§6.1, canonical row-major bytes, device-side packing, shared-table sizes); persistent device buffers and streams named as the existing `DeviceBuffer`, `HipStreamPool`, and `LaunchDims` of `crates/gf2-kernels-hip/src/host/`, each cited to its defining line, with `PinnedHostBuffer`, `HipStream`, `HipEvent`, `HipEventSpan`, and `GfxTarget` beside them (§6.2); bounded-duration launches sized against a per-launch span target rather than a work budget, with the 978.5× measurement that rules out the work-budget form (§6.3); per-device initialization through `GfxTarget::detect_device` and blob loading, once per device (§6.4); error propagation selecting a tested CPU fallback for unsupported capabilities and recoverable resource failures through `DeviceBuffer::new_with_fallback` and the `UnsupportedArch` and `OutOfMemory` variants, while fatal device failures propagate as typed errors instead of the current asserts (§6.5); and behavioral-equivalence coverage on the shared field-law suite, the per-matrix oracle gate, the representation-boundary orders, determinism across the fallback boundary, and tests that force each fallback branch (§6.6). The gap each element closes is cited to the dispatcher line that currently bypasses it. |
 | REQ-07 | §7, §7.1 | **Satisfied.** The public packed-field representation `Packed7` (`packed7.rs:211`, `:216`) and the permanent-specialized internal state `ThreePlane` (`wave_gf7_equivalence.hip:75-79`) are named as distinct surfaces with their scopes. The second compliant resolution is chosen — public representation unchanged, three-plane state internal — grounded in the committed evidence's single architecture, device-only scope, unresolved batch confound, and the campaign's own refusal to order the two circuits, and in `@/inv/convention-convergence` together with the proof-obligation asymmetry. §7.1 records the named exception `permanent-f7-internal-three-plane` with its scope, its shared behavioral tests, and a tracked convergence condition with two discharge routes. $\mathbb{F}_5$ needs no exception because `Packed5` is already three-plane (`packed5.rs:208-212`). |
-| REQ-08 | §8 | **Determined; drafted; escalation-gated.** The receipts support the three-plane $\mathbb{F}_7$ candidate under the permanent workload, on three strands of which the strongest is the falsified weighting: the archived model charges the complete row-product reduction on every Gray step, and the measured exact marginal $(6/7)^n$ puts it at 4.58 % of steps at $n = 20$. The amendment is drafted at [`req08-amendment-draft.md`](req08-amendment-draft.md) and is **not applied**: `dev/archive/` is permanent content and amending it needs the owner's approval. Until it lands, the archived verdict stands as written and §7's choice is consistent with it standing. |
+| REQ-08 | §8 | **Satisfied.** The receipts support the three-plane $\mathbb{F}_7$ candidate under the permanent workload, on three strands of which the strongest is the falsified weighting: the archived model charges the complete row-product reduction on every Gray step, and the measured exact marginal $(6/7)^n$ puts it at 4.58 % of steps at $n = 20$. The amendment, drafted at [`req08-amendment-draft.md`](req08-amendment-draft.md), is **applied to the archived file with owner approval (2026-08-17)**: a dated additive note above its §1 and two pointer stubs, no existing sentence edited. `Packed7` remains Candidate A and §7's choice is consistent with that. |
 | REQ-09 | §10 | **Satisfied.** Twelve entries, each recorded with the evidence contradicting the statement it bears on rather than replacing it: the non-executing candidate, the $\mathbb{F}_3$ crossover closing before the operating point, the censoring record and the non-conservative projection chains, the inter-receipt disagreement about the archived $q = 7$ budget, the two distinct fault observations, the prior sub-minimum published cells, the falsified occupancy hypothesis, the dynamic-LDS blind spot, the failed occupancy readings, the two branch-frequency interval misses, the packed-CPU run-to-run shift, and the retained rejected candidates. |
 | REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure the receipts do not print — the envelope share columns and the $q = 7$ operating point as a share of the archived $q = 7$ work budget, both in §9, and the $q = 2$ marginal against the committed Wilson intervals in §3.3 — it names both inputs with their sources and states that the figure is computed here. |
 | REQ-11 | §9 | **Answered in substance; one presupposition of the wording fails, and §12.1 states it.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. The inside-the-bound clause is answered against everything the record documents: each point's own field's observed clean-completion envelope, and the archived prior's span boundary and work budget, each named with its status. It is not answered against a located safe launch-duration boundary, because [`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4 and §12.1 state that no such boundary exists in the evidence. |

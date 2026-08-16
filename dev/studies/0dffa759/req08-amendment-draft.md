@@ -1,7 +1,8 @@
-# REQ-08 amendment draft — archived $\mathbb{F}_7$ encoding decision
+# REQ-08 amendment — archived $\mathbb{F}_7$ encoding decision
 
-**Status: draft, awaiting owner approval. Nothing under `dev/archive/` is
-modified by this study.**
+**Status: approved by the owner and applied verbatim (2026-08-17). The
+archived file carries the note and stubs below at the insertion points of
+§1.**
 
 REQ-08 of JIT issue `0dffa759` requires that, where the study's receipts support
 the three-plane $\mathbb{F}_7$ candidate, the archived $\mathbb{F}_7$ encoding
@@ -9,8 +10,9 @@ decision be amended at its source with the permanent-workload evidence and the
 changed verdict. [`findings.md`](findings.md) §8 determines that the receipts do
 support it. `dev/archive/` is permanent repository content and amending it is a
 deliberate act that needs the owner's approval
-([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174), so the
-amendment text lives here until that approval is given.
+([`../../active/0de41c82/plan.md`](../../active/0de41c82/plan.md):174). The
+owner gave that approval on 2026-08-17 and this document records the approved
+text and its insertion points.
 
 ## 1. Target file and insertion points
 
@@ -122,15 +124,12 @@ document already carries — the 2026-08-16 supersession note above
 > device. Candidate A remains the ratified public packed $\mathbb{F}_7$
 > encoding.)*
 
-## 4. What the owner is being asked to approve
+## 4. What the owner approved
 
 Adding the note of §2 and the two pointer stubs of §3 to a file under
 `dev/archive/`. Nothing existing is edited. The amendment records a falsified
 premise and a scoped changed verdict; it does not re-decide the public packed
 $\mathbb{F}_7$ encoding, and no code, proof, or public type changes as a
-consequence of it.
-
-If approval is withheld, [`findings.md`](findings.md) §8 already states the
-alternative disposition it currently operates under: the archived verdict stands
-as written, `Packed7` remains Candidate A, and the synthesis's own
-representation-boundary choice (§7) is consistent with it standing.
+consequence of it. The archived verdict's ratification of `Packed7` as
+Candidate A stands, and the synthesis's representation-boundary choice
+([`findings.md`](findings.md) §7) is consistent with it standing.
