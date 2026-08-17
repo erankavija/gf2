@@ -8414,3 +8414,7 @@
 {"gate_key":"f3-bipedal-ci","id":"23187728-8129-4f41-8ed0-190323e355ec","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:14:30.899348880Z","type":"gate_passed","updated_by":"auto:executor"}
 {"fields":["description"],"id":"58408eb0-7f2a-47eb-b3ed-fc4713489a87","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:46:05.838878087Z","type":"issue_updated","updated_by":"issue-update"}
 {"fields":["description"],"id":"85c4e9f9-0889-4b1a-83a2-78a72d7dc7bb","issue_id":"fe26dc9a-be55-4be6-a911-c5328cd7b1d8","timestamp":"2026-08-17T20:46:11.822602089Z","type":"issue_updated","updated_by":"issue-update"}
+{"gate_key":"code-review","id":"6fa633ed-4c75-410e-96fd-44419917e971","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:48:40.387929924Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"56fdcb2a-8e3b-46ed-adb6-9bc4f2713cd3","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:05.768404813Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"083d8969-710f-45c1-b61e-42af29281106","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","to":"done","type":"issue_state_changed"}
+{"id":"e08caec0-48bf-4700-8dc0-0e7646b240bc","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","type":"issue_completed"}
