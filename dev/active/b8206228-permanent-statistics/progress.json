@@ -108,14 +108,14 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "pending; forward sweep 2026-08-17 wired 7a816262 -> eb8825c8 so the freeze can measure and name the batch-parallel backend; run after eb8825c8"
+     "status": "phase-1 dispatched (luna): freeze-feasibility inventory against the protocol backend-freeze cohort rules, gap list, draft manifest + freeze document; bench premeasurement (if any) is lead-scheduled after 02:00"
     },
     {
      "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
      "short_id": "eb8825c8",
      "title": "Batch-parallel processor path for campaign shards",
      "classification": "implementation",
-     "status": "rework-1 dispatched (luna): cargo-ci passed; code-review R1 single finding - the production binary hardcodes one worker and records no parallelism (REQ-03); fix adds --workers with a recorded header line"
+     "status": "done: rework-1 (--workers flag + recorded configuration header) closed the single R1 finding; cargo-ci re-passed after the transient GPU page fault (filed as 10071e51), code-review passed R2; lead six-tier review PASS"
     }
    ],
    "note": "serialized: eb8825c8 first (5a), then 7a816262 (5b) behind the new dependency edge"
