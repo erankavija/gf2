@@ -14,13 +14,13 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-17T06:39:53.343946124Z",
+      "updated_at": "2026-08-17T06:40:37.753274979Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "pending",
-      "updated_at": "2026-08-16T23:34:17.980595610Z",
-      "updated_by": null
+      "status": "failed",
+      "updated_at": "2026-08-17T06:43:52.118567117Z",
+      "updated_by": "auto:executor"
     }
   },
   "id": "63d931a9-add9-4812-8d7b-56b71cb325a0",
@@ -32,5 +32,5 @@
   "priority": "low",
   "state": "in_progress",
   "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
-  "updated_at": "2026-08-17T06:39:53.343946124Z"
+  "updated_at": "2026-08-17T06:43:52.118567117Z"
 }
