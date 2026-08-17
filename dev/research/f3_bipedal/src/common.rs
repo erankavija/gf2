@@ -42,6 +42,10 @@ pub trait F3Encoding: Sized {
     fn pack(canonical: &[u8]) -> Self;
     fn unpack(&self) -> Vec<u8>;
     fn len(&self) -> usize;
+    /// Reports whether the encoded vector is empty.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     fn add_assign(&mut self, other: &Self);
     fn sub_assign(&mut self, other: &Self);
     fn mul_assign(&mut self, other: &Self);
@@ -112,7 +116,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ref_ops_match_known_table() {
+    fn test_ref_ops_match_known_table() {
         assert_eq!(ref_add(2, 1), 0);
         assert_eq!(ref_add(2, 2), 1);
         assert_eq!(ref_sub(0, 1), 2);
@@ -121,14 +125,14 @@ mod tests {
     }
 
     #[test]
-    fn ref_inverse_table_correct() {
+    fn test_ref_inverse_table_correct() {
         for x in 1..3 {
             assert_eq!(ref_mul(x, INV_F3[x as usize]), 1);
         }
     }
 
     #[test]
-    fn f3_vec_only_canonical() {
+    fn test_f3_vec_only_canonical() {
         let mut rng = Lcg::new(7);
         let v = rng.f3_vec(2048);
         assert_eq!(v.len(), 2048);
@@ -136,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn f3_vec_nonzero_excludes_zero() {
+    fn test_f3_vec_nonzero_excludes_zero() {
         let mut rng = Lcg::new(11);
         let v = rng.f3_vec_nonzero(2048);
         assert!(v.iter().all(|&x| (1..3).contains(&x)));
