@@ -286,11 +286,14 @@ The `permanent_campaign` binary executes one field arm:
 
 ```console
 $ cargo run -p gf2-sim --release --bin permanent_campaign -- \
-    --manifest PATH --output CAMPAIGN-DIR --q FIELD
+    --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N]
 ```
 
-One invocation executes exactly one field arm and writes only that field's
-shard files and field summary, so field arms can run concurrently. The writer
+`--workers N` sets the positive worker count for the field arm and defaults to
+`1` when omitted. One invocation executes exactly one field arm and writes only
+that field's shard files and field summary, so field arms can run concurrently.
+The first output line records the effective configuration as
+`campaign q={field} workers={N}` before the per-shard timing lines. The writer
 passes `approve_emission` before it runs the field, establishing source
 identity before any dataset bytes are written. An interrupted field arm
 resumes from its field-specific

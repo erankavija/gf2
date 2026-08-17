@@ -303,6 +303,12 @@ purpose tags, stream addresses, git revision, build and toolchain provenance,
 they bind the sampler that maps an address to matrices. A manifest missing any
 of them cannot freeze.
 
+The `permanent_campaign` invocation accepts `--workers N`, where $N$ is an
+integer of at least $1$ and defaults to $1$ when the flag is omitted. Its first
+output line records the effective configuration as `campaign q={field}
+workers={N}` before any per-shard timing lines, so the execution receipt names
+the parallelism used by the driver rather than relying on host probing.
+
 This claim is deliberately limited: the argument vector records how the driver
 was invoked, while the source revision and dependency lock resolve the RNG
 implementation. Neither an unrecorded local default nor a prose command is
