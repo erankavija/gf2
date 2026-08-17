@@ -24,6 +24,54 @@
       "format": "markdown",
       "label": "Permanent-shaped bit-sliced arithmetic study",
       "path": "dev/active/0de41c82/bipedal-f5-f7-representation-study.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "2f552ccae367a32062da4b74bed88d0e2d4f5ff186984df04987ef2fc1d19df5",
+          "is_shared": false,
+          "mime_type": null,
+          "original_path": "breakdown.json",
+          "resolved_path": "dev/active/0de41c82/breakdown.json"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "926051cdd017ca00d2fc05a79be9f6fcb3416326d38f566e3e5412d55b411ff8",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "investigation.md",
+          "resolved_path": "dev/active/0de41c82/investigation.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a92109f9f7f11c8409e8f784a2274828c8c6f14cf005b7d1dafa811848e8b241",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../../studies/b488f02c/feasibility-study.md",
+          "resolved_path": "dev/studies/b488f02c/feasibility-study.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "9f92c2c9d087d2d335d3c882e0c65dbd4f89ae3e1e8eb9f368f73a384b617dc3",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "bipedal-f5-f7-representation-study.md",
+          "resolved_path": "dev/active/0de41c82/bipedal-f5-f7-representation-study.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/0de41c82/plan.md"
+    },
+    {
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/active/0de41c82/investigation.md"
     }
   ],
   "first_ready_at": "2026-08-07T22:43:35.681967553Z",
@@ -57,5 +105,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-17T17:06:40.007842093Z"
+  "updated_at": "2026-08-17T17:15:51.687917680Z"
 }
