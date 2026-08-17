@@ -18,7 +18,7 @@
   "gates_status": {
     "cargo-ci": {
       "status": "passed",
-      "updated_at": "2026-08-17T06:39:25.086522849Z",
+      "updated_at": "2026-08-17T07:55:33.348801649Z",
       "updated_by": "auto:executor"
     },
     "code-review": {
@@ -42,5 +42,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-  "updated_at": "2026-08-17T06:48:39.257675489Z"
+  "updated_at": "2026-08-17T07:55:33.348801649Z"
 }
