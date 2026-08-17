@@ -4,14 +4,31 @@
   "context": {},
   "created_at": "2026-08-17T19:44:59.652905393Z",
   "dependencies": [],
-  "description": "`dev/research/f3_bipedal` is outside the Cargo workspace, so no gate reaches it: its tests never run in CI, and its Clippy failure and test-naming deviation have gone unobserved.\n\n## Background\n\nThe crate is excluded from the root workspace deliberately — it carries its own `[workspace]` table and is consumed only as a path dev-dependency by `gf2-kernels-simd`. The `cargo-ci` gate runs `cargo check`, `cargo nextest run`, and `cargo clippy` with `--workspace`, so it compiles this crate as a dependency but never runs its test suite or lints it.\n\nThe repository already has the pattern for this: `gf2-kernels-hip` and `dev/research/permanent-sampling-feas` each carry a dedicated gate that runs the standalone crate's release tests, formatting, and Clippy, described as covering exactly what workspace `cargo-ci` excludes. `f3_bipedal` has no equivalent, and two defects have accumulated behind the gap:\n\n- Clippy fails today. `cargo clippy --manifest-path dev/research/f3_bipedal/Cargo.toml --release --all-targets -- -D warnings` reports `clippy::len_without_is_empty` against the `F3Encoding` trait in `dev/research/f3_bipedal/src/common.rs:40`, which declares `len` with no `is_empty`.\n- Test functions in the crate are named without the project's required `test_<operation>_<scenario>` prefix, for example `pack_unpack_roundtrip` and `exhaustive_add_pairs`.\n\n## Success Criteria\n\n- [hard] REQ-01: A gate in the repository's gate registry runs this crate's release test suite, formatting check, and Clippy with warnings denied, following the shape of the existing standalone-crate gates.\n- [hard] REQ-02: `cargo clippy --manifest-path dev/research/f3_bipedal/Cargo.toml --release --all-targets -- -D warnings` exits zero.\n- [hard] REQ-03: Every test function in the crate is named `test_<operation>_<scenario>`, and each renamed function keeps its original assertions; no test is dropped, merged, or weakened.\n- [hard] REQ-04: The crate's release test suite passes after the renames.\n\n## Notes\n\nREQ-02 is satisfied by giving `F3Encoding` an `is_empty` method, not by an `allow` attribute; the trait models a packed-vector encoding where emptiness is a meaningful query.\n",
+  "description": "`dev/research/f3_bipedal` is outside the Cargo workspace, so no gate reaches it: its tests never run in CI, and its Clippy failure and test-naming deviation have gone unobserved.\n\n## Background\n\nThe crate is excluded from the root workspace deliberately — it carries its own `[workspace]` table and is consumed only as a path dev-dependency by `gf2-kernels-simd`. The `cargo-ci` gate runs `cargo check`, `cargo nextest run`, and `cargo clippy` with `--workspace`, so it compiles this crate as a dependency but never runs its test suite or lints it.\n\nThe repository already has the pattern for this: `gf2-kernels-hip` and `dev/research/permanent-sampling-feas` each carry a dedicated gate that runs the standalone crate's release tests, formatting, and Clippy, described as covering exactly what workspace `cargo-ci` excludes. `f3_bipedal` has no equivalent, and two defects have accumulated behind the gap:\n\n- Clippy fails today. `cargo clippy --manifest-path dev/research/f3_bipedal/Cargo.toml --release --all-targets -- -D warnings` reports `clippy::len_without_is_empty` against the `F3Encoding` trait in `dev/research/f3_bipedal/src/common.rs:40`, which declares `len` with no `is_empty`.\n- Test functions in the crate are named without the project's required `test_<operation>_<scenario>` prefix, for example `pack_unpack_roundtrip` and `exhaustive_add_pairs`.\n\n## Success Criteria\n\n- [hard] REQ-01: A gate in the repository's gate registry runs this crate's release test suite, formatting check, and Clippy with warnings denied, following the shape of the existing standalone-crate gates.\n- [hard] REQ-02: `cargo clippy --manifest-path dev/research/f3_bipedal/Cargo.toml --release --all-targets -- -D warnings` exits zero.\n- [hard] REQ-03: Every plain `#[test]` function in the crate is named `test_<operation>_<scenario>`, and property tests follow the workspace `prop_*` convention; each renamed function keeps its original assertions, and no test is dropped, merged, or weakened.\n- [hard] REQ-04: The crate's release test suite passes after the renames.\n\n## Notes\n\nREQ-02 is satisfied by giving `F3Encoding` an `is_empty` method, not by an `allow` attribute; the trait models a packed-vector encoding where emptiness is a meaningful query.\n\nREQ-03 distinguishes the two naming families the workspace already uses: 1985 `test_*` unit functions and 213 `prop_*` property functions. Property tests keep `prop_*` so the crate converges on the shared convention rather than forking it.\n\n",
   "documents": [],
   "first_ready_at": "2026-08-17T19:44:59.652905393Z",
   "gates_required": [
     "cargo-ci",
-    "code-review"
+    "code-review",
+    "f3-bipedal-ci"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-17T20:11:18.642360935Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-17T20:13:50.754421925Z",
+      "updated_by": "auto:executor"
+    },
+    "f3-bipedal-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-17T20:14:30.899348880Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "9ce34225-d40d-4c2b-a56e-1a4882925377",
   "labels": [
     "epic:quality-documentation-tech-debt",
@@ -22,5 +39,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Bring dev/research/f3_bipedal under a CI gate and the test-naming convention",
-  "updated_at": "2026-08-17T20:05:34.826090299Z"
+  "updated_at": "2026-08-17T20:46:05.838878087Z"
 }
