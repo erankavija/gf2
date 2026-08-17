@@ -8418,3 +8418,4 @@
 {"gate_key":"code-review","id":"56fdcb2a-8e3b-46ed-adb6-9bc4f2713cd3","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:05.768404813Z","type":"gate_passed","updated_by":"auto:executor"}
 {"from":"in_progress","id":"083d8969-710f-45c1-b61e-42af29281106","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","to":"done","type":"issue_state_changed"}
 {"id":"e08caec0-48bf-4700-8dc0-0e7646b240bc","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","type":"issue_completed"}
+{"id":"5a9b6aed-1e74-4b33-b5c4-b9686b8a64fe","isolated_torn_tail":false,"operation":"reconfigure","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"unchanged","variables":[]}],"timestamp":"2026-08-17T20:57:12.197928953Z","type":"profile_lifecycle"}
