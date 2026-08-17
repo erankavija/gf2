@@ -208,6 +208,12 @@ pub fn campaign_configuration(manifest: &CampaignManifest, field: u8) -> Campaig
     }
 }
 
+/// Returns the checkpoint path for one field arm in a campaign directory.
+#[must_use]
+pub fn field_checkpoint_path(root: &Path, field: u8) -> PathBuf {
+    root.join(format!("campaign.q{field}.checkpoint.json"))
+}
+
 /// Runs one field arm with checkpointed shard execution.
 ///
 /// Resume uses the checkpoint's configuration identity and completed work set.
@@ -220,6 +226,8 @@ pub fn campaign_configuration(manifest: &CampaignManifest, field: u8) -> Campaig
 /// preceding checkpoint write, and an evaluator error quarantines that item in
 /// the field summary while remaining work continues. These contracts enforce
 /// `@/inv/campaign-resumability` and `@/inv/deterministic-seeded-execution`.
+/// `worker_count` must be non-zero; zero is refused with
+/// [`CampaignDriverError::ResumeRefused`].
 pub fn run_field_checkpointed(
     root: &Path,
     manifest: &CampaignManifest,
@@ -244,7 +252,8 @@ pub fn run_field_checkpointed(
 /// result; this seam lets conformance tests exercise quarantine without
 /// replacing the scheduler or its sampler. The resume, interruption, adoption,
 /// durability, and quarantine contracts are the same as
-/// [`run_field_checkpointed`].
+/// [`run_field_checkpointed`]. `worker_count` must be non-zero; zero is refused
+/// with [`CampaignDriverError::ResumeRefused`].
 pub fn run_field_checkpointed_with_evaluator<E>(
     root: &Path,
     manifest: &CampaignManifest,
@@ -628,7 +637,7 @@ mod tests {
     fn shard_and_summary_durability_precede_checkpoint_recording() {
         let directory = TestDir::new();
         let campaign = manifest();
-        let checkpoint = directory.root().join("campaign.checkpoint.json");
+        let checkpoint = field_checkpoint_path(directory.root(), 3);
         let events = Rc::new(RefCell::new(Vec::new()));
         let shard_events = Rc::clone(&events);
         let summary_events = Rc::clone(&events);

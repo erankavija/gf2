@@ -12,7 +12,7 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use gf2_sim::permanent_campaign::driver::run_field_checkpointed;
+use gf2_sim::permanent_campaign::driver::{field_checkpoint_path, run_field_checkpointed};
 use gf2_sim::permanent_campaign::provenance::approve_emission;
 use gf2_sim::permanent_campaign::schema::read_manifest;
 
@@ -58,7 +58,7 @@ fn main() -> ExitCode {
         eprintln!("emission refused: {refusal}");
         return ExitCode::FAILURE;
     }
-    let checkpoint = output.join("campaign.checkpoint.json");
+    let checkpoint = field_checkpoint_path(&output, field);
     let run = match run_field_checkpointed(&output, &manifest, field, &checkpoint, 1) {
         Ok(run) => run,
         Err(error) => return failure(error),

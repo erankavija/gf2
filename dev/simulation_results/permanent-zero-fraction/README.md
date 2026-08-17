@@ -290,13 +290,16 @@ One invocation executes exactly one field arm and writes only that field's
 shard files and field summary, so field arms can run concurrently. The writer
 passes `approve_emission` before it runs the field, establishing source
 identity before any dataset bytes are written. An interrupted field arm
-resumes from `<campaign-directory>/campaign.checkpoint.json`; checkpointed
-completed shards are never re-evaluated or rewritten, and a shard emitted just
-before a checkpoint update is adopted after a deterministic byte comparison.
+resumes from its field-specific
+`<campaign-directory>/campaign.q{field}.checkpoint.json`; checkpointed completed
+shards are never re-evaluated or rewritten, and a shard emitted just before a
+checkpoint update is adopted after a deterministic byte comparison.
 A resume whose configuration differs is refused and names the differing
 component. An evaluation failure is quarantined and remains visible in the
-field summary while the remaining work continues. A COMPLETED field-arm
-re-run still refuses at its existing files, preserving the first emission.
+field summary while the remaining work continues. A completed field-arm rerun
+resumes from the checkpoint's completed work set, re-evaluates nothing, rewrites
+no shard or summary files, and exits successfully; the first emission is
+preserved because completed shards are never rewritten.
 Per-phase timings go to standard output and never into dataset files.
 
 | Exit status | Means |

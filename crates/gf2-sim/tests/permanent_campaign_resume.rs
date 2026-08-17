@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use gf2_sim::checkpoint::{CheckpointReader, CheckpointWriter};
 use gf2_sim::permanent_campaign::driver::{
-    campaign_config_hash, campaign_configuration, run_field_checkpointed,
+    campaign_config_hash, campaign_configuration, field_checkpoint_path, run_field_checkpointed,
     run_field_checkpointed_with_evaluator, CampaignCheckpoint, CampaignDriverError,
 };
 use gf2_sim::permanent_campaign::schedule::evaluate_work_item;
@@ -79,7 +79,7 @@ fn manifest(root_seed: u64) -> CampaignManifest {
 }
 
 fn checkpoint(root: &Path) -> PathBuf {
-    root.join("campaign.checkpoint.json")
+    field_checkpoint_path(root, 3)
 }
 
 fn dataset_bytes(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
@@ -87,7 +87,13 @@ fn dataset_bytes(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
         for entry in fs::read_dir(path).unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
-            if path.file_name().and_then(|name| name.to_str()) == Some("campaign.checkpoint.json") {
+            let is_field_checkpoint =
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| {
+                        name.starts_with("campaign.q") && name.ends_with(".checkpoint.json")
+                    });
+            if is_field_checkpoint {
                 continue;
             }
             if path.is_dir() {
@@ -104,6 +110,27 @@ fn dataset_bytes(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
     visit(root, root, &mut output);
     output.sort_by(|left, right| left.0.cmp(&right.0));
     output
+}
+
+#[test]
+fn different_field_arms_share_campaign_directory_without_checkpoint_conflict() {
+    clear_interrupt();
+    let mut campaign = manifest(0x51498);
+    let mut q5_cell = campaign.cells[0].clone();
+    q5_cell.q = 5;
+    campaign.cells.push(q5_cell);
+    let root = temp_root("field-arms");
+    let q3_checkpoint = field_checkpoint_path(&root, 3);
+    let q5_checkpoint = field_checkpoint_path(&root, 5);
+
+    let q3_run = run_field_checkpointed(&root, &campaign, 3, &q3_checkpoint, 1).unwrap();
+    let q5_run = run_field_checkpointed(&root, &campaign, 5, &q5_checkpoint, 1).unwrap();
+
+    assert_eq!(q3_run.q(), 3);
+    assert_eq!(q5_run.q(), 5);
+    assert!(q3_checkpoint.is_file());
+    assert!(q5_checkpoint.is_file());
+    assert_ne!(q3_checkpoint, q5_checkpoint);
 }
 
 #[test]
