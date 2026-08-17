@@ -96,7 +96,7 @@
      "short_id": "4a6bdcff",
      "title": "Determinant companion evaluated on the campaign's matrices",
      "classification": "implementation",
-     "status": "rework-1 dispatched (luna): code-review F1 counts-estimate pairing (owner-approved: summarize fills the determinant estimate and exact-rule verdict), F2 operand-level one-draw test via observer seam, F3 README timing wording; implementation f01dd0be recovered from the codex transcript after the worktree-overlay loss and re-verified"
+     "status": "done: rework-1 closed all three findings (estimate+verdict fill with canonical round-trip test, operand-level one-draw test via observer seam, README timing wording); cargo-ci + code-review passed round 2; lead six-tier review PASS"
     }
    ]
   },
@@ -117,7 +117,8 @@
      "classification": "implementation",
      "status": "pending"
     }
-   ]
+   ],
+   "note": "serialized: eb8825c8 first (5a), then 7a816262 (5b) behind the new dependency edge"
   },
   {
    "wave_number": 6,

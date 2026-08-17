@@ -7,6 +7,7 @@
   ],
   "description": "A batch-parallel execution path that evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$, using the existing single-matrix kernels with no field-specific parallel code.\n\n## Background\n\nNo batch-parallel path exists in-tree for any field: the only parallel permanent routine splits one matrix's Gray-code walk and exists for $\\mathbb{F}_3$ alone. Batch parallelism is harness-side, needs no field-specific kernel, and works for each of the three fields, which is why it belongs in the campaign's execution layer rather than in any kernel crate.\n\nThe measurements motivating it are recorded: batching across matrices with a work-stealing pool wins decisively at small $n$, where per-matrix scheduling overhead dominates a short kernel; from $n = 20$ upward at $q = 3$ the intra-matrix parallel path overtakes it. A campaign needs both paths and chooses per cell from measurement; the choosing is the selection leaf's work, behind this one.\n\n## Success Criteria\n\n- [hard] REQ-01: A batch-parallel path evaluates a shard's matrices across threads for $q \\in \\{3,5,7\\}$ without a field-specific kernel.\n- [hard] REQ-02: The path returns per-matrix results in input order, asserted against the generic reference routine on a common matrix set for each supported field.\n- [hard] REQ-03: Thread count is taken from configuration rather than probed at run time, so a recorded execution names the parallelism it ran with.\n- [hard] REQ-04: A fixed input produces byte-identical per-matrix results across configured thread counts for each supported field, asserted by a test that varies the thread count.\n\n## Notes\n\nScope is the batch-parallel path alone. Backend selection, the manifest table read, and the halt rule are the selection leaf's work behind this one.\n\nREQ-04 added 2026-08-17 with owner approval: the cross-worker-count determinism obligation moved here from 51498b90, whose serial driver made the clause vacuous; this leaf introduces the thread pool, so a thread-count-varying test is discriminating here.",
   "documents": [],
+  "first_ready_at": "2026-08-17T18:41:57.734939418Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
@@ -20,7 +21,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "normal",
-  "state": "backlog",
+  "state": "ready",
   "title": "Batch-parallel processor path for campaign shards",
-  "updated_at": "2026-08-17T16:47:17.841938395Z"
+  "updated_at": "2026-08-17T18:41:57.734939418Z"
 }
