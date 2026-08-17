@@ -1,9 +1,11 @@
 //! Execute one field arm of a permanent-zero-fraction campaign.
 //!
 //! The manifest is read from `--manifest`; `--output` names the campaign
-//! directory and `--q` selects exactly one field. The binary reports timings
-//! to standard output and writes only the selected field's shard records and
-//! summary. Before execution, it passes the output directory through
+//! directory, `--q` selects exactly one field, and `--workers N` selects the
+//! configured worker count (default: 1 when omitted). The binary reports the
+//! effective campaign configuration and timings to standard output and writes
+//! only the selected field's shard records and summary. Before execution, it
+//! passes the output directory through
 //! `approve_emission`; the guard contract binds writers, and this binary is the
 //! writer, while `emit_field` remains the library emission primitive. Use
 //! `permanent_dataset conform` after all field arms and campaign finalization
@@ -16,13 +18,15 @@ use gf2_sim::permanent_campaign::driver::{field_checkpoint_path, run_field_check
 use gf2_sim::permanent_campaign::provenance::approve_emission;
 use gf2_sim::permanent_campaign::schema::read_manifest;
 
-const USAGE: &str = "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD";
+const USAGE: &str =
+    "usage: permanent_campaign --manifest PATH --output CAMPAIGN-DIR --q FIELD [--workers N]";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let mut manifest_path = None;
     let mut output = None;
     let mut field = None;
+    let mut workers = 1usize;
     let mut index = 0;
     while index < arguments.len() {
         let name = arguments[index].as_str();
@@ -43,6 +47,13 @@ fn main() -> ExitCode {
                 }
                 Err(_) => return usage("--q must be an integer field order"),
             },
+            ("--workers", Some(value)) => match value.parse::<usize>() {
+                Ok(parsed_workers) if parsed_workers >= 1 => {
+                    workers = parsed_workers;
+                    index += 2;
+                }
+                _ => return usage("--workers must be an integer of at least 1"),
+            },
             _ => return usage("unrecognized or incomplete argument"),
         }
     }
@@ -59,10 +70,11 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
     let checkpoint = field_checkpoint_path(&output, field);
-    let run = match run_field_checkpointed(&output, &manifest, field, &checkpoint, 1) {
+    let run = match run_field_checkpointed(&output, &manifest, field, &checkpoint, workers) {
         Ok(run) => run,
         Err(error) => return failure(error),
     };
+    println!("campaign q={} workers={workers}", run.q());
     for shard in run.shards() {
         println!(
             "q={} n={} shard={} matrices={} zeros={} draw_s={:.6} pack_s={:.6} evaluate_s={:.6} determinant_s={:.6} count_s={:.6}",
