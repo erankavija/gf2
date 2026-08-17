@@ -8419,3 +8419,5 @@
 {"from":"in_progress","id":"083d8969-710f-45c1-b61e-42af29281106","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","to":"done","type":"issue_state_changed"}
 {"id":"e08caec0-48bf-4700-8dc0-0e7646b240bc","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:52:32.559012388Z","type":"issue_completed"}
 {"id":"5a9b6aed-1e74-4b33-b5c4-b9686b8a64fe","isolated_torn_tail":false,"operation":"reconfigure","profiles":[{"id":"jit-default","status":"unchanged","variables":[]},{"id":"sim-research","status":"unchanged","variables":[]}],"timestamp":"2026-08-17T20:57:12.197928953Z","type":"profile_lifecycle"}
+{"id":"e623b32f-cebb-4c67-aa2f-c9470ad42f2a","issue_id":"563f364b-b674-438d-9ba9-9bcdf81afade","priority":"normal","timestamp":"2026-08-17T20:58:40.847401546Z","title":"Gate additions break profile-ownership validation of the rules-and-gates projection","type":"issue_created"}
+{"fields":["dependencies"],"id":"5929d59b-08d6-48f3-81ae-1f44bd3559a5","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T20:58:49.436705294Z","type":"issue_updated","updated_by":"dependency-add"}

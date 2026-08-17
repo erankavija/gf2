@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-17T20:58:40.847401546Z",
+  "dependencies": [],
+  "description": "Defining a repository gate re-renders `.jit/reference/rules-and-gates.md`, which the sim-research profile claims, so every gate addition breaks `jit validate` until someone re-records the profile fingerprint by hand.\n\n## Background\n\nThe projection lists every gate in the registry. The profile owns the rendered file but only some of its content: 19 of the repository's 24 gates are profile contributions, and five — `f3-bipedal-ci`, `gf2-kernels-hip-ci`, `permanent-sampling-feas-ci`, `permanent-wave-gpu-ci`, and `research-review` — are repository-local. Adding one is ordinary work, but it moves a file the profile claims, and `jit validate` then fails with `[profile-ownership] '.jit/reference/rules-and-gates.md' no longer holds the value this profile published`. Because `repo-validate` is itself a gate, the red state propagates to any issue carrying it.\n\nTwo further inconsistencies sit behind this:\n\n- The package's published copy at `packages/sim-research/assets/install/.jit/reference/rules-and-gates.md` names six gates — `breakdown-review`, `code-review`, `coverage-preview`, `jit-validate`, `plan-review`, `repo-validate` — while the repository copy names all 24. It also describes `breakdown-review` and `plan-review` as external-review placeholders, where the repository defines both as automated `ai-review.sh` checkers. The published asset and the live repository file describe different registries.\n- `manifest.toml` declares that file both as an install-only `[[asset]]` and beneath the `.jit/reference` `[[live-source]]` root. The asset declaration wins, so `jit profile capture` reads the package's own copy and reports no change; the error message's suggested capture is a no-op against this drift.\n\nThe immediate breakage is repaired by `jit profile reconfigure`, which re-records the claim fingerprint without changing any file. That repair is manual and must be repeated after every gate change.\n\n## Success Criteria\n\n- [hard] REQ-01: Adding a gate to the registry and rendering the projections leaves `jit validate` green with no manual profile re-record.\n- [hard] REQ-02: The published package asset and the repository's rendered projection no longer describe different gate sets, or the package no longer publishes that file at all.\n- [hard] REQ-03: `.jit/reference/rules-and-gates.md` is declared once in `manifest.toml`, so `jit profile capture` and the ownership check draw the file's authoritative content from the same place.\n- [hard] REQ-04: The chosen resolution is recorded with the reasoning, including what a fresh install of the profile publishes for this file afterwards.\n\n## Notes\n\nRemoving a gate is the mirror case and should be checked the same way as REQ-01.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-17T20:58:40.847401546Z",
+  "gates_required": [
+    "repo-validate",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "563f364b-b674-438d-9ba9-9bcdf81afade",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:tooling",
+    "type:bug"
+  ],
+  "priority": "normal",
+  "state": "ready",
+  "title": "Gate additions break profile-ownership validation of the rules-and-gates projection",
+  "updated_at": "2026-08-17T20:58:40.847401546Z"
+}
