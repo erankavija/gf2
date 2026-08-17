@@ -8301,3 +8301,6 @@
 {"gate_key":"code-review","id":"234423b1-53c3-4c23-a676-46717f6343ed","issue_id":"63d931a9-add9-4812-8d7b-56b71cb325a0","timestamp":"2026-08-16T23:34:17.980595610Z","type":"gate_added"}
 {"gate_key":"cargo-ci","id":"338f89e2-461d-4a67-bda6-2aa2b3c1e93b","issue_id":"63d931a9-add9-4812-8d7b-56b71cb325a0","timestamp":"2026-08-16T23:34:18.099436584Z","type":"gate_added"}
 {"fields":["dependencies"],"id":"0a9ec2c3-468e-4d8a-8d0d-874410253870","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-16T23:34:22.028166058Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"doc-review","id":"ea602b4b-915b-441e-a563-054677ff7b14","issue_id":"0dffa759-8ff3-4198-a901-23bedf6667e0","timestamp":"2026-08-17T05:55:49.193721166Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"dad54556-e096-4dcb-9660-78f81a4ba9a9","issue_id":"d2fb76b9-3a43-468e-9a05-dd7e7ca51a26","priority":"low","timestamp":"2026-08-17T05:57:18.287997846Z","title":"Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation","type":"issue_created"}
+{"fields":["dependencies"],"id":"5b62dc2d-60d1-40a1-b677-f0a1b36f4071","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T05:57:27.419742159Z","type":"issue_updated","updated_by":"dependency-add"}

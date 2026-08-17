@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-17T05:57:18.287997846Z",
+  "dependencies": [],
+  "description": "Carries the tracked convergence condition for the named convention exception permanent-f7-internal-three-plane (@/inv/convention-convergence), recorded in dev/studies/0dffa759/findings.md §7.1. The F_7 permanent kernel's production design holds its per-lane column-sum accumulator in a three-plane bit-sliced state (b0, b1, b2) rather than the canonical public Packed7 representation (crates/gf2-algebra/src/packed/packed7.rs:211); the state is kernel-internal, appears in no public signature, and every boundary value is canonical.\n\nThe exception is discharged, and the two representations converge on one form, when either of the following holds:\n\n1. Convergence upward. A committed receipt orders the three-plane and lookup F_7 arithmetic circuits against each other at matched launch geometry — the comparison dev/studies/6c7fcb38/receipts.md §17.8 declines to make — AND a CPU-side re-measurement on the PackedField surface reproduces the ordering, on the workload the archived decision weighted (findings.md §8). Packed7 then changes at its source, under an approved Lean sketch (reaching crates/gf2-kernels-simd/src/bipedal/packed7.rs, x86/bipedal_avx2_packed7.rs, the HIP LUT upload path, and Packed7Correctness.lean), and the internal state is removed.\n2. Convergence downward. The receipts fail to reproduce the ordering, or the F_7 go verdict of findings.md §5 is withdrawn. The internal state is removed and the permanent kernel returns to Packed7.\n\nUntil one of those resolves, the exception is cited at the internal state's definition site and at the F_7 dispatcher when the production kernel lands, citing findings.md §7.1 as the record.\n\n## Success Criteria\n\n- [hard] REQ-01: One of the two discharge paths above is executed to completion, with the deciding receipts committed; the internal three-plane state either replaces Packed7 at its source (with SIMD mirrors, HIP LUT path, and Lean proof updated under an approved sketch) or is removed in favor of Packed7.\n- [hard] REQ-02: Every exception citation at the internal state's definition site and the F_7 dispatcher is removed in the same change, and dev/studies/0dffa759/findings.md §7.1 is not edited (it is the historical record).",
+  "documents": [],
+  "first_ready_at": "2026-08-17T05:57:18.287997846Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "d2fb76b9-3a43-468e-9a05-dd7e7ca51a26",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:gf2-algebra",
+    "type:enhancement"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation",
+  "updated_at": "2026-08-17T05:57:18.287997846Z"
+}

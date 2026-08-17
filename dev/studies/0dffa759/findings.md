@@ -969,8 +969,10 @@ other way. That is the same decision §8 addresses.
 >
 > Until one of those resolves, the exception is cited at the internal state's
 > definition site and at the $\mathbb{F}_7$ dispatcher, and this document is the
-> record it cites. A tracked issue carrying the condition is named by the lead
-> when this synthesis lands; this document does not create one.
+> record it cites. The tracked issue carrying the condition is `d2fb76b9`
+> (*Converge the F_7 permanent kernel's internal three-plane state with the
+> public Packed7 representation*), filed under the quality and tech-debt
+> umbrella when this synthesis landed.
 
 ## 8. The archived $\mathbb{F}_7$ encoding decision (REQ-08)
 

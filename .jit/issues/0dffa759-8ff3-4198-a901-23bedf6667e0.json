@@ -164,7 +164,7 @@
   "gates_status": {
     "doc-review": {
       "status": "failed",
-      "updated_at": "2026-08-16T22:52:46.954104101Z",
+      "updated_at": "2026-08-17T05:55:49.193721166Z",
       "updated_by": "auto:executor"
     },
     "research-review": {
@@ -189,5 +189,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Field-by-field go/no-go synthesis with production design",
-  "updated_at": "2026-08-16T23:12:20.810579794Z"
+  "updated_at": "2026-08-17T05:55:49.193721166Z"
 }
