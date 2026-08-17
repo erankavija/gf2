@@ -208,7 +208,7 @@ mod tests {
     }
 
     #[test]
-    fn pack_unpack_roundtrip() {
+    fn test_pack_unpack_roundtrip() {
         let mut rng = Lcg::new(13);
         for &n in &[0usize, 1, 63, 64, 65, 127, 128, 129, 1000] {
             let v = rng.f3_vec(n);
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn exhaustive_add_pairs() {
+    fn test_add_exhaustive_pairs() {
         for a in 0u8..3 {
             for b in 0u8..3 {
                 let mut va = Bipedal3::pack(&[a]);
@@ -230,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn exhaustive_sub_pairs() {
+    fn test_sub_exhaustive_pairs() {
         for a in 0u8..3 {
             for b in 0u8..3 {
                 let mut va = Bipedal3::pack(&[a]);
@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn exhaustive_mul_pairs() {
+    fn test_mul_exhaustive_pairs() {
         for a in 0u8..3 {
             for b in 0u8..3 {
                 let mut va = Bipedal3::pack(&[a]);
@@ -290,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    fn exhaustive_div_pairs_nonzero_b() {
+    fn test_div_exhaustive_pairs_nonzero_divisor() {
         for a in 0u8..3 {
             for b in 1u8..3 {
                 let mut va = Bipedal3::pack(&[a]);
@@ -303,7 +303,7 @@ mod tests {
 
     /// Tail-mask invariant: out-of-range slots in the last word must stay 0.
     #[test]
-    fn tail_mask_keeps_padding_zero() {
+    fn test_tail_mask_keeps_padding_zero() {
         let mut va = Bipedal3::pack(&[1, 2, 0, 1, 2]); // len = 5, padding 59 bits
         let vb = Bipedal3::pack(&[2, 2, 2, 2, 2]);
         va.add_assign(&vb);

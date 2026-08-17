@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn pack_unpack_roundtrip() {
+    fn test_pack_unpack_roundtrip() {
         let mut rng = Lcg::new(17);
         for &n in &[0usize, 1, 64, 1000] {
             let v = rng.f3_vec(n);
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn exhaustive_all_ops_pairs() {
+    fn test_all_ops_exhaustive_pairs() {
         for a in 0u8..3 {
             for b in 0u8..3 {
                 let mk = || (Naive3::pack(&[a]), Naive3::pack(&[b]));
