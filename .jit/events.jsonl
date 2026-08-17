@@ -8395,3 +8395,5 @@
 {"assignee":"agent:claude","id":"ceaacf4f-f113-4fe8-af1c-0c2ac36d3089","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","timestamp":"2026-08-17T19:35:19.232409433Z","type":"issue_claimed"}
 {"from":"in_progress","id":"486ca32d-ef6e-4ef4-94cf-42e461644f01","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","timestamp":"2026-08-17T19:37:24.318058600Z","to":"ready","type":"issue_state_changed"}
 {"assignee":"agent:claude","id":"4c08c1d1-d04e-4e71-b8ab-fcfd0df4e359","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","reason":"Owner rejected the criteria amendment; leaving the issue as found","timestamp":"2026-08-17T19:37:24.318058600Z","type":"issue_released"}
+{"from":"ready","id":"6dea9360-629c-4435-af52-64dbd33bb822","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T19:38:19.092406272Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:claude","id":"32758fd6-93de-43ad-a4ed-f982f19d0f13","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T19:38:19.092406272Z","type":"issue_claimed"}
