@@ -88,8 +88,8 @@
       "updated_by": "auto:executor"
     },
     "holistic-review": {
-      "status": "failed",
-      "updated_at": "2026-08-17T17:26:43.802799942Z",
+      "status": "passed",
+      "updated_at": "2026-08-17T17:49:36.233202177Z",
       "updated_by": "auto:executor"
     },
     "repo-validate": {
@@ -98,8 +98,8 @@
       "updated_by": "auto:executor"
     },
     "research-review": {
-      "status": "failed",
-      "updated_at": "2026-08-17T17:24:11.332266100Z",
+      "status": "passed",
+      "updated_at": "2026-08-17T17:46:50.874579118Z",
       "updated_by": "auto:executor"
     }
   },
@@ -115,5 +115,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-17T17:40:15.164241454Z"
+  "updated_at": "2026-08-17T17:49:36.233202177Z"
 }
