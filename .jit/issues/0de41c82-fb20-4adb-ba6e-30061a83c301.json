@@ -74,6 +74,7 @@
       "path": "dev/active/0de41c82/investigation.md"
     }
   ],
+  "done_at": "2026-08-17T18:27:27.288092861Z",
   "first_ready_at": "2026-08-07T22:43:35.681967553Z",
   "gates_required": [
     "doc-review",
@@ -113,7 +114,7 @@
     "story:gpu-wave-permanents"
   ],
   "priority": "high",
-  "state": "in_progress",
+  "state": "done",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-17T17:49:36.233202177Z"
+  "updated_at": "2026-08-17T18:27:27.288092861Z"
 }
