@@ -30,8 +30,8 @@ use crate::checkpoint::{
 };
 use crate::permanent_campaign::schedule::{
     emit_shard_with_durability_hook, emit_summary_with_durability_hook, enumerate_work_items,
-    evaluate_work_item, shard_record_bytes, summarize_with_quarantine, EvaluatedShard, FieldRun,
-    PhaseDurations, ShardRun, WorkItem,
+    evaluate_work_item_with_worker_count, shard_record_bytes, summarize_with_quarantine,
+    EvaluatedShard, FieldRun, PhaseDurations, ShardRun, WorkItem,
 };
 use crate::permanent_campaign::schema::{
     field_summary_file, shard_record_file, CampaignManifest, QuarantinedShard, ShardRecord,
@@ -241,7 +241,10 @@ pub fn run_field_checkpointed(
         field,
         checkpoint_path,
         worker_count,
-        |item| evaluate_work_item(manifest, item).map_err(|error| error.to_string()),
+        |item| {
+            evaluate_work_item_with_worker_count(manifest, item, worker_count)
+                .map_err(|error| error.to_string())
+        },
     )
 }
 
@@ -630,6 +633,7 @@ fn configuration_differences(
 mod tests {
     use super::*;
     use crate::permanent_campaign::fixture::{manifest, TestDir};
+    use crate::permanent_campaign::schedule::evaluate_work_item;
     use std::cell::RefCell;
     use std::path::Path;
     use std::rc::Rc;
