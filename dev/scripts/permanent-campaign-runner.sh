@@ -35,7 +35,13 @@ FLOCK_WRAPPER="${CAMPAIGN_FLOCK_WRAPPER:-$SCRIPT_DIR/ccx1-bench-flock.sh}"
 STUDY_ROOT="${CAMPAIGN_STUDY_ROOT:-$REPO_ROOT/dev/studies}"
 ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
 ARCH="${PERMANENT_CAMPAIGN_ARCH:-gfx1030}"
-RUN_ID="${CAMPAIGN_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+if [[ "${1:-}" == premeasure || "${1:-}" == premeasure-collect || "${1:-}" == __locked-premeasure ]]; then
+    RUN_ID="${CAMPAIGN_RUN_ID:-premeasure-v1}"
+else
+    RUN_ID="${CAMPAIGN_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+fi
+PREMEASURE_PLAN="${CAMPAIGN_PREMEASURE_PLAN:-$REPO_ROOT/dev/benchmarks/permanent_campaign/premeasure-plan-v1.csv}"
+PREMEASURE_DEFAULT_SESSION_CAP=43200
 
 # The production permanent kernels the campaign measures, listed as the
 # translation units crates/gf2-kernels-hip/build.rs hands to hipcc. build.rs
@@ -76,7 +82,7 @@ CENSORED_EXIT=7
 
 usage() {
     cat <<'USAGE'
-Usage: permanent-campaign-runner.sh <prepare|smoke|measure>
+Usage: permanent-campaign-runner.sh <prepare|smoke|measure|premeasure|premeasure-collect>
 
 Subcommands:
   prepare  Build both HIP harnesses, capture kernel resource receipts, and
@@ -86,6 +92,12 @@ Subcommands:
   measure  Refuse tracked worktree changes or hash drift, then run the
            overnight receipt campaign while holding the canonical full-host
            benchmark mutex for the entire run.
+  premeasure [--session-cap SECONDS]
+           Run the resumable 60-cell premeasurement schedule under one
+           canonical full-host lock. The default session cap is 43200 seconds.
+  premeasure-collect
+           Collect completed premeasurement process receipts and report
+           per-configuration completeness; no pooled means are calculated.
 USAGE
 }
 
@@ -111,6 +123,14 @@ tracked_worktree_clean() {
 assert_tracked_worktree_clean() {
     if ! tracked_worktree_clean; then
         echo "ERROR: measure requires a clean worktree (tracked and untracked)" >&2
+        git -C "$REPO_ROOT" status --short --untracked-files=all >&2
+        exit 2
+    fi
+}
+
+assert_premeasure_worktree_clean() {
+    if ! tracked_worktree_clean; then
+        echo "ERROR: premeasure requires a clean worktree (tracked and untracked)" >&2
         git -C "$REPO_ROOT" status --short --untracked-files=all >&2
         exit 2
     fi
@@ -607,6 +627,286 @@ run_campaign() {
         "$FLOCK_WRAPPER" --full-host "$BASH" "$SCRIPT_PATH" __locked-pipeline "$smoke"
 }
 
+validate_premeasure_plan() {
+    require_command awk
+    require_command sort
+    [[ -f "$PREMEASURE_PLAN" ]] || die "premeasurement plan not found: $PREMEASURE_PLAN"
+    local header rows cells bad
+    header=$(head -n 1 "$PREMEASURE_PLAN")
+    [[ "$header" == "q,n,manifest_backend,harness_backend,batch_size,process_count,warmup_seconds,timed_repetition_min,timed_seconds_min,per_process_cap_seconds,interleave_block,nomination_basis" ]] \
+        || die "premeasurement plan has an unexpected header"
+    rows=$(awk -F, 'NR > 1 && NF == 12 { n++ } END { print n + 0 }' "$PREMEASURE_PLAN")
+    [[ "$rows" -eq 120 ]] || die "premeasurement plan has $rows rows; expected 120"
+    cells=$(awk -F, 'NR > 1 { key=$1 ":" $2; seen[key]++; rows++ } END { for (key in seen) if (seen[key] != 2) bad=1; for (key in seen) cells++; if (bad) exit 1; print cells + 0 }' "$PREMEASURE_PLAN") \
+        || die "premeasurement plan does not contain exactly two rows per cell"
+    [[ "$cells" -eq 60 ]] || die "premeasurement plan has $cells cells; expected 60"
+    bad=$(awk -F, 'NR > 1 {
+        if ($1 !~ /^[357]$/ || $2 !~ /^[0-9]+$/ || $5 !~ /^[1-9][0-9]*$/ ||
+            $6 != 12 || $7 < 3 || $8 != 5 || $9 < 5 || $10 != 120 ||
+            $11 != "A B B A") bad++
+        if ($4 !~ /^(cpu_rayon_batch_scalar|cpu_rayon_intra_matrix|gpu_hip|cpu_ryser_generic)$/) bad++
+    } END { print bad + 0 }' "$PREMEASURE_PLAN")
+    [[ "$bad" -eq 0 ]] || die "premeasurement plan has $bad invalid protocol or backend rows"
+}
+
+load_premeasure_schedule() {
+    validate_premeasure_plan
+    local row q n token backend batch _rest key code _cycle
+    local -a sorted_rows
+    local -A config_token config_backend config_batch config_seen
+    mapfile -t sorted_rows < <(tail -n +2 "$PREMEASURE_PLAN" | sort -t, -k1,1n -k2,2n -k3,3)
+    [[ "${#sorted_rows[@]}" -eq 120 ]] || die "failed to load the 120-row premeasurement plan"
+    for row in "${sorted_rows[@]}"; do
+        IFS=, read -r q n token backend batch _rest <<< "$row"
+        key="$q:$n"
+        if [[ -z "${config_seen[$key]:-}" ]]; then
+            config_seen[$key]=1
+        fi
+        if [[ -n "${config_token[$key:A]:-}" ]]; then
+            code=B
+        else
+            code=A
+        fi
+        config_token["$key:$code"]="$token"
+        config_backend["$key:$code"]="$backend"
+        config_batch["$key:$code"]="$batch"
+    done
+    local -a cell_keys
+    mapfile -t cell_keys < <(printf '%s\n' "${!config_seen[@]}" | sort -t: -k1,1n -k2,2n)
+    [[ "${#cell_keys[@]}" -eq 60 ]] || die "premeasurement schedule has ${#cell_keys[@]} cells; expected 60"
+    PREMEASURE_CONFIG_KEYS=("${cell_keys[@]}")
+    PREMEASURE_SCHEDULE=()
+    local process_index=0
+    for key in "${cell_keys[@]}"; do
+        IFS=: read -r q n <<< "$key"
+        for _cycle in 1 2 3 4 5 6; do
+            for code in A B B A; do
+                PREMEASURE_SCHEDULE+=("$q,$n,$code,${config_token[$key:$code]},${config_backend[$key:$code]},${config_batch[$key:$code]},$process_index")
+                process_index=$((process_index + 1))
+            done
+        done
+    done
+    [[ "${#PREMEASURE_SCHEDULE[@]}" -eq 1440 ]] || die "premeasurement schedule has ${#PREMEASURE_SCHEDULE[@]} processes; expected 1440"
+}
+
+premeasure_run_dir() {
+    printf '%s\n' "$TARGET_ROOT/premeasure-$RUN_ID"
+}
+
+write_premeasure_provenance() {
+    local run_dir="$1" session_id="$2" warmup_state="$3" cap="$4"
+    local provenance="$run_dir/sessions/session-$session_id.provenance.txt"
+    mkdir -p "$run_dir/sessions"
+    {
+        echo "schema_version: 1"
+        echo "campaign_run_id: $RUN_ID"
+        echo "session_id: $session_id"
+        echo "mode: premeasure"
+        echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "source_revision: $(git -C "$REPO_ROOT" rev-parse HEAD)"
+        echo "session_cap_seconds: $cap"
+        echo "warmup_state_file: $warmup_state"
+        echo "manifest: $MANIFEST_PATH"
+        echo "binary_hashes: see manifest and per-process harness CSV preambles"
+        print_manifest_binary_hashes
+        echo "host_identity_command: lscpu"
+        capture_block "cpu_model_command: lscpu" lscpu
+        echo "rocm_identity_command: $ROCM_PATH/bin/rocm-smi --showproductname --showuniqueid"
+        capture_block "gpu_model_uuid_command: $ROCM_PATH/bin/rocm-smi --showproductname --showuniqueid" "$ROCM_PATH/bin/rocm-smi" --showproductname --showuniqueid
+        capture_block "rocm_hipcc_version_command: $ROCM_PATH/bin/hipcc --version" "$ROCM_PATH/bin/hipcc" --version
+        capture_block "kernel_version_command: uname -r" uname -r
+        echo "wrapper_invocation: $FLOCK_WRAPPER --full-host $BASH $SCRIPT_PATH __locked-premeasure $cap"
+        echo "exact_plan: $PREMEASURE_PLAN"
+        echo "plan_sha256: $(hash_file "$PREMEASURE_PLAN")"
+    } > "$provenance"
+    PREMEASURE_SESSION_PROVENANCE="$provenance"
+}
+
+premeasure_record_interrupted() {
+    [[ -n "${PREMEASURE_CURRENT_RECEIPT:-}" ]] || return 0
+    local receipt="$PREMEASURE_CURRENT_RECEIPT"
+    if [[ ! -f "$receipt/exit.status" ]]; then
+        printf '%s\n' 130 > "$receipt/exit.status"
+        printf '%s\n' "status: failed" >> "$receipt/receipt.txt"
+        printf '%s\n' "failure: interrupted by runner signal" >> "$receipt/receipt.txt"
+    fi
+}
+
+premeasure_process_is_final() {
+    [[ -f "$1/exit.status" ]] && grep -q '^status: \(completed\|failed\)$' "$1/receipt.txt"
+}
+
+run_premeasure_process() {
+    local run_dir="$1" session_id="$2" process_index="$3" q="$4" n="$5" code="$6" token="$7" backend="$8" batch="$9" warmup="${10}"
+    local receipt
+    receipt="$run_dir/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code"
+    local csv="$receipt/scratch.csv" log="$receipt/harness.log" rc status skip=false
+    mkdir -p "$receipt"
+    PREMEASURE_CURRENT_RECEIPT="$receipt"
+    if [[ "$warmup" == skipped ]]; then skip=true; fi
+    local -a command=("$HARNESS_BIN" grid --out "$csv" --only "q=$q,n=$n,backend=$backend" --batch-size "$batch" --execution-id "$process_index")
+    [[ "$skip" == true ]] && command+=(--skip-machine-warmup)
+    local rendered
+    printf -v rendered '%q ' "${command[@]}"
+    {
+        echo "schema_version: 1"
+        echo "run_id: $RUN_ID"
+        echo "session_id: $session_id"
+        echo "schedule_position: $process_index"
+        echo "q: $q"
+        echo "n: $n"
+        echo "config_code: $code"
+        echo "manifest_backend: $token"
+        echo "harness_backend: $backend"
+        echo "batch_size: $batch"
+        echo "machine_warmup: $warmup"
+        echo "started_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "command: ${rendered% }"
+        echo "scratch_csv: $csv"
+    } > "$receipt/receipt.txt"
+    set +e
+    "${command[@]}" > "$log" 2>&1
+    rc=$?
+    set -e
+    if [[ "$rc" -eq 0 && ! -s "$csv" ]]; then rc=2; fi
+    if [[ "$rc" -eq 0 ]]; then status=completed; else status=failed; fi
+    printf '%s\n' "$rc" > "$receipt/exit.status"
+    printf 'status: %s\nexit_status: %s\nfinished_utc: %s\n' "$status" "$rc" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$receipt/receipt.txt"
+    PREMEASURE_CURRENT_RECEIPT=""
+    [[ "$status" == completed ]] || PREMEASURE_FAILURE_COUNT=$((PREMEASURE_FAILURE_COUNT + 1))
+}
+
+run_locked_premeasure() {
+    local cap="$1" run_dir session_id warmup_state elapsed key q n code token backend batch process_index row
+    load_premeasure_schedule
+    run_dir=$(premeasure_run_dir)
+    mkdir -p "$run_dir/processes"
+    warmup_state="$run_dir/machine-warmup.state"
+    session_id="$(date -u +%Y%m%dT%H%M%SZ)-$$"
+    write_premeasure_provenance "$run_dir" "$session_id" "$warmup_state" "$cap"
+    PREMEASURE_FAILURE_COUNT=0
+    PREMEASURE_CURRENT_RECEIPT=""
+    trap 'premeasure_record_interrupted; exit 130' INT TERM HUP
+    local session_start
+    session_start=$(date +%s)
+    local stopped_by_cap=false
+    for row in "${PREMEASURE_SCHEDULE[@]}"; do
+        IFS=, read -r q n code token backend batch process_index <<< "$row"
+        local receipt
+        receipt="$run_dir/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code"
+        if premeasure_process_is_final "$receipt"; then
+            if [[ "$process_index" -eq 0 && ! -f "$warmup_state" ]]; then
+                printf 'state: resumed; first process already has a durable receipt\nutc: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$warmup_state"
+            fi
+            echo "premeasure skip: process=$process_index config=$q,$n,$code"
+            continue
+        fi
+        if [[ -e "$receipt" ]]; then
+            # A scratch directory without a final status is an interrupted
+            # process. It is censored in place and never reused.
+            printf '%s\n' 125 > "$receipt/exit.status"
+            printf 'status: failed\nexit_status: 125\nfailure: interrupted before final receipt\n' >> "$receipt/receipt.txt"
+            PREMEASURE_FAILURE_COUNT=$((PREMEASURE_FAILURE_COUNT + 1))
+            echo "premeasure skip: process=$process_index already interrupted"
+            continue
+        fi
+        elapsed=$(( $(date +%s) - session_start ))
+        if [[ "$elapsed" -ge "$cap" ]]; then
+            stopped_by_cap=true
+            break
+        fi
+        if [[ ! -f "$warmup_state" ]]; then
+            printf 'state: performed\nutc: %s\nsession_id: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$session_id" > "$warmup_state"
+            warmup=full
+        else
+            warmup=skipped
+        fi
+        run_premeasure_process "$run_dir" "$session_id" "$process_index" "$q" "$n" "$code" "$token" "$backend" "$batch" "$warmup"
+    done
+    trap - INT TERM HUP
+    if [[ "$stopped_by_cap" == true ]]; then
+        echo "premeasure session stopped cleanly at session cap ${cap}s"
+        printf 'status: stopped_by_session_cap\nfinished_utc: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$run_dir/sessions/session-$session_id.status"
+    else
+        echo "premeasure schedule complete"
+        printf 'status: complete\nfinished_utc: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$run_dir/sessions/session-$session_id.status"
+    fi
+    echo "premeasure provenance: $PREMEASURE_SESSION_PROVENANCE"
+    [[ "$PREMEASURE_FAILURE_COUNT" -eq 0 ]] || return "$CENSORED_EXIT"
+}
+
+PREMEASURE_COLLECT_HEADER="record_type,process_index,schedule_position,raw_file,config_id,config_code,q,n,backend,batch_size,outcome,fresh_process,reps,matrices,zeros,total_s,gen_s,eval_s,reduce_s,store_s,composite_matrices_per_s,eval_matrices_per_s,timestamp_utc,machine_warmup,lock_mode,lock_path,git_sha,binary_sha256,exit_status,status"
+
+premeasure_collect() {
+    load_premeasure_schedule
+    local run_dir tmp row q n code token backend batch process_index receipt csv status data
+    local -A completed failures
+    run_dir=$(premeasure_run_dir)
+    [[ -d "$run_dir/processes" ]] || die "premeasurement run directory not found: $run_dir"
+    tmp="$run_dir/premeasure-candidates.csv.tmp.$$"
+    printf '%s\n' "$PREMEASURE_COLLECT_HEADER" > "$tmp"
+    local source_revision binary_hash
+    source_revision="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+    binary_hash="$(hash_file "$HARNESS_BIN")"
+    for row in "${PREMEASURE_SCHEDULE[@]}"; do
+        IFS=, read -r q n code token backend batch process_index <<< "$row"
+        receipt="$run_dir/processes/process-$(printf '%04d' "$process_index")-$q-$n-$code"
+        if ! premeasure_process_is_final "$receipt"; then
+            failures["$q:$n:$code"]="missing or interrupted receipt"
+            continue
+        fi
+        status=$(sed -n 's/^status: //p' "$receipt/receipt.txt" | tail -n 1)
+        if [[ "$status" != completed ]]; then
+            failures["$q:$n:$code"]="exit $(cat "$receipt/exit.status")"
+            continue
+        fi
+        csv="$receipt/scratch.csv"
+        data=$(grep -v '^#' "$csv" | tail -n 1)
+        [[ -n "$data" ]] || { failures["$q:$n:$code"]="completed without a data row"; continue; }
+        local hq hn hbackend houtcome hm hrep hmat hzeros htotal hgen heval hreduce hstore hrate hevalsec rest started warmup
+        IFS=, read -r hq hn hbackend houtcome hm hrep hmat hzeros htotal hgen heval hreduce hstore hrate hevalsec rest <<< "$data"
+        completed["$q:$n:$code"]=$(( ${completed["$q:$n:$code"]:-0} + 1 ))
+        started=$(sed -n 's/^started_utc: //p' "$receipt/receipt.txt" | tail -n 1)
+        warmup=$(sed -n 's/^machine_warmup: //p' "$receipt/receipt.txt" | tail -n 1)
+        printf 'execution,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,True,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ccx1-bench-flock --full-host,/tmp/gf2-ccx1.lock,%s,%s,%s,completed\n' \
+            "$process_index" "$process_index" "$csv" "q${q}_n${n}" "$code" "$hq" "$hn" "$hbackend" "$hm" "$houtcome" "$hrep" "$hmat" "$hzeros" "$htotal" "$hgen" "$heval" "$hreduce" "$hstore" "$hrate" "$hevalsec" "$started" "$warmup" "$source_revision" "$binary_hash" "$(cat "$receipt/exit.status")" >> "$tmp"
+    done
+    local zero=0 key count
+    for key in "${PREMEASURE_CONFIG_KEYS[@]}"; do
+        for code in A B; do
+            local config_key
+            config_key="$key:$code"
+            count="${completed[$config_key]:-0}"
+            if [[ -n "${failures[$config_key]:-}" ]]; then
+                echo "completeness $config_key: $count/12 failures=${failures[$config_key]}"
+            else
+                echo "completeness $config_key: $count/12"
+            fi
+            if [[ "$count" -eq 0 ]]; then zero=$((zero + 1)); fi
+        done
+    done
+    if [[ "$zero" -ne 0 ]]; then
+        rm -f "$tmp"
+        die "refusing to aggregate $zero configuration(s) with zero completed processes"
+    fi
+    mv "$tmp" "$run_dir/premeasure-candidates.csv"
+    echo "wrote $run_dir/premeasure-candidates.csv"
+}
+
+run_premeasure() {
+    local cap="$1"
+    verify_manifest
+    mkdir -p "$TARGET_ROOT"
+    CAMPAIGN_HARNESS_BIN="$HARNESS_BIN" \
+        "$FLOCK_WRAPPER" --full-host "$BASH" "$SCRIPT_PATH" __locked-premeasure "$cap"
+}
+
+revalidate_premeasure_under_lock() {
+    require_command git
+    assert_premeasure_worktree_clean
+    verify_manifest
+}
+
 # Re-runs measure's refusals inside the lock-held child, before any step. The
 # pre-lock checks fail fast without waiting, but the canonical mutex is shared
 # with every other worker on this host and a run can sit on it for a long time;
@@ -631,6 +931,29 @@ if [[ "${1:-}" == "__locked-pipeline" ]]; then
     exit $?
 fi
 
+if [[ "${1:-}" == "__locked-premeasure" ]]; then
+    [[ $# -eq 2 ]] || die "internal premeasure invocation has wrong arity"
+    revalidate_premeasure_under_lock
+    run_locked_premeasure "$2"
+    exit $?
+fi
+
+parse_session_cap() {
+    local cap="$PREMEASURE_DEFAULT_SESSION_CAP"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --session-cap)
+                [[ $# -ge 2 ]] || die "--session-cap requires seconds"
+                cap="$2"
+                shift 2
+                ;;
+            *) die "unknown premeasure option: $1" ;;
+        esac
+    done
+    [[ "$cap" =~ ^[1-9][0-9]*$ ]] || die "session cap must be a positive integer number of seconds"
+    printf '%s\n' "$cap"
+}
+
 case "${1:-}" in
     --help|-h|"") usage; exit 0 ;;
     prepare) prepare ;;
@@ -646,6 +969,19 @@ case "${1:-}" in
         assert_tracked_worktree_clean
         verify_manifest
         run_campaign false
+        ;;
+    premeasure)
+        require_command git
+        require_command sha256sum
+        assert_premeasure_worktree_clean
+        verify_manifest
+        run_premeasure "$(parse_session_cap "${@:2}")"
+        ;;
+    premeasure-collect)
+        require_command git
+        require_command sha256sum
+        verify_manifest
+        premeasure_collect
         ;;
     *) usage >&2; exit 2 ;;
 esac

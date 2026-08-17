@@ -284,6 +284,7 @@ fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct GridOptions {
     only: Option<String>,
+    batch_size: Option<usize>,
     execution_id: u64,
     skip_machine_warmup: bool,
 }
@@ -294,8 +295,19 @@ impl GridOptions {
             .unwrap_or("0")
             .parse::<u64>()
             .map_err(|e| format!("invalid --execution-id: {e}"))?;
+        let batch_size = flag(args, "--batch-size")
+            .map(|value| {
+                let batch_size = value
+                    .parse::<usize>()
+                    .map_err(|e| format!("invalid --batch-size: {e}"))?;
+                (batch_size > 0)
+                    .then_some(batch_size)
+                    .ok_or_else(|| "--batch-size must be nonzero".to_string())
+            })
+            .transpose()?;
         Ok(Self {
             only: flag(args, "--only").map(str::to_string),
+            batch_size,
             execution_id,
             skip_machine_warmup: args.iter().any(|arg| arg == "--skip-machine-warmup"),
         })
@@ -570,6 +582,14 @@ fn cmd_grid(args: &[String]) {
     let options = GridOptions::parse(args).unwrap_or_else(|message| panic!("{message}"));
 
     let mut specs = grid_specs();
+    if let Some(batch_size) = options.batch_size {
+        // A pre-registered measurement can pin M for either an adaptive CPU
+        // backend or a fixed-batch GPU backend. Without this flag, the
+        // historical probe-calibrated behavior remains unchanged.
+        for spec in &mut specs {
+            spec.batch_size = Some(batch_size);
+        }
+    }
     if let Some(filter) = &options.only {
         // Clauses combine with AND. In particular, `batch_size=1024` selects
         // one GPU launch shape rather than both configured GPU batches.
@@ -1176,11 +1196,14 @@ mod cli_tests {
             "q=3,n=28,backend=gpu_hip,batch_size=1024",
             "--execution-id",
             "47",
+            "--batch-size",
+            "1024",
             "--skip-machine-warmup",
         ]))
         .expect("valid grid options");
 
         assert_eq!(parsed.execution_id, 47);
+        assert_eq!(parsed.batch_size, Some(1024));
         assert!(parsed.skip_machine_warmup);
         assert_eq!(
             parsed.only.as_deref(),

@@ -26,6 +26,8 @@ SUBCOMMANDS
                  --out PATH        output CSV (default throughput.csv)
                  --only CLAUSES    comma-separated q=,n=,backend=,batch_size=
                                    filter; clauses combine with AND
+                 --batch-size M   pin M before timing; without this flag the
+                                   documented probe-calibrated adaptive M applies
                  --execution-id N  reserve a disjoint stream-index block for
                                    this fresh process (default 0)
                  --skip-machine-warmup
