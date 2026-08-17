@@ -8397,3 +8397,5 @@
 {"assignee":"agent:claude","id":"4c08c1d1-d04e-4e71-b8ab-fcfd0df4e359","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","reason":"Owner rejected the criteria amendment; leaving the issue as found","timestamp":"2026-08-17T19:37:24.318058600Z","type":"issue_released"}
 {"from":"ready","id":"6dea9360-629c-4435-af52-64dbd33bb822","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T19:38:19.092406272Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:claude","id":"32758fd6-93de-43ad-a4ed-f982f19d0f13","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T19:38:19.092406272Z","type":"issue_claimed"}
+{"id":"9434bf8c-247d-421b-8b76-33b52a00fa82","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","priority":"normal","timestamp":"2026-08-17T19:44:59.652905393Z","title":"Bring dev/research/f3_bipedal under a CI gate and the test-naming convention","type":"issue_created"}
+{"fields":["dependencies"],"id":"147681e1-c7a6-4ec1-9e69-7abec4ecec1c","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T19:45:07.784154539Z","type":"issue_updated","updated_by":"dependency-add"}
