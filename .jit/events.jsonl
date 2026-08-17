@@ -8348,3 +8348,4 @@
 {"assignee":"agent:jit-execution-lead","id":"89a56324-a976-4d35-b9a9-2942860fb148","issue_id":"0de41c82-fb20-4adb-ba6e-30061a83c301","timestamp":"2026-08-17T17:06:40.007842093Z","type":"issue_claimed"}
 {"from":"ready","id":"e4d15aa6-3267-4a6d-856b-c71a4172c63a","issue_id":"4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b","timestamp":"2026-08-17T17:06:45.943921452Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:codex-luna","id":"27519c32-550f-4d7f-a2f2-672ae1e6e151","issue_id":"4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b","timestamp":"2026-08-17T17:06:45.943921452Z","type":"issue_claimed"}
+{"fields":["description"],"id":"8a8160c9-a0e6-46b1-b8c9-bd4da807329f","issue_id":"4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b","timestamp":"2026-08-17T17:13:33.841834762Z","type":"issue_updated","updated_by":"issue-update"}
