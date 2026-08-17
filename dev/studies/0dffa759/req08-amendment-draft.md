@@ -1,8 +1,9 @@
 # REQ-08 amendment — archived $\mathbb{F}_7$ encoding decision
 
-**Status: approved by the owner and applied verbatim (2026-08-17). The
-archived file carries the note and stubs below at the insertion points of
-§1.**
+**Status: approved by the owner and applied verbatim (2026-08-17). The applied
+amendment carries the owner-approved 2026-08-17 revision removing the numeric
+republication of §6's weighted comparison. The archived file carries the note
+and stubs below at the insertion points of §1.**
 
 REQ-08 of JIT issue `0dffa759` requires that, where the study's receipts support
 the three-plane $\mathbb{F}_7$ candidate, the archived $\mathbb{F}_7$ encoding
@@ -52,7 +53,8 @@ document already carries — the 2026-08-16 supersession note above
 >    samples and again on 6.8–7.8 million timed operations
 >    (`dev/studies/6c7fcb38/receipts.md` §9). At $n = 20$ the complete reduction
 >    runs on 4.58 % of Gray steps, not on every one of them. §6's weighted
->    comparison, and the 1.61× margin it gives A at $n = 36$, therefore rest on
+>    comparison and the margin it derives for A at $n = 36$ from that weighting
+>    (§6) therefore rest on
 >    a premise the permanent workload does not satisfy.
 >
 > 2. **Measured against each other on the permanent workload, on the device, D

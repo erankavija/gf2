@@ -174,3 +174,8 @@ arxiv = "2502.16577"
 key = "Niu2019"
 citation = "Niu, Su, Zheng, Lü — A New Fast Computation of a Permanent. arXiv:1908.06371 (2019); withdrawn by the authors in 2020."
 arxiv = "1908.06371"
+
+[[references]]
+key = "RustRandom2025"
+citation = "rust-random project — rand_chacha 0.9.0 (ChaCha-based CSPRNGs for Rust). crates.io registry release, published 2025-01-27, checksum d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb."
+url = "https://crates.io/crates/rand_chacha/0.9.0"

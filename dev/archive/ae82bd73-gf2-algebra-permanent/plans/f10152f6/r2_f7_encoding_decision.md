@@ -22,7 +22,8 @@
 >    samples and again on 6.8–7.8 million timed operations
 >    (`dev/studies/6c7fcb38/receipts.md` §9). At $n = 20$ the complete reduction
 >    runs on 4.58 % of Gray steps, not on every one of them. §6's weighted
->    comparison, and the 1.61× margin it gives A at $n = 36$, therefore rest on
+>    comparison and the margin it derives for A at $n = 36$ from that weighting
+>    (§6) therefore rest on
 >    a premise the permanent workload does not satisfy.
 >
 > 2. **Measured against each other on the permanent workload, on the device, D
