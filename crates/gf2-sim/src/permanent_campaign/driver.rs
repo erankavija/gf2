@@ -566,6 +566,7 @@ fn load_existing_shard(
             draw: std::time::Duration::ZERO,
             pack: std::time::Duration::ZERO,
             evaluate: std::time::Duration::ZERO,
+            determinant: std::time::Duration::ZERO,
             count: std::time::Duration::ZERO,
         },
     })

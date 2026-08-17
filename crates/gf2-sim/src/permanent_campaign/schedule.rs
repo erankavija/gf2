@@ -2,7 +2,8 @@
 //!
 //! A campaign invocation owns one field arm. Work is ordered by `(q, n,
 //! shard_id)`, each shard opens the stream address recorded by its manifest,
-//! and every matrix passes through draw, pack, evaluate, and count phases.
+//! and every matrix passes through draw, pack, evaluate, determinant, and count
+//! phases when the cell requests the determinant companion.
 //! Timings remain in [`ShardRun`] for progress reporting; only schema records
 //! and summaries are written to disk, so wall-clock variation cannot alter
 //! emitted bytes.
@@ -29,6 +30,7 @@ use gf2_algebra::packed::{Bipedal3Matrix, Packed5Matrix, Packed7Matrix};
 use gf2_algebra::permanent::{
     permanent_bipedal3, permanent_bipedal5, permanent_bipedal7, permanent_ryser,
 };
+use gf2_core::field::{matrix::FieldMatrix, FieldVec};
 use gf2_core::gfp::Fp;
 use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
 use gf2_stats::sampler::{
@@ -86,6 +88,8 @@ pub struct PhaseDurations {
     pub pack: Duration,
     /// Time spent evaluating permanents.
     pub evaluate: Duration,
+    /// Time spent evaluating determinants when the companion is enabled.
+    pub determinant: Duration,
     /// Time spent updating the residue histogram and zero count.
     pub count: Duration,
 }
@@ -152,13 +156,6 @@ pub enum ScheduleError {
     },
     /// The manifest has no campaign-cell stream purpose with the required tag.
     MissingCampaignPurpose,
-    /// This scheduler does not execute determinant companions.
-    DeterminantCompanionRequested {
-        /// Prime field order of the cell.
-        q: u8,
-        /// Matrix dimension of the cell.
-        n: u16,
-    },
     /// A manifest value cannot be represented by the execution API.
     InvalidWorkItem(String),
     /// A filesystem or serialization operation failed.
@@ -179,10 +176,6 @@ impl fmt::Display for ScheduleError {
             Self::MissingCampaignPurpose => write!(
                 formatter,
                 "manifest stream_purposes has no campaign-cell purpose tag {CAMPAIGN_CELL_PURPOSE_TAG}"
-            ),
-            Self::DeterminantCompanionRequested { q, n } => write!(
-                formatter,
-                "determinant companion is not part of the scheduler for q={q}, n={n}"
             ),
             Self::InvalidWorkItem(message) => formatter.write_str(message),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
@@ -235,7 +228,8 @@ pub fn enumerate_work_items(
 /// to the backend named by each cell. The result is in memory; use
 /// [`emit_field`] to write only its shard paths and field summary. For `M`
 /// matrices of dimension `n`, the evaluation cost is the selected algebra
-/// kernel's cost per matrix and the sampler/packing storage is `O(n²)`.
+/// kernel plus an optional `O(n³)` determinant per matrix; sampler and packing
+/// storage remain `O(n²)`.
 pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
     let purpose = manifest
         .stream_purposes
@@ -245,12 +239,6 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
     let items = enumerate_work_items(manifest, Some(field))?;
     let mut shards = Vec::with_capacity(items.len());
     for item in &items {
-        if item.determinant_companion != DeterminantPlan::NotEvaluated {
-            return Err(ScheduleError::DeterminantCompanionRequested {
-                q: item.q,
-                n: item.n,
-            });
-        }
         shards.push(run_shard(manifest.root_seed, purpose.tag, item)?);
     }
     let summary = summarize(field, &shards, manifest.cells.len() as u64);
@@ -407,7 +395,9 @@ fn run_shard_for<const Q: u64>(
     let mut draw = Duration::ZERO;
     let mut pack = Duration::ZERO;
     let mut evaluate = Duration::ZERO;
+    let mut determinant = Duration::ZERO;
     let mut count = Duration::ZERO;
+    let mut determinant_zero_count = 0_u64;
 
     for _ in 0..item.matrix_count {
         let started = Instant::now();
@@ -421,6 +411,14 @@ fn run_shard_for<const Q: u64>(
         let started = Instant::now();
         let value = evaluate_permanent(item.backend, &row_major, &packed, n)?;
         evaluate += started.elapsed();
+
+        if item.determinant_companion == DeterminantPlan::Evaluate {
+            let started = Instant::now();
+            if evaluate_determinant(&row_major, n) == 0 {
+                determinant_zero_count += 1;
+            }
+            determinant += started.elapsed();
+        }
 
         let started = Instant::now();
         histogram[value as usize] += 1;
@@ -445,12 +443,19 @@ fn run_shard_for<const Q: u64>(
                 matrix_count: item.matrix_count,
                 permanent_zero_count,
                 permanent_histogram: histogram,
-                determinant: DeterminantCount::NotEvaluated,
+                determinant: match item.determinant_companion {
+                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                        sample_count: item.matrix_count,
+                        zero_count: determinant_zero_count,
+                    },
+                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+                },
             },
             timing: PhaseDurations {
                 draw,
                 pack,
                 evaluate,
+                determinant,
                 count,
             },
         },
@@ -524,6 +529,11 @@ fn evaluate_permanent<const Q: u64>(
     Ok(value)
 }
 
+fn evaluate_determinant<const Q: u64>(row_major: &[Fp<Q>], n: usize) -> u64 {
+    let rows: Vec<FieldVec<Fp<Q>>> = row_major.chunks(n).map(|row| row.to_vec().into()).collect();
+    FieldMatrix::from_rows(rows).det().value()
+}
+
 fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary {
     let mut rows = Vec::new();
     let mut index = 0;
@@ -531,19 +541,39 @@ fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary
         let n = shards[index].record.stream_address.n;
         let mut matrix_count = 0_u64;
         let mut zero_count = 0_u64;
+        let mut determinant_evaluated = false;
+        let mut determinant_sample_count = 0_u64;
+        let mut determinant_zero_count = 0_u64;
         while index < shards.len() && shards[index].record.stream_address.n == n {
             matrix_count += shards[index].record.matrix_count;
             zero_count += shards[index].record.permanent_zero_count;
+            if let DeterminantCount::Evaluated {
+                sample_count,
+                zero_count,
+            } = &shards[index].record.determinant
+            {
+                determinant_evaluated = true;
+                determinant_sample_count += *sample_count;
+                determinant_zero_count += *zero_count;
+            }
             index += 1;
         }
         let (lower, upper) = wilson_interval(zero_count, matrix_count);
+        let determinant = if determinant_evaluated {
+            DeterminantCount::Evaluated {
+                sample_count: determinant_sample_count,
+                zero_count: determinant_zero_count,
+            }
+        } else {
+            DeterminantCount::NotEvaluated
+        };
         rows.push(SummaryRow {
             schema_version: SCHEMA_VERSION,
             q,
             n,
             matrix_count,
             permanent_zero_count: zero_count,
-            determinant: DeterminantCount::NotEvaluated,
+            determinant,
             terminal_state: CellTerminalState::Completed {
                 permanent_estimate: ProportionEstimate {
                     point: zero_count as f64 / matrix_count as f64,
@@ -593,7 +623,13 @@ pub(crate) fn summarize_with_quarantine(
                 n: cell.n,
                 matrix_count: 0,
                 permanent_zero_count: 0,
-                determinant: DeterminantCount::NotEvaluated,
+                determinant: match cell.determinant_companion {
+                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                        sample_count: 0,
+                        zero_count: 0,
+                    },
+                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+                },
                 terminal_state: CellTerminalState::Halted {
                     reason: super::schema::HaltReason::ExecutionFailure,
                 },
@@ -736,9 +772,10 @@ pub(crate) fn emit_summary_with_durability_hook(
 mod tests {
     use super::*;
     use crate::permanent_campaign::schema::{
-        ArtifactIdentity, Availability, CellSpec, GitRevision, Provenance, RngAlgorithm, ShardSpec,
-        StreamPurpose,
+        ArtifactIdentity, Availability, CellSpec, DeterminantCount, DeterminantPlan, GitRevision,
+        Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
     };
+    use gf2_core::field::{matrix::FieldMatrix, FieldVec};
     use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
     use std::collections::BTreeSet;
 
@@ -765,6 +802,15 @@ mod tests {
                 gpu_model: Availability::NotPresent,
             },
         }
+    }
+
+    #[test]
+    fn determinant_fixture_manifest_selects_the_companion() {
+        let campaign = crate::permanent_campaign::fixture::manifest_with_determinant_companion();
+        let work = enumerate_work_items(&campaign, Some(3)).unwrap();
+        assert!(work
+            .iter()
+            .all(|item| item.determinant_companion == DeterminantPlan::Evaluate));
     }
 
     fn cell(q: u8, n: u16, matrix_count: u64, shards: &[(u64, u64)]) -> CellSpec {
@@ -812,6 +858,8 @@ mod tests {
     #[test]
     fn composite_loop_matches_direct_oracle_and_records_timings() {
         let campaign = manifest(vec![cell(3, 2, 4, &[(0, 7)])]);
+        let mut campaign = campaign;
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
         let run = run_field(&campaign, 3).unwrap();
         let shard = &run.shards()[0];
         let address = MatrixAddress::new(
@@ -823,17 +871,179 @@ mod tests {
         );
         let mut sampler = MatrixSampler::<3>::new(address).unwrap();
         let mut expected = vec![0_u64; 3];
+        let mut expected_determinant_zero_count = 0_u64;
         let mut entries = vec![Fp::<3>::new(0); 4];
         for _ in 0..4 {
             sampler.fill_next_matrix(&mut entries);
             expected[permanent_ryser(&entries, 2).value() as usize] += 1;
+            let rows = entries
+                .chunks(2)
+                .map(|row| FieldVec::from(row.to_vec()))
+                .collect();
+            let matrix = FieldMatrix::from_rows(rows);
+            if matrix.det() == Fp::<3>::new(0) {
+                expected_determinant_zero_count += 1;
+            }
         }
         assert_eq!(shard.record.permanent_histogram, expected);
         assert_eq!(shard.record.permanent_zero_count, expected[0]);
+        assert_eq!(
+            shard.record.determinant,
+            DeterminantCount::Evaluated {
+                sample_count: 4,
+                zero_count: expected_determinant_zero_count,
+            }
+        );
         assert!(shard.timing.draw >= Duration::ZERO);
         assert!(shard.timing.pack >= Duration::ZERO);
         assert!(shard.timing.evaluate >= Duration::ZERO);
         assert!(shard.timing.count >= Duration::ZERO);
+    }
+
+    #[test]
+    fn companion_uses_the_same_one_pass_matrices_for_both_values() {
+        let mut campaign = manifest(vec![cell(3, 2, 8, &[(0, 17)])]);
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let run = run_field(&campaign, 3).unwrap();
+
+        let address = MatrixAddress::new(
+            campaign.root_seed,
+            FieldOrder::F3,
+            2,
+            SamplerPurpose::CampaignCell,
+            StreamIndex::new(17).unwrap(),
+        );
+        let mut sampler = MatrixSampler::<3>::new(address).unwrap();
+        let mut entries = vec![Fp::<3>::new(0); 4];
+        let mut permanent_values = Vec::new();
+        let mut determinant_values = Vec::new();
+        for _ in 0..8 {
+            sampler.fill_next_matrix(&mut entries);
+            permanent_values.push(permanent_ryser(&entries, 2).value());
+            let rows = entries
+                .chunks(2)
+                .map(|row| FieldVec::from(row.to_vec()))
+                .collect();
+            determinant_values.push(FieldMatrix::from_rows(rows).det().value());
+        }
+
+        let shard = &run.shards()[0];
+        assert_eq!(
+            shard.record.permanent_zero_count,
+            permanent_values.iter().filter(|&&value| value == 0).count() as u64
+        );
+        assert_eq!(
+            shard.record.determinant,
+            DeterminantCount::Evaluated {
+                sample_count: 8,
+                zero_count: determinant_values
+                    .iter()
+                    .filter(|&&value| value == 0)
+                    .count() as u64,
+            }
+        );
+    }
+
+    #[test]
+    fn exhaustive_small_field_determinant_count_matches_external_recomputation() {
+        let mut campaign = manifest(vec![cell(3, 2, 81, &[(0, 31)])]);
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let run = run_field(&campaign, 3).unwrap();
+
+        let address = MatrixAddress::new(
+            campaign.root_seed,
+            FieldOrder::F3,
+            2,
+            SamplerPurpose::CampaignCell,
+            StreamIndex::new(31).unwrap(),
+        );
+        let mut sampler = MatrixSampler::<3>::new(address).unwrap();
+        let mut entries = vec![Fp::<3>::new(0); 4];
+        let mut expected_zero_count = 0_u64;
+        for _ in 0..81 {
+            sampler.fill_next_matrix(&mut entries);
+            let rows = entries
+                .chunks(2)
+                .map(|row| FieldVec::from(row.to_vec()))
+                .collect();
+            if FieldMatrix::from_rows(rows).det() == Fp::<3>::new(0) {
+                expected_zero_count += 1;
+            }
+        }
+
+        assert_eq!(
+            run.shards()[0].record.determinant,
+            DeterminantCount::Evaluated {
+                sample_count: 81,
+                zero_count: expected_zero_count,
+            }
+        );
+    }
+
+    #[test]
+    fn companion_does_not_change_permanent_counts() {
+        let disabled = manifest(vec![cell(3, 2, 8, &[(0, 43)])]);
+        let mut enabled = disabled.clone();
+        enabled.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let disabled_run = run_field(&disabled, 3).unwrap();
+        let enabled_run = run_field(&enabled, 3).unwrap();
+
+        assert_eq!(
+            disabled_run.shards()[0].record.permanent_zero_count,
+            enabled_run.shards()[0].record.permanent_zero_count
+        );
+        assert_eq!(
+            disabled_run.shards()[0].record.permanent_histogram,
+            enabled_run.shards()[0].record.permanent_histogram
+        );
+    }
+
+    #[test]
+    fn not_evaluated_plan_is_explicit_in_shard_and_summary() {
+        let campaign = manifest(vec![cell(3, 2, 2, &[(0, 47)])]);
+        let run = run_field(&campaign, 3).unwrap();
+
+        assert_eq!(
+            run.shards()[0].record.determinant,
+            DeterminantCount::NotEvaluated
+        );
+        assert_eq!(
+            run.summary().rows[0].determinant,
+            DeterminantCount::NotEvaluated
+        );
+    }
+
+    #[test]
+    fn determinant_counts_pool_across_shards_in_one_cell() {
+        let mut campaign = manifest(vec![cell(3, 2, 6, &[(0, 53), (1, 54)])]);
+        campaign.cells[0].shard_size = 3;
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let run = run_field(&campaign, 3).unwrap();
+
+        let shard_counts: Vec<_> = run
+            .shards()
+            .iter()
+            .map(|shard| shard.record.determinant.clone())
+            .collect();
+        let (sample_count, zero_count) =
+            shard_counts
+                .into_iter()
+                .fold((0, 0), |acc, count| match count {
+                    DeterminantCount::Evaluated {
+                        sample_count,
+                        zero_count,
+                    } => (acc.0 + sample_count, acc.1 + zero_count),
+                    DeterminantCount::NotEvaluated => {
+                        panic!("evaluated plan produced no determinant")
+                    }
+                });
+        assert_eq!(
+            run.summary().rows[0].determinant,
+            DeterminantCount::Evaluated {
+                sample_count,
+                zero_count,
+            }
+        );
     }
 
     #[test]

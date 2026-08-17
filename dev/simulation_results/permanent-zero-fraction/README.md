@@ -308,7 +308,10 @@ from the raw dataset and pooling. A completed field-arm rerun
 resumes from the checkpoint's completed work set, re-evaluates nothing, rewrites
 no shard or summary files, and exits successfully; the first emission is
 preserved because completed shards are never rewritten.
-Per-phase timings go to standard output and never into dataset files.
+Per-phase timings go to standard output and never into dataset files. Each
+shard timing line reports `draw_s`, `pack_s`, `evaluate_s`,
+`determinant_s`, and `count_s`; `determinant_s` is the measured companion
+phase and is zero when the cell plan is `not_evaluated`.
 
 | Exit status | Means |
 | --- | --- |
