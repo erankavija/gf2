@@ -2,7 +2,7 @@
 //!
 //! # Encoding
 //!
-//! Each F_3 element `x ∈ {0, 1, 2}` is encoded as `(mag, sgn) ∈ F_2 × F_2`
+//! Each F_3 element `x ∈ {0, 1, 2}` is stored as `(mag, sgn) ∈ F_2 × F_2`
 //! using the convention `2 ≡ −1 (mod 3)`:
 //!
 //! | `x` | `mag` | `sgn` | meaning            |
@@ -10,8 +10,14 @@
 //! | 0   | 0     | 0     | zero               |
 //! | 1   | 1     | 0     | `+1`               |
 //! | 2   | 1     | 1     | `−1` (canonical 2) |
+//! | alt | 0     | 1     | alternative zero   |
 //!
-//! `(mag=0, sgn=1)` is a redundant codeword we never produce.
+//! The encoding uses equivalence classes: a clear `mag` bit is field zero
+//! regardless of the `sgn` bit, so `(mag=0, sgn=0)` and `(mag=0, sgn=1)`
+//! represent the same field value. The formulas respect these classes and do
+//! not canonicalise every result; addition, subtraction, and multiplication
+//! can each produce `(mag=0, sgn=1)` from canonical inputs. `unpack` reads
+//! these classes, so decoding remains correct.
 //!
 //! # Layout
 //!
@@ -245,6 +251,42 @@ mod tests {
                 assert_eq!(va.unpack()[0], ref_mul(a, b), "{a}*{b}");
             }
         }
+    }
+
+    #[test]
+    fn test_add_produces_alt_zero_from_canonical_inputs() {
+        // All-2 plus all-1 is zero; Theorem 2.1 produces (0, 1).
+        let mut value = Bipedal3::pack(&[2; 64]);
+        let other = Bipedal3::pack(&[1; 64]);
+        value.add_assign(&other);
+
+        assert_eq!(value.raw_mag()[0], 0);
+        assert_eq!(value.raw_sgn()[0], u64::MAX);
+        assert_eq!(value.unpack(), vec![0; 64]);
+    }
+
+    #[test]
+    fn test_sub_produces_alt_zero_from_canonical_inputs() {
+        // All-2 minus all-2 is zero; Theorem 2.1 produces (0, 1).
+        let mut value = Bipedal3::pack(&[2; 64]);
+        let other = Bipedal3::pack(&[2; 64]);
+        value.sub_assign(&other);
+
+        assert_eq!(value.raw_mag()[0], 0);
+        assert_eq!(value.raw_sgn()[0], u64::MAX);
+        assert_eq!(value.unpack(), vec![0; 64]);
+    }
+
+    #[test]
+    fn test_mul_produces_alt_zero_from_canonical_inputs() {
+        // All-2 times all-0 is zero; Theorem 2.1 produces (0, 1).
+        let mut value = Bipedal3::pack(&[2; 64]);
+        let other = Bipedal3::pack(&[0; 64]);
+        value.mul_assign(&other);
+
+        assert_eq!(value.raw_mag()[0], 0);
+        assert_eq!(value.raw_sgn()[0], u64::MAX);
+        assert_eq!(value.unpack(), vec![0; 64]);
     }
 
     #[test]
