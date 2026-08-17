@@ -445,6 +445,14 @@
    "requested_at": "2026-08-17",
    "resolved_at": "2026-08-17",
    "decision": "Owner approved the protocol reconciliation: the field summary's quarantined list is a diagnostic index (identity plus mechanical error) discharging REQ-04's visibility; the committed campaign execution receipt remains the sole authoritative quarantine evidence; exclusion from the raw shard set and pooling is unchanged; README and the FieldSummary rustdoc are reworded to name the receipt authoritative. No statistical protocol content changes. The rework counter reset with the guidance."
+  },
+  {
+   "issue": "51498b90",
+   "reason": "code-review at the reconciliation HEAD produced a confirmed new finding: the driver evaluates work items serially and worker_count keys only checkpoint bookkeeping, so REQ-02's cross-worker-count byte-identity clause is vacuous and its test non-discriminating; real multi-threaded execution is deliberately owned by wave-5 leaf eb8825c8.",
+   "status": "approved",
+   "requested_at": "2026-08-17",
+   "resolved_at": "2026-08-17",
+   "decision": "Owner approved amending REQ-02 to the leaf's real deliverable: identical shard contents across a checkpoint boundary including a resume under a different worker count, with the checkpoint's per-worker generator-word-position contract stated as the forward interface. The cross-thread-count execution determinism obligation moved to eb8825c8 as its new REQ-04 (thread-count-varying test), where the thread pool makes it discriminating."
   }
  ],
  "rework_counts": {
