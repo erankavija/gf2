@@ -116,7 +116,7 @@ impl BipedalLikeConfig for Config3 {
         // (`dev/research/f3_bipedal::Bipedal3::sub_assign`) bit-for-bit so
         // the SIMD parity tests can assert raw-word equality, not just
         // canonical-decoded equality. The 7-op sequence is the same paper
-        // Algorithm 2 add formula applied with `bsg = s2 ^ m2` (neg(b)).
+        // Theorem 2.1 add formula applied with `bsg = s2 ^ m2` (neg(b)).
         unsafe {
             let bsg = Avx2Lane::xor(s2, m2);
             let t = Avx2Lane::xor(Avx2Lane::xor(m1, s1), bsg);
@@ -285,7 +285,7 @@ mod tests {
         /// Raw-word comparison is required: comparing only canonical-decoded
         /// outputs would let alt-zero divergences (`(mag=0, sgn=1)` vs
         /// `(mag=0, sgn=0)`) slip through even though they decode to the
-        /// same F_3 value. Both implementations follow paper Algorithm 2
+        /// same F_3 value. Both implementations follow paper Theorem 2.1
         /// (same six XOR/AND/OR sequence), so the raw `(mag, sgn)` buffers
         /// must agree word-for-word.
         fn run_parity_add(a: &[u8], b: &[u8]) {
