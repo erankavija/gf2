@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "rework-1-dispatched: doc-review F1 + research-review F1-F6 (go-verdict safe-duration logic, Wilson n=24, crossover synthesis, F3 validity argument, stale work-budget text, Scheinerman cite); REQ-08 amendment applied with owner approval"
+     "status": "rework-3-dispatched: research-review R3 F1-F3 under the owner-approved REQ-11 amendment (clean-completion discharge, RNG addendum, archived-figure removal); doc-review passed R3"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "rework-2-dispatched: R2 code-review F1 CLI single field-bound checkpoint path; doc-review F1-F3 README concurrency/rerun contract + worker-count rustdoc; to codex luna"
+     "status": "review-passed: cargo-ci + code-review + doc-review all passed round 3 (field-specific checkpoint path); lead six-tier review PASS; completion pending final gate re-runs at post-reword HEAD"
     }
    ]
   },
@@ -304,6 +304,20 @@
    "wave": "1 (interleaved)",
    "status": "done",
    "note": "Closed 2026-08-15: R1 7a0af9ab daggered the two source cells; R2 0795a82a daggered every rendering incl. derived figures and widened the check document-wide; R3 c315fe2b (luna, rework count 2 = MAX, passed) verifies both stopping-rule minima: five-second half from the pinned harness source's loop-exit structure plus direct total_s>=5 proof, cap-path evidence total_s>=120 for reps<5 rows. total_s undercounts the stopping clock (12 conforming rows at 4.4-4.99 s), so a naive total_s>=5 test falsely flags conforming cells. doc-review passed R3 with persisted record at c315fe2b, 0 findings; lead six-tier review PASS."
+  },
+  {
+   "short_id": "63d931a9",
+   "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
+   "reason": "Found by the 0dffa759 synthesis (finding F.13) during rework-1; filed per the a2c0db52 interleaved-bug precedent.",
+   "wave": "3 (interleaved)",
+   "status": "review round 2 pending: cargo-ci passed, code-review R1 failed only on the lead commit's 89-char subject; subject reworded in place (65dae3bf), gates re-run pending"
+  },
+  {
+   "short_id": "d2fb76b9",
+   "title": "Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation",
+   "reason": "Carries the tracked convergence condition the 0dffa759 exception permanent-f7-internal-three-plane names; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
+   "wave": "n/a (tech-debt umbrella)",
+   "status": "filed"
   }
  ],
  "escalations": [
@@ -415,6 +429,14 @@
    "requested_at": "2026-08-17",
    "resolved_at": "2026-08-17",
    "decision": "Owner approved the drafted amendment verbatim; the lead applied the note and pointer stubs to the archived file and updated the study documents' pending-approval framing."
+  },
+  {
+   "issue": "0dffa759",
+   "reason": "Research-review rejected a third candidate for 'the documented safe launch-duration bound' on the same root cause in three consecutive rounds (none exists; envelope promotion; archived-calibration promotion), reaching MAX_SAME_FINDING_REPEATS and MAX_REWORK_ATTEMPTS: no committed evidence locates a fault boundary, so the criterion's presupposed object does not exist in the tree.",
+   "status": "approved",
+   "requested_at": "2026-08-17",
+   "resolved_at": "2026-08-17",
+   "decision": "Owner approved amending REQ-11: the safe-launch-duration condition is discharged by the operating point's own receipted clean completions at its declared configuration, with the envelope and the archived calibration cited as reference limits carrying their evidentiary status, no located fault boundary claimed, and locating one an open deliverable. The rework counter reset with the guidance. Owner also approved the two lead fixes for the round's other findings: a dated RNG provenance addendum in the study recording ChaCha20/rand_chacha 0.9 as read from the pinned revisions, and removal of the republished archived CPU speedup figures in favour of a qualitative description with citation."
   }
  ],
  "rework_counts": {
@@ -435,8 +457,9 @@
   "41c3d91d": 2,
   "a9284086": 1,
   "51498b90": 2,
-  "0dffa759": 1,
-  "e1c96c9c": 1
+  "0dffa759": 0,
+  "e1c96c9c": 1,
+  "63d931a9": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
@@ -472,7 +495,9 @@
    "source": "code-review round 1 (advisory, pre-existing)",
    "finding": "The measurement harness embeds historical receipt figures and narrative instead of an identity-based derivation reference (main.rs:64), cited against @/inv/runtime-observed-provenance.",
    "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
-  }
+  },
+  "Code-review enforces the AGENTS.md 72-character commit-subject limit on the lead's own commits: 63d931a9 round 1 failed solely on an 89-character lead subject. Fixed by reset-amend-cherry-pick over the unpushed chain; gate records citing the rewritten hashes were re-run at the new HEAD. Check subject lengths before committing.",
+  "Naming any committed object 'the documented safe launch-duration bound' invites the reviewer to falsify the promotion: three rounds rejected in turn no-bound, the observed clean-completion envelope, and the archived calibration. Same lesson as the breakdown.json exclusion saga: a checkable claim defending a framing becomes the next round's target. Resolution was amending the criterion to name the discharge the evidence supports (direct receipted clean completions at the operating point)."
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
