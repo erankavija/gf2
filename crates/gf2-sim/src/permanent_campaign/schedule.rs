@@ -32,7 +32,7 @@ use gf2_algebra::permanent::{
 };
 use gf2_core::field::{matrix::FieldMatrix, FieldVec};
 use gf2_core::gfp::Fp;
-use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
+use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
 use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
@@ -51,6 +51,11 @@ pub const CAMPAIGN_CELL_PURPOSE_TAG: u8 = SamplerPurpose::CampaignCell as u8;
 /// in `dev/simulation_results/permanent-zero-fraction/protocol.md` under
 /// "Error budgets" and "Permanent-floor decision".
 const PERMANENT_FAMILYWISE_ERROR: f64 = 0.025;
+
+/// Family-wise error budget for the determinant tests, as preregistered in
+/// `dev/simulation_results/permanent-zero-fraction/protocol.md` under
+/// "Error budgets" and "Determinant decision".
+const DETERMINANT_FAMILYWISE_ERROR: f64 = 0.025;
 
 /// One manifest shard expanded into executable scheduling data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -375,6 +380,27 @@ fn run_shard_for<const Q: u64>(
     item: &WorkItem,
     field_order: FieldOrder,
 ) -> Result<EvaluatedShard, ScheduleError> {
+    let mut observer = |_: &[Fp<Q>], _: u64, _: Option<u64>| {};
+    run_shard_for_with_observer(root_seed, purpose_tag, item, field_order, &mut observer)
+}
+
+/// Evaluates a shard while observing the exact matrix operands and both values.
+///
+/// The observer runs once per sampled matrix after both evaluations, with the
+/// row-major operand passed to the evaluators, the permanent value, and the
+/// determinant value when the companion is enabled. Production execution uses
+/// [`run_shard_for`] with a no-op observer; this seam is crate-visible so the
+/// one-draw contract can be tested without changing the public API.
+pub(crate) fn run_shard_for_with_observer<const Q: u64, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
     let stream = StreamIndex::new(item.stream_index).map_err(|error| {
         ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
     })?;
@@ -412,13 +438,19 @@ fn run_shard_for<const Q: u64>(
         let value = evaluate_permanent(item.backend, &row_major, &packed, n)?;
         evaluate += started.elapsed();
 
-        if item.determinant_companion == DeterminantPlan::Evaluate {
+        let determinant_value = if item.determinant_companion == DeterminantPlan::Evaluate {
             let started = Instant::now();
-            if evaluate_determinant(&row_major, n) == 0 {
+            let value = evaluate_determinant(&row_major, n);
+            if value == 0 {
                 determinant_zero_count += 1;
             }
             determinant += started.elapsed();
-        }
+            Some(value)
+        } else {
+            None
+        };
+
+        observer(&row_major, value, determinant_value);
 
         let started = Instant::now();
         histogram[value as usize] += 1;
@@ -567,6 +599,28 @@ fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary
         } else {
             DeterminantCount::NotEvaluated
         };
+        let determinant_estimate = match determinant {
+            DeterminantCount::Evaluated {
+                sample_count,
+                zero_count,
+            } => {
+                let (lower, upper) = wilson_interval(zero_count, sample_count);
+                DeterminantEstimate::Evaluated {
+                    estimate: ProportionEstimate {
+                        point: zero_count as f64 / sample_count as f64,
+                        interval: Interval { lower, upper },
+                    },
+                    verdict: determinant_acceptance(
+                        q,
+                        n,
+                        zero_count,
+                        sample_count,
+                        family_test_count,
+                    ),
+                }
+            }
+            DeterminantCount::NotEvaluated => DeterminantEstimate::NotEvaluated,
+        };
         rows.push(SummaryRow {
             schema_version: SCHEMA_VERSION,
             q,
@@ -585,7 +639,7 @@ fn summarize(q: u8, shards: &[ShardRun], family_test_count: u64) -> FieldSummary
                     matrix_count,
                     family_test_count,
                 ),
-                determinant_estimate: DeterminantEstimate::NotEvaluated,
+                determinant_estimate,
             },
         });
     }
@@ -654,6 +708,37 @@ fn permanent_acceptance(
     } else {
         AcceptanceVerdict::Accepted
     }
+}
+
+fn determinant_acceptance(
+    q: u8,
+    n: u16,
+    determinant_zero_count: u64,
+    determinant_sample_count: u64,
+    family_test_count: u64,
+) -> AcceptanceVerdict {
+    let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
+    let null_probability = determinant_null_probability(q, n);
+    if two_sided_test(
+        determinant_zero_count,
+        determinant_sample_count,
+        null_probability,
+    )
+    .rejects_at(level)
+    {
+        AcceptanceVerdict::Rejected
+    } else {
+        AcceptanceVerdict::Accepted
+    }
+}
+
+/// Returns the exact finite-size singular probability
+/// \(p_{\det}(q,n)=1-\prod_{i=1}^{n}(1-q^{-i})\) in `f64`.
+fn determinant_null_probability(q: u8, n: u16) -> f64 {
+    let q = f64::from(q);
+    1.0 - (1..=n).fold(1.0, |nonsingular_probability, i| {
+        nonsingular_probability * (1.0 - q.powi(-i32::from(i)))
+    })
 }
 
 fn wilson_interval(successes: u64, trials: u64) -> (f64, f64) {
@@ -776,7 +861,7 @@ mod tests {
         Provenance, RngAlgorithm, ShardSpec, StreamPurpose,
     };
     use gf2_core::field::{matrix::FieldMatrix, FieldVec};
-    use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test};
+    use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided_test};
     use std::collections::BTreeSet;
 
     fn manifest(cells: Vec<CellSpec>) -> CampaignManifest {
@@ -901,10 +986,30 @@ mod tests {
     }
 
     #[test]
-    fn companion_uses_the_same_one_pass_matrices_for_both_values() {
+    fn companion_observer_sees_same_one_pass_operands_for_both_values() {
         let mut campaign = manifest(vec![cell(3, 2, 8, &[(0, 17)])]);
         campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
         let run = run_field(&campaign, 3).unwrap();
+
+        let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
+        let mut observed = Vec::new();
+        let observed_run = run_shard_for_with_observer(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            FieldOrder::F3,
+            &mut |entries: &[Fp<3>], permanent, determinant| {
+                observed.push((
+                    entries
+                        .iter()
+                        .map(|entry| entry.value())
+                        .collect::<Vec<_>>(),
+                    permanent,
+                    determinant,
+                ));
+            },
+        )
+        .unwrap();
 
         let address = MatrixAddress::new(
             campaign.root_seed,
@@ -917,16 +1022,33 @@ mod tests {
         let mut entries = vec![Fp::<3>::new(0); 4];
         let mut permanent_values = Vec::new();
         let mut determinant_values = Vec::new();
-        for _ in 0..8 {
+        for (observed_entries, observed_permanent, observed_determinant) in &observed {
             sampler.fill_next_matrix(&mut entries);
             permanent_values.push(permanent_ryser(&entries, 2).value());
-            let rows = entries
+            let observed_matrix: Vec<Fp<3>> =
+                observed_entries.iter().copied().map(Fp::<3>::new).collect();
+            let rows = observed_matrix
                 .chunks(2)
                 .map(|row| FieldVec::from(row.to_vec()))
                 .collect();
-            determinant_values.push(FieldMatrix::from_rows(rows).det().value());
+            let determinant = FieldMatrix::from_rows(rows).det().value();
+            determinant_values.push(determinant);
+            assert_eq!(
+                observed_entries,
+                &entries
+                    .iter()
+                    .map(|entry| entry.value())
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(
+                *observed_permanent,
+                permanent_ryser(&observed_matrix, 2).value()
+            );
+            assert_eq!(*observed_determinant, Some(determinant));
         }
 
+        assert_eq!(observed.len(), 8);
+        assert_eq!(observed_run.run.record, run.shards()[0].record);
         let shard = &run.shards()[0];
         assert_eq!(
             shard.record.permanent_zero_count,
@@ -1044,6 +1166,51 @@ mod tests {
                 zero_count,
             }
         );
+    }
+
+    #[test]
+    fn enabled_completed_summary_round_trips_through_canonical_reader() {
+        let mut campaign = manifest(vec![cell(3, 2, 8, &[(0, 61)])]);
+        campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let run = run_field(&campaign, 3).unwrap();
+        let parent = std::env::temp_dir().join(format!(
+            "campaign-summary-round-trip-{}",
+            std::process::id()
+        ));
+        let root = parent.join("campaign-test");
+
+        emit_field(&root, &campaign, &run).unwrap();
+        let read_back = crate::permanent_campaign::schema::read_field_summary(&root, 3).unwrap();
+
+        assert_eq!(read_back, *run.summary());
+        let _ = fs::remove_dir_all(parent);
+    }
+
+    #[test]
+    fn determinant_verdict_uses_the_protocol_probability_ordered_test() {
+        let q = 3;
+        let n = 2;
+        let sample_count = 100;
+        let family_test_count = 63;
+        let level = bonferroni_level(DETERMINANT_FAMILYWISE_ERROR, family_test_count);
+        let null_probability = determinant_null_probability(q, n);
+
+        for (zero_count, expected_verdict) in [
+            (41, AcceptanceVerdict::Accepted),
+            (0, AcceptanceVerdict::Rejected),
+            (sample_count, AcceptanceVerdict::Rejected),
+        ] {
+            let expected_rejection =
+                two_sided_test(zero_count, sample_count, null_probability).rejects_at(level);
+            assert_eq!(
+                expected_rejection,
+                matches!(expected_verdict, AcceptanceVerdict::Rejected)
+            );
+            assert_eq!(
+                determinant_acceptance(q, n, zero_count, sample_count, family_test_count),
+                expected_verdict
+            );
+        }
     }
 
     #[test]
