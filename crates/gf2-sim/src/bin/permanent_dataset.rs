@@ -9,11 +9,10 @@
 //!
 //! The campaign driver is the `permanent_campaign` binary. It enumerates the
 //! frozen manifest's work items, derives stream addresses, draws matrices,
-//! evaluates permanents, accumulates shard records, and writes shard files and
-//! the field summary through the emission guard. The scheduler refuses
-//! `DeterminantPlan` values other than `NotEvaluated` via
-//! `DeterminantCompanionRequested`; determinant-companion evaluation belongs to
-//! separate work. This binary has no sampler, no backend selection, and no
+//! evaluates permanents and any manifest-requested determinant companions on
+//! the same row-major samples, accumulates shard records, and writes shard
+//! files and the field summary through the emission guard. This binary has no
+//! sampler, no backend selection, and no
 //! accumulator, and it never creates or mutates a dataset file: `checksums`
 //! prints to standard output rather than writing `checksums.sha256`, so the
 //! executable has no write path into a dataset at all.

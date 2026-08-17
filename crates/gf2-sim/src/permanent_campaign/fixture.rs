@@ -73,6 +73,13 @@ pub(crate) fn manifest() -> CampaignManifest {
     manifest_at_revision(&fixture_revision())
 }
 
+/// Returns the default fixture manifest with the determinant companion enabled.
+pub(crate) fn manifest_with_determinant_companion() -> CampaignManifest {
+    let mut campaign = manifest();
+    campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+    campaign
+}
+
 /// Returns the default root manifest with `revision` recorded as its source.
 pub(crate) fn manifest_at_revision(revision: &GitRevision) -> CampaignManifest {
     CampaignManifest {

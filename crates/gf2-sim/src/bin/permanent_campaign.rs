@@ -65,7 +65,7 @@ fn main() -> ExitCode {
     };
     for shard in run.shards() {
         println!(
-            "q={} n={} shard={} matrices={} zeros={} draw_s={:.6} pack_s={:.6} evaluate_s={:.6} count_s={:.6}",
+            "q={} n={} shard={} matrices={} zeros={} draw_s={:.6} pack_s={:.6} evaluate_s={:.6} determinant_s={:.6} count_s={:.6}",
             run.q(),
             shard.record.stream_address.n,
             shard.record.shard_id,
@@ -74,6 +74,7 @@ fn main() -> ExitCode {
             shard.timing.draw.as_secs_f64(),
             shard.timing.pack.as_secs_f64(),
             shard.timing.evaluate.as_secs_f64(),
+            shard.timing.determinant.as_secs_f64(),
             shard.timing.count.as_secs_f64(),
         );
     }

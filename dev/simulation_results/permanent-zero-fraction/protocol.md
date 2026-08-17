@@ -283,9 +283,11 @@ Within that cohort, selection proceeds in this order:
    remains eligible, the selection receipt records the exclusions rather than
    implying a timing comparison that did not occur.
 
-Timing fixtures use their own stream purpose. Permanent or determinant values,
-zero counts, zero fractions, intervals, or test outcomes never enter backend
-selection. A backend discovered to be faster after the freeze does not replace
+Timing fixtures use their own stream purpose. The campaign execution stream
+reports draw, pack, permanent evaluate, determinant, and count phases per
+shard; those timings remain outside dataset files. Permanent or determinant
+values, zero counts, zero fractions, intervals, or test outcomes never enter
+backend selection. A backend discovered to be faster after the freeze does not replace
 the manifest choice. A manifest-named backend that is absent or becomes unsafe
 halts the cell; the driver does not silently substitute another backend. This
 campaign-specific rule preserves the frozen selection and does not alter safe
