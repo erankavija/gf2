@@ -6,6 +6,7 @@
   "dependencies": [],
   "description": "crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119 and :288 cite 'Algorithm 2' of [Scheinerman2024] for the bipedal add/sub formulas. The paper carries no object labelled Algorithm 2; Theorem 2.1 is where the add, subtract, multiply, and divide formulas are stated. The same miscitation was corrected in crates/gf2-algebra (packed/bipedal3.rs, permanent/bipedal3_multiword.rs) under JIT issue 63d931a9 at commit 65dae3bf; these two comment sites are the remaining occurrences.\n\n## Success Criteria\n\n- [hard] REQ-01: Every citation of the bipedal operation formulas in crates/gf2-kernels-simd/src/bipedal/bipedal3.rs names [Scheinerman2024] Theorem 2.1, and a repository-wide search finds no remaining 'Algorithm 2' citation of [Scheinerman2024].",
   "documents": [],
+  "done_at": "2026-08-17T19:33:36.484896587Z",
   "first_ready_at": "2026-08-17T16:36:28.392202596Z",
   "gates_required": [],
   "gates_status": {},
@@ -17,7 +18,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "SIMD bipedal3 comments cite Scheinerman Algorithm 2, an object the paper does not carry",
-  "updated_at": "2026-08-17T19:30:26.196477865Z"
+  "updated_at": "2026-08-17T19:33:36.484896587Z"
 }
