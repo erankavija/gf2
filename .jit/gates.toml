@@ -1,273 +1,461 @@
 [[gates]]
-auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/plan-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Independently review the linked plan before implementation work fans out."
-key = "plan-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Plan Review"
 version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/breakdown-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Independently review decomposition quality, issue content, and dependency ordering before implementation."
-key = "breakdown-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Breakdown Review"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/code-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Review issue-attributable implementation changes against repository policy and success criteria."
-key = "code-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Code Review"
-version = 1
-
-[[gates]]
-auto = true
-checker = { label_namespace = "brackets", type = "label_target_validation" }
-description = "Validate the container named by the breakdown issue's brackets label."
-key = "coverage-preview"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Coverage Preview"
-version = 1
-
-[[gates]]
-auto = true
-checker = { type = "issue_validation" }
-description = "Run declarative validation for the gated issue."
-key = "jit-validate"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Issue Validation"
-version = 1
-
-[[gates]]
-auto = true
-checker = { type = "repository_validation" }
-description = "Run structural and declarative validation for the whole repository."
-key = "repo-validate"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Repository Validation"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/doc-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material."
-key = "doc-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Documentation Review"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./contrib/gates/ai-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high" }, pass_context = true, prompt_file = "./contrib/gates/holistic-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants."
-key = "holistic-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Holistic Container Review"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./scripts/asm-artefact-present.sh", env = {}, pass_context = false, timeout_seconds = 300, type = "exec" }
-description = "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update."
 key = "asm-artefact-present"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "ASM artefact present"
-version = 1
+description = "Fails if SIMD source files are modified without a corresponding sibling *.asm.txt update."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/asm-artefact-present.sh"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
+version = 1
+key = "breakdown-review"
+title = "Breakdown Review"
+description = "Independently review decomposition quality, issue content, and dependency ordering before implementation."
+stage = "postcheck"
+mode = "auto"
+priority = 100
 auto = true
-checker = { command = "./scripts/cargo-ci.sh", env = {}, pass_context = false, timeout_seconds = 900, type = "exec" }
-description = "Run the full release-mode Rust workspace CI pipeline: build, tests, clippy, and formatting."
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/breakdown-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
 key = "cargo-ci"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "Rust CI checks pass"
-version = 1
+description = "Run the full release-mode Rust workspace CI pipeline: build, tests, clippy, and formatting."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/cargo-ci.sh"
+timeout_seconds = 900
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
-auto = true
-checker = { command = "./scripts/cargo-kani-gate.sh", env = {}, pass_context = false, timeout_seconds = 1800, type = "exec" }
-description = "Run all bounded model-checking harnesses and retain the bounded summary and compressed proof log."
+version = 1
 key = "cargo-kani"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "Kani proof harnesses pass"
-version = 1
+description = "Run all bounded model-checking harnesses and retain the bounded summary and compressed proof log."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/cargo-kani-gate.sh"
+timeout_seconds = 1800
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
-auto = true
-checker = { command = "cargo clippy --all-targets -- -D warnings", env = {}, pass_context = false, timeout_seconds = 120, type = "exec" }
-description = "Require the configured Clippy targets to pass with warnings denied."
+version = 1
 key = "clippy"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "Clippy lints pass"
-version = 1
+description = "Require the configured Clippy targets to pass with warnings denied."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo clippy --all-targets -- -D warnings"
+timeout_seconds = 120
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
+version = 1
+key = "code-review"
+title = "Code Review"
+description = "Review issue-attributable implementation changes against repository policy and success criteria."
+stage = "postcheck"
+mode = "auto"
+priority = 100
 auto = true
-checker = { command = "./scripts/criterion-1.5x.sh", env = {}, pass_context = true, timeout_seconds = 300, type = "exec" }
-description = "Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>."
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/code-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "coverage-preview"
+title = "Coverage Preview"
+description = "Validate the container named by the breakdown issue's brackets label."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "label_target_validation"
+label_namespace = "brackets"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
 key = "criterion-1.5x"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "Criterion 1.5x speedup"
-version = 1
+description = "Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/criterion-1.5x.sh"
+timeout_seconds = 300
+pass_context = true
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
+version = 1
+key = "doc-review"
+title = "Documentation Review"
+description = "Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material."
+stage = "postcheck"
+mode = "auto"
+priority = 100
 auto = true
-checker = { command = "cargo fmt --check", env = {}, pass_context = false, timeout_seconds = 30, type = "exec" }
-description = "Require cargo fmt to report no formatting drift."
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/doc-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "f3-bipedal-ci"
+title = "Bipedal F_3 prototype checks pass"
+description = "Run the standalone f3_bipedal release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test --manifest-path dev/research/f3_bipedal/Cargo.toml --release --offline && cargo fmt --manifest-path dev/research/f3_bipedal/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/f3_bipedal/Cargo.toml --release --all-targets --offline -- -D warnings"
+timeout_seconds = 600
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
 key = "fmt"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
 title = "Code formatted"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./scripts/lake-build-strict.sh", env = {}, pass_context = false, timeout_seconds = 600, type = "exec" }
-description = "Require lake build to succeed with no sorry warnings in hand-written proof files."
-key = "lake-build"
+description = "Require cargo fmt to report no formatting drift."
+stage = "postcheck"
 mode = "auto"
 priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Lean4 proofs compile"
-version = 1
-
-[[gates]]
-auto = false
-description = "Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target."
-key = "parallelism-pays"
-mode = "manual"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Parallelism speedup demonstrated"
-version = 1
-
-[[gates]]
-auto = false
-description = "Remind implementers to establish failing behavioral evidence before implementation."
-key = "tdd-reminder"
-mode = "manual"
-priority = 100
-reserved = {}
-stage = "precheck"
-title = "Write tests first (TDD)"
-version = 1
-
-[[gates]]
 auto = true
-checker = { command = "cargo test", env = {}, pass_context = false, timeout_seconds = 300, type = "exec" }
-description = "Run the legacy cargo test gate retained for issues that explicitly require it."
-key = "tests"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "All tests pass"
-version = 1
+
+[gates.checker]
+type = "exec"
+command = "cargo fmt --check"
+timeout_seconds = 30
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
 
 [[gates]]
-auto = true
-checker = { command = "./scripts/verify-lean.sh", env = {}, pass_context = false, timeout_seconds = 1200, type = "exec" }
-description = "Regenerate LLBC and Lean from current Rust with Charon and Aeneas, then build the proof package."
-key = "verify-lean"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Lean extraction regenerates"
 version = 1
-
-[[gates]]
-auto = true
-checker = { command = "./contrib/gates/research-review.sh", env = { REVIEWER_AGENT = "codex exec -m gpt-5.6-sol -c model_reasoning_effort=xhigh" }, pass_context = true, prompt_file = "./contrib/gates/research-review-prompt.md", timeout_seconds = 1800, type = "exec" }
-description = "Verify scientific rigor: claims trace to artifacts, statistics are sound, citations resolve, results are reproducible."
-key = "research-review"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Research Review"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release && cargo fmt --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --all-targets -- -D warnings && cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip", env = {}, pass_context = false, timeout_seconds = 600, type = "exec" }
-description = "Run the standalone permanent-wave-gpu release tests, formatting, Clippy, and ROCm probe build that workspace cargo-ci intentionally excludes."
-key = "permanent-wave-gpu-ci"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Permanent wave prototype checks pass"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --offline && cargo fmt --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --all-targets --offline -- -D warnings", env = {}, pass_context = false, timeout_seconds = 600, type = "exec" }
-description = "Run the standalone permanent-sampling-feas release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
-key = "permanent-sampling-feas-ci"
-mode = "auto"
-priority = 100
-reserved = {}
-stage = "postcheck"
-title = "Permanent sampling feasibility checks pass"
-version = 1
-
-[[gates]]
-auto = true
-checker = { command = "cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --features hip --offline && cargo fmt --manifest-path crates/gf2-kernels-hip/Cargo.toml --all -- --check && cargo clippy --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --all-targets --features hip --offline -- -D warnings", env = {}, pass_context = false, timeout_seconds = 900, type = "exec" }
-description = "Run the ROCm-only gf2-kernels-hip release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
 key = "gf2-kernels-hip-ci"
+title = "HIP kernel crate checks pass"
+description = "Run the ROCm-only gf2-kernels-hip release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
+stage = "postcheck"
 mode = "auto"
 priority = 100
-reserved = {}
-stage = "postcheck"
-title = "HIP kernel crate checks pass"
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --features hip --offline && cargo fmt --manifest-path crates/gf2-kernels-hip/Cargo.toml --all -- --check && cargo clippy --manifest-path crates/gf2-kernels-hip/Cargo.toml --release --all-targets --features hip --offline -- -D warnings"
+timeout_seconds = 900
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
 version = 1
+key = "holistic-review"
+title = "Holistic Container Review"
+description = "Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/holistic-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "jit-validate"
+title = "Issue Validation"
+description = "Run declarative validation for the gated issue."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "issue_validation"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "lake-build"
+title = "Lean4 proofs compile"
+description = "Require lake build to succeed with no sorry warnings in hand-written proof files."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/lake-build-strict.sh"
+timeout_seconds = 600
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "parallelism-pays"
+title = "Parallelism speedup demonstrated"
+description = "Require a committed benchmark receipt showing that measured parallel speedup meets the issue's stated target."
+stage = "postcheck"
+mode = "manual"
+priority = 100
+auto = false
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "permanent-sampling-feas-ci"
+title = "Permanent sampling feasibility checks pass"
+description = "Run the standalone permanent-sampling-feas release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --offline && cargo fmt --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent-sampling-feas/Cargo.toml --release --all-targets --offline -- -D warnings"
+timeout_seconds = 600
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "permanent-wave-gpu-ci"
+title = "Permanent wave prototype checks pass"
+description = "Run the standalone permanent-wave-gpu release tests, formatting, Clippy, and ROCm probe build that workspace cargo-ci intentionally excludes."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release && cargo fmt --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --all -- --check && cargo clippy --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --all-targets -- -D warnings && cargo build --manifest-path dev/research/permanent_wave_gpu/Cargo.toml --release --features hip"
+timeout_seconds = 600
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "plan-review"
+title = "Plan Review"
+description = "Independently review the linked plan before implementation work fans out."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/ai-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/plan-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-terra -c model_reasoning_effort=high"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "repo-validate"
+title = "Repository Validation"
+description = "Run structural and declarative validation for the whole repository."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "repository_validation"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "research-review"
+title = "Research Review"
+description = "Verify scientific rigor: claims trace to artifacts, statistics are sound, citations resolve, results are reproducible."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./contrib/gates/research-review.sh"
+timeout_seconds = 1800
+pass_context = true
+prompt_file = "./contrib/gates/research-review-prompt.md"
+
+[gates.checker.env]
+REVIEWER_AGENT = "codex exec -m gpt-5.6-sol -c model_reasoning_effort=xhigh"
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "tdd-reminder"
+title = "Write tests first (TDD)"
+description = "Remind implementers to establish failing behavioral evidence before implementation."
+stage = "precheck"
+mode = "manual"
+priority = 100
+auto = false
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "tests"
+title = "All tests pass"
+description = "Run the legacy cargo test gate retained for issues that explicitly require it."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "cargo test"
+timeout_seconds = 300
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]
+
+[[gates]]
+version = 1
+key = "verify-lean"
+title = "Lean extraction regenerates"
+description = "Regenerate LLBC and Lean from current Rust with Charon and Aeneas, then build the proof package."
+stage = "postcheck"
+mode = "auto"
+priority = 100
+auto = true
+
+[gates.checker]
+type = "exec"
+command = "./scripts/verify-lean.sh"
+timeout_seconds = 1200
+pass_context = false
+
+[gates.checker.env]
+
+[gates.reserved]

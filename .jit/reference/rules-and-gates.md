@@ -26,6 +26,7 @@
 - **@/gate/coverage-preview** — Coverage Preview: Validate the container named by the breakdown issue's brackets label.
 - **@/gate/criterion-1.5x** — Criterion 1.5x speedup: Require geomean speedup against the pinned baseline of at least 1.5x for the kernel named by ppc-kernel:<id>.
 - **@/gate/doc-review** — Documentation Review: Automatically review issue-attributable documentation impact across README files, crate docs, docs/, and linked design material.
+- **@/gate/f3-bipedal-ci** — Bipedal F_3 prototype checks pass: Run the standalone f3_bipedal release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes.
 - **@/gate/fmt** — Code formatted: Require cargo fmt to report no formatting drift.
 - **@/gate/gf2-kernels-hip-ci** — HIP kernel crate checks pass: Run the ROCm-only gf2-kernels-hip release tests, formatting, and Clippy that workspace cargo-ci intentionally excludes.
 - **@/gate/holistic-review** — Holistic Container Review: Independently review a configured-hierarchy container for hard-criterion completion and coherence across descendants.
