@@ -21,7 +21,7 @@
 //!
 //! # Op cost (per `u64`-pair = 64 F_3 elements)
 //!
-//! Following the paper (Algorithm 2):
+//! Following the paper (Theorem 2.1):
 //!
 //! - **add**: `t = a.mag ^ a.sgn ^ b.sgn; u = b.mag & t;`
 //!   `mag' = u | (a.mag ^ b.mag); sgn' = u ^ a.sgn` — **6 ops**.
@@ -143,7 +143,7 @@ impl F3Encoding for Bipedal3 {
             let asg = self.sgn[w];
             let bm = other.mag[w];
             let bsg = other.sgn[w];
-            // Paper's Algorithm 2 — 6 bitwise ops per word (= 64 elements).
+            // Paper's Theorem 2.1 — 6 bitwise ops per word (= 64 elements).
             let t = am ^ asg ^ bsg;
             let u = bm & t;
             self.mag[w] = u | (am ^ bm);

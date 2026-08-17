@@ -6,7 +6,7 @@
 
 ## What landed this session
 
-- **T12 (d181e95b — SIMD bipedal3 kernel via generic BatchedBipedalLike framework)** — DONE after 4 code-review rounds. Findings resolved: OnceLock SSOT for `detect_avx2`; raw `(mag,sgn)` bitwise parity tests against `Bipedal3` (paper Algorithm 2 — AVX2 `sub_lane` formula corrected to match scalar bit-for-bit); SSOT `encode_to_words` via `Bipedal3::pack()`; doc examples updated to public re-export path.
+- **T12 (d181e95b — SIMD bipedal3 kernel via generic BatchedBipedalLike framework)** — DONE after 4 code-review rounds. Findings resolved: OnceLock SSOT for `detect_avx2`; raw `(mag,sgn)` bitwise parity tests against `Bipedal3` (paper Theorem 2.1 — AVX2 `sub_lane` formula corrected to match scalar bit-for-bit); SSOT `encode_to_words` via `Bipedal3::pack()`; doc examples updated to public re-export path.
 
 - **T14 (a7886bd8 — Multi-word streaming column-sum for n>64)** — DONE after 11 code-review rounds. Final shape:
   - `gray_code_iter` widened to `u128` so the singleword path now accepts `n=64` (was capped at 63 due to `1u64 << 64` UB).
@@ -82,7 +82,7 @@ Ask the user:
 
 - **Trap T14-r1**: Worker shipped `permanent_bipedal3_multiword`'s lower-bound assertion as `debug_assert!(n > 64)`. Reviewer ran tests in *debug mode* — which would have left the assertion firing on small-n cross-check tests if I'd kept it. **Fix:** drop the lower-bound assertion entirely (it was a perf hint, not a correctness invariant). Small-n calls into the multi-word path are correctness-preserving.
 
-- **Trap T14-r2 (sub-wave-wide)**: An AVX2 alternative formula for `sub` (6 ops, written as `t = s1^s2; u = m1&t; m_- = u | (m1^m2); s_- = u ^ (m2^s2)`) is *semantically* equivalent to the scalar Algorithm 2 reference but NOT *bitwise* equivalent — for inputs `(a=1, b=1)` the AVX2 formula produces alt-zero `(0, 1)` while scalar produces canonical `(0, 0)`. The criterion-2 contract was "bitwise on 1000 random inputs (proptest cross-check)" — strictly enforced. **Fix:** rewrite AVX2 `sub_lane` to mirror the scalar formula (`bsg = s2^m2; t = m1^s1^bsg; u = m2&t; ...`) at the cost of 1 extra XOR op. The two implementations now agree word-for-word.
+- **Trap T14-r2 (sub-wave-wide)**: An AVX2 alternative formula for `sub` (6 ops, written as `t = s1^s2; u = m1&t; m_- = u | (m1^m2); s_- = u ^ (m2^s2)`) is *semantically* equivalent to the scalar Theorem 2.1 reference but NOT *bitwise* equivalent — for inputs `(a=1, b=1)` the AVX2 formula produces alt-zero `(0, 1)` while scalar produces canonical `(0, 0)`. The criterion-2 contract was "bitwise on 1000 random inputs (proptest cross-check)" — strictly enforced. **Fix:** rewrite AVX2 `sub_lane` to mirror the scalar formula (`bsg = s2^m2; t = m1^s1^bsg; u = m2&t; ...`) at the cost of 1 extra XOR op. The two implementations now agree word-for-word.
 
 - **Trap T14 docs**: After capping `N_MAX_MULTIWORD` at 255 and dropping the multi-word lower-bound assert, the R3 design doc (`dev/plans/r3_multi_word_streaming.md`) lagged behind reality in multiple sections (§1 scope, §5.2 runtime branch, §8 pseudocode panic note, §9 validation plan, §12 summary). Reviewer kept flagging stale sections one-at-a-time across rounds 5–10. **Pre-emptive action:** when amending any cap or contract during rework, *grep the whole design-doc tree for the old number / shape* in one pass and update all hits at once, not lazily as reviewer flags each one.
 
