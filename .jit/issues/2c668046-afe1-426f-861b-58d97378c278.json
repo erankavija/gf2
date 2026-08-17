@@ -1,0 +1,24 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-17T21:03:40.145775006Z",
+  "dependencies": [],
+  "description": "A group of ready issues in this epic carries a single auto-generated success criterion of the form \"Delivers <title> with the behavior, scope, evidence, and constraints described above\", which states no observable outcome and cannot be verified. Their prose descriptions, which carry the real intent, have also drifted from the repository.\n\n## Background\n\nA criterion that restates the title delegates the whole contract to the description. That is tolerable when the description is accurate; here it is not, and the combination has cost real rework:\n\n- `be331e20` prescribes creating `hamming_basic.rs` at 30–50 lines. The file already exists at 114 lines and is a good beginner example, so the issue cannot be delivered as written without deleting working content. An attempt to restate its criteria was declined and the issue was returned untouched.\n- `35007c4c` says \"12 existing examples need updating\". `crates/gf2-coding/examples/` holds 25 files, of which six are generators and smoke-test emitters rather than tutorials, so \"all existing examples\" has no single defensible reading.\n- `9b3452e9` says six LDPC encoding doctests are marked `no_run` because each takes 2–10 seconds. There are thirteen `no_run` blocks across four files, and several carry the marker because they perform file I/O rather than because they are slow.\n\nThe affected set is identified by a predicate, not a list: a child of this epic whose description contains exactly one `REQ-` criterion and whose criterion text ends in the generated \"described above\" phrasing. Measured on 2026-08-18 the predicate selects ten children, every one of them in `ready` state; the same scan reports sixteen siblings with substantive criteria, so this is a property of one authoring batch rather than of the epic.\n\n## Success Criteria\n\n- [hard] REQ-01: No child of this epic matches the predicate above: every criterion states an observable outcome a reviewer can check without consulting the issue's author.\n- [hard] REQ-02: Each rewritten issue's description agrees with the repository at rewrite time — file counts, inventories, and claimed prerequisites are re-derived from the tree rather than carried forward from the original text.\n- [hard] REQ-03: Where an original left a scope question genuinely open, the rewrite settles it in the criteria rather than leaving it to the implementer, or the issue is closed as obsolete with the reason recorded.\n- [hard] REQ-04: The rewrite changes no issue's intent: an issue that described a piece of work still describes that work, and any issue found already delivered is closed as such rather than silently rescoped.\n\n## Notes\n\n`4eaa31a0` and `cef2e631` carry no `REQ-` markers at all, but both are `done`; the content standards direct that existing issues are not retroactively renamed unless asked, so they are out of scope here.\n",
+  "documents": [],
+  "first_ready_at": "2026-08-17T21:03:40.145775006Z",
+  "gates_required": [
+    "jit-validate",
+    "code-review"
+  ],
+  "gates_status": {},
+  "id": "2c668046-afe1-426f-861b-58d97378c278",
+  "labels": [
+    "epic:quality-documentation-tech-debt",
+    "component:docs",
+    "type:task"
+  ],
+  "priority": "high",
+  "state": "ready",
+  "title": "Ready issues in the quality epic carry unverifiable auto-generated criteria",
+  "updated_at": "2026-08-17T21:03:40.145775006Z"
+}
