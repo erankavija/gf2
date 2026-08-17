@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 4,
+ "current_wave": 5,
  "waves": [
   {
    "wave_number": 1,
@@ -115,7 +115,7 @@
      "short_id": "eb8825c8",
      "title": "Batch-parallel processor path for campaign shards",
      "classification": "implementation",
-     "status": "pending"
+     "status": "rework-1 dispatched (luna): cargo-ci passed; code-review R1 single finding - the production binary hardcodes one worker and records no parallelism (REQ-03); fix adds --workers with a recorded header line"
     }
    ],
    "note": "serialized: eb8825c8 first (5a), then 7a816262 (5b) behind the new dependency edge"
@@ -494,7 +494,8 @@
   "0dffa759_note": "reset to 0 by the 2026-08-17 REQ-11 escalation guidance, then 1 on the rework-3 dispatch (redispatched in session 10 after the session-9 crash)",
   "e1c96c9c": 1,
   "63d931a9": 1,
-  "4a6bdcff": 1
+  "4a6bdcff": 1,
+  "eb8825c8": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
