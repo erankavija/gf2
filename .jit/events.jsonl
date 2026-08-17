@@ -8373,3 +8373,5 @@
 {"assignee":"agent:codex-luna","id":"8021e841-be8a-404c-a789-6c87d4a8a429","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T18:42:48.081872502Z","type":"issue_claimed"}
 {"gate_key":"cargo-ci","id":"e57b1014-233e-46dd-8f24-dc3a190de09f","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T18:56:50.935391644Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"2ac918a4-ec0c-464a-8b03-f731c19601e9","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:00:17.215459481Z","type":"gate_failed","updated_by":"auto:executor"}
+{"gate_key":"cargo-ci","id":"1c0af186-6a21-47b0-978e-1876f2852fd6","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:05:34.719965030Z","type":"gate_failed","updated_by":"auto:executor"}
+{"fields":["documents"],"id":"aeb278d6-b49e-4343-aad6-8907c8e07e0f","issue_id":"b8206228-77d2-49ab-aaba-a16830d75cca","timestamp":"2026-08-17T19:07:25.663904322Z","type":"issue_updated","updated_by":"doc-add"}
