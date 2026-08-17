@@ -108,7 +108,7 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); overnight 02:00 premeasurement session pending: systemd-run blocked by permission classifier, at(1) absent, owner asked to arm the timer"
+     "status": "phase 1 done (rework-1 PASS, committed 776858ed/b6bdb10f: 3 dischargeable cells, 60 gaps, top-2 premeasurement preregistered per owner decisions); phase 2a done (abcb5438: premeasure-plan-v1 CSV+MD, runner premeasure/premeasure-collect modes, opt-in harness --batch-size, 5/5 shell tests, 67 crate tests, prepare run and binary manifest pinned at 0695438d); gf2-premeasure.timer armed (owner-approved) for 2026-08-18 02:00 EEST, session cap 19800 s; next: premeasure-collect, then freeze finalization with selection receipts and doc-review + research-review"
     },
     {
      "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
