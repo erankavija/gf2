@@ -13,7 +13,18 @@
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-17T18:56:50.935391644Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "failed",
+      "updated_at": "2026-08-17T19:00:17.215459481Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
   "labels": [
     "type:task",
@@ -24,5 +35,5 @@
   "priority": "normal",
   "state": "in_progress",
   "title": "Batch-parallel processor path for campaign shards",
-  "updated_at": "2026-08-17T18:42:48.081872502Z"
+  "updated_at": "2026-08-17T19:00:17.215459481Z"
 }
