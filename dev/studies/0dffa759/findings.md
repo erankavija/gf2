@@ -20,6 +20,7 @@ artifacts disagree, §10 records the disagreement rather than choosing silently.
 | [`../../research/permanent_wave_gpu/`](../../research/permanent_wave_gpu/README.md) | The executable prototype: shared mapping header, three per-field equivalence units |
 | [`../../active/0de41c82/investigation.md`](../../active/0de41c82/investigation.md), [`plan.md`](../../active/0de41c82/plan.md) | The study's own survey of this ground |
 | [`req08-amendment-draft.md`](req08-amendment-draft.md) | Drafted amendment to the archived $\mathbb{F}_7$ encoding decision (§8) |
+| [`rng-provenance-addendum.md`](rng-provenance-addendum.md) | Committed RNG identity for the three campaign manifests, which omit it (§1) |
 
 All three field campaigns and the runtime qualification measure one host and one
 architecture: AMD Ryzen 9 5900X, AMD Radeon RX 6950 XT, `gfx1030`, ROCm 7.2.4
@@ -52,66 +53,66 @@ re-verified three times per campaign, the exact commands, and the campaign seed
 root with each cell's reserved stream-index block, under the repository's
 canonical benchmark mutex, with `analysis.py` regenerating every table from
 committed artifacts ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §1).
-They do not record the RNG algorithm and version. That identity resolves
-indirectly, through the pinned revision's harness source: the generator is
-ChaCha20 as implemented by `rand_chacha` 0.9 (`ChaCha20Rng`), stated in the
-sampler's own module documentation
-(`dev/research/permanent-sampling-feas/src/sampler.rs:33-34`, `:58`) and
-declared as a versioned dependency
-(`dev/research/permanent-sampling-feas/Cargo.toml:60-62`) resolved to 0.9.0 in
-the harness lockfile
-(`dev/research/permanent-sampling-feas/Cargo.lock:222-226`), with the seed
-derivation from $(\text{root}, q, n, \text{purpose}, \text{index})$ in the same
-module (`sampler.rs:232-245`, `:295`). Reproducing a campaign's samples
-therefore needs the harness source at the pinned revision, not the manifest
-alone; §6.7 carries that gap forward as a requirement on production campaign
+They do not record the RNG algorithm and version. That omission is closed by a
+committed record rather than left to a reader's reconstruction:
+[`rng-provenance-addendum.md`](rng-provenance-addendum.md) supplements all three
+§1 provenance blocks, naming the generator as ChaCha20 implemented by
+`rand_chacha` 0.9 through `ChaCha20Rng`, from sources it verifies byte-identical
+at both revisions the campaigns pin — the sampler's own module documentation
+(`dev/research/permanent-sampling-feas/src/sampler.rs:33-34`), the import and
+construction site (`:58`, `:295`), the versioned dependency declaration
+(`dev/research/permanent-sampling-feas/Cargo.toml:60-62`), and the seed
+derivation from $(\text{root}, q, n, \text{purpose}, \text{index})$
+(`sampler.rs:232-245`). The addendum records one edge it cannot close: the
+committed requirement is the semver range `"0.9"`, and the resolved patch
+version is unrecoverable, because the harness lockfile is gitignored
+(`dev/research/permanent-sampling-feas/.gitignore:2`) and absent from the tree at
+both pinned revisions (addendum §4). The manifests themselves are unedited, so
+the gap they carry stands as published: a reader holding one alone cannot name
+the generator. §6.7 carries that forward as a requirement on production campaign
 manifests.
 
-**A safe launch duration** is discharged against the documented bound, on the
-operating point's own direct evidence, with the runtime qualification's
-observations carried beside both. Three distinct things, named apart here and
-kept apart everywhere below.
+**A safe launch duration** is discharged by the operating point's own receipted
+clean completions at its declared configuration, which is what REQ-11 asks for
+as amended (§9). No committed object in the record is a bound on safe launch
+duration, and this document calls none of them one. Two committed objects are
+cited as *reference limits* beside the discharge, each with its evidentiary
+status stated and neither certifying anything. Three distinct things, named
+apart here and kept apart everywhere below.
 
-*The documented safe launch-duration bound is the archived calibration's
-committed bound.* It places a hang boundary at "*≈190–200 s*" per launch and
-sets per-field work budgets on $\text{sub\_batch} \cdot 2^n$ of
-$4.0 \times 10^9$ at $q = 3$, $1.3 \times 10^9$ at $q = 5$, and
-$3.5 \times 10^8$ at $q = 7$
-(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:225-227).
-It is the one launch-duration bound committed before this study — "*The only
-committed numeric bound before this study is an archived calibration*"
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1) — and the field
-receipts apply it as their bound: the $\mathbb{F}_7$ receipt applies the
-archived $q = 7$ work budget alongside that span boundary under its own REQ-19
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19), and the
-$\mathbb{F}_5$ receipt reports its operating point against the same span
-boundary and the $q = 5$ budget
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). Its provenance is
-stated in place rather than assumed away: the boundary derives from the one
-recorded device fault, whose watchdog attribution was retracted
+*The discharge is each operating point's own direct evidence.* The point's own
+receipted cell completed its launches cleanly at exactly the declared
+configuration, with its launch count recorded in the field receipt — a per-cell
+observation at the point itself, on the kernel the verdict is for and at the
+batch the verdict is for, requiring no transfer from another kernel, another
+batch, or another cell. §3, §4, §5, and §9 cite those cells. What it establishes
+is that those launches completed; it locates no fault boundary.
+
+*Reference limit 1 — the archived calibration, superseded.* It places a hang
+boundary at "*≈190–200 s*" per launch and sets per-field work budgets on
+$\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
+$1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
+(`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:225-227),
+and it is the figure the field receipts report their operating points against
+([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19;
+[`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). Its standing is stated
+in place rather than assumed away: the boundary derives from the one recorded
+device fault, whose watchdog attribution was retracted
 ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1), and the archived
-document carries a dated supersession note over it: "*The budgets below are
+document carries a dated supersession note over it — "*The budgets below are
 therefore not a necessary condition for safe operation of these kernels on this
 host, and the boundary below is not a measured device property*"
-(`r4_gpu_uniformity_resample.md`:176-215). It is the conservative operational
-bound the receipts apply, not a measured device property, and this document uses
-it on exactly those terms.
+(`r4_gpu_uniformity_resample.md`:176-215). A superseded figure that its own
+source denies is a measured device property is a reference point for comparison
+and nothing more, and this document uses it on exactly those terms.
 
-*Each go verdict's launch duration is grounded first in the operating point's
-own direct evidence.* The point's own receipted cells completed their launches
-cleanly at exactly the declared configuration, with their launch counts recorded
-in the field receipt — a per-cell observation at the point itself, requiring no
-transfer from another kernel, another batch, or another cell. §4, §5, and §9
-cite those cells.
-
-*The runtime qualification's observed clean-completion envelope corroborates
-both, and is neither of them.* It is "*the largest per-launch work and the
-longest per-launch span at which a launch of a retained path completed without
-device fault, on this host, at the pinned binary*", each figure carried by a
-named cell with its outcome and its launch count
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2): per-launch work to
-$2.7488 \times 10^{11}$ and per-launch span to 53.077521 s at $q = 3$; to
-$1.0737 \times 10^{9}$ and 115.452922 s at $q = 5$; and to
+*Reference limit 2 — the runtime qualification's observed clean-completion
+envelope.* It is "*the largest per-launch work and the longest per-launch span at
+which a launch of a retained path completed without device fault, on this host,
+at the pinned binary*", each figure carried by a named cell with its outcome and
+its launch count ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2):
+per-launch work to $2.7488 \times 10^{11}$ and per-launch span to 53.077521 s at
+$q = 3$; to $1.0737 \times 10^{9}$ and 115.452922 s at $q = 5$; and to
 $1.0737 \times 10^{9}$ and 21.722805 s at $q = 7$ (§9.4). Its scope is a
 per-field extremum over the field's retained paths, so its two axes are often
 two different kernels — at $q = 5$ the work figure is
@@ -120,8 +121,11 @@ $q = 7$ the work figure is `permanent_bipedal7_kernel` and the span figure
 `wave_gf7_lookup_table_kernel<2>` (§9.4) — and a clean completion by one kernel
 certifies no launch of another. It is observed rather than derived from a device
 model, and it is a *conservative lower bound* on the safe region: no launch in
-the qualification was run to failure, so it locates no upper boundary. Deriving
-one needs a launch run to failure and remains an open deliverable (§12.1).
+the qualification was run to failure, so it locates no upper boundary.
+
+*No located fault boundary is claimed anywhere in this document.* Locating one
+needs a launch run to failure, which no committed run performs; it is an open
+deliverable and §12.1 carries it.
 
 **An end-to-end crossover against the best applicable in-tree CPU path** is the
 composite-throughput comparison of each campaign's §4.2, with the best CPU path
@@ -233,14 +237,15 @@ The equivalence and reproducibility conditions are met — all 48 $q = 3$
 comparison cells report `mismatches = 0` and `status = identical`, both
 prototypes included, at every order the grid times
 ([`../047b62ed/receipts.md`](../047b62ed/receipts.md) §3) — and so is the
-safe-launch-duration condition at the declared operating point, on the point's
-own direct evidence: no $q = 3$ cell failed with a device fault, the $M = 256$
-cell completed five launches at 29.954639 s of device kernel time each, and the
-$M = 1024$ cell completed three at 53.02–53.20 s
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.3). Both spans sit
-inside the archived calibration's ≈190–200 s span boundary. Their per-launch
-work does not sit inside its $q = 3$ budget: at $6.8719 \times 10^{10}$ and
-$2.7488 \times 10^{11}$ units of $M \cdot 2^n$ they run 17.18× and 68.72× the
+safe-launch-duration condition at the declared operating point, discharged on
+the point's own receipted clean completions: no $q = 3$ cell failed with a device
+fault, the $M = 256$ cell completed five launches at 29.954639 s of device kernel
+time each, and the $M = 1024$ cell completed three at 53.02–53.20 s
+([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.3). Against the
+reference limits: both spans sit below the archived calibration's ≈190–200 s
+figure, while their per-launch work sits above its $q = 3$ budget — at
+$6.8719 \times 10^{10}$ and $2.7488 \times 10^{11}$ units of $M \cdot 2^n$ they
+run 17.18× and 68.72× the
 archived $4.0 \times 10^9$, and complete without fault, which is the
 qualification's own record that the budget is not a necessary condition for this
 kernel on this host ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2,
@@ -454,24 +459,24 @@ closes on all 30 $q = 5$ comparison cells with `mismatches = 0`, both prototypes
 included, at every order the grid times and at $n = 8$ below them
 ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §3).
 
-**The declared operating point's launches complete cleanly at exactly that
-configuration, and sit inside the documented safe launch-duration bound.** The
-direct evidence is the point's own cell: `f5-three-plane` at $n = 24$, $M = 17$
-runs a kernel span of 0.0800 s per launch on $2.852 \times 10^{8}$ units of
-$M \cdot 2^n$ over 63 launches, and no cell of that run failed with a device
-fault, every step reporting `status=completed exit=0`
-([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). Against the
-documented bound — the archived calibration's span boundary and $q = 5$ work
-budget, which this receipt applies — the same cell is 0.0004 of the span
-boundary and 0.2194 of the budget, both figures read from that receipt (§12).
-The runtime qualification's $q = 5$ observed clean-completion envelope
-corroborates: 115.452922 s per launch and $1.0737 \times 10^{9}$ work units
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4), which the point's
-figures are 0.00069 and 0.266 of, computed in §9 from those two sources. That
-envelope is a per-field extremum over retained paths — its $q = 5$ span figure
-belongs to `f5_byte_control_kernel` and its work figure to
-`permanent_bipedal5_kernel` (§9.4) — so it corroborates rather than certifies
-this kernel's launches.
+**The safe-launch-duration condition is discharged on this operating point's own
+receipted clean completions.** The point's own cell is the evidence:
+`f5-three-plane` at $n = 24$, $M = 17$ runs a kernel span of 0.0800 s per launch
+on $2.852 \times 10^{8}$ units of $M \cdot 2^n$ over 63 launches, and no cell of
+that run failed with a device fault, every step reporting
+`status=completed exit=0`
+([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12). The two reference
+limits of §1 are reported beside it and neither certifies it. Against the
+archived calibration, superseded by its own source's note, the cell is 0.0004 of
+the ≈190–200 s figure and 0.2194 of the $q = 5$ work budget, both read from that
+receipt (§12). Against the runtime qualification's $q = 5$ observed
+clean-completion envelope — 115.452922 s per launch and $1.0737 \times 10^{9}$
+work units ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4) — the
+point's figures are 0.00069 and 0.266, computed in §9 from those two sources;
+that envelope is a per-field extremum over retained paths whose $q = 5$ span
+figure belongs to `f5_byte_control_kernel` and whose work figure belongs to
+`permanent_bipedal5_kernel` (§9.4), so it speaks for those kernels rather than
+for this one. No fault boundary is located by either.
 
 ### 4.1 The measured crossover condition (REQ-02)
 
@@ -571,25 +576,24 @@ equivalence gate closes on all 24 $q = 7$ comparison cells with
 times and at $n = 8$ below them
 ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §3).
 
-**The declared operating point's launches complete cleanly at exactly that
-configuration, and sit inside the documented safe launch-duration bound.** The
-direct evidence is the point's own cell: `f7-three-plane-permanent` at $n = 20$,
-$M = 41$ runs a kernel span of 0.004672 s per launch on $4.299 \times 10^{7}$
-units of $M \cdot 2^n$ over 1 023 launches, and no cell of that run failed with
-a device fault, every step reporting `status=completed exit=0`
-([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Against the
-documented bound — the archived calibration's span boundary and $q = 7$ work
-budget, which this receipt applies under its own REQ-19 — the same cell is
-0.00002 of the span boundary and 0.1228 of the budget, both figures read from
-that receipt (§15, §16 REQ-19). The runtime qualification's $q = 7$ observed
-clean-completion envelope corroborates: 21.722805 s per launch and
-$1.0737 \times 10^{9}$ work units
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4), which the point's
-figures are 0.000215 and 0.040 of, computed in §9 from those two sources. That
-envelope is a per-field extremum over retained paths — its $q = 7$ span figure
-belongs to `wave_gf7_lookup_table_kernel<2>` and its work figure to
-`permanent_bipedal7_kernel` (§9.4) — so it corroborates rather than certifies
-this kernel's launches.
+**The safe-launch-duration condition is discharged on this operating point's own
+receipted clean completions.** The point's own cell is the evidence:
+`f7-three-plane-permanent` at $n = 20$, $M = 41$ runs a kernel span of 0.004672 s
+per launch on $4.299 \times 10^{7}$ units of $M \cdot 2^n$ over 1 023 launches,
+and no cell of that run failed with a device fault, every step reporting
+`status=completed exit=0`
+([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). The two reference
+limits of §1 are reported beside it and neither certifies it. Against the
+archived calibration, superseded by its own source's note, the cell is 0.00002 of
+the ≈190–200 s figure and 0.1228 of the $q = 7$ work budget, both read from that
+receipt (§15, §16 REQ-19). Against the runtime qualification's $q = 7$ observed
+clean-completion envelope — 21.722805 s per launch and $1.0737 \times 10^{9}$
+work units ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4) — the
+point's figures are 0.000215 and 0.040, computed in §9 from those two sources;
+that envelope is a per-field extremum over retained paths whose $q = 7$ span
+figure belongs to `wave_gf7_lookup_table_kernel<2>` and whose work figure belongs
+to `permanent_bipedal7_kernel` (§9.4), so it speaks for those kernels rather than
+for this one. No fault boundary is located by either.
 
 ### 5.1 The measured crossover condition (REQ-02)
 
@@ -784,7 +788,7 @@ one dispatch: one timed repetition evaluates one batch and one batch evaluation
 is one dispatch
 (`dev/research/permanent-sampling-feas/src/protocol.rs:765-781`).
 
-**The bound the sub-batch is sized against is a per-launch device *span*
+**The quantity the sub-batch is sized against is a per-launch device *span*
 target, not a per-launch work budget, and the runtime qualification measures
 why.** At the one value of $M \cdot 2^n$ that five committed cells share, the
 measured per-launch spans run from 0.117988 s to 115.452922 s — a factor of
@@ -796,27 +800,29 @@ therefore takes a configured per-launch span target, calibrates $M$ against it
 from a measured span rather than from a single-matrix probe, and re-calibrates
 when the observed span drifts from the target.
 
-The span target must sit inside the documented safe launch-duration bound of §1
-— the archived calibration's ≈190–200 s per-launch span boundary, the
-conservative operational bound the field receipts apply
-(`r4_gpu_uniformity_resample.md`:225-227). Sizing against a span target rather
-than against that calibration's per-field work budgets is the point of the
-preceding paragraph, and the budgets' own standing is recorded rather than
-assumed: six committed device cells run above their field's budget without
-fault, to 68.72× at $q = 3$, so the budget is not a necessary condition for
-these kernels on this host
+The span target is set against the §1 reference limits, and the design treats
+neither as a safety certificate. The archived calibration's ≈190–200 s
+per-launch figure is the conservative operational limit the field receipts report
+against (`r4_gpu_uniformity_resample.md`:225-227), superseded by its own source
+as a device property, so it is where a default target sits until a measured
+boundary exists rather than a threshold the design may approach on evidence.
+Sizing against a span target rather than against that calibration's per-field
+work budgets is the point of the preceding paragraph, and the budgets' own
+standing is recorded rather than assumed: six committed device cells run above
+their field's budget without fault, to 68.72× at $q = 3$, so the budget is not a
+necessary condition for these kernels on this host
 ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §10.2). The observed
-clean-completion envelope corroborates at spans well below the boundary —
-per-launch spans to 115.452922 s complete without fault at $q = 5$ and to
-21.722805 s at $q = 7$, each on the one retained path that carries the field's
-longest span, a conservative lower bound on the safe region rather than a
-located boundary (§9.4). The two go operating points sit far inside that
-boundary at 0.0800 s per launch at $q = 5$, $n = 24$ and 0.004672 s at $q = 7$,
-$n = 20$, and their own cells' launches complete cleanly there
+clean-completion envelope is the second reference limit — per-launch spans to
+115.452922 s complete without fault at $q = 5$ and to 21.722805 s at $q = 7$,
+each on the one retained path that carries the field's longest span, a
+conservative lower bound on the safe region rather than a located boundary
+(§9.4). The two go operating points run far below both figures, at 0.0800 s per
+launch at $q = 5$, $n = 24$ and 0.004672 s at $q = 7$, $n = 20$, and their own
+cells' launches complete cleanly there
 ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12,
 [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15; §4, §5), so the
-constraint the target actually binds is device utilization, not safety. The
-nearest counter
+constraint the target actually binds at the measured points is device
+utilization rather than safety. The nearest counter
 readings are 0.3515 % of the device's 2 560 wave slots for
 `f5_three_plane_kernel` on a 9-wave launch at $q = 5$, $n = 24$
 ([`../a9284086/receipt.md`](../a9284086/receipt.md) §5) and 0.5043 % for
@@ -957,9 +963,14 @@ existing manifests already carry
 The manifests behind this study's receipts record the seed root and each cell's
 stream-index block but leave the generator's identity to the harness source at
 the pinned revision (§1), so a reader holding the manifest alone cannot name the
-generator that produced the samples. Recording the algorithm and version in the
-manifest closes that indirection at the source that publishes the numbers, which
-is what `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording
+generator that produced the samples;
+[`rng-provenance-addendum.md`](rng-provenance-addendum.md) closes that for the
+three committed campaigns after the fact, and its §4 records the one edge a
+retrospective record cannot close — the resolved patch version, because the
+harness lockfile is gitignored and absent at both pinned revisions. A manifest
+that records the algorithm and version directly, and a committed lockfile, are
+what remove both indirections at the source that publishes the numbers, which is
+what `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording
 seeds, revision, hardware, and toolchain. The determinism obligation of §6.6
 item 4 rests on the same identity: a fixed seed reproduces a run only against a
 named generator.
@@ -1109,21 +1120,26 @@ Candidate D is the bit-sliced three-plane canonical $(b_0, b_1, b_2)$ encoding
 with Mersenne-fold add and subtract (`:50`). D was rejected on a weighting: "*For
 the Gray-code Ryser kernel, each Gray-code transition does 1 packed add/sub
 (column-sum update) and ~`n−1` packed muls (row-product update). Per Gray-code
-step at n=36, the mul:add ratio is 35:1 ≈ 97% mul, 3% add*" (`:145-148`). The
-CPU figures that weighting is applied to are the archived document's own
-recorded basis: D "*is 9.5× faster on add but regresses 1.7× on mul*" (`:98`),
-which its §6 weighted table turns into A winning by 1.61× on the $n = 36$
-Ryser-weighted mix (`:265-269`). This study restates them
-as that document's stated rationale and vouches for none of them as
-measurements. They resolve to its prose tables (`:168-181`, `:265-269`) and the
-protocol those tables state — median of five runs over 65 536 packed elements
-with `std::time::Instant`, on a standalone prototype (`:141-151`) — and to no
+step at n=36, the mul:add ratio is 35:1 ≈ 97% mul, 3% add*" (`:145-148`). Its
+rationale is an ordering, not a measurement this document can carry: D is
+recorded there as the faster candidate on add and the slower on mul, and its §6
+applies the mul-dominated weighting above to those two directions to conclude
+that A wins the $n = 36$ Ryser-weighted mix (`:98`, `:168-181`, `:265-269`).
+
+**The per-operation speedups behind that ordering are not restated here.** They
+resolve only to that document's own prose tables and the protocol those tables
+state — median of five runs over 65 536 packed elements with
+`std::time::Instant`, on a standalone prototype (`:141-151`) — and to no
 committed raw artifact: the harness source is in the tree
 (`dev/research/f7_packing/`), and no run record, CSV, or log for it is committed
-beside it. The document's own renderings of D's mul cost differ where they meet,
-at 0.58× (`:181`, `:252`), 0.53× "*(i.e., ~1.9× slower on mul)*" (`:120-121`),
-and "*about 1.7× slower*" (`:261`). The document states that a re-bench "*is not
-a re-decision authority for T19*" (`:196`, `:210-211`).
+beside it. The document's own renderings of D's mul cost also disagree with each
+other where they meet (`:120-121`, `:181`, `:252`, `:261`). A figure that traces
+to conflicting prose and no run artifact fails
+`@/inv/claims-trace-to-artifacts`, so this document names the direction of the
+archived rationale and republishes none of its numbers. Nothing below depends on
+their magnitudes; what Strand 1 contradicts is the weighting, which the archived
+document states in its own words above. The document states that a re-bench "*is
+not a re-decision authority for T19*" (`:196`, `:210-211`).
 
 **Three strands of this study's evidence bear on it, and they are not equally
 strong.**
@@ -1224,14 +1240,25 @@ magnitude carries §5.1's caveat: its denominator is a single-threaded generic
 Ryser driver, because this field has no packed CPU kernel and no rayon permanent
 path at $n = 20$.
 
-**The inside-the-bound half is answered in three parts, the three §1 names
-apart: the operating point's own direct evidence first, then the
-documented safe launch-duration bound, then the runtime qualification's
-observed clean-completion envelope as corroboration.**
+**The launch-duration half is answered against the criterion as amended.** REQ-11
+was amended on 2026-08-17 with owner approval, after no committed evidence was
+found to locate a fault boundary, and it now names the discharge the evidence
+supports:
 
-**(a) Direct evidence at each operating point.** The launches this question is
-about are the operating point's own, and both fields' receipts record them
-completing cleanly at exactly the declared configuration:
+> The safe-launch-duration condition is discharged by the operating point's own
+> receipted clean completions at its declared configuration; the observed
+> clean-completion envelope and the archived calibration are cited as reference
+> limits with their evidentiary status stated, no located fault boundary is
+> claimed, and locating one is recorded as an open deliverable.
+> (JIT issue `0dffa759`, REQ-11)
+
+Three parts follow, in that order: the discharge, then each reference limit with
+its status.
+
+**(a) The discharge — each operating point's own receipted clean completions.**
+The launches this question is about are the operating point's own, and both
+fields' receipts record them completing cleanly at exactly the declared
+configuration:
 
 | field | declared configuration | span per launch | launches | outcome | receipt |
 | --- | --- | ---: | ---: | --- | --- |
@@ -1240,17 +1267,18 @@ completing cleanly at exactly the declared configuration:
 
 That is an observation at the point itself, on the kernel the verdict is for, at
 the batch the verdict is for. It transfers nothing from another kernel or
-another cell, and it locates no fault boundary either.
+another cell, and it locates no fault boundary either. It is what discharges the
+condition, and it is the whole of what discharges it.
 
-**(b) The documented safe launch-duration bound: the archived calibration's
-committed span boundary and per-field work budgets.** It places a hang boundary
+**(b) Reference limit — the archived calibration's span boundary and per-field
+work budgets, superseded.** It places a hang boundary
 at "*≈190–200 s*" per launch and sets per-field work budgets on
 $\text{sub\_batch} \cdot 2^n$ of $4.0 \times 10^9$ at $q = 3$,
 $1.3 \times 10^9$ at $q = 5$, and $3.5 \times 10^8$ at $q = 7$
 (`dev/archive/ae82bd73-gf2-algebra-permanent/plans/b293af5a/r4_gpu_uniformity_resample.md`:225-227).
-It is the bound the field receipts themselves apply: the $\mathbb{F}_7$ receipt
-applies the archived $q = 7$ work budget to its own field alongside that span
-boundary under its own REQ-19
+It is the figure the field receipts themselves report against: the $\mathbb{F}_7$
+receipt applies the archived $q = 7$ work budget to its own field alongside that
+span boundary under its own REQ-19
 ([`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19), and the
 $\mathbb{F}_5$ receipt reports its operating point against the same boundary and
 the $q = 5$ budget ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12).
@@ -1260,20 +1288,22 @@ the $q = 5$ budget ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12).
 | $\mathbb{F}_5$, $n = 24$ | 0.0004 | 0.2194 of $1.3 \times 10^9$ | [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 |
 | $\mathbb{F}_7$, $n = 20$ | 0.00002 | 0.1228 of $3.5 \times 10^8$ | [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15 |
 
-Its provenance is stated with it and not softened. The boundary derives from the
-one recorded device fault, whose watchdog attribution was retracted
+**Its evidentiary status, stated with it and not softened: superseded, and not a
+measured device property.** The boundary derives from the one recorded device
+fault, whose watchdog attribution was retracted
 ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1), and the archived
 document carries a dated supersession note over it: "*The budgets below are
 therefore not a necessary condition for safe operation of these kernels on this
 host, and the boundary below is not a measured device property*"
-(`r4_gpu_uniformity_resample.md`:176-215). It is the conservative operational
-bound the receipts apply, not a measured device property. §10 records the
-falsified premise the $\mathbb{F}_7$ receipt preserves beside its application of
-the budget (F.4), and the qualification's own record that six committed device
-cells run above their field's budget without fault, to 68.72× at $q = 3$
-([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §10.2).
+(`r4_gpu_uniformity_resample.md`:176-215). §10 records the falsified premise the
+$\mathbb{F}_7$ receipt preserves beside its application of the budget (F.4), and
+the qualification's own record that six committed device cells run above their
+field's budget without fault, to 68.72× at $q = 3$
+([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §10.2). Sitting below
+this figure is therefore a comparison against a superseded operational limit, and
+this document draws no safety conclusion from it.
 
-**(c) Corroboration: the runtime qualification's observed clean-completion
+**(c) Reference limit — the runtime qualification's observed clean-completion
 envelope** ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4):
 
 | field | point's span per launch | field's observed span envelope | share | point's $M \cdot 2^n$ | field's observed work envelope | share |
@@ -1290,43 +1320,48 @@ kernels in both go fields: at $q = 5$ the work figure is
 `permanent_bipedal5_kernel` and the span figure `f5_byte_control_kernel`, at
 $q = 7$ the work figure is `permanent_bipedal7_kernel` and the span figure
 `wave_gf7_lookup_table_kernel<2>` (§9.4). A clean completion by one kernel is no
-guarantee for a launch of another, so these figures corroborate the direct
-evidence of (a) rather than certifying either verdict, and no verdict here is
-certified by sitting inside them. The qualification states the envelope as "*the
+guarantee for a launch of another, so these figures speak for the kernels that
+carry them rather than certifying either verdict.
+
+**Its evidentiary status:** observed rather than derived, and a conservative
+lower bound on the safe region. The qualification states the envelope as "*the
 watchdog-safe per-launch bound this study supports*" while recording in the same
 place that "*No launch in this study was run to failure, so none of these is an
 upper bound on where faults begin, and no boundary is located*" (§9.4), which
 its limitations restate as "*No watchdog boundary is located. §9's bound is an
 envelope of observed clean completions, not an upper bound on safe operation*"
 (§12.1). This document reads it on those terms, as a cross-kernel record of what
-completed rather than as the launch-duration bound the verdicts are checked
-against.
+completed.
 
 **The statement REQ-11 asks for, made exactly.** For $\mathbb{F}_5$ and for
 $\mathbb{F}_7$, the declared scientifically relevant operating point reaches at
 least 1.5× the best applicable in-tree CPU throughput — at 19.7082× and
-545.6693× — and does so inside the documented safe launch-duration bound, the
-archived calibration's span boundary and per-field work budget that both field
-receipts apply: 0.0004 of the span boundary and 0.2194 of the $q = 5$ budget at
-$\mathbb{F}_5$, $n = 24$, and 0.00002 of the span boundary and 0.1228 of the
-$q = 7$ budget at $\mathbb{F}_7$, $n = 20$. The direct evidence for each point's
-launch duration is its own cell's clean completions, 63 launches and 1 023
-launches at the declared configurations, and the runtime qualification's
-observed clean-completion envelope corroborates at its stated cross-kernel
-scope. The two go verdicts therefore clear all four conditions of §1's decision
-rule.
+545.6693× — with no shortfall to record on either. The safe-launch-duration
+condition is discharged at each point by that point's own receipted clean
+completions at its declared configuration: 63 launches at $\mathbb{F}_5$,
+$n = 24$, `f5-three-plane`, $M = 17$, and 1 023 launches at $\mathbb{F}_7$,
+$n = 20$, `f7-three-plane-permanent`, $M = 41$, with no cell of either run
+failing with a device fault
+([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12,
+[`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Both reference limits
+are reported beside that discharge with the status each carries — the archived
+calibration superseded by its own source and denied as a measured device
+property, the envelope observed and cross-kernel — and neither certifies either
+verdict. The two go verdicts clear all four conditions of §1's decision rule on
+that basis.
 
-**What is not established by any of the three.** No fault boundary is located.
-The documented bound is a conservative operational bound whose mechanism was
-retracted and whose supersession note denies it is a measured device property;
-the direct evidence is a set of completed launches at one configuration each;
-the envelope is observed rather than derived and is a conservative lower bound,
-because no launch in the evidence was run to failure. The longest span the study
-observes anywhere is 115.452922 s against the archived ≈190–200 s figure that
-nothing here probes above, and the one recorded fault's cause and span remain
-unknown ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4, §12.1, §12.2).
-Locating an upper boundary needs a launch run to failure, which no committed run
-performs; it is an open deliverable and §12.1 carries it.
+**What none of the three establishes.** No fault boundary is located, and this
+document claims none. The discharge is a set of completed launches at one
+configuration each, which is evidence that those launches completed and not
+evidence of where faults begin; the archived calibration is a superseded
+operational limit whose mechanism was retracted; the envelope is observed rather
+than derived and is a conservative lower bound, because no launch in the evidence
+was run to failure. The longest span the study observes anywhere is 115.452922 s
+against the archived ≈190–200 s figure that nothing here probes above, and the
+one recorded fault's cause and span remain unknown
+([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4, §12.1, §12.2). Locating
+a boundary needs a launch run to failure, which no committed run performs; it is
+an open deliverable and §12.1 carries it.
 
 ## 10. Falsification record (REQ-09)
 
@@ -1397,7 +1432,8 @@ timeout*" — is in the second one's log, and the supersession note applies it t
 the archived calibration's account
 ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.1). The archived $q = 5$
 hang has no separate committed artifact beyond the archived prose. Recorded
-because §9's bound statement rests on which observation the retraction covers.
+because §9's reading of the archived calibration as a reference limit rests on
+which observation the retraction covers.
 
 **F.6 — Prior published rates outside their own stopping rule.** Two cells of
 the prior feasibility grid are published `measured` below the protocol's
@@ -1478,7 +1514,7 @@ doc-comment defect is tracked as JIT issue `63d931a9`.
 
 | REQ | Where addressed | Status |
 | --- | --- | --- |
-| REQ-01 | §3, §4, §5 | **Satisfied.** A verdict per field, each with a receipt citation: $\mathbb{F}_3$ no-go, on [`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2 — every measured device cell falls below the CPU at the declared operating point $n = 28$, with the censored $M = 1024$ cell's ordering left open (§3.1, §12.6); $\mathbb{F}_5$ go on `f5-three-plane`, on [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 and §3; $\mathbb{F}_7$ go on `f7-three-plane-permanent`, on [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §3, and §14. Each verdict is checked against the study's own four-part decision rule, quoted in §1, including the safe-launch-duration condition: each field's section grounds its declared operating point's launch duration in that point's own receipted clean completions, states its per-launch span and work against the documented safe launch-duration bound — the archived calibration's span boundary and per-field work budget, which the field receipts apply (`r4_gpu_uniformity_resample.md`:225-227) — and carries the runtime qualification's observed clean-completion envelope beside them as corroboration at its cross-kernel scope ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4). Where a declared point's work sits above the archived budget, at $\mathbb{F}_3$ $n = 28$, §3 states it with the completions that contradict the budget's necessity. |
+| REQ-01 | §3, §4, §5 | **Satisfied.** A verdict per field, each with a receipt citation: $\mathbb{F}_3$ no-go, on [`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2 — every measured device cell falls below the CPU at the declared operating point $n = 28$, with the censored $M = 1024$ cell's ordering left open (§3.1, §12.6); $\mathbb{F}_5$ go on `f5-three-plane`, on [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 and §3; $\mathbb{F}_7$ go on `f7-three-plane-permanent`, on [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §3, and §14. Each verdict is checked against the study's own four-part decision rule, quoted in §1, including the safe-launch-duration condition: each field's section discharges that condition on its declared operating point's own receipted clean completions at the declared configuration, and reports the two reference limits beside it with their status — the archived calibration's span boundary and per-field work budget, superseded by its own source's note and denied there as a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`), and the runtime qualification's observed clean-completion envelope, observed and cross-kernel ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4). Neither limit certifies a verdict. Where a declared point's work sits above the archived budget, at $\mathbb{F}_3$ $n = 28$, §3 states it with the completions that contradict the budget's necessity. |
 | REQ-02 | §3.1, §4.1, §5.1 | **Satisfied, with every crossing located only as a bracketing between two adjacent measured orders.** $\mathbb{F}_3$: the prototype's ratio brackets a crossing upward between $n = 12$ and $n = 16$ (0.7568 to 2.2149) and downward between $n = 24$ and $n = 28$ (1.5561 to 0.2036), and the shipped path's brackets the same two on the same two pairs (0.7118 to 1.5547, 1.0527 to 0.4390); the better shipped configuration's downward crossing is unlocated because the $n = 28$, $M = 1024$ cell is censored, and its projection is labelled an extrapolation. $\mathbb{F}_5$: the prototype's ratio is above 1 at all five measured orders and the shipped path's below 1 at the three it is measured, so neither column brackets a crossing and none is placed below $n = 12$. $\mathbb{F}_7$: neither prototype column brackets a crossing for the same reason; the shipped path is the one $\mathbb{F}_7$ column that does, upward between $n = 16$ and $n = 20$, which [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2 reports as beating the CPU at exactly one order, stated here with its mechanism — the CPU denominator changing at the packed kernel's sixteen-lane bound. Each statement names the best applicable in-tree CPU path per order, identified from the run's own data. |
 | REQ-03 | §2 | **Satisfied.** The per-lane Gray interval (`wave_ryser_mapping.h:33-40`), the per-lane accumulator initialization by prefix reconstruction at $g(\text{interval.start})$ (`wave_ryser_mapping.h:42-44`, with the per-field loops cited), the lane-local row-product reduction (five circuits cited by field and representation), and the cross-lane partial-sum reduction in fixed increasing lane order (`wave_ryser_mapping.h:67-78`) are each specified with the source that implements them, and the executable prototype is linked. |
 | REQ-04 | §3.3 | **Satisfied.** The two-bit `(mag, sgn)` encoding carries three values under three equivalence classes, a clear `mag` bit being field zero whatever `sgn` holds, and validity rests on those classes rather than on a canonical form: every decode in the crate and both device fold circuits read the class, and `add`, `sub`, `mul`, and `neg` map class to class on all sixteen codeword pairs, the alternative zero included as an input. The doc comment's narrower claim that the alternative zero is never produced is contradicted by three of those four operations and is recorded as such (§10, F.13) rather than relied on; `add` and `sub` are distinct operations, which excludes $\mathbb{F}_2$; the two algebraic facts that make the encoding Boolean are $q = 3$-specific — $3 = 2^2 - 1$ and $\mathbb{F}_3^* \cong \mathbb{Z}/2$, the latter used directly by the sign-popcount fold; the Ryser sign is nontrivial in $\mathbb{F}_3$ and is applied twice over, where over $\mathbb{F}_2$ it would vanish and the permanent would collapse onto the determinant; and two committed measurements are functions of $q = 3$ specifically and hold — the branch marginal $1 - (2/3)^n$ at all five orders and the permanent-zero fraction near $1/3$ — with the $q = 2$ alternative excluded by the committed intervals at three of five orders on the 4 096-sample observation and at all five on the timed-operation observation, coverage stated per cell rather than claimed uniformly. The result is checked per matrix against an `Fp<3>` oracle that runs the shared field-law suite. |
@@ -1487,20 +1523,21 @@ doc-comment defect is tracked as JIT issue `63d931a9`.
 | REQ-07 | §7, §7.1 | **Satisfied.** The public packed-field representation `Packed7` (`packed7.rs:211`, `:216`) and the permanent-specialized internal state `ThreePlane` (`wave_gf7_equivalence.hip:75-79`) are named as distinct surfaces with their scopes. The second compliant resolution is chosen — public representation unchanged, three-plane state internal — grounded in the committed evidence's single architecture, device-only scope, unresolved batch confound, and the campaign's own refusal to order the two circuits, and in `@/inv/convention-convergence` together with the proof-obligation asymmetry. §7.1 records the named exception `permanent-f7-internal-three-plane` with its scope, its shared behavioral tests, and a tracked convergence condition with two discharge routes. $\mathbb{F}_5$ needs no exception because `Packed5` is already three-plane (`packed5.rs:208-212`). |
 | REQ-08 | §8 | **Satisfied.** The receipts support the three-plane $\mathbb{F}_7$ candidate under the permanent workload, on three strands of which the strongest is the falsified weighting: the archived model charges the complete row-product reduction on every Gray step, and the measured exact marginal $(6/7)^n$ puts it at 4.58 % of steps at $n = 20$. The amendment, drafted at [`req08-amendment-draft.md`](req08-amendment-draft.md), is **applied to the archived file with owner approval (2026-08-17)**: a dated additive note above its §1 and two pointer stubs, no existing sentence edited. `Packed7` remains Candidate A and §7's choice is consistent with that. |
 | REQ-09 | §10 | **Satisfied.** Thirteen entries, each recorded with the evidence contradicting the statement it bears on rather than replacing it: the non-executing candidate, the $\mathbb{F}_3$ crossover closing before the operating point, the censoring record and the non-conservative projection chains, the archived $q = 7$ budget premise the $\mathbb{F}_7$ receipt preserves beside its correction (filed by this study as `e1c96c9c`), the two distinct fault observations, the prior sub-minimum published cells, the falsified occupancy hypothesis, the dynamic-LDS blind spot, the failed occupancy readings, the two branch-frequency interval misses, the packed-CPU run-to-run shift, the retained rejected candidates, and the $\mathbb{F}_3$ alternative-zero doc comment the implemented circuits contradict. |
-| REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure or a fact the sources do not print — §9's envelope share columns, §3.3's $q = 2$ marginal against the committed Wilson intervals, and §3.3's enumeration of the four bipedal operations over all sixteen codeword pairs — it names its inputs with their sources and states that the result is computed here. |
-| REQ-11 | §9 | **Satisfied.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. Both points are inside the documented safe launch-duration bound, the archived calibration's ≈190–200 s per-launch span boundary and per-field work budgets (`r4_gpu_uniformity_resample.md`:225-227) that both field receipts apply: 0.0004 of the span boundary and 0.2194 of the $q = 5$ budget, and 0.00002 of the span boundary and 0.1228 of the $q = 7$ budget ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12, [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §16 REQ-19). Each point's launch duration is grounded first in its own direct evidence, the 63 and 1 023 launches its own cell completed cleanly at the declared configuration with no device fault in either run. The runtime qualification's per-field observed clean-completion envelope is carried as corroboration at its stated cross-kernel scope — 0.00069 and 0.000215 of the span figures, 0.266 and 0.040 of the work figures ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4) — and certifies neither verdict, since it is a per-field extremum over retained paths whose two axes are different kernels. Each limit carries its status: the documented bound derives from the one recorded fault whose mechanism attribution was retracted and whose archived supersession note denies it is a measured device property; the envelope is observed rather than derived and is a conservative lower bound, since no launch in the evidence was run to failure. No fault boundary is located, none is claimed, and locating one is an open deliverable (§12.1). |
+| REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure or a fact the sources do not print — §9's envelope share columns, §3.3's $q = 2$ marginal against the committed Wilson intervals, and §3.3's enumeration of the four bipedal operations over all sixteen codeword pairs — it names its inputs with their sources and states that the result is computed here. Two claims that resolved only to uncommitted or conflicting sources are handled rather than restated: the campaign RNG's identity now resolves to the committed [`rng-provenance-addendum.md`](rng-provenance-addendum.md), whose §4 records the resolved patch version as unrecoverable because the harness lockfile is uncommitted, and the archived $\mathbb{F}_7$ decision's per-operation CPU speedups are described by direction only in §8, because they resolve to conflicting prose and no committed run artifact. |
+| REQ-11 | §9 | **Satisfied, against the criterion as amended 2026-08-17 and quoted in §9.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. The safe-launch-duration condition is discharged at each point by that point's own receipted clean completions at its declared configuration: 63 launches on `f5-three-plane` at $M = 17$ and 1 023 launches on `f7-three-plane-permanent` at $M = 41$, with no cell of either run failing with a device fault ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12, [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Both reference limits are cited with their evidentiary status and neither certifies a verdict: the archived calibration, at 0.0004 and 0.00002 of its span boundary and 0.2194 and 0.1228 of its per-field work budgets, derives from the one recorded fault whose mechanism attribution was retracted and carries a supersession note denying it is a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`); the observed clean-completion envelope, at 0.00069 and 0.000215 of the span figures and 0.266 and 0.040 of the work figures ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4), is observed rather than derived, is a conservative lower bound, and is a per-field extremum whose two axes are different kernels. No located fault boundary is claimed, and locating one is recorded as an open deliverable (§12.1). |
 
 ## 12. What this synthesis does not establish
 
 Collected so a reader does not have to reassemble it.
 
-1. **No upper boundary on safe launch duration is located.** §9's
-   inside-the-bound statements are against the archived calibration's committed
-   bound, whose mechanism attribution is retracted and whose own supersession
-   note denies it is a measured device property; the direct evidence under them
-   is a set of launches completed at two configurations; and the observed
-   clean-completion envelope carried beside them is a conservative lower bound
-   on the safe region. None of the three locates a fault boundary. The longest
+1. **No fault boundary on launch duration is located, and no committed object
+   here is a bound on safe operation.** §9 discharges the safe-launch-duration
+   condition on launches completed at two configurations, which is evidence that
+   those launches completed rather than evidence of where faults begin. Its two
+   reference limits establish no more: the archived calibration's mechanism
+   attribution is retracted and its own supersession note denies it is a measured
+   device property, and the observed clean-completion envelope is a conservative
+   lower bound on the safe region. The longest
    span this study observes anywhere is 115.452922 s, 0.61 of the archived
    ≈190–200 s figure, and nothing in the evidence probes above it
    ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.4, §12.1). Locating a

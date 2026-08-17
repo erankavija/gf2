@@ -154,6 +154,47 @@
       "format": "markdown",
       "label": "REQ-08 archived-decision amendment draft",
       "path": "dev/studies/0dffa759/req08-amendment-draft.md"
+    },
+    {
+      "assets": [
+        {
+          "asset_type": "local",
+          "content_hash": "9a659727a7493f6d7e2f3726d16bfb6801c3fe11a18b1b24e26fb789f0d5d76f",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../6c7fcb38/receipts.md",
+          "resolved_path": "dev/studies/6c7fcb38/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "941e0ed6fe06907e20f60a9d7697f0a9519853d36f558b191a0aea7062038b3c",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../91605d4d/receipts.md",
+          "resolved_path": "dev/studies/91605d4d/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "a0b0b1b345260dfec9545273ce798f4223aee2bbca87ef0d04414fe0d0c88ca2",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "../047b62ed/receipts.md",
+          "resolved_path": "dev/studies/047b62ed/receipts.md"
+        },
+        {
+          "asset_type": "local",
+          "content_hash": "701e13757914cab131ebd959d124f22eb0a01f773ea45c3a9ec74bdeeefcc1a6",
+          "is_shared": false,
+          "mime_type": "text/markdown",
+          "original_path": "findings.md",
+          "resolved_path": "dev/studies/0dffa759/findings.md"
+        }
+      ],
+      "commit": null,
+      "doc_type": null,
+      "format": "markdown",
+      "label": null,
+      "path": "dev/studies/0dffa759/rng-provenance-addendum.md"
     }
   ],
   "first_ready_at": "2026-08-16T01:25:08.467546317Z",
@@ -189,5 +230,5 @@
   "priority": "high",
   "state": "in_progress",
   "title": "Field-by-field go/no-go synthesis with production design",
-  "updated_at": "2026-08-17T07:43:43.517835975Z"
+  "updated_at": "2026-08-17T07:53:36.898481822Z"
 }
