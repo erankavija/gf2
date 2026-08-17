@@ -8,6 +8,12 @@
 //! and summaries are written to disk, so wall-clock variation cannot alter
 //! emitted bytes.
 //!
+//! A `BatchParallel` cell draws each shard's matrices serially in bounded
+//! chunks, then uses a locally configured Rayon pool for packing, permanent
+//! evaluation, and optional determinant evaluation. Batch phase durations are
+//! wall-clock durations for those per-chunk pool sections; the observer and
+//! histogram updates retain input order on the caller thread.
+//!
 //! ```no_run
 //! # use std::path::Path;
 //! # use gf2_sim::permanent_campaign::schema::read_manifest;
@@ -36,6 +42,8 @@ use gf2_stats::binomial::{bonferroni_level, permanent_zero_floor_test, two_sided
 use gf2_stats::sampler::{
     FieldOrder, MatrixAddress, MatrixSampler, StreamIndex, StreamPurpose as SamplerPurpose,
 };
+use rayon::prelude::*;
+use rayon::ThreadPoolBuilder;
 
 use super::schema::{
     field_summary_file, shard_record_file, AcceptanceVerdict, Backend, CampaignManifest, CellSpec,
@@ -56,6 +64,11 @@ const PERMANENT_FAMILYWISE_ERROR: f64 = 0.025;
 /// `dev/simulation_results/permanent-zero-fraction/protocol.md` under
 /// "Error budgets" and "Determinant decision".
 const DETERMINANT_FAMILYWISE_ERROR: f64 = 0.025;
+
+/// Maximum number of field entries retained by one batch's raw matrices.
+const BATCH_CHUNK_MAX_MATRIX_ENTRIES: usize = 16 * 1024;
+/// Maximum number of matrices evaluated by one batch for small matrices.
+const BATCH_CHUNK_MAX_MATRICES: usize = 64;
 
 /// One manifest shard expanded into executable scheduling data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -89,11 +102,15 @@ impl WorkItem {
 pub struct PhaseDurations {
     /// Time spent drawing row-major field entries.
     pub draw: Duration,
-    /// Time spent constructing the packed representation.
+    /// Time spent constructing the packed representation, including each
+    /// batch's wall-clock packing section when `BatchParallel` is selected.
     pub pack: Duration,
-    /// Time spent evaluating permanents.
+    /// Time spent evaluating permanents, as serial per-matrix time or the
+    /// wall-clock duration of each batch's parallel permanent section.
     pub evaluate: Duration,
-    /// Time spent evaluating determinants when the companion is enabled.
+    /// Time spent evaluating determinants when the companion is enabled; for
+    /// batches this is the wall-clock duration of each parallel determinant
+    /// section.
     pub determinant: Duration,
     /// Time spent updating the residue histogram and zero count.
     pub count: Duration,
@@ -236,6 +253,34 @@ pub fn enumerate_work_items(
 /// kernel plus an optional `O(n³)` determinant per matrix; sampler and packing
 /// storage remain `O(n²)`.
 pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, ScheduleError> {
+    run_field_with_worker_count(manifest, field, 1)
+}
+
+/// Executes every shard for one field using the caller's configured worker
+/// count for `BatchParallel` cells.
+///
+/// Matrix draws remain serial and deterministic. A worker count of zero is
+/// rejected before any sampler is opened; positive counts build a local Rayon
+/// pool for each batch-parallel shard. Scalar, generic-Ryser, and
+/// intra-matrix-parallel cells retain their existing per-matrix dispatch.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError`] when `worker_count` is zero, the manifest has no
+/// campaign stream purpose, or a selected work item cannot be opened or
+/// evaluated. The batch pool is configured exactly with `worker_count`.
+///
+/// # Complexity
+///
+/// For a batch of `B` matrices of dimension `n`, raw matrix storage is bounded
+/// by the configured chunk limit and the per-matrix kernel remains the
+/// selected single-matrix cost; the sampler itself advances in input order.
+pub fn run_field_with_worker_count(
+    manifest: &CampaignManifest,
+    field: u8,
+    worker_count: usize,
+) -> Result<FieldRun, ScheduleError> {
+    validate_worker_count(worker_count)?;
     let purpose = manifest
         .stream_purposes
         .iter()
@@ -244,7 +289,12 @@ pub fn run_field(manifest: &CampaignManifest, field: u8) -> Result<FieldRun, Sch
     let items = enumerate_work_items(manifest, Some(field))?;
     let mut shards = Vec::with_capacity(items.len());
     for item in &items {
-        shards.push(run_shard(manifest.root_seed, purpose.tag, item)?);
+        shards.push(run_shard(
+            manifest.root_seed,
+            purpose.tag,
+            item,
+            worker_count,
+        )?);
     }
     let summary = summarize(field, &shards, manifest.cells.len() as u64);
     Ok(FieldRun {
@@ -339,8 +389,13 @@ fn shard_matrix_count(cell: &CellSpec, shard: &ShardSpec) -> u64 {
     cell.matrix_count.saturating_sub(start).min(cell.shard_size)
 }
 
-fn run_shard(root_seed: u64, purpose_tag: u8, item: &WorkItem) -> Result<ShardRun, ScheduleError> {
-    Ok(run_shard_with_position(root_seed, purpose_tag, item)?.run)
+fn run_shard(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    worker_count: usize,
+) -> Result<ShardRun, ScheduleError> {
+    Ok(run_shard_with_position(root_seed, purpose_tag, item, worker_count)?.run)
 }
 
 /// Evaluates one manifest work item and returns its continuation position.
@@ -351,23 +406,42 @@ pub fn evaluate_work_item(
     manifest: &CampaignManifest,
     item: &WorkItem,
 ) -> Result<EvaluatedShard, ScheduleError> {
+    evaluate_work_item_with_worker_count(manifest, item, 1)
+}
+
+/// Evaluates one manifest work item using the caller's configured worker count
+/// for a `BatchParallel` backend.
+///
+/// # Errors
+///
+/// Returns [`ScheduleError`] when `worker_count` is zero, the manifest has no
+/// campaign stream purpose, or the work item cannot be opened or evaluated.
+/// The function does not intentionally panic; invalid execution configuration
+/// and pool-construction failures are returned as schedule errors.
+pub fn evaluate_work_item_with_worker_count(
+    manifest: &CampaignManifest,
+    item: &WorkItem,
+    worker_count: usize,
+) -> Result<EvaluatedShard, ScheduleError> {
+    validate_worker_count(worker_count)?;
     let purpose = manifest
         .stream_purposes
         .iter()
         .find(|purpose| purpose.tag == CAMPAIGN_CELL_PURPOSE_TAG)
         .ok_or(ScheduleError::MissingCampaignPurpose)?;
-    run_shard_with_position(manifest.root_seed, purpose.tag, item)
+    run_shard_with_position(manifest.root_seed, purpose.tag, item, worker_count)
 }
 
 fn run_shard_with_position(
     root_seed: u64,
     purpose_tag: u8,
     item: &WorkItem,
+    worker_count: usize,
 ) -> Result<EvaluatedShard, ScheduleError> {
     match item.q {
-        3 => run_shard_for::<3>(root_seed, purpose_tag, item, FieldOrder::F3),
-        5 => run_shard_for::<5>(root_seed, purpose_tag, item, FieldOrder::F5),
-        7 => run_shard_for::<7>(root_seed, purpose_tag, item, FieldOrder::F7),
+        3 => run_shard_for::<3>(root_seed, purpose_tag, item, FieldOrder::F3, worker_count),
+        5 => run_shard_for::<5>(root_seed, purpose_tag, item, FieldOrder::F5, worker_count),
+        7 => run_shard_for::<7>(root_seed, purpose_tag, item, FieldOrder::F7, worker_count),
         q => Err(ScheduleError::InvalidWorkItem(format!(
             "unsupported campaign field q={q}"
         ))),
@@ -379,9 +453,17 @@ fn run_shard_for<const Q: u64>(
     purpose_tag: u8,
     item: &WorkItem,
     field_order: FieldOrder,
+    worker_count: usize,
 ) -> Result<EvaluatedShard, ScheduleError> {
     let mut observer = |_: &[Fp<Q>], _: u64, _: Option<u64>| {};
-    run_shard_for_with_observer(root_seed, purpose_tag, item, field_order, &mut observer)
+    run_shard_for_with_observer_with_worker_count(
+        root_seed,
+        purpose_tag,
+        item,
+        field_order,
+        worker_count,
+        &mut observer,
+    )
 }
 
 /// Evaluates a shard while observing the exact matrix operands and both values.
@@ -391,7 +473,53 @@ fn run_shard_for<const Q: u64>(
 /// determinant value when the companion is enabled. Production execution uses
 /// [`run_shard_for`] with a no-op observer; this seam is crate-visible so the
 /// one-draw contract can be tested without changing the public API.
+#[cfg(test)]
 pub(crate) fn run_shard_for_with_observer<const Q: u64, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
+    run_shard_for_with_observer_with_worker_count(
+        root_seed,
+        purpose_tag,
+        item,
+        field_order,
+        1,
+        observer,
+    )
+}
+
+fn run_shard_for_with_observer_with_worker_count<const Q: u64, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    worker_count: usize,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
+    validate_worker_count(worker_count)?;
+    if item.backend == Backend::BatchParallel {
+        return run_shard_for_batch(
+            root_seed,
+            purpose_tag,
+            item,
+            field_order,
+            worker_count,
+            observer,
+        );
+    }
+    run_shard_for_serial(root_seed, purpose_tag, item, field_order, observer)
+}
+
+fn run_shard_for_serial<const Q: u64, O>(
     root_seed: u64,
     purpose_tag: u8,
     item: &WorkItem,
@@ -495,6 +623,160 @@ where
     })
 }
 
+fn run_shard_for_batch<const Q: u64, O>(
+    root_seed: u64,
+    purpose_tag: u8,
+    item: &WorkItem,
+    field_order: FieldOrder,
+    worker_count: usize,
+    observer: &mut O,
+) -> Result<EvaluatedShard, ScheduleError>
+where
+    O: FnMut(&[Fp<Q>], u64, Option<u64>),
+{
+    let stream = StreamIndex::new(item.stream_index).map_err(|error| {
+        ScheduleError::InvalidWorkItem(format!("invalid stream index: {error}"))
+    })?;
+    let address = MatrixAddress::new(
+        root_seed,
+        field_order,
+        usize::from(item.n),
+        SamplerPurpose::CampaignCell,
+        stream,
+    );
+    let mut sampler = MatrixSampler::<Q>::new(address).map_err(|error| {
+        ScheduleError::InvalidWorkItem(format!("cannot open matrix sampler: {error}"))
+    })?;
+    let n = usize::from(item.n);
+    let matrix_entries = n.checked_mul(n).ok_or_else(|| {
+        ScheduleError::InvalidWorkItem("matrix dimension overflows entry count".to_owned())
+    })?;
+    let chunk_size =
+        (BATCH_CHUNK_MAX_MATRIX_ENTRIES / matrix_entries.max(1)).clamp(1, BATCH_CHUNK_MAX_MATRICES);
+    let pool = ThreadPoolBuilder::new()
+        .num_threads(worker_count)
+        .build()
+        .map_err(|error| {
+            ScheduleError::InvalidWorkItem(format!("cannot build batch thread pool: {error}"))
+        })?;
+
+    let mut histogram = vec![0_u64; Q as usize];
+    let mut permanent_zero_count = 0_u64;
+    let mut draw = Duration::ZERO;
+    let mut pack = Duration::ZERO;
+    let mut evaluate = Duration::ZERO;
+    let mut determinant = Duration::ZERO;
+    let mut count = Duration::ZERO;
+    let mut determinant_zero_count = 0_u64;
+    let mut remaining = item.matrix_count;
+
+    while remaining != 0 {
+        let batch_len = remaining.min(chunk_size as u64) as usize;
+        let started = Instant::now();
+        let mut matrices = Vec::with_capacity(batch_len);
+        for _ in 0..batch_len {
+            let mut entries = vec![Fp::<Q>::new(0); matrix_entries];
+            sampler.fill_next_matrix(&mut entries);
+            matrices.push(entries);
+        }
+        draw += started.elapsed();
+
+        let started = Instant::now();
+        let packed: Vec<_> = pool.install(|| {
+            matrices
+                .par_iter()
+                .map(|entries| PackedMatrix::new(entries, n))
+                .collect()
+        });
+        pack += started.elapsed();
+
+        let started = Instant::now();
+        let permanent_values: Vec<Result<u64, ScheduleError>> = pool.install(|| {
+            packed
+                .par_iter()
+                .zip(matrices.par_iter())
+                .map(|(packed, entries)| evaluate_permanent(Backend::Scalar, entries, packed, n))
+                .collect()
+        });
+        evaluate += started.elapsed();
+        let permanent_values: Vec<u64> = permanent_values.into_iter().collect::<Result<_, _>>()?;
+
+        let determinant_values = if item.determinant_companion == DeterminantPlan::Evaluate {
+            let started = Instant::now();
+            let values: Vec<u64> = pool.install(|| {
+                matrices
+                    .par_iter()
+                    .map(|entries| evaluate_determinant(entries, n))
+                    .collect()
+            });
+            determinant += started.elapsed();
+            Some(values)
+        } else {
+            None
+        };
+
+        for index in 0..batch_len {
+            let value = permanent_values[index];
+            let determinant_value = determinant_values.as_ref().map(|values| values[index]);
+            if determinant_value == Some(0) {
+                determinant_zero_count += 1;
+            }
+            observer(&matrices[index], value, determinant_value);
+
+            let started = Instant::now();
+            histogram[value as usize] += 1;
+            if value == 0 {
+                permanent_zero_count += 1;
+            }
+            count += started.elapsed();
+        }
+        remaining -= batch_len as u64;
+    }
+
+    Ok(EvaluatedShard {
+        run: ShardRun {
+            record: ShardRecord {
+                schema_version: SCHEMA_VERSION,
+                shard_id: item.shard_id,
+                stream_address: StreamAddress {
+                    root_seed,
+                    q: item.q,
+                    n: item.n,
+                    purpose_tag,
+                    stream_index: item.stream_index,
+                },
+                matrix_count: item.matrix_count,
+                permanent_zero_count,
+                permanent_histogram: histogram,
+                determinant: match item.determinant_companion {
+                    DeterminantPlan::Evaluate => DeterminantCount::Evaluated {
+                        sample_count: item.matrix_count,
+                        zero_count: determinant_zero_count,
+                    },
+                    DeterminantPlan::NotEvaluated => DeterminantCount::NotEvaluated,
+                },
+            },
+            timing: PhaseDurations {
+                draw,
+                pack,
+                evaluate,
+                determinant,
+                count,
+            },
+        },
+        generator_word_position: sampler.generator_word_position(),
+    })
+}
+
+fn validate_worker_count(worker_count: usize) -> Result<(), ScheduleError> {
+    if worker_count == 0 {
+        return Err(ScheduleError::InvalidWorkItem(
+            "worker_count must be non-zero".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
 enum PackedMatrix {
     F3(Bipedal3Matrix),
     F5(Packed5Matrix),
@@ -532,17 +814,14 @@ fn evaluate_permanent<const Q: u64>(
 ) -> Result<u64, ScheduleError> {
     let value = match (Q, backend, packed) {
         (3, Backend::Scalar, PackedMatrix::F3(matrix))
-        | (3, Backend::BatchParallel, PackedMatrix::F3(matrix))
         | (3, Backend::IntraMatrixParallel, PackedMatrix::F3(matrix)) => {
             permanent_bipedal3(matrix).value()
         }
         (5, Backend::Scalar, PackedMatrix::F5(matrix))
-        | (5, Backend::BatchParallel, PackedMatrix::F5(matrix))
         | (5, Backend::IntraMatrixParallel, PackedMatrix::F5(matrix)) => {
             permanent_bipedal5(matrix).value()
         }
         (7, Backend::Scalar, PackedMatrix::F7(matrix))
-        | (7, Backend::BatchParallel, PackedMatrix::F7(matrix))
         | (7, Backend::IntraMatrixParallel, PackedMatrix::F7(matrix)) => {
             permanent_bipedal7(matrix).value()
         }
@@ -988,8 +1267,9 @@ mod tests {
     #[test]
     fn companion_observer_sees_same_one_pass_operands_for_both_values() {
         let mut campaign = manifest(vec![cell(3, 2, 8, &[(0, 17)])]);
+        campaign.cells[0].backend = Backend::BatchParallel;
         campaign.cells[0].determinant_companion = DeterminantPlan::Evaluate;
-        let run = run_field(&campaign, 3).unwrap();
+        let run = run_field_with_worker_count(&campaign, 3, 4).unwrap();
 
         let item = enumerate_work_items(&campaign, Some(3)).unwrap().remove(0);
         let mut observed = Vec::new();
@@ -1063,6 +1343,87 @@ mod tests {
                     .filter(|&&value| value == 0)
                     .count() as u64,
             }
+        );
+    }
+
+    fn assert_batch_results_match_ryser<const Q: u64>(q: u8) {
+        let mut campaign = manifest(vec![cell(q, 2, 9, &[(0, 23)])]);
+        campaign.cells[0].backend = Backend::BatchParallel;
+        let item = enumerate_work_items(&campaign, Some(q)).unwrap().remove(0);
+        let field_order = match q {
+            3 => FieldOrder::F3,
+            5 => FieldOrder::F5,
+            7 => FieldOrder::F7,
+            _ => unreachable!(),
+        };
+        let mut observed = Vec::new();
+        run_shard_for_with_observer_with_worker_count(
+            campaign.root_seed,
+            CAMPAIGN_CELL_PURPOSE_TAG,
+            &item,
+            field_order,
+            4,
+            &mut |entries: &[Fp<Q>], permanent, _| {
+                observed.push((entries.to_vec(), permanent));
+            },
+        )
+        .unwrap();
+
+        let address = MatrixAddress::new(
+            campaign.root_seed,
+            field_order,
+            2,
+            SamplerPurpose::CampaignCell,
+            StreamIndex::new(23).unwrap(),
+        );
+        let mut sampler = MatrixSampler::<Q>::new(address).unwrap();
+        let mut entries = vec![Fp::<Q>::new(0); 4];
+        for (observed_entries, observed_permanent) in observed {
+            sampler.fill_next_matrix(&mut entries);
+            assert_eq!(observed_entries, entries);
+            assert_eq!(observed_permanent, permanent_ryser(&entries, 2).value());
+        }
+    }
+
+    #[test]
+    fn batch_results_match_ryser_in_input_order_for_each_supported_field() {
+        assert_batch_results_match_ryser::<3>(3);
+        assert_batch_results_match_ryser::<5>(5);
+        assert_batch_results_match_ryser::<7>(7);
+    }
+
+    #[test]
+    fn batch_records_are_identical_across_configured_thread_counts() {
+        for (q, stream_index) in [(3, 29), (5, 31), (7, 37)] {
+            let mut campaign = manifest(vec![cell(q, 2, 12, &[(0, stream_index)])]);
+            campaign.cells[0].backend = Backend::BatchParallel;
+            let one = run_field_with_worker_count(&campaign, q, 1).unwrap();
+            let four = run_field_with_worker_count(&campaign, q, 4).unwrap();
+            assert_eq!(one.shards()[0].record, four.shards()[0].record);
+            assert_eq!(
+                shard_record_bytes(&one.shards()[0].record).unwrap(),
+                shard_record_bytes(&four.shards()[0].record).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn batch_determinant_counts_match_scalar_on_the_same_address() {
+        let mut scalar = manifest(vec![cell(5, 2, 10, &[(0, 41)])]);
+        scalar.cells[0].determinant_companion = DeterminantPlan::Evaluate;
+        let mut batch = scalar.clone();
+        scalar.cells[0].backend = Backend::Scalar;
+        batch.cells[0].backend = Backend::BatchParallel;
+
+        let scalar_run = run_field_with_worker_count(&scalar, 5, 1).unwrap();
+        let batch_run = run_field_with_worker_count(&batch, 5, 4).unwrap();
+        assert_eq!(
+            scalar_run.shards()[0].record.determinant,
+            batch_run.shards()[0].record.determinant
+        );
+        assert_eq!(
+            scalar_run.shards()[0].record.permanent_histogram,
+            batch_run.shards()[0].record.permanent_histogram
         );
     }
 
