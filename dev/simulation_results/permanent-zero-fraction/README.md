@@ -311,7 +311,8 @@ preserved because completed shards are never rewritten.
 Per-phase timings go to standard output and never into dataset files. Each
 shard timing line reports `draw_s`, `pack_s`, `evaluate_s`,
 `determinant_s`, and `count_s`; `determinant_s` is the measured companion
-phase and is zero when the cell plan is `not_evaluated`.
+phase and is zero when the cell plan is `not_evaluated` or when a shard is
+loaded or adopted rather than evaluated in the reporting process.
 
 | Exit status | Means |
 | --- | --- |
