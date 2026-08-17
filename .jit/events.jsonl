@@ -8378,3 +8378,10 @@
 {"gate_key":"cargo-ci","id":"c3d80b89-f90b-4956-9b4d-dfcece299ef4","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:12:22.722061101Z","type":"gate_passed","updated_by":"auto:executor"}
 {"id":"da2c9adb-3a17-4592-9b10-02eae3094136","issue_id":"10071e51-674f-4d3d-9cbb-592b244e823e","priority":"low","timestamp":"2026-08-17T19:12:41.010221493Z","title":"Transient amdgpu page fault in the AWGN GPU test under parallel gate load","type":"issue_created"}
 {"fields":["dependencies"],"id":"b00412ae-c317-4b58-b348-9b3b40eb96ff","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T19:12:55.080998888Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"code-review","id":"68a51b5f-218c-4d8c-9949-32b8f11bc93d","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:15:59.787737473Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"07c449eb-7698-4233-bf46-c8a80657e690","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:16:23.305521412Z","to":"done","type":"issue_state_changed"}
+{"id":"fa370d41-1589-4cd5-8f1a-91a8bdf72386","issue_id":"eb8825c8-058c-43af-bb46-e79759c7e90d","timestamp":"2026-08-17T19:16:23.305521412Z","type":"issue_completed"}
+{"from":"backlog","id":"9503c566-823c-4192-8bb9-9a4595d201b0","issue_id":"032cc754-c88c-4e1b-b56d-6511d0a70c3c","timestamp":"2026-08-17T19:16:29.198210308Z","to":"ready","type":"issue_state_changed"}
+{"from":"backlog","id":"a3c88b72-c1f9-477d-9542-dbae69019013","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-17T19:16:35.076007960Z","to":"ready","type":"issue_state_changed"}
+{"from":"ready","id":"bc21a538-0a3f-48fd-af7b-67626d4a5c48","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-17T19:18:31.266010272Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:codex-luna","id":"942483af-2155-4fb4-a1b2-2b60708ab27f","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-17T19:18:31.266010272Z","type":"issue_claimed"}
