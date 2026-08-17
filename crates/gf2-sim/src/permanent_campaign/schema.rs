@@ -681,10 +681,12 @@ impl<'de> Deserialize<'de> for DeterminantCount {
 
 /// One field execution's raw summary document.
 ///
-/// A field may retain failed shard evaluations in [`FieldSummary::quarantined`]
-/// while the remaining shards continue. This keeps the failure identity and
-/// diagnostic in the canonical dataset document rather than silently dropping
-/// the work item.
+/// A field may index failed shard evaluations in [`FieldSummary::quarantined`]
+/// while the remaining shards continue. The list is a diagnostic index that
+/// retains only each failure's stable identity (`q`, `n`, `shard_id`) and
+/// mechanical `error` diagnostic in the summary document; the dataset protocol
+/// names the committed campaign execution receipt as the authoritative
+/// quarantine evidence.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FieldSummary {

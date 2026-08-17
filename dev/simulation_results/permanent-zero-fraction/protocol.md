@@ -330,12 +330,15 @@ hold:
 An incomplete write, crash, checksum or schema failure, address mismatch or
 overlap, count inconsistency, backend error, or safety/conformance failure
 quarantines the shard. It is excluded from the raw dataset and pooling. The
-runner preserves its bytes, logs, observed counts if any, failure reason, and
-attempt number until they are content-addressed in a committed campaign
-execution receipt. That receipt is evidence rather than a raw-schema shard;
-finalization refuses a campaign with quarantine evidence that has not been
-receipted. Nothing is deleted or overwritten. A statistically surprising but
-mechanically valid shard is not quarantined.
+field summary's `quarantined` list is a diagnostic index that retains only the
+failure's stable identity (`q`, `n`, `shard_id`) and mechanical `error`
+diagnostic. The runner preserves its bytes, logs, observed counts if any,
+failure reason, and attempt number until they are content-addressed in a
+committed campaign execution receipt, which is the authoritative quarantine
+evidence. That receipt is evidence rather than a raw-schema shard; finalization
+refuses a campaign with quarantine evidence that has not been receipted.
+Nothing is deleted or overwritten. A statistically surprising but mechanically
+valid shard is not quarantined.
 
 Each shard permits at most two executions: the initial attempt and one recovery
 attempt. Recovery must use the identical stream address, manifest-selected

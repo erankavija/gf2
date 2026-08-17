@@ -115,10 +115,13 @@ $O(\text{shards})$.
 ## Field and pooled summary schemas
 
 Each `summaries/q<q>.json` file is a `FieldSummary` containing
-`schema_version`, `q`, `rows`, and — only when present — `quarantined`, the
-failed shard evaluations retained with their identity (`q`, `n`, `shard_id`)
-and mechanical `error` diagnostic instead of being dropped from the dataset.
-A `SummaryRow` is shared by field summaries
+`schema_version`, `q`, `rows`, and — only when present — `quarantined`, a
+diagnostic index retaining only each failed shard's stable identity (`q`, `n`,
+`shard_id`) and mechanical `error` diagnostic so the failure remains visible
+instead of being silently absent. A quarantined shard remains excluded from the
+raw dataset and pooling; the committed campaign execution receipt is the
+authoritative quarantine evidence, preserving its bytes, logs, observed counts,
+failure reason, and attempt numbers. A `SummaryRow` is shared by field summaries
 and `summary.csv`; per $(q,n)$ it contains:
 
 - pooled `matrix_count` and `permanent_zero_count`;
@@ -295,8 +298,13 @@ resumes from its field-specific
 shards are never re-evaluated or rewritten, and a shard emitted just before a
 checkpoint update is adopted after a deterministic byte comparison.
 A resume whose configuration differs is refused and names the differing
-component. An evaluation failure is quarantined and remains visible in the
-field summary while the remaining work continues. A completed field-arm rerun
+component. An evaluation failure is quarantined: its stable identity (`q`, `n`,
+`shard_id`) and mechanical `error` diagnostic remain visible in the field
+summary's `quarantined` diagnostic index while the remaining work continues.
+The committed campaign execution receipt named by the dataset protocol is the
+authoritative quarantine evidence, preserving bytes, logs, observed counts,
+failure reason, and attempt numbers; the quarantined shard remains excluded
+from the raw dataset and pooling. A completed field-arm rerun
 resumes from the checkpoint's completed work set, re-evaluates nothing, rewrites
 no shard or summary files, and exits successfully; the first emission is
 preserved because completed shards are never rewritten.
