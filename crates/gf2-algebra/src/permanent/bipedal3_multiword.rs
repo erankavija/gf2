@@ -13,7 +13,7 @@
 //! At each Gray step exactly one column is added to or subtracted from a
 //! packed column-sum buffer. For `n > 64` the column-sum spans
 //! `W = ceil(n / 64)` words per leg (`mag` + `sgn`), updated via the
-//! Scheinerman 2024 (arXiv 2407.20205v2) Theorem 2.1 / Algorithm 2
+//! Scheinerman 2024 (arXiv 2407.20205v2) Theorem 2.1
 //! bipedal-3 add/sub formulas (6 bitwise ops per word per leg per step).
 //!
 //! ## Cache-blocking (R3 §5)
@@ -240,7 +240,7 @@ pub fn permanent_bipedal3_multiword(mat: &Bipedal3Matrix) -> Fp<3> {
         if added {
             subset_size += 1;
             // col_sum += column[flip], lane-wise bipedal add per word.
-            // SSOT: Bipedal3::add (paper §2.2 / Algorithm 2, 6 bitwise ops).
+            // SSOT: Bipedal3::add (paper Theorem 2.1, 6 bitwise ops).
             for i in 0..w {
                 let result = Bipedal3::from_raw(col_sum_mag[i], col_sum_sgn[i])
                     .add(Bipedal3::from_raw(col_mag[i], col_sgn[i]));

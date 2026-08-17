@@ -2,8 +2,8 @@
 //!
 //! [`Bipedal3`] packs exactly **64** independent `F_3` lanes into two
 //! `u64` words (`mag` and `sgn`).  Arithmetic follows the bitwise
-//! formulas of Scheinerman 2024 (arXiv 2407.20205v2, Theorem 2.1 /
-//! Algorithm 2).  The implementation is extractable by Charon/Aeneas:
+//! formulas of Scheinerman 2024 (arXiv 2407.20205v2, Theorem 2.1).
+//! The implementation is extractable by Charon/Aeneas:
 //! every operation is a flat, straight-line expression — no closures,
 //! no iterators, no helper traits.
 //!
@@ -16,9 +16,15 @@
 //! |  0  |     0     |     0     | canonical zero             |
 //! |  1  |     1     |     0     |                            |
 //! |  2  |     1     |     1     | `≡ −1 (mod 3)`            |
-//! | alt |     0     |     1     | **alternative zero** — never produced by |
-//! |     |           |           | `add/sub/mul/neg` from canonical inputs; |
+//! | alt |     0     |     1     | **alternative zero** — same field value as |
+//! |     |           |           | canonical zero; arithmetic respects the |
+//! |     |           |           | equivalence classes and can produce `(0,1)`; |
 //! |     |           |           | `lane`, `all_zero`, and `Eq` treat it as 0. |
+//!
+//! The encoding uses equivalence classes: a clear `mag` bit is field zero
+//! regardless of the `sgn` bit, so `(0,0)` and `(0,1)` represent the same
+//! field value. The formulas respect these classes and do not canonicalise
+//! every result.
 //!
 //! Bit `s` of `mag` and bit `s` of `sgn` encode lane `s`.
 //!
@@ -59,10 +65,12 @@ use super::{PackedField, PackedFieldVec};
 /// |      1      |     1     |     0     |
 /// |      2      |     1     |     1     |
 ///
-/// The codeword `(mag=0, sgn=1)` is an *alternative zero*: it is never
-/// produced by the arithmetic operations but may appear in manually
-/// constructed values. [`Bipedal3::lane`], [`Bipedal3::all_zero`], and
-/// the `PartialEq` / `Eq` implementations all treat it as zero.
+/// The encoding uses equivalence classes: a clear `mag` bit is field zero
+/// regardless of the `sgn` bit, so `(mag=0, sgn=0)` and `(mag=0, sgn=1)`
+/// represent the same value. The arithmetic formulas respect these classes
+/// and can produce `(mag=0, sgn=1)` from canonical inputs in `add`, `sub`,
+/// and `mul`. [`Bipedal3::lane`], [`Bipedal3::all_zero`], and the `PartialEq`
+/// / `Eq` implementations all treat it as zero.
 ///
 /// # Examples
 ///
@@ -557,7 +565,7 @@ impl PackedField<Fp<3>> for Bipedal3 {
         Self::splat_raw(mag_bit, sgn_bit)
     }
 
-    /// Lane-wise sum using Scheinerman 2024 Algorithm 2 (6 ops, CSE).
+    /// Lane-wise sum using Scheinerman 2024 Theorem 2.1 (6 ops, CSE).
     ///
     /// # Arguments
     ///
@@ -583,7 +591,7 @@ impl PackedField<Fp<3>> for Bipedal3 {
         let asg = self.sgn;
         let bm = rhs.mag;
         let bsg = rhs.sgn;
-        // Algorithm 2 (6 ops with CSE).
+        // Theorem 2.1 (6 ops with CSE).
         let t = am ^ asg ^ bsg;
         let u = bm & t;
         Self {
@@ -956,6 +964,45 @@ mod tests {
                 }
             }
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Canonical inputs can produce the alternative-zero codeword
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_add_can_produce_alt_zero_from_canonical_inputs() {
+        // 2 + 1 = 0; Theorem 2.1 returns the equivalent codeword (0, 1).
+        let two = Bipedal3::splat(Fp::<3>::new(2));
+        let one = Bipedal3::splat(Fp::<3>::new(1));
+        let result = two.add(one);
+
+        assert_eq!(result.mag(), 0);
+        assert_eq!(result.sgn(), u64::MAX);
+        assert_eq!(result.lane(0), Fp::<3>::new(0));
+    }
+
+    #[test]
+    fn test_sub_can_produce_alt_zero_from_canonical_inputs() {
+        // 1 - 1 = 0; Theorem 2.1 returns the equivalent codeword (0, 1).
+        let one = Bipedal3::splat(Fp::<3>::new(1));
+        let result = one.sub(one);
+
+        assert_eq!(result.mag(), 0);
+        assert_eq!(result.sgn(), u64::MAX);
+        assert_eq!(result.lane(0), Fp::<3>::new(0));
+    }
+
+    #[test]
+    fn test_mul_can_produce_alt_zero_from_canonical_inputs() {
+        // 0 * 2 = 0; the mul formula returns the equivalent codeword (0, 1).
+        let zero = Bipedal3::splat(Fp::<3>::new(0));
+        let two = Bipedal3::splat(Fp::<3>::new(2));
+        let result = zero.mul(two);
+
+        assert_eq!(result.mag(), 0);
+        assert_eq!(result.sgn(), u64::MAX);
+        assert_eq!(result.lane(0), Fp::<3>::new(0));
     }
 
     /// Neg truth table: all 3 single inputs.
@@ -1961,7 +2008,7 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
 
     /// Lane-wise in-place sum: `self[i] += rhs[i]` for every `i`.
     ///
-    /// Applies the Scheinerman 2024 Algorithm 2 add formula per word:
+    /// Applies the Scheinerman 2024 Theorem 2.1 add formula per word:
     /// `t = am ^ asg ^ bsg; u = bm & t; mag' = u | (am ^ bm); sgn' = u ^ asg`
     ///
     /// # Arguments
@@ -1999,7 +2046,7 @@ impl PackedFieldVec<Fp<3>> for Bipedal3Vec {
             let asg = self.sgn[w];
             let bm = rhs.mag[w];
             let bsg = rhs.sgn[w];
-            // Scheinerman 2024 Algorithm 2 — 6 bitwise ops per word.
+            // Scheinerman 2024 Theorem 2.1 — 6 bitwise ops per word.
             let t = am ^ asg ^ bsg;
             let u = bm & t;
             self.mag[w] = u | (am ^ bm);
