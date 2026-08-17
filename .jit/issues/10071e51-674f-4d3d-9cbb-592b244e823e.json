@@ -1,0 +1,21 @@
+{
+  "assignee": null,
+  "context": {},
+  "created_at": "2026-08-17T19:12:41.010221493Z",
+  "dependencies": [],
+  "description": "During the 2026-08-17 22:04 cargo-ci gate run, gf2-sim's gpu::awgn::imp::tests::test_gpu_chacha_raw_words_full_range_byte_identical died with SIGABRT and test_gpu_box_muller_within_1_ulp_over_1024_frames timed out. The kernel log records a GPU memory-protection fault at 22:05:11 attributed to the test process (amdgpu gfxhub page fault, GCVM_L2_PROTECTION_FAULT_STATUS 0x00A008B0, UTCL2 client CPF, PERMISSION_FAULTS 0xb, process gf2_sim-90310a3 thread gpu::awgn::imp), preceded by repeated 'Runlist is getting oversubscribed due to too many queues' warnings at 20:55, 21:37, 21:56, and 22:05 - each coinciding with a parallel gate test run. Both tests pass in isolation immediately afterwards (0.1 s), and the next full gate run passed, so the fault is transient and load-coupled. After the fault, rocm-smi reported the graphics engine pinned at 99% busy with zero VRAM allocated and no KFD processes - a stuck telemetry counter, not an occupied device; compute remained healthy.\n\nThis is a fresh member of the fault family the permanent-statistics synthesis records (two prior distinct fault observations; locating a fault boundary is an open deliverable there). The oversubscription warnings suggest the parallel nextest run creates enough concurrent HIP queues to oversubscribe the runlist, and the AWGN kernel faults under that pressure.\n\n## Success Criteria\n\n- [hard] REQ-01: The fault is reproduced under queue oversubscription or bounded out: a recorded attempt drives the AWGN GPU tests under concurrent queue pressure comparable to the full parallel suite and either reproduces the page fault with its signature or records the tested bound at which it does not occur.\n- [hard] REQ-02: If reproduced, the defect is isolated to the test, the kernel, or the driver interaction, and fixed or filed upstream with the isolation evidence; if not reproduced, the observation, its kernel-log signature, and the tested bound are recorded in a committed note linked here.",
+  "documents": [],
+  "first_ready_at": "2026-08-17T19:12:41.010221493Z",
+  "gates_required": [],
+  "gates_status": {},
+  "id": "10071e51-674f-4d3d-9cbb-592b244e823e",
+  "labels": [
+    "component:gf2-sim",
+    "epic:quality-documentation-tech-debt",
+    "type:bug"
+  ],
+  "priority": "low",
+  "state": "ready",
+  "title": "Transient amdgpu page fault in the AWGN GPU test under parallel gate load",
+  "updated_at": "2026-08-17T19:12:41.010221493Z"
+}
