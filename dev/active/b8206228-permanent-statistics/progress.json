@@ -89,14 +89,14 @@
      "short_id": "0de41c82",
      "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
      "classification": "implementation",
-     "status": "pending"
+     "status": "done: all four gates passed (repo-validate, doc-review, research-review R2 after the owner-approved manifest-exclusion decision and citation clarification, holistic-review R2); lead six-tier review PASS; closed 2026-08-17"
     },
     {
      "id": "4a6bdcff-9342-47d1-ace9-b3a5c0eeb98b",
      "short_id": "4a6bdcff",
      "title": "Determinant companion evaluated on the campaign's matrices",
      "classification": "implementation",
-     "status": "pending"
+     "status": "rework-1 dispatched (luna): code-review F1 counts-estimate pairing (owner-approved: summarize fills the determinant estimate and exact-rule verdict), F2 operand-level one-draw test via observer seam, F3 README timing wording; implementation f01dd0be recovered from the codex transcript after the worktree-overlay loss and re-verified"
     }
    ]
   },
@@ -108,7 +108,7 @@
      "short_id": "7a816262",
      "title": "Frozen root manifest for the campaign",
      "classification": "implementation",
-     "status": "pending"
+     "status": "pending; forward sweep 2026-08-17 wired 7a816262 -> eb8825c8 so the freeze can measure and name the batch-parallel backend; run after eb8825c8"
     },
     {
      "id": "eb8825c8-058c-43af-bb46-e79759c7e90d",
@@ -460,6 +460,14 @@
    "requested_at": "2026-08-17",
    "resolved_at": "2026-08-17",
    "decision": "Owner approved amending REQ-02 to the leaf's real deliverable: identical shard contents across a checkpoint boundary including a resume under a different worker count, with the checkpoint's per-worker generator-word-position contract stated as the forward interface. The cross-thread-count execution determinism obligation moved to eb8825c8 as its new REQ-04 (thread-count-varying test), where the thread pool makes it discriminating."
+  },
+  {
+   "issue": "4a6bdcff",
+   "reason": "code-review F1 confirmed: summarize emitted Completed rows pairing Evaluated determinant counts with a NotEvaluated estimate, which the canonical validator rejects; the issue Notes forbade computing the estimate/verdict while the protocol fully specifies the exact rule and mandates the estimate in completed cells.",
+   "status": "approved",
+   "requested_at": "2026-08-17",
+   "resolved_at": "2026-08-17",
+   "decision": "Owner approved amending the Notes: summarize fills the determinant estimate (Wilson) and the exact two-sided binomial verdict at the protocol level (bonferroni 0.025 over the family, 1/2520 on the 63-cell grid), mirroring the inline permanent verdict; 73317b2e keeps the halt-and-preserve wiring, retry policy, and global-budget reconciliation."
   }
  ],
  "rework_counts": {
@@ -484,7 +492,8 @@
   "0dffa759": 1,
   "0dffa759_note": "reset to 0 by the 2026-08-17 REQ-11 escalation guidance, then 1 on the rework-3 dispatch (redispatched in session 10 after the session-9 crash)",
   "e1c96c9c": 1,
-  "63d931a9": 1
+  "63d931a9": 1,
+  "4a6bdcff": 1
  },
  "surfaced_pitfalls": [
   "Owner directive 2026-08-16: simulations and bench/device measurement runs execute only after 02:00 local; the host also carries external load at times, so treat fast-tier per-test-budget failures during loaded periods as suspected contention and re-verify on an idle host before acting (existing LDPC-contention pitfall applies).",
@@ -522,7 +531,9 @@
    "disposition": "Owned by retrofit task 0ba493e1 REQ-03 (preamble/tool-prose audit) under the tech-debt umbrella; no campaign issue owns harness changes."
   },
   "Code-review enforces the AGENTS.md 72-character commit-subject limit on the lead's own commits: 63d931a9 round 1 failed solely on an 89-character lead subject. Fixed by reset-amend-cherry-pick over the unpushed chain; gate records citing the rewritten hashes were re-run at the new HEAD. Check subject lengths before committing.",
-  "Naming any committed object 'the documented safe launch-duration bound' invites the reviewer to falsify the promotion: three rounds rejected in turn no-bound, the observed clean-completion envelope, and the archived calibration. Same lesson as the breakdown.json exclusion saga: a checkable claim defending a framing becomes the next round's target. Resolution was amending the criterion to name the discharge the evidence supports (direct receipted clean completions at the operating point)."
+  "Naming any committed object 'the documented safe launch-duration bound' invites the reviewer to falsify the promotion: three rounds rejected in turn no-bound, the observed clean-completion envelope, and the archived calibration. Same lesson as the breakdown.json exclusion saga: a checkable claim defending a framing becomes the next round's target. Resolution was amending the criterion to name the discharge the evidence supports (direct receipted clean completions at the operating point).",
+  "Session-10 worktree loss: the dispatch script's worktree under .agents/worktrees/ vanished from the real filesystem between creation and worker completion (sandbox overlay suspected); the codex worker's writes were lost with it and were recovered by replaying the 19 patch_apply_end unified diffs from the codex session transcript (~/.codex/sessions/...) onto main, then re-verifying fmt/clippy/nextest from scratch. Until root-caused, treat worktree isolation as unavailable on this host: dispatch single workers on the primary checkout with disjoint-file discipline, and always run check-leak-into-main.sh whose 'leak' report may actually be the only surviving copy of the work.",
+  "Forward sweep 2026-08-17 over waves 5-13 found the pending criteria self-consistent with the hardened contracts (protocol, schema validator, byte-determinism, evidence locations): the objects they presuppose exist (296a41c9 backend re-measurement, 8cb4def5 determinant timing receipt, b488f02c literature search, all five Backend variants, ccx1-bench-flock.sh). Two dispatch-time notes: f74e327d REQ-05 needs deterministic figure regeneration (pin plotting toolchain, no embedded timestamps); 73317b2e REQ-04 refactors summarize's inline estimate/verdict computation into the acceptance layer rather than duplicating it."
  ],
  "started_at": "2026-08-09T12:20:30Z",
  "rederived_at": "2026-08-13T15:55:00Z",
