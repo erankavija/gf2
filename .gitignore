@@ -71,6 +71,7 @@ target/charon/
 .jit/gate-runs/
 .jit/gate-artifacts/
 .claude/worktrees/
+.agents/worktrees/
 crates/gf2-kernels-hip/target/
 
 # sim_runner transient progress logs (final results live in
