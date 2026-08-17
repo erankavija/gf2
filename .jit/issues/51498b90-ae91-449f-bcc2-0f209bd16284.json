@@ -9,6 +9,7 @@
   ],
   "description": "The campaign driver survives interruption: it checkpoints its progress through the generic checkpoint mechanism, resumes to results identical to an uninterrupted run, refuses a changed configuration, and quarantines a failing work item instead of losing it.\n\n## Background\n\nA campaign run spans days, so interruption is the normal case rather than the exception, and the recorded defects in this problem family are exactly resume defects: a superseded result set was corrupted by runs whose resumed state did not regenerate the recorded sample. Resume correctness is therefore demonstrated as identity — an interrupted-and-resumed run produces the same shard set and pooled counts as an uninterrupted one — rather than asserted as absence of error.\n\nDeterministic resume works by storing each worker's absolute generator word position through the generic checkpoint payload, which the checkpoint foundation leaf leaves expressible by contract.\n\n## Success Criteria\n\n- [hard] REQ-01: Interrupting the driver and restarting it produces a shard set and pooled counts identical to an uninterrupted run over the same work items.\n- [hard] REQ-02: A fixed campaign root reproduces identical shard contents across a checkpoint boundary, including a resume whose worker count differs from the interrupted run's, and the checkpoint stores each logical worker's absolute generator word position keyed by stable worker index.\n- [hard] REQ-03: A resume whose campaign configuration differs from the checkpointed one is refused with an error naming the disagreement, rather than continuing against changed inputs.\n- [hard] REQ-04: A work item whose evaluation fails is quarantined with its identity and error, remaining work continues, and the quarantined item is visible in the dataset rather than absent from it.\n- [hard] REQ-05: Tests cover interruption and resume, including the signal-during-write case the checkpoint mechanism's own tests pin.\n\n## Notes\n\nThe scheduler and emission land ahead of this leaf on its dependency edge; this leaf owns the resume, determinism, and quarantine behaviour layered onto them.\n\nREQ-02 amended 2026-08-17 with owner approval: the driver evaluates work items serially, and worker count keys only the checkpoint's per-worker generator-position contract, so a cross-worker-count byte-identity clause on this leaf is vacuous and its test non-discriminating. The checkpoint's worker-state schema is the forward contract consumed by the batch-parallel execution leaf eb8825c8, which owns execution determinism across configured thread counts.",
   "documents": [],
+  "done_at": "2026-08-17T17:03:40.626771572Z",
   "first_ready_at": "2026-08-16T00:12:57.793023972Z",
   "gates_required": [
     "cargo-ci",
@@ -22,13 +23,13 @@
       "updated_by": "auto:executor"
     },
     "code-review": {
-      "status": "failed",
-      "updated_at": "2026-08-17T16:43:43.599138610Z",
+      "status": "passed",
+      "updated_at": "2026-08-17T16:51:10.339792333Z",
       "updated_by": "auto:executor"
     },
     "doc-review": {
-      "status": "failed",
-      "updated_at": "2026-08-17T07:58:36.886658210Z",
+      "status": "passed",
+      "updated_at": "2026-08-17T16:52:54.054741976Z",
       "updated_by": "auto:executor"
     }
   },
@@ -40,7 +41,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "normal",
-  "state": "in_progress",
+  "state": "done",
   "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
-  "updated_at": "2026-08-17T16:47:01.288806169Z"
+  "updated_at": "2026-08-17T17:03:40.626771572Z"
 }

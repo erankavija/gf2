@@ -54,7 +54,7 @@
     "story:gpu-wave-permanents"
   ],
   "priority": "high",
-  "state": "backlog",
+  "state": "ready",
   "title": "Evaluate wave-parallel GPU kernels for finite-field permanents",
-  "updated_at": "2026-08-09T11:49:00.666887753Z"
+  "updated_at": "2026-08-17T17:03:58.369726848Z"
 }

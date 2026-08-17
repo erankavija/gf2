@@ -1,7 +1,7 @@
 {
  "epic_id": "b8206228-77d2-49ab-aaba-a16830d75cca",
  "epic_short_id": "b8206228",
- "current_wave": 3,
+ "current_wave": 4,
  "waves": [
   {
    "wave_number": 1,
@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "rework-3-redispatched (session 10): prior dispatch died with the session, no commits landed; closing research R3 F1 (RNG resolved-version derivation via new registry entry RustRandom2025), F2 (archived 1.61x figure removed for qualitative citation, owner-approved), F3 + doc-review R3 F1 (findings.md F.13 prose closed against the 65dae3bf correction); luna in flight"
+     "status": "done: all gates passed at 85269c1c after the session-10 rework (RNG registry derivation, figure removal, F.13 closure); lead six-tier review PASS"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "escalation approved 2026-08-17 (session 10): doc-review at post-reword HEAD found the REQ-04 FieldSummary.quarantined contract colliding with the protocol's receipt-authoritative quarantine evidence; owner chose the dated protocol reconciliation (quarantined list = diagnostic index; committed execution receipt authoritative; pooling exclusion unchanged); rework counter reset with guidance; luna rework in flight"
+     "status": "done: cargo-ci + code-review + doc-review passed at 85269c1c under the owner-approved quarantine reconciliation and REQ-02 amendment; lead six-tier review PASS"
     }
    ]
   },
@@ -310,12 +310,19 @@
    "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
    "reason": "Found by the 0dffa759 synthesis (finding F.13) during rework-1; filed per the a2c0db52 interleaved-bug precedent.",
    "wave": "3 (interleaved)",
-   "status": "gates all passed at ab311654 (cargo-ci + code-review); closure pending the findings.md F.13 stale-narrative fix landing under 0dffa759's rework (Tier 2.5 sweep would trip on it)"
+   "status": "done: closed 2026-08-17 session 10; cargo-ci + code-review passed at ab311654, findings.md F.13 narrative closed under 0dffa759, sibling SIMD miscitation filed as 59024f1a (tech-debt umbrella); lead six-tier review PASS"
   },
   {
    "short_id": "d2fb76b9",
    "title": "Converge the F_7 permanent kernel's internal three-plane state with the public Packed7 representation",
    "reason": "Carries the tracked convergence condition the 0dffa759 exception permanent-f7-internal-three-plane names; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
+   "wave": "n/a (tech-debt umbrella)",
+   "status": "filed"
+  },
+  {
+   "short_id": "59024f1a",
+   "title": "SIMD bipedal3 comments cite Scheinerman Algorithm 2, an object the paper does not carry",
+   "reason": "Lead Tier 2.5 sweep for 63d931a9 found the corrected miscitation surviving in crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119,288; filed under the tech-debt umbrella 86b9c719 per the 023233c5 precedent.",
    "wave": "n/a (tech-debt umbrella)",
    "status": "filed"
   }
