@@ -8391,3 +8391,7 @@
 {"fields":["dependencies"],"id":"88360787-8245-4855-b52c-d7e51f525a5a","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T19:33:28.792193086Z","type":"issue_updated","updated_by":"dependency-add"}
 {"from":"in_progress","id":"077783e9-d0e8-4998-bb67-1afcb04a6a6d","issue_id":"59024f1a-23b1-422a-b2b4-d09f13db5661","timestamp":"2026-08-17T19:33:36.484896587Z","to":"done","type":"issue_state_changed"}
 {"id":"6ca13f5f-b237-4b76-b54b-ca0286fa4c75","issue_id":"59024f1a-23b1-422a-b2b4-d09f13db5661","timestamp":"2026-08-17T19:33:36.484896587Z","type":"issue_completed"}
+{"from":"ready","id":"cf2654fc-213f-49f1-959a-d9009d7e9bac","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","timestamp":"2026-08-17T19:35:19.232409433Z","to":"in_progress","type":"issue_state_changed"}
+{"assignee":"agent:claude","id":"ceaacf4f-f113-4fe8-af1c-0c2ac36d3089","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","timestamp":"2026-08-17T19:35:19.232409433Z","type":"issue_claimed"}
+{"from":"in_progress","id":"486ca32d-ef6e-4ef4-94cf-42e461644f01","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","timestamp":"2026-08-17T19:37:24.318058600Z","to":"ready","type":"issue_state_changed"}
+{"assignee":"agent:claude","id":"4c08c1d1-d04e-4e71-b8ab-fcfd0df4e359","issue_id":"be331e20-11a0-40d0-a36f-a56467f6cbde","reason":"Owner rejected the criteria amendment; leaving the issue as found","timestamp":"2026-08-17T19:37:24.318058600Z","type":"issue_released"}
