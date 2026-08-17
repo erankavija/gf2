@@ -58,12 +58,24 @@ type.** Four committed source facts fix it:
    `u64` words (`sampler.rs:232-245`), which is the derivation the manifests'
    seed root and per-cell stream-index blocks feed.
 
-## 4. What committed evidence does not fix: the exact patch version
+## 4. Registry-derived resolution of the exact patch version
 
-The version requirement committed at both revisions is the Cargo semver
-requirement `"0.9"`, which admits any `0.9.z`. **The resolved patch version is
-not recoverable from committed evidence**, and this addendum does not assert
-one:
+The version requirement committed at both revisions is `rand_chacha = "0.9"`.
+Cargo caret semantics interpret that requirement as
+`>=0.9.0, <0.10.0`, and a requirement without a pre-release component does not
+match pre-release versions. The crates.io index observed on 2026-08-17 carries
+exactly one release matching that requirement: `rand_chacha` `0.9.0`, published
+2025-01-27, with checksum
+`d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb`
+(`@/citation/RustRandom2025`). The `0.9` pre-releases
+(`0.9.0-alpha.*`, `0.9.0-beta.*`) cannot match, and the next stable release,
+`0.10.0`, published 2026-02-02, is outside the requirement.
+
+Therefore every resolution of the committed requirement at the pinned
+measurement revisions, and at any date up to the observation date, resolves
+`rand_chacha` to `0.9.0`. The measured runs' resolved version is `0.9.0`,
+derived from the committed sources and the cited registry state rather than
+from a lockfile:
 
 - `dev/research/permanent-sampling-feas/Cargo.lock` is untracked by design —
   `dev/research/permanent-sampling-feas/.gitignore:2` ignores it — and
@@ -72,18 +84,13 @@ one:
   at either pinned revision.
 - The lockfile present in a current worktree resolves `rand_chacha` to `0.9.0`
   with checksum
-  `d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb`. That file
-  is an uncommitted local artifact produced after the fact, not a record of what
-  the pinned build resolved, so it is reported here as what a reader will
-  observe locally and is not evidence of the measurement's resolution.
+  `d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb`. It is an
+  uncommitted local artifact rather than the provenance source for the pinned
+  builds, and it confirms the registry derivation above.
 
-The algorithm, the implementation crate, the type, the construction site, and
-the seed derivation are therefore pinned by committed sources; the patch version
-within `0.9.z` is not. Since ChaCha20 is a specified stream cipher and
-`rand_chacha` holds its output stream stable across patch releases by its own
-compatibility policy, a patch difference is not expected to change a draw — but
-that is a property of the crate's policy rather than something this record
-establishes, and it is stated as the open edge it is.
+The algorithm, the implementation crate, the type, the construction site, the
+seed derivation, and the resolved patch version are therefore fixed by
+committed sources together with the cited registry state.
 
 ## 5. Why this is an addendum rather than an edit
 
@@ -99,6 +106,6 @@ production design of [`findings.md`](findings.md) §6.7 records the RNG algorith
 and version in the manifest itself, at the source that publishes the numbers,
 rather than leaving a reader to reconstruct it — which is what
 `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording seeds,
-revision, hardware, and toolchain. Committing the harness lockfile is the
-smallest change that would make the patch version of §4 recoverable for a future
-run.
+revision, hardware, and toolchain. Committing the harness lockfile remains the
+smallest forward improvement for a future run because it records that run's
+exact dependency resolution beside the manifest.

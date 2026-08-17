@@ -63,14 +63,15 @@ at both revisions the campaigns pin — the sampler's own module documentation
 construction site (`:58`, `:295`), the versioned dependency declaration
 (`dev/research/permanent-sampling-feas/Cargo.toml:60-62`), and the seed
 derivation from $(\text{root}, q, n, \text{purpose}, \text{index})$
-(`sampler.rs:232-245`). The addendum records one edge it cannot close: the
-committed requirement is the semver range `"0.9"`, and the resolved patch
-version is unrecoverable, because the harness lockfile is gitignored
+(`sampler.rs:232-245`). The addendum derives the resolved patch version as
+`0.9.0` from the committed requirement's Cargo range and the crates.io registry
+state observed on 2026-08-17 (`@/citation/RustRandom2025`), while recording that
+the harness lockfile is gitignored
 (`dev/research/permanent-sampling-feas/.gitignore:2`) and absent from the tree at
-both pinned revisions (addendum §4). The manifests themselves are unedited, so
-the gap they carry stands as published: a reader holding one alone cannot name
-the generator. §6.7 carries that forward as a requirement on production campaign
-manifests.
+both pinned revisions (addendum §4). The manifests themselves are unedited; the
+committed addendum supplies the generator identity and derived version
+alongside them. §6.7 carries forward the requirement for production campaign
+manifests to record the identity directly.
 
 **A safe launch duration** is discharged by the operating point's own receipted
 clean completions at its declared configuration, which is what REQ-11 asks for
@@ -351,21 +352,32 @@ The operations respect those classes. Evaluating `add`, `sub`, `mul`, and `neg`
 codeword pairs — the alternative zero included as an input — decodes to the
 correct $\mathbb{F}_3$ result in every case, which is what makes the class the
 carrier of the field value; that enumeration is computed here from those source
-lines and is stated as a computation rather than as a measurement. The crate's
-own doc comment additionally claims the alternative zero is "*never produced by
-`add/sub/mul/neg` from canonical inputs*" (`:19-21`, `:62-65`). That narrower
-claim is false of the implemented circuits — `add((1,1),(1,0))`,
-`sub((1,0),(1,0))`, and `mul((0,0),(1,1))` each return $(0,1)$ — and the argument
-here is deliberately independent of it (§10, F.13). Two bits per lane address
+lines and is stated as a computation rather than as a measurement. Through
+revision `ced6701e`, the crate's doc comment claims that the alternative zero is
+"*never produced by `add/sub/mul/neg` from canonical inputs*" (`:19-21`,
+`:62-65`). That historical claim is false of the implemented circuits —
+`add((1,1),(1,0))`, `sub((1,0),(1,0))`, and `mul((0,0),(1,1))` each return
+$(0,1)$. The defect is filed as JIT issue `63d931a9` and corrected in
+`65dae3bf`: current rustdoc states that a clear `mag` bit is field zero
+regardless of `sgn`, that the operations respect equivalence classes, and that
+`add`, `sub`, and `mul` can produce `(0,1)`; the three unit tests at
+`bipedal3.rs:973-1006` pin one producing case for each. The validity argument
+here is deliberately independent of the historical claim (§10, F.13). Two bits
+per lane address
 $\{0, 1, 2\}$; one bit per lane would address $\{0, 1\}$. The lane alphabet is
 $\mathbb{F}_3$.
 
 **The circuits are $\mathbb{F}_3$ arithmetic, not $\mathbb{F}_2$ arithmetic.**
 `add` and `sub` are the bitwise formulas of [Scheinerman2024] Theorem 2.1,
-transliterated once (`crates/gf2-algebra/src/packed/bipedal3.rs:5-7`; that doc
-comment names the object "Theorem 2.1 / Algorithm 2", and the paper carries no
-object labelled Algorithm 2 — Theorem 2.1 is where its add, subtract, multiply,
-and divide formulas are stated). The device prototype uses the same two
+transliterated once (`crates/gf2-algebra/src/packed/bipedal3.rs:5-7`). Through
+revision `ced6701e`, that doc comment names the object "Theorem 2.1 / Algorithm
+2", although the paper carries no object labelled Algorithm 2. The citation is
+corrected in `65dae3bf`: current rustdoc names [Scheinerman2024] Theorem 2.1 at
+the affected citations, and neither `packed/bipedal3.rs` nor
+`permanent/bipedal3_multiword.rs` carries an "Algorithm 2" reference; the two
+comment citations remaining in the sibling SIMD kernel
+(`crates/gf2-kernels-simd/src/bipedal/bipedal3.rs:119`, `:288`) are tracked as
+JIT issue `59024f1a`. The device prototype uses the same two
 circuits, `add3` and `sub3`
 (`dev/research/permanent_wave_gpu/hip/wave_gf3_equivalence.hip:72-90`). They are
 distinct operations: over $\mathbb{F}_2$ addition and subtraction coincide, and
@@ -965,9 +977,10 @@ stream-index block but leave the generator's identity to the harness source at
 the pinned revision (§1), so a reader holding the manifest alone cannot name the
 generator that produced the samples;
 [`rng-provenance-addendum.md`](rng-provenance-addendum.md) closes that for the
-three committed campaigns after the fact, and its §4 records the one edge a
-retrospective record cannot close — the resolved patch version, because the
-harness lockfile is gitignored and absent at both pinned revisions. A manifest
+three committed campaigns, and its §4 derives the resolved patch version as
+`0.9.0` from the committed requirement and the crates.io registry state observed
+on 2026-08-17 (`@/citation/RustRandom2025`); the harness lockfile remains
+gitignored and absent at both pinned revisions. A manifest
 that records the algorithm and version directly, and a committed lockfile, are
 what remove both indirections at the source that publishes the numbers, which is
 what `@/inv/claims-trace-to-artifacts` asks of a committed artifact recording
@@ -1495,20 +1508,23 @@ document is stated where it bites, in §4.1
 and both remain in the record with their throughputs, their resource profiles,
 their censored cells, and the one order where the lookup control wins.
 
-**F.13 — The $\mathbb{F}_3$ packed encoding's own doc comment claims its
-alternative zero is never produced, and the implemented circuits produce it.**
-`bipedal3.rs` states that the codeword $(0,1)$ is "*never produced by
-`add/sub/mul/neg` from canonical inputs*" (`:19-21`, `:62-65`). Evaluating the
-committed formulas on canonical inputs contradicts that for three of the four
-operations: `add` returns $(0,1)$ for $2 + 1$ (`:581-593`), `sub` for $1 - 1$
-(`:620-632`), and `mul` for $0 \times 2$ and $2 \times 0$ (`:680-685`); only
-`neg` never produces it (`:652-657`). Every one of those results decodes to the
-correct field value, because the encoding's three classes are what carry the
-field element and all four operations respect them, so nothing computed anywhere
-in this record is wrong: the affected claim is the doc comment's, not a
-measurement's. §3.3's validity argument is written not to depend on it. Recorded
-rather than repaired here, because this document changes no code (§12.11); the
-doc-comment defect is tracked as JIT issue `63d931a9`.
+**F.13 — Through revision `ced6701e`, the $\mathbb{F}_3$ packed encoding's doc
+comment claims its alternative zero is never produced, and the implemented
+circuits produce it.** `bipedal3.rs` at that revision states that the codeword
+$(0,1)$ is "*never produced by `add/sub/mul/neg` from canonical inputs*"
+(`:19-21`, `:62-65`). Evaluating the committed formulas on canonical inputs
+contradicts that for three of the four operations: `add` returns $(0,1)$ for
+$2 + 1$ (`:581-593`), `sub` for $1 - 1$ (`:620-632`), and `mul` for $0 \times 2$
+and $2 \times 0$ (`:680-685`); only `neg` never produces it (`:652-657`). Every
+one of those results decodes to the correct field value, because the encoding's
+three classes are what carry the field element and all four operations respect
+them, so nothing computed anywhere in this record is wrong: the affected claim
+is the historical doc comment's, not a measurement's. The defect is filed as
+JIT issue `63d931a9` and corrected in `65dae3bf`: current rustdoc states that a
+clear `mag` bit is field zero regardless of `sgn`, that the operations respect
+equivalence classes, and that `add`, `sub`, and `mul` can produce `(0,1)`; the
+three unit tests at `bipedal3.rs:973-1006` pin one producing case per affected
+operation. §3.3's validity argument is independent of the historical claim.
 
 ## 11. Criterion-by-criterion conformance
 
@@ -1517,13 +1533,13 @@ doc-comment defect is tracked as JIT issue `63d931a9`.
 | REQ-01 | §3, §4, §5 | **Satisfied.** A verdict per field, each with a receipt citation: $\mathbb{F}_3$ no-go, on [`../047b62ed/receipts.md`](../047b62ed/receipts.md) §4.2 — every measured device cell falls below the CPU at the declared operating point $n = 28$, with the censored $M = 1024$ cell's ordering left open (§3.1, §12.6); $\mathbb{F}_5$ go on `f5-three-plane`, on [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12 and §3; $\mathbb{F}_7$ go on `f7-three-plane-permanent`, on [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15, §3, and §14. Each verdict is checked against the study's own four-part decision rule, quoted in §1, including the safe-launch-duration condition: each field's section discharges that condition on its declared operating point's own receipted clean completions at the declared configuration, and reports the two reference limits beside it with their status — the archived calibration's span boundary and per-field work budget, superseded by its own source's note and denied there as a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`), and the runtime qualification's observed clean-completion envelope, observed and cross-kernel ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4). Neither limit certifies a verdict. Where a declared point's work sits above the archived budget, at $\mathbb{F}_3$ $n = 28$, §3 states it with the completions that contradict the budget's necessity. |
 | REQ-02 | §3.1, §4.1, §5.1 | **Satisfied, with every crossing located only as a bracketing between two adjacent measured orders.** $\mathbb{F}_3$: the prototype's ratio brackets a crossing upward between $n = 12$ and $n = 16$ (0.7568 to 2.2149) and downward between $n = 24$ and $n = 28$ (1.5561 to 0.2036), and the shipped path's brackets the same two on the same two pairs (0.7118 to 1.5547, 1.0527 to 0.4390); the better shipped configuration's downward crossing is unlocated because the $n = 28$, $M = 1024$ cell is censored, and its projection is labelled an extrapolation. $\mathbb{F}_5$: the prototype's ratio is above 1 at all five measured orders and the shipped path's below 1 at the three it is measured, so neither column brackets a crossing and none is placed below $n = 12$. $\mathbb{F}_7$: neither prototype column brackets a crossing for the same reason; the shipped path is the one $\mathbb{F}_7$ column that does, upward between $n = 16$ and $n = 20$, which [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2 reports as beating the CPU at exactly one order, stated here with its mechanism — the CPU denominator changing at the packed kernel's sixteen-lane bound. Each statement names the best applicable in-tree CPU path per order, identified from the run's own data. |
 | REQ-03 | §2 | **Satisfied.** The per-lane Gray interval (`wave_ryser_mapping.h:33-40`), the per-lane accumulator initialization by prefix reconstruction at $g(\text{interval.start})$ (`wave_ryser_mapping.h:42-44`, with the per-field loops cited), the lane-local row-product reduction (five circuits cited by field and representation), and the cross-lane partial-sum reduction in fixed increasing lane order (`wave_ryser_mapping.h:67-78`) are each specified with the source that implements them, and the executable prototype is linked. |
-| REQ-04 | §3.3 | **Satisfied.** The two-bit `(mag, sgn)` encoding carries three values under three equivalence classes, a clear `mag` bit being field zero whatever `sgn` holds, and validity rests on those classes rather than on a canonical form: every decode in the crate and both device fold circuits read the class, and `add`, `sub`, `mul`, and `neg` map class to class on all sixteen codeword pairs, the alternative zero included as an input. The doc comment's narrower claim that the alternative zero is never produced is contradicted by three of those four operations and is recorded as such (§10, F.13) rather than relied on; `add` and `sub` are distinct operations, which excludes $\mathbb{F}_2$; the two algebraic facts that make the encoding Boolean are $q = 3$-specific — $3 = 2^2 - 1$ and $\mathbb{F}_3^* \cong \mathbb{Z}/2$, the latter used directly by the sign-popcount fold; the Ryser sign is nontrivial in $\mathbb{F}_3$ and is applied twice over, where over $\mathbb{F}_2$ it would vanish and the permanent would collapse onto the determinant; and two committed measurements are functions of $q = 3$ specifically and hold — the branch marginal $1 - (2/3)^n$ at all five orders and the permanent-zero fraction near $1/3$ — with the $q = 2$ alternative excluded by the committed intervals at three of five orders on the 4 096-sample observation and at all five on the timed-operation observation, coverage stated per cell rather than claimed uniformly. The result is checked per matrix against an `Fp<3>` oracle that runs the shared field-law suite. |
+| REQ-04 | §3.3 | **Satisfied.** The two-bit `(mag, sgn)` encoding carries three values under three equivalence classes, a clear `mag` bit being field zero whatever `sgn` holds, and validity rests on those classes rather than on a canonical form: every decode in the crate and both device fold circuits read the class, and `add`, `sub`, `mul`, and `neg` map class to class on all sixteen codeword pairs, the alternative zero included as an input. The historical doc-comment claim that the alternative zero is never produced is contradicted by three of those four operations and is corrected in `65dae3bf`; current rustdoc states the class semantics, with one producing case per affected operation pinned by tests. The validity argument never relies on that claim (§10, F.13); `add` and `sub` are distinct operations, which excludes $\mathbb{F}_2$; the two algebraic facts that make the encoding Boolean are $q = 3$-specific — $3 = 2^2 - 1$ and $\mathbb{F}_3^* \cong \mathbb{Z}/2$, the latter used directly by the sign-popcount fold; the Ryser sign is nontrivial in $\mathbb{F}_3$ and is applied twice over, where over $\mathbb{F}_2$ it would vanish and the permanent would collapse onto the determinant; and two committed measurements are functions of $q = 3$ specifically and hold — the branch marginal $1 - (2/3)^n$ at all five orders and the permanent-zero fraction near $1/3$ — with the $q = 2$ alternative excluded by the committed intervals at three of five orders on the 4 096-sample observation and at all five on the timed-operation observation, coverage stated per cell rather than claimed uniformly. The result is checked per matrix against an `Fp<3>` oracle that runs the shared field-law suite. |
 | REQ-05 | §4.2, §5.2 | **Satisfied.** $\mathbb{F}_5$: `f5-byte-control` and `f5-three-plane`, each with lane state, row-product circuit, shared-memory formula, measured `VGPRs`/`TotalSGPRs`/scratch, occupancy, and composite rate at five orders, cited to [`../91605d4d/receipts.md`](../91605d4d/receipts.md) §4.2, §6.2, §7, §10, before the selection. $\mathbb{F}_7$: `f7-lookup-table-control` and `f7-three-plane-permanent`, the same fields, cited to [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §4.2, §7, §10, §12, before the selection; the third planned candidate is recorded with its structural falsification (§10, F.1). |
 | REQ-06 | §6 | **Satisfied.** For both go verdicts: input layout (§6.1, canonical row-major bytes, device-side packing, shared-table sizes); persistent device buffers and streams named as the existing `DeviceBuffer`, `HipStreamPool`, and `LaunchDims` of `crates/gf2-kernels-hip/src/host/`, each cited to its defining line, with `PinnedHostBuffer`, `HipStream`, `HipEvent`, `HipEventSpan`, and `GfxTarget` beside them (§6.2); bounded-duration launches sized against a per-launch span target rather than a work budget, with the 978.5× measurement that rules out the work-budget form (§6.3); per-device initialization through `GfxTarget::detect_device` and blob loading, once per device (§6.4); error propagation selecting a tested CPU fallback for unsupported capabilities and recoverable resource failures through `DeviceBuffer::new_with_fallback` and the `UnsupportedArch` and `OutOfMemory` variants, while fatal device failures propagate as typed errors instead of the current asserts (§6.5); and behavioral-equivalence coverage on the shared field-law suite, the per-matrix oracle gate, the representation-boundary orders, determinism across the fallback boundary, and tests that force each fallback branch (§6.6). §6.7 adds the provenance requirement the determinism obligation rests on: a production campaign manifest records the RNG algorithm and version directly rather than leaving it to be reconstructed from the pinned revision's source (§1). The gap each element closes is cited to the dispatcher line that currently bypasses it. |
 | REQ-07 | §7, §7.1 | **Satisfied.** The public packed-field representation `Packed7` (`packed7.rs:211`, `:216`) and the permanent-specialized internal state `ThreePlane` (`wave_gf7_equivalence.hip:75-79`) are named as distinct surfaces with their scopes. The second compliant resolution is chosen — public representation unchanged, three-plane state internal — grounded in the committed evidence's single architecture, device-only scope, unresolved batch confound, and the campaign's own refusal to order the two circuits, and in `@/inv/convention-convergence` together with the proof-obligation asymmetry. §7.1 records the named exception `permanent-f7-internal-three-plane` with its scope, its shared behavioral tests, and a tracked convergence condition with two discharge routes. $\mathbb{F}_5$ needs no exception because `Packed5` is already three-plane (`packed5.rs:208-212`). |
 | REQ-08 | §8 | **Satisfied.** The receipts support the three-plane $\mathbb{F}_7$ candidate under the permanent workload, on three strands of which the strongest is the falsified weighting: the archived model charges the complete row-product reduction on every Gray step, and the measured exact marginal $(6/7)^n$ puts it at 4.58 % of steps at $n = 20$. The amendment, drafted at [`req08-amendment-draft.md`](req08-amendment-draft.md), is **applied to the archived file with owner approval (2026-08-17)**: a dated additive note above its §1 and two pointer stubs, no existing sentence edited. `Packed7` remains Candidate A and §7's choice is consistent with that. |
-| REQ-09 | §10 | **Satisfied.** Thirteen entries, each recorded with the evidence contradicting the statement it bears on rather than replacing it: the non-executing candidate, the $\mathbb{F}_3$ crossover closing before the operating point, the censoring record and the non-conservative projection chains, the archived $q = 7$ budget premise the $\mathbb{F}_7$ receipt preserves beside its correction (filed by this study as `e1c96c9c`), the two distinct fault observations, the prior sub-minimum published cells, the falsified occupancy hypothesis, the dynamic-LDS blind spot, the failed occupancy readings, the two branch-frequency interval misses, the packed-CPU run-to-run shift, the retained rejected candidates, and the $\mathbb{F}_3$ alternative-zero doc comment the implemented circuits contradict. |
-| REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure or a fact the sources do not print — §9's envelope share columns, §3.3's $q = 2$ marginal against the committed Wilson intervals, and §3.3's enumeration of the four bipedal operations over all sixteen codeword pairs — it names its inputs with their sources and states that the result is computed here. Two claims that resolved only to uncommitted or conflicting sources are handled rather than restated: the campaign RNG's identity now resolves to the committed [`rng-provenance-addendum.md`](rng-provenance-addendum.md), whose §4 records the resolved patch version as unrecoverable because the harness lockfile is uncommitted, and the archived $\mathbb{F}_7$ decision's per-operation CPU speedups are described by direction only in §8, because they resolve to conflicting prose and no committed run artifact. |
+| REQ-09 | §10 | **Satisfied.** Thirteen entries, each recorded with the evidence contradicting the statement it bears on rather than replacing it: the non-executing candidate, the $\mathbb{F}_3$ crossover closing before the operating point, the censoring record and the non-conservative projection chains, the archived $q = 7$ budget premise the $\mathbb{F}_7$ receipt preserves beside its correction (filed by this study as `e1c96c9c`), the two distinct fault observations, the prior sub-minimum published cells, the falsified occupancy hypothesis, the dynamic-LDS blind spot, the failed occupancy readings, the two branch-frequency interval misses, the packed-CPU run-to-run shift, the retained rejected candidates, and the historical $\mathbb{F}_3$ alternative-zero doc-comment claim with its correction in `65dae3bf`. |
+| REQ-10 | throughout | **Satisfied.** Every quantitative claim carries the receipt file and section, or the in-tree source path and line, it resolves to. Where this document computes a figure or a fact the sources do not print — §9's envelope share columns, §3.3's $q = 2$ marginal against the committed Wilson intervals, and §3.3's enumeration of the four bipedal operations over all sixteen codeword pairs — it names its inputs with their sources and states that the result is computed here. Two claims that resolved only to uncommitted or conflicting sources are handled rather than restated: the campaign RNG's identity resolves to the committed [`rng-provenance-addendum.md`](rng-provenance-addendum.md), whose §4 derives the resolved patch version as `0.9.0` from the committed requirement and cited registry state, while the local lockfile confirms that derivation; the archived $\mathbb{F}_7$ decision's per-operation CPU speedups are described by direction only in §8, because they resolve to conflicting prose and no committed run artifact. |
 | REQ-11 | §9 | **Satisfied, against the criterion as amended 2026-08-17 and quoted in §9.** Both factors are recorded with their receipts — 19.7082× at $\mathbb{F}_5$, $n = 24$ and 545.6693× at $\mathbb{F}_7$, $n = 20$ — and both exceed 1.5×, so there is no throughput shortfall to record. The safe-launch-duration condition is discharged at each point by that point's own receipted clean completions at its declared configuration: 63 launches on `f5-three-plane` at $M = 17$ and 1 023 launches on `f7-three-plane-permanent` at $M = 41$, with no cell of either run failing with a device fault ([`../91605d4d/receipts.md`](../91605d4d/receipts.md) §12, [`../6c7fcb38/receipts.md`](../6c7fcb38/receipts.md) §15). Both reference limits are cited with their evidentiary status and neither certifies a verdict: the archived calibration, at 0.0004 and 0.00002 of its span boundary and 0.2194 and 0.1228 of its per-field work budgets, derives from the one recorded fault whose mechanism attribution was retracted and carries a supersession note denying it is a measured device property (`r4_gpu_uniformity_resample.md`:225-227, `:176-215`); the observed clean-completion envelope, at 0.00069 and 0.000215 of the span figures and 0.266 and 0.040 of the work figures ([`../a9284086/receipt.md`](../a9284086/receipt.md) §9.2, §9.4), is observed rather than derived, is a conservative lower bound, and is a per-field extremum whose two axes are different kernels. No located fault boundary is claimed, and locating one is recorded as an open deliverable (§12.1). |
 
 ## 12. What this synthesis does not establish
