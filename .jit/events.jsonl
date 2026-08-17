@@ -8406,3 +8406,5 @@
 {"from":"ready","id":"7b4e469f-118f-4208-b3b0-a58b1487a3c3","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:05:34.826090299Z","to":"in_progress","type":"issue_state_changed"}
 {"assignee":"agent:claude","id":"a543363f-e9d8-4027-af79-794fd9c13334","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","timestamp":"2026-08-17T20:05:34.826090299Z","type":"issue_claimed"}
 {"gate_key":"f3-bipedal-ci","id":"fb62d7b7-e13a-4b21-8b87-03522c76e1b1","timestamp":"2026-08-17T20:07:33.065394757Z","type":"gate_definition_created"}
+{"fields":["documents"],"id":"78073d48-630e-4d72-b235-3d87486954c8","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-17T20:08:50.308547647Z","type":"issue_updated","updated_by":"doc-add"}
+{"fields":["documents"],"id":"4d65bc41-6b94-40dd-b5f2-ce359369b1a4","issue_id":"7a816262-1eed-492c-a58b-6752fdf50636","timestamp":"2026-08-17T20:08:50.507189093Z","type":"issue_updated","updated_by":"doc-add"}
