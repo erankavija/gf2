@@ -70,14 +70,14 @@
      "short_id": "0dffa759",
      "title": "Field-by-field go/no-go synthesis with production design",
      "classification": "design",
-     "status": "rework-3-dispatched: research-review R3 F1-F3 under the owner-approved REQ-11 amendment (clean-completion discharge, RNG addendum, archived-figure removal); doc-review passed R3"
+     "status": "rework-3-redispatched (session 10): prior dispatch died with the session, no commits landed; closing research R3 F1 (RNG resolved-version derivation via new registry entry RustRandom2025), F2 (archived 1.61x figure removed for qualitative citation, owner-approved), F3 + doc-review R3 F1 (findings.md F.13 prose closed against the 65dae3bf correction); luna in flight"
     },
     {
      "id": "51498b90-ae91-449f-bcc2-0f209bd16284",
      "short_id": "51498b90",
      "title": "Checkpointed resume, determinism, and quarantine for the campaign driver",
      "classification": "implementation",
-     "status": "review-passed: cargo-ci + code-review + doc-review all passed round 3 (field-specific checkpoint path); lead six-tier review PASS; completion pending final gate re-runs at post-reword HEAD"
+     "status": "escalation approved 2026-08-17 (session 10): doc-review at post-reword HEAD found the REQ-04 FieldSummary.quarantined contract colliding with the protocol's receipt-authoritative quarantine evidence; owner chose the dated protocol reconciliation (quarantined list = diagnostic index; committed execution receipt authoritative; pooling exclusion unchanged); rework counter reset with guidance; luna rework in flight"
     }
    ]
   },
@@ -310,7 +310,7 @@
    "title": "Bipedal3 doc comments deny the alternative zero their own circuits produce",
    "reason": "Found by the 0dffa759 synthesis (finding F.13) during rework-1; filed per the a2c0db52 interleaved-bug precedent.",
    "wave": "3 (interleaved)",
-   "status": "review round 2 pending: cargo-ci passed, code-review R1 failed only on the lead commit's 89-char subject; subject reworded in place (65dae3bf), gates re-run pending"
+   "status": "gates all passed at ab311654 (cargo-ci + code-review); closure pending the findings.md F.13 stale-narrative fix landing under 0dffa759's rework (Tier 2.5 sweep would trip on it)"
   },
   {
    "short_id": "d2fb76b9",
@@ -437,6 +437,14 @@
    "requested_at": "2026-08-17",
    "resolved_at": "2026-08-17",
    "decision": "Owner approved amending REQ-11: the safe-launch-duration condition is discharged by the operating point's own receipted clean completions at its declared configuration, with the envelope and the archived calibration cited as reference limits carrying their evidentiary status, no located fault boundary claimed, and locating one an open deliverable. The rework counter reset with the guidance. Owner also approved the two lead fixes for the round's other findings: a dated RNG provenance addendum in the study recording ChaCha20/rand_chacha 0.9 as read from the pinned revisions, and removal of the republished archived CPU speedup figures in favour of a qualitative description with citation."
+  },
+  {
+   "issue": "51498b90",
+   "reason": "doc-review at the post-reword HEAD failed with a new blocking finding while the rework counter stood at MAX (2): the issue's REQ-04 requires the quarantined item visible in the dataset and the worker delivered FieldSummary.quarantined, but the controlling preregistered protocol excludes quarantined shards from the raw dataset and names a committed campaign execution receipt as the retained evidence; the reviewer requires the two prose bodies reconciled with the authoritative evidence location named.",
+   "status": "approved",
+   "requested_at": "2026-08-17",
+   "resolved_at": "2026-08-17",
+   "decision": "Owner approved the protocol reconciliation: the field summary's quarantined list is a diagnostic index (identity plus mechanical error) discharging REQ-04's visibility; the committed campaign execution receipt remains the sole authoritative quarantine evidence; exclusion from the raw shard set and pooling is unchanged; README and the FieldSummary rustdoc are reworded to name the receipt authoritative. No statistical protocol content changes. The rework counter reset with the guidance."
   }
  ],
  "rework_counts": {
@@ -456,8 +464,10 @@
   "4fdd781a": 2,
   "41c3d91d": 2,
   "a9284086": 1,
-  "51498b90": 2,
-  "0dffa759": 0,
+  "51498b90": 1,
+  "51498b90_note": "reset to 0 by the 2026-08-17 quarantine-reconciliation escalation guidance, then 1 on the luna rework dispatch",
+  "0dffa759": 1,
+  "0dffa759_note": "reset to 0 by the 2026-08-17 REQ-11 escalation guidance, then 1 on the rework-3 dispatch (redispatched in session 10 after the session-9 crash)",
   "e1c96c9c": 1,
   "63d931a9": 1
  },

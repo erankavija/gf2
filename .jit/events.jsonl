@@ -8325,3 +8325,5 @@
 {"gate_key":"doc-review","id":"851fc3bc-fd53-4240-8883-fb544a6e5c7d","issue_id":"0dffa759-8ff3-4198-a901-23bedf6667e0","timestamp":"2026-08-17T07:59:06.573300783Z","type":"gate_failed","updated_by":"auto:executor"}
 {"gate_key":"code-review","id":"276cdbea-088c-43b4-be61-ce8a75c58bd7","issue_id":"51498b90-ae91-449f-bcc2-0f209bd16284","timestamp":"2026-08-17T08:04:13.286136954Z","type":"gate_passed","updated_by":"auto:executor"}
 {"gate_key":"research-review","id":"5e4c4a1e-e626-4f92-a9e3-7fd7cb5c7407","issue_id":"0dffa759-8ff3-4198-a901-23bedf6667e0","timestamp":"2026-08-17T08:09:52.362675705Z","type":"gate_failed","updated_by":"auto:executor"}
+{"id":"67e21d27-c1a2-4332-8010-8d66b40ddd9e","issue_id":"59024f1a-23b1-422a-b2b4-d09f13db5661","priority":"low","timestamp":"2026-08-17T16:36:28.392202596Z","title":"SIMD bipedal3 comments cite Scheinerman Algorithm 2, an object the paper does not carry","type":"issue_created"}
+{"fields":["dependencies"],"id":"ca66cf2f-6224-402b-8704-cb9cde97500d","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T16:36:40.952363290Z","type":"issue_updated","updated_by":"dependency-add"}
