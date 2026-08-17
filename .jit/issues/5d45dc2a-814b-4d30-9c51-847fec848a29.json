@@ -6,12 +6,24 @@
   "dependencies": [],
   "description": "The `f3_bipedal` module doc states that `(mag=0, sgn=1)` is a redundant codeword the implementation never produces, while its own add, sub, and mul formulas produce it from canonical inputs.\n\n## Background\n\n`Bipedal3` in `dev/research/f3_bipedal/src/bipedal.rs` is the scalar reference that the `gf2-kernels-simd` AVX2 bipedal kernel asserts raw-word parity against, so its documented encoding contract is what the parity tests are read against. The module doc at `:14` claims `(mag=0, sgn=1)` is \"a redundant codeword we never produce\". The committed [Scheinerman2024] Theorem 2.1 formulas contradict this for three of the four operations on canonical inputs:\n\n- `add_assign`: $2 + 1$ yields `(mag=0, sgn=1)`\n- `sub_assign`: $2 - 2$ yields `(mag=0, sgn=1)`\n- `mul_assign`: $2 \\cdot 0$ yields `(mag=0, sgn=1)`\n\nOnly negation never produces it. Every such result decodes to the correct field value because `unpack` reads `mag` first and treats a clear `mag` bit as field zero regardless of `sgn`, so no computed value is wrong; the false statement is the documentation's. The equivalent claim over the same formulas in `crates/gf2-algebra/src/packed/bipedal3.rs` already states the class semantics instead, and that wording is the convention to converge on.\n\n## Success Criteria\n\n- [hard] REQ-01: The module documentation of `dev/research/f3_bipedal/src/bipedal.rs` states the encoding's class semantics — a clear `mag` bit is field zero whatever `sgn` holds, and the operations respect those classes and can return `(mag=0, sgn=1)` — and no claim survives anywhere in the crate that the codeword is never produced.\n- [hard] REQ-02: A test pins one producing case for each of addition, subtraction, and multiplication by asserting the resulting raw `(mag, sgn)` word pair, not the decoded field value.\n\n## Notes\n\nRaw-word assertions are what REQ-02 needs: decoded output alone cannot distinguish `(mag=0, sgn=1)` from `(mag=0, sgn=0)`, so a decode-level assertion would pass without pinning anything.\n",
   "documents": [],
+  "done_at": "2026-08-17T20:04:32.699831294Z",
   "first_ready_at": "2026-08-17T19:33:17.360746295Z",
   "gates_required": [
     "cargo-ci",
     "code-review"
   ],
-  "gates_status": {},
+  "gates_status": {
+    "cargo-ci": {
+      "status": "passed",
+      "updated_at": "2026-08-17T20:01:31.083615723Z",
+      "updated_by": "auto:executor"
+    },
+    "code-review": {
+      "status": "passed",
+      "updated_at": "2026-08-17T20:04:09.811614776Z",
+      "updated_by": "auto:executor"
+    }
+  },
   "id": "5d45dc2a-814b-4d30-9c51-847fec848a29",
   "labels": [
     "epic:quality-documentation-tech-debt",
@@ -20,7 +32,7 @@
     "type:bug"
   ],
   "priority": "low",
-  "state": "in_progress",
+  "state": "done",
   "title": "Bipedal3 reference doc denies a codeword its own formulas produce",
-  "updated_at": "2026-08-17T19:38:19.092406272Z"
+  "updated_at": "2026-08-17T20:04:32.699831294Z"
 }

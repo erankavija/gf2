@@ -8399,3 +8399,7 @@
 {"assignee":"agent:claude","id":"32758fd6-93de-43ad-a4ed-f982f19d0f13","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T19:38:19.092406272Z","type":"issue_claimed"}
 {"id":"9434bf8c-247d-421b-8b76-33b52a00fa82","issue_id":"9ce34225-d40d-4c2b-a56e-1a4882925377","priority":"normal","timestamp":"2026-08-17T19:44:59.652905393Z","title":"Bring dev/research/f3_bipedal under a CI gate and the test-naming convention","type":"issue_created"}
 {"fields":["dependencies"],"id":"147681e1-c7a6-4ec1-9e69-7abec4ecec1c","issue_id":"86b9c719-b19d-4372-80bd-8b4deed1eb16","timestamp":"2026-08-17T19:45:07.784154539Z","type":"issue_updated","updated_by":"dependency-add"}
+{"gate_key":"cargo-ci","id":"f54798d9-c51a-464a-8df1-59f89cbb8557","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T20:01:31.083615723Z","type":"gate_passed","updated_by":"auto:executor"}
+{"gate_key":"code-review","id":"f29ce204-10b3-44cb-ac24-35c280f2295e","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T20:04:09.811614776Z","type":"gate_passed","updated_by":"auto:executor"}
+{"from":"in_progress","id":"199842fd-03bd-41db-8ab8-e15aa836e005","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T20:04:32.699831294Z","to":"done","type":"issue_state_changed"}
+{"id":"f81936cf-5764-4d48-96bc-75eaa0236c7c","issue_id":"5d45dc2a-814b-4d30-9c51-847fec848a29","timestamp":"2026-08-17T20:04:32.699831294Z","type":"issue_completed"}
