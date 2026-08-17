@@ -1,5 +1,6 @@
 {
-  "assignee": null,
+  "assignee": "agent:codex-luna",
+  "claimed_at": "2026-08-17T17:06:45.943921452Z",
   "context": {},
   "created_at": "2026-08-09T11:54:10.417169574Z",
   "dependencies": [
@@ -21,7 +22,7 @@
     "satisfies:REQ-02"
   ],
   "priority": "high",
-  "state": "ready",
+  "state": "in_progress",
   "title": "Determinant companion evaluated on the campaign's matrices",
-  "updated_at": "2026-08-17T17:03:46.523687599Z"
+  "updated_at": "2026-08-17T17:06:45.943921452Z"
 }
